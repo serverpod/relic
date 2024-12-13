@@ -5,5 +5,5 @@ updates:
     schedule:
       interval: "daily"
     versioning-strategy: "widen"
-    # Limit open pull requests to 1 to avoid multiple PRs for the same dependency.
-    open-pull-requests-limit: 1
+    # Limit open pull requests to 5
+    open-pull-requests-limit: 5
