@@ -13,14 +13,3 @@ pubspec.lock
 .vscode/
 .vscode-test/
 
-# Generated files
-*.log
-*.tmp
-*.swp
-*.bak
-*.lock
-
-# Coverage and test output
-coverage/
-test-output/
-
