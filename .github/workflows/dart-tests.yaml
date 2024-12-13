@@ -1,0 +1,135 @@
+name: Relic CI
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+  pull_request:
+    branches:
+      - main
+      - dev
+
+env:
+  PUB_CACHE_PATH: ~/.pub-cache
+
+jobs:
+  dart_format:
+    name: Verify Dart Formatting
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+        dart_sdk: ['3.3.0']
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+      - name: Setup Dart
+        uses: dart-lang/setup-dart@v1.3
+        with:
+          sdk: ${{ matrix.dart_sdk }}
+      - name: Cache Dart dependencies
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.PUB_CACHE_PATH }}
+          key: ${{ runner.os }}-pub-cache-${{ matrix.dart_sdk }}
+          restore-keys: |
+            ${{ runner.os }}-pub-cache-
+      - name: Verify formatting
+        run: dart format --output=none --set-exit-if-changed .
+
+  dart_analyze:
+    name: Run Dart Analysis
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+        dart_sdk: ['3.3.0', 'stable']
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+      - name: Setup Dart
+        uses: dart-lang/setup-dart@v1.3
+        with:
+          sdk: ${{ matrix.dart_sdk }}
+      - name: Cache Dart dependencies
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.PUB_CACHE_PATH }}
+          key: ${{ runner.os }}-pub-cache-${{ matrix.dart_sdk }}
+          restore-keys: |
+            ${{ runner.os }}-pub-cache-
+      - name: Install dependencies
+        run: dart pub upgrade
+      - name: Analyze
+        run: dart analyze
+
+  dart_analyze_downgrade:
+    name: Run Dart Analysis Downgrade
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+      - name: Setup Dart
+        uses: dart-lang/setup-dart@v1.3
+        with:
+          sdk: '3.3.0'
+      - name: Cache Dart dependencies
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.PUB_CACHE_PATH }}
+          key: ${{ runner.os }}-pub-cache-downgrade
+          restore-keys: |
+            ${{ runner.os }}-pub-cache-
+      - name: Install dependencies (Downgrade)
+        run: dart pub downgrade
+      - name: Analyze
+        run: dart analyze
+
+  dart_analyze_latest_downgrade:
+    name: Run Dart Analysis Latest (stable) Downgrade
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+      - name: Setup Dart
+        uses: dart-lang/setup-dart@v1.3
+        with:
+          sdk: 'stable'
+      - name: Cache Dart dependencies
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.PUB_CACHE_PATH }}
+          key: ${{ runner.os }}-pub-cache-downgrade
+          restore-keys: |
+            ${{ runner.os }}-pub-cache-
+      - name: Install dependencies (Downgrade)
+        run: dart pub downgrade
+      - name: Analyze
+        run: dart analyze
+
+  unit_tests:
+    name: Run Unit Tests
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+        dart_sdk: ['3.3.0']
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+      - name: Setup Dart
+        uses: dart-lang/setup-dart@v1.3
+        with:
+          sdk: ${{ matrix.dart_sdk }}
+      - name: Cache Dart dependencies
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.PUB_CACHE_PATH }}
+          key: ${{ runner.os }}-pub-cache-${{ matrix.dart_sdk }}
+          restore-keys: |
+            ${{ runner.os }}-pub-cache-
+      - name: Install dependencies
+        run: dart pub upgrade
+      - name: Run tests
+        run: dart test
