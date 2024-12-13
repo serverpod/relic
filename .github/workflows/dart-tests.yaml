@@ -20,19 +20,19 @@ jobs:
     strategy:
       matrix:
         os: [windows-latest, ubuntu-latest, macos-latest]
-        dart_version: ['3.3.0']
+        dart_sdk: ['3.3.0']
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
       - name: Setup Dart
         uses: dart-lang/setup-dart@v1.3
         with:
-          sdk: ${{ matrix.dart_version }}
+          sdk: ${{ matrix.dart_sdk }}
       - name: Cache Dart dependencies
         uses: actions/cache@v3
         with:
           path: ${{ env.PUB_CACHE_PATH }}
-          key: ${{ runner.os }}-pub-cache-${{ matrix.dart_version }}
+          key: ${{ runner.os }}-pub-cache-${{ matrix.dart_sdk }}
           restore-keys: |
             ${{ runner.os }}-pub-cache-
       - name: Verify formatting
@@ -44,28 +44,28 @@ jobs:
     strategy:
       matrix:
         os: [windows-latest, ubuntu-latest, macos-latest]
-        dart_version: ['3.3.0', '3.3.9']
+        dart_sdk: ['3.3.0', 'stable']
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
       - name: Setup Dart
         uses: dart-lang/setup-dart@v1.3
         with:
-          sdk: ${{ matrix.dart_version }}
+          sdk: ${{ matrix.dart_sdk }}
       - name: Cache Dart dependencies
         uses: actions/cache@v3
         with:
           path: ${{ env.PUB_CACHE_PATH }}
-          key: ${{ runner.os }}-pub-cache-${{ matrix.dart_version }}
+          key: ${{ runner.os }}-pub-cache-${{ matrix.dart_sdk }}
           restore-keys: |
             ${{ runner.os }}-pub-cache-
       - name: Install dependencies
-        run: dart pub get
+        run: dart pub upgrade
       - name: Analyze
         run: dart analyze
 
   dart_analyze_downgrade:
-    name: Run Dart Analysis with Downgraded Dependencies
+    name: Run Dart Analysis Downgrade
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -83,7 +83,29 @@ jobs:
             ${{ runner.os }}-pub-cache-
       - name: Install dependencies (Downgrade)
         run: dart pub downgrade
-      - name: Analyze with Downgraded Dependencies
+      - name: Analyze
+        run: dart analyze
+
+  dart_analyze_latest_downgrade:
+    name: Run Dart Analysis Latest (stable) Downgrade
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+      - name: Setup Dart
+        uses: dart-lang/setup-dart@v1.3
+        with:
+          sdk: 'stable'
+      - name: Cache Dart dependencies
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.PUB_CACHE_PATH }}
+          key: ${{ runner.os }}-pub-cache-downgrade
+          restore-keys: |
+            ${{ runner.os }}-pub-cache-
+      - name: Install dependencies (Downgrade)
+        run: dart pub downgrade
+      - name: Analyze
         run: dart analyze
 
   unit_tests:
@@ -92,22 +114,22 @@ jobs:
     strategy:
       matrix:
         os: [windows-latest, ubuntu-latest, macos-latest]
-        dart_version: ['3.3.0']
+        dart_sdk: ['3.3.0']
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
       - name: Setup Dart
         uses: dart-lang/setup-dart@v1.3
         with:
-          sdk: ${{ matrix.dart_version }}
+          sdk: ${{ matrix.dart_sdk }}
       - name: Cache Dart dependencies
         uses: actions/cache@v3
         with:
           path: ${{ env.PUB_CACHE_PATH }}
-          key: ${{ runner.os }}-pub-cache-${{ matrix.dart_version }}
+          key: ${{ runner.os }}-pub-cache-${{ matrix.dart_sdk }}
           restore-keys: |
             ${{ runner.os }}-pub-cache-
       - name: Install dependencies
-        run: dart pub get
+        run: dart pub upgrade
       - name: Run tests
         run: dart test
