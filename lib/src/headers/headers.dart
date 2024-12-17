@@ -92,11 +92,18 @@ abstract base class Headers {
 
   /// Define header properties
 
-  /// Date-related headers
-  final DateTime? date;
-  final DateTime? expires;
-  final DateTime? ifModifiedSince;
-  final DateTime? lastModified;
+  /// Date-related headers`
+  final _LazyInit<DateTime?> _date;
+  DateTime? get date => _date.value;
+
+  final _LazyInit<DateTime?> _expires;
+  DateTime? get expires => _expires.value;
+
+  final _LazyInit<DateTime?> _ifModifiedSince;
+  DateTime? get ifModifiedSince => _ifModifiedSince.value;
+
+  final _LazyInit<DateTime?> _lastModified;
+  DateTime? get lastModified => _lastModified.value;
 
   /// General Headers
   final Uri? origin;
@@ -260,10 +267,10 @@ abstract base class Headers {
 
   Headers._({
     // Date-related headers
-    this.date,
-    this.expires,
-    this.ifModifiedSince,
-    this.lastModified,
+    required _LazyInit<DateTime?> date,
+    required _LazyInit<DateTime?> expires,
+    required _LazyInit<DateTime?> ifModifiedSince,
+    required _LazyInit<DateTime?> lastModified,
 
     // General Headers
     this.origin,
@@ -336,7 +343,11 @@ abstract base class Headers {
     this.crossOriginEmbedderPolicy,
     this.crossOriginOpenerPolicy,
     required this.failedHeadersToParse,
-  }) : custom = custom ?? CustomHeaders.empty();
+  })  : _date = date,
+        _expires = expires,
+        _ifModifiedSince = ifModifiedSince,
+        _lastModified = lastModified,
+        custom = custom ?? CustomHeaders.empty();
 
   /// Create a new request headers instance from a Dart IO request
   factory Headers.fromHttpRequest(
@@ -364,21 +375,29 @@ abstract base class Headers {
 
     return _HeadersImpl(
       // Date-related headers
-      date: dartIOHeaders.parseSingleValue(
-        dateHeader,
-        onParse: parseDate,
+      date: _LazyInit.lazy(
+        init: () => dartIOHeaders.parseSingleValue(
+          dateHeader,
+          onParse: parseDate,
+        ),
       ),
-      expires: dartIOHeaders.parseSingleValue(
-        expiresHeader,
-        onParse: parseDate,
+      expires: _LazyInit.lazy(
+        init: () => dartIOHeaders.parseSingleValue(
+          expiresHeader,
+          onParse: parseDate,
+        ),
       ),
-      ifModifiedSince: dartIOHeaders.parseSingleValue(
-        ifModifiedSinceHeader,
-        onParse: parseDate,
+      ifModifiedSince: _LazyInit.lazy(
+        init: () => dartIOHeaders.parseSingleValue(
+          ifModifiedSinceHeader,
+          onParse: parseDate,
+        ),
       ),
-      lastModified: dartIOHeaders.parseSingleValue(
-        lastModifiedHeader,
-        onParse: parseDate,
+      lastModified: _LazyInit.lazy(
+        init: () => dartIOHeaders.parseSingleValue(
+          lastModifiedHeader,
+          onParse: parseDate,
+        ),
       ),
 
       // General Headers
@@ -683,8 +702,10 @@ abstract base class Headers {
   }) {
     return _HeadersImpl(
       // Date-related headers
-      date: date,
-      ifModifiedSince: ifModifiedSince,
+      date: _LazyInit.value(value: date),
+      ifModifiedSince: _LazyInit.value(value: ifModifiedSince),
+      expires: _LazyInit.nullValue(),
+      lastModified: _LazyInit.nullValue(),
 
       // Request Headers
       xPoweredBy: xPoweredBy,
@@ -778,9 +799,12 @@ abstract base class Headers {
     CrossOriginOpenerPolicyHeader? crossOriginOpenerPolicy,
   }) {
     return _HeadersImpl(
-      date: date ?? DateTime.now(),
-      expires: expires,
-      lastModified: lastModified,
+      // Date-related headers
+      date: _LazyInit.value(value: date ?? DateTime.now()),
+      expires: _LazyInit.value(value: expires),
+      lastModified: _LazyInit.value(value: lastModified),
+      ifModifiedSince: _LazyInit.nullValue(),
+
       origin: origin,
       server: server,
       via: via,
@@ -913,10 +937,10 @@ abstract base class Headers {
 final class _HeadersImpl extends Headers {
   _HeadersImpl({
     /// Date-related headers
-    super.date,
-    super.expires,
-    super.ifModifiedSince,
-    super.lastModified,
+    required super.date,
+    required super.expires,
+    required super.ifModifiedSince,
+    required super.lastModified,
 
     /// General Headers
     super.origin,
@@ -1070,12 +1094,15 @@ final class _HeadersImpl extends Headers {
     Object? crossOriginOpenerPolicy = _Undefined,
   }) {
     return _HeadersImpl(
-      date: date is DateTime? ? date : this.date,
-      expires: expires is DateTime? ? expires : this.expires,
-      ifModifiedSince:
-          ifModifiedSince is DateTime? ? ifModifiedSince : this.ifModifiedSince,
-      lastModified:
-          lastModified is DateTime? ? lastModified : this.lastModified,
+      date: date is DateTime? ? _LazyInit.value(value: date) : _date,
+      expires:
+          expires is DateTime? ? _LazyInit.value(value: expires) : _expires,
+      ifModifiedSince: ifModifiedSince is DateTime?
+          ? _LazyInit.value(value: ifModifiedSince)
+          : _ifModifiedSince,
+      lastModified: lastModified is DateTime?
+          ? _LazyInit.value(value: lastModified)
+          : _lastModified,
 
       /// General Headers
       origin: origin is Uri? ? origin : this.origin,
@@ -1390,3 +1417,51 @@ final class _HeadersImpl extends Headers {
 }
 
 class _Undefined {}
+
+typedef _LazyInitializer<T> = T Function();
+
+class _LazyInit<T> {
+  final _LazyInitializer<T>? _init;
+  bool _isInitialized = false;
+  T? _value;
+
+  _LazyInit._({
+    _LazyInitializer<T>? init,
+    T? value,
+    bool isInitialized = false,
+  })  : _init = init,
+        _value = value,
+        _isInitialized = isInitialized;
+
+  factory _LazyInit.value({
+    required T value,
+  }) {
+    return _LazyInit._(
+      value: value,
+      isInitialized: true,
+    );
+  }
+
+  factory _LazyInit.lazy({
+    required _LazyInitializer<T> init,
+  }) {
+    return _LazyInit._(
+      init: init,
+      isInitialized: false,
+    );
+  }
+
+  factory _LazyInit.nullValue() {
+    return _LazyInit._(
+      isInitialized: true,
+    );
+  }
+
+  T? get value {
+    if (!_isInitialized) {
+      _value = _init?.call();
+      _isInitialized = true;
+    }
+    return _value;
+  }
+}
