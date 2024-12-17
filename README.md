@@ -1,14 +1,16 @@
-# Relic
+![Relic web server banner](https://github.com/serverpod/relic/raw/main/misc/images/github-banner.jpg)
+
+# Relic web server
 
 Relic is a web server based on Shelf that supports middleware. It's currently available as a tech preview to gather feedback before we release a stable version. __Beware that the API is still subject to change.__ The best way to provide your feedback is through issues on GitHub here:
 [https://github.com/serverpod/relic/issues](https://github.com/serverpod/relic/issues)
 
 This package was born out of the needs of [Serverpod](https://serverpod.dev), as we wanted a more modern and performant base for our web server. Relic is based on [Shelf](https://pub.dev/packages/shelf), but we have made several improvements:
 
-- We removed all List<int> in favor of Uint8List.
+- We removed all `List<int>` in favor of `Uint8List`.
 - We made everything type-safe (no more dynamic).
-- Encoding types have been moved to the Body of a Request/Response to simplify the logic when syncing up the headers and to have a single source of truth.
-- We've added parsers and validation for all commonly used HTTP headers. E.g., times are represented by DateTime, cookies have their own class with validation of formatting, etc.
+- Encoding types have been moved to the `Body` of a `Request`/`Response` to simplify the logic when syncing up the headers and to have a single source of truth.
+- We've added parsers and validation for all commonly used HTTP headers. E.g., times are represented by `DateTime`, cookies have their own class with validation of formatting, etc.
 - Extended test coverage.
 - There are lots of smaller fixes here and there.
 
