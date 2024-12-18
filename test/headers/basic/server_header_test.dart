@@ -38,6 +38,21 @@ void main() {
     );
 
     test(
+      'when a Server header with an empty value is passed '
+      'then the server does not respond with a bad request if the headers '
+      'is not actually used',
+      () async {
+        Headers headers = await getServerRequestHeaders(
+          server: server,
+          headers: {'server': ''},
+          echoHeaders: false,
+        );
+
+        expect(headers, isNotNull);
+      },
+    );
+
+    test(
       'when a valid Server header is passed then it should parse the server correctly',
       () async {
         Headers headers = await getServerRequestHeaders(

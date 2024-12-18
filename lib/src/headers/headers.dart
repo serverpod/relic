@@ -106,9 +106,14 @@ abstract base class Headers {
   DateTime? get lastModified => _lastModified.value;
 
   /// General Headers
-  final Uri? origin;
-  final String? server;
-  final List<String>? via;
+  final _LazyInit<Uri?> _origin;
+  Uri? get origin => _origin.value;
+
+  final _LazyInit<String?> _server;
+  String? get server => _server.value;
+
+  final _LazyInit<List<String>?> _via;
+  List<String>? get via => _via.value;
 
   /// Request Headers
   final FromHeader? from;
@@ -273,9 +278,9 @@ abstract base class Headers {
     required _LazyInit<DateTime?> lastModified,
 
     // General Headers
-    this.origin,
-    this.server,
-    this.via,
+    required _LazyInit<Uri?> origin,
+    required _LazyInit<String?> server,
+    required _LazyInit<List<String>?> via,
 
     // Request Headers
     this.from,
@@ -343,10 +348,19 @@ abstract base class Headers {
     this.crossOriginEmbedderPolicy,
     this.crossOriginOpenerPolicy,
     required this.failedHeadersToParse,
-  })  : _date = date,
+  })  :
+        // Date-related headers
+        _date = date,
         _expires = expires,
         _ifModifiedSince = ifModifiedSince,
         _lastModified = lastModified,
+
+        // General Headers
+        _origin = origin,
+        _server = server,
+        _via = via,
+
+        // Request Headers
         custom = custom ?? CustomHeaders.empty();
 
   /// Create a new request headers instance from a Dart IO request
@@ -401,17 +415,23 @@ abstract base class Headers {
       ),
 
       // General Headers
-      origin: dartIOHeaders.parseSingleValue(
-        originHeader,
-        onParse: parseUri,
+      origin: _LazyInit.lazy(
+        init: () => dartIOHeaders.parseSingleValue(
+          originHeader,
+          onParse: parseUri,
+        ),
       ),
-      server: dartIOHeaders.parseSingleValue(
-        serverHeader,
-        onParse: parseString,
+      server: _LazyInit.lazy(
+        init: () => dartIOHeaders.parseSingleValue(
+          serverHeader,
+          onParse: parseString,
+        ),
       ),
-      via: dartIOHeaders.parseMultipleValue(
-        viaHeader,
-        onParse: parseStringList,
+      via: _LazyInit.lazy(
+        init: () => dartIOHeaders.parseMultipleValue(
+          viaHeader,
+          onParse: parseStringList,
+        ),
       ),
 
       // Request Headers
@@ -707,6 +727,11 @@ abstract base class Headers {
       expires: _LazyInit.nullValue(),
       lastModified: _LazyInit.nullValue(),
 
+      // General Headers
+      origin: _LazyInit.nullValue(),
+      server: _LazyInit.nullValue(),
+      via: _LazyInit.nullValue(),
+
       // Request Headers
       xPoweredBy: xPoweredBy,
       from: from,
@@ -805,9 +830,12 @@ abstract base class Headers {
       lastModified: _LazyInit.value(value: lastModified),
       ifModifiedSince: _LazyInit.nullValue(),
 
-      origin: origin,
-      server: server,
-      via: via,
+      // General Headers
+      origin: _LazyInit.value(value: origin),
+      server: _LazyInit.value(value: server),
+      via: _LazyInit.value(value: via),
+
+      // Request Headers
       from: from,
       location: location,
       xPoweredBy: xPoweredBy,
@@ -943,9 +971,9 @@ final class _HeadersImpl extends Headers {
     required super.lastModified,
 
     /// General Headers
-    super.origin,
-    super.server,
-    super.via,
+    required super.origin,
+    required super.server,
+    required super.via,
 
     /// Request Headers
     super.from,
@@ -1105,9 +1133,9 @@ final class _HeadersImpl extends Headers {
           : _lastModified,
 
       /// General Headers
-      origin: origin is Uri? ? origin : this.origin,
-      server: server is String? ? server : this.server,
-      via: via is List<String>? ? via : this.via,
+      origin: origin is Uri? ? _LazyInit.value(value: origin) : _origin,
+      server: server is String? ? _LazyInit.value(value: server) : _server,
+      via: via is List<String>? ? _LazyInit.value(value: via) : _via,
 
       /// Request Headers
       from: from is FromHeader? ? from : this.from,
