@@ -1,9 +1,5 @@
 import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
-
-import 'package:http_parser/http_parser.dart';
-import 'package:relic/src/headers/typed/headers/transfer_encoding_header.dart';
 
 import '../body/body.dart';
 import '../headers/headers.dart';
@@ -329,48 +325,15 @@ class Response extends Message {
 
     httpResponse.statusCode = statusCode;
 
-    headers.applyHeaders(
-      httpResponse,
-      body,
-    );
+    headers.applyHeaders(httpResponse);
 
-    var mBody = _handleTransferEncoding(
+    body.applyHeadersAndEncodeBody(
       httpResponse,
-      headers.transferEncoding,
-      statusCode,
-      body,
+      transferEncoding: headers.transferEncoding,
     );
 
     return httpResponse
-        .addStream(mBody.read())
+        .addStream(body.read())
         .then((_) => httpResponse.close());
   }
-}
-
-Body _handleTransferEncoding(
-  HttpResponse httpResponse,
-  TransferEncodingHeader? transferEncoding,
-  int statusCode,
-  Body body,
-) {
-  if (transferEncoding?.isChunked == true) {
-    // If the response is already chunked, decode it to avoid double chunking.
-    body = Body.fromDataStream(
-      chunkedCoding.decoder.bind(body.read()).cast<Uint8List>(),
-    );
-    httpResponse.headers.set(HttpHeaders.transferEncodingHeader, 'chunked');
-    return body;
-  } else if (_shouldEnableChunkedEncoding(statusCode, body)) {
-    // If content length is unknown and chunking is needed, set chunked encoding.
-    httpResponse.headers.set(HttpHeaders.transferEncodingHeader, 'chunked');
-  }
-  return body;
-}
-
-bool _shouldEnableChunkedEncoding(int statusCode, Body body) {
-  return statusCode >= 200 &&
-      statusCode != 204 &&
-      statusCode != 304 &&
-      body.contentLength == null &&
-      body.contentType?.mimeType.toString() != 'multipart/byteranges';
 }
