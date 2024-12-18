@@ -10,8 +10,6 @@ import 'package:relic/src/method/request_method.dart';
 
 import 'typed/typed_headers.dart';
 
-import '../body/body.dart';
-
 abstract base class Headers {
   /// Request Headers
   static const acceptHeader = "accept";
@@ -910,7 +908,7 @@ abstract base class Headers {
   });
 
   /// Apply headers to the response
-  void applyHeaders(io.HttpResponse response, Body body);
+  void applyHeaders(io.HttpResponse response);
 
   /// Convert headers to a map
   Map<String, Object> toMap();
@@ -1237,10 +1235,7 @@ final class _HeadersImpl extends Headers {
 
   /// Apply headers to the response
   @override
-  void applyHeaders(
-    io.HttpResponse response,
-    Body body,
-  ) {
+  void applyHeaders(io.HttpResponse response) {
     var headers = response.headers;
     headers.clear();
 
@@ -1308,12 +1303,6 @@ final class _HeadersImpl extends Headers {
     for (var entry in custom.entries) {
       headers.set(entry.key, entry.value);
     }
-
-    // Set the content length from the Body
-    headers.contentLength = body.contentLength ?? 0;
-
-    // Set the content type from the Body
-    headers.contentType = body.getContentType();
   }
 
   /// Convert headers to a map
