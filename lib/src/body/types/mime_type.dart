@@ -74,3 +74,11 @@ extension ContentTypeExtension on ContentType {
   /// We are calling this method 'toMimeType' to avoid conflict with the 'mimeType' property.
   MimeType get toMimeType => MimeType(primaryType, subType);
 }
+
+/// Extension to check if a [MimeType] is not multipart/byteranges.
+extension MimeTypeExtensions on MimeType {
+  /// Checks if the mime type is not multipart/byteranges.
+  bool get isNotMultipartByteranges {
+    return primaryType != 'multipart' || subType != 'byteranges';
+  }
+}
