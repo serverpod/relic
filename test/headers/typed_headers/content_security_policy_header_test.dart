@@ -36,6 +36,21 @@ void main() {
     );
 
     test(
+      'when a Content-Security-Policy header with an empty value is passed '
+      'then the server does not respond with a bad request if the headers '
+      'is not actually used',
+      () async {
+        Headers headers = await getServerRequestHeaders(
+          server: server,
+          headers: {'content-security-policy': ''},
+          echoHeaders: false,
+        );
+
+        expect(headers, isNotNull);
+      },
+    );
+
+    test(
       'when a valid Content-Security-Policy header is passed then it should parse the directives correctly',
       () async {
         Headers headers = await getServerRequestHeaders(

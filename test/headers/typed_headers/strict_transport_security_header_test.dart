@@ -75,6 +75,21 @@ void main() {
     );
 
     test(
+      'when a Strict-Transport-Security header with an invalid value is passed '
+      'then the server does not respond with a bad request if the headers '
+      'is not actually used',
+      () async {
+        Headers headers = await getServerRequestHeaders(
+          server: server,
+          headers: {'strict-transport-security': 'max-age=abc'},
+          echoHeaders: false,
+        );
+
+        expect(headers, isNotNull);
+      },
+    );
+
+    test(
       'when a valid Strict-Transport-Security header is passed then it should parse the directives correctly',
       () async {
         Headers headers = await getServerRequestHeaders(

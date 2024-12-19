@@ -75,6 +75,20 @@ void main() {
     );
 
     test(
+      'when a Clear-Site-Data header with an invalid value is passed '
+      'then the server does not respond with a bad request if the headers '
+      'is not actually used',
+      () async {
+        Headers headers = await getServerRequestHeaders(
+          server: server,
+          headers: {'clear-site-data': '"cache", "*", "cookies"'},
+          echoHeaders: false,
+        );
+        expect(headers, isNotNull);
+      },
+    );
+
+    test(
       'when a valid Clear-Site-Data header is passed then it should parse the data types correctly',
       () async {
         Headers headers = await getServerRequestHeaders(

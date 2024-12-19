@@ -58,6 +58,21 @@ void main() {
     );
 
     test(
+      'when a Access-Control-Allow-Headers header with an invalid value is passed '
+      'then the server does not respond with a bad request if the headers '
+      'is not actually used',
+      () async {
+        Headers headers = await getServerRequestHeaders(
+          server: server,
+          headers: {'access-control-allow-headers': '*, Content-Type'},
+          echoHeaders: false,
+        );
+
+        expect(headers, isNotNull);
+      },
+    );
+
+    test(
       'when a valid Access-Control-Allow-Headers header is passed then it should parse the headers correctly',
       () async {
         Headers headers = await getServerRequestHeaders(

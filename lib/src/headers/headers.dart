@@ -243,26 +243,58 @@ abstract base class Headers {
   final _LazyInit<ContentDispositionHeader?> _contentDisposition;
   ContentDispositionHeader? get contentDisposition => _contentDisposition.value;
 
+  /// Security and Modern Headers
+  final _LazyInit<StrictTransportSecurityHeader?> _strictTransportSecurity;
+  StrictTransportSecurityHeader? get strictTransportSecurity =>
+      _strictTransportSecurity.value;
+
+  final _LazyInit<ContentSecurityPolicyHeader?> _contentSecurityPolicy;
+  ContentSecurityPolicyHeader? get contentSecurityPolicy =>
+      _contentSecurityPolicy.value;
+
+  final _LazyInit<ReferrerPolicyHeader?> _referrerPolicy;
+  ReferrerPolicyHeader? get referrerPolicy => _referrerPolicy.value;
+
+  final _LazyInit<PermissionsPolicyHeader?> _permissionsPolicy;
+  PermissionsPolicyHeader? get permissionsPolicy => _permissionsPolicy.value;
+
+  final _LazyInit<AccessControlAllowMethodsHeader?> _accessControlAllowMethods;
+  AccessControlAllowMethodsHeader? get accessControlAllowMethods =>
+      _accessControlAllowMethods.value;
+
+  final _LazyInit<AccessControlAllowHeadersHeader?> _accessControlAllowHeaders;
+  AccessControlAllowHeadersHeader? get accessControlAllowHeaders =>
+      _accessControlAllowHeaders.value;
+
+  final _LazyInit<ClearSiteDataHeader?> _clearSiteData;
+  ClearSiteDataHeader? get clearSiteData => _clearSiteData.value;
+
+  final _LazyInit<SecFetchDestHeader?> _secFetchDest;
+  SecFetchDestHeader? get secFetchDest => _secFetchDest.value;
+
+  final _LazyInit<SecFetchModeHeader?> _secFetchMode;
+  SecFetchModeHeader? get secFetchMode => _secFetchMode.value;
+
+  final _LazyInit<SecFetchSiteHeader?> _secFetchSite;
+  SecFetchSiteHeader? get secFetchSite => _secFetchSite.value;
+
+  final _LazyInit<CrossOriginResourcePolicyHeader?> _crossOriginResourcePolicy;
+  CrossOriginResourcePolicyHeader? get crossOriginResourcePolicy =>
+      _crossOriginResourcePolicy.value;
+
+  final _LazyInit<CrossOriginEmbedderPolicyHeader?> _crossOriginEmbedderPolicy;
+  CrossOriginEmbedderPolicyHeader? get crossOriginEmbedderPolicy =>
+      _crossOriginEmbedderPolicy.value;
+
+  final _LazyInit<CrossOriginOpenerPolicyHeader?> _crossOriginOpenerPolicy;
+  CrossOriginOpenerPolicyHeader? get crossOriginOpenerPolicy =>
+      _crossOriginOpenerPolicy.value;
+
   /// Common Headers (Used in Both Requests and Responses)
   final AcceptHeader? accept;
   final AcceptRangesHeader? acceptRanges;
   final TransferEncodingHeader? transferEncoding;
   final String? xPoweredBy;
-
-  /// Security and Modern Headers
-  final StrictTransportSecurityHeader? strictTransportSecurity;
-  final ContentSecurityPolicyHeader? contentSecurityPolicy;
-  final ReferrerPolicyHeader? referrerPolicy;
-  final PermissionsPolicyHeader? permissionsPolicy;
-  final AccessControlAllowMethodsHeader? accessControlAllowMethods;
-  final AccessControlAllowHeadersHeader? accessControlAllowHeaders;
-  final ClearSiteDataHeader? clearSiteData;
-  final SecFetchDestHeader? secFetchDest;
-  final SecFetchModeHeader? secFetchMode;
-  final SecFetchSiteHeader? secFetchSite;
-  final CrossOriginResourcePolicyHeader? crossOriginResourcePolicy;
-  final CrossOriginEmbedderPolicyHeader? crossOriginEmbedderPolicy;
-  final CrossOriginOpenerPolicyHeader? crossOriginOpenerPolicy;
 
   /// Custom Headers
   final CustomHeaders custom;
@@ -411,27 +443,35 @@ abstract base class Headers {
     required _LazyInit<AuthenticationHeader?> wwwAuthenticate,
     required _LazyInit<ContentDispositionHeader?> contentDisposition,
 
+    // Security and Modern Headers
+    required _LazyInit<StrictTransportSecurityHeader?> strictTransportSecurity,
+    required _LazyInit<ContentSecurityPolicyHeader?> contentSecurityPolicy,
+    required _LazyInit<ReferrerPolicyHeader?> referrerPolicy,
+    required _LazyInit<PermissionsPolicyHeader?> permissionsPolicy,
+    required _LazyInit<AccessControlAllowMethodsHeader?>
+        accessControlAllowMethods,
+    required _LazyInit<AccessControlAllowHeadersHeader?>
+        accessControlAllowHeaders,
+    required _LazyInit<ClearSiteDataHeader?> clearSiteData,
+    required _LazyInit<SecFetchDestHeader?> secFetchDest,
+    required _LazyInit<SecFetchModeHeader?> secFetchMode,
+    required _LazyInit<SecFetchSiteHeader?> secFetchSite,
+    required _LazyInit<CrossOriginResourcePolicyHeader?>
+        crossOriginResourcePolicy,
+    required _LazyInit<CrossOriginEmbedderPolicyHeader?>
+        crossOriginEmbedderPolicy,
+    required _LazyInit<CrossOriginOpenerPolicyHeader?> crossOriginOpenerPolicy,
+
     // Common Headers (Used in Both Requests and Responses)
     this.accept,
     this.acceptRanges,
     this.transferEncoding,
     this.xPoweredBy,
+
+    // Custom Headers
     CustomHeaders? custom,
 
-    // Security and Modern Headers
-    this.strictTransportSecurity,
-    this.contentSecurityPolicy,
-    this.referrerPolicy,
-    this.permissionsPolicy,
-    this.accessControlAllowMethods,
-    this.accessControlAllowHeaders,
-    this.clearSiteData,
-    this.secFetchDest,
-    this.secFetchMode,
-    this.secFetchSite,
-    this.crossOriginResourcePolicy,
-    this.crossOriginEmbedderPolicy,
-    this.crossOriginOpenerPolicy,
+    // Failed headers to parse
     required this.failedHeadersToParse,
   })  :
         // Date-related headers
@@ -488,6 +528,21 @@ abstract base class Headers {
         _trailer = trailer,
         _vary = vary,
         _wwwAuthenticate = wwwAuthenticate,
+
+        // Security and Modern Headers
+        _strictTransportSecurity = strictTransportSecurity,
+        _contentSecurityPolicy = contentSecurityPolicy,
+        _referrerPolicy = referrerPolicy,
+        _permissionsPolicy = permissionsPolicy,
+        _accessControlAllowMethods = accessControlAllowMethods,
+        _accessControlAllowHeaders = accessControlAllowHeaders,
+        _clearSiteData = clearSiteData,
+        _secFetchDest = secFetchDest,
+        _secFetchMode = secFetchMode,
+        _secFetchSite = secFetchSite,
+        _crossOriginResourcePolicy = crossOriginResourcePolicy,
+        _crossOriginEmbedderPolicy = crossOriginEmbedderPolicy,
+        _crossOriginOpenerPolicy = crossOriginOpenerPolicy,
 
         // Request Headers
         custom = custom ?? CustomHeaders.empty();
@@ -829,63 +884,92 @@ abstract base class Headers {
           xPoweredBy,
 
       // Security and Modern Headers
-      strictTransportSecurity: dartIOHeaders.parseSingleValue(
-        strictTransportSecurityHeader,
-        onParse: StrictTransportSecurityHeader.parse,
+      strictTransportSecurity: _LazyInit.lazy(
+        init: () => dartIOHeaders.parseSingleValue(
+          strictTransportSecurityHeader,
+          onParse: StrictTransportSecurityHeader.parse,
+        ),
       ),
-      contentSecurityPolicy: dartIOHeaders.parseSingleValue(
-        contentSecurityPolicyHeader,
-        onParse: ContentSecurityPolicyHeader.parse,
+      contentSecurityPolicy: _LazyInit.lazy(
+        init: () => dartIOHeaders.parseSingleValue(
+          contentSecurityPolicyHeader,
+          onParse: ContentSecurityPolicyHeader.parse,
+        ),
       ),
-      referrerPolicy: dartIOHeaders.parseSingleValue(
-        referrerPolicyHeader,
-        onParse: ReferrerPolicyHeader.parse,
+      referrerPolicy: _LazyInit.lazy(
+        init: () => dartIOHeaders.parseSingleValue(
+          referrerPolicyHeader,
+          onParse: ReferrerPolicyHeader.parse,
+        ),
       ),
-      permissionsPolicy: dartIOHeaders.parseSingleValue(
-        permissionsPolicyHeader,
-        onParse: PermissionsPolicyHeader.parse,
+      permissionsPolicy: _LazyInit.lazy(
+        init: () => dartIOHeaders.parseSingleValue(
+          permissionsPolicyHeader,
+          onParse: PermissionsPolicyHeader.parse,
+        ),
       ),
-      accessControlAllowMethods: dartIOHeaders.parseMultipleValue(
-        accessControlAllowMethodsHeader,
-        onParse: AccessControlAllowMethodsHeader.parse,
+      accessControlAllowMethods: _LazyInit.lazy(
+        init: () => dartIOHeaders.parseMultipleValue(
+          accessControlAllowMethodsHeader,
+          onParse: AccessControlAllowMethodsHeader.parse,
+        ),
       ),
-      accessControlAllowHeaders: dartIOHeaders.parseMultipleValue(
-        accessControlAllowHeadersHeader,
-        onParse: AccessControlAllowHeadersHeader.parse,
+      accessControlAllowHeaders: _LazyInit.lazy(
+        init: () => dartIOHeaders.parseMultipleValue(
+          accessControlAllowHeadersHeader,
+          onParse: AccessControlAllowHeadersHeader.parse,
+        ),
       ),
-      clearSiteData: dartIOHeaders.parseMultipleValue(
-        clearSiteDataHeader,
-        onParse: ClearSiteDataHeader.parse,
+      clearSiteData: _LazyInit.lazy(
+        init: () => dartIOHeaders.parseMultipleValue(
+          clearSiteDataHeader,
+          onParse: ClearSiteDataHeader.parse,
+        ),
       ),
-      secFetchDest: dartIOHeaders.parseSingleValue(
-        secFetchDestHeader,
-        onParse: SecFetchDestHeader.parse,
+      secFetchDest: _LazyInit.lazy(
+        init: () => dartIOHeaders.parseSingleValue(
+          secFetchDestHeader,
+          onParse: SecFetchDestHeader.parse,
+        ),
       ),
-      secFetchMode: dartIOHeaders.parseSingleValue(
-        secFetchModeHeader,
-        onParse: SecFetchModeHeader.parse,
+      secFetchMode: _LazyInit.lazy(
+        init: () => dartIOHeaders.parseSingleValue(
+          secFetchModeHeader,
+          onParse: SecFetchModeHeader.parse,
+        ),
       ),
-      secFetchSite: dartIOHeaders.parseSingleValue(
-        secFetchSiteHeader,
-        onParse: SecFetchSiteHeader.parse,
+      secFetchSite: _LazyInit.lazy(
+        init: () => dartIOHeaders.parseSingleValue(
+          secFetchSiteHeader,
+          onParse: SecFetchSiteHeader.parse,
+        ),
       ),
-      crossOriginResourcePolicy: dartIOHeaders.parseSingleValue(
-        crossOriginResourcePolicyHeader,
-        onParse: CrossOriginResourcePolicyHeader.parse,
+      crossOriginResourcePolicy: _LazyInit.lazy(
+        init: () => dartIOHeaders.parseSingleValue(
+          crossOriginResourcePolicyHeader,
+          onParse: CrossOriginResourcePolicyHeader.parse,
+        ),
       ),
-      crossOriginEmbedderPolicy: dartIOHeaders.parseSingleValue(
-        crossOriginEmbedderPolicyHeader,
-        onParse: CrossOriginEmbedderPolicyHeader.parse,
+      crossOriginEmbedderPolicy: _LazyInit.lazy(
+        init: () => dartIOHeaders.parseSingleValue(
+          crossOriginEmbedderPolicyHeader,
+          onParse: CrossOriginEmbedderPolicyHeader.parse,
+        ),
       ),
-      crossOriginOpenerPolicy: dartIOHeaders.parseSingleValue(
-        crossOriginOpenerPolicyHeader,
-        onParse: CrossOriginOpenerPolicyHeader.parse,
+      crossOriginOpenerPolicy: _LazyInit.lazy(
+        init: () => dartIOHeaders.parseSingleValue(
+          crossOriginOpenerPolicyHeader,
+          onParse: CrossOriginOpenerPolicyHeader.parse,
+        ),
       ),
+
+      // Custom Headers
       custom: parseCustomHeaders(
         dartIOHeaders.headers,
         excludedHeaders: _managedHeaders,
       ),
 
+      // Failed Headers to Parse
       failedHeadersToParse: failedHeadersToParse,
     );
   }
@@ -993,13 +1077,27 @@ abstract base class Headers {
       accept: accept,
       acceptRanges: acceptRanges,
       transferEncoding: transferEncoding,
+      xPoweredBy: xPoweredBy,
+
+      // Security and Modern Headers
+      secFetchDest: _LazyInit.value(value: secFetchDest),
+      secFetchMode: _LazyInit.value(value: secFetchMode),
+      secFetchSite: _LazyInit.value(value: secFetchSite),
+      crossOriginResourcePolicy: _LazyInit.nullValue(),
+      crossOriginEmbedderPolicy: _LazyInit.nullValue(),
+      crossOriginOpenerPolicy: _LazyInit.nullValue(),
+      strictTransportSecurity: _LazyInit.nullValue(),
+      contentSecurityPolicy: _LazyInit.nullValue(),
+      referrerPolicy: _LazyInit.nullValue(),
+      permissionsPolicy: _LazyInit.nullValue(),
+      accessControlAllowMethods: _LazyInit.nullValue(),
+      accessControlAllowHeaders: _LazyInit.nullValue(),
+      clearSiteData: _LazyInit.nullValue(),
+
+      // Custom headers
       custom: custom ?? CustomHeaders.empty(),
 
-      // Fetch Metadata Headers
-      xPoweredBy: xPoweredBy,
-      secFetchDest: secFetchDest,
-      secFetchMode: secFetchMode,
-      secFetchSite: secFetchSite,
+      // Security and Modern Headers
       failedHeadersToParse: {},
     );
   }
@@ -1130,19 +1228,23 @@ abstract base class Headers {
       custom: custom ?? CustomHeaders.empty(),
 
       // Security and Modern Headers
-      strictTransportSecurity: strictTransportSecurity,
-      contentSecurityPolicy: contentSecurityPolicy,
-      referrerPolicy: referrerPolicy,
-      permissionsPolicy: permissionsPolicy,
-      accessControlAllowMethods: accessControlAllowMethods,
-      accessControlAllowHeaders: accessControlAllowHeaders,
-      clearSiteData: clearSiteData,
-      secFetchDest: secFetchDest,
-      secFetchMode: secFetchMode,
-      secFetchSite: secFetchSite,
-      crossOriginResourcePolicy: crossOriginResourcePolicy,
-      crossOriginEmbedderPolicy: crossOriginEmbedderPolicy,
-      crossOriginOpenerPolicy: crossOriginOpenerPolicy,
+      strictTransportSecurity: _LazyInit.value(value: strictTransportSecurity),
+      contentSecurityPolicy: _LazyInit.value(value: contentSecurityPolicy),
+      referrerPolicy: _LazyInit.value(value: referrerPolicy),
+      permissionsPolicy: _LazyInit.value(value: permissionsPolicy),
+      accessControlAllowMethods:
+          _LazyInit.value(value: accessControlAllowMethods),
+      accessControlAllowHeaders:
+          _LazyInit.value(value: accessControlAllowHeaders),
+      clearSiteData: _LazyInit.value(value: clearSiteData),
+      secFetchDest: _LazyInit.value(value: secFetchDest),
+      secFetchMode: _LazyInit.value(value: secFetchMode),
+      secFetchSite: _LazyInit.value(value: secFetchSite),
+      crossOriginResourcePolicy:
+          _LazyInit.value(value: crossOriginResourcePolicy),
+      crossOriginEmbedderPolicy:
+          _LazyInit.value(value: crossOriginEmbedderPolicy),
+      crossOriginOpenerPolicy: _LazyInit.value(value: crossOriginOpenerPolicy),
 
       failedHeadersToParse: {},
     );
@@ -1289,27 +1391,30 @@ final class _HeadersImpl extends Headers {
     required super.wwwAuthenticate,
     required super.contentDisposition,
 
+    /// Security and Modern Headers
+    required super.strictTransportSecurity,
+    required super.contentSecurityPolicy,
+    required super.referrerPolicy,
+    required super.permissionsPolicy,
+    required super.accessControlAllowMethods,
+    required super.accessControlAllowHeaders,
+    required super.clearSiteData,
+    required super.secFetchDest,
+    required super.secFetchMode,
+    required super.secFetchSite,
+    required super.crossOriginResourcePolicy,
+    required super.crossOriginEmbedderPolicy,
+    required super.crossOriginOpenerPolicy,
+
     /// Common Headers (Used in Both Requests and Responses)
     super.accept,
     super.acceptRanges,
     super.transferEncoding,
     super.xPoweredBy,
-    super.custom,
 
-    /// Security and Modern Headers
-    super.strictTransportSecurity,
-    super.contentSecurityPolicy,
-    super.referrerPolicy,
-    super.permissionsPolicy,
-    super.accessControlAllowMethods,
-    super.accessControlAllowHeaders,
-    super.clearSiteData,
-    super.secFetchDest,
-    super.secFetchMode,
-    super.secFetchSite,
-    super.crossOriginResourcePolicy,
-    super.crossOriginEmbedderPolicy,
-    super.crossOriginOpenerPolicy,
+    // Custom headers
+    super.custom,
+    // Failed headers to parse
     required super.failedHeadersToParse,
   }) : super._();
 
@@ -1511,6 +1616,54 @@ final class _HeadersImpl extends Headers {
           ? _LazyInit.value(value: contentDisposition)
           : _contentDisposition,
 
+      /// Security and Modern Headers
+      strictTransportSecurity:
+          strictTransportSecurity is StrictTransportSecurityHeader?
+              ? _LazyInit.value(value: strictTransportSecurity)
+              : _strictTransportSecurity,
+      contentSecurityPolicy:
+          contentSecurityPolicy is ContentSecurityPolicyHeader?
+              ? _LazyInit.value(value: contentSecurityPolicy)
+              : _contentSecurityPolicy,
+      referrerPolicy: referrerPolicy is ReferrerPolicyHeader?
+          ? _LazyInit.value(value: referrerPolicy)
+          : _referrerPolicy,
+      permissionsPolicy: permissionsPolicy is PermissionsPolicyHeader?
+          ? _LazyInit.value(value: permissionsPolicy)
+          : _permissionsPolicy,
+      accessControlAllowMethods:
+          accessControlAllowMethods is AccessControlAllowMethodsHeader?
+              ? _LazyInit.value(value: accessControlAllowMethods)
+              : _accessControlAllowMethods,
+      accessControlAllowHeaders:
+          accessControlAllowHeaders is AccessControlAllowHeadersHeader?
+              ? _LazyInit.value(value: accessControlAllowHeaders)
+              : _accessControlAllowHeaders,
+      clearSiteData: clearSiteData is ClearSiteDataHeader?
+          ? _LazyInit.value(value: clearSiteData)
+          : _clearSiteData,
+      secFetchDest: secFetchDest is SecFetchDestHeader?
+          ? _LazyInit.value(value: secFetchDest)
+          : _secFetchDest,
+      secFetchMode: secFetchMode is SecFetchModeHeader?
+          ? _LazyInit.value(value: secFetchMode)
+          : _secFetchMode,
+      secFetchSite: secFetchSite is SecFetchSiteHeader?
+          ? _LazyInit.value(value: secFetchSite)
+          : _secFetchSite,
+      crossOriginResourcePolicy:
+          crossOriginResourcePolicy is CrossOriginResourcePolicyHeader?
+              ? _LazyInit.value(value: crossOriginResourcePolicy)
+              : _crossOriginResourcePolicy,
+      crossOriginEmbedderPolicy:
+          crossOriginEmbedderPolicy is CrossOriginEmbedderPolicyHeader?
+              ? _LazyInit.value(value: crossOriginEmbedderPolicy)
+              : _crossOriginEmbedderPolicy,
+      crossOriginOpenerPolicy:
+          crossOriginOpenerPolicy is CrossOriginOpenerPolicyHeader?
+              ? _LazyInit.value(value: crossOriginOpenerPolicy)
+              : _crossOriginOpenerPolicy,
+
       /// Common Headers (Used in Both Requests and Responses)
       accept: accept is AcceptHeader? ? accept : this.accept,
       acceptRanges: acceptRanges is AcceptRangesHeader?
@@ -1522,53 +1675,7 @@ final class _HeadersImpl extends Headers {
       xPoweredBy: xPoweredBy is String? ? xPoweredBy : this.xPoweredBy,
       custom: custom ?? this.custom,
 
-      /// Security and Modern Headers
-      strictTransportSecurity:
-          strictTransportSecurity is StrictTransportSecurityHeader?
-              ? strictTransportSecurity
-              : this.strictTransportSecurity,
-      contentSecurityPolicy:
-          contentSecurityPolicy is ContentSecurityPolicyHeader?
-              ? contentSecurityPolicy
-              : this.contentSecurityPolicy,
-      referrerPolicy: referrerPolicy is ReferrerPolicyHeader?
-          ? referrerPolicy
-          : this.referrerPolicy,
-      permissionsPolicy: permissionsPolicy is PermissionsPolicyHeader?
-          ? permissionsPolicy
-          : this.permissionsPolicy,
-      accessControlAllowMethods:
-          accessControlAllowMethods is AccessControlAllowMethodsHeader?
-              ? accessControlAllowMethods
-              : this.accessControlAllowMethods,
-      accessControlAllowHeaders:
-          accessControlAllowHeaders is AccessControlAllowHeadersHeader?
-              ? accessControlAllowHeaders
-              : this.accessControlAllowHeaders,
-      clearSiteData: clearSiteData is ClearSiteDataHeader?
-          ? clearSiteData
-          : this.clearSiteData,
-      secFetchDest: secFetchDest is SecFetchDestHeader?
-          ? secFetchDest
-          : this.secFetchDest,
-      secFetchMode: secFetchMode is SecFetchModeHeader?
-          ? secFetchMode
-          : this.secFetchMode,
-      secFetchSite: secFetchSite is SecFetchSiteHeader?
-          ? secFetchSite
-          : this.secFetchSite,
-      crossOriginResourcePolicy:
-          crossOriginResourcePolicy is CrossOriginResourcePolicyHeader?
-              ? crossOriginResourcePolicy
-              : this.crossOriginResourcePolicy,
-      crossOriginEmbedderPolicy:
-          crossOriginEmbedderPolicy is CrossOriginEmbedderPolicyHeader?
-              ? crossOriginEmbedderPolicy
-              : this.crossOriginEmbedderPolicy,
-      crossOriginOpenerPolicy:
-          crossOriginOpenerPolicy is CrossOriginOpenerPolicyHeader?
-              ? crossOriginOpenerPolicy
-              : this.crossOriginOpenerPolicy,
+      // Failed headers to parse
       failedHeadersToParse: failedHeadersToParse,
     );
   }

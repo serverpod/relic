@@ -55,6 +55,20 @@ void main() {
     );
 
     test(
+      'when a Cross-Origin-Resource-Policy header with an invalid value is passed '
+      'then the server does not respond with a bad request if the headers '
+      'is not actually used',
+      () async {
+        Headers headers = await getServerRequestHeaders(
+          server: server,
+          headers: {'cross-origin-resource-policy': 'custom-policy'},
+          echoHeaders: false,
+        );
+        expect(headers, isNotNull);
+      },
+    );
+
+    test(
       'when a valid Cross-Origin-Resource-Policy header is passed then it should parse the policy correctly',
       () async {
         Headers headers = await getServerRequestHeaders(

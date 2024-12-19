@@ -36,6 +36,21 @@ void main() {
     );
 
     test(
+      'when a Permissions-Policy header with an empty value is passed '
+      'then the server does not respond with a bad request if the headers '
+      'is not actually used',
+      () async {
+        Headers headers = await getServerRequestHeaders(
+          server: server,
+          headers: {'permissions-policy': ''},
+          echoHeaders: false,
+        );
+
+        expect(headers, isNotNull);
+      },
+    );
+
+    test(
       'when a valid Permissions-Policy header is passed then it should parse the policies correctly',
       () async {
         Headers headers = await getServerRequestHeaders(
