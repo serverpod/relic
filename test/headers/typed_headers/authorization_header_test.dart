@@ -42,6 +42,21 @@ void main() {
     );
 
     test(
+      'when a Authorization header with an invalid value is passed '
+      'then the server does not respond with a bad request if the headers '
+      'is not actually used',
+      () async {
+        Headers headers = await getServerRequestHeaders(
+          server: server,
+          headers: {'authorization': 'invalid-authorization-format'},
+          echoHeaders: false,
+        );
+
+        expect(headers, isNotNull);
+      },
+    );
+
+    test(
       'when no Authorization header is passed then it should default to null',
       () async {
         Headers headers = await getServerRequestHeaders(

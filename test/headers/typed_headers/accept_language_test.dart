@@ -102,6 +102,21 @@ void main() {
     );
 
     test(
+      'when an Accept-Language header with an invalid value is passed '
+      'then the server does not respond with a bad request if the headers '
+      'is not actually used',
+      () async {
+        Headers headers = await getServerRequestHeaders(
+          server: server,
+          headers: {'accept-language': ';q=0.5'},
+          echoHeaders: false,
+        );
+
+        expect(headers, isNotNull);
+      },
+    );
+
+    test(
       'when an Accept-Language header is passed then it should parse the '
       'language correctly',
       () async {

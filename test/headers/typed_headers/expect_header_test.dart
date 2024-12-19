@@ -57,6 +57,21 @@ void main() {
     );
 
     test(
+      'when an Expect header with an invalid value is passed '
+      'then the server does not respond with a bad request if the headers '
+      'is not actually used',
+      () async {
+        Headers headers = await getServerRequestHeaders(
+          server: server,
+          headers: {'expect': 'custom-directive'},
+          echoHeaders: false,
+        );
+
+        expect(headers, isNotNull);
+      },
+    );
+
+    test(
       'when a valid Expect header is passed then it should parse the directives correctly',
       () async {
         Headers headers = await getServerRequestHeaders(

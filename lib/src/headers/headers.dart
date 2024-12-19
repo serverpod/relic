@@ -116,29 +116,74 @@ abstract base class Headers {
   List<String>? get via => _via.value;
 
   /// Request Headers
-  final FromHeader? from;
-  final Uri? host;
-  final AcceptEncodingHeader? acceptEncoding;
-  final AcceptLanguageHeader? acceptLanguage;
-  final List<String>? accessControlRequestHeaders;
-  final RequestMethod? accessControlRequestMethod;
-  final int? age;
-  final List<RequestMethod>? allow;
-  final AuthorizationHeader? authorization;
-  final AuthorizationHeader? proxyAuthorization;
-  final ConnectionHeader? connection;
-  final ExpectHeader? expect;
-  final IfMatchHeader? ifMatch;
-  final IfNoneMatchHeader? ifNoneMatch;
-  final IfRangeHeader? ifRange;
-  final int? maxForwards;
-  final RangeHeader? range;
-  final Uri? referer;
-  final String? userAgent;
-  final TEHeader? te;
-  final UpgradeHeader? upgrade;
+  final _LazyInit<CookieHeader?> _cookie;
+  CookieHeader? get cookie => _cookie.value;
+
+  final _LazyInit<FromHeader?> _from;
+  FromHeader? get from => _from.value;
+
+  final _LazyInit<Uri?> _host;
+  Uri? get host => _host.value;
+
+  final _LazyInit<AcceptEncodingHeader?> _acceptEncoding;
+  AcceptEncodingHeader? get acceptEncoding => _acceptEncoding.value;
+
+  final _LazyInit<AcceptLanguageHeader?> _acceptLanguage;
+  AcceptLanguageHeader? get acceptLanguage => _acceptLanguage.value;
+
+  final _LazyInit<List<String>?> _accessControlRequestHeaders;
+  List<String>? get accessControlRequestHeaders =>
+      _accessControlRequestHeaders.value;
+
+  final _LazyInit<RequestMethod?> _accessControlRequestMethod;
+  RequestMethod? get accessControlRequestMethod =>
+      _accessControlRequestMethod.value;
+
+  final _LazyInit<int?> _age;
+  int? get age => _age.value;
+
+  final _LazyInit<AuthorizationHeader?> _authorization;
+  AuthorizationHeader? get authorization => _authorization.value;
+
+  final _LazyInit<AuthorizationHeader?> _proxyAuthorization;
+  AuthorizationHeader? get proxyAuthorization => _proxyAuthorization.value;
+
+  final _LazyInit<ConnectionHeader?> _connection;
+  ConnectionHeader? get connection => _connection.value;
+
+  final _LazyInit<ExpectHeader?> _expect;
+  ExpectHeader? get expect => _expect.value;
+
+  final _LazyInit<IfMatchHeader?> _ifMatch;
+  IfMatchHeader? get ifMatch => _ifMatch.value;
+
+  final _LazyInit<IfNoneMatchHeader?> _ifNoneMatch;
+  IfNoneMatchHeader? get ifNoneMatch => _ifNoneMatch.value;
+
+  final _LazyInit<IfRangeHeader?> _ifRange;
+  IfRangeHeader? get ifRange => _ifRange.value;
+
+  final _LazyInit<int?> _maxForwards;
+  int? get maxForwards => _maxForwards.value;
+
+  final _LazyInit<RangeHeader?> _range;
+  RangeHeader? get range => _range.value;
+
+  final _LazyInit<Uri?> _referer;
+  Uri? get referer => _referer.value;
+
+  final _LazyInit<String?> _userAgent;
+  String? get userAgent => _userAgent.value;
+
+  final _LazyInit<TEHeader?> _te;
+  TEHeader? get te => _te.value;
+
+  final _LazyInit<UpgradeHeader?> _upgrade;
+  UpgradeHeader? get upgrade => _upgrade.value;
 
   /// Response Headers
+  final SetCookieHeader? setCookie;
+  final List<RequestMethod>? allow;
   final Uri? location;
   final String? xPoweredBy;
   final bool? accessControlAllowCredentials;
@@ -159,12 +204,9 @@ abstract base class Headers {
   final ContentDispositionHeader? contentDisposition;
 
   /// Common Headers (Used in Both Requests and Responses)
-
   final AcceptHeader? accept;
   final AcceptRangesHeader? acceptRanges;
   final TransferEncodingHeader? transferEncoding;
-  final CookieHeader? cookie;
-  final SetCookieHeader? setCookie;
 
   /// Security and Modern Headers
   final StrictTransportSecurityHeader? strictTransportSecurity;
@@ -283,29 +325,31 @@ abstract base class Headers {
     required _LazyInit<List<String>?> via,
 
     // Request Headers
-    this.from,
-    this.host,
-    this.acceptEncoding,
-    this.acceptLanguage,
-    this.accessControlRequestHeaders,
-    this.accessControlRequestMethod,
-    this.age,
-    this.allow,
-    this.authorization,
-    this.connection,
-    this.expect,
-    this.ifMatch,
-    this.ifNoneMatch,
-    this.ifRange,
-    this.maxForwards,
-    this.proxyAuthorization,
-    this.range,
-    this.referer,
-    this.userAgent,
-    this.te,
-    this.upgrade,
+    required _LazyInit<CookieHeader?> cookie,
+    required _LazyInit<FromHeader?> from,
+    required _LazyInit<Uri?> host,
+    required _LazyInit<AcceptEncodingHeader?> acceptEncoding,
+    required _LazyInit<AcceptLanguageHeader?> acceptLanguage,
+    required _LazyInit<List<String>?> accessControlRequestHeaders,
+    required _LazyInit<RequestMethod?> accessControlRequestMethod,
+    required _LazyInit<int?> age,
+    required _LazyInit<AuthorizationHeader?> authorization,
+    required _LazyInit<ConnectionHeader?> connection,
+    required _LazyInit<ExpectHeader?> expect,
+    required _LazyInit<IfMatchHeader?> ifMatch,
+    required _LazyInit<IfNoneMatchHeader?> ifNoneMatch,
+    required _LazyInit<IfRangeHeader?> ifRange,
+    required _LazyInit<int?> maxForwards,
+    required _LazyInit<AuthorizationHeader?> proxyAuthorization,
+    required _LazyInit<RangeHeader?> range,
+    required _LazyInit<Uri?> referer,
+    required _LazyInit<String?> userAgent,
+    required _LazyInit<TEHeader?> te,
+    required _LazyInit<UpgradeHeader?> upgrade,
 
     // Response Headers
+    this.setCookie,
+    this.allow,
     this.location,
     this.xPoweredBy,
     this.accessControlAllowCredentials,
@@ -329,8 +373,6 @@ abstract base class Headers {
     this.accept,
     this.acceptRanges,
     this.transferEncoding,
-    this.cookie,
-    this.setCookie,
     CustomHeaders? custom,
 
     // Security and Modern Headers
@@ -359,6 +401,29 @@ abstract base class Headers {
         _origin = origin,
         _server = server,
         _via = via,
+
+        // Request Headers
+        _cookie = cookie,
+        _from = from,
+        _host = host,
+        _acceptEncoding = acceptEncoding,
+        _acceptLanguage = acceptLanguage,
+        _accessControlRequestHeaders = accessControlRequestHeaders,
+        _accessControlRequestMethod = accessControlRequestMethod,
+        _age = age,
+        _authorization = authorization,
+        _connection = connection,
+        _expect = expect,
+        _ifMatch = ifMatch,
+        _ifNoneMatch = ifNoneMatch,
+        _ifRange = ifRange,
+        _maxForwards = maxForwards,
+        _proxyAuthorization = proxyAuthorization,
+        _range = range,
+        _referer = referer,
+        _userAgent = userAgent,
+        _te = te,
+        _upgrade = upgrade,
 
         // Request Headers
         custom = custom ?? CustomHeaders.empty();
@@ -435,100 +500,143 @@ abstract base class Headers {
       ),
 
       // Request Headers
-      from: dartIOHeaders.parseMultipleValue(
-        fromHeader,
-        onParse: FromHeader.parse,
+      cookie: _LazyInit.lazy(
+        init: () => dartIOHeaders.parseSingleValue(
+          cookieHeader,
+          onParse: CookieHeader.parse,
+        ),
       ),
-      host: dartIOHeaders.parseSingleValue(
-        hostHeader,
-        onParse: parseUri,
+      from: _LazyInit.lazy(
+        init: () => dartIOHeaders.parseMultipleValue(
+          fromHeader,
+          onParse: FromHeader.parse,
+        ),
       ),
-      acceptEncoding: dartIOHeaders.parseMultipleValue(
-        acceptEncodingHeader,
-        onParse: AcceptEncodingHeader.parse,
+      host: _LazyInit.lazy(
+        init: () => dartIOHeaders.parseSingleValue(
+          hostHeader,
+          onParse: parseUri,
+        ),
       ),
-      acceptLanguage: dartIOHeaders.parseMultipleValue(
-        acceptLanguageHeader,
-        onParse: AcceptLanguageHeader.parse,
+      acceptEncoding: _LazyInit.lazy(
+        init: () => dartIOHeaders.parseMultipleValue(
+          acceptEncodingHeader,
+          onParse: AcceptEncodingHeader.parse,
+        ),
       ),
-      accessControlRequestHeaders: dartIOHeaders.parseMultipleValue(
-        accessControlRequestHeadersHeader,
-        onParse: parseStringList,
+      acceptLanguage: _LazyInit.lazy(
+        init: () => dartIOHeaders.parseMultipleValue(
+          acceptLanguageHeader,
+          onParse: AcceptLanguageHeader.parse,
+        ),
       ),
-      accessControlRequestMethod: dartIOHeaders.parseSingleValue(
-        accessControlRequestMethodHeader,
-        onParse: RequestMethod.parse,
+      accessControlRequestHeaders: _LazyInit.lazy(
+        init: () => dartIOHeaders.parseMultipleValue(
+          accessControlRequestHeadersHeader,
+          onParse: parseStringList,
+        ),
       ),
-      age: dartIOHeaders.parseSingleValue(
-        ageHeader,
-        onParse: parsePositiveInt,
+      accessControlRequestMethod: _LazyInit.lazy(
+        init: () => dartIOHeaders.parseSingleValue(
+          accessControlRequestMethodHeader,
+          onParse: RequestMethod.parse,
+        ),
+      ),
+      age: _LazyInit.lazy(
+        init: () => dartIOHeaders.parseSingleValue(
+          ageHeader,
+          onParse: parsePositiveInt,
+        ),
+      ),
+
+      authorization: _LazyInit.lazy(
+        init: () => dartIOHeaders.parseSingleValue(
+          authorizationHeader,
+          onParse: AuthorizationHeader.parse,
+        ),
+      ),
+      connection: _LazyInit.lazy(
+        init: () => dartIOHeaders.parseMultipleValue(
+          connectionHeader,
+          onParse: ConnectionHeader.parse,
+        ),
+      ),
+      expect: _LazyInit.lazy(
+        init: () => dartIOHeaders.parseSingleValue(
+          expectHeader,
+          onParse: ExpectHeader.parse,
+        ),
+      ),
+      ifMatch: _LazyInit.lazy(
+        init: () => dartIOHeaders.parseMultipleValue(
+          ifMatchHeader,
+          onParse: IfMatchHeader.parse,
+        ),
+      ),
+      ifNoneMatch: _LazyInit.lazy(
+        init: () => dartIOHeaders.parseMultipleValue(
+          ifNoneMatchHeader,
+          onParse: IfNoneMatchHeader.parse,
+        ),
+      ),
+      ifRange: _LazyInit.lazy(
+        init: () => dartIOHeaders.parseSingleValue(
+          ifRangeHeader,
+          onParse: IfRangeHeader.parse,
+        ),
+      ),
+      maxForwards: _LazyInit.lazy(
+        init: () => dartIOHeaders.parseSingleValue(
+          maxForwardsHeader,
+          onParse: parsePositiveInt,
+        ),
+      ),
+      proxyAuthorization: _LazyInit.lazy(
+        init: () => dartIOHeaders.parseSingleValue(
+          proxyAuthorizationHeader,
+          onParse: AuthorizationHeader.parse,
+        ),
+      ),
+      range: _LazyInit.lazy(
+        init: () => dartIOHeaders.parseSingleValue(
+          rangeHeader,
+          onParse: RangeHeader.parse,
+        ),
+      ),
+      referer: _LazyInit.lazy(
+        init: () => dartIOHeaders.parseSingleValue(
+          refererHeader,
+          onParse: parseUri,
+        ),
+      ),
+      te: _LazyInit.lazy(
+        init: () => dartIOHeaders.parseMultipleValue(
+          teHeader,
+          onParse: TEHeader.parse,
+        ),
+      ),
+      upgrade: _LazyInit.lazy(
+        init: () => dartIOHeaders.parseMultipleValue(
+          upgradeHeader,
+          onParse: UpgradeHeader.parse,
+        ),
+      ),
+      userAgent: _LazyInit.lazy(
+        init: () => dartIOHeaders.parseSingleValue(
+          userAgentHeader,
+          onParse: parseString,
+        ),
+      ),
+
+      // Response Headers
+      setCookie: dartIOHeaders.parseSingleValue(
+        setCookieHeader,
+        onParse: SetCookieHeader.parse,
       ),
       allow: dartIOHeaders.parseMultipleValue(
         allowHeader,
         onParse: parseMethodList,
       ),
-      cookie: dartIOHeaders.parseSingleValue(
-        cookieHeader,
-        onParse: CookieHeader.parse,
-      ),
-      setCookie: dartIOHeaders.parseSingleValue(
-        setCookieHeader,
-        onParse: SetCookieHeader.parse,
-      ),
-      authorization: dartIOHeaders.parseSingleValue(
-        authorizationHeader,
-        onParse: AuthorizationHeader.parse,
-      ),
-      connection: dartIOHeaders.parseMultipleValue(
-        connectionHeader,
-        onParse: ConnectionHeader.parse,
-      ),
-      expect: dartIOHeaders.parseSingleValue(
-        expectHeader,
-        onParse: ExpectHeader.parse,
-      ),
-      ifMatch: dartIOHeaders.parseMultipleValue(
-        ifMatchHeader,
-        onParse: IfMatchHeader.parse,
-      ),
-      ifNoneMatch: dartIOHeaders.parseMultipleValue(
-        ifNoneMatchHeader,
-        onParse: IfNoneMatchHeader.parse,
-      ),
-      ifRange: dartIOHeaders.parseSingleValue(
-        ifRangeHeader,
-        onParse: IfRangeHeader.parse,
-      ),
-      maxForwards: dartIOHeaders.parseSingleValue(
-        maxForwardsHeader,
-        onParse: parsePositiveInt,
-      ),
-      proxyAuthorization: dartIOHeaders.parseSingleValue(
-        proxyAuthorizationHeader,
-        onParse: AuthorizationHeader.parse,
-      ),
-      range: dartIOHeaders.parseSingleValue(
-        rangeHeader,
-        onParse: RangeHeader.parse,
-      ),
-      referer: dartIOHeaders.parseSingleValue(
-        refererHeader,
-        onParse: parseUri,
-      ),
-      te: dartIOHeaders.parseMultipleValue(
-        teHeader,
-        onParse: TEHeader.parse,
-      ),
-      upgrade: dartIOHeaders.parseMultipleValue(
-        upgradeHeader,
-        onParse: UpgradeHeader.parse,
-      ),
-      userAgent: dartIOHeaders.parseSingleValue(
-        userAgentHeader,
-        onParse: parseString,
-      ),
-
-      // Response Headers
       location: dartIOHeaders.parseSingleValue(
         locationHeader,
         onParse: parseUri,
@@ -733,28 +841,32 @@ abstract base class Headers {
       via: _LazyInit.nullValue(),
 
       // Request Headers
+      cookie: _LazyInit.value(value: cookie),
+      from: _LazyInit.value(value: from),
+      host: _LazyInit.value(value: host),
+      acceptEncoding: _LazyInit.value(value: acceptEncoding),
+      acceptLanguage: _LazyInit.value(value: acceptLanguage),
+      accessControlRequestHeaders:
+          _LazyInit.value(value: accessControlRequestHeaders),
+      accessControlRequestMethod:
+          _LazyInit.value(value: accessControlRequestMethod),
+      age: _LazyInit.value(value: age),
+      authorization: _LazyInit.value(value: authorization),
+      connection: _LazyInit.value(value: connection),
+      expect: _LazyInit.value(value: expect),
+      ifMatch: _LazyInit.value(value: ifMatch),
+      ifNoneMatch: _LazyInit.value(value: ifNoneMatch),
+      ifRange: _LazyInit.value(value: ifRange),
+      maxForwards: _LazyInit.value(value: maxForwards),
+      proxyAuthorization: _LazyInit.value(value: proxyAuthorization),
+      range: _LazyInit.value(value: range),
+      referer: _LazyInit.value(value: referer),
+      userAgent: _LazyInit.value(value: userAgent),
+      te: _LazyInit.value(value: te),
+      upgrade: _LazyInit.value(value: upgrade),
+
+      // Fetch Metadata Headers
       xPoweredBy: xPoweredBy,
-      from: from,
-      host: host,
-      acceptEncoding: acceptEncoding,
-      acceptLanguage: acceptLanguage,
-      accessControlRequestHeaders: accessControlRequestHeaders,
-      accessControlRequestMethod: accessControlRequestMethod,
-      age: age,
-      authorization: authorization,
-      connection: connection,
-      expect: expect,
-      ifMatch: ifMatch,
-      ifNoneMatch: ifNoneMatch,
-      ifRange: ifRange,
-      maxForwards: maxForwards,
-      proxyAuthorization: proxyAuthorization,
-      range: range,
-      referer: referer,
-      userAgent: userAgent,
-      cookie: cookie,
-      te: te,
-      upgrade: upgrade,
       secFetchDest: secFetchDest,
       secFetchMode: secFetchMode,
       secFetchSite: secFetchSite,
@@ -787,7 +899,6 @@ abstract base class Headers {
     AccessControlAllowOriginHeader? accessControlAllowOrigin,
     AccessControlExposeHeadersHeader? accessControlExposeHeaders,
     int? accessControlMaxAge,
-    List<RequestMethod>? allow,
     CacheControlHeader? cacheControl,
     ContentEncodingHeader? contentEncoding,
     ContentLanguageHeader? contentLanguage,
@@ -835,15 +946,38 @@ abstract base class Headers {
       server: _LazyInit.value(value: server),
       via: _LazyInit.value(value: via),
 
+      // This is a request header but is also used in middleware
+      from: _LazyInit.value(value: from),
+
       // Request Headers
-      from: from,
+      cookie: _LazyInit.nullValue(),
+      host: _LazyInit.nullValue(),
+      acceptEncoding: _LazyInit.nullValue(),
+      acceptLanguage: _LazyInit.nullValue(),
+      accessControlRequestHeaders: _LazyInit.nullValue(),
+      accessControlRequestMethod: _LazyInit.nullValue(),
+      age: _LazyInit.nullValue(),
+      authorization: _LazyInit.nullValue(),
+      connection: _LazyInit.nullValue(),
+      expect: _LazyInit.nullValue(),
+      ifMatch: _LazyInit.nullValue(),
+      ifNoneMatch: _LazyInit.nullValue(),
+      ifRange: _LazyInit.nullValue(),
+      maxForwards: _LazyInit.nullValue(),
+      proxyAuthorization: _LazyInit.nullValue(),
+      range: _LazyInit.nullValue(),
+      referer: _LazyInit.nullValue(),
+      userAgent: _LazyInit.nullValue(),
+      te: _LazyInit.nullValue(),
+      upgrade: _LazyInit.nullValue(),
+
+      // response Headers
       location: location,
       xPoweredBy: xPoweredBy,
       accessControlAllowCredentials: accessControlAllowCredentials,
       accessControlAllowOrigin: accessControlAllowOrigin,
       accessControlExposeHeaders: accessControlExposeHeaders,
       accessControlMaxAge: accessControlMaxAge,
-      allow: allow,
       cacheControl: cacheControl,
       contentEncoding: contentEncoding,
       contentLanguage: contentLanguage,
@@ -874,6 +1008,7 @@ abstract base class Headers {
       crossOriginResourcePolicy: crossOriginResourcePolicy,
       crossOriginEmbedderPolicy: crossOriginEmbedderPolicy,
       crossOriginOpenerPolicy: crossOriginOpenerPolicy,
+
       failedHeadersToParse: {},
     );
   }
@@ -976,28 +1111,30 @@ final class _HeadersImpl extends Headers {
     required super.via,
 
     /// Request Headers
-    super.from,
-    super.host,
-    super.acceptEncoding,
-    super.acceptLanguage,
-    super.accessControlRequestHeaders,
-    super.accessControlRequestMethod,
-    super.age,
-    super.authorization,
-    super.connection,
-    super.expect,
-    super.ifMatch,
-    super.ifNoneMatch,
-    super.ifRange,
-    super.maxForwards,
-    super.proxyAuthorization,
-    super.range,
-    super.referer,
-    super.userAgent,
-    super.te,
-    super.upgrade,
+    required super.cookie,
+    required super.from,
+    required super.host,
+    required super.acceptEncoding,
+    required super.acceptLanguage,
+    required super.accessControlRequestHeaders,
+    required super.accessControlRequestMethod,
+    required super.age,
+    required super.authorization,
+    required super.connection,
+    required super.expect,
+    required super.ifMatch,
+    required super.ifNoneMatch,
+    required super.ifRange,
+    required super.maxForwards,
+    required super.proxyAuthorization,
+    required super.range,
+    required super.referer,
+    required super.userAgent,
+    required super.te,
+    required super.upgrade,
 
     /// Response Headers
+    super.setCookie,
     super.location,
     super.xPoweredBy,
     super.accessControlAllowCredentials,
@@ -1022,8 +1159,6 @@ final class _HeadersImpl extends Headers {
     super.accept,
     super.acceptRanges,
     super.transferEncoding,
-    super.cookie,
-    super.setCookie,
     super.custom,
 
     /// Security and Modern Headers
@@ -1138,42 +1273,57 @@ final class _HeadersImpl extends Headers {
       via: via is List<String>? ? _LazyInit.value(value: via) : _via,
 
       /// Request Headers
-      from: from is FromHeader? ? from : this.from,
-      host: host is Uri? ? host : this.host,
+      cookie:
+          cookie is CookieHeader? ? _LazyInit.value(value: cookie) : _cookie,
+      from: from is FromHeader? ? _LazyInit.value(value: from) : _from,
+      host: host is Uri? ? _LazyInit.value(value: host) : _host,
       acceptEncoding: acceptEncoding is AcceptEncodingHeader?
-          ? acceptEncoding
-          : this.acceptEncoding,
+          ? _LazyInit.value(value: acceptEncoding)
+          : _acceptEncoding,
       acceptLanguage: acceptLanguage is AcceptLanguageHeader?
-          ? acceptLanguage
-          : this.acceptLanguage,
+          ? _LazyInit.value(value: acceptLanguage)
+          : _acceptLanguage,
       accessControlRequestHeaders: accessControlRequestHeaders is List<String>?
-          ? accessControlRequestHeaders
-          : this.accessControlRequestHeaders,
+          ? _LazyInit.value(value: accessControlRequestHeaders)
+          : _accessControlRequestHeaders,
       accessControlRequestMethod: accessControlRequestMethod is RequestMethod?
-          ? accessControlRequestMethod
-          : this.accessControlRequestMethod,
-      age: age is int? ? age : this.age,
+          ? _LazyInit.value(value: accessControlRequestMethod)
+          : _accessControlRequestMethod,
+      age: age is int? ? _LazyInit.value(value: age) : _age,
       authorization: authorization is AuthorizationHeader?
-          ? authorization
-          : this.authorization,
-      connection:
-          connection is ConnectionHeader? ? connection : this.connection,
-      expect: expect is ExpectHeader? ? expect : this.expect,
-      ifMatch: ifMatch is IfMatchHeader? ? ifMatch : this.ifMatch,
-      ifNoneMatch:
-          ifNoneMatch is IfNoneMatchHeader? ? ifNoneMatch : this.ifNoneMatch,
-      ifRange: ifRange is IfRangeHeader? ? ifRange : this.ifRange,
-      maxForwards: maxForwards is int? ? maxForwards : this.maxForwards,
+          ? _LazyInit.value(value: authorization)
+          : _authorization,
+      connection: connection is ConnectionHeader?
+          ? _LazyInit.value(value: connection)
+          : _connection,
+      expect:
+          expect is ExpectHeader? ? _LazyInit.value(value: expect) : _expect,
+      ifMatch: ifMatch is IfMatchHeader?
+          ? _LazyInit.value(value: ifMatch)
+          : _ifMatch,
+      ifNoneMatch: ifNoneMatch is IfNoneMatchHeader?
+          ? _LazyInit.value(value: ifNoneMatch)
+          : _ifNoneMatch,
+      ifRange: ifRange is IfRangeHeader?
+          ? _LazyInit.value(value: ifRange)
+          : _ifRange,
+      maxForwards: maxForwards is int?
+          ? _LazyInit.value(value: maxForwards)
+          : _maxForwards,
       proxyAuthorization: proxyAuthorization is AuthorizationHeader?
-          ? proxyAuthorization
-          : this.proxyAuthorization,
-      range: range is RangeHeader? ? range : this.range,
-      referer: referer is Uri? ? referer : this.referer,
-      userAgent: userAgent is String? ? userAgent : this.userAgent,
-      te: te is TEHeader? ? te : this.te,
-      upgrade: upgrade is UpgradeHeader? ? upgrade : this.upgrade,
+          ? _LazyInit.value(value: proxyAuthorization)
+          : _proxyAuthorization,
+      range: range is RangeHeader? ? _LazyInit.value(value: range) : _range,
+      referer: referer is Uri? ? _LazyInit.value(value: referer) : _referer,
+      userAgent:
+          userAgent is String? ? _LazyInit.value(value: userAgent) : _userAgent,
+      te: te is TEHeader? ? _LazyInit.value(value: te) : _te,
+      upgrade: upgrade is UpgradeHeader?
+          ? _LazyInit.value(value: upgrade)
+          : _upgrade,
 
       /// Response Headers
+      setCookie: setCookie is SetCookieHeader? ? setCookie : this.setCookie,
       location: location is Uri? ? location : this.location,
       xPoweredBy: xPoweredBy is String? ? xPoweredBy : this.xPoweredBy,
       accessControlAllowCredentials: accessControlAllowCredentials is bool?
@@ -1228,8 +1378,6 @@ final class _HeadersImpl extends Headers {
       transferEncoding: transferEncoding is TransferEncodingHeader?
           ? transferEncoding
           : this.transferEncoding,
-      cookie: cookie is CookieHeader? ? cookie : this.cookie,
-      setCookie: setCookie is SetCookieHeader? ? setCookie : this.setCookie,
       custom: custom ?? this.custom,
 
       /// Security and Modern Headers
