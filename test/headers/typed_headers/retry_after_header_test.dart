@@ -36,6 +36,21 @@ void main() {
       },
     );
 
+    test(
+      'when a Retry-After header with an invalid value is passed '
+      'then the server does not respond with a bad request if the headers '
+      'is not actually used',
+      () async {
+        Headers headers = await getServerRequestHeaders(
+          server: server,
+          headers: {'retry-after': 'invalid'},
+          echoHeaders: false,
+        );
+
+        expect(headers, isNotNull);
+      },
+    );
+
     group('when the header contains a delay in seconds', () {
       test('then it should parse a valid positive integer correctly', () async {
         Headers headers = await getServerRequestHeaders(

@@ -3,9 +3,11 @@ import 'package:relic/src/headers/headers.dart';
 import 'package:relic/src/relic_server.dart';
 
 import '../headers_test_utils.dart';
+import '../docs/strict_validation_docs.dart';
 
+/// Reference: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Proxy-Authenticate
+/// About empty value test, check the [StrictValidationDocs] class for more details.
 void main() {
-  // Reference: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Proxy-Authenticate
   group('Given a Proxy-Authenticate header with the strict flag true', () {
     late RelicServer server;
 
@@ -29,6 +31,21 @@ void main() {
             contains('Value cannot be empty'),
           )),
         );
+      },
+    );
+
+    test(
+      'when a Proxy-Authenticate header with an invalid value is passed '
+      'then the server does not respond with a bad request if the headers '
+      'is not actually used',
+      () async {
+        Headers headers = await getServerRequestHeaders(
+          server: server,
+          headers: {'proxy-authenticate': 'Test'},
+          echoHeaders: false,
+        );
+
+        expect(headers, isNotNull);
       },
     );
 

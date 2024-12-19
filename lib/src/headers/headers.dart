@@ -182,31 +182,72 @@ abstract base class Headers {
   UpgradeHeader? get upgrade => _upgrade.value;
 
   /// Response Headers
-  final SetCookieHeader? setCookie;
-  final List<RequestMethod>? allow;
-  final Uri? location;
-  final String? xPoweredBy;
-  final bool? accessControlAllowCredentials;
-  final AccessControlAllowOriginHeader? accessControlAllowOrigin;
-  final AccessControlExposeHeadersHeader? accessControlExposeHeaders;
-  final int? accessControlMaxAge;
-  final CacheControlHeader? cacheControl;
-  final ContentEncodingHeader? contentEncoding;
-  final ContentLanguageHeader? contentLanguage;
-  final Uri? contentLocation;
-  final ContentRangeHeader? contentRange;
-  final ETagHeader? etag;
-  final AuthenticationHeader? proxyAuthenticate;
-  final AuthenticationHeader? wwwAuthenticate;
-  final RetryAfterHeader? retryAfter;
-  final List<String>? trailer;
-  final VaryHeader? vary;
-  final ContentDispositionHeader? contentDisposition;
+  final _LazyInit<SetCookieHeader?> _setCookie;
+  SetCookieHeader? get setCookie => _setCookie.value;
+
+  final _LazyInit<List<RequestMethod>?> _allow;
+  List<RequestMethod>? get allow => _allow.value;
+
+  final _LazyInit<Uri?> _location;
+  Uri? get location => _location.value;
+
+  final _LazyInit<bool?> _accessControlAllowCredentials;
+  bool? get accessControlAllowCredentials =>
+      _accessControlAllowCredentials.value;
+
+  final _LazyInit<AccessControlAllowOriginHeader?> _accessControlAllowOrigin;
+  AccessControlAllowOriginHeader? get accessControlAllowOrigin =>
+      _accessControlAllowOrigin.value;
+
+  final _LazyInit<AccessControlExposeHeadersHeader?>
+      _accessControlExposeHeaders;
+  AccessControlExposeHeadersHeader? get accessControlExposeHeaders =>
+      _accessControlExposeHeaders.value;
+
+  final _LazyInit<int?> _accessControlMaxAge;
+  int? get accessControlMaxAge => _accessControlMaxAge.value;
+
+  final _LazyInit<CacheControlHeader?> _cacheControl;
+  CacheControlHeader? get cacheControl => _cacheControl.value;
+
+  final _LazyInit<ContentEncodingHeader?> _contentEncoding;
+  ContentEncodingHeader? get contentEncoding => _contentEncoding.value;
+
+  final _LazyInit<ContentLanguageHeader?> _contentLanguage;
+  ContentLanguageHeader? get contentLanguage => _contentLanguage.value;
+
+  final _LazyInit<Uri?> _contentLocation;
+  Uri? get contentLocation => _contentLocation.value;
+
+  final _LazyInit<ContentRangeHeader?> _contentRange;
+  ContentRangeHeader? get contentRange => _contentRange.value;
+
+  final _LazyInit<ETagHeader?> _etag;
+  ETagHeader? get etag => _etag.value;
+
+  final _LazyInit<AuthenticationHeader?> _proxyAuthenticate;
+  AuthenticationHeader? get proxyAuthenticate => _proxyAuthenticate.value;
+
+  final _LazyInit<AuthenticationHeader?> _wwwAuthenticate;
+  AuthenticationHeader? get wwwAuthenticate => _wwwAuthenticate.value;
+
+  final _LazyInit<RetryAfterHeader?> _retryAfter;
+  RetryAfterHeader? get retryAfter => _retryAfter.value;
+
+  final _LazyInit<List<String>?> _trailer;
+  List<String>? get trailer => _trailer.value;
+
+  final _LazyInit<VaryHeader?> _vary;
+  VaryHeader? get vary => _vary.value;
+
+  final _LazyInit<ContentDispositionHeader?> _contentDisposition;
+  ContentDispositionHeader? get contentDisposition => _contentDisposition.value;
 
   /// Common Headers (Used in Both Requests and Responses)
   final AcceptHeader? accept;
   final AcceptRangesHeader? acceptRanges;
   final TransferEncodingHeader? transferEncoding;
+  final String? xPoweredBy;
 
   /// Security and Modern Headers
   final StrictTransportSecurityHeader? strictTransportSecurity;
@@ -348,31 +389,33 @@ abstract base class Headers {
     required _LazyInit<UpgradeHeader?> upgrade,
 
     // Response Headers
-    this.setCookie,
-    this.allow,
-    this.location,
-    this.xPoweredBy,
-    this.accessControlAllowCredentials,
-    this.accessControlAllowOrigin,
-    this.accessControlExposeHeaders,
-    this.accessControlMaxAge,
-    this.cacheControl,
-    this.contentEncoding,
-    this.contentLanguage,
-    this.contentLocation,
-    this.contentRange,
-    this.etag,
-    this.proxyAuthenticate,
-    this.retryAfter,
-    this.trailer,
-    this.vary,
-    this.wwwAuthenticate,
-    this.contentDisposition,
+    required _LazyInit<SetCookieHeader?> setCookie,
+    required _LazyInit<List<RequestMethod>?> allow,
+    required _LazyInit<Uri?> location,
+    required _LazyInit<bool?> accessControlAllowCredentials,
+    required _LazyInit<AccessControlAllowOriginHeader?>
+        accessControlAllowOrigin,
+    required _LazyInit<AccessControlExposeHeadersHeader?>
+        accessControlExposeHeaders,
+    required _LazyInit<int?> accessControlMaxAge,
+    required _LazyInit<CacheControlHeader?> cacheControl,
+    required _LazyInit<ContentEncodingHeader?> contentEncoding,
+    required _LazyInit<ContentLanguageHeader?> contentLanguage,
+    required _LazyInit<Uri?> contentLocation,
+    required _LazyInit<ContentRangeHeader?> contentRange,
+    required _LazyInit<ETagHeader?> etag,
+    required _LazyInit<AuthenticationHeader?> proxyAuthenticate,
+    required _LazyInit<RetryAfterHeader?> retryAfter,
+    required _LazyInit<List<String>?> trailer,
+    required _LazyInit<VaryHeader?> vary,
+    required _LazyInit<AuthenticationHeader?> wwwAuthenticate,
+    required _LazyInit<ContentDispositionHeader?> contentDisposition,
 
     // Common Headers (Used in Both Requests and Responses)
     this.accept,
     this.acceptRanges,
     this.transferEncoding,
+    this.xPoweredBy,
     CustomHeaders? custom,
 
     // Security and Modern Headers
@@ -424,6 +467,27 @@ abstract base class Headers {
         _userAgent = userAgent,
         _te = te,
         _upgrade = upgrade,
+
+        // Response Headers
+        _setCookie = setCookie,
+        _allow = allow,
+        _location = location,
+        _accessControlAllowCredentials = accessControlAllowCredentials,
+        _accessControlAllowOrigin = accessControlAllowOrigin,
+        _accessControlExposeHeaders = accessControlExposeHeaders,
+        _accessControlMaxAge = accessControlMaxAge,
+        _cacheControl = cacheControl,
+        _contentDisposition = contentDisposition,
+        _contentEncoding = contentEncoding,
+        _contentLanguage = contentLanguage,
+        _contentLocation = contentLocation,
+        _contentRange = contentRange,
+        _etag = etag,
+        _proxyAuthenticate = proxyAuthenticate,
+        _retryAfter = retryAfter,
+        _trailer = trailer,
+        _vary = vary,
+        _wwwAuthenticate = wwwAuthenticate,
 
         // Request Headers
         custom = custom ?? CustomHeaders.empty();
@@ -629,90 +693,120 @@ abstract base class Headers {
       ),
 
       // Response Headers
-      setCookie: dartIOHeaders.parseSingleValue(
-        setCookieHeader,
-        onParse: SetCookieHeader.parse,
+      setCookie: _LazyInit.lazy(
+        init: () => dartIOHeaders.parseSingleValue(
+          setCookieHeader,
+          onParse: SetCookieHeader.parse,
+        ),
       ),
-      allow: dartIOHeaders.parseMultipleValue(
-        allowHeader,
-        onParse: parseMethodList,
+      allow: _LazyInit.lazy(
+        init: () => dartIOHeaders.parseMultipleValue(
+          allowHeader,
+          onParse: parseMethodList,
+        ),
       ),
-      location: dartIOHeaders.parseSingleValue(
-        locationHeader,
-        onParse: parseUri,
+      location: _LazyInit.lazy(
+        init: () => dartIOHeaders.parseSingleValue(
+          locationHeader,
+          onParse: parseUri,
+        ),
       ),
-      xPoweredBy: dartIOHeaders.parseSingleValue(
-            xPoweredByHeader,
-            onParse: parseString,
-          ) ??
-          xPoweredBy,
-      accessControlAllowCredentials: dartIOHeaders.parseSingleValue(
-        accessControlAllowCredentialsHeader,
-        onParse: parsePositiveBool,
+
+      accessControlAllowCredentials: _LazyInit.lazy(
+        init: () => dartIOHeaders.parseSingleValue(
+          accessControlAllowCredentialsHeader,
+          onParse: parsePositiveBool,
+        ),
       ),
-      accessControlAllowOrigin: dartIOHeaders.parseSingleValue(
-        accessControlAllowOriginHeader,
-        onParse: AccessControlAllowOriginHeader.parse,
+      accessControlAllowOrigin: _LazyInit.lazy(
+        init: () => dartIOHeaders.parseSingleValue(
+          accessControlAllowOriginHeader,
+          onParse: AccessControlAllowOriginHeader.parse,
+        ),
       ),
-      accessControlExposeHeaders: dartIOHeaders.parseMultipleValue(
-        accessControlExposeHeadersHeader,
-        onParse: AccessControlExposeHeadersHeader.parse,
+      accessControlExposeHeaders: _LazyInit.lazy(
+        init: () => dartIOHeaders.parseMultipleValue(
+          accessControlExposeHeadersHeader,
+          onParse: AccessControlExposeHeadersHeader.parse,
+        ),
       ),
-      accessControlMaxAge: dartIOHeaders.parseSingleValue(
-        accessControlMaxAgeHeader,
-        onParse: parseInt,
+      accessControlMaxAge: _LazyInit.lazy(
+        init: () => dartIOHeaders.parseSingleValue(
+          accessControlMaxAgeHeader,
+          onParse: parseInt,
+        ),
       ),
-      cacheControl: dartIOHeaders.parseMultipleValue(
-        cacheControlHeader,
-        onParse: CacheControlHeader.parse,
+      cacheControl: _LazyInit.lazy(
+        init: () => dartIOHeaders.parseMultipleValue(
+          cacheControlHeader,
+          onParse: CacheControlHeader.parse,
+        ),
       ),
-      contentDisposition: dartIOHeaders.parseSingleValue(
-        contentDispositionHeader,
-        onParse: ContentDispositionHeader.parse,
+      contentDisposition: _LazyInit.lazy(
+        init: () => dartIOHeaders.parseSingleValue(
+          contentDispositionHeader,
+          onParse: ContentDispositionHeader.parse,
+        ),
       ),
-      contentEncoding: dartIOHeaders.parseMultipleValue(
-        contentEncodingHeader,
-        onParse: ContentEncodingHeader.parse,
+      contentEncoding: _LazyInit.lazy(
+        init: () => dartIOHeaders.parseMultipleValue(
+          contentEncodingHeader,
+          onParse: ContentEncodingHeader.parse,
+        ),
       ),
-      contentLanguage: dartIOHeaders.parseMultipleValue(
-        contentLanguageHeader,
-        onParse: ContentLanguageHeader.parse,
+      contentLanguage: _LazyInit.lazy(
+        init: () => dartIOHeaders.parseMultipleValue(
+          contentLanguageHeader,
+          onParse: ContentLanguageHeader.parse,
+        ),
       ),
-      contentLocation: dartIOHeaders.parseSingleValue(
-        contentLocationHeader,
-        onParse: parseUri,
+      contentLocation: _LazyInit.lazy(
+        init: () => dartIOHeaders.parseSingleValue(
+          contentLocationHeader,
+          onParse: parseUri,
+        ),
       ),
-      contentRange: dartIOHeaders.parseSingleValue(
-        contentRangeHeader,
-        onParse: ContentRangeHeader.parse,
+      contentRange: _LazyInit.lazy(
+        init: () => dartIOHeaders.parseSingleValue(
+          contentRangeHeader,
+          onParse: ContentRangeHeader.parse,
+        ),
       ),
-      etag: dartIOHeaders.parseSingleValue(
-        etagHeader,
-        onParse: ETagHeader.parse,
+      etag: _LazyInit.lazy(
+        init: () => dartIOHeaders.parseSingleValue(
+          etagHeader,
+          onParse: ETagHeader.parse,
+        ),
       ),
-      proxyAuthenticate: dartIOHeaders.parseSingleValue(
-        proxyAuthenticationHeader,
-        onParse: AuthenticationHeader.parse,
+      proxyAuthenticate: _LazyInit.lazy(
+        init: () => dartIOHeaders.parseSingleValue(
+          proxyAuthenticationHeader,
+          onParse: AuthenticationHeader.parse,
+        ),
       ),
-      retryAfter: dartIOHeaders.parseSingleValue(
-        retryAfterHeader,
-        onParse: RetryAfterHeader.parse,
+      retryAfter: _LazyInit.lazy(
+        init: () => dartIOHeaders.parseSingleValue(
+          retryAfterHeader,
+          onParse: RetryAfterHeader.parse,
+        ),
       ),
-      trailer: dartIOHeaders.parseMultipleValue(
-        trailerHeader,
-        onParse: parseStringList,
+      trailer: _LazyInit.lazy(
+        init: () => dartIOHeaders.parseMultipleValue(
+          trailerHeader,
+          onParse: parseStringList,
+        ),
       ),
-      transferEncoding: dartIOHeaders.parseMultipleValue(
-        transferEncodingHeader,
-        onParse: TransferEncodingHeader.parse,
+      vary: _LazyInit.lazy(
+        init: () => dartIOHeaders.parseMultipleValue(
+          varyHeader,
+          onParse: VaryHeader.parse,
+        ),
       ),
-      vary: dartIOHeaders.parseMultipleValue(
-        varyHeader,
-        onParse: VaryHeader.parse,
-      ),
-      wwwAuthenticate: dartIOHeaders.parseSingleValue(
-        wwwAuthenticateHeader,
-        onParse: AuthenticationHeader.parse,
+      wwwAuthenticate: _LazyInit.lazy(
+        init: () => dartIOHeaders.parseSingleValue(
+          wwwAuthenticateHeader,
+          onParse: AuthenticationHeader.parse,
+        ),
       ),
 
       // Common Headers (Used in Both Requests and Responses)
@@ -724,6 +818,15 @@ abstract base class Headers {
         acceptRangesHeader,
         onParse: AcceptRangesHeader.parse,
       ),
+      transferEncoding: dartIOHeaders.parseMultipleValue(
+        transferEncodingHeader,
+        onParse: TransferEncodingHeader.parse,
+      ),
+      xPoweredBy: dartIOHeaders.parseSingleValue(
+            xPoweredByHeader,
+            onParse: parseString,
+          ) ??
+          xPoweredBy,
 
       // Security and Modern Headers
       strictTransportSecurity: dartIOHeaders.parseSingleValue(
@@ -865,15 +968,38 @@ abstract base class Headers {
       te: _LazyInit.value(value: te),
       upgrade: _LazyInit.value(value: upgrade),
 
+      // response headers
+      setCookie: _LazyInit.nullValue(),
+      location: _LazyInit.nullValue(),
+      accessControlAllowCredentials: _LazyInit.nullValue(),
+      accessControlAllowOrigin: _LazyInit.nullValue(),
+      accessControlExposeHeaders: _LazyInit.nullValue(),
+      accessControlMaxAge: _LazyInit.nullValue(),
+      allow: _LazyInit.nullValue(),
+      cacheControl: _LazyInit.nullValue(),
+      contentEncoding: _LazyInit.nullValue(),
+      contentLanguage: _LazyInit.nullValue(),
+      contentLocation: _LazyInit.nullValue(),
+      contentRange: _LazyInit.nullValue(),
+      etag: _LazyInit.nullValue(),
+      proxyAuthenticate: _LazyInit.nullValue(),
+      retryAfter: _LazyInit.nullValue(),
+      trailer: _LazyInit.nullValue(),
+      vary: _LazyInit.nullValue(),
+      wwwAuthenticate: _LazyInit.nullValue(),
+      contentDisposition: _LazyInit.nullValue(),
+
+      //common headers
+      accept: accept,
+      acceptRanges: acceptRanges,
+      transferEncoding: transferEncoding,
+      custom: custom ?? CustomHeaders.empty(),
+
       // Fetch Metadata Headers
       xPoweredBy: xPoweredBy,
       secFetchDest: secFetchDest,
       secFetchMode: secFetchMode,
       secFetchSite: secFetchSite,
-      accept: accept,
-      acceptRanges: acceptRanges,
-      transferEncoding: transferEncoding,
-      custom: custom ?? CustomHeaders.empty(),
       failedHeadersToParse: {},
     );
   }
@@ -893,6 +1019,7 @@ abstract base class Headers {
     FromHeader? from,
 
     // Response Headers
+    List<RequestMethod>? allow,
     Uri? location,
     String? xPoweredBy,
     bool? accessControlAllowCredentials,
@@ -972,29 +1099,37 @@ abstract base class Headers {
       upgrade: _LazyInit.nullValue(),
 
       // response Headers
-      location: location,
-      xPoweredBy: xPoweredBy,
-      accessControlAllowCredentials: accessControlAllowCredentials,
-      accessControlAllowOrigin: accessControlAllowOrigin,
-      accessControlExposeHeaders: accessControlExposeHeaders,
-      accessControlMaxAge: accessControlMaxAge,
-      cacheControl: cacheControl,
-      contentEncoding: contentEncoding,
-      contentLanguage: contentLanguage,
-      contentLocation: contentLocation,
-      contentRange: contentRange,
-      etag: etag,
-      proxyAuthenticate: proxyAuthenticate,
-      retryAfter: retryAfter,
-      trailer: trailer,
-      vary: vary,
-      wwwAuthenticate: wwwAuthenticate,
-      contentDisposition: contentDisposition,
+      allow: _LazyInit.value(value: allow),
+      location: _LazyInit.value(value: location),
+      accessControlAllowCredentials:
+          _LazyInit.value(value: accessControlAllowCredentials),
+      accessControlAllowOrigin:
+          _LazyInit.value(value: accessControlAllowOrigin),
+      accessControlExposeHeaders:
+          _LazyInit.value(value: accessControlExposeHeaders),
+      accessControlMaxAge: _LazyInit.value(value: accessControlMaxAge),
+      cacheControl: _LazyInit.value(value: cacheControl),
+      contentEncoding: _LazyInit.value(value: contentEncoding),
+      contentLanguage: _LazyInit.value(value: contentLanguage),
+      contentLocation: _LazyInit.value(value: contentLocation),
+      contentRange: _LazyInit.value(value: contentRange),
+      etag: _LazyInit.value(value: etag),
+      proxyAuthenticate: _LazyInit.value(value: proxyAuthenticate),
+      retryAfter: _LazyInit.value(value: retryAfter),
+      trailer: _LazyInit.value(value: trailer),
+      vary: _LazyInit.value(value: vary),
+      wwwAuthenticate: _LazyInit.value(value: wwwAuthenticate),
+      contentDisposition: _LazyInit.value(value: contentDisposition),
+      setCookie: _LazyInit.value(value: setCookie),
+
+      //common headers
       accept: accept,
       acceptRanges: acceptRanges,
       transferEncoding: transferEncoding,
+      xPoweredBy: xPoweredBy,
       custom: custom ?? CustomHeaders.empty(),
-      setCookie: setCookie,
+
+      // Security and Modern Headers
       strictTransportSecurity: strictTransportSecurity,
       contentSecurityPolicy: contentSecurityPolicy,
       referrerPolicy: referrerPolicy,
@@ -1134,31 +1269,31 @@ final class _HeadersImpl extends Headers {
     required super.upgrade,
 
     /// Response Headers
-    super.setCookie,
-    super.location,
-    super.xPoweredBy,
-    super.accessControlAllowCredentials,
-    super.accessControlAllowOrigin,
-    super.accessControlExposeHeaders,
-    super.accessControlMaxAge,
-    super.allow,
-    super.cacheControl,
-    super.contentEncoding,
-    super.contentLanguage,
-    super.contentLocation,
-    super.contentRange,
-    super.etag,
-    super.proxyAuthenticate,
-    super.retryAfter,
-    super.trailer,
-    super.vary,
-    super.wwwAuthenticate,
-    super.contentDisposition,
+    required super.setCookie,
+    required super.location,
+    required super.accessControlAllowCredentials,
+    required super.accessControlAllowOrigin,
+    required super.accessControlExposeHeaders,
+    required super.accessControlMaxAge,
+    required super.allow,
+    required super.cacheControl,
+    required super.contentEncoding,
+    required super.contentLanguage,
+    required super.contentLocation,
+    required super.contentRange,
+    required super.etag,
+    required super.proxyAuthenticate,
+    required super.retryAfter,
+    required super.trailer,
+    required super.vary,
+    required super.wwwAuthenticate,
+    required super.contentDisposition,
 
     /// Common Headers (Used in Both Requests and Responses)
     super.accept,
     super.acceptRanges,
     super.transferEncoding,
+    super.xPoweredBy,
     super.custom,
 
     /// Security and Modern Headers
@@ -1323,52 +1458,58 @@ final class _HeadersImpl extends Headers {
           : _upgrade,
 
       /// Response Headers
-      setCookie: setCookie is SetCookieHeader? ? setCookie : this.setCookie,
-      location: location is Uri? ? location : this.location,
-      xPoweredBy: xPoweredBy is String? ? xPoweredBy : this.xPoweredBy,
+      setCookie: setCookie is SetCookieHeader?
+          ? _LazyInit.value(value: setCookie)
+          : _setCookie,
+      location: location is Uri? ? _LazyInit.value(value: location) : _location,
       accessControlAllowCredentials: accessControlAllowCredentials is bool?
-          ? accessControlAllowCredentials
-          : this.accessControlAllowCredentials,
+          ? _LazyInit.value(value: accessControlAllowCredentials)
+          : _accessControlAllowCredentials,
       accessControlAllowOrigin:
           accessControlAllowOrigin is AccessControlAllowOriginHeader?
-              ? accessControlAllowOrigin
-              : this.accessControlAllowOrigin,
+              ? _LazyInit.value(value: accessControlAllowOrigin)
+              : _accessControlAllowOrigin,
       accessControlExposeHeaders:
           accessControlExposeHeaders is AccessControlExposeHeadersHeader?
-              ? accessControlExposeHeaders
-              : this.accessControlExposeHeaders,
+              ? _LazyInit.value(value: accessControlExposeHeaders)
+              : _accessControlExposeHeaders,
       accessControlMaxAge: accessControlMaxAge is int?
-          ? accessControlMaxAge
-          : this.accessControlMaxAge,
-      allow: allow is List<RequestMethod>? ? allow : this.allow,
+          ? _LazyInit.value(value: accessControlMaxAge)
+          : _accessControlMaxAge,
+      allow: allow is List<RequestMethod>?
+          ? _LazyInit.value(value: allow)
+          : _allow,
       cacheControl: cacheControl is CacheControlHeader?
-          ? cacheControl
-          : this.cacheControl,
+          ? _LazyInit.value(value: cacheControl)
+          : _cacheControl,
       contentEncoding: contentEncoding is ContentEncodingHeader?
-          ? contentEncoding
-          : this.contentEncoding,
+          ? _LazyInit.value(value: contentEncoding)
+          : _contentEncoding,
       contentLanguage: contentLanguage is ContentLanguageHeader?
-          ? contentLanguage
-          : this.contentLanguage,
-      contentLocation:
-          contentLocation is Uri? ? contentLocation : this.contentLocation,
+          ? _LazyInit.value(value: contentLanguage)
+          : _contentLanguage,
+      contentLocation: contentLocation is Uri?
+          ? _LazyInit.value(value: contentLocation)
+          : _contentLocation,
       contentRange: contentRange is ContentRangeHeader?
-          ? contentRange
-          : this.contentRange,
-      etag: etag is ETagHeader? ? etag : this.etag,
+          ? _LazyInit.value(value: contentRange)
+          : _contentRange,
+      etag: etag is ETagHeader? ? _LazyInit.value(value: etag) : _etag,
       proxyAuthenticate: proxyAuthenticate is AuthenticationHeader?
-          ? proxyAuthenticate
-          : this.proxyAuthenticate,
-      retryAfter:
-          retryAfter is RetryAfterHeader? ? retryAfter : this.retryAfter,
-      trailer: trailer is List<String>? ? trailer : this.trailer,
-      vary: vary is VaryHeader? ? vary : this.vary,
+          ? _LazyInit.value(value: proxyAuthenticate)
+          : _proxyAuthenticate,
+      retryAfter: retryAfter is RetryAfterHeader?
+          ? _LazyInit.value(value: retryAfter)
+          : _retryAfter,
+      trailer:
+          trailer is List<String>? ? _LazyInit.value(value: trailer) : _trailer,
+      vary: vary is VaryHeader? ? _LazyInit.value(value: vary) : _vary,
       wwwAuthenticate: wwwAuthenticate is AuthenticationHeader?
-          ? wwwAuthenticate
-          : this.wwwAuthenticate,
+          ? _LazyInit.value(value: wwwAuthenticate)
+          : _wwwAuthenticate,
       contentDisposition: contentDisposition is ContentDispositionHeader?
-          ? contentDisposition
-          : this.contentDisposition,
+          ? _LazyInit.value(value: contentDisposition)
+          : _contentDisposition,
 
       /// Common Headers (Used in Both Requests and Responses)
       accept: accept is AcceptHeader? ? accept : this.accept,
@@ -1378,6 +1519,7 @@ final class _HeadersImpl extends Headers {
       transferEncoding: transferEncoding is TransferEncodingHeader?
           ? transferEncoding
           : this.transferEncoding,
+      xPoweredBy: xPoweredBy is String? ? xPoweredBy : this.xPoweredBy,
       custom: custom ?? this.custom,
 
       /// Security and Modern Headers

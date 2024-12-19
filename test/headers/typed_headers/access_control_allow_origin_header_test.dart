@@ -84,6 +84,21 @@ void main() {
     );
 
     test(
+      'when a Access-Control-Allow-Origin header with an invalid value is passed '
+      'then the server does not respond with a bad request if the headers '
+      'is not actually used',
+      () async {
+        Headers headers = await getServerRequestHeaders(
+          server: server,
+          headers: {'access-control-allow-origin': 'https://example.com:test'},
+          echoHeaders: false,
+        );
+
+        expect(headers, isNotNull);
+      },
+    );
+
+    test(
       'when a Access-Control-Allow-Origin header with a valid URI origin is passed '
       'then it should parse correctly',
       () async {

@@ -60,6 +60,21 @@ void main() {
     );
 
     test(
+      'when a Content-Encoding header with an invalid value is passed '
+      'then the server does not respond with a bad request if the headers '
+      'is not actually used',
+      () async {
+        Headers headers = await getServerRequestHeaders(
+          server: server,
+          headers: {'content-encoding': 'custom-encoding'},
+          echoHeaders: false,
+        );
+
+        expect(headers, isNotNull);
+      },
+    );
+
+    test(
       'when a single valid encoding is passed then it should parse correctly',
       () async {
         Headers headers = await getServerRequestHeaders(

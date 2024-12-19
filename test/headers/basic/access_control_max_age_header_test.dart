@@ -59,6 +59,21 @@ void main() {
     );
 
     test(
+      'when a Access-Control-Max-Age header with an invalid value is passed '
+      'then the server does not respond with a bad request if the headers '
+      'is not actually used',
+      () async {
+        Headers headers = await getServerRequestHeaders(
+          server: server,
+          headers: {'access-control-max-age': 'test'},
+          echoHeaders: false,
+        );
+
+        expect(headers, isNotNull);
+      },
+    );
+
+    test(
       'when a Access-Control-Max-Age header is passed then it should parse the value correctly',
       () async {
         Headers headers = await getServerRequestHeaders(

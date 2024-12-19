@@ -102,6 +102,21 @@ void main() {
     );
 
     test(
+      'when a Content-Range header with an invalid value is passed '
+      'then the server does not respond with a bad request if the headers '
+      'is not actually used',
+      () async {
+        Headers headers = await getServerRequestHeaders(
+          server: server,
+          headers: {'content-range': 'bytes 500-499/1234'},
+          echoHeaders: false,
+        );
+
+        expect(headers, isNotNull);
+      },
+    );
+
+    test(
       'when a Content-Range header with a valid byte range is passed then it '
       'should parse correctly',
       () async {

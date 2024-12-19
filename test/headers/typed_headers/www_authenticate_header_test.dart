@@ -34,6 +34,21 @@ void main() {
       },
     );
 
+    test(
+      'when a WWW-Authenticate header with an invalid value is passed '
+      'then the server does not respond with a bad request if the headers '
+      'is not actually used',
+      () async {
+        Headers headers = await getServerRequestHeaders(
+          server: server,
+          headers: {'www-authenticate': 'Test'},
+          echoHeaders: false,
+        );
+
+        expect(headers, isNotNull);
+      },
+    );
+
     group('when Basic authentication', () {
       test('with realm parameter should parse scheme correctly', () async {
         Headers headers = await getServerRequestHeaders(

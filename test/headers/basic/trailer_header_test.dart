@@ -36,6 +36,21 @@ void main() {
     );
 
     test(
+      'when a Trailer header with an empty value is passed '
+      'then the server does not respond with a bad request if the headers '
+      'is not actually used',
+      () async {
+        Headers headers = await getServerRequestHeaders(
+          server: server,
+          headers: {'trailer': ''},
+          echoHeaders: false,
+        );
+
+        expect(headers, isNotNull);
+      },
+    );
+
+    test(
       'when a valid Trailer header is passed then it should parse correctly',
       () async {
         Headers headers = await getServerRequestHeaders(

@@ -159,6 +159,21 @@ void main() {
     );
 
     test(
+      'when a Set-Cookie header with an invalid value is passed '
+      'then the server does not respond with a bad request if the headers '
+      'is not actually used',
+      () async {
+        Headers headers = await getServerRequestHeaders(
+          server: server,
+          headers: {'set-cookie': 'userId=42\x7F'},
+          echoHeaders: false,
+        );
+
+        expect(headers, isNotNull);
+      },
+    );
+
+    test(
       'when a Set-Cookie header with an empty name is passed then it should parse the cookie correctly',
       () async {
         Headers headers = await getServerRequestHeaders(
