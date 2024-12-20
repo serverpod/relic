@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:relic/src/body/types/body_type.dart';
+import 'package:relic/relic.dart';
 import 'package:relic/src/body/types/mime_type.dart';
 
 /// The body of a request or response.
@@ -124,10 +124,61 @@ class Body {
     return stream;
   }
 
+  /// Applies transfer encoding headers and content length to the response.
+  void applyHeaders(
+    HttpResponse response, {
+    TransferEncodingHeader? transferEncoding,
+  }) {
+    // Set the Content-Type header based on the MIME type of the body.
+    response.headers.contentType = _getContentType();
+
+    // If the content length is known, set it and remove the Transfer-Encoding header.
+    if (contentLength != null) {
+      response.headers
+        ..contentLength = contentLength!
+        ..removeAll(Headers.transferEncodingHeader);
+      return;
+    }
+
+    // Determine if chunked encoding should be applied.
+    bool shouldEnableChunkedEncoding = response.statusCode >= 200 &&
+        // 204 is no content
+        response.statusCode != 204 &&
+        // 304 is not modified
+        response.statusCode != 304 &&
+        // If the content length is not known, chunked encoding is applied.
+        contentLength == null &&
+        // If the content type is not multipart/byteranges, chunked encoding is applied.
+        (contentType?.mimeType.isNotMultipartByteranges ?? true);
+
+    // Prepare transfer encodings.
+    var encodings = transferEncoding?.encodings ?? [];
+    bool isChunked = transferEncoding?.isChunked ?? false;
+
+    if (shouldEnableChunkedEncoding && !isChunked) {
+      encodings.add(TransferEncoding.chunked);
+      isChunked = true;
+    }
+
+    if (isChunked) {
+      // Remove conflicting 'identity' encoding if present.
+      encodings.removeWhere((e) => e.name == TransferEncoding.identity.name);
+
+      // Set Transfer-Encoding header and remove Content-Length as it is not needed for chunked encoding.
+      response.headers
+        ..set(Headers.transferEncodingHeader,
+            encodings.map((e) => e.name).toList())
+        ..removeAll(Headers.contentLengthHeader);
+    } else {
+      // Set Content-Length to 0 if chunked encoding is not enabled.
+      response.headers.contentLength = 0;
+    }
+  }
+
   /// Returns the content type of the body as a [ContentType].
   ///
   /// This is a convenience method that combines [mimeType] and [encoding].
-  ContentType? getContentType() {
+  ContentType? _getContentType() {
     var mContentType = contentType;
     if (mContentType == null) return null;
     return ContentType(
