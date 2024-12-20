@@ -291,10 +291,17 @@ abstract base class Headers {
       _crossOriginOpenerPolicy.value;
 
   /// Common Headers (Used in Both Requests and Responses)
-  final AcceptHeader? accept;
-  final AcceptRangesHeader? acceptRanges;
-  final TransferEncodingHeader? transferEncoding;
-  final String? xPoweredBy;
+  final _LazyInit<AcceptHeader?> _accept;
+  AcceptHeader? get accept => _accept.value;
+
+  final _LazyInit<AcceptRangesHeader?> _acceptRanges;
+  AcceptRangesHeader? get acceptRanges => _acceptRanges.value;
+
+  final _LazyInit<TransferEncodingHeader?> _transferEncoding;
+  TransferEncodingHeader? get transferEncoding => _transferEncoding.value;
+
+  final _LazyInit<String?> _xPoweredBy;
+  String? get xPoweredBy => _xPoweredBy.value;
 
   /// Custom Headers
   final CustomHeaders custom;
@@ -463,10 +470,10 @@ abstract base class Headers {
     required _LazyInit<CrossOriginOpenerPolicyHeader?> crossOriginOpenerPolicy,
 
     // Common Headers (Used in Both Requests and Responses)
-    this.accept,
-    this.acceptRanges,
-    this.transferEncoding,
-    this.xPoweredBy,
+    required _LazyInit<AcceptHeader?> accept,
+    required _LazyInit<AcceptRangesHeader?> acceptRanges,
+    required _LazyInit<TransferEncodingHeader?> transferEncoding,
+    required _LazyInit<String?> xPoweredBy,
 
     // Custom Headers
     CustomHeaders? custom,
@@ -543,6 +550,12 @@ abstract base class Headers {
         _crossOriginResourcePolicy = crossOriginResourcePolicy,
         _crossOriginEmbedderPolicy = crossOriginEmbedderPolicy,
         _crossOriginOpenerPolicy = crossOriginOpenerPolicy,
+
+        // Common Headers (Used in Both Requests and Responses)
+        _accept = accept,
+        _acceptRanges = acceptRanges,
+        _transferEncoding = transferEncoding,
+        _xPoweredBy = xPoweredBy,
 
         // Request Headers
         custom = custom ?? CustomHeaders.empty();
@@ -864,25 +877,6 @@ abstract base class Headers {
         ),
       ),
 
-      // Common Headers (Used in Both Requests and Responses)
-      accept: dartIOHeaders.parseMultipleValue(
-        acceptHeader,
-        onParse: AcceptHeader.parse,
-      ),
-      acceptRanges: dartIOHeaders.parseSingleValue(
-        acceptRangesHeader,
-        onParse: AcceptRangesHeader.parse,
-      ),
-      transferEncoding: dartIOHeaders.parseMultipleValue(
-        transferEncodingHeader,
-        onParse: TransferEncodingHeader.parse,
-      ),
-      xPoweredBy: dartIOHeaders.parseSingleValue(
-            xPoweredByHeader,
-            onParse: parseString,
-          ) ??
-          xPoweredBy,
-
       // Security and Modern Headers
       strictTransportSecurity: _LazyInit.lazy(
         init: () => dartIOHeaders.parseSingleValue(
@@ -961,6 +955,34 @@ abstract base class Headers {
           crossOriginOpenerPolicyHeader,
           onParse: CrossOriginOpenerPolicyHeader.parse,
         ),
+      ),
+
+      // Common Headers (Used in Both Requests and Responses)
+      accept: _LazyInit.lazy(
+        init: () => dartIOHeaders.parseMultipleValue(
+          acceptHeader,
+          onParse: AcceptHeader.parse,
+        ),
+      ),
+      acceptRanges: _LazyInit.lazy(
+        init: () => dartIOHeaders.parseSingleValue(
+          acceptRangesHeader,
+          onParse: AcceptRangesHeader.parse,
+        ),
+      ),
+      transferEncoding: _LazyInit.lazy(
+        init: () => dartIOHeaders.parseMultipleValue(
+          transferEncodingHeader,
+          onParse: TransferEncodingHeader.parse,
+        ),
+      ),
+      xPoweredBy: _LazyInit.lazy(
+        init: () =>
+            dartIOHeaders.parseSingleValue(
+              xPoweredByHeader,
+              onParse: parseString,
+            ) ??
+            xPoweredBy,
       ),
 
       // Custom Headers
@@ -1073,12 +1095,6 @@ abstract base class Headers {
       wwwAuthenticate: _LazyInit.nullValue(),
       contentDisposition: _LazyInit.nullValue(),
 
-      //common headers
-      accept: accept,
-      acceptRanges: acceptRanges,
-      transferEncoding: transferEncoding,
-      xPoweredBy: xPoweredBy,
-
       // Security and Modern Headers
       secFetchDest: _LazyInit.value(value: secFetchDest),
       secFetchMode: _LazyInit.value(value: secFetchMode),
@@ -1093,6 +1109,12 @@ abstract base class Headers {
       accessControlAllowMethods: _LazyInit.nullValue(),
       accessControlAllowHeaders: _LazyInit.nullValue(),
       clearSiteData: _LazyInit.nullValue(),
+
+      //common headers
+      accept: _LazyInit.value(value: accept),
+      acceptRanges: _LazyInit.value(value: acceptRanges),
+      transferEncoding: _LazyInit.value(value: transferEncoding),
+      xPoweredBy: _LazyInit.value(value: xPoweredBy),
 
       // Custom headers
       custom: custom ?? CustomHeaders.empty(),
@@ -1220,13 +1242,6 @@ abstract base class Headers {
       contentDisposition: _LazyInit.value(value: contentDisposition),
       setCookie: _LazyInit.value(value: setCookie),
 
-      //common headers
-      accept: accept,
-      acceptRanges: acceptRanges,
-      transferEncoding: transferEncoding,
-      xPoweredBy: xPoweredBy,
-      custom: custom ?? CustomHeaders.empty(),
-
       // Security and Modern Headers
       strictTransportSecurity: _LazyInit.value(value: strictTransportSecurity),
       contentSecurityPolicy: _LazyInit.value(value: contentSecurityPolicy),
@@ -1246,6 +1261,16 @@ abstract base class Headers {
           _LazyInit.value(value: crossOriginEmbedderPolicy),
       crossOriginOpenerPolicy: _LazyInit.value(value: crossOriginOpenerPolicy),
 
+      // Common Headers (Used in Both Requests and Responses)
+      accept: _LazyInit.value(value: accept),
+      acceptRanges: _LazyInit.value(value: acceptRanges),
+      transferEncoding: _LazyInit.value(value: transferEncoding),
+      xPoweredBy: _LazyInit.value(value: xPoweredBy),
+
+      // Custom headers
+      custom: custom ?? CustomHeaders.empty(),
+
+      // Failed headers to parse
       failedHeadersToParse: {},
     );
   }
@@ -1407,10 +1432,10 @@ final class _HeadersImpl extends Headers {
     required super.crossOriginOpenerPolicy,
 
     /// Common Headers (Used in Both Requests and Responses)
-    super.accept,
-    super.acceptRanges,
-    super.transferEncoding,
-    super.xPoweredBy,
+    required super.accept,
+    required super.acceptRanges,
+    required super.transferEncoding,
+    required super.xPoweredBy,
 
     // Custom headers
     super.custom,
@@ -1665,14 +1690,19 @@ final class _HeadersImpl extends Headers {
               : _crossOriginOpenerPolicy,
 
       /// Common Headers (Used in Both Requests and Responses)
-      accept: accept is AcceptHeader? ? accept : this.accept,
+      accept:
+          accept is AcceptHeader? ? _LazyInit.value(value: accept) : _accept,
       acceptRanges: acceptRanges is AcceptRangesHeader?
-          ? acceptRanges
-          : this.acceptRanges,
+          ? _LazyInit.value(value: acceptRanges)
+          : _acceptRanges,
       transferEncoding: transferEncoding is TransferEncodingHeader?
-          ? transferEncoding
-          : this.transferEncoding,
-      xPoweredBy: xPoweredBy is String? ? xPoweredBy : this.xPoweredBy,
+          ? _LazyInit.value(value: transferEncoding)
+          : _transferEncoding,
+      xPoweredBy: xPoweredBy is String?
+          ? _LazyInit.value(value: xPoweredBy)
+          : _xPoweredBy,
+
+      // Custom headers
       custom: custom ?? this.custom,
 
       // Failed headers to parse
@@ -1838,6 +1868,8 @@ final class _HeadersImpl extends Headers {
         Headers.crossOriginResourcePolicyHeader: crossOriginResourcePolicy,
         Headers.crossOriginEmbedderPolicyHeader: crossOriginEmbedderPolicy,
         Headers.crossOriginOpenerPolicyHeader: crossOriginOpenerPolicy,
+        Headers.acceptHeader: accept,
+        Headers.acceptRangesHeader: acceptRanges,
       };
 }
 

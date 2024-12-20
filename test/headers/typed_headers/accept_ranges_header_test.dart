@@ -36,6 +36,21 @@ void main() {
     );
 
     test(
+      'when an Accept-Ranges header with an empty value is passed '
+      'then the server does not respond with a bad request if the headers '
+      'is not actually used',
+      () async {
+        Headers headers = await getServerRequestHeaders(
+          server: server,
+          headers: {'accept-ranges': ''},
+          echoHeaders: false,
+        );
+
+        expect(headers, isNotNull);
+      },
+    );
+
+    test(
       'when a valid Accept-Ranges header is passed then it should parse the range unit correctly',
       () async {
         Headers headers = await getServerRequestHeaders(
