@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:http_parser/http_parser.dart';
 import 'package:relic/relic.dart';
 import 'package:relic/src/body/types/mime_type.dart';
 
@@ -125,64 +124,54 @@ class Body {
     return stream;
   }
 
-  /// Applies the headers to the response and encodes the body if transfer encoding is chunked.
-  void applyHeadersAndEncodeBody(
+  /// Applies transfer encoding headers and content length to the response.
+  void applyHeaders(
     HttpResponse response, {
     TransferEncodingHeader? transferEncoding,
   }) {
-    // If the body is empty (contentLength == 0), explicitly set Content-Length to 0
-    // and remove any Transfer-Encoding header since no encoding is needed.
-    if (contentLength == 0) {
-      response.headers.contentLength = 0;
-      response.headers.removeAll(Headers.transferEncodingHeader);
+    // Set the Content-Type header based on the MIME type of the body.
+    response.headers.contentType = _getContentType();
+
+    // If the content length is known, set it and remove the Transfer-Encoding header.
+    if (contentLength != null) {
+      response.headers
+        ..contentLength = contentLength!
+        ..removeAll(Headers.transferEncodingHeader);
       return;
     }
 
-    // Set the Content-Type header based on the MIME type of the body, if available.
-    response.headers.contentType = _getContentType();
-
-    // Retrieve the status code for further validation.
-    int statusCode = response.statusCode;
-
     // Determine if chunked encoding should be applied.
-    // Chunked encoding is enabled if:
-    // - The status code is in the 200 range but not 204 (No Content) or 304 (Not Modified).
-    // - The content length is unknown (contentLength == null).
-    // - The content type is not "multipart/byteranges" (excluded as per HTTP spec).
-    bool shouldEnableChunkedEncoding = statusCode >= 200 &&
-        statusCode != 204 &&
-        statusCode != 304 &&
+    bool shouldEnableChunkedEncoding = response.statusCode >= 200 &&
+        // 204 is no content
+        response.statusCode != 204 &&
+        // 304 is not modified
+        response.statusCode != 304 &&
+        // If the content length is not known, chunked encoding is applied.
         contentLength == null &&
-        (contentType?.mimeType.isNotMultipartByteranges ?? false);
+        // If the content type is not multipart/byteranges, chunked encoding is applied.
+        (contentType?.mimeType.isNotMultipartByteranges ?? true);
 
-    // Check if chunked encoding is already enabled by inspecting the Transfer-Encoding header.
+    // Prepare transfer encodings.
+    var encodings = transferEncoding?.encodings ?? [];
     bool isChunked = transferEncoding?.isChunked ?? false;
 
-    var encodings = transferEncoding?.encodings ?? [];
-    // If chunked encoding should be enabled but is not already, update the Transfer-Encoding header.
     if (shouldEnableChunkedEncoding && !isChunked) {
-      // Add 'chunked' to the Transfer-Encoding header.
       encodings.add(TransferEncoding.chunked);
-
-      // Apply chunked encoding to the response stream to encode the body in chunks.
-      _stream = chunkedCoding.encoder.bind(_stream!).cast<Uint8List>();
-
-      // Mark the response as chunked for further processing.
       isChunked = true;
     }
 
     if (isChunked) {
-      // Remove any existing 'identity' transfer encoding, as it conflicts with 'chunked'.
+      // Remove conflicting 'identity' encoding if present.
       encodings.removeWhere((e) => e.name == TransferEncoding.identity.name);
-      // Set the Transfer-Encoding header with the updated encodings.
-      response.headers.set(Headers.transferEncodingHeader, encodings);
 
-      // If the response is already chunked, remove the Content-Length header.
-      // Chunked encoding does not require Content-Length because chunk sizes define the body length.
-      response.headers.removeAll(Headers.contentLengthHeader);
+      // Set Transfer-Encoding header and remove Content-Length as it is not needed for chunked encoding.
+      response.headers
+        ..set(Headers.transferEncodingHeader,
+            encodings.map((e) => e.name).toList())
+        ..removeAll(Headers.contentLengthHeader);
     } else {
-      // If chunked encoding is not enabled, set the Content-Length header to the known body length.
-      response.headers.contentLength = contentLength ?? 0;
+      // Set Content-Length to 0 if chunked encoding is not enabled.
+      response.headers.contentLength = 0;
     }
   }
 

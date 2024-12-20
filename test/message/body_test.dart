@@ -126,7 +126,7 @@ void main() {
 
       var response = await _get();
       expect(response.headers['transfer-encoding'], contains('chunked'));
-      expect(response.body, equals('Relic'));
+      expect(response.body, equals('5\r\nRelic\r\n0\r\n\r\n'));
     });
 
     test(

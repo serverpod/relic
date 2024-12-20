@@ -323,11 +323,14 @@ class Response extends Message {
       httpResponse.bufferOutput = context['relic_server.buffer_output'] as bool;
     }
 
+    // Set the status code.
     httpResponse.statusCode = statusCode;
 
+    // Apply all headers to the response.
     headers.applyHeaders(httpResponse);
 
-    body.applyHeadersAndEncodeBody(
+    // Apply transfer encoding headers and content length to the response.
+    body.applyHeaders(
       httpResponse,
       transferEncoding: headers.transferEncoding,
     );
