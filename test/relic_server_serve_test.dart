@@ -499,7 +499,7 @@ void main() {
         response.headers,
         containsPair(HttpHeaders.transferEncodingHeader, 'chunked'),
       );
-      expect(response.body, equals('hi'));
+      expect(response.body, equals('2\r\nhi\r\n0\r\n\r\n'));
     });
 
     group('is not added when', () {
@@ -508,6 +508,7 @@ void main() {
           return Response.ok(
             body: Body.fromDataStream(
               Stream.value(Uint8List.fromList([1, 2, 3, 4])),
+              contentLength: 4,
             ),
           );
         });
