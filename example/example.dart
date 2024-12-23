@@ -1,10 +1,14 @@
 import 'package:relic/relic.dart';
+import 'package:relic/src/address/relic_address.dart';
 
 void main() async {
   var handler =
       const Pipeline().addMiddleware(logRequests()).addHandler(_echoRequest);
 
-  var server = await serve(handler, 'localhost', 8080);
+  var server = await serve(
+    handler,
+    RelicAddress.fromString(address: 'localhost', port: 8080),
+  );
 
   // Enable content compression
   server.autoCompress = true;
