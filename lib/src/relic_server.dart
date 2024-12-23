@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:relic/src/address/relic_address.dart';
 import 'package:relic/src/body/body.dart';
 import 'package:relic/src/hijack/exception/hijack_exception.dart';
 import 'package:relic/src/headers/exception/invalid_header_exception.dart';
@@ -50,8 +51,7 @@ class RelicServer {
 
   /// Creates a server with the given parameters.
   static Future<RelicServer> createServer(
-    Object address,
-    int port, {
+    RelicAddress address, {
     SecurityContext? securityContext,
     int? backlog,
     bool shared = false,
@@ -61,14 +61,14 @@ class RelicServer {
     backlog ??= 0;
     var server = switch (securityContext == null) {
       true => await HttpServer.bind(
-          address,
-          port,
+          address.address,
+          address.port,
           backlog: backlog,
           shared: shared,
         ),
       false => await HttpServer.bindSecure(
-          address,
-          port,
+          address.address,
+          address.port,
           securityContext!,
           backlog: backlog,
           shared: shared,
