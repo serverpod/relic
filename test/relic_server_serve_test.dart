@@ -10,6 +10,7 @@ import 'package:async/async.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart' as parser;
 import 'package:relic/relic.dart';
+import 'package:relic/src/address/relic_address.dart';
 import 'package:relic/src/method/request_method.dart';
 import 'package:relic/src/relic_server_serve.dart' as relic_server;
 import 'package:test/test.dart';
@@ -279,10 +280,13 @@ void main() {
 
   test('passes asynchronous exceptions to the parent error zone', () async {
     await runZonedGuarded(() async {
-      var server = await relic_server.serve((request) {
-        Future(() => throw StateError('oh no'));
-        return syncHandler(request);
-      }, 'localhost', 0);
+      var server = await relic_server.serve(
+        (request) {
+          Future(() => throw StateError('oh no'));
+          return syncHandler(request);
+        },
+        'localhost'.withPort(0),
+      );
 
       var response = await http.get(Uri.http('localhost:${server.port}', '/'));
       expect(response.statusCode, HttpStatus.ok);
@@ -295,10 +299,13 @@ void main() {
 
   test("doesn't pass asynchronous exceptions to the root error zone", () async {
     var response = await Zone.root.run(() async {
-      var server = await relic_server.serve((request) {
-        Future(() => throw StateError('oh no'));
-        return syncHandler(request);
-      }, 'localhost', 0);
+      var server = await relic_server.serve(
+        (request) {
+          Future(() => throw StateError('oh no'));
+          return syncHandler(request);
+        },
+        'localhost'.withPort(0),
+      );
 
       try {
         return await http.get(Uri.http('localhost:${server.port}', '/'));
@@ -407,8 +414,7 @@ void main() {
     test('can be set at the server level', () async {
       _server = await relic_server.serve(
         syncHandler,
-        'localhost',
-        0,
+        'localhost'.withPort(0),
         poweredByHeader: 'ourServer',
       );
       var response = await _get();
@@ -428,8 +434,7 @@ void main() {
             ),
           );
         },
-        'localhost',
-        0,
+        'localhost'.withPort(0),
         poweredByHeader: 'ourServer',
       );
 
@@ -644,8 +649,7 @@ Future<void> _scheduleServer(
   assert(_server == null);
   _server = await relic_server.serve(
     handler,
-    'localhost',
-    0,
+    'localhost'.withPort(0),
     securityContext: securityContext,
   );
 }
