@@ -67,6 +67,21 @@ void main() {
     );
 
     test(
+      'when a Transfer-Encoding header with an invalid value is passed '
+      'then the server does not respond with a bad request if the headers '
+      'is not actually used',
+      () async {
+        Headers headers = await getServerRequestHeaders(
+          server: server,
+          headers: {'transfer-encoding': 'custom-encoding'},
+          echoHeaders: false,
+        );
+
+        expect(headers, isNotNull);
+      },
+    );
+
+    test(
       'when a valid Transfer-Encoding header is passed then it should parse the encodings correctly',
       () async {
         Headers headers = await getServerRequestHeaders(
