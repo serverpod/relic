@@ -15,7 +15,7 @@ class MimeType {
   static const csv = MimeType('text', 'csv');
 
   /// JavaScript mime type.
-  static const javaScript = MimeType('text', 'javascript');
+  static const javascript = MimeType('text', 'javascript');
 
   /// JSON mime type.
   static const json = MimeType('application', 'json');
@@ -25,7 +25,7 @@ class MimeType {
 
   /// Binary mime type.
 
-  static const binary = MimeType('application', 'octet-stream');
+  static const octetStream = MimeType('application', 'octet-stream');
 
   /// PDF mime type.
   static const pdf = MimeType('application', 'pdf');
@@ -33,11 +33,14 @@ class MimeType {
   /// RTF mime type.
   static const rtf = MimeType('application', 'rtf');
 
-  /// Multipart mime type.
-  static const multipart = MimeType('multipart', 'form-data');
+  /// Multipart form data mime type.
+  static const multipartFormData = MimeType('multipart', 'form-data');
 
-  /// Multipart mime type.
+  /// Multipart byteranges mime type.
   static const multipartByteranges = MimeType('multipart', 'byteranges');
+
+  /// URL-encoded form MIME type.
+  static const urlEncoded = MimeType('application', 'x-www-form-urlencoded');
 
   /// The primary type of the mime type.
   final String primaryType;
@@ -79,14 +82,4 @@ extension ContentTypeExtension on ContentType {
   /// Converts a [ContentType] to a [MimeType].
   /// We are calling this method 'toMimeType' to avoid conflict with the 'mimeType' property.
   MimeType get toMimeType => MimeType(primaryType, subType);
-}
-
-/// Extension to check if a [MimeType] is not multipart/byteranges.
-extension MimeTypeExtensions on MimeType {
-  /// Checks if the mime type is not multipart/byteranges.
-  bool get isMultipartByteranges {
-    var multipartByteranges = MimeType.multipartByteranges;
-    return primaryType == multipartByteranges.primaryType &&
-        subType == multipartByteranges.subType;
-  }
 }

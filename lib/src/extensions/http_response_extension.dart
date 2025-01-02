@@ -1,33 +1,36 @@
 import 'package:relic/relic.dart';
 import 'dart:io' as io;
 
-import 'package:relic/src/body/types/mime_type.dart';
-
 /// Extension for [io.HttpResponse] to apply headers and body.
 extension HttpResponseExtension on io.HttpResponse {
   /// Apply headers and body to the response.
   void applyHeaders(Headers headers, Body body) {
-    var httpHeaders = this.headers;
-    httpHeaders.clear();
+    var responseHeaders = this.headers;
+    responseHeaders.clear();
 
     // Apply headers
     var mappedHeaders = headers.toMap();
     for (var entry in mappedHeaders.entries) {
-      var key = entry.key;
-      var value = entry.value;
-      httpHeaders.set(key, value);
+      responseHeaders.set(entry.key, entry.value);
     }
 
     // Set the Content-Type header based on the MIME type of the body.
-    httpHeaders.contentType = body.getContentType();
+    responseHeaders.contentType = body.getContentType();
 
     // If the content length is known, set it and remove the Transfer-Encoding header.
-    if (body.contentLength != null) {
-      httpHeaders
-        ..contentLength = body.contentLength!
+    var contentLength = body.contentLength;
+    if (contentLength != null) {
+      responseHeaders
+        ..contentLength = contentLength
         ..removeAll(Headers.transferEncodingHeader);
       return;
     }
+
+    // Check if the content type is multipart/byteranges.
+    var bodyMimeType = body.contentType?.mimeType;
+    bool isMultipartByteranges =
+        bodyMimeType?.primaryType == MimeType.multipartByteranges.primaryType &&
+            bodyMimeType?.subType == MimeType.multipartByteranges.subType;
 
     // Determine if chunked encoding should be applied.
     bool shouldEnableChunkedEncoding = statusCode >= 200 &&
@@ -38,7 +41,7 @@ extension HttpResponseExtension on io.HttpResponse {
         // If the content length is not known, chunked encoding is applied.
         body.contentLength == null &&
         // If the content type is not multipart/byteranges, chunked encoding is applied.
-        (body.contentType?.mimeType.isMultipartByteranges == false);
+        !isMultipartByteranges;
 
     // Prepare transfer encodings.
     var encodings = headers.transferEncoding?.encodings ?? [];
@@ -54,15 +57,15 @@ extension HttpResponseExtension on io.HttpResponse {
       encodings.removeWhere((e) => e.name == TransferEncoding.identity.name);
 
       // Set Transfer-Encoding header and remove Content-Length as it is not needed for chunked encoding.
-      httpHeaders
+      responseHeaders
         ..set(
           Headers.transferEncodingHeader,
           encodings.map((e) => e.name).toList(),
         )
         ..removeAll(Headers.contentLengthHeader);
     } else {
-      // Set Content-Length to 0 if chunked encoding is not enabled.
-      httpHeaders.contentLength = 0;
+      // Set Content-Length if chunked encoding is not enabled.
+      responseHeaders.contentLength = contentLength ?? 0;
     }
   }
 }
