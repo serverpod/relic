@@ -33,6 +33,12 @@ class MimeType {
   /// RTF mime type.
   static const rtf = MimeType('application', 'rtf');
 
+  /// Multipart mime type.
+  static const multipart = MimeType('multipart', 'form-data');
+
+  /// Multipart mime type.
+  static const multipartByteranges = MimeType('multipart', 'byteranges');
+
   /// The primary type of the mime type.
   final String primaryType;
 
@@ -78,7 +84,9 @@ extension ContentTypeExtension on ContentType {
 /// Extension to check if a [MimeType] is not multipart/byteranges.
 extension MimeTypeExtensions on MimeType {
   /// Checks if the mime type is not multipart/byteranges.
-  bool get isNotMultipartByteranges {
-    return primaryType != 'multipart' || subType != 'byteranges';
+  bool get isMultipartByteranges {
+    var multipartByteranges = MimeType.multipartByteranges;
+    return primaryType == multipartByteranges.primaryType &&
+        subType == multipartByteranges.subType;
   }
 }
