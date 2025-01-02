@@ -51,7 +51,8 @@ class RelicServer {
 
   /// Creates a server with the given parameters.
   static Future<RelicServer> createServer(
-    RelicAddress address, {
+    RelicAddress address,
+    int port, {
     SecurityContext? securityContext,
     int? backlog,
     bool shared = false,
@@ -62,13 +63,13 @@ class RelicServer {
     var server = switch (securityContext == null) {
       true => await HttpServer.bind(
           address.address,
-          address.port,
+          port,
           backlog: backlog,
           shared: shared,
         ),
       false => await HttpServer.bindSecure(
           address.address,
-          address.port,
+          port,
           securityContext!,
           backlog: backlog,
           shared: shared,

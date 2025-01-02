@@ -1,60 +1,42 @@
 import 'dart:io';
 
 /// A class that represents an address.
-class RelicAddress {
+abstract class RelicAddress<T> {
+  /// Returns the address as an [Object].
+  T get address;
+}
+
+/// A class that represents a hostname address.
+class RelicHostnameAddress implements RelicAddress<String> {
   /// The hostname of the address.
-  final String? hostname;
+  final String hostname;
 
-  /// The internet address of the address.
-  final InternetAddress? internetAddress;
-
-  /// The port of the address.
-  final int port;
-
-  RelicAddress._({
-    this.hostname,
-    this.internetAddress,
-    required this.port,
+  RelicHostnameAddress({
+    required this.hostname,
   });
 
-  /// Creates an address from a string.
-  factory RelicAddress.fromString({
-    required String address,
-    required int port,
-  }) {
-    return RelicAddress._(hostname: address, port: port);
-  }
-
-  /// Creates an address from an [InternetAddress].
-  factory RelicAddress.fromInternetAddress({
-    required InternetAddress address,
-    required int port,
-  }) {
-    return RelicAddress._(internetAddress: address, port: port);
-  }
-
-  /// Returns the address as an [Object].
-  Object get address => hostname ?? internetAddress!;
+  /// Returns the address as a [String].
+  @override
+  String get address => hostname;
 
   @override
-  String toString() {
-    final addr = hostname ?? internetAddress!.address;
-    return '$addr:$port';
-  }
+  String toString() => 'RelicHostnameAddress(hostname: $hostname)';
 }
 
-/// An extension on [InternetAddress] to create a [RelicAddress] with a port.
-extension InternetAddressExtension on InternetAddress {
-  /// Creates a [RelicAddress] with a port.
-  RelicAddress withPort(int port) {
-    return RelicAddress.fromInternetAddress(address: this, port: port);
-  }
-}
+/// A class that represents an internet address.
+class RelicInternetAddress implements RelicAddress<InternetAddress> {
+  /// The internet address of the address.
+  final InternetAddress internetAddress;
 
-/// An extension on [String] to create a [RelicAddress] with a port.
-extension StringExtension on String {
-  /// Creates a [RelicAddress] with a port.
-  RelicAddress withPort(int port) {
-    return RelicAddress.fromString(address: this, port: port);
-  }
+  RelicInternetAddress({
+    required this.internetAddress,
+  });
+
+  /// Returns the address as an [InternetAddress].
+  @override
+  InternetAddress get address => internetAddress;
+
+  @override
+  String toString() =>
+      'RelicInternetAddress(internetAddress: $internetAddress)';
 }

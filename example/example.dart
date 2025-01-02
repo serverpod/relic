@@ -7,7 +7,8 @@ void main() async {
 
   var server = await serve(
     handler,
-    RelicAddress.fromString(address: 'localhost', port: 8080),
+    RelicHostnameAddress(hostname: 'localhost'),
+    8080,
   );
 
   // Enable content compression

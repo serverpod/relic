@@ -44,7 +44,8 @@ import 'message/response.dart';
 /// {@endtemplate}
 Future<io.HttpServer> serve(
   Handler handler,
-  RelicAddress address, {
+  RelicAddress address,
+  int port, {
   io.SecurityContext? securityContext,
   int? backlog,
   bool shared = false,
@@ -55,6 +56,7 @@ Future<io.HttpServer> serve(
 
   var server = await RelicServer.createServer(
     address,
+    port,
     securityContext: securityContext,
     backlog: backlog,
     shared: shared,

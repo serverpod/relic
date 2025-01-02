@@ -22,12 +22,14 @@ Future<RelicServer> createServer({
 }) async {
   try {
     return RelicServer.createServer(
-      InternetAddress.loopbackIPv6.withPort(0),
+      RelicInternetAddress(internetAddress: InternetAddress.loopbackIPv6),
+      0,
       strictHeaders: strictHeaders,
     );
   } on SocketException catch (_) {
     return RelicServer.createServer(
-      InternetAddress.loopbackIPv4.withPort(0),
+      RelicInternetAddress(internetAddress: InternetAddress.loopbackIPv4),
+      0,
       strictHeaders: strictHeaders,
     );
   }

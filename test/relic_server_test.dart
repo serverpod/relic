@@ -17,11 +17,13 @@ void main() {
   setUp(() async {
     try {
       server = await RelicServer.createServer(
-        InternetAddress.loopbackIPv6.withPort(0),
+        RelicInternetAddress(internetAddress: InternetAddress.loopbackIPv6),
+        0,
       );
     } on SocketException catch (_) {
       server = await RelicServer.createServer(
-        InternetAddress.loopbackIPv4.withPort(0),
+        RelicInternetAddress(internetAddress: InternetAddress.loopbackIPv4),
+        0,
       );
     }
   });

@@ -286,7 +286,8 @@ void main() {
           Future(() => throw StateError('oh no'));
           return syncHandler(request);
         },
-        'localhost'.withPort(0),
+        RelicHostnameAddress(hostname: 'localhost'),
+        0,
       );
 
       var response = await http.get(Uri.http('localhost:${server.port}', '/'));
@@ -305,7 +306,8 @@ void main() {
           Future(() => throw StateError('oh no'));
           return syncHandler(request);
         },
-        'localhost'.withPort(0),
+        RelicHostnameAddress(hostname: 'localhost'),
+        0,
       );
 
       try {
@@ -415,7 +417,8 @@ void main() {
     test('can be set at the server level', () async {
       _server = await relic_server.serve(
         syncHandler,
-        'localhost'.withPort(0),
+        RelicHostnameAddress(hostname: 'localhost'),
+        0,
         poweredByHeader: 'ourServer',
       );
       var response = await _get();
@@ -435,7 +438,8 @@ void main() {
             ),
           );
         },
-        'localhost'.withPort(0),
+        RelicHostnameAddress(hostname: 'localhost'),
+        0,
         poweredByHeader: 'ourServer',
       );
 
@@ -650,7 +654,8 @@ Future<void> _scheduleServer(
   assert(_server == null);
   _server = await relic_server.serve(
     handler,
-    'localhost'.withPort(0),
+    RelicHostnameAddress(hostname: 'localhost'),
+    0,
     securityContext: securityContext,
   );
 }
