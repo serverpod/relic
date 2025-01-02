@@ -56,7 +56,10 @@ void main() {
       );
 
       var response = await _get();
-      expect(response.headers['transfer-encoding'], contains('chunked'));
+      expect(
+        response.headers['transfer-encoding'],
+        contains(TransferEncoding.chunked.name),
+      );
       expect(response.bodyBytes, equals([1, 2, 3, 4]));
     });
 
@@ -98,10 +101,13 @@ void main() {
       );
 
       var response = await _get();
-      expect(response.headers['transfer-encoding'], contains('chunked'));
       expect(
         response.headers['transfer-encoding'],
-        isNot(contains('identity')),
+        contains(TransferEncoding.chunked.name),
+      );
+      expect(
+        response.headers['transfer-encoding'],
+        isNot(contains(TransferEncoding.identity.name)),
       );
       expect(response.bodyBytes, equals([1, 2, 3, 4]));
     });
@@ -125,7 +131,10 @@ void main() {
       );
 
       var response = await _get();
-      expect(response.headers['transfer-encoding'], contains('chunked'));
+      expect(
+        response.headers['transfer-encoding'],
+        contains(TransferEncoding.chunked.name),
+      );
       expect(response.body, equals('5\r\nRelic\r\n0\r\n\r\n'));
     });
 
