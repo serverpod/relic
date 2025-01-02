@@ -60,21 +60,21 @@ class RelicServer {
     String? poweredByHeader,
   }) async {
     backlog ??= 0;
-    var server = switch (securityContext == null) {
-      true => await HttpServer.bind(
-          address.address,
-          port,
-          backlog: backlog,
-          shared: shared,
-        ),
-      false => await HttpServer.bindSecure(
-          address.address,
-          port,
-          securityContext!,
-          backlog: backlog,
-          shared: shared,
-        ),
-    };
+    var server = securityContext == null
+        ? await HttpServer.bind(
+            address.address,
+            port,
+            backlog: backlog,
+            shared: shared,
+          )
+        : await HttpServer.bindSecure(
+            address.address,
+            port,
+            securityContext,
+            backlog: backlog,
+            shared: shared,
+          );
+
     return RelicServer._(
       server,
       strictHeaders: strictHeaders,
