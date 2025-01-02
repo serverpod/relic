@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:relic/src/extensions/http_response_extension.dart';
+
 import '../body/body.dart';
 import '../headers/headers.dart';
 import 'message.dart';
@@ -327,13 +329,7 @@ class Response extends Message {
     httpResponse.statusCode = statusCode;
 
     // Apply all headers to the response.
-    headers.applyHeaders(httpResponse);
-
-    // Apply transfer encoding headers and content length to the response.
-    body.applyHeaders(
-      httpResponse,
-      transferEncoding: headers.transferEncoding,
-    );
+    httpResponse.applyHeaders(headers, body);
 
     return httpResponse
         .addStream(body.read())

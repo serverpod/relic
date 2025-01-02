@@ -1,14 +1,12 @@
 import 'dart:io' as io;
 
 import 'package:http_parser/http_parser.dart';
-import 'package:relic/src/headers/custom/custom_headers.dart';
+import 'package:relic/relic.dart';
 import 'package:relic/src/headers/extension/string_list_extensions.dart';
 import 'package:relic/src/headers/parser/headers_parser.dart';
 import 'package:relic/src/headers/parser/common_types_parser.dart';
 import 'package:relic/src/headers/typed/typed_header_interface.dart';
 import 'package:relic/src/method/request_method.dart';
-
-import 'typed/typed_headers.dart';
 
 abstract base class Headers {
   /// Request Headers
@@ -907,9 +905,6 @@ abstract base class Headers {
     CrossOriginOpenerPolicyHeader? crossOriginOpenerPolicy,
   });
 
-  /// Apply headers to the response
-  void applyHeaders(io.HttpResponse response);
-
   /// Convert headers to a map
   Map<String, Object> toMap();
 }
@@ -1231,78 +1226,6 @@ final class _HeadersImpl extends Headers {
               : this.crossOriginOpenerPolicy,
       failedHeadersToParse: failedHeadersToParse,
     );
-  }
-
-  /// Apply headers to the response
-  @override
-  void applyHeaders(io.HttpResponse response) {
-    var headers = response.headers;
-    headers.clear();
-
-    // Date-related headers
-    var dateHeaders = _dateHeadersMap;
-    for (var entry in dateHeaders.entries) {
-      var key = entry.key;
-      var value = entry.value;
-      if (value != null) {
-        headers.set(key, formatHttpDate(value));
-      }
-    }
-
-    // Number-related headers
-    var numberHeaders = _numberHeadersMap;
-    for (var entry in numberHeaders.entries) {
-      var key = entry.key;
-      var value = entry.value;
-      if (value != null) {
-        headers.set(key, value);
-      }
-    }
-
-    // String-related headers
-    var stringHeaders = _stringHeadersMap;
-    for (var entry in stringHeaders.entries) {
-      var key = entry.key;
-      var value = entry.value;
-      if (value != null) {
-        headers.set(key, value);
-      }
-    }
-
-    // List<String>-related headers
-    var listStringHeaders = _listStringHeadersMap;
-    for (var entry in listStringHeaders.entries) {
-      var key = entry.key;
-      var value = entry.value;
-      if (value != null) {
-        headers.set(key, value);
-      }
-    }
-
-    // Uri-related headers
-    var uriHeaders = _uriHeadersMap;
-    for (var entry in uriHeaders.entries) {
-      var key = entry.key;
-      var value = entry.value;
-      if (value != null) {
-        headers.set(key, value.toString());
-      }
-    }
-
-    // TypedHeader-related headers
-    var typedHeaders = _typedHeadersMap;
-    for (var entry in typedHeaders.entries) {
-      var key = entry.key;
-      var value = entry.value;
-      if (value != null) {
-        headers.set(key, value.toHeaderString());
-      }
-    }
-
-    // Set custom headers
-    for (var entry in custom.entries) {
-      headers.set(entry.key, entry.value);
-    }
   }
 
   /// Convert headers to a map
