@@ -4,6 +4,18 @@ import 'dart:io';
 abstract class RelicAddress<T> {
   /// Returns the address as an [Object].
   T get address;
+
+  /// Creates a [RelicAddress] from a [String].
+  static RelicAddress<String> fromHostname(String hostname) {
+    return RelicHostnameAddress(hostname: hostname);
+  }
+
+  /// Creates a [RelicAddress] from an [InternetAddress].
+  static RelicAddress<InternetAddress> fromInternetAddress(
+    InternetAddress address,
+  ) {
+    return RelicInternetAddress(internetAddress: address);
+  }
 }
 
 /// A class that represents a hostname address.
