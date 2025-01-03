@@ -537,6 +537,8 @@ void main() {
         });
 
         var response = await _get();
+        expect(response.headers,
+            isNot(contains(HttpHeaders.transferEncodingHeader)));
         expect(response.bodyBytes, equals([1, 2, 3, 4]));
       });
 
