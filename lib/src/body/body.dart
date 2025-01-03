@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:relic/relic.dart';
+import 'package:relic/src/body/types/body_type.dart';
 import 'package:relic/src/body/types/mime_type.dart';
 
 /// The body of a request or response.
