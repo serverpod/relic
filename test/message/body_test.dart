@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -159,6 +160,45 @@ void main() {
       expect(response.headers['transfer-encoding'], isNull);
       expect(response.bodyBytes, equals([1, 2, 3, 4]));
     });
+
+    test(
+      'with an unknown content length and chunked encoding '
+      'then content-length should be set to 0 and it should throw an HttpException '
+      'with a message that states the content size exceeds the specified contentLength',
+      () async {
+        Completer<Object?> completer = Completer();
+
+        unawaited(runZonedGuarded(
+          () async {
+            await _scheduleServer(
+              (_) => Response.ok(
+                body: Body.fromDataStream(
+                  Stream.fromIterable([
+                    Uint8List.fromList([1, 2, 3, 4])
+                  ]),
+                  mimeType: MimeType.multipartByteranges,
+                ),
+                headers: Headers.response(),
+              ),
+            );
+
+            await _get();
+          },
+          (error, stackTrace) {
+            if (completer.isCompleted) return;
+            completer.complete(error);
+          },
+        ));
+
+        var error = await completer.future;
+
+        expect(error, isA<HttpException>());
+        expect(
+          error.toString(),
+          contains('Content size exceeds specified contentLength'),
+        );
+      },
+    );
   });
 }
 
@@ -173,7 +213,7 @@ Future<void> _scheduleServer(
   assert(_server == null);
   _server = await relic_server.serve(
     handler,
-    'localhost',
+    RelicAddress.fromHostname('localhost'),
     0,
     securityContext: securityContext,
   );

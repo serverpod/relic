@@ -38,8 +38,6 @@ extension HttpResponseExtension on io.HttpResponse {
         statusCode != 204 &&
         // 304 is not modified
         statusCode != 304 &&
-        // If the content length is not known, chunked encoding is applied.
-        body.contentLength == null &&
         // If the content type is not multipart/byteranges, chunked encoding is applied.
         !isMultipartByteranges;
 
@@ -52,20 +50,21 @@ extension HttpResponseExtension on io.HttpResponse {
       isChunked = true;
     }
 
-    if (isChunked) {
-      // Remove conflicting 'identity' encoding if present.
-      encodings.removeWhere((e) => e.name == TransferEncoding.identity.name);
-
-      // Set Transfer-Encoding header and remove Content-Length as it is not needed for chunked encoding.
-      responseHeaders
-        ..set(
-          Headers.transferEncodingHeader,
-          encodings.map((e) => e.name).toList(),
-        )
-        ..removeAll(Headers.contentLengthHeader);
-    } else {
-      // Set Content-Length if chunked encoding is not enabled.
-      responseHeaders.contentLength = contentLength ?? 0;
+    if (!isChunked) {
+      // Set Content-Length to 0 if chunked encoding is not enabled.
+      responseHeaders.contentLength = 0;
+      return;
     }
+
+    // Remove conflicting 'identity' encoding if present.
+    encodings.removeWhere((e) => e.name == TransferEncoding.identity.name);
+
+    // Set Transfer-Encoding header and remove Content-Length as it is not needed for chunked encoding.
+    responseHeaders
+      ..set(
+        Headers.transferEncodingHeader,
+        encodings.map((e) => e.name).toList(),
+      )
+      ..removeAll(Headers.contentLengthHeader);
   }
 }
