@@ -15,7 +15,7 @@ class MimeType {
   static const csv = MimeType('text', 'csv');
 
   /// JavaScript mime type.
-  static const javaScript = MimeType('text', 'javascript');
+  static const javascript = MimeType('text', 'javascript');
 
   /// JSON mime type.
   static const json = MimeType('application', 'json');
@@ -25,13 +25,22 @@ class MimeType {
 
   /// Binary mime type.
 
-  static const binary = MimeType('application', 'octet-stream');
+  static const octetStream = MimeType('application', 'octet-stream');
 
   /// PDF mime type.
   static const pdf = MimeType('application', 'pdf');
 
   /// RTF mime type.
   static const rtf = MimeType('application', 'rtf');
+
+  /// Multipart form data mime type.
+  static const multipartFormData = MimeType('multipart', 'form-data');
+
+  /// Multipart byteranges mime type.
+  static const multipartByteranges = MimeType('multipart', 'byteranges');
+
+  /// URL-encoded form MIME type.
+  static const urlEncoded = MimeType('application', 'x-www-form-urlencoded');
 
   /// The primary type of the mime type.
   final String primaryType;

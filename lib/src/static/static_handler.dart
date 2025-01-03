@@ -309,7 +309,7 @@ Response? _fileRangeResponse(
       file.openRead(start, end + 1).cast<Uint8List>(),
       encoding: null,
       contentLength: (end - start) + 1,
-      mimeType: MimeType.binary,
+      mimeType: MimeType.octetStream,
     );
   }
 

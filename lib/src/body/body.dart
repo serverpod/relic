@@ -99,7 +99,7 @@ class Body {
   factory Body.fromData(
     Uint8List body, {
     Encoding? encoding,
-    MimeType mimeType = MimeType.binary,
+    MimeType mimeType = MimeType.octetStream,
   }) {
     return Body._(
       Stream.value(body),

@@ -458,8 +458,13 @@ void main() {
         });
 
         var response = await _get();
-        expect(response.headers,
-            containsPair(HttpHeaders.transferEncodingHeader, 'chunked'));
+        expect(
+          response.headers,
+          containsPair(
+            HttpHeaders.transferEncodingHeader,
+            TransferEncoding.chunked.name,
+          ),
+        );
         expect(response.bodyBytes, equals([1, 2, 3, 4]));
       });
 
@@ -478,13 +483,19 @@ void main() {
         });
 
         var response = await _get();
-        expect(response.headers,
-            containsPair(HttpHeaders.transferEncodingHeader, 'chunked'));
+        expect(
+          response.headers,
+          containsPair(
+            HttpHeaders.transferEncodingHeader,
+            TransferEncoding.chunked.name,
+          ),
+        );
         expect(response.bodyBytes, equals([1, 2, 3, 4]));
       });
     });
 
-    test('is preserved when the transfer-encoding header is "chunked"',
+    test(
+        'is preserved and body is not modified when the transfer-encoding header is "chunked"',
         () async {
       await _scheduleServer((request) {
         return Response.ok(
@@ -506,9 +517,12 @@ void main() {
       var response = await _get();
       expect(
         response.headers,
-        containsPair(HttpHeaders.transferEncodingHeader, 'chunked'),
+        containsPair(
+          HttpHeaders.transferEncodingHeader,
+          TransferEncoding.chunked.name,
+        ),
       );
-      expect(response.body, equals('hi'));
+      expect(response.body, equals('2\r\nhi\r\n0\r\n\r\n'));
     });
 
     group('is not added when', () {
@@ -517,11 +531,14 @@ void main() {
           return Response.ok(
             body: Body.fromDataStream(
               Stream.value(Uint8List.fromList([1, 2, 3, 4])),
+              contentLength: 4,
             ),
           );
         });
 
         var response = await _get();
+        expect(response.headers,
+            isNot(contains(HttpHeaders.transferEncodingHeader)));
         expect(response.bodyBytes, equals([1, 2, 3, 4]));
       });
 
