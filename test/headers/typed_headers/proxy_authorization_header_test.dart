@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'dart:io';
+
 import 'package:relic/src/headers/typed/headers/authorization_header.dart';
 import 'package:test/test.dart';
 import 'package:relic/src/headers/headers.dart';
@@ -15,19 +15,7 @@ void main() {
     late RelicServer server;
 
     setUp(() async {
-      try {
-        server = await RelicServer.createServer(
-          InternetAddress.loopbackIPv6,
-          0,
-          strictHeaders: true,
-        );
-      } on SocketException catch (_) {
-        server = await RelicServer.createServer(
-          InternetAddress.loopbackIPv4,
-          0,
-          strictHeaders: true,
-        );
-      }
+      server = await createServer(strictHeaders: true);
     });
 
     tearDown(() => server.close());
@@ -455,19 +443,7 @@ void main() {
     late RelicServer server;
 
     setUp(() async {
-      try {
-        server = await RelicServer.createServer(
-          InternetAddress.loopbackIPv6,
-          0,
-          strictHeaders: false,
-        );
-      } on SocketException catch (_) {
-        server = await RelicServer.createServer(
-          InternetAddress.loopbackIPv4,
-          0,
-          strictHeaders: false,
-        );
-      }
+      server = await createServer(strictHeaders: false);
     });
 
     tearDown(() => server.close());

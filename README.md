@@ -35,7 +35,11 @@ void main() async {
   var handler =
       const Pipeline().addMiddleware(logRequests()).addHandler(_echoRequest);
 
-  var server = await serve(handler, 'localhost', 8080);
+  var server = await serve(
+    handler,
+    RelicAddress.fromHostname('localhost'),
+    8080,
+  );
 
   // Enable content compression
   server.autoCompress = true;

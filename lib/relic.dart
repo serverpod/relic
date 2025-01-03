@@ -28,6 +28,8 @@ export 'src/middleware/middleware.dart' show Middleware, createMiddleware;
 export 'src/middleware/middleware_extensions.dart' show MiddlewareExtensions;
 
 /// Relic server related exports
+export 'src/address/relic_address.dart' show RelicAddress;
+export 'dart:io' show InternetAddress;
 export 'src/relic_server.dart' show RelicServer;
 export 'src/relic_server_serve.dart' show serve;
 

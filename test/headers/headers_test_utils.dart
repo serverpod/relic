@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:relic/relic.dart';
 import 'package:http/http.dart' as http;
@@ -10,6 +11,27 @@ class BadRequestException implements Exception {
   BadRequestException(
     this.message,
   );
+}
+
+/// Creates a [RelicServer] that listens on the loopback IPv6 address.
+/// If the IPv6 address is not available, it will listen on the loopback IPv4
+/// address.
+Future<RelicServer> createServer({
+  required bool strictHeaders,
+}) async {
+  try {
+    return RelicServer.createServer(
+      RelicAddress.fromInternetAddress(InternetAddress.loopbackIPv6),
+      0,
+      strictHeaders: strictHeaders,
+    );
+  } on SocketException catch (_) {
+    return RelicServer.createServer(
+      RelicAddress.fromInternetAddress(InternetAddress.loopbackIPv4),
+      0,
+      strictHeaders: strictHeaders,
+    );
+  }
 }
 
 /// Returns the headers from the server request if the server returns a 200

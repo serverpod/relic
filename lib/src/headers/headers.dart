@@ -1389,7 +1389,7 @@ final class _HeadersImpl extends Headers {
     return map;
   }
 
-  /// Date-related headers
+  /// Date related headers
   Map<String, DateTime?> get _dateHeadersMap => {
         Headers.dateHeader: date ?? DateTime.now().toUtc(),
         Headers.expiresHeader: expires,
@@ -1413,7 +1413,7 @@ final class _HeadersImpl extends Headers {
             accessControlRequestMethod?.value,
       };
 
-  /// List<String>-related headers
+  /// String list related headers
   Map<String, List<String>?> get _listStringHeadersMap =>
       <String, List<String>?>{
         Headers.viaHeader: via,
@@ -1422,7 +1422,7 @@ final class _HeadersImpl extends Headers {
         Headers.trailerHeader: trailer,
       };
 
-  /// Uri-related headers
+  /// Uri related headers
   Map<String, Uri?> get _uriHeadersMap => <String, Uri?>{
         Headers.locationHeader: location,
         Headers.refererHeader: referer,
@@ -1431,7 +1431,7 @@ final class _HeadersImpl extends Headers {
         Headers.hostHeader: host,
       };
 
-  /// TypedHeader-related headers
+  /// TypedHeader related headers
   Map<String, TypedHeader?> get _typedHeadersMap => <String, TypedHeader?>{
         Headers.fromHeader: from,
         Headers.acceptEncodingHeader: acceptEncoding,
