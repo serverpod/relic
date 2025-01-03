@@ -3,7 +3,6 @@ import 'dart:io';
 
 import 'package:relic/relic.dart';
 import 'package:http/http.dart' as http;
-import 'package:relic/src/address/relic_address.dart';
 
 /// Thrown when the server returns a 400 status code.
 class BadRequestException implements Exception {
@@ -22,13 +21,13 @@ Future<RelicServer> createServer({
 }) async {
   try {
     return RelicServer.createServer(
-      RelicInternetAddress(internetAddress: InternetAddress.loopbackIPv6),
+      RelicAddress.fromInternetAddress(InternetAddress.loopbackIPv6),
       0,
       strictHeaders: strictHeaders,
     );
   } on SocketException catch (_) {
     return RelicServer.createServer(
-      RelicInternetAddress(internetAddress: InternetAddress.loopbackIPv4),
+      RelicAddress.fromInternetAddress(InternetAddress.loopbackIPv4),
       0,
       strictHeaders: strictHeaders,
     );

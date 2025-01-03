@@ -37,7 +37,7 @@ void main() async {
 
   var server = await serve(
     handler,
-    RelicHostnameAddress(hostname: 'localhost'),
+    RelicAddress.fromHostname('localhost'),
     8080,
   );
 

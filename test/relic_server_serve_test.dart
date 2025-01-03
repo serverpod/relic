@@ -10,7 +10,6 @@ import 'package:async/async.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart' as parser;
 import 'package:relic/relic.dart';
-import 'package:relic/src/address/relic_address.dart';
 import 'package:relic/src/method/request_method.dart';
 import 'package:relic/src/relic_server_serve.dart' as relic_server;
 import 'package:test/test.dart';
@@ -286,7 +285,7 @@ void main() {
           Future(() => throw StateError('oh no'));
           return syncHandler(request);
         },
-        RelicHostnameAddress(hostname: 'localhost'),
+        RelicAddress.fromHostname('localhost'),
         0,
       );
 
@@ -306,7 +305,7 @@ void main() {
           Future(() => throw StateError('oh no'));
           return syncHandler(request);
         },
-        RelicHostnameAddress(hostname: 'localhost'),
+        RelicAddress.fromHostname('localhost'),
         0,
       );
 
@@ -417,7 +416,7 @@ void main() {
     test('can be set at the server level', () async {
       _server = await relic_server.serve(
         syncHandler,
-        RelicHostnameAddress(hostname: 'localhost'),
+        RelicAddress.fromHostname('localhost'),
         0,
         poweredByHeader: 'ourServer',
       );
@@ -438,7 +437,7 @@ void main() {
             ),
           );
         },
-        RelicHostnameAddress(hostname: 'localhost'),
+        RelicAddress.fromHostname('localhost'),
         0,
         poweredByHeader: 'ourServer',
       );
@@ -654,7 +653,7 @@ Future<void> _scheduleServer(
   assert(_server == null);
   _server = await relic_server.serve(
     handler,
-    RelicHostnameAddress(hostname: 'localhost'),
+    RelicAddress.fromHostname('localhost'),
     0,
     securityContext: securityContext,
   );

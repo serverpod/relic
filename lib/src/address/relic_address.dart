@@ -1,29 +1,29 @@
 import 'dart:io';
 
 /// A class that represents an address.
-abstract class RelicAddress<T> {
+abstract final class RelicAddress<T> {
   /// Returns the address as an [Object].
   T get address;
 
   /// Creates a [RelicAddress] from a [String].
   static RelicAddress<String> fromHostname(String hostname) {
-    return RelicHostnameAddress(hostname: hostname);
+    return _RelicHostnameAddress(hostname: hostname);
   }
 
   /// Creates a [RelicAddress] from an [InternetAddress].
   static RelicAddress<InternetAddress> fromInternetAddress(
     InternetAddress address,
   ) {
-    return RelicInternetAddress(internetAddress: address);
+    return _RelicInternetAddress(internetAddress: address);
   }
 }
 
 /// A class that represents a hostname address.
-class RelicHostnameAddress implements RelicAddress<String> {
+final class _RelicHostnameAddress implements RelicAddress<String> {
   /// The hostname of the address.
   final String hostname;
 
-  RelicHostnameAddress({
+  _RelicHostnameAddress({
     required this.hostname,
   });
 
@@ -36,11 +36,11 @@ class RelicHostnameAddress implements RelicAddress<String> {
 }
 
 /// A class that represents an internet address.
-class RelicInternetAddress implements RelicAddress<InternetAddress> {
+final class _RelicInternetAddress implements RelicAddress<InternetAddress> {
   /// The internet address of the address.
   final InternetAddress internetAddress;
 
-  RelicInternetAddress({
+  _RelicInternetAddress({
     required this.internetAddress,
   });
 

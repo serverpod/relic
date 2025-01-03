@@ -1,5 +1,4 @@
 import 'package:relic/relic.dart';
-import 'package:relic/src/address/relic_address.dart';
 
 void main() async {
   var handler =
@@ -7,7 +6,7 @@ void main() async {
 
   var server = await serve(
     handler,
-    RelicHostnameAddress(hostname: 'localhost'),
+    RelicAddress.fromHostname('localhost'),
     8080,
   );
 
