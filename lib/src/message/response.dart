@@ -125,6 +125,22 @@ class Response extends Message {
           context: context,
         );
 
+  /// Constructs a 204 No Content response.
+  ///
+  /// This indicates that the request has succeeded but that the server has no
+  /// further information to send in the response body.
+  ///
+  /// {@macro relic_response_body_and_encoding_param}
+  Response.noContent({
+    Headers? headers,
+    Map<String, Object>? context,
+  }) : this(
+          204,
+          body: Body.empty(),
+          headers: headers ?? Headers.response(),
+          context: context,
+        );
+
   /// Constructs a 304 Not Modified response.
   ///
   /// This is used to respond to a conditional GET request that provided
@@ -143,7 +159,7 @@ class Response extends Message {
           304,
           body: Body.empty(),
           context: context,
-          headers: (headers ?? Headers.response()),
+          headers: headers ?? Headers.response(),
         );
 
   /// Constructs a 400 Bad Request response.
