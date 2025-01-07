@@ -83,9 +83,9 @@ void main() {
     });
 
     test(
-        'with "identity" transfer encoding and known content length when '
-        'applying headers to the response then "chunked" transfer encoding '
-        'is added and "identity" is removed', () async {
+        'with "identity" transfer encoding and unknown "content-length" when '
+        'applying headers to the response then the response times out because '
+        'server does not send a "content-length" or end of stream', () async {
       await _scheduleServer(
         (_) => Response.ok(
           body: Body.fromDataStream(
@@ -101,16 +101,10 @@ void main() {
         ),
       );
 
-      var response = await _get();
       expect(
-        response.headers['transfer-encoding'],
-        contains(TransferEncoding.chunked.name),
+        () async => await _get(),
+        throwsA(isA<TimeoutException>()),
       );
-      expect(
-        response.headers['transfer-encoding'],
-        isNot(contains(TransferEncoding.identity.name)),
-      );
-      expect(response.bodyBytes, equals([1, 2, 3, 4]));
     });
 
     test(
@@ -160,45 +154,6 @@ void main() {
       expect(response.headers['transfer-encoding'], isNull);
       expect(response.bodyBytes, equals([1, 2, 3, 4]));
     });
-
-    test(
-      'with an unknown content length and chunked encoding '
-      'then content-length should be set to 0 and it should throw an HttpException '
-      'with a message that states the content size exceeds the specified contentLength',
-      () async {
-        Completer<Object?> completer = Completer();
-
-        unawaited(runZonedGuarded(
-          () async {
-            await _scheduleServer(
-              (_) => Response.ok(
-                body: Body.fromDataStream(
-                  Stream.fromIterable([
-                    Uint8List.fromList([1, 2, 3, 4])
-                  ]),
-                  mimeType: MimeType.multipartByteranges,
-                ),
-                headers: Headers.response(),
-              ),
-            );
-
-            await _get();
-          },
-          (error, stackTrace) {
-            if (completer.isCompleted) return;
-            completer.complete(error);
-          },
-        ));
-
-        var error = await completer.future;
-
-        expect(error, isA<HttpException>());
-        expect(
-          error.toString(),
-          contains('Content size exceeds specified contentLength'),
-        );
-      },
-    );
   });
 }
 
@@ -231,5 +186,5 @@ Future<http.Response> _get({
   if (headers != null) request.headers.addAll(headers);
 
   var response = await request.send();
-  return await http.Response.fromStream(response);
+  return await http.Response.fromStream(response).timeout(Duration(seconds: 1));
 }

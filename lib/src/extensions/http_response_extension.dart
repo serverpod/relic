@@ -4,67 +4,80 @@ import 'dart:io' as io;
 /// Extension for [io.HttpResponse] to apply headers and body.
 extension HttpResponseExtension on io.HttpResponse {
   /// Apply headers and body to the response.
+  ///
+  /// Resolves conflicts between `Content-Length` and `Transfer-Encoding`
+  /// based on HTTP/1.1 standards.
   void applyHeaders(Headers headers, Body body) {
     var responseHeaders = this.headers;
     responseHeaders.clear();
 
-    // Apply headers
+    // Apply all headers from the provided headers map.
     var mappedHeaders = headers.toMap();
     for (var entry in mappedHeaders.entries) {
       responseHeaders.set(entry.key, entry.value);
     }
 
-    // Set the Content-Type header based on the MIME type of the body.
+    // Set Content-Type based on the MIME type of the body.
     responseHeaders.contentType = body.getContentType();
 
-    // If the content length is known, set it and remove the Transfer-Encoding header.
+    // If the content length is known, set it and return.
     var contentLength = body.contentLength;
     if (contentLength != null) {
-      responseHeaders
-        ..contentLength = contentLength
-        ..removeAll(Headers.transferEncodingHeader);
+      responseHeaders.contentLength = contentLength;
       return;
     }
 
-    // Check if the content type is multipart/byteranges.
-    var bodyMimeType = body.contentType?.mimeType;
-    bool isMultipartByteranges =
-        bodyMimeType?.primaryType == MimeType.multipartByteranges.primaryType &&
-            bodyMimeType?.subType == MimeType.multipartByteranges.subType;
-
-    // Determine if chunked encoding should be applied.
-    bool shouldEnableChunkedEncoding = statusCode >= 200 &&
-        // 204 is no content
-        statusCode != 204 &&
-        // 304 is not modified
-        statusCode != 304 &&
-        // If the content type is not multipart/byteranges, chunked encoding is applied.
-        !isMultipartByteranges;
-
-    // Prepare transfer encodings.
     var encodings = headers.transferEncoding?.encodings ?? [];
-    bool isChunked = headers.transferEncoding?.isChunked ?? false;
+    var isChunked = headers.transferEncoding?.isChunked ?? false;
+    var isIdentity = headers.transferEncoding?.isIdentity ?? false;
+    var shouldEnableChunkedEncoding = _shouldEnableChunkedEncoding(body);
 
-    if (shouldEnableChunkedEncoding && !isChunked) {
+    // If the transfer encoding is not chunked or identity and chunked encoding
+    // should be enabled, add chunked encoding to the response.
+    if (!isChunked && !isIdentity && shouldEnableChunkedEncoding) {
       encodings.add(TransferEncoding.chunked);
-      isChunked = true;
     }
 
-    if (!isChunked) {
-      // Set Content-Length to 0 if chunked encoding is not enabled.
-      responseHeaders.contentLength = 0;
-      return;
-    }
+    // Set the transfer encoding header.
+    responseHeaders.set(
+      Headers.transferEncodingHeader,
+      encodings.map((e) => e.name).toList(),
+    );
+  }
 
-    // Remove conflicting 'identity' encoding if present.
-    encodings.removeWhere((e) => e.name == TransferEncoding.identity.name);
+  /// Check if chunked encoding should be applied.
+  ///
+  /// References:
+  /// - RFC 7230, Section 3.3: "Message Body" (https://datatracker.ietf.org/doc/html/rfc7230#section-3.3)
+  ///   - Responses with status codes 1xx (Informational), 204 (No Content), and 304 (Not Modified) MUST NOT include a body.
+  ///   - As these responses lack a body, there is no content to encode, making `Transfer-Encoding` unnecessary
+  ///     and inapplicable in such cases.
+  ///
+  /// - RFC 7233, Section 4.1: "Multipart/byteranges" (https://datatracker.ietf.org/doc/html/rfc7233#section-4.1)
+  ///   - Multipart/byteranges responses use the `Content-Range` mechanism instead of chunked transfer encoding.
+  ///
+  /// This logic ensures compliance with HTTP/1.1 by:
+  /// - Excluding status codes 1xx, 204, and 304 from chunked encoding.
+  /// - Handling multipart/byteranges responses according to their specific requirements.
+  bool _shouldEnableChunkedEncoding(Body body) {
+    return
+        // Exclude 1xx status codes (no body allowed).
+        statusCode >= 200 &&
+            // Exclude 204 (No Content) status code (no body allowed).
+            statusCode != 204 &&
+            // Exclude 304 (Not Modified) status code (no body allowed).
+            statusCode != 304 &&
+            // Exclude multipart/byteranges responses (handled via Content-Range).
+            !body.isMultipartByteranges;
+  }
+}
 
-    // Set Transfer-Encoding header and remove Content-Length as it is not needed for chunked encoding.
-    responseHeaders
-      ..set(
-        Headers.transferEncodingHeader,
-        encodings.map((e) => e.name).toList(),
-      )
-      ..removeAll(Headers.contentLengthHeader);
+/// Extension for [MimeType] to check if it is multipart/byteranges.
+extension _BodyExtension on Body {
+  /// Check if the body is multipart/byteranges.
+  bool get isMultipartByteranges {
+    return contentType?.mimeType.primaryType ==
+            MimeType.multipartByteranges.primaryType &&
+        contentType?.mimeType.subType == MimeType.multipartByteranges.subType;
   }
 }

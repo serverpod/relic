@@ -34,6 +34,11 @@ class TransferEncodingHeader implements TypedHeader {
     return encodings.contains(TransferEncoding.chunked);
   }
 
+  /// Checks if the Transfer-Encoding contains `identity`.
+  bool get isIdentity {
+    return encodings.contains(TransferEncoding.identity);
+  }
+
   /// Converts the [TransferEncodingHeader] instance into a string
   /// representation suitable for HTTP headers.
   @override

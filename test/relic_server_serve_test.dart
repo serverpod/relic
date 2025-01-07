@@ -448,50 +448,24 @@ void main() {
   });
 
   group('chunked coding', () {
-    group('is added when the transfer-encoding header is', () {
-      test('unset', () async {
-        await _scheduleServer((request) {
-          return Response.ok(
-            body: Body.fromDataStream(
-                Stream.value(Uint8List.fromList([1, 2, 3, 4]))),
-          );
-        });
-
-        var response = await _get();
-        expect(
-          response.headers,
-          containsPair(
-            HttpHeaders.transferEncodingHeader,
-            TransferEncoding.chunked.name,
+    test('is added when the transfer-encoding header is unset', () async {
+      await _scheduleServer((request) {
+        return Response.ok(
+          body: Body.fromDataStream(
+            Stream.value(Uint8List.fromList([1, 2, 3, 4])),
           ),
         );
-        expect(response.bodyBytes, equals([1, 2, 3, 4]));
       });
 
-      test('"identity"', () async {
-        await _scheduleServer((request) {
-          return Response.ok(
-            body: Body.fromDataStream(
-              Stream.value(Uint8List.fromList([1, 2, 3, 4])),
-            ),
-            headers: Headers.response(
-              transferEncoding: TransferEncodingHeader(
-                encodings: [TransferEncoding.identity],
-              ),
-            ),
-          );
-        });
-
-        var response = await _get();
-        expect(
-          response.headers,
-          containsPair(
-            HttpHeaders.transferEncodingHeader,
-            TransferEncoding.chunked.name,
-          ),
-        );
-        expect(response.bodyBytes, equals([1, 2, 3, 4]));
-      });
+      var response = await _get();
+      expect(
+        response.headers,
+        containsPair(
+          HttpHeaders.transferEncodingHeader,
+          TransferEncoding.chunked.name,
+        ),
+      );
+      expect(response.bodyBytes, equals([1, 2, 3, 4]));
     });
 
     test(
@@ -544,7 +518,10 @@ void main() {
 
       test('status code is 1xx', () async {
         await _scheduleServer((request) {
-          return Response(123, body: Body.fromDataStream(Stream.empty()));
+          return Response(
+            123,
+            body: Body.fromDataStream(Stream.empty()),
+          );
         });
 
         var response = await _get();
@@ -688,7 +665,7 @@ Future<http.Response> _get({
   if (headers != null) request.headers.addAll(headers);
 
   var response = await request.send();
-  return await http.Response.fromStream(response);
+  return await http.Response.fromStream(response).timeout(Duration(seconds: 1));
 }
 
 Future<http.StreamedResponse> _post({
