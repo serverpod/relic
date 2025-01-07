@@ -76,8 +76,8 @@ extension HttpResponseExtension on io.HttpResponse {
 extension _BodyExtension on Body {
   /// Check if the body is multipart/byteranges.
   bool get isMultipartByteranges {
-    return contentType?.mimeType.primaryType ==
-            MimeType.multipartByteranges.primaryType &&
-        contentType?.mimeType.subType == MimeType.multipartByteranges.subType;
+    var multipartByteranges = MimeType.multipartByteranges;
+    return bodyType?.mimeType.primaryType == multipartByteranges.primaryType &&
+        bodyType?.mimeType.subType == multipartByteranges.subType;
   }
 }

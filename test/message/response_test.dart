@@ -45,14 +45,25 @@ void main() {
         () {
       var response = Response.internalServerError();
       expect(
-          response.readAsString(), completion(equals('Internal Server Error')));
+        response.readAsString(),
+        completion(equals('Internal Server Error')),
+      );
     });
 
     test('when checked then it sets the content-type header to text/plain', () {
       var response = Response.internalServerError();
+      var contentType = response.body.getContentType();
       expect(
-        response.body.contentType?.toHeaderValue(),
-        equals('text/plain; charset=utf-8'),
+        contentType?.primaryType,
+        equals('text'),
+      );
+      expect(
+        contentType?.subType,
+        equals('plain'),
+      );
+      expect(
+        contentType?.charset,
+        equals('utf-8'),
       );
       expect(response.body.contentLength, equals(21));
     });

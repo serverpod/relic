@@ -21,7 +21,7 @@ class Body {
   /// determined efficiently.
   final int? contentLength;
 
-  /// The content type of the body.
+  /// The body type
   ///
   /// This will be `null` if the body is empty.
   ///
@@ -31,14 +31,14 @@ class Body {
   /// var body = Body.fromString('hello', mimeType: MimeType.plainText);
   /// print(body.contentType); // ContentType(text/plain; charset=utf-8)
   /// ```
-  final BodyType? contentType;
+  final BodyType? bodyType;
 
   Body._(
     this._stream,
     this.contentLength, {
     Encoding? encoding,
     MimeType? mimeType,
-  }) : contentType = mimeType == null
+  }) : bodyType = mimeType == null
             ? null
             : BodyType(mimeType: mimeType, encoding: encoding);
 
@@ -128,12 +128,12 @@ class Body {
   ///
   /// This is a convenience method that combines [mimeType] and [encoding].
   ContentType? getContentType() {
-    var mContentType = contentType;
-    if (mContentType == null) return null;
+    var mBodyType = bodyType;
+    if (mBodyType == null) return null;
     return ContentType(
-      mContentType.mimeType.primaryType,
-      mContentType.mimeType.subType,
-      charset: mContentType.encoding?.name,
+      mBodyType.mimeType.primaryType,
+      mBodyType.mimeType.subType,
+      charset: mBodyType.encoding?.name,
     );
   }
 }
