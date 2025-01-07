@@ -25,8 +25,8 @@ void main() {
   group('Given a response', () {
     test(
         'with an empty body and "chunked" transfer encoding '
-        'when applying headers to the response then the "chunked" transfer '
-        'encoding is removed', () async {
+        'when applying headers to the response '
+        'then the "chunked" transfer encoding is removed', () async {
       await _scheduleServer(
         (_) => Response.ok(
           body: Body.empty(),
@@ -44,8 +44,9 @@ void main() {
     });
 
     test(
-        'with unknown content length when applying headers '
-        'to the response then "chunked" transfer encoding is added', () async {
+        'with unknown content length '
+        'when applying headers to the response '
+        'then "chunked" transfer encoding is added', () async {
       await _scheduleServer(
         (_) => Response.ok(
           body: Body.fromDataStream(
@@ -65,9 +66,9 @@ void main() {
     });
 
     test(
-        'with a known content length when applying headers '
-        'to the response then "chunked" transfer encoding is not added',
-        () async {
+        'with a known content length '
+        'when applying headers to the response '
+        'then "chunked" transfer encoding is not added', () async {
       await _scheduleServer(
         (_) => Response.ok(
           body: Body.fromData(
@@ -83,9 +84,10 @@ void main() {
     });
 
     test(
-        'with "identity" transfer encoding and unknown "content-length" when '
-        'applying headers to the response then the response times out because '
-        'server does not send a "content-length" or end of stream', () async {
+        'with "identity" transfer encoding and unknown "content-length" '
+        'when applying headers to the response '
+        'then the response times out because server does not send a "content-length" '
+        'or end of stream', () async {
       await _scheduleServer(
         (_) => Response.ok(
           body: Body.fromDataStream(
@@ -108,8 +110,9 @@ void main() {
     });
 
     test(
-        'with "chunked" transfer encoding already applied when applying headers '
-        'to the response then "chunked" is retained', () async {
+        'with "chunked" transfer encoding already applied '
+        'when applying headers to the response '
+        'then "chunked" is retained', () async {
       await _scheduleServer(
         (_) => Response.ok(
           body: Body.fromDataStream(
@@ -134,9 +137,9 @@ void main() {
     });
 
     test(
-        'with a valid content length when applying headers '
-        'to the response then Content-Length is used instead of chunked encoding',
-        () async {
+        'with a valid content length '
+        'when applying headers to the response '
+        'then Content-Length is used instead of chunked encoding', () async {
       await _scheduleServer(
         (_) => Response.ok(
           body: Body.fromDataStream(
