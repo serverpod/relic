@@ -1,0 +1,34 @@
+name: Feature Request
+description: Suggest a new feature for Relic.
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        When suggesting a feature, please read this complete form and fill in all the fields to ensure we understand your idea thoroughly!
+  - type: textarea
+    id: problem-to-solve
+    attributes:
+      label: Problem to Solve
+      description: What problem are you trying to solve with this feature?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal
+      description: What is your proposed solution? Add as much detail as possible, including code examples or references.
+    validations:
+      required: true
+  - type: textarea
+    id: use-case
+    attributes:
+      label: Use Case
+      description: How would this feature be used in a real-world scenario? Provide an example if possible.
+    validations:
+      required: false
+  - type: textarea
+    id: additional-information
+    attributes:
+      label: Additional Information
+      description: Include any other details, references, or context that might help us understand your request better.

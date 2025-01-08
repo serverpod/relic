@@ -1,0 +1,32 @@
+name: Improvement Suggestion
+description: Suggest an improvement for Relic.
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        When suggesting an improvement, please complete this form thoroughly. Providing detailed and clear information will help us assess your suggestion more effectively!
+  - type: textarea
+    id: area-to-improve
+    attributes:
+      label: What could be improved?
+      description: Specify the part of the code or functionality that could be improved.
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why should this be improved?
+      description: Explain why this improvement is necessary or beneficial.
+    validations:
+      required: true
+  - type: textarea
+    id: risks
+    attributes:
+      label: Risks
+      description: Are there any risks associated with making this improvement? For example, could it change the API or affect other functionality?
+  - type: textarea
+    id: more-information
+    attributes:
+      label: More information
+      description: Provide additional information, references, or context about this suggestion. Links to similar implementations or examples are particularly useful.
