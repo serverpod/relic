@@ -21,7 +21,13 @@ class Body {
   /// determined efficiently.
   final int? contentLength;
 
-  /// The body type
+  /// Body type is a combination of [mimeType] and [encoding].
+  ///
+  /// For incoming requests, this is populated from the request content type
+  /// header.
+  ///
+  /// For outgoing responses, this field is used to create the content type
+  /// header.
   ///
   /// This will be `null` if the body is empty.
   ///
@@ -43,16 +49,7 @@ class Body {
             : BodyType(mimeType: mimeType, encoding: encoding);
 
   /// Creates an empty body.
-  factory Body.empty({
-    Encoding encoding = utf8,
-    MimeType mimeType = MimeType.plainText,
-  }) =>
-      Body._(
-        Stream.empty(),
-        0,
-        encoding: encoding,
-        mimeType: mimeType,
-      );
+  factory Body.empty() => Body._(Stream.empty(), 0);
 
   /// Creates a body from a [HttpRequest].
   factory Body.fromHttpRequest(HttpRequest request) {

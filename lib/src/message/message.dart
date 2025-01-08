@@ -20,10 +20,10 @@ abstract class Message {
     this.context = const {},
   });
 
-  /// Returns the MIME type from the Body-Type (Content-Type) header, if available.
+  /// Returns the MIME type from the Body-Type (Content-Type header), if available.
   MimeType? get mimeType => body.bodyType?.mimeType;
 
-  /// Returns the encoding specified in the Body-Type (Content-Type) header, or null if not specified.
+  /// Returns the encoding specified in the Body-Type (Content-Type header), or null if not specified.
   Encoding? get encoding => body.bodyType?.encoding;
 
   /// Reads the body as a stream of bytes. Can only be called once.

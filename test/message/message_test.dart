@@ -222,7 +222,11 @@ void main() {
 
   group('Given encoding', () {
     test('when no content-type header is present then it defaults to utf8', () {
-      expect(_createMessage().encoding, utf8);
+      expect(
+          _createMessage(
+            body: Body.fromString(''),
+          ).encoding,
+          utf8);
     });
 
     test('when encoding a String then it defaults to UTF-8', () {
