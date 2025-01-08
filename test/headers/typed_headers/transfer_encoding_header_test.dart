@@ -1,3 +1,4 @@
+import 'package:relic/src/headers/typed/headers/transfer_encoding_header.dart';
 import 'package:test/test.dart';
 import 'package:relic/src/headers/headers.dart';
 import 'package:relic/src/relic_server.dart';
@@ -111,7 +112,11 @@ void main() {
           headers: {'transfer-encoding': 'gzip, chunked'},
         );
 
-        expect(headers.transferEncoding?.isChunked, isTrue);
+        expect(
+          headers.transferEncoding?.encodings
+              .any((e) => e.name == TransferEncoding.chunked.name),
+          isTrue,
+        );
       },
     );
 

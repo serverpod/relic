@@ -5,8 +5,8 @@ import 'dart:io' as io;
 extension HttpResponseExtension on io.HttpResponse {
   /// Apply headers and body to the response.
   ///
-  /// Resolves conflicts between `Content-Length` and `Transfer-Encoding`
-  /// based on HTTP/1.1 standards.
+  /// Transfer encoding 'chunked' may be added to the response if it is required
+  /// and does not conflict with existing headers.
   void applyHeaders(Headers headers, Body body) {
     var responseHeaders = this.headers;
     responseHeaders.clear();
@@ -80,4 +80,17 @@ extension _BodyExtension on Body {
     return bodyType?.mimeType.primaryType == multipartByteranges.primaryType &&
         bodyType?.mimeType.subType == multipartByteranges.subType;
   }
+}
+
+extension _TransferEncodingHeaderExtension on TransferEncodingHeader {
+  /// Checks if the Transfer-Encoding contains the specified encoding.
+  bool _exists(TransferEncoding encoding) {
+    return encodings.any((e) => e.name == encoding.name);
+  }
+
+  /// Checks if the Transfer-Encoding contains `chunked`.
+  bool get isChunked => _exists(TransferEncoding.chunked);
+
+  /// Checks if the Transfer-Encoding contains `identity`.
+  bool get isIdentity => _exists(TransferEncoding.identity);
 }
