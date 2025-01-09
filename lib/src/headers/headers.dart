@@ -587,25 +587,25 @@ abstract base class Headers {
     return _HeadersImpl(
       // Date-related headers
       date: _LazyInit.lazy(
-        init: () => dartIOHeaders.parseSingleValue(
+        () => dartIOHeaders.parseSingleValue(
           dateHeader,
           onParse: parseDate,
         ),
       ),
       expires: _LazyInit.lazy(
-        init: () => dartIOHeaders.parseSingleValue(
+        () => dartIOHeaders.parseSingleValue(
           expiresHeader,
           onParse: parseDate,
         ),
       ),
       ifModifiedSince: _LazyInit.lazy(
-        init: () => dartIOHeaders.parseSingleValue(
+        () => dartIOHeaders.parseSingleValue(
           ifModifiedSinceHeader,
           onParse: parseDate,
         ),
       ),
       lastModified: _LazyInit.lazy(
-        init: () => dartIOHeaders.parseSingleValue(
+        () => dartIOHeaders.parseSingleValue(
           lastModifiedHeader,
           onParse: parseDate,
         ),
@@ -613,19 +613,19 @@ abstract base class Headers {
 
       // General Headers
       origin: _LazyInit.lazy(
-        init: () => dartIOHeaders.parseSingleValue(
+        () => dartIOHeaders.parseSingleValue(
           originHeader,
           onParse: parseUri,
         ),
       ),
       server: _LazyInit.lazy(
-        init: () => dartIOHeaders.parseSingleValue(
+        () => dartIOHeaders.parseSingleValue(
           serverHeader,
           onParse: parseString,
         ),
       ),
       via: _LazyInit.lazy(
-        init: () => dartIOHeaders.parseMultipleValue(
+        () => dartIOHeaders.parseMultipleValue(
           viaHeader,
           onParse: parseStringList,
         ),
@@ -633,128 +633,128 @@ abstract base class Headers {
 
       // Request Headers
       cookie: _LazyInit.lazy(
-        init: () => dartIOHeaders.parseSingleValue(
+        () => dartIOHeaders.parseSingleValue(
           cookieHeader,
           onParse: CookieHeader.parse,
         ),
       ),
       from: _LazyInit.lazy(
-        init: () => dartIOHeaders.parseMultipleValue(
+        () => dartIOHeaders.parseMultipleValue(
           fromHeader,
           onParse: FromHeader.parse,
         ),
       ),
       host: _LazyInit.lazy(
-        init: () => dartIOHeaders.parseSingleValue(
+        () => dartIOHeaders.parseSingleValue(
           hostHeader,
           onParse: parseUri,
         ),
       ),
       acceptEncoding: _LazyInit.lazy(
-        init: () => dartIOHeaders.parseMultipleValue(
+        () => dartIOHeaders.parseMultipleValue(
           acceptEncodingHeader,
           onParse: AcceptEncodingHeader.parse,
         ),
       ),
       acceptLanguage: _LazyInit.lazy(
-        init: () => dartIOHeaders.parseMultipleValue(
+        () => dartIOHeaders.parseMultipleValue(
           acceptLanguageHeader,
           onParse: AcceptLanguageHeader.parse,
         ),
       ),
       accessControlRequestHeaders: _LazyInit.lazy(
-        init: () => dartIOHeaders.parseMultipleValue(
+        () => dartIOHeaders.parseMultipleValue(
           accessControlRequestHeadersHeader,
           onParse: parseStringList,
         ),
       ),
       accessControlRequestMethod: _LazyInit.lazy(
-        init: () => dartIOHeaders.parseSingleValue(
+        () => dartIOHeaders.parseSingleValue(
           accessControlRequestMethodHeader,
           onParse: RequestMethod.parse,
         ),
       ),
       age: _LazyInit.lazy(
-        init: () => dartIOHeaders.parseSingleValue(
+        () => dartIOHeaders.parseSingleValue(
           ageHeader,
           onParse: parsePositiveInt,
         ),
       ),
 
       authorization: _LazyInit.lazy(
-        init: () => dartIOHeaders.parseSingleValue(
+        () => dartIOHeaders.parseSingleValue(
           authorizationHeader,
           onParse: AuthorizationHeader.parse,
         ),
       ),
       connection: _LazyInit.lazy(
-        init: () => dartIOHeaders.parseMultipleValue(
+        () => dartIOHeaders.parseMultipleValue(
           connectionHeader,
           onParse: ConnectionHeader.parse,
         ),
       ),
       expect: _LazyInit.lazy(
-        init: () => dartIOHeaders.parseSingleValue(
+        () => dartIOHeaders.parseSingleValue(
           expectHeader,
           onParse: ExpectHeader.parse,
         ),
       ),
       ifMatch: _LazyInit.lazy(
-        init: () => dartIOHeaders.parseMultipleValue(
+        () => dartIOHeaders.parseMultipleValue(
           ifMatchHeader,
           onParse: IfMatchHeader.parse,
         ),
       ),
       ifNoneMatch: _LazyInit.lazy(
-        init: () => dartIOHeaders.parseMultipleValue(
+        () => dartIOHeaders.parseMultipleValue(
           ifNoneMatchHeader,
           onParse: IfNoneMatchHeader.parse,
         ),
       ),
       ifRange: _LazyInit.lazy(
-        init: () => dartIOHeaders.parseSingleValue(
+        () => dartIOHeaders.parseSingleValue(
           ifRangeHeader,
           onParse: IfRangeHeader.parse,
         ),
       ),
       maxForwards: _LazyInit.lazy(
-        init: () => dartIOHeaders.parseSingleValue(
+        () => dartIOHeaders.parseSingleValue(
           maxForwardsHeader,
           onParse: parsePositiveInt,
         ),
       ),
       proxyAuthorization: _LazyInit.lazy(
-        init: () => dartIOHeaders.parseSingleValue(
+        () => dartIOHeaders.parseSingleValue(
           proxyAuthorizationHeader,
           onParse: AuthorizationHeader.parse,
         ),
       ),
       range: _LazyInit.lazy(
-        init: () => dartIOHeaders.parseSingleValue(
+        () => dartIOHeaders.parseSingleValue(
           rangeHeader,
           onParse: RangeHeader.parse,
         ),
       ),
       referer: _LazyInit.lazy(
-        init: () => dartIOHeaders.parseSingleValue(
+        () => dartIOHeaders.parseSingleValue(
           refererHeader,
           onParse: parseUri,
         ),
       ),
       te: _LazyInit.lazy(
-        init: () => dartIOHeaders.parseMultipleValue(
+        () => dartIOHeaders.parseMultipleValue(
           teHeader,
           onParse: TEHeader.parse,
         ),
       ),
       upgrade: _LazyInit.lazy(
-        init: () => dartIOHeaders.parseMultipleValue(
+        () => dartIOHeaders.parseMultipleValue(
           upgradeHeader,
           onParse: UpgradeHeader.parse,
         ),
       ),
       userAgent: _LazyInit.lazy(
-        init: () => dartIOHeaders.parseSingleValue(
+        () => dartIOHeaders.parseSingleValue(
           userAgentHeader,
           onParse: parseString,
         ),
@@ -762,116 +762,116 @@ abstract base class Headers {
 
       // Response Headers
       setCookie: _LazyInit.lazy(
-        init: () => dartIOHeaders.parseSingleValue(
+        () => dartIOHeaders.parseSingleValue(
           setCookieHeader,
           onParse: SetCookieHeader.parse,
         ),
       ),
       allow: _LazyInit.lazy(
-        init: () => dartIOHeaders.parseMultipleValue(
+        () => dartIOHeaders.parseMultipleValue(
           allowHeader,
           onParse: parseMethodList,
         ),
       ),
       location: _LazyInit.lazy(
-        init: () => dartIOHeaders.parseSingleValue(
+        () => dartIOHeaders.parseSingleValue(
           locationHeader,
           onParse: parseUri,
         ),
       ),
 
       accessControlAllowCredentials: _LazyInit.lazy(
-        init: () => dartIOHeaders.parseSingleValue(
+        () => dartIOHeaders.parseSingleValue(
           accessControlAllowCredentialsHeader,
           onParse: parsePositiveBool,
         ),
       ),
       accessControlAllowOrigin: _LazyInit.lazy(
-        init: () => dartIOHeaders.parseSingleValue(
+        () => dartIOHeaders.parseSingleValue(
           accessControlAllowOriginHeader,
           onParse: AccessControlAllowOriginHeader.parse,
         ),
       ),
       accessControlExposeHeaders: _LazyInit.lazy(
-        init: () => dartIOHeaders.parseMultipleValue(
+        () => dartIOHeaders.parseMultipleValue(
           accessControlExposeHeadersHeader,
           onParse: AccessControlExposeHeadersHeader.parse,
         ),
       ),
       accessControlMaxAge: _LazyInit.lazy(
-        init: () => dartIOHeaders.parseSingleValue(
+        () => dartIOHeaders.parseSingleValue(
           accessControlMaxAgeHeader,
           onParse: parseInt,
         ),
       ),
       cacheControl: _LazyInit.lazy(
-        init: () => dartIOHeaders.parseMultipleValue(
+        () => dartIOHeaders.parseMultipleValue(
           cacheControlHeader,
           onParse: CacheControlHeader.parse,
         ),
       ),
       contentDisposition: _LazyInit.lazy(
-        init: () => dartIOHeaders.parseSingleValue(
+        () => dartIOHeaders.parseSingleValue(
           contentDispositionHeader,
           onParse: ContentDispositionHeader.parse,
         ),
       ),
       contentEncoding: _LazyInit.lazy(
-        init: () => dartIOHeaders.parseMultipleValue(
+        () => dartIOHeaders.parseMultipleValue(
           contentEncodingHeader,
           onParse: ContentEncodingHeader.parse,
         ),
       ),
       contentLanguage: _LazyInit.lazy(
-        init: () => dartIOHeaders.parseMultipleValue(
+        () => dartIOHeaders.parseMultipleValue(
           contentLanguageHeader,
           onParse: ContentLanguageHeader.parse,
         ),
       ),
       contentLocation: _LazyInit.lazy(
-        init: () => dartIOHeaders.parseSingleValue(
+        () => dartIOHeaders.parseSingleValue(
           contentLocationHeader,
           onParse: parseUri,
         ),
       ),
       contentRange: _LazyInit.lazy(
-        init: () => dartIOHeaders.parseSingleValue(
+        () => dartIOHeaders.parseSingleValue(
           contentRangeHeader,
           onParse: ContentRangeHeader.parse,
         ),
       ),
       etag: _LazyInit.lazy(
-        init: () => dartIOHeaders.parseSingleValue(
+        () => dartIOHeaders.parseSingleValue(
           etagHeader,
           onParse: ETagHeader.parse,
         ),
       ),
       proxyAuthenticate: _LazyInit.lazy(
-        init: () => dartIOHeaders.parseSingleValue(
+        () => dartIOHeaders.parseSingleValue(
           proxyAuthenticationHeader,
           onParse: AuthenticationHeader.parse,
         ),
       ),
       retryAfter: _LazyInit.lazy(
-        init: () => dartIOHeaders.parseSingleValue(
+        () => dartIOHeaders.parseSingleValue(
           retryAfterHeader,
           onParse: RetryAfterHeader.parse,
         ),
       ),
       trailer: _LazyInit.lazy(
-        init: () => dartIOHeaders.parseMultipleValue(
+        () => dartIOHeaders.parseMultipleValue(
           trailerHeader,
           onParse: parseStringList,
         ),
       ),
       vary: _LazyInit.lazy(
-        init: () => dartIOHeaders.parseMultipleValue(
+        () => dartIOHeaders.parseMultipleValue(
           varyHeader,
           onParse: VaryHeader.parse,
         ),
       ),
       wwwAuthenticate: _LazyInit.lazy(
-        init: () => dartIOHeaders.parseSingleValue(
+        () => dartIOHeaders.parseSingleValue(
           wwwAuthenticateHeader,
           onParse: AuthenticationHeader.parse,
         ),
@@ -879,79 +879,79 @@ abstract base class Headers {
 
       // Security and Modern Headers
       strictTransportSecurity: _LazyInit.lazy(
-        init: () => dartIOHeaders.parseSingleValue(
+        () => dartIOHeaders.parseSingleValue(
           strictTransportSecurityHeader,
           onParse: StrictTransportSecurityHeader.parse,
         ),
       ),
       contentSecurityPolicy: _LazyInit.lazy(
-        init: () => dartIOHeaders.parseSingleValue(
+        () => dartIOHeaders.parseSingleValue(
           contentSecurityPolicyHeader,
           onParse: ContentSecurityPolicyHeader.parse,
         ),
       ),
       referrerPolicy: _LazyInit.lazy(
-        init: () => dartIOHeaders.parseSingleValue(
+        () => dartIOHeaders.parseSingleValue(
           referrerPolicyHeader,
           onParse: ReferrerPolicyHeader.parse,
         ),
       ),
       permissionsPolicy: _LazyInit.lazy(
-        init: () => dartIOHeaders.parseSingleValue(
+        () => dartIOHeaders.parseSingleValue(
           permissionsPolicyHeader,
           onParse: PermissionsPolicyHeader.parse,
         ),
       ),
       accessControlAllowMethods: _LazyInit.lazy(
-        init: () => dartIOHeaders.parseMultipleValue(
+        () => dartIOHeaders.parseMultipleValue(
           accessControlAllowMethodsHeader,
           onParse: AccessControlAllowMethodsHeader.parse,
         ),
       ),
       accessControlAllowHeaders: _LazyInit.lazy(
-        init: () => dartIOHeaders.parseMultipleValue(
+        () => dartIOHeaders.parseMultipleValue(
           accessControlAllowHeadersHeader,
           onParse: AccessControlAllowHeadersHeader.parse,
         ),
       ),
       clearSiteData: _LazyInit.lazy(
-        init: () => dartIOHeaders.parseMultipleValue(
+        () => dartIOHeaders.parseMultipleValue(
           clearSiteDataHeader,
           onParse: ClearSiteDataHeader.parse,
         ),
       ),
       secFetchDest: _LazyInit.lazy(
-        init: () => dartIOHeaders.parseSingleValue(
+        () => dartIOHeaders.parseSingleValue(
           secFetchDestHeader,
           onParse: SecFetchDestHeader.parse,
         ),
       ),
       secFetchMode: _LazyInit.lazy(
-        init: () => dartIOHeaders.parseSingleValue(
+        () => dartIOHeaders.parseSingleValue(
           secFetchModeHeader,
           onParse: SecFetchModeHeader.parse,
         ),
       ),
       secFetchSite: _LazyInit.lazy(
-        init: () => dartIOHeaders.parseSingleValue(
+        () => dartIOHeaders.parseSingleValue(
           secFetchSiteHeader,
           onParse: SecFetchSiteHeader.parse,
         ),
       ),
       crossOriginResourcePolicy: _LazyInit.lazy(
-        init: () => dartIOHeaders.parseSingleValue(
+        () => dartIOHeaders.parseSingleValue(
           crossOriginResourcePolicyHeader,
           onParse: CrossOriginResourcePolicyHeader.parse,
         ),
       ),
       crossOriginEmbedderPolicy: _LazyInit.lazy(
-        init: () => dartIOHeaders.parseSingleValue(
+        () => dartIOHeaders.parseSingleValue(
           crossOriginEmbedderPolicyHeader,
           onParse: CrossOriginEmbedderPolicyHeader.parse,
         ),
       ),
       crossOriginOpenerPolicy: _LazyInit.lazy(
-        init: () => dartIOHeaders.parseSingleValue(
+        () => dartIOHeaders.parseSingleValue(
           crossOriginOpenerPolicyHeader,
           onParse: CrossOriginOpenerPolicyHeader.parse,
         ),
@@ -959,25 +959,25 @@ abstract base class Headers {
 
       // Common Headers (Used in Both Requests and Responses)
       accept: _LazyInit.lazy(
-        init: () => dartIOHeaders.parseMultipleValue(
+        () => dartIOHeaders.parseMultipleValue(
           acceptHeader,
           onParse: AcceptHeader.parse,
         ),
       ),
       acceptRanges: _LazyInit.lazy(
-        init: () => dartIOHeaders.parseSingleValue(
+        () => dartIOHeaders.parseSingleValue(
           acceptRangesHeader,
           onParse: AcceptRangesHeader.parse,
         ),
       ),
       transferEncoding: _LazyInit.lazy(
-        init: () => dartIOHeaders.parseMultipleValue(
+        () => dartIOHeaders.parseMultipleValue(
           transferEncodingHeader,
           onParse: TransferEncodingHeader.parse,
         ),
       ),
       xPoweredBy: _LazyInit.lazy(
-        init: () =>
+        () =>
             dartIOHeaders.parseSingleValue(
               xPoweredByHeader,
               onParse: parseString,
@@ -1039,8 +1039,8 @@ abstract base class Headers {
   }) {
     return _HeadersImpl(
       // Date-related headers
-      date: _LazyInit.value(value: date),
-      ifModifiedSince: _LazyInit.value(value: ifModifiedSince),
+      date: _LazyInit.withValue(date),
+      ifModifiedSince: _LazyInit.withValue(ifModifiedSince),
       expires: _LazyInit.nullValue(),
       lastModified: _LazyInit.nullValue(),
 
@@ -1050,29 +1050,29 @@ abstract base class Headers {
       via: _LazyInit.nullValue(),
 
       // Request Headers
-      cookie: _LazyInit.value(value: cookie),
-      from: _LazyInit.value(value: from),
-      host: _LazyInit.value(value: host),
-      acceptEncoding: _LazyInit.value(value: acceptEncoding),
-      acceptLanguage: _LazyInit.value(value: acceptLanguage),
+      cookie: _LazyInit.withValue(cookie),
+      from: _LazyInit.withValue(from),
+      host: _LazyInit.withValue(host),
+      acceptEncoding: _LazyInit.withValue(acceptEncoding),
+      acceptLanguage: _LazyInit.withValue(acceptLanguage),
       accessControlRequestHeaders:
-          _LazyInit.value(value: accessControlRequestHeaders),
+          _LazyInit.withValue(accessControlRequestHeaders),
       accessControlRequestMethod:
-          _LazyInit.value(value: accessControlRequestMethod),
-      age: _LazyInit.value(value: age),
-      authorization: _LazyInit.value(value: authorization),
-      connection: _LazyInit.value(value: connection),
-      expect: _LazyInit.value(value: expect),
-      ifMatch: _LazyInit.value(value: ifMatch),
-      ifNoneMatch: _LazyInit.value(value: ifNoneMatch),
-      ifRange: _LazyInit.value(value: ifRange),
-      maxForwards: _LazyInit.value(value: maxForwards),
-      proxyAuthorization: _LazyInit.value(value: proxyAuthorization),
-      range: _LazyInit.value(value: range),
-      referer: _LazyInit.value(value: referer),
-      userAgent: _LazyInit.value(value: userAgent),
-      te: _LazyInit.value(value: te),
-      upgrade: _LazyInit.value(value: upgrade),
+          _LazyInit.withValue(accessControlRequestMethod),
+      age: _LazyInit.withValue(age),
+      authorization: _LazyInit.withValue(authorization),
+      connection: _LazyInit.withValue(connection),
+      expect: _LazyInit.withValue(expect),
+      ifMatch: _LazyInit.withValue(ifMatch),
+      ifNoneMatch: _LazyInit.withValue(ifNoneMatch),
+      ifRange: _LazyInit.withValue(ifRange),
+      maxForwards: _LazyInit.withValue(maxForwards),
+      proxyAuthorization: _LazyInit.withValue(proxyAuthorization),
+      range: _LazyInit.withValue(range),
+      referer: _LazyInit.withValue(referer),
+      userAgent: _LazyInit.withValue(userAgent),
+      te: _LazyInit.withValue(te),
+      upgrade: _LazyInit.withValue(upgrade),
 
       // response headers
       setCookie: _LazyInit.nullValue(),
@@ -1096,9 +1096,9 @@ abstract base class Headers {
       contentDisposition: _LazyInit.nullValue(),
 
       // Security and Modern Headers
-      secFetchDest: _LazyInit.value(value: secFetchDest),
-      secFetchMode: _LazyInit.value(value: secFetchMode),
-      secFetchSite: _LazyInit.value(value: secFetchSite),
+      secFetchDest: _LazyInit.withValue(secFetchDest),
+      secFetchMode: _LazyInit.withValue(secFetchMode),
+      secFetchSite: _LazyInit.withValue(secFetchSite),
       crossOriginResourcePolicy: _LazyInit.nullValue(),
       crossOriginEmbedderPolicy: _LazyInit.nullValue(),
       crossOriginOpenerPolicy: _LazyInit.nullValue(),
@@ -1111,10 +1111,10 @@ abstract base class Headers {
       clearSiteData: _LazyInit.nullValue(),
 
       //common headers
-      accept: _LazyInit.value(value: accept),
-      acceptRanges: _LazyInit.value(value: acceptRanges),
-      transferEncoding: _LazyInit.value(value: transferEncoding),
-      xPoweredBy: _LazyInit.value(value: xPoweredBy),
+      accept: _LazyInit.withValue(accept),
+      acceptRanges: _LazyInit.withValue(acceptRanges),
+      transferEncoding: _LazyInit.withValue(transferEncoding),
+      xPoweredBy: _LazyInit.withValue(xPoweredBy),
 
       // Custom headers
       custom: custom ?? CustomHeaders.empty(),
@@ -1183,18 +1183,18 @@ abstract base class Headers {
   }) {
     return _HeadersImpl(
       // Date-related headers
-      date: _LazyInit.value(value: date ?? DateTime.now()),
-      expires: _LazyInit.value(value: expires),
-      lastModified: _LazyInit.value(value: lastModified),
+      date: _LazyInit.withValue(date ?? DateTime.now()),
+      expires: _LazyInit.withValue(expires),
+      lastModified: _LazyInit.withValue(lastModified),
       ifModifiedSince: _LazyInit.nullValue(),
 
       // General Headers
-      origin: _LazyInit.value(value: origin),
-      server: _LazyInit.value(value: server),
-      via: _LazyInit.value(value: via),
+      origin: _LazyInit.withValue(origin),
+      server: _LazyInit.withValue(server),
+      via: _LazyInit.withValue(via),
 
       // This is a request header but is also used in middleware
-      from: _LazyInit.value(value: from),
+      from: _LazyInit.withValue(from),
 
       // Request Headers
       cookie: _LazyInit.nullValue(),
@@ -1219,53 +1219,48 @@ abstract base class Headers {
       upgrade: _LazyInit.nullValue(),
 
       // response Headers
-      allow: _LazyInit.value(value: allow),
-      location: _LazyInit.value(value: location),
+      allow: _LazyInit.withValue(allow),
+      location: _LazyInit.withValue(location),
       accessControlAllowCredentials:
-          _LazyInit.value(value: accessControlAllowCredentials),
-      accessControlAllowOrigin:
-          _LazyInit.value(value: accessControlAllowOrigin),
+          _LazyInit.withValue(accessControlAllowCredentials),
+      accessControlAllowOrigin: _LazyInit.withValue(accessControlAllowOrigin),
       accessControlExposeHeaders:
-          _LazyInit.value(value: accessControlExposeHeaders),
-      accessControlMaxAge: _LazyInit.value(value: accessControlMaxAge),
-      cacheControl: _LazyInit.value(value: cacheControl),
-      contentEncoding: _LazyInit.value(value: contentEncoding),
-      contentLanguage: _LazyInit.value(value: contentLanguage),
-      contentLocation: _LazyInit.value(value: contentLocation),
-      contentRange: _LazyInit.value(value: contentRange),
-      etag: _LazyInit.value(value: etag),
-      proxyAuthenticate: _LazyInit.value(value: proxyAuthenticate),
-      retryAfter: _LazyInit.value(value: retryAfter),
-      trailer: _LazyInit.value(value: trailer),
-      vary: _LazyInit.value(value: vary),
-      wwwAuthenticate: _LazyInit.value(value: wwwAuthenticate),
-      contentDisposition: _LazyInit.value(value: contentDisposition),
-      setCookie: _LazyInit.value(value: setCookie),
+          _LazyInit.withValue(accessControlExposeHeaders),
+      accessControlMaxAge: _LazyInit.withValue(accessControlMaxAge),
+      cacheControl: _LazyInit.withValue(cacheControl),
+      contentEncoding: _LazyInit.withValue(contentEncoding),
+      contentLanguage: _LazyInit.withValue(contentLanguage),
+      contentLocation: _LazyInit.withValue(contentLocation),
+      contentRange: _LazyInit.withValue(contentRange),
+      etag: _LazyInit.withValue(etag),
+      proxyAuthenticate: _LazyInit.withValue(proxyAuthenticate),
+      retryAfter: _LazyInit.withValue(retryAfter),
+      trailer: _LazyInit.withValue(trailer),
+      vary: _LazyInit.withValue(vary),
+      wwwAuthenticate: _LazyInit.withValue(wwwAuthenticate),
+      contentDisposition: _LazyInit.withValue(contentDisposition),
+      setCookie: _LazyInit.withValue(setCookie),
 
       // Security and Modern Headers
-      strictTransportSecurity: _LazyInit.value(value: strictTransportSecurity),
-      contentSecurityPolicy: _LazyInit.value(value: contentSecurityPolicy),
-      referrerPolicy: _LazyInit.value(value: referrerPolicy),
-      permissionsPolicy: _LazyInit.value(value: permissionsPolicy),
-      accessControlAllowMethods:
-          _LazyInit.value(value: accessControlAllowMethods),
-      accessControlAllowHeaders:
-          _LazyInit.value(value: accessControlAllowHeaders),
-      clearSiteData: _LazyInit.value(value: clearSiteData),
-      secFetchDest: _LazyInit.value(value: secFetchDest),
-      secFetchMode: _LazyInit.value(value: secFetchMode),
-      secFetchSite: _LazyInit.value(value: secFetchSite),
-      crossOriginResourcePolicy:
-          _LazyInit.value(value: crossOriginResourcePolicy),
-      crossOriginEmbedderPolicy:
-          _LazyInit.value(value: crossOriginEmbedderPolicy),
-      crossOriginOpenerPolicy: _LazyInit.value(value: crossOriginOpenerPolicy),
+      strictTransportSecurity: _LazyInit.withValue(strictTransportSecurity),
+      contentSecurityPolicy: _LazyInit.withValue(contentSecurityPolicy),
+      referrerPolicy: _LazyInit.withValue(referrerPolicy),
+      permissionsPolicy: _LazyInit.withValue(permissionsPolicy),
+      accessControlAllowMethods: _LazyInit.withValue(accessControlAllowMethods),
+      accessControlAllowHeaders: _LazyInit.withValue(accessControlAllowHeaders),
+      clearSiteData: _LazyInit.withValue(clearSiteData),
+      secFetchDest: _LazyInit.withValue(secFetchDest),
+      secFetchMode: _LazyInit.withValue(secFetchMode),
+      secFetchSite: _LazyInit.withValue(secFetchSite),
+      crossOriginResourcePolicy: _LazyInit.withValue(crossOriginResourcePolicy),
+      crossOriginEmbedderPolicy: _LazyInit.withValue(crossOriginEmbedderPolicy),
+      crossOriginOpenerPolicy: _LazyInit.withValue(crossOriginOpenerPolicy),
 
       // Common Headers (Used in Both Requests and Responses)
-      accept: _LazyInit.value(value: accept),
-      acceptRanges: _LazyInit.value(value: acceptRanges),
-      transferEncoding: _LazyInit.value(value: transferEncoding),
-      xPoweredBy: _LazyInit.value(value: xPoweredBy),
+      accept: _LazyInit.withValue(accept),
+      acceptRanges: _LazyInit.withValue(acceptRanges),
+      transferEncoding: _LazyInit.withValue(transferEncoding),
+      xPoweredBy: _LazyInit.withValue(xPoweredBy),
 
       // Custom headers
       custom: custom ?? CustomHeaders.empty(),
@@ -1522,185 +1517,175 @@ final class _HeadersImpl extends Headers {
     Object? crossOriginOpenerPolicy = _Undefined,
   }) {
     return _HeadersImpl(
-      date: date is DateTime? ? _LazyInit.value(value: date) : _date,
-      expires:
-          expires is DateTime? ? _LazyInit.value(value: expires) : _expires,
+      date: date is DateTime? ? _LazyInit.withValue(date) : _date,
+      expires: expires is DateTime? ? _LazyInit.withValue(expires) : _expires,
       ifModifiedSince: ifModifiedSince is DateTime?
-          ? _LazyInit.value(value: ifModifiedSince)
+          ? _LazyInit.withValue(ifModifiedSince)
           : _ifModifiedSince,
       lastModified: lastModified is DateTime?
-          ? _LazyInit.value(value: lastModified)
+          ? _LazyInit.withValue(lastModified)
           : _lastModified,
 
       /// General Headers
-      origin: origin is Uri? ? _LazyInit.value(value: origin) : _origin,
-      server: server is String? ? _LazyInit.value(value: server) : _server,
-      via: via is List<String>? ? _LazyInit.value(value: via) : _via,
+      origin: origin is Uri? ? _LazyInit.withValue(origin) : _origin,
+      server: server is String? ? _LazyInit.withValue(server) : _server,
+      via: via is List<String>? ? _LazyInit.withValue(via) : _via,
 
       /// Request Headers
-      cookie:
-          cookie is CookieHeader? ? _LazyInit.value(value: cookie) : _cookie,
-      from: from is FromHeader? ? _LazyInit.value(value: from) : _from,
-      host: host is Uri? ? _LazyInit.value(value: host) : _host,
+      cookie: cookie is CookieHeader? ? _LazyInit.withValue(cookie) : _cookie,
+      from: from is FromHeader? ? _LazyInit.withValue(from) : _from,
+      host: host is Uri? ? _LazyInit.withValue(host) : _host,
       acceptEncoding: acceptEncoding is AcceptEncodingHeader?
-          ? _LazyInit.value(value: acceptEncoding)
+          ? _LazyInit.withValue(acceptEncoding)
           : _acceptEncoding,
       acceptLanguage: acceptLanguage is AcceptLanguageHeader?
-          ? _LazyInit.value(value: acceptLanguage)
+          ? _LazyInit.withValue(acceptLanguage)
           : _acceptLanguage,
       accessControlRequestHeaders: accessControlRequestHeaders is List<String>?
-          ? _LazyInit.value(value: accessControlRequestHeaders)
+          ? _LazyInit.withValue(accessControlRequestHeaders)
           : _accessControlRequestHeaders,
       accessControlRequestMethod: accessControlRequestMethod is RequestMethod?
-          ? _LazyInit.value(value: accessControlRequestMethod)
+          ? _LazyInit.withValue(accessControlRequestMethod)
           : _accessControlRequestMethod,
-      age: age is int? ? _LazyInit.value(value: age) : _age,
+      age: age is int? ? _LazyInit.withValue(age) : _age,
       authorization: authorization is AuthorizationHeader?
-          ? _LazyInit.value(value: authorization)
+          ? _LazyInit.withValue(authorization)
           : _authorization,
       connection: connection is ConnectionHeader?
-          ? _LazyInit.value(value: connection)
+          ? _LazyInit.withValue(connection)
           : _connection,
-      expect:
-          expect is ExpectHeader? ? _LazyInit.value(value: expect) : _expect,
-      ifMatch: ifMatch is IfMatchHeader?
-          ? _LazyInit.value(value: ifMatch)
-          : _ifMatch,
+      expect: expect is ExpectHeader? ? _LazyInit.withValue(expect) : _expect,
+      ifMatch:
+          ifMatch is IfMatchHeader? ? _LazyInit.withValue(ifMatch) : _ifMatch,
       ifNoneMatch: ifNoneMatch is IfNoneMatchHeader?
-          ? _LazyInit.value(value: ifNoneMatch)
+          ? _LazyInit.withValue(ifNoneMatch)
           : _ifNoneMatch,
-      ifRange: ifRange is IfRangeHeader?
-          ? _LazyInit.value(value: ifRange)
-          : _ifRange,
-      maxForwards: maxForwards is int?
-          ? _LazyInit.value(value: maxForwards)
-          : _maxForwards,
+      ifRange:
+          ifRange is IfRangeHeader? ? _LazyInit.withValue(ifRange) : _ifRange,
+      maxForwards:
+          maxForwards is int? ? _LazyInit.withValue(maxForwards) : _maxForwards,
       proxyAuthorization: proxyAuthorization is AuthorizationHeader?
-          ? _LazyInit.value(value: proxyAuthorization)
+          ? _LazyInit.withValue(proxyAuthorization)
           : _proxyAuthorization,
-      range: range is RangeHeader? ? _LazyInit.value(value: range) : _range,
-      referer: referer is Uri? ? _LazyInit.value(value: referer) : _referer,
+      range: range is RangeHeader? ? _LazyInit.withValue(range) : _range,
+      referer: referer is Uri? ? _LazyInit.withValue(referer) : _referer,
       userAgent:
-          userAgent is String? ? _LazyInit.value(value: userAgent) : _userAgent,
-      te: te is TEHeader? ? _LazyInit.value(value: te) : _te,
-      upgrade: upgrade is UpgradeHeader?
-          ? _LazyInit.value(value: upgrade)
-          : _upgrade,
+          userAgent is String? ? _LazyInit.withValue(userAgent) : _userAgent,
+      te: te is TEHeader? ? _LazyInit.withValue(te) : _te,
+      upgrade:
+          upgrade is UpgradeHeader? ? _LazyInit.withValue(upgrade) : _upgrade,
 
       /// Response Headers
       setCookie: setCookie is SetCookieHeader?
-          ? _LazyInit.value(value: setCookie)
+          ? _LazyInit.withValue(setCookie)
           : _setCookie,
-      location: location is Uri? ? _LazyInit.value(value: location) : _location,
+      location: location is Uri? ? _LazyInit.withValue(location) : _location,
       accessControlAllowCredentials: accessControlAllowCredentials is bool?
-          ? _LazyInit.value(value: accessControlAllowCredentials)
+          ? _LazyInit.withValue(accessControlAllowCredentials)
           : _accessControlAllowCredentials,
       accessControlAllowOrigin:
           accessControlAllowOrigin is AccessControlAllowOriginHeader?
-              ? _LazyInit.value(value: accessControlAllowOrigin)
+              ? _LazyInit.withValue(accessControlAllowOrigin)
               : _accessControlAllowOrigin,
       accessControlExposeHeaders:
           accessControlExposeHeaders is AccessControlExposeHeadersHeader?
-              ? _LazyInit.value(value: accessControlExposeHeaders)
+              ? _LazyInit.withValue(accessControlExposeHeaders)
               : _accessControlExposeHeaders,
       accessControlMaxAge: accessControlMaxAge is int?
-          ? _LazyInit.value(value: accessControlMaxAge)
+          ? _LazyInit.withValue(accessControlMaxAge)
           : _accessControlMaxAge,
-      allow: allow is List<RequestMethod>?
-          ? _LazyInit.value(value: allow)
-          : _allow,
+      allow:
+          allow is List<RequestMethod>? ? _LazyInit.withValue(allow) : _allow,
       cacheControl: cacheControl is CacheControlHeader?
-          ? _LazyInit.value(value: cacheControl)
+          ? _LazyInit.withValue(cacheControl)
           : _cacheControl,
       contentEncoding: contentEncoding is ContentEncodingHeader?
-          ? _LazyInit.value(value: contentEncoding)
+          ? _LazyInit.withValue(contentEncoding)
           : _contentEncoding,
       contentLanguage: contentLanguage is ContentLanguageHeader?
-          ? _LazyInit.value(value: contentLanguage)
+          ? _LazyInit.withValue(contentLanguage)
           : _contentLanguage,
       contentLocation: contentLocation is Uri?
-          ? _LazyInit.value(value: contentLocation)
+          ? _LazyInit.withValue(contentLocation)
           : _contentLocation,
       contentRange: contentRange is ContentRangeHeader?
-          ? _LazyInit.value(value: contentRange)
+          ? _LazyInit.withValue(contentRange)
           : _contentRange,
-      etag: etag is ETagHeader? ? _LazyInit.value(value: etag) : _etag,
+      etag: etag is ETagHeader? ? _LazyInit.withValue(etag) : _etag,
       proxyAuthenticate: proxyAuthenticate is AuthenticationHeader?
-          ? _LazyInit.value(value: proxyAuthenticate)
+          ? _LazyInit.withValue(proxyAuthenticate)
           : _proxyAuthenticate,
       retryAfter: retryAfter is RetryAfterHeader?
-          ? _LazyInit.value(value: retryAfter)
+          ? _LazyInit.withValue(retryAfter)
           : _retryAfter,
       trailer:
-          trailer is List<String>? ? _LazyInit.value(value: trailer) : _trailer,
-      vary: vary is VaryHeader? ? _LazyInit.value(value: vary) : _vary,
+          trailer is List<String>? ? _LazyInit.withValue(trailer) : _trailer,
+      vary: vary is VaryHeader? ? _LazyInit.withValue(vary) : _vary,
       wwwAuthenticate: wwwAuthenticate is AuthenticationHeader?
-          ? _LazyInit.value(value: wwwAuthenticate)
+          ? _LazyInit.withValue(wwwAuthenticate)
           : _wwwAuthenticate,
       contentDisposition: contentDisposition is ContentDispositionHeader?
-          ? _LazyInit.value(value: contentDisposition)
+          ? _LazyInit.withValue(contentDisposition)
           : _contentDisposition,
 
       /// Security and Modern Headers
       strictTransportSecurity:
           strictTransportSecurity is StrictTransportSecurityHeader?
-              ? _LazyInit.value(value: strictTransportSecurity)
+              ? _LazyInit.withValue(strictTransportSecurity)
               : _strictTransportSecurity,
       contentSecurityPolicy:
           contentSecurityPolicy is ContentSecurityPolicyHeader?
-              ? _LazyInit.value(value: contentSecurityPolicy)
+              ? _LazyInit.withValue(contentSecurityPolicy)
               : _contentSecurityPolicy,
       referrerPolicy: referrerPolicy is ReferrerPolicyHeader?
-          ? _LazyInit.value(value: referrerPolicy)
+          ? _LazyInit.withValue(referrerPolicy)
           : _referrerPolicy,
       permissionsPolicy: permissionsPolicy is PermissionsPolicyHeader?
-          ? _LazyInit.value(value: permissionsPolicy)
+          ? _LazyInit.withValue(permissionsPolicy)
           : _permissionsPolicy,
       accessControlAllowMethods:
           accessControlAllowMethods is AccessControlAllowMethodsHeader?
-              ? _LazyInit.value(value: accessControlAllowMethods)
+              ? _LazyInit.withValue(accessControlAllowMethods)
               : _accessControlAllowMethods,
       accessControlAllowHeaders:
           accessControlAllowHeaders is AccessControlAllowHeadersHeader?
-              ? _LazyInit.value(value: accessControlAllowHeaders)
+              ? _LazyInit.withValue(accessControlAllowHeaders)
               : _accessControlAllowHeaders,
       clearSiteData: clearSiteData is ClearSiteDataHeader?
-          ? _LazyInit.value(value: clearSiteData)
+          ? _LazyInit.withValue(clearSiteData)
           : _clearSiteData,
       secFetchDest: secFetchDest is SecFetchDestHeader?
-          ? _LazyInit.value(value: secFetchDest)
+          ? _LazyInit.withValue(secFetchDest)
           : _secFetchDest,
       secFetchMode: secFetchMode is SecFetchModeHeader?
-          ? _LazyInit.value(value: secFetchMode)
+          ? _LazyInit.withValue(secFetchMode)
           : _secFetchMode,
       secFetchSite: secFetchSite is SecFetchSiteHeader?
-          ? _LazyInit.value(value: secFetchSite)
+          ? _LazyInit.withValue(secFetchSite)
           : _secFetchSite,
       crossOriginResourcePolicy:
           crossOriginResourcePolicy is CrossOriginResourcePolicyHeader?
-              ? _LazyInit.value(value: crossOriginResourcePolicy)
+              ? _LazyInit.withValue(crossOriginResourcePolicy)
               : _crossOriginResourcePolicy,
       crossOriginEmbedderPolicy:
           crossOriginEmbedderPolicy is CrossOriginEmbedderPolicyHeader?
-              ? _LazyInit.value(value: crossOriginEmbedderPolicy)
+              ? _LazyInit.withValue(crossOriginEmbedderPolicy)
               : _crossOriginEmbedderPolicy,
       crossOriginOpenerPolicy:
           crossOriginOpenerPolicy is CrossOriginOpenerPolicyHeader?
-              ? _LazyInit.value(value: crossOriginOpenerPolicy)
+              ? _LazyInit.withValue(crossOriginOpenerPolicy)
               : _crossOriginOpenerPolicy,
 
       /// Common Headers (Used in Both Requests and Responses)
-      accept:
-          accept is AcceptHeader? ? _LazyInit.value(value: accept) : _accept,
+      accept: accept is AcceptHeader? ? _LazyInit.withValue(accept) : _accept,
       acceptRanges: acceptRanges is AcceptRangesHeader?
-          ? _LazyInit.value(value: acceptRanges)
+          ? _LazyInit.withValue(acceptRanges)
           : _acceptRanges,
       transferEncoding: transferEncoding is TransferEncodingHeader?
-          ? _LazyInit.value(value: transferEncoding)
+          ? _LazyInit.withValue(transferEncoding)
           : _transferEncoding,
-      xPoweredBy: xPoweredBy is String?
-          ? _LazyInit.value(value: xPoweredBy)
-          : _xPoweredBy,
+      xPoweredBy:
+          xPoweredBy is String? ? _LazyInit.withValue(xPoweredBy) : _xPoweredBy,
 
       // Custom headers
       custom: custom ?? this.custom,
@@ -1906,18 +1891,14 @@ class _LazyInit<T> {
         _value = value,
         _isInitialized = isInitialized;
 
-  factory _LazyInit.value({
-    required T value,
-  }) {
+  factory _LazyInit.withValue(T value) {
     return _LazyInit._(
       value: value,
       isInitialized: true,
     );
   }
 
-  factory _LazyInit.lazy({
-    required _LazyInitializer<T> init,
-  }) {
+  factory _LazyInit.lazy(_LazyInitializer<T> init) {
     return _LazyInit._(
       init: init,
       isInitialized: false,
