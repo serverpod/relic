@@ -49,8 +49,6 @@ Future<Headers> getServerRequestHeaders({
       parsedHeaders = request.headers;
 
       if (parseAllHeaders) {
-        // This will force the headers to be parsed and the lazy parsing to
-        // complete.
         parsedHeaders?.toMap();
       }
 
