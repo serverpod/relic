@@ -70,7 +70,7 @@ void main() {
         Headers headers = await getServerRequestHeaders(
           server: server,
           headers: {'access-control-expose-headers': '*, X-Custom-Header'},
-          echoHeaders: false,
+          parseAllHeaders: false,
         );
 
         expect(headers, isNotNull);

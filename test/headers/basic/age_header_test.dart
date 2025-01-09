@@ -105,7 +105,7 @@ void main() {
         Headers headers = await getServerRequestHeaders(
           server: server,
           headers: {'age': 'invalid-age-format'},
-          echoHeaders: false,
+          parseAllHeaders: false,
         );
 
         expect(headers, isNotNull);

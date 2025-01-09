@@ -49,7 +49,7 @@ void main() {
         Headers headers = await getServerRequestHeaders(
           server: server,
           headers: {'authorization': 'invalid-authorization-format'},
-          echoHeaders: false,
+          parseAllHeaders: false,
         );
 
         expect(headers, isNotNull);

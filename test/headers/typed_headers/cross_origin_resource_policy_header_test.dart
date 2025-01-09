@@ -62,7 +62,7 @@ void main() {
         Headers headers = await getServerRequestHeaders(
           server: server,
           headers: {'cross-origin-resource-policy': 'custom-policy'},
-          echoHeaders: false,
+          parseAllHeaders: false,
         );
         expect(headers, isNotNull);
       },

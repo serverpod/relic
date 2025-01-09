@@ -66,7 +66,7 @@ void main() {
         Headers headers = await getServerRequestHeaders(
           server: server,
           headers: {'etag': '123456'},
-          echoHeaders: false,
+          parseAllHeaders: false,
         );
 
         expect(headers, isNotNull);

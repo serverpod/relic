@@ -82,7 +82,7 @@ void main() {
         Headers headers = await getServerRequestHeaders(
           server: server,
           headers: {'clear-site-data': '"cache", "*", "cookies"'},
-          echoHeaders: false,
+          parseAllHeaders: false,
         );
         expect(headers, isNotNull);
       },

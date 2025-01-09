@@ -44,7 +44,7 @@ void main() {
         Headers headers = await getServerRequestHeaders(
           server: server,
           headers: {'retry-after': 'invalid'},
-          echoHeaders: false,
+          parseAllHeaders: false,
         );
 
         expect(headers, isNotNull);

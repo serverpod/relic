@@ -87,7 +87,7 @@ void main() {
         Headers headers = await getServerRequestHeaders(
           server: server,
           headers: {'if-match': 'invalid-etag'},
-          echoHeaders: false,
+          parseAllHeaders: false,
         );
 
         expect(headers, isNotNull);

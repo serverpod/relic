@@ -43,7 +43,7 @@ void main() {
         Headers headers = await getServerRequestHeaders(
           server: server,
           headers: {'accept-ranges': ''},
-          echoHeaders: false,
+          parseAllHeaders: false,
         );
 
         expect(headers, isNotNull);

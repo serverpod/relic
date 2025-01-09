@@ -108,7 +108,7 @@ void main() {
         Headers headers = await getServerRequestHeaders(
           server: server,
           headers: {'accept-encoding': ';q=0.5'},
-          echoHeaders: false,
+          parseAllHeaders: false,
         );
 
         expect(headers, isNotNull);

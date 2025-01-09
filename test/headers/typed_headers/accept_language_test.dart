@@ -109,7 +109,7 @@ void main() {
         Headers headers = await getServerRequestHeaders(
           server: server,
           headers: {'accept-language': ';q=0.5'},
-          echoHeaders: false,
+          parseAllHeaders: false,
         );
 
         expect(headers, isNotNull);

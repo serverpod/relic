@@ -87,7 +87,7 @@ void main() {
         Headers headers = await getServerRequestHeaders(
           server: server,
           headers: {'origin': 'http://example.com:test'},
-          echoHeaders: false,
+          parseAllHeaders: false,
         );
 
         expect(headers, isNotNull);

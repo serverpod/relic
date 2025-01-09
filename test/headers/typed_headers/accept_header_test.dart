@@ -62,7 +62,7 @@ void main() {
         Headers headers = await getServerRequestHeaders(
           server: server,
           headers: {'accept': 'text/html;q=abc'},
-          echoHeaders: false,
+          parseAllHeaders: false,
         );
 
         expect(headers, isNotNull);

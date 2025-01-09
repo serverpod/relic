@@ -42,7 +42,7 @@ void main() {
         Headers headers = await getServerRequestHeaders(
           server: server,
           headers: {'proxy-authenticate': 'Test'},
-          echoHeaders: false,
+          parseAllHeaders: false,
         );
 
         expect(headers, isNotNull);

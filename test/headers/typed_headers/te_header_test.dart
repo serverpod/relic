@@ -88,7 +88,7 @@ void main() {
         Headers headers = await getServerRequestHeaders(
           server: server,
           headers: {'te': 'trailers;q=abc'},
-          echoHeaders: false,
+          parseAllHeaders: false,
         );
 
         expect(headers, isNotNull);

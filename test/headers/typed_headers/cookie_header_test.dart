@@ -103,7 +103,7 @@ void main() {
         Headers headers = await getServerRequestHeaders(
           server: server,
           headers: {'cookie': 'sessionId=abc123; userId=42\x7F'},
-          echoHeaders: false,
+          parseAllHeaders: false,
         );
 
         expect(headers, isNotNull);

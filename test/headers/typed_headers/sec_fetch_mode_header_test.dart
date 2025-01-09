@@ -61,7 +61,7 @@ void main() {
         Headers headers = await getServerRequestHeaders(
           server: server,
           headers: {'sec-fetch-mode': 'custom-mode'},
-          echoHeaders: false,
+          parseAllHeaders: false,
         );
         expect(headers, isNotNull);
       },

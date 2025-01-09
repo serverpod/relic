@@ -61,7 +61,7 @@ void main() {
         Headers headers = await getServerRequestHeaders(
           server: server,
           headers: {'referrer-policy': 'invalid-value'},
-          echoHeaders: false,
+          parseAllHeaders: false,
         );
 
         expect(headers, isNotNull);

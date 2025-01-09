@@ -88,7 +88,7 @@ void main() {
         Headers headers = await getServerRequestHeaders(
           server: server,
           headers: {'max-forwards': 'invalid-value'},
-          echoHeaders: false,
+          parseAllHeaders: false,
         );
 
         expect(headers, isNotNull);

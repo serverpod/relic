@@ -51,7 +51,7 @@ void main() {
           headers: {
             'proxy-authorization': 'invalid-proxy-authorization-format'
           },
-          echoHeaders: false,
+          parseAllHeaders: false,
         );
 
         expect(headers, isNotNull);
