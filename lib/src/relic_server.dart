@@ -190,14 +190,6 @@ class RelicServer {
       return Response.badRequest(
         body: Body.fromString(error.toString()),
       ).writeHttpResponse(request.response);
-    } on UnimplementedError catch (error, stackTrace) {
-      // If the request is not implemented, respond with a 501 Not Implemented status.
-      logMessage(
-        'Error parsing request headers.\n$error',
-        stackTrace: stackTrace,
-        type: LoggerType.error,
-      );
-      return Response.notImplemented().writeHttpResponse(request.response);
     } on HijackException catch (error, stackTrace) {
       // If the request is already hijacked, meaning it's being handled by
       // another handler, like a websocket, then don't respond with an error.

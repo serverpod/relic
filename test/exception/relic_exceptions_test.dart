@@ -27,7 +27,8 @@ void main() {
   group('Given a server', () {
     test(
         'when a handler throws an InvalidHeaderException '
-        'then it returns a 400 Bad Request response', () async {
+        'then it returns a 400 Bad Request response with exception message '
+        'included in the response body', () async {
       await _scheduleServer(
         (Request request) => throw InvalidHeaderException(
           'Value cannot be empty',
@@ -41,13 +42,13 @@ void main() {
 
     test(
         'when a handler throws an UnimplementedError '
-        'then it returns a 501 Not Implemented response', () async {
+        'then it returns a 500 Internal Server Error response', () async {
       await _scheduleServer(
         (Request request) => throw UnimplementedError(),
       );
       final response = await _get();
-      expect(response.statusCode, 501);
-      expect(response.body, 'Not Implemented');
+      expect(response.statusCode, 500);
+      expect(response.body, 'Internal Server Error');
     });
 
     test(
