@@ -1,3 +1,4 @@
+import 'package:relic/src/headers/typed/headers/transfer_encoding_header.dart';
 import 'package:test/test.dart';
 import 'package:relic/src/headers/headers.dart';
 import 'package:relic/src/relic_server.dart';
@@ -53,8 +54,12 @@ void main() {
       },
     );
 
+    /// According to the HTTP/1.1 specification (RFC 9112), the 'chunked' transfer
+    /// encoding must be the final encoding applied to the response body.
     test(
-      'when a valid Transfer-Encoding header is passed then it should parse the encodings correctly',
+      'when a valid Transfer-Encoding header is passed with "chunked" as not the last '
+      'encoding then it should parse the encodings correctly and reorder them sot the '
+      'chunked encoding is the last encoding',
       () async {
         Headers headers = await getServerRequestHeaders(
           server: server,
@@ -63,7 +68,22 @@ void main() {
 
         expect(
           headers.transferEncoding?.encodings.map((e) => e.name),
-          equals(['chunked', 'gzip']),
+          equals(['gzip', 'chunked']),
+        );
+      },
+    );
+
+    test(
+      'when a valid Transfer-Encoding header is passed then it should parse the encodings correctly',
+      () async {
+        Headers headers = await getServerRequestHeaders(
+          server: server,
+          headers: {'transfer-encoding': 'gzip, chunked'},
+        );
+
+        expect(
+          headers.transferEncoding?.encodings.map((e) => e.name),
+          equals(['gzip', 'chunked']),
         );
       },
     );
@@ -74,12 +94,12 @@ void main() {
       () async {
         Headers headers = await getServerRequestHeaders(
           server: server,
-          headers: {'transfer-encoding': 'chunked, gzip, chunked'},
+          headers: {'transfer-encoding': 'gzip, chunked, chunked'},
         );
 
         expect(
           headers.transferEncoding?.encodings.map((e) => e.name),
-          equals(['chunked', 'gzip']),
+          equals(['gzip', 'chunked']),
         );
       },
     );
@@ -89,10 +109,14 @@ void main() {
       () async {
         Headers headers = await getServerRequestHeaders(
           server: server,
-          headers: {'transfer-encoding': 'chunked, gzip'},
+          headers: {'transfer-encoding': 'gzip, chunked'},
         );
 
-        expect(headers.transferEncoding?.isChunked, isTrue);
+        expect(
+          headers.transferEncoding?.encodings
+              .any((e) => e.name == TransferEncoding.chunked.name),
+          isTrue,
+        );
       },
     );
 

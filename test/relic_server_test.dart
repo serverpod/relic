@@ -30,35 +30,46 @@ void main() {
 
   tearDown(() => server.close());
 
-  test('serves HTTP requests with the mounted handler', () async {
-    server.mountAndStart(syncHandler);
-    expect(await http.read(server.url), equals('Hello from /'));
-  });
+  group('Given a server', () {
+    test(
+        'when a valid HTTP request is made '
+        'then it serves the request using the mounted handler', () async {
+      server.mountAndStart(syncHandler);
+      final response = await http.read(server.url);
+      expect(response, equals('Hello from /'));
+    });
 
-  test('Handles malformed requests gracefully.', () async {
-    server.mountAndStart(syncHandler);
-    final rs = await http
-        .get(Uri.parse('${server.url}/%D0%C2%BD%A8%CE%C4%BC%FE%BC%D0.zip'));
-    expect(rs.statusCode, 400);
-    expect(rs.body, 'Bad Request');
-  });
+    test(
+        'when a malformed HTTP request is made '
+        'then it returns a 400 Bad Request response', () async {
+      server.mountAndStart(syncHandler);
+      final rs = await http
+          .get(Uri.parse('${server.url}/%D0%C2%BD%A8%CE%C4%BC%FE%BC%D0.zip'));
+      expect(rs.statusCode, 400);
+      expect(rs.body, 'Bad Request');
+    });
 
-  test('delays HTTP requests until a handler is mounted', () async {
-    expect(http.read(server.url), completion(equals('Hello from /')));
-    await Future<void>.delayed(Duration.zero);
+    test(
+        'when no handler is mounted initially '
+        'then it delays requests until a handler is mounted', () async {
+      final delayedResponse = http.read(server.url);
+      await Future<void>.delayed(Duration.zero);
+      server.mountAndStart(asyncHandler);
+      expect(delayedResponse, completion(equals('Hello from /')));
+    });
 
-    server.mountAndStart(asyncHandler);
-  });
-
-  test('disallows more than one handler from being mounted', () async {
-    server.mountAndStart((_) => throw UnimplementedError());
-    expect(
-      () => server.mountAndStart((_) => throw UnimplementedError()),
-      throwsStateError,
-    );
-    expect(
-      () => server.mountAndStart((_) => throw UnimplementedError()),
-      throwsStateError,
-    );
+    test(
+        'when a handler is already mounted '
+        'then mounting another handler throws a StateError', () async {
+      server.mountAndStart((_) => throw UnimplementedError());
+      expect(
+        () => server.mountAndStart((_) => throw UnimplementedError()),
+        throwsStateError,
+      );
+      expect(
+        () => server.mountAndStart((_) => throw UnimplementedError()),
+        throwsStateError,
+      );
+    });
   });
 }

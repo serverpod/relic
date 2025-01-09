@@ -447,117 +447,25 @@ void main() {
     });
   });
 
-  group('chunked coding', () {
-    group('is added when the transfer-encoding header is', () {
-      test('unset', () async {
-        await _scheduleServer((request) {
-          return Response.ok(
-            body: Body.fromDataStream(
-                Stream.value(Uint8List.fromList([1, 2, 3, 4]))),
-          );
-        });
-
-        var response = await _get();
-        expect(response.headers,
-            containsPair(HttpHeaders.transferEncodingHeader, 'chunked'));
-        expect(response.bodyBytes, equals([1, 2, 3, 4]));
-      });
-
-      test('"identity"', () async {
-        await _scheduleServer((request) {
-          return Response.ok(
-            body: Body.fromDataStream(
-              Stream.value(Uint8List.fromList([1, 2, 3, 4])),
-            ),
-            headers: Headers.response(
-              transferEncoding: TransferEncodingHeader(
-                encodings: [TransferEncoding.identity],
-              ),
-            ),
-          );
-        });
-
-        var response = await _get();
-        expect(response.headers,
-            containsPair(HttpHeaders.transferEncodingHeader, 'chunked'));
-        expect(response.bodyBytes, equals([1, 2, 3, 4]));
-      });
-    });
-
-    test('is preserved when the transfer-encoding header is "chunked"',
-        () async {
-      await _scheduleServer((request) {
-        return Response.ok(
-          body: Body.fromDataStream(
-            Stream.fromIterable(
-              [
-                Uint8List.fromList('2\r\nhi\r\n0\r\n\r\n'.codeUnits),
-              ],
-            ),
+  test(
+      'Given a response with a chunked transfer encoding header and an empty body '
+      'when applying headers '
+      'then the chunked transfer encoding header is removed from the response',
+      () async {
+    await _scheduleServer(
+      (_) => Response.ok(
+        body: Body.empty(),
+        headers: Headers.response(
+          transferEncoding: TransferEncodingHeader(
+            encodings: [TransferEncoding.chunked],
           ),
-          headers: Headers.response(
-            transferEncoding: TransferEncodingHeader(
-              encodings: [TransferEncoding.chunked],
-            ),
-          ),
-        );
-      });
+        ),
+      ),
+    );
 
-      var response = await _get();
-      expect(
-        response.headers,
-        containsPair(HttpHeaders.transferEncodingHeader, 'chunked'),
-      );
-      expect(response.body, equals('hi'));
-    });
-
-    group('is not added when', () {
-      test('content-length is set', () async {
-        await _scheduleServer((request) {
-          return Response.ok(
-            body: Body.fromDataStream(
-              Stream.value(Uint8List.fromList([1, 2, 3, 4])),
-            ),
-          );
-        });
-
-        var response = await _get();
-        expect(response.bodyBytes, equals([1, 2, 3, 4]));
-      });
-
-      test('status code is 1xx', () async {
-        await _scheduleServer((request) {
-          return Response(123, body: Body.fromDataStream(Stream.empty()));
-        });
-
-        var response = await _get();
-        expect(response.headers,
-            isNot(contains(HttpHeaders.transferEncodingHeader)));
-        expect(response.body, isEmpty);
-      });
-
-      test('status code is 204', () async {
-        await _scheduleServer((request) {
-          return Response(204, body: Body.fromDataStream(Stream.empty()));
-        });
-
-        var response = await _get();
-        expect(response.headers,
-            isNot(contains(HttpHeaders.transferEncodingHeader)));
-        expect(response.body, isEmpty);
-      });
-
-      test('status code is 304', () async {
-        await _scheduleServer((request) {
-          return Response(304, body: Body.fromDataStream(Stream.empty()));
-        });
-
-        var response = await _get();
-        expect(response.headers,
-            isNot(contains(HttpHeaders.transferEncodingHeader)));
-        expect(response.body, isEmpty);
-      });
-    });
+    var response = await _get();
+    expect(response.body, isEmpty);
+    expect(response.headers['transfer-encoding'], isNull);
   });
 
   test('respects the "relic_server.buffer_output" context parameter', () async {
@@ -671,7 +579,7 @@ Future<http.Response> _get({
   if (headers != null) request.headers.addAll(headers);
 
   var response = await request.send();
-  return await http.Response.fromStream(response);
+  return await http.Response.fromStream(response).timeout(Duration(seconds: 1));
 }
 
 Future<http.StreamedResponse> _post({

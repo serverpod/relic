@@ -1,9 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
 
-import 'package:http_parser/http_parser.dart';
-import 'package:relic/src/headers/typed/headers/transfer_encoding_header.dart';
+import 'package:relic/src/extensions/http_response_extension.dart';
 
 import '../body/body.dart';
 import '../headers/headers.dart';
@@ -127,6 +125,22 @@ class Response extends Message {
           context: context,
         );
 
+  /// Constructs a 204 No Content response.
+  ///
+  /// This indicates that the request has succeeded but that the server has no
+  /// further information to send in the response body.
+  ///
+  /// {@macro relic_response_body_and_encoding_param}
+  Response.noContent({
+    Headers? headers,
+    Map<String, Object>? context,
+  }) : this(
+          204,
+          body: Body.empty(),
+          headers: headers ?? Headers.response(),
+          context: context,
+        );
+
   /// Constructs a 304 Not Modified response.
   ///
   /// This is used to respond to a conditional GET request that provided
@@ -145,7 +159,7 @@ class Response extends Message {
           304,
           body: Body.empty(),
           context: context,
-          headers: (headers ?? Headers.response()),
+          headers: headers ?? Headers.response(),
         );
 
   /// Constructs a 400 Bad Request response.
@@ -327,50 +341,14 @@ class Response extends Message {
       httpResponse.bufferOutput = context['relic_server.buffer_output'] as bool;
     }
 
+    // Set the status code.
     httpResponse.statusCode = statusCode;
 
-    headers.applyHeaders(
-      httpResponse,
-      body,
-    );
-
-    var mBody = _handleTransferEncoding(
-      httpResponse,
-      headers.transferEncoding,
-      statusCode,
-      body,
-    );
+    // Apply all headers to the response.
+    httpResponse.applyHeaders(headers, body);
 
     return httpResponse
-        .addStream(mBody.read())
+        .addStream(body.read())
         .then((_) => httpResponse.close());
   }
-}
-
-Body _handleTransferEncoding(
-  HttpResponse httpResponse,
-  TransferEncodingHeader? transferEncoding,
-  int statusCode,
-  Body body,
-) {
-  if (transferEncoding?.isChunked == true) {
-    // If the response is already chunked, decode it to avoid double chunking.
-    body = Body.fromDataStream(
-      chunkedCoding.decoder.bind(body.read()).cast<Uint8List>(),
-    );
-    httpResponse.headers.set(HttpHeaders.transferEncodingHeader, 'chunked');
-    return body;
-  } else if (_shouldEnableChunkedEncoding(statusCode, body)) {
-    // If content length is unknown and chunking is needed, set chunked encoding.
-    httpResponse.headers.set(HttpHeaders.transferEncodingHeader, 'chunked');
-  }
-  return body;
-}
-
-bool _shouldEnableChunkedEncoding(int statusCode, Body body) {
-  return statusCode >= 200 &&
-      statusCode != 204 &&
-      statusCode != 304 &&
-      body.contentLength == null &&
-      body.contentType?.mimeType.toString() != 'multipart/byteranges';
 }

@@ -1,3 +1,4 @@
+import 'package:collection/collection.dart';
 import 'package:relic/src/headers/extension/string_list_extensions.dart';
 import 'package:relic/src/headers/typed/typed_header_interface.dart';
 
@@ -10,9 +11,9 @@ class TransferEncodingHeader implements TypedHeader {
   final List<TransferEncoding> encodings;
 
   /// Constructs a [TransferEncodingHeader] instance with the specified transfer encodings.
-  const TransferEncodingHeader({
-    required this.encodings,
-  });
+  TransferEncodingHeader({
+    required List<TransferEncoding> encodings,
+  }) : encodings = _reorderEncodings(encodings);
 
   /// Parses the Transfer-Encoding header value and returns a [TransferEncodingHeader] instance.
   ///
@@ -28,11 +29,6 @@ class TransferEncodingHeader implements TypedHeader {
     return TransferEncodingHeader(encodings: encodings);
   }
 
-  /// Checks if the Transfer-Encoding contains `chunked`.
-  bool get isChunked {
-    return encodings.contains(TransferEncoding.chunked);
-  }
-
   /// Converts the [TransferEncodingHeader] instance into a string
   /// representation suitable for HTTP headers.
   @override
@@ -41,6 +37,35 @@ class TransferEncodingHeader implements TypedHeader {
   @override
   String toString() {
     return 'TransferEncodingHeader(encodings: $encodings)';
+  }
+
+  /// Ensures that the 'chunked' transfer encoding is always the last in the list.
+  ///
+  /// According to the HTTP/1.1 specification (RFC 9112), the 'chunked' transfer
+  /// encoding must be the final encoding applied to the response body. This is
+  /// because 'chunked' signals the end of the response message, and any
+  /// encoding after 'chunked' would cause ambiguity or violate the standard.
+  ///
+  /// Example of valid ordering:
+  ///   Transfer-Encoding: gzip, chunked
+  ///
+  /// Example of invalid ordering:
+  ///   Transfer-Encoding: chunked, gzip
+  ///
+  /// This function reorders the encodings to comply with the standard and
+  /// ensures compatibility with HTTP clients and intermediaries.
+  static List<TransferEncoding> _reorderEncodings(
+    List<TransferEncoding> encodings,
+  ) {
+    final TransferEncoding? chunked = encodings.firstWhereOrNull(
+      (e) => e.name == TransferEncoding.chunked.name,
+    );
+    if (chunked == null) return encodings;
+
+    var reordered = List<TransferEncoding>.from(encodings);
+    reordered.removeWhere((e) => e.name == TransferEncoding.chunked.name);
+    reordered.add(chunked);
+    return reordered;
   }
 }
 

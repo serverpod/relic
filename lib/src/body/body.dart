@@ -21,7 +21,13 @@ class Body {
   /// determined efficiently.
   final int? contentLength;
 
-  /// The content type of the body.
+  /// Body type is a combination of [mimeType] and [encoding].
+  ///
+  /// For incoming requests, this is populated from the request content type
+  /// header.
+  ///
+  /// For outgoing responses, this field is used to create the content type
+  /// header.
   ///
   /// This will be `null` if the body is empty.
   ///
@@ -31,28 +37,19 @@ class Body {
   /// var body = Body.fromString('hello', mimeType: MimeType.plainText);
   /// print(body.contentType); // ContentType(text/plain; charset=utf-8)
   /// ```
-  final BodyType? contentType;
+  final BodyType? bodyType;
 
   Body._(
     this._stream,
     this.contentLength, {
     Encoding? encoding,
     MimeType? mimeType,
-  }) : contentType = mimeType == null
+  }) : bodyType = mimeType == null
             ? null
             : BodyType(mimeType: mimeType, encoding: encoding);
 
   /// Creates an empty body.
-  factory Body.empty({
-    Encoding encoding = utf8,
-    MimeType mimeType = MimeType.plainText,
-  }) =>
-      Body._(
-        Stream.empty(),
-        0,
-        encoding: encoding,
-        mimeType: mimeType,
-      );
+  factory Body.empty() => Body._(Stream.empty(), 0);
 
   /// Creates a body from a [HttpRequest].
   factory Body.fromHttpRequest(HttpRequest request) {
@@ -99,7 +96,7 @@ class Body {
   factory Body.fromData(
     Uint8List body, {
     Encoding? encoding,
-    MimeType mimeType = MimeType.binary,
+    MimeType mimeType = MimeType.octetStream,
   }) {
     return Body._(
       Stream.value(body),
@@ -128,12 +125,12 @@ class Body {
   ///
   /// This is a convenience method that combines [mimeType] and [encoding].
   ContentType? getContentType() {
-    var mContentType = contentType;
-    if (mContentType == null) return null;
+    var mBodyType = bodyType;
+    if (mBodyType == null) return null;
     return ContentType(
-      mContentType.mimeType.primaryType,
-      mContentType.mimeType.subType,
-      charset: mContentType.encoding?.name,
+      mBodyType.mimeType.primaryType,
+      mBodyType.mimeType.subType,
+      charset: mBodyType.encoding?.name,
     );
   }
 }

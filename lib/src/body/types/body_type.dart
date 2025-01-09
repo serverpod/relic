@@ -29,8 +29,8 @@ class BodyType {
   );
 
   /// A body type for JavaScript.
-  static const javaScript = BodyType(
-    mimeType: MimeType.javaScript,
+  static const javascript = BodyType(
+    mimeType: MimeType.javascript,
     encoding: utf8,
   );
 
@@ -46,9 +46,9 @@ class BodyType {
     encoding: utf8,
   );
 
-  /// A body type for binary data.
-  static const binary = BodyType(
-    mimeType: MimeType.binary,
+  /// A body type for octet stream data.
+  static const octetStream = BodyType(
+    mimeType: MimeType.octetStream,
   );
 
   /// A body type for PDF.
@@ -59,6 +59,21 @@ class BodyType {
   /// A body type for RTF.
   static const rtf = BodyType(
     mimeType: MimeType.rtf,
+  );
+
+  /// A body type for multipart form data.
+  static const multipartFormData = BodyType(
+    mimeType: MimeType.multipartFormData,
+  );
+
+  /// A body type for multipart byteranges.
+  static const multipartByteranges = BodyType(
+    mimeType: MimeType.multipartByteranges,
+  );
+
+  /// A body type for URL-encoded form data.
+  static const urlEncoded = BodyType(
+    mimeType: MimeType.urlEncoded,
   );
 
   /// The mime type of the body.
