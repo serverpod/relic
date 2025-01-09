@@ -135,9 +135,8 @@ class RelicServer {
         strictHeaders: strictHeaders,
         poweredByHeader: poweredByHeader,
       );
-    }
-    // If the request headers are invalid, respond with a 400 Bad Request status.
-    on InvalidHeaderException catch (error, stackTrace) {
+    } on InvalidHeaderException catch (error, stackTrace) {
+      // If the request headers are invalid, respond with a 400 Bad Request status.
       logMessage(
         'Error parsing request headers.\n$error',
         stackTrace: stackTrace,
@@ -147,9 +146,8 @@ class RelicServer {
       return Response.badRequest(
         body: Body.fromString(error.toString()),
       ).writeHttpResponse(request.response);
-    }
-    // Catch any other errors.
-    catch (error, stackTrace) {
+    } catch (error, stackTrace) {
+      // Catch any other errors.
       logMessage(
         'Error parsing request.\n$error',
         stackTrace: stackTrace,
@@ -158,10 +156,9 @@ class RelicServer {
 
       // If the error is an [ArgumentError] with the name 'method' or 'requestedUri',
       // respond with a 400 Bad Request status.
-      if (error is ArgumentError) {
-        if (error.name == 'method' || error.name == 'requestedUri') {
-          return Response.badRequest().writeHttpResponse(request.response);
-        }
+      if (error is ArgumentError &&
+          (error.name == 'method' || error.name == 'requestedUri')) {
+        return Response.badRequest().writeHttpResponse(request.response);
       }
 
       // Write the response to the HTTP response.
@@ -183,7 +180,12 @@ class RelicServer {
           ),
         );
       }
-    } on InvalidHeaderException catch (error) {
+    } on InvalidHeaderException catch (error, stackTrace) {
+      _logError(
+        relicRequest,
+        'Error parsing request headers.\n$error',
+        stackTrace,
+      );
       return Response.badRequest(
         body: Body.fromString(error.toString()),
       ).writeHttpResponse(request.response);
