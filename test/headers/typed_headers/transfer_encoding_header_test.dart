@@ -69,6 +69,21 @@ void main() {
       },
     );
 
+    test(
+      'when a valid Transfer-Encoding header is passed then it should parse the encodings correctly',
+      () async {
+        Headers headers = await getServerRequestHeaders(
+          server: server,
+          headers: {'transfer-encoding': 'gzip, chunked'},
+        );
+
+        expect(
+          headers.transferEncoding?.encodings.map((e) => e.name),
+          equals(['gzip', 'chunked']),
+        );
+      },
+    );
+
     /// According to the HTTP/1.1 specification (RFC 9112), the 'chunked' transfer
     /// encoding must be the final encoding applied to the response body.
     test(
