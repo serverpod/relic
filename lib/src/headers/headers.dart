@@ -1735,6 +1735,16 @@ final class _HeadersImpl extends Headers {
       }
     }
 
+    // Boolean-related headers
+    var booleanHeaders = _booleanHeadersMap;
+    for (var entry in booleanHeaders.entries) {
+      var key = entry.key;
+      var value = entry.value;
+      if (value != null) {
+        map[key] = value;
+      }
+    }
+
     // String-related headers
     var stringHeaders = _stringHeadersMap;
     for (var entry in stringHeaders.entries) {
@@ -1796,6 +1806,12 @@ final class _HeadersImpl extends Headers {
         Headers.ageHeader: age,
         Headers.maxForwardsHeader: maxForwards,
         Headers.accessControlMaxAgeHeader: accessControlMaxAge,
+      };
+
+  /// Boolean-related headers
+  Map<String, bool?> get _booleanHeadersMap => <String, bool?>{
+        Headers.accessControlAllowCredentialsHeader:
+            accessControlAllowCredentials,
       };
 
   /// String-related headers
