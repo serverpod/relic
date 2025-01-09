@@ -586,25 +586,25 @@ abstract base class Headers {
 
     return _HeadersImpl(
       // Date-related headers
-      date: _LazyInit.lazy(
+      date: _LazyInit.from(
         () => dartIOHeaders.parseSingleValue(
           dateHeader,
           onParse: parseDate,
         ),
       ),
-      expires: _LazyInit.lazy(
+      expires: _LazyInit.from(
         () => dartIOHeaders.parseSingleValue(
           expiresHeader,
           onParse: parseDate,
         ),
       ),
-      ifModifiedSince: _LazyInit.lazy(
+      ifModifiedSince: _LazyInit.from(
         () => dartIOHeaders.parseSingleValue(
           ifModifiedSinceHeader,
           onParse: parseDate,
         ),
       ),
-      lastModified: _LazyInit.lazy(
+      lastModified: _LazyInit.from(
         () => dartIOHeaders.parseSingleValue(
           lastModifiedHeader,
           onParse: parseDate,
@@ -612,19 +612,19 @@ abstract base class Headers {
       ),
 
       // General Headers
-      origin: _LazyInit.lazy(
+      origin: _LazyInit.from(
         () => dartIOHeaders.parseSingleValue(
           originHeader,
           onParse: parseUri,
         ),
       ),
-      server: _LazyInit.lazy(
+      server: _LazyInit.from(
         () => dartIOHeaders.parseSingleValue(
           serverHeader,
           onParse: parseString,
         ),
       ),
-      via: _LazyInit.lazy(
+      via: _LazyInit.from(
         () => dartIOHeaders.parseMultipleValue(
           viaHeader,
           onParse: parseStringList,
@@ -632,128 +632,128 @@ abstract base class Headers {
       ),
 
       // Request Headers
-      cookie: _LazyInit.lazy(
+      cookie: _LazyInit.from(
         () => dartIOHeaders.parseSingleValue(
           cookieHeader,
           onParse: CookieHeader.parse,
         ),
       ),
-      from: _LazyInit.lazy(
+      from: _LazyInit.from(
         () => dartIOHeaders.parseMultipleValue(
           fromHeader,
           onParse: FromHeader.parse,
         ),
       ),
-      host: _LazyInit.lazy(
+      host: _LazyInit.from(
         () => dartIOHeaders.parseSingleValue(
           hostHeader,
           onParse: parseUri,
         ),
       ),
-      acceptEncoding: _LazyInit.lazy(
+      acceptEncoding: _LazyInit.from(
         () => dartIOHeaders.parseMultipleValue(
           acceptEncodingHeader,
           onParse: AcceptEncodingHeader.parse,
         ),
       ),
-      acceptLanguage: _LazyInit.lazy(
+      acceptLanguage: _LazyInit.from(
         () => dartIOHeaders.parseMultipleValue(
           acceptLanguageHeader,
           onParse: AcceptLanguageHeader.parse,
         ),
       ),
-      accessControlRequestHeaders: _LazyInit.lazy(
+      accessControlRequestHeaders: _LazyInit.from(
         () => dartIOHeaders.parseMultipleValue(
           accessControlRequestHeadersHeader,
           onParse: parseStringList,
         ),
       ),
-      accessControlRequestMethod: _LazyInit.lazy(
+      accessControlRequestMethod: _LazyInit.from(
         () => dartIOHeaders.parseSingleValue(
           accessControlRequestMethodHeader,
           onParse: RequestMethod.parse,
         ),
       ),
-      age: _LazyInit.lazy(
+      age: _LazyInit.from(
         () => dartIOHeaders.parseSingleValue(
           ageHeader,
           onParse: parsePositiveInt,
         ),
       ),
 
-      authorization: _LazyInit.lazy(
+      authorization: _LazyInit.from(
         () => dartIOHeaders.parseSingleValue(
           authorizationHeader,
           onParse: AuthorizationHeader.parse,
         ),
       ),
-      connection: _LazyInit.lazy(
+      connection: _LazyInit.from(
         () => dartIOHeaders.parseMultipleValue(
           connectionHeader,
           onParse: ConnectionHeader.parse,
         ),
       ),
-      expect: _LazyInit.lazy(
+      expect: _LazyInit.from(
         () => dartIOHeaders.parseSingleValue(
           expectHeader,
           onParse: ExpectHeader.parse,
         ),
       ),
-      ifMatch: _LazyInit.lazy(
+      ifMatch: _LazyInit.from(
         () => dartIOHeaders.parseMultipleValue(
           ifMatchHeader,
           onParse: IfMatchHeader.parse,
         ),
       ),
-      ifNoneMatch: _LazyInit.lazy(
+      ifNoneMatch: _LazyInit.from(
         () => dartIOHeaders.parseMultipleValue(
           ifNoneMatchHeader,
           onParse: IfNoneMatchHeader.parse,
         ),
       ),
-      ifRange: _LazyInit.lazy(
+      ifRange: _LazyInit.from(
         () => dartIOHeaders.parseSingleValue(
           ifRangeHeader,
           onParse: IfRangeHeader.parse,
         ),
       ),
-      maxForwards: _LazyInit.lazy(
+      maxForwards: _LazyInit.from(
         () => dartIOHeaders.parseSingleValue(
           maxForwardsHeader,
           onParse: parsePositiveInt,
         ),
       ),
-      proxyAuthorization: _LazyInit.lazy(
+      proxyAuthorization: _LazyInit.from(
         () => dartIOHeaders.parseSingleValue(
           proxyAuthorizationHeader,
           onParse: AuthorizationHeader.parse,
         ),
       ),
-      range: _LazyInit.lazy(
+      range: _LazyInit.from(
         () => dartIOHeaders.parseSingleValue(
           rangeHeader,
           onParse: RangeHeader.parse,
         ),
       ),
-      referer: _LazyInit.lazy(
+      referer: _LazyInit.from(
         () => dartIOHeaders.parseSingleValue(
           refererHeader,
           onParse: parseUri,
         ),
       ),
-      te: _LazyInit.lazy(
+      te: _LazyInit.from(
         () => dartIOHeaders.parseMultipleValue(
           teHeader,
           onParse: TEHeader.parse,
         ),
       ),
-      upgrade: _LazyInit.lazy(
+      upgrade: _LazyInit.from(
         () => dartIOHeaders.parseMultipleValue(
           upgradeHeader,
           onParse: UpgradeHeader.parse,
         ),
       ),
-      userAgent: _LazyInit.lazy(
+      userAgent: _LazyInit.from(
         () => dartIOHeaders.parseSingleValue(
           userAgentHeader,
           onParse: parseString,
@@ -761,116 +761,116 @@ abstract base class Headers {
       ),
 
       // Response Headers
-      setCookie: _LazyInit.lazy(
+      setCookie: _LazyInit.from(
         () => dartIOHeaders.parseSingleValue(
           setCookieHeader,
           onParse: SetCookieHeader.parse,
         ),
       ),
-      allow: _LazyInit.lazy(
+      allow: _LazyInit.from(
         () => dartIOHeaders.parseMultipleValue(
           allowHeader,
           onParse: parseMethodList,
         ),
       ),
-      location: _LazyInit.lazy(
+      location: _LazyInit.from(
         () => dartIOHeaders.parseSingleValue(
           locationHeader,
           onParse: parseUri,
         ),
       ),
 
-      accessControlAllowCredentials: _LazyInit.lazy(
+      accessControlAllowCredentials: _LazyInit.from(
         () => dartIOHeaders.parseSingleValue(
           accessControlAllowCredentialsHeader,
           onParse: parsePositiveBool,
         ),
       ),
-      accessControlAllowOrigin: _LazyInit.lazy(
+      accessControlAllowOrigin: _LazyInit.from(
         () => dartIOHeaders.parseSingleValue(
           accessControlAllowOriginHeader,
           onParse: AccessControlAllowOriginHeader.parse,
         ),
       ),
-      accessControlExposeHeaders: _LazyInit.lazy(
+      accessControlExposeHeaders: _LazyInit.from(
         () => dartIOHeaders.parseMultipleValue(
           accessControlExposeHeadersHeader,
           onParse: AccessControlExposeHeadersHeader.parse,
         ),
       ),
-      accessControlMaxAge: _LazyInit.lazy(
+      accessControlMaxAge: _LazyInit.from(
         () => dartIOHeaders.parseSingleValue(
           accessControlMaxAgeHeader,
           onParse: parseInt,
         ),
       ),
-      cacheControl: _LazyInit.lazy(
+      cacheControl: _LazyInit.from(
         () => dartIOHeaders.parseMultipleValue(
           cacheControlHeader,
           onParse: CacheControlHeader.parse,
         ),
       ),
-      contentDisposition: _LazyInit.lazy(
+      contentDisposition: _LazyInit.from(
         () => dartIOHeaders.parseSingleValue(
           contentDispositionHeader,
           onParse: ContentDispositionHeader.parse,
         ),
       ),
-      contentEncoding: _LazyInit.lazy(
+      contentEncoding: _LazyInit.from(
         () => dartIOHeaders.parseMultipleValue(
           contentEncodingHeader,
           onParse: ContentEncodingHeader.parse,
         ),
       ),
-      contentLanguage: _LazyInit.lazy(
+      contentLanguage: _LazyInit.from(
         () => dartIOHeaders.parseMultipleValue(
           contentLanguageHeader,
           onParse: ContentLanguageHeader.parse,
         ),
       ),
-      contentLocation: _LazyInit.lazy(
+      contentLocation: _LazyInit.from(
         () => dartIOHeaders.parseSingleValue(
           contentLocationHeader,
           onParse: parseUri,
         ),
       ),
-      contentRange: _LazyInit.lazy(
+      contentRange: _LazyInit.from(
         () => dartIOHeaders.parseSingleValue(
           contentRangeHeader,
           onParse: ContentRangeHeader.parse,
         ),
       ),
-      etag: _LazyInit.lazy(
+      etag: _LazyInit.from(
         () => dartIOHeaders.parseSingleValue(
           etagHeader,
           onParse: ETagHeader.parse,
         ),
       ),
-      proxyAuthenticate: _LazyInit.lazy(
+      proxyAuthenticate: _LazyInit.from(
         () => dartIOHeaders.parseSingleValue(
           proxyAuthenticationHeader,
           onParse: AuthenticationHeader.parse,
         ),
       ),
-      retryAfter: _LazyInit.lazy(
+      retryAfter: _LazyInit.from(
         () => dartIOHeaders.parseSingleValue(
           retryAfterHeader,
           onParse: RetryAfterHeader.parse,
         ),
       ),
-      trailer: _LazyInit.lazy(
+      trailer: _LazyInit.from(
         () => dartIOHeaders.parseMultipleValue(
           trailerHeader,
           onParse: parseStringList,
         ),
       ),
-      vary: _LazyInit.lazy(
+      vary: _LazyInit.from(
         () => dartIOHeaders.parseMultipleValue(
           varyHeader,
           onParse: VaryHeader.parse,
         ),
       ),
-      wwwAuthenticate: _LazyInit.lazy(
+      wwwAuthenticate: _LazyInit.from(
         () => dartIOHeaders.parseSingleValue(
           wwwAuthenticateHeader,
           onParse: AuthenticationHeader.parse,
@@ -878,79 +878,79 @@ abstract base class Headers {
       ),
 
       // Security and Modern Headers
-      strictTransportSecurity: _LazyInit.lazy(
+      strictTransportSecurity: _LazyInit.from(
         () => dartIOHeaders.parseSingleValue(
           strictTransportSecurityHeader,
           onParse: StrictTransportSecurityHeader.parse,
         ),
       ),
-      contentSecurityPolicy: _LazyInit.lazy(
+      contentSecurityPolicy: _LazyInit.from(
         () => dartIOHeaders.parseSingleValue(
           contentSecurityPolicyHeader,
           onParse: ContentSecurityPolicyHeader.parse,
         ),
       ),
-      referrerPolicy: _LazyInit.lazy(
+      referrerPolicy: _LazyInit.from(
         () => dartIOHeaders.parseSingleValue(
           referrerPolicyHeader,
           onParse: ReferrerPolicyHeader.parse,
         ),
       ),
-      permissionsPolicy: _LazyInit.lazy(
+      permissionsPolicy: _LazyInit.from(
         () => dartIOHeaders.parseSingleValue(
           permissionsPolicyHeader,
           onParse: PermissionsPolicyHeader.parse,
         ),
       ),
-      accessControlAllowMethods: _LazyInit.lazy(
+      accessControlAllowMethods: _LazyInit.from(
         () => dartIOHeaders.parseMultipleValue(
           accessControlAllowMethodsHeader,
           onParse: AccessControlAllowMethodsHeader.parse,
         ),
       ),
-      accessControlAllowHeaders: _LazyInit.lazy(
+      accessControlAllowHeaders: _LazyInit.from(
         () => dartIOHeaders.parseMultipleValue(
           accessControlAllowHeadersHeader,
           onParse: AccessControlAllowHeadersHeader.parse,
         ),
       ),
-      clearSiteData: _LazyInit.lazy(
+      clearSiteData: _LazyInit.from(
         () => dartIOHeaders.parseMultipleValue(
           clearSiteDataHeader,
           onParse: ClearSiteDataHeader.parse,
         ),
       ),
-      secFetchDest: _LazyInit.lazy(
+      secFetchDest: _LazyInit.from(
         () => dartIOHeaders.parseSingleValue(
           secFetchDestHeader,
           onParse: SecFetchDestHeader.parse,
         ),
       ),
-      secFetchMode: _LazyInit.lazy(
+      secFetchMode: _LazyInit.from(
         () => dartIOHeaders.parseSingleValue(
           secFetchModeHeader,
           onParse: SecFetchModeHeader.parse,
         ),
       ),
-      secFetchSite: _LazyInit.lazy(
+      secFetchSite: _LazyInit.from(
         () => dartIOHeaders.parseSingleValue(
           secFetchSiteHeader,
           onParse: SecFetchSiteHeader.parse,
         ),
       ),
-      crossOriginResourcePolicy: _LazyInit.lazy(
+      crossOriginResourcePolicy: _LazyInit.from(
         () => dartIOHeaders.parseSingleValue(
           crossOriginResourcePolicyHeader,
           onParse: CrossOriginResourcePolicyHeader.parse,
         ),
       ),
-      crossOriginEmbedderPolicy: _LazyInit.lazy(
+      crossOriginEmbedderPolicy: _LazyInit.from(
         () => dartIOHeaders.parseSingleValue(
           crossOriginEmbedderPolicyHeader,
           onParse: CrossOriginEmbedderPolicyHeader.parse,
         ),
       ),
-      crossOriginOpenerPolicy: _LazyInit.lazy(
+      crossOriginOpenerPolicy: _LazyInit.from(
         () => dartIOHeaders.parseSingleValue(
           crossOriginOpenerPolicyHeader,
           onParse: CrossOriginOpenerPolicyHeader.parse,
@@ -958,25 +958,25 @@ abstract base class Headers {
       ),
 
       // Common Headers (Used in Both Requests and Responses)
-      accept: _LazyInit.lazy(
+      accept: _LazyInit.from(
         () => dartIOHeaders.parseMultipleValue(
           acceptHeader,
           onParse: AcceptHeader.parse,
         ),
       ),
-      acceptRanges: _LazyInit.lazy(
+      acceptRanges: _LazyInit.from(
         () => dartIOHeaders.parseSingleValue(
           acceptRangesHeader,
           onParse: AcceptRangesHeader.parse,
         ),
       ),
-      transferEncoding: _LazyInit.lazy(
+      transferEncoding: _LazyInit.from(
         () => dartIOHeaders.parseMultipleValue(
           transferEncodingHeader,
           onParse: TransferEncodingHeader.parse,
         ),
       ),
-      xPoweredBy: _LazyInit.lazy(
+      xPoweredBy: _LazyInit.from(
         () =>
             dartIOHeaders.parseSingleValue(
               xPoweredByHeader,
@@ -1898,7 +1898,7 @@ class _LazyInit<T> {
     );
   }
 
-  factory _LazyInit.lazy(_LazyInitializer<T> init) {
+  factory _LazyInit.from(_LazyInitializer<T> init) {
     return _LazyInit._(
       init: init,
       isInitialized: false,
