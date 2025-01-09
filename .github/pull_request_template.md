@@ -17,15 +17,10 @@ Please ensure that your PR meets the following requirements before submitting:
 - [ ] I have documented any breaking changes below.
 
 ## Breaking Changes
-- [ ] This PR introduces breaking changes. (If checked, provide details below.)
-- [ ] This PR does not introduce any breaking changes.
+- [ ] Includes breaking changes.
+- [ ] No breaking changes.
 
 _If there are breaking changes, clearly outline them here to ensure they are included in the release notes:_
 
 ## Additional Notes
 _Include any additional information or context about the PR here, if needed._
-
----
-
-**Need Help?**  
-If you require assistance, feel free to ask on the [discussion board](https://github.com/serverpod/serverpod/discussions).
