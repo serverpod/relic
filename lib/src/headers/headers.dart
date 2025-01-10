@@ -1364,12 +1364,9 @@ abstract base class Headers {
   });
 
   /// Convert headers to a map
-  ///
-  /// If [allowNullValueToBeIncluded] is `true`, then null values will be
-  /// included in the map, otherwise they will be excluded.
-  Map<String, Object?> toMap({
-    bool allowNullValueToBeIncluded = false,
-  });
+  /// This will include all headers, if a header is null then the value of the
+  /// header was not set.
+  Map<String, Object?> toMap();
 }
 
 /// Headers implementation
@@ -1719,14 +1716,8 @@ final class _HeadersImpl extends Headers {
     );
   }
 
-  /// Convert headers to a map
-  ///
-  /// If [allowNullValueToBeIncluded] is `true`, then null values will be
-  /// included in the map, otherwise they will be excluded.
   @override
-  Map<String, Object?> toMap({
-    bool allowNullValueToBeIncluded = false,
-  }) {
+  Map<String, Object?> toMap() {
     var map = <String, Object?>{};
 
     // Date-related headers
@@ -1734,69 +1725,43 @@ final class _HeadersImpl extends Headers {
     for (var entry in dateHeaders.entries) {
       var key = entry.key;
       var value = entry.value;
-      if (value != null || allowNullValueToBeIncluded) {
-        map[key] = value != null ? formatHttpDate(value) : null;
-      }
+      map[key] = value != null ? formatHttpDate(value) : null;
     }
 
     // Number-related headers
     var numberHeaders = _numberHeadersMap;
     for (var entry in numberHeaders.entries) {
-      var key = entry.key;
-      var value = entry.value;
-      if (value != null || allowNullValueToBeIncluded) {
-        map[key] = value;
-      }
+      map[entry.key] = entry.value;
     }
 
     // Boolean-related headers
     var booleanHeaders = _booleanHeadersMap;
     for (var entry in booleanHeaders.entries) {
-      var key = entry.key;
-      var value = entry.value;
-      if (value != null || allowNullValueToBeIncluded) {
-        map[key] = value;
-      }
+      map[entry.key] = entry.value;
     }
 
     // String-related headers
     var stringHeaders = _stringHeadersMap;
     for (var entry in stringHeaders.entries) {
-      var key = entry.key;
-      var value = entry.value;
-      if (value != null || allowNullValueToBeIncluded) {
-        map[key] = value;
-      }
+      map[entry.key] = entry.value;
     }
 
     // List<String>-related headers
     var listStringHeaders = _listStringHeadersMap;
     for (var entry in listStringHeaders.entries) {
-      var key = entry.key;
-      var value = entry.value;
-      if (value != null || allowNullValueToBeIncluded) {
-        map[key] = value;
-      }
+      map[entry.key] = entry.value;
     }
 
     // Uri-related headers
     var uriHeaders = _uriHeadersMap;
     for (var entry in uriHeaders.entries) {
-      var key = entry.key;
-      var value = entry.value;
-      if (value != null || allowNullValueToBeIncluded) {
-        map[key] = value.toString();
-      }
+      map[entry.key] = entry.value?.toString();
     }
 
     // TypedHeader-related headers
     var typedHeaders = _typedHeadersMap;
     for (var entry in typedHeaders.entries) {
-      var key = entry.key;
-      var value = entry.value;
-      if (value != null || allowNullValueToBeIncluded) {
-        map[key] = value?.toHeaderString();
-      }
+      map[entry.key] = entry.value?.toHeaderString();
     }
 
     // Custom headers
