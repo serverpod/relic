@@ -111,20 +111,50 @@ void main() {
       expect(headers.date, equals(newDate));
     });
 
-    test('when converting to map then all managed headers are included', () {
-      var headers = Headers.request();
-      var managedHeaders = Headers.managedHeaders
-          .where(
-            (header) =>
-                // These headers are not managed by the Headers class but are
-                // managed by the body class and applied later to the response.
-                header != Headers.contentLengthHeader &&
-                header != Headers.contentTypeHeader,
-          )
-          .toSet();
-      var mapKeys = headers.toMap().keys.toSet();
+    group('when converting to map', () {
+      test('then all managed header by Header class are included', () {
+        var headers = Headers.request();
+        var managedHeaders = Headers.managedHeaders
+            .where(
+              (header) =>
+                  // These headers are not managed by the Headers class but are
+                  // managed by the body class and applied later to the response.
+                  header != Headers.contentLengthHeader &&
+                  header != Headers.contentTypeHeader,
+            )
+            .toSet();
+        var mapKeys = headers.toMap().keys.toSet();
 
-      expect(managedHeaders, mapKeys);
+        var missingManagedHeaders = managedHeaders.difference(mapKeys);
+
+        expect(
+          missingManagedHeaders.isEmpty,
+          isTrue,
+          reason: 'Missing managed headers: $missingManagedHeaders.',
+        );
+      });
+
+      test('then no unexpected additional headers are included', () {
+        var headers = Headers.request();
+        var managedHeaders = Headers.managedHeaders
+            .where(
+              (header) =>
+                  // These headers are not managed by the Headers class but are
+                  // managed by the body class and applied later to the response.
+                  header != Headers.contentLengthHeader &&
+                  header != Headers.contentTypeHeader,
+            )
+            .toSet();
+        var mapKeys = headers.toMap().keys.toSet();
+
+        var unexpectedAdditionalHeaders = mapKeys.difference(managedHeaders);
+        expect(
+          unexpectedAdditionalHeaders.isEmpty,
+          isTrue,
+          reason:
+              'Unexpected additional headers: $unexpectedAdditionalHeaders.',
+        );
+      });
     });
   });
 }
