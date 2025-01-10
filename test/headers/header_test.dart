@@ -112,7 +112,7 @@ void main() {
     });
 
     group('when converting to map', () {
-      test('then all managed header by Header class are included', () {
+      test('then all managed header by the Header class are included', () {
         var headers = Headers.request();
         var managedHeaders = Headers.managedHeaders
             .where(
