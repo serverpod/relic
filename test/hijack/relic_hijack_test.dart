@@ -73,9 +73,9 @@ void main() {
         isA<StateError>().having(
           (e) => e.message,
           'message',
-          'Cannot proceed: the request has already been hijacked by another handler '
-              '(e.g., a WebSocket). Ensure you dont attempt to write to the HTTP response '
-              'after the request has been hijacked.',
+          'The request has been hijacked by another handler (e.g., a WebSocket) '
+              'but the HijackException was never thrown. If a request is hijacked '
+              'then a HijackException is expected to be thrown.',
         ),
       );
     });

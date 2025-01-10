@@ -214,17 +214,11 @@ class RelicServer {
       );
     }
 
-    // Ensure the request is not hijacked before proceeding.
-    //
-    // If the request is already hijacked (e.g., taken over by another handler
-    // like a WebSocket), this is an unexpected state. Typically, hijacking
-    // should throw a [HijackException], but this check serves as a safeguard
-    // for improper hijacking scenarios.
     if (relicRequest.isHijacked) {
       throw StateError(
-        'Cannot proceed: the request has already been hijacked by another handler '
-        '(e.g., a WebSocket). Ensure you dont attempt to write to the HTTP response '
-        'after the request has been hijacked.',
+        'The request has been hijacked by another handler (e.g., a WebSocket) '
+        'but the HijackException was never thrown. If a request is hijacked '
+        'then a HijackException is expected to be thrown.',
       );
     }
 
