@@ -144,7 +144,7 @@ class RelicServer {
       );
       // Write the response to the HTTP response.
       return Response.badRequest(
-        body: Body.fromString(error.toString()),
+        body: Body.fromString(error.httpResponseBody),
       ).writeHttpResponse(request.response);
     } catch (error, stackTrace) {
       // Catch any other errors.
@@ -188,7 +188,7 @@ class RelicServer {
         stackTrace,
       );
       return Response.badRequest(
-        body: Body.fromString(error.toString()),
+        body: Body.fromString(error.httpResponseBody),
       ).writeHttpResponse(request.response);
     } on HijackException catch (error, stackTrace) {
       // If the request is already hijacked, meaning it's being handled by
