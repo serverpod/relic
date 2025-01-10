@@ -374,10 +374,13 @@ abstract base class Headers {
     // Common Headers (Used in Both Requests and Responses)
     acceptHeader,
     acceptRangesHeader,
-    contentLengthHeader,
-    contentTypeHeader,
     cookieHeader,
     setCookieHeader,
+
+    // These headers are not managed by the Headers class but are
+    // managed by the body class and applied later to the response.
+    contentLengthHeader,
+    contentTypeHeader,
 
     // Security and Modern Headers
     accessControlAllowHeadersHeader,
