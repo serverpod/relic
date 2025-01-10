@@ -136,15 +136,7 @@ void main() {
 
       test('then no unexpected additional headers are included', () {
         var headers = Headers.request();
-        var managedHeaders = Headers.managedHeaders
-            .where(
-              (header) =>
-                  // These headers are not managed by the Headers class but are
-                  // managed by the body class and applied later to the response.
-                  header != Headers.contentLengthHeader &&
-                  header != Headers.contentTypeHeader,
-            )
-            .toSet();
+        var managedHeaders = Headers.managedHeaders.toSet();
         var mapKeys = headers.toMap().keys.toSet();
 
         var unexpectedAdditionalHeaders = mapKeys.difference(managedHeaders);
