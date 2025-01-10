@@ -102,6 +102,9 @@ abstract base class Headers {
   final _LazyInit<DateTime?> _ifModifiedSince;
   DateTime? get ifModifiedSince => _ifModifiedSince.value;
 
+  final _LazyInit<DateTime?> _ifUnmodifiedSince;
+  DateTime? get ifUnmodifiedSince => _ifUnmodifiedSince.value;
+
   final _LazyInit<DateTime?> _lastModified;
   DateTime? get lastModified => _lastModified.value;
 
@@ -397,6 +400,7 @@ abstract base class Headers {
     required _LazyInit<DateTime?> date,
     required _LazyInit<DateTime?> expires,
     required _LazyInit<DateTime?> ifModifiedSince,
+    required _LazyInit<DateTime?> ifUnmodifiedSince,
     required _LazyInit<DateTime?> lastModified,
 
     // General Headers
@@ -485,6 +489,7 @@ abstract base class Headers {
         _date = date,
         _expires = expires,
         _ifModifiedSince = ifModifiedSince,
+        _ifUnmodifiedSince = ifUnmodifiedSince,
         _lastModified = lastModified,
 
         // General Headers
@@ -601,6 +606,12 @@ abstract base class Headers {
       ifModifiedSince: _LazyInit.from(
         () => dartIOHeaders.parseSingleValue(
           ifModifiedSinceHeader,
+          onParse: parseDate,
+        ),
+      ),
+      ifUnmodifiedSince: _LazyInit.from(
+        () => dartIOHeaders.parseSingleValue(
+          ifUnmodifiedSinceHeader,
           onParse: parseDate,
         ),
       ),
@@ -1001,6 +1012,7 @@ abstract base class Headers {
     // Date-related headers
     DateTime? date,
     DateTime? ifModifiedSince,
+    DateTime? ifUnmodifiedSince,
 
     // Request Headers
     String? xPoweredBy,
@@ -1041,6 +1053,7 @@ abstract base class Headers {
       // Date-related headers
       date: _LazyInit.withValue(date),
       ifModifiedSince: _LazyInit.withValue(ifModifiedSince),
+      ifUnmodifiedSince: _LazyInit.withValue(ifUnmodifiedSince),
       expires: _LazyInit.nullValue(),
       lastModified: _LazyInit.nullValue(),
 
@@ -1187,6 +1200,7 @@ abstract base class Headers {
       expires: _LazyInit.withValue(expires),
       lastModified: _LazyInit.withValue(lastModified),
       ifModifiedSince: _LazyInit.nullValue(),
+      ifUnmodifiedSince: _LazyInit.nullValue(),
 
       // General Headers
       origin: _LazyInit.withValue(origin),
@@ -1275,6 +1289,7 @@ abstract base class Headers {
     DateTime? date,
     DateTime? expires,
     DateTime? ifModifiedSince,
+    DateTime? ifUnmodifiedSince,
     DateTime? lastModified,
 
     /// General Headers
@@ -1360,6 +1375,7 @@ final class _HeadersImpl extends Headers {
     required super.date,
     required super.expires,
     required super.ifModifiedSince,
+    required super.ifUnmodifiedSince,
     required super.lastModified,
 
     /// General Headers
@@ -1443,6 +1459,7 @@ final class _HeadersImpl extends Headers {
     Object? date = _Undefined,
     Object? expires = _Undefined,
     Object? ifModifiedSince = _Undefined,
+    Object? ifUnmodifiedSince = _Undefined,
     Object? lastModified = _Undefined,
 
     /// General Headers
@@ -1522,6 +1539,9 @@ final class _HeadersImpl extends Headers {
       ifModifiedSince: ifModifiedSince is DateTime?
           ? _LazyInit.withValue(ifModifiedSince)
           : _ifModifiedSince,
+      ifUnmodifiedSince: ifUnmodifiedSince is DateTime?
+          ? _LazyInit.withValue(ifUnmodifiedSince)
+          : _ifUnmodifiedSince,
       lastModified: lastModified is DateTime?
           ? _LazyInit.withValue(lastModified)
           : _lastModified,
@@ -1783,6 +1803,7 @@ final class _HeadersImpl extends Headers {
         Headers.dateHeader: date ?? DateTime.now().toUtc(),
         Headers.expiresHeader: expires,
         Headers.ifModifiedSinceHeader: ifModifiedSince,
+        Headers.ifUnmodifiedSinceHeader: ifUnmodifiedSince,
         Headers.lastModifiedHeader: lastModified,
       };
 
