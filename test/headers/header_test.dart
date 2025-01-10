@@ -110,5 +110,69 @@ void main() {
       headers = headers.copyWith(date: newDate);
       expect(headers.date, equals(newDate));
     });
+
+    test(
+        'when calling "toMap" without setting the "allowNullValueToBeIncluded" flag'
+        'then "allowNullValueToBeIncluded" will default to false and null values are excluded',
+        () {
+      var headers = Headers.request(age: null);
+      var map = headers.toMap();
+      expect(map.containsKey('age'), isFalse);
+    });
+
+    test(
+        'when calling "toMap" with "allowNullValueToBeIncluded" flag set to true '
+        'then null values are included', () {
+      var headers = Headers.request(age: null);
+      var map = headers.toMap(allowNullValueToBeIncluded: true);
+      expect(map.containsKey('age'), isTrue);
+    });
+
+    test(
+        'when calling "toMap" with "allowNullValueToBeIncluded" flag set to true '
+        'then all managed headers are included', () {
+      var headers = Headers.request();
+      var map = headers.toMap(allowNullValueToBeIncluded: true);
+      expect(
+        Headers.managedHeaders.every((header) {
+          // These headers are not managed by the Headers class but are
+          // managed by the body class and applied later to the response.
+          if (header == Headers.contentLengthHeader ||
+              header == Headers.contentTypeHeader) {
+            return true;
+          }
+          return map.containsKey(header);
+        }),
+        isTrue,
+      );
+    });
+
+    test(
+        'when calling "toMap" with "allowNullValueToBeIncluded" flag set to true '
+        'then all headers included are managed headers', () {
+      var headers = Headers.request();
+      var map = headers.toMap(allowNullValueToBeIncluded: true);
+      expect(
+        map.keys.every((header) => Headers.managedHeaders.contains(header)),
+        isTrue,
+      );
+    });
+
+    test(
+        'with custom headers'
+        'when calling "toMap" with "allowNullValueToBeIncluded" flag set to true '
+        'then not all headers included are managed headers', () {
+      var headers = Headers.request(
+        custom: CustomHeaders({
+          'Custom-Header': ['custom-value']
+        }),
+      );
+
+      var map = headers.toMap(allowNullValueToBeIncluded: true);
+      expect(
+        map.keys.every((header) => Headers.managedHeaders.contains(header)),
+        isFalse,
+      );
+    });
   });
 }

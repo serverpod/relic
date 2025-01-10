@@ -315,7 +315,7 @@ abstract base class Headers {
 
   /// Managed headers
   /// Headers that are managed by the library
-  static const _managedHeaders = <String>{
+  static const managedHeaders = <String>{
     dateHeader,
     expiresHeader,
     ifModifiedSinceHeader,
@@ -999,7 +999,7 @@ abstract base class Headers {
       // Custom Headers
       custom: parseCustomHeaders(
         dartIOHeaders.headers,
-        excludedHeaders: _managedHeaders,
+        excludedHeaders: managedHeaders,
       ),
 
       // Failed Headers to Parse
@@ -1201,7 +1201,6 @@ abstract base class Headers {
       lastModified: _LazyInit.withValue(lastModified),
       ifModifiedSince: _LazyInit.nullValue(),
       ifUnmodifiedSince: _LazyInit.nullValue(),
-
       // General Headers
       origin: _LazyInit.withValue(origin),
       server: _LazyInit.withValue(server),
@@ -1365,7 +1364,12 @@ abstract base class Headers {
   });
 
   /// Convert headers to a map
-  Map<String, Object> toMap();
+  ///
+  /// If [allowNullValueToBeIncluded] is `true`, then null values will be
+  /// included in the map, otherwise they will be excluded.
+  Map<String, Object?> toMap({
+    bool allowNullValueToBeIncluded = false,
+  });
 }
 
 /// Headers implementation
@@ -1716,17 +1720,22 @@ final class _HeadersImpl extends Headers {
   }
 
   /// Convert headers to a map
+  ///
+  /// If [allowNullValueToBeIncluded] is `true`, then null values will be
+  /// included in the map, otherwise they will be excluded.
   @override
-  Map<String, Object> toMap() {
-    var map = <String, Object>{};
+  Map<String, Object?> toMap({
+    bool allowNullValueToBeIncluded = false,
+  }) {
+    var map = <String, Object?>{};
 
     // Date-related headers
     var dateHeaders = _dateHeadersMap;
     for (var entry in dateHeaders.entries) {
       var key = entry.key;
       var value = entry.value;
-      if (value != null) {
-        map[key] = formatHttpDate(value);
+      if (value != null || allowNullValueToBeIncluded) {
+        map[key] = value != null ? formatHttpDate(value) : null;
       }
     }
 
@@ -1735,7 +1744,7 @@ final class _HeadersImpl extends Headers {
     for (var entry in numberHeaders.entries) {
       var key = entry.key;
       var value = entry.value;
-      if (value != null) {
+      if (value != null || allowNullValueToBeIncluded) {
         map[key] = value;
       }
     }
@@ -1745,7 +1754,7 @@ final class _HeadersImpl extends Headers {
     for (var entry in booleanHeaders.entries) {
       var key = entry.key;
       var value = entry.value;
-      if (value != null) {
+      if (value != null || allowNullValueToBeIncluded) {
         map[key] = value;
       }
     }
@@ -1755,7 +1764,7 @@ final class _HeadersImpl extends Headers {
     for (var entry in stringHeaders.entries) {
       var key = entry.key;
       var value = entry.value;
-      if (value != null) {
+      if (value != null || allowNullValueToBeIncluded) {
         map[key] = value;
       }
     }
@@ -1765,7 +1774,7 @@ final class _HeadersImpl extends Headers {
     for (var entry in listStringHeaders.entries) {
       var key = entry.key;
       var value = entry.value;
-      if (value != null) {
+      if (value != null || allowNullValueToBeIncluded) {
         map[key] = value;
       }
     }
@@ -1775,7 +1784,7 @@ final class _HeadersImpl extends Headers {
     for (var entry in uriHeaders.entries) {
       var key = entry.key;
       var value = entry.value;
-      if (value != null) {
+      if (value != null || allowNullValueToBeIncluded) {
         map[key] = value.toString();
       }
     }
@@ -1785,8 +1794,8 @@ final class _HeadersImpl extends Headers {
     for (var entry in typedHeaders.entries) {
       var key = entry.key;
       var value = entry.value;
-      if (value != null) {
-        map[key] = value.toHeaderString();
+      if (value != null || allowNullValueToBeIncluded) {
+        map[key] = value?.toHeaderString();
       }
     }
 
