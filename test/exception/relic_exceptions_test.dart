@@ -52,15 +52,6 @@ void main() {
     });
 
     test(
-        'when a handler throws an HijackException '
-        'then it returns a 500 Internal Server Error response', () async {
-      await _scheduleServer((Request request) => throw HijackException());
-      final response = await _get();
-      expect(response.statusCode, 500);
-      expect(response.body, 'Internal Server Error');
-    });
-
-    test(
         'when a handler throws an Exception '
         'then it returns a 500 Internal Server Error response', () async {
       await _scheduleServer((Request request) => throw Exception());

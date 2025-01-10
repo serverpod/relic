@@ -193,7 +193,7 @@ class RelicServer {
     } on HijackException catch (error, stackTrace) {
       // If the request is already hijacked, meaning it's being handled by
       // another handler, like a websocket, then don't respond with an error.
-      if (!relicRequest.canHijack) return;
+      if (relicRequest.isHijacked) return;
 
       _logError(
         relicRequest,
@@ -214,12 +214,17 @@ class RelicServer {
       );
     }
 
-    // If the the request is already hijacked, meaning it's being handled by
-    // another handler, like a websocket, then respond with a 501 Not Implemented status.
-    // This should never happen, but if it does, we don't want to respond with an error.
-    if (!relicRequest.canHijack) {
-      return await Response.notImplemented().writeHttpResponse(
-        request.response,
+    // Ensure the request is not hijacked before proceeding.
+    //
+    // If the request is already hijacked (e.g., taken over by another handler
+    // like a WebSocket), this is an unexpected state. Typically, hijacking
+    // should throw a [HijackException], but this check serves as a safeguard
+    // for improper hijacking scenarios.
+    if (relicRequest.isHijacked) {
+      throw StateError(
+        'Cannot proceed: the request has already been hijacked by another handler '
+        '(e.g., a WebSocket). Ensure you dont attempt to write to the HTTP response '
+        'after the request has been hijacked.',
       );
     }
 
