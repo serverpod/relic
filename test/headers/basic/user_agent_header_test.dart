@@ -39,6 +39,21 @@ void main() {
     );
 
     test(
+      'when a User-Agent header with an empty value is passed '
+      'then the server does not respond with a bad request if the headers '
+      'is not actually used',
+      () async {
+        Headers headers = await getServerRequestHeaders(
+          server: server,
+          headers: {'user-agent': ''},
+          parseAllHeaders: false,
+        );
+
+        expect(headers, isNotNull);
+      },
+    );
+
+    test(
       'when a User-Agent string is passed then it should parse correctly',
       () async {
         Headers headers = await getServerRequestHeaders(

@@ -39,12 +39,19 @@ Future<RelicServer> createServer({
 Future<Headers> getServerRequestHeaders({
   required RelicServer server,
   required Map<String, String> headers,
+  // Whether to parse all headers.
+  bool parseAllHeaders = true,
 }) async {
   Headers? parsedHeaders;
 
   server.mountAndStart(
     (Request request) {
       parsedHeaders = request.headers;
+
+      if (parseAllHeaders) {
+        parsedHeaders?.toMap();
+      }
+
       return Response.ok();
     },
   );

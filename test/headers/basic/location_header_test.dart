@@ -81,6 +81,21 @@ void main() {
     );
 
     test(
+      'when a Location header with an invalid value is passed '
+      'then the server does not respond with a bad request if the headers '
+      'is not actually used',
+      () async {
+        Headers headers = await getServerRequestHeaders(
+          server: server,
+          headers: {'location': 'https://example.com:test'},
+          parseAllHeaders: false,
+        );
+
+        expect(headers, isNotNull);
+      },
+    );
+
+    test(
       'when a Location header with a valid URI is passed then it should parse correctly',
       () async {
         Headers headers = await getServerRequestHeaders(

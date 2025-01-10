@@ -66,6 +66,14 @@ class Request extends Message {
   /// if the request has already been hijacked.
   bool get canHijack => _onHijack != null && !_onHijack.called;
 
+  /// Whether this request has been hijacked.
+  ///
+  /// This is `true` if the request is already hijacked.
+  ///
+  /// Useful for clearer intent in cases where checking the hijacked state is
+  /// more relevant than the ability to hijack.
+  bool get isHijacked => !canHijack;
+
   /// Creates a new [Request].
   ///
   /// [handlerPath] must be root-relative. [url]'s path must be fully relative,

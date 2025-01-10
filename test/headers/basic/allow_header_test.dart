@@ -59,6 +59,21 @@ void main() {
     );
 
     test(
+      'when an Allow header with an invalid value is passed '
+      'then the server does not respond with a bad request if the headers '
+      'is not actually used',
+      () async {
+        Headers headers = await getServerRequestHeaders(
+          server: server,
+          headers: {'allow': 'CUSTOM'},
+          parseAllHeaders: false,
+        );
+
+        expect(headers, isNotNull);
+      },
+    );
+
+    test(
       'when a valid Allow header is passed then it should parse the methods correctly',
       () async {
         Headers headers = await getServerRequestHeaders(

@@ -60,6 +60,21 @@ void main() {
     );
 
     test(
+      'when an If-Modified-Since header with an invalid date format is passed '
+      'then the server does not respond with a bad request if the headers '
+      'is not actually used',
+      () async {
+        Headers headers = await getServerRequestHeaders(
+          server: server,
+          headers: {'if-modified-since': 'invalid-date-format'},
+          parseAllHeaders: false,
+        );
+
+        expect(headers, isNotNull);
+      },
+    );
+
+    test(
       'when a valid If-Modified-Since header is passed then it should parse the '
       'date correctly',
       () async {

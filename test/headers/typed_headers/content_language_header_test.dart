@@ -59,6 +59,21 @@ void main() {
     );
 
     test(
+      'when a Content-Language header with an invalid value is passed '
+      'then the server does not respond with a bad request if the headers '
+      'is not actually used',
+      () async {
+        Headers headers = await getServerRequestHeaders(
+          server: server,
+          headers: {'content-language': 'en-123'},
+          parseAllHeaders: false,
+        );
+
+        expect(headers, isNotNull);
+      },
+    );
+
+    test(
       'when a single valid language is passed then it should parse correctly',
       () async {
         Headers headers = await getServerRequestHeaders(

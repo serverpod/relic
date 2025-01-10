@@ -60,6 +60,21 @@ void main() {
     );
 
     test(
+      'when a Date header with an invalid date format is passed '
+      'then the server does not respond with a bad request if the headers '
+      'is not actually used',
+      () async {
+        Headers headers = await getServerRequestHeaders(
+          server: server,
+          headers: {'date': 'invalid-date-format'},
+          parseAllHeaders: false,
+        );
+
+        expect(headers, isNotNull);
+      },
+    );
+
+    test(
       'when a valid Date header is passed then it should parse the date correctly',
       () async {
         Headers headers = await getServerRequestHeaders(

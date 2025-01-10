@@ -14,7 +14,11 @@ extension HttpResponseExtension on io.HttpResponse {
     // Apply all headers from the provided headers map.
     var mappedHeaders = headers.toMap();
     for (var entry in mappedHeaders.entries) {
-      responseHeaders.set(entry.key, entry.value);
+      var key = entry.key;
+      var value = entry.value;
+      if (value != null) {
+        responseHeaders.set(key, value);
+      }
     }
 
     // Set Content-Type based on the MIME type of the body.

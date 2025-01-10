@@ -101,6 +101,21 @@ void main() {
     );
 
     test(
+      'when an Accept-Encoding header with an invalid value is passed '
+      'then the server does not respond with a bad request if the headers '
+      'is not actually used',
+      () async {
+        Headers headers = await getServerRequestHeaders(
+          server: server,
+          headers: {'accept-encoding': ';q=0.5'},
+          parseAllHeaders: false,
+        );
+
+        expect(headers, isNotNull);
+      },
+    );
+
+    test(
       'when an Accept-Encoding header is passed then it should parse the encoding correctly',
       () async {
         Headers headers = await getServerRequestHeaders(

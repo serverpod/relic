@@ -5,10 +5,10 @@ import 'package:relic/src/relic_server.dart';
 import '../headers_test_utils.dart';
 import '../docs/strict_validation_docs.dart';
 
-/// Reference: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Expires
+/// Reference: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/If-Unmodified-Since
 /// About empty value test, check the [StrictValidationDocs] class for more details.
 void main() {
-  group('Given an Expires header with the strict flag true', () {
+  group('Given an If-Unmodified-Since header with the strict flag true', () {
     late RelicServer server;
 
     setUp(() async {
@@ -18,14 +18,14 @@ void main() {
     tearDown(() => server.close());
 
     test(
-      'when an empty Expires header is passed then the server responds '
+      'when an empty If-Unmodified-Since header is passed then the server responds '
       'with a bad request including a message that states the header value '
       'cannot be empty',
       () async {
         expect(
           () async => await getServerRequestHeaders(
             server: server,
-            headers: {'expires': ''},
+            headers: {'if-unmodified-since': ''},
           ),
           throwsA(
             isA<BadRequestException>().having(
@@ -39,14 +39,14 @@ void main() {
     );
 
     test(
-      'when an Expires header with an invalid date format is passed '
+      'when an If-Unmodified-Since header with an invalid date format is passed '
       'then the server responds with a bad request including a message that '
       'states the date format is invalid',
       () async {
         expect(
           () async => await getServerRequestHeaders(
             server: server,
-            headers: {'expires': 'invalid-date-format'},
+            headers: {'if-unmodified-since': 'invalid-date-format'},
           ),
           throwsA(
             isA<BadRequestException>().having(
@@ -60,13 +60,13 @@ void main() {
     );
 
     test(
-      'when an Expires header with an invalid date format is passed '
+      'when an If-Unmodified-Since header with an invalid date format is passed '
       'then the server does not respond with a bad request if the headers '
       'is not actually used',
       () async {
         Headers headers = await getServerRequestHeaders(
           server: server,
-          headers: {'expires': 'invalid-date-format'},
+          headers: {'if-unmodified-since': 'invalid-date-format'},
           parseAllHeaders: false,
         );
 
@@ -75,49 +75,50 @@ void main() {
     );
 
     test(
-      'when a valid Expires header is passed then it should parse the date correctly',
+      'when a valid If-Unmodified-Since header is passed then it should parse the '
+      'date correctly',
       () async {
         Headers headers = await getServerRequestHeaders(
           server: server,
-          headers: {'expires': 'Wed, 21 Oct 2015 07:28:00 GMT'},
+          headers: {'if-unmodified-since': 'Wed, 21 Oct 2015 07:28:00 GMT'},
         );
 
         expect(
-          headers.expires,
+          headers.ifUnmodifiedSince,
           equals(parseHttpDate('Wed, 21 Oct 2015 07:28:00 GMT')),
         );
       },
     );
 
     test(
-      'when an Expires header with extra whitespace is passed then it should parse the date correctly',
+      'when an If-Unmodified-Since header with extra whitespace is passed then it should parse the date correctly',
       () async {
         Headers headers = await getServerRequestHeaders(
           server: server,
-          headers: {'expires': ' Wed, 21 Oct 2015 07:28:00 GMT '},
+          headers: {'if-unmodified-since': ' Wed, 21 Oct 2015 07:28:00 GMT '},
         );
 
         expect(
-          headers.expires,
+          headers.ifUnmodifiedSince,
           equals(parseHttpDate('Wed, 21 Oct 2015 07:28:00 GMT')),
         );
       },
     );
 
     test(
-      'when no Expires header is passed then it should return null',
+      'when no If-Unmodified-Since header is passed then it should return null',
       () async {
         Headers headers = await getServerRequestHeaders(
           server: server,
           headers: {},
         );
 
-        expect(headers.expires, isNull);
+        expect(headers.ifUnmodifiedSince, isNull);
       },
     );
   });
 
-  group('Given an Expires header with the strict flag false', () {
+  group('Given an If-Unmodified-Since header with the strict flag false', () {
     late RelicServer server;
 
     setUp(() async {
@@ -126,58 +127,58 @@ void main() {
 
     tearDown(() => server.close());
 
-    group('when an empty Expires header is passed ', () {
+    group('when an empty If-Unmodified-Since header is passed', () {
       test(
         'then it should return null',
         () async {
           Headers headers = await getServerRequestHeaders(
             server: server,
-            headers: {'expires': ''},
+            headers: {'if-unmodified-since': ''},
           );
 
-          expect(headers.expires, isNull);
+          expect(headers.ifUnmodifiedSince, isNull);
         },
       );
 
       test(
-        'then it should be recorded in "failedHeadersToParse" field',
+        'then it should be recorded in failedHeadersToParse',
         () async {
           Headers headers = await getServerRequestHeaders(
             server: server,
-            headers: {'expires': ''},
+            headers: {'if-unmodified-since': ''},
           );
 
           expect(
-            headers.failedHeadersToParse['expires'],
+            headers.failedHeadersToParse['if-unmodified-since'],
             equals(['']),
           );
         },
       );
     });
 
-    group('when an invalid Expires header is passed', () {
+    group('when an invalid If-Unmodified-Since header is passed', () {
       test(
         'then it should return null',
         () async {
           Headers headers = await getServerRequestHeaders(
             server: server,
-            headers: {'expires': 'invalid-date-format'},
+            headers: {'if-unmodified-since': 'invalid-date-format'},
           );
 
-          expect(headers.expires, isNull);
+          expect(headers.ifUnmodifiedSince, isNull);
         },
       );
 
       test(
-        'then it should be recorded in "failedHeadersToParse" field',
+        'then it should be recorded in failedHeadersToParse',
         () async {
           Headers headers = await getServerRequestHeaders(
             server: server,
-            headers: {'expires': 'invalid-date-format'},
+            headers: {'if-unmodified-since': 'invalid-date-format'},
           );
 
           expect(
-            headers.failedHeadersToParse['expires'],
+            headers.failedHeadersToParse['if-unmodified-since'],
             equals(['invalid-date-format']),
           );
         },

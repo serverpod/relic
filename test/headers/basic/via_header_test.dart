@@ -37,6 +37,21 @@ void main() {
     );
 
     test(
+      'when a Via header with an empty value is passed '
+      'then the server does not respond with a bad request if the headers '
+      'is not actually used',
+      () async {
+        Headers headers = await getServerRequestHeaders(
+          server: server,
+          headers: {'via': ''},
+          parseAllHeaders: false,
+        );
+
+        expect(headers, isNotNull);
+      },
+    );
+
+    test(
       'when a valid Via header is passed then it should parse the values correctly',
       () async {
         Headers headers = await getServerRequestHeaders(

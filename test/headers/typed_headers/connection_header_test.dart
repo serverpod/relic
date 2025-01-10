@@ -60,6 +60,21 @@ void main() {
     );
 
     test(
+      'when a Connection header with an invalid value is passed '
+      'then the server does not respond with a bad request if the headers '
+      'is not actually used',
+      () async {
+        Headers headers = await getServerRequestHeaders(
+          server: server,
+          headers: {'connection': 'invalid-connection-format'},
+          parseAllHeaders: false,
+        );
+
+        expect(headers, isNotNull);
+      },
+    );
+
+    test(
       'when a Connection header with directives are passed then they should be parsed correctly',
       () async {
         Headers headers = await getServerRequestHeaders(

@@ -127,6 +127,7 @@ class RelicServer {
       );
     }
 
+    // Parsing and converting the HTTP request to a relic request
     Request relicRequest;
     try {
       relicRequest = Request.fromHttpRequest(
@@ -134,35 +135,39 @@ class RelicServer {
         strictHeaders: strictHeaders,
         poweredByHeader: poweredByHeader,
       );
+    } on InvalidHeaderException catch (error, stackTrace) {
+      // If the request headers are invalid, respond with a 400 Bad Request status.
+      logMessage(
+        'Error parsing request headers.\n$error',
+        stackTrace: stackTrace,
+        type: LoggerType.error,
+      );
+      // Write the response to the HTTP response.
+      return Response.badRequest(
+        body: Body.fromString(error.httpResponseBody),
+      ).writeHttpResponse(request.response);
     } catch (error, stackTrace) {
+      // Catch any other errors.
       logMessage(
         'Error parsing request.\n$error',
         stackTrace: stackTrace,
+        type: LoggerType.error,
       );
 
-      Response errorResponse;
-      // If the error is an [InvalidHeaderException], respond with a 400 Bad Request status.
-      if (error is InvalidHeaderException) {
-        errorResponse = Response.badRequest(
-          body: Body.fromString(error.toString()),
-        );
-      } else
       // If the error is an [ArgumentError] with the name 'method' or 'requestedUri',
       // respond with a 400 Bad Request status.
       if (error is ArgumentError &&
           (error.name == 'method' || error.name == 'requestedUri')) {
-        errorResponse = Response.badRequest();
-      } else {
-        errorResponse = Response.internalServerError();
+        return Response.badRequest().writeHttpResponse(request.response);
       }
 
       // Write the response to the HTTP response.
-      await errorResponse.writeHttpResponse(
+      return Response.internalServerError().writeHttpResponse(
         request.response,
       );
-      return;
     }
 
+    // Handling the request with the handler
     Response? response;
     try {
       response = await handler(relicRequest);
@@ -175,34 +180,66 @@ class RelicServer {
           ),
         );
       }
+    } on InvalidHeaderException catch (error, stackTrace) {
+      // If the request headers are invalid, respond with a 400 Bad Request status.
+      _logError(
+        relicRequest,
+        'Error parsing request headers.\n$error',
+        stackTrace,
+      );
+      return Response.badRequest(
+        body: Body.fromString(error.httpResponseBody),
+      ).writeHttpResponse(request.response);
     } on HijackException catch (error, stackTrace) {
       // If the request is already hijacked, meaning it's being handled by
       // another handler, like a websocket, then don't respond with an error.
-      if (!relicRequest.canHijack) return;
+      if (relicRequest.isHijacked) return;
 
       _logError(
         relicRequest,
         "Caught HijackException, but the request wasn't hijacked.",
         stackTrace,
       );
-      response = Response.internalServerError();
+      return Response.internalServerError().writeHttpResponse(
+        request.response,
+      );
     } catch (error, stackTrace) {
       _logError(
         relicRequest,
         'Error thrown by handler.\n$error',
         stackTrace,
       );
-      response = Response.internalServerError();
+      return Response.internalServerError().writeHttpResponse(
+        request.response,
+      );
     }
 
-    // If the the request is already hijacked, meaning it's being handled by
-    // another handler, like a websocket, then respond with a 501 Not Implemented status.
-    // This should never happen, but if it does, we don't want to respond with an error.
-    if (!relicRequest.canHijack) {
-      response = Response.notImplemented();
+    if (relicRequest.isHijacked) {
+      throw StateError(
+        'The request has been hijacked by another handler (e.g., a WebSocket) '
+        'but the HijackException was never thrown. If a request is hijacked '
+        'then a HijackException is expected to be thrown.',
+      );
     }
 
-    await response.writeHttpResponse(request.response);
+    // When writing the response to the HTTP response, if the response headers
+    // are invalid, respond with a 400 Bad Request status.
+    try {
+      return await response.writeHttpResponse(request.response);
+    } on InvalidHeaderException catch (error) {
+      return Response.badRequest(
+        body: Body.fromString(error.toString()),
+      ).writeHttpResponse(request.response);
+    } catch (error, stackTrace) {
+      _logError(
+        relicRequest,
+        'Error thrown by handler.\n$error',
+        stackTrace,
+      );
+      return Response.internalServerError().writeHttpResponse(
+        request.response,
+      );
+    }
   }
 }
 

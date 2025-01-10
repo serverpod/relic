@@ -88,6 +88,21 @@ void main() {
     );
 
     test(
+      'when a Access-Control-Allow-Credentials header with an invalid value is passed '
+      'then the server does not respond with a bad request if the headers '
+      'is not actually used',
+      () async {
+        Headers headers = await getServerRequestHeaders(
+          server: server,
+          headers: {'access-control-allow-credentials': 'test'},
+          parseAllHeaders: false,
+        );
+
+        expect(headers, isNotNull);
+      },
+    );
+
+    test(
       'when a Access-Control-Allow-Credentials header with a value "true" '
       'is passed then it should parse correctly',
       () async {

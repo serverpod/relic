@@ -55,6 +55,21 @@ void main() {
     );
 
     test(
+      'when a Upgrade header with an invalid protocol is passed '
+      'then the server does not respond with a bad request if the headers '
+      'is not actually used',
+      () async {
+        Headers headers = await getServerRequestHeaders(
+          server: server,
+          headers: {'upgrade': 'InvalidProtocol/abc'},
+          parseAllHeaders: false,
+        );
+
+        expect(headers, isNotNull);
+      },
+    );
+
+    test(
       'when no Upgrade header is passed then it should return null',
       () async {
         Headers headers = await getServerRequestHeaders(

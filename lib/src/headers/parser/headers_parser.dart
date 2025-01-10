@@ -120,7 +120,7 @@ class HeadersParser {
   }) {
     var message = "$exception";
     if (exception is InvalidHeaderException) {
-      message = exception.message;
+      message = exception.description;
     } else if (exception is FormatException) {
       message = exception.message;
     } else if (exception is ArgumentError) {

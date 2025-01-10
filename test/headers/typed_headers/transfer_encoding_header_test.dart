@@ -54,6 +54,36 @@ void main() {
       },
     );
 
+    test(
+      'when a Transfer-Encoding header with an invalid value is passed '
+      'then the server does not respond with a bad request if the headers '
+      'is not actually used',
+      () async {
+        Headers headers = await getServerRequestHeaders(
+          server: server,
+          headers: {'transfer-encoding': 'custom-encoding'},
+          parseAllHeaders: false,
+        );
+
+        expect(headers, isNotNull);
+      },
+    );
+
+    test(
+      'when a valid Transfer-Encoding header is passed then it should parse the encodings correctly',
+      () async {
+        Headers headers = await getServerRequestHeaders(
+          server: server,
+          headers: {'transfer-encoding': 'gzip, chunked'},
+        );
+
+        expect(
+          headers.transferEncoding?.encodings.map((e) => e.name),
+          equals(['gzip', 'chunked']),
+        );
+      },
+    );
+
     /// According to the HTTP/1.1 specification (RFC 9112), the 'chunked' transfer
     /// encoding must be the final encoding applied to the response body.
     test(
@@ -64,21 +94,6 @@ void main() {
         Headers headers = await getServerRequestHeaders(
           server: server,
           headers: {'transfer-encoding': 'chunked, gzip'},
-        );
-
-        expect(
-          headers.transferEncoding?.encodings.map((e) => e.name),
-          equals(['gzip', 'chunked']),
-        );
-      },
-    );
-
-    test(
-      'when a valid Transfer-Encoding header is passed then it should parse the encodings correctly',
-      () async {
-        Headers headers = await getServerRequestHeaders(
-          server: server,
-          headers: {'transfer-encoding': 'gzip, chunked'},
         );
 
         expect(

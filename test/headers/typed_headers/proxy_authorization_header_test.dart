@@ -42,6 +42,23 @@ void main() {
     );
 
     test(
+      'when a Proxy-Authorization header with an invalid value is passed '
+      'then the server does not respond with a bad request if the headers '
+      'is not actually used',
+      () async {
+        Headers headers = await getServerRequestHeaders(
+          server: server,
+          headers: {
+            'proxy-authorization': 'invalid-proxy-authorization-format'
+          },
+          parseAllHeaders: false,
+        );
+
+        expect(headers, isNotNull);
+      },
+    );
+
+    test(
       'when no Proxy-Authorization header is passed then it should default to null',
       () async {
         Headers headers = await getServerRequestHeaders(

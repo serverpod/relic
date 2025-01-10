@@ -41,6 +41,21 @@ void main() {
     );
 
     test(
+      'when an Access-Control-Request-Headers header with an empty value is '
+      'passed then the server does not respond with a bad request if the '
+      'headers is not actually used',
+      () async {
+        Headers headers = await getServerRequestHeaders(
+          server: server,
+          headers: {'access-control-request-headers': ''},
+          parseAllHeaders: false,
+        );
+
+        expect(headers, isNotNull);
+      },
+    );
+
+    test(
       'when an Access-Control-Request-Headers header is passed then it '
       'should parse the headers correctly',
       () async {
