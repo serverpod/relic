@@ -90,7 +90,7 @@ Future<void> _scheduleServer(
   assert(_server == null);
   _server = await relic_server.serve(
     handler,
-    RelicAddress.fromHostname('localhost'),
+    InternetAddress.loopbackIPv4,
     0,
     securityContext: securityContext,
   );

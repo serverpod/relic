@@ -282,7 +282,7 @@ void main() {
           Future(() => throw StateError('oh no'));
           return syncHandler(request);
         },
-        RelicAddress.fromHostname('localhost'),
+        InternetAddress.loopbackIPv4,
         0,
       );
 
@@ -302,7 +302,7 @@ void main() {
           Future(() => throw StateError('oh no'));
           return syncHandler(request);
         },
-        RelicAddress.fromHostname('localhost'),
+        InternetAddress.loopbackIPv4,
         0,
       );
 
@@ -413,7 +413,7 @@ void main() {
     test('can be set at the server level', () async {
       _server = await relic_server.serve(
         syncHandler,
-        RelicAddress.fromHostname('localhost'),
+        InternetAddress.loopbackIPv4,
         0,
         poweredByHeader: 'ourServer',
       );
@@ -434,7 +434,7 @@ void main() {
             ),
           );
         },
-        RelicAddress.fromHostname('localhost'),
+        InternetAddress.loopbackIPv4,
         0,
         poweredByHeader: 'ourServer',
       );
@@ -558,7 +558,7 @@ Future<void> _scheduleServer(
   assert(_server == null);
   _server = await relic_server.serve(
     handler,
-    RelicAddress.fromHostname('localhost'),
+    InternetAddress.loopbackIPv4,
     0,
     securityContext: securityContext,
   );

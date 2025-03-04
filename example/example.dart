@@ -6,7 +6,7 @@ void main() async {
 
   var server = await serve(
     handler,
-    RelicAddress.fromHostname('localhost'),
+    InternetAddress.loopbackIPv4,
     8080,
   );
 
