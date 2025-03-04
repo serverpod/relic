@@ -28,26 +28,6 @@ class RelicServer {
   /// The powered by header to use for responses.
   final String poweredByHeader;
 
-  Uri get url {
-    if (server.address.isLoopback) {
-      return Uri(scheme: 'http', host: 'localhost', port: server.port);
-    }
-
-    if (server.address.type == InternetAddressType.IPv6) {
-      return Uri(
-        scheme: 'http',
-        host: '[${server.address.address}]',
-        port: server.port,
-      );
-    }
-
-    return Uri(
-      scheme: 'http',
-      host: server.address.address,
-      port: server.port,
-    );
-  }
-
   /// Creates a server with the given parameters.
   static Future<RelicServer> createServer(
     InternetAddress address,
