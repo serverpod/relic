@@ -1,5 +1,5 @@
 name: relic
-description: A lightweight web server inspired by Shelf.
+description: A lightweight and flexible web server inspired by Shelf for building APIs and backend services.
 version: 0.3.0
 repository: https://github.com/serverpod/relic
 
