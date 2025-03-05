@@ -42,7 +42,7 @@ void main() {
         Headers headers = await getServerRequestHeaders(
           server: server,
           headers: {'www-authenticate': 'Test'},
-          parseAllHeaders: false,
+          eagerParseHeaders: false,
         );
 
         expect(headers, isNotNull);

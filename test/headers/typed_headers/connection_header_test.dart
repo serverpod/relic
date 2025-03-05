@@ -67,7 +67,7 @@ void main() {
         Headers headers = await getServerRequestHeaders(
           server: server,
           headers: {'connection': 'invalid-connection-format'},
-          parseAllHeaders: false,
+          eagerParseHeaders: false,
         );
 
         expect(headers, isNotNull);

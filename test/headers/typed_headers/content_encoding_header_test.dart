@@ -67,7 +67,7 @@ void main() {
         Headers headers = await getServerRequestHeaders(
           server: server,
           headers: {'content-encoding': 'custom-encoding'},
-          parseAllHeaders: false,
+          eagerParseHeaders: false,
         );
 
         expect(headers, isNotNull);

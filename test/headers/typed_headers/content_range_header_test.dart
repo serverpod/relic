@@ -109,7 +109,7 @@ void main() {
         Headers headers = await getServerRequestHeaders(
           server: server,
           headers: {'content-range': 'bytes 500-499/1234'},
-          parseAllHeaders: false,
+          eagerParseHeaders: false,
         );
 
         expect(headers, isNotNull);

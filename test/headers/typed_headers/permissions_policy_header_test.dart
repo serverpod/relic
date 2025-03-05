@@ -43,7 +43,7 @@ void main() {
         Headers headers = await getServerRequestHeaders(
           server: server,
           headers: {'permissions-policy': ''},
-          parseAllHeaders: false,
+          eagerParseHeaders: false,
         );
 
         expect(headers, isNotNull);

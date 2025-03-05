@@ -73,7 +73,7 @@ Future<Headers> getServerRequestHeaders({
   required RelicServer server,
   required Map<String, String> headers,
   // Whether to parse all headers.
-  bool parseAllHeaders = true,
+  bool eagerParseHeaders = true,
 }) async {
   Headers? parsedHeaders;
 
@@ -81,8 +81,8 @@ Future<Headers> getServerRequestHeaders({
     (Request request) {
       parsedHeaders = request.headers;
 
-      if (parseAllHeaders) {
-        parsedHeaders?.toMap(); // parse all headers eagerly (if any)
+      if (eagerParseHeaders) {
+        parsedHeaders?.toMap();
       }
 
       return Response.ok();

@@ -132,7 +132,7 @@ void main() {
           headers: {
             'cache-control': 'max-age=3600, stale-while-revalidate=300'
           },
-          parseAllHeaders: false,
+          eagerParseHeaders: false,
         );
 
         expect(headers, isNotNull);
