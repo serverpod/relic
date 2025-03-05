@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:http/http.dart' as http;
-import 'package:relic/src/address/relic_address.dart';
 import 'package:relic/src/relic_server.dart';
 import 'package:test/test.dart';
 
@@ -13,15 +12,9 @@ void main() {
 
   setUp(() async {
     try {
-      server = await RelicServer.createServer(
-        RelicAddress.fromInternetAddress(InternetAddress.loopbackIPv6),
-        0,
-      );
+      server = await RelicServer.createServer(InternetAddress.loopbackIPv6, 0);
     } on SocketException catch (_) {
-      server = await RelicServer.createServer(
-        RelicAddress.fromInternetAddress(InternetAddress.loopbackIPv4),
-        0,
-      );
+      server = await RelicServer.createServer(InternetAddress.loopbackIPv4, 0);
     }
   });
 
