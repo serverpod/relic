@@ -1,0 +1,12 @@
+name: Publish Relic 
+
+on:
+    push:
+        tags:
+            - 'v[0-9]+.[0-9]+.[0-9]+*' # Matches tags like v1.2.3 and v1.2.3-pre.1
+
+jobs:
+    publish:
+        permissions:
+            id-token: write
+        uses: dart-lang/setup-dart/.github/workflows/publish.yml@v1
