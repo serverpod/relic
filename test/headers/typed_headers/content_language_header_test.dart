@@ -66,7 +66,7 @@ void main() {
         Headers headers = await getServerRequestHeaders(
           server: server,
           headers: {'content-language': 'en-123'},
-          parseAllHeaders: false,
+          eagerParseHeaders: false,
         );
 
         expect(headers, isNotNull);

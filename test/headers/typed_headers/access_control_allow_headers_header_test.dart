@@ -65,7 +65,7 @@ void main() {
         Headers headers = await getServerRequestHeaders(
           server: server,
           headers: {'access-control-allow-headers': '*, Content-Type'},
-          parseAllHeaders: false,
+          eagerParseHeaders: false,
         );
 
         expect(headers, isNotNull);

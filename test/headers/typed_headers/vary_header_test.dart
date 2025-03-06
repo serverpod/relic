@@ -64,7 +64,7 @@ void main() {
         Headers headers = await getServerRequestHeaders(
           server: server,
           headers: {'vary': '* , User-Agent'},
-          parseAllHeaders: false,
+          eagerParseHeaders: false,
         );
 
         expect(headers, isNotNull);

@@ -62,7 +62,7 @@ void main() {
         Headers headers = await getServerRequestHeaders(
           server: server,
           headers: {'upgrade': 'InvalidProtocol/abc'},
-          parseAllHeaders: false,
+          eagerParseHeaders: false,
         );
 
         expect(headers, isNotNull);

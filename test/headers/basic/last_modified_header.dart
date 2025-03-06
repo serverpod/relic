@@ -67,7 +67,7 @@ void main() {
         Headers headers = await getServerRequestHeaders(
           server: server,
           headers: {'last-modified': 'invalid-date-format'},
-          parseAllHeaders: false,
+          eagerParseHeaders: false,
         );
 
         expect(headers, isNotNull);

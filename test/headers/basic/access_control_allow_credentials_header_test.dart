@@ -95,7 +95,7 @@ void main() {
         Headers headers = await getServerRequestHeaders(
           server: server,
           headers: {'access-control-allow-credentials': 'test'},
-          parseAllHeaders: false,
+          eagerParseHeaders: false,
         );
 
         expect(headers, isNotNull);

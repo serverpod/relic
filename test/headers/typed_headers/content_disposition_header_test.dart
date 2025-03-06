@@ -43,7 +43,7 @@ void main() {
         Headers headers = await getServerRequestHeaders(
           server: server,
           headers: {'content-disposition': ''},
-          parseAllHeaders: false,
+          eagerParseHeaders: false,
         );
 
         expect(headers, isNotNull);

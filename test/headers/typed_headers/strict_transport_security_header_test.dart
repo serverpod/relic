@@ -82,7 +82,7 @@ void main() {
         Headers headers = await getServerRequestHeaders(
           server: server,
           headers: {'strict-transport-security': 'max-age=abc'},
-          parseAllHeaders: false,
+          eagerParseHeaders: false,
         );
 
         expect(headers, isNotNull);

@@ -70,7 +70,7 @@ void main() {
         Headers headers = await getServerRequestHeaders(
           server: server,
           headers: {'access-control-request-method': 'TEST'},
-          parseAllHeaders: false,
+          eagerParseHeaders: false,
         );
 
         expect(headers, isNotNull);

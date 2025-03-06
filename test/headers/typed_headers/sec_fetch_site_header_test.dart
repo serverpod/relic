@@ -61,7 +61,7 @@ void main() {
         Headers headers = await getServerRequestHeaders(
           server: server,
           headers: {'sec-fetch-site': 'custom-site'},
-          parseAllHeaders: false,
+          eagerParseHeaders: false,
         );
         expect(headers, isNotNull);
       },

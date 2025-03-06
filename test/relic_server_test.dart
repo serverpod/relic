@@ -1,21 +1,17 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:http/http.dart' as http;
 import 'package:relic/src/relic_server.dart';
 import 'package:test/test.dart';
 
+import 'headers/headers_test_utils.dart';
 import 'util/test_util.dart';
 
 void main() {
   late RelicServer server;
 
   setUp(() async {
-    try {
-      server = await RelicServer.createServer(InternetAddress.loopbackIPv6, 0);
-    } on SocketException catch (_) {
-      server = await RelicServer.createServer(InternetAddress.loopbackIPv4, 0);
-    }
+    server = await createServer(strictHeaders: false);
   });
 
   tearDown(() => server.close());

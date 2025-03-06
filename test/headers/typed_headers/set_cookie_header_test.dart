@@ -166,7 +166,7 @@ void main() {
         Headers headers = await getServerRequestHeaders(
           server: server,
           headers: {'set-cookie': 'userId=42\x7F'},
-          parseAllHeaders: false,
+          eagerParseHeaders: false,
         );
 
         expect(headers, isNotNull);

@@ -21,11 +21,6 @@ import 'dart:async';
 import 'dart:io' as io;
 
 import 'package:relic/relic.dart';
-import 'package:relic/src/relic_server.dart';
-
-import 'handler/handler.dart';
-import 'message/request.dart';
-import 'message/response.dart';
 
 /// Starts an [HttpServer] that listens on the specified [address] and
 /// [port] and sends requests to [handler].
