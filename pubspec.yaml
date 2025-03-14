@@ -4,13 +4,13 @@ version: 0.3.0
 repository: https://github.com/serverpod/relic
 
 environment:
-  sdk: '>=3.3.0 <4.0.0'
-  
+  sdk: ">=3.3.0 <4.0.0"
+
 dependencies:
   async: ^2.11.0
   collection: ^1.17.1
   http_parser: ^4.0.2
-  path: ^1.8.2
+  path: ^1.8.3
   stack_trace: ^1.10.0
   stream_channel: ^2.1.1
   mime: ">=1.0.6 <3.0.0"
@@ -18,7 +18,14 @@ dependencies:
 
 dev_dependencies:
   lints: ">=3.0.0 <6.0.0"
-  http: '>=1.0.0 <2.0.0'
-  test: ^1.24.2
+  http: ">=1.0.0 <2.0.0"
+  test: ^1.25.0
   test_descriptor: ^2.0.1
   mockito: ^5.4.4
+  # The following are not used directly, but are included transitively.
+  # Due to bad semver hygiene we need to bound the versions higher than
+  # our direct dependencies indicate.
+  file: ^7.0.0
+  frontend_server_client: ^4.0.0
+  pub_semver: ^2.1.4
+  watcher: ^1.1.0

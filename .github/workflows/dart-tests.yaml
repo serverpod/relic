@@ -1,112 +1,76 @@
-name: Relic CI
+name: Relic Ci
 
 on:
   push:
-    branches:
-      - main
-      - dev
+    branches: [main]
   pull_request:
-    branches:
-      - main
-      - dev
+    branches: [main]
+  schedule:
+    - cron: "0 0 * * 0" # every Sunday at 00:00 UTC
+  workflow_dispatch: # allow manual triggering
 
 env:
   PUB_CACHE_PATH: ~/.pub-cache
+  LOWEST_DART_SDK: "3.3.0"
 
 jobs:
-  dart_format:
-    name: Verify Dart Formatting
+  build:
+    name: Verify Build
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [windows-latest, ubuntu-latest, macos-latest]
-        dart_sdk: ['3.3.0']
+        os: [ubuntu-latest]
+        dart_sdk:
+          - "3.3.0" # ${{ env.LOWEST_DART_SDK }} won't work ¯\_(ツ)_/¯
+          - stable
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Setup Dart
         uses: dart-lang/setup-dart@v1.3
         with:
           sdk: ${{ matrix.dart_sdk }}
-      - name: Cache Dart dependencies
-        uses: actions/cache@v3
+
+      - name: Cache Dart Dependencies
+        uses: actions/cache@v4
         with:
           path: ${{ env.PUB_CACHE_PATH }}
           key: ${{ runner.os }}-pub-cache-${{ matrix.dart_sdk }}
-          restore-keys: |
-            ${{ runner.os }}-pub-cache-
-      - name: Verify formatting
+          restore-keys: ${{ runner.os }}-pub-cache-
+
+      - name: Verify Formatting
+        # Disable formatting check on stable for now.
+        # Dart stable (3.7.2 as of 2025-03-14) has radically different formatting
+        if: ${{ matrix.dart_sdk == env.LOWEST_DART_SDK }}
         run: dart format --output=none --set-exit-if-changed .
 
-  dart_analyze:
-    name: Run Dart Analysis
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [windows-latest, ubuntu-latest, macos-latest]
-        dart_sdk: ['3.3.0', 'stable']
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
-      - name: Setup Dart
-        uses: dart-lang/setup-dart@v1.3
-        with:
-          sdk: ${{ matrix.dart_sdk }}
-      - name: Cache Dart dependencies
-        uses: actions/cache@v3
-        with:
-          path: ${{ env.PUB_CACHE_PATH }}
-          key: ${{ runner.os }}-pub-cache-${{ matrix.dart_sdk }}
-          restore-keys: |
-            ${{ runner.os }}-pub-cache-
-      - name: Install dependencies
-        run: dart pub upgrade
-      - name: Analyze
-        run: dart analyze
+      - name: Check Dependency Bounds
+        if: ${{ matrix.dart_sdk != env.LOWEST_DART_SDK }} # --tighten available from 3.5
+        run: >-
+          dart pub downgrade --tighten &&
+          dart pub upgrade --major-versions &&
+          git diff-files --quiet
 
-  dart_analyze_downgrade:
-    name: Run Dart Analysis Downgrade
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
-      - name: Setup Dart
-        uses: dart-lang/setup-dart@v1.3
-        with:
-          sdk: '3.3.0'
-      - name: Cache Dart dependencies
-        uses: actions/cache@v3
-        with:
-          path: ${{ env.PUB_CACHE_PATH }}
-          key: ${{ runner.os }}-pub-cache-downgrade
-          restore-keys: |
-            ${{ runner.os }}-pub-cache-
-      - name: Install dependencies (Downgrade)
-        run: dart pub downgrade
-      - name: Analyze
-        run: dart analyze
+      - name: Analyze (downgraded)
+        run: >-
+          dart pub downgrade &&
+          dart pub get &&
+          dart analyze ${{ matrix.dart_sdk == env.LOWEST_DART_SDK && '--fatal-infos' || '--fatal-warnings' }}
 
-  dart_analyze_latest_downgrade:
-    name: Run Dart Analysis Latest (stable) Downgrade
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
-      - name: Setup Dart
-        uses: dart-lang/setup-dart@v1.3
-        with:
-          sdk: 'stable'
-      - name: Cache Dart dependencies
-        uses: actions/cache@v3
-        with:
-          path: ${{ env.PUB_CACHE_PATH }}
-          key: ${{ runner.os }}-pub-cache-downgrade
-          restore-keys: |
-            ${{ runner.os }}-pub-cache-
-      - name: Install dependencies (Downgrade)
-        run: dart pub downgrade
-      - name: Analyze
-        run: dart analyze
+      - name: Analyze (upgraded)
+        run: >-
+          dart pub upgrade &&
+          dart pub get &&
+          dart analyze ${{ matrix.dart_sdk == env.LOWEST_DART_SDK && '--fatal-infos' || '--fatal-warnings' }}
+
+      - name: Check Pana Score
+        if: ${{ matrix.dart_sdk == 'stable' }}
+        run: >-
+          dart pub global activate pana &&
+          dart pub global run pana --no-warning --exit-code-threshold=0 --json
+
+      - name: Publish Dry Run
+        run: dart pub publish --dry-run
 
   unit_tests:
     name: Run Unit Tests
@@ -114,22 +78,36 @@ jobs:
     strategy:
       matrix:
         os: [windows-latest, ubuntu-latest, macos-latest]
-        dart_sdk: ['3.3.0']
+        dart_sdk: ["3.3.0", stable, beta]
+        deps: [downgrade, upgrade]
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Setup Dart
         uses: dart-lang/setup-dart@v1.3
         with:
           sdk: ${{ matrix.dart_sdk }}
-      - name: Cache Dart dependencies
-        uses: actions/cache@v3
+
+      - name: Cache Dart Dependencies
+        uses: actions/cache@v4
         with:
           path: ${{ env.PUB_CACHE_PATH }}
           key: ${{ runner.os }}-pub-cache-${{ matrix.dart_sdk }}
-          restore-keys: |
-            ${{ runner.os }}-pub-cache-
-      - name: Install dependencies
-        run: dart pub upgrade
-      - name: Run tests
-        run: dart test
+          restore-keys: ${{ runner.os }}-pub-cache-
+
+      - name: Install Dependencies (${{ matrix.deps }})
+        run: >-
+          dart pub ${{ matrix.deps }} &&
+          dart pub get
+
+      - name: Run Tests With Coverage
+        continue-on-error: ${{ matrix.dart_sdk != env.LOWEST_DART_SDK }}
+        run: >-
+          dart pub global activate coverage &&
+          dart pub global run coverage:test_with_coverage --branch-coverage
+
+      - name: Upload Coverage
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: coverage/lcov.info
