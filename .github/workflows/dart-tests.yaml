@@ -37,7 +37,7 @@ jobs:
 
       - name: Verify Formatting
         # Disable formatting check on stable for now.
-        # Dart stable (3.7.2 as of 2025-03-14) has radically different formating
+        # Dart stable (3.7.2 as of 2025-03-14) has radically different formatting
         if: ${{ matrix.dart_sdk != 'stable' }}
         run: dart format --output=none --set-exit-if-changed .
 
