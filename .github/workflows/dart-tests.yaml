@@ -64,7 +64,6 @@ jobs:
 
   unit_tests:
     name: Run Unit Tests
-    needs: build
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
