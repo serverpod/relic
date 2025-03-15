@@ -26,6 +26,7 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+
       - name: Setup Dart
         uses: dart-lang/setup-dart@v1.3
         with:
@@ -75,6 +76,7 @@ jobs:
   unit_tests:
     name: Run Unit Tests
     runs-on: ${{ matrix.os }}
+    continue-on-error: ${{ matrix.dart_sdk != env.LOWEST_DART_SDK }}
     strategy:
       matrix:
         os: [windows-latest, ubuntu-latest, macos-latest]
@@ -83,6 +85,7 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+
       - name: Setup Dart
         uses: dart-lang/setup-dart@v1.3
         with:
@@ -101,13 +104,13 @@ jobs:
           dart pub get
 
       - name: Run Tests With Coverage
-        continue-on-error: ${{ matrix.dart_sdk != env.LOWEST_DART_SDK }}
         run: >-
           dart pub global activate coverage &&
           dart pub global run coverage:test_with_coverage --branch-coverage
 
       - name: Upload Coverage
         uses: codecov/codecov-action@v5
+        if: ${{ !cancelled() }} # upload coverage irrespective of test results
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: coverage/lcov.info
