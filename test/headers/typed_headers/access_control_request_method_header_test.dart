@@ -1,6 +1,6 @@
 import 'package:relic/src/method/request_method.dart';
 import 'package:test/test.dart';
-import 'package:relic/src/headers/headers.dart';
+import 'package:relic/src/headers/standard_headers_extensions.dart';
 import 'package:relic/src/relic_server.dart';
 
 import '../headers_test_utils.dart';
@@ -67,7 +67,7 @@ void main() {
       'passed then the server does not respond with a bad request if the '
       'headers is not actually used',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {'access-control-request-method': 'TEST'},
           eagerParseHeaders: false,
@@ -81,7 +81,7 @@ void main() {
       'when a valid Access-Control-Request-Method header is passed then it '
       'should parse the method correctly',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {'access-control-request-method': 'POST'},
         );
@@ -97,7 +97,7 @@ void main() {
       'when an Access-Control-Request-Method header with extra whitespace is '
       'passed then it should parse the method correctly',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {'access-control-request-method': ' POST '},
         );
@@ -110,7 +110,7 @@ void main() {
       'when no Access-Control-Request-Method header is passed then it should '
       'default to null',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {},
         );
@@ -135,7 +135,7 @@ void main() {
       test(
         'then it should return null',
         () async {
-          Headers headers = await getServerRequestHeaders(
+          var headers = await getServerRequestHeaders(
             server: server,
             headers: {'access-control-request-method': ''},
           );
@@ -147,7 +147,7 @@ void main() {
       test(
         'then it should be recorded in "failedHeadersToParse" field',
         () async {
-          Headers headers = await getServerRequestHeaders(
+          var headers = await getServerRequestHeaders(
             server: server,
             headers: {'access-control-request-method': ''},
           );

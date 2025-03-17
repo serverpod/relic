@@ -1,5 +1,5 @@
 import 'package:test/test.dart';
-import 'package:relic/src/headers/headers.dart';
+import 'package:relic/src/headers/standard_headers_extensions.dart';
 import 'package:relic/src/relic_server.dart';
 
 import '../headers_test_utils.dart';
@@ -40,7 +40,7 @@ void main() {
       'then the server does not respond with a bad request if the headers '
       'is not actually used',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {'trailer': ''},
           eagerParseHeaders: false,
@@ -53,7 +53,7 @@ void main() {
     test(
       'when a valid Trailer header is passed then it should parse correctly',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {'trailer': 'Expires, Content-MD5, Content-Language'},
         );
@@ -68,7 +68,7 @@ void main() {
     test(
       'when a Trailer header with whitespace is passed then it should parse correctly',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {'trailer': ' Expires , Content-MD5 , Content-Language '},
         );
@@ -83,7 +83,7 @@ void main() {
     test(
       'when a Trailer header with custom values is passed then it should parse correctly',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {'trailer': 'custom-header, AnotherHeader'},
         );
@@ -98,7 +98,7 @@ void main() {
     test(
       'when no Trailer header is passed then it should return null',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {},
         );
@@ -120,7 +120,7 @@ void main() {
     test(
       'when a custom Trailer header is passed then it should parse correctly',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {'trailer': 'custom-header'},
         );
@@ -132,7 +132,7 @@ void main() {
     test(
       'when an empty Trailer header is passed then it should be recorded in failedHeadersToParse',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {'trailer': ''},
         );

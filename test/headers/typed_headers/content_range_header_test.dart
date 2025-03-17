@@ -1,5 +1,5 @@
 import 'package:test/test.dart';
-import 'package:relic/src/headers/headers.dart';
+import 'package:relic/src/headers/standard_headers_extensions.dart';
 import 'package:relic/src/relic_server.dart';
 
 import '../headers_test_utils.dart';
@@ -106,7 +106,7 @@ void main() {
       'then the server does not respond with a bad request if the headers '
       'is not actually used',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {'content-range': 'bytes 500-499/1234'},
           eagerParseHeaders: false,
@@ -120,7 +120,7 @@ void main() {
       'when a Content-Range header with a valid byte range is passed then it '
       'should parse correctly',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {'content-range': 'bytes 0-499/1234'},
         );
@@ -136,7 +136,7 @@ void main() {
       'when a Content-Range header with a valid byte range and unknown size is '
       'passed then it should parse correctly',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {'content-range': 'bytes 0-499/*'},
         );
@@ -152,7 +152,7 @@ void main() {
       'when a Content-Range header with a valid unsatisfiable range is passed '
       'then it should parse correctly',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {'content-range': 'bytes */1234'},
         );
@@ -167,7 +167,7 @@ void main() {
     test(
       'when no Content-Range header is passed then it should return null',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {},
         );
@@ -190,7 +190,7 @@ void main() {
       test(
         'then it should return null',
         () async {
-          Headers headers = await getServerRequestHeaders(
+          var headers = await getServerRequestHeaders(
             server: server,
             headers: {'content-range': 'bytes 0-499/invalid'},
           );
@@ -202,7 +202,7 @@ void main() {
       test(
         'then it should be recorded in the "failedHeadersToParse" field',
         () async {
-          Headers headers = await getServerRequestHeaders(
+          var headers = await getServerRequestHeaders(
             server: server,
             headers: {'content-range': 'bytes 0-499/invalid'},
           );

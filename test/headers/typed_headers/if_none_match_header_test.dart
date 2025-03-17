@@ -1,5 +1,5 @@
 import 'package:test/test.dart';
-import 'package:relic/src/headers/headers.dart';
+import 'package:relic/src/headers/standard_headers_extensions.dart';
 import 'package:relic/src/relic_server.dart';
 
 import '../headers_test_utils.dart';
@@ -84,7 +84,7 @@ void main() {
       'then the server does not respond with a bad request if the headers '
       'is not actually used',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {'if-none-match': 'invalid-etag'},
           eagerParseHeaders: false,
@@ -98,7 +98,7 @@ void main() {
       'when an If-None-Match header with a single valid ETag is passed then it '
       'should parse correctly',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {'if-none-match': '"123456"'},
         );
@@ -113,7 +113,7 @@ void main() {
       'when an If-None-Match header with a wildcard (*) is passed then it '
       'should parse correctly',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {'if-none-match': '*'},
         );
@@ -126,7 +126,7 @@ void main() {
     test(
       'when no If-None-Match header is passed then it should default to null',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {},
         );
@@ -139,7 +139,7 @@ void main() {
       test(
         'then they should parse correctly',
         () async {
-          Headers headers = await getServerRequestHeaders(
+          var headers = await getServerRequestHeaders(
             server: server,
             headers: {'if-none-match': '"123", "456", "789"'},
           );
@@ -155,7 +155,7 @@ void main() {
       test(
         'with W/ weak validator prefix should be accepted',
         () async {
-          Headers headers = await getServerRequestHeaders(
+          var headers = await getServerRequestHeaders(
             server: server,
             headers: {'if-none-match': 'W/"123", W/"456"'},
           );
@@ -171,7 +171,7 @@ void main() {
       test(
         'with extra whitespace are passed then they should parse correctly',
         () async {
-          Headers headers = await getServerRequestHeaders(
+          var headers = await getServerRequestHeaders(
             server: server,
             headers: {'if-none-match': ' "123" , "456" , "789" '},
           );
@@ -188,7 +188,7 @@ void main() {
         'with duplicate values are passed then they should parse correctly '
         'and remove duplicates',
         () async {
-          Headers headers = await getServerRequestHeaders(
+          var headers = await getServerRequestHeaders(
             server: server,
             headers: {'if-none-match': '"123", "456", "789", "123"'},
           );
@@ -216,7 +216,7 @@ void main() {
       test(
         'then it should return null',
         () async {
-          Headers headers = await getServerRequestHeaders(
+          var headers = await getServerRequestHeaders(
             server: server,
             headers: {'if-none-match': 'invalid-etag'},
           );
@@ -228,7 +228,7 @@ void main() {
       test(
         'then it should be recorded in "failedHeadersToParse" field',
         () async {
-          Headers headers = await getServerRequestHeaders(
+          var headers = await getServerRequestHeaders(
             server: server,
             headers: {'if-none-match': 'invalid-etag'},
           );

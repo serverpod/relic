@@ -1,5 +1,5 @@
 import 'package:test/test.dart';
-import 'package:relic/src/headers/headers.dart';
+import 'package:relic/src/headers/standard_headers_extensions.dart';
 import 'package:relic/src/relic_server.dart';
 
 import '../headers_test_utils.dart';
@@ -40,7 +40,7 @@ void main() {
     test(
       'when a valid X-Powered-By value is passed then it should parse correctly',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {'x-powered-by': 'Express'},
         );
@@ -52,7 +52,7 @@ void main() {
     test(
       'when no X-Powered-By header is passed then it should default to Relic',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {},
         );
@@ -75,7 +75,7 @@ void main() {
       test(
         'when an invalid X-Powered-By header is passed then it should default to Relic',
         () async {
-          Headers headers = await getServerRequestHeaders(
+          var headers = await getServerRequestHeaders(
             server: server,
             headers: {'x-powered-by': ''},
           );
