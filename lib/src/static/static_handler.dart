@@ -6,17 +6,17 @@ import 'dart:typed_data';
 import 'package:convert/convert.dart';
 import 'package:mime/mime.dart';
 import 'package:path/path.dart' as p;
+import 'package:relic/src/headers/standard_headers_extensions.dart';
 import 'package:relic/src/headers/typed/typed_headers.dart';
 import 'package:relic/src/method/request_method.dart';
 import 'package:relic/src/static/extension/datetime_extension.dart';
 
 import '../body/body.dart';
+import '../body/types/mime_type.dart';
 import '../handler/handler.dart';
 import '../headers/headers.dart';
-import '../body/types/mime_type.dart';
 import '../message/request.dart';
 import '../message/response.dart';
-
 import 'directory_listing.dart';
 
 /// The default resolver for MIME types based on file extensions.

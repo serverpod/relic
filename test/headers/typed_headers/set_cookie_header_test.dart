@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:test/test.dart';
-import 'package:relic/src/headers/headers.dart';
+import 'package:relic/src/headers/standard_headers_extensions.dart';
 import 'package:relic/src/relic_server.dart';
 
 import '../headers_test_utils.dart';
@@ -163,7 +163,7 @@ void main() {
       'then the server does not respond with a bad request if the headers '
       'is not actually used',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {'set-cookie': 'userId=42\x7F'},
           eagerParseHeaders: false,
@@ -176,7 +176,7 @@ void main() {
     test(
       'when a Set-Cookie header with an empty name is passed then it should parse the cookie correctly',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {'set-cookie': '=abc123'},
         );
@@ -189,7 +189,7 @@ void main() {
     test(
       'when a Set-Cookie header with all attributes is passed then it should parse correctly',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {
             'set-cookie':
@@ -212,7 +212,7 @@ void main() {
     test(
       'when a Set-Cookie header with extra whitespace is passed then it should parse the cookies correctly',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {'set-cookie': ' sessionId=abc123 ; Secure '},
         );
@@ -237,7 +237,7 @@ void main() {
       test(
         'when an invalid Set-Cookie header is passed then it should return null',
         () async {
-          Headers headers = await getServerRequestHeaders(
+          var headers = await getServerRequestHeaders(
             server: server,
             headers: {'set-cookie': 'sessionId=abc123; invalidCookie'},
           );
@@ -249,7 +249,7 @@ void main() {
       test(
         'when an invalid Set-Cookie header is passed then it should be recorded in failedHeadersToParse',
         () async {
-          Headers headers = await getServerRequestHeaders(
+          var headers = await getServerRequestHeaders(
             server: server,
             headers: {'set-cookie': 'sessionId=abc123; invalidCookie'},
           );

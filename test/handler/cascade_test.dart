@@ -9,19 +9,19 @@ void main() {
     late Handler handler;
     setUp(() {
       handler = Cascade().add((request) {
-        if (request.headers.custom['one']?.first == 'false') {
+        if (request.headers['one']?.first == 'false') {
           return Response.notFound(body: Body.fromString('handler 1'));
         } else {
           return Response.ok(body: Body.fromString('handler 1'));
         }
       }).add((request) {
-        if (request.headers.custom['two']?.first == 'false') {
+        if (request.headers['two']?.first == 'false') {
           return Response.notFound(body: Body.fromString('handler 2'));
         } else {
           return Response.ok(body: Body.fromString('handler 2'));
         }
       }).add((request) {
-        if (request.headers.custom['three']?.first == 'false') {
+        if (request.headers['three']?.first == 'false') {
           return Response.notFound(body: Body.fromString('handler 3'));
         } else {
           return Response.ok(body: Body.fromString('handler 3'));

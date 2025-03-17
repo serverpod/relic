@@ -1,6 +1,6 @@
 import 'package:http_parser/http_parser.dart';
 import 'package:test/test.dart';
-import 'package:relic/src/headers/headers.dart';
+import 'package:relic/src/headers/standard_headers_extensions.dart';
 import 'package:relic/src/relic_server.dart';
 
 import '../headers_test_utils.dart';
@@ -41,7 +41,7 @@ void main() {
       'then the server does not respond with a bad request if the headers '
       'is not actually used',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {'retry-after': 'invalid'},
           eagerParseHeaders: false,
@@ -53,7 +53,7 @@ void main() {
 
     group('when the header contains a delay in seconds', () {
       test('then it should parse a valid positive integer correctly', () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {'retry-after': '120'},
         );
@@ -62,7 +62,7 @@ void main() {
       });
 
       test('then it should parse a value with whitespace correctly', () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {'retry-after': ' 120 '},
         );
@@ -101,7 +101,7 @@ void main() {
 
     group('when the header contains an HTTP date', () {
       test('then it should parse a valid date correctly', () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {'retry-after': 'Wed, 21 Oct 2015 07:28:00 GMT'},
         );
@@ -113,7 +113,7 @@ void main() {
       });
 
       test('then it should parse a date with whitespace correctly', () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {'retry-after': ' Wed, 21 Oct 2015 07:28:00 GMT '},
         );
@@ -142,7 +142,7 @@ void main() {
     test(
       'when no Retry-After header is passed then it should return null',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {},
         );
@@ -164,7 +164,7 @@ void main() {
     test(
       'when an invalid header is passed then it should return null',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {'retry-after': 'invalid'},
         );
@@ -176,7 +176,7 @@ void main() {
     test(
       'when an invalid header is passed then it should be recorded in failedHeadersToParse',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {'retry-after': 'invalid'},
         );

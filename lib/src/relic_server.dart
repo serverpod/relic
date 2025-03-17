@@ -2,8 +2,9 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:relic/src/body/body.dart';
-import 'package:relic/src/hijack/exception/hijack_exception.dart';
 import 'package:relic/src/headers/exception/invalid_header_exception.dart';
+import 'package:relic/src/headers/standard_headers_extensions.dart';
+import 'package:relic/src/hijack/exception/hijack_exception.dart';
 import 'package:relic/src/logger/logger.dart';
 import 'package:relic/src/message/request.dart';
 import 'package:relic/src/message/response.dart';

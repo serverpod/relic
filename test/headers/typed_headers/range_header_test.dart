@@ -1,5 +1,5 @@
 import 'package:test/test.dart';
-import 'package:relic/src/headers/headers.dart';
+import 'package:relic/src/headers/standard_headers_extensions.dart';
 import 'package:relic/src/relic_server.dart';
 
 import '../headers_test_utils.dart';
@@ -83,7 +83,7 @@ void main() {
       'then the server does not respond with a bad request if the headers '
       'is not actually used',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {'range': 'invalid-value'},
           eagerParseHeaders: false,
@@ -97,7 +97,7 @@ void main() {
       'when a Range header with a single valid range is passed then it '
       'should parse correctly',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {'range': 'bytes=0-499'},
         );
@@ -113,7 +113,7 @@ void main() {
       'when a Range header with a range that only has a start is passed then it '
       'should parse correctly',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {'range': 'bytes=500-'},
         );
@@ -129,7 +129,7 @@ void main() {
       'when a Range header with a range that only has an end is passed then it '
       'should parse correctly',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {'range': 'bytes=-500'},
         );
@@ -144,7 +144,7 @@ void main() {
     test(
       'when no Range header is passed then it should return null',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {},
         );
@@ -157,7 +157,7 @@ void main() {
       test(
         'then they should parse correctly',
         () async {
-          Headers headers = await getServerRequestHeaders(
+          var headers = await getServerRequestHeaders(
             server: server,
             headers: {'range': 'bytes=0-499, 500-999, 1000-'},
           );
@@ -178,7 +178,7 @@ void main() {
       test(
         'with extra whitespace are passed then they should parse correctly',
         () async {
-          Headers headers = await getServerRequestHeaders(
+          var headers = await getServerRequestHeaders(
             server: server,
             headers: {'range': ' bytes = 0-499 , 500-999 , 1000- '},
           );
@@ -203,7 +203,7 @@ void main() {
       test(
         'then it should return null',
         () async {
-          Headers headers = await getServerRequestHeaders(
+          var headers = await getServerRequestHeaders(
             server: server,
             headers: {'range': 'invalid-range'},
           );
@@ -215,7 +215,7 @@ void main() {
       test(
         'then it should be recorded in "failedHeadersToParse" field',
         () async {
-          Headers headers = await getServerRequestHeaders(
+          var headers = await getServerRequestHeaders(
             server: server,
             headers: {'range': 'invalid-range'},
           );

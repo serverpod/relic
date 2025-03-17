@@ -3,6 +3,7 @@
 import 'dart:async';
 
 import 'package:relic/relic.dart';
+import 'package:relic/src/headers/standard_headers_extensions.dart';
 import 'package:test/test.dart';
 
 import '../util/test_util.dart';
@@ -35,7 +36,7 @@ void main() {
           .addHandler(syncHandler);
 
       final response = await makeSimpleRequest(handler);
-      expect(response.headers.custom['from'], isNull);
+      expect(response.headers['from'], isNull);
     });
 
     test(

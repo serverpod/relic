@@ -1,9 +1,9 @@
-import 'package:test/test.dart';
-import 'package:relic/src/headers/headers.dart';
+import 'package:relic/src/headers/standard_headers_extensions.dart';
 import 'package:relic/src/relic_server.dart';
+import 'package:test/test.dart';
 
-import '../headers_test_utils.dart';
 import '../docs/strict_validation_docs.dart';
+import '../headers_test_utils.dart';
 
 /// Reference: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Expose-Headers
 /// About empty value test, check the [StrictValidationDocs] class for more details.
@@ -67,7 +67,7 @@ void main() {
       'then the server does not respond with a bad request if the headers '
       'is not actually used',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {'access-control-expose-headers': '*, X-Custom-Header'},
           eagerParseHeaders: false,
@@ -81,7 +81,7 @@ void main() {
       'when a Access-Control-Expose-Headers header with a single valid header is '
       'passed then it should parse correctly',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {'access-control-expose-headers': 'X-Custom-Header'},
         );
@@ -96,7 +96,7 @@ void main() {
     test(
       'when a wildcard (*) is passed then it should parse correctly',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {'access-control-expose-headers': '*'},
         );
@@ -109,7 +109,7 @@ void main() {
     test(
       'when no Access-Control-Expose-Headers header is passed then it should return null',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {},
         );
@@ -122,7 +122,7 @@ void main() {
       test(
         'then they should parse correctly',
         () async {
-          Headers headers = await getServerRequestHeaders(
+          var headers = await getServerRequestHeaders(
             server: server,
             headers: {
               'access-control-expose-headers':
@@ -140,7 +140,7 @@ void main() {
       test(
         'with extra whitespace then they should parse correctly',
         () async {
-          Headers headers = await getServerRequestHeaders(
+          var headers = await getServerRequestHeaders(
             server: server,
             headers: {
               'access-control-expose-headers':
@@ -172,7 +172,7 @@ void main() {
       test(
         'then it should return null',
         () async {
-          Headers headers = await getServerRequestHeaders(
+          var headers = await getServerRequestHeaders(
             server: server,
             headers: {'access-control-expose-headers': ''},
           );
@@ -184,7 +184,7 @@ void main() {
       test(
         'then it should be recorded in the "failedHeadersToParse" field',
         () async {
-          Headers headers = await getServerRequestHeaders(
+          var headers = await getServerRequestHeaders(
             server: server,
             headers: {'access-control-expose-headers': ''},
           );

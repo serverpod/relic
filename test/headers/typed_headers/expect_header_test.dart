@@ -1,5 +1,5 @@
 import 'package:test/test.dart';
-import 'package:relic/src/headers/headers.dart';
+import 'package:relic/src/headers/standard_headers_extensions.dart';
 import 'package:relic/src/relic_server.dart';
 import '../headers_test_utils.dart';
 
@@ -61,7 +61,7 @@ void main() {
       'then the server does not respond with a bad request if the headers '
       'is not actually used',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {'expect': 'custom-directive'},
           eagerParseHeaders: false,
@@ -74,7 +74,7 @@ void main() {
     test(
       'when a valid Expect header is passed then it should parse the directives correctly',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {'expect': '100-continue'},
         );
@@ -100,7 +100,7 @@ void main() {
       test(
         'then it should return null',
         () async {
-          Headers headers = await getServerRequestHeaders(
+          var headers = await getServerRequestHeaders(
             server: server,
             headers: {'expect': ''},
           );
@@ -112,7 +112,7 @@ void main() {
       test(
         'then it should be recorded in "failedHeadersToParse" field',
         () async {
-          Headers headers = await getServerRequestHeaders(
+          var headers = await getServerRequestHeaders(
             server: server,
             headers: {'expect': ''},
           );

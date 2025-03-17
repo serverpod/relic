@@ -1,5 +1,5 @@
 import 'package:test/test.dart';
-import 'package:relic/src/headers/headers.dart';
+import 'package:relic/src/headers/standard_headers_extensions.dart';
 import 'package:relic/src/relic_server.dart';
 import '../headers_test_utils.dart';
 import '../docs/strict_validation_docs.dart';
@@ -83,7 +83,7 @@ void main() {
       'then the server does not respond with a bad request if the headers '
       'is not actually used',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {'host': 'http://example.com:test'},
           eagerParseHeaders: false,
@@ -96,7 +96,7 @@ void main() {
     test(
       'when a valid Host header is passed then it should parse the URI correctly',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {'host': 'https://example.com'},
         );
@@ -109,7 +109,7 @@ void main() {
       'when a Host header with a port number is passed then it should parse '
       'the port number correctly',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {'host': 'https://example.com:8080'},
         );
@@ -124,7 +124,7 @@ void main() {
     test(
       'when a Host header with extra whitespace is passed then it should parse the URI correctly',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {'host': ' https://example.com '},
         );
@@ -136,7 +136,7 @@ void main() {
     test(
       'when no Host header is passed then it should default to machine address',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {},
         );
@@ -160,7 +160,7 @@ void main() {
       test(
         'then it should return null',
         () async {
-          Headers headers = await getServerRequestHeaders(
+          var headers = await getServerRequestHeaders(
             server: server,
             headers: {'host': 'h@ttp://example.com'},
           );
@@ -172,7 +172,7 @@ void main() {
       test(
         'then it should be recorded in the "failedHeadersToParse" field',
         () async {
-          Headers headers = await getServerRequestHeaders(
+          var headers = await getServerRequestHeaders(
             server: server,
             headers: {'host': 'h@ttp://example.com'},
           );
@@ -188,7 +188,7 @@ void main() {
     test(
       'when no Host header is passed then it should default to machine address',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {},
         );

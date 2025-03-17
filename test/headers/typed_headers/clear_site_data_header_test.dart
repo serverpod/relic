@@ -1,5 +1,5 @@
 import 'package:test/test.dart';
-import 'package:relic/src/headers/headers.dart';
+import 'package:relic/src/headers/standard_headers_extensions.dart';
 import 'package:relic/src/relic_server.dart';
 
 import '../headers_test_utils.dart';
@@ -79,7 +79,7 @@ void main() {
       'then the server does not respond with a bad request if the headers '
       'is not actually used',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {'clear-site-data': '"cache", "*", "cookies"'},
           eagerParseHeaders: false,
@@ -91,7 +91,7 @@ void main() {
     test(
       'when a valid Clear-Site-Data header is passed then it should parse the data types correctly',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {'clear-site-data': '"cache", "cookies", "storage"'},
         );
@@ -108,7 +108,7 @@ void main() {
     test(
       'when a Clear-Site-Data header with wildcard is passed then it should parse correctly',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {'clear-site-data': '*'},
         );
@@ -120,7 +120,7 @@ void main() {
     test(
       'when no Clear-Site-Data header is passed then it should return null',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {},
         );
@@ -143,7 +143,7 @@ void main() {
       test(
         'then it should return null',
         () async {
-          Headers headers = await getServerRequestHeaders(
+          var headers = await getServerRequestHeaders(
             server: server,
             headers: {'clear-site-data': ''},
           );
@@ -155,7 +155,7 @@ void main() {
       test(
         'then it should be recorded in the "failedHeadersToParse" field',
         () async {
-          Headers headers = await getServerRequestHeaders(
+          var headers = await getServerRequestHeaders(
             server: server,
             headers: {'clear-site-data': ''},
           );

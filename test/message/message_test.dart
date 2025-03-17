@@ -48,9 +48,9 @@ void main() {
         ),
       );
 
-      expect(message.headers.custom, containsPair('foo', ['bar']));
-      expect(message.headers.custom, containsPair('Foo', ['bar']));
-      expect(message.headers.custom, containsPair('FOO', ['bar']));
+      expect(message.headers, containsPair('foo', ['bar']));
+      expect(message.headers, containsPair('Foo', ['bar']));
+      expect(message.headers, containsPair('FOO', ['bar']));
     });
 
     test('when modified then they are immutable', () {
@@ -62,15 +62,15 @@ void main() {
         ),
       );
       expect(
-        () => message.headers.custom['h1'] = ['value1'],
+        () => message.headers['h1'] = ['value1'],
         throwsUnsupportedError,
       );
       expect(
-        () => message.headers.custom['h1'] = ['value2'],
+        () => message.headers['h1'] = ['value2'],
         throwsUnsupportedError,
       );
       expect(
-        () => message.headers.custom['h2'] = ['value2'],
+        () => message.headers['h2'] = ['value2'],
         throwsUnsupportedError,
       );
     });
@@ -85,7 +85,7 @@ void main() {
         ),
       );
 
-      expect(message.headers.custom, {
+      expect(message.headers, {
         'a': ['A'],
         'b': ['B1', 'B2'],
       });

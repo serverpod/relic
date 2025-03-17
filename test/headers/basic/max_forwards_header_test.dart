@@ -1,5 +1,5 @@
 import 'package:test/test.dart';
-import 'package:relic/src/headers/headers.dart';
+import 'package:relic/src/headers/standard_headers_extensions.dart';
 import 'package:relic/src/relic_server.dart';
 
 import '../headers_test_utils.dart';
@@ -85,7 +85,7 @@ void main() {
       'then the server does not respond with a bad request if the headers '
       'is not actually used',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {'max-forwards': 'invalid-value'},
           eagerParseHeaders: false,
@@ -99,7 +99,7 @@ void main() {
       'when a Max-Forwards header with a valid integer is passed then it '
       'should parse correctly',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {'max-forwards': '5'},
         );
@@ -111,7 +111,7 @@ void main() {
     test(
       'when a Max-Forwards header with zero is passed then it should parse correctly',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {'max-forwards': '0'},
         );
@@ -123,7 +123,7 @@ void main() {
     test(
       'when no Max-Forwards header is passed then it should return null',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {},
         );
@@ -146,7 +146,7 @@ void main() {
       test(
         'then it should return null',
         () async {
-          Headers headers = await getServerRequestHeaders(
+          var headers = await getServerRequestHeaders(
             server: server,
             headers: {'max-forwards': 'invalid'},
           );
@@ -158,7 +158,7 @@ void main() {
       test(
         ' then it should be recorded in "failedHeadersToParse" field',
         () async {
-          Headers headers = await getServerRequestHeaders(
+          var headers = await getServerRequestHeaders(
             server: server,
             headers: {'max-forwards': 'invalid'},
           );

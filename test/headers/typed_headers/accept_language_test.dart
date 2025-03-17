@@ -1,9 +1,9 @@
-import 'package:test/test.dart';
-import 'package:relic/src/headers/headers.dart';
+import 'package:relic/src/headers/standard_headers_extensions.dart';
 import 'package:relic/src/relic_server.dart';
+import 'package:test/test.dart';
 
-import '../headers_test_utils.dart';
 import '../docs/strict_validation_docs.dart';
+import '../headers_test_utils.dart';
 
 /// Reference: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Accept-Language
 /// About empty value test, check the [StrictValidationDocs] class for more details.
@@ -106,7 +106,7 @@ void main() {
       'then the server does not respond with a bad request if the headers '
       'is not actually used',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {'accept-language': ';q=0.5'},
           eagerParseHeaders: false,
@@ -120,7 +120,7 @@ void main() {
       'when an Accept-Language header is passed then it should parse the '
       'language correctly',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {'accept-language': 'en'},
         );
@@ -136,7 +136,7 @@ void main() {
       'when an Accept-Language header is passed without quality then the '
       'default quality value should be set',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {'accept-language': 'en'},
         );
@@ -152,7 +152,7 @@ void main() {
       'when a mixed case Accept-Language header is passed then it should parse '
       'the language correctly',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {'accept-language': 'En'},
         );
@@ -167,7 +167,7 @@ void main() {
     test(
       'when no Accept-Language header is passed then it should return null',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {},
         );
@@ -179,7 +179,7 @@ void main() {
     test(
       'when an Accept-Language header with wildcard (*) is passed then it should parse correctly',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {'accept-language': '*'},
         );
@@ -193,7 +193,7 @@ void main() {
       'when an Accept-Language header with wildcard (*) and quality value is passed '
       'then it should parse the encoding correctly',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {'accept-language': '*;q=0.5'},
         );
@@ -213,7 +213,7 @@ void main() {
       test(
         'then they should parse the languages correctly',
         () async {
-          Headers headers = await getServerRequestHeaders(
+          var headers = await getServerRequestHeaders(
             server: server,
             headers: {'accept-language': 'en, fr, de'},
           );
@@ -228,7 +228,7 @@ void main() {
       test(
         'then they should parse the qualities correctly',
         () async {
-          Headers headers = await getServerRequestHeaders(
+          var headers = await getServerRequestHeaders(
             server: server,
             headers: {'accept-language': 'en, fr, de'},
           );
@@ -243,7 +243,7 @@ void main() {
       test(
         'with quality values then they should parse the languages correctly',
         () async {
-          Headers headers = await getServerRequestHeaders(
+          var headers = await getServerRequestHeaders(
             server: server,
             headers: {'accept-language': 'en;q=1.0, fr;q=0.5, de;q=0.8'},
           );
@@ -258,7 +258,7 @@ void main() {
       test(
         'with quality values then they should parse the qualities correctly',
         () async {
-          Headers headers = await getServerRequestHeaders(
+          var headers = await getServerRequestHeaders(
             server: server,
             headers: {'accept-language': 'en;q=1.0, fr;q=0.5, de;q=0.8'},
           );
@@ -273,7 +273,7 @@ void main() {
       test(
         'with duplicated values then it should remove duplicates and parse the languages correctly',
         () async {
-          Headers headers = await getServerRequestHeaders(
+          var headers = await getServerRequestHeaders(
             server: server,
             headers: {'accept-language': 'en, en, fr, de'},
           );
@@ -288,7 +288,7 @@ void main() {
       test(
         'with duplicated values then it should remove duplicates and parse the qualities correctly',
         () async {
-          Headers headers = await getServerRequestHeaders(
+          var headers = await getServerRequestHeaders(
             server: server,
             headers: {'accept-language': 'en, en, fr, de'},
           );
@@ -303,7 +303,7 @@ void main() {
       test(
         'with extra whitespace then it should parse the languages correctly',
         () async {
-          Headers headers = await getServerRequestHeaders(
+          var headers = await getServerRequestHeaders(
             server: server,
             headers: {'accept-language': ' en , fr , de '},
           );
@@ -318,7 +318,7 @@ void main() {
       test(
         'with extra whitespace then it should parse the qualities correctly',
         () async {
-          Headers headers = await getServerRequestHeaders(
+          var headers = await getServerRequestHeaders(
             server: server,
             headers: {'accept-language': ' en , fr , de '},
           );
@@ -345,7 +345,7 @@ void main() {
       test(
         'then it should return null',
         () async {
-          Headers headers = await getServerRequestHeaders(
+          var headers = await getServerRequestHeaders(
             server: server,
             headers: {'accept-language': ''},
           );
@@ -357,7 +357,7 @@ void main() {
       test(
         'then it should be recorded in "failedHeadersToParse" field',
         () async {
-          Headers headers = await getServerRequestHeaders(
+          var headers = await getServerRequestHeaders(
             server: server,
             headers: {'accept-language': ''},
           );
@@ -375,7 +375,7 @@ void main() {
       test(
         'then it should return null',
         () async {
-          Headers headers = await getServerRequestHeaders(
+          var headers = await getServerRequestHeaders(
             server: server,
             headers: {'accept-language': 'en;q=abc, fr, de'},
           );
@@ -387,7 +387,7 @@ void main() {
       test(
         'then they should be recorded in "failedHeadersToParse" field',
         () async {
-          Headers headers = await getServerRequestHeaders(
+          var headers = await getServerRequestHeaders(
             server: server,
             headers: {'accept-language': 'en;q=abc, fr, de'},
           );

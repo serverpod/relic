@@ -1,6 +1,6 @@
 import 'package:http_parser/http_parser.dart';
 import 'package:test/test.dart';
-import 'package:relic/src/headers/headers.dart';
+import 'package:relic/src/headers/standard_headers_extensions.dart';
 import 'package:relic/src/relic_server.dart';
 import '../headers_test_utils.dart';
 import '../docs/strict_validation_docs.dart';
@@ -64,7 +64,7 @@ void main() {
       'then the server does not respond with a bad request if the headers '
       'is not actually used',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {'expires': 'invalid-date-format'},
           eagerParseHeaders: false,
@@ -77,7 +77,7 @@ void main() {
     test(
       'when a valid Expires header is passed then it should parse the date correctly',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {'expires': 'Wed, 21 Oct 2015 07:28:00 GMT'},
         );
@@ -92,7 +92,7 @@ void main() {
     test(
       'when an Expires header with extra whitespace is passed then it should parse the date correctly',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {'expires': ' Wed, 21 Oct 2015 07:28:00 GMT '},
         );
@@ -107,7 +107,7 @@ void main() {
     test(
       'when no Expires header is passed then it should return null',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {},
         );
@@ -130,7 +130,7 @@ void main() {
       test(
         'then it should return null',
         () async {
-          Headers headers = await getServerRequestHeaders(
+          var headers = await getServerRequestHeaders(
             server: server,
             headers: {'expires': ''},
           );
@@ -142,7 +142,7 @@ void main() {
       test(
         'then it should be recorded in "failedHeadersToParse" field',
         () async {
-          Headers headers = await getServerRequestHeaders(
+          var headers = await getServerRequestHeaders(
             server: server,
             headers: {'expires': ''},
           );
@@ -159,7 +159,7 @@ void main() {
       test(
         'then it should return null',
         () async {
-          Headers headers = await getServerRequestHeaders(
+          var headers = await getServerRequestHeaders(
             server: server,
             headers: {'expires': 'invalid-date-format'},
           );
@@ -171,7 +171,7 @@ void main() {
       test(
         'then it should be recorded in "failedHeadersToParse" field',
         () async {
-          Headers headers = await getServerRequestHeaders(
+          var headers = await getServerRequestHeaders(
             server: server,
             headers: {'expires': 'invalid-date-format'},
           );

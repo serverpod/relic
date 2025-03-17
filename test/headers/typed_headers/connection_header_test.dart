@@ -1,4 +1,4 @@
-import 'package:relic/src/headers/headers.dart';
+import 'package:relic/src/headers/standard_headers_extensions.dart';
 import 'package:test/test.dart';
 import 'package:relic/src/relic_server.dart';
 
@@ -64,7 +64,7 @@ void main() {
       'then the server does not respond with a bad request if the headers '
       'is not actually used',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {'connection': 'invalid-connection-format'},
           eagerParseHeaders: false,
@@ -77,7 +77,7 @@ void main() {
     test(
       'when a Connection header with directives are passed then they should be parsed correctly',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {'connection': 'keep-alive, upgrade'},
         );
@@ -93,7 +93,7 @@ void main() {
       'when a Connection header with duplicate directives are passed then '
       'they should be parsed correctly and remove duplicates',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {'connection': 'keep-alive, upgrade, keep-alive'},
         );
@@ -108,7 +108,7 @@ void main() {
     test(
       'when a Connection header with keep-alive is passed then isKeepAlive should be true',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {'connection': 'keep-alive'},
         );
@@ -120,7 +120,7 @@ void main() {
     test(
       'when a Connection header with close is passed then isClose should be true',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {'connection': 'close'},
         );
@@ -145,7 +145,7 @@ void main() {
         test(
           'then it should return null',
           () async {
-            Headers headers = await getServerRequestHeaders(
+            var headers = await getServerRequestHeaders(
               server: server,
               headers: {'connection': ''},
             );
@@ -157,7 +157,7 @@ void main() {
         test(
           'then it should be recorded in failedHeadersToParse',
           () async {
-            Headers headers = await getServerRequestHeaders(
+            var headers = await getServerRequestHeaders(
               server: server,
               headers: {'connection': ''},
             );

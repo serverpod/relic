@@ -1,5 +1,5 @@
 import 'package:test/test.dart';
-import 'package:relic/src/headers/headers.dart';
+import 'package:relic/src/headers/standard_headers_extensions.dart';
 import 'package:relic/src/relic_server.dart';
 import '../headers_test_utils.dart';
 
@@ -64,7 +64,7 @@ void main() {
       'then the server does not respond with a bad request if the headers '
       'is not actually used',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {'from': 'invalid-email-format'},
           eagerParseHeaders: false,
@@ -77,7 +77,7 @@ void main() {
     test(
       'when a valid From header is passed then it should parse the email correctly',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {'from': 'user@example.com'},
         );
@@ -89,7 +89,7 @@ void main() {
     test(
       'when a From header with extra whitespace is passed then it should parse the email correctly',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {'from': ' user@example.com '},
         );
@@ -102,7 +102,7 @@ void main() {
       test(
         'From headers are passed then they should parse all emails correctly',
         () async {
-          Headers headers = await getServerRequestHeaders(
+          var headers = await getServerRequestHeaders(
             server: server,
             headers: {'from': 'user1@example.com, user2@example.com'},
           );
@@ -117,7 +117,7 @@ void main() {
       test(
         'From headers with extra whitespace are passed then they should parse all emails correctly',
         () async {
-          Headers headers = await getServerRequestHeaders(
+          var headers = await getServerRequestHeaders(
             server: server,
             headers: {'from': ' user1@example.com , user2@example.com '},
           );
@@ -133,7 +133,7 @@ void main() {
         'From headers with extra duplicate values are passed then they should '
         'parse all emails correctly and remove duplicates',
         () async {
-          Headers headers = await getServerRequestHeaders(
+          var headers = await getServerRequestHeaders(
             server: server,
             headers: {
               'from': 'user1@example.com, user2@example.com, user1@example.com'
@@ -175,7 +175,7 @@ void main() {
     test(
       'when no From header is passed then it should return null',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {},
         );
@@ -198,7 +198,7 @@ void main() {
       test(
         'then it should return null',
         () async {
-          Headers headers = await getServerRequestHeaders(
+          var headers = await getServerRequestHeaders(
             server: server,
             headers: {'from': 'invalid-email-format'},
           );
@@ -210,7 +210,7 @@ void main() {
       test(
         'then it should be recorded in the "failedHeadersToParse" field',
         () async {
-          Headers headers = await getServerRequestHeaders(
+          var headers = await getServerRequestHeaders(
             server: server,
             headers: {'from': 'invalid-email-format'},
           );
@@ -227,7 +227,7 @@ void main() {
       'when multiple From headers with an invalid email format among valid ones are passed '
       'then they should be recorded in failedHeadersToParse',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {
             'from': 'user1@example.com, invalid-email-format, user2@example.com'

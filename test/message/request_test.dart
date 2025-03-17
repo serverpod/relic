@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:http_parser/http_parser.dart';
 import 'package:relic/relic.dart';
+import 'package:relic/src/headers/standard_headers_extensions.dart';
 import 'package:relic/src/method/request_method.dart';
 import 'package:test/test.dart';
 
@@ -283,7 +284,7 @@ void main() {
       expect(copy.requestedUri, request.requestedUri);
       expect(copy.protocolVersion, request.protocolVersion);
       expect(copy.headers, same(request.headers));
-      expect(copy.headers.custom, same(request.headers.custom));
+      expect(copy.headers, same(request.headers));
       expect(copy.url, request.url);
       expect(copy.handlerPath, request.handlerPath);
       expect(copy.context, same(request.context));
