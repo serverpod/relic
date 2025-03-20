@@ -1,5 +1,5 @@
 import 'package:test/test.dart';
-import 'package:relic/src/headers/headers.dart';
+import 'package:relic/src/headers/standard_headers_extensions.dart';
 import 'package:relic/src/relic_server.dart';
 
 import '../headers_test_utils.dart';
@@ -79,7 +79,7 @@ void main() {
       'then the server does not respond with a bad request if the headers '
       'is not actually used',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {'strict-transport-security': 'max-age=abc'},
           eagerParseHeaders: false,
@@ -92,7 +92,7 @@ void main() {
     test(
       'when a valid Strict-Transport-Security header is passed then it should parse the directives correctly',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {
             'strict-transport-security': 'max-age=31536000; includeSubDomains'
@@ -108,7 +108,7 @@ void main() {
     test(
       'when a Strict-Transport-Security header without includeSubDomains is passed then it should parse correctly',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {'strict-transport-security': 'max-age=31536000'},
         );
@@ -122,7 +122,7 @@ void main() {
     test(
       'when a Strict-Transport-Security header with preload is passed then it should parse correctly',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {'strict-transport-security': 'max-age=31536000; preload'},
         );
@@ -136,7 +136,7 @@ void main() {
     test(
       'when no Strict-Transport-Security header is passed then it should return null',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {},
         );
@@ -160,7 +160,7 @@ void main() {
       test(
         'then it should return null',
         () async {
-          Headers headers = await getServerRequestHeaders(
+          var headers = await getServerRequestHeaders(
             server: server,
             headers: {'strict-transport-security': ''},
           );
@@ -171,7 +171,7 @@ void main() {
       test(
         ' then it should be recorded in the "failedHeadersToParse" field',
         () async {
-          Headers headers = await getServerRequestHeaders(
+          var headers = await getServerRequestHeaders(
             server: server,
             headers: {'strict-transport-security': ''},
           );

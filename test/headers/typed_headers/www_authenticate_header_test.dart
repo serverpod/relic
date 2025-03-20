@@ -1,5 +1,5 @@
 import 'package:test/test.dart';
-import 'package:relic/src/headers/headers.dart';
+import 'package:relic/src/headers/standard_headers_extensions.dart';
 import 'package:relic/src/relic_server.dart';
 
 import '../headers_test_utils.dart';
@@ -39,7 +39,7 @@ void main() {
       'then the server does not respond with a bad request if the headers '
       'is not actually used',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {'www-authenticate': 'Test'},
           eagerParseHeaders: false,
@@ -51,7 +51,7 @@ void main() {
 
     group('when Basic authentication', () {
       test('with realm parameter should parse scheme correctly', () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {'www-authenticate': 'Basic realm="Protected Area"'},
         );
@@ -60,7 +60,7 @@ void main() {
       });
 
       test('with realm parameter should parse realm correctly', () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {'www-authenticate': 'Basic realm="Protected Area"'},
         );
@@ -76,7 +76,7 @@ void main() {
 
     group('when Digest authentication', () {
       test('should parse scheme correctly', () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {
             'www-authenticate':
@@ -88,7 +88,7 @@ void main() {
       });
 
       test('should parse realm parameter correctly', () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {
             'www-authenticate':
@@ -105,7 +105,7 @@ void main() {
       });
 
       test('should parse qop parameter correctly', () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {
             'www-authenticate':
@@ -122,7 +122,7 @@ void main() {
       });
 
       test('should parse nonce parameter correctly', () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {
             'www-authenticate':
@@ -139,7 +139,7 @@ void main() {
       });
 
       test('should parse opaque parameter correctly', () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {
             'www-authenticate':
@@ -158,7 +158,7 @@ void main() {
 
     group('when Bearer authentication', () {
       test('with realm parameter should parse scheme correctly', () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {'www-authenticate': 'Bearer realm="Protected API"'},
         );
@@ -167,7 +167,7 @@ void main() {
       });
 
       test('with error parameter should parse error correctly', () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {
             'www-authenticate':
@@ -187,7 +187,7 @@ void main() {
     test(
       'when no WWW-Authenticate header is passed then it should return null',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {},
         );
@@ -209,7 +209,7 @@ void main() {
     test(
       'when an invalid header is passed then it should return null',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {'www-authenticate': 'InvalidHeader'},
         );
@@ -221,7 +221,7 @@ void main() {
     test(
       'when an invalid header is passed then it should be recorded in failedHeadersToParse',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {'www-authenticate': 'InvalidHeader'},
         );

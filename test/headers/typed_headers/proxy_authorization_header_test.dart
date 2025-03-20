@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:relic/src/headers/typed/headers/authorization_header.dart';
 import 'package:test/test.dart';
-import 'package:relic/src/headers/headers.dart';
+import 'package:relic/src/headers/standard_headers_extensions.dart';
 import 'package:relic/src/relic_server.dart';
 
 import '../headers_test_utils.dart';
@@ -46,7 +46,7 @@ void main() {
       'then the server does not respond with a bad request if the headers '
       'is not actually used',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {
             'proxy-authorization': 'invalid-proxy-authorization-format'
@@ -61,7 +61,7 @@ void main() {
     test(
       'when no Proxy-Authorization header is passed then it should default to null',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {},
         );
@@ -94,7 +94,7 @@ void main() {
       test(
         'when a Bearer token is passed then it should parse the token correctly',
         () async {
-          Headers headers = await getServerRequestHeaders(
+          var headers = await getServerRequestHeaders(
             server: server,
             headers: {'proxy-authorization': 'Bearer validToken123'},
           );
@@ -137,7 +137,7 @@ void main() {
         'correctly',
         () async {
           final credentials = base64Encode(utf8.encode('user:pass'));
-          Headers headers = await getServerRequestHeaders(
+          var headers = await getServerRequestHeaders(
             server: server,
             headers: {'proxy-authorization': 'Basic $credentials'},
           );
@@ -411,7 +411,7 @@ void main() {
         () async {
           final digestValue =
               'username="user", realm="realm", nonce="nonce", uri="/", response="response"';
-          Headers headers = await getServerRequestHeaders(
+          var headers = await getServerRequestHeaders(
             server: server,
             headers: {'proxy-authorization': 'Digest $digestValue'},
           );
@@ -432,7 +432,7 @@ void main() {
         () async {
           final digestValue =
               'username="user", realm="realm", nonce="nonce", uri="/", response="response", algorithm="MD5", qop="auth", nc="00000001", cnonce="cnonce", opaque="opaque"';
-          Headers headers = await getServerRequestHeaders(
+          var headers = await getServerRequestHeaders(
             server: server,
             headers: {'proxy-authorization': 'Digest $digestValue'},
           );
@@ -469,7 +469,7 @@ void main() {
       test(
         'then it should return null',
         () async {
-          Headers headers = await getServerRequestHeaders(
+          var headers = await getServerRequestHeaders(
             server: server,
             headers: {'proxy-authorization': ''},
           );
@@ -481,7 +481,7 @@ void main() {
       test(
         'then it should be recorded in "failedHeadersToParse" field',
         () async {
-          Headers headers = await getServerRequestHeaders(
+          var headers = await getServerRequestHeaders(
             server: server,
             headers: {'proxy-authorization': ''},
           );
@@ -498,7 +498,7 @@ void main() {
       test(
         'then it should return null',
         () async {
-          Headers headers = await getServerRequestHeaders(
+          var headers = await getServerRequestHeaders(
             server: server,
             headers: {'proxy-authorization': 'InvalidFormat'},
           );
@@ -510,7 +510,7 @@ void main() {
       test(
         'then it should be recorded in "failedHeadersToParse" field',
         () async {
-          Headers headers = await getServerRequestHeaders(
+          var headers = await getServerRequestHeaders(
             server: server,
             headers: {'proxy-authorization': 'InvalidFormat'},
           );

@@ -1,6 +1,6 @@
 import 'package:relic/src/headers/typed/headers/transfer_encoding_header.dart';
 import 'package:test/test.dart';
-import 'package:relic/src/headers/headers.dart';
+import 'package:relic/src/headers/standard_headers_extensions.dart';
 import 'package:relic/src/relic_server.dart';
 
 import '../headers_test_utils.dart';
@@ -59,7 +59,7 @@ void main() {
       'then the server does not respond with a bad request if the headers '
       'is not actually used',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {'transfer-encoding': 'custom-encoding'},
           eagerParseHeaders: false,
@@ -72,7 +72,7 @@ void main() {
     test(
       'when a valid Transfer-Encoding header is passed then it should parse the encodings correctly',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {'transfer-encoding': 'gzip, chunked'},
         );
@@ -91,7 +91,7 @@ void main() {
       'encoding then it should parse the encodings correctly and reorder them sot the '
       'chunked encoding is the last encoding',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {'transfer-encoding': 'chunked, gzip'},
         );
@@ -107,7 +107,7 @@ void main() {
       'when a Transfer-Encoding header with duplicate encodings is passed then '
       'it should parse the encodings correctly and remove duplicates',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {'transfer-encoding': 'gzip, chunked, chunked'},
         );
@@ -122,7 +122,7 @@ void main() {
     test(
       'when a Transfer-Encoding header contains "chunked" then isChunked should be true',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {'transfer-encoding': 'gzip, chunked'},
         );
@@ -138,7 +138,7 @@ void main() {
     test(
       'when no Transfer-Encoding header is passed then it should return null',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {},
         );
@@ -161,7 +161,7 @@ void main() {
       test(
         'then it should return null',
         () async {
-          Headers headers = await getServerRequestHeaders(
+          var headers = await getServerRequestHeaders(
             server: server,
             headers: {'transfer-encoding': ''},
           );
@@ -172,7 +172,7 @@ void main() {
       test(
         'then it should be recorded in the "failedHeadersToParse" field',
         () async {
-          Headers headers = await getServerRequestHeaders(
+          var headers = await getServerRequestHeaders(
             server: server,
             headers: {'transfer-encoding': ''},
           );

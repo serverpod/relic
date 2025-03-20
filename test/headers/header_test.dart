@@ -1,5 +1,6 @@
 import 'package:relic/src/headers/custom/custom_headers.dart';
 import 'package:relic/src/headers/headers.dart';
+import 'package:relic/src/headers/standard_headers_extensions.dart';
 import 'package:relic/src/message/response.dart';
 import 'package:test/test.dart';
 
@@ -7,7 +8,7 @@ void main() {
   group('Given Headers class', () {
     test('when created with default values then it initializes correctly', () {
       var headers = Headers.request();
-      expect(headers.custom, isEmpty);
+      expect(headers, isEmpty);
       expect(headers.date, isNull);
     });
 
@@ -17,7 +18,7 @@ void main() {
           'X-Custom-Header': ['value']
         }),
       );
-      expect(headers.custom['x-custom-header'], equals(['value']));
+      expect(headers['x-custom-header'], equals(['value']));
     });
 
     test('when custom headers are removed then they are no longer present', () {
@@ -27,7 +28,7 @@ void main() {
         }),
       );
       headers = headers.copyWith(custom: CustomHeaders({}));
-      expect(headers.custom['x-custom-header'], isNull);
+      expect(headers['x-custom-header'], isNull);
     });
 
     test('when headers are serialized then they are correctly formatted', () {
@@ -46,8 +47,8 @@ void main() {
           'Case-Insensitive': ['value']
         }),
       );
-      expect(headers.custom['case-insensitive'], contains('value'));
-      expect(headers.custom['CASE-INSENSITIVE'], contains('value'));
+      expect(headers['case-insensitive'], contains('value'));
+      expect(headers['CASE-INSENSITIVE'], contains('value'));
     });
 
     test('when headers are copied then modifications are correctly applied',
@@ -62,8 +63,8 @@ void main() {
           'Copied-Header': ['copied']
         }),
       );
-      expect(copiedHeaders.custom['initial-header'], isNull);
-      expect(copiedHeaders.custom['copied-header'], equals(['copied']));
+      expect(copiedHeaders['initial-header'], isNull);
+      expect(copiedHeaders['copied-header'], equals(['copied']));
     });
 
     test('when converting headers to map then it includes all headers', () {
@@ -85,8 +86,7 @@ void main() {
       );
       var response = Response.ok(headers: headers);
 
-      expect(response.headers.custom['Response-Header'],
-          equals(['response-value']));
+      expect(response.headers['Response-Header'], equals(['response-value']));
     });
 
     test('when handling large headers then they are processed correctly', () {
@@ -95,7 +95,7 @@ void main() {
           custom: CustomHeaders({
         'Large-Header': [largeValue]
       }));
-      expect(headers.custom['large-header']?.first.length, equals(10000));
+      expect(headers['large-header']?.first.length, equals(10000));
     });
 
     test('when a managed header is removed then it is no longer present', () {

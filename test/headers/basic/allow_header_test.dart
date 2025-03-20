@@ -1,8 +1,9 @@
-import 'package:test/test.dart';
-import 'package:relic/src/headers/headers.dart';
+import 'package:relic/src/headers/standard_headers_extensions.dart';
 import 'package:relic/src/relic_server.dart';
-import '../headers_test_utils.dart';
+import 'package:test/test.dart';
+
 import '../docs/strict_validation_docs.dart';
+import '../headers_test_utils.dart';
 
 /// Reference: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Allow
 /// About empty value test, check the [StrictValidationDocs] class for more details.
@@ -63,7 +64,7 @@ void main() {
       'then the server does not respond with a bad request if the headers '
       'is not actually used',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {'allow': 'CUSTOM'},
           eagerParseHeaders: false,
@@ -76,7 +77,7 @@ void main() {
     test(
       'when a valid Allow header is passed then it should parse the methods correctly',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {'allow': 'GET, POST, DELETE'},
         );
@@ -92,7 +93,7 @@ void main() {
       'when an Allow header with duplicate methods is passed then it should '
       'parse the methods correctly and remove duplicates',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {'allow': 'GET, POST, GET'},
         );
@@ -108,7 +109,7 @@ void main() {
       'when an Allow header with spaces is passed then it should parse the '
       'methods correctly',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {'allow': ' GET , POST , DELETE '},
         );
@@ -134,7 +135,7 @@ void main() {
       test(
         'then it should return null',
         () async {
-          Headers headers = await getServerRequestHeaders(
+          var headers = await getServerRequestHeaders(
             server: server,
             headers: {'allow': ''},
           );
@@ -146,7 +147,7 @@ void main() {
       test(
         'then it should be recorded in "failedHeadersToParse" field',
         () async {
-          Headers headers = await getServerRequestHeaders(
+          var headers = await getServerRequestHeaders(
             server: server,
             headers: {'allow': ''},
           );

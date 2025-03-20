@@ -84,7 +84,7 @@ void main() {
           'bAr': 'z',
         },
       );
-      var customHeaders = headers.custom;
+      var customHeaders = headers;
 
       expect(
         customHeaders['foo'],
@@ -106,7 +106,7 @@ void main() {
           'bAr': 'z',
         },
       );
-      var customHeaders = headers.custom;
+      var customHeaders = headers;
 
       expect(
         customHeaders['foo'],
@@ -128,7 +128,7 @@ void main() {
           'bAr': 'z',
         },
       );
-      var customHeaders = headers.custom;
+      var customHeaders = headers;
 
       expect(
         customHeaders['x-custom-header1'],
@@ -150,7 +150,7 @@ void main() {
           'X-Custom-Header2': 'customValue2',
         },
       );
-      var customHeaders = headers.custom;
+      var customHeaders = headers;
 
       expect(
         customHeaders['x-custom-header1'],

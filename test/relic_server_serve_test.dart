@@ -153,9 +153,9 @@ void main() {
         body: Body.fromString('Hello from /'),
         headers: Headers.response(
             custom: CustomHeaders({
-          'requested-values': request.headers.custom['request-values']!,
+          'requested-values': request.headers['request-values']!,
           'requested-values-length': [
-            request.headers.custom['request-values']!.length.toString()
+            request.headers['request-values']!.length.toString()
           ],
         })),
       );
@@ -185,14 +185,14 @@ void main() {
   test('custom request headers are received by the handler', () async {
     await _scheduleServer((request) {
       expect(
-        request.headers.custom,
+        request.headers,
         containsPair('custom-header', ['client value']),
       );
 
       // dart:io HttpServer splits multi-value headers into an array
       // validate that they are combined correctly
       expect(
-        request.headers.custom,
+        request.headers,
         containsPair('multi-header', ['foo', 'bar', 'baz']),
       );
       return syncHandler(request);
