@@ -24,7 +24,7 @@ class ClearSiteDataHeader implements TypedHeader {
   ///
   /// This method splits the header value by commas, trims each data type,
   /// and processes the data type values.
-  factory ClearSiteDataHeader.parse(List<String> values) {
+  factory ClearSiteDataHeader.parse(Iterable<String> values) {
     var splitValues = values
         .splitTrimAndFilterUnique()
         .map((s) => s.replaceAll('"', ''))

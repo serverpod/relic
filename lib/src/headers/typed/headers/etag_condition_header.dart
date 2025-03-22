@@ -35,7 +35,7 @@ class IfMatchHeader extends ETagConditionHeader {
   const IfMatchHeader.wildcard() : super.wildcard();
 
   /// Parses the If-Match header value.
-  factory IfMatchHeader.parse(List<String> values) {
+  factory IfMatchHeader.parse(Iterable<String> values) {
     var splitValues = values.splitTrimAndFilterUnique();
     if (splitValues.isEmpty) {
       throw FormatException('Value cannot be empty');
@@ -72,7 +72,7 @@ class IfNoneMatchHeader extends ETagConditionHeader {
   const IfNoneMatchHeader.wildcard() : super.wildcard();
 
   /// Parses the If-None-Match header value.
-  factory IfNoneMatchHeader.parse(List<String> values) {
+  factory IfNoneMatchHeader.parse(Iterable<String> values) {
     var splitValues = values.splitTrimAndFilterUnique();
     if (splitValues.isEmpty) {
       throw FormatException('Value cannot be empty');

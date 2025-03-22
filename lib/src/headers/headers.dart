@@ -1,9 +1,15 @@
 import 'dart:collection';
 import 'dart:io' as io; // TODO: Get rid of this dependen
 
+import 'package:http_parser/http_parser.dart';
 import 'package:relic/relic.dart';
 
-class Headers extends UnmodifiableMapView<String, List<String>> {
+part 'mutable_headers.dart';
+
+typedef _BackingStore = CaseInsensitiveMap<List<String>>;
+
+/// [Headers] is a case-insensitive, unmodifiable map that stores headers
+class Headers extends UnmodifiableMapView<String, Iterable<String>> {
   /// Request Headers
   static const acceptHeader = "accept";
   static const acceptEncodingHeader = "accept-encoding";
@@ -170,6 +176,47 @@ class Headers extends UnmodifiableMapView<String, List<String>> {
     strictTransportSecurityHeader,
   };
 
+  factory Headers.from(Map<String, Iterable<String>>? values) {
+    if (values == null || values.isEmpty) {
+      return _emptyHeaders;
+    } else if (values is Headers) {
+      return values;
+    } else {
+      return Headers._fromEntries(values.entries);
+    }
+  }
+
+  factory Headers.fromEntries(
+    Iterable<MapEntry<String, Iterable<String>>>? entries,
+  ) {
+    if (entries == null || entries.isEmpty) {
+      return _emptyHeaders;
+    } else {
+      return Headers._fromEntries(entries);
+    }
+  }
+
+  factory Headers.empty() => _emptyHeaders;
+
+  // cannot be made const before: <insert link to dart CL
+  Headers._empty() : this._fromEntries(const {});
+
+  Headers._fromEntries(Iterable<MapEntry<String, Iterable<String>>> entries)
+      : this._(CaseInsensitiveMap.from(Map.fromEntries(
+          entries
+              .where((e) => e.value.isNotEmpty)
+              .map((e) => MapEntry(e.key, List.unmodifiable(e.value))),
+        )));
+
+  final _BackingStore _backing;
+  Headers._(this._backing) : super(_backing);
+
+  Headers modify(void Function(MutableHeaders) update) {
+    final mutable = MutableHeaders._from(this);
+    update(mutable);
+    return mutable._freeze();
+  }
+
   Headers copyWith({
     Uri? location,
     ContentRangeHeader? contentRange,
@@ -177,20 +224,36 @@ class Headers extends UnmodifiableMapView<String, List<String>> {
     CustomHeaders? custom,
     DateTime? date,
   }) {
-    throw UnimplementedError(); // TODO: Should die
+    return modify((mh) {
+      if (location != null) mh[Headers.locationHeader] = [location.toString()];
+      if (contentRange != null) {
+        mh[Headers.contentRangeHeader] = [contentRange.toHeaderString()];
+      }
+      if (xPoweredBy != null) mh[Headers.xPoweredByHeader] = [xPoweredBy];
+      if (date != null) mh[Headers.dateHeader] = [formatHttpDate(date)];
+      if (custom != null) {
+        for (final header in custom.entries) {
+          mh[header.key] = header.value;
+        }
+      }
+    });
   }
 
+  // TODO: Should die
   factory Headers.fromHttpRequest(
     io.HttpRequest request, {
     bool strict = false,
     required String? xPoweredBy,
     DateTime? date,
   }) {
-    throw UnimplementedError(); // TODO: Should die
+    return Headers.empty().modify((mh) {
+      request.headers.forEach((k, v) => mh[k] = v);
+    });
   }
 
   Map<String, List<String>> failedHeadersToParse = {}; // TODO: Should die
 
+  // TODO: Should die
   factory Headers.request({
     // Date-related headers
     DateTime? date,
@@ -204,9 +267,29 @@ class Headers extends UnmodifiableMapView<String, List<String>> {
     TransferEncodingHeader? transferEncoding,
     CustomHeaders? custom,
   }) {
-    throw UnimplementedError(); // TODO: Should die
+    return Headers.empty().modify((mh) {
+      if (date != null) mh[Headers.dateHeader] = [formatHttpDate(date)];
+      if (ifModifiedSince != null) {
+        mh[Headers.ifModifiedSinceHeader] = [formatHttpDate(ifModifiedSince)];
+      }
+      if (from != null) mh[Headers.fromHeader] = [...from.emails];
+      if (range != null) {
+        mh[Headers.rangeHeader] = [range.toHeaderString()];
+      }
+      if (transferEncoding != null) {
+        mh[Headers.transferEncodingHeader] = [
+          transferEncoding.toHeaderString()
+        ];
+      }
+      if (custom != null) {
+        for (final header in custom.entries) {
+          mh[header.key] = header.value;
+        }
+      }
+    });
   }
 
+  // TODO: Should die
   factory Headers.response({
     // Date-related headers
     DateTime? date,
@@ -229,7 +312,33 @@ class Headers extends UnmodifiableMapView<String, List<String>> {
     TransferEncodingHeader? transferEncoding,
     CustomHeaders? custom,
   }) {
-    throw UnimplementedError(); // TODO: Should die
+    return Headers.empty().modify((mh) {
+      if (date != null) mh[Headers.dateHeader] = [formatHttpDate(date)];
+      if (expires != null) {
+        mh[Headers.expiresHeader] = [formatHttpDate(expires)];
+      }
+      if (lastModified != null) {
+        mh[Headers.lastModifiedHeader] = [formatHttpDate(lastModified)];
+      }
+      if (origin != null) mh[Headers.originHeader] = [origin.toString()];
+      if (server != null) mh[Headers.serverHeader] = [server];
+      if (from != null) mh[Headers.fromHeader] = [from.toHeaderString()];
+      if (location != null) mh[Headers.locationHeader] = [location.toString()];
+      if (xPoweredBy != null) mh[Headers.xPoweredByHeader] = [xPoweredBy];
+      if (acceptRanges != null) {
+        mh[Headers.acceptRangesHeader] = [acceptRanges.toHeaderString()];
+      }
+      if (transferEncoding != null) {
+        mh[Headers.transferEncodingHeader] = [
+          transferEncoding.toHeaderString()
+        ];
+      }
+      if (custom != null) {
+        for (final header in custom.entries) {
+          mh[header.key] = header.value;
+        }
+      }
+    });
   }
 
   /// Convert headers to a map
@@ -237,3 +346,5 @@ class Headers extends UnmodifiableMapView<String, List<String>> {
   /// header was not set.
   Map<String, Object?> toMap() => this; // TODO: Should die
 }
+
+final _emptyHeaders = Headers._empty();

@@ -131,18 +131,18 @@ String parseString(String value) {
 /// Parses a list of strings from the given [values] and returns it as a `List<String>`.
 ///
 /// - Throws a [FormatException] if the resulting list is empty.
-List<String> parseStringList(List<String> values) {
+List<String> parseStringList(Iterable<String> values) {
   var tempValues = values.splitTrimAndFilterUnique();
   if (tempValues.isEmpty) {
     throw FormatException('Value cannot be empty');
   }
-  return tempValues;
+  return tempValues.toList();
 }
 
 /// Parses a list of methods from the given [values] and returns it as a `List<Method>`.
 ///
 /// - Throws a [FormatException] if the resulting list is empty.
-List<RequestMethod> parseMethodList(List<String> values) {
+List<RequestMethod> parseMethodList(Iterable<String> values) {
   var tempValues = values.splitTrimAndFilterUnique(emptyCheck: false);
   if (tempValues.isEmpty) {
     throw FormatException('Value cannot be empty');

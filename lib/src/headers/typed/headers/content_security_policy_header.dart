@@ -58,7 +58,7 @@ class ContentSecurityPolicyDirective {
 
   /// The values associated with the directive (e.g., `'self'`,
   /// `https://example.com`).
-  final List<String> values;
+  final Iterable<String> values;
 
   /// Constructs a [ContentSecurityPolicyDirective] instance with the specified
   /// name and values.

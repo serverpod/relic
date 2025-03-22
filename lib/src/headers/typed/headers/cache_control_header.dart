@@ -25,7 +25,7 @@ class CacheControlHeader implements TypedHeader {
   static const String _maxStaleDirective = 'max-stale';
   static const String _minFreshDirective = 'min-fresh';
 
-  static const List<String> _validDirectives = [
+  static const Iterable<String> _validDirectives = [
     _noCacheDirective,
     _noStoreDirective,
     _mustRevalidateDirective,
@@ -125,7 +125,7 @@ class CacheControlHeader implements TypedHeader {
   ///
   /// This method splits the header value by commas, trims each directive, and processes
   /// common cache directives like `no-cache`, `no-store`, `max-age`, etc.
-  factory CacheControlHeader.parse(List<String> values) {
+  factory CacheControlHeader.parse(Iterable<String> values) {
     var directives = values.splitTrimAndFilterUnique();
 
     if (directives.isEmpty) {

@@ -18,7 +18,7 @@ class TransferEncodingHeader implements TypedHeader {
   /// Parses the Transfer-Encoding header value and returns a [TransferEncodingHeader] instance.
   ///
   /// This method splits the value by commas and trims each encoding.
-  factory TransferEncodingHeader.parse(List<String> values) {
+  factory TransferEncodingHeader.parse(Iterable<String> values) {
     var splitValues = values.splitTrimAndFilterUnique();
     if (splitValues.isEmpty) {
       throw FormatException('Value cannot be empty');

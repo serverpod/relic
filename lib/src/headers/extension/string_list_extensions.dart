@@ -1,6 +1,6 @@
 import 'dart:collection';
 
-extension StringListExtensions on List<String> {
+extension StringListExtensions on Iterable<String> {
   /// Processes a list of strings by:
   /// 1. Splitting each element by the given [separator]
   /// 2. Trimming whitespace from each resulting part
@@ -14,14 +14,14 @@ extension StringListExtensions on List<String> {
   /// ```
   ///
   /// The default separator is comma (",").
-  List<String> splitTrimAndFilterUnique({
+  Iterable<String> splitTrimAndFilterUnique({
     String separator = ',',
     bool emptyCheck = true,
   }) {
     var filtered = expand((element) => element.split(separator))
         .map((el) => el.trim())
         .where((e) => !emptyCheck || e.isNotEmpty);
-    return LinkedHashSet<String>.from(filtered).toList();
+    return LinkedHashSet<String>.from(filtered);
   }
 }
 
@@ -39,7 +39,7 @@ extension StringExtensions on String {
   /// ```
   ///
   /// The default separator is comma (",").
-  List<String> splitTrimAndFilterUnique({
+  Iterable<String> splitTrimAndFilterUnique({
     String separator = ',',
     bool emptyCheck = true,
     bool noTrim = false,
@@ -47,7 +47,7 @@ extension StringExtensions on String {
     var filtered = split(separator)
         .map((el) => noTrim ? el : el.trim())
         .where((e) => !emptyCheck || e.isNotEmpty);
-    return LinkedHashSet<String>.from(filtered).toList();
+    return LinkedHashSet<String>.from(filtered);
   }
 
   /// Checks if the string is a valid email address.

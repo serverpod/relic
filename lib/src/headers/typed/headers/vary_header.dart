@@ -9,7 +9,7 @@ import 'package:relic/src/headers/typed/typed_header_interface.dart';
 class VaryHeader implements TypedHeader {
   /// A list of headers that the response varies on.
   /// If the list contains only "*", it means all headers are varied on.
-  final List<String>? fields;
+  final Iterable<String>? fields;
 
   /// Whether all headers are allowed to vary (`*`).
   final bool isWildcard;
@@ -25,7 +25,7 @@ class VaryHeader implements TypedHeader {
   /// Parses the Vary header value and returns a [VaryHeader] instance.
   ///
   /// This method handles the wildcard value "*" or splits the value by commas and trims each field.
-  factory VaryHeader.parse(List<String> values) {
+  factory VaryHeader.parse(Iterable<String> values) {
     var splitValues = values.splitTrimAndFilterUnique();
 
     if (splitValues.isEmpty) {

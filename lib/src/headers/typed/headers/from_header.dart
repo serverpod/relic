@@ -8,13 +8,13 @@ import 'package:relic/src/headers/typed/typed_header_interface.dart';
 /// email addresses separated by commas.
 class FromHeader implements TypedHeader {
   /// A list of email addresses provided in the `From` header.
-  final List<String> emails;
+  final Iterable<String> emails;
 
   /// Private constructor for initializing the [emails] list.
   FromHeader({required this.emails});
 
   /// Parses a `From` header value and returns a [FromHeader] instance.
-  factory FromHeader.parse(List<String> values) {
+  factory FromHeader.parse(Iterable<String> values) {
     var emails = values.splitTrimAndFilterUnique();
     if (emails.isEmpty) {
       throw FormatException('Value cannot be empty');

@@ -16,7 +16,7 @@ class TEHeader implements TypedHeader {
   ///
   /// This method processes the TE header and extracts the list of encodings
   /// with their quality values.
-  factory TEHeader.parse(List<String> values) {
+  factory TEHeader.parse(Iterable<String> values) {
     var splitValues = values.splitTrimAndFilterUnique();
 
     if (splitValues.isEmpty) {

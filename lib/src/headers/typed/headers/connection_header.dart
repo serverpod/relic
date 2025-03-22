@@ -18,7 +18,7 @@ class ConnectionHeader implements TypedHeader {
   /// Parses the Connection header value and returns a [ConnectionHeader] instance.
   ///
   /// This method splits the value by commas and trims each directive.
-  factory ConnectionHeader.parse(List<String> values) {
+  factory ConnectionHeader.parse(Iterable<String> values) {
     var splitValues = values.splitTrimAndFilterUnique();
 
     if (splitValues.isEmpty) {

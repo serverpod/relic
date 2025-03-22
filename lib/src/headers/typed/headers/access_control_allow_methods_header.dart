@@ -24,7 +24,7 @@ class AccessControlAllowMethodsHeader implements TypedHeader {
 
   /// Parses the Access-Control-Allow-Methods header value and returns an
   /// [AccessControlAllowMethodsHeader] instance.
-  factory AccessControlAllowMethodsHeader.parse(List<String> values) {
+  factory AccessControlAllowMethodsHeader.parse(Iterable<String> values) {
     var splitValues = values.splitTrimAndFilterUnique();
     if (splitValues.isEmpty) {
       throw FormatException(

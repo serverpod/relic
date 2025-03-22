@@ -15,7 +15,7 @@ class UpgradeHeader implements TypedHeader {
   /// Parses the Upgrade header value and returns an [UpgradeHeader] instance.
   ///
   /// This method processes the header value, extracting the list of protocols.
-  factory UpgradeHeader.parse(List<String> values) {
+  factory UpgradeHeader.parse(Iterable<String> values) {
     final splitValues = values.splitTrimAndFilterUnique(separator: ',');
     if (splitValues.isEmpty) {
       throw FormatException('Value cannot be empty');
