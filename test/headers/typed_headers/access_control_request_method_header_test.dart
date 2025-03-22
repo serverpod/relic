@@ -1,7 +1,7 @@
+import 'package:relic/relic.dart';
 import 'package:relic/src/method/request_method.dart';
 import 'package:test/test.dart';
 import 'package:relic/src/headers/standard_headers_extensions.dart';
-import 'package:relic/src/relic_server.dart';
 
 import '../headers_test_utils.dart';
 import '../docs/strict_validation_docs.dart';
@@ -11,7 +11,7 @@ import '../docs/strict_validation_docs.dart';
 void main() {
   group(
       'Given an Access-Control-Request-Method header with the strict flag true',
-      () {
+      skip: 'todo: drop strict mode', () {
     late RelicServer server;
 
     setUp(() async {
@@ -115,7 +115,10 @@ void main() {
           headers: {},
         );
 
-        expect(headers.accessControlRequestMethod, isNull);
+        expect(
+            headers.accessControlRequestMethod_.valueOrNullIfInvalid, isNull);
+        expect(() => headers.accessControlRequestMethod,
+            throwsA(isA<InvalidHeaderException>()));
       },
     );
   });
@@ -140,12 +143,16 @@ void main() {
             headers: {'access-control-request-method': ''},
           );
 
-          expect(headers.accessControlRequestMethod, isNull);
+          expect(
+              headers.accessControlRequestMethod_.valueOrNullIfInvalid, isNull);
+          expect(() => headers.accessControlRequestMethod,
+              throwsA(isA<InvalidHeaderException>()));
         },
       );
 
       test(
         'then it should be recorded in "failedHeadersToParse" field',
+        skip: 'drop failedHeadersToParse',
         () async {
           var headers = await getServerRequestHeaders(
             server: server,

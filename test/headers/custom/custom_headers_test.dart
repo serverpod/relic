@@ -1,5 +1,6 @@
-import 'package:relic/src/headers/custom/custom_headers.dart';
-import 'package:relic/src/relic_server.dart';
+import 'package:relic/relic.dart';
+import 'package:relic/src/headers/header_flyweight.dart';
+import 'package:relic/src/headers/parser/common_types_parser.dart';
 import 'package:test/test.dart';
 
 import '../headers_test_utils.dart';
@@ -7,9 +8,10 @@ import '../headers_test_utils.dart';
 void main() {
   group('Given direct manipulation of CustomHeaders', () {
     test('when adding new custom headers then it allows the addition', () {
-      var headers = CustomHeaders.empty();
-      var updatedHeaders =
-          headers.add('X-Custom-Authorization', ['Bearer token']);
+      var headers = Headers.empty();
+      var updatedHeaders = headers.transform(
+        (mh) => mh['X-Custom-Authorization'] = ['Bearer token'],
+      );
 
       expect(
         updatedHeaders['x-custom-authorization'],
@@ -74,6 +76,11 @@ void main() {
 
     tearDown(() => server.close());
 
+    const custom = HeaderFlyweight<List<String>>(
+      'foo',
+      HeaderDecoderMulti(parseStringList),
+    );
+
     test(
         'when custom headers have multiple values then it combines them correctly',
         () async {
@@ -88,11 +95,15 @@ void main() {
 
       expect(
         customHeaders['foo'],
-        equals(['x', 'y']),
+        equals(['x,y']),
       );
       expect(
         customHeaders['bar'],
         equals(['z']),
+      );
+      expect(
+        custom.getValueFrom(customHeaders),
+        ['x', 'y'],
       );
     });
 

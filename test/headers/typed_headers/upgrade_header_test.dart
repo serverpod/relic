@@ -1,6 +1,6 @@
+import 'package:relic/relic.dart';
 import 'package:test/test.dart';
 import 'package:relic/src/headers/standard_headers_extensions.dart';
-import 'package:relic/src/relic_server.dart';
 
 import '../headers_test_utils.dart';
 import '../docs/strict_validation_docs.dart';
@@ -8,7 +8,8 @@ import '../docs/strict_validation_docs.dart';
 /// Reference: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Upgrade
 /// About empty value test, check the [StrictValidationDocs] class for more details.
 void main() {
-  group('Given an Upgrade header with the strict flag true', () {
+  group('Given an Upgrade header with the strict flag true',
+      skip: 'todo: drop strict mode', () {
     late RelicServer server;
 
     setUp(() async {
@@ -77,7 +78,8 @@ void main() {
           headers: {},
         );
 
-        expect(headers.upgrade, isNull);
+        expect(headers.upgrade_.valueOrNullIfInvalid, isNull);
+        expect(() => headers.upgrade, throwsA(isA<InvalidHeaderException>()));
       },
     );
 
@@ -145,6 +147,7 @@ void main() {
     group('when an empty Upgrade header is passed', () {
       test(
         'then it should be recorded in failedHeadersToParse',
+        skip: 'todo: drop failedHeadersToParse',
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
@@ -160,6 +163,7 @@ void main() {
 
       test(
         'then it should be recorded in failedHeadersToParse',
+        skip: 'todo: drop failedHeadersToParse',
         () async {
           var headers = await getServerRequestHeaders(
             server: server,

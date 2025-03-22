@@ -1,3 +1,4 @@
+import 'package:relic/relic.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
@@ -5,7 +6,6 @@ import 'dart:typed_data';
 
 import 'package:http_parser/http_parser.dart';
 import 'package:mockito/mockito.dart';
-import 'package:relic/relic.dart';
 import 'package:relic/src/extensions/http_response_extension.dart';
 import 'package:test/test.dart';
 

@@ -1,3 +1,4 @@
+import 'package:relic/relic.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
@@ -6,7 +7,6 @@ import 'dart:typed_data';
 import 'package:async/async.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart' as parser;
-import 'package:relic/relic.dart';
 import 'package:relic/src/method/request_method.dart';
 import 'package:relic/src/relic_server_serve.dart' as relic_server;
 import 'package:test/test.dart';
@@ -153,7 +153,7 @@ void main() {
         body: Body.fromString('Hello from /'),
         headers: Headers.response(
             custom: CustomHeaders({
-          'requested-values': request.headers['request-values']!,
+          'requested-values': request.headers['request-values']!.toList(),
           'requested-values-length': [
             request.headers['request-values']!.length.toString()
           ],

@@ -1,3 +1,4 @@
+import 'package:relic/relic.dart';
 import 'dart:io';
 
 import 'package:relic/src/headers/standard_headers_extensions.dart';

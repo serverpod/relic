@@ -1,6 +1,6 @@
+import 'package:relic/relic.dart';
 import 'package:test/test.dart';
 import 'package:relic/src/headers/standard_headers_extensions.dart';
-import 'package:relic/src/relic_server.dart';
 
 import '../headers_test_utils.dart';
 import '../docs/strict_validation_docs.dart';
@@ -8,7 +8,8 @@ import '../docs/strict_validation_docs.dart';
 /// Reference: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Range
 /// About empty value test, check the [StrictValidationDocs] class for more details.
 void main() {
-  group('Given a Range header with the strict flag true', () {
+  group('Given a Range header with the strict flag true',
+      skip: 'drop strict mode', () {
     late RelicServer server;
 
     setUp(() async {
@@ -149,7 +150,8 @@ void main() {
           headers: {},
         );
 
-        expect(headers.range, isNull);
+        expect(headers.range_.valueOrNullIfInvalid, isNull);
+        expect(() => headers.range, throwsA(isA<InvalidHeaderException>()));
       },
     );
 
@@ -208,12 +210,14 @@ void main() {
             headers: {'range': 'invalid-range'},
           );
 
-          expect(headers.range, isNull);
+          expect(headers.range_.valueOrNullIfInvalid, isNull);
+          expect(() => headers.range, throwsA(isA<InvalidHeaderException>()));
         },
       );
 
       test(
         'then it should be recorded in "failedHeadersToParse" field',
+        skip: 'drop failedHeadersToParse',
         () async {
           var headers = await getServerRequestHeaders(
             server: server,

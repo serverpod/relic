@@ -1,14 +1,15 @@
 import 'package:http_parser/http_parser.dart';
+import 'package:relic/relic.dart';
 import 'package:test/test.dart';
 import 'package:relic/src/headers/standard_headers_extensions.dart';
-import 'package:relic/src/relic_server.dart';
 import '../headers_test_utils.dart';
 import '../docs/strict_validation_docs.dart';
 
 /// Reference: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Last-Modified
 /// About empty value test, check the [StrictValidationDocs] class for more details.
 void main() {
-  group('Given a Last-Modified header with the strict flag true', () {
+  group('Given a Last-Modified header with the strict flag true',
+      skip: 'drop strict mode', () {
     late RelicServer server;
 
     setUp(() async {
@@ -113,7 +114,9 @@ void main() {
           headers: {},
         );
 
-        expect(headers.lastModified, isNull);
+        expect(headers.lastModified_.valueOrNullIfInvalid, isNull);
+        expect(
+            () => headers.lastModified, throwsA(isA<InvalidHeaderException>()));
       },
     );
   });
@@ -136,12 +139,15 @@ void main() {
             headers: {'last-modified': ''},
           );
 
-          expect(headers.lastModified, isNull);
+          expect(headers.lastModified_.valueOrNullIfInvalid, isNull);
+          expect(() => headers.lastModified,
+              throwsA(isA<InvalidHeaderException>()));
         },
       );
 
       test(
         'then it should be recorded in "failedHeadersToParse" field',
+        skip: 'drop failedHeadersToParse',
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
@@ -165,12 +171,15 @@ void main() {
             headers: {'last-modified': 'invalid-date-format'},
           );
 
-          expect(headers.lastModified, isNull);
+          expect(headers.lastModified_.valueOrNullIfInvalid, isNull);
+          expect(() => headers.lastModified,
+              throwsA(isA<InvalidHeaderException>()));
         },
       );
 
       test(
         'then it should be recorded in "failedHeadersToParse" field',
+        skip: 'drop failedHeadersToParse',
         () async {
           var headers = await getServerRequestHeaders(
             server: server,

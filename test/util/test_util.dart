@@ -1,15 +1,13 @@
 import 'dart:async';
-import 'dart:typed_data';
+import 'dart:convert';
 
 import 'package:relic/relic.dart';
 import 'package:relic/src/method/request_method.dart';
 import 'package:test/test.dart';
 
-// "hello,"
-final helloBytes = Uint8List.fromList([104, 101, 108, 108, 111, 44]);
+final helloBytes = utf8.encode('hello,');
 
-// " world"
-final worldBytes = Uint8List.fromList([32, 119, 111, 114, 108, 100]);
+final worldBytes = utf8.encode(' world');
 
 final Matcher throwsHijackException = throwsA(isA<HijackException>());
 

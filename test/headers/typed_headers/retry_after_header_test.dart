@@ -1,7 +1,7 @@
+import 'package:relic/relic.dart';
 import 'package:http_parser/http_parser.dart';
 import 'package:test/test.dart';
 import 'package:relic/src/headers/standard_headers_extensions.dart';
-import 'package:relic/src/relic_server.dart';
 
 import '../headers_test_utils.dart';
 import '../docs/strict_validation_docs.dart';
@@ -9,7 +9,8 @@ import '../docs/strict_validation_docs.dart';
 /// Reference: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Retry-After
 /// About empty value test, check the [StrictValidationDocs] class for more details.
 void main() {
-  group('Given a Retry-After header with the strict flag true', () {
+  group('Given a Retry-After header with the strict flag true',
+      skip: 'drop strict mode', () {
     late RelicServer server;
 
     setUp(() async {
@@ -147,7 +148,9 @@ void main() {
           headers: {},
         );
 
-        expect(headers.retryAfter, isNull);
+        expect(headers.retryAfter_.valueOrNullIfInvalid, isNull);
+        expect(
+            () => headers.retryAfter, throwsA(isA<InvalidHeaderException>()));
       },
     );
   });
@@ -169,12 +172,15 @@ void main() {
           headers: {'retry-after': 'invalid'},
         );
 
-        expect(headers.retryAfter, isNull);
+        expect(headers.retryAfter_.valueOrNullIfInvalid, isNull);
+        expect(
+            () => headers.retryAfter, throwsA(isA<InvalidHeaderException>()));
       },
     );
 
     test(
       'when an invalid header is passed then it should be recorded in failedHeadersToParse',
+      skip: 'todo: drop failedHeadersToParse',
       () async {
         var headers = await getServerRequestHeaders(
           server: server,

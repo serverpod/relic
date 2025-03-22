@@ -1,5 +1,5 @@
+import 'package:relic/relic.dart';
 import 'package:relic/src/headers/standard_headers_extensions.dart';
-import 'package:relic/src/relic_server.dart';
 import 'package:test/test.dart';
 
 import '../docs/strict_validation_docs.dart';
@@ -15,118 +15,123 @@ import '../headers_test_utils.dart';
 
 void main() {
   group(
-      'Given an Access-Control-Allow-Credentials header with the strict flag true',
-      () {
-    late RelicServer server;
+    'Given an Access-Control-Allow-Credentials header with the strict flag true',
+    skip: 'todo: drop strict flag',
+    () {
+      late RelicServer server;
 
-    setUp(() async {
-      server = await createServer(strictHeaders: true);
-    });
+      setUp(() async {
+        server = await createServer(strictHeaders: true);
+      });
 
-    tearDown(() => server.close());
+      tearDown(() => server.close());
 
-    test(
-      'when an empty Access-Control-Allow-Credentials header is passed then the server responds '
-      'with a bad request including a message that states the header value '
-      'cannot be empty',
-      () async {
-        expect(
-          () async => await getServerRequestHeaders(
-            server: server,
-            headers: {'access-control-allow-credentials': ''},
-          ),
-          throwsA(
-            isA<BadRequestException>().having(
-              (e) => e.message,
-              'message',
-              contains('Value cannot be empty'),
+      test(
+        'when an empty Access-Control-Allow-Credentials header is passed then the server responds '
+        'with a bad request including a message that states the header value '
+        'cannot be empty',
+        () async {
+          expect(
+            () async => await getServerRequestHeaders(
+              server: server,
+              headers: {'access-control-allow-credentials': ''},
             ),
-          ),
-        );
-      },
-    );
-
-    test(
-      'when an invalid Access-Control-Allow-Credentials header is passed then the server responds '
-      'with a bad request including a message that states the header value is invalid',
-      () async {
-        expect(
-          () async => await getServerRequestHeaders(
-            server: server,
-            headers: {'access-control-allow-credentials': 'blabla'},
-          ),
-          throwsA(
-            isA<BadRequestException>().having(
-              (e) => e.message,
-              'message',
-              contains('Invalid boolean'),
+            throwsA(
+              isA<BadRequestException>().having(
+                (e) => e.message,
+                'message',
+                contains('Value cannot be empty'),
+              ),
             ),
-          ),
-        );
-      },
-    );
+          );
+        },
+      );
 
-    test(
-      'when a Access-Control-Allow-Credentials header with a value "false" '
-      'then the server responds with a bad request including a message that states the header value '
-      'must be "true" or "null"',
-      () async {
-        expect(
-          () async => await getServerRequestHeaders(
-            server: server,
-            headers: {'access-control-allow-credentials': 'false'},
-          ),
-          throwsA(
-            isA<BadRequestException>().having(
-              (e) => e.message,
-              'message',
-              contains('Must be true or null'),
+      test(
+        'when an invalid Access-Control-Allow-Credentials header is passed then the server responds '
+        'with a bad request including a message that states the header value is invalid',
+        () async {
+          expect(
+            () async => await getServerRequestHeaders(
+              server: server,
+              headers: {'access-control-allow-credentials': 'blabla'},
             ),
-          ),
-        );
-      },
-    );
+            throwsA(
+              isA<BadRequestException>().having(
+                (e) => e.message,
+                'message',
+                contains('Invalid boolean'),
+              ),
+            ),
+          );
+        },
+      );
 
-    test(
-      'when a Access-Control-Allow-Credentials header with an invalid value is passed '
-      'then the server does not respond with a bad request if the headers '
-      'is not actually used',
-      () async {
-        var headers = await getServerRequestHeaders(
-          server: server,
-          headers: {'access-control-allow-credentials': 'test'},
-          eagerParseHeaders: false,
-        );
+      test(
+        'when a Access-Control-Allow-Credentials header with a value "false" '
+        'then the server responds with a bad request including a message that states the header value '
+        'must be "true" or "null"',
+        () async {
+          expect(
+            () async => await getServerRequestHeaders(
+              server: server,
+              headers: {'access-control-allow-credentials': 'false'},
+            ),
+            throwsA(
+              isA<BadRequestException>().having(
+                (e) => e.message,
+                'message',
+                contains('Must be true or null'),
+              ),
+            ),
+          );
+        },
+      );
 
-        expect(headers, isNotNull);
-      },
-    );
+      test(
+        'when a Access-Control-Allow-Credentials header with an invalid value is passed '
+        'then the server does not respond with a bad request if the headers '
+        'is not actually used',
+        () async {
+          var headers = await getServerRequestHeaders(
+            server: server,
+            headers: {'access-control-allow-credentials': 'test'},
+            eagerParseHeaders: false,
+          );
 
-    test(
-      'when a Access-Control-Allow-Credentials header with a value "true" '
-      'is passed then it should parse correctly',
-      () async {
-        var headers = await getServerRequestHeaders(
-          server: server,
-          headers: {'access-control-allow-credentials': 'true'},
-        );
+          expect(headers, isNotNull);
+        },
+      );
 
-        expect(headers.accessControlAllowCredentials, isTrue);
-      },
-    );
+      test(
+        'when a Access-Control-Allow-Credentials header with a value "true" '
+        'is passed then it should parse correctly',
+        () async {
+          var headers = await getServerRequestHeaders(
+            server: server,
+            headers: {'access-control-allow-credentials': 'true'},
+          );
 
-    test(
-      'when no Access-Control-Allow-Credentials header is passed then it should return null',
-      () async {
-        var headers = await getServerRequestHeaders(
-          server: server,
-          headers: {},
-        );
+          expect(headers.accessControlAllowCredentials, isTrue);
+        },
+      );
 
-        expect(headers.accessControlAllowCredentials, isNull);
-      },
-    );
-  });
+      test(
+        'when no Access-Control-Allow-Credentials header is passed then it should return null',
+        () async {
+          var headers = await getServerRequestHeaders(
+            server: server,
+            headers: {},
+          );
+
+          expect(headers.accessControlAllowCredentials_.valueOrNullIfInvalid,
+              isNull);
+          expect(() => headers.accessControlAllowCredentials,
+              throwsA(isA<InvalidHeaderException>()));
+        },
+      );
+    },
+  );
 
   group(
       'Given an Access-Control-Allow-Credentials header with the strict flag false',
@@ -149,12 +154,16 @@ void main() {
             headers: {'access-control-allow-credentials': ''},
           );
 
-          expect(headers.accessControlAllowCredentials, isNull);
+          expect(headers.accessControlAllowCredentials_.valueOrNullIfInvalid,
+              isNull);
+          expect(() => headers.accessControlAllowCredentials_.value,
+              throwsA(isA<InvalidHeaderException>()));
         },
       );
 
       test(
         'then it should be recorded in failedHeadersToParse',
+        skip: 'todo: drop failedHeadersToParse',
         () async {
           var headers = await getServerRequestHeaders(
             server: server,

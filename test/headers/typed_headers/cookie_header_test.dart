@@ -1,12 +1,13 @@
+import 'package:relic/relic.dart';
 import 'package:test/test.dart';
 import 'package:relic/src/headers/standard_headers_extensions.dart';
-import 'package:relic/src/relic_server.dart';
 
 import '../headers_test_utils.dart';
 
 /// Reference: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cookie
 void main() {
-  group('Given a Cookie header with the strict flag true', () {
+  group('Given a Cookie header with the strict flag true',
+      skip: 'drop strict mode', () {
     late RelicServer server;
 
     setUp(() async {
@@ -225,12 +226,14 @@ void main() {
             headers: {'cookie': 'sessionId=abc123; invalidCookie'},
           );
 
-          expect(headers.cookie, isNull);
+          expect(headers.cookie_.valueOrNullIfInvalid, isNull);
+          expect(() => headers.cookie, throwsA(isA<InvalidHeaderException>()));
         },
       );
 
       test(
         'when an invalid Cookie header is passed then it should be recorded in failedHeadersToParse',
+        skip: 'todo: drop failedHeadersToParse',
         () async {
           var headers = await getServerRequestHeaders(
             server: server,

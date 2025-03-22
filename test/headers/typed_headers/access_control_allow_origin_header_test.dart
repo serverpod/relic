@@ -1,5 +1,5 @@
+import 'package:relic/relic.dart';
 import 'package:relic/src/headers/standard_headers_extensions.dart';
-import 'package:relic/src/relic_server.dart';
 import 'package:test/test.dart';
 
 import '../docs/strict_validation_docs.dart';
@@ -9,7 +9,7 @@ import '../headers_test_utils.dart';
 /// About empty value test, check the [StrictValidationDocs] class for more details.
 void main() {
   group('Given an Access-Control-Allow-Origin header with the strict flag true',
-      () {
+      skip: 'todo: drop strict mode', () {
     late RelicServer server;
 
     setUp(() async {
@@ -168,7 +168,9 @@ void main() {
           headers: {},
         );
 
-        expect(headers.accessControlAllowOrigin, isNull);
+        expect(headers.accessControlAllowOrigin_.valueOrNullIfInvalid, isNull);
+        expect(() => headers.accessControlAllowOrigin,
+            throwsA(isA<InvalidHeaderException>()));
       },
     );
   });
@@ -193,12 +195,16 @@ void main() {
             headers: {'access-control-allow-origin': 'ht!tp://invalid-url'},
           );
 
-          expect(headers.accessControlAllowOrigin, isNull);
+          expect(
+              headers.accessControlAllowOrigin_.valueOrNullIfInvalid, isNull);
+          expect(() => headers.accessControlAllowOrigin,
+              throwsA(isA<InvalidHeaderException>()));
         },
       );
 
       test(
         'then it should be recorded in "failedHeadersToParse" field',
+        skip: 'drop failedHeadersToParse',
         () async {
           var headers = await getServerRequestHeaders(
             server: server,

@@ -1,8 +1,8 @@
+import 'package:relic/relic.dart';
 import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:http_parser/http_parser.dart';
-import 'package:relic/relic.dart';
 import 'package:relic/src/headers/standard_headers_extensions.dart';
 import 'package:relic/src/method/request_method.dart';
 import 'package:test/test.dart';

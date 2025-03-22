@@ -1,8 +1,8 @@
+import 'package:relic/relic.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
-import 'package:relic/relic.dart';
 import 'package:relic/src/message/message.dart';
 import 'package:test/test.dart';
 

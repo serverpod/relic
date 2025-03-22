@@ -1,7 +1,5 @@
-import 'package:relic/src/headers/custom/custom_headers.dart';
-import 'package:relic/src/headers/headers.dart';
+import 'package:relic/relic.dart';
 import 'package:relic/src/headers/standard_headers_extensions.dart';
-import 'package:relic/src/message/response.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -13,66 +11,53 @@ void main() {
     });
 
     test('when custom headers are added then they are included', () {
-      var headers = Headers.request(
-        custom: CustomHeaders({
-          'X-Custom-Header': ['value']
-        }),
-      );
+      var headers = Headers.from({
+        'X-Custom-Header': ['value']
+      });
       expect(headers['x-custom-header'], equals(['value']));
     });
 
     test('when custom headers are removed then they are no longer present', () {
-      var headers = Headers.request(
-        custom: CustomHeaders({
-          'X-Custom-Header': ['value']
-        }),
-      );
-      headers = headers.copyWith(custom: CustomHeaders({}));
+      var headers = Headers.from({
+        'X-Custom-Header': ['value']
+      });
+      headers = headers.modify((mh) => mh.remove('X-Custom-Header'));
       expect(headers['x-custom-header'], isNull);
     });
 
     test('when headers are serialized then they are correctly formatted', () {
-      var headers = Headers.request(
-        custom: CustomHeaders({
-          'Serialized-Header': ['value']
-        }),
-      );
+      var headers = Headers.from({
+        'Serialized-Header': ['value']
+      });
       var serialized = headers.toMap();
       expect(serialized['Serialized-Header'], equals(['value']));
     });
 
     test('when accessing headers then they are case insensitive', () {
-      var headers = Headers.request(
-        custom: CustomHeaders({
-          'Case-Insensitive': ['value']
-        }),
-      );
+      var headers = Headers.from({
+        'Case-Insensitive': ['value']
+      });
       expect(headers['case-insensitive'], contains('value'));
       expect(headers['CASE-INSENSITIVE'], contains('value'));
     });
 
     test('when headers are copied then modifications are correctly applied',
         () {
-      var headers = Headers.request(
-        custom: CustomHeaders({
-          'Initial-Header': ['initial']
-        }),
-      );
-      var copiedHeaders = headers.copyWith(
-        custom: CustomHeaders({
-          'Copied-Header': ['copied']
-        }),
-      );
+      var headers = Headers.from({
+        'Initial-Header': ['initial']
+      });
+      var copiedHeaders = headers.modify((mh) {
+        mh.remove('Initial-Header');
+        mh['Copied-Header'] = ['copied'];
+      });
       expect(copiedHeaders['initial-header'], isNull);
       expect(copiedHeaders['copied-header'], equals(['copied']));
     });
 
     test('when converting headers to map then it includes all headers', () {
-      var headers = Headers.request(
-        custom: CustomHeaders({
-          'Map-Header': ['map-value']
-        }),
-      );
+      var headers = Headers.from({
+        'Map-Header': ['map-value']
+      });
       var map = headers.toMap();
       expect(map['Map-Header'], equals(['map-value']));
     });
@@ -100,39 +85,48 @@ void main() {
 
     test('when a managed header is removed then it is no longer present', () {
       var headers = Headers.request(date: DateTime.now());
-      headers = headers.copyWith(date: null);
+      headers = headers.modify((mh) {
+        mh.remove(headers.date_.key); // TODO: mh.date_.remove();
+      });
       expect(headers.date, isNull);
     });
 
     test('when a managed header is updated then it is correctly replaced', () {
       var headers = Headers.request(date: DateTime.now());
-      var newDate = DateTime.now().add(Duration(days: 1));
+      var newDate = DateTime.now()
+          .add(Duration(days: 1))
+          .toUtc()
+          .copyWith(microsecond: 0, millisecond: 0);
       headers = headers.copyWith(date: newDate);
       expect(headers.date, equals(newDate));
     });
 
     group('when converting to map', () {
-      test('then all managed header by the Header class are included', () {
-        var headers = Headers.request();
-        var managedHeaders = Headers.managedHeaders
-            .where(
-              (header) =>
-                  // These headers are not managed by the Headers class but are
-                  // managed by the body class and applied later to the response.
-                  header != Headers.contentLengthHeader &&
-                  header != Headers.contentTypeHeader,
-            )
-            .toSet();
-        var mapKeys = headers.toMap().keys.toSet();
+      test(
+        'then all managed header by the Header class are included',
+        () {
+          var headers = Headers.request();
+          var managedHeaders = Headers.managedHeaders
+              .where(
+                (header) =>
+                    // These headers are not managed by the Headers class but are
+                    // managed by the body class and applied later to the response.
+                    header != Headers.contentLengthHeader &&
+                    header != Headers.contentTypeHeader,
+              )
+              .toSet();
+          var mapKeys = headers.toMap().keys.toSet();
 
-        var missingManagedHeaders = managedHeaders.difference(mapKeys);
+          var missingManagedHeaders = managedHeaders.difference(mapKeys);
 
-        expect(
-          missingManagedHeaders.isEmpty,
-          isTrue,
-          reason: 'Missing managed headers: $missingManagedHeaders.',
-        );
-      });
+          expect(
+            missingManagedHeaders.isEmpty,
+            isTrue,
+            reason: 'Missing managed headers: $missingManagedHeaders.',
+          );
+        },
+        skip: 'No headers are mandatory in Http 1.0, and only host in Http 1.1',
+      );
 
       test('then no unexpected additional headers are included', () {
         var headers = Headers.request();

@@ -1,6 +1,6 @@
+import 'package:relic/relic.dart';
 import 'package:test/test.dart';
 import 'package:relic/src/headers/standard_headers_extensions.dart';
-import 'package:relic/src/relic_server.dart';
 import '../headers_test_utils.dart';
 
 import '../docs/strict_validation_docs.dart';
@@ -8,7 +8,8 @@ import '../docs/strict_validation_docs.dart';
 /// Reference: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/From
 /// About empty value test, check the [StrictValidationDocs] class for more details.
 void main() {
-  group('Given a From header with the strict flag true', () {
+  group('Given a From header with the strict flag true',
+      skip: 'drop strict mode', () {
     late RelicServer server;
 
     setUp(() async {
@@ -180,7 +181,8 @@ void main() {
           headers: {},
         );
 
-        expect(headers.from, isNull);
+        expect(headers.from_.valueOrNullIfInvalid, isNull);
+        expect(() => headers.from, throwsA(isA<InvalidHeaderException>()));
       },
     );
   });
@@ -203,12 +205,14 @@ void main() {
             headers: {'from': 'invalid-email-format'},
           );
 
-          expect(headers.from, isNull);
+          expect(headers.from_.valueOrNullIfInvalid, isNull);
+          expect(() => headers.from, throwsA(isA<InvalidHeaderException>()));
         },
       );
 
       test(
         'then it should be recorded in the "failedHeadersToParse" field',
+        skip: 'todo: drop failedHeadersToParse',
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
@@ -226,6 +230,7 @@ void main() {
     test(
       'when multiple From headers with an invalid email format among valid ones are passed '
       'then they should be recorded in failedHeadersToParse',
+      skip: 'todo: drop failedHeadersToParse',
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
