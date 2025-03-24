@@ -21,7 +21,7 @@ void main() {
       var headers = Headers.from({
         'X-Custom-Header': ['value']
       });
-      headers = headers.modify((mh) => mh.remove('X-Custom-Header'));
+      headers = headers.transform((mh) => mh.remove('X-Custom-Header'));
       expect(headers['x-custom-header'], isNull);
     });
 
@@ -46,7 +46,7 @@ void main() {
       var headers = Headers.from({
         'Initial-Header': ['initial']
       });
-      var copiedHeaders = headers.modify((mh) {
+      var copiedHeaders = headers.transform((mh) {
         mh.remove('Initial-Header');
         mh['Copied-Header'] = ['copied'];
       });
@@ -85,7 +85,7 @@ void main() {
 
     test('when a managed header is removed then it is no longer present', () {
       var headers = Headers.request(date: DateTime.now());
-      headers = headers.modify((mh) {
+      headers = headers.transform((mh) {
         mh.date = null;
       });
       expect(headers.date, isNull);

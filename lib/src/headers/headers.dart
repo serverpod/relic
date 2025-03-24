@@ -216,7 +216,7 @@ class Headers extends HeadersBase {
 
   Headers._(super.backing) : super._();
 
-  Headers modify(void Function(MutableHeaders) update) {
+  Headers transform(void Function(MutableHeaders) update) {
     final mutable = MutableHeaders._from(this);
     update(mutable);
     return mutable._freeze();
@@ -229,7 +229,7 @@ class Headers extends HeadersBase {
     CustomHeaders? custom,
     DateTime? date,
   }) {
-    return modify((mh) {
+    return transform((mh) {
       if (location != null) mh.location = location;
       if (contentRange != null) mh.contentRange = contentRange;
       if (xPoweredBy != null) mh.xPoweredBy = xPoweredBy;
@@ -249,7 +249,7 @@ class Headers extends HeadersBase {
     required String? xPoweredBy,
     DateTime? date,
   }) {
-    return Headers.empty().modify((mh) {
+    return Headers.empty().transform((mh) {
       request.headers.forEach((k, v) => mh[k] = v);
     });
   }
@@ -270,7 +270,7 @@ class Headers extends HeadersBase {
     TransferEncodingHeader? transferEncoding,
     CustomHeaders? custom,
   }) {
-    return Headers.empty().modify((mh) {
+    return Headers.empty().transform((mh) {
       if (date != null) mh.date = date;
       if (ifModifiedSince != null) mh.ifModifiedSince = ifModifiedSince;
       if (from != null) mh.from = from;
@@ -311,8 +311,8 @@ class Headers extends HeadersBase {
     TransferEncodingHeader? transferEncoding,
     CustomHeaders? custom,
   }) {
-    return Headers.empty().modify((mh) {
-      if (date != null) mh.date = date;
+    return Headers.empty().transform((mh) {
+      mh.date = date ?? DateTime.now();
       if (expires != null) mh.expires = expires;
       if (lastModified != null) mh.lastModified = lastModified;
       if (origin != null) mh.origin = origin;
