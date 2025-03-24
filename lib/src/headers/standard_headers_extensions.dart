@@ -323,4 +323,82 @@ extension StandardMutableHeadersExtensions on MutableHeaders {
       crossOriginEmbedderPolicy_.set(value);
   set crossOriginOpenerPolicy(CrossOriginOpenerPolicyHeader? value) =>
       crossOriginOpenerPolicy_.set(value);
+
+  DateTime? get date => date_();
+  DateTime? get expires => expires_();
+  DateTime? get lastModified => lastModified_();
+  DateTime? get ifModifiedSince => ifModifiedSince_();
+  DateTime? get ifUnmodifiedSince => ifUnmodifiedSince_();
+  Uri? get origin => origin_();
+  String? get server => server_();
+  List<String>? get via => via_();
+  FromHeader? get from => from_();
+  Uri? get host => host_();
+  AcceptEncodingHeader? get acceptEncoding => acceptEncoding_();
+  AcceptLanguageHeader? get acceptLanguage => acceptLanguage_();
+  List<String>? get accessControlRequestHeaders =>
+      accessControlRequestHeaders_();
+  RequestMethod? get accessControlRequestMethod =>
+      accessControlRequestMethod_();
+  int? get age => age_();
+  AuthorizationHeader? get authorization => authorization_();
+  ConnectionHeader? get connection => connection_();
+  int? get contentLength => contentLength_();
+  ExpectHeader? get expect => expect_();
+  IfMatchHeader? get ifMatch => ifMatch_();
+  IfNoneMatchHeader? get ifNoneMatch => ifNoneMatch_();
+  IfRangeHeader? get ifRange => ifRange_();
+  int? get maxForwards => maxForwards_();
+  AuthorizationHeader? get proxyAuthorization => proxyAuthorization_();
+  RangeHeader? get range => range_();
+  Uri? get referer => referer_();
+  String? get userAgent => userAgent_();
+  TEHeader? get te => te_();
+  UpgradeHeader? get upgrade => upgrade_();
+  Uri? get location => location_();
+  String? get xPoweredBy => xPoweredBy_();
+  AccessControlAllowOriginHeader? get accessControlAllowOrigin =>
+      accessControlAllowOrigin_();
+  AccessControlExposeHeadersHeader? get accessControlExposeHeaders =>
+      accessControlExposeHeaders_();
+  int? get accessControlMaxAge => accessControlMaxAge_();
+  List<RequestMethod>? get allow => allow_();
+  CacheControlHeader? get cacheControl => cacheControl_();
+  ContentEncodingHeader? get contentEncoding => contentEncoding_();
+  ContentLanguageHeader? get contentLanguage => contentLanguage_();
+  Uri? get contentLocation => contentLocation_();
+  ContentRangeHeader? get contentRange => contentRange_();
+  ETagHeader? get etag => etag_();
+  AuthenticationHeader? get proxyAuthenticate => proxyAuthenticate_();
+  RetryAfterHeader? get retryAfter => retryAfter_();
+  List<String>? get trailer => trailer_();
+  VaryHeader? get vary => vary_();
+  AuthenticationHeader? get wwwAuthenticate => wwwAuthenticate_();
+  ContentDispositionHeader? get contentDisposition => contentDisposition_();
+  AcceptHeader? get accept => accept_();
+  AcceptRangesHeader? get acceptRanges => acceptRanges_();
+  TransferEncodingHeader? get transferEncoding => transferEncoding_();
+  CookieHeader? get cookie => cookie_();
+  SetCookieHeader? get setCookie => setCookie_();
+  StrictTransportSecurityHeader? get strictTransportSecurity =>
+      strictTransportSecurity_();
+  ContentSecurityPolicyHeader? get contentSecurityPolicy =>
+      contentSecurityPolicy_();
+  ReferrerPolicyHeader? get referrerPolicy => referrerPolicy_();
+  PermissionsPolicyHeader? get permissionsPolicy => permissionsPolicy_();
+  bool? get accessControlAllowCredentials => accessControlAllowCredentials_();
+  AccessControlAllowMethodsHeader? get accessControlAllowMethods =>
+      accessControlAllowMethods_();
+  AccessControlAllowHeadersHeader? get accessControlAllowHeaders =>
+      accessControlAllowHeaders_();
+  ClearSiteDataHeader? get clearSiteData => clearSiteData_();
+  SecFetchDestHeader? get secFetchDest => secFetchDest_();
+  SecFetchModeHeader? get secFetchMode => secFetchMode_();
+  SecFetchSiteHeader? get secFetchSite => secFetchSite_();
+  CrossOriginResourcePolicyHeader? get crossOriginResourcePolicy =>
+      crossOriginResourcePolicy_();
+  CrossOriginEmbedderPolicyHeader? get crossOriginEmbedderPolicy =>
+      crossOriginEmbedderPolicy_();
+  CrossOriginOpenerPolicyHeader? get crossOriginOpenerPolicy =>
+      crossOriginOpenerPolicy_();
 }
