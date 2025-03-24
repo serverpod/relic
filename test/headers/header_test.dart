@@ -86,7 +86,7 @@ void main() {
     test('when a managed header is removed then it is no longer present', () {
       var headers = Headers.request(date: DateTime.now());
       headers = headers.modify((mh) {
-        mh.remove(headers.date_.key); // TODO: mh.date_.remove();
+        mh.date = null;
       });
       expect(headers.date, isNull);
     });

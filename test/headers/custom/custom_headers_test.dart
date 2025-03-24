@@ -9,7 +9,7 @@ void main() {
   group('Given direct manipulation of CustomHeaders', () {
     test('when adding new custom headers then it allows the addition', () {
       var headers = Headers.empty();
-      var updatedHeaders = headers.transform(
+      var updatedHeaders = headers.modify(
         (mh) => mh['X-Custom-Authorization'] = ['Bearer token'],
       );
 

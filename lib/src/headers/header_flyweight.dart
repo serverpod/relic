@@ -1,5 +1,8 @@
 import 'dart:collection';
 
+import 'package:http_parser/http_parser.dart';
+import 'package:relic/src/headers/typed/typed_header_interface.dart';
+
 import 'exception/invalid_header_exception.dart';
 import 'headers.dart';
 
@@ -16,10 +19,10 @@ final class HeaderFlyweight<T extends Object> {
 
   const HeaderFlyweight(this.key, this.decode);
 
-  Iterable<String>? rawFrom(Headers external) => external[key];
+  Iterable<String>? rawFrom(HeadersBase external) => external[key];
 
   V getValueFrom<V extends T?>(
-    Headers external, {
+    HeadersBase external, {
     V Function(Exception) orElse = _raise,
   }) {
     try {
@@ -38,13 +41,19 @@ final class HeaderFlyweight<T extends Object> {
     }
   }
 
-  bool isSetIn(Headers external) => rawFrom(external) != null;
+  bool isSetIn(HeadersBase external) => rawFrom(external) != null;
 
-  bool isValidIn(Headers external) =>
+  bool isValidIn(HeadersBase external) =>
       getValueFrom<T?>(external, orElse: _returnNull) != null;
 
-  Header<T> operator [](Headers external) =>
+  Header<T> operator [](HeadersBase external) =>
       Header((flyweight: this, headers: external));
+
+  /// [null] implies removing the header
+  void setValueOn(MutableHeaders external, T? value) =>
+      _setValue(external, key, value);
+
+  void removeFrom(MutableHeaders external) => external.remove(key);
 }
 
 Never _raise(Exception ex) => throw ex;
@@ -80,7 +89,7 @@ final class HeaderDecoderMulti<T extends Object> extends HeaderDecoder<T> {
 /// to keep runtime cost low.
 // ignore: library_private_types_in_public_api
 extension type Header<T extends Object>(_HeaderTuple<T> tuple) {
-  Headers get _headers => tuple.headers;
+  HeadersBase get _headers => tuple.headers;
   HeaderFlyweight<T> get _flyweight => tuple.flyweight;
 
   String get key => _flyweight.key;
@@ -95,12 +104,15 @@ extension type Header<T extends Object>(_HeaderTuple<T> tuple) {
 
   V call<V extends T?>({V Function(Exception) orElse = _raise}) =>
       _flyweight.getValueFrom<V>(_headers, orElse: orElse);
+
+  void set(T? value) =>
+      _flyweight.setValueOn(_headers as MutableHeaders, value);
 }
 
 /// Internal record for bundling a [HeaderFlyweight] with its externalized state [Headers].
 typedef _HeaderTuple<T extends Object> = ({
   HeaderFlyweight<T> flyweight,
-  Headers headers,
+  HeadersBase headers,
 });
 
 /// Throws an [InvalidHeaderException] with the appropriate message based on
@@ -133,4 +145,18 @@ Never _throwException(
     message,
     headerType: key,
   );
+}
+
+void _setValue<T>(MutableHeaders headers, String key, T value) {
+  if (value == null) {
+    headers.remove(key);
+  } else {
+    headers[key] = switch (value) {
+      String s => [s],
+      DateTime d => [formatHttpDate(d)],
+      TypedHeader t => [t.toHeaderString()],
+      Iterable<String> i => i,
+      Object o => [o.toString()],
+    };
+  }
 }

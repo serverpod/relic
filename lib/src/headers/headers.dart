@@ -3,13 +3,19 @@ import 'dart:io' as io; // TODO: Get rid of this dependen
 
 import 'package:http_parser/http_parser.dart';
 import 'package:relic/relic.dart';
+import 'package:relic/src/headers/standard_headers_extensions.dart';
 
 part 'mutable_headers.dart';
 
-typedef _BackingStore = CaseInsensitiveMap<List<String>>;
+typedef _BackingStore = CaseInsensitiveMap<Iterable<String>>;
+
+class HeadersBase extends UnmodifiableMapView<String, Iterable<String>> {
+  final _BackingStore _backing;
+  HeadersBase._(this._backing) : super(_backing);
+}
 
 /// [Headers] is a case-insensitive, unmodifiable map that stores headers
-class Headers extends UnmodifiableMapView<String, Iterable<String>> {
+class Headers extends HeadersBase {
   /// Request Headers
   static const acceptHeader = "accept";
   static const acceptEncodingHeader = "accept-encoding";
@@ -208,8 +214,7 @@ class Headers extends UnmodifiableMapView<String, Iterable<String>> {
               .map((e) => MapEntry(e.key, List.unmodifiable(e.value))),
         )));
 
-  final _BackingStore _backing;
-  Headers._(this._backing) : super(_backing);
+  Headers._(super.backing) : super._();
 
   Headers modify(void Function(MutableHeaders) update) {
     final mutable = MutableHeaders._from(this);
@@ -225,12 +230,10 @@ class Headers extends UnmodifiableMapView<String, Iterable<String>> {
     DateTime? date,
   }) {
     return modify((mh) {
-      if (location != null) mh[Headers.locationHeader] = [location.toString()];
-      if (contentRange != null) {
-        mh[Headers.contentRangeHeader] = [contentRange.toHeaderString()];
-      }
-      if (xPoweredBy != null) mh[Headers.xPoweredByHeader] = [xPoweredBy];
-      if (date != null) mh[Headers.dateHeader] = [formatHttpDate(date)];
+      if (location != null) mh.location = location;
+      if (contentRange != null) mh.contentRange = contentRange;
+      if (xPoweredBy != null) mh.xPoweredBy = xPoweredBy;
+      if (date != null) mh.date = date;
       if (custom != null) {
         for (final header in custom.entries) {
           mh[header.key] = header.value;
@@ -268,14 +271,10 @@ class Headers extends UnmodifiableMapView<String, Iterable<String>> {
     CustomHeaders? custom,
   }) {
     return Headers.empty().modify((mh) {
-      if (date != null) mh[Headers.dateHeader] = [formatHttpDate(date)];
-      if (ifModifiedSince != null) {
-        mh[Headers.ifModifiedSinceHeader] = [formatHttpDate(ifModifiedSince)];
-      }
-      if (from != null) mh[Headers.fromHeader] = [...from.emails];
-      if (range != null) {
-        mh[Headers.rangeHeader] = [range.toHeaderString()];
-      }
+      if (date != null) mh.date = date;
+      if (ifModifiedSince != null) mh.ifModifiedSince = ifModifiedSince;
+      if (from != null) mh.from = from;
+      if (range != null) mh.range = range;
       if (transferEncoding != null) {
         mh[Headers.transferEncodingHeader] = [
           transferEncoding.toHeaderString()
@@ -313,26 +312,16 @@ class Headers extends UnmodifiableMapView<String, Iterable<String>> {
     CustomHeaders? custom,
   }) {
     return Headers.empty().modify((mh) {
-      if (date != null) mh[Headers.dateHeader] = [formatHttpDate(date)];
-      if (expires != null) {
-        mh[Headers.expiresHeader] = [formatHttpDate(expires)];
-      }
-      if (lastModified != null) {
-        mh[Headers.lastModifiedHeader] = [formatHttpDate(lastModified)];
-      }
-      if (origin != null) mh[Headers.originHeader] = [origin.toString()];
-      if (server != null) mh[Headers.serverHeader] = [server];
-      if (from != null) mh[Headers.fromHeader] = [from.toHeaderString()];
-      if (location != null) mh[Headers.locationHeader] = [location.toString()];
-      if (xPoweredBy != null) mh[Headers.xPoweredByHeader] = [xPoweredBy];
-      if (acceptRanges != null) {
-        mh[Headers.acceptRangesHeader] = [acceptRanges.toHeaderString()];
-      }
-      if (transferEncoding != null) {
-        mh[Headers.transferEncodingHeader] = [
-          transferEncoding.toHeaderString()
-        ];
-      }
+      if (date != null) mh.date = date;
+      if (expires != null) mh.expires = expires;
+      if (lastModified != null) mh.lastModified = lastModified;
+      if (origin != null) mh.origin = origin;
+      if (server != null) mh.server = server;
+      if (from != null) mh.from = from;
+      if (location != null) mh.location = location;
+      if (xPoweredBy != null) mh.xPoweredBy = xPoweredBy;
+      if (acceptRanges != null) mh.acceptRanges = acceptRanges;
+      if (transferEncoding != null) mh.transferEncoding = transferEncoding;
       if (custom != null) {
         for (final header in custom.entries) {
           mh[header.key] = header.value;

@@ -5,7 +5,7 @@ import 'header_flyweight.dart';
 import 'standard_headers_flyweights.dart' as std;
 import 'typed/typed_headers.dart';
 
-extension StandardHeadersEx on Headers {
+extension StandardHeadersEx on HeadersBase {
   Header<DateTime> get date_ => std.date[this];
   DateTime? get date => date_();
 
@@ -234,4 +234,93 @@ extension StandardHeadersEx on Headers {
       std.crossOriginOpenerPolicy[this];
   CrossOriginOpenerPolicyHeader? get crossOriginOpenerPolicy =>
       crossOriginOpenerPolicy_();
+}
+
+extension StandardMutableHeadersExtensions on MutableHeaders {
+  set date(DateTime? value) => date_.set(value);
+  set expires(DateTime? value) => expires_.set(value);
+  set lastModified(DateTime? value) => lastModified_.set(value);
+  set ifModifiedSince(DateTime? value) => ifModifiedSince_.set(value);
+  set ifUnmodifiedSince(DateTime? value) => ifUnmodifiedSince_.set(value);
+  set origin(Uri? value) => origin_.set(value);
+  set server(String? value) => server_.set(value);
+  set via(List<String>? value) => via_.set(value);
+  set from(FromHeader? value) => from_.set(value);
+  set host(Uri? value) => host_.set(value);
+  set acceptEncoding(AcceptEncodingHeader? value) => acceptEncoding_.set(value);
+  set acceptLanguage(AcceptLanguageHeader? value) => acceptLanguage_.set(value);
+  set accessControlRequestHeader(List<String>? value) =>
+      accessControlRequestHeaders_.set(value);
+  set accessControlRequestMethod(RequestMethod? value) =>
+      accessControlRequestMethod_.set(value);
+  set age(int? value) => age_.set(value);
+  set authorization(AuthorizationHeader? value) => authorization_.set(value);
+  set connection(ConnectionHeader? value) => connection_.set(value);
+  set contentLength(int? value) => contentLength_.set(value);
+  set expect(ExpectHeader? value) => expect_.set(value);
+  set ifMatch(IfMatchHeader? value) => ifMatch_.set(value);
+  set ifNoneMatch(IfNoneMatchHeader? value) => ifNoneMatch_.set(value);
+  set ifRange(IfRangeHeader? value) => ifRange_.set(value);
+  set maxForwards(int? value) => maxForwards_.set(value);
+  set proxyAuthorization(AuthorizationHeader? value) =>
+      proxyAuthorization_.set(value);
+  set range(RangeHeader? value) => range_.set(value);
+  set referer(Uri? value) => referer_.set(value);
+  set userAgent(String? value) => userAgent_.set(value);
+  set te(TEHeader? value) => te_.set(value);
+  set upgrade(UpgradeHeader? value) => upgrade_.set(value);
+  set location(Uri? value) => location_.set(value);
+  set xPoweredBy(String? value) => xPoweredBy_.set(value);
+  set accessControlAllowOrigin(AccessControlAllowOriginHeader? value) =>
+      accessControlAllowOrigin_.set(value);
+  set accessControlExposeHeaders(AccessControlExposeHeadersHeader? value) =>
+      accessControlExposeHeaders_.set(value);
+  set accessControlMaxAge(int? value) => accessControlMaxAge_.set(value);
+  set allow(List<RequestMethod>? value) => allow_.set(value);
+  set cacheControl(CacheControlHeader? value) => cacheControl_.set(value);
+  set contentEncoding(ContentEncodingHeader? value) =>
+      contentEncoding_.set(value);
+  set contentLanguage(ContentLanguageHeader? value) =>
+      contentLanguage_.set(value);
+  set contentLocation(Uri? value) => contentLocation_.set(value);
+  set contentRange(ContentRangeHeader? value) => contentRange_.set(value);
+  set etag(ETagHeader? value) => etag_.set(value);
+  set proxyAuthenticate(AuthenticationHeader? value) =>
+      proxyAuthenticate_.set(value);
+  set retryAfter(RetryAfterHeader? value) => retryAfter_.set(value);
+  set trailer(List<String>? value) => trailer_.set(value);
+  set vary(VaryHeader? value) => vary_.set(value);
+  set wwwAuthenticate(AuthenticationHeader? value) =>
+      wwwAuthenticate_.set(value);
+  set contentDisposition(ContentDispositionHeader? value) =>
+      contentDisposition_.set(value);
+  set accept(AcceptHeader? value) => accept_.set(value);
+  set acceptRanges(AcceptRangesHeader? value) => acceptRanges_.set(value);
+  set transferEncoding(TransferEncodingHeader? value) =>
+      transferEncoding_.set(value);
+  set cookie(CookieHeader? value) => cookie_.set(value);
+  set setCookie(SetCookieHeader? value) => setCookie_.set(value);
+  set strictTransportSecurity(StrictTransportSecurityHeader? value) =>
+      strictTransportSecurity_.set(value);
+  set contentSecurityPolicy(ContentSecurityPolicyHeader? value) =>
+      contentSecurityPolicy_.set(value);
+  set referrerPolicy(ReferrerPolicyHeader? value) => referrerPolicy_.set(value);
+  set permissionsPolicy(PermissionsPolicyHeader? value) =>
+      permissionsPolicy_.set(value);
+  set accessControlAllowCredentials(bool? value) =>
+      accessControlAllowCredentials_.set(value);
+  set accessControlAllowMethods(AccessControlAllowMethodsHeader? value) =>
+      accessControlAllowMethods_.set(value);
+  set accessControlAllowHeaders(AccessControlAllowHeadersHeader? value) =>
+      accessControlAllowHeaders_.set(value);
+  set clearSiteData(ClearSiteDataHeader? value) => clearSiteData_.set(value);
+  set secFetchDest(SecFetchDestHeader? value) => secFetchDest_.set(value);
+  set secFetchMode(SecFetchModeHeader? value) => secFetchMode_.set(value);
+  set secFetchSite(SecFetchSiteHeader? value) => secFetchSite_.set(value);
+  set crossOriginResourcePolicy(CrossOriginResourcePolicyHeader? value) =>
+      crossOriginResourcePolicy_.set(value);
+  set crossOriginEmbedderPolicy(CrossOriginEmbedderPolicyHeader? value) =>
+      crossOriginEmbedderPolicy_.set(value);
+  set crossOriginOpenerPolicy(CrossOriginOpenerPolicyHeader? value) =>
+      crossOriginOpenerPolicy_.set(value);
 }
