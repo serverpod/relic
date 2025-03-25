@@ -82,7 +82,7 @@ Future<Headers> getServerRequestHeaders({
       parsedHeaders = request.headers;
 
       if (eagerParseHeaders) {
-        parsedHeaders?.toMap();
+        //parsedHeaders?.toMap();
       }
 
       return Response.ok();

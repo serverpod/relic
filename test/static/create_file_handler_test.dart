@@ -82,8 +82,8 @@ void main() {
       final response = await makeRequest(
         handler,
         '/file.txt',
-        headers: Headers.request(
-          range: RangeHeader.parse('bytes=0-4'),
+        headers: Headers.build(
+          (mh) => mh.range = RangeHeader.parse('bytes=0-4'),
         ),
       );
       expect(response.statusCode, equals(HttpStatus.partialContent));
@@ -103,8 +103,8 @@ void main() {
       final response = await makeRequest(
         handler,
         '/file.txt',
-        headers: Headers.request(
-          range: RangeHeader.parse('bytes=0-9'),
+        headers: Headers.build(
+          (mh) => mh.range = RangeHeader.parse('bytes=0-9'),
         ),
       );
       expect(
@@ -130,8 +130,8 @@ void main() {
       final response = await makeRequest(
         handler,
         '/file.txt',
-        headers: Headers.request(
-          range: RangeHeader.parse('bytes=8-9'),
+        headers: Headers.build(
+          (mh) => mh.range = RangeHeader.parse('bytes=8-9'),
         ),
       );
 
@@ -157,8 +157,8 @@ void main() {
       final response = await makeRequest(
         handler,
         '/file.txt',
-        headers: Headers.request(
-          range: RangeHeader.parse('bytes=2-1'),
+        headers: Headers.build(
+          (mh) => mh.range = RangeHeader.parse('bytes=2-1'),
         ),
       );
       expect(response.statusCode, equals(HttpStatus.ok));
@@ -173,8 +173,8 @@ void main() {
       final response = await makeRequest(
         handler,
         '/file.txt',
-        headers: Headers.request(
-          range: RangeHeader.parse('bytes=2-1'),
+        headers: Headers.build(
+          (mh) => mh.range = RangeHeader.parse('bytes=2-1'),
         ),
       );
       expect(response.statusCode, equals(HttpStatus.ok));

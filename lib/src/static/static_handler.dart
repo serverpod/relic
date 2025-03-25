@@ -224,10 +224,10 @@ Future<Response> _handleFile(
       return Response.notModified();
     }
   }
-  final headers = Headers.response(
-    lastModified: stat.modified,
-    acceptRanges: AcceptRangesHeader.bytes(),
-  );
+  final headers = Headers.build((mh) {
+    mh.lastModified = stat.modified;
+    mh.acceptRanges = AcceptRangesHeader.bytes();
+  });
 
   var response = _fileRangeResponse(request, file, headers);
   if (response != null) return response;
@@ -244,9 +244,7 @@ Future<Response> _handleFile(
 
   return Response.ok(
     body: body,
-    headers: Headers.response(
-      lastModified: file.lastModifiedSync(),
-    ),
+    headers: Headers.build((mh) => mh.lastModified = file.lastModifiedSync()),
   );
 }
 

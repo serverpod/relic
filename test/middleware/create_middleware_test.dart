@@ -17,9 +17,8 @@ void main() {
         .addHandler((request) {
       return syncHandler(
         request,
-        headers: Headers.request(
-          from: FromHeader(emails: ['innerHandler@serverpod.dev']),
-        ),
+        headers: Headers.build((mh) =>
+            mh.from = FromHeader(emails: ['innerHandler@serverpod.dev'])),
       );
     });
 
@@ -118,9 +117,8 @@ void main() {
       })).addHandler((request) {
         return syncHandler(
           request,
-          headers: Headers.response(
-            from: FromHeader(emails: ['handler@serverpod.dev']),
-          ),
+          headers: Headers.build(
+              (mh) => mh.from = FromHeader(emails: ['handler@serverpod.dev'])),
         );
       });
 
@@ -147,9 +145,8 @@ void main() {
         return Future(
           () => syncHandler(
             request,
-            headers: Headers.response(
-              from: FromHeader(emails: ['handler@serverpod.dev']),
-            ),
+            headers: Headers.build((mh) =>
+                mh.from = FromHeader(emails: ['handler@serverpod.dev'])),
           ),
         );
       });
@@ -277,7 +274,7 @@ Response _failHandler(Request request) => fail('should never get here');
 
 final Response _middlewareResponse = Response.ok(
   body: Body.fromString('middleware content'),
-  headers: Headers.response(
-    from: FromHeader(emails: ['middleware@serverpod.dev']),
+  headers: Headers.build(
+    (mh) => mh.from = FromHeader(emails: ['middleware@serverpod.dev']),
   ),
 );

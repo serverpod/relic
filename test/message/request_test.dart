@@ -251,9 +251,9 @@ void main() {
     });
 
     test('when there is a Last-Modified header then it is set correctly', () {
-      var request = _request(
-          headers: Headers.request(
-              ifModifiedSince: parseHttpDate('Sun, 06 Nov 1994 08:49:37 GMT')));
+      var request = _request(headers: Headers.build((mh) {
+        mh.ifModifiedSince = parseHttpDate('Sun, 06 Nov 1994 08:49:37 GMT');
+      }));
       expect(request.headers.ifModifiedSince,
           equals(DateTime.parse('1994-11-06 08:49:37z')));
     });
@@ -267,16 +267,16 @@ void main() {
 
       var uri = Uri.parse('https://test.example.com/static/file.html');
 
-      var request = Request(RequestMethod.get, uri,
-          protocolVersion: '2.0',
-          headers: Headers.request(
-              custom: CustomHeaders({
-            'header1': ['header value 1']
-          })),
-          url: Uri.parse('file.html'),
-          handlerPath: '/static/',
-          body: Body.fromDataStream(controller.stream),
-          context: {'context1': 'context value 1'});
+      var request = Request(
+        RequestMethod.get,
+        uri,
+        protocolVersion: '2.0',
+        headers: Headers.build((mh) => mh['header1'] = ['header value 1']),
+        url: Uri.parse('file.html'),
+        handlerPath: '/static/',
+        body: Body.fromDataStream(controller.stream),
+        context: {'context1': 'context value 1'},
+      );
 
       var copy = request.copyWith();
 

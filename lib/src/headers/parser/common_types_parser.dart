@@ -1,7 +1,4 @@
-import 'dart:io' as io;
-
 import 'package:http_parser/http_parser.dart';
-import 'package:relic/src/headers/custom/custom_headers.dart';
 import 'package:relic/src/headers/extension/string_list_extensions.dart';
 import 'package:relic/src/method/request_method.dart';
 
@@ -148,36 +145,4 @@ List<RequestMethod> parseMethodList(Iterable<String> values) {
     throw FormatException('Value cannot be empty');
   }
   return tempValues.map(RequestMethod.parse).toList();
-}
-
-/// Parses custom headers from the [headers] and returns them as a [CustomHeaders] instance.
-///
-/// - Excludes headers specified in [excludedHeaders].
-/// - Returns an empty [CustomHeaders] if no valid headers are found.
-CustomHeaders parseCustomHeaders(
-  io.HttpHeaders headers, {
-  Set<String> excludedHeaders = const {},
-}) {
-  var custom = <MapEntry<String, List<String>>>[];
-
-  headers.forEach((name, values) {
-    if (excludedHeaders.contains(name.toLowerCase())) {
-      return;
-    }
-
-    custom.add(MapEntry(
-      name,
-      values.fold(
-        [],
-        (a, b) => [
-          ...a,
-          ...b.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty)
-        ],
-      ),
-    ));
-  });
-
-  if (custom.isEmpty) return CustomHeaders.empty();
-
-  return CustomHeaders.fromEntries(custom);
 }

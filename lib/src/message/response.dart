@@ -43,7 +43,7 @@ class Response extends Message {
   }) : this(
           200,
           body: body ?? Body.empty(),
-          headers: headers ?? Headers.response(),
+          headers: headers ?? Headers.empty(),
           encoding: encoding,
           context: context,
         );
@@ -137,7 +137,7 @@ class Response extends Message {
   }) : this(
           204,
           body: Body.empty(),
-          headers: headers ?? Headers.response(),
+          headers: headers ?? Headers.empty(),
           context: context,
         );
 
@@ -159,7 +159,7 @@ class Response extends Message {
           304,
           body: Body.empty(),
           context: context,
-          headers: headers ?? Headers.response(),
+          headers: headers ?? Headers.empty(),
         );
 
   /// Constructs a 400 Bad Request response.
@@ -174,7 +174,7 @@ class Response extends Message {
     Map<String, Object>? context,
   }) : this(
           400,
-          headers: headers ?? Headers.response(),
+          headers: headers ?? Headers.empty(),
           body: body ?? Body.fromString('Bad Request'),
           context: context,
           encoding: encoding,
@@ -193,7 +193,7 @@ class Response extends Message {
     Map<String, Object>? context,
   }) : this(
           401,
-          headers: headers ?? Headers.response(),
+          headers: headers ?? Headers.empty(),
           body: body ?? Body.fromString('Unauthorized'),
           context: context,
           encoding: encoding,
@@ -211,7 +211,7 @@ class Response extends Message {
     Map<String, Object>? context,
   }) : this(
           403,
-          headers: headers ?? Headers.response(),
+          headers: headers ?? Headers.empty(),
           body: body ?? Body.fromString('Forbidden'),
           context: context,
           encoding: encoding,
@@ -230,7 +230,7 @@ class Response extends Message {
     Map<String, Object>? context,
   }) : this(
           404,
-          headers: headers ?? Headers.response(),
+          headers: headers ?? Headers.empty(),
           body: body ?? Body.fromString('Not Found'),
           context: context,
           encoding: encoding,
@@ -249,7 +249,7 @@ class Response extends Message {
     Map<String, Object>? context,
   }) : this(
           500,
-          headers: headers ?? Headers.response(),
+          headers: headers ?? Headers.empty(),
           body: body ?? Body.fromString('Internal Server Error'),
           context: context,
           encoding: encoding,
@@ -268,7 +268,7 @@ class Response extends Message {
     Map<String, Object>? context,
   }) : this(
           501,
-          headers: headers ?? Headers.response(),
+          headers: headers ?? Headers.empty(),
           body: body ?? Body.fromString('Not Implemented'),
           context: context,
           encoding: encoding,
@@ -287,12 +287,20 @@ class Response extends Message {
     Map<String, Object>? context,
   }) : super(
           body: body ?? Body.empty(),
-          headers: headers ?? Headers.response(),
+          headers: _ensureDate(headers),
           context: context ?? {},
         ) {
     if (statusCode < 100) {
       throw ArgumentError('Invalid status code: $statusCode.');
     }
+  }
+
+  static Headers _ensureDate(Headers? headers) {
+    headers ??= Headers.empty();
+    if (!headers.date_.isSet) {
+      headers = headers.transform((mh) => mh.date ??= DateTime.now());
+    }
+    return headers;
   }
 
   /// Creates a new [Response] by copying existing values and applying specified

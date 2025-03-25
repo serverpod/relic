@@ -44,11 +44,7 @@ void main() {
         Request(
           RequestMethod.get,
           localhostUri,
-          headers: Headers.response(
-            custom: CustomHeaders({
-              'one': ['false']
-            }),
-          ),
+          headers: Headers.build((mh) => mh['one'] = ['false']),
         ),
       );
       expect(response.statusCode, equals(200));
@@ -62,12 +58,10 @@ void main() {
         Request(
           RequestMethod.get,
           localhostUri,
-          headers: Headers.response(
-            custom: CustomHeaders({
-              'one': ['false'],
-              'two': ['false']
-            }),
-          ),
+          headers: Headers.build((mh) {
+            mh['one'] = ['false'];
+            mh['two'] = ['false'];
+          }),
         ),
       );
 
@@ -82,15 +76,11 @@ void main() {
         Request(
           RequestMethod.get,
           localhostUri,
-          headers: Headers.response(
-            custom: CustomHeaders(
-              {
-                'one': ['false'],
-                'two': ['false'],
-                'three': ['false']
-              },
-            ),
-          ),
+          headers: Headers.build((mh) {
+            mh['one'] = ['false'];
+            mh['two'] = ['false'];
+            mh['three'] = ['false'];
+          }),
         ),
       );
       expect(response.statusCode, equals(404));

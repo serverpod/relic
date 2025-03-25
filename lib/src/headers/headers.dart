@@ -2,8 +2,6 @@ import 'dart:collection';
 import 'dart:io' as io; // TODO: Get rid of this dependen
 
 import 'package:http_parser/http_parser.dart';
-import 'package:relic/relic.dart';
-import 'package:relic/src/headers/standard_headers_extensions.dart';
 
 part 'mutable_headers.dart';
 
@@ -151,85 +149,6 @@ class Headers extends HeadersBase {
       request.headers.forEach((k, v) => mh[k] = v);
     });
   }
-
-  // TODO: Should die
-  factory Headers.request({
-    // Date-related headers
-    DateTime? date,
-    DateTime? ifModifiedSince,
-
-    // Request Headers
-    FromHeader? from,
-    RangeHeader? range,
-
-    // Common Headers (Used in Both Requests and Responses)
-    TransferEncodingHeader? transferEncoding,
-    CustomHeaders? custom,
-  }) {
-    return Headers.build((mh) {
-      if (date != null) mh.date = date;
-      if (ifModifiedSince != null) mh.ifModifiedSince = ifModifiedSince;
-      if (from != null) mh.from = from;
-      if (range != null) mh.range = range;
-      if (transferEncoding != null) {
-        mh[Headers.transferEncodingHeader] = [
-          transferEncoding.toHeaderString()
-        ];
-      }
-      if (custom != null) {
-        for (final header in custom.entries) {
-          mh[header.key] = header.value;
-        }
-      }
-    });
-  }
-
-  // TODO: Should die
-  factory Headers.response({
-    // Date-related headers
-    DateTime? date,
-    DateTime? expires,
-    DateTime? lastModified,
-
-    // General Headers
-    Uri? origin,
-    String? server,
-
-    // Used from middleware
-    FromHeader? from,
-
-    // Response Headers
-    Uri? location,
-    String? xPoweredBy,
-
-    // Common Headers (Used in Both Requests and Responses)
-    AcceptRangesHeader? acceptRanges,
-    TransferEncodingHeader? transferEncoding,
-    CustomHeaders? custom,
-  }) {
-    return Headers.build((mh) {
-      mh.date = date ?? DateTime.now();
-      if (expires != null) mh.expires = expires;
-      if (lastModified != null) mh.lastModified = lastModified;
-      if (origin != null) mh.origin = origin;
-      if (server != null) mh.server = server;
-      if (from != null) mh.from = from;
-      if (location != null) mh.location = location;
-      if (xPoweredBy != null) mh.xPoweredBy = xPoweredBy;
-      if (acceptRanges != null) mh.acceptRanges = acceptRanges;
-      if (transferEncoding != null) mh.transferEncoding = transferEncoding;
-      if (custom != null) {
-        for (final header in custom.entries) {
-          mh[header.key] = header.value;
-        }
-      }
-    });
-  }
-
-  /// Convert headers to a map
-  /// This will include all headers, if a header is null then the value of the
-  /// header was not set.
-  Map<String, Object?> toMap() => this; // TODO: Should die
 }
 
 final _emptyHeaders = Headers._empty();

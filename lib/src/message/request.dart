@@ -134,7 +134,7 @@ class Request extends Message {
           method,
           requestedUri,
           connectionInfo,
-          headers ?? Headers.request(),
+          headers ?? Headers.empty(),
           protocolVersion: protocolVersion,
           url: url,
           handlerPath: handlerPath,

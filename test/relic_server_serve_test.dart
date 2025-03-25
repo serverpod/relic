@@ -8,6 +8,7 @@ import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart' as parser;
 import 'package:relic/relic.dart';
 import 'package:relic/src/headers/parser/common_types_parser.dart';
+import 'package:relic/src/headers/standard_headers_extensions.dart';
 import 'package:relic/src/method/request_method.dart';
 import 'package:relic/src/relic_server_serve.dart' as relic_server;
 import 'package:test/test.dart';
@@ -134,11 +135,10 @@ void main() {
     await _scheduleServer((request) {
       return Response.ok(
         body: Body.fromString('Hello from /'),
-        headers: Headers.response(
-            custom: CustomHeaders({
+        headers: Headers.from({
           'test-header': ['test-value'],
           'test-list': ['a', 'b', 'c'],
-        })),
+        }),
       );
     });
 
@@ -357,9 +357,7 @@ void main() {
       await _scheduleServer((request) {
         return Response.ok(
           body: Body.fromString('test'),
-          headers: Headers.response(
-            date: date,
-          ),
+          headers: Headers.build((mh) => mh.date = date),
         );
       });
 
@@ -386,9 +384,7 @@ void main() {
       await _scheduleServer((request) {
         return Response.ok(
           body: Body.fromString('test'),
-          headers: Headers.response(
-            xPoweredBy: 'myServer',
-          ),
+          headers: Headers.build((mh) => mh.xPoweredBy = 'myServer'),
         );
       });
 
@@ -415,9 +411,7 @@ void main() {
         (request) {
           return Response.ok(
             body: Body.fromString('test'),
-            headers: Headers.response(
-              xPoweredBy: 'myServer',
-            ),
+            headers: Headers.build((mh) => mh.xPoweredBy = 'myServer'),
           );
         },
         InternetAddress.loopbackIPv4,
@@ -438,11 +432,8 @@ void main() {
     await _scheduleServer(
       (_) => Response.ok(
         body: Body.empty(),
-        headers: Headers.response(
-          transferEncoding: TransferEncodingHeader(
-            encodings: [TransferEncoding.chunked],
-          ),
-        ),
+        headers: Headers.build((mh) => mh.transferEncoding =
+            TransferEncodingHeader(encodings: [TransferEncoding.chunked])),
       ),
     );
 
