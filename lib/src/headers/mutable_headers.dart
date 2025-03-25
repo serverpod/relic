@@ -4,6 +4,8 @@ class MutableHeaders extends HeadersBase
     with MapMixin<String, Iterable<String>> {
   MutableHeaders._(super.backing) : super._();
 
+  MutableHeaders() : this._(_BackingStore());
+
   MutableHeaders._from(Headers headers)
       : this._(_BackingStore.from(headers._backing));
 
