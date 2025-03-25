@@ -1,4 +1,3 @@
-import 'package:relic/relic.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
@@ -7,6 +6,8 @@ import 'dart:typed_data';
 import 'package:async/async.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart' as parser;
+import 'package:relic/relic.dart';
+import 'package:relic/src/headers/parser/common_types_parser.dart';
 import 'package:relic/src/method/request_method.dart';
 import 'package:relic/src/relic_server_serve.dart' as relic_server;
 import 'package:test/test.dart';
@@ -183,6 +184,10 @@ void main() {
   });
 
   test('custom request headers are received by the handler', () async {
+    const multi = HeaderFlyweight<List<String>>(
+      'multi-header',
+      HeaderDecoderMulti(parseStringList),
+    );
     await _scheduleServer((request) {
       expect(
         request.headers,
@@ -193,8 +198,14 @@ void main() {
       // validate that they are combined correctly
       expect(
         request.headers,
-        containsPair('multi-header', ['foo', 'bar', 'baz']),
+        containsPair('multi-header', ['foo,bar,baz']),
       );
+
+      expect(
+        multi[request.headers].value,
+        ['foo', 'bar', 'baz'],
+      );
+
       return syncHandler(request);
     });
 
