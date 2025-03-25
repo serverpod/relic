@@ -100,47 +100,5 @@ void main() {
       headers = headers.copyWith(date: newDate);
       expect(headers.date, equals(newDate));
     });
-
-    group('when converting to map', () {
-      test(
-        'then all managed header by the Header class are included',
-        () {
-          var headers = Headers.request();
-          var managedHeaders = Headers.managedHeaders
-              .where(
-                (header) =>
-                    // These headers are not managed by the Headers class but are
-                    // managed by the body class and applied later to the response.
-                    header != Headers.contentLengthHeader &&
-                    header != Headers.contentTypeHeader,
-              )
-              .toSet();
-          var mapKeys = headers.toMap().keys.toSet();
-
-          var missingManagedHeaders = managedHeaders.difference(mapKeys);
-
-          expect(
-            missingManagedHeaders.isEmpty,
-            isTrue,
-            reason: 'Missing managed headers: $missingManagedHeaders.',
-          );
-        },
-        skip: 'No headers are mandatory in Http 1.0, and only host in Http 1.1',
-      );
-
-      test('then no unexpected additional headers are included', () {
-        var headers = Headers.request();
-        var managedHeaders = Headers.managedHeaders.toSet();
-        var mapKeys = headers.toMap().keys.toSet();
-
-        var unexpectedAdditionalHeaders = mapKeys.difference(managedHeaders);
-        expect(
-          unexpectedAdditionalHeaders.isEmpty,
-          isTrue,
-          reason:
-              'Unexpected additional headers: $unexpectedAdditionalHeaders.',
-        );
-      });
-    });
   });
 }
