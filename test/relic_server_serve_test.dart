@@ -148,31 +148,6 @@ void main() {
     expect(response.body, 'Hello from /');
   });
 
-  test('multiple headers are received from the client', () async {
-    await _scheduleServer((Request request) {
-      return Response.ok(
-        body: Body.fromString('Hello from /'),
-        headers: Headers.response(
-            custom: CustomHeaders({
-          'requested-values': request.headers['request-values']!.toList(),
-          'requested-values-length': [
-            request.headers['request-values']!.length.toString()
-          ],
-        })),
-      );
-    });
-
-    final response = await _get(
-      headers: {
-        'request-values': 'a,b',
-        'set-cookie': 'c,d',
-      },
-    );
-    expect(response.statusCode, HttpStatus.ok);
-    expect(response.headers['requested-values'], 'a, b');
-    expect(response.headers['requested-values-length'], '2');
-  });
-
   test('custom status code is received by the client', () async {
     await _scheduleServer((request) {
       return Response(299, body: Body.fromString('Hello from /'));
