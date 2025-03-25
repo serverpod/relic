@@ -204,6 +204,9 @@ class Headers extends HeadersBase {
 
   factory Headers.empty() => _emptyHeaders;
 
+  factory Headers.build(void Function(MutableHeaders) update) =>
+      Headers.empty().transform(update);
+
   // cannot be made const before: <insert link to dart CL
   Headers._empty() : this._fromEntries(const {});
 
@@ -249,7 +252,7 @@ class Headers extends HeadersBase {
     required String? xPoweredBy,
     DateTime? date,
   }) {
-    return Headers.empty().transform((mh) {
+    return Headers.build((mh) {
       request.headers.forEach((k, v) => mh[k] = v);
     });
   }
@@ -268,7 +271,7 @@ class Headers extends HeadersBase {
     TransferEncodingHeader? transferEncoding,
     CustomHeaders? custom,
   }) {
-    return Headers.empty().transform((mh) {
+    return Headers.build((mh) {
       if (date != null) mh.date = date;
       if (ifModifiedSince != null) mh.ifModifiedSince = ifModifiedSince;
       if (from != null) mh.from = from;
@@ -309,7 +312,7 @@ class Headers extends HeadersBase {
     TransferEncodingHeader? transferEncoding,
     CustomHeaders? custom,
   }) {
-    return Headers.empty().transform((mh) {
+    return Headers.build((mh) {
       mh.date = date ?? DateTime.now();
       if (expires != null) mh.expires = expires;
       if (lastModified != null) mh.lastModified = lastModified;
