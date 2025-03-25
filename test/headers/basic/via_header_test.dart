@@ -125,19 +125,6 @@ void main() {
           expect(() => headers.via, throwsA(isA<InvalidHeaderException>()));
         },
       );
-
-      test(
-        'then it should be recorded in failedHeadersToParse',
-        skip: 'todo: drop failedHeadersToParse',
-        () async {
-          var headers = await getServerRequestHeaders(
-            server: server,
-            headers: {'via': ''},
-          );
-
-          expect(headers.failedHeadersToParse['via'], equals(['']));
-        },
-      );
     });
   });
 }

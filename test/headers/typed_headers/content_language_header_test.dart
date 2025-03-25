@@ -155,22 +155,6 @@ void main() {
               throwsA(isA<InvalidHeaderException>()));
         },
       );
-
-      test(
-        'then it should be recorded in the "failedHeadersToParse" field',
-        skip: 'todo: drop failedHeadersToParse',
-        () async {
-          var headers = await getServerRequestHeaders(
-            server: server,
-            headers: {'content-language': 'en-123'},
-          );
-
-          expect(
-            headers.failedHeadersToParse['content-language'],
-            equals(['en-123']),
-          );
-        },
-      );
     });
   });
 }

@@ -222,21 +222,5 @@ void main() {
             throwsA(isA<InvalidHeaderException>()));
       },
     );
-
-    test(
-      'when an invalid header is passed then it should be recorded in failedHeadersToParse',
-      skip: 'todo: drop failedHeadersToParse',
-      () async {
-        var headers = await getServerRequestHeaders(
-          server: server,
-          headers: {'www-authenticate': 'InvalidHeader'},
-        );
-
-        expect(
-          headers.failedHeadersToParse['www-authenticate'],
-          equals(['InvalidHeader']),
-        );
-      },
-    );
   });
 }

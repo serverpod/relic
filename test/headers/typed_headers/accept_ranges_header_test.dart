@@ -115,21 +115,6 @@ void main() {
               throwsA(isA<InvalidHeaderException>()));
         },
       );
-      test(
-        'then it should be recorded in the "failedHeadersToParse" field',
-        skip: 'todo: drop failedHeadersToParse',
-        () async {
-          var headers = await getServerRequestHeaders(
-            server: server,
-            headers: {'accept-ranges': ''},
-          );
-
-          expect(
-            headers.failedHeadersToParse['accept-ranges'],
-            equals(['']),
-          );
-        },
-      );
     });
   });
 }

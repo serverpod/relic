@@ -144,22 +144,6 @@ void main() {
           expect(() => headers.expires, throwsA(isA<InvalidHeaderException>()));
         },
       );
-
-      test(
-        'then it should be recorded in "failedHeadersToParse" field',
-        skip: 'drop failedHeadersToParse',
-        () async {
-          var headers = await getServerRequestHeaders(
-            server: server,
-            headers: {'expires': ''},
-          );
-
-          expect(
-            headers.failedHeadersToParse['expires'],
-            equals(['']),
-          );
-        },
-      );
     });
 
     group('when an invalid Expires header is passed', () {
@@ -173,22 +157,6 @@ void main() {
 
           expect(headers.expires_.valueOrNullIfInvalid, isNull);
           expect(() => headers.expires, throwsA(isA<InvalidHeaderException>()));
-        },
-      );
-
-      test(
-        'then it should be recorded in "failedHeadersToParse" field',
-        skip: 'drop failedHeadersToParse',
-        () async {
-          var headers = await getServerRequestHeaders(
-            server: server,
-            headers: {'expires': 'invalid-date-format'},
-          );
-
-          expect(
-            headers.failedHeadersToParse['expires'],
-            equals(['invalid-date-format']),
-          );
         },
       );
     });

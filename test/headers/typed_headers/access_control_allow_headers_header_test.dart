@@ -137,22 +137,6 @@ void main() {
         );
         expect(headers.accessControlAllowHeaders, isNull);
       });
-
-      test(
-        'then it should be recorded in the "failedHeadersToParse" field',
-        skip: 'todo: drop failedHeadersToParse',
-        () async {
-          var headers = await getServerRequestHeaders(
-            server: server,
-            headers: {'access-control-allow-headers': ''},
-          );
-
-          expect(
-            headers.failedHeadersToParse['access-control-allow-headers'],
-            equals(['']),
-          );
-        },
-      );
     });
   });
 }

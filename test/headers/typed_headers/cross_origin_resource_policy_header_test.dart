@@ -126,22 +126,6 @@ void main() {
               expect(headers.crossOriginResourcePolicy, isNull);
             },
           );
-
-          test(
-            'then it should be recorded in the "failedHeadersToParse" field',
-            skip: 'todo: drop failedHeadersToParse',
-            () async {
-              var headers = await getServerRequestHeaders(
-                server: server,
-                headers: {'cross-origin-resource-policy': ''},
-              );
-
-              expect(
-                headers.failedHeadersToParse['cross-origin-resource-policy'],
-                equals(['']),
-              );
-            },
-          );
         },
       );
     },

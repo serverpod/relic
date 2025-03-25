@@ -140,22 +140,6 @@ void main() {
               throwsA(isA<InvalidHeaderException>()));
         },
       );
-
-      test(
-        'then it should be recorded in the "failedHeadersToParse" field',
-        skip: 'todo: drop failedHeadersToParse',
-        () async {
-          var headers = await getServerRequestHeaders(
-            server: server,
-            headers: {'access-control-max-age': 'invalid'},
-          );
-
-          expect(
-            headers.failedHeadersToParse['access-control-max-age'],
-            equals(['invalid']),
-          );
-        },
-      );
     });
   });
 }

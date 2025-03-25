@@ -144,22 +144,6 @@ void main() {
               throwsA(isA<InvalidHeaderException>()));
         },
       );
-
-      test(
-        'then it should be recorded in "failedHeadersToParse" field',
-        skip: 'drop failedHeadersToParse',
-        () async {
-          var headers = await getServerRequestHeaders(
-            server: server,
-            headers: {'last-modified': ''},
-          );
-
-          expect(
-            headers.failedHeadersToParse['last-modified'],
-            equals(['']),
-          );
-        },
-      );
     });
 
     group('when an invalid Last-Modified header is passed', () {
@@ -174,22 +158,6 @@ void main() {
           expect(headers.lastModified_.valueOrNullIfInvalid, isNull);
           expect(() => headers.lastModified,
               throwsA(isA<InvalidHeaderException>()));
-        },
-      );
-
-      test(
-        'then it should be recorded in "failedHeadersToParse" field',
-        skip: 'drop failedHeadersToParse',
-        () async {
-          var headers = await getServerRequestHeaders(
-            server: server,
-            headers: {'last-modified': 'invalid-date-format'},
-          );
-
-          expect(
-            headers.failedHeadersToParse['last-modified'],
-            equals(['invalid-date-format']),
-          );
         },
       );
     });

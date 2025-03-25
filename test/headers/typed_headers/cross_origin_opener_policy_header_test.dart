@@ -116,22 +116,6 @@ void main() {
           expect(headers.crossOriginOpenerPolicy, isNull);
         },
       );
-
-      test(
-        'then it should be recorded in the "failedHeadersToParse" field',
-        skip: 'todo: drop failedHeadersToParse',
-        () async {
-          var headers = await getServerRequestHeaders(
-            server: server,
-            headers: {'cross-origin-opener-policy': ''},
-          );
-
-          expect(
-            headers.failedHeadersToParse['cross-origin-opener-policy'],
-            equals(['']),
-          );
-        },
-      );
     });
   });
 }

@@ -162,19 +162,6 @@ void main() {
               throwsA(isA<InvalidHeaderException>()));
         },
       );
-
-      test(' then it should be recorded in "failedHeadersToParse" field',
-          () async {
-        var headers = await getServerRequestHeaders(
-          server: server,
-          headers: {'max-forwards': 'invalid'},
-        );
-
-        expect(
-          headers.failedHeadersToParse['max-forwards'],
-          equals(['invalid']),
-        );
-      }, skip: 'drop failedHeadersToParse');
     });
   });
 }

@@ -145,22 +145,6 @@ void main() {
           expect(() => headers.date, throwsA(isA<InvalidHeaderException>()));
         },
       );
-
-      test(
-        'then it should be recorded in "failedHeadersToParse" field',
-        skip: 'drop failedHeadersToParse',
-        () async {
-          var headers = await getServerRequestHeaders(
-            server: server,
-            headers: {'date': ''},
-          );
-
-          expect(
-            headers.failedHeadersToParse['date'],
-            equals(['']),
-          );
-        },
-      );
     });
 
     group('when an invalid Date header is passed', () {
@@ -174,22 +158,6 @@ void main() {
 
           expect(headers.date_.valueOrNullIfInvalid, isNull);
           expect(() => headers.date, throwsA(isA<InvalidHeaderException>()));
-        },
-      );
-
-      test(
-        'then it should be recorded in "failedHeadersToParse" field',
-        skip: 'drop failedHeadersToParse',
-        () async {
-          var headers = await getServerRequestHeaders(
-            server: server,
-            headers: {'date': 'invalid-date-format'},
-          );
-
-          expect(
-            headers.failedHeadersToParse['date'],
-            equals(['invalid-date-format']),
-          );
         },
       );
     });

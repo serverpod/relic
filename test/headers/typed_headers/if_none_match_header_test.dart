@@ -229,22 +229,6 @@ void main() {
               throwsA(isA<InvalidHeaderException>()));
         },
       );
-
-      test(
-        'then it should be recorded in "failedHeadersToParse" field',
-        skip: 'drop failedHeadersToParse',
-        () async {
-          var headers = await getServerRequestHeaders(
-            server: server,
-            headers: {'if-none-match': 'invalid-etag'},
-          );
-
-          expect(
-            headers.failedHeadersToParse['if-none-match'],
-            equals(['invalid-etag']),
-          );
-        },
-      );
     });
   });
 }

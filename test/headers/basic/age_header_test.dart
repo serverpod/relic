@@ -177,19 +177,6 @@ void main() {
           expect(() => headers.age, throwsA(isA<InvalidHeaderException>()));
         },
       );
-
-      test(
-        'then it should be recorded in "failedHeadersToParse" field',
-        skip: 'drop failedHeadersToParse',
-        () async {
-          var headers = await getServerRequestHeaders(
-            server: server,
-            headers: {'age': ''},
-          );
-
-          expect(headers.failedHeadersToParse['age'], equals(['']));
-        },
-      );
     });
 
     group('when an invalid Age header is passed', () {
@@ -203,19 +190,6 @@ void main() {
 
           expect(headers.age_.valueOrNullIfInvalid, isNull);
           expect(() => headers.age, throwsA(isA<InvalidHeaderException>()));
-        },
-      );
-
-      test(
-        'then it should be recorded in "failedHeadersToParse" field',
-        skip: 'drop failedHeadersToParse',
-        () async {
-          var headers = await getServerRequestHeaders(
-            server: server,
-            headers: {'age': 'invalid'},
-          );
-
-          expect(headers.failedHeadersToParse['age'], equals(['invalid']));
         },
       );
     });

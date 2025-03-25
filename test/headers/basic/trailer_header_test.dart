@@ -130,21 +130,5 @@ void main() {
         expect(headers.trailer, equals(['custom-header']));
       },
     );
-
-    test(
-      'when an empty Trailer header is passed then it should be recorded in failedHeadersToParse',
-      skip: 'todo: drop failedHeadersToParse',
-      () async {
-        var headers = await getServerRequestHeaders(
-          server: server,
-          headers: {'trailer': ''},
-        );
-
-        expect(
-          headers.failedHeadersToParse['trailer'],
-          equals(['']),
-        );
-      },
-    );
   });
 }

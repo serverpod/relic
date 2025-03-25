@@ -134,48 +134,4 @@ void main() {
       );
     });
   });
-
-  group('Given an Upgrade header with the strict flag false', () {
-    late RelicServer server;
-
-    setUp(() async {
-      server = await createServer(strictHeaders: false);
-    });
-
-    tearDown(() => server.close());
-
-    group('when an empty Upgrade header is passed', () {
-      test(
-        'then it should be recorded in failedHeadersToParse',
-        skip: 'todo: drop failedHeadersToParse',
-        () async {
-          var headers = await getServerRequestHeaders(
-            server: server,
-            headers: {'upgrade': ''},
-          );
-
-          expect(
-            headers.failedHeadersToParse['upgrade'],
-            equals(['']),
-          );
-        },
-      );
-
-      test(
-        'then it should be recorded in failedHeadersToParse',
-        skip: 'todo: drop failedHeadersToParse',
-        () async {
-          var headers = await getServerRequestHeaders(
-            server: server,
-            headers: {'upgrade': ''},
-          );
-
-          expect(
-            headers.failedHeadersToParse['upgrade'],
-            equals(['']),
-          );
-        },
-      );
-    });
-  });
 }

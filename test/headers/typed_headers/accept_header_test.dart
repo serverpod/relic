@@ -225,21 +225,6 @@ void main() {
           expect(() => headers.accept, throwsA(isA<InvalidHeaderException>()));
         },
       );
-      test(
-        'then it should be recorded in the "failedHeadersToParse" field',
-        skip: 'todo: drop failedHeadersToParse',
-        () async {
-          var headers = await getServerRequestHeaders(
-            server: server,
-            headers: {'accept': 'text/html;q=abc'},
-          );
-
-          expect(
-            headers.failedHeadersToParse['accept'],
-            equals(['text/html;q=abc']),
-          );
-        },
-      );
     });
   });
 }

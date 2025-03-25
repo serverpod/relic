@@ -254,8 +254,6 @@ class Headers extends HeadersBase {
     });
   }
 
-  Map<String, List<String>> failedHeadersToParse = {}; // TODO: Should die
-
   // TODO: Should die
   factory Headers.request({
     // Date-related headers

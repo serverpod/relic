@@ -156,22 +156,6 @@ void main() {
                 throwsA(isA<InvalidHeaderException>()));
           },
         );
-
-        test(
-          'then it should be recorded in failedHeadersToParse',
-          skip: 'todo: drop failedHeadersToParse',
-          () async {
-            var headers = await getServerRequestHeaders(
-              server: server,
-              headers: {'connection': ''},
-            );
-
-            expect(
-              headers.failedHeadersToParse['connection'],
-              equals(['']),
-            );
-          },
-        );
       },
     );
   });

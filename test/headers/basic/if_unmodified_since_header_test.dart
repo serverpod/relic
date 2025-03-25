@@ -147,22 +147,6 @@ void main() {
               throwsA(isA<InvalidHeaderException>()));
         },
       );
-
-      test(
-        'then it should be recorded in failedHeadersToParse',
-        skip: 'todo: drop failedHeadersToParse',
-        () async {
-          var headers = await getServerRequestHeaders(
-            server: server,
-            headers: {'if-unmodified-since': ''},
-          );
-
-          expect(
-            headers.failedHeadersToParse['if-unmodified-since'],
-            equals(['']),
-          );
-        },
-      );
     });
 
     group('when an invalid If-Unmodified-Since header is passed', () {
@@ -177,22 +161,6 @@ void main() {
           expect(headers.ifUnmodifiedSince_.valueOrNullIfInvalid, isNull);
           expect(() => headers.ifUnmodifiedSince,
               throwsA(isA<InvalidHeaderException>()));
-        },
-      );
-
-      test(
-        'then it should be recorded in failedHeadersToParse',
-        skip: 'todo: drop failedHeadersToParse',
-        () async {
-          var headers = await getServerRequestHeaders(
-            server: server,
-            headers: {'if-unmodified-since': 'invalid-date-format'},
-          );
-
-          expect(
-            headers.failedHeadersToParse['if-unmodified-since'],
-            equals(['invalid-date-format']),
-          );
         },
       );
     });

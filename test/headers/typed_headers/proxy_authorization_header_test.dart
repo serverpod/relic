@@ -481,22 +481,6 @@ void main() {
               throwsA(isA<InvalidHeaderException>()));
         },
       );
-
-      test(
-        'then it should be recorded in "failedHeadersToParse" field',
-        skip: 'drop failedHeadersToParse',
-        () async {
-          var headers = await getServerRequestHeaders(
-            server: server,
-            headers: {'proxy-authorization': ''},
-          );
-
-          expect(
-            headers.failedHeadersToParse['proxy-authorization'],
-            equals(['']),
-          );
-        },
-      );
     });
 
     group('when an invalid Proxy-Authorization header is passed', () {
@@ -511,22 +495,6 @@ void main() {
           expect(headers.proxyAuthorization_.valueOrNullIfInvalid, isNull);
           expect(() => headers.proxyAuthorization,
               throwsA(isA<InvalidHeaderException>()));
-        },
-      );
-
-      test(
-        'then it should be recorded in "failedHeadersToParse" field',
-        skip: 'drop failedHeadersToParse',
-        () async {
-          var headers = await getServerRequestHeaders(
-            server: server,
-            headers: {'proxy-authorization': 'InvalidFormat'},
-          );
-
-          expect(
-            headers.failedHeadersToParse['proxy-authorization'],
-            equals(['InvalidFormat']),
-          );
         },
       );
     });

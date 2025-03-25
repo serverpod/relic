@@ -177,22 +177,6 @@ void main() {
           expect(() => headers.origin, throwsA(isA<InvalidHeaderException>()));
         },
       );
-
-      test(
-        'then it should be recorded in "failedHeadersToParse" field',
-        skip: 'drop failedHeadersToParse',
-        () async {
-          var headers = await getServerRequestHeaders(
-            server: server,
-            headers: {'origin': ''},
-          );
-
-          expect(
-            headers.failedHeadersToParse['origin'],
-            equals(['']),
-          );
-        },
-      );
     });
 
     group('when an invalid Origin header is passed', () {
@@ -206,22 +190,6 @@ void main() {
 
           expect(headers.origin_.valueOrNullIfInvalid, isNull);
           expect(() => headers.origin, throwsA(isA<InvalidHeaderException>()));
-        },
-      );
-
-      test(
-        'then it should be recorded in "failedHeadersToParse" field',
-        skip: 'drop failedHeadersToParse',
-        () async {
-          var headers = await getServerRequestHeaders(
-            server: server,
-            headers: {'origin': 'h@ttp://example.com'},
-          );
-
-          expect(
-            headers.failedHeadersToParse['origin'],
-            equals(['h@ttp://example.com']),
-          );
         },
       );
     });

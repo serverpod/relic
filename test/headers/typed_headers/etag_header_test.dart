@@ -136,22 +136,6 @@ void main() {
           expect(() => headers.etag, throwsA(isA<InvalidHeaderException>()));
         },
       );
-
-      test(
-        'then it should be recorded in the "failedHeadersToParse" field',
-        skip: 'todo: drop failedHeadersToParse',
-        () async {
-          var headers = await getServerRequestHeaders(
-            server: server,
-            headers: {'etag': '123456'},
-          );
-
-          expect(
-            headers.failedHeadersToParse['etag'],
-            equals(['123456']),
-          );
-        },
-      );
     });
   });
 }

@@ -173,22 +173,6 @@ void main() {
           expect(() => headers.host, throwsA(isA<InvalidHeaderException>()));
         },
       );
-
-      test(
-        'then it should be recorded in the "failedHeadersToParse" field',
-        skip: 'todo: drop failedHeadersToParse',
-        () async {
-          var headers = await getServerRequestHeaders(
-            server: server,
-            headers: {'host': 'h@ttp://example.com'},
-          );
-
-          expect(
-            headers.failedHeadersToParse['host'],
-            equals(['h@ttp://example.com']),
-          );
-        },
-      );
     });
 
     test(

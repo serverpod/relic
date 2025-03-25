@@ -334,19 +334,6 @@ void main() {
               throwsA(isA<InvalidHeaderException>()));
         },
       );
-
-      test(
-        'then it should be recorded in failedHeadersToParse',
-        skip: 'todo: drop failedHeadersToParse',
-        () async {
-          var headers = await getServerRequestHeaders(
-            server: server,
-            headers: {'accept-encoding': ''},
-          );
-
-          expect(headers.failedHeadersToParse['accept-encoding'], equals(['']));
-        },
-      );
     });
 
     group('when Accept-Encoding headers with invalid quality values are passed',
@@ -362,22 +349,6 @@ void main() {
           expect(headers.acceptEncoding_.valueOrNullIfInvalid, isNull);
           expect(() => headers.acceptEncoding,
               throwsA(isA<InvalidHeaderException>()));
-        },
-      );
-
-      test(
-        'then they should be recorded in failedHeadersToParse',
-        skip: 'todo: drop failedHeadersToParse',
-        () async {
-          var headers = await getServerRequestHeaders(
-            server: server,
-            headers: {'accept-encoding': 'gzip;q=abc, deflate, br'},
-          );
-
-          expect(
-            headers.failedHeadersToParse['accept-encoding'],
-            equals(['gzip;q=abc', 'deflate', 'br']),
-          );
         },
       );
     });

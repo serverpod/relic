@@ -209,45 +209,6 @@ void main() {
           expect(() => headers.from, throwsA(isA<InvalidHeaderException>()));
         },
       );
-
-      test(
-        'then it should be recorded in the "failedHeadersToParse" field',
-        skip: 'todo: drop failedHeadersToParse',
-        () async {
-          var headers = await getServerRequestHeaders(
-            server: server,
-            headers: {'from': 'invalid-email-format'},
-          );
-
-          expect(
-            headers.failedHeadersToParse['from'],
-            equals(['invalid-email-format']),
-          );
-        },
-      );
     });
-
-    test(
-      'when multiple From headers with an invalid email format among valid ones are passed '
-      'then they should be recorded in failedHeadersToParse',
-      skip: 'todo: drop failedHeadersToParse',
-      () async {
-        var headers = await getServerRequestHeaders(
-          server: server,
-          headers: {
-            'from': 'user1@example.com, invalid-email-format, user2@example.com'
-          },
-        );
-
-        expect(
-          headers.failedHeadersToParse['from'],
-          equals([
-            'user1@example.com',
-            'invalid-email-format',
-            'user2@example.com'
-          ]),
-        );
-      },
-    );
   });
 }

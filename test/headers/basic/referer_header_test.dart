@@ -178,22 +178,6 @@ void main() {
           expect(() => headers.referer, throwsA(isA<InvalidHeaderException>()));
         },
       );
-
-      test(
-        'then it should be recorded in "failedHeadersToParse" field',
-        skip: 'drop failedHeadersToParse',
-        () async {
-          var headers = await getServerRequestHeaders(
-            server: server,
-            headers: {'referer': 'ht!tp://invalid-url'},
-          );
-
-          expect(
-            headers.failedHeadersToParse['referer'],
-            equals(['ht!tp://invalid-url']),
-          );
-        },
-      );
     });
   });
 }

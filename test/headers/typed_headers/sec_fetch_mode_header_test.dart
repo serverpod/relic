@@ -116,22 +116,6 @@ void main() {
           expect(headers.secFetchMode, isNull);
         },
       );
-
-      test(
-        'then it should be recorded in the "failedHeadersToParse" field',
-        skip: 'todo: drop failedHeadersToParse',
-        () async {
-          var headers = await getServerRequestHeaders(
-            server: server,
-            headers: {'sec-fetch-mode': ''},
-          );
-
-          expect(
-            headers.failedHeadersToParse['sec-fetch-mode'],
-            equals(['']),
-          );
-        },
-      );
     });
   });
 }

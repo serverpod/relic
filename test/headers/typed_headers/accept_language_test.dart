@@ -371,22 +371,6 @@ void main() {
                 throwsA(isA<InvalidHeaderException>()));
           },
         );
-
-        test(
-          'then it should be recorded in "failedHeadersToParse" field',
-          skip: 'drop failedHeadersToParse',
-          () async {
-            var headers = await getServerRequestHeaders(
-              server: server,
-              headers: {'accept-language': ''},
-            );
-
-            expect(
-              headers.failedHeadersToParse['accept-language'],
-              equals(['']),
-            );
-          },
-        );
       });
 
       group(
@@ -403,22 +387,6 @@ void main() {
               expect(headers.acceptLanguage_.valueOrNullIfInvalid, isNull);
               expect(() => headers.acceptLanguage,
                   throwsA(isA<InvalidHeaderException>()));
-            },
-          );
-
-          test(
-            'then they should be recorded in "failedHeadersToParse" field',
-            skip: 'drop failedHeadersToParse',
-            () async {
-              var headers = await getServerRequestHeaders(
-                server: server,
-                headers: {'accept-language': 'en;q=abc, fr, de'},
-              );
-
-              expect(
-                headers.failedHeadersToParse['accept-language'],
-                equals(['en;q=abc', 'fr', 'de']),
-              );
             },
           );
         },

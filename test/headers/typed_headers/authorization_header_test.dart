@@ -479,22 +479,6 @@ void main() {
               throwsA(isA<InvalidHeaderException>()));
         },
       );
-
-      test(
-        'then it should be recorded in "failedHeadersToParse" field',
-        skip: 'drop failedHeadersToParse',
-        () async {
-          var headers = await getServerRequestHeaders(
-            server: server,
-            headers: {'authorization': ''},
-          );
-
-          expect(
-            headers.failedHeadersToParse['authorization'],
-            equals(['']),
-          );
-        },
-      );
     });
 
     group('when an invalid Authorization header is passed', () {
@@ -509,22 +493,6 @@ void main() {
           expect(headers.authorization_.valueOrNullIfInvalid, isNull);
           expect(() => headers.authorization,
               throwsA(isA<InvalidHeaderException>()));
-        },
-      );
-
-      test(
-        'then it should be recorded in "failedHeadersToParse" field',
-        skip: 'drop failedHeadersToParse',
-        () async {
-          var headers = await getServerRequestHeaders(
-            server: server,
-            headers: {'authorization': 'InvalidFormat'},
-          );
-
-          expect(
-            headers.failedHeadersToParse['authorization'],
-            equals(['InvalidFormat']),
-          );
         },
       );
     });

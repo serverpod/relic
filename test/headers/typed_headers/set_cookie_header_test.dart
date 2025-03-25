@@ -247,22 +247,6 @@ void main() {
               () => headers.setCookie, throwsA(isA<InvalidHeaderException>()));
         },
       );
-
-      test(
-        'when an invalid Set-Cookie header is passed then it should be recorded in failedHeadersToParse',
-        skip: 'todo: drop failedHeadersToParse',
-        () async {
-          var headers = await getServerRequestHeaders(
-            server: server,
-            headers: {'set-cookie': 'sessionId=abc123; invalidCookie'},
-          );
-
-          expect(
-            headers.failedHeadersToParse['set-cookie'],
-            equals(['sessionId=abc123; invalidCookie']),
-          );
-        },
-      );
     });
   });
 }

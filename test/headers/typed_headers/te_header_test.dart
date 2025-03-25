@@ -226,19 +226,6 @@ void main() {
           expect(() => headers.te, throwsA(isA<InvalidHeaderException>()));
         },
       );
-
-      test(
-        'then it should be recorded in failedHeadersToParse',
-        skip: 'todo: drop failedHeadersToParse',
-        () async {
-          var headers = await getServerRequestHeaders(
-            server: server,
-            headers: {'te': ''},
-          );
-
-          expect(headers.failedHeadersToParse['te'], equals(['']));
-        },
-      );
     });
 
     group('when TE headers with invalid quality values are passed', () {
@@ -252,22 +239,6 @@ void main() {
 
           expect(headers.te_.valueOrNullIfInvalid, isNull);
           expect(() => headers.te, throwsA(isA<InvalidHeaderException>()));
-        },
-      );
-
-      test(
-        'then they should be recorded in failedHeadersToParse',
-        skip: 'todo: drop failedHeadersToParse',
-        () async {
-          var headers = await getServerRequestHeaders(
-            server: server,
-            headers: {'te': 'trailers;q=abc, deflate, gzip'},
-          );
-
-          expect(
-            headers.failedHeadersToParse['te'],
-            equals(['trailers;q=abc', 'deflate', 'gzip']),
-          );
         },
       );
     });

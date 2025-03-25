@@ -260,6 +260,9 @@ extension StandardMutableHeadersExtensions on MutableHeaders {
       crossOriginEmbedderPolicy_.set(value);
   set crossOriginOpenerPolicy(CrossOriginOpenerPolicyHeader? value) =>
       crossOriginOpenerPolicy_.set(value);
+
+  // We have to repeat these read props, since dart cannot have getter and setter defined on two different
+  // classes as extensions
   DateTime? get date => date_();
   DateTime? get expires => expires_();
   DateTime? get lastModified => lastModified_();

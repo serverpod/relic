@@ -148,19 +148,6 @@ void main() {
           expect(headers.allow_.valueOrNullIfInvalid, isNull);
         },
       );
-
-      test(
-        'then it should be recorded in "failedHeadersToParse" field',
-        skip: 'drop failedHeadersToParse',
-        () async {
-          var headers = await getServerRequestHeaders(
-            server: server,
-            headers: {'allow': ''},
-          );
-
-          expect(headers.failedHeadersToParse['allow'], equals(['']));
-        },
-      );
     });
   });
 }

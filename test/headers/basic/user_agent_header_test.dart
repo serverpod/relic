@@ -105,22 +105,6 @@ void main() {
               () => headers.userAgent, throwsA(isA<InvalidHeaderException>()));
         },
       );
-
-      test(
-        'then it should be recorded in "failedHeadersToParse" field',
-        skip: 'drop failedHeadersToParse',
-        () async {
-          var headers = await getServerRequestHeaders(
-            server: server,
-            headers: {'user-agent': ''},
-          );
-
-          expect(
-            headers.failedHeadersToParse['user-agent'],
-            equals(['']),
-          );
-        },
-      );
     });
   });
 }

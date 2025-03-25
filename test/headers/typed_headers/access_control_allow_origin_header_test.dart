@@ -201,22 +201,6 @@ void main() {
               throwsA(isA<InvalidHeaderException>()));
         },
       );
-
-      test(
-        'then it should be recorded in "failedHeadersToParse" field',
-        skip: 'drop failedHeadersToParse',
-        () async {
-          var headers = await getServerRequestHeaders(
-            server: server,
-            headers: {'access-control-allow-origin': 'ht!tp://invalid-url'},
-          );
-
-          expect(
-            headers.failedHeadersToParse['access-control-allow-origin'],
-            equals(['ht!tp://invalid-url']),
-          );
-        },
-      );
     });
   });
 }

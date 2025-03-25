@@ -203,22 +203,6 @@ void main() {
               throwsA(isA<InvalidHeaderException>()));
         },
       );
-
-      test(
-        'then it should be recorded in the "failedHeadersToParse" field',
-        skip: 'todo: drop failedHeadersToParse',
-        () async {
-          var headers = await getServerRequestHeaders(
-            server: server,
-            headers: {'content-range': 'bytes 0-499/invalid'},
-          );
-
-          expect(
-            headers.failedHeadersToParse['content-range'],
-            equals(['bytes 0-499/invalid']),
-          );
-        },
-      );
     });
   });
 }

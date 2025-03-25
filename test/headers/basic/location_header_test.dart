@@ -181,22 +181,6 @@ void main() {
               () => headers.location, throwsA(isA<InvalidHeaderException>()));
         },
       );
-
-      test(
-        'then it should be recorded in failedHeadersToParse',
-        skip: 'todo: drop failedHeadersToParse',
-        () async {
-          var headers = await getServerRequestHeaders(
-            server: server,
-            headers: {'location': 'ht!tp://invalid-url'},
-          );
-
-          expect(
-            headers.failedHeadersToParse['location'],
-            equals(['ht!tp://invalid-url']),
-          );
-        },
-      );
     });
   });
 }

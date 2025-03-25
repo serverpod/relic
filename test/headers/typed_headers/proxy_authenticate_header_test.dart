@@ -194,21 +194,5 @@ void main() {
             throwsA(isA<InvalidHeaderException>()));
       },
     );
-
-    test(
-      'when an invalid header is passed then it should be recorded in failedHeadersToParse',
-      skip: 'todo: drop failedHeadersToParse',
-      () async {
-        var headers = await getServerRequestHeaders(
-          server: server,
-          headers: {'proxy-authenticate': 'InvalidHeader'},
-        );
-
-        expect(
-          headers.failedHeadersToParse['proxy-authenticate'],
-          equals(['InvalidHeader']),
-        );
-      },
-    );
   });
 }
