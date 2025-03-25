@@ -85,9 +85,7 @@ void main() {
 
     test('when a managed header is removed then it is no longer present', () {
       var headers = Headers.request(date: DateTime.now());
-      headers = headers.transform((mh) {
-        mh.date = null;
-      });
+      headers = headers.transform((mh) => mh.date = null);
       expect(headers.date, isNull);
     });
 
@@ -97,7 +95,7 @@ void main() {
           .add(Duration(days: 1))
           .toUtc()
           .copyWith(microsecond: 0, millisecond: 0);
-      headers = headers.copyWith(date: newDate);
+      headers = headers.transform((mh) => mh.date = newDate);
       expect(headers.date, equals(newDate));
     });
   });

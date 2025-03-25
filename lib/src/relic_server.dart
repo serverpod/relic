@@ -155,8 +155,8 @@ class RelicServer {
       // If the response doesn't have a powered by header, add the default one.
       if (response.headers.xPoweredBy == null) {
         response = response.copyWith(
-          headers: response.headers.copyWith(
-            xPoweredBy: poweredByHeader,
+          headers: response.headers.transform(
+            (mh) => mh.xPoweredBy = poweredByHeader,
           ),
         );
       }

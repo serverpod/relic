@@ -316,8 +316,8 @@ Response? _fileRangeResponse(
   return Response(
     HttpStatus.partialContent,
     body: body,
-    headers: headers.copyWith(
-      contentRange: ContentRangeHeader(
+    headers: headers.transform(
+      (mh) => mh.contentRange = ContentRangeHeader(
         start: start,
         end: end,
         size: actualLength,

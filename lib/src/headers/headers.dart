@@ -140,26 +140,6 @@ class Headers extends HeadersBase {
     return mutable._freeze();
   }
 
-  Headers copyWith({
-    Uri? location,
-    ContentRangeHeader? contentRange,
-    String? xPoweredBy,
-    CustomHeaders? custom,
-    DateTime? date,
-  }) {
-    return transform((mh) {
-      if (location != null) mh.location = location;
-      if (contentRange != null) mh.contentRange = contentRange;
-      if (xPoweredBy != null) mh.xPoweredBy = xPoweredBy;
-      if (date != null) mh.date = date;
-      if (custom != null) {
-        for (final header in custom.entries) {
-          mh[header.key] = header.value;
-        }
-      }
-    });
-  }
-
   // TODO: Should die
   factory Headers.fromHttpRequest(
     io.HttpRequest request, {

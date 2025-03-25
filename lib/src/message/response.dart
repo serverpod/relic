@@ -1,12 +1,12 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:relic/src/extensions/http_response_extension.dart';
-
 import '../body/body.dart';
+import '../extensions/http_response_extension.dart';
 import '../headers/headers.dart';
-import 'message.dart';
+import '../headers/standard_headers_extensions.dart';
 import '../util/util.dart';
+import 'message.dart';
 
 /// The response returned by a [Handler].
 class Response extends Message {
@@ -120,8 +120,8 @@ class Response extends Message {
           statusCode,
           body: body ?? Body.empty(),
           encoding: encoding,
-          headers: headers?.copyWith(location: location) ??
-              Headers.response(location: location),
+          headers: (headers ?? Headers.empty())
+              .transform((mh) => mh.location = location),
           context: context,
         );
 
