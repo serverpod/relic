@@ -10,7 +10,6 @@ import '../docs/strict_validation_docs.dart';
 void main() {
   group(
     'Given an Expires header with the strict flag true',
-    skip: 'todo: drop strict mode',
     () {
       late RelicServer server;
 
@@ -29,6 +28,7 @@ void main() {
             () async => await getServerRequestHeaders(
               server: server,
               headers: {'expires': ''},
+              touchHeaders: (h) => h.expires,
             ),
             throwsA(
               isA<BadRequestException>().having(
@@ -50,6 +50,7 @@ void main() {
             () async => await getServerRequestHeaders(
               server: server,
               headers: {'expires': 'invalid-date-format'},
+              touchHeaders: (h) => h.expires,
             ),
             throwsA(
               isA<BadRequestException>().having(
@@ -69,8 +70,8 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (_) {},
             headers: {'expires': 'invalid-date-format'},
-            eagerParseHeaders: false,
           );
 
           expect(headers, isNotNull);
@@ -83,6 +84,7 @@ void main() {
           var headers = await getServerRequestHeaders(
             server: server,
             headers: {'expires': 'Wed, 21 Oct 2015 07:28:00 GMT'},
+            touchHeaders: (h) => h.expires,
           );
 
           expect(
@@ -98,6 +100,7 @@ void main() {
           var headers = await getServerRequestHeaders(
             server: server,
             headers: {'expires': ' Wed, 21 Oct 2015 07:28:00 GMT '},
+            touchHeaders: (h) => h.expires,
           );
 
           expect(
@@ -113,10 +116,10 @@ void main() {
           var headers = await getServerRequestHeaders(
             server: server,
             headers: {},
+            touchHeaders: (h) => h.expires,
           );
 
-          expect(headers.expires_.valueOrNullIfInvalid, isNull);
-          expect(() => headers.expires, throwsA(isA<InvalidHeaderException>()));
+          expect(headers.expires, isNull);
         },
       );
     },
@@ -137,6 +140,7 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (_) {},
             headers: {'expires': ''},
           );
 
@@ -152,6 +156,7 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (_) {},
             headers: {'expires': 'invalid-date-format'},
           );
 

@@ -6,8 +6,7 @@ import '../headers_test_utils.dart';
 
 /// Reference: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cookie
 void main() {
-  group('Given a Cookie header with the strict flag true',
-      skip: 'drop strict mode', () {
+  group('Given a Cookie header with the strict flag true', () {
     late RelicServer server;
 
     setUp(() async {
@@ -23,6 +22,7 @@ void main() {
         expect(
           () async => await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.cookie,
             headers: {'cookie': ''},
           ),
           throwsA(
@@ -43,6 +43,7 @@ void main() {
         expect(
           () async => await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.cookie,
             headers: {'cookie': 'sessionId=abc123; invalidCookie'},
           ),
           throwsA(
@@ -63,6 +64,7 @@ void main() {
         expect(
           () async => await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.cookie,
             headers: {'cookie': 'invalid name=abc123; userId=42'},
           ),
           throwsA(
@@ -83,6 +85,7 @@ void main() {
         expect(
           () async => await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.cookie,
             headers: {'cookie': 'sessionId=abc123; userId=42\x7F'},
           ),
           throwsA(
@@ -103,8 +106,8 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (_) {},
           headers: {'cookie': 'sessionId=abc123; userId=42\x7F'},
-          eagerParseHeaders: false,
         );
 
         expect(headers, isNotNull);
@@ -116,6 +119,7 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.cookie,
           headers: {'cookie': '=abc123; userId=42'},
         );
 
@@ -135,6 +139,7 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.cookie,
           headers: {'cookie': 'sessionId=abc123; userId=42'},
         );
 
@@ -154,6 +159,7 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.cookie,
           headers: {'cookie': 'sessionId=abc%20123; userId=42'},
         );
 
@@ -174,6 +180,7 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.cookie,
           headers: {'cookie': 'sessionId=abc123; userId=42; sessionId=abc123'},
         );
 
@@ -193,6 +200,7 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.cookie,
           headers: {'cookie': ' sessionId=abc123 ; userId=42 '},
         );
 
@@ -223,6 +231,7 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (_) {},
             headers: {'cookie': 'sessionId=abc123; invalidCookie'},
           );
 

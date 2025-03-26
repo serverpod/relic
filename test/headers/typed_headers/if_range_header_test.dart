@@ -9,8 +9,7 @@ import '../docs/strict_validation_docs.dart';
 /// Reference: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/If-Range
 /// About empty value test, check the [StrictValidationDocs] class for more details.
 void main() {
-  group('Given an If-Range header with the strict flag true',
-      skip: 'todo: drop strict mode', () {
+  group('Given an If-Range header with the strict flag true', () {
     late RelicServer server;
 
     setUp(() async {
@@ -27,6 +26,7 @@ void main() {
         expect(
           () async => await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.ifRange,
             headers: {'if-range': ''},
           ),
           throwsA(
@@ -47,6 +47,7 @@ void main() {
         expect(
           () async => await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.ifRange,
             headers: {'if-range': 'invalid-etag'},
           ),
           throwsA(
@@ -67,8 +68,8 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (_) {},
           headers: {'if-range': 'invalid-value'},
-          eagerParseHeaders: false,
         );
 
         expect(headers, isNotNull);
@@ -80,6 +81,7 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.ifRange,
           headers: {'if-range': '"123456"'},
         );
 
@@ -94,6 +96,7 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.ifRange,
           headers: {'if-range': 'W/"123456"'},
         );
 
@@ -108,6 +111,7 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.ifRange,
           headers: {'if-range': 'Wed, 21 Oct 2015 07:28:00 GMT'},
         );
 
@@ -124,11 +128,11 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.ifRange,
           headers: {},
         );
 
-        expect(headers.ifRange_.valueOrNullIfInvalid, isNull);
-        expect(() => headers.ifRange, throwsA(isA<InvalidHeaderException>()));
+        expect(headers.ifRange, isNull);
       },
     );
   });
@@ -148,6 +152,7 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (_) {},
             headers: {'if-range': 'invalid-value'},
           );
 

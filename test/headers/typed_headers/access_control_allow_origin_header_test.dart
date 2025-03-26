@@ -9,7 +9,7 @@ import '../headers_test_utils.dart';
 /// About empty value test, check the [StrictValidationDocs] class for more details.
 void main() {
   group('Given an Access-Control-Allow-Origin header with the strict flag true',
-      skip: 'todo: drop strict mode', () {
+      () {
     late RelicServer server;
 
     setUp(() async {
@@ -26,6 +26,7 @@ void main() {
         expect(
           () async => await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.accessControlAllowOrigin,
             headers: {'access-control-allow-origin': ''},
           ),
           throwsA(
@@ -47,6 +48,7 @@ void main() {
         expect(
           () async => await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.accessControlAllowOrigin,
             headers: {'access-control-allow-origin': 'ht!tp://invalid-url'},
           ),
           throwsA(
@@ -68,6 +70,7 @@ void main() {
         expect(
           () async => await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.accessControlAllowOrigin,
             headers: {
               'access-control-allow-origin': 'https://example.com:test'
             },
@@ -90,8 +93,8 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (_) {},
           headers: {'access-control-allow-origin': 'https://example.com:test'},
-          eagerParseHeaders: false,
         );
 
         expect(headers, isNotNull);
@@ -104,6 +107,7 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.accessControlAllowOrigin,
           headers: {'access-control-allow-origin': 'https://example.com'},
         );
 
@@ -120,6 +124,7 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.accessControlAllowOrigin,
           headers: {'access-control-allow-origin': 'https://example.com:8080'},
         );
 
@@ -136,6 +141,7 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.accessControlAllowOrigin,
           headers: {'access-control-allow-origin': ' https://example.com '},
         );
 
@@ -152,6 +158,7 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.accessControlAllowOrigin,
           headers: {'access-control-allow-origin': '*'},
         );
 
@@ -165,12 +172,11 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.accessControlAllowOrigin,
           headers: {},
         );
 
-        expect(headers.accessControlAllowOrigin_.valueOrNullIfInvalid, isNull);
-        expect(() => headers.accessControlAllowOrigin,
-            throwsA(isA<InvalidHeaderException>()));
+        expect(headers.accessControlAllowOrigin, isNull);
       },
     );
   });
@@ -192,6 +198,7 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (_) {},
             headers: {'access-control-allow-origin': 'ht!tp://invalid-url'},
           );
 

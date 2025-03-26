@@ -7,8 +7,7 @@ import '../docs/strict_validation_docs.dart';
 /// Reference: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Via
 /// About empty value test, check the [StrictValidationDocs] class for more details.
 void main() {
-  group('Given a Via header with the strict flag true',
-      skip: 'drop strict mode', () {
+  group('Given a Via header with the strict flag true', () {
     late RelicServer server;
 
     setUp(() async {
@@ -25,6 +24,7 @@ void main() {
           () async => await getServerRequestHeaders(
             server: server,
             headers: {'via': ''},
+            touchHeaders: (h) => h.via,
           ),
           throwsA(
             isA<BadRequestException>().having(
@@ -44,8 +44,8 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (_) {},
           headers: {'via': ''},
-          eagerParseHeaders: false,
         );
 
         expect(headers, isNotNull);
@@ -58,6 +58,7 @@ void main() {
         var headers = await getServerRequestHeaders(
           server: server,
           headers: {'via': '1.1 example.com, 1.0 another.com'},
+          touchHeaders: (h) => h.via,
         );
 
         expect(headers.via, equals(['1.1 example.com', '1.0 another.com']));
@@ -70,6 +71,7 @@ void main() {
         var headers = await getServerRequestHeaders(
           server: server,
           headers: {'via': ' 1.1 example.com , 1.0 another.com '},
+          touchHeaders: (h) => h.via,
         );
 
         expect(headers.via, equals(['1.1 example.com', '1.0 another.com']));
@@ -83,6 +85,7 @@ void main() {
         var headers = await getServerRequestHeaders(
           server: server,
           headers: {'via': '1.1 example.com, 1.0 another.com, 1.0 another.com'},
+          touchHeaders: (h) => h.via,
         );
 
         expect(headers.via, equals(['1.1 example.com', '1.0 another.com']));
@@ -95,10 +98,10 @@ void main() {
         var headers = await getServerRequestHeaders(
           server: server,
           headers: {},
+          touchHeaders: (h) => h.via,
         );
 
-        expect(headers.via_.valueOrNullIfInvalid, isNull);
-        expect(() => headers.via, throwsA(isA<InvalidHeaderException>()));
+        expect(headers.via, isNull);
       },
     );
   });
@@ -118,6 +121,7 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (_) {},
             headers: {'via': ''},
           );
 

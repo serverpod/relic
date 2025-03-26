@@ -10,7 +10,6 @@ import '../docs/strict_validation_docs.dart';
 void main() {
   group(
     'Given a Strict-Transport-Security header with the strict flag true',
-    skip: 'todo: drop strict mode',
     () {
       late RelicServer server;
 
@@ -27,6 +26,7 @@ void main() {
           expect(
             () async => await getServerRequestHeaders(
               server: server,
+              touchHeaders: (h) => h.strictTransportSecurity,
               headers: {'strict-transport-security': ''},
             ),
             throwsA(isA<BadRequestException>().having(
@@ -46,6 +46,7 @@ void main() {
           expect(
             () async => await getServerRequestHeaders(
               server: server,
+              touchHeaders: (h) => h.strictTransportSecurity,
               headers: {'strict-transport-security': 'max-age=abc'},
             ),
             throwsA(isA<BadRequestException>().having(
@@ -65,6 +66,7 @@ void main() {
           expect(
             () async => await getServerRequestHeaders(
               server: server,
+              touchHeaders: (h) => h.strictTransportSecurity,
               headers: {'strict-transport-security': 'includeSubDomains'},
             ),
             throwsA(isA<BadRequestException>().having(
@@ -83,8 +85,8 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (_) {},
             headers: {'strict-transport-security': 'max-age=abc'},
-            eagerParseHeaders: false,
           );
 
           expect(headers, isNotNull);
@@ -96,6 +98,7 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (_) {},
             headers: {
               'strict-transport-security': 'max-age=31536000; includeSubDomains'
             },
@@ -112,6 +115,7 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.strictTransportSecurity,
             headers: {'strict-transport-security': 'max-age=31536000'},
           );
 
@@ -126,6 +130,7 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.strictTransportSecurity,
             headers: {'strict-transport-security': 'max-age=31536000; preload'},
           );
 
@@ -140,10 +145,11 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.strictTransportSecurity,
             headers: {},
           );
 
-          expect(headers.strictTransportSecurity_, isNull);
+          expect(headers.strictTransportSecurity, isNull);
         },
       );
     },
@@ -165,6 +171,7 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (_) {},
             headers: {'strict-transport-security': ''},
           );
 

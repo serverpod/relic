@@ -16,7 +16,6 @@ import '../headers_test_utils.dart';
 void main() {
   group(
     'Given an Access-Control-Allow-Credentials header with the strict flag true',
-    skip: 'todo: drop strict flag',
     () {
       late RelicServer server;
 
@@ -35,6 +34,7 @@ void main() {
             () async => await getServerRequestHeaders(
               server: server,
               headers: {'access-control-allow-credentials': ''},
+              touchHeaders: (h) => h.accessControlAllowCredentials,
             ),
             throwsA(
               isA<BadRequestException>().having(
@@ -55,6 +55,7 @@ void main() {
             () async => await getServerRequestHeaders(
               server: server,
               headers: {'access-control-allow-credentials': 'blabla'},
+              touchHeaders: (h) => h.accessControlAllowCredentials,
             ),
             throwsA(
               isA<BadRequestException>().having(
@@ -76,6 +77,7 @@ void main() {
             () async => await getServerRequestHeaders(
               server: server,
               headers: {'access-control-allow-credentials': 'false'},
+              touchHeaders: (h) => h.accessControlAllowCredentials,
             ),
             throwsA(
               isA<BadRequestException>().having(
@@ -95,8 +97,8 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (_) {},
             headers: {'access-control-allow-credentials': 'test'},
-            eagerParseHeaders: false,
           );
 
           expect(headers, isNotNull);
@@ -110,6 +112,7 @@ void main() {
           var headers = await getServerRequestHeaders(
             server: server,
             headers: {'access-control-allow-credentials': 'true'},
+            touchHeaders: (h) => h.accessControlAllowCredentials,
           );
 
           expect(headers.accessControlAllowCredentials, isTrue);
@@ -122,12 +125,10 @@ void main() {
           var headers = await getServerRequestHeaders(
             server: server,
             headers: {},
+            touchHeaders: (h) => h.accessControlAllowCredentials,
           );
 
-          expect(headers.accessControlAllowCredentials_.valueOrNullIfInvalid,
-              isNull);
-          expect(() => headers.accessControlAllowCredentials,
-              throwsA(isA<InvalidHeaderException>()));
+          expect(headers.accessControlAllowCredentials, isNull);
         },
       );
     },
@@ -151,6 +152,7 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (_) {},
             headers: {'access-control-allow-credentials': ''},
           );
 

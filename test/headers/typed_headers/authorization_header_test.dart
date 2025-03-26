@@ -10,8 +10,7 @@ import '../docs/strict_validation_docs.dart';
 /// Reference: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Authorization
 /// About empty value test, check the [StrictValidationDocs] class for more details.
 void main() {
-  group('Given an Authorization header with the strict flag true',
-      skip: 'todo: drop strict mode', () {
+  group('Given an Authorization header with the strict flag true', () {
     late RelicServer server;
 
     setUp(() async {
@@ -28,6 +27,7 @@ void main() {
         expect(
           () async => await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.authorization,
             headers: {'authorization': ''},
           ),
           throwsA(
@@ -48,8 +48,8 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (_) {},
           headers: {'authorization': 'invalid-authorization-format'},
-          eagerParseHeaders: false,
         );
 
         expect(headers, isNotNull);
@@ -61,12 +61,11 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.authorization,
           headers: {},
         );
 
-        expect(headers.authorization_.valueOrNullIfInvalid, isNull);
-        expect(() => headers.authorization,
-            throwsA(isA<InvalidHeaderException>()));
+        expect(headers.authorization, isNull);
       },
     );
 
@@ -78,6 +77,7 @@ void main() {
           expect(
             () async => await getServerRequestHeaders(
               server: server,
+              touchHeaders: (h) => h.authorization,
               headers: {'authorization': 'Bearer'},
             ),
             throwsA(
@@ -96,6 +96,7 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.authorization,
             headers: {'authorization': 'Bearer validToken123'},
           );
 
@@ -119,6 +120,7 @@ void main() {
           expect(
             () async => await getServerRequestHeaders(
               server: server,
+              touchHeaders: (h) => h.authorization,
               headers: {'authorization': 'Basic invalidBase64'},
             ),
             throwsA(
@@ -139,6 +141,7 @@ void main() {
           final credentials = base64Encode(utf8.encode('user:pass'));
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.authorization,
             headers: {'authorization': 'Basic $credentials'},
           );
 
@@ -160,6 +163,7 @@ void main() {
           expect(
             () async => await getServerRequestHeaders(
               server: server,
+              touchHeaders: (h) => h.authorization,
               headers: {'authorization': 'Digest invalidFormat'},
             ),
             throwsA(
@@ -184,6 +188,7 @@ void main() {
             expect(
               () async => await getServerRequestHeaders(
                 server: server,
+                touchHeaders: (h) => h.authorization,
                 headers: {'authorization': 'Digest $digestValue'},
               ),
               throwsA(
@@ -206,6 +211,7 @@ void main() {
             expect(
               () async => await getServerRequestHeaders(
                 server: server,
+                touchHeaders: (h) => h.authorization,
                 headers: {'authorization': 'Digest $digestValue'},
               ),
               throwsA(
@@ -229,6 +235,7 @@ void main() {
             expect(
               () async => await getServerRequestHeaders(
                 server: server,
+                touchHeaders: (h) => h.authorization,
                 headers: {'authorization': 'Digest $digestValue'},
               ),
               throwsA(
@@ -252,6 +259,7 @@ void main() {
             expect(
               () async => await getServerRequestHeaders(
                 server: server,
+                touchHeaders: (h) => h.authorization,
                 headers: {'authorization': 'Digest $digestValue'},
               ),
               throwsA(
@@ -275,6 +283,7 @@ void main() {
             expect(
               () async => await getServerRequestHeaders(
                 server: server,
+                touchHeaders: (h) => h.authorization,
                 headers: {'authorization': 'Digest $digestValue'},
               ),
               throwsA(
@@ -300,6 +309,7 @@ void main() {
             expect(
               () async => await getServerRequestHeaders(
                 server: server,
+                touchHeaders: (h) => h.authorization,
                 headers: {'authorization': 'Digest $digestValue'},
               ),
               throwsA(
@@ -322,6 +332,7 @@ void main() {
             expect(
               () async => await getServerRequestHeaders(
                 server: server,
+                touchHeaders: (h) => h.authorization,
                 headers: {'authorization': 'Digest $digestValue'},
               ),
               throwsA(
@@ -345,6 +356,7 @@ void main() {
             expect(
               () async => await getServerRequestHeaders(
                 server: server,
+                touchHeaders: (h) => h.authorization,
                 headers: {'authorization': 'Digest $digestValue'},
               ),
               throwsA(
@@ -368,6 +380,7 @@ void main() {
             expect(
               () async => await getServerRequestHeaders(
                 server: server,
+                touchHeaders: (h) => h.authorization,
                 headers: {'authorization': 'Digest $digestValue'},
               ),
               throwsA(
@@ -391,6 +404,7 @@ void main() {
             expect(
               () async => await getServerRequestHeaders(
                 server: server,
+                touchHeaders: (h) => h.authorization,
                 headers: {'authorization': 'Digest $digestValue'},
               ),
               throwsA(
@@ -413,6 +427,7 @@ void main() {
               'username="user", realm="realm", nonce="nonce", uri="/", response="response"';
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.authorization,
             headers: {'authorization': 'Digest $digestValue'},
           );
 
@@ -434,6 +449,7 @@ void main() {
               'username="user", realm="realm", nonce="nonce", uri="/", response="response", algorithm="MD5", qop="auth", nc="00000001", cnonce="cnonce", opaque="opaque"';
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.authorization,
             headers: {'authorization': 'Digest $digestValue'},
           );
 
@@ -471,6 +487,7 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (_) {},
             headers: {'authorization': ''},
           );
 
@@ -487,6 +504,7 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (_) {},
             headers: {'authorization': 'InvalidFormat'},
           );
 

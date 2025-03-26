@@ -9,8 +9,7 @@ import '../docs/strict_validation_docs.dart';
 /// Reference: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Retry-After
 /// About empty value test, check the [StrictValidationDocs] class for more details.
 void main() {
-  group('Given a Retry-After header with the strict flag true',
-      skip: 'drop strict mode', () {
+  group('Given a Retry-After header with the strict flag true', () {
     late RelicServer server;
 
     setUp(() async {
@@ -26,6 +25,7 @@ void main() {
         expect(
           () async => await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.retryAfter,
             headers: {'retry-after': ''},
           ),
           throwsA(isA<BadRequestException>().having(
@@ -44,8 +44,8 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (_) {},
           headers: {'retry-after': 'invalid'},
-          eagerParseHeaders: false,
         );
 
         expect(headers, isNotNull);
@@ -56,6 +56,7 @@ void main() {
       test('then it should parse a valid positive integer correctly', () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.retryAfter,
           headers: {'retry-after': '120'},
         );
 
@@ -65,6 +66,7 @@ void main() {
       test('then it should parse a value with whitespace correctly', () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.retryAfter,
           headers: {'retry-after': ' 120 '},
         );
 
@@ -75,6 +77,7 @@ void main() {
         expect(
           () async => await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.retryAfter,
             headers: {'retry-after': '-120'},
           ),
           throwsA(isA<BadRequestException>().having(
@@ -89,6 +92,7 @@ void main() {
         expect(
           () async => await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.retryAfter,
             headers: {'retry-after': '120.5'},
           ),
           throwsA(isA<BadRequestException>().having(
@@ -104,6 +108,7 @@ void main() {
       test('then it should parse a valid date correctly', () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.retryAfter,
           headers: {'retry-after': 'Wed, 21 Oct 2015 07:28:00 GMT'},
         );
 
@@ -116,6 +121,7 @@ void main() {
       test('then it should parse a date with whitespace correctly', () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.retryAfter,
           headers: {'retry-after': ' Wed, 21 Oct 2015 07:28:00 GMT '},
         );
 
@@ -129,6 +135,7 @@ void main() {
         expect(
           () async => await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.retryAfter,
             headers: {'retry-after': '2015-10-21'},
           ),
           throwsA(isA<BadRequestException>().having(
@@ -145,12 +152,11 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.retryAfter,
           headers: {},
         );
 
-        expect(headers.retryAfter_.valueOrNullIfInvalid, isNull);
-        expect(
-            () => headers.retryAfter, throwsA(isA<InvalidHeaderException>()));
+        expect(headers.retryAfter, isNull);
       },
     );
   });
@@ -169,6 +175,7 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (_) {},
           headers: {'retry-after': 'invalid'},
         );
 

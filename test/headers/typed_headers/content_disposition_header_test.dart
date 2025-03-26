@@ -8,8 +8,7 @@ import '../docs/strict_validation_docs.dart';
 /// Reference: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Disposition
 /// About empty value test, check the [StrictValidationDocs] class for more details.
 void main() {
-  group('Given a Content-Disposition header with the strict flag true',
-      skip: 'drop strict mode', () {
+  group('Given a Content-Disposition header with the strict flag true', () {
     late RelicServer server;
 
     setUp(() async {
@@ -25,6 +24,7 @@ void main() {
         expect(
           () async => await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.contentDisposition,
             headers: {'content-disposition': ''},
           ),
           throwsA(isA<BadRequestException>().having(
@@ -43,8 +43,8 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (_) {},
           headers: {'content-disposition': ''},
-          eagerParseHeaders: false,
         );
 
         expect(headers, isNotNull);
@@ -56,6 +56,7 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (_) {},
           headers: {
             'content-disposition': 'attachment; filename="example.txt"'
           },
@@ -78,6 +79,7 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.contentDisposition,
           headers: {'content-disposition': 'inline'},
         );
 
@@ -91,6 +93,7 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (_) {},
           headers: {
             'content-disposition':
                 'attachment; filename="example.txt"; size=12345'
@@ -122,12 +125,11 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.contentDisposition,
           headers: {},
         );
 
-        expect(headers.contentDisposition_.valueOrNullIfInvalid, isNull);
-        expect(() => headers.contentDisposition,
-            throwsA(isA<InvalidHeaderException>()));
+        expect(headers.contentDisposition, isNull);
       },
     );
   });
@@ -147,6 +149,7 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (_) {},
             headers: {'content-disposition': ''},
           );
 

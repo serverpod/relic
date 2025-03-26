@@ -10,7 +10,7 @@ import '../docs/strict_validation_docs.dart';
 void main() {
   group(
     'Given an X-Powered-By header with the strict flag true',
-    skip: 'todo: drop strict mode',
+    //
     () {
       late RelicServer server;
 
@@ -26,9 +26,9 @@ void main() {
           'cannot be empty', () async {
         expect(
           () async => await getServerRequestHeaders(
-            server: server,
-            headers: {'x-powered-by': ''},
-          ),
+              server: server,
+              headers: {'x-powered-by': ''},
+              touchHeaders: (h) => h.xPoweredBy),
           throwsA(
             isA<BadRequestException>().having(
               (e) => e.message,
@@ -45,6 +45,7 @@ void main() {
           var headers = await getServerRequestHeaders(
             server: server,
             headers: {'x-powered-by': 'Express'},
+            touchHeaders: (h) => h.xPoweredBy,
           );
 
           expect(headers.xPoweredBy, equals('Express'));
@@ -57,6 +58,7 @@ void main() {
           var headers = await getServerRequestHeaders(
             server: server,
             headers: {},
+            touchHeaders: (h) => h.xPoweredBy,
           );
 
           expect(headers.xPoweredBy, equals('Relic'));
@@ -74,14 +76,17 @@ void main() {
 
     tearDown(() => server.close());
 
-    group('when an invalid X-Powered-By header is passed', () {
-      test(
-        'when an invalid X-Powered-By header is passed then it should default to Relic',
-        () async {
-          var headers = await getServerRequestHeaders(
-            server: server,
-            headers: {'x-powered-by': ''},
-          );
+    group(
+      'when an invalid X-Powered-By header is passed',
+      () {
+        test(
+          'when an invalid X-Powered-By header is passed then it should default to Relic',
+          () async {
+            var headers = await getServerRequestHeaders(
+              server: server,
+              touchHeaders: (_) {},
+              headers: {'x-powered-by': ''},
+            );
 
             expect(headers.xPoweredBy, equals('Relic'));
           },

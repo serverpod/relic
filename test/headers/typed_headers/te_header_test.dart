@@ -8,8 +8,7 @@ import '../docs/strict_validation_docs.dart';
 /// Reference: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/TE
 /// About empty value test, check the [StrictValidationDocs] class for more details.
 void main() {
-  group('Given a TE header with the strict flag true', skip: 'drop strict mode',
-      () {
+  group('Given a TE header with the strict flag true', () {
     late RelicServer server;
 
     setUp(() async {
@@ -26,6 +25,7 @@ void main() {
         expect(
           () async => await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.te,
             headers: {'te': ''},
           ),
           throwsA(
@@ -47,6 +47,7 @@ void main() {
         expect(
           () async => await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.te,
             headers: {'te': 'trailers;q=abc'},
           ),
           throwsA(
@@ -68,6 +69,7 @@ void main() {
         expect(
           () async => await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.te,
             headers: {'te': ';q=1.0'},
           ),
           throwsA(
@@ -88,8 +90,8 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (_) {},
           headers: {'te': 'trailers;q=abc'},
-          eagerParseHeaders: false,
         );
 
         expect(headers, isNotNull);
@@ -102,6 +104,7 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.te,
           headers: {'te': 'trailers'},
         );
 
@@ -118,6 +121,7 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.te,
           headers: {'te': 'trailers'},
         );
 
@@ -133,11 +137,11 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.te,
           headers: {},
         );
 
-        expect(headers.te_.valueOrNullIfInvalid, isNull);
-        expect(() => headers.te, throwsA(isA<InvalidHeaderException>()));
+        expect(headers.te, isNull);
       },
     );
 
@@ -147,6 +151,7 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.te,
             headers: {'te': 'trailers, deflate, gzip'},
           );
 
@@ -162,6 +167,7 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.te,
             headers: {'te': 'trailers;q=1.0, deflate;q=0.5, gzip;q=0.8'},
           );
 
@@ -177,6 +183,7 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.te,
             headers: {'te': 'trailers;q=1.0, deflate;q=0.5, gzip;q=0.8'},
           );
 
@@ -192,6 +199,7 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.te,
             headers: {'te': ' trailers , deflate , gzip '},
           );
 
@@ -219,6 +227,7 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (_) {},
             headers: {'te': ''},
           );
 
@@ -234,6 +243,7 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (_) {},
             headers: {'te': 'trailers;q=abc, deflate, gzip'},
           );
 

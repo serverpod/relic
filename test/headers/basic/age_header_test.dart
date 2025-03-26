@@ -10,7 +10,6 @@ import '../headers_test_utils.dart';
 void main() {
   group(
     'Given an Age header with the strict flag true',
-    skip: 'todo: drop strict mode',
     () {
       late RelicServer server;
 
@@ -28,6 +27,7 @@ void main() {
             () async => await getServerRequestHeaders(
               server: server,
               headers: {'age': ''},
+              touchHeaders: (h) => h.age,
             ),
             throwsA(
               isA<BadRequestException>().having(
@@ -48,6 +48,7 @@ void main() {
             () async => await getServerRequestHeaders(
               server: server,
               headers: {'age': 'invalid'},
+              touchHeaders: (h) => h.age,
             ),
             throwsA(
               isA<BadRequestException>().having(
@@ -68,6 +69,7 @@ void main() {
             () async => await getServerRequestHeaders(
               server: server,
               headers: {'age': '-3600'},
+              touchHeaders: (h) => h.age,
             ),
             throwsA(
               isA<BadRequestException>().having(
@@ -88,6 +90,7 @@ void main() {
             () async => await getServerRequestHeaders(
               server: server,
               headers: {'age': '3.14'},
+              touchHeaders: (h) => h.age,
             ),
             throwsA(
               isA<BadRequestException>().having(
@@ -107,8 +110,8 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (_) {},
             headers: {'age': 'invalid-age-format'},
-            eagerParseHeaders: false,
           );
 
           expect(headers, isNotNull);
@@ -121,6 +124,7 @@ void main() {
           var headers = await getServerRequestHeaders(
             server: server,
             headers: {'age': '3600'},
+            touchHeaders: (h) => h.age,
           );
 
           expect(headers.age, equals(3600));
@@ -134,6 +138,7 @@ void main() {
           var headers = await getServerRequestHeaders(
             server: server,
             headers: {'age': ' 3600 '},
+            touchHeaders: (h) => h.age,
           );
 
           expect(headers.age, equals(3600));
@@ -146,10 +151,10 @@ void main() {
           var headers = await getServerRequestHeaders(
             server: server,
             headers: {},
+            touchHeaders: (h) => h.age,
           );
 
-          expect(headers.age_.valueOrNullIfInvalid, isNull);
-          expect(() => headers.age, throwsA(isA<InvalidHeaderException>()));
+          expect(headers.age, isNull);
         },
       );
     },
@@ -170,6 +175,7 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (_) {},
             headers: {'age': ''},
           );
 
@@ -185,6 +191,7 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (_) {},
             headers: {'age': 'invalid'},
           );
 

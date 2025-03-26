@@ -8,8 +8,7 @@ import '../docs/strict_validation_docs.dart';
 /// Reference: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control
 /// About empty value test, check the [StrictValidationDocs] class for more details.
 void main() {
-  group('Given a Cache-Control header with the strict flag true',
-      skip: 'drop strict mode', () {
+  group('Given a Cache-Control header with the strict flag true', () {
     late RelicServer server;
 
     setUp(() async {
@@ -26,6 +25,7 @@ void main() {
         expect(
           () async => await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.cacheControl,
             headers: {'cache-control': ''},
           ),
           throwsA(
@@ -46,6 +46,7 @@ void main() {
         expect(
           () async => await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.cacheControl,
             headers: {'cache-control': 'invalid-directive'},
           ),
           throwsA(
@@ -66,6 +67,7 @@ void main() {
         expect(
           () async => await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.cacheControl,
             headers: {'cache-control': 'public, invalid-directive'},
           ),
           throwsA(
@@ -86,6 +88,7 @@ void main() {
         expect(
           () async => await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.cacheControl,
             headers: {'cache-control': 'public, private'},
           ),
           throwsA(
@@ -106,6 +109,7 @@ void main() {
         expect(
           () async => await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.cacheControl,
             headers: {
               'cache-control': 'max-age=3600, stale-while-revalidate=300'
             },
@@ -130,10 +134,8 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
-          headers: {
-            'cache-control': 'max-age=3600, stale-while-revalidate=300'
-          },
-          eagerParseHeaders: false,
+          touchHeaders: (_) {},
+          headers: {},
         );
 
         expect(headers, isNotNull);
@@ -145,6 +147,7 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.cacheControl,
           headers: {'cache-control': 'no-cache, no-store, must-revalidate'},
         );
 
@@ -159,6 +162,7 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.cacheControl,
           headers: {'cache-control': 'max-age=3600'},
         );
 
@@ -171,6 +175,7 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.cacheControl,
           headers: {'cache-control': 's-maxage=7200'},
         );
 
@@ -183,6 +188,7 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.cacheControl,
           headers: {'cache-control': 'stale-while-revalidate=300'},
         );
 
@@ -195,6 +201,7 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.cacheControl,
           headers: {'cache-control': 'stale-if-error=600'},
         );
 
@@ -207,6 +214,7 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.cacheControl,
           headers: {'cache-control': 'max-stale=100'},
         );
 
@@ -219,6 +227,7 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.cacheControl,
           headers: {'cache-control': 'min-fresh=200'},
         );
 
@@ -231,6 +240,7 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.cacheControl,
           headers: {'cache-control': 'public'},
         );
 
@@ -243,6 +253,7 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.cacheControl,
           headers: {'cache-control': 'private'},
         );
 
@@ -255,6 +266,7 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.cacheControl,
           headers: {'cache-control': 'no-transform'},
         );
 
@@ -267,6 +279,7 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.cacheControl,
           headers: {'cache-control': 'only-if-cached'},
         );
 
@@ -279,6 +292,7 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.cacheControl,
           headers: {'cache-control': 'immutable'},
         );
 
@@ -291,6 +305,7 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.cacheControl,
           headers: {'cache-control': 'must-understand'},
         );
 
@@ -303,12 +318,11 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.cacheControl,
           headers: {},
         );
 
-        expect(headers.cacheControl_.valueOrNullIfInvalid, isNull);
-        expect(
-            () => headers.cacheControl, throwsA(isA<InvalidHeaderException>()));
+        expect(headers.cacheControl, isNull);
       },
     );
   });
@@ -328,6 +342,7 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (_) {},
             headers: {'cache-control': 'invalid-directive'},
           );
 

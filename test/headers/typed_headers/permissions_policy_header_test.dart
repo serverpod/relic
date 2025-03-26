@@ -8,8 +8,7 @@ import '../docs/strict_validation_docs.dart';
 /// Reference: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Permissions-Policy
 /// About empty value test, check the [StrictValidationDocs] class for more details.
 void main() {
-  group('Given a Permissions-Policy header with the strict flag true',
-      skip: 'drop strict mode', () {
+  group('Given a Permissions-Policy header with the strict flag true', () {
     late RelicServer server;
 
     setUp(() async {
@@ -25,6 +24,7 @@ void main() {
         expect(
           () async => await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.permissionsPolicy,
             headers: {'permissions-policy': ''},
           ),
           throwsA(isA<BadRequestException>().having(
@@ -43,8 +43,8 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (_) {},
           headers: {'permissions-policy': ''},
-          eagerParseHeaders: false,
         );
 
         expect(headers, isNotNull);
@@ -56,6 +56,7 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.permissionsPolicy,
           headers: {'permissions-policy': 'geolocation=(self), microphone=()'},
         );
 
@@ -77,6 +78,7 @@ void main() {
             'permissions-policy':
                 'geolocation=(self), camera=(self "https://example.com")'
           },
+          touchHeaders: (h) => h.permissionsPolicy,
         );
 
         final policies = headers.permissionsPolicy?.directives;
@@ -94,11 +96,10 @@ void main() {
         var headers = await getServerRequestHeaders(
           server: server,
           headers: {},
+          touchHeaders: (h) => h.permissionsPolicy,
         );
 
-        expect(headers.permissionsPolicy_.valueOrNullIfInvalid, isNull);
-        expect(() => headers.permissionsPolicy,
-            throwsA(isA<InvalidHeaderException>()));
+        expect(headers.permissionsPolicy, isNull);
       },
     );
   });
@@ -118,6 +119,7 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (_) {},
             headers: {'permissions-policy': ''},
           );
 

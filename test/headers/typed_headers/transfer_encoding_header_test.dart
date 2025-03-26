@@ -10,7 +10,6 @@ import '../docs/strict_validation_docs.dart';
 void main() {
   group(
     'Given a Transfer-Encoding header with the strict flag true',
-    skip: 'drop strict mode',
     () {
       late RelicServer server;
 
@@ -27,6 +26,7 @@ void main() {
           expect(
             () async => await getServerRequestHeaders(
               server: server,
+              touchHeaders: (h) => h.transferEncoding,
               headers: {'transfer-encoding': ''},
             ),
             throwsA(isA<BadRequestException>().having(
@@ -45,6 +45,7 @@ void main() {
           expect(
             () async => await getServerRequestHeaders(
               server: server,
+              touchHeaders: (h) => h.transferEncoding,
               headers: {'transfer-encoding': 'custom-encoding'},
             ),
             throwsA(isA<BadRequestException>().having(
@@ -63,8 +64,8 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (_) {},
             headers: {'transfer-encoding': 'custom-encoding'},
-            eagerParseHeaders: false,
           );
 
           expect(headers, isNotNull);
@@ -76,6 +77,7 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.transferEncoding,
             headers: {'transfer-encoding': 'gzip, chunked'},
           );
 
@@ -95,6 +97,7 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.transferEncoding,
             headers: {'transfer-encoding': 'chunked, gzip'},
           );
 
@@ -111,6 +114,7 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.transferEncoding,
             headers: {'transfer-encoding': 'gzip, chunked, chunked'},
           );
 
@@ -126,6 +130,7 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.transferEncoding,
             headers: {'transfer-encoding': 'gzip, chunked'},
           );
 
@@ -142,12 +147,11 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.transferEncoding,
             headers: {},
           );
 
-          expect(headers.transferEncoding_.valueOrNullIfInvalid, isNull);
-          expect(() => headers.transferEncoding,
-              throwsA(isA<InvalidHeaderException>()));
+          expect(headers.transferEncoding, isNull);
         },
       );
     },
@@ -168,6 +172,7 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (_) {},
             headers: {'transfer-encoding': ''},
           );
 

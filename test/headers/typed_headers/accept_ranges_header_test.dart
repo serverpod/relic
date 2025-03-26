@@ -8,8 +8,7 @@ import '../headers_test_utils.dart';
 /// Reference: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Accept-Ranges
 /// About empty value test, check the [StrictValidationDocs] class for more details.
 void main() {
-  group('Given an Accept-Ranges header with the strict flag true',
-      skip: 'todo: drop strict mode', () {
+  group('Given an Accept-Ranges header with the strict flag true', () {
     late RelicServer server;
 
     setUp(() async {
@@ -25,6 +24,7 @@ void main() {
         expect(
           () async => await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.acceptRanges,
             headers: {'accept-ranges': ''},
           ),
           throwsA(isA<BadRequestException>().having(
@@ -43,8 +43,8 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (_) {},
           headers: {'accept-ranges': ''},
-          eagerParseHeaders: false,
         );
 
         expect(headers, isNotNull);
@@ -56,6 +56,7 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.acceptRanges,
           headers: {'accept-ranges': 'bytes'},
         );
 
@@ -69,6 +70,7 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.acceptRanges,
           headers: {'accept-ranges': 'none'},
         );
 
@@ -82,12 +84,11 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.acceptRanges,
           headers: {},
         );
 
-        expect(headers.acceptRanges_.valueOrNullIfInvalid, isNull);
-        expect(
-            () => headers.acceptRanges, throwsA(isA<InvalidHeaderException>()));
+        expect(headers.acceptRanges, isNull);
       },
     );
   });
@@ -107,6 +108,7 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (_) {},
             headers: {'accept-ranges': ''},
           );
 

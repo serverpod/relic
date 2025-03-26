@@ -8,8 +8,7 @@ import '../docs/strict_validation_docs.dart';
 /// Reference: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/ETag
 /// About empty value test, check the [StrictValidationDocs] class for more details.
 void main() {
-  group('Given an ETag header with the strict flag true',
-      skip: 'todo: drop strict mode', () {
+  group('Given an ETag header with the strict flag true', () {
     late RelicServer server;
 
     setUp(() async {
@@ -26,6 +25,7 @@ void main() {
         expect(
           () async => await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.etag,
             headers: {'etag': ''},
           ),
           throwsA(
@@ -46,6 +46,7 @@ void main() {
         expect(
           () async => await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.etag,
             headers: {'etag': '123456'},
           ),
           throwsA(
@@ -66,8 +67,8 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (_) {},
           headers: {'etag': '123456'},
-          eagerParseHeaders: false,
         );
 
         expect(headers, isNotNull);
@@ -79,6 +80,7 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.etag,
           headers: {'etag': '"123456"'},
         );
 
@@ -92,6 +94,7 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.etag,
           headers: {'etag': 'W/"123456"'},
         );
 
@@ -105,11 +108,11 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.etag,
           headers: {},
         );
 
-        expect(headers.etag_.valueOrNullIfInvalid, isNull);
-        expect(() => headers.etag, throwsA(isA<InvalidHeaderException>()));
+        expect(headers.etag, isNull);
       },
     );
   });
@@ -129,6 +132,7 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (_) {},
             headers: {'etag': '123456'},
           );
 

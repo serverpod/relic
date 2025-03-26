@@ -8,8 +8,7 @@ import '../docs/strict_validation_docs.dart';
 /// Reference: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Last-Modified
 /// About empty value test, check the [StrictValidationDocs] class for more details.
 void main() {
-  group('Given a Last-Modified header with the strict flag true',
-      skip: 'drop strict mode', () {
+  group('Given a Last-Modified header with the strict flag true', () {
     late RelicServer server;
 
     setUp(() async {
@@ -27,6 +26,7 @@ void main() {
           () async => await getServerRequestHeaders(
             server: server,
             headers: {'last-modified': ''},
+            touchHeaders: (h) => h.lastModified,
           ),
           throwsA(
             isA<BadRequestException>().having(
@@ -48,6 +48,7 @@ void main() {
           () async => await getServerRequestHeaders(
             server: server,
             headers: {'last-modified': 'invalid-date-format'},
+            touchHeaders: (h) => h.lastModified,
           ),
           throwsA(
             isA<BadRequestException>().having(
@@ -67,8 +68,8 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (_) {},
           headers: {'last-modified': 'invalid-date-format'},
-          eagerParseHeaders: false,
         );
 
         expect(headers, isNotNull);
@@ -82,6 +83,7 @@ void main() {
         var headers = await getServerRequestHeaders(
           server: server,
           headers: {'last-modified': 'Wed, 21 Oct 2015 07:28:00 GMT'},
+          touchHeaders: (h) => h.lastModified,
         );
 
         expect(
@@ -97,6 +99,7 @@ void main() {
         var headers = await getServerRequestHeaders(
           server: server,
           headers: {'last-modified': ' Wed, 21 Oct 2015 07:28:00 GMT '},
+          touchHeaders: (h) => h.lastModified,
         );
 
         expect(
@@ -112,11 +115,10 @@ void main() {
         var headers = await getServerRequestHeaders(
           server: server,
           headers: {},
+          touchHeaders: (h) => h.lastModified,
         );
 
-        expect(headers.lastModified_.valueOrNullIfInvalid, isNull);
-        expect(
-            () => headers.lastModified, throwsA(isA<InvalidHeaderException>()));
+        expect(headers.lastModified, isNull);
       },
     );
   });
@@ -136,6 +138,7 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (_) {},
             headers: {'last-modified': ''},
           );
 
@@ -152,6 +155,7 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (_) {},
             headers: {'last-modified': 'invalid-date-format'},
           );
 

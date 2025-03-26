@@ -10,7 +10,7 @@ import '../headers_test_utils.dart';
 void main() {
   group(
       'Given an Access-Control-Expose-Headers header with the strict flag true',
-      skip: 'todo: drop strict mode', () {
+      () {
     late RelicServer server;
 
     setUp(() async {
@@ -27,6 +27,7 @@ void main() {
         expect(
           () async => await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.accessControlExposeHeaders,
             headers: {'access-control-expose-headers': ''},
           ),
           throwsA(
@@ -49,6 +50,7 @@ void main() {
         expect(
           () async => await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.accessControlExposeHeaders,
             headers: {'access-control-expose-headers': '*, X-Custom-Header'},
           ),
           throwsA(
@@ -69,8 +71,8 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (_) {},
           headers: {'access-control-expose-headers': '*, X-Custom-Header'},
-          eagerParseHeaders: false,
         );
 
         expect(headers, isNotNull);
@@ -83,6 +85,7 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.accessControlExposeHeaders,
           headers: {'access-control-expose-headers': 'X-Custom-Header'},
         );
 
@@ -98,6 +101,7 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.accessControlExposeHeaders,
           headers: {'access-control-expose-headers': '*'},
         );
 
@@ -111,13 +115,11 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.accessControlExposeHeaders,
           headers: {},
         );
 
-        expect(
-            headers.accessControlExposeHeaders_.valueOrNullIfInvalid, isNull);
-        expect(() => headers.accessControlExposeHeaders,
-            throwsA(isA<InvalidHeaderException>()));
+        expect(headers.accessControlExposeHeaders, isNull);
       },
     );
 
@@ -127,6 +129,7 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (_) {},
             headers: {
               'access-control-expose-headers':
                   'X-Custom-Header, X-Another-Header'
@@ -145,6 +148,7 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (_) {},
             headers: {
               'access-control-expose-headers':
                   ' X-Custom-Header , X-Another-Header '
@@ -177,6 +181,7 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (_) {},
             headers: {'access-control-expose-headers': ''},
           );
 

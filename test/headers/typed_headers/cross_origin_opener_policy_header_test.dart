@@ -9,7 +9,7 @@ import '../docs/strict_validation_docs.dart';
 /// About empty value test, check the [StrictValidationDocs] class for more details.
 void main() {
   group('Given a Cross-Origin-Opener-Policy header with the strict flag true',
-      skip: 'todo: drop strict mode', () {
+      () {
     late RelicServer server;
 
     setUp(() async {
@@ -25,6 +25,7 @@ void main() {
         expect(
           () async => await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.crossOriginOpenerPolicy,
             headers: {'cross-origin-opener-policy': ''},
           ),
           throwsA(isA<BadRequestException>().having(
@@ -43,6 +44,7 @@ void main() {
         expect(
           () async => await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.crossOriginOpenerPolicy,
             headers: {'cross-origin-opener-policy': 'custom-policy'},
           ),
           throwsA(isA<BadRequestException>().having(
@@ -61,8 +63,8 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (_) {},
           headers: {'cross-origin-opener-policy': 'custom-policy'},
-          eagerParseHeaders: false,
         );
         expect(headers, isNotNull);
       },
@@ -73,6 +75,7 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.crossOriginOpenerPolicy,
           headers: {'cross-origin-opener-policy': 'same-origin'},
         );
 
@@ -85,12 +88,11 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.crossOriginOpenerPolicy,
           headers: {},
         );
 
-        expect(headers.crossOriginOpenerPolicy_.valueOrNullIfInvalid, isNull);
-        expect(() => headers.crossOriginOpenerPolicy,
-            throwsA(isA<InvalidHeaderException>()));
+        expect(headers.crossOriginOpenerPolicy, isNull);
       },
     );
   });
@@ -111,6 +113,7 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (_) {},
             headers: {},
           );
           expect(headers.crossOriginOpenerPolicy, isNull);

@@ -10,7 +10,6 @@ import '../headers_test_utils.dart';
 void main() {
   group(
     'Given an Access-Control-Request-Headers header with the strict flag true',
-    skip: 'todo: drop strict flag',
     () {
       late RelicServer server;
 
@@ -29,6 +28,7 @@ void main() {
             () async => await getServerRequestHeaders(
               server: server,
               headers: {'access-control-request-headers': ''},
+              touchHeaders: (h) => h.accessControlRequestHeaders,
             ),
             throwsA(
               isA<BadRequestException>().having(
@@ -48,8 +48,8 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (_) {},
             headers: {'access-control-request-headers': ''},
-            eagerParseHeaders: false,
           );
 
           expect(headers, isNotNull);
@@ -66,6 +66,7 @@ void main() {
               'access-control-request-headers':
                   'X-Custom-Header, X-Another-Header'
             },
+            touchHeaders: (h) => h.accessControlRequestHeaders,
           );
 
           expect(
@@ -85,6 +86,7 @@ void main() {
               'access-control-request-headers':
                   ' X-Custom-Header , X-Another-Header '
             },
+            touchHeaders: (h) => h.accessControlRequestHeaders,
           );
 
           expect(
@@ -104,6 +106,7 @@ void main() {
               'access-control-request-headers':
                   'X-Custom-Header, X-Another-Header, X-Custom-Header'
             },
+            touchHeaders: (h) => h.accessControlRequestHeaders,
           );
 
           expect(
@@ -120,12 +123,10 @@ void main() {
           var headers = await getServerRequestHeaders(
             server: server,
             headers: {},
+            touchHeaders: (h) => h.accessControlRequestHeaders,
           );
 
-          expect(headers.accessControlRequestHeaders_.valueOrNullIfInvalid,
-              isNull);
-          expect(() => headers.accessControlRequestHeaders,
-              throwsA(isA<InvalidHeaderException>()));
+          expect(headers.accessControlRequestHeaders, isNull);
         },
       );
     },
@@ -148,6 +149,7 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (_) {},
             headers: {'access-control-request-headers': ''},
           );
 

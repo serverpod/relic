@@ -10,7 +10,6 @@ import '../docs/strict_validation_docs.dart';
 void main() {
   group(
     'Given a Cross-Origin-Embedder-Policy header with the strict flag true',
-    skip: 'drop strict mode',
     () {
       late RelicServer server;
 
@@ -27,6 +26,7 @@ void main() {
           expect(
             () async => await getServerRequestHeaders(
               server: server,
+              touchHeaders: (h) => h.crossOriginEmbedderPolicy,
               headers: {'cross-origin-embedder-policy': ''},
             ),
             throwsA(isA<BadRequestException>().having(
@@ -45,6 +45,7 @@ void main() {
           expect(
             () async => await getServerRequestHeaders(
               server: server,
+              touchHeaders: (h) => h.crossOriginEmbedderPolicy,
               headers: {'cross-origin-embedder-policy': 'custom-policy'},
             ),
             throwsA(isA<BadRequestException>().having(
@@ -63,8 +64,8 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (_) {},
             headers: {'cross-origin-embedder-policy': 'custom-policy'},
-            eagerParseHeaders: false,
           );
           expect(headers, isNotNull);
         },
@@ -75,6 +76,7 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.crossOriginEmbedderPolicy,
             headers: {'cross-origin-embedder-policy': 'require-corp'},
           );
 
@@ -90,13 +92,11 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.crossOriginEmbedderPolicy,
             headers: {},
           );
 
-          expect(
-              headers.crossOriginEmbedderPolicy_.valueOrNullIfInvalid, isNull);
-          expect(() => headers.crossOriginEmbedderPolicy,
-              throwsA(isA<InvalidHeaderException>()));
+          expect(headers.crossOriginEmbedderPolicy, isNull);
         },
       );
     },
@@ -119,6 +119,7 @@ void main() {
           () async {
             var headers = await getServerRequestHeaders(
               server: server,
+              touchHeaders: (_) {},
               headers: {},
             );
             expect(headers.crossOriginEmbedderPolicy, isNull);

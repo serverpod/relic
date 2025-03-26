@@ -8,8 +8,7 @@ import '../docs/strict_validation_docs.dart';
 /// Reference: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Language
 /// About empty value test, check the [StrictValidationDocs] class for more details.
 void main() {
-  group('Given a Content-Language header with the strict flag true',
-      skip: 'drop strict mode', () {
+  group('Given a Content-Language header with the strict flag true', () {
     late RelicServer server;
 
     setUp(() async {
@@ -26,6 +25,7 @@ void main() {
         expect(
           () async => await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.contentLanguage,
             headers: {'content-language': ''},
           ),
           throwsA(
@@ -46,6 +46,7 @@ void main() {
         expect(
           () async => await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.contentLanguage,
             headers: {'content-language': 'en-123'},
           ),
           throwsA(
@@ -66,8 +67,8 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (_) {},
           headers: {'content-language': 'en-123'},
-          eagerParseHeaders: false,
         );
 
         expect(headers, isNotNull);
@@ -79,6 +80,7 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.contentLanguage,
           headers: {'content-language': 'en'},
         );
 
@@ -90,6 +92,7 @@ void main() {
       test('then they should parse correctly', () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.contentLanguage,
           headers: {'content-language': 'en, fr, de'},
         );
 
@@ -99,6 +102,7 @@ void main() {
       test('with extra whitespace then they should parse correctly', () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.contentLanguage,
           headers: {'content-language': ' en , fr , de '},
         );
 
@@ -110,6 +114,7 @@ void main() {
           () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.contentLanguage,
           headers: {'content-language': 'en, fr, de, en'},
         );
 
@@ -122,12 +127,11 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.contentLanguage,
           headers: {},
         );
 
-        expect(headers.contentLanguage_.valueOrNullIfInvalid, isNull);
-        expect(() => headers.contentLanguage,
-            throwsA(isA<InvalidHeaderException>()));
+        expect(headers.contentLanguage, isNull);
       },
     );
   });
@@ -147,6 +151,7 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (_) {},
             headers: {'content-language': 'en-123'},
           );
 

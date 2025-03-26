@@ -8,8 +8,7 @@ import '../docs/strict_validation_docs.dart';
 /// Reference: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy
 /// About empty value test, check the [StrictValidationDocs] class for more details.
 void main() {
-  group('Given a Content-Security-Policy header with the strict flag true',
-      skip: 'drop strict mode', () {
+  group('Given a Content-Security-Policy header with the strict flag true', () {
     late RelicServer server;
 
     setUp(() async {
@@ -25,6 +24,7 @@ void main() {
         expect(
           () async => await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.contentSecurityPolicy,
             headers: {'content-security-policy': ''},
           ),
           throwsA(isA<BadRequestException>().having(
@@ -43,8 +43,8 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (_) {},
           headers: {'content-security-policy': ''},
-          eagerParseHeaders: false,
         );
 
         expect(headers, isNotNull);
@@ -56,6 +56,7 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (_) {},
           headers: {
             'content-security-policy': "default-src 'self'; script-src 'none'"
           },
@@ -75,6 +76,7 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (_) {},
           headers: {
             'content-security-policy':
                 "default-src 'self'; img-src *; media-src media1.com media2.com"
@@ -97,12 +99,11 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.contentSecurityPolicy,
           headers: {},
         );
 
-        expect(headers.contentSecurityPolicy_.valueOrNullIfInvalid, isNull);
-        expect(() => headers.contentSecurityPolicy,
-            throwsA(isA<InvalidHeaderException>()));
+        expect(headers.contentSecurityPolicy, isNull);
       },
     );
   });
@@ -123,6 +124,7 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (_) {},
             headers: {'content-security-policy': ''},
           );
 

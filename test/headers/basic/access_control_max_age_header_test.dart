@@ -10,7 +10,6 @@ import '../headers_test_utils.dart';
 void main() {
   group(
     'Given an Access-Control-Max-Age header with the strict flag true',
-    skip: 'todo: drop strict mode',
     () {
       late RelicServer server;
 
@@ -29,6 +28,7 @@ void main() {
             () async => await getServerRequestHeaders(
               server: server,
               headers: {'access-control-max-age': ''},
+              touchHeaders: (h) => h.accessControlMaxAge,
             ),
             throwsA(
               isA<BadRequestException>().having(
@@ -49,6 +49,7 @@ void main() {
             () async => await getServerRequestHeaders(
               server: server,
               headers: {'access-control-max-age': 'invalid'},
+              touchHeaders: (h) => h.accessControlMaxAge,
             ),
             throwsA(
               isA<BadRequestException>().having(
@@ -68,8 +69,8 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (_) {},
             headers: {'access-control-max-age': 'test'},
-            eagerParseHeaders: false,
           );
 
           expect(headers, isNotNull);
@@ -82,6 +83,7 @@ void main() {
           var headers = await getServerRequestHeaders(
             server: server,
             headers: {'access-control-max-age': '600'},
+            touchHeaders: (h) => h.accessControlMaxAge,
           );
 
           expect(headers.accessControlMaxAge, equals(600));
@@ -94,6 +96,7 @@ void main() {
           var headers = await getServerRequestHeaders(
             server: server,
             headers: {'access-control-max-age': ' 600 '},
+            touchHeaders: (h) => h.accessControlMaxAge,
           );
 
           expect(headers.accessControlMaxAge, equals(600));
@@ -106,11 +109,10 @@ void main() {
           var headers = await getServerRequestHeaders(
             server: server,
             headers: {},
+            touchHeaders: (h) => h.accessControlMaxAge,
           );
 
-          expect(headers.accessControlMaxAge_.valueOrNullIfInvalid, isNull);
-          expect(() => headers.accessControlMaxAge,
-              throwsA(isA<InvalidHeaderException>()));
+          expect(headers.accessControlMaxAge, isNull);
         },
       );
     },
@@ -132,6 +134,7 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (_) {},
             headers: {'access-control-max-age': 'invalid'},
           );
 

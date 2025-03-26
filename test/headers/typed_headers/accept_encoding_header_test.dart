@@ -8,8 +8,7 @@ import '../headers_test_utils.dart';
 /// Reference: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Accept-Encoding
 /// About empty value test, check the [StrictValidationDocs] class for more details.
 void main() {
-  group('Given an Accept-Encoding header with the strict flag true',
-      skip: 'todo: drop strict mode', () {
+  group('Given an Accept-Encoding header with the strict flag true', () {
     late RelicServer server;
 
     setUp(() async {
@@ -26,6 +25,7 @@ void main() {
           () async => await getServerRequestHeaders(
             server: server,
             headers: {'accept-encoding': ''},
+            touchHeaders: (h) => h.acceptEncoding,
           ),
           throwsA(
             isA<BadRequestException>().having(
@@ -47,6 +47,7 @@ void main() {
           () async => await getServerRequestHeaders(
             server: server,
             headers: {'accept-encoding': 'gzip;q=abc'},
+            touchHeaders: (h) => h.acceptEncoding,
           ),
           throwsA(
             isA<BadRequestException>().having(
@@ -68,6 +69,7 @@ void main() {
           () async => await getServerRequestHeaders(
             server: server,
             headers: {'accept-encoding': '*, gzip'},
+            touchHeaders: (h) => h.acceptEncoding,
           ),
           throwsA(
             isA<BadRequestException>().having(
@@ -89,6 +91,7 @@ void main() {
           () async => await getServerRequestHeaders(
             server: server,
             headers: {'accept-encoding': ';q=0.5'},
+            touchHeaders: (h) => h.acceptEncoding,
           ),
           throwsA(
             isA<BadRequestException>().having(
@@ -108,8 +111,8 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (_) {},
           headers: {'accept-encoding': ';q=0.5'},
-          eagerParseHeaders: false,
         );
 
         expect(headers, isNotNull);
@@ -122,6 +125,7 @@ void main() {
         var headers = await getServerRequestHeaders(
           server: server,
           headers: {'accept-encoding': 'gzip'},
+          touchHeaders: (h) => h.acceptEncoding,
         );
 
         expect(
@@ -138,6 +142,7 @@ void main() {
         var headers = await getServerRequestHeaders(
           server: server,
           headers: {'accept-encoding': 'gzip'},
+          touchHeaders: (h) => h.acceptEncoding,
         );
 
         expect(
@@ -154,6 +159,7 @@ void main() {
         var headers = await getServerRequestHeaders(
           server: server,
           headers: {'accept-encoding': 'gzip;q=0.5'},
+          touchHeaders: (h) => h.acceptEncoding,
         );
 
         expect(
@@ -170,6 +176,7 @@ void main() {
         var headers = await getServerRequestHeaders(
           server: server,
           headers: {'accept-encoding': 'GZip'},
+          touchHeaders: (h) => h.acceptEncoding,
         );
 
         expect(
@@ -186,6 +193,7 @@ void main() {
         var headers = await getServerRequestHeaders(
           server: server,
           headers: {'accept-encoding': '*'},
+          touchHeaders: (h) => h.acceptEncoding,
         );
 
         expect(headers.acceptEncoding?.isWildcard, isTrue);
@@ -200,6 +208,7 @@ void main() {
         var headers = await getServerRequestHeaders(
           server: server,
           headers: {'accept-encoding': '*;q=0.5'},
+          touchHeaders: (h) => h.acceptEncoding,
         );
 
         expect(
@@ -219,6 +228,7 @@ void main() {
         var headers = await getServerRequestHeaders(
           server: server,
           headers: {},
+          touchHeaders: (h) => h.acceptEncoding,
         );
 
         expect(
@@ -239,6 +249,7 @@ void main() {
           var headers = await getServerRequestHeaders(
             server: server,
             headers: {'accept-encoding': 'gzip, deflate, br'},
+            touchHeaders: (h) => h.acceptEncoding,
           );
 
           expect(
@@ -254,6 +265,7 @@ void main() {
           var headers = await getServerRequestHeaders(
             server: server,
             headers: {'accept-encoding': 'gzip;q=1.0, deflate;q=0.5, br;q=0.8'},
+            touchHeaders: (h) => h.acceptEncoding,
           );
 
           expect(
@@ -269,6 +281,7 @@ void main() {
           var headers = await getServerRequestHeaders(
             server: server,
             headers: {'accept-encoding': 'gzip;q=1.0, deflate;q=0.5, br;q=0.8'},
+            touchHeaders: (h) => h.acceptEncoding,
           );
 
           expect(
@@ -285,6 +298,7 @@ void main() {
           var headers = await getServerRequestHeaders(
             server: server,
             headers: {'accept-encoding': 'gzip, gzip, deflate, br'},
+            touchHeaders: (h) => h.acceptEncoding,
           );
 
           expect(
@@ -300,6 +314,7 @@ void main() {
           var headers = await getServerRequestHeaders(
             server: server,
             headers: {'accept-encoding': ' gzip , deflate , br '},
+            touchHeaders: (h) => h.acceptEncoding,
           );
 
           expect(
@@ -326,6 +341,7 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (_) {},
             headers: {'accept-encoding': ''},
           );
 
@@ -343,6 +359,7 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (_) {},
             headers: {'accept-encoding': 'gzip;q=abc, deflate, br'},
           );
 

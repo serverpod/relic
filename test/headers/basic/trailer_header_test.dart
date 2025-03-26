@@ -8,8 +8,7 @@ import '../headers_test_utils.dart';
 /// Reference: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Trailer
 /// About empty value test, check the [StrictValidationDocs] class for more details.
 void main() {
-  group('Given a Trailer header with the strict flag true',
-      skip: 'drop strict mode', () {
+  group('Given a Trailer header with the strict flag true', () {
     late RelicServer server;
 
     setUp(() async {
@@ -26,6 +25,7 @@ void main() {
           () async => await getServerRequestHeaders(
             server: server,
             headers: {'trailer': ''},
+            touchHeaders: (h) => h.trailer,
           ),
           throwsA(isA<BadRequestException>().having(
             (e) => e.message,
@@ -43,8 +43,8 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (_) {},
           headers: {'trailer': ''},
-          eagerParseHeaders: false,
         );
 
         expect(headers, isNotNull);
@@ -57,6 +57,7 @@ void main() {
         var headers = await getServerRequestHeaders(
           server: server,
           headers: {'trailer': 'Expires, Content-MD5, Content-Language'},
+          touchHeaders: (h) => h.trailer,
         );
 
         expect(
@@ -72,6 +73,7 @@ void main() {
         var headers = await getServerRequestHeaders(
           server: server,
           headers: {'trailer': ' Expires , Content-MD5 , Content-Language '},
+          touchHeaders: (h) => h.trailer,
         );
 
         expect(
@@ -87,6 +89,7 @@ void main() {
         var headers = await getServerRequestHeaders(
           server: server,
           headers: {'trailer': 'custom-header, AnotherHeader'},
+          touchHeaders: (h) => h.trailer,
         );
 
         expect(
@@ -102,10 +105,10 @@ void main() {
         var headers = await getServerRequestHeaders(
           server: server,
           headers: {},
+          touchHeaders: (h) => h.lastModified,
         );
 
-        expect(headers.trailer_.valueOrNullIfInvalid, isNull);
-        expect(() => headers.trailer, throwsA(isA<InvalidHeaderException>()));
+        expect(headers.trailer, isNull);
       },
     );
   });
@@ -124,6 +127,7 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (_) {},
           headers: {'trailer': 'custom-header'},
         );
 

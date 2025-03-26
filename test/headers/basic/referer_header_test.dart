@@ -10,7 +10,6 @@ import '../docs/strict_validation_docs.dart';
 void main() {
   group(
     'Given a Referer header with the strict flag true',
-    skip: 'drop strict mode',
     () {
       late RelicServer server;
 
@@ -29,6 +28,7 @@ void main() {
             () async => await getServerRequestHeaders(
               server: server,
               headers: {'referer': ''},
+              touchHeaders: (h) => h.referer,
             ),
             throwsA(
               isA<BadRequestException>().having(
@@ -50,6 +50,7 @@ void main() {
             () async => await getServerRequestHeaders(
               server: server,
               headers: {'referer': 'ht!tp://invalid-url'},
+              touchHeaders: (h) => h.referer,
             ),
             throwsA(
               isA<BadRequestException>().having(
@@ -71,6 +72,7 @@ void main() {
             () async => await getServerRequestHeaders(
               server: server,
               headers: {'referer': 'http://example.com:test'},
+              touchHeaders: (h) => h.referer,
             ),
             throwsA(
               isA<BadRequestException>().having(
@@ -90,8 +92,8 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (_) {},
             headers: {'referer': 'http://example.com:test'},
-            eagerParseHeaders: false,
           );
 
           expect(headers, isNotNull);
@@ -105,6 +107,7 @@ void main() {
           var headers = await getServerRequestHeaders(
             server: server,
             headers: {'referer': 'https://example.com/page'},
+            touchHeaders: (h) => h.referer,
           );
 
           expect(
@@ -119,6 +122,7 @@ void main() {
           var headers = await getServerRequestHeaders(
             server: server,
             headers: {'referer': 'https://example.com:8080'},
+            touchHeaders: (h) => h.referer,
           );
 
           expect(
@@ -135,6 +139,7 @@ void main() {
           var headers = await getServerRequestHeaders(
             server: server,
             headers: {'referer': ' https://example.com '},
+            touchHeaders: (h) => h.referer,
           );
 
           expect(headers.referer, equals(Uri.parse('https://example.com')));
@@ -147,10 +152,10 @@ void main() {
           var headers = await getServerRequestHeaders(
             server: server,
             headers: {},
+            touchHeaders: (h) => h.referer,
           );
 
-          expect(headers.referer_.valueOrNullIfInvalid, isNull);
-          expect(() => headers.referer, throwsA(isA<InvalidHeaderException>()));
+          expect(headers.referer, isNull);
         },
       );
     },
@@ -171,6 +176,7 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (_) {},
             headers: {'referer': 'ht!tp://invalid-url'},
           );
 

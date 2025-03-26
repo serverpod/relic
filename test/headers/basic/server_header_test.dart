@@ -9,7 +9,6 @@ import '../docs/strict_validation_docs.dart';
 void main() {
   group(
     'Given a Server header with the strict flag true',
-    skip: 'drop strict mode',
     () {
       late RelicServer server;
 
@@ -28,6 +27,7 @@ void main() {
             () async => await getServerRequestHeaders(
               server: server,
               headers: {'server': ''},
+              touchHeaders: (h) => h.server,
             ),
             throwsA(
               isA<BadRequestException>().having(
@@ -47,8 +47,8 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (_) {},
             headers: {'server': ''},
-            eagerParseHeaders: false,
           );
 
           expect(headers, isNotNull);
@@ -60,6 +60,7 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (_) {},
             headers: {'server': 'MyServer/1.0'},
           );
 
@@ -73,6 +74,7 @@ void main() {
           var headers = await getServerRequestHeaders(
             server: server,
             headers: {'server': ' MyServer/1.0 '},
+            touchHeaders: (h) => h.server,
           );
 
           expect(headers.server, equals('MyServer/1.0'));
@@ -85,10 +87,10 @@ void main() {
           var headers = await getServerRequestHeaders(
             server: server,
             headers: {},
+            touchHeaders: (h) => h.server,
           );
 
-          expect(headers.server_.valueOrNullIfInvalid, isNull);
-          expect(() => headers.server, throwsA(isA<InvalidHeaderException>()));
+          expect(headers.server, isNull);
         },
       );
     },
@@ -109,6 +111,7 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (_) {},
             headers: {'server': ''},
           );
 

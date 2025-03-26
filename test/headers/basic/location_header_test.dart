@@ -10,7 +10,6 @@ import '../docs/strict_validation_docs.dart';
 void main() {
   group(
     'Given a Location header with the strict flag true',
-    skip: 'drop strict mode',
     () {
       late RelicServer server;
 
@@ -29,6 +28,7 @@ void main() {
             () async => await getServerRequestHeaders(
               server: server,
               headers: {'location': ''},
+              touchHeaders: (h) => h.location,
             ),
             throwsA(
               isA<BadRequestException>().having(
@@ -50,6 +50,7 @@ void main() {
             () async => await getServerRequestHeaders(
               server: server,
               headers: {'location': 'ht!tp://invalid-url'},
+              touchHeaders: (h) => h.location,
             ),
             throwsA(
               isA<BadRequestException>().having(
@@ -71,6 +72,7 @@ void main() {
             () async => await getServerRequestHeaders(
               server: server,
               headers: {'location': 'https://example.com:test'},
+              touchHeaders: (h) => h.location,
             ),
             throwsA(
               isA<BadRequestException>().having(
@@ -90,8 +92,8 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (_) {},
             headers: {'location': 'https://example.com:test'},
-            eagerParseHeaders: false,
           );
 
           expect(headers, isNotNull);
@@ -104,6 +106,7 @@ void main() {
           var headers = await getServerRequestHeaders(
             server: server,
             headers: {'location': 'https://example.com/page'},
+            touchHeaders: (h) => h.location,
           );
 
           expect(
@@ -120,6 +123,7 @@ void main() {
           var headers = await getServerRequestHeaders(
             server: server,
             headers: {'location': 'https://example.com:8080'},
+            touchHeaders: (h) => h.location,
           );
 
           expect(
@@ -136,6 +140,7 @@ void main() {
           var headers = await getServerRequestHeaders(
             server: server,
             headers: {'location': ' https://example.com '},
+            touchHeaders: (h) => h.location,
           );
 
           expect(headers.location, equals(Uri.parse('https://example.com')));
@@ -148,11 +153,10 @@ void main() {
           var headers = await getServerRequestHeaders(
             server: server,
             headers: {},
+            touchHeaders: (h) => h.location,
           );
 
-          expect(headers.location_.valueOrNullIfInvalid, isNull);
-          expect(
-              () => headers.location, throwsA(isA<InvalidHeaderException>()));
+          expect(headers.location, isNull);
         },
       );
     },
@@ -173,6 +177,7 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (_) {},
             headers: {'location': 'ht!tp://invalid-url'},
           );
 

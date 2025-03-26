@@ -8,8 +8,7 @@ import '../docs/strict_validation_docs.dart';
 /// Reference: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Upgrade
 /// About empty value test, check the [StrictValidationDocs] class for more details.
 void main() {
-  group('Given an Upgrade header with the strict flag true',
-      skip: 'todo: drop strict mode', () {
+  group('Given an Upgrade header with the strict flag true', () {
     late RelicServer server;
 
     setUp(() async {
@@ -25,6 +24,7 @@ void main() {
         expect(
           () async => await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.upgrade,
             headers: {'upgrade': ''},
           ),
           throwsA(isA<BadRequestException>().having(
@@ -44,6 +44,7 @@ void main() {
         expect(
           () async => await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.upgrade,
             headers: {'upgrade': 'InvalidProtocol/abc'},
           ),
           throwsA(isA<BadRequestException>().having(
@@ -62,8 +63,8 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (_) {},
           headers: {'upgrade': 'InvalidProtocol/abc'},
-          eagerParseHeaders: false,
         );
 
         expect(headers, isNotNull);
@@ -75,11 +76,11 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (_) {},
           headers: {},
         );
 
-        expect(headers.upgrade_.valueOrNullIfInvalid, isNull);
-        expect(() => headers.upgrade, throwsA(isA<InvalidHeaderException>()));
+        expect(headers.upgrade, isNull);
       },
     );
 
@@ -91,6 +92,7 @@ void main() {
           expect(
             () async => await getServerRequestHeaders(
               server: server,
+              touchHeaders: (h) => h.upgrade,
               headers: {'upgrade': 'HTTP/2.0, HTTP/abc'},
             ),
             throwsA(isA<BadRequestException>().having(
@@ -107,6 +109,7 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.upgrade,
             headers: {'upgrade': 'HTTP/2.0, WebSocket'},
           );
 
@@ -125,6 +128,7 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.upgrade,
             headers: {'upgrade': 'HTTP/2.0, WebSocket, HTTP/2.0'},
           );
 

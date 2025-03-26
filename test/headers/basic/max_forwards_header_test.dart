@@ -10,7 +10,6 @@ import '../docs/strict_validation_docs.dart';
 void main() {
   group(
     'Given a Max-Forwards header with the strict flag true',
-    skip: 'drop strict mode',
     () {
       late RelicServer server;
 
@@ -29,6 +28,7 @@ void main() {
             () async => await getServerRequestHeaders(
               server: server,
               headers: {'max-forwards': ''},
+              touchHeaders: (h) => h.maxForwards,
             ),
             throwsA(
               isA<BadRequestException>().having(
@@ -50,6 +50,7 @@ void main() {
             () async => await getServerRequestHeaders(
               server: server,
               headers: {'max-forwards': '-1'},
+              touchHeaders: (h) => h.maxForwards,
             ),
             throwsA(
               isA<BadRequestException>().having(
@@ -71,6 +72,7 @@ void main() {
             () async => await getServerRequestHeaders(
               server: server,
               headers: {'max-forwards': '5.5'},
+              touchHeaders: (h) => h.maxForwards,
             ),
             throwsA(
               isA<BadRequestException>().having(
@@ -90,8 +92,8 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (_) {},
             headers: {'max-forwards': 'invalid-value'},
-            eagerParseHeaders: false,
           );
 
           expect(headers, isNotNull);
@@ -105,6 +107,7 @@ void main() {
           var headers = await getServerRequestHeaders(
             server: server,
             headers: {'max-forwards': '5'},
+            touchHeaders: (h) => h.maxForwards,
           );
 
           expect(headers.maxForwards, equals(5));
@@ -117,6 +120,7 @@ void main() {
           var headers = await getServerRequestHeaders(
             server: server,
             headers: {'max-forwards': '0'},
+            touchHeaders: (h) => h.maxForwards,
           );
 
           expect(headers.maxForwards, equals(0));
@@ -129,11 +133,10 @@ void main() {
           var headers = await getServerRequestHeaders(
             server: server,
             headers: {},
+            touchHeaders: (h) => h.maxForwards,
           );
 
-          expect(headers.maxForwards_.valueOrNullIfInvalid, isNull);
-          expect(() => headers.maxForwards,
-              throwsA(isA<InvalidHeaderException>()));
+          expect(headers.maxForwards, isNull);
         },
       );
     },
@@ -154,6 +157,7 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (_) {},
             headers: {'max-forwards': 'invalid'},
           );
 

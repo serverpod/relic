@@ -10,7 +10,6 @@ import '../docs/strict_validation_docs.dart';
 void main() {
   group(
     'Given a Cross-Origin-Resource-Policy header with the strict flag true',
-    skip: 'todo: drop strict mode',
     () {
       late RelicServer server;
 
@@ -27,6 +26,7 @@ void main() {
           expect(
             () async => await getServerRequestHeaders(
               server: server,
+              touchHeaders: (h) => h.crossOriginResourcePolicy,
               headers: {'cross-origin-resource-policy': ''},
             ),
             throwsA(isA<BadRequestException>().having(
@@ -45,6 +45,7 @@ void main() {
           expect(
             () async => await getServerRequestHeaders(
               server: server,
+              touchHeaders: (h) => h.crossOriginResourcePolicy,
               headers: {'cross-origin-resource-policy': 'custom-policy'},
             ),
             throwsA(isA<BadRequestException>().having(
@@ -63,8 +64,8 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (_) {},
             headers: {'cross-origin-resource-policy': 'custom-policy'},
-            eagerParseHeaders: false,
           );
           expect(headers, isNotNull);
         },
@@ -75,6 +76,7 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.crossOriginResourcePolicy,
             headers: {'cross-origin-resource-policy': 'same-origin'},
           );
 
@@ -90,13 +92,11 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.crossOriginResourcePolicy,
             headers: {},
           );
 
-          expect(
-              headers.crossOriginResourcePolicy_.valueOrNullIfInvalid, isNull);
-          expect(() => headers.crossOriginResourcePolicy,
-              throwsA(isA<InvalidHeaderException>()));
+          expect(headers.crossOriginResourcePolicy, isNull);
         },
       );
     },
@@ -121,6 +121,7 @@ void main() {
             () async {
               var headers = await getServerRequestHeaders(
                 server: server,
+                touchHeaders: (_) {},
                 headers: {},
               );
               expect(headers.crossOriginResourcePolicy, isNull);

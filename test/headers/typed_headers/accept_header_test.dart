@@ -8,8 +8,7 @@ import '../docs/strict_validation_docs.dart';
 /// Reference: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Accept
 /// About empty value test, check the [StrictValidationDocs] class for more details.
 void main() {
-  group('Given an Accept header with the strict flag true',
-      skip: 'todo: drop strict mode', () {
+  group('Given an Accept header with the strict flag true', () {
     late RelicServer server;
 
     setUp(() async {
@@ -25,6 +24,7 @@ void main() {
         expect(
           () async => await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.accept,
             headers: {'accept': ''},
           ),
           throwsA(isA<BadRequestException>().having(
@@ -44,6 +44,7 @@ void main() {
         expect(
           () async => await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.accept,
             headers: {'accept': 'text/html;q=abc'},
           ),
           throwsA(isA<BadRequestException>().having(
@@ -62,8 +63,8 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (_) {},
           headers: {'accept': 'text/html;q=abc'},
-          eagerParseHeaders: false,
         );
 
         expect(headers, isNotNull);
@@ -75,6 +76,7 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.accept,
           headers: {'accept': 'text/html'},
         );
 
@@ -91,6 +93,7 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.accept,
           headers: {'accept': 'text/html'},
         );
 
@@ -105,6 +108,7 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.accept,
           headers: {'accept': 'text/html;q=0.8'},
         );
 
@@ -119,6 +123,7 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.accept,
           headers: {'accept': '*/*'},
         );
 
@@ -134,11 +139,11 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.accept,
           headers: {},
         );
 
-        expect(headers.accept_.valueOrNullIfInvalid, isNull);
-        expect(() => headers.accept, throwsA(isA<InvalidHeaderException>()));
+        expect(headers.accept, isNull);
       },
     );
 
@@ -150,6 +155,7 @@ void main() {
           expect(
             () async => await getServerRequestHeaders(
               server: server,
+              touchHeaders: (h) => h.accept,
               headers: {
                 'accept': 'text/html;q=test, application/json;q=abc, */*;q=0.5'
               },
@@ -167,6 +173,7 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.accept,
             headers: {
               'accept': 'text/html;q=0.8, application/json;q=0.9, */*;q=0.5'
             },
@@ -188,6 +195,7 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.accept,
             headers: {
               'accept': 'text/html;q=0.8, application/json;q=0.9, */*;q=0.5'
             },
@@ -218,6 +226,7 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (_) {},
             headers: {'accept': 'text/html;q=abc'},
           );
 

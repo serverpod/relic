@@ -8,8 +8,7 @@ import '../docs/strict_validation_docs.dart';
 /// Reference: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/If-Match
 /// About empty value test, check the [StrictValidationDocs] class for more details.
 void main() {
-  group('Given an If-Match header with the strict flag true',
-      skip: 'todo: drop strict mode', () {
+  group('Given an If-Match header with the strict flag true', () {
     late RelicServer server;
 
     setUp(() async {
@@ -26,6 +25,7 @@ void main() {
         expect(
           () async => await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.ifMatch,
             headers: {'if-match': ''},
           ),
           throwsA(
@@ -46,6 +46,7 @@ void main() {
         expect(
           () async => await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.ifMatch,
             headers: {'if-match': 'invalid-etag'},
           ),
           throwsA(
@@ -67,6 +68,7 @@ void main() {
         expect(
           () async => await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.ifMatch,
             headers: {'if-match': '*, 123456"'},
           ),
           throwsA(
@@ -87,8 +89,8 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (_) {},
           headers: {'if-match': 'invalid-etag'},
-          eagerParseHeaders: false,
         );
 
         expect(headers, isNotNull);
@@ -101,6 +103,7 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.ifMatch,
           headers: {'if-match': '"123456"'},
         );
 
@@ -116,6 +119,7 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.ifMatch,
           headers: {'if-match': '*'},
         );
 
@@ -129,11 +133,11 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.ifMatch,
           headers: {},
         );
 
-        expect(headers.ifMatch_.valueOrNullIfInvalid, isNull);
-        expect(() => headers.ifMatch, throwsA(isA<InvalidHeaderException>()));
+        expect(headers.ifMatch, isNull);
       },
     );
 
@@ -143,6 +147,7 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.ifMatch,
             headers: {'if-match': '"123", "456", "789"'},
           );
 
@@ -159,6 +164,7 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.ifMatch,
             headers: {'if-match': 'W/"123", W/"456"'},
           );
 
@@ -175,6 +181,7 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.ifMatch,
             headers: {'if-match': ' "123" , "456" , "789" '},
           );
 
@@ -192,6 +199,7 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.ifMatch,
             headers: {'if-match': '"123", "456", "789", "123"'},
           );
 
@@ -220,6 +228,7 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (_) {},
             headers: {'if-match': 'invalid-etag'},
           );
 

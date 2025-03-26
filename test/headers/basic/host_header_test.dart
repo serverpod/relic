@@ -9,7 +9,6 @@ import '../docs/strict_validation_docs.dart';
 void main() {
   group(
     'Given a Host header with the strict flag true',
-    skip: 'drop strict mode',
     () {
       late RelicServer server;
 
@@ -27,6 +26,7 @@ void main() {
             () async => await getServerRequestHeaders(
               server: server,
               headers: {'host': ''},
+              touchHeaders: (h) => h.host,
             ),
             throwsA(
               isA<BadRequestException>().having(
@@ -48,6 +48,7 @@ void main() {
             () async => await getServerRequestHeaders(
               server: server,
               headers: {'host': 'h@ttp://example.com'},
+              touchHeaders: (h) => h.host,
             ),
             throwsA(
               isA<BadRequestException>().having(
@@ -69,6 +70,7 @@ void main() {
             () async => await getServerRequestHeaders(
               server: server,
               headers: {'host': 'http://example.com:test'},
+              touchHeaders: (h) => h.host,
             ),
             throwsA(
               isA<BadRequestException>().having(
@@ -88,8 +90,8 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (_) {},
             headers: {'host': 'http://example.com:test'},
-            eagerParseHeaders: false,
           );
 
           expect(headers, isNotNull);
@@ -102,6 +104,7 @@ void main() {
           var headers = await getServerRequestHeaders(
             server: server,
             headers: {'host': 'https://example.com'},
+            touchHeaders: (h) => h.host,
           );
 
           expect(headers.host, equals(Uri.parse('https://example.com')));
@@ -115,6 +118,7 @@ void main() {
           var headers = await getServerRequestHeaders(
             server: server,
             headers: {'host': 'https://example.com:8080'},
+            touchHeaders: (h) => h.host,
           );
 
           expect(
@@ -130,6 +134,7 @@ void main() {
           var headers = await getServerRequestHeaders(
             server: server,
             headers: {'host': ' https://example.com '},
+            touchHeaders: (h) => h.host,
           );
 
           expect(headers.host, equals(Uri.parse('https://example.com')));
@@ -142,6 +147,7 @@ void main() {
           var headers = await getServerRequestHeaders(
             server: server,
             headers: {},
+            touchHeaders: (h) => h.host,
           );
 
           expect(headers.host, isNotNull);
@@ -166,6 +172,7 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (_) {},
             headers: {'host': 'h@ttp://example.com'},
           );
 
@@ -181,6 +188,7 @@ void main() {
         var headers = await getServerRequestHeaders(
           server: server,
           headers: {},
+          touchHeaders: (h) => h.host,
         );
 
         expect(headers.host, isNotNull);

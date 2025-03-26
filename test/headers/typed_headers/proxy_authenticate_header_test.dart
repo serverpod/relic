@@ -8,8 +8,7 @@ import '../docs/strict_validation_docs.dart';
 /// Reference: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Proxy-Authenticate
 /// About empty value test, check the [StrictValidationDocs] class for more details.
 void main() {
-  group('Given a Proxy-Authenticate header with the strict flag true',
-      skip: 'drop strict mode', () {
+  group('Given a Proxy-Authenticate header with the strict flag true', () {
     late RelicServer server;
 
     setUp(() async {
@@ -24,6 +23,7 @@ void main() {
         expect(
           () async => await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.proxyAuthenticate,
             headers: {'proxy-authenticate': ''},
           ),
           throwsA(isA<BadRequestException>().having(
@@ -42,8 +42,8 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (_) {},
           headers: {'proxy-authenticate': 'Test'},
-          eagerParseHeaders: false,
         );
 
         expect(headers, isNotNull);
@@ -54,6 +54,7 @@ void main() {
       test('with realm parameter should parse scheme correctly', () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.proxyAuthenticate,
           headers: {'proxy-authenticate': 'Basic realm="Proxy Realm"'},
         );
 
@@ -63,6 +64,7 @@ void main() {
       test('with realm parameter should parse realm correctly', () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.proxyAuthenticate,
           headers: {'proxy-authenticate': 'Basic realm="Proxy Realm"'},
         );
 
@@ -79,6 +81,7 @@ void main() {
       test('should parse scheme correctly', () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (_) {},
           headers: {
             'proxy-authenticate':
                 'Digest realm="Proxy Authentication Required"',
@@ -91,6 +94,7 @@ void main() {
       test('should parse realm parameter correctly', () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (_) {},
           headers: {
             'proxy-authenticate':
                 'Digest realm="Proxy Authentication Required"',
@@ -108,6 +112,7 @@ void main() {
       test('should parse qop parameter correctly', () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (_) {},
           headers: {
             'proxy-authenticate':
                 'Digest realm="Proxy Authentication Required", qop="auth", nonce="dcd98b7102dd2f0e8b11d0f600bfb0c093", opaque="5ccc069c403ebaf9f0171e9517f40e41"'
@@ -125,6 +130,7 @@ void main() {
       test('should parse nonce parameter correctly', () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (_) {},
           headers: {
             'proxy-authenticate':
                 'Digest realm="Proxy Authentication Required", qop="auth", nonce="dcd98b7102dd2f0e8b11d0f600bfb0c093", opaque="5ccc069c403ebaf9f0171e9517f40e41"'
@@ -142,6 +148,7 @@ void main() {
       test('should parse opaque parameter correctly', () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (_) {},
           headers: {
             'proxy-authenticate':
                 'Digest realm="Proxy Authentication Required", qop="auth", nonce="dcd98b7102dd2f0e8b11d0f600bfb0c093", opaque="5ccc069c403ebaf9f0171e9517f40e41"'
@@ -162,12 +169,11 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.proxyAuthenticate,
           headers: {},
         );
 
-        expect(headers.proxyAuthenticate_.valueOrNullIfInvalid, isNull);
-        expect(() => headers.proxyAuthenticate,
-            throwsA(isA<InvalidHeaderException>()));
+        expect(headers.proxyAuthenticate, isNull);
       },
     );
   });
@@ -186,6 +192,7 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (_) {},
           headers: {'proxy-authenticate': 'InvalidHeader'},
         );
 

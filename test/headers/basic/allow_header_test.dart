@@ -11,7 +11,6 @@ import '../headers_test_utils.dart';
 void main() {
   group(
     'Given an Allow header with the strict flag true',
-    skip: 'todo: drop strict mode',
     () {
       late RelicServer server;
 
@@ -30,6 +29,7 @@ void main() {
             () async => await getServerRequestHeaders(
               server: server,
               headers: {'allow': ''},
+              touchHeaders: (h) => h.allow,
             ),
             throwsA(
               isA<BadRequestException>().having(
@@ -51,6 +51,7 @@ void main() {
             () async => await getServerRequestHeaders(
               server: server,
               headers: {'allow': 'CUSTOM'},
+              touchHeaders: (h) => h.allow,
             ),
             throwsA(
               isA<BadRequestException>().having(
@@ -70,8 +71,8 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (_) {},
             headers: {'allow': 'CUSTOM'},
-            eagerParseHeaders: false,
           );
 
           expect(headers, isNotNull);
@@ -84,6 +85,7 @@ void main() {
           var headers = await getServerRequestHeaders(
             server: server,
             headers: {'allow': 'GET, POST, DELETE'},
+            touchHeaders: (h) => h.allow,
           );
 
           expect(
@@ -100,6 +102,7 @@ void main() {
           var headers = await getServerRequestHeaders(
             server: server,
             headers: {'allow': 'GET, POST, GET'},
+            touchHeaders: (h) => h.allow,
           );
 
           expect(
@@ -116,6 +119,7 @@ void main() {
           var headers = await getServerRequestHeaders(
             server: server,
             headers: {'allow': ' GET , POST , DELETE '},
+            touchHeaders: (h) => h.allow,
           );
 
           expect(
@@ -142,6 +146,7 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (_) {},
             headers: {'allow': ''},
           );
 

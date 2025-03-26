@@ -10,7 +10,6 @@ import '../docs/strict_validation_docs.dart';
 void main() {
   group(
     'Given an If-Unmodified-Since header with the strict flag true',
-    skip: 'todo: drop strict mode',
     () {
       late RelicServer server;
 
@@ -29,6 +28,7 @@ void main() {
             () async => await getServerRequestHeaders(
               server: server,
               headers: {'if-unmodified-since': ''},
+              touchHeaders: (h) => h.ifUnmodifiedSince,
             ),
             throwsA(
               isA<BadRequestException>().having(
@@ -50,6 +50,7 @@ void main() {
             () async => await getServerRequestHeaders(
               server: server,
               headers: {'if-unmodified-since': 'invalid-date-format'},
+              touchHeaders: (h) => h.ifUnmodifiedSince,
             ),
             throwsA(
               isA<BadRequestException>().having(
@@ -69,8 +70,8 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (_) {},
             headers: {'if-unmodified-since': 'invalid-date-format'},
-            eagerParseHeaders: false,
           );
 
           expect(headers, isNotNull);
@@ -84,6 +85,7 @@ void main() {
           var headers = await getServerRequestHeaders(
             server: server,
             headers: {'if-unmodified-since': 'Wed, 21 Oct 2015 07:28:00 GMT'},
+            touchHeaders: (h) => h.ifUnmodifiedSince,
           );
 
           expect(
@@ -99,6 +101,7 @@ void main() {
           var headers = await getServerRequestHeaders(
             server: server,
             headers: {'if-unmodified-since': ' Wed, 21 Oct 2015 07:28:00 GMT '},
+            touchHeaders: (h) => h.ifUnmodifiedSince,
           );
 
           expect(
@@ -114,11 +117,10 @@ void main() {
           var headers = await getServerRequestHeaders(
             server: server,
             headers: {},
+            touchHeaders: (h) => h.ifModifiedSince,
           );
 
-          expect(headers.ifUnmodifiedSince_.valueOrNullIfInvalid, isNull);
-          expect(() => headers.ifUnmodifiedSince,
-              throwsA(isA<InvalidHeaderException>()));
+          expect(headers.ifUnmodifiedSince, isNull);
         },
       );
     },
@@ -139,6 +141,7 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (_) {},
             headers: {'if-unmodified-since': ''},
           );
 
@@ -155,6 +158,7 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (_) {},
             headers: {'if-unmodified-since': 'invalid-date-format'},
           );
 

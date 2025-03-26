@@ -8,8 +8,7 @@ import '../docs/strict_validation_docs.dart';
 /// Reference: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/From
 /// About empty value test, check the [StrictValidationDocs] class for more details.
 void main() {
-  group('Given a From header with the strict flag true',
-      skip: 'drop strict mode', () {
+  group('Given a From header with the strict flag true', () {
     late RelicServer server;
 
     setUp(() async {
@@ -26,6 +25,7 @@ void main() {
         expect(
           () async => await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.from,
             headers: {'from': ''},
           ),
           throwsA(
@@ -47,6 +47,7 @@ void main() {
         expect(
           () async => await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.from,
             headers: {'from': 'invalid-email-format'},
           ),
           throwsA(
@@ -67,8 +68,8 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (_) {},
           headers: {'from': 'invalid-email-format'},
-          eagerParseHeaders: false,
         );
 
         expect(headers, isNotNull);
@@ -80,6 +81,7 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.from,
           headers: {'from': 'user@example.com'},
         );
 
@@ -92,6 +94,7 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.from,
           headers: {'from': ' user@example.com '},
         );
 
@@ -105,6 +108,7 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.from,
             headers: {'from': 'user1@example.com, user2@example.com'},
           );
 
@@ -120,6 +124,7 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.from,
             headers: {'from': ' user1@example.com , user2@example.com '},
           );
 
@@ -136,6 +141,7 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.from,
             headers: {
               'from': 'user1@example.com, user2@example.com, user1@example.com'
             },
@@ -156,6 +162,7 @@ void main() {
           expect(
             () async => await getServerRequestHeaders(
               server: server,
+              touchHeaders: (h) => h.from,
               headers: {
                 'from':
                     'user1@example.com, invalid-email-format, user2@example.com'
@@ -178,11 +185,11 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.from,
           headers: {},
         );
 
-        expect(headers.from_.valueOrNullIfInvalid, isNull);
-        expect(() => headers.from, throwsA(isA<InvalidHeaderException>()));
+        expect(headers.from, isNull);
       },
     );
   });
@@ -202,6 +209,7 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (_) {},
             headers: {'from': 'invalid-email-format'},
           );
 

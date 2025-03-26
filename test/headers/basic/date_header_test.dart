@@ -11,7 +11,6 @@ import '../headers_test_utils.dart';
 void main() {
   group(
     'Given a Date header with the strict flag true',
-    skip: 'drop strict mode',
     () {
       late RelicServer server;
 
@@ -30,6 +29,7 @@ void main() {
             () async => await getServerRequestHeaders(
               server: server,
               headers: {'date': ''},
+              touchHeaders: (h) => h.date,
             ),
             throwsA(
               isA<BadRequestException>().having(
@@ -51,6 +51,7 @@ void main() {
             () async => await getServerRequestHeaders(
               server: server,
               headers: {'date': 'invalid-date-format'},
+              touchHeaders: (h) => h.date,
             ),
             throwsA(
               isA<BadRequestException>().having(
@@ -70,8 +71,8 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (_) {},
             headers: {'date': 'invalid-date-format'},
-            eagerParseHeaders: false,
           );
 
           expect(headers, isNotNull);
@@ -84,6 +85,7 @@ void main() {
           var headers = await getServerRequestHeaders(
             server: server,
             headers: {'date': 'Wed, 21 Oct 2015 07:28:00 GMT'},
+            touchHeaders: (h) => h.date,
           );
 
           expect(
@@ -99,6 +101,7 @@ void main() {
           var headers = await getServerRequestHeaders(
             server: server,
             headers: {'date': ' Wed, 21 Oct 2015 07:28:00 GMT '},
+            touchHeaders: (h) => h.date,
           );
 
           expect(
@@ -114,10 +117,10 @@ void main() {
           var headers = await getServerRequestHeaders(
             server: server,
             headers: {},
+            touchHeaders: (h) => h.date,
           );
 
-          expect(headers.date_.valueOrNullIfInvalid, isNull);
-          expect(() => headers.date, throwsA(isA<InvalidHeaderException>()));
+          expect(headers.date, isNull);
         },
       );
     },
@@ -138,6 +141,7 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (_) {},
             headers: {'date': ''},
           );
 
@@ -153,6 +157,7 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (_) {},
             headers: {'date': 'invalid-date-format'},
           );
 

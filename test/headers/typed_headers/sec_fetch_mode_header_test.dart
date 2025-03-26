@@ -8,8 +8,7 @@ import '../docs/strict_validation_docs.dart';
 /// Reference: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Sec-Fetch-Mode
 /// About empty value test, check the [StrictValidationDocs] class for more details.
 void main() {
-  group('Given a Sec-Fetch-Mode header with the strict flag true',
-      skip: 'drop strict mode', () {
+  group('Given a Sec-Fetch-Mode header with the strict flag true', () {
     late RelicServer server;
 
     setUp(() async {
@@ -25,6 +24,7 @@ void main() {
         expect(
           () async => await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.secFetchMode,
             headers: {'sec-fetch-mode': ''},
           ),
           throwsA(isA<BadRequestException>().having(
@@ -43,6 +43,7 @@ void main() {
         expect(
           () async => await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.secFetchMode,
             headers: {'sec-fetch-mode': 'custom-mode'},
           ),
           throwsA(isA<BadRequestException>().having(
@@ -61,8 +62,8 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (_) {},
           headers: {'sec-fetch-mode': 'custom-mode'},
-          eagerParseHeaders: false,
         );
         expect(headers, isNotNull);
       },
@@ -73,6 +74,7 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.secFetchMode,
           headers: {'sec-fetch-mode': 'cors'},
         );
 
@@ -85,12 +87,11 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.secFetchMode,
           headers: {},
         );
 
-        expect(headers.secFetchMode_.valueOrNullIfInvalid, isNull);
-        expect(
-            () => headers.secFetchMode, throwsA(isA<InvalidHeaderException>()));
+        expect(headers.secFetchMode, isNull);
       },
     );
   });
@@ -110,6 +111,7 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (_) {},
             headers: {},
           );
 

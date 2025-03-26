@@ -10,7 +10,7 @@ import '../docs/strict_validation_docs.dart';
 void main() {
   group(
       'Given an Access-Control-Allow-Methods header with the strict flag true',
-      skip: 'todo: drop strict mode', () {
+      () {
     late RelicServer server;
 
     setUp(() async {
@@ -26,6 +26,7 @@ void main() {
         expect(
           () async => await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.accessControlAllowMethods,
             headers: {'access-control-allow-methods': ''},
           ),
           throwsA(isA<BadRequestException>().having(
@@ -46,6 +47,7 @@ void main() {
         expect(
           () async => await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.accessControlAllowMethods,
             headers: {'access-control-allow-methods': 'GET, *'},
           ),
           throwsA(isA<BadRequestException>().having(
@@ -64,8 +66,8 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (_) {},
           headers: {'access-control-allow-methods': 'CUSTOM'},
-          eagerParseHeaders: false,
         );
 
         expect(headers, isNotNull);
@@ -77,6 +79,7 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.accessControlAllowMethods,
           headers: {'access-control-allow-methods': 'GET, POST, OPTIONS'},
         );
 
@@ -95,6 +98,7 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.accessControlAllowMethods,
           headers: {'access-control-allow-methods': 'GET, POST, OPTIONS, GET'},
         );
 
@@ -112,6 +116,7 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.accessControlAllowMethods,
           headers: {'access-control-allow-methods': '*'},
         );
 
@@ -124,12 +129,11 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.accessControlAllowMethods,
           headers: {},
         );
 
-        expect(headers.accessControlAllowMethods_.valueOrNullIfInvalid, isNull);
-        expect(() => headers.accessControlAllowMethods,
-            throwsA(isA<InvalidHeaderException>()));
+        expect(headers.accessControlAllowMethods, isNull);
       },
     );
   });
@@ -151,6 +155,7 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (_) {},
             headers: {},
           );
           expect(headers.accessControlAllowMethods, isNull);

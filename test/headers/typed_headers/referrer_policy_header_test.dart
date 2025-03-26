@@ -8,8 +8,7 @@ import '../docs/strict_validation_docs.dart';
 /// Reference: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Referrer-Policy
 /// About empty value test, check the [StrictValidationDocs] class for more details.
 void main() {
-  group('Given a Referrer-Policy header with the strict flag true',
-      skip: 'drop strict mode', () {
+  group('Given a Referrer-Policy header with the strict flag true', () {
     late RelicServer server;
 
     setUp(() async {
@@ -25,6 +24,7 @@ void main() {
         expect(
           () async => await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.referrerPolicy,
             headers: {'referrer-policy': ''},
           ),
           throwsA(isA<BadRequestException>().having(
@@ -43,6 +43,7 @@ void main() {
         expect(
           () async => await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.referrerPolicy,
             headers: {'referrer-policy': 'invalid-value'},
           ),
           throwsA(isA<BadRequestException>().having(
@@ -61,8 +62,8 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (_) {},
           headers: {'referrer-policy': 'invalid-value'},
-          eagerParseHeaders: false,
         );
 
         expect(headers, isNotNull);
@@ -74,6 +75,7 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.referrerPolicy,
           headers: {'referrer-policy': 'no-referrer'},
         );
 
@@ -86,12 +88,11 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.referrerPolicy,
           headers: {},
         );
 
-        expect(headers.referrerPolicy_.valueOrNullIfInvalid, isNull);
-        expect(() => headers.referrerPolicy,
-            throwsA(isA<InvalidHeaderException>()));
+        expect(headers.referrerPolicy, isNull);
       },
     );
   });
@@ -111,6 +112,7 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (_) {},
             headers: {'referrer-policy': ''},
           );
 

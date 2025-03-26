@@ -9,7 +9,6 @@ import '../docs/strict_validation_docs.dart';
 void main() {
   group(
     'Given an Origin header with the strict flag true',
-    skip: 'todo: drop strict mode',
     () {
       late RelicServer server;
 
@@ -28,6 +27,7 @@ void main() {
             () async => await getServerRequestHeaders(
               server: server,
               headers: {'origin': ''},
+              touchHeaders: (h) => h.origin,
             ),
             throwsA(
               isA<BadRequestException>().having(
@@ -49,6 +49,7 @@ void main() {
             () async => await getServerRequestHeaders(
               server: server,
               headers: {'origin': 'h@ttp://example.com'},
+              touchHeaders: (h) => h.origin,
             ),
             throwsA(
               isA<BadRequestException>().having(
@@ -70,6 +71,7 @@ void main() {
             () async => await getServerRequestHeaders(
               server: server,
               headers: {'origin': 'http://example.com:test'},
+              touchHeaders: (h) => h.origin,
             ),
             throwsA(
               isA<BadRequestException>().having(
@@ -89,8 +91,8 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (_) {},
             headers: {'origin': 'http://example.com:test'},
-            eagerParseHeaders: false,
           );
 
           expect(headers, isNotNull);
@@ -103,6 +105,7 @@ void main() {
           var headers = await getServerRequestHeaders(
             server: server,
             headers: {'origin': 'https://example.com'},
+            touchHeaders: (h) => h.origin,
           );
 
           expect(
@@ -118,6 +121,7 @@ void main() {
           var headers = await getServerRequestHeaders(
             server: server,
             headers: {'origin': 'https://example.com:8080'},
+            touchHeaders: (h) => h.origin,
           );
 
           expect(
@@ -133,6 +137,7 @@ void main() {
           var headers = await getServerRequestHeaders(
             server: server,
             headers: {'origin': ' https://example.com '},
+            touchHeaders: (h) => h.origin,
           );
 
           expect(
@@ -148,10 +153,10 @@ void main() {
           var headers = await getServerRequestHeaders(
             server: server,
             headers: {},
+            touchHeaders: (h) => h.origin,
           );
 
-          expect(headers.origin_.valueOrNullIfInvalid, isNull);
-          expect(() => headers.origin, throwsA(isA<InvalidHeaderException>()));
+          expect(headers.origin, isNull);
         },
       );
     },
@@ -171,6 +176,7 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (_) {},
             headers: {'origin': ''},
           );
           expect(headers.origin_.valueOrNullIfInvalid, isNull);
@@ -185,6 +191,7 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (_) {},
             headers: {'origin': 'h@ttp://example.com'},
           );
 

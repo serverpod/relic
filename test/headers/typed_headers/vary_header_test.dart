@@ -8,8 +8,7 @@ import '../docs/strict_validation_docs.dart';
 /// Reference: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Vary
 /// About empty value test, check the [StrictValidationDocs] class for more details.
 void main() {
-  group('Given a Vary header with the strict flag true',
-      skip: 'drop strict mode', () {
+  group('Given a Vary header with the strict flag true', () {
     late RelicServer server;
 
     setUp(() async {
@@ -25,6 +24,7 @@ void main() {
         expect(
           () async => await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.vary,
             headers: {'vary': ''},
           ),
           throwsA(isA<BadRequestException>().having(
@@ -44,6 +44,7 @@ void main() {
         expect(
           () async => await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.vary,
             headers: {'vary': '* , User-Agent'},
           ),
           throwsA(
@@ -64,8 +65,8 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (_) {},
           headers: {'vary': '* , User-Agent'},
-          eagerParseHeaders: false,
         );
 
         expect(headers, isNotNull);
@@ -77,6 +78,7 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.vary,
           headers: {'vary': 'Accept-Encoding, User-Agent'},
         );
 
@@ -92,6 +94,7 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.vary,
           headers: {'vary': ' Accept-Encoding , User-Agent '},
         );
 
@@ -107,6 +110,7 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.vary,
           headers: {'vary': '*'},
         );
 
@@ -120,11 +124,11 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.vary,
           headers: {},
         );
 
-        expect(headers.vary_.valueOrNullIfInvalid, isNull);
-        expect(() => headers.vary, throwsA(isA<InvalidHeaderException>()));
+        expect(headers.vary, isNull);
       },
     );
   });
@@ -144,6 +148,7 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (_) {},
             headers: {'vary': ''},
           );
 

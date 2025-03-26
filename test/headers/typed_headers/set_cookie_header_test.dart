@@ -7,8 +7,7 @@ import '../headers_test_utils.dart';
 
 /// Reference: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie
 void main() {
-  group('Given a Set-Cookie header with the strict flag true',
-      skip: 'drop strict mode', () {
+  group('Given a Set-Cookie header with the strict flag true', () {
     late RelicServer server;
 
     setUp(() async {
@@ -24,6 +23,7 @@ void main() {
         expect(
           () async => await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.setCookie,
             headers: {'set-cookie': ''},
           ),
           throwsA(
@@ -45,6 +45,7 @@ void main() {
         expect(
           () async => await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.setCookie,
             headers: {
               'set-cookie': 'sessionId=abc123; Max-Age=3600; Max-Age=7200'
             },
@@ -66,6 +67,7 @@ void main() {
         expect(
           () async => await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.setCookie,
             headers: {'set-cookie': 'sessionId=abc123; SameSite=Invalid'},
           ),
           throwsA(isA<BadRequestException>().having(
@@ -85,6 +87,7 @@ void main() {
         expect(
           () async => await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.setCookie,
             headers: {'set-cookie': 'sessionId=test; userId=42'},
           ),
           throwsA(
@@ -105,6 +108,7 @@ void main() {
         expect(
           () async => await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.setCookie,
             headers: {'set-cookie': 'sessionId=abc123; invalidCookie'},
           ),
           throwsA(
@@ -125,6 +129,7 @@ void main() {
         expect(
           () async => await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.setCookie,
             headers: {'set-cookie': 'invalid name=abc123'},
           ),
           throwsA(
@@ -145,6 +150,7 @@ void main() {
         expect(
           () async => await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.setCookie,
             headers: {'set-cookie': 'userId=42\x7F'},
           ),
           throwsA(
@@ -165,8 +171,8 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (_) {},
           headers: {'set-cookie': 'userId=42\x7F'},
-          eagerParseHeaders: false,
         );
 
         expect(headers, isNotNull);
@@ -178,6 +184,7 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.setCookie,
           headers: {'set-cookie': '=abc123'},
         );
 
@@ -191,6 +198,7 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (_) {},
           headers: {
             'set-cookie':
                 'sessionId=abc123; Expires=Wed, 21 Oct 2025 07:28:00 GMT; Max-Age=3600; Domain=example.com; Path=/; Secure; HttpOnly; SameSite=Strict'
@@ -214,6 +222,7 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.setCookie,
           headers: {'set-cookie': ' sessionId=abc123 ; Secure '},
         );
 
@@ -239,6 +248,7 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (_) {},
             headers: {'set-cookie': 'sessionId=abc123; invalidCookie'},
           );
 

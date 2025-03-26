@@ -8,8 +8,7 @@ import '../docs/strict_validation_docs.dart';
 /// Reference: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Encoding
 /// About empty value test, check the [StrictValidationDocs] class for more details.
 void main() {
-  group('Given a Content-Encoding header with the strict flag true',
-      skip: 'drop strict mode', () {
+  group('Given a Content-Encoding header with the strict flag true', () {
     late RelicServer server;
 
     setUp(() async {
@@ -26,6 +25,7 @@ void main() {
         expect(
           () async => await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.contentEncoding,
             headers: {'content-encoding': ''},
           ),
           throwsA(
@@ -47,6 +47,7 @@ void main() {
         expect(
           () async => await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.contentEncoding,
             headers: {'content-encoding': 'custom-encoding'},
           ),
           throwsA(
@@ -67,8 +68,8 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (_) {},
           headers: {'content-encoding': 'custom-encoding'},
-          eagerParseHeaders: false,
         );
 
         expect(headers, isNotNull);
@@ -80,6 +81,7 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.contentEncoding,
           headers: {'content-encoding': 'gzip'},
         );
 
@@ -95,12 +97,11 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.contentEncoding,
           headers: {},
         );
 
-        expect(headers.contentEncoding_.valueOrNullIfInvalid, isNull);
-        expect(() => headers.contentEncoding,
-            throwsA(isA<InvalidHeaderException>()));
+        expect(headers.contentEncoding, isNull);
       },
     );
 
@@ -110,6 +111,7 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.contentEncoding,
             headers: {'content-encoding': 'gzip, deflate'},
           );
 
@@ -125,6 +127,7 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.contentEncoding,
             headers: {'content-encoding': ' gzip , deflate '},
           );
 
@@ -140,6 +143,7 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.contentEncoding,
             headers: {'content-encoding': 'gzip, deflate, gzip'},
           );
 
@@ -167,6 +171,7 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (_) {},
             headers: {'content-encoding': ''},
           );
 

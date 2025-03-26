@@ -10,7 +10,6 @@ import '../headers_test_utils.dart';
 void main() {
   group(
     'Given an Accept-Language header with the strict flag true',
-    skip: 'todo: drop strict mode',
     () {
       late RelicServer server;
 
@@ -28,6 +27,7 @@ void main() {
           expect(
             () async => await getServerRequestHeaders(
               server: server,
+              touchHeaders: (h) => h.acceptLanguage,
               headers: {'accept-language': ''},
             ),
             throwsA(
@@ -49,6 +49,7 @@ void main() {
           expect(
             () async => await getServerRequestHeaders(
               server: server,
+              touchHeaders: (h) => h.acceptLanguage,
               headers: {'accept-language': 'en;q=abc'},
             ),
             throwsA(
@@ -70,6 +71,7 @@ void main() {
           expect(
             () async => await getServerRequestHeaders(
               server: server,
+              touchHeaders: (h) => h.acceptLanguage,
               headers: {'accept-language': '*, en'},
             ),
             throwsA(
@@ -91,6 +93,7 @@ void main() {
           expect(
             () async => await getServerRequestHeaders(
               server: server,
+              touchHeaders: (h) => h.acceptLanguage,
               headers: {'accept-language': ';q=0.5'},
             ),
             throwsA(
@@ -111,8 +114,8 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (_) {},
             headers: {'accept-language': ';q=0.5'},
-            eagerParseHeaders: false,
           );
 
           expect(headers, isNotNull);
@@ -125,6 +128,7 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.acceptLanguage,
             headers: {'accept-language': 'en'},
           );
 
@@ -141,6 +145,7 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.acceptLanguage,
             headers: {'accept-language': 'en'},
           );
 
@@ -157,6 +162,7 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.acceptLanguage,
             headers: {'accept-language': 'En'},
           );
 
@@ -172,12 +178,11 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.acceptLanguage,
             headers: {},
           );
 
-          expect(headers.acceptLanguage_.valueOrNullIfInvalid, isNull);
-          expect(() => headers.acceptLanguage,
-              throwsA(isA<InvalidHeaderException>()));
+          expect(headers.acceptLanguage, isNull);
         },
       );
 
@@ -186,6 +191,7 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.acceptLanguage,
             headers: {'accept-language': '*'},
           );
 
@@ -200,6 +206,7 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.acceptLanguage,
             headers: {'accept-language': '*;q=0.5'},
           );
 
@@ -220,6 +227,7 @@ void main() {
           () async {
             var headers = await getServerRequestHeaders(
               server: server,
+              touchHeaders: (h) => h.acceptLanguage,
               headers: {'accept-language': 'en, fr, de'},
             );
 
@@ -237,6 +245,7 @@ void main() {
           () async {
             var headers = await getServerRequestHeaders(
               server: server,
+              touchHeaders: (h) => h.acceptLanguage,
               headers: {'accept-language': 'en, fr, de'},
             );
 
@@ -252,6 +261,7 @@ void main() {
           () async {
             var headers = await getServerRequestHeaders(
               server: server,
+              touchHeaders: (h) => h.acceptLanguage,
               headers: {'accept-language': 'en;q=1.0, fr;q=0.5, de;q=0.8'},
             );
 
@@ -269,6 +279,7 @@ void main() {
           () async {
             var headers = await getServerRequestHeaders(
               server: server,
+              touchHeaders: (h) => h.acceptLanguage,
               headers: {'accept-language': 'en;q=1.0, fr;q=0.5, de;q=0.8'},
             );
 
@@ -284,6 +295,7 @@ void main() {
           () async {
             var headers = await getServerRequestHeaders(
               server: server,
+              touchHeaders: (h) => h.acceptLanguage,
               headers: {'accept-language': 'en, en, fr, de'},
             );
 
@@ -301,6 +313,7 @@ void main() {
           () async {
             var headers = await getServerRequestHeaders(
               server: server,
+              touchHeaders: (h) => h.acceptLanguage,
               headers: {'accept-language': 'en, en, fr, de'},
             );
 
@@ -316,6 +329,7 @@ void main() {
           () async {
             var headers = await getServerRequestHeaders(
               server: server,
+              touchHeaders: (h) => h.acceptLanguage,
               headers: {'accept-language': ' en , fr , de '},
             );
 
@@ -333,6 +347,7 @@ void main() {
           () async {
             var headers = await getServerRequestHeaders(
               server: server,
+              touchHeaders: (h) => h.acceptLanguage,
               headers: {'accept-language': ' en , fr , de '},
             );
 
@@ -363,6 +378,7 @@ void main() {
           () async {
             var headers = await getServerRequestHeaders(
               server: server,
+              touchHeaders: (_) {},
               headers: {'accept-language': ''},
             );
 
@@ -381,6 +397,7 @@ void main() {
             () async {
               var headers = await getServerRequestHeaders(
                 server: server,
+                touchHeaders: (_) {},
                 headers: {'accept-language': 'en;q=abc, fr, de'},
               );
 

@@ -8,8 +8,7 @@ import '../docs/strict_validation_docs.dart';
 /// Reference: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Range
 /// About empty value test, check the [StrictValidationDocs] class for more details.
 void main() {
-  group('Given a Content-Range header with the strict flag true',
-      skip: 'drop strict mode', () {
+  group('Given a Content-Range header with the strict flag true', () {
     late RelicServer server;
 
     setUp(() async {
@@ -26,6 +25,7 @@ void main() {
         expect(
           () async => await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.contentRange,
             headers: {'content-range': ''},
           ),
           throwsA(
@@ -47,6 +47,7 @@ void main() {
         expect(
           () async => await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.contentRange,
             headers: {'content-range': 'bytes 0-abc/1234'},
           ),
           throwsA(
@@ -68,6 +69,7 @@ void main() {
         expect(
           () async => await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.contentRange,
             headers: {'content-range': 'bytes -10-499/1234'},
           ),
           throwsA(
@@ -89,6 +91,7 @@ void main() {
         expect(
           () async => await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.contentRange,
             headers: {'content-range': 'bytes 500-499/1234'},
           ),
           throwsA(
@@ -109,8 +112,8 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (_) {},
           headers: {'content-range': 'bytes 500-499/1234'},
-          eagerParseHeaders: false,
         );
 
         expect(headers, isNotNull);
@@ -123,6 +126,7 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.contentRange,
           headers: {'content-range': 'bytes 0-499/1234'},
         );
 
@@ -139,6 +143,7 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.contentRange,
           headers: {'content-range': 'bytes 0-499/*'},
         );
 
@@ -155,6 +160,7 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.contentRange,
           headers: {'content-range': 'bytes */1234'},
         );
 
@@ -170,12 +176,11 @@ void main() {
       () async {
         var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.contentRange,
           headers: {},
         );
 
-        expect(headers.contentRange_.valueOrNullIfInvalid, isNull);
-        expect(
-            () => headers.contentRange, throwsA(isA<InvalidHeaderException>()));
+        expect(headers.contentRange, isNull);
       },
     );
   });
@@ -195,6 +200,7 @@ void main() {
         () async {
           var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (_) {},
             headers: {'content-range': 'bytes 0-499/invalid'},
           );
 
