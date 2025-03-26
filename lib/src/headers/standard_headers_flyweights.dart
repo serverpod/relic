@@ -80,7 +80,7 @@ const accessControlRequestMethod = HeaderFlyweight<RequestMethod>(
 
 const age = HeaderFlyweight<int>(
   Headers.ageHeader,
-  HeaderDecoderSingle(int.parse),
+  HeaderDecoderSingle(parsePositiveInt),
 );
 
 const authorization = HeaderFlyweight<AuthorizationHeader>(
@@ -120,7 +120,7 @@ const ifRange = HeaderFlyweight<IfRangeHeader>(
 
 const maxForwards = HeaderFlyweight<int>(
   Headers.maxForwardsHeader,
-  HeaderDecoderSingle(int.parse),
+  HeaderDecoderSingle(parsePositiveInt),
 );
 
 const proxyAuthorization = HeaderFlyweight<AuthorizationHeader>(
@@ -157,7 +157,7 @@ const upgrade = HeaderFlyweight<UpgradeHeader>(
 
 const location = HeaderFlyweight<Uri>(
   Headers.locationHeader,
-  HeaderDecoderSingle(Uri.parse),
+  HeaderDecoderSingle(parseUri),
 );
 
 const xPoweredBy = HeaderFlyweight<String>(
