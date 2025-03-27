@@ -10,7 +10,6 @@ import '../docs/strict_validation_docs.dart';
 void main() {
   group(
     'Given an X-Powered-By header with the strict flag true',
-    //
     () {
       late RelicServer server;
 
@@ -51,47 +50,20 @@ void main() {
           expect(headers.xPoweredBy, equals('Express'));
         },
       );
-
-      test(
-        'when no X-Powered-By header is passed then it should default to Relic',
-        () async {
-          var headers = await getServerRequestHeaders(
-            server: server,
-            headers: {},
-            touchHeaders: (h) => h.xPoweredBy,
-          );
-
-          expect(headers.xPoweredBy, equals('Relic'));
-        },
-      );
     },
   );
 
-  group('Given an X-Powered-By header with the strict flag false', () {
-    late RelicServer server;
+  group(
+    'Given an X-Powered-By header with the strict flag false',
+    skip: 'x-powered-by is a response header (stripped on get request)',
+    () {
+      late RelicServer server;
 
-    setUp(() async {
-      server = await createServer(strictHeaders: false);
-    });
+      setUp(() async {
+        server = await createServer(strictHeaders: false);
+      });
 
-    tearDown(() => server.close());
-
-    group(
-      'when an invalid X-Powered-By header is passed',
-      () {
-        test(
-          'when an invalid X-Powered-By header is passed then it should default to Relic',
-          () async {
-            var headers = await getServerRequestHeaders(
-              server: server,
-              touchHeaders: (_) {},
-              headers: {'x-powered-by': ''},
-            );
-
-            expect(headers.xPoweredBy, equals('Relic'));
-          },
-        );
-      },
-    );
-  });
+      tearDown(() => server.close());
+    },
+  );
 }
