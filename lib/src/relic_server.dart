@@ -152,14 +152,13 @@ class RelicServer {
     try {
       response = await handler(relicRequest);
 
-      // If the response doesn't have a powered by header, add the default one.
-      if (response.headers.xPoweredBy == null) {
-        response = response.copyWith(
-          headers: response.headers.transform(
-            (mh) => mh.xPoweredBy = poweredByHeader,
-          ),
-        );
-      }
+      // If the response doesn't have a powered-by or date header, add the default ones
+      response = response.copyWith(
+        headers: response.headers.transform((mh) {
+          mh.xPoweredBy ??= poweredByHeader;
+          mh.date ??= DateTime.now();
+        }),
+      );
     } on InvalidHeaderException catch (error, stackTrace) {
       // If the request headers are invalid, respond with a 400 Bad Request status.
       _logError(

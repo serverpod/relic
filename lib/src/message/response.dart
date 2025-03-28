@@ -287,20 +287,12 @@ class Response extends Message {
     Map<String, Object>? context,
   }) : super(
           body: body ?? Body.empty(),
-          headers: _ensureDate(headers),
+          headers: headers ?? Headers.empty(),
           context: context ?? {},
         ) {
     if (statusCode < 100) {
       throw ArgumentError('Invalid status code: $statusCode.');
     }
-  }
-
-  static Headers _ensureDate(Headers? headers) {
-    headers ??= Headers.empty();
-    if (!headers.date_.isSet) {
-      headers = headers.transform((mh) => mh.date ??= DateTime.now());
-    }
-    return headers;
   }
 
   /// Creates a new [Response] by copying existing values and applying specified
