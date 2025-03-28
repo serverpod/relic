@@ -345,9 +345,8 @@ void main() {
             headers: {'accept-encoding': ''},
           );
 
-          expect(headers.acceptEncoding_.valueOrNullIfInvalid, isNull);
-          expect(() => headers.acceptEncoding,
-              throwsA(isA<InvalidHeaderException>()));
+          expect(Headers.acceptEncoding[headers].valueOrNullIfInvalid, isNull);
+          expect(() => headers.acceptEncoding, throwsInvalidHeader);
         },
       );
     });
@@ -363,9 +362,8 @@ void main() {
             headers: {'accept-encoding': 'gzip;q=abc, deflate, br'},
           );
 
-          expect(headers.acceptEncoding_.valueOrNullIfInvalid, isNull);
-          expect(() => headers.acceptEncoding,
-              throwsA(isA<InvalidHeaderException>()));
+          expect(Headers.acceptEncoding[headers].valueOrNullIfInvalid, isNull);
+          expect(() => headers.acceptEncoding, throwsInvalidHeader);
         },
       );
     });

@@ -181,9 +181,8 @@ void main() {
             headers: {'location': 'ht!tp://invalid-url'},
           );
 
-          expect(headers.location_.valueOrNullIfInvalid, isNull);
-          expect(
-              () => headers.location, throwsA(isA<InvalidHeaderException>()));
+          expect(Headers.location[headers].valueOrNullIfInvalid, isNull);
+          expect(() => headers.location, throwsInvalidHeader);
         },
       );
     });

@@ -142,9 +142,8 @@ void main() {
             headers: {'if-modified-since': ''},
           );
 
-          expect(headers.ifModifiedSince_.valueOrNullIfInvalid, isNull);
-          expect(() => headers.ifModifiedSince,
-              throwsA(isA<InvalidHeaderException>()));
+          expect(Headers.ifModifiedSince[headers].valueOrNullIfInvalid, isNull);
+          expect(() => headers.ifModifiedSince, throwsInvalidHeader);
         },
       );
     });
@@ -159,9 +158,8 @@ void main() {
             headers: {'if-modified-since': 'invalid-date-format'},
           );
 
-          expect(headers.ifModifiedSince_.valueOrNullIfInvalid, isNull);
-          expect(() => headers.ifModifiedSince,
-              throwsA(isA<InvalidHeaderException>()));
+          expect(Headers.ifModifiedSince[headers].valueOrNullIfInvalid, isNull);
+          expect(() => headers.ifModifiedSince, throwsInvalidHeader);
         },
       );
     });

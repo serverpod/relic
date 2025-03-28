@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:relic/relic.dart';
 import 'package:http/http.dart' as http;
+import 'package:test/test.dart';
 
 /// Thrown when the server returns a 400 status code.
 class BadRequestException implements Exception {
@@ -102,3 +103,6 @@ Future<Headers> getServerRequestHeaders({
 
   return requestHeaders;
 }
+
+Matcher throwsInvalidHeader = throwsA(isA<InvalidHeaderException>());
+Matcher throwsMissingHeader = throwsA(isA<MissingHeaderException>());

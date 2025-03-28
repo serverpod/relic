@@ -128,9 +128,9 @@ void main() {
             headers: {'content-security-policy': ''},
           );
 
-          expect(headers.contentSecurityPolicy_.valueOrNullIfInvalid, isNull);
-          expect(() => headers.contentSecurityPolicy,
-              throwsA(isA<InvalidHeaderException>()));
+          expect(Headers.contentSecurityPolicy[headers].valueOrNullIfInvalid,
+              isNull);
+          expect(() => headers.contentSecurityPolicy, throwsInvalidHeader);
         },
       );
     });

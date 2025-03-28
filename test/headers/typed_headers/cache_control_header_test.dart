@@ -346,9 +346,8 @@ void main() {
             headers: {'cache-control': 'invalid-directive'},
           );
 
-          expect(headers.cacheControl_.valueOrNullIfInvalid, isNull);
-          expect(() => headers.cacheControl,
-              throwsA(isA<InvalidHeaderException>()));
+          expect(Headers.cacheControl[headers].valueOrNullIfInvalid, isNull);
+          expect(() => headers.cacheControl, throwsInvalidHeader);
         },
       );
     });

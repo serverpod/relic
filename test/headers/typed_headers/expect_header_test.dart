@@ -109,8 +109,8 @@ void main() {
             headers: {'expect': ''},
           );
 
-          expect(headers.expect_.valueOrNullIfInvalid, isNull);
-          expect(() => headers.expect, throwsA(isA<InvalidHeaderException>()));
+          expect(Headers.expect[headers].valueOrNullIfInvalid, isNull);
+          expect(() => headers.expect, throwsInvalidHeader);
         },
       );
     });

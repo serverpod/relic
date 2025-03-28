@@ -145,8 +145,8 @@ void main() {
             headers: {'date': ''},
           );
 
-          expect(headers.date_.valueOrNullIfInvalid, isNull);
-          expect(() => headers.date, throwsA(isA<InvalidHeaderException>()));
+          expect(Headers.date[headers].valueOrNullIfInvalid, isNull);
+          expect(() => headers.date, throwsInvalidHeader);
         },
       );
     });
@@ -161,8 +161,8 @@ void main() {
             headers: {'date': 'invalid-date-format'},
           );
 
-          expect(headers.date_.valueOrNullIfInvalid, isNull);
-          expect(() => headers.date, throwsA(isA<InvalidHeaderException>()));
+          expect(Headers.date[headers].valueOrNullIfInvalid, isNull);
+          expect(() => headers.date, throwsInvalidHeader);
         },
       );
     });

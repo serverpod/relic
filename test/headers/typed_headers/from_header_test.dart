@@ -213,8 +213,8 @@ void main() {
             headers: {'from': 'invalid-email-format'},
           );
 
-          expect(headers.from_.valueOrNullIfInvalid, isNull);
-          expect(() => headers.from, throwsA(isA<InvalidHeaderException>()));
+          expect(Headers.from[headers].valueOrNullIfInvalid, isNull);
+          expect(() => headers.from, throwsInvalidHeader);
         },
       );
     });

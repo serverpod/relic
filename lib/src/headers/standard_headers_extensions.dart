@@ -1,343 +1,281 @@
 import 'package:relic/src/method/request_method.dart';
 import 'headers.dart';
-import 'header_flyweight.dart';
-import 'standard_headers_flyweights.dart' as std;
 import 'typed/typed_headers.dart';
 
-extension StandardHeadersBaseEx on HeadersBase {
-  Header<DateTime> get date_ => std.date[this];
-  Header<DateTime> get expires_ => std.expires[this];
-  Header<DateTime> get lastModified_ => std.lastModified[this];
-  Header<DateTime> get ifModifiedSince_ => std.ifModifiedSince[this];
-  Header<DateTime> get ifUnmodifiedSince_ => std.ifUnmodifiedSince[this];
-  Header<Uri> get origin_ => std.origin[this];
-  Header<String> get server_ => std.server[this];
-  Header<List<String>> get via_ => std.via[this];
-  Header<FromHeader> get from_ => std.from[this];
-  Header<Uri> get host_ => std.host[this];
-  Header<AcceptEncodingHeader> get acceptEncoding_ => std.acceptEncoding[this];
-  Header<AcceptLanguageHeader> get acceptLanguage_ => std.acceptLanguage[this];
-  Header<List<String>> get accessControlRequestHeaders_ =>
-      std.accessControlRequestHeaders[this];
-  Header<RequestMethod> get accessControlRequestMethod_ =>
-      std.accessControlRequestMethod[this];
-  Header<int> get age_ => std.age[this];
-  Header<AuthorizationHeader> get authorization_ => std.authorization[this];
-  Header<ConnectionHeader> get connection_ => std.connection[this];
-  Header<int> get contentLength_ => std.contentLength[this];
-  Header<ExpectHeader> get expect_ => std.expect[this];
-  Header<IfMatchHeader> get ifMatch_ => std.ifMatch[this];
-  Header<IfNoneMatchHeader> get ifNoneMatch_ => std.ifNoneMatch[this];
-  Header<IfRangeHeader> get ifRange_ => std.ifRange[this];
-  Header<int> get maxForwards_ => std.maxForwards[this];
-  Header<AuthorizationHeader> get proxyAuthorization_ =>
-      std.proxyAuthorization[this];
-  Header<RangeHeader> get range_ => std.range[this];
-  Header<Uri> get referer_ => std.referer[this];
-  Header<String> get userAgent_ => std.userAgent[this];
-  Header<TEHeader> get te_ => std.te[this];
-  Header<UpgradeHeader> get upgrade_ => std.upgrade[this];
-  Header<Uri> get location_ => std.location[this];
-  Header<String> get xPoweredBy_ => std.xPoweredBy[this];
-  Header<AccessControlAllowOriginHeader> get accessControlAllowOrigin_ =>
-      std.accessControlAllowOrigin[this];
-  Header<AccessControlExposeHeadersHeader> get accessControlExposeHeaders_ =>
-      std.accessControlExposeHeaders[this];
-  Header<int> get accessControlMaxAge_ => std.accessControlMaxAge[this];
-  Header<List<RequestMethod>> get allow_ => std.allow[this];
-  Header<CacheControlHeader> get cacheControl_ => std.cacheControl[this];
-  Header<ContentEncodingHeader> get contentEncoding_ =>
-      std.contentEncoding[this];
-  Header<ContentLanguageHeader> get contentLanguage_ =>
-      std.contentLanguage[this];
-  Header<Uri> get contentLocation_ => std.contentLocation[this];
-  Header<ContentRangeHeader> get contentRange_ => std.contentRange[this];
-  Header<ETagHeader> get etag_ => std.etag[this];
-  Header<AuthenticationHeader> get proxyAuthenticate_ =>
-      std.proxyAuthenticate[this];
-  Header<RetryAfterHeader> get retryAfter_ => std.retryAfter[this];
-  Header<List<String>> get trailer_ => std.trailer[this];
-  Header<VaryHeader> get vary_ => std.vary[this];
-  Header<AuthenticationHeader> get wwwAuthenticate_ =>
-      std.wwwAuthenticate[this];
-  Header<ContentDispositionHeader> get contentDisposition_ =>
-      std.contentDisposition[this];
-  Header<AcceptHeader> get accept_ => std.accept[this];
-  Header<AcceptRangesHeader> get acceptRanges_ => std.acceptRanges[this];
-  Header<TransferEncodingHeader> get transferEncoding_ =>
-      std.transferEncoding[this];
-  Header<CookieHeader> get cookie_ => std.cookie[this];
-  Header<SetCookieHeader> get setCookie_ => std.setCookie[this];
-  Header<StrictTransportSecurityHeader> get strictTransportSecurity_ =>
-      std.strictTransportSecurity[this];
-  Header<ContentSecurityPolicyHeader> get contentSecurityPolicy_ =>
-      std.contentSecurityPolicy[this];
-  Header<ReferrerPolicyHeader> get referrerPolicy_ => std.referrerPolicy[this];
-  Header<PermissionsPolicyHeader> get permissionsPolicy_ =>
-      std.permissionsPolicy[this];
-  Header<bool> get accessControlAllowCredentials_ =>
-      std.accessControlAllowCredentials[this];
-  Header<AccessControlAllowMethodsHeader> get accessControlAllowMethods_ =>
-      std.accessControlAllowMethods[this];
-  Header<AccessControlAllowHeadersHeader> get accessControlAllowHeaders_ =>
-      std.accessControlAllowHeaders[this];
-  Header<ClearSiteDataHeader> get clearSiteData_ => std.clearSiteData[this];
-  Header<SecFetchDestHeader> get secFetchDest_ => std.secFetchDest[this];
-  Header<SecFetchModeHeader> get secFetchMode_ => std.secFetchMode[this];
-  Header<SecFetchSiteHeader> get secFetchSite_ => std.secFetchSite[this];
-  Header<CrossOriginResourcePolicyHeader> get crossOriginResourcePolicy_ =>
-      std.crossOriginResourcePolicy[this];
-  Header<CrossOriginEmbedderPolicyHeader> get crossOriginEmbedderPolicy_ =>
-      std.crossOriginEmbedderPolicy[this];
-  Header<CrossOriginOpenerPolicyHeader> get crossOriginOpenerPolicy_ =>
-      std.crossOriginOpenerPolicy[this];
-}
-
-extension StandardHeadersExtensions on Headers {
-  DateTime? get date => date_();
-  DateTime? get expires => expires_();
-  DateTime? get lastModified => lastModified_();
-  DateTime? get ifModifiedSince => ifModifiedSince_();
-  DateTime? get ifUnmodifiedSince => ifUnmodifiedSince_();
-  Uri? get origin => origin_();
-  String? get server => server_();
-  List<String>? get via => via_();
-  FromHeader? get from => from_();
-  Uri? get host => host_();
-  AcceptEncodingHeader? get acceptEncoding => acceptEncoding_();
-  AcceptLanguageHeader? get acceptLanguage => acceptLanguage_();
+extension HeadersEx on Headers {
+  DateTime? get date => Headers.date[this]();
+  DateTime? get expires => Headers.expires[this]();
+  DateTime? get lastModified => Headers.lastModified[this]();
+  DateTime? get ifModifiedSince => Headers.ifModifiedSince[this]();
+  DateTime? get ifUnmodifiedSince => Headers.ifUnmodifiedSince[this]();
+  Uri? get origin => Headers.origin[this]();
+  String? get server => Headers.server[this]();
+  List<String>? get via => Headers.via[this]();
+  FromHeader? get from => Headers.from[this]();
+  Uri? get host => Headers.host[this]();
+  AcceptEncodingHeader? get acceptEncoding => Headers.acceptEncoding[this]();
+  AcceptLanguageHeader? get acceptLanguage => Headers.acceptLanguage[this]();
   List<String>? get accessControlRequestHeaders =>
-      accessControlRequestHeaders_();
+      Headers.accessControlRequestHeaders[this]();
   RequestMethod? get accessControlRequestMethod =>
-      accessControlRequestMethod_();
-  int? get age => age_();
-  AuthorizationHeader? get authorization => authorization_();
-  ConnectionHeader? get connection => connection_();
-  int? get contentLength => contentLength_();
-  ExpectHeader? get expect => expect_();
-  IfMatchHeader? get ifMatch => ifMatch_();
-  IfNoneMatchHeader? get ifNoneMatch => ifNoneMatch_();
-  IfRangeHeader? get ifRange => ifRange_();
-  int? get maxForwards => maxForwards_();
-  AuthorizationHeader? get proxyAuthorization => proxyAuthorization_();
-  RangeHeader? get range => range_();
-  Uri? get referer => referer_();
-  String? get userAgent => userAgent_();
-  TEHeader? get te => te_();
-  UpgradeHeader? get upgrade => upgrade_();
-  Uri? get location => location_();
-  String? get xPoweredBy => xPoweredBy_();
+      Headers.accessControlRequestMethod[this]();
+  int? get age => Headers.age[this]();
+  AuthorizationHeader? get authorization => Headers.authorization[this]();
+  ConnectionHeader? get connection => Headers.connection[this]();
+  int? get contentLength => Headers.contentLength[this]();
+  ExpectHeader? get expect => Headers.expect[this]();
+  IfMatchHeader? get ifMatch => Headers.ifMatch[this]();
+  IfNoneMatchHeader? get ifNoneMatch => Headers.ifNoneMatch[this]();
+  IfRangeHeader? get ifRange => Headers.ifRange[this]();
+  int? get maxForwards => Headers.maxForwards[this]();
+  AuthorizationHeader? get proxyAuthorization =>
+      Headers.proxyAuthorization[this]();
+  RangeHeader? get range => Headers.range[this]();
+  Uri? get referer => Headers.referer[this]();
+  String? get userAgent => Headers.userAgent[this]();
+  TEHeader? get te => Headers.te[this]();
+  UpgradeHeader? get upgrade => Headers.upgrade[this]();
+  Uri? get location => Headers.location[this]();
+  String? get xPoweredBy => Headers.xPoweredBy[this]();
   AccessControlAllowOriginHeader? get accessControlAllowOrigin =>
-      accessControlAllowOrigin_();
+      Headers.accessControlAllowOrigin[this]();
   AccessControlExposeHeadersHeader? get accessControlExposeHeaders =>
-      accessControlExposeHeaders_();
-  int? get accessControlMaxAge => accessControlMaxAge_();
-  List<RequestMethod>? get allow => allow_();
-  CacheControlHeader? get cacheControl => cacheControl_();
-  ContentEncodingHeader? get contentEncoding => contentEncoding_();
-  ContentLanguageHeader? get contentLanguage => contentLanguage_();
-  Uri? get contentLocation => contentLocation_();
-  ContentRangeHeader? get contentRange => contentRange_();
-  ETagHeader? get etag => etag_();
-  AuthenticationHeader? get proxyAuthenticate => proxyAuthenticate_();
-  RetryAfterHeader? get retryAfter => retryAfter_();
-  List<String>? get trailer => trailer_();
-  VaryHeader? get vary => vary_();
-  AuthenticationHeader? get wwwAuthenticate => wwwAuthenticate_();
-  ContentDispositionHeader? get contentDisposition => contentDisposition_();
-  AcceptHeader? get accept => accept_();
-  AcceptRangesHeader? get acceptRanges => acceptRanges_();
-  TransferEncodingHeader? get transferEncoding => transferEncoding_();
-  CookieHeader? get cookie => cookie_();
-  SetCookieHeader? get setCookie => setCookie_();
+      Headers.accessControlExposeHeaders[this]();
+  int? get accessControlMaxAge => Headers.accessControlMaxAge[this]();
+  List<RequestMethod>? get allow => Headers.allow[this]();
+  CacheControlHeader? get cacheControl => Headers.cacheControl[this]();
+  ContentEncodingHeader? get contentEncoding => Headers.contentEncoding[this]();
+  ContentLanguageHeader? get contentLanguage => Headers.contentLanguage[this]();
+  Uri? get contentLocation => Headers.contentLocation[this]();
+  ContentRangeHeader? get contentRange => Headers.contentRange[this]();
+  ETagHeader? get etag => Headers.etag[this]();
+  AuthenticationHeader? get proxyAuthenticate =>
+      Headers.proxyAuthenticate[this]();
+  RetryAfterHeader? get retryAfter => Headers.retryAfter[this]();
+  List<String>? get trailer => Headers.trailer[this]();
+  VaryHeader? get vary => Headers.vary[this]();
+  AuthenticationHeader? get wwwAuthenticate => Headers.wwwAuthenticate[this]();
+  ContentDispositionHeader? get contentDisposition =>
+      Headers.contentDisposition[this]();
+  AcceptHeader? get accept => Headers.accept[this]();
+  AcceptRangesHeader? get acceptRanges => Headers.acceptRanges[this]();
+  TransferEncodingHeader? get transferEncoding =>
+      Headers.transferEncoding[this]();
+  CookieHeader? get cookie => Headers.cookie[this]();
+  SetCookieHeader? get setCookie => Headers.setCookie[this]();
   StrictTransportSecurityHeader? get strictTransportSecurity =>
-      strictTransportSecurity_();
+      Headers.strictTransportSecurity[this]();
   ContentSecurityPolicyHeader? get contentSecurityPolicy =>
-      contentSecurityPolicy_();
-  ReferrerPolicyHeader? get referrerPolicy => referrerPolicy_();
-  PermissionsPolicyHeader? get permissionsPolicy => permissionsPolicy_();
-  bool? get accessControlAllowCredentials => accessControlAllowCredentials_();
+      Headers.contentSecurityPolicy[this]();
+  ReferrerPolicyHeader? get referrerPolicy => Headers.referrerPolicy[this]();
+  PermissionsPolicyHeader? get permissionsPolicy =>
+      Headers.permissionsPolicy[this]();
+  bool? get accessControlAllowCredentials =>
+      Headers.accessControlAllowCredentials[this]();
   AccessControlAllowMethodsHeader? get accessControlAllowMethods =>
-      accessControlAllowMethods_();
+      Headers.accessControlAllowMethods[this]();
   AccessControlAllowHeadersHeader? get accessControlAllowHeaders =>
-      accessControlAllowHeaders_();
-  ClearSiteDataHeader? get clearSiteData => clearSiteData_();
-  SecFetchDestHeader? get secFetchDest => secFetchDest_();
-  SecFetchModeHeader? get secFetchMode => secFetchMode_();
-  SecFetchSiteHeader? get secFetchSite => secFetchSite_();
+      Headers.accessControlAllowHeaders[this]();
+  ClearSiteDataHeader? get clearSiteData => Headers.clearSiteData[this]();
+  SecFetchDestHeader? get secFetchDest => Headers.secFetchDest[this]();
+  SecFetchModeHeader? get secFetchMode => Headers.secFetchMode[this]();
+  SecFetchSiteHeader? get secFetchSite => Headers.secFetchSite[this]();
   CrossOriginResourcePolicyHeader? get crossOriginResourcePolicy =>
-      crossOriginResourcePolicy_();
+      Headers.crossOriginResourcePolicy[this]();
   CrossOriginEmbedderPolicyHeader? get crossOriginEmbedderPolicy =>
-      crossOriginEmbedderPolicy_();
+      Headers.crossOriginEmbedderPolicy[this]();
   CrossOriginOpenerPolicyHeader? get crossOriginOpenerPolicy =>
-      crossOriginOpenerPolicy_();
+      Headers.crossOriginOpenerPolicy[this]();
 }
 
-extension StandardMutableHeadersExtensions on MutableHeaders {
-  set date(DateTime? value) => date_.set(value);
-  set expires(DateTime? value) => expires_.set(value);
-  set lastModified(DateTime? value) => lastModified_.set(value);
-  set ifModifiedSince(DateTime? value) => ifModifiedSince_.set(value);
-  set ifUnmodifiedSince(DateTime? value) => ifUnmodifiedSince_.set(value);
-  set origin(Uri? value) => origin_.set(value);
-  set server(String? value) => server_.set(value);
-  set via(List<String>? value) => via_.set(value);
-  set from(FromHeader? value) => from_.set(value);
-  set host(Uri? value) => host_.set(value);
-  set acceptEncoding(AcceptEncodingHeader? value) => acceptEncoding_.set(value);
-  set acceptLanguage(AcceptLanguageHeader? value) => acceptLanguage_.set(value);
-  set accessControlRequestHeader(List<String>? value) =>
-      accessControlRequestHeaders_.set(value);
+extension MutableHeadersEx on MutableHeaders {
+  set date(DateTime? value) => Headers.date[this].set(value);
+  set expires(DateTime? value) => Headers.expires[this].set(value);
+  set lastModified(DateTime? value) => Headers.lastModified[this].set(value);
+  set ifModifiedSince(DateTime? value) =>
+      Headers.ifModifiedSince[this].set(value);
+  set ifUnmodifiedSince(DateTime? value) =>
+      Headers.ifUnmodifiedSince[this].set(value);
+  set origin(Uri? value) => Headers.origin[this].set(value);
+  set server(String? value) => Headers.server[this].set(value);
+  set via(List<String>? value) => Headers.via[this].set(value);
+  set from(FromHeader? value) => Headers.from[this].set(value);
+  set host(Uri? value) => Headers.host[this].set(value);
+  set acceptEncoding(AcceptEncodingHeader? value) =>
+      Headers.acceptEncoding[this].set(value);
+  set acceptLanguage(AcceptLanguageHeader? value) =>
+      Headers.acceptLanguage[this].set(value);
+  set accessControlRequestHeaders(List<String>? value) =>
+      Headers.accessControlRequestHeaders[this].set(value);
   set accessControlRequestMethod(RequestMethod? value) =>
-      accessControlRequestMethod_.set(value);
-  set age(int? value) => age_.set(value);
-  set authorization(AuthorizationHeader? value) => authorization_.set(value);
-  set connection(ConnectionHeader? value) => connection_.set(value);
-  set contentLength(int? value) => contentLength_.set(value);
-  set expect(ExpectHeader? value) => expect_.set(value);
-  set ifMatch(IfMatchHeader? value) => ifMatch_.set(value);
-  set ifNoneMatch(IfNoneMatchHeader? value) => ifNoneMatch_.set(value);
-  set ifRange(IfRangeHeader? value) => ifRange_.set(value);
-  set maxForwards(int? value) => maxForwards_.set(value);
+      Headers.accessControlRequestMethod[this].set(value);
+  set age(int? value) => Headers.age[this].set(value);
+  set authorization(AuthorizationHeader? value) =>
+      Headers.authorization[this].set(value);
+  set connection(ConnectionHeader? value) =>
+      Headers.connection[this].set(value);
+  set contentLength(int? value) => Headers.contentLength[this].set(value);
+  set expect(ExpectHeader? value) => Headers.expect[this].set(value);
+  set ifMatch(IfMatchHeader? value) => Headers.ifMatch[this].set(value);
+  set ifNoneMatch(IfNoneMatchHeader? value) =>
+      Headers.ifNoneMatch[this].set(value);
+  set ifRange(IfRangeHeader? value) => Headers.ifRange[this].set(value);
+  set maxForwards(int? value) => Headers.maxForwards[this].set(value);
   set proxyAuthorization(AuthorizationHeader? value) =>
-      proxyAuthorization_.set(value);
-  set range(RangeHeader? value) => range_.set(value);
-  set referer(Uri? value) => referer_.set(value);
-  set userAgent(String? value) => userAgent_.set(value);
-  set te(TEHeader? value) => te_.set(value);
-  set upgrade(UpgradeHeader? value) => upgrade_.set(value);
-  set location(Uri? value) => location_.set(value);
-  set xPoweredBy(String? value) => xPoweredBy_.set(value);
+      Headers.proxyAuthorization[this].set(value);
+  set range(RangeHeader? value) => Headers.range[this].set(value);
+  set referer(Uri? value) => Headers.referer[this].set(value);
+  set userAgent(String? value) => Headers.userAgent[this].set(value);
+  set te(TEHeader? value) => Headers.te[this].set(value);
+  set upgrade(UpgradeHeader? value) => Headers.upgrade[this].set(value);
+  set location(Uri? value) => Headers.location[this].set(value);
+  set xPoweredBy(String? value) => Headers.xPoweredBy[this].set(value);
   set accessControlAllowOrigin(AccessControlAllowOriginHeader? value) =>
-      accessControlAllowOrigin_.set(value);
+      Headers.accessControlAllowOrigin[this].set(value);
   set accessControlExposeHeaders(AccessControlExposeHeadersHeader? value) =>
-      accessControlExposeHeaders_.set(value);
-  set accessControlMaxAge(int? value) => accessControlMaxAge_.set(value);
-  set allow(List<RequestMethod>? value) => allow_.set(value);
-  set cacheControl(CacheControlHeader? value) => cacheControl_.set(value);
+      Headers.accessControlExposeHeaders[this].set(value);
+  set accessControlMaxAge(int? value) =>
+      Headers.accessControlMaxAge[this].set(value);
+  set allow(List<RequestMethod>? value) => Headers.allow[this].set(value);
+  set cacheControl(CacheControlHeader? value) =>
+      Headers.cacheControl[this].set(value);
   set contentEncoding(ContentEncodingHeader? value) =>
-      contentEncoding_.set(value);
+      Headers.contentEncoding[this].set(value);
   set contentLanguage(ContentLanguageHeader? value) =>
-      contentLanguage_.set(value);
-  set contentLocation(Uri? value) => contentLocation_.set(value);
-  set contentRange(ContentRangeHeader? value) => contentRange_.set(value);
-  set etag(ETagHeader? value) => etag_.set(value);
+      Headers.contentLanguage[this].set(value);
+  set contentLocation(Uri? value) => Headers.contentLocation[this].set(value);
+  set contentRange(ContentRangeHeader? value) =>
+      Headers.contentRange[this].set(value);
+  set etag(ETagHeader? value) => Headers.etag[this].set(value);
   set proxyAuthenticate(AuthenticationHeader? value) =>
-      proxyAuthenticate_.set(value);
-  set retryAfter(RetryAfterHeader? value) => retryAfter_.set(value);
-  set trailer(List<String>? value) => trailer_.set(value);
-  set vary(VaryHeader? value) => vary_.set(value);
+      Headers.proxyAuthenticate[this].set(value);
+  set retryAfter(RetryAfterHeader? value) =>
+      Headers.retryAfter[this].set(value);
+  set trailer(List<String>? value) => Headers.trailer[this].set(value);
+  set vary(VaryHeader? value) => Headers.vary[this].set(value);
   set wwwAuthenticate(AuthenticationHeader? value) =>
-      wwwAuthenticate_.set(value);
+      Headers.wwwAuthenticate[this].set(value);
   set contentDisposition(ContentDispositionHeader? value) =>
-      contentDisposition_.set(value);
-  set accept(AcceptHeader? value) => accept_.set(value);
-  set acceptRanges(AcceptRangesHeader? value) => acceptRanges_.set(value);
+      Headers.contentDisposition[this].set(value);
+  set accept(AcceptHeader? value) => Headers.accept[this].set(value);
+  set acceptRanges(AcceptRangesHeader? value) =>
+      Headers.acceptRanges[this].set(value);
   set transferEncoding(TransferEncodingHeader? value) =>
-      transferEncoding_.set(value);
-  set cookie(CookieHeader? value) => cookie_.set(value);
-  set setCookie(SetCookieHeader? value) => setCookie_.set(value);
+      Headers.transferEncoding[this].set(value);
+  set cookie(CookieHeader? value) => Headers.cookie[this].set(value);
+  set setCookie(SetCookieHeader? value) => Headers.setCookie[this].set(value);
   set strictTransportSecurity(StrictTransportSecurityHeader? value) =>
-      strictTransportSecurity_.set(value);
+      Headers.strictTransportSecurity[this].set(value);
   set contentSecurityPolicy(ContentSecurityPolicyHeader? value) =>
-      contentSecurityPolicy_.set(value);
-  set referrerPolicy(ReferrerPolicyHeader? value) => referrerPolicy_.set(value);
+      Headers.contentSecurityPolicy[this].set(value);
+  set referrerPolicy(ReferrerPolicyHeader? value) =>
+      Headers.referrerPolicy[this].set(value);
   set permissionsPolicy(PermissionsPolicyHeader? value) =>
-      permissionsPolicy_.set(value);
+      Headers.permissionsPolicy[this].set(value);
   set accessControlAllowCredentials(bool? value) =>
-      accessControlAllowCredentials_.set(value);
+      Headers.accessControlAllowCredentials[this].set(value);
   set accessControlAllowMethods(AccessControlAllowMethodsHeader? value) =>
-      accessControlAllowMethods_.set(value);
+      Headers.accessControlAllowMethods[this].set(value);
   set accessControlAllowHeaders(AccessControlAllowHeadersHeader? value) =>
-      accessControlAllowHeaders_.set(value);
-  set clearSiteData(ClearSiteDataHeader? value) => clearSiteData_.set(value);
-  set secFetchDest(SecFetchDestHeader? value) => secFetchDest_.set(value);
-  set secFetchMode(SecFetchModeHeader? value) => secFetchMode_.set(value);
-  set secFetchSite(SecFetchSiteHeader? value) => secFetchSite_.set(value);
+      Headers.accessControlAllowHeaders[this].set(value);
+  set clearSiteData(ClearSiteDataHeader? value) =>
+      Headers.clearSiteData[this].set(value);
+  set secFetchDest(SecFetchDestHeader? value) =>
+      Headers.secFetchDest[this].set(value);
+  set secFetchMode(SecFetchModeHeader? value) =>
+      Headers.secFetchMode[this].set(value);
+  set secFetchSite(SecFetchSiteHeader? value) =>
+      Headers.secFetchSite[this].set(value);
   set crossOriginResourcePolicy(CrossOriginResourcePolicyHeader? value) =>
-      crossOriginResourcePolicy_.set(value);
+      Headers.crossOriginResourcePolicy[this].set(value);
   set crossOriginEmbedderPolicy(CrossOriginEmbedderPolicyHeader? value) =>
-      crossOriginEmbedderPolicy_.set(value);
+      Headers.crossOriginEmbedderPolicy[this].set(value);
   set crossOriginOpenerPolicy(CrossOriginOpenerPolicyHeader? value) =>
-      crossOriginOpenerPolicy_.set(value);
+      Headers.crossOriginOpenerPolicy[this].set(value);
 
   // We have to repeat these read props, since dart cannot have getter and setter defined on two different
   // classes as extensions
-  DateTime? get date => date_();
-  DateTime? get expires => expires_();
-  DateTime? get lastModified => lastModified_();
-  DateTime? get ifModifiedSince => ifModifiedSince_();
-  DateTime? get ifUnmodifiedSince => ifUnmodifiedSince_();
-  Uri? get origin => origin_();
-  String? get server => server_();
-  List<String>? get via => via_();
-  FromHeader? get from => from_();
-  Uri? get host => host_();
-  AcceptEncodingHeader? get acceptEncoding => acceptEncoding_();
-  AcceptLanguageHeader? get acceptLanguage => acceptLanguage_();
+  DateTime? get date => Headers.date[this]();
+  DateTime? get expires => Headers.expires[this]();
+  DateTime? get lastModified => Headers.lastModified[this]();
+  DateTime? get ifModifiedSince => Headers.ifModifiedSince[this]();
+  DateTime? get ifUnmodifiedSince => Headers.ifUnmodifiedSince[this]();
+  Uri? get origin => Headers.origin[this]();
+  String? get server => Headers.server[this]();
+  List<String>? get via => Headers.via[this]();
+  FromHeader? get from => Headers.from[this]();
+  Uri? get host => Headers.host[this]();
+  AcceptEncodingHeader? get acceptEncoding => Headers.acceptEncoding[this]();
+  AcceptLanguageHeader? get acceptLanguage => Headers.acceptLanguage[this]();
   List<String>? get accessControlRequestHeaders =>
-      accessControlRequestHeaders_();
+      Headers.accessControlRequestHeaders[this]();
   RequestMethod? get accessControlRequestMethod =>
-      accessControlRequestMethod_();
-  int? get age => age_();
-  AuthorizationHeader? get authorization => authorization_();
-  ConnectionHeader? get connection => connection_();
-  int? get contentLength => contentLength_();
-  ExpectHeader? get expect => expect_();
-  IfMatchHeader? get ifMatch => ifMatch_();
-  IfNoneMatchHeader? get ifNoneMatch => ifNoneMatch_();
-  IfRangeHeader? get ifRange => ifRange_();
-  int? get maxForwards => maxForwards_();
-  AuthorizationHeader? get proxyAuthorization => proxyAuthorization_();
-  RangeHeader? get range => range_();
-  Uri? get referer => referer_();
-  String? get userAgent => userAgent_();
-  TEHeader? get te => te_();
-  UpgradeHeader? get upgrade => upgrade_();
-  Uri? get location => location_();
-  String? get xPoweredBy => xPoweredBy_();
+      Headers.accessControlRequestMethod[this]();
+  int? get age => Headers.age[this]();
+  AuthorizationHeader? get authorization => Headers.authorization[this]();
+  ConnectionHeader? get connection => Headers.connection[this]();
+  int? get contentLength => Headers.contentLength[this]();
+  ExpectHeader? get expect => Headers.expect[this]();
+  IfMatchHeader? get ifMatch => Headers.ifMatch[this]();
+  IfNoneMatchHeader? get ifNoneMatch => Headers.ifNoneMatch[this]();
+  IfRangeHeader? get ifRange => Headers.ifRange[this]();
+  int? get maxForwards => Headers.maxForwards[this]();
+  AuthorizationHeader? get proxyAuthorization =>
+      Headers.proxyAuthorization[this]();
+  RangeHeader? get range => Headers.range[this]();
+  Uri? get referer => Headers.referer[this]();
+  String? get userAgent => Headers.userAgent[this]();
+  TEHeader? get te => Headers.te[this]();
+  UpgradeHeader? get upgrade => Headers.upgrade[this]();
+  Uri? get location => Headers.location[this]();
+  String? get xPoweredBy => Headers.xPoweredBy[this]();
   AccessControlAllowOriginHeader? get accessControlAllowOrigin =>
-      accessControlAllowOrigin_();
+      Headers.accessControlAllowOrigin[this]();
   AccessControlExposeHeadersHeader? get accessControlExposeHeaders =>
-      accessControlExposeHeaders_();
-  int? get accessControlMaxAge => accessControlMaxAge_();
-  List<RequestMethod>? get allow => allow_();
-  CacheControlHeader? get cacheControl => cacheControl_();
-  ContentEncodingHeader? get contentEncoding => contentEncoding_();
-  ContentLanguageHeader? get contentLanguage => contentLanguage_();
-  Uri? get contentLocation => contentLocation_();
-  ContentRangeHeader? get contentRange => contentRange_();
-  ETagHeader? get etag => etag_();
-  AuthenticationHeader? get proxyAuthenticate => proxyAuthenticate_();
-  RetryAfterHeader? get retryAfter => retryAfter_();
-  List<String>? get trailer => trailer_();
-  VaryHeader? get vary => vary_();
-  AuthenticationHeader? get wwwAuthenticate => wwwAuthenticate_();
-  ContentDispositionHeader? get contentDisposition => contentDisposition_();
-  AcceptHeader? get accept => accept_();
-  AcceptRangesHeader? get acceptRanges => acceptRanges_();
-  TransferEncodingHeader? get transferEncoding => transferEncoding_();
-  CookieHeader? get cookie => cookie_();
-  SetCookieHeader? get setCookie => setCookie_();
+      Headers.accessControlExposeHeaders[this]();
+  int? get accessControlMaxAge => Headers.accessControlMaxAge[this]();
+  List<RequestMethod>? get allow => Headers.allow[this]();
+  CacheControlHeader? get cacheControl => Headers.cacheControl[this]();
+  ContentEncodingHeader? get contentEncoding => Headers.contentEncoding[this]();
+  ContentLanguageHeader? get contentLanguage => Headers.contentLanguage[this]();
+  Uri? get contentLocation => Headers.contentLocation[this]();
+  ContentRangeHeader? get contentRange => Headers.contentRange[this]();
+  ETagHeader? get etag => Headers.etag[this]();
+  AuthenticationHeader? get proxyAuthenticate =>
+      Headers.proxyAuthenticate[this]();
+  RetryAfterHeader? get retryAfter => Headers.retryAfter[this]();
+  List<String>? get trailer => Headers.trailer[this]();
+  VaryHeader? get vary => Headers.vary[this]();
+  AuthenticationHeader? get wwwAuthenticate => Headers.wwwAuthenticate[this]();
+  ContentDispositionHeader? get contentDisposition =>
+      Headers.contentDisposition[this]();
+  AcceptHeader? get accept => Headers.accept[this]();
+  AcceptRangesHeader? get acceptRanges => Headers.acceptRanges[this]();
+  TransferEncodingHeader? get transferEncoding =>
+      Headers.transferEncoding[this]();
+  CookieHeader? get cookie => Headers.cookie[this]();
+  SetCookieHeader? get setCookie => Headers.setCookie[this]();
   StrictTransportSecurityHeader? get strictTransportSecurity =>
-      strictTransportSecurity_();
+      Headers.strictTransportSecurity[this]();
   ContentSecurityPolicyHeader? get contentSecurityPolicy =>
-      contentSecurityPolicy_();
-  ReferrerPolicyHeader? get referrerPolicy => referrerPolicy_();
-  PermissionsPolicyHeader? get permissionsPolicy => permissionsPolicy_();
-  bool? get accessControlAllowCredentials => accessControlAllowCredentials_();
+      Headers.contentSecurityPolicy[this]();
+  ReferrerPolicyHeader? get referrerPolicy => Headers.referrerPolicy[this]();
+  PermissionsPolicyHeader? get permissionsPolicy =>
+      Headers.permissionsPolicy[this]();
+  bool? get accessControlAllowCredentials =>
+      Headers.accessControlAllowCredentials[this]();
   AccessControlAllowMethodsHeader? get accessControlAllowMethods =>
-      accessControlAllowMethods_();
+      Headers.accessControlAllowMethods[this]();
   AccessControlAllowHeadersHeader? get accessControlAllowHeaders =>
-      accessControlAllowHeaders_();
-  ClearSiteDataHeader? get clearSiteData => clearSiteData_();
-  SecFetchDestHeader? get secFetchDest => secFetchDest_();
-  SecFetchModeHeader? get secFetchMode => secFetchMode_();
-  SecFetchSiteHeader? get secFetchSite => secFetchSite_();
+      Headers.accessControlAllowHeaders[this]();
+  ClearSiteDataHeader? get clearSiteData => Headers.clearSiteData[this]();
+  SecFetchDestHeader? get secFetchDest => Headers.secFetchDest[this]();
+  SecFetchModeHeader? get secFetchMode => Headers.secFetchMode[this]();
+  SecFetchSiteHeader? get secFetchSite => Headers.secFetchSite[this]();
   CrossOriginResourcePolicyHeader? get crossOriginResourcePolicy =>
-      crossOriginResourcePolicy_();
+      Headers.crossOriginResourcePolicy[this]();
   CrossOriginEmbedderPolicyHeader? get crossOriginEmbedderPolicy =>
-      crossOriginEmbedderPolicy_();
+      Headers.crossOriginEmbedderPolicy[this]();
   CrossOriginOpenerPolicyHeader? get crossOriginOpenerPolicy =>
-      crossOriginOpenerPolicy_();
+      Headers.crossOriginOpenerPolicy[this]();
 }

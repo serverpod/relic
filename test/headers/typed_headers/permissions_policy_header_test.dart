@@ -123,9 +123,9 @@ void main() {
             headers: {'permissions-policy': ''},
           );
 
-          expect(headers.permissionsPolicy_.valueOrNullIfInvalid, isNull);
-          expect(() => headers.permissionsPolicy,
-              throwsA(isA<InvalidHeaderException>()));
+          expect(
+              Headers.permissionsPolicy[headers].valueOrNullIfInvalid, isNull);
+          expect(() => headers.permissionsPolicy, throwsInvalidHeader);
         },
       );
     });

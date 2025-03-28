@@ -125,8 +125,8 @@ void main() {
             headers: {'via': ''},
           );
 
-          expect(headers.via_.valueOrNullIfInvalid, isNull);
-          expect(() => headers.via, throwsA(isA<InvalidHeaderException>()));
+          expect(Headers.via[headers].valueOrNullIfInvalid, isNull);
+          expect(() => headers.via, throwsInvalidHeader);
         },
       );
     });

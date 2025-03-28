@@ -176,8 +176,8 @@ void main() {
             headers: {'host': 'h@ttp://example.com'},
           );
 
-          expect(headers.host_.valueOrNullIfInvalid, isNull);
-          expect(() => headers.host, throwsA(isA<InvalidHeaderException>()));
+          expect(Headers.host[headers].valueOrNullIfInvalid, isNull);
+          expect(() => headers.host, throwsInvalidHeader);
         },
       );
     });

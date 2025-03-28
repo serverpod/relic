@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:meta/meta.dart';
 import 'package:relic/relic.dart';
 import 'package:relic/src/method/request_method.dart';
 import 'package:test/test.dart';
@@ -36,4 +37,40 @@ final _request = Request(RequestMethod.get, localhostUri);
 final localhostUri = Uri.parse('http://localhost/');
 
 final isOhNoStateError =
-    isA<StateError>().having((p0) => p0.message, 'message', 'oh no');
+    isA<StateError>().having((e) => e.message, 'message', 'oh no');
+
+/// Like [group] but takes a variants argument and creates a group for each variant.
+@isTestGroup
+void parameterizedGroup<T>(
+  String Function(T) descriptionBuilder,
+  void Function(T) body, {
+  required Iterable<T> variants,
+}) {
+  for (var v in variants) {
+    group(descriptionBuilder(v), () => body(v));
+  }
+}
+
+/// Like [test] but takes a variants argument and creates a test-case for each variant.
+@isTest
+void parameterizedTest<T>(
+  String Function(T) descriptionBuilder,
+  void Function(T) body, {
+  required Iterable<T> variants,
+}) {
+  for (var v in variants) {
+    test(descriptionBuilder(v), () => body(v));
+  }
+}
+
+/// A [test] with a single [expect]
+@isTest
+void singleTest(
+  String description,
+  dynamic actual,
+  dynamic expected,
+) {
+  test(description, () {
+    expect(actual, expected);
+  });
+}

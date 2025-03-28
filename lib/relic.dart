@@ -14,8 +14,8 @@ export 'src/handler/pipeline.dart' show Pipeline;
 export 'src/headers/headers.dart';
 export 'src/headers/header_flyweight.dart';
 export 'src/headers/typed/typed_headers.dart';
-export 'src/headers/exception/invalid_header_exception.dart'
-    show InvalidHeaderException;
+export 'src/headers/exception/header_exception.dart'
+    show HeaderException, InvalidHeaderException, MissingHeaderException;
 
 /// Hijack related exports
 export 'src/hijack/exception/hijack_exception.dart' show HijackException;

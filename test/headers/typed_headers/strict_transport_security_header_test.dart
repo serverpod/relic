@@ -175,9 +175,9 @@ void main() {
             headers: {'strict-transport-security': ''},
           );
 
-          expect(headers.strictTransportSecurity_.valueOrNullIfInvalid, isNull);
-          expect(() => headers.strictTransportSecurity,
-              throwsA(isA<InvalidHeaderException>()));
+          expect(Headers.strictTransportSecurity[headers].valueOrNullIfInvalid,
+              isNull);
+          expect(() => headers.strictTransportSecurity, throwsInvalidHeader);
         },
       );
     });

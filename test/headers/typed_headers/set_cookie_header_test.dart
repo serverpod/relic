@@ -252,9 +252,8 @@ void main() {
             headers: {'set-cookie': 'sessionId=abc123; invalidCookie'},
           );
 
-          expect(headers.setCookie_.valueOrNullIfInvalid, isNull);
-          expect(
-              () => headers.setCookie, throwsA(isA<InvalidHeaderException>()));
+          expect(Headers.setCookie[headers].valueOrNullIfInvalid, isNull);
+          expect(() => headers.setCookie, throwsInvalidHeader);
         },
       );
     });

@@ -176,9 +176,9 @@ void main() {
             headers: {'transfer-encoding': ''},
           );
 
-          expect(headers.transferEncoding_.valueOrNullIfInvalid, isNull);
-          expect(() => headers.transferEncoding,
-              throwsA(isA<InvalidHeaderException>()));
+          expect(
+              Headers.transferEncoding[headers].valueOrNullIfInvalid, isNull);
+          expect(() => headers.transferEncoding, throwsInvalidHeader);
         },
       );
     });

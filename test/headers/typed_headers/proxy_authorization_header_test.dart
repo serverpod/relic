@@ -488,9 +488,9 @@ void main() {
             touchHeaders: (_) {},
             headers: {'proxy-authorization': ''},
           );
-          expect(headers.proxyAuthorization_.valueOrNullIfInvalid, isNull);
-          expect(() => headers.proxyAuthorization,
-              throwsA(isA<InvalidHeaderException>()));
+          expect(
+              Headers.proxyAuthorization[headers].valueOrNullIfInvalid, isNull);
+          expect(() => headers.proxyAuthorization, throwsInvalidHeader);
         },
       );
     });
@@ -505,9 +505,9 @@ void main() {
             headers: {'proxy-authorization': 'InvalidFormat'},
           );
 
-          expect(headers.proxyAuthorization_.valueOrNullIfInvalid, isNull);
-          expect(() => headers.proxyAuthorization,
-              throwsA(isA<InvalidHeaderException>()));
+          expect(
+              Headers.proxyAuthorization[headers].valueOrNullIfInvalid, isNull);
+          expect(() => headers.proxyAuthorization, throwsInvalidHeader);
         },
       );
     });

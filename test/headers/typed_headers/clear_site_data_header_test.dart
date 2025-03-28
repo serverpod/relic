@@ -155,9 +155,8 @@ void main() {
             headers: {'clear-site-data': ''},
           );
 
-          expect(headers.clearSiteData_.valueOrNullIfInvalid, isNull);
-          expect(() => headers.clearSiteData,
-              throwsA(isA<InvalidHeaderException>()));
+          expect(Headers.clearSiteData[headers].valueOrNullIfInvalid, isNull);
+          expect(() => headers.clearSiteData, throwsInvalidHeader);
         },
       );
     });

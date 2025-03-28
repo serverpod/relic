@@ -235,8 +235,8 @@ void main() {
             headers: {'cookie': 'sessionId=abc123; invalidCookie'},
           );
 
-          expect(headers.cookie_.valueOrNullIfInvalid, isNull);
-          expect(() => headers.cookie, throwsA(isA<InvalidHeaderException>()));
+          expect(Headers.cookie[headers].valueOrNullIfInvalid, isNull);
+          expect(() => headers.cookie, throwsInvalidHeader);
         },
       );
     });

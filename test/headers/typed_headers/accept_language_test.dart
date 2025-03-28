@@ -382,9 +382,9 @@ void main() {
               headers: {'accept-language': ''},
             );
 
-            expect(headers.acceptLanguage_.valueOrNullIfInvalid, isNull);
-            expect(() => headers.acceptLanguage,
-                throwsA(isA<InvalidHeaderException>()));
+            expect(
+                Headers.acceptLanguage[headers].valueOrNullIfInvalid, isNull);
+            expect(() => headers.acceptLanguage, throwsInvalidHeader);
           },
         );
       });
@@ -401,9 +401,9 @@ void main() {
                 headers: {'accept-language': 'en;q=abc, fr, de'},
               );
 
-              expect(headers.acceptLanguage_.valueOrNullIfInvalid, isNull);
-              expect(() => headers.acceptLanguage,
-                  throwsA(isA<InvalidHeaderException>()));
+              expect(
+                  Headers.acceptLanguage[headers].valueOrNullIfInvalid, isNull);
+              expect(() => headers.acceptLanguage, throwsInvalidHeader);
             },
           );
         },

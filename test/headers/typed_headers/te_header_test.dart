@@ -231,8 +231,8 @@ void main() {
             headers: {'te': ''},
           );
 
-          expect(headers.te_.valueOrNullIfInvalid, isNull);
-          expect(() => headers.te, throwsA(isA<InvalidHeaderException>()));
+          expect(Headers.te[headers].valueOrNullIfInvalid, isNull);
+          expect(() => headers.te, throwsInvalidHeader);
         },
       );
     });
@@ -247,8 +247,8 @@ void main() {
             headers: {'te': 'trailers;q=abc, deflate, gzip'},
           );
 
-          expect(headers.te_.valueOrNullIfInvalid, isNull);
-          expect(() => headers.te, throwsA(isA<InvalidHeaderException>()));
+          expect(Headers.te[headers].valueOrNullIfInvalid, isNull);
+          expect(() => headers.te, throwsInvalidHeader);
         },
       );
     });

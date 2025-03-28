@@ -179,8 +179,8 @@ void main() {
             headers: {'age': ''},
           );
 
-          expect(headers.age_.valueOrNullIfInvalid, isNull);
-          expect(() => headers.age, throwsA(isA<InvalidHeaderException>()));
+          expect(Headers.age[headers].valueOrNullIfInvalid, isNull);
+          expect(() => headers.age, throwsInvalidHeader);
         },
       );
     });
@@ -195,8 +195,8 @@ void main() {
             headers: {'age': 'invalid'},
           );
 
-          expect(headers.age_.valueOrNullIfInvalid, isNull);
-          expect(() => headers.age, throwsA(isA<InvalidHeaderException>()));
+          expect(Headers.age[headers].valueOrNullIfInvalid, isNull);
+          expect(() => headers.age, throwsInvalidHeader);
         },
       );
     });

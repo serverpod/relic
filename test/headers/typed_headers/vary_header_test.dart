@@ -152,8 +152,8 @@ void main() {
             headers: {'vary': ''},
           );
 
-          expect(headers.vary_.valueOrNullIfInvalid, isNull);
-          expect(() => headers.vary, throwsA(isA<InvalidHeaderException>()));
+          expect(Headers.vary[headers].valueOrNullIfInvalid, isNull);
+          expect(() => headers.vary, throwsInvalidHeader);
         },
       );
     });

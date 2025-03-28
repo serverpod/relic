@@ -186,9 +186,9 @@ void main() {
           );
 
           expect(
-              headers.accessControlExposeHeaders_.valueOrNullIfInvalid, isNull);
-          expect(() => headers.accessControlExposeHeaders,
-              throwsA(isA<InvalidHeaderException>()));
+              Headers.accessControlExposeHeaders[headers].valueOrNullIfInvalid,
+              isNull);
+          expect(() => headers.accessControlExposeHeaders, throwsInvalidHeader);
         },
       );
     });

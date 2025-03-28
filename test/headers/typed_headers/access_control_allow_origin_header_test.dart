@@ -202,10 +202,9 @@ void main() {
             headers: {'access-control-allow-origin': 'ht!tp://invalid-url'},
           );
 
-          expect(
-              headers.accessControlAllowOrigin_.valueOrNullIfInvalid, isNull);
-          expect(() => headers.accessControlAllowOrigin,
-              throwsA(isA<InvalidHeaderException>()));
+          expect(Headers.accessControlAllowOrigin[headers].valueOrNullIfInvalid,
+              isNull);
+          expect(() => headers.accessControlAllowOrigin, throwsInvalidHeader);
         },
       );
     });

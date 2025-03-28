@@ -156,8 +156,8 @@ void main() {
             headers: {'if-range': 'invalid-value'},
           );
 
-          expect(headers.ifRange_.valueOrNullIfInvalid, isNull);
-          expect(() => headers.ifRange, throwsA(isA<InvalidHeaderException>()));
+          expect(Headers.ifRange[headers].valueOrNullIfInvalid, isNull);
+          expect(() => headers.ifRange, throwsInvalidHeader);
         },
       );
     });

@@ -218,8 +218,8 @@ void main() {
             headers: {'range': 'invalid-range'},
           );
 
-          expect(headers.range_.valueOrNullIfInvalid, isNull);
-          expect(() => headers.range, throwsA(isA<InvalidHeaderException>()));
+          expect(Headers.range[headers].valueOrNullIfInvalid, isNull);
+          expect(() => headers.range, throwsInvalidHeader);
         },
       );
     });

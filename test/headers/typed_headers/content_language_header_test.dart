@@ -155,9 +155,8 @@ void main() {
             headers: {'content-language': 'en-123'},
           );
 
-          expect(headers.contentLanguage_.valueOrNullIfInvalid, isNull);
-          expect(() => headers.contentLanguage,
-              throwsA(isA<InvalidHeaderException>()));
+          expect(Headers.contentLanguage[headers].valueOrNullIfInvalid, isNull);
+          expect(() => headers.contentLanguage, throwsInvalidHeader);
         },
       );
     });

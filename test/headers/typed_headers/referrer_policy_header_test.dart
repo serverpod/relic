@@ -116,9 +116,8 @@ void main() {
             headers: {'referrer-policy': ''},
           );
 
-          expect(headers.referrerPolicy_.valueOrNullIfInvalid, isNull);
-          expect(() => headers.referrerPolicy,
-              throwsA(isA<InvalidHeaderException>()));
+          expect(Headers.referrerPolicy[headers].valueOrNullIfInvalid, isNull);
+          expect(() => headers.referrerPolicy, throwsInvalidHeader);
         },
       );
     });

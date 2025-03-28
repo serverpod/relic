@@ -161,9 +161,8 @@ void main() {
             headers: {'max-forwards': 'invalid'},
           );
 
-          expect(headers.maxForwards_.valueOrNullIfInvalid, isNull);
-          expect(() => headers.maxForwards,
-              throwsA(isA<InvalidHeaderException>()));
+          expect(Headers.maxForwards[headers].valueOrNullIfInvalid, isNull);
+          expect(() => headers.maxForwards, throwsInvalidHeader);
         },
       );
     });

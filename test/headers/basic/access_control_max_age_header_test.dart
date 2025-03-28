@@ -25,7 +25,7 @@ void main() {
         'cannot be empty',
         () async {
           expect(
-            () async => await getServerRequestHeaders(
+            getServerRequestHeaders(
               server: server,
               headers: {'access-control-max-age': ''},
               touchHeaders: (h) => h.accessControlMaxAge,
@@ -118,31 +118,22 @@ void main() {
     },
   );
 
-  group('Given an Access-Control-Max-Age header with the strict flag false',
-      () {
-    late RelicServer server;
+  group(
+    'Given an Access-Control-Max-Age header '
+    'when an invalid raw header is passed',
+    () {
+      final header = Headers.accessControlMaxAge[Headers.fromMap({
+        'access-control-max-age': ['invalid']
+      })];
 
-    setUp(() async {
-      server = await createServer(strictHeaders: false);
-    });
-
-    tearDown(() => server.close());
-
-    group('when an invalid Access-Control-Max-Age header is passed', () {
       test(
-        'then it should return null',
-        () async {
-          var headers = await getServerRequestHeaders(
-            server: server,
-            touchHeaders: (_) {},
-            headers: {'access-control-max-age': 'invalid'},
-          );
-
-          expect(headers.accessControlMaxAge_.valueOrNullIfInvalid, isNull);
-          expect(() => headers.accessControlMaxAge_.value,
-              throwsA(isA<InvalidHeaderException>()));
+        'then valueOrNullIfInvalid should return null',
+        () {
+          expect(header.valueOrNullIfInvalid, isNull);
+          expect(() => header.valueOrNull, throwsInvalidHeader);
+          expect(() => header.value, throwsInvalidHeader);
         },
       );
-    });
-  });
+    },
+  );
 }

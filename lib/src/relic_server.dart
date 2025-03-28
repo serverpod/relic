@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:relic/src/body/body.dart';
-import 'package:relic/src/headers/exception/invalid_header_exception.dart';
+import 'package:relic/src/headers/exception/header_exception.dart';
 import 'package:relic/src/headers/standard_headers_extensions.dart';
 import 'package:relic/src/hijack/exception/hijack_exception.dart';
 import 'package:relic/src/logger/logger.dart';
@@ -115,7 +115,7 @@ class RelicServer {
         strictHeaders: strictHeaders,
         poweredByHeader: poweredByHeader,
       );
-    } on InvalidHeaderException catch (error, stackTrace) {
+    } on HeaderException catch (error, stackTrace) {
       // If the request headers are invalid, respond with a 400 Bad Request status.
       logMessage(
         'Error parsing request headers.\n$error',
@@ -159,7 +159,7 @@ class RelicServer {
           mh.date ??= DateTime.now();
         }),
       );
-    } on InvalidHeaderException catch (error, stackTrace) {
+    } on HeaderException catch (error, stackTrace) {
       // If the request headers are invalid, respond with a 400 Bad Request status.
       _logError(
         relicRequest,
@@ -205,7 +205,7 @@ class RelicServer {
     // are invalid, respond with a 400 Bad Request status.
     try {
       return await response.writeHttpResponse(request.response);
-    } on InvalidHeaderException catch (error) {
+    } on HeaderException catch (error) {
       return Response.badRequest(
         body: Body.fromString(error.toString()),
       ).writeHttpResponse(request.response);

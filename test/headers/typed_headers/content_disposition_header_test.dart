@@ -153,9 +153,9 @@ void main() {
             headers: {'content-disposition': ''},
           );
 
-          expect(headers.contentDisposition_.valueOrNullIfInvalid, isNull);
-          expect(() => headers.contentDisposition,
-              throwsA(isA<InvalidHeaderException>()));
+          expect(
+              Headers.contentDisposition[headers].valueOrNullIfInvalid, isNull);
+          expect(() => headers.contentDisposition, throwsInvalidHeader);
         },
       );
     });

@@ -147,9 +147,9 @@ void main() {
           );
 
           expect(
-              headers.accessControlRequestMethod_.valueOrNullIfInvalid, isNull);
-          expect(() => headers.accessControlRequestMethod,
-              throwsA(isA<InvalidHeaderException>()));
+              Headers.accessControlRequestMethod[headers].valueOrNullIfInvalid,
+              isNull);
+          expect(() => headers.accessControlRequestMethod, throwsInvalidHeader);
         },
       );
     });

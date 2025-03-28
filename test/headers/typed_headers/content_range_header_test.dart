@@ -204,9 +204,8 @@ void main() {
             headers: {'content-range': 'bytes 0-499/invalid'},
           );
 
-          expect(headers.contentRange_.valueOrNullIfInvalid, isNull);
-          expect(() => headers.contentRange,
-              throwsA(isA<InvalidHeaderException>()));
+          expect(Headers.contentRange[headers].valueOrNullIfInvalid, isNull);
+          expect(() => headers.contentRange, throwsInvalidHeader);
         },
       );
     });

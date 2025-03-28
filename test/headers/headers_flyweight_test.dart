@@ -1,8 +1,10 @@
 import 'package:test/test.dart';
 import 'package:relic/src/headers/header_flyweight.dart';
 import 'package:relic/src/headers/headers.dart';
-import 'package:relic/src/headers/exception/invalid_header_exception.dart';
+import 'package:relic/src/headers/exception/header_exception.dart';
 import 'package:relic/src/headers/typed/typed_header_interface.dart';
+
+import 'headers_test_utils.dart';
 
 // Simple implementation of TypedHeader for testing
 class TestTypedHeader implements TypedHeader {
@@ -64,16 +66,6 @@ void main() {
       intDecoder = HeaderDecoderSingle<int>((s) => int.parse(s));
       flyweight = HeaderFlyweight<int>('x-test', intDecoder);
     });
-
-    test('rawFrom returns header values from external', () {
-      var headers = Headers.build((mh) => mh['x-test'] = ['123']);
-      expect(flyweight.rawFrom(headers), equals(['123']));
-    });
-
-    test('rawFrom returns null when header is not present', () {
-      expect(flyweight.rawFrom(Headers.empty()), isNull);
-    });
-
     test('getValueFrom returns decoded value when header is present', () {
       var headers = Headers.build((mh) => mh['x-test'] = ['123']);
       expect(flyweight.getValueFrom(headers), equals(123));
@@ -103,13 +95,13 @@ void main() {
     });
 
     test('getValueFrom returns null when header is not present', () {
-      expect(flyweight.getValueFrom<int?>(Headers.empty()), isNull);
+      expect(flyweight.getValueFrom(Headers.empty()), isNull);
     });
 
     test('getValueFrom uses orElse when parsing fails', () {
       var headers = Headers.build((mh) => mh['x-test'] = ['abc']);
       expect(
-        flyweight.getValueFrom<int?>(headers, orElse: (_) => -1),
+        flyweight.getValueFrom(headers, orElse: (_) => -1),
         equals(-1),
       );
     });
@@ -237,7 +229,7 @@ void main() {
 
     test('value throws when not valid', () {
       headers['x-test'] = ['abc'];
-      expect(() => header.value, throwsA(isA<InvalidHeaderException>()));
+      expect(() => header.value, throwsInvalidHeader);
     });
 
     test('valueOrNullIfInvalid returns value when valid', () {
@@ -253,11 +245,6 @@ void main() {
     test('call invokes flyweight.getValueFrom', () {
       headers['x-test'] = ['123'];
       expect(header(), equals(123));
-    });
-
-    test('call with orElse uses custom handler', () {
-      headers['x-test'] = ['abc'];
-      expect(header(orElse: (_) => -1), equals(-1));
     });
 
     test('set calls setValueOn with correct params', () {

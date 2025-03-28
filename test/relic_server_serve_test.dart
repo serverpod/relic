@@ -102,7 +102,7 @@ void main() {
     await _scheduleServer((request) {
       return Response.ok(
         body: Body.fromString('Hello from /'),
-        headers: Headers.from({
+        headers: Headers.fromMap({
           'test-header': ['test-value'],
           'test-list': ['a', 'b', 'c'],
         }),

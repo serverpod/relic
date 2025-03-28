@@ -3,7 +3,7 @@ import 'dart:collection';
 import 'package:http_parser/http_parser.dart';
 import 'package:relic/src/headers/typed/typed_header_interface.dart';
 
-import 'exception/invalid_header_exception.dart';
+import 'exception/header_exception.dart';
 import 'headers.dart';
 
 /// Flyweight class for headers. It should always be const constructed.
@@ -19,32 +19,30 @@ final class HeaderFlyweight<T extends Object> {
 
   const HeaderFlyweight(this.key, this.decode);
 
-  Iterable<String>? rawFrom(HeadersBase external) => external[key];
-
-  V getValueFrom<V extends T?>(
+  T? getValueFrom(
     HeadersBase external, {
-    V Function(Exception) orElse = _raise,
+    T? Function(Exception)? orElse,
   }) {
     try {
-      try {
-        var result = _cache[external];
-        if (result != null) return result as V;
-        final raw = rawFrom(external);
-        result = _cache[external] ??= // update cache
-            raw == null ? null : decode(raw);
-        return result as V;
-      } on Exception catch (e) {
-        return orElse(e);
-      }
-    } catch (o) {
-      _throwException(o, key: key);
+      var result = _cache[external] as T?;
+      if (result != null) return result; // found in cache
+
+      final raw = external[key];
+      if (raw == null) return null; // nothing to decode
+
+      result = decode(raw);
+      _cache[external] = result;
+      return result;
+    } on Exception catch (e) {
+      if (orElse == null) _throwException(e, key: key);
+      return orElse(e);
     }
   }
 
-  bool isSetIn(HeadersBase external) => rawFrom(external) != null;
+  bool isSetIn(HeadersBase external) => external[key] != null;
 
   bool isValidIn(HeadersBase external) =>
-      getValueFrom<T?>(external, orElse: _returnNull) != null;
+      getValueFrom(external, orElse: _returnNull) != null;
 
   Header<T> operator [](HeadersBase external) =>
       Header((flyweight: this, headers: external));
@@ -56,8 +54,7 @@ final class HeaderFlyweight<T extends Object> {
   void removeFrom(MutableHeaders external) => external.remove(key);
 }
 
-Never _raise(Exception ex) => throw ex;
-Null _returnNull(Exception ex) => null;
+Null _returnNull<T>(Exception ex) => null;
 
 sealed class HeaderDecoder<T extends Object> {
   const HeaderDecoder();
@@ -87,30 +84,31 @@ final class HeaderDecoderMulti<T extends Object> extends HeaderDecoder<T> {
 ///
 /// This is implemented as an extension type over a record type
 /// to keep runtime cost low.
-// ignore: library_private_types_in_public_api
-extension type Header<T extends Object>(_HeaderTuple<T> tuple) {
+extension type Header<T extends Object>(HeaderTuple<T> tuple) {
   HeadersBase get _headers => tuple.headers;
   HeaderFlyweight<T> get _flyweight => tuple.flyweight;
 
   String get key => _flyweight.key;
-  Iterable<String>? get raw => _flyweight.rawFrom(_headers);
+  Iterable<String>? get raw => _headers[_flyweight.key];
 
   bool get isSet => _flyweight.isSetIn(_headers);
   bool get isValid => _flyweight.isValidIn(_headers);
 
-  T? get valueOrNullIfInvalid => this(orElse: _returnNull);
-  T? get valueOrNull => this();
-  T get value => this(); // magic of type inference
+  T? call() => _flyweight.getValueFrom(_headers);
 
-  V call<V extends T?>({V Function(Exception) orElse = _raise}) =>
-      _flyweight.getValueFrom<V>(_headers, orElse: orElse);
+  T? get valueOrNullIfInvalid =>
+      _flyweight.getValueFrom(_headers, orElse: _returnNull);
+  T? get valueOrNull => this();
+  T get value =>
+      _flyweight.getValueFrom(_headers) ??
+      (throw MissingHeaderException('', headerType: key));
 
   void set(T? value) =>
       _flyweight.setValueOn(_headers as MutableHeaders, value);
 }
 
 /// Internal record for bundling a [HeaderFlyweight] with its externalized state [Headers].
-typedef _HeaderTuple<T extends Object> = ({
+typedef HeaderTuple<T extends Object> = ({
   HeaderFlyweight<T> flyweight,
   HeadersBase headers,
 });

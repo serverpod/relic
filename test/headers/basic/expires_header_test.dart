@@ -144,8 +144,8 @@ void main() {
             headers: {'expires': ''},
           );
 
-          expect(headers.expires_.valueOrNullIfInvalid, isNull);
-          expect(() => headers.expires, throwsA(isA<InvalidHeaderException>()));
+          expect(Headers.expires[headers].valueOrNullIfInvalid, isNull);
+          expect(() => headers.expires, throwsInvalidHeader);
         },
       );
     });
@@ -160,8 +160,8 @@ void main() {
             headers: {'expires': 'invalid-date-format'},
           );
 
-          expect(headers.expires_.valueOrNullIfInvalid, isNull);
-          expect(() => headers.expires, throwsA(isA<InvalidHeaderException>()));
+          expect(Headers.expires[headers].valueOrNullIfInvalid, isNull);
+          expect(() => headers.expires, throwsInvalidHeader);
         },
       );
     });

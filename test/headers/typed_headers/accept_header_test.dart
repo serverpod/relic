@@ -230,8 +230,8 @@ void main() {
             headers: {'accept': 'text/html;q=abc'},
           );
 
-          expect(headers.accept_.valueOrNullIfInvalid, isNull);
-          expect(() => headers.accept, throwsA(isA<InvalidHeaderException>()));
+          expect(Headers.accept[headers].valueOrNullIfInvalid, isNull);
+          expect(() => headers.accept, throwsInvalidHeader);
         },
       );
     });

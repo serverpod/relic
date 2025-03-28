@@ -180,8 +180,8 @@ void main() {
             headers: {'referer': 'ht!tp://invalid-url'},
           );
 
-          expect(headers.referer_.valueOrNullIfInvalid, isNull);
-          expect(() => headers.referer, throwsA(isA<InvalidHeaderException>()));
+          expect(Headers.referer[headers].valueOrNullIfInvalid, isNull);
+          expect(() => headers.referer, throwsInvalidHeader);
         },
       );
     });

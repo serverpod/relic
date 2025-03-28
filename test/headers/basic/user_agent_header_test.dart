@@ -103,9 +103,8 @@ void main() {
             headers: {'user-agent': ''},
           );
 
-          expect(headers.userAgent_.valueOrNullIfInvalid, isNull);
-          expect(
-              () => headers.userAgent, throwsA(isA<InvalidHeaderException>()));
+          expect(Headers.userAgent[headers].valueOrNullIfInvalid, isNull);
+          expect(() => headers.userAgent, throwsInvalidHeader);
         },
       );
     });

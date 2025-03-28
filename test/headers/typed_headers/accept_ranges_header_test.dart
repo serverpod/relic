@@ -112,9 +112,8 @@ void main() {
             headers: {'accept-ranges': ''},
           );
 
-          expect(headers.acceptRanges_.valueOrNullIfInvalid, isNull);
-          expect(() => headers.acceptRanges,
-              throwsA(isA<InvalidHeaderException>()));
+          expect(Headers.acceptRanges[headers].valueOrNullIfInvalid, isNull);
+          expect(() => headers.acceptRanges, throwsInvalidHeader);
         },
       );
     });

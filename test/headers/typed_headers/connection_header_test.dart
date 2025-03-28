@@ -157,9 +157,8 @@ void main() {
               headers: {'connection': ''},
             );
 
-            expect(headers.connection_.valueOrNullIfInvalid, isNull);
-            expect(() => headers.connection,
-                throwsA(isA<InvalidHeaderException>()));
+            expect(Headers.connection[headers].valueOrNullIfInvalid, isNull);
+            expect(() => headers.connection, throwsInvalidHeader);
           },
         );
       },
