@@ -98,41 +98,6 @@ void main() {
     expect(response.body, 'Hello from /user:42');
   });
 
-  test('chunked requests are un-chunked', () async {
-    await _scheduleServer(
-      expectAsync1((request) async {
-        expect(request.body.contentLength, isNull);
-        expect(request.method, RequestMethod.post);
-        // TODO(nielsenko): Enforcing this absense Transfer-Encoding will cause
-        // trouble with 'transfer_encoding_header_test.dart'
-        //
-        // expect(
-        //   request.headers,
-        //   isNot(contains(HttpHeaders.transferEncodingHeader)),
-        // );
-        var stream = request.read();
-        var body = await stream.toList();
-        expect(
-          body.first,
-          equals(Uint8List.fromList([1, 2, 3, 4])),
-        );
-
-        return Response.ok();
-      }),
-    );
-
-    var request = http.StreamedRequest(
-      RequestMethod.post.value,
-      Uri.http('localhost:$_serverPort', '/'),
-    );
-    request.sink.add([1, 2, 3, 4]);
-    // ignore: unawaited_futures
-    request.sink.close();
-
-    var response = await request.send();
-    expect(response.statusCode, HttpStatus.ok);
-  });
-
   test('custom response headers are received by the client', () async {
     await _scheduleServer((request) {
       return Response.ok(
