@@ -11,14 +11,49 @@ import 'headers.dart';
 /// The externalized state is stored in the Headers external, and to avoid repeated
 /// parsing of the raw value the value is cached with an [Expando].
 final class HeaderFlyweight<T extends Object> {
+  /// Static map that stores the cache [Expando] for each [HeaderFlyweight] instance.
+  /// Using an identity map ensures each flyweight gets its own unique cache.
   static final _caches = LinkedHashMap<HeaderFlyweight, Expando>.identity();
+
+  /// Returns the [Expando] cache for this flyweight instance.
+  ///
+  /// Each flyweight has its own unique cache to store parsed header values,
+  /// avoiding repeated parsing of the same raw header value.
+  ///
+  /// This is used internally by [getValueFrom] to implement the caching mechanism.
   Expando get _cache => _caches.putIfAbsent(this, Expando.new);
 
+  /// The [key] is the name of the HTTP header.
   final String key;
+
+  /// The [decode] function converts the raw header value into a typed value of type [T].
   final HeaderDecoder<T> decode;
 
+  /// Creates a new header flyweight.
+  ///
+  /// - [key]: The name of the HTTP header
+  /// - [decode]: Function that parses the raw header value into type [T]
+  ///
+  /// Each flyweight instance maintains its own cache to avoid repeated parsing
+  /// of the same raw header value.
   const HeaderFlyweight(this.key, this.decode);
 
+  /// Retrieves the typed value of this header from the given [external] headers.
+  ///
+  /// This method gets the raw header value from [external], decodes it into type [T],
+  /// and caches the result to avoid re-parsing the same value in future calls.
+  ///
+  /// Parameters:
+  /// - [external]: The headers container from which to retrieve the header value
+  /// - [orElse]: Optional function to handle exceptions during header parsing
+  ///
+  /// Returns:
+  /// - The parsed header value of type [T]
+  /// - `null` if the header is not present
+  /// - The result of [orElse] if parsing fails and [orElse] is provided
+  ///
+  /// Throws:
+  /// - [InvalidHeaderException] if parsing fails and no [orElse] is provided
   T? getValueFrom(
     HeadersBase external, {
     T? Function(Exception)? orElse,
@@ -39,11 +74,14 @@ final class HeaderFlyweight<T extends Object> {
     }
   }
 
+  /// Checks if the header is set in the given [external] headers.
   bool isSetIn(HeadersBase external) => external[key] != null;
 
+  /// Checks if the header is valid in the given [external] headers.
   bool isValidIn(HeadersBase external) =>
       getValueFrom(external, orElse: _returnNull) != null;
 
+  /// Creates a new [Header] instance for the given [external] headers.
   Header<T> operator [](HeadersBase external) =>
       Header((flyweight: this, headers: external));
 
@@ -51,6 +89,7 @@ final class HeaderFlyweight<T extends Object> {
   void setValueOn(MutableHeaders external, T? value) =>
       _setValue(external, key, value);
 
+  /// Removes the header from the given [external] headers.
   void removeFrom(MutableHeaders external) => external.remove(key);
 }
 
