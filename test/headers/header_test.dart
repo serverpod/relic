@@ -180,279 +180,247 @@ void main() {
     }),
   );
 
-  test(
-      'Given a headers object '
-      'when using the named extensions getters '
-      'then it succeeds', () {
-    final headers = Headers.empty();
-    // contentType, // Huh?
-    expect(headers.cacheControl, isNull);
-    expect(headers.connection, isNull);
-    expect(headers.contentEncoding, isNull);
-    expect(headers.contentLanguage, isNull);
-    expect(headers.contentLength, isNull);
-    expect(headers.contentLocation, isNull);
-    expect(headers.date, isNull);
-    expect(headers.referrerPolicy, isNull);
-    expect(headers.trailer, isNull);
-    expect(headers.transferEncoding, isNull);
-    expect(headers.via, isNull);
-    expect(headers.accept, isNull);
-    expect(headers.acceptEncoding, isNull);
-    expect(headers.acceptLanguage, isNull);
-    expect(headers.authorization, isNull);
-    expect(headers.cookie, isNull);
-    expect(headers.expect, isNull);
-    expect(headers.from, isNull);
-    expect(headers.host, isNull);
-    expect(headers.ifMatch, isNull);
-    expect(headers.ifModifiedSince, isNull);
-    expect(headers.ifNoneMatch, isNull);
-    expect(headers.ifRange, isNull);
-    expect(headers.ifUnmodifiedSince, isNull);
-    expect(headers.maxForwards, isNull);
-    expect(headers.origin, isNull);
-    expect(headers.proxyAuthorization, isNull);
-    expect(headers.range, isNull);
-    expect(headers.referer, isNull);
-    expect(headers.te, isNull);
-    expect(headers.userAgent, isNull);
-    expect(headers.accessControlRequestHeaders, isNull);
-    expect(headers.accessControlRequestMethod, isNull);
-    expect(headers.secFetchDest, isNull);
-    expect(headers.secFetchMode, isNull);
-    expect(headers.secFetchSite, isNull);
-    expect(headers.acceptRanges, isNull);
-    expect(headers.accessControlAllowCredentials, isNull);
-    expect(headers.accessControlAllowHeaders, isNull);
-    expect(headers.accessControlAllowMethods, isNull);
-    expect(headers.accessControlMaxAge, isNull);
-    expect(headers.age, isNull);
-    expect(headers.allow, isNull);
-    expect(headers.clearSiteData, isNull);
-    expect(headers.contentRange, isNull);
-    expect(headers.contentSecurityPolicy, isNull);
-    expect(headers.crossOriginEmbedderPolicy, isNull);
-    expect(headers.crossOriginOpenerPolicy, isNull);
-    expect(headers.etag, isNull);
-    expect(headers.expires, isNull);
-    expect(headers.lastModified, isNull);
-    expect(headers.location, isNull);
-    expect(headers.permissionsPolicy, isNull);
-    expect(headers.proxyAuthenticate, isNull);
-    expect(headers.retryAfter, isNull);
-    expect(headers.server, isNull);
-    expect(headers.setCookie, isNull);
-    expect(headers.strictTransportSecurity, isNull);
-    expect(headers.vary, isNull);
-    expect(headers.wwwAuthenticate, isNull);
-    expect(headers.xPoweredBy, isNull);
-  });
-
-  test(
-      'Given a MutableHeader object '
-      'when using the named getter and setter extensions '
-      'then it succeeds', () {
-    Headers.build((mh) {
-      // contentType, // Huh?
-
-      expect(mh.cacheControl, isNull);
-      expect(() => mh.cacheControl = null, returnsNormally);
-
-      expect(mh.connection, isNull);
-      expect(() => mh.connection = null, returnsNormally);
-
-      expect(mh.contentDisposition, isNull);
-      expect(() => mh.contentDisposition = null, returnsNormally);
-
-      expect(mh.contentEncoding, isNull);
-      expect(() => mh.contentEncoding = null, returnsNormally);
-
-      expect(mh.contentLanguage, isNull);
-      expect(() => mh.contentLanguage = null, returnsNormally);
-
-      expect(mh.contentLength, isNull);
-      expect(() => mh.contentLength = null, returnsNormally);
-
-      expect(mh.contentLocation, isNull);
-      expect(() => mh.contentLocation = null, returnsNormally);
-
-      expect(mh.date, isNull);
-      expect(() => mh.date = null, returnsNormally);
-
-      expect(mh.referrerPolicy, isNull);
-      expect(() => mh.referrerPolicy = null, returnsNormally);
-
-      expect(mh.trailer, isNull);
-      expect(() => mh.trailer = null, returnsNormally);
-
-      expect(mh.transferEncoding, isNull);
-      expect(() => mh.transferEncoding = null, returnsNormally);
-
-      expect(mh.upgrade, isNull);
-      expect(() => mh.upgrade = null, returnsNormally);
-
-      expect(mh.via, isNull);
-      expect(() => mh.via = null, returnsNormally);
-
-      expect(mh.accept, isNull);
-      expect(() => mh.accept = null, returnsNormally);
-
-      expect(mh.acceptEncoding, isNull);
-      expect(() => mh.acceptEncoding = null, returnsNormally);
-
-      expect(mh.acceptLanguage, isNull);
-      expect(() => mh.acceptLanguage = null, returnsNormally);
-
-      expect(mh.authorization, isNull);
-      expect(() => mh.authorization = null, returnsNormally);
-
-      expect(mh.cookie, isNull);
-      expect(() => mh.cookie = null, returnsNormally);
-
-      expect(mh.expect, isNull);
-      expect(() => mh.expect = null, returnsNormally);
-
-      expect(mh.from, isNull);
-      expect(() => mh.from = null, returnsNormally);
-
-      expect(mh.host, isNull);
-      expect(() => mh.host = null, returnsNormally);
-
-      expect(mh.ifMatch, isNull);
-      expect(() => mh.ifMatch = null, returnsNormally);
-
-      expect(mh.ifModifiedSince, isNull);
-      expect(() => mh.ifModifiedSince = null, returnsNormally);
-
-      expect(mh.ifNoneMatch, isNull);
-      expect(() => mh.ifNoneMatch = null, returnsNormally);
-
-      expect(mh.ifRange, isNull);
-      expect(() => mh.ifRange = null, returnsNormally);
-
-      expect(mh.ifUnmodifiedSince, isNull);
-      expect(() => mh.ifUnmodifiedSince = null, returnsNormally);
-
-      expect(mh.maxForwards, isNull);
-      expect(() => mh.maxForwards = null, returnsNormally);
-
-      expect(mh.origin, isNull);
-      expect(() => mh.origin = null, returnsNormally);
-
-      expect(mh.proxyAuthorization, isNull);
-      expect(() => mh.proxyAuthorization = null, returnsNormally);
-
-      expect(mh.range, isNull);
-      expect(() => mh.range = null, returnsNormally);
-
-      expect(mh.referer, isNull);
-      expect(() => mh.referer = null, returnsNormally);
-
-      expect(mh.te, isNull);
-      expect(() => mh.te = null, returnsNormally);
-
-      expect(mh.userAgent, isNull);
-      expect(() => mh.userAgent = null, returnsNormally);
-
-      expect(mh.accessControlRequestHeaders, isNull);
-      expect(() => mh.accessControlRequestHeaders = null, returnsNormally);
-
-      expect(mh.accessControlRequestMethod, isNull);
-      expect(() => mh.accessControlRequestMethod = null, returnsNormally);
-
-      expect(mh.secFetchDest, isNull);
-      expect(() => mh.secFetchDest = null, returnsNormally);
-
-      expect(mh.secFetchMode, isNull);
-      expect(() => mh.secFetchMode = null, returnsNormally);
-
-      expect(mh.secFetchSite, isNull);
-      expect(() => mh.secFetchSite = null, returnsNormally);
-
-      expect(mh.acceptRanges, isNull);
-      expect(() => mh.acceptRanges = null, returnsNormally);
-
-      expect(mh.accessControlAllowCredentials, isNull);
-      expect(() => mh.accessControlAllowCredentials = null, returnsNormally);
-
-      expect(mh.accessControlAllowHeaders, isNull);
-      expect(() => mh.accessControlAllowHeaders = null, returnsNormally);
-
-      expect(mh.accessControlAllowMethods, isNull);
-      expect(() => mh.accessControlAllowMethods = null, returnsNormally);
-
-      expect(mh.accessControlAllowOrigin, isNull);
-      expect(() => mh.accessControlAllowOrigin = null, returnsNormally);
-
-      expect(mh.accessControlExposeHeaders, isNull);
-      expect(() => mh.accessControlExposeHeaders = null, returnsNormally);
-
-      expect(mh.accessControlMaxAge, isNull);
-      expect(() => mh.accessControlMaxAge = null, returnsNormally);
-
-      expect(mh.age, isNull);
-      expect(() => mh.age = null, returnsNormally);
-
-      expect(mh.allow, isNull);
-      expect(() => mh.allow = null, returnsNormally);
-
-      expect(mh.clearSiteData, isNull);
-      expect(() => mh.clearSiteData = null, returnsNormally);
-
-      expect(mh.contentRange, isNull);
-      expect(() => mh.contentRange = null, returnsNormally);
-
-      expect(mh.contentSecurityPolicy, isNull);
-      expect(() => mh.contentSecurityPolicy = null, returnsNormally);
-
-      expect(mh.crossOriginEmbedderPolicy, isNull);
-      expect(() => mh.crossOriginEmbedderPolicy = null, returnsNormally);
-
-      expect(mh.crossOriginOpenerPolicy, isNull);
-      expect(() => mh.crossOriginOpenerPolicy = null, returnsNormally);
-
-      expect(mh.crossOriginResourcePolicy, isNull);
-      expect(() => mh.crossOriginResourcePolicy = null, returnsNormally);
-
-      expect(mh.etag, isNull);
-      expect(() => mh.etag = null, returnsNormally);
-
-      expect(mh.expires, isNull);
-      expect(() => mh.expires = null, returnsNormally);
-
-      expect(mh.lastModified, isNull);
-      expect(() => mh.lastModified = null, returnsNormally);
-
-      expect(mh.location, isNull);
-      expect(() => mh.location = null, returnsNormally);
-
-      expect(mh.permissionsPolicy, isNull);
-      expect(() => mh.permissionsPolicy = null, returnsNormally);
-
-      expect(mh.proxyAuthenticate, isNull);
-      expect(() => mh.proxyAuthenticate = null, returnsNormally);
-
-      expect(mh.retryAfter, isNull);
-      expect(() => mh.retryAfter = null, returnsNormally);
-
-      expect(mh.server, isNull);
-      expect(() => mh.server = null, returnsNormally);
-
-      expect(mh.setCookie, isNull);
-      expect(() => mh.setCookie = null, returnsNormally);
-
-      expect(mh.strictTransportSecurity, isNull);
-      expect(() => mh.strictTransportSecurity = null, returnsNormally);
-
-      expect(mh.vary, isNull);
-      expect(() => mh.vary = null, returnsNormally);
-
-      expect(mh.wwwAuthenticate, isNull);
-      expect(() => mh.wwwAuthenticate = null, returnsNormally);
-
-      expect(mh.xPoweredBy, isNull);
-      expect(() => mh.xPoweredBy = null, returnsNormally);
-    });
-  });
+  parameterizedTest(
+    (v) => 'Given a "${v.key.key}" header '
+        'when using the named extension property on an empty Headers instance '
+        'then reading it succeeds and returns null',
+    (v) {
+      expect(() => v.value(Headers.empty()), returnsNormally);
+      expect(v.value(Headers.empty()), isNull);
+    },
+    variants: <HeaderFlyweight, dynamic Function(Headers)>{
+      Headers.accept: (h) => h.accept,
+      Headers.acceptEncoding: (h) => h.acceptEncoding,
+      Headers.acceptLanguage: (h) => h.acceptLanguage,
+      Headers.acceptRanges: (h) => h.acceptRanges,
+      Headers.accessControlAllowCredentials: (h) =>
+          h.accessControlAllowCredentials,
+      Headers.accessControlAllowHeaders: (h) => h.accessControlAllowHeaders,
+      Headers.accessControlAllowMethods: (h) => h.accessControlAllowMethods,
+      Headers.accessControlAllowOrigin: (h) => h.accessControlAllowOrigin,
+      Headers.accessControlExposeHeaders: (h) => h.accessControlExposeHeaders,
+      Headers.accessControlMaxAge: (h) => h.accessControlMaxAge,
+      Headers.accessControlRequestHeaders: (h) => h.accessControlRequestHeaders,
+      Headers.accessControlRequestMethod: (h) => h.accessControlRequestMethod,
+      Headers.age: (h) => h.age,
+      Headers.allow: (h) => h.allow,
+      Headers.authorization: (h) => h.authorization,
+      Headers.cacheControl: (h) => h.cacheControl,
+      Headers.clearSiteData: (h) => h.clearSiteData,
+      Headers.connection: (h) => h.connection,
+      Headers.contentDisposition: (h) => h.contentDisposition,
+      Headers.contentEncoding: (h) => h.contentEncoding,
+      Headers.contentLanguage: (h) => h.contentLanguage,
+      Headers.contentLength: (h) => h.contentLength,
+      Headers.contentLocation: (h) => h.contentLocation,
+      Headers.contentRange: (h) => h.contentRange,
+      Headers.contentSecurityPolicy: (h) => h.contentSecurityPolicy,
+      Headers.cookie: (h) => h.cookie,
+      Headers.crossOriginEmbedderPolicy: (h) => h.crossOriginEmbedderPolicy,
+      Headers.crossOriginOpenerPolicy: (h) => h.crossOriginOpenerPolicy,
+      Headers.crossOriginResourcePolicy: (h) => h.crossOriginResourcePolicy,
+      Headers.date: (h) => h.date,
+      Headers.etag: (h) => h.etag,
+      Headers.expect: (h) => h.expect,
+      Headers.expires: (h) => h.expires,
+      Headers.from: (h) => h.from,
+      Headers.host: (h) => h.host,
+      Headers.ifMatch: (h) => h.ifMatch,
+      Headers.ifModifiedSince: (h) => h.ifModifiedSince,
+      Headers.ifNoneMatch: (h) => h.ifNoneMatch,
+      Headers.ifRange: (h) => h.ifRange,
+      Headers.ifUnmodifiedSince: (h) => h.ifUnmodifiedSince,
+      Headers.lastModified: (h) => h.lastModified,
+      Headers.location: (h) => h.location,
+      Headers.maxForwards: (h) => h.maxForwards,
+      Headers.origin: (h) => h.origin,
+      Headers.permissionsPolicy: (h) => h.permissionsPolicy,
+      Headers.proxyAuthenticate: (h) => h.proxyAuthenticate,
+      Headers.proxyAuthorization: (h) => h.proxyAuthorization,
+      Headers.range: (h) => h.range,
+      Headers.referer: (h) => h.referer,
+      Headers.referrerPolicy: (h) => h.referrerPolicy,
+      Headers.retryAfter: (h) => h.retryAfter,
+      Headers.secFetchDest: (h) => h.secFetchDest,
+      Headers.secFetchMode: (h) => h.secFetchMode,
+      Headers.secFetchSite: (h) => h.secFetchSite,
+      Headers.server: (h) => h.server,
+      Headers.setCookie: (h) => h.setCookie,
+      Headers.strictTransportSecurity: (h) => h.strictTransportSecurity,
+      Headers.te: (h) => h.te,
+      Headers.trailer: (h) => h.trailer,
+      Headers.transferEncoding: (h) => h.transferEncoding,
+      Headers.upgrade: (h) => h.upgrade,
+      Headers.userAgent: (h) => h.userAgent,
+      Headers.vary: (h) => h.vary,
+      Headers.via: (h) => h.via,
+      Headers.wwwAuthenticate: (h) => h.wwwAuthenticate,
+      Headers.xPoweredBy: (h) => h.xPoweredBy,
+    }.entries,
+  );
+
+  parameterizedTest(
+    (v) => 'Given a "${v.key.key}" header '
+        'when using the named extension property on an empty MutableHeaders instance '
+        'then reading it succeeds and returns null',
+    (v) {
+      expect(() => Headers.build((mh) => v.value(mh)), returnsNormally);
+      Headers.build((mh) => expect(v.value(mh), isNull));
+    },
+    variants: <HeaderFlyweight, dynamic Function(MutableHeaders)>{
+      Headers.accept: (h) => h.accept,
+      Headers.acceptEncoding: (h) => h.acceptEncoding,
+      Headers.acceptLanguage: (h) => h.acceptLanguage,
+      Headers.acceptRanges: (h) => h.acceptRanges,
+      Headers.accessControlAllowCredentials: (h) =>
+          h.accessControlAllowCredentials,
+      Headers.accessControlAllowHeaders: (h) => h.accessControlAllowHeaders,
+      Headers.accessControlAllowMethods: (h) => h.accessControlAllowMethods,
+      Headers.accessControlAllowOrigin: (h) => h.accessControlAllowOrigin,
+      Headers.accessControlExposeHeaders: (h) => h.accessControlExposeHeaders,
+      Headers.accessControlMaxAge: (h) => h.accessControlMaxAge,
+      Headers.accessControlRequestHeaders: (h) => h.accessControlRequestHeaders,
+      Headers.accessControlRequestMethod: (h) => h.accessControlRequestMethod,
+      Headers.age: (h) => h.age,
+      Headers.allow: (h) => h.allow,
+      Headers.authorization: (h) => h.authorization,
+      Headers.cacheControl: (h) => h.cacheControl,
+      Headers.clearSiteData: (h) => h.clearSiteData,
+      Headers.connection: (h) => h.connection,
+      Headers.contentDisposition: (h) => h.contentDisposition,
+      Headers.contentEncoding: (h) => h.contentEncoding,
+      Headers.contentLanguage: (h) => h.contentLanguage,
+      Headers.contentLength: (h) => h.contentLength,
+      Headers.contentLocation: (h) => h.contentLocation,
+      Headers.contentRange: (h) => h.contentRange,
+      Headers.contentSecurityPolicy: (h) => h.contentSecurityPolicy,
+      Headers.cookie: (h) => h.cookie,
+      Headers.crossOriginEmbedderPolicy: (h) => h.crossOriginEmbedderPolicy,
+      Headers.crossOriginOpenerPolicy: (h) => h.crossOriginOpenerPolicy,
+      Headers.crossOriginResourcePolicy: (h) => h.crossOriginResourcePolicy,
+      Headers.date: (h) => h.date,
+      Headers.etag: (h) => h.etag,
+      Headers.expect: (h) => h.expect,
+      Headers.expires: (h) => h.expires,
+      Headers.from: (h) => h.from,
+      Headers.host: (h) => h.host,
+      Headers.ifMatch: (h) => h.ifMatch,
+      Headers.ifModifiedSince: (h) => h.ifModifiedSince,
+      Headers.ifNoneMatch: (h) => h.ifNoneMatch,
+      Headers.ifRange: (h) => h.ifRange,
+      Headers.ifUnmodifiedSince: (h) => h.ifUnmodifiedSince,
+      Headers.lastModified: (h) => h.lastModified,
+      Headers.location: (h) => h.location,
+      Headers.maxForwards: (h) => h.maxForwards,
+      Headers.origin: (h) => h.origin,
+      Headers.permissionsPolicy: (h) => h.permissionsPolicy,
+      Headers.proxyAuthenticate: (h) => h.proxyAuthenticate,
+      Headers.proxyAuthorization: (h) => h.proxyAuthorization,
+      Headers.range: (h) => h.range,
+      Headers.referer: (h) => h.referer,
+      Headers.referrerPolicy: (h) => h.referrerPolicy,
+      Headers.retryAfter: (h) => h.retryAfter,
+      Headers.secFetchDest: (h) => h.secFetchDest,
+      Headers.secFetchMode: (h) => h.secFetchMode,
+      Headers.secFetchSite: (h) => h.secFetchSite,
+      Headers.server: (h) => h.server,
+      Headers.setCookie: (h) => h.setCookie,
+      Headers.strictTransportSecurity: (h) => h.strictTransportSecurity,
+      Headers.te: (h) => h.te,
+      Headers.trailer: (h) => h.trailer,
+      Headers.transferEncoding: (h) => h.transferEncoding,
+      Headers.upgrade: (h) => h.upgrade,
+      Headers.userAgent: (h) => h.userAgent,
+      Headers.vary: (h) => h.vary,
+      Headers.via: (h) => h.via,
+      Headers.wwwAuthenticate: (h) => h.wwwAuthenticate,
+      Headers.xPoweredBy: (h) => h.xPoweredBy,
+    }.entries,
+  );
+
+  parameterizedTest(
+    (v) => 'Given a "${v.key.key}" header '
+        'when using the named extension property on an empty MutableHeaders instance '
+        'then setting it succeeds',
+    (v) {
+      expect(() => Headers.build((mh) => v.value(mh)), returnsNormally);
+    },
+    variants: <HeaderFlyweight, dynamic Function(MutableHeaders)>{
+      Headers.accept: (h) => h.accept = null,
+      Headers.acceptEncoding: (h) => h.acceptEncoding = null,
+      Headers.acceptLanguage: (h) => h.acceptLanguage = null,
+      Headers.acceptRanges: (h) => h.acceptRanges = null,
+      Headers.accessControlAllowCredentials: (h) =>
+          h.accessControlAllowCredentials = null,
+      Headers.accessControlAllowHeaders: (h) =>
+          h.accessControlAllowHeaders = null,
+      Headers.accessControlAllowMethods: (h) =>
+          h.accessControlAllowMethods = null,
+      Headers.accessControlAllowOrigin: (h) =>
+          h.accessControlAllowOrigin = null,
+      Headers.accessControlExposeHeaders: (h) =>
+          h.accessControlExposeHeaders = null,
+      Headers.accessControlMaxAge: (h) => h.accessControlMaxAge = null,
+      Headers.accessControlRequestHeaders: (h) =>
+          h.accessControlRequestHeaders = null,
+      Headers.accessControlRequestMethod: (h) =>
+          h.accessControlRequestMethod = null,
+      Headers.age: (h) => h.age = null,
+      Headers.allow: (h) => h.allow = null,
+      Headers.authorization: (h) => h.authorization = null,
+      Headers.cacheControl: (h) => h.cacheControl = null,
+      Headers.clearSiteData: (h) => h.clearSiteData = null,
+      Headers.connection: (h) => h.connection = null,
+      Headers.contentDisposition: (h) => h.contentDisposition = null,
+      Headers.contentEncoding: (h) => h.contentEncoding = null,
+      Headers.contentLanguage: (h) => h.contentLanguage = null,
+      Headers.contentLength: (h) => h.contentLength = null,
+      Headers.contentLocation: (h) => h.contentLocation = null,
+      Headers.contentRange: (h) => h.contentRange = null,
+      Headers.contentSecurityPolicy: (h) => h.contentSecurityPolicy = null,
+      Headers.cookie: (h) => h.cookie = null,
+      Headers.crossOriginEmbedderPolicy: (h) =>
+          h.crossOriginEmbedderPolicy = null,
+      Headers.crossOriginOpenerPolicy: (h) => h.crossOriginOpenerPolicy = null,
+      Headers.crossOriginResourcePolicy: (h) =>
+          h.crossOriginResourcePolicy = null,
+      Headers.date: (h) => h.date = null,
+      Headers.etag: (h) => h.etag = null,
+      Headers.expect: (h) => h.expect = null,
+      Headers.expires: (h) => h.expires = null,
+      Headers.from: (h) => h.from = null,
+      Headers.host: (h) => h.host = null,
+      Headers.ifMatch: (h) => h.ifMatch = null,
+      Headers.ifModifiedSince: (h) => h.ifModifiedSince = null,
+      Headers.ifNoneMatch: (h) => h.ifNoneMatch = null,
+      Headers.ifRange: (h) => h.ifRange = null,
+      Headers.ifUnmodifiedSince: (h) => h.ifUnmodifiedSince = null,
+      Headers.lastModified: (h) => h.lastModified = null,
+      Headers.location: (h) => h.location = null,
+      Headers.maxForwards: (h) => h.maxForwards = null,
+      Headers.origin: (h) => h.origin = null,
+      Headers.permissionsPolicy: (h) => h.permissionsPolicy = null,
+      Headers.proxyAuthenticate: (h) => h.proxyAuthenticate = null,
+      Headers.proxyAuthorization: (h) => h.proxyAuthorization = null,
+      Headers.range: (h) => h.range = null,
+      Headers.referer: (h) => h.referer = null,
+      Headers.referrerPolicy: (h) => h.referrerPolicy = null,
+      Headers.retryAfter: (h) => h.retryAfter = null,
+      Headers.secFetchDest: (h) => h.secFetchDest = null,
+      Headers.secFetchMode: (h) => h.secFetchMode = null,
+      Headers.secFetchSite: (h) => h.secFetchSite = null,
+      Headers.server: (h) => h.server = null,
+      Headers.setCookie: (h) => h.setCookie = null,
+      Headers.strictTransportSecurity: (h) => h.strictTransportSecurity = null,
+      Headers.te: (h) => h.te = null,
+      Headers.trailer: (h) => h.trailer = null,
+      Headers.transferEncoding: (h) => h.transferEncoding = null,
+      Headers.upgrade: (h) => h.upgrade = null,
+      Headers.userAgent: (h) => h.userAgent = null,
+      Headers.vary: (h) => h.vary = null,
+      Headers.via: (h) => h.via = null,
+      Headers.wwwAuthenticate: (h) => h.wwwAuthenticate = null,
+      Headers.xPoweredBy: (h) => h.xPoweredBy = null,
+    }.entries,
+  );
 }
