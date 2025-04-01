@@ -139,11 +139,12 @@ void main() {
     variants: Headers.all,
   );
 
-  const invalid = ['invalid'];
   parameterizedGroup(
-    (v) => 'Given a "${v.key}" header with a raw value $invalid',
+    (v) => 'Given a "${v.key}" header with a raw value "[\'invalid\']"}',
     (v) {
-      late final header = v[Headers.fromMap({v.key: invalid})];
+      late final header = v[Headers.fromMap({
+        v.key: ['invalid']
+      })];
 
       singleTest('then isSet is true', header.isSet, isTrue);
       singleTest('then isValid is false', header.isValid, isFalse);
