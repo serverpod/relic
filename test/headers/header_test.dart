@@ -90,17 +90,14 @@ void main() {
     (v) {
       Headers.build((mh) {
         final header = v[mh];
-        singleTest('then raw value not set',
-            actual: mh, expected: isNot(contains(v.key)));
-        singleTest('then not isSet', actual: header.isSet, expected: isFalse);
+        singleTest('then raw value not set', mh, isNot(contains(v.key)));
+        singleTest('then not isSet', header.isSet, isFalse);
         singleTest('then set fails if type of value wrong',
-            actual: () => header.set(Object()),
-            expected: throwsA(isA<TypeError>()));
-        singleTest('then set to null succeeds',
-            actual: () => header.set(null), expected: returnsNormally);
+            () => header.set(Object()), throwsA(isA<TypeError>()));
+        singleTest('then set to null succeeds', () => header.set(null),
+            returnsNormally);
         singleTest('then set succeeds if value is correct type',
-            actual: () => header.set(header.valueOrNull),
-            expected: returnsNormally);
+            () => header.set(header.valueOrNull), returnsNormally);
       });
     },
     variants: Headers.all,
@@ -112,18 +109,13 @@ void main() {
       late final headers = Headers.empty();
       late final header = v[headers];
 
-      singleTest('then raw value not set',
-          actual: headers, expected: isNot(contains(v.key)));
-      singleTest('then isSet is false',
-          actual: header.isSet, expected: isFalse);
-      singleTest('then isValid is false',
-          actual: header.isValid, expected: isFalse);
-      singleTest('then valueOrNull is null',
-          actual: header.valueOrNull, expected: isNull);
+      singleTest('then raw value not set', headers, isNot(contains(v.key)));
+      singleTest('then isSet is false', header.isSet, isFalse);
+      singleTest('then isValid is false', header.isValid, isFalse);
+      singleTest('then valueOrNull is null', header.valueOrNull, isNull);
       singleTest('then valueOrNullIfInvalid is null',
-          actual: header.valueOrNullIfInvalid, expected: isNull);
-      singleTest('then value throws',
-          actual: () => header.value, expected: throwsMissingHeader);
+          header.valueOrNullIfInvalid, isNull);
+      singleTest('then value throws', () => header.value, throwsMissingHeader);
     },
     variants: Headers.all,
   );
@@ -136,17 +128,14 @@ void main() {
       });
       late final header = v[headers];
 
-      singleTest('then raw value set',
-          actual: headers, expected: contains(v.key));
-      singleTest('then isSet is true', actual: header.isSet, expected: isTrue);
-      singleTest('then isValid is false',
-          actual: header.isValid, expected: isFalse);
-      singleTest('then valueOrNull throws',
-          actual: () => header.valueOrNull, expected: throwsInvalidHeader);
+      singleTest('then raw value set', headers, contains(v.key));
+      singleTest('then isSet is true', header.isSet, isTrue);
+      singleTest('then isValid is false', header.isValid, isFalse);
+      singleTest('then valueOrNull throws', () => header.valueOrNull,
+          throwsInvalidHeader);
       singleTest('then valueOrNullIfInvalid is null',
-          actual: header.valueOrNullIfInvalid, expected: isNull);
-      singleTest('then value throws',
-          actual: () => header.value, expected: throwsInvalidHeader);
+          header.valueOrNullIfInvalid, isNull);
+      singleTest('then value throws', () => header.value, throwsInvalidHeader);
     },
     variants: Headers.all,
   );
@@ -158,13 +147,11 @@ void main() {
         v.key: ['invalid']
       })];
 
-      singleTest('then isSet is true', actual: header.isSet, expected: isTrue);
-      singleTest('then isValid is false',
-          actual: header.isValid, expected: isFalse);
-      singleTest('then valueOrNull throws',
-          actual: () => header.valueOrNull, expected: throwsInvalidHeader);
-      singleTest('then value throws',
-          actual: () => header.value, expected: throwsInvalidHeader);
+      singleTest('then isSet is true', header.isSet, isTrue);
+      singleTest('then isValid is false', header.isValid, isFalse);
+      singleTest('then valueOrNull throws', () => header.valueOrNull,
+          throwsInvalidHeader);
+      singleTest('then value throws', () => header.value, throwsInvalidHeader);
     },
     variants: Headers.all.difference({
       // TODO(nielsenko): Go over these exceptions and find out if they are correct. Not all are for sure!

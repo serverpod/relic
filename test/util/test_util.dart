@@ -63,12 +63,13 @@ void parameterizedTest<T>(
   }
 }
 
+/// A [test] with a single [expect]
 @isTest
 void singleTest(
-  String description, {
-  required dynamic actual,
-  required dynamic expected,
-}) {
+  String description,
+  dynamic actual,
+  dynamic expected,
+) {
   test(description, () {
     expect(actual, expected);
   });

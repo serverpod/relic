@@ -115,7 +115,6 @@ List<String> parseStringList(Iterable<String> values) {
 /// - Throws a [FormatException] if the resulting list is empty.
 List<RequestMethod> parseMethodList(Iterable<String> values) {
   var tempValues = values.splitTrimAndFilterUnique(emptyCheck: false);
-
   if (tempValues.isEmpty) {
     throw FormatException('Value cannot be empty');
   }
