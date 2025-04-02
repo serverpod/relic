@@ -39,9 +39,11 @@ final localhostUri = Uri.parse('http://localhost/');
 final isOhNoStateError =
     isA<StateError>().having((e) => e.message, 'message', 'oh no');
 
-void parameterizedGroup<T>({
-  required String Function(T) descriptionBuilder,
-  required void Function(T) body,
+/// Like [group] but takes a variants argument and creates a group for each variant.
+@isTestGroup
+void parameterizedGroup<T>(
+  String Function(T) descriptionBuilder,
+  void Function(T) body, {
   required Iterable<T> variants,
 }) {
   for (var v in variants) {
@@ -49,9 +51,11 @@ void parameterizedGroup<T>({
   }
 }
 
-void parameterizedTest<T>({
-  required String Function(T) descriptionBuilder,
-  required void Function(T) body,
+/// Like [test] but takes a variants argument and creates a test-case for each variant.
+@isTest
+void parameterizedTest<T>(
+  String Function(T) descriptionBuilder,
+  void Function(T) body, {
   required Iterable<T> variants,
 }) {
   for (var v in variants) {
@@ -59,8 +63,9 @@ void parameterizedTest<T>({
   }
 }
 
-void singleTest({
-  required String description,
+@isTest
+void singleTest(
+  String description, {
   required dynamic actual,
   required dynamic expected,
 }) {
