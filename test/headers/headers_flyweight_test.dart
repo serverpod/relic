@@ -1,7 +1,7 @@
-import 'package:relic/src/headers/parser/common_types_parser.dart';
-import 'package:test/test.dart';
 import 'package:relic/src/headers/header_flyweight.dart';
 import 'package:relic/src/headers/headers.dart';
+import 'package:relic/src/headers/parser/common_types_parser.dart';
+import 'package:test/test.dart';
 
 import 'headers_test_utils.dart';
 
