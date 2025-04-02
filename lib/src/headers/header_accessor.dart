@@ -6,18 +6,18 @@ import 'package:relic/src/headers/typed/typed_header_interface.dart';
 import 'exception/header_exception.dart';
 import 'headers.dart';
 
-/// Flyweight class for headers. It should always be const constructed.
+/// Flyweight accessor class for headers. It should always be const constructed.
 ///
 /// The externalized state is stored in the Headers external, and to avoid repeated
 /// parsing of the raw value the value is cached with an [Expando].
-final class HeaderFlyweight<T extends Object> {
-  /// Static map that stores the cache [Expando] for each [HeaderFlyweight] instance.
-  /// Using an identity map ensures each flyweight gets its own unique cache.
-  static final _caches = LinkedHashMap<HeaderFlyweight, Expando>.identity();
+final class HeaderAccessor<T extends Object> {
+  /// Static map that stores the cache [Expando] for each [HeaderAccessor] instance.
+  /// Using an identity map ensures each accessor gets its own unique cache.
+  static final _caches = LinkedHashMap<HeaderAccessor, Expando>.identity();
 
-  /// Returns the [Expando] cache for this flyweight instance.
+  /// Returns the [Expando] cache for this accessor instance.
   ///
-  /// Each flyweight has its own unique cache to store parsed header values,
+  /// Each accessor has its own unique cache to store parsed header values,
   /// avoiding repeated parsing of the same raw header value.
   ///
   /// This is used internally by [getValueFrom] to implement the caching mechanism.
@@ -29,14 +29,14 @@ final class HeaderFlyweight<T extends Object> {
   /// The [decode] function converts the raw header value into a typed value of type [T].
   final HeaderDecoder<T> decode;
 
-  /// Creates a new header flyweight.
+  /// Creates a new header accessor.
   ///
   /// - [key]: The name of the HTTP header
   /// - [decode]: Function that parses the raw header value into type [T]
   ///
-  /// Each flyweight instance maintains its own cache to avoid repeated parsing
+  /// Each accessor instance maintains its own cache to avoid repeated parsing
   /// of the same raw header value.
-  const HeaderFlyweight(this.key, this.decode);
+  const HeaderAccessor(this.key, this.decode);
 
   /// Retrieves the typed value of this header from the given [external] headers.
   ///
@@ -83,7 +83,7 @@ final class HeaderFlyweight<T extends Object> {
 
   /// Creates a new [Header] instance for the given [external] headers.
   Header<T> operator [](HeadersBase external) =>
-      Header((flyweight: this, headers: external));
+      Header((accessor: this, headers: external));
 
   /// [null] implies removing the header
   void setValueOn(MutableHeaders external, T? value) =>
@@ -125,30 +125,29 @@ final class HeaderDecoderMulti<T extends Object> extends HeaderDecoder<T> {
 /// to keep runtime cost low.
 extension type Header<T extends Object>(HeaderTuple<T> tuple) {
   HeadersBase get _headers => tuple.headers;
-  HeaderFlyweight<T> get _flyweight => tuple.flyweight;
+  HeaderAccessor<T> get _accessor => tuple.accessor;
 
-  String get key => _flyweight.key;
-  Iterable<String>? get raw => _headers[_flyweight.key];
+  String get key => _accessor.key;
+  Iterable<String>? get raw => _headers[_accessor.key];
 
-  bool get isSet => _flyweight.isSetIn(_headers);
-  bool get isValid => _flyweight.isValidIn(_headers);
+  bool get isSet => _accessor.isSetIn(_headers);
+  bool get isValid => _accessor.isValidIn(_headers);
 
-  T? call() => _flyweight.getValueFrom(_headers);
+  T? call() => _accessor.getValueFrom(_headers);
 
   T? get valueOrNullIfInvalid =>
-      _flyweight.getValueFrom(_headers, orElse: _returnNull);
+      _accessor.getValueFrom(_headers, orElse: _returnNull);
   T? get valueOrNull => this();
   T get value =>
-      _flyweight.getValueFrom(_headers) ??
+      _accessor.getValueFrom(_headers) ??
       (throw MissingHeaderException('', headerType: key));
 
-  void set(T? value) =>
-      _flyweight.setValueOn(_headers as MutableHeaders, value);
+  void set(T? value) => _accessor.setValueOn(_headers as MutableHeaders, value);
 }
 
-/// Internal record for bundling a [HeaderFlyweight] with its externalized state [Headers].
+/// Internal record for bundling a [HeaderAccessor] with its externalized state [Headers].
 typedef HeaderTuple<T extends Object> = ({
-  HeaderFlyweight<T> flyweight,
+  HeaderAccessor<T> accessor,
   HeadersBase headers,
 });
 

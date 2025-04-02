@@ -126,7 +126,7 @@ void main() {
   });
 
   test('custom request headers are received by the handler', () async {
-    const multi = HeaderFlyweight<List<String>>(
+    const multi = HeaderAccessor<List<String>>(
       'multi-header',
       HeaderDecoderMulti(parseStringList),
     );

@@ -190,7 +190,7 @@ void main() {
       expect(() => v.value(Headers.empty()), returnsNormally);
       expect(v.value(Headers.empty()), isNull);
     },
-    variants: <HeaderFlyweight, dynamic Function(Headers)>{
+    variants: <HeaderAccessor, dynamic Function(Headers)>{
       Headers.accept: (h) => h.accept,
       Headers.acceptEncoding: (h) => h.acceptEncoding,
       Headers.acceptLanguage: (h) => h.acceptLanguage,
@@ -269,7 +269,7 @@ void main() {
       expect(() => Headers.build((mh) => v.value(mh)), returnsNormally);
       Headers.build((mh) => expect(v.value(mh), isNull));
     },
-    variants: <HeaderFlyweight, dynamic Function(MutableHeaders)>{
+    variants: <HeaderAccessor, dynamic Function(MutableHeaders)>{
       Headers.accept: (h) => h.accept,
       Headers.acceptEncoding: (h) => h.acceptEncoding,
       Headers.acceptLanguage: (h) => h.acceptLanguage,
@@ -347,7 +347,7 @@ void main() {
     (v) {
       expect(() => Headers.build((mh) => v.value(mh)), returnsNormally);
     },
-    variants: <HeaderFlyweight, dynamic Function(MutableHeaders)>{
+    variants: <HeaderAccessor, dynamic Function(MutableHeaders)>{
       Headers.accept: (h) => h.accept = null,
       Headers.acceptEncoding: (h) => h.acceptEncoding = null,
       Headers.acceptLanguage: (h) => h.acceptLanguage = null,
@@ -433,7 +433,7 @@ void main() {
     (v) {
       expect(() => Headers.build((mh) => v.value(mh)), returnsNormally);
     },
-    variants: <HeaderFlyweight, dynamic Function(MutableHeaders)>{
+    variants: <HeaderAccessor, dynamic Function(MutableHeaders)>{
       Headers.accept: (h) =>
           h.accept = AcceptHeader.parse(['application/vnd.example.api+json']),
       Headers.acceptEncoding: (h) =>

@@ -12,7 +12,7 @@ export 'src/handler/pipeline.dart' show Pipeline;
 
 // Headers related exports
 export 'src/headers/headers.dart';
-export 'src/headers/header_flyweight.dart';
+export 'src/headers/header_accessor.dart';
 export 'src/headers/typed/typed_headers.dart';
 export 'src/headers/exception/header_exception.dart'
     show HeaderException, InvalidHeaderException, MissingHeaderException;
