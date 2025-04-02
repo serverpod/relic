@@ -57,24 +57,10 @@ int parseInt(String value) {
 ///
 /// - Throws a [FormatException] if the [value] is empty, contains an invalid number, is negative, or is not an integer.
 int parsePositiveInt(String value) {
-  if (value.isEmpty) {
-    throw FormatException('Value cannot be empty');
-  }
-  num parsedValue;
-  try {
-    parsedValue = num.parse(value);
-  } catch (e) {
-    throw FormatException('Invalid number');
-  }
-
+  int parsedValue = parseInt(value);
   if (parsedValue.isNegative) {
     throw FormatException('Must be non-negative');
   }
-
-  if (parsedValue is! int) {
-    throw FormatException('Must be an integer');
-  }
-
   return parsedValue;
 }
 
@@ -96,22 +82,10 @@ bool parseBool(String value) {
 ///
 /// - Throws a [FormatException] if the [value] is 'empty', 'false' or contains an invalid boolean.
 bool parsePositiveBool(String value) {
-  if (value.isEmpty) {
-    throw FormatException('Value cannot be empty');
-  }
-
-  bool parsedValue;
-
-  try {
-    parsedValue = bool.parse(value);
-  } catch (e) {
-    throw FormatException('Invalid boolean');
-  }
-
+  bool parsedValue = parseBool(value);
   if (!parsedValue) {
     throw FormatException('Must be true or null');
   }
-
   return parsedValue;
 }
 
