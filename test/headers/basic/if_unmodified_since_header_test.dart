@@ -117,7 +117,7 @@ void main() {
           var headers = await getServerRequestHeaders(
             server: server,
             headers: {},
-            touchHeaders: (h) => h.ifModifiedSince,
+            touchHeaders: (h) => h.ifUnmodifiedSince,
           );
 
           expect(headers.ifUnmodifiedSince, isNull);
