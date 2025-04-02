@@ -170,13 +170,16 @@ Never _throwException(
   required String key,
 }) {
   var message = "$exception";
-  if (exception is InvalidHeaderException) {
-    message = exception.description;
-  } else if (exception is FormatException) {
+  if (exception is FormatException) {
     message = exception.message;
+  }
+  // This code block is defensive, and should not be hit
+  else if (exception is InvalidHeaderException) {
+    throw exception;
   } else if (exception is ArgumentError) {
     message = exception.message;
   }
+  // -
 
   throw InvalidHeaderException(
     message,

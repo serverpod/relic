@@ -1,288 +1,148 @@
+import 'package:relic/src/headers/parser/common_types_parser.dart';
 import 'package:test/test.dart';
 import 'package:relic/src/headers/header_flyweight.dart';
 import 'package:relic/src/headers/headers.dart';
-import 'package:relic/src/headers/exception/header_exception.dart';
-import 'package:relic/src/headers/typed/typed_header_interface.dart';
 
 import 'headers_test_utils.dart';
 
-// Simple implementation of TypedHeader for testing
-class TestTypedHeader implements TypedHeader {
-  final String _value;
+const _anInt = HeaderFlyweight<int>(
+  'anInt',
+  HeaderDecoderSingle(int.parse),
+);
 
-  TestTypedHeader(this._value);
+const _someStrings = HeaderFlyweight<List<String>>(
+  'someStrings',
+  HeaderDecoderMulti(parseStringList),
+);
 
-  @override
-  String toHeaderString() => _value;
+extension on Headers {
+  int? get anInt => _anInt[this]();
+  List<String>? get someStrings => _someStrings[this]();
+}
+
+extension on MutableHeaders {
+  set anInt(int? value) => _anInt[this].set(value);
 }
 
 void main() {
-  group('HeaderDecoderSingle', () {
-    late HeaderDecoderSingle<int> decoder;
-
-    setUp(() {
-      decoder = HeaderDecoderSingle<int>((s) => int.parse(s));
+  test('Given a correct header then single values are parsed correctly', () {
+    final headers = Headers.fromMap({
+      'anInt': ['42']
     });
-
-    test('parses a single value', () {
-      expect(decoder(['123']), equals(123));
-    });
-
-    test('uses first value when multiple are present', () {
-      expect(decoder(['123', '456']), equals(123));
-    });
-
-    test('throws when parsing fails', () {
-      expect(() => decoder(['abc']), throwsA(isA<FormatException>()));
-    });
+    expect(headers.anInt, isA<int>());
+    expect(headers.anInt, 42);
   });
 
-  group('HeaderDecoderMulti', () {
-    late HeaderDecoderMulti<List<int>> decoder;
-
-    setUp(() {
-      decoder = HeaderDecoderMulti<List<int>>(
-          (values) => values.map((s) => int.parse(s)).toList());
+  test('Given a correct header then multi values are parsed correctly', () {
+    final headers = Headers.fromMap({
+      'someStrings': 'foo bar'.split(' '),
     });
-
-    test('parses multiple values', () {
-      expect(decoder(['123', '456']), equals([123, 456]));
-    });
-
-    test('parses a single value as a list', () {
-      expect(decoder(['123']), equals([123]));
-    });
-
-    test('throws when parsing fails', () {
-      expect(() => decoder(['123', 'abc']), throwsA(isA<FormatException>()));
-    });
+    expect(headers.someStrings, isA<List<String>>());
+    expect(headers.someStrings, ['foo', 'bar']);
   });
 
-  group('HeaderFlyweight', () {
-    late HeaderDecoderSingle<int> intDecoder;
-    late HeaderFlyweight<int> flyweight;
+  group('Given an empty Headers collection', () {
+    final headers = Headers.empty();
+    final header = _anInt[headers];
 
-    setUp(() {
-      intDecoder = HeaderDecoderSingle<int>((s) => int.parse(s));
-      flyweight = HeaderFlyweight<int>('x-test', intDecoder);
-    });
-    test('getValueFrom returns decoded value when header is present', () {
-      var headers = Headers.build((mh) => mh['x-test'] = ['123']);
-      expect(flyweight.getValueFrom(headers), equals(123));
-    });
-
-    test('getValueFrom caches decoded values', () {
-      var headers = Headers.build((mh) => mh['x-test'] = ['123']);
-
-      // Access value twice to test caching
-      var value1 = flyweight.getValueFrom(headers);
-
-      // Change the header value - if caching works, this won't affect the second getValue
-      var headers2 = headers.transform((mh) {
-        expect(flyweight.getValueFrom(mh), equals(123));
-        mh['x-test'] = ['456'];
-        // expect(flyweight.getValueFrom(mh), equals(456)); // <-- THIS DON' CURRENTLY WORK!!
+    group('when accessing the header', () {
+      test('it is not set', () {
+        expect(_anInt.isSetIn(headers), isFalse);
+        expect(header.isSet, isFalse);
       });
-      var value2 = flyweight.getValueFrom(headers);
+      test('it is invalid', () {
+        expect(_anInt.isValidIn(headers), isFalse);
+        expect(header.isValid, isFalse);
+      });
 
-      expect(value1, equals(123));
-      expect(value2, equals(123)); // Should be from cache, not the new value
-
-      // Create a new headers object to test a fresh value
-      var value3 = flyweight.getValueFrom(headers2);
-
-      expect(value3, equals(456)); // Should get the new value
-    });
-
-    test('getValueFrom returns null when header is not present', () {
-      expect(flyweight.getValueFrom(Headers.empty()), isNull);
-    });
-
-    test('getValueFrom uses orElse when parsing fails', () {
-      var headers = Headers.build((mh) => mh['x-test'] = ['abc']);
-      expect(
-        flyweight.getValueFrom(headers, orElse: (_) => -1),
-        equals(-1),
-      );
-    });
-
-    test('getValueFrom wraps exceptions in InvalidHeaderException', () {
-      var headers = Headers.build((mh) => mh['x-test'] = ['abc']);
-      expect(
-        () => flyweight.getValueFrom(headers),
-        throwsA(isA<InvalidHeaderException>()
-            .having((e) => e.headerType, 'headerType', 'x-test')),
-      );
-    });
-
-    test('isSetIn returns true when header is present', () {
-      var headers = Headers.build((mh) => mh['x-test'] = ['123']);
-      expect(flyweight.isSetIn(headers), isTrue);
-    });
-
-    test('isSetIn returns false when header is not present', () {
-      expect(flyweight.isSetIn(Headers.empty()), isFalse);
-    });
-
-    test('isValidIn returns true when header is valid', () {
-      var headers = Headers.build((mh) => mh['x-test'] = ['123']);
-      expect(flyweight.isValidIn(headers), isTrue);
-    });
-
-    test('isValidIn returns false when header is not present', () {
-      expect(flyweight.isValidIn(Headers.empty()), isFalse);
-    });
-
-    test('isValidIn returns false when header is invalid', () {
-      var headers = Headers.build((mh) => mh['x-test'] = ['abc']);
-      expect(flyweight.isValidIn(headers), isFalse);
-    });
-
-    test('operator[] returns Header with correct key', () {
-      var headers = Headers.build((mh) => mh['x-test'] = ['123']);
-      final header = flyweight[headers];
-      expect(header.key, equals('x-test'));
-    });
-
-    test('setValueOn sets header value', () {
-      var headers = MutableHeaders();
-      flyweight.setValueOn(headers, 123);
-      expect(headers['x-test'], equals(['123']));
-    });
-
-    test('setValueOn removes header when value is null', () {
-      // First set a value
-      var headers = MutableHeaders();
-      headers['x-test'] = ['123'];
-      expect(headers['x-test'], ['123']);
-      expect(flyweight.getValueFrom(headers), equals(123));
-
-      // Then remove it with null
-      flyweight.setValueOn(headers, null);
-      expect(headers.containsKey('x-test'), isFalse);
-      expect(headers['x-test'], isNull);
-    });
-
-    test('removeFrom removes header', () {
-      var headers = MutableHeaders();
-      headers['x-test'] = ['123'];
-      flyweight.removeFrom(headers);
-      expect(headers['x-test'], isNull);
+      test('then access behaves as expected', () {
+        expect(header.raw, isNull);
+        expect(headers.anInt, isNull);
+        expect(() => header.value, throwsMissingHeader);
+        expect(header.valueOrNull, isNull);
+        expect(header.valueOrNullIfInvalid, isNull);
+      });
     });
   });
 
-  group('Header extension type', () {
-    late MutableHeaders headers;
-    late HeaderDecoderSingle<int> intDecoder;
-    late HeaderFlyweight<int> flyweight;
-    late Header<int> header;
-
-    setUp(() {
-      headers = MutableHeaders();
-      intDecoder = HeaderDecoderSingle<int>((s) => int.parse(s));
-      flyweight = HeaderFlyweight<int>('x-test', intDecoder);
-      header = flyweight[headers];
+  group('Given a Headers collection with an invalid entry', () {
+    late final headers = Headers.fromMap({
+      'anInt': ['error']
     });
+    late final header = _anInt[headers];
 
-    test('key returns the flyweight key', () {
-      expect(header.key, flyweight.key);
-      expect(header.key, equals('x-test'));
+    group('when accessing the header', () {
+      test('it is set', () {
+        expect(_anInt.isSetIn(headers), isTrue);
+        expect(header.isSet, isTrue);
+      });
+      test('it is invalid', () {
+        expect(_anInt.isValidIn(headers), isFalse);
+        expect(header.isValid, isFalse);
+      });
+
+      test('then access behaves as expected', () {
+        expect(header.raw, ['error']);
+        expect(() => headers.anInt, throwsInvalidHeader);
+        expect(() => header.value, throwsInvalidHeader);
+        expect(() => header.valueOrNull, throwsInvalidHeader);
+        expect(header.valueOrNullIfInvalid, isNull);
+      });
     });
+  });
 
-    test('raw returns header values from external', () {
-      headers['x-test'] = ['123'];
-      expect(header.raw, equals(['123']));
+  test(
+      'When setting a header on a mutable headers collection '
+      'then it succeeds', () {
+    final headers = Headers.build((mh) {
+      expect(() => mh.anInt = 42, returnsNormally);
     });
+    expect(headers.anInt, 42);
+  });
 
-    test('isSet returns true when header is present', () {
-      headers['x-test'] = ['123'];
-      expect(header.isSet, isTrue);
+  test(
+      'Given a mutable headers collection '
+      'When removing a header by setting to null '
+      'then it succeeds', () {
+    final headers = Headers.build((mh) {
+      expect(() => mh.anInt = 42, returnsNormally);
     });
+    expect(headers.anInt, 42);
 
-    test('isSet returns false when header is not present', () {
-      expect(header.isSet, isFalse);
+    final headers2 = headers.transform((mh) => mh.anInt = null);
+
+    expect(headers.anInt, 42); // still in original
+    expect(headers2.anInt, isNull);
+    expect(headers2, isNot(contains('anInt')));
+  });
+
+  test(
+      'Given a mutable headers collection '
+      'When removing a header using removeFrom '
+      'then it succeeds', () {
+    final headers = Headers.build((mh) {
+      expect(() => mh.anInt = 42, returnsNormally);
     });
+    expect(headers.anInt, 42);
+    final headers2 = headers.transform((mh) => _anInt.removeFrom(mh));
 
-    test('isValid returns true when header is valid', () {
-      headers['x-test'] = ['123'];
-      expect(header.isValid, isTrue);
+    expect(headers.anInt, 42); // still in original
+    expect(headers2.anInt, isNull);
+    expect(headers2, isNot(contains('anInt')));
+  });
+
+  // TODO: Should we try to prevent this scenario compile time?
+  test(
+      'Given a immutable headers collection '
+      'When trying to set a header '
+      'then it fails', () {
+    final headers = Headers.build((mh) {
+      expect(() => mh.anInt = 42, returnsNormally);
     });
-
-    test('isValid returns false when header is not valid', () {
-      headers['x-test'] = ['abc'];
-      expect(header.isValid, isFalse);
-    });
-
-    test('valueOrNull returns value when valid', () {
-      headers['x-test'] = ['123'];
-      expect(header.valueOrNull, equals(123));
-    });
-
-    test('valueOrNull returns null when not present', () {
-      expect(header.valueOrNull, isNull);
-    });
-
-    test('value returns value when valid', () {
-      headers['x-test'] = ['123'];
-      expect(header.value, equals(123));
-    });
-
-    test('value throws when not valid', () {
-      headers['x-test'] = ['abc'];
-      expect(() => header.value, throwsInvalidHeader);
-    });
-
-    test('valueOrNullIfInvalid returns value when valid', () {
-      headers['x-test'] = ['123'];
-      expect(header.valueOrNullIfInvalid, equals(123));
-    });
-
-    test('valueOrNullIfInvalid returns null when invalid', () {
-      headers['x-test'] = ['abc'];
-      expect(header.valueOrNullIfInvalid, isNull);
-    });
-
-    test('call invokes flyweight.getValueFrom', () {
-      headers['x-test'] = ['123'];
-      expect(header(), equals(123));
-    });
-
-    test('set calls setValueOn with correct params', () {
-      header.set(123);
-      expect(headers['x-test'], equals(['123']));
-    });
-
-    test('set with null removes header', () {
-      headers['x-test'] = ['123'];
-      expect(header.value, 123);
-
-      header.set(null);
-
-      expect(headers.containsKey('x-test'), isFalse);
-      expect(headers['x-test'], isNull);
-      // expect(header.value, isNull); // <-- THIS DON' CURRENTLY WORK!!
-    });
-
-    test('set by key with null removes header', () {
-      headers['x-test'] = ['123'];
-      expect(header.value, 123);
-
-      headers['x-test'] = null;
-
-      expect(headers.containsKey('x-test'), isFalse);
-      expect(headers['x-test'], isNull);
-      // expect(header.value, isNull); // <-- THIS DON' CURRENTLY WORK!!
-    });
-
-    test('set by key with null removes header', () {
-      headers['x-test'] = ['123'];
-      expect(header.value, 123);
-
-      headers.clear();
-
-      expect(headers.keys, isEmpty);
-      expect(headers['x-test'], isNull);
-      // expect(header.value, isNull); // <-- THIS DON' CURRENTLY WORK!!
-    });
+    final header = _anInt[headers];
+    // This is compile error:
+    //  headers.anInt = null;
+    // but this uncommon approach will not fail until runtime:
+    expect(() => header.set(null), throwsA(isA<TypeError>()));
   });
 }
