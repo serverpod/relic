@@ -23,7 +23,7 @@ void main() {
       'cannot be empty',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
             touchHeaders: (h) => h.contentRange,
             headers: {'content-range': ''},
@@ -45,7 +45,7 @@ void main() {
       'states the header value has an invalid format',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
             touchHeaders: (h) => h.contentRange,
             headers: {'content-range': 'bytes 0-abc/1234'},
@@ -67,7 +67,7 @@ void main() {
       'states the header value has an invalid format',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
             touchHeaders: (h) => h.contentRange,
             headers: {'content-range': 'bytes -10-499/1234'},
@@ -89,7 +89,7 @@ void main() {
       'that states the header value has an invalid range',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
             touchHeaders: (h) => h.contentRange,
             headers: {'content-range': 'bytes 500-499/1234'},

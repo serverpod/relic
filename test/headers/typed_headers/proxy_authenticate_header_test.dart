@@ -21,7 +21,7 @@ void main() {
       'when an empty Proxy-Authenticate header is passed then it should throw FormatException',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
             touchHeaders: (h) => h.proxyAuthenticate,
             headers: {'proxy-authenticate': ''},

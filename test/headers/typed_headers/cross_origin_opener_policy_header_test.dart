@@ -23,7 +23,7 @@ void main() {
       'including a message that states the value cannot be empty',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
             touchHeaders: (h) => h.crossOriginOpenerPolicy,
             headers: {'cross-origin-opener-policy': ''},
@@ -42,7 +42,7 @@ void main() {
       'including a message that states the value is invalid',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
             touchHeaders: (h) => h.crossOriginOpenerPolicy,
             headers: {'cross-origin-opener-policy': 'custom-policy'},

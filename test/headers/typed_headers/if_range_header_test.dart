@@ -24,7 +24,7 @@ void main() {
       'cannot be empty',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
             touchHeaders: (h) => h.ifRange,
             headers: {'if-range': ''},
@@ -45,7 +45,7 @@ void main() {
       'bad request including a message that states the ETag format is invalid',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
             touchHeaders: (h) => h.ifRange,
             headers: {'if-range': 'invalid-etag'},

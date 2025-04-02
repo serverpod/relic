@@ -25,7 +25,7 @@ void main() {
       'cannot be empty',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
             touchHeaders: (h) => h.accessControlExposeHeaders,
             headers: {'access-control-expose-headers': ''},
@@ -48,7 +48,7 @@ void main() {
       'cannot be used with other values',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
             touchHeaders: (h) => h.accessControlExposeHeaders,
             headers: {'access-control-expose-headers': '*, X-Custom-Header'},

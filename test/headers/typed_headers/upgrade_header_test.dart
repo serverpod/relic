@@ -22,7 +22,7 @@ void main() {
       'including a message that states the value cannot be empty',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
             touchHeaders: (h) => h.upgrade,
             headers: {'upgrade': ''},
@@ -42,7 +42,7 @@ void main() {
       'states the version is invalid',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
             touchHeaders: (h) => h.upgrade,
             headers: {'upgrade': 'InvalidProtocol/abc'},
@@ -90,7 +90,7 @@ void main() {
         'bad request including a message that states the version is invalid',
         () async {
           expect(
-            () async => await getServerRequestHeaders(
+            getServerRequestHeaders(
               server: server,
               touchHeaders: (h) => h.upgrade,
               headers: {'upgrade': 'HTTP/2.0, HTTP/abc'},

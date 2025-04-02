@@ -23,7 +23,7 @@ void main() {
       'cannot be empty',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
             headers: {'user-agent': ''},
             touchHeaders: (h) => h.userAgent,

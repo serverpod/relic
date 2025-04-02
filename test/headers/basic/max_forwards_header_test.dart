@@ -25,7 +25,7 @@ void main() {
         'cannot be empty',
         () async {
           expect(
-            () async => await getServerRequestHeaders(
+            getServerRequestHeaders(
               server: server,
               headers: {'max-forwards': ''},
               touchHeaders: (h) => h.maxForwards,
@@ -47,7 +47,7 @@ void main() {
         'must be non-negative',
         () async {
           expect(
-            () async => await getServerRequestHeaders(
+            getServerRequestHeaders(
               server: server,
               headers: {'max-forwards': '-1'},
               touchHeaders: (h) => h.maxForwards,
@@ -69,7 +69,7 @@ void main() {
         'must be an integer',
         () async {
           expect(
-            () async => await getServerRequestHeaders(
+            getServerRequestHeaders(
               server: server,
               headers: {'max-forwards': '5.5'},
               touchHeaders: (h) => h.maxForwards,

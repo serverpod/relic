@@ -25,7 +25,7 @@ void main() {
         'header value cannot be empty',
         () async {
           expect(
-            () async => await getServerRequestHeaders(
+            getServerRequestHeaders(
               server: server,
               headers: {'access-control-request-headers': ''},
               touchHeaders: (h) => h.accessControlRequestHeaders,

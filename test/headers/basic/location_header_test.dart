@@ -25,7 +25,7 @@ void main() {
         'cannot be empty',
         () async {
           expect(
-            () async => await getServerRequestHeaders(
+            getServerRequestHeaders(
               server: server,
               headers: {'location': ''},
               touchHeaders: (h) => h.location,
@@ -47,7 +47,7 @@ void main() {
         'is invalid',
         () async {
           expect(
-            () async => await getServerRequestHeaders(
+            getServerRequestHeaders(
               server: server,
               headers: {'location': 'ht!tp://invalid-url'},
               touchHeaders: (h) => h.location,
@@ -69,7 +69,7 @@ void main() {
         'format is invalid',
         () async {
           expect(
-            () async => await getServerRequestHeaders(
+            getServerRequestHeaders(
               server: server,
               headers: {'location': 'https://example.com:test'},
               touchHeaders: (h) => h.location,

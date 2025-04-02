@@ -23,7 +23,7 @@ void main() {
       'cannot be empty',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
             touchHeaders: (h) => h.connection,
             headers: {'connection': ''},
@@ -45,7 +45,7 @@ void main() {
       'is invalid',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
             touchHeaders: (h) => h.connection,
             headers: {'connection': 'custom-directive'},

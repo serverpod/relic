@@ -24,7 +24,7 @@ void main() {
         'request including a message that states the header value cannot be empty',
         () async {
           expect(
-            () async => await getServerRequestHeaders(
+            getServerRequestHeaders(
               server: server,
               headers: {'age': ''},
               touchHeaders: (h) => h.age,
@@ -45,7 +45,7 @@ void main() {
         'request including a message that states the age is invalid',
         () async {
           expect(
-            () async => await getServerRequestHeaders(
+            getServerRequestHeaders(
               server: server,
               headers: {'age': 'invalid'},
               touchHeaders: (h) => h.age,
@@ -66,7 +66,7 @@ void main() {
         'request including a message that states the age must be non-negative',
         () async {
           expect(
-            () async => await getServerRequestHeaders(
+            getServerRequestHeaders(
               server: server,
               headers: {'age': '-3600'},
               touchHeaders: (h) => h.age,
@@ -87,7 +87,7 @@ void main() {
         'bad request including a message that states the age must be an integer',
         () async {
           expect(
-            () async => await getServerRequestHeaders(
+            getServerRequestHeaders(
               server: server,
               headers: {'age': '3.14'},
               touchHeaders: (h) => h.age,

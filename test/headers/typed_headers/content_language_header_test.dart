@@ -23,7 +23,7 @@ void main() {
       'cannot be empty',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
             touchHeaders: (h) => h.contentLanguage,
             headers: {'content-language': ''},
@@ -44,7 +44,7 @@ void main() {
       'bad request including a message that states the language code is invalid',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
             touchHeaders: (h) => h.contentLanguage,
             headers: {'content-language': 'en-123'},

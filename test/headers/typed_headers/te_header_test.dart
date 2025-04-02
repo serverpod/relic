@@ -23,7 +23,7 @@ void main() {
       'cannot be empty',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
             touchHeaders: (h) => h.te,
             headers: {'te': ''},
@@ -45,7 +45,7 @@ void main() {
       'states the quality value is invalid',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
             touchHeaders: (h) => h.te,
             headers: {'te': 'trailers;q=abc'},
@@ -67,7 +67,7 @@ void main() {
       'states the encoding is invalid',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
             touchHeaders: (h) => h.te,
             headers: {'te': ';q=1.0'},

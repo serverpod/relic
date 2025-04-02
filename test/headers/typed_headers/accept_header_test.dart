@@ -22,7 +22,7 @@ void main() {
       'including a message that states the value cannot be empty',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
             touchHeaders: (h) => h.accept,
             headers: {'accept': ''},
@@ -42,7 +42,7 @@ void main() {
       'quality value is invalid',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
             touchHeaders: (h) => h.accept,
             headers: {'accept': 'text/html;q=abc'},
@@ -153,7 +153,7 @@ void main() {
         'including a message that states the quality value is invalid',
         () async {
           expect(
-            () async => await getServerRequestHeaders(
+            getServerRequestHeaders(
               server: server,
               touchHeaders: (h) => h.accept,
               headers: {

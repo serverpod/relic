@@ -31,7 +31,7 @@ void main() {
         'cannot be empty',
         () async {
           expect(
-            () async => await getServerRequestHeaders(
+            getServerRequestHeaders(
               server: server,
               headers: {'access-control-allow-credentials': ''},
               touchHeaders: (h) => h.accessControlAllowCredentials,
@@ -52,7 +52,7 @@ void main() {
         'with a bad request including a message that states the header value is invalid',
         () async {
           expect(
-            () async => await getServerRequestHeaders(
+            getServerRequestHeaders(
               server: server,
               headers: {'access-control-allow-credentials': 'blabla'},
               touchHeaders: (h) => h.accessControlAllowCredentials,
@@ -74,7 +74,7 @@ void main() {
         'must be "true" or "null"',
         () async {
           expect(
-            () async => await getServerRequestHeaders(
+            getServerRequestHeaders(
               server: server,
               headers: {'access-control-allow-credentials': 'false'},
               touchHeaders: (h) => h.accessControlAllowCredentials,

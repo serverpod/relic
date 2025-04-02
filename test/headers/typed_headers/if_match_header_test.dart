@@ -23,7 +23,7 @@ void main() {
       'cannot be empty',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
             touchHeaders: (h) => h.ifMatch,
             headers: {'if-match': ''},
@@ -44,7 +44,7 @@ void main() {
       'responds with a bad request including a message that states the ETag is invalid',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
             touchHeaders: (h) => h.ifMatch,
             headers: {'if-match': 'invalid-etag'},
@@ -66,7 +66,7 @@ void main() {
       'the wildcard (*) cannot be used with other values',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
             touchHeaders: (h) => h.ifMatch,
             headers: {'if-match': '*, 123456"'},

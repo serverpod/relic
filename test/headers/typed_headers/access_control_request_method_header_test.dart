@@ -26,7 +26,7 @@ void main() {
       'header value cannot be empty',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
             touchHeaders: (h) => h.accessControlRequestMethod,
             headers: {'access-control-request-method': ''},
@@ -48,7 +48,7 @@ void main() {
       'is invalid',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
             touchHeaders: (h) => h.accessControlRequestMethod,
             headers: {'access-control-request-method': 'CUSTOM'},

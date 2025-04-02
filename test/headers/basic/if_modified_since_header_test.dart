@@ -23,7 +23,7 @@ void main() {
       'cannot be empty',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
             headers: {'if-modified-since': ''},
             touchHeaders: (h) => h.ifModifiedSince,
@@ -45,7 +45,7 @@ void main() {
       'states the date format is invalid',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
             headers: {'if-modified-since': 'invalid-date-format'},
             touchHeaders: (h) => h.ifModifiedSince,

@@ -1,5 +1,5 @@
 import 'dart:collection';
-import 'dart:io' as io; // TODO: Get rid of this dependen
+import 'dart:io' as io; // TODO: Get rid of this dependency
 
 import 'package:http_parser/http_parser.dart';
 import 'package:relic/relic.dart';
@@ -51,7 +51,7 @@ class Headers extends HeadersBase {
     return mutable._freeze();
   }
 
-  // TODO: Should die
+  // TODO: Move this functionality out of Headers so that we can avoid the dart:io dependency
   factory Headers.fromHttpRequest(
     io.HttpRequest request, {
     bool strict = false,

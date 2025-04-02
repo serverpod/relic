@@ -23,7 +23,7 @@ void main() {
       'cannot be empty',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
             touchHeaders: (h) => h.clearSiteData,
             headers: {'clear-site-data': ''},
@@ -43,7 +43,7 @@ void main() {
       'is invalid',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
             touchHeaders: (h) => h.clearSiteData,
             headers: {'clear-site-data': 'invalidValue'},
@@ -63,7 +63,7 @@ void main() {
       'message that states the wildcard cannot be used with other values',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
             touchHeaders: (h) => h.clearSiteData,
             headers: {'clear-site-data': '"cache", "*", "cookies"'},

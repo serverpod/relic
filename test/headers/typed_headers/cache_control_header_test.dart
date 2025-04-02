@@ -23,7 +23,7 @@ void main() {
       'cannot be empty',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
             touchHeaders: (h) => h.cacheControl,
             headers: {'cache-control': ''},
@@ -44,7 +44,7 @@ void main() {
       'with a bad request including a message that states the directive is invalid',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
             touchHeaders: (h) => h.cacheControl,
             headers: {'cache-control': 'invalid-directive'},
@@ -65,7 +65,7 @@ void main() {
       'with a bad request including a message that states the directive is invalid',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
             touchHeaders: (h) => h.cacheControl,
             headers: {'cache-control': 'public, invalid-directive'},
@@ -86,7 +86,7 @@ void main() {
       'with a bad request including a message that states the directives cannot be both public and private',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
             touchHeaders: (h) => h.cacheControl,
             headers: {'cache-control': 'public, private'},
@@ -107,7 +107,7 @@ void main() {
       'with a bad request including a message that states the directives cannot be both max-age and stale-while-revalidate',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
             touchHeaders: (h) => h.cacheControl,
             headers: {

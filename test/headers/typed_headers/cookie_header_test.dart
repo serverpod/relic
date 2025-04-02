@@ -20,7 +20,7 @@ void main() {
       'with a bad request including a message that states the header value cannot be empty',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
             touchHeaders: (h) => h.cookie,
             headers: {'cookie': ''},
@@ -41,7 +41,7 @@ void main() {
       'with a bad request including a message that states the cookie format is invalid',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
             touchHeaders: (h) => h.cookie,
             headers: {'cookie': 'sessionId=abc123; invalidCookie'},
@@ -62,7 +62,7 @@ void main() {
       'with a bad request including a message that states the cookie name is invalid',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
             touchHeaders: (h) => h.cookie,
             headers: {'cookie': 'invalid name=abc123; userId=42'},
@@ -83,7 +83,7 @@ void main() {
       'with a bad request including a message that states the cookie value is invalid',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
             touchHeaders: (h) => h.cookie,
             headers: {'cookie': 'sessionId=abc123; userId=42\x7F'},

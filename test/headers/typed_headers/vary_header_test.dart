@@ -22,7 +22,7 @@ void main() {
       'including a message that states the value cannot be empty',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
             touchHeaders: (h) => h.vary,
             headers: {'vary': ''},
@@ -42,7 +42,7 @@ void main() {
       'the wildcard (*) cannot be used with other values',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
             touchHeaders: (h) => h.vary,
             headers: {'vary': '* , User-Agent'},

@@ -22,7 +22,7 @@ void main() {
       'with a bad request including a message that states the header value cannot be empty',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
             headers: {'accept-encoding': ''},
             touchHeaders: (h) => h.acceptEncoding,
@@ -44,7 +44,7 @@ void main() {
       'states the quality value is invalid',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
             headers: {'accept-encoding': 'gzip;q=abc'},
             touchHeaders: (h) => h.acceptEncoding,
@@ -66,7 +66,7 @@ void main() {
       'that states the wildcard (*) cannot be used with other values',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
             headers: {'accept-encoding': '*, gzip'},
             touchHeaders: (h) => h.acceptEncoding,
@@ -88,7 +88,7 @@ void main() {
       'states the encoding is invalid',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
             headers: {'accept-encoding': ';q=0.5'},
             touchHeaders: (h) => h.acceptEncoding,

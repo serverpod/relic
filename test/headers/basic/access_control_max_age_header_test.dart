@@ -46,7 +46,7 @@ void main() {
         'responds with a bad request including a message that states the value is invalid',
         () async {
           expect(
-            () async => await getServerRequestHeaders(
+            getServerRequestHeaders(
               server: server,
               headers: {'access-control-max-age': 'invalid'},
               touchHeaders: (h) => h.accessControlMaxAge,

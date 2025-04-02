@@ -23,7 +23,7 @@ void main() {
       'cannot be empty',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
             touchHeaders: (h) => h.from,
             headers: {'from': ''},
@@ -45,7 +45,7 @@ void main() {
       'states the email format is invalid',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
             touchHeaders: (h) => h.from,
             headers: {'from': 'invalid-email-format'},
@@ -160,7 +160,7 @@ void main() {
         'states the email format is invalid',
         () async {
           expect(
-            () async => await getServerRequestHeaders(
+            getServerRequestHeaders(
               server: server,
               touchHeaders: (h) => h.from,
               headers: {

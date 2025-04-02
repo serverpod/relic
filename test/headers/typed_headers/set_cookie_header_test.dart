@@ -21,7 +21,7 @@ void main() {
       'with a bad request including a message that states the header value cannot be empty',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
             touchHeaders: (h) => h.setCookie,
             headers: {'set-cookie': ''},
@@ -43,7 +43,7 @@ void main() {
       'supplied multiple times',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
             touchHeaders: (h) => h.setCookie,
             headers: {
@@ -65,7 +65,7 @@ void main() {
       'SameSite is supplied multiple times',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
             touchHeaders: (h) => h.setCookie,
             headers: {'set-cookie': 'sessionId=abc123; SameSite=Invalid'},
@@ -85,7 +85,7 @@ void main() {
       'are supplied multiple times',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
             touchHeaders: (h) => h.setCookie,
             headers: {'set-cookie': 'sessionId=test; userId=42'},
@@ -106,7 +106,7 @@ void main() {
       'with a bad request including a message that states the cookie format is invalid',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
             touchHeaders: (h) => h.setCookie,
             headers: {'set-cookie': 'sessionId=abc123; invalidCookie'},
@@ -127,7 +127,7 @@ void main() {
       'with a bad request including a message that states the cookie name is invalid',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
             touchHeaders: (h) => h.setCookie,
             headers: {'set-cookie': 'invalid name=abc123'},
@@ -148,7 +148,7 @@ void main() {
       'with a bad request including a message that states the cookie value is invalid',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
             touchHeaders: (h) => h.setCookie,
             headers: {'set-cookie': 'userId=42\x7F'},

@@ -25,7 +25,7 @@ void main() {
         'cannot be empty',
         () async {
           expect(
-            () async => await getServerRequestHeaders(
+            getServerRequestHeaders(
               server: server,
               headers: {'content-location': ''},
               touchHeaders: (h) => h.contentLocation,
@@ -47,7 +47,7 @@ void main() {
         'URI is invalid',
         () async {
           expect(
-            () async => await getServerRequestHeaders(
+            getServerRequestHeaders(
               server: server,
               headers: {'content-location': 'ht!tp://invalid-url'},
               touchHeaders: (h) => h.contentLocation,
@@ -69,7 +69,7 @@ void main() {
         'URI is invalid',
         () async {
           expect(
-            () async => await getServerRequestHeaders(
+            getServerRequestHeaders(
               server: server,
               headers: {'content-location': 'https://example.com:test'},
               touchHeaders: (h) => h.contentLocation,

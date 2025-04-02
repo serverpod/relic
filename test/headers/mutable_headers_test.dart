@@ -21,19 +21,21 @@ void main() {
     });
     test(
         'when removing a key '
-        'then the value disappear', () {
+        'then the value is removed', () {
       expect(() => mutable['2'] = null, returnsNormally);
       expect(mutable, {
         '1': ['a'],
         '3': ['c']
       });
     });
-    test('', () {
+    test(
+        'when accessing keys '
+        'then all keys are returned', () {
       expect(mutable.keys, ['1', '2', '3']);
     });
     test(
         'when clearing '
-        'then all values disappear', () {
+        'then all values is removed', () {
       expect(() => mutable.clear(), returnsNormally);
       expect(mutable, {});
     });

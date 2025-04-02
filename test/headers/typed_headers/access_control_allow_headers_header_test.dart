@@ -25,7 +25,7 @@ void main() {
       'that states the value cannot be empty',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
             touchHeaders: (h) => h.accessControlAllowHeaders,
             headers: {'access-control-allow-headers': ''},
@@ -45,7 +45,7 @@ void main() {
       'a message that states the wildcard cannot be used with other headers',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
             touchHeaders: (h) => h.accessControlAllowHeaders,
             headers: {'access-control-allow-headers': '*, Content-Type'},

@@ -24,7 +24,7 @@ void main() {
           'with a bad request including a message that states the header value '
           'cannot be empty', () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
               server: server,
               headers: {'x-powered-by': ''},
               touchHeaders: (h) => h.xPoweredBy),

@@ -23,7 +23,7 @@ void main() {
       'header value cannot be empty',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
             touchHeaders: (h) => h.range,
             headers: {'range': ''},
@@ -44,7 +44,7 @@ void main() {
       'bad request including a message that states the range format is invalid',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
             touchHeaders: (h) => h.range,
             headers: {'range': 'bytes=abc-xyz'},
@@ -65,7 +65,7 @@ void main() {
       'with a bad request including a message that states both values cannot be empty',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
             touchHeaders: (h) => h.range,
             headers: {'range': 'bytes=-'},

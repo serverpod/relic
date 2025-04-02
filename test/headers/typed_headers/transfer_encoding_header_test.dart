@@ -24,7 +24,7 @@ void main() {
         'including a message that states the encodings cannot be empty',
         () async {
           expect(
-            () async => await getServerRequestHeaders(
+            getServerRequestHeaders(
               server: server,
               touchHeaders: (h) => h.transferEncoding,
               headers: {'transfer-encoding': ''},
@@ -43,7 +43,7 @@ void main() {
         'including a message that states the value is invalid',
         () async {
           expect(
-            () async => await getServerRequestHeaders(
+            getServerRequestHeaders(
               server: server,
               touchHeaders: (h) => h.transferEncoding,
               headers: {'transfer-encoding': 'custom-encoding'},

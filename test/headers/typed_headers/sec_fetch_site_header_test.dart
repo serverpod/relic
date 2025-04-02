@@ -22,7 +22,7 @@ void main() {
       'including a message that states the value cannot be empty',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
             touchHeaders: (h) => h.secFetchSite,
             headers: {'sec-fetch-site': ''},
@@ -41,7 +41,7 @@ void main() {
       'including a message that states the value is invalid',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
             touchHeaders: (h) => h.secFetchSite,
             headers: {'sec-fetch-site': 'custom-site'},

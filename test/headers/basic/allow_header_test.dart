@@ -25,7 +25,7 @@ void main() {
         'cannot be empty',
         () async {
           expect(
-            () async => await getServerRequestHeaders(
+            getServerRequestHeaders(
               server: server,
               headers: {'allow': ''},
               touchHeaders: (h) => h.allow,
@@ -47,7 +47,7 @@ void main() {
         'is invalid',
         () async {
           expect(
-            () async => await getServerRequestHeaders(
+            getServerRequestHeaders(
               server: server,
               headers: {'allow': 'CUSTOM'},
               touchHeaders: (h) => h.allow,

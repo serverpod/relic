@@ -24,7 +24,7 @@ void main() {
         'cannot be empty',
         () async {
           expect(
-            () async => await getServerRequestHeaders(
+            getServerRequestHeaders(
               server: server,
               headers: {'origin': ''},
               touchHeaders: (h) => h.origin,
@@ -46,7 +46,7 @@ void main() {
         'states the URI format is invalid',
         () async {
           expect(
-            () async => await getServerRequestHeaders(
+            getServerRequestHeaders(
               server: server,
               headers: {'origin': 'h@ttp://example.com'},
               touchHeaders: (h) => h.origin,
@@ -68,7 +68,7 @@ void main() {
         'states the URI format is invalid',
         () async {
           expect(
-            () async => await getServerRequestHeaders(
+            getServerRequestHeaders(
               server: server,
               headers: {'origin': 'http://example.com:test'},
               touchHeaders: (h) => h.origin,

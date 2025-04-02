@@ -24,7 +24,7 @@ void main() {
         'including a message that states the value cannot be empty',
         () async {
           expect(
-            () async => await getServerRequestHeaders(
+            getServerRequestHeaders(
               server: server,
               touchHeaders: (h) => h.strictTransportSecurity,
               headers: {'strict-transport-security': ''},
@@ -44,7 +44,7 @@ void main() {
         'that states the max-age directive is missing or invalid',
         () async {
           expect(
-            () async => await getServerRequestHeaders(
+            getServerRequestHeaders(
               server: server,
               touchHeaders: (h) => h.strictTransportSecurity,
               headers: {'strict-transport-security': 'max-age=abc'},
@@ -64,7 +64,7 @@ void main() {
         'states the max-age directive is missing or invalid',
         () async {
           expect(
-            () async => await getServerRequestHeaders(
+            getServerRequestHeaders(
               server: server,
               touchHeaders: (h) => h.strictTransportSecurity,
               headers: {'strict-transport-security': 'includeSubDomains'},

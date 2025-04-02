@@ -25,7 +25,7 @@ void main() {
         'cannot be empty',
         () async {
           expect(
-            () async => await getServerRequestHeaders(
+            getServerRequestHeaders(
               server: server,
               touchHeaders: (h) => h.acceptLanguage,
               headers: {'accept-language': ''},
@@ -47,7 +47,7 @@ void main() {
         'states the quality value is invalid',
         () async {
           expect(
-            () async => await getServerRequestHeaders(
+            getServerRequestHeaders(
               server: server,
               touchHeaders: (h) => h.acceptLanguage,
               headers: {'accept-language': 'en;q=abc'},
@@ -69,7 +69,7 @@ void main() {
         'that states the wildcard (*) cannot be used with other values',
         () async {
           expect(
-            () async => await getServerRequestHeaders(
+            getServerRequestHeaders(
               server: server,
               touchHeaders: (h) => h.acceptLanguage,
               headers: {'accept-language': '*, en'},
@@ -91,7 +91,7 @@ void main() {
         'states the language is invalid',
         () async {
           expect(
-            () async => await getServerRequestHeaders(
+            getServerRequestHeaders(
               server: server,
               touchHeaders: (h) => h.acceptLanguage,
               headers: {'accept-language': ';q=0.5'},

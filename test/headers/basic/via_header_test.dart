@@ -21,7 +21,7 @@ void main() {
       'cannot be empty',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
             headers: {'via': ''},
             touchHeaders: (h) => h.via,

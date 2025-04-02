@@ -13,6 +13,13 @@ import 'headers.dart';
 final class HeaderAccessor<T extends Object> {
   /// Static map that stores the cache [Expando] for each [HeaderAccessor] instance.
   /// Using an identity map ensures each accessor gets its own unique cache.
+  ///
+  /// As this is static container and we only ever add to it, each added Expando will
+  /// live until proess terminates. However there should only be a finite number of
+  /// const constructed [HeaderAccessor] objects, so this is fine.
+  ///
+  /// Note that the cached values stored in the [Expando]s follows the lifetime of the
+  /// [Headers] objects that are expanded.
   static final _caches = LinkedHashMap<HeaderAccessor, Expando>.identity();
 
   /// Returns the [Expando] cache for this accessor instance.

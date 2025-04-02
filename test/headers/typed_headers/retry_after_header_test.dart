@@ -23,7 +23,7 @@ void main() {
       'including a message that states the value cannot be empty',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
             touchHeaders: (h) => h.retryAfter,
             headers: {'retry-after': ''},
@@ -75,7 +75,7 @@ void main() {
 
       test('then it should throw an error on a negative value', () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
             touchHeaders: (h) => h.retryAfter,
             headers: {'retry-after': '-120'},
@@ -90,7 +90,7 @@ void main() {
 
       test('then it should throw an error on a non-integer value', () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
             touchHeaders: (h) => h.retryAfter,
             headers: {'retry-after': '120.5'},
@@ -133,7 +133,7 @@ void main() {
 
       test('then it should throw an error on an invalid date format', () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
             touchHeaders: (h) => h.retryAfter,
             headers: {'retry-after': '2015-10-21'},

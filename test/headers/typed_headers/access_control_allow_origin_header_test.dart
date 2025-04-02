@@ -24,7 +24,7 @@ void main() {
       'cannot be empty',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
             touchHeaders: (h) => h.accessControlAllowOrigin,
             headers: {'access-control-allow-origin': ''},
@@ -46,7 +46,7 @@ void main() {
       'states the URI is invalid',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
             touchHeaders: (h) => h.accessControlAllowOrigin,
             headers: {'access-control-allow-origin': 'ht!tp://invalid-url'},
@@ -68,7 +68,7 @@ void main() {
       'states the URI is invalid',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
             touchHeaders: (h) => h.accessControlAllowOrigin,
             headers: {

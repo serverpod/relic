@@ -24,7 +24,7 @@ void main() {
       'including a message that states the value cannot be empty',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
             touchHeaders: (h) => h.accessControlAllowMethods,
             headers: {'access-control-allow-methods': ''},
@@ -45,7 +45,7 @@ void main() {
       'other values',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
             touchHeaders: (h) => h.accessControlAllowMethods,
             headers: {'access-control-allow-methods': 'GET, *'},

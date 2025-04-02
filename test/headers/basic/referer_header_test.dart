@@ -25,7 +25,7 @@ void main() {
         'header value cannot be empty',
         () async {
           expect(
-            () async => await getServerRequestHeaders(
+            getServerRequestHeaders(
               server: server,
               headers: {'referer': ''},
               touchHeaders: (h) => h.referer,
@@ -47,7 +47,7 @@ void main() {
         'invalid',
         () async {
           expect(
-            () async => await getServerRequestHeaders(
+            getServerRequestHeaders(
               server: server,
               headers: {'referer': 'ht!tp://invalid-url'},
               touchHeaders: (h) => h.referer,
@@ -69,7 +69,7 @@ void main() {
         'states the URI format is invalid',
         () async {
           expect(
-            () async => await getServerRequestHeaders(
+            getServerRequestHeaders(
               server: server,
               headers: {'referer': 'http://example.com:test'},
               touchHeaders: (h) => h.referer,
