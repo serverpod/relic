@@ -39,7 +39,29 @@ final localhostUri = Uri.parse('http://localhost/');
 final isOhNoStateError =
     isA<StateError>().having((e) => e.message, 'message', 'oh no');
 
-/// Like [group] but takes a variants argument and creates a group for each variant.
+/// Like [group], but takes a [variants] argument and creates a group for each
+/// variant.
+///
+/// Setup multiple groups of tests where each group gets a different parameter
+/// value. The [descriptionBuilder] is used to produce a description for each
+/// group based on the [variants]. For each variant the [body] is executed to
+/// setup tests and sub-groups.
+///
+/// This is useful for running the same tests against multiple configurations,
+/// implementations, or inputs.
+///
+/// Example:
+/// ```dart
+/// parameterizedGroup<String>(
+///   (protocol) => 'Testing protocol: $protocol',
+///   (protocol) {
+///     test('connects successfully', () {
+///       // Test using the protocol parameter
+///     });
+///   },
+///   variants: ['http', 'https', 'ws'],
+/// );
+/// ```
 @isTestGroup
 void parameterizedGroup<T>(
   String Function(T) descriptionBuilder,
@@ -51,7 +73,26 @@ void parameterizedGroup<T>(
   }
 }
 
-/// Like [test] but takes a variants argument and creates a test-case for each variant.
+/// Like [test,] but takes a [variants] argument and creates a test-case
+/// for each variant.
+///
+/// Setup multiple test cases where each test case gets a different parameter
+/// value. The [descriptionBuilder] is used to produce a description for each
+/// test case based on the [variants]. For each variant the [body] is executed.
+///
+/// This is useful for testing the same functionality against multiple inputs
+/// or configurations.
+///
+/// Example:
+/// ```dart
+/// parameterizedTest<int>(
+///   (value) => 'Test with value: $value',
+///   (value) {
+///     expect(value * 2, greaterThan(value));
+///   },
+///   variants: [1, 2, 3, 4, 5],
+/// );
+/// ```
 @isTest
 void parameterizedTest<T>(
   String Function(T) descriptionBuilder,
@@ -63,7 +104,15 @@ void parameterizedTest<T>(
   }
 }
 
-/// A [test] with a single [expect]
+/// Creates a [test] with a single [expect].
+///
+/// A convenience method that creates a test with a [description] that
+/// validates the single expectation that [actual] matches [expected].
+///
+/// Example:
+/// ```dart
+/// singleTest('1 + 1 equals 2', 1 + 1, 2);
+/// ```
 @isTest
 void singleTest(
   String description,
