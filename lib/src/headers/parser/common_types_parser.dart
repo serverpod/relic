@@ -1,7 +1,4 @@
-import 'dart:io' as io;
-
 import 'package:http_parser/http_parser.dart';
-import 'package:relic/src/headers/custom/custom_headers.dart';
 import 'package:relic/src/headers/extension/string_list_extensions.dart';
 import 'package:relic/src/method/request_method.dart';
 
@@ -60,24 +57,10 @@ int parseInt(String value) {
 ///
 /// - Throws a [FormatException] if the [value] is empty, contains an invalid number, is negative, or is not an integer.
 int parsePositiveInt(String value) {
-  if (value.isEmpty) {
-    throw FormatException('Value cannot be empty');
-  }
-  num parsedValue;
-  try {
-    parsedValue = num.parse(value);
-  } catch (e) {
-    throw FormatException('Invalid number');
-  }
-
+  int parsedValue = parseInt(value);
   if (parsedValue.isNegative) {
     throw FormatException('Must be non-negative');
   }
-
-  if (parsedValue is! int) {
-    throw FormatException('Must be an integer');
-  }
-
   return parsedValue;
 }
 
@@ -99,22 +82,10 @@ bool parseBool(String value) {
 ///
 /// - Throws a [FormatException] if the [value] is 'empty', 'false' or contains an invalid boolean.
 bool parsePositiveBool(String value) {
-  if (value.isEmpty) {
-    throw FormatException('Value cannot be empty');
-  }
-
-  bool parsedValue;
-
-  try {
-    parsedValue = bool.parse(value);
-  } catch (e) {
-    throw FormatException('Invalid boolean');
-  }
-
+  bool parsedValue = parseBool(value);
   if (!parsedValue) {
     throw FormatException('Must be true or null');
   }
-
   return parsedValue;
 }
 
@@ -131,53 +102,21 @@ String parseString(String value) {
 /// Parses a list of strings from the given [values] and returns it as a `List<String>`.
 ///
 /// - Throws a [FormatException] if the resulting list is empty.
-List<String> parseStringList(List<String> values) {
+List<String> parseStringList(Iterable<String> values) {
   var tempValues = values.splitTrimAndFilterUnique();
   if (tempValues.isEmpty) {
     throw FormatException('Value cannot be empty');
   }
-  return tempValues;
+  return tempValues.toList();
 }
 
 /// Parses a list of methods from the given [values] and returns it as a `List<Method>`.
 ///
 /// - Throws a [FormatException] if the resulting list is empty.
-List<RequestMethod> parseMethodList(List<String> values) {
+List<RequestMethod> parseMethodList(Iterable<String> values) {
   var tempValues = values.splitTrimAndFilterUnique(emptyCheck: false);
   if (tempValues.isEmpty) {
     throw FormatException('Value cannot be empty');
   }
   return tempValues.map(RequestMethod.parse).toList();
-}
-
-/// Parses custom headers from the [headers] and returns them as a [CustomHeaders] instance.
-///
-/// - Excludes headers specified in [excludedHeaders].
-/// - Returns an empty [CustomHeaders] if no valid headers are found.
-CustomHeaders parseCustomHeaders(
-  io.HttpHeaders headers, {
-  Set<String> excludedHeaders = const {},
-}) {
-  var custom = <MapEntry<String, List<String>>>[];
-
-  headers.forEach((name, values) {
-    if (excludedHeaders.contains(name.toLowerCase())) {
-      return;
-    }
-
-    custom.add(MapEntry(
-      name,
-      values.fold(
-        [],
-        (a, b) => [
-          ...a,
-          ...b.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty)
-        ],
-      ),
-    ));
-  });
-
-  if (custom.isEmpty) return CustomHeaders.empty();
-
-  return CustomHeaders.fromEntries(custom);
 }

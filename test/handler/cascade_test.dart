@@ -9,19 +9,19 @@ void main() {
     late Handler handler;
     setUp(() {
       handler = Cascade().add((request) {
-        if (request.headers.custom['one']?.first == 'false') {
+        if (request.headers['one']?.first == 'false') {
           return Response.notFound(body: Body.fromString('handler 1'));
         } else {
           return Response.ok(body: Body.fromString('handler 1'));
         }
       }).add((request) {
-        if (request.headers.custom['two']?.first == 'false') {
+        if (request.headers['two']?.first == 'false') {
           return Response.notFound(body: Body.fromString('handler 2'));
         } else {
           return Response.ok(body: Body.fromString('handler 2'));
         }
       }).add((request) {
-        if (request.headers.custom['three']?.first == 'false') {
+        if (request.headers['three']?.first == 'false') {
           return Response.notFound(body: Body.fromString('handler 3'));
         } else {
           return Response.ok(body: Body.fromString('handler 3'));
@@ -44,11 +44,7 @@ void main() {
         Request(
           RequestMethod.get,
           localhostUri,
-          headers: Headers.response(
-            custom: CustomHeaders({
-              'one': ['false']
-            }),
-          ),
+          headers: Headers.build((mh) => mh['one'] = ['false']),
         ),
       );
       expect(response.statusCode, equals(200));
@@ -62,12 +58,10 @@ void main() {
         Request(
           RequestMethod.get,
           localhostUri,
-          headers: Headers.response(
-            custom: CustomHeaders({
-              'one': ['false'],
-              'two': ['false']
-            }),
-          ),
+          headers: Headers.build((mh) {
+            mh['one'] = ['false'];
+            mh['two'] = ['false'];
+          }),
         ),
       );
 
@@ -82,15 +76,11 @@ void main() {
         Request(
           RequestMethod.get,
           localhostUri,
-          headers: Headers.response(
-            custom: CustomHeaders(
-              {
-                'one': ['false'],
-                'two': ['false'],
-                'three': ['false']
-              },
-            ),
-          ),
+          headers: Headers.build((mh) {
+            mh['one'] = ['false'];
+            mh['two'] = ['false'];
+            mh['three'] = ['false'];
+          }),
         ),
       );
       expect(response.statusCode, equals(404));

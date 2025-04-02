@@ -1,8 +1,9 @@
+import 'package:relic/relic.dart';
+import 'package:relic/src/headers/standard_headers_extensions.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
-import 'package:relic/relic.dart';
 import 'package:relic/src/message/message.dart';
 import 'package:test/test.dart';
 
@@ -14,7 +15,7 @@ class _TestMessage extends Message {
     Map<String, Object>? context, {
     Body? body,
   }) : super(
-          headers: headers ?? Headers.request(),
+          headers: headers ?? Headers.empty(),
           body: body ?? Body.empty(),
           context: context ?? {},
         );
@@ -41,51 +42,41 @@ void main() {
   group('Given message headers', () {
     test('when accessed then they are case insensitive', () {
       var message = _createMessage(
-        headers: Headers.request(
-          custom: CustomHeaders({
-            'foo': ['bar']
-          }),
-        ),
+        headers: Headers.build((mh) => mh['foo'] = ['bar']),
       );
 
-      expect(message.headers.custom, containsPair('foo', ['bar']));
-      expect(message.headers.custom, containsPair('Foo', ['bar']));
-      expect(message.headers.custom, containsPair('FOO', ['bar']));
+      expect(message.headers, containsPair('foo', ['bar']));
+      expect(message.headers, containsPair('Foo', ['bar']));
+      expect(message.headers, containsPair('FOO', ['bar']));
     });
 
     test('when modified then they are immutable', () {
       var message = _createMessage(
-        headers: Headers.request(
-          custom: CustomHeaders({
-            'h1': ['value1']
-          }),
-        ),
+        headers: Headers.build((mh) => mh['foo'] = ['bar']),
       );
       expect(
-        () => message.headers.custom['h1'] = ['value1'],
+        () => message.headers['h1'] = ['value1'],
         throwsUnsupportedError,
       );
       expect(
-        () => message.headers.custom['h1'] = ['value2'],
+        () => message.headers['h1'] = ['value2'],
         throwsUnsupportedError,
       );
       expect(
-        () => message.headers.custom['h2'] = ['value2'],
+        () => message.headers['h2'] = ['value2'],
         throwsUnsupportedError,
       );
     });
 
     test('when containing multiple values then they are handled correctly', () {
       final message = _createMessage(
-        headers: Headers.request(
-          custom: CustomHeaders({
-            'a': ['A'],
-            'b': ['B1', 'B2'],
-          }),
-        ),
+        headers: Headers.build((mh) {
+          mh['a'] = ['A'];
+          mh['b'] = ['B1', 'B2'];
+        }),
       );
 
-      expect(message.headers.custom, {
+      expect(message.headers, {
         'a': ['A'],
         'b': ['B1', 'B2'],
       });
@@ -210,8 +201,8 @@ void main() {
     test('when identity transfer encoding is set then it is set correctly', () {
       var request = _createMessage(
         body: Body.fromString('1\r\na0\r\n\r\n'),
-        headers: Headers.request(
-          transferEncoding: TransferEncodingHeader(
+        headers: Headers.build(
+          (mh) => mh.transferEncoding = TransferEncodingHeader(
             encodings: [TransferEncoding.identity],
           ),
         ),

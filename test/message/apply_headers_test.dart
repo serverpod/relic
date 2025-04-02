@@ -1,3 +1,4 @@
+import 'package:relic/relic.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
@@ -5,8 +6,8 @@ import 'dart:typed_data';
 
 import 'package:http_parser/http_parser.dart';
 import 'package:mockito/mockito.dart';
-import 'package:relic/relic.dart';
 import 'package:relic/src/extensions/http_response_extension.dart';
+import 'package:relic/src/headers/standard_headers_extensions.dart';
 import 'package:test/test.dart';
 
 class HttpHeadersMock extends Mock implements HttpHeaders {
@@ -64,16 +65,14 @@ void main() {
       var expires = now.add(Duration(days: 1));
       var lastModified = now.add(Duration(days: 2));
       response.applyHeaders(
-        Headers.response(
-          date: now,
-          expires: expires,
-          lastModified: lastModified,
-          origin: Uri.parse('https://example.com'),
-          server: 'Relic',
-          custom: CustomHeaders({
-            'foo': ['bar']
-          }),
-        ),
+        Headers.build((mh) {
+          mh.date = now;
+          mh.expires = expires;
+          mh.lastModified = lastModified;
+          mh.origin = Uri.parse('https://example.com');
+          mh.server = 'Relic';
+          mh['foo'] = ['bar'];
+        }),
         Body.empty(),
       );
 
@@ -92,7 +91,7 @@ void main() {
         'then the content type is applied correctly', () async {
       HttpResponseMock response = HttpResponseMock();
       response.applyHeaders(
-        Headers.response(),
+        Headers.empty(),
         Body.fromString(
           'Relic',
           mimeType: MimeType.plainText,
@@ -112,7 +111,7 @@ void main() {
         'then the content length is applied correctly', () async {
       HttpResponseMock response = HttpResponseMock();
       response.applyHeaders(
-        Headers.response(),
+        Headers.empty(),
         Body.fromDataStream(
           Stream.fromIterable([
             Uint8List.fromList('Relic'.codeUnits),
@@ -130,7 +129,7 @@ void main() {
         'then chunked transfer encoding is added', () async {
       HttpResponseMock response = HttpResponseMock(statusCode: 200);
       response.applyHeaders(
-        Headers.response(),
+        Headers.empty(),
         Body.fromDataStream(
           Stream.empty(),
         ),
@@ -148,8 +147,8 @@ void main() {
         'then no "chunked" transfer encoding is added', () async {
       HttpResponseMock response = HttpResponseMock();
       response.applyHeaders(
-        Headers.response(
-          transferEncoding: TransferEncodingHeader(
+        Headers.build(
+          (mh) => mh.transferEncoding = TransferEncodingHeader(
             encodings: [TransferEncoding.identity],
           ),
         ),
@@ -170,8 +169,8 @@ void main() {
         'then "chunked" is retained', () async {
       HttpResponseMock response = HttpResponseMock();
       response.applyHeaders(
-        Headers.response(
-          transferEncoding: TransferEncodingHeader(
+        Headers.build(
+          (mh) => mh.transferEncoding = TransferEncodingHeader(
             encodings: [TransferEncoding.chunked],
           ),
         ),
@@ -195,7 +194,7 @@ void main() {
           'then no chunked transfer encoding is added', () async {
         HttpResponseMock response = HttpResponseMock(statusCode: 100);
         response.applyHeaders(
-          Headers.response(),
+          Headers.empty(),
           Body.fromDataStream(
             Stream.empty(),
           ),
@@ -213,7 +212,7 @@ void main() {
           'then no chunked transfer encoding is added', () async {
         HttpResponseMock response = HttpResponseMock(statusCode: 101);
         response.applyHeaders(
-          Headers.response(),
+          Headers.empty(),
           Body.fromDataStream(
             Stream.empty(),
           ),
@@ -231,7 +230,7 @@ void main() {
           'then no chunked transfer encoding is added', () async {
         HttpResponseMock response = HttpResponseMock(statusCode: 102);
         response.applyHeaders(
-          Headers.response(),
+          Headers.empty(),
           Body.fromDataStream(
             Stream.empty(),
           ),
@@ -249,7 +248,7 @@ void main() {
           'then no chunked transfer encoding is added', () async {
         HttpResponseMock response = HttpResponseMock(statusCode: 103);
         response.applyHeaders(
-          Headers.response(),
+          Headers.empty(),
           Body.fromDataStream(
             Stream.empty(),
           ),
@@ -267,7 +266,7 @@ void main() {
           'then no chunked transfer encoding is added', () async {
         HttpResponseMock response = HttpResponseMock(statusCode: 204);
         response.applyHeaders(
-          Headers.response(),
+          Headers.empty(),
           Body.fromDataStream(
             Stream.empty(),
           ),
@@ -285,7 +284,7 @@ void main() {
           'then no chunked transfer encoding is added', () async {
         HttpResponseMock response = HttpResponseMock(statusCode: 304);
         response.applyHeaders(
-          Headers.response(),
+          Headers.empty(),
           Body.fromDataStream(
             Stream.empty(),
           ),
@@ -304,7 +303,7 @@ void main() {
         'then no chunked transfer encoding is added', () async {
       HttpResponseMock response = HttpResponseMock();
       response.applyHeaders(
-        Headers.response(),
+        Headers.empty(),
         Body.fromDataStream(
           Stream.empty(),
           mimeType: MimeType.multipartByteranges,

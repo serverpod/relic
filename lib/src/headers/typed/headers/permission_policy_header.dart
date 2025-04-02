@@ -65,7 +65,7 @@ class PermissionsPolicyDirective {
   final String name;
 
   /// The values associated with the directive (e.g., `self`, `https://example.com`).
-  final List<String> values;
+  final Iterable<String> values;
 
   /// Constructs a [PermissionsPolicyDirective] instance with the specified name and values.
   const PermissionsPolicyDirective({

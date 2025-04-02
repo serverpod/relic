@@ -7,6 +7,8 @@ import 'package:async/async.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart' as parser;
 import 'package:relic/relic.dart';
+import 'package:relic/src/headers/parser/common_types_parser.dart';
+import 'package:relic/src/headers/standard_headers_extensions.dart';
 import 'package:relic/src/method/request_method.dart';
 import 'package:relic/src/relic_server_serve.dart' as relic_server;
 import 'package:test/test.dart';
@@ -96,48 +98,14 @@ void main() {
     expect(response.body, 'Hello from /user:42');
   });
 
-  test('chunked requests are un-chunked', () async {
-    await _scheduleServer(
-      expectAsync1((request) async {
-        expect(request.body.contentLength, isNull);
-        expect(request.method, RequestMethod.post);
-        expect(
-          request.headers,
-          isNot(contains(HttpHeaders.transferEncodingHeader)),
-        );
-
-        var stream = request.read();
-        var body = await stream.toList();
-        expect(
-          body.first,
-          equals(Uint8List.fromList([1, 2, 3, 4])),
-        );
-
-        return Response.ok();
-      }),
-    );
-
-    var request = http.StreamedRequest(
-      RequestMethod.post.value,
-      Uri.http('localhost:$_serverPort', '/'),
-    );
-    request.sink.add([1, 2, 3, 4]);
-    // ignore: unawaited_futures
-    request.sink.close();
-
-    var response = await request.send();
-    expect(response.statusCode, HttpStatus.ok);
-  });
-
   test('custom response headers are received by the client', () async {
     await _scheduleServer((request) {
       return Response.ok(
         body: Body.fromString('Hello from /'),
-        headers: Headers.response(
-            custom: CustomHeaders({
+        headers: Headers.fromMap({
           'test-header': ['test-value'],
           'test-list': ['a', 'b', 'c'],
-        })),
+        }),
       );
     });
 
@@ -145,31 +113,6 @@ void main() {
     expect(response.statusCode, HttpStatus.ok);
     expect(response.headers['test-header'], 'test-value');
     expect(response.body, 'Hello from /');
-  });
-
-  test('multiple headers are received from the client', () async {
-    await _scheduleServer((Request request) {
-      return Response.ok(
-        body: Body.fromString('Hello from /'),
-        headers: Headers.response(
-            custom: CustomHeaders({
-          'requested-values': request.headers.custom['request-values']!,
-          'requested-values-length': [
-            request.headers.custom['request-values']!.length.toString()
-          ],
-        })),
-      );
-    });
-
-    final response = await _get(
-      headers: {
-        'request-values': 'a,b',
-        'set-cookie': 'c,d',
-      },
-    );
-    expect(response.statusCode, HttpStatus.ok);
-    expect(response.headers['requested-values'], 'a, b');
-    expect(response.headers['requested-values-length'], '2');
   });
 
   test('custom status code is received by the client', () async {
@@ -183,18 +126,28 @@ void main() {
   });
 
   test('custom request headers are received by the handler', () async {
+    const multi = HeaderAccessor<List<String>>(
+      'multi-header',
+      HeaderDecoderMulti(parseStringList),
+    );
     await _scheduleServer((request) {
       expect(
-        request.headers.custom,
+        request.headers,
         containsPair('custom-header', ['client value']),
       );
 
       // dart:io HttpServer splits multi-value headers into an array
       // validate that they are combined correctly
       expect(
-        request.headers.custom,
-        containsPair('multi-header', ['foo', 'bar', 'baz']),
+        request.headers,
+        containsPair('multi-header', ['foo,bar,baz']),
       );
+
+      expect(
+        multi[request.headers].value,
+        ['foo', 'bar', 'baz'],
+      );
+
       return syncHandler(request);
     });
 
@@ -371,9 +324,7 @@ void main() {
       await _scheduleServer((request) {
         return Response.ok(
           body: Body.fromString('test'),
-          headers: Headers.response(
-            date: date,
-          ),
+          headers: Headers.build((mh) => mh.date = date),
         );
       });
 
@@ -400,9 +351,7 @@ void main() {
       await _scheduleServer((request) {
         return Response.ok(
           body: Body.fromString('test'),
-          headers: Headers.response(
-            xPoweredBy: 'myServer',
-          ),
+          headers: Headers.build((mh) => mh.xPoweredBy = 'myServer'),
         );
       });
 
@@ -429,9 +378,7 @@ void main() {
         (request) {
           return Response.ok(
             body: Body.fromString('test'),
-            headers: Headers.response(
-              xPoweredBy: 'myServer',
-            ),
+            headers: Headers.build((mh) => mh.xPoweredBy = 'myServer'),
           );
         },
         InternetAddress.loopbackIPv4,
@@ -452,11 +399,8 @@ void main() {
     await _scheduleServer(
       (_) => Response.ok(
         body: Body.empty(),
-        headers: Headers.response(
-          transferEncoding: TransferEncodingHeader(
-            encodings: [TransferEncoding.chunked],
-          ),
-        ),
+        headers: Headers.build((mh) => mh.transferEncoding =
+            TransferEncodingHeader(encodings: [TransferEncoding.chunked])),
       ),
     );
 

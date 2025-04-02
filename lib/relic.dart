@@ -11,11 +11,11 @@ export 'src/handler/handler.dart' show Handler;
 export 'src/handler/pipeline.dart' show Pipeline;
 
 // Headers related exports
-export 'src/headers/headers.dart' show Headers;
+export 'src/headers/headers.dart';
+export 'src/headers/header_accessor.dart';
 export 'src/headers/typed/typed_headers.dart';
-export 'src/headers/custom/custom_headers.dart' show CustomHeaders;
-export 'src/headers/exception/invalid_header_exception.dart'
-    show InvalidHeaderException;
+export 'src/headers/exception/header_exception.dart'
+    show HeaderException, InvalidHeaderException, MissingHeaderException;
 
 /// Hijack related exports
 export 'src/hijack/exception/hijack_exception.dart' show HijackException;

@@ -1,6 +1,6 @@
+import 'package:relic/relic.dart';
 import 'package:test/test.dart';
-import 'package:relic/src/headers/headers.dart';
-import 'package:relic/src/relic_server.dart';
+import 'package:relic/src/headers/standard_headers_extensions.dart';
 
 import '../headers_test_utils.dart';
 import '../docs/strict_validation_docs.dart';
@@ -24,8 +24,9 @@ void main() {
       'including a message that states the value cannot be empty',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.accessControlAllowMethods,
             headers: {'access-control-allow-methods': ''},
           ),
           throwsA(isA<BadRequestException>().having(
@@ -44,8 +45,9 @@ void main() {
       'other values',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.accessControlAllowMethods,
             headers: {'access-control-allow-methods': 'GET, *'},
           ),
           throwsA(isA<BadRequestException>().having(
@@ -62,10 +64,10 @@ void main() {
       'then the server does not respond with a bad request if the headers '
       'is not actually used',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (_) {},
           headers: {'access-control-allow-methods': 'CUSTOM'},
-          eagerParseHeaders: false,
         );
 
         expect(headers, isNotNull);
@@ -75,8 +77,9 @@ void main() {
     test(
       'when a valid Access-Control-Allow-Methods header is passed then it should parse the methods correctly',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.accessControlAllowMethods,
           headers: {'access-control-allow-methods': 'GET, POST, OPTIONS'},
         );
 
@@ -93,8 +96,9 @@ void main() {
       'when a valid Access-Control-Allow-Methods header with duplicate methods is passed '
       'then it should parse the methods correctly and remove duplicates',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.accessControlAllowMethods,
           headers: {'access-control-allow-methods': 'GET, POST, OPTIONS, GET'},
         );
 
@@ -110,8 +114,9 @@ void main() {
     test(
       'when an Access-Control-Allow-Methods header with wildcard is passed then it should parse correctly',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.accessControlAllowMethods,
           headers: {'access-control-allow-methods': '*'},
         );
 
@@ -122,8 +127,9 @@ void main() {
     test(
       'when no Access-Control-Allow-Methods header is passed then it should return null',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.accessControlAllowMethods,
           headers: {},
         );
 
@@ -147,26 +153,12 @@ void main() {
       test(
         'then it should return null',
         () async {
-          Headers headers = await getServerRequestHeaders(
+          var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (_) {},
             headers: {},
           );
           expect(headers.accessControlAllowMethods, isNull);
-        },
-      );
-
-      test(
-        'then it should be recorded in the "failedHeadersToParse" field',
-        () async {
-          Headers headers = await getServerRequestHeaders(
-            server: server,
-            headers: {'access-control-allow-methods': ''},
-          );
-
-          expect(
-            headers.failedHeadersToParse['access-control-allow-methods'],
-            equals(['']),
-          );
         },
       );
     });

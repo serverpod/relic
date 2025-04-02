@@ -1,7 +1,7 @@
+import 'package:relic/relic.dart';
 import 'package:relic/src/method/request_method.dart';
 import 'package:test/test.dart';
-import 'package:relic/src/headers/headers.dart';
-import 'package:relic/src/relic_server.dart';
+import 'package:relic/src/headers/standard_headers_extensions.dart';
 
 import '../headers_test_utils.dart';
 import '../docs/strict_validation_docs.dart';
@@ -26,8 +26,9 @@ void main() {
       'header value cannot be empty',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.accessControlRequestMethod,
             headers: {'access-control-request-method': ''},
           ),
           throwsA(
@@ -47,8 +48,9 @@ void main() {
       'is invalid',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.accessControlRequestMethod,
             headers: {'access-control-request-method': 'CUSTOM'},
           ),
           throwsA(
@@ -67,10 +69,10 @@ void main() {
       'passed then the server does not respond with a bad request if the '
       'headers is not actually used',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (_) {},
           headers: {'access-control-request-method': 'TEST'},
-          eagerParseHeaders: false,
         );
 
         expect(headers, isNotNull);
@@ -81,8 +83,9 @@ void main() {
       'when a valid Access-Control-Request-Method header is passed then it '
       'should parse the method correctly',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.accessControlRequestMethod,
           headers: {'access-control-request-method': 'POST'},
         );
 
@@ -97,8 +100,9 @@ void main() {
       'when an Access-Control-Request-Method header with extra whitespace is '
       'passed then it should parse the method correctly',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.accessControlRequestMethod,
           headers: {'access-control-request-method': ' POST '},
         );
 
@@ -110,9 +114,10 @@ void main() {
       'when no Access-Control-Request-Method header is passed then it should '
       'default to null',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {},
+          touchHeaders: (h) => h.accessControlRequestMethod,
         );
 
         expect(headers.accessControlRequestMethod, isNull);
@@ -135,27 +140,16 @@ void main() {
       test(
         'then it should return null',
         () async {
-          Headers headers = await getServerRequestHeaders(
+          var headers = await getServerRequestHeaders(
             server: server,
-            headers: {'access-control-request-method': ''},
-          );
-
-          expect(headers.accessControlRequestMethod, isNull);
-        },
-      );
-
-      test(
-        'then it should be recorded in "failedHeadersToParse" field',
-        () async {
-          Headers headers = await getServerRequestHeaders(
-            server: server,
+            touchHeaders: (_) {},
             headers: {'access-control-request-method': ''},
           );
 
           expect(
-            headers.failedHeadersToParse['access-control-request-method'],
-            equals(['']),
-          );
+              Headers.accessControlRequestMethod[headers].valueOrNullIfInvalid,
+              isNull);
+          expect(() => headers.accessControlRequestMethod, throwsInvalidHeader);
         },
       );
     });

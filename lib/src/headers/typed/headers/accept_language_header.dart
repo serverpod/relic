@@ -21,7 +21,7 @@ class AcceptLanguageHeader implements TypedHeader {
         isWildcard = true;
 
   /// Parses the Accept-Language header value and returns an [AcceptLanguageHeader] instance.
-  factory AcceptLanguageHeader.parse(List<String> values) {
+  factory AcceptLanguageHeader.parse(Iterable<String> values) {
     var splitValues = values.splitTrimAndFilterUnique();
 
     if (splitValues.isEmpty) {

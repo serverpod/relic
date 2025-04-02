@@ -1,5 +1,5 @@
 import 'dart:io';
-import 'package:relic/src/headers/exception/invalid_header_exception.dart';
+import 'package:relic/src/headers/exception/header_exception.dart';
 
 /// A class responsible for parsing HTTP headers.
 ///

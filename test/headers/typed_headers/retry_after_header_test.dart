@@ -1,7 +1,7 @@
+import 'package:relic/relic.dart';
 import 'package:http_parser/http_parser.dart';
 import 'package:test/test.dart';
-import 'package:relic/src/headers/headers.dart';
-import 'package:relic/src/relic_server.dart';
+import 'package:relic/src/headers/standard_headers_extensions.dart';
 
 import '../headers_test_utils.dart';
 import '../docs/strict_validation_docs.dart';
@@ -23,8 +23,9 @@ void main() {
       'including a message that states the value cannot be empty',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.retryAfter,
             headers: {'retry-after': ''},
           ),
           throwsA(isA<BadRequestException>().having(
@@ -41,10 +42,10 @@ void main() {
       'then the server does not respond with a bad request if the headers '
       'is not actually used',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (_) {},
           headers: {'retry-after': 'invalid'},
-          eagerParseHeaders: false,
         );
 
         expect(headers, isNotNull);
@@ -53,8 +54,9 @@ void main() {
 
     group('when the header contains a delay in seconds', () {
       test('then it should parse a valid positive integer correctly', () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.retryAfter,
           headers: {'retry-after': '120'},
         );
 
@@ -62,8 +64,9 @@ void main() {
       });
 
       test('then it should parse a value with whitespace correctly', () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.retryAfter,
           headers: {'retry-after': ' 120 '},
         );
 
@@ -72,8 +75,9 @@ void main() {
 
       test('then it should throw an error on a negative value', () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.retryAfter,
             headers: {'retry-after': '-120'},
           ),
           throwsA(isA<BadRequestException>().having(
@@ -86,8 +90,9 @@ void main() {
 
       test('then it should throw an error on a non-integer value', () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.retryAfter,
             headers: {'retry-after': '120.5'},
           ),
           throwsA(isA<BadRequestException>().having(
@@ -101,8 +106,9 @@ void main() {
 
     group('when the header contains an HTTP date', () {
       test('then it should parse a valid date correctly', () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.retryAfter,
           headers: {'retry-after': 'Wed, 21 Oct 2015 07:28:00 GMT'},
         );
 
@@ -113,8 +119,9 @@ void main() {
       });
 
       test('then it should parse a date with whitespace correctly', () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.retryAfter,
           headers: {'retry-after': ' Wed, 21 Oct 2015 07:28:00 GMT '},
         );
 
@@ -126,8 +133,9 @@ void main() {
 
       test('then it should throw an error on an invalid date format', () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.retryAfter,
             headers: {'retry-after': '2015-10-21'},
           ),
           throwsA(isA<BadRequestException>().having(
@@ -142,8 +150,9 @@ void main() {
     test(
       'when no Retry-After header is passed then it should return null',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.retryAfter,
           headers: {},
         );
 
@@ -164,27 +173,14 @@ void main() {
     test(
       'when an invalid header is passed then it should return null',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (_) {},
           headers: {'retry-after': 'invalid'},
         );
 
-        expect(headers.retryAfter, isNull);
-      },
-    );
-
-    test(
-      'when an invalid header is passed then it should be recorded in failedHeadersToParse',
-      () async {
-        Headers headers = await getServerRequestHeaders(
-          server: server,
-          headers: {'retry-after': 'invalid'},
-        );
-
-        expect(
-          headers.failedHeadersToParse['retry-after'],
-          equals(['invalid']),
-        );
+        expect(Headers.retryAfter[headers].valueOrNullIfInvalid, isNull);
+        expect(() => headers.retryAfter, throwsInvalidHeader);
       },
     );
   });

@@ -2,8 +2,9 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:relic/src/body/body.dart';
+import 'package:relic/src/headers/exception/header_exception.dart';
+import 'package:relic/src/headers/standard_headers_extensions.dart';
 import 'package:relic/src/hijack/exception/hijack_exception.dart';
-import 'package:relic/src/headers/exception/invalid_header_exception.dart';
 import 'package:relic/src/logger/logger.dart';
 import 'package:relic/src/message/request.dart';
 import 'package:relic/src/message/response.dart';
@@ -114,7 +115,7 @@ class RelicServer {
         strictHeaders: strictHeaders,
         poweredByHeader: poweredByHeader,
       );
-    } on InvalidHeaderException catch (error, stackTrace) {
+    } on HeaderException catch (error, stackTrace) {
       // If the request headers are invalid, respond with a 400 Bad Request status.
       logMessage(
         'Error parsing request headers.\n$error',
@@ -151,15 +152,14 @@ class RelicServer {
     try {
       response = await handler(relicRequest);
 
-      // If the response doesn't have a powered by header, add the default one.
-      if (response.headers.xPoweredBy == null) {
-        response = response.copyWith(
-          headers: response.headers.copyWith(
-            xPoweredBy: poweredByHeader,
-          ),
-        );
-      }
-    } on InvalidHeaderException catch (error, stackTrace) {
+      // If the response doesn't have a powered-by or date header, add the default ones
+      response = response.copyWith(
+        headers: response.headers.transform((mh) {
+          mh.xPoweredBy ??= poweredByHeader;
+          mh.date ??= DateTime.now();
+        }),
+      );
+    } on HeaderException catch (error, stackTrace) {
       // If the request headers are invalid, respond with a 400 Bad Request status.
       _logError(
         relicRequest,
@@ -205,7 +205,7 @@ class RelicServer {
     // are invalid, respond with a 400 Bad Request status.
     try {
       return await response.writeHttpResponse(request.response);
-    } on InvalidHeaderException catch (error) {
+    } on HeaderException catch (error) {
       return Response.badRequest(
         body: Body.fromString(error.toString()),
       ).writeHttpResponse(request.response);

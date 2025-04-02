@@ -15,7 +15,7 @@ class AcceptHeader implements TypedHeader {
   ///
   /// This method processes the header value, extracting media types and
   /// their quality values.
-  factory AcceptHeader.parse(List<String> values) {
+  factory AcceptHeader.parse(Iterable<String> values) {
     final splitValues = values.splitTrimAndFilterUnique();
     if (splitValues.isEmpty) {
       throw FormatException('Value cannot be empty');
@@ -56,8 +56,8 @@ class MediaRange {
   /// This method processes the media range string, extracting the type,
   /// subtype, quality, and parameters.
   factory MediaRange.parse(String value) {
-    final parts = value.splitTrimAndFilterUnique(separator: ';');
-    final typeSubtype = parts[0].split('/');
+    final parts = value.splitTrimAndFilterUnique(separator: ';').toList();
+    final typeSubtype = parts.first.split('/');
     if (typeSubtype.length != 2) {
       throw FormatException('Invalid media range');
     }

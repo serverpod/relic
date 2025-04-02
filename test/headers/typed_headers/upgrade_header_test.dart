@@ -1,6 +1,6 @@
+import 'package:relic/relic.dart';
 import 'package:test/test.dart';
-import 'package:relic/src/headers/headers.dart';
-import 'package:relic/src/relic_server.dart';
+import 'package:relic/src/headers/standard_headers_extensions.dart';
 
 import '../headers_test_utils.dart';
 import '../docs/strict_validation_docs.dart';
@@ -22,8 +22,9 @@ void main() {
       'including a message that states the value cannot be empty',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.upgrade,
             headers: {'upgrade': ''},
           ),
           throwsA(isA<BadRequestException>().having(
@@ -41,8 +42,9 @@ void main() {
       'states the version is invalid',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.upgrade,
             headers: {'upgrade': 'InvalidProtocol/abc'},
           ),
           throwsA(isA<BadRequestException>().having(
@@ -59,10 +61,10 @@ void main() {
       'then the server does not respond with a bad request if the headers '
       'is not actually used',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (_) {},
           headers: {'upgrade': 'InvalidProtocol/abc'},
-          eagerParseHeaders: false,
         );
 
         expect(headers, isNotNull);
@@ -72,8 +74,9 @@ void main() {
     test(
       'when no Upgrade header is passed then it should return null',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (_) {},
           headers: {},
         );
 
@@ -87,8 +90,9 @@ void main() {
         'bad request including a message that states the version is invalid',
         () async {
           expect(
-            () async => await getServerRequestHeaders(
+            getServerRequestHeaders(
               server: server,
+              touchHeaders: (h) => h.upgrade,
               headers: {'upgrade': 'HTTP/2.0, HTTP/abc'},
             ),
             throwsA(isA<BadRequestException>().having(
@@ -103,8 +107,9 @@ void main() {
       test(
         'then it should parse the protocols correctly',
         () async {
-          Headers headers = await getServerRequestHeaders(
+          var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.upgrade,
             headers: {'upgrade': 'HTTP/2.0, WebSocket'},
           );
 
@@ -121,55 +126,14 @@ void main() {
         'with duplicate protocols then it should parse the protocols correctly '
         'and remove the duplicates',
         () async {
-          Headers headers = await getServerRequestHeaders(
+          var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.upgrade,
             headers: {'upgrade': 'HTTP/2.0, WebSocket, HTTP/2.0'},
           );
 
           final protocols = headers.upgrade?.protocols;
           expect(protocols?.length, equals(2));
-        },
-      );
-    });
-  });
-
-  group('Given an Upgrade header with the strict flag false', () {
-    late RelicServer server;
-
-    setUp(() async {
-      server = await createServer(strictHeaders: false);
-    });
-
-    tearDown(() => server.close());
-
-    group('when an empty Upgrade header is passed', () {
-      test(
-        'then it should be recorded in failedHeadersToParse',
-        () async {
-          Headers headers = await getServerRequestHeaders(
-            server: server,
-            headers: {'upgrade': ''},
-          );
-
-          expect(
-            headers.failedHeadersToParse['upgrade'],
-            equals(['']),
-          );
-        },
-      );
-
-      test(
-        'then it should be recorded in failedHeadersToParse',
-        () async {
-          Headers headers = await getServerRequestHeaders(
-            server: server,
-            headers: {'upgrade': ''},
-          );
-
-          expect(
-            headers.failedHeadersToParse['upgrade'],
-            equals(['']),
-          );
         },
       );
     });

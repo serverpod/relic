@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:relic/relic.dart';
 import 'package:http/http.dart' as http;
+import 'package:test/test.dart';
 
 /// Thrown when the server returns a 400 status code.
 class BadRequestException implements Exception {
@@ -72,19 +73,14 @@ Future<RelicServer> createServer({
 Future<Headers> getServerRequestHeaders({
   required RelicServer server,
   required Map<String, String> headers,
-  // Whether to parse all headers.
-  bool eagerParseHeaders = true,
+  required void Function(Headers) touchHeaders,
 }) async {
-  Headers? parsedHeaders;
+  var requestHeaders = Headers.empty();
 
   server.mountAndStart(
     (Request request) {
-      parsedHeaders = request.headers;
-
-      if (eagerParseHeaders) {
-        parsedHeaders?.toMap();
-      }
-
+      requestHeaders = request.headers;
+      touchHeaders(requestHeaders);
       return Response.ok();
     },
   );
@@ -105,11 +101,8 @@ Future<Headers> getServerRequestHeaders({
     );
   }
 
-  if (parsedHeaders == null) {
-    throw StateError(
-      'No headers were parsed from the request',
-    );
-  }
-
-  return parsedHeaders!;
+  return requestHeaders;
 }
+
+Matcher throwsInvalidHeader = throwsA(isA<InvalidHeaderException>());
+Matcher throwsMissingHeader = throwsA(isA<MissingHeaderException>());

@@ -1,6 +1,6 @@
+import 'package:relic/relic.dart';
 import 'package:test/test.dart';
-import 'package:relic/src/headers/headers.dart';
-import 'package:relic/src/relic_server.dart';
+import 'package:relic/src/headers/standard_headers_extensions.dart';
 
 import '../headers_test_utils.dart';
 import '../docs/strict_validation_docs.dart';
@@ -23,8 +23,9 @@ void main() {
       'including a message that states the value cannot be empty',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.crossOriginOpenerPolicy,
             headers: {'cross-origin-opener-policy': ''},
           ),
           throwsA(isA<BadRequestException>().having(
@@ -41,8 +42,9 @@ void main() {
       'including a message that states the value is invalid',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.crossOriginOpenerPolicy,
             headers: {'cross-origin-opener-policy': 'custom-policy'},
           ),
           throwsA(isA<BadRequestException>().having(
@@ -59,10 +61,10 @@ void main() {
       'then the server does not respond with a bad request if the headers '
       'is not actually used',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (_) {},
           headers: {'cross-origin-opener-policy': 'custom-policy'},
-          eagerParseHeaders: false,
         );
         expect(headers, isNotNull);
       },
@@ -71,8 +73,9 @@ void main() {
     test(
       'when a valid Cross-Origin-Opener-Policy header is passed then it should parse the policy correctly',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.crossOriginOpenerPolicy,
           headers: {'cross-origin-opener-policy': 'same-origin'},
         );
 
@@ -83,8 +86,9 @@ void main() {
     test(
       'when no Cross-Origin-Opener-Policy header is passed then it should return null',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.crossOriginOpenerPolicy,
           headers: {},
         );
 
@@ -107,26 +111,12 @@ void main() {
       test(
         'then it should return null',
         () async {
-          Headers headers = await getServerRequestHeaders(
+          var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (_) {},
             headers: {},
           );
           expect(headers.crossOriginOpenerPolicy, isNull);
-        },
-      );
-
-      test(
-        'then it should be recorded in the "failedHeadersToParse" field',
-        () async {
-          Headers headers = await getServerRequestHeaders(
-            server: server,
-            headers: {'cross-origin-opener-policy': ''},
-          );
-
-          expect(
-            headers.failedHeadersToParse['cross-origin-opener-policy'],
-            equals(['']),
-          );
         },
       );
     });

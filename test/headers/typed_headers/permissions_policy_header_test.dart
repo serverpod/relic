@@ -1,6 +1,6 @@
+import 'package:relic/relic.dart';
 import 'package:test/test.dart';
-import 'package:relic/src/headers/headers.dart';
-import 'package:relic/src/relic_server.dart';
+import 'package:relic/src/headers/standard_headers_extensions.dart';
 
 import '../headers_test_utils.dart';
 import '../docs/strict_validation_docs.dart';
@@ -22,8 +22,9 @@ void main() {
       'including a message that states the value cannot be empty',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.permissionsPolicy,
             headers: {'permissions-policy': ''},
           ),
           throwsA(isA<BadRequestException>().having(
@@ -40,10 +41,10 @@ void main() {
       'then the server does not respond with a bad request if the headers '
       'is not actually used',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (_) {},
           headers: {'permissions-policy': ''},
-          eagerParseHeaders: false,
         );
 
         expect(headers, isNotNull);
@@ -53,8 +54,9 @@ void main() {
     test(
       'when a valid Permissions-Policy header is passed then it should parse the policies correctly',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.permissionsPolicy,
           headers: {'permissions-policy': 'geolocation=(self), microphone=()'},
         );
 
@@ -70,12 +72,13 @@ void main() {
     test(
       'when a Permissions-Policy header with multiple policies is passed then it should parse correctly',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {
             'permissions-policy':
                 'geolocation=(self), camera=(self "https://example.com")'
           },
+          touchHeaders: (h) => h.permissionsPolicy,
         );
 
         final policies = headers.permissionsPolicy?.directives;
@@ -90,9 +93,10 @@ void main() {
     test(
       'when no Permissions-Policy header is passed then it should return null',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {},
+          touchHeaders: (h) => h.permissionsPolicy,
         );
 
         expect(headers.permissionsPolicy, isNull);
@@ -113,27 +117,15 @@ void main() {
       test(
         'then it should return null',
         () async {
-          Headers headers = await getServerRequestHeaders(
+          var headers = await getServerRequestHeaders(
             server: server,
-            headers: {'permissions-policy': ''},
-          );
-
-          expect(headers.permissionsPolicy, isNull);
-        },
-      );
-
-      test(
-        'then it should be recorded in the "failedHeadersToParse" field',
-        () async {
-          Headers headers = await getServerRequestHeaders(
-            server: server,
+            touchHeaders: (_) {},
             headers: {'permissions-policy': ''},
           );
 
           expect(
-            headers.failedHeadersToParse['permissions-policy'],
-            equals(['']),
-          );
+              Headers.permissionsPolicy[headers].valueOrNullIfInvalid, isNull);
+          expect(() => headers.permissionsPolicy, throwsInvalidHeader);
         },
       );
     });

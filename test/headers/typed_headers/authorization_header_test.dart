@@ -1,9 +1,8 @@
+import 'package:relic/relic.dart';
 import 'dart:convert';
 
-import 'package:relic/src/headers/typed/headers/authorization_header.dart';
 import 'package:test/test.dart';
-import 'package:relic/src/headers/headers.dart';
-import 'package:relic/src/relic_server.dart';
+import 'package:relic/src/headers/standard_headers_extensions.dart';
 
 import '../headers_test_utils.dart';
 import '../docs/strict_validation_docs.dart';
@@ -26,8 +25,9 @@ void main() {
       'cannot be empty',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.authorization,
             headers: {'authorization': ''},
           ),
           throwsA(
@@ -46,10 +46,10 @@ void main() {
       'then the server does not respond with a bad request if the headers '
       'is not actually used',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (_) {},
           headers: {'authorization': 'invalid-authorization-format'},
-          eagerParseHeaders: false,
         );
 
         expect(headers, isNotNull);
@@ -59,8 +59,9 @@ void main() {
     test(
       'when no Authorization header is passed then it should default to null',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.authorization,
           headers: {},
         );
 
@@ -74,8 +75,9 @@ void main() {
         'bad request including a message that states the token format is invalid',
         () async {
           expect(
-            () async => await getServerRequestHeaders(
+            getServerRequestHeaders(
               server: server,
+              touchHeaders: (h) => h.authorization,
               headers: {'authorization': 'Bearer'},
             ),
             throwsA(
@@ -92,8 +94,9 @@ void main() {
       test(
         'when a Bearer token is passed then it should parse the token correctly',
         () async {
-          Headers headers = await getServerRequestHeaders(
+          var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.authorization,
             headers: {'authorization': 'Bearer validToken123'},
           );
 
@@ -115,8 +118,9 @@ void main() {
         'bad request including a message that states the token format is invalid',
         () async {
           expect(
-            () async => await getServerRequestHeaders(
+            getServerRequestHeaders(
               server: server,
+              touchHeaders: (h) => h.authorization,
               headers: {'authorization': 'Basic invalidBase64'},
             ),
             throwsA(
@@ -135,8 +139,9 @@ void main() {
         'correctly',
         () async {
           final credentials = base64Encode(utf8.encode('user:pass'));
-          Headers headers = await getServerRequestHeaders(
+          var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.authorization,
             headers: {'authorization': 'Basic $credentials'},
           );
 
@@ -156,8 +161,9 @@ void main() {
         'bad request including a message that states the token format is invalid',
         () async {
           expect(
-            () async => await getServerRequestHeaders(
+            getServerRequestHeaders(
               server: server,
+              touchHeaders: (h) => h.authorization,
               headers: {'authorization': 'Digest invalidFormat'},
             ),
             throwsA(
@@ -180,8 +186,9 @@ void main() {
                 'missingUsername="user", realm="realm", nonce="nonce", uri="/", response="response"';
 
             expect(
-              () async => await getServerRequestHeaders(
+              getServerRequestHeaders(
                 server: server,
+                touchHeaders: (h) => h.authorization,
                 headers: {'authorization': 'Digest $digestValue'},
               ),
               throwsA(
@@ -202,8 +209,9 @@ void main() {
                 'username="user", missingRealm="realm", nonce="nonce", uri="/", response="response"';
 
             expect(
-              () async => await getServerRequestHeaders(
+              getServerRequestHeaders(
                 server: server,
+                touchHeaders: (h) => h.authorization,
                 headers: {'authorization': 'Digest $digestValue'},
               ),
               throwsA(
@@ -225,8 +233,9 @@ void main() {
                 'username="user", realm="realm", missingNonce="nonce", uri="/", response="response"';
 
             expect(
-              () async => await getServerRequestHeaders(
+              getServerRequestHeaders(
                 server: server,
+                touchHeaders: (h) => h.authorization,
                 headers: {'authorization': 'Digest $digestValue'},
               ),
               throwsA(
@@ -248,8 +257,9 @@ void main() {
                 'username="user", realm="realm", nonce="nonce", missingUri="/", response="response"';
 
             expect(
-              () async => await getServerRequestHeaders(
+              getServerRequestHeaders(
                 server: server,
+                touchHeaders: (h) => h.authorization,
                 headers: {'authorization': 'Digest $digestValue'},
               ),
               throwsA(
@@ -271,8 +281,9 @@ void main() {
                 'username="user", realm="realm", nonce="nonce", uri="/", missingResponse="response"';
 
             expect(
-              () async => await getServerRequestHeaders(
+              getServerRequestHeaders(
                 server: server,
+                touchHeaders: (h) => h.authorization,
                 headers: {'authorization': 'Digest $digestValue'},
               ),
               throwsA(
@@ -296,8 +307,9 @@ void main() {
                 'username="", realm="realm", nonce="nonce", uri="/", response="response"';
 
             expect(
-              () async => await getServerRequestHeaders(
+              getServerRequestHeaders(
                 server: server,
+                touchHeaders: (h) => h.authorization,
                 headers: {'authorization': 'Digest $digestValue'},
               ),
               throwsA(
@@ -318,8 +330,9 @@ void main() {
                 'username="user", realm="", nonce="nonce", uri="/", response="response"';
 
             expect(
-              () async => await getServerRequestHeaders(
+              getServerRequestHeaders(
                 server: server,
+                touchHeaders: (h) => h.authorization,
                 headers: {'authorization': 'Digest $digestValue'},
               ),
               throwsA(
@@ -341,8 +354,9 @@ void main() {
                 'username="user", realm="realm", nonce="", uri="/", response="response"';
 
             expect(
-              () async => await getServerRequestHeaders(
+              getServerRequestHeaders(
                 server: server,
+                touchHeaders: (h) => h.authorization,
                 headers: {'authorization': 'Digest $digestValue'},
               ),
               throwsA(
@@ -364,8 +378,9 @@ void main() {
                 'username="user", realm="realm", nonce="nonce", uri="", response="response"';
 
             expect(
-              () async => await getServerRequestHeaders(
+              getServerRequestHeaders(
                 server: server,
+                touchHeaders: (h) => h.authorization,
                 headers: {'authorization': 'Digest $digestValue'},
               ),
               throwsA(
@@ -387,8 +402,9 @@ void main() {
                 'username="user", realm="realm", nonce="nonce", uri="/", response=""';
 
             expect(
-              () async => await getServerRequestHeaders(
+              getServerRequestHeaders(
                 server: server,
+                touchHeaders: (h) => h.authorization,
                 headers: {'authorization': 'Digest $digestValue'},
               ),
               throwsA(
@@ -409,8 +425,9 @@ void main() {
         () async {
           final digestValue =
               'username="user", realm="realm", nonce="nonce", uri="/", response="response"';
-          Headers headers = await getServerRequestHeaders(
+          var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.authorization,
             headers: {'authorization': 'Digest $digestValue'},
           );
 
@@ -430,8 +447,9 @@ void main() {
         () async {
           final digestValue =
               'username="user", realm="realm", nonce="nonce", uri="/", response="response", algorithm="MD5", qop="auth", nc="00000001", cnonce="cnonce", opaque="opaque"';
-          Headers headers = await getServerRequestHeaders(
+          var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.authorization,
             headers: {'authorization': 'Digest $digestValue'},
           );
 
@@ -467,27 +485,14 @@ void main() {
       test(
         'then it should return null',
         () async {
-          Headers headers = await getServerRequestHeaders(
+          var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (_) {},
             headers: {'authorization': ''},
           );
 
-          expect(headers.authorization, isNull);
-        },
-      );
-
-      test(
-        'then it should be recorded in "failedHeadersToParse" field',
-        () async {
-          Headers headers = await getServerRequestHeaders(
-            server: server,
-            headers: {'authorization': ''},
-          );
-
-          expect(
-            headers.failedHeadersToParse['authorization'],
-            equals(['']),
-          );
+          expect(Headers.authorization[headers].valueOrNullIfInvalid, isNull);
+          expect(() => headers.authorization, throwsInvalidHeader);
         },
       );
     });
@@ -496,27 +501,14 @@ void main() {
       test(
         'then it should return null',
         () async {
-          Headers headers = await getServerRequestHeaders(
+          var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (_) {},
             headers: {'authorization': 'InvalidFormat'},
           );
 
-          expect(headers.authorization, isNull);
-        },
-      );
-
-      test(
-        'then it should be recorded in "failedHeadersToParse" field',
-        () async {
-          Headers headers = await getServerRequestHeaders(
-            server: server,
-            headers: {'authorization': 'InvalidFormat'},
-          );
-
-          expect(
-            headers.failedHeadersToParse['authorization'],
-            equals(['InvalidFormat']),
-          );
+          expect(Headers.authorization[headers].valueOrNullIfInvalid, isNull);
+          expect(() => headers.authorization, throwsInvalidHeader);
         },
       );
     });

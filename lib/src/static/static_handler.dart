@@ -6,17 +6,17 @@ import 'dart:typed_data';
 import 'package:convert/convert.dart';
 import 'package:mime/mime.dart';
 import 'package:path/path.dart' as p;
+import 'package:relic/src/headers/standard_headers_extensions.dart';
 import 'package:relic/src/headers/typed/typed_headers.dart';
 import 'package:relic/src/method/request_method.dart';
 import 'package:relic/src/static/extension/datetime_extension.dart';
 
 import '../body/body.dart';
+import '../body/types/mime_type.dart';
 import '../handler/handler.dart';
 import '../headers/headers.dart';
-import '../body/types/mime_type.dart';
 import '../message/request.dart';
 import '../message/response.dart';
-
 import 'directory_listing.dart';
 
 /// The default resolver for MIME types based on file extensions.
@@ -224,10 +224,10 @@ Future<Response> _handleFile(
       return Response.notModified();
     }
   }
-  final headers = Headers.response(
-    lastModified: stat.modified,
-    acceptRanges: AcceptRangesHeader.bytes(),
-  );
+  final headers = Headers.build((mh) {
+    mh.lastModified = stat.modified;
+    mh.acceptRanges = AcceptRangesHeader.bytes();
+  });
 
   var response = _fileRangeResponse(request, file, headers);
   if (response != null) return response;
@@ -244,9 +244,7 @@ Future<Response> _handleFile(
 
   return Response.ok(
     body: body,
-    headers: Headers.response(
-      lastModified: file.lastModifiedSync(),
-    ),
+    headers: Headers.build((mh) => mh.lastModified = file.lastModifiedSync()),
   );
 }
 
@@ -316,8 +314,8 @@ Response? _fileRangeResponse(
   return Response(
     HttpStatus.partialContent,
     body: body,
-    headers: headers.copyWith(
-      contentRange: ContentRangeHeader(
+    headers: headers.transform(
+      (mh) => mh.contentRange = ContentRangeHeader(
         start: start,
         end: end,
         size: actualLength,

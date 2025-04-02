@@ -1,6 +1,6 @@
+import 'package:relic/relic.dart';
 import 'package:test/test.dart';
-import 'package:relic/src/headers/headers.dart';
-import 'package:relic/src/relic_server.dart';
+import 'package:relic/src/headers/standard_headers_extensions.dart';
 
 import '../headers_test_utils.dart';
 import '../docs/strict_validation_docs.dart';
@@ -23,8 +23,9 @@ void main() {
       'cannot be empty',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.contentLanguage,
             headers: {'content-language': ''},
           ),
           throwsA(
@@ -43,8 +44,9 @@ void main() {
       'bad request including a message that states the language code is invalid',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.contentLanguage,
             headers: {'content-language': 'en-123'},
           ),
           throwsA(
@@ -63,10 +65,10 @@ void main() {
       'then the server does not respond with a bad request if the headers '
       'is not actually used',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (_) {},
           headers: {'content-language': 'en-123'},
-          eagerParseHeaders: false,
         );
 
         expect(headers, isNotNull);
@@ -76,8 +78,9 @@ void main() {
     test(
       'when a single valid language is passed then it should parse correctly',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.contentLanguage,
           headers: {'content-language': 'en'},
         );
 
@@ -87,8 +90,9 @@ void main() {
 
     group('when multiple Content-Language languages are passed', () {
       test('then they should parse correctly', () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.contentLanguage,
           headers: {'content-language': 'en, fr, de'},
         );
 
@@ -96,8 +100,9 @@ void main() {
       });
 
       test('with extra whitespace then they should parse correctly', () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.contentLanguage,
           headers: {'content-language': ' en , fr , de '},
         );
 
@@ -107,8 +112,9 @@ void main() {
       test(
           'with duplicate languages then they should parse correctly and remove duplicates',
           () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.contentLanguage,
           headers: {'content-language': 'en, fr, de, en'},
         );
 
@@ -119,8 +125,9 @@ void main() {
     test(
       'when no Content-Language header is passed then it should return null',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.contentLanguage,
           headers: {},
         );
 
@@ -142,27 +149,14 @@ void main() {
       test(
         'then it should return null',
         () async {
-          Headers headers = await getServerRequestHeaders(
+          var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (_) {},
             headers: {'content-language': 'en-123'},
           );
 
-          expect(headers.contentLanguage, isNull);
-        },
-      );
-
-      test(
-        'then it should be recorded in the "failedHeadersToParse" field',
-        () async {
-          Headers headers = await getServerRequestHeaders(
-            server: server,
-            headers: {'content-language': 'en-123'},
-          );
-
-          expect(
-            headers.failedHeadersToParse['content-language'],
-            equals(['en-123']),
-          );
+          expect(Headers.contentLanguage[headers].valueOrNullIfInvalid, isNull);
+          expect(() => headers.contentLanguage, throwsInvalidHeader);
         },
       );
     });

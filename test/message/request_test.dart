@@ -1,8 +1,9 @@
+import 'package:relic/relic.dart';
 import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:http_parser/http_parser.dart';
-import 'package:relic/relic.dart';
+import 'package:relic/src/headers/standard_headers_extensions.dart';
 import 'package:relic/src/method/request_method.dart';
 import 'package:test/test.dart';
 
@@ -250,9 +251,9 @@ void main() {
     });
 
     test('when there is a Last-Modified header then it is set correctly', () {
-      var request = _request(
-          headers: Headers.request(
-              ifModifiedSince: parseHttpDate('Sun, 06 Nov 1994 08:49:37 GMT')));
+      var request = _request(headers: Headers.build((mh) {
+        mh.ifModifiedSince = parseHttpDate('Sun, 06 Nov 1994 08:49:37 GMT');
+      }));
       expect(request.headers.ifModifiedSince,
           equals(DateTime.parse('1994-11-06 08:49:37z')));
     });
@@ -266,16 +267,16 @@ void main() {
 
       var uri = Uri.parse('https://test.example.com/static/file.html');
 
-      var request = Request(RequestMethod.get, uri,
-          protocolVersion: '2.0',
-          headers: Headers.request(
-              custom: CustomHeaders({
-            'header1': ['header value 1']
-          })),
-          url: Uri.parse('file.html'),
-          handlerPath: '/static/',
-          body: Body.fromDataStream(controller.stream),
-          context: {'context1': 'context value 1'});
+      var request = Request(
+        RequestMethod.get,
+        uri,
+        protocolVersion: '2.0',
+        headers: Headers.build((mh) => mh['header1'] = ['header value 1']),
+        url: Uri.parse('file.html'),
+        handlerPath: '/static/',
+        body: Body.fromDataStream(controller.stream),
+        context: {'context1': 'context value 1'},
+      );
 
       var copy = request.copyWith();
 
@@ -283,7 +284,7 @@ void main() {
       expect(copy.requestedUri, request.requestedUri);
       expect(copy.protocolVersion, request.protocolVersion);
       expect(copy.headers, same(request.headers));
-      expect(copy.headers.custom, same(request.headers.custom));
+      expect(copy.headers, same(request.headers));
       expect(copy.url, request.url);
       expect(copy.handlerPath, request.handlerPath);
       expect(copy.context, same(request.context));

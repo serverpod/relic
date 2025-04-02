@@ -1,9 +1,11 @@
+import 'package:relic/relic.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:http_parser/http_parser.dart';
 import 'package:relic/relic.dart' hide Request;
+import 'package:relic/src/headers/standard_headers_extensions.dart';
 import 'package:test/test.dart';
 
 import '../util/test_util.dart';
@@ -117,9 +119,8 @@ void main() {
       expect(
         Response.ok(
           body: Body.fromString('okay!'),
-          headers: Headers.response(
-            expires: parseHttpDate('Sun, 06 Nov 1994 08:49:37 GMT'),
-          ),
+          headers: Headers.build((mh) =>
+              mh.expires = parseHttpDate('Sun, 06 Nov 1994 08:49:37 GMT')),
         ).headers.expires,
         equals(DateTime.parse('1994-11-06 08:49:37z')),
       );
@@ -139,9 +140,8 @@ void main() {
       expect(
         Response.ok(
           body: Body.fromString('okay!'),
-          headers: Headers.response(
-            lastModified: parseHttpDate('Sun, 06 Nov 1994 08:49:37 GMT'),
-          ),
+          headers: Headers.build((mh) =>
+              mh.lastModified = parseHttpDate('Sun, 06 Nov 1994 08:49:37 GMT')),
         ).headers.lastModified,
         equals(DateTime.parse('1994-11-06 08:49:37z')),
       );
@@ -154,25 +154,22 @@ void main() {
         () {
       var controller = StreamController<Object>();
 
-      var request = Response(
+      var response = Response(
         345,
         body: Body.fromString('hèllo, world'),
         encoding: latin1,
-        headers: Headers.response(
-          custom: CustomHeaders({
-            'header1': ['header value 1']
-          }),
-        ),
+        headers: Headers.build((mh) => mh['header1'] = ['header value 1']),
         context: {'context1': 'context value 1'},
       );
 
-      var copy = request.copyWith();
+      var copy = response.copyWith();
 
-      expect(copy.statusCode, request.statusCode);
+      expect(copy.statusCode, response.statusCode);
       expect(copy.readAsString(), completion('hèllo, world'));
-      expect(copy.headers, same(request.headers));
-      expect(copy.encoding, request.encoding);
-      expect(copy.context, same(request.context));
+      expect(copy.headers.hashCode, response.headers.hashCode);
+      expect(copy.headers, same(response.headers));
+      expect(copy.encoding, response.encoding);
+      expect(copy.context, same(response.context));
 
       controller.add(helloBytes);
       return Future(() {

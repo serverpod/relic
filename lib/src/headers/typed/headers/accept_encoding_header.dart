@@ -21,7 +21,7 @@ class AcceptEncodingHeader implements TypedHeader {
         isWildcard = true;
 
   /// Parses the Accept-Encoding header value and returns an [AcceptEncodingHeader] instance.
-  factory AcceptEncodingHeader.parse(List<String> values) {
+  factory AcceptEncodingHeader.parse(Iterable<String> values) {
     var splitValues = values.splitTrimAndFilterUnique();
 
     if (splitValues.isEmpty) {

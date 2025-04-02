@@ -1,6 +1,8 @@
 import 'package:relic/relic.dart';
 import 'dart:io' as io;
 
+import 'package:relic/src/headers/standard_headers_extensions.dart';
+
 /// Extension for [io.HttpResponse] to apply headers and body.
 extension HttpResponseExtension on io.HttpResponse {
   /// Apply headers and body to the response.
@@ -12,13 +14,8 @@ extension HttpResponseExtension on io.HttpResponse {
     responseHeaders.clear();
 
     // Apply all headers from the provided headers map.
-    var mappedHeaders = headers.toMap();
-    for (var entry in mappedHeaders.entries) {
-      var key = entry.key;
-      var value = entry.value;
-      if (value != null) {
-        responseHeaders.set(key, value);
-      }
+    for (var entry in headers.entries) {
+      responseHeaders.set(entry.key, entry.value);
     }
 
     // Set Content-Type based on the MIME type of the body.

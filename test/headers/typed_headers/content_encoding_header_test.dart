@@ -1,6 +1,6 @@
+import 'package:relic/relic.dart';
 import 'package:test/test.dart';
-import 'package:relic/src/headers/headers.dart';
-import 'package:relic/src/relic_server.dart';
+import 'package:relic/src/headers/standard_headers_extensions.dart';
 
 import '../headers_test_utils.dart';
 import '../docs/strict_validation_docs.dart';
@@ -23,8 +23,9 @@ void main() {
       'cannot be empty',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.contentEncoding,
             headers: {'content-encoding': ''},
           ),
           throwsA(
@@ -44,8 +45,9 @@ void main() {
       'is invalid',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.contentEncoding,
             headers: {'content-encoding': 'custom-encoding'},
           ),
           throwsA(
@@ -64,10 +66,10 @@ void main() {
       'then the server does not respond with a bad request if the headers '
       'is not actually used',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (_) {},
           headers: {'content-encoding': 'custom-encoding'},
-          eagerParseHeaders: false,
         );
 
         expect(headers, isNotNull);
@@ -77,8 +79,9 @@ void main() {
     test(
       'when a single valid encoding is passed then it should parse correctly',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.contentEncoding,
           headers: {'content-encoding': 'gzip'},
         );
 
@@ -92,8 +95,9 @@ void main() {
     test(
       'when no Content-Encoding header is passed then it should return null',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.contentEncoding,
           headers: {},
         );
 
@@ -105,8 +109,9 @@ void main() {
       test(
         'then they should parse correctly',
         () async {
-          Headers headers = await getServerRequestHeaders(
+          var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.contentEncoding,
             headers: {'content-encoding': 'gzip, deflate'},
           );
 
@@ -120,8 +125,9 @@ void main() {
       test(
         'with extra whitespace should parse correctly',
         () async {
-          Headers headers = await getServerRequestHeaders(
+          var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.contentEncoding,
             headers: {'content-encoding': ' gzip , deflate '},
           );
 
@@ -135,8 +141,9 @@ void main() {
       test(
         'with duplicate encodings should parse correctly and remove duplicates',
         () async {
-          Headers headers = await getServerRequestHeaders(
+          var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.contentEncoding,
             headers: {'content-encoding': 'gzip, deflate, gzip'},
           );
 
@@ -162,27 +169,14 @@ void main() {
       test(
         'then it should return null',
         () async {
-          Headers headers = await getServerRequestHeaders(
+          var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (_) {},
             headers: {'content-encoding': ''},
           );
 
-          expect(headers.contentEncoding, isNull);
-        },
-      );
-
-      test(
-        'then it should be recorded in the "failedHeadersToParse" field',
-        () async {
-          Headers headers = await getServerRequestHeaders(
-            server: server,
-            headers: {'content-encoding': ''},
-          );
-
-          expect(
-            headers.failedHeadersToParse['content-encoding'],
-            equals(['']),
-          );
+          expect(Headers.contentEncoding[headers].valueOrNullIfInvalid, isNull);
+          expect(() => headers.contentEncoding, throwsInvalidHeader);
         },
       );
     });

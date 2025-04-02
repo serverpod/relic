@@ -1,7 +1,7 @@
 import 'package:http_parser/http_parser.dart';
+import 'package:relic/relic.dart';
 import 'package:test/test.dart';
-import 'package:relic/src/headers/headers.dart';
-import 'package:relic/src/relic_server.dart';
+import 'package:relic/src/headers/standard_headers_extensions.dart';
 import '../headers_test_utils.dart';
 import '../docs/strict_validation_docs.dart';
 
@@ -23,9 +23,10 @@ void main() {
       'cannot be empty',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
             headers: {'last-modified': ''},
+            touchHeaders: (h) => h.lastModified,
           ),
           throwsA(
             isA<BadRequestException>().having(
@@ -44,9 +45,10 @@ void main() {
       'states the date format is invalid',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
             headers: {'last-modified': 'invalid-date-format'},
+            touchHeaders: (h) => h.lastModified,
           ),
           throwsA(
             isA<BadRequestException>().having(
@@ -64,10 +66,10 @@ void main() {
       'then the server does not respond with a bad request if the headers '
       'is not actually used',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (_) {},
           headers: {'last-modified': 'invalid-date-format'},
-          eagerParseHeaders: false,
         );
 
         expect(headers, isNotNull);
@@ -78,9 +80,10 @@ void main() {
       'when a valid Last-Modified header is passed then it should parse the '
       'date correctly',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {'last-modified': 'Wed, 21 Oct 2015 07:28:00 GMT'},
+          touchHeaders: (h) => h.lastModified,
         );
 
         expect(
@@ -93,9 +96,10 @@ void main() {
     test(
       'when a Last-Modified header with extra whitespace is passed then it should parse the date correctly',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {'last-modified': ' Wed, 21 Oct 2015 07:28:00 GMT '},
+          touchHeaders: (h) => h.lastModified,
         );
 
         expect(
@@ -108,9 +112,10 @@ void main() {
     test(
       'when no Last-Modified header is passed then it should return null',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {},
+          touchHeaders: (h) => h.lastModified,
         );
 
         expect(headers.lastModified, isNull);
@@ -131,27 +136,14 @@ void main() {
       test(
         'then it should return null',
         () async {
-          Headers headers = await getServerRequestHeaders(
+          var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (_) {},
             headers: {'last-modified': ''},
           );
 
-          expect(headers.lastModified, isNull);
-        },
-      );
-
-      test(
-        'then it should be recorded in "failedHeadersToParse" field',
-        () async {
-          Headers headers = await getServerRequestHeaders(
-            server: server,
-            headers: {'last-modified': ''},
-          );
-
-          expect(
-            headers.failedHeadersToParse['last-modified'],
-            equals(['']),
-          );
+          expect(Headers.lastModified[headers].valueOrNullIfInvalid, isNull);
+          expect(() => headers.lastModified, throwsInvalidHeader);
         },
       );
     });
@@ -160,27 +152,14 @@ void main() {
       test(
         'then it should return null',
         () async {
-          Headers headers = await getServerRequestHeaders(
+          var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (_) {},
             headers: {'last-modified': 'invalid-date-format'},
           );
 
-          expect(headers.lastModified, isNull);
-        },
-      );
-
-      test(
-        'then it should be recorded in "failedHeadersToParse" field',
-        () async {
-          Headers headers = await getServerRequestHeaders(
-            server: server,
-            headers: {'last-modified': 'invalid-date-format'},
-          );
-
-          expect(
-            headers.failedHeadersToParse['last-modified'],
-            equals(['invalid-date-format']),
-          );
+          expect(Headers.lastModified[headers].valueOrNullIfInvalid, isNull);
+          expect(() => headers.lastModified, throwsInvalidHeader);
         },
       );
     });

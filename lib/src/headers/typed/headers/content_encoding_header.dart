@@ -20,7 +20,7 @@ class ContentEncodingHeader implements TypedHeader {
   /// [ContentEncodingHeader] instance.
   ///
   /// This method splits the value by commas and trims each encoding.
-  factory ContentEncodingHeader.parse(List<String> values) {
+  factory ContentEncodingHeader.parse(Iterable<String> values) {
     var splitValues = values.splitTrimAndFilterUnique();
     if (splitValues.isEmpty) {
       throw FormatException('Value cannot be empty');

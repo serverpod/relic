@@ -1,9 +1,9 @@
+import 'package:relic/relic.dart';
+import 'package:relic/src/headers/standard_headers_extensions.dart';
 import 'package:test/test.dart';
-import 'package:relic/src/headers/headers.dart';
-import 'package:relic/src/relic_server.dart';
 
-import '../headers_test_utils.dart';
 import '../docs/strict_validation_docs.dart';
+import '../headers_test_utils.dart';
 
 /// Reference: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Trailer
 /// About empty value test, check the [StrictValidationDocs] class for more details.
@@ -22,9 +22,10 @@ void main() {
       'including a message that states the value cannot be empty',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
             headers: {'trailer': ''},
+            touchHeaders: (h) => h.trailer,
           ),
           throwsA(isA<BadRequestException>().having(
             (e) => e.message,
@@ -40,10 +41,10 @@ void main() {
       'then the server does not respond with a bad request if the headers '
       'is not actually used',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (_) {},
           headers: {'trailer': ''},
-          eagerParseHeaders: false,
         );
 
         expect(headers, isNotNull);
@@ -53,9 +54,10 @@ void main() {
     test(
       'when a valid Trailer header is passed then it should parse correctly',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {'trailer': 'Expires, Content-MD5, Content-Language'},
+          touchHeaders: (h) => h.trailer,
         );
 
         expect(
@@ -68,9 +70,10 @@ void main() {
     test(
       'when a Trailer header with whitespace is passed then it should parse correctly',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {'trailer': ' Expires , Content-MD5 , Content-Language '},
+          touchHeaders: (h) => h.trailer,
         );
 
         expect(
@@ -83,9 +86,10 @@ void main() {
     test(
       'when a Trailer header with custom values is passed then it should parse correctly',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {'trailer': 'custom-header, AnotherHeader'},
+          touchHeaders: (h) => h.trailer,
         );
 
         expect(
@@ -98,9 +102,10 @@ void main() {
     test(
       'when no Trailer header is passed then it should return null',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {},
+          touchHeaders: (h) => h.lastModified,
         );
 
         expect(headers.trailer, isNull);
@@ -120,27 +125,13 @@ void main() {
     test(
       'when a custom Trailer header is passed then it should parse correctly',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (_) {},
           headers: {'trailer': 'custom-header'},
         );
 
         expect(headers.trailer, equals(['custom-header']));
-      },
-    );
-
-    test(
-      'when an empty Trailer header is passed then it should be recorded in failedHeadersToParse',
-      () async {
-        Headers headers = await getServerRequestHeaders(
-          server: server,
-          headers: {'trailer': ''},
-        );
-
-        expect(
-          headers.failedHeadersToParse['trailer'],
-          equals(['']),
-        );
       },
     );
   });

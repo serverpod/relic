@@ -1,8 +1,7 @@
-import 'dart:io';
+import 'package:relic/relic.dart';
 
 import 'package:test/test.dart';
-import 'package:relic/src/headers/headers.dart';
-import 'package:relic/src/relic_server.dart';
+import 'package:relic/src/headers/standard_headers_extensions.dart';
 
 import '../headers_test_utils.dart';
 
@@ -22,8 +21,9 @@ void main() {
       'with a bad request including a message that states the header value cannot be empty',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.setCookie,
             headers: {'set-cookie': ''},
           ),
           throwsA(
@@ -43,8 +43,9 @@ void main() {
       'supplied multiple times',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.setCookie,
             headers: {
               'set-cookie': 'sessionId=abc123; Max-Age=3600; Max-Age=7200'
             },
@@ -64,8 +65,9 @@ void main() {
       'SameSite is supplied multiple times',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.setCookie,
             headers: {'set-cookie': 'sessionId=abc123; SameSite=Invalid'},
           ),
           throwsA(isA<BadRequestException>().having(
@@ -83,8 +85,9 @@ void main() {
       'are supplied multiple times',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.setCookie,
             headers: {'set-cookie': 'sessionId=test; userId=42'},
           ),
           throwsA(
@@ -103,8 +106,9 @@ void main() {
       'with a bad request including a message that states the cookie format is invalid',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.setCookie,
             headers: {'set-cookie': 'sessionId=abc123; invalidCookie'},
           ),
           throwsA(
@@ -123,8 +127,9 @@ void main() {
       'with a bad request including a message that states the cookie name is invalid',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.setCookie,
             headers: {'set-cookie': 'invalid name=abc123'},
           ),
           throwsA(
@@ -143,8 +148,9 @@ void main() {
       'with a bad request including a message that states the cookie value is invalid',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.setCookie,
             headers: {'set-cookie': 'userId=42\x7F'},
           ),
           throwsA(
@@ -163,10 +169,10 @@ void main() {
       'then the server does not respond with a bad request if the headers '
       'is not actually used',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (_) {},
           headers: {'set-cookie': 'userId=42\x7F'},
-          eagerParseHeaders: false,
         );
 
         expect(headers, isNotNull);
@@ -176,8 +182,9 @@ void main() {
     test(
       'when a Set-Cookie header with an empty name is passed then it should parse the cookie correctly',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.setCookie,
           headers: {'set-cookie': '=abc123'},
         );
 
@@ -189,8 +196,9 @@ void main() {
     test(
       'when a Set-Cookie header with all attributes is passed then it should parse correctly',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (_) {},
           headers: {
             'set-cookie':
                 'sessionId=abc123; Expires=Wed, 21 Oct 2025 07:28:00 GMT; Max-Age=3600; Domain=example.com; Path=/; Secure; HttpOnly; SameSite=Strict'
@@ -212,8 +220,9 @@ void main() {
     test(
       'when a Set-Cookie header with extra whitespace is passed then it should parse the cookies correctly',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.setCookie,
           headers: {'set-cookie': ' sessionId=abc123 ; Secure '},
         );
 
@@ -237,27 +246,14 @@ void main() {
       test(
         'when an invalid Set-Cookie header is passed then it should return null',
         () async {
-          Headers headers = await getServerRequestHeaders(
+          var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (_) {},
             headers: {'set-cookie': 'sessionId=abc123; invalidCookie'},
           );
 
-          expect(headers.setCookie, isNull);
-        },
-      );
-
-      test(
-        'when an invalid Set-Cookie header is passed then it should be recorded in failedHeadersToParse',
-        () async {
-          Headers headers = await getServerRequestHeaders(
-            server: server,
-            headers: {'set-cookie': 'sessionId=abc123; invalidCookie'},
-          );
-
-          expect(
-            headers.failedHeadersToParse['set-cookie'],
-            equals(['sessionId=abc123; invalidCookie']),
-          );
+          expect(Headers.setCookie[headers].valueOrNullIfInvalid, isNull);
+          expect(() => headers.setCookie, throwsInvalidHeader);
         },
       );
     });

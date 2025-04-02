@@ -1,7 +1,7 @@
+import 'package:relic/relic.dart';
 import 'package:http_parser/http_parser.dart';
 import 'package:test/test.dart';
-import 'package:relic/src/headers/headers.dart';
-import 'package:relic/src/relic_server.dart';
+import 'package:relic/src/headers/standard_headers_extensions.dart';
 
 import '../headers_test_utils.dart';
 import '../docs/strict_validation_docs.dart';
@@ -24,8 +24,9 @@ void main() {
       'cannot be empty',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.ifRange,
             headers: {'if-range': ''},
           ),
           throwsA(
@@ -44,8 +45,9 @@ void main() {
       'bad request including a message that states the ETag format is invalid',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.ifRange,
             headers: {'if-range': 'invalid-etag'},
           ),
           throwsA(
@@ -64,10 +66,10 @@ void main() {
       'then the server does not respond with a bad request if the headers '
       'is not actually used',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (_) {},
           headers: {'if-range': 'invalid-value'},
-          eagerParseHeaders: false,
         );
 
         expect(headers, isNotNull);
@@ -77,8 +79,9 @@ void main() {
     test(
       'when an If-Range header with a valid ETag is passed then it should parse correctly',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.ifRange,
           headers: {'if-range': '"123456"'},
         );
 
@@ -91,8 +94,9 @@ void main() {
     test(
       'when an If-Range header with a weak ETag is passed then it should parse correctly',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.ifRange,
           headers: {'if-range': 'W/"123456"'},
         );
 
@@ -105,8 +109,9 @@ void main() {
     test(
       'when an If-Range header with a valid HTTP date is passed then it should parse correctly',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.ifRange,
           headers: {'if-range': 'Wed, 21 Oct 2015 07:28:00 GMT'},
         );
 
@@ -121,8 +126,9 @@ void main() {
     test(
       'when no If-Range header is passed then it should default to null',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.ifRange,
           headers: {},
         );
 
@@ -144,27 +150,14 @@ void main() {
       test(
         'then it should return null',
         () async {
-          Headers headers = await getServerRequestHeaders(
+          var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (_) {},
             headers: {'if-range': 'invalid-value'},
           );
 
-          expect(headers.ifRange, isNull);
-        },
-      );
-
-      test(
-        'then it should be recorded in "failedHeadersToParse" field',
-        () async {
-          Headers headers = await getServerRequestHeaders(
-            server: server,
-            headers: {'if-range': 'invalid-value'},
-          );
-
-          expect(
-            headers.failedHeadersToParse['if-range'],
-            equals(['invalid-value']),
-          );
+          expect(Headers.ifRange[headers].valueOrNullIfInvalid, isNull);
+          expect(() => headers.ifRange, throwsInvalidHeader);
         },
       );
     });

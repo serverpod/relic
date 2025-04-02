@@ -1,6 +1,6 @@
+import 'package:relic/relic.dart';
 import 'package:test/test.dart';
-import 'package:relic/src/headers/headers.dart';
-import 'package:relic/src/relic_server.dart';
+import 'package:relic/src/headers/standard_headers_extensions.dart';
 import '../headers_test_utils.dart';
 
 import '../docs/strict_validation_docs.dart';
@@ -23,8 +23,9 @@ void main() {
       'cannot be empty',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.expect,
             headers: {'expect': ''},
           ),
           throwsA(
@@ -43,8 +44,9 @@ void main() {
       'including a message that states the value is invalid',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.expect,
             headers: {'expect': 'custom-directive'},
           ),
           throwsA(isA<BadRequestException>().having(
@@ -61,10 +63,10 @@ void main() {
       'then the server does not respond with a bad request if the headers '
       'is not actually used',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (_) {},
           headers: {'expect': 'custom-directive'},
-          eagerParseHeaders: false,
         );
 
         expect(headers, isNotNull);
@@ -74,8 +76,9 @@ void main() {
     test(
       'when a valid Expect header is passed then it should parse the directives correctly',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.expect,
           headers: {'expect': '100-continue'},
         );
 
@@ -100,27 +103,14 @@ void main() {
       test(
         'then it should return null',
         () async {
-          Headers headers = await getServerRequestHeaders(
+          var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (_) {},
             headers: {'expect': ''},
           );
 
-          expect(headers.expect, isNull);
-        },
-      );
-
-      test(
-        'then it should be recorded in "failedHeadersToParse" field',
-        () async {
-          Headers headers = await getServerRequestHeaders(
-            server: server,
-            headers: {'expect': ''},
-          );
-
-          expect(
-            headers.failedHeadersToParse['expect'],
-            equals(['']),
-          );
+          expect(Headers.expect[headers].valueOrNullIfInvalid, isNull);
+          expect(() => headers.expect, throwsInvalidHeader);
         },
       );
     });

@@ -1,6 +1,6 @@
+import 'package:relic/relic.dart';
 import 'package:test/test.dart';
-import 'package:relic/src/headers/headers.dart';
-import 'package:relic/src/relic_server.dart';
+import 'package:relic/src/headers/standard_headers_extensions.dart';
 
 import '../headers_test_utils.dart';
 import '../docs/strict_validation_docs.dart';
@@ -23,9 +23,10 @@ void main() {
       'cannot be empty',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
             headers: {'user-agent': ''},
+            touchHeaders: (h) => h.userAgent,
           ),
           throwsA(
             isA<BadRequestException>().having(
@@ -43,10 +44,10 @@ void main() {
       'then the server does not respond with a bad request if the headers '
       'is not actually used',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (_) {},
           headers: {'user-agent': ''},
-          eagerParseHeaders: false,
         );
 
         expect(headers, isNotNull);
@@ -56,9 +57,10 @@ void main() {
     test(
       'when a User-Agent string is passed then it should parse correctly',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'},
+          touchHeaders: (h) => h.userAgent,
         );
 
         expect(
@@ -71,9 +73,10 @@ void main() {
     test(
       'when no User-Agent header is passed then it should default to a non-null value',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {},
+          touchHeaders: (h) => h.userAgent,
         );
 
         expect(headers.userAgent, isNotNull);
@@ -94,27 +97,14 @@ void main() {
       test(
         'then it should return null',
         () async {
-          Headers headers = await getServerRequestHeaders(
+          var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (_) {},
             headers: {'user-agent': ''},
           );
 
-          expect(headers.userAgent, isNull);
-        },
-      );
-
-      test(
-        'then it should be recorded in "failedHeadersToParse" field',
-        () async {
-          Headers headers = await getServerRequestHeaders(
-            server: server,
-            headers: {'user-agent': ''},
-          );
-
-          expect(
-            headers.failedHeadersToParse['user-agent'],
-            equals(['']),
-          );
+          expect(Headers.userAgent[headers].valueOrNullIfInvalid, isNull);
+          expect(() => headers.userAgent, throwsInvalidHeader);
         },
       );
     });

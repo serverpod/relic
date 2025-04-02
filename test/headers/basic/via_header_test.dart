@@ -1,6 +1,6 @@
+import 'package:relic/relic.dart';
 import 'package:test/test.dart';
-import 'package:relic/src/headers/headers.dart';
-import 'package:relic/src/relic_server.dart';
+import 'package:relic/src/headers/standard_headers_extensions.dart';
 import '../headers_test_utils.dart';
 import '../docs/strict_validation_docs.dart';
 
@@ -21,9 +21,10 @@ void main() {
       'cannot be empty',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
             headers: {'via': ''},
+            touchHeaders: (h) => h.via,
           ),
           throwsA(
             isA<BadRequestException>().having(
@@ -41,10 +42,10 @@ void main() {
       'then the server does not respond with a bad request if the headers '
       'is not actually used',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (_) {},
           headers: {'via': ''},
-          eagerParseHeaders: false,
         );
 
         expect(headers, isNotNull);
@@ -54,9 +55,10 @@ void main() {
     test(
       'when a valid Via header is passed then it should parse the values correctly',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {'via': '1.1 example.com, 1.0 another.com'},
+          touchHeaders: (h) => h.via,
         );
 
         expect(headers.via, equals(['1.1 example.com', '1.0 another.com']));
@@ -66,9 +68,10 @@ void main() {
     test(
       'when a Via header with extra whitespace is passed then it should parse the values correctly',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {'via': ' 1.1 example.com , 1.0 another.com '},
+          touchHeaders: (h) => h.via,
         );
 
         expect(headers.via, equals(['1.1 example.com', '1.0 another.com']));
@@ -79,9 +82,10 @@ void main() {
       'when a Via header with duplicate values is passed then it should parse '
       'the values correctly and remove duplicates',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {'via': '1.1 example.com, 1.0 another.com, 1.0 another.com'},
+          touchHeaders: (h) => h.via,
         );
 
         expect(headers.via, equals(['1.1 example.com', '1.0 another.com']));
@@ -91,9 +95,10 @@ void main() {
     test(
       'when no Via header is passed then it should return null',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {},
+          touchHeaders: (h) => h.via,
         );
 
         expect(headers.via, isNull);
@@ -114,24 +119,14 @@ void main() {
       test(
         'then it should return null',
         () async {
-          Headers headers = await getServerRequestHeaders(
+          var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (_) {},
             headers: {'via': ''},
           );
 
-          expect(headers.via, isNull);
-        },
-      );
-
-      test(
-        'then it should be recorded in failedHeadersToParse',
-        () async {
-          Headers headers = await getServerRequestHeaders(
-            server: server,
-            headers: {'via': ''},
-          );
-
-          expect(headers.failedHeadersToParse['via'], equals(['']));
+          expect(Headers.via[headers].valueOrNullIfInvalid, isNull);
+          expect(() => headers.via, throwsInvalidHeader);
         },
       );
     });

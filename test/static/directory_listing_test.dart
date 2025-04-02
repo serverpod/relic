@@ -1,5 +1,7 @@
+import 'package:relic/relic.dart';
 import 'dart:io';
 
+import 'package:relic/src/headers/standard_headers_extensions.dart';
 import 'package:relic/src/static/static_handler.dart';
 import 'package:test/test.dart';
 import 'package:test_descriptor/test_descriptor.dart' as d;

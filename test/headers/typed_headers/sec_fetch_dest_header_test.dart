@@ -1,6 +1,6 @@
+import 'package:relic/relic.dart';
 import 'package:test/test.dart';
-import 'package:relic/src/headers/headers.dart';
-import 'package:relic/src/relic_server.dart';
+import 'package:relic/src/headers/standard_headers_extensions.dart';
 
 import '../headers_test_utils.dart';
 import '../docs/strict_validation_docs.dart';
@@ -22,8 +22,9 @@ void main() {
       'including a message that states the value cannot be empty',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.secFetchDest,
             headers: {'sec-fetch-dest': ''},
           ),
           throwsA(isA<BadRequestException>().having(
@@ -40,8 +41,9 @@ void main() {
       'including a message that states the value is invalid',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.secFetchDest,
             headers: {'sec-fetch-dest': 'custom-destination'},
           ),
           throwsA(isA<BadRequestException>().having(
@@ -58,10 +60,10 @@ void main() {
       'then the server does not respond with a bad request if the headers '
       'is not actually used',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (_) {},
           headers: {'sec-fetch-dest': 'custom-destination'},
-          eagerParseHeaders: false,
         );
         expect(headers, isNotNull);
       },
@@ -70,8 +72,9 @@ void main() {
     test(
       'when a valid Sec-Fetch-Dest header is passed then it should parse the destination correctly',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.secFetchDest,
           headers: {'sec-fetch-dest': 'document'},
         );
 
@@ -82,8 +85,9 @@ void main() {
     test(
       'when no Sec-Fetch-Dest header is passed then it should return null',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.secFetchDest,
           headers: {},
         );
 
@@ -105,27 +109,13 @@ void main() {
       test(
         'then it should return null',
         () async {
-          Headers headers = await getServerRequestHeaders(
+          var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (_) {},
             headers: {},
           );
 
           expect(headers.secFetchDest, isNull);
-        },
-      );
-
-      test(
-        'then it should be recorded in the "failedHeadersToParse" field',
-        () async {
-          Headers headers = await getServerRequestHeaders(
-            server: server,
-            headers: {'sec-fetch-dest': ''},
-          );
-
-          expect(
-            headers.failedHeadersToParse['sec-fetch-dest'],
-            equals(['']),
-          );
         },
       );
     });

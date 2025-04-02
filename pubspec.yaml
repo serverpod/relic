@@ -29,3 +29,4 @@ dev_dependencies:
   frontend_server_client: ^4.0.0
   pub_semver: ^2.1.4
   watcher: ^1.1.0
+  meta: ^1.9.1

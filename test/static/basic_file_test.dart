@@ -1,9 +1,13 @@
+@Timeout.none
+library;
+
 import 'dart:convert';
 import 'dart:io';
 
 import 'package:mime/mime.dart' as mime;
 import 'package:path/path.dart' as p;
 import 'package:relic/relic.dart';
+import 'package:relic/src/headers/standard_headers_extensions.dart';
 import 'package:relic/src/method/request_method.dart';
 import 'package:test/test.dart';
 import 'package:test_descriptor/test_descriptor.dart' as d;
@@ -121,9 +125,7 @@ void main() {
       final rootPath = p.join(d.sandbox, 'root.txt');
       final modified = File(rootPath).statSync().modified.toUtc();
 
-      final headers = Headers.request(
-        ifModifiedSince: modified,
-      );
+      final headers = Headers.build((mh) => mh.ifModifiedSince = modified);
 
       final response =
           await makeRequest(handler, '/root.txt', headers: headers);
@@ -137,9 +139,8 @@ void main() {
       final rootPath = p.join(d.sandbox, 'root.txt');
       final modified = File(rootPath).statSync().modified.toUtc();
 
-      final headers = Headers.request(
-        ifModifiedSince: modified.subtract(const Duration(seconds: 1)),
-      );
+      final headers = Headers.build((mh) =>
+          mh.ifModifiedSince = modified.subtract(const Duration(seconds: 1)));
 
       final response = await makeRequest(
         handler,
@@ -160,9 +161,7 @@ void main() {
       final rootPath = p.join(d.sandbox, 'root.txt');
       final modified = File(rootPath).statSync().modified.toUtc();
 
-      final headers = Headers.request(
-        ifModifiedSince: modified,
-      );
+      final headers = Headers.build((mh) => mh.ifModifiedSince = modified);
 
       final response = await makeRequest(
         handler,
@@ -186,9 +185,8 @@ void main() {
       await Future<void>.delayed(const Duration(seconds: 2));
       File(rootPath).writeAsStringSync('updated root txt');
 
-      final headers = Headers.request(
-        ifModifiedSince: originalModificationDate,
-      );
+      final headers =
+          Headers.build((mh) => mh.ifModifiedSince = originalModificationDate);
 
       final response2 = await makeRequest(
         handler,

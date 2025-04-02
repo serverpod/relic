@@ -7,7 +7,7 @@ import 'package:relic/src/headers/typed/typed_header_interface.dart';
 /// by listing them explicitly or using a wildcard (`*`) to expose all headers.
 class AccessControlExposeHeadersHeader implements TypedHeader {
   /// The list of headers that can be exposed.
-  final List<String>? headers;
+  final Iterable<String>? headers;
 
   /// Whether all headers are allowed to be exposed (`*`).
   final bool isWildcard;
@@ -23,7 +23,7 @@ class AccessControlExposeHeadersHeader implements TypedHeader {
 
   /// Parses the Access-Control-Expose-Headers header value and returns an
   /// [AccessControlExposeHeadersHeader] instance.
-  factory AccessControlExposeHeadersHeader.parse(List<String> values) {
+  factory AccessControlExposeHeadersHeader.parse(Iterable<String> values) {
     var splitValues = values.splitTrimAndFilterUnique();
     if (splitValues.isEmpty) {
       throw FormatException('Value cannot be empty');

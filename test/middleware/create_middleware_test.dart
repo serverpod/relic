@@ -1,8 +1,9 @@
+import 'package:relic/relic.dart';
 // ignore_for_file: only_throw_errors
 
 import 'dart:async';
 
-import 'package:relic/relic.dart';
+import 'package:relic/src/headers/standard_headers_extensions.dart';
 import 'package:test/test.dart';
 
 import '../util/test_util.dart';
@@ -16,14 +17,14 @@ void main() {
         .addHandler((request) {
       return syncHandler(
         request,
-        headers: Headers.request(
-          from: FromHeader(emails: ['innerHandler']),
-        ),
+        headers: Headers.build((mh) =>
+            mh.from = FromHeader(emails: ['innerHandler@serverpod.dev'])),
       );
     });
 
     final response = await makeSimpleRequest(handler);
-    expect(response.headers.from?.emails, contains('innerHandler'));
+    expect(
+        response.headers.from?.emails, contains('innerHandler@serverpod.dev'));
   });
 
   group('Given a requestHandler', () {
@@ -35,7 +36,7 @@ void main() {
           .addHandler(syncHandler);
 
       final response = await makeSimpleRequest(handler);
-      expect(response.headers.custom['from'], isNull);
+      expect(response.headers['from'], isNull);
     });
 
     test(
@@ -57,7 +58,8 @@ void main() {
           .addHandler(_failHandler);
 
       final response = await makeSimpleRequest(handler);
-      expect(response.headers.from?.emails, contains('middleware'));
+      expect(
+          response.headers.from?.emails, contains('middleware@serverpod.dev'));
     });
 
     test('when async response is returned then it is used', () async {
@@ -67,7 +69,8 @@ void main() {
           .addHandler(_failHandler);
 
       final response = await makeSimpleRequest(handler);
-      expect(response.headers.from?.emails, contains('middleware'));
+      expect(
+          response.headers.from?.emails, contains('middleware@serverpod.dev'));
     });
 
     group('Given a responseHandler', () {
@@ -81,7 +84,8 @@ void main() {
             const Pipeline().addMiddleware(middleware).addHandler(syncHandler);
 
         final response = await makeSimpleRequest(handler);
-        expect(response.headers.from?.emails, contains('middleware'));
+        expect(response.headers.from?.emails,
+            contains('middleware@serverpod.dev'));
       });
 
       test('when async result is returned then responseHandler is not called',
@@ -93,7 +97,8 @@ void main() {
             const Pipeline().addMiddleware(middleware).addHandler(syncHandler);
 
         final response = await makeSimpleRequest(handler);
-        expect(response.headers.from?.emails, contains('middleware'));
+        expect(response.headers.from?.emails,
+            contains('middleware@serverpod.dev'));
       });
     });
   });
@@ -104,19 +109,24 @@ void main() {
         () async {
       var handler = const Pipeline()
           .addMiddleware(createMiddleware(responseHandler: (response) {
-        expect(response.headers.from?.emails, contains('handler'));
+        expect(
+          response.headers.from?.emails,
+          contains('handler@serverpod.dev'),
+        );
         return _middlewareResponse;
       })).addHandler((request) {
         return syncHandler(
           request,
-          headers: Headers.response(
-            from: FromHeader(emails: ['handler']),
-          ),
+          headers: Headers.build(
+              (mh) => mh.from = FromHeader(emails: ['handler@serverpod.dev'])),
         );
       });
 
       final response = await makeSimpleRequest(handler);
-      expect(response.headers.from?.emails, contains('middleware'));
+      expect(
+        response.headers.from?.emails,
+        contains('middleware@serverpod.dev'),
+      );
     });
 
     test('when innerHandler async response is seen then async value continues',
@@ -124,7 +134,10 @@ void main() {
       var handler = const Pipeline().addMiddleware(
         createMiddleware(
           responseHandler: (response) {
-            expect(response.headers.from?.emails, contains('handler'));
+            expect(
+              response.headers.from?.emails,
+              contains('handler@serverpod.dev'),
+            );
             return Future.value(_middlewareResponse);
           },
         ),
@@ -132,15 +145,17 @@ void main() {
         return Future(
           () => syncHandler(
             request,
-            headers: Headers.response(
-              from: FromHeader(emails: ['handler']),
-            ),
+            headers: Headers.build((mh) =>
+                mh.from = FromHeader(emails: ['handler@serverpod.dev'])),
           ),
         );
       });
 
       final response = await makeSimpleRequest(handler);
-      expect(response.headers.from?.emails, contains('middleware'));
+      expect(
+        response.headers.from?.emails,
+        contains('middleware@serverpod.dev'),
+      );
     });
   });
 
@@ -206,7 +221,10 @@ void main() {
       });
 
       final response = await makeSimpleRequest(handler);
-      expect(response.headers.from?.emails, contains('middleware'));
+      expect(
+        response.headers.from?.emails,
+        contains('middleware@serverpod.dev'),
+      );
     });
 
     test(
@@ -256,7 +274,7 @@ Response _failHandler(Request request) => fail('should never get here');
 
 final Response _middlewareResponse = Response.ok(
   body: Body.fromString('middleware content'),
-  headers: Headers.response(
-    from: FromHeader(emails: ['middleware']),
+  headers: Headers.build(
+    (mh) => mh.from = FromHeader(emails: ['middleware@serverpod.dev']),
   ),
 );

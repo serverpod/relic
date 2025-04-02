@@ -1,6 +1,6 @@
+import 'package:relic/relic.dart';
 import 'package:test/test.dart';
-import 'package:relic/src/headers/headers.dart';
-import 'package:relic/src/relic_server.dart';
+import 'package:relic/src/headers/standard_headers_extensions.dart';
 
 import '../headers_test_utils.dart';
 import '../docs/strict_validation_docs.dart';
@@ -22,8 +22,9 @@ void main() {
       'including a message that states the value cannot be empty',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.vary,
             headers: {'vary': ''},
           ),
           throwsA(isA<BadRequestException>().having(
@@ -41,8 +42,9 @@ void main() {
       'the wildcard (*) cannot be used with other values',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.vary,
             headers: {'vary': '* , User-Agent'},
           ),
           throwsA(
@@ -61,10 +63,10 @@ void main() {
       'then the server does not respond with a bad request if the headers '
       'is not actually used',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (_) {},
           headers: {'vary': '* , User-Agent'},
-          eagerParseHeaders: false,
         );
 
         expect(headers, isNotNull);
@@ -74,8 +76,9 @@ void main() {
     test(
       'when a Vary header is passed then it should parse correctly',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.vary,
           headers: {'vary': 'Accept-Encoding, User-Agent'},
         );
 
@@ -89,8 +92,9 @@ void main() {
     test(
       'when a Vary header with whitespace is passed then it should parse correctly',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.vary,
           headers: {'vary': ' Accept-Encoding , User-Agent '},
         );
 
@@ -104,8 +108,9 @@ void main() {
     test(
       'when a Vary header with wildcard (*) is passed then it should parse correctly',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.vary,
           headers: {'vary': '*'},
         );
 
@@ -117,8 +122,9 @@ void main() {
     test(
       'when no Vary header is passed then it should return null',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.vary,
           headers: {},
         );
 
@@ -140,26 +146,14 @@ void main() {
       test(
         'then it should return null',
         () async {
-          Headers headers = await getServerRequestHeaders(
+          var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (_) {},
             headers: {'vary': ''},
           );
 
-          expect(headers.vary, isNull);
-        },
-      );
-      test(
-        'then it should be recorded in the "failedHeadersToParse" field',
-        () async {
-          Headers headers = await getServerRequestHeaders(
-            server: server,
-            headers: {'vary': ''},
-          );
-
-          expect(
-            headers.failedHeadersToParse['vary'],
-            equals(['']),
-          );
+          expect(Headers.vary[headers].valueOrNullIfInvalid, isNull);
+          expect(() => headers.vary, throwsInvalidHeader);
         },
       );
     });

@@ -1,6 +1,6 @@
+import 'package:relic/relic.dart';
 import 'package:test/test.dart';
-import 'package:relic/src/headers/headers.dart';
-import 'package:relic/src/relic_server.dart';
+import 'package:relic/src/headers/standard_headers_extensions.dart';
 
 import '../headers_test_utils.dart';
 import '../docs/strict_validation_docs.dart';
@@ -25,8 +25,9 @@ void main() {
       'that states the value cannot be empty',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.accessControlAllowHeaders,
             headers: {'access-control-allow-headers': ''},
           ),
           throwsA(isA<BadRequestException>().having(
@@ -44,8 +45,9 @@ void main() {
       'a message that states the wildcard cannot be used with other headers',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.accessControlAllowHeaders,
             headers: {'access-control-allow-headers': '*, Content-Type'},
           ),
           throwsA(isA<BadRequestException>().having(
@@ -62,10 +64,10 @@ void main() {
       'then the server does not respond with a bad request if the headers '
       'is not actually used',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (_) {},
           headers: {'access-control-allow-headers': '*, Content-Type'},
-          eagerParseHeaders: false,
         );
 
         expect(headers, isNotNull);
@@ -75,8 +77,9 @@ void main() {
     test(
       'when a valid Access-Control-Allow-Headers header is passed then it should parse the headers correctly',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (_) {},
           headers: {
             'access-control-allow-headers': 'Content-Type, X-Custom-Header'
           },
@@ -94,8 +97,9 @@ void main() {
     test(
       'when an Access-Control-Allow-Headers header with wildcard is passed then it should parse correctly',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.accessControlAllowHeaders,
           headers: {'access-control-allow-headers': '*'},
         );
 
@@ -106,8 +110,9 @@ void main() {
     test(
       'when no Access-Control-Allow-Headers header is passed then it should return null',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.accessControlAllowHeaders,
           headers: {},
         );
 
@@ -129,27 +134,13 @@ void main() {
 
     group('when an empty Access-Control-Allow-Headers header is passed', () {
       test('then it should return null', () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (_) {},
           headers: {},
         );
         expect(headers.accessControlAllowHeaders, isNull);
       });
-
-      test(
-        'then it should be recorded in the "failedHeadersToParse" field',
-        () async {
-          Headers headers = await getServerRequestHeaders(
-            server: server,
-            headers: {'access-control-allow-headers': ''},
-          );
-
-          expect(
-            headers.failedHeadersToParse['access-control-allow-headers'],
-            equals(['']),
-          );
-        },
-      );
     });
   });
 }

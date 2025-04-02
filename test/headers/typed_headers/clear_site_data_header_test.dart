@@ -1,6 +1,6 @@
+import 'package:relic/relic.dart';
 import 'package:test/test.dart';
-import 'package:relic/src/headers/headers.dart';
-import 'package:relic/src/relic_server.dart';
+import 'package:relic/src/headers/standard_headers_extensions.dart';
 
 import '../headers_test_utils.dart';
 import '../docs/strict_validation_docs.dart';
@@ -23,8 +23,9 @@ void main() {
       'cannot be empty',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.clearSiteData,
             headers: {'clear-site-data': ''},
           ),
           throwsA(isA<BadRequestException>().having(
@@ -42,8 +43,9 @@ void main() {
       'is invalid',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.clearSiteData,
             headers: {'clear-site-data': 'invalidValue'},
           ),
           throwsA(isA<BadRequestException>().having(
@@ -61,8 +63,9 @@ void main() {
       'message that states the wildcard cannot be used with other values',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.clearSiteData,
             headers: {'clear-site-data': '"cache", "*", "cookies"'},
           ),
           throwsA(isA<BadRequestException>().having(
@@ -79,10 +82,10 @@ void main() {
       'then the server does not respond with a bad request if the headers '
       'is not actually used',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (_) {},
           headers: {'clear-site-data': '"cache", "*", "cookies"'},
-          eagerParseHeaders: false,
         );
         expect(headers, isNotNull);
       },
@@ -91,8 +94,9 @@ void main() {
     test(
       'when a valid Clear-Site-Data header is passed then it should parse the data types correctly',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.clearSiteData,
           headers: {'clear-site-data': '"cache", "cookies", "storage"'},
         );
 
@@ -108,8 +112,9 @@ void main() {
     test(
       'when a Clear-Site-Data header with wildcard is passed then it should parse correctly',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.clearSiteData,
           headers: {'clear-site-data': '*'},
         );
 
@@ -120,8 +125,9 @@ void main() {
     test(
       'when no Clear-Site-Data header is passed then it should return null',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (h) => h.clearSiteData,
           headers: {},
         );
 
@@ -143,27 +149,14 @@ void main() {
       test(
         'then it should return null',
         () async {
-          Headers headers = await getServerRequestHeaders(
+          var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (_) {},
             headers: {'clear-site-data': ''},
           );
 
-          expect(headers.clearSiteData, isNull);
-        },
-      );
-
-      test(
-        'then it should be recorded in the "failedHeadersToParse" field',
-        () async {
-          Headers headers = await getServerRequestHeaders(
-            server: server,
-            headers: {'clear-site-data': ''},
-          );
-
-          expect(
-            headers.failedHeadersToParse['clear-site-data'],
-            equals(['']),
-          );
+          expect(Headers.clearSiteData[headers].valueOrNullIfInvalid, isNull);
+          expect(() => headers.clearSiteData, throwsInvalidHeader);
         },
       );
     });

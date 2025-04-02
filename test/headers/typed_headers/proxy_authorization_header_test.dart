@@ -1,9 +1,8 @@
+import 'package:relic/relic.dart';
 import 'dart:convert';
 
-import 'package:relic/src/headers/typed/headers/authorization_header.dart';
 import 'package:test/test.dart';
-import 'package:relic/src/headers/headers.dart';
-import 'package:relic/src/relic_server.dart';
+import 'package:relic/src/headers/standard_headers_extensions.dart';
 
 import '../headers_test_utils.dart';
 import '../docs/strict_validation_docs.dart';
@@ -26,8 +25,9 @@ void main() {
       'value cannot be empty',
       () async {
         expect(
-          () async => await getServerRequestHeaders(
+          getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.proxyAuthorization,
             headers: {'proxy-authorization': ''},
           ),
           throwsA(
@@ -46,12 +46,12 @@ void main() {
       'then the server does not respond with a bad request if the headers '
       'is not actually used',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
+          touchHeaders: (_) {},
           headers: {
             'proxy-authorization': 'invalid-proxy-authorization-format'
           },
-          eagerParseHeaders: false,
         );
 
         expect(headers, isNotNull);
@@ -61,9 +61,10 @@ void main() {
     test(
       'when no Proxy-Authorization header is passed then it should default to null',
       () async {
-        Headers headers = await getServerRequestHeaders(
+        var headers = await getServerRequestHeaders(
           server: server,
           headers: {},
+          touchHeaders: (h) => h.proxyAuthorization,
         );
 
         expect(headers.proxyAuthorization, isNull);
@@ -76,8 +77,9 @@ void main() {
         'bad request including a message that states the token format is invalid',
         () async {
           expect(
-            () async => await getServerRequestHeaders(
+            getServerRequestHeaders(
               server: server,
+              touchHeaders: (h) => h.proxyAuthorization,
               headers: {'proxy-authorization': 'Bearer'},
             ),
             throwsA(
@@ -94,11 +96,11 @@ void main() {
       test(
         'when a Bearer token is passed then it should parse the token correctly',
         () async {
-          Headers headers = await getServerRequestHeaders(
+          var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.proxyAuthorization,
             headers: {'proxy-authorization': 'Bearer validToken123'},
           );
-
           expect(
             headers.proxyAuthorization,
             isA<BearerAuthorizationHeader>().having(
@@ -117,8 +119,9 @@ void main() {
         'bad request including a message that states the token format is invalid',
         () async {
           expect(
-            () async => await getServerRequestHeaders(
+            getServerRequestHeaders(
               server: server,
+              touchHeaders: (h) => h.proxyAuthorization,
               headers: {'proxy-authorization': 'Basic invalidBase64'},
             ),
             throwsA(
@@ -137,11 +140,11 @@ void main() {
         'correctly',
         () async {
           final credentials = base64Encode(utf8.encode('user:pass'));
-          Headers headers = await getServerRequestHeaders(
+          var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.proxyAuthorization,
             headers: {'proxy-authorization': 'Basic $credentials'},
           );
-
           expect(
             headers.proxyAuthorization,
             isA<BasicAuthorizationHeader>()
@@ -158,8 +161,9 @@ void main() {
         'bad request including a message that states the token format is invalid',
         () async {
           expect(
-            () async => await getServerRequestHeaders(
+            getServerRequestHeaders(
               server: server,
+              touchHeaders: (h) => h.proxyAuthorization,
               headers: {'proxy-authorization': 'Digest invalidFormat'},
             ),
             throwsA(
@@ -182,8 +186,9 @@ void main() {
                 'missingUsername="user", realm="realm", nonce="nonce", uri="/", response="response"';
 
             expect(
-              () async => await getServerRequestHeaders(
+              getServerRequestHeaders(
                 server: server,
+                touchHeaders: (h) => h.proxyAuthorization,
                 headers: {'proxy-authorization': 'Digest $digestValue'},
               ),
               throwsA(
@@ -204,8 +209,9 @@ void main() {
                 'username="user", missingRealm="realm", nonce="nonce", uri="/", response="response"';
 
             expect(
-              () async => await getServerRequestHeaders(
+              getServerRequestHeaders(
                 server: server,
+                touchHeaders: (h) => h.proxyAuthorization,
                 headers: {'proxy-authorization': 'Digest $digestValue'},
               ),
               throwsA(
@@ -227,8 +233,9 @@ void main() {
                 'username="user", realm="realm", missingNonce="nonce", uri="/", response="response"';
 
             expect(
-              () async => await getServerRequestHeaders(
+              getServerRequestHeaders(
                 server: server,
+                touchHeaders: (h) => h.proxyAuthorization,
                 headers: {'proxy-authorization': 'Digest $digestValue'},
               ),
               throwsA(
@@ -250,8 +257,9 @@ void main() {
                 'username="user", realm="realm", nonce="nonce", missingUri="/", response="response"';
 
             expect(
-              () async => await getServerRequestHeaders(
+              getServerRequestHeaders(
                 server: server,
+                touchHeaders: (h) => h.proxyAuthorization,
                 headers: {'proxy-authorization': 'Digest $digestValue'},
               ),
               throwsA(
@@ -273,8 +281,9 @@ void main() {
                 'username="user", realm="realm", nonce="nonce", uri="/", missingResponse="response"';
 
             expect(
-              () async => await getServerRequestHeaders(
+              getServerRequestHeaders(
                 server: server,
+                touchHeaders: (h) => h.proxyAuthorization,
                 headers: {'proxy-authorization': 'Digest $digestValue'},
               ),
               throwsA(
@@ -298,8 +307,9 @@ void main() {
                 'username="", realm="realm", nonce="nonce", uri="/", response="response"';
 
             expect(
-              () async => await getServerRequestHeaders(
+              getServerRequestHeaders(
                 server: server,
+                touchHeaders: (h) => h.proxyAuthorization,
                 headers: {'proxy-authorization': 'Digest $digestValue'},
               ),
               throwsA(
@@ -320,8 +330,9 @@ void main() {
                 'username="user", realm="", nonce="nonce", uri="/", response="response"';
 
             expect(
-              () async => await getServerRequestHeaders(
+              getServerRequestHeaders(
                 server: server,
+                touchHeaders: (h) => h.proxyAuthorization,
                 headers: {'proxy-authorization': 'Digest $digestValue'},
               ),
               throwsA(
@@ -343,8 +354,9 @@ void main() {
                 'username="user", realm="realm", nonce="", uri="/", response="response"';
 
             expect(
-              () async => await getServerRequestHeaders(
+              getServerRequestHeaders(
                 server: server,
+                touchHeaders: (h) => h.proxyAuthorization,
                 headers: {'proxy-authorization': 'Digest $digestValue'},
               ),
               throwsA(
@@ -366,8 +378,9 @@ void main() {
                 'username="user", realm="realm", nonce="nonce", uri="", response="response"';
 
             expect(
-              () async => await getServerRequestHeaders(
+              getServerRequestHeaders(
                 server: server,
+                touchHeaders: (h) => h.proxyAuthorization,
                 headers: {'proxy-authorization': 'Digest $digestValue'},
               ),
               throwsA(
@@ -389,8 +402,9 @@ void main() {
                 'username="user", realm="realm", nonce="nonce", uri="/", response=""';
 
             expect(
-              () async => await getServerRequestHeaders(
+              getServerRequestHeaders(
                 server: server,
+                touchHeaders: (h) => h.proxyAuthorization,
                 headers: {'proxy-authorization': 'Digest $digestValue'},
               ),
               throwsA(
@@ -411,11 +425,11 @@ void main() {
         () async {
           final digestValue =
               'username="user", realm="realm", nonce="nonce", uri="/", response="response"';
-          Headers headers = await getServerRequestHeaders(
+          var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.proxyAuthorization,
             headers: {'proxy-authorization': 'Digest $digestValue'},
           );
-
           expect(
               headers.proxyAuthorization,
               isA<DigestAuthorizationHeader>()
@@ -432,11 +446,11 @@ void main() {
         () async {
           final digestValue =
               'username="user", realm="realm", nonce="nonce", uri="/", response="response", algorithm="MD5", qop="auth", nc="00000001", cnonce="cnonce", opaque="opaque"';
-          Headers headers = await getServerRequestHeaders(
+          var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (h) => h.proxyAuthorization,
             headers: {'proxy-authorization': 'Digest $digestValue'},
           );
-
           expect(
             headers.proxyAuthorization,
             isA<DigestAuthorizationHeader>()
@@ -469,27 +483,14 @@ void main() {
       test(
         'then it should return null',
         () async {
-          Headers headers = await getServerRequestHeaders(
+          var headers = await getServerRequestHeaders(
             server: server,
+            touchHeaders: (_) {},
             headers: {'proxy-authorization': ''},
           );
-
-          expect(headers.proxyAuthorization, isNull);
-        },
-      );
-
-      test(
-        'then it should be recorded in "failedHeadersToParse" field',
-        () async {
-          Headers headers = await getServerRequestHeaders(
-            server: server,
-            headers: {'proxy-authorization': ''},
-          );
-
           expect(
-            headers.failedHeadersToParse['proxy-authorization'],
-            equals(['']),
-          );
+              Headers.proxyAuthorization[headers].valueOrNullIfInvalid, isNull);
+          expect(() => headers.proxyAuthorization, throwsInvalidHeader);
         },
       );
     });
@@ -498,27 +499,15 @@ void main() {
       test(
         'then it should return null',
         () async {
-          Headers headers = await getServerRequestHeaders(
+          var headers = await getServerRequestHeaders(
             server: server,
-            headers: {'proxy-authorization': 'InvalidFormat'},
-          );
-
-          expect(headers.proxyAuthorization, isNull);
-        },
-      );
-
-      test(
-        'then it should be recorded in "failedHeadersToParse" field',
-        () async {
-          Headers headers = await getServerRequestHeaders(
-            server: server,
+            touchHeaders: (_) {},
             headers: {'proxy-authorization': 'InvalidFormat'},
           );
 
           expect(
-            headers.failedHeadersToParse['proxy-authorization'],
-            equals(['InvalidFormat']),
-          );
+              Headers.proxyAuthorization[headers].valueOrNullIfInvalid, isNull);
+          expect(() => headers.proxyAuthorization, throwsInvalidHeader);
         },
       );
     });

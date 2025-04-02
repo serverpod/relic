@@ -6,7 +6,7 @@ import 'package:relic/src/headers/typed/typed_header_interface.dart';
 /// This class manages the language codes specified in the Content-Language header.
 class ContentLanguageHeader implements TypedHeader {
   /// The list of language codes specified in the header.
-  final List<String> languages;
+  final Iterable<String> languages;
 
   /// Constructs a [ContentLanguageHeader] instance with the specified language codes.
   const ContentLanguageHeader({required this.languages});
@@ -14,7 +14,7 @@ class ContentLanguageHeader implements TypedHeader {
   /// Parses the Content-Language header value and returns a [ContentLanguageHeader] instance.
   ///
   /// This method splits the header value by commas and trims each language code.
-  factory ContentLanguageHeader.parse(List<String> values) {
+  factory ContentLanguageHeader.parse(Iterable<String> values) {
     final splitValues = values.splitTrimAndFilterUnique();
     if (splitValues.isEmpty) {
       throw FormatException('Value cannot be empty');
