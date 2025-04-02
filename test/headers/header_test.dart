@@ -1,5 +1,6 @@
 import 'package:relic/relic.dart';
 import 'package:relic/src/headers/standard_headers_extensions.dart';
+import 'package:relic/src/method/request_method.dart';
 import 'package:test/test.dart';
 
 import '../util/test_util.dart';
@@ -342,7 +343,7 @@ void main() {
   parameterizedTest(
     (v) => 'Given a "${v.key.key}" header '
         'when using the named extension property on an empty MutableHeaders instance '
-        'then setting it succeeds',
+        'then setting to null succeeds',
     (v) {
       expect(() => Headers.build((mh) => v.value(mh)), returnsNormally);
     },
@@ -422,6 +423,113 @@ void main() {
       Headers.via: (h) => h.via = null,
       Headers.wwwAuthenticate: (h) => h.wwwAuthenticate = null,
       Headers.xPoweredBy: (h) => h.xPoweredBy = null,
+    }.entries,
+  );
+  parameterizedTest(
+    (v) => 'Given a "${v.key.key}" header '
+        'when using the named extension property on an empty MutableHeaders instance '
+        'then setting to value succeeds',
+    (v) {
+      expect(() => Headers.build((mh) => v.value(mh)), returnsNormally);
+    },
+    variants: <HeaderFlyweight, dynamic Function(MutableHeaders)>{
+      Headers.accept: (h) =>
+          h.accept = AcceptHeader.parse(['application/vnd.example.api+json']),
+      Headers.acceptEncoding: (h) =>
+          h.acceptEncoding = AcceptEncodingHeader.wildcard(),
+      Headers.acceptLanguage: (h) =>
+          h.acceptLanguage = AcceptLanguageHeader.wildcard(),
+      Headers.acceptRanges: (h) => h.acceptRanges = AcceptRangesHeader.none(),
+      Headers.accessControlAllowCredentials: (h) =>
+          h.accessControlAllowCredentials = true,
+      Headers.accessControlAllowHeaders: (h) => h.accessControlAllowHeaders =
+          AccessControlAllowHeadersHeader.wildcard(),
+      Headers.accessControlAllowMethods: (h) => h.accessControlAllowMethods =
+          AccessControlAllowMethodsHeader.wildcard(),
+      Headers.accessControlAllowOrigin: (h) => h.accessControlAllowOrigin =
+          AccessControlAllowOriginHeader.origin(origin: Uri()),
+      Headers.accessControlExposeHeaders: (h) => h.accessControlExposeHeaders =
+          AccessControlExposeHeadersHeader.headers(headers: null),
+      Headers.accessControlMaxAge: (h) => h.accessControlMaxAge = 42,
+      Headers.accessControlRequestHeaders: (h) =>
+          h.accessControlRequestHeaders = [''],
+      Headers.accessControlRequestMethod: (h) =>
+          h.accessControlRequestMethod = RequestMethod.get,
+      Headers.age: (h) => h.age = 42,
+      Headers.allow: (h) => h.allow = [RequestMethod.get],
+      Headers.authorization: (h) =>
+          h.authorization = BearerAuthorizationHeader(token: 'foobar'),
+      Headers.cacheControl: (h) =>
+          h.cacheControl = CacheControlHeader.parse(['max-age=3600']),
+      Headers.clearSiteData: (h) =>
+          h.clearSiteData = ClearSiteDataHeader.wildcard(),
+      Headers.connection: (h) => h.connection =
+          ConnectionHeader(directives: [ConnectionHeaderType.keepAlive]),
+      Headers.contentDisposition: (h) => h.contentDisposition =
+          ContentDispositionHeader.parse('attachment; filename="report.pdf"'),
+      Headers.contentEncoding: (h) =>
+          h.contentEncoding = ContentEncodingHeader(encodings: []),
+      Headers.contentLanguage: (h) =>
+          h.contentLanguage = ContentLanguageHeader(languages: []),
+      Headers.contentLength: (h) => h.contentLength = 1202,
+      Headers.contentLocation: (h) => h.contentLocation = Uri(),
+      Headers.contentRange: (h) => h.contentRange = ContentRangeHeader(),
+      Headers.contentSecurityPolicy: (h) =>
+          h.contentSecurityPolicy = ContentSecurityPolicyHeader(directives: []),
+      Headers.cookie: (h) => h.cookie = CookieHeader(cookies: []),
+      Headers.crossOriginEmbedderPolicy: (h) => h.crossOriginEmbedderPolicy =
+          CrossOriginEmbedderPolicyHeader.unsafeNone,
+      Headers.crossOriginOpenerPolicy: (h) =>
+          h.crossOriginOpenerPolicy = CrossOriginOpenerPolicyHeader.unsafeNone,
+      Headers.crossOriginResourcePolicy: (h) => h.crossOriginResourcePolicy =
+          CrossOriginResourcePolicyHeader.sameSite,
+      Headers.date: (h) => h.date = DateTime.now(),
+      Headers.etag: (h) => h.etag = ETagHeader(value: ''),
+      Headers.expect: (h) => h.expect = ExpectHeader.continue100,
+      Headers.expires: (h) => h.expires = DateTime.now(),
+      Headers.from: (h) => h.from = FromHeader(emails: []),
+      Headers.host: (h) => h.host = Uri(),
+      Headers.ifMatch: (h) => h.ifMatch = IfMatchHeader.wildcard(),
+      Headers.ifModifiedSince: (h) => h.ifModifiedSince = DateTime.now(),
+      Headers.ifNoneMatch: (h) => h.ifNoneMatch = IfNoneMatchHeader.wildcard(),
+      Headers.ifRange: (h) =>
+          h.ifRange = IfRangeHeader(lastModified: DateTime.now()),
+      Headers.ifUnmodifiedSince: (h) => h.ifUnmodifiedSince = DateTime.now(),
+      Headers.lastModified: (h) => h.lastModified = DateTime.now(),
+      Headers.location: (h) => h.location = Uri(),
+      Headers.maxForwards: (h) => h.maxForwards = 42,
+      Headers.origin: (h) => h.origin = Uri(),
+      Headers.permissionsPolicy: (h) =>
+          h.permissionsPolicy = PermissionsPolicyHeader(directives: []),
+      Headers.proxyAuthenticate: (h) => h.proxyAuthenticate =
+          AuthenticationHeader(scheme: '', parameters: []),
+      Headers.proxyAuthorization: (h) =>
+          h.proxyAuthorization = BearerAuthorizationHeader(token: 'foobar'),
+      Headers.range: (h) => h.range = RangeHeader(ranges: []),
+      Headers.referer: (h) => h.referer = Uri(),
+      Headers.referrerPolicy: (h) =>
+          h.referrerPolicy = ReferrerPolicyHeader.origin,
+      Headers.retryAfter: (h) => h.retryAfter = RetryAfterHeader(delay: 1),
+      Headers.secFetchDest: (h) => h.secFetchDest = SecFetchDestHeader.audio,
+      Headers.secFetchMode: (h) => h.secFetchMode = SecFetchModeHeader.cors,
+      Headers.secFetchSite: (h) =>
+          h.secFetchSite = SecFetchSiteHeader.crossSite,
+      Headers.server: (h) => h.server = 'localhost',
+      Headers.setCookie: (h) =>
+          h.setCookie = SetCookieHeader(name: 'foo', value: 'bar'),
+      Headers.strictTransportSecurity: (h) =>
+          h.strictTransportSecurity = StrictTransportSecurityHeader(maxAge: 42),
+      Headers.te: (h) => h.te = TEHeader(encodings: []),
+      Headers.trailer: (h) => h.trailer = [],
+      Headers.transferEncoding: (h) =>
+          h.transferEncoding = TransferEncodingHeader(encodings: []),
+      Headers.upgrade: (h) => h.upgrade = UpgradeHeader(protocols: []),
+      Headers.userAgent: (h) => h.userAgent = 'null',
+      Headers.vary: (h) => h.vary = VaryHeader.headers(fields: []),
+      Headers.via: (h) => h.via = [],
+      Headers.wwwAuthenticate: (h) =>
+          h.wwwAuthenticate = AuthenticationHeader(scheme: '', parameters: []),
+      Headers.xPoweredBy: (h) => h.xPoweredBy = 'null',
     }.entries,
   );
 }
