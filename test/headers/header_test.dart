@@ -141,7 +141,7 @@ void main() {
   );
 
   parameterizedGroup(
-    (v) => 'Given a "${v.key}" header with a raw value "[\'invalid\']"}',
+    (v) => 'Given a "${v.key}" header with an invalid raw value',
     (v) {
       late final header = v[Headers.fromMap({
         v.key: ['invalid']
