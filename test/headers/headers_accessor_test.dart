@@ -7,7 +7,7 @@ import 'headers_test_utils.dart';
 
 const _anInt = HeaderAccessor<int>(
   'anInt',
-  HeaderDecoderSingle(int.parse),
+  HeaderDecoderSingle(intParseAndCount),
 );
 
 const _someStrings = HeaderAccessor<List<String>>(
@@ -15,12 +15,19 @@ const _someStrings = HeaderAccessor<List<String>>(
   HeaderDecoderMulti(parseStringList),
 );
 
+var _count = 0;
+int intParseAndCount(String s) {
+  ++_count;
+  return int.parse(s);
+}
+
 extension on Headers {
   int? get anInt => _anInt[this]();
   List<String>? get someStrings => _someStrings[this]();
 }
 
 extension on MutableHeaders {
+  int? get anInt => _anInt[this]();
   set anInt(int? value) => _anInt[this].set(value);
 }
 
@@ -144,5 +151,60 @@ void main() {
     //  headers.anInt = null;
     // but this uncommon approach will not fail until runtime:
     expect(() => header.set(null), throwsA(isA<TypeError>()));
+  });
+
+  test(
+      'Given a header accessor '
+      'when updating a value '
+      'then you can read the value immediately', () {
+    Headers.build((mh) {
+      mh.anInt = 42;
+      expect(mh.anInt, 42);
+      mh.anInt = 1202;
+      expect(mh.anInt, 1202);
+      mh['anInt'] = ['51']; // also for raw value updates
+      expect(mh.anInt, 51);
+    });
+  });
+
+  test(
+      'Given a header accessor '
+      'when reading the value '
+      'then decode is only called if raw value changed', () {
+    final headers = Headers.fromMap({
+      'anInt': ['102']
+    });
+
+    final offset = _count;
+    int decodeCount() => _count - offset; // compensate for previous calls
+
+    expect(headers.anInt, 102); // read first time
+    expect(decodeCount(), 1); // one call to parse
+
+    expect(headers.anInt, 102); // read again
+    expect(decodeCount(), 1); // still only one call to parse, due to cache
+
+    // update raw value directly
+    final headers2 = headers.transform((mh) => mh['anInt'] = ['1202']);
+
+    expect(headers.anInt, 102); // read first again
+    expect(decodeCount(), 1); // still only one call to parse, due to cache
+
+    expect(headers2.anInt, 1202); // read second first time
+    expect(decodeCount(), 2); // parse called once more
+
+    // update through header accessor
+    final headers3 = headers.transform((mh) => mh.anInt = 51);
+
+    expect(headers.anInt, 102); // read first again
+    expect(decodeCount(), 2); // still only two call to parse, due to cache
+
+    expect(headers2.anInt, 1202); // read second again
+    expect(decodeCount(), 2); // still only two call to parse, due to cache
+
+    // read third first time - count will not be affected, since update done
+    // through accessor that updated the cache immediately
+    expect(headers3.anInt, 51);
+    expect(decodeCount(), 2); // still only two call to parse, due to cache
   });
 }
