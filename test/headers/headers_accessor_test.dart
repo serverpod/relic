@@ -7,13 +7,22 @@ import 'headers_test_utils.dart';
 
 const _anInt = HeaderAccessor<int>(
   'anInt',
-  HeaderDecoderSingle(parseInt),
+  HeaderCodec.single(parseInt),
 );
 
 const _someStrings = HeaderAccessor<List<String>>(
   'someStrings',
-  HeaderDecoderMulti(parseStringList),
+  HeaderCodec(parseStringList),
 );
+
+class Custom {
+  Custom();
+  factory Custom.parse(String s) => Custom();
+  static Iterable<String> encode(Custom c) => ['foo'];
+}
+
+const _customClass = HeaderAccessor<Custom>(
+    'custom', HeaderCodec.single(Custom.parse, Custom.encode));
 
 extension on Headers {
   int? get anInt => _anInt[this]();
@@ -149,7 +158,7 @@ void main() {
 
   test(
       'Given a header accessor '
-      'when updating a value '
+      'when updating a value on a mutable headers collection '
       'then you can read the value immediately', () {
     Headers.build((mh) {
       mh.anInt = 42;
@@ -170,7 +179,7 @@ void main() {
       // This header accessor is not const constructed since we want
       // a non-const decoder that increment local the local variable count
       // whenever called. This is not good practice, but useful in the test!
-      accessor = HeaderAccessor('tmp', HeaderDecoderSingle((i) {
+      accessor = HeaderAccessor('tmp', HeaderCodec.single((i) {
         ++count;
         return int.parse(i);
       }));
@@ -218,5 +227,16 @@ void main() {
       expect(accessor[headers].value, 51);
       expect(count, 0);
     });
+  });
+
+  test(
+      'Given a custom class '
+      'then it is possible to setup header accessor for it with a custom encode',
+      () {
+    final c = Custom();
+    final headers = Headers.build((mh) => _customClass[mh].set(c));
+    expect(headers[_customClass.key], ['foo']);
+    expect(_customClass[headers].raw, ['foo']);
+    expect(_customClass[headers].value, same(c));
   });
 }
