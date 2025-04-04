@@ -7,19 +7,13 @@ import 'headers_test_utils.dart';
 
 const _anInt = HeaderAccessor<int>(
   'anInt',
-  HeaderDecoderSingle(intParseAndCount),
+  HeaderDecoderSingle(parseInt),
 );
 
 const _someStrings = HeaderAccessor<List<String>>(
   'someStrings',
   HeaderDecoderMulti(parseStringList),
 );
-
-var _count = 0;
-int intParseAndCount(String s) {
-  ++_count;
-  return int.parse(s);
-}
 
 extension on Headers {
   int? get anInt => _anInt[this]();
@@ -167,44 +161,62 @@ void main() {
     });
   });
 
-  test(
-      'Given a header accessor '
-      'when reading the value '
-      'then decode is only called if raw value changed', () {
-    final headers = Headers.fromMap({
-      'anInt': ['102']
+  group('Given a header accessor ', () {
+    late HeaderAccessor<int> accessor;
+    int count = 0;
+
+    setUp(() {
+      count = 0;
+      // This header accessor is not const constructed since we want
+      // a non-const decoder that increment local the local variable count
+      // whenever called. This is not good practice, but useful in the test!
+      accessor = HeaderAccessor('tmp', HeaderDecoderSingle((i) {
+        ++count;
+        return int.parse(i);
+      }));
     });
 
-    final offset = _count;
-    int decodeCount() => _count - offset; // compensate for previous calls
+    test(
+        'when reading the value from a headers collection twice '
+        'then decode is only called once', () {
+      final headers = Headers.fromMap({
+        accessor.key: ['1202']
+      });
 
-    expect(headers.anInt, 102); // read first time
-    expect(decodeCount(), 1); // one call to parse
+      expect(accessor[headers].value, 1202);
+      expect(count, 1);
 
-    expect(headers.anInt, 102); // read again
-    expect(decodeCount(), 1); // still only one call to parse, due to cache
+      expect(accessor[headers].value, 1202);
+      expect(count, 1);
+    });
 
-    // update raw value directly
-    final headers2 = headers.transform((mh) => mh['anInt'] = ['1202']);
+    test(
+        'when reading the value from a headers collection '
+        'where the raw value is updated directly '
+        'then decode is only called once per update', () {
+      final headers = Headers.fromMap({
+        accessor.key: ['1202']
+      });
+      final headers2 = headers.transform((mh) => mh[accessor.key] = ['42']);
 
-    expect(headers.anInt, 102); // read first again
-    expect(decodeCount(), 1); // still only one call to parse, due to cache
+      expect(accessor[headers].value, 1202);
+      expect(count, 1);
 
-    expect(headers2.anInt, 1202); // read second first time
-    expect(decodeCount(), 2); // parse called once more
+      expect(accessor[headers2].value, 42);
+      expect(count, 2);
 
-    // update through header accessor
-    final headers3 = headers.transform((mh) => mh.anInt = 51);
+      expect(accessor[headers].value, 1202);
+      expect(accessor[headers2].value, 42);
+      expect(count, 2);
+    });
 
-    expect(headers.anInt, 102); // read first again
-    expect(decodeCount(), 2); // still only two call to parse, due to cache
-
-    expect(headers2.anInt, 1202); // read second again
-    expect(decodeCount(), 2); // still only two call to parse, due to cache
-
-    // read third first time - count will not be affected, since update done
-    // through accessor that updated the cache immediately
-    expect(headers3.anInt, 51);
-    expect(decodeCount(), 2); // still only two call to parse, due to cache
+    test(
+        'when reading the value from a headers collection '
+        'where the encoded value is set via the accessor '
+        'then decode is not needed at all', () {
+      final headers = Headers.build((mh) => accessor[mh].set(51));
+      expect(accessor[headers].value, 51);
+      expect(count, 0);
+    });
   });
 }
