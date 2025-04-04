@@ -7,13 +7,22 @@ import 'headers_test_utils.dart';
 
 const _anInt = HeaderAccessor<int>(
   'anInt',
-  HeaderDecoderSingle(int.parse),
+  HeaderCodec.single(parseInt),
 );
 
 const _someStrings = HeaderAccessor<List<String>>(
   'someStrings',
-  HeaderDecoderMulti(parseStringList),
+  HeaderCodec(parseStringList),
 );
+
+class Custom {
+  Custom();
+  factory Custom.parse(String s) => Custom();
+  static Iterable<String> encode(Custom c) => ['foo'];
+}
+
+const _customClass = HeaderAccessor<Custom>(
+    'custom', HeaderCodec.single(Custom.parse, Custom.encode));
 
 extension on Headers {
   int? get anInt => _anInt[this]();
@@ -21,6 +30,7 @@ extension on Headers {
 }
 
 extension on MutableHeaders {
+  int? get anInt => _anInt[this]();
   set anInt(int? value) => _anInt[this].set(value);
 }
 
@@ -144,5 +154,89 @@ void main() {
     //  headers.anInt = null;
     // but this uncommon approach will not fail until runtime:
     expect(() => header.set(null), throwsA(isA<TypeError>()));
+  });
+
+  test(
+      'Given a header accessor '
+      'when updating a value on a mutable headers collection '
+      'then you can read the value immediately', () {
+    Headers.build((mh) {
+      mh.anInt = 42;
+      expect(mh.anInt, 42);
+      mh.anInt = 1202;
+      expect(mh.anInt, 1202);
+      mh['anInt'] = ['51']; // also for raw value updates
+      expect(mh.anInt, 51);
+    });
+  });
+
+  group('Given a header accessor ', () {
+    late HeaderAccessor<int> accessor;
+    int count = 0;
+
+    setUp(() {
+      count = 0;
+      // This header accessor is not const constructed since we want
+      // a non-const decoder that increment local the local variable count
+      // whenever called. This is not good practice, but useful in the test!
+      accessor = HeaderAccessor('tmp', HeaderCodec.single((i) {
+        ++count;
+        return int.parse(i);
+      }));
+    });
+
+    test(
+        'when reading the value from a headers collection twice '
+        'then decode is only called once', () {
+      final headers = Headers.fromMap({
+        accessor.key: ['1202']
+      });
+
+      expect(accessor[headers].value, 1202);
+      expect(count, 1);
+
+      expect(accessor[headers].value, 1202);
+      expect(count, 1);
+    });
+
+    test(
+        'when reading the value from a headers collection '
+        'where the raw value is updated directly '
+        'then decode is only called once per update', () {
+      final headers = Headers.fromMap({
+        accessor.key: ['1202']
+      });
+      final headers2 = headers.transform((mh) => mh[accessor.key] = ['42']);
+
+      expect(accessor[headers].value, 1202);
+      expect(count, 1);
+
+      expect(accessor[headers2].value, 42);
+      expect(count, 2);
+
+      expect(accessor[headers].value, 1202);
+      expect(accessor[headers2].value, 42);
+      expect(count, 2);
+    });
+
+    test(
+        'when reading the value from a headers collection '
+        'where the encoded value is set via the accessor '
+        'then decode is not needed at all', () {
+      final headers = Headers.build((mh) => accessor[mh].set(51));
+      expect(accessor[headers].value, 51);
+      expect(count, 0);
+    });
+  });
+
+  test(
+      'Given a custom class '
+      'then it is possible to setup header accessor for it with a custom encode',
+      () {
+    final c = Custom();
+    final headers = Headers.build((mh) => _customClass[mh].set(c));
+    expect(headers[_customClass.key], ['foo']);
+    expect(_customClass[headers].raw, ['foo']);
+    expect(_customClass[headers].value, same(c));
   });
 }
