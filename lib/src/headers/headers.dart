@@ -66,270 +66,270 @@ class Headers extends HeadersBase {
   /// Date-related headers
   static const date = HeaderAccessor<DateTime>(
     Headers.dateHeader,
-    HeaderDecoderSingle(parseDate),
+    HeaderCodec.single(parseDate),
   );
 
   static const expires = HeaderAccessor<DateTime>(
     Headers.expiresHeader,
-    HeaderDecoderSingle(parseDate),
+    HeaderCodec.single(parseDate),
   );
 
   static const lastModified = HeaderAccessor<DateTime>(
     Headers.lastModifiedHeader,
-    HeaderDecoderSingle(parseDate),
+    HeaderCodec.single(parseDate),
   );
 
   static const ifModifiedSince = HeaderAccessor<DateTime>(
     Headers.ifModifiedSinceHeader,
-    HeaderDecoderSingle(parseDate),
+    HeaderCodec.single(parseDate),
   );
 
   static const ifUnmodifiedSince = HeaderAccessor<DateTime>(
     Headers.ifUnmodifiedSinceHeader,
-    HeaderDecoderSingle(parseDate),
+    HeaderCodec.single(parseDate),
   );
 
 // General Headers
   static const origin = HeaderAccessor<Uri>(
     Headers.originHeader,
-    HeaderDecoderSingle(parseUri),
+    HeaderCodec.single(parseUri),
   );
 
   static const server = HeaderAccessor<String>(
     Headers.serverHeader,
-    HeaderDecoderSingle(parseString),
+    HeaderCodec.single(parseString),
   );
 
   static const via = HeaderAccessor<List<String>>(
     Headers.viaHeader,
-    HeaderDecoderMulti(parseStringList),
+    HeaderCodec(parseStringList),
   );
 
   /// Request Headers
   static const from = HeaderAccessor<FromHeader>(
     Headers.fromHeader,
-    HeaderDecoderMulti(FromHeader.parse),
+    HeaderCodec(FromHeader.parse),
   );
 
   static const host = HeaderAccessor<Uri>(
     Headers.hostHeader,
-    HeaderDecoderSingle(parseUri),
+    HeaderCodec.single(parseUri),
   );
 
   static const acceptEncoding = HeaderAccessor<AcceptEncodingHeader>(
     Headers.acceptEncodingHeader,
-    HeaderDecoderMulti(AcceptEncodingHeader.parse),
+    HeaderCodec(AcceptEncodingHeader.parse),
   );
 
   static const acceptLanguage = HeaderAccessor<AcceptLanguageHeader>(
     Headers.acceptLanguageHeader,
-    HeaderDecoderMulti(AcceptLanguageHeader.parse),
+    HeaderCodec(AcceptLanguageHeader.parse),
   );
 
   static const accessControlRequestHeaders = HeaderAccessor<List<String>>(
     Headers.accessControlRequestHeadersHeader,
-    HeaderDecoderMulti(parseStringList),
+    HeaderCodec(parseStringList),
   );
 
   static const accessControlRequestMethod = HeaderAccessor<RequestMethod>(
     Headers.accessControlRequestMethodHeader,
-    HeaderDecoderSingle(RequestMethod.parse),
+    HeaderCodec.single(RequestMethod.parse),
   );
 
   static const age = HeaderAccessor<int>(
     Headers.ageHeader,
-    HeaderDecoderSingle(parsePositiveInt),
+    HeaderCodec.single(parsePositiveInt),
   );
 
   static const authorization = HeaderAccessor<AuthorizationHeader>(
     Headers.authorizationHeader,
-    HeaderDecoderSingle(AuthorizationHeader.parse),
+    HeaderCodec.single(AuthorizationHeader.parse),
   );
 
   static const connection = HeaderAccessor<ConnectionHeader>(
     Headers.connectionHeader,
-    HeaderDecoderMulti(ConnectionHeader.parse),
+    HeaderCodec(ConnectionHeader.parse),
   );
 
   static const contentLength = HeaderAccessor<int>(
     Headers.contentLengthHeader,
-    HeaderDecoderSingle(parseInt),
+    HeaderCodec.single(parseInt),
   );
 
   static const expect = HeaderAccessor<ExpectHeader>(
     Headers.expectHeader,
-    HeaderDecoderSingle(ExpectHeader.parse),
+    HeaderCodec.single(ExpectHeader.parse),
   );
 
   static const ifMatch = HeaderAccessor<IfMatchHeader>(
     Headers.ifMatchHeader,
-    HeaderDecoderMulti(IfMatchHeader.parse),
+    HeaderCodec(IfMatchHeader.parse),
   );
 
   static const ifNoneMatch = HeaderAccessor<IfNoneMatchHeader>(
     Headers.ifNoneMatchHeader,
-    HeaderDecoderMulti(IfNoneMatchHeader.parse),
+    HeaderCodec(IfNoneMatchHeader.parse),
   );
 
   static const ifRange = HeaderAccessor<IfRangeHeader>(
     Headers.ifRangeHeader,
-    HeaderDecoderSingle(IfRangeHeader.parse),
+    HeaderCodec.single(IfRangeHeader.parse),
   );
 
   static const maxForwards = HeaderAccessor<int>(
     Headers.maxForwardsHeader,
-    HeaderDecoderSingle(parsePositiveInt),
+    HeaderCodec.single(parsePositiveInt),
   );
 
   static const proxyAuthorization = HeaderAccessor<AuthorizationHeader>(
     Headers.proxyAuthorizationHeader,
-    HeaderDecoderSingle(AuthorizationHeader.parse),
+    HeaderCodec.single(AuthorizationHeader.parse),
   );
 
   static const range = HeaderAccessor<RangeHeader>(
     Headers.rangeHeader,
-    HeaderDecoderSingle(RangeHeader.parse),
+    HeaderCodec.single(RangeHeader.parse),
   );
 
   static const referer = HeaderAccessor<Uri>(
     Headers.refererHeader,
-    HeaderDecoderSingle(parseUri),
+    HeaderCodec.single(parseUri),
   );
 
   static const userAgent = HeaderAccessor<String>(
     Headers.userAgentHeader,
-    HeaderDecoderSingle(parseString),
+    HeaderCodec.single(parseString),
   );
 
   static const te = HeaderAccessor<TEHeader>(
     Headers.teHeader,
-    HeaderDecoderMulti(TEHeader.parse),
+    HeaderCodec(TEHeader.parse),
   );
 
   static const upgrade = HeaderAccessor<UpgradeHeader>(
     Headers.upgradeHeader,
-    HeaderDecoderMulti(UpgradeHeader.parse),
+    HeaderCodec(UpgradeHeader.parse),
   );
 
   /// Response Headers
 
   static const location = HeaderAccessor<Uri>(
     Headers.locationHeader,
-    HeaderDecoderSingle(parseUri),
+    HeaderCodec.single(parseUri),
   );
 
   static const xPoweredBy = HeaderAccessor<String>(
     Headers.xPoweredByHeader,
-    HeaderDecoderSingle(parseString),
+    HeaderCodec.single(parseString),
   );
 
   static const accessControlAllowOrigin =
       HeaderAccessor<AccessControlAllowOriginHeader>(
     Headers.accessControlAllowOriginHeader,
-    HeaderDecoderSingle(AccessControlAllowOriginHeader.parse),
+    HeaderCodec.single(AccessControlAllowOriginHeader.parse),
   );
 
   static const accessControlExposeHeaders =
       HeaderAccessor<AccessControlExposeHeadersHeader>(
     Headers.accessControlExposeHeadersHeader,
-    HeaderDecoderMulti(AccessControlExposeHeadersHeader.parse),
+    HeaderCodec(AccessControlExposeHeadersHeader.parse),
   );
 
   static const accessControlMaxAge = HeaderAccessor<int>(
     Headers.accessControlMaxAgeHeader,
-    HeaderDecoderSingle(parseInt),
+    HeaderCodec.single(parseInt),
   );
 
   static const allow = HeaderAccessor<List<RequestMethod>>(
     Headers.allowHeader,
-    HeaderDecoderMulti(parseMethodList),
+    HeaderCodec(parseMethodList),
   );
 
   static const cacheControl = HeaderAccessor<CacheControlHeader>(
     Headers.cacheControlHeader,
-    HeaderDecoderMulti(CacheControlHeader.parse),
+    HeaderCodec(CacheControlHeader.parse),
   );
 
   static const contentEncoding = HeaderAccessor<ContentEncodingHeader>(
     Headers.contentEncodingHeader,
-    HeaderDecoderMulti(ContentEncodingHeader.parse),
+    HeaderCodec(ContentEncodingHeader.parse),
   );
 
   static const contentLanguage = HeaderAccessor<ContentLanguageHeader>(
     Headers.contentLanguageHeader,
-    HeaderDecoderMulti(ContentLanguageHeader.parse),
+    HeaderCodec(ContentLanguageHeader.parse),
   );
 
   static const contentLocation = HeaderAccessor<Uri>(
     Headers.contentLocationHeader,
-    HeaderDecoderSingle(parseUri),
+    HeaderCodec.single(parseUri),
   );
 
   static const contentRange = HeaderAccessor<ContentRangeHeader>(
     Headers.contentRangeHeader,
-    HeaderDecoderSingle(ContentRangeHeader.parse),
+    HeaderCodec.single(ContentRangeHeader.parse),
   );
 
   static const etag = HeaderAccessor<ETagHeader>(
     Headers.etagHeader,
-    HeaderDecoderSingle(ETagHeader.parse),
+    HeaderCodec.single(ETagHeader.parse),
   );
 
   static const proxyAuthenticate = HeaderAccessor<AuthenticationHeader>(
     Headers.proxyAuthenticateHeader,
-    HeaderDecoderSingle(AuthenticationHeader.parse),
+    HeaderCodec.single(AuthenticationHeader.parse),
   );
 
   static const retryAfter = HeaderAccessor<RetryAfterHeader>(
     Headers.retryAfterHeader,
-    HeaderDecoderSingle(RetryAfterHeader.parse),
+    HeaderCodec.single(RetryAfterHeader.parse),
   );
 
   static const trailer = HeaderAccessor<List<String>>(
     Headers.trailerHeader,
-    HeaderDecoderMulti(parseStringList),
+    HeaderCodec(parseStringList),
   );
 
   static const vary = HeaderAccessor<VaryHeader>(
     Headers.varyHeader,
-    HeaderDecoderMulti(VaryHeader.parse),
+    HeaderCodec(VaryHeader.parse),
   );
 
   static const wwwAuthenticate = HeaderAccessor<AuthenticationHeader>(
     Headers.wwwAuthenticateHeader,
-    HeaderDecoderSingle(AuthenticationHeader.parse),
+    HeaderCodec.single(AuthenticationHeader.parse),
   );
 
   static const contentDisposition = HeaderAccessor<ContentDispositionHeader>(
     Headers.contentDispositionHeader,
-    HeaderDecoderSingle(ContentDispositionHeader.parse),
+    HeaderCodec.single(ContentDispositionHeader.parse),
   );
 
   /// Common Headers (Used in Both Requests and Responses)
 
   static const accept = HeaderAccessor<AcceptHeader>(
     Headers.acceptHeader,
-    HeaderDecoderMulti(AcceptHeader.parse),
+    HeaderCodec(AcceptHeader.parse),
   );
 
   static const acceptRanges = HeaderAccessor<AcceptRangesHeader>(
     Headers.acceptRangesHeader,
-    HeaderDecoderSingle(AcceptRangesHeader.parse),
+    HeaderCodec.single(AcceptRangesHeader.parse),
   );
 
   static const transferEncoding = HeaderAccessor<TransferEncodingHeader>(
     Headers.transferEncodingHeader,
-    HeaderDecoderMulti(TransferEncodingHeader.parse),
+    HeaderCodec(TransferEncodingHeader.parse),
   );
 
   static const cookie = HeaderAccessor<CookieHeader>(
     Headers.cookieHeader,
-    HeaderDecoderSingle(CookieHeader.parse),
+    HeaderCodec.single(CookieHeader.parse),
   );
 
   static const setCookie = HeaderAccessor<SetCookieHeader>(
     Headers.setCookieHeader,
-    HeaderDecoderSingle(SetCookieHeader.parse),
+    HeaderCodec.single(SetCookieHeader.parse),
   );
 
   /// Security and Modern Headers
@@ -337,78 +337,78 @@ class Headers extends HeadersBase {
   static const strictTransportSecurity =
       HeaderAccessor<StrictTransportSecurityHeader>(
     Headers.strictTransportSecurityHeader,
-    HeaderDecoderSingle(StrictTransportSecurityHeader.parse),
+    HeaderCodec.single(StrictTransportSecurityHeader.parse),
   );
 
   static const contentSecurityPolicy =
       HeaderAccessor<ContentSecurityPolicyHeader>(
     Headers.contentSecurityPolicyHeader,
-    HeaderDecoderSingle(ContentSecurityPolicyHeader.parse),
+    HeaderCodec.single(ContentSecurityPolicyHeader.parse),
   );
 
   static const referrerPolicy = HeaderAccessor<ReferrerPolicyHeader>(
     Headers.referrerPolicyHeader,
-    HeaderDecoderSingle(ReferrerPolicyHeader.parse),
+    HeaderCodec.single(ReferrerPolicyHeader.parse),
   );
 
   static const permissionsPolicy = HeaderAccessor<PermissionsPolicyHeader>(
     Headers.permissionsPolicyHeader,
-    HeaderDecoderSingle(PermissionsPolicyHeader.parse),
+    HeaderCodec.single(PermissionsPolicyHeader.parse),
   );
 
   static const accessControlAllowCredentials = HeaderAccessor<bool>(
     Headers.accessControlAllowCredentialsHeader,
-    HeaderDecoderSingle(parsePositiveBool),
+    HeaderCodec.single(parsePositiveBool),
   );
 
   static const accessControlAllowMethods =
       HeaderAccessor<AccessControlAllowMethodsHeader>(
     Headers.accessControlAllowMethodsHeader,
-    HeaderDecoderMulti(AccessControlAllowMethodsHeader.parse),
+    HeaderCodec(AccessControlAllowMethodsHeader.parse),
   );
 
   static const accessControlAllowHeaders =
       HeaderAccessor<AccessControlAllowHeadersHeader>(
     Headers.accessControlAllowHeadersHeader,
-    HeaderDecoderMulti(AccessControlAllowHeadersHeader.parse),
+    HeaderCodec(AccessControlAllowHeadersHeader.parse),
   );
 
   static const clearSiteData = HeaderAccessor<ClearSiteDataHeader>(
     Headers.clearSiteDataHeader,
-    HeaderDecoderMulti(ClearSiteDataHeader.parse),
+    HeaderCodec(ClearSiteDataHeader.parse),
   );
 
   static const secFetchDest = HeaderAccessor<SecFetchDestHeader>(
     Headers.secFetchDestHeader,
-    HeaderDecoderSingle(SecFetchDestHeader.parse),
+    HeaderCodec.single(SecFetchDestHeader.parse),
   );
 
   static const secFetchMode = HeaderAccessor<SecFetchModeHeader>(
     Headers.secFetchModeHeader,
-    HeaderDecoderSingle(SecFetchModeHeader.parse),
+    HeaderCodec.single(SecFetchModeHeader.parse),
   );
 
   static const secFetchSite = HeaderAccessor<SecFetchSiteHeader>(
     Headers.secFetchSiteHeader,
-    HeaderDecoderSingle(SecFetchSiteHeader.parse),
+    HeaderCodec.single(SecFetchSiteHeader.parse),
   );
 
   static const crossOriginResourcePolicy =
       HeaderAccessor<CrossOriginResourcePolicyHeader>(
     Headers.crossOriginResourcePolicyHeader,
-    HeaderDecoderSingle(CrossOriginResourcePolicyHeader.parse),
+    HeaderCodec.single(CrossOriginResourcePolicyHeader.parse),
   );
 
   static const crossOriginEmbedderPolicy =
       HeaderAccessor<CrossOriginEmbedderPolicyHeader>(
     Headers.crossOriginEmbedderPolicyHeader,
-    HeaderDecoderSingle(CrossOriginEmbedderPolicyHeader.parse),
+    HeaderCodec.single(CrossOriginEmbedderPolicyHeader.parse),
   );
 
   static const crossOriginOpenerPolicy =
       HeaderAccessor<CrossOriginOpenerPolicyHeader>(
     Headers.crossOriginOpenerPolicyHeader,
-    HeaderDecoderSingle(CrossOriginOpenerPolicyHeader.parse),
+    HeaderCodec.single(CrossOriginOpenerPolicyHeader.parse),
   );
 
   static const _common = {

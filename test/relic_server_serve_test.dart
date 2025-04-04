@@ -128,7 +128,7 @@ void main() {
   test('custom request headers are received by the handler', () async {
     const multi = HeaderAccessor<List<String>>(
       'multi-header',
-      HeaderDecoderMulti(parseStringList),
+      HeaderCodec(parseStringList),
     );
     await _scheduleServer((request) {
       expect(
