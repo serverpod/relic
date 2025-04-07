@@ -28,7 +28,8 @@ final class HeaderAccessor<T extends Object> {
   /// avoiding repeated parsing of the same raw header value.
   ///
   /// This is used internally by [getValueFrom] to implement the caching mechanism.
-  Expando get _cache => _caches.putIfAbsent(this, Expando.new);
+  Expando<T> get _cache =>
+      _caches.putIfAbsent(this, Expando<T>.new) as Expando<T>;
 
   /// The [key] is the name of the HTTP header.
   final String key;
@@ -66,14 +67,14 @@ final class HeaderAccessor<T extends Object> {
     T? Function(Exception)? orElse,
   }) {
     try {
-      var result = _cache[external] as T?;
-      if (result != null) return result; // found in cache
-
       final raw = external[key];
       if (raw == null) return null; // nothing to decode
 
+      var result = _cache[raw];
+      if (result != null) return result; // found in cache
+
       result = decode(raw);
-      _cache[external] = result;
+      _cache[raw] = result;
       return result;
     } on Exception catch (e) {
       if (orElse == null) _throwException(e, key: key);
@@ -93,8 +94,10 @@ final class HeaderAccessor<T extends Object> {
       Header((accessor: this, headers: external));
 
   /// [null] implies removing the header
-  void setValueOn(MutableHeaders external, T? value) =>
-      _setValue(external, key, value);
+  void setValueOn(MutableHeaders external, T? value) {
+    final raw = _setValue(external, key, value);
+    if (raw != null) _cache[raw] = value; // prime cache immediately
+  }
 
   /// Removes the header from the given [external] headers.
   void removeFrom(MutableHeaders external) => external.remove(key);
@@ -186,16 +189,16 @@ Never _throwException(
   );
 }
 
-void _setValue<T>(MutableHeaders headers, String key, T value) {
+Iterable<String>? _setValue<T>(MutableHeaders headers, String key, T value) {
   if (value == null) {
     headers.remove(key);
-  } else {
-    headers[key] = switch (value) {
-      String s => [s],
-      DateTime d => [formatHttpDate(d)],
-      TypedHeader t => [t.toHeaderString()],
-      Iterable<String> i => i,
-      Object o => [o.toString()],
-    };
+    return null;
   }
+  return headers[key] = switch (value) {
+    String s => [s],
+    DateTime d => [formatHttpDate(d)],
+    TypedHeader t => [t.toHeaderString()],
+    Iterable<String> i => i,
+    Object o => [o.toString()],
+  };
 }
