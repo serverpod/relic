@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import '../handler/handler.dart';
-import '../hijack/exception/hijack_exception.dart';
 import '../message/request.dart';
 import '../message/response.dart';
 

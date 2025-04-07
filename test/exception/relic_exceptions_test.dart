@@ -1,10 +1,7 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:http/http.dart' as http;
 import 'package:relic/relic.dart';
-import 'package:relic/src/method/request_method.dart';
-import 'package:relic/src/relic_server_serve.dart' as relic_server;
 import 'package:test/test.dart';
 
 void main() {
@@ -14,7 +11,7 @@ void main() {
       try {
         await server.close().timeout(const Duration(seconds: 5));
       } catch (e) {
-        await server.close(force: true);
+        await server.close();
       } finally {
         _server = null;
       }
@@ -68,20 +65,17 @@ void main() {
   });
 }
 
-int get _serverPort => _server!.port;
+int get _serverPort => _server!.adaptor.port;
 
-HttpServer? _server;
+RelicServer? _server;
 
-Future<void> _scheduleServer(
-  final Handler handler, {
-  final SecurityContext? securityContext,
-}) async {
+Future<void> _scheduleServer(final Handler handler) async {
   assert(_server == null);
-  _server = await relic_server.serve(
+  _server = await serve(
     handler,
-    InternetAddress.loopbackIPv4,
+    Address.loopback(),
     0,
-    securityContext: securityContext,
+    //securityContext: securityContext,
   );
 }
 

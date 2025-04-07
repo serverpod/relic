@@ -4,12 +4,30 @@ import 'package:stream_channel/stream_channel.dart';
 
 import '../body/body.dart';
 import '../headers/headers.dart';
-import '../hijack/exception/hijack_exception.dart';
 import '../method/request_method.dart';
 import '../util/util.dart';
 import 'message.dart';
 
 part '../hijack/hijack.dart';
+
+class ConnectionInfo {}
+
+/// An exception used to indicate that a request has been hijacked.
+///
+/// This shouldn't be captured by any code other than the relic server adapter that
+/// created the hijackable request. Middleware that captures exceptions should
+/// make sure to pass on HijackExceptions.
+///
+/// See also [Request.hijack].
+class HijackException implements Exception {
+  const HijackException();
+
+  @override
+  String toString() =>
+      "A relic server request's underlying data stream was hijacked.\n"
+      'This exception is used for control flow and should only be handled by a '
+      'relic server adapter.';
+}
 
 /// An HTTP request to be processed by a Relic Server application.
 class Request extends Message {
@@ -51,8 +69,8 @@ class Request extends Message {
   /// The original [Uri] for the request.
   final Uri requestedUri;
 
-  /// The [HttpConnectionInfo] info associated with this request, if available.
-  final io.HttpConnectionInfo? connectionInfo;
+  /// The [ConnectionInfo] info associated with this request, if available.
+  final ConnectionInfo? connectionInfo;
 
   /// The callback wrapper for hijacking this request.
   ///
@@ -121,7 +139,7 @@ class Request extends Message {
   Request(
     final RequestMethod method,
     final Uri requestedUri, {
-    final io.HttpConnectionInfo? connectionInfo,
+    final ConnectionInfo? connectionInfo,
     final String? protocolVersion,
     final Headers? headers,
     final String? handlerPath,
@@ -141,31 +159,6 @@ class Request extends Message {
           context: context,
           onHijack: onHijack == null ? null : _OnHijack(onHijack),
         );
-
-  /// Creates a new [Request] from an [io.HttpRequest].
-  ///
-  /// [strictHeaders] determines whether to strictly enforce header parsing
-  /// rules. [poweredByHeader] sets the value of the `X-Powered-By` header.
-  factory Request.fromHttpRequest(
-    final io.HttpRequest request, {
-    final bool strictHeaders = false,
-    final String? poweredByHeader,
-  }) {
-    return Request(
-      RequestMethod.parse(request.method),
-      request.requestedUri,
-      connectionInfo: request.connectionInfo,
-      protocolVersion: request.protocolVersion,
-      headers: Headers.fromHttpRequest(
-        request,
-        strict: strictHeaders,
-        xPoweredBy: poweredByHeader,
-      ),
-      body: Body.fromHttpRequest(request),
-      onHijack: (final callback) => onHijack(request.response, callback),
-      context: {},
-    );
-  }
 
   /// This constructor has the same signature as [Request.new] except that
   /// accepts [onHijack] as [_OnHijack].
@@ -267,8 +260,7 @@ class Request extends Message {
     final String? path,
     Body? body,
   }) {
-    // final headersAll = updateHeaders(this.headersAll, headers);
-    final newContext = updateMap<String, Object>(this.context, context);
+    final newContext = updateMap(this.context, context);
 
     body ??= this.body;
 

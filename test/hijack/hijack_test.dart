@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:relic/relic.dart';
-import 'package:relic/src/method/request_method.dart';
 import 'package:stream_channel/stream_channel.dart';
 import 'package:test/test.dart';
 

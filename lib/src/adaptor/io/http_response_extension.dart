@@ -1,7 +1,7 @@
 import 'dart:io' as io;
 
-import '../../relic.dart';
-import '../headers/standard_headers_extensions.dart';
+import '../../../relic.dart';
+import '../../headers/standard_headers_extensions.dart';
 
 /// Extension for [io.HttpResponse] to apply headers and body.
 extension HttpResponseExtension on io.HttpResponse {
@@ -74,7 +74,7 @@ extension HttpResponseExtension on io.HttpResponse {
 }
 
 /// Extension for [MimeType] to check if it is multipart/byteranges.
-extension _BodyExtension on Body {
+extension on Body {
   /// Check if the body is multipart/byteranges.
   bool get isMultipartByteranges {
     const multipartByteranges = MimeType.multipartByteranges;
@@ -83,7 +83,7 @@ extension _BodyExtension on Body {
   }
 }
 
-extension _TransferEncodingHeaderExtension on TransferEncodingHeader {
+extension on TransferEncodingHeader {
   /// Checks if the Transfer-Encoding contains the specified encoding.
   bool _exists(final TransferEncoding encoding) {
     return encodings.any((final e) => e.name == encoding.name);
@@ -94,4 +94,27 @@ extension _TransferEncodingHeaderExtension on TransferEncodingHeader {
 
   /// Checks if the Transfer-Encoding contains `identity`.
   bool get isIdentity => _exists(TransferEncoding.identity);
+}
+
+// TODO(nielsenko): This is currently dead-code, but perhaps useful.
+/// Extension to convert a [ContentType] to a [MimeType].
+extension ContentTypeExtension on io.ContentType {
+  /// Converts a [ContentType] to a [MimeType].
+  /// We are calling this method 'toMimeType' to avoid conflict with the 'mimeType' property.
+  MimeType get toMimeType => MimeType(primaryType, subType);
+}
+
+extension on Body {
+  /// Returns the content type of the body as a [ContentType].
+  ///
+  /// This is a convenience method that combines [mimeType] and [encoding].
+  io.ContentType? getContentType() {
+    final mBodyType = bodyType;
+    if (mBodyType == null) return null;
+    return io.ContentType(
+      mBodyType.mimeType.primaryType,
+      mBodyType.mimeType.subType,
+      charset: mBodyType.encoding?.name,
+    );
+  }
 }

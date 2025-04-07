@@ -2,8 +2,7 @@ import 'dart:async';
 
 import 'package:path/path.dart' as p;
 import 'package:relic/relic.dart';
-import 'package:relic/src/method/request_method.dart';
-import 'package:relic/src/static/extension/datetime_extension.dart';
+import 'package:relic/src/io/static/extension/datetime_extension.dart';
 import 'package:test/test.dart';
 
 final p.Context _ctx = p.url;

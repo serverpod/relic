@@ -1,10 +1,8 @@
 import 'dart:collection';
-import 'dart:io' as io; // TODO: Get rid of this dependency
 
 import 'package:http_parser/http_parser.dart';
 import '../../relic.dart';
 
-import '../method/request_method.dart';
 import 'codecs/common_types_codecs.dart';
 
 part 'mutable_headers.dart';
@@ -50,18 +48,6 @@ class Headers extends HeadersBase {
     final mutable = MutableHeaders._from(this);
     update(mutable);
     return mutable._freeze();
-  }
-
-  // TODO: Move this functionality out of Headers so that we can avoid the dart:io dependency
-  factory Headers.fromHttpRequest(
-    final io.HttpRequest request, {
-    final bool strict = false,
-    required final String? xPoweredBy,
-    final DateTime? date,
-  }) {
-    return Headers.build((final mh) {
-      request.headers.forEach((final k, final v) => mh[k] = v);
-    });
   }
 
   /// Date-related headers

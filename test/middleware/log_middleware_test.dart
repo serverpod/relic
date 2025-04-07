@@ -1,6 +1,5 @@
 import 'package:relic/relic.dart';
 import 'package:relic/src/logger/logger.dart';
-import 'package:relic/src/method/request_method.dart';
 import 'package:test/test.dart';
 
 import '../util/test_util.dart';

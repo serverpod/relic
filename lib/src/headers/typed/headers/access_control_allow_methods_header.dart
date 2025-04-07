@@ -1,5 +1,4 @@
 import '../../../../relic.dart';
-import '../../../method/request_method.dart';
 import '../../extension/string_list_extensions.dart';
 
 /// A class representing the HTTP Access-Control-Allow-Methods header.

@@ -7,14 +7,11 @@ void main() async {
 
   final server = await serve(
     handler,
-    InternetAddress.loopbackIPv4,
+    Address.loopback(),
     8080,
   );
 
-  // Enable content compression
-  server.autoCompress = true;
-
-  print('Serving at http://${server.address.host}:${server.port}');
+  print('Serving at http://${server.adaptor.address}:${server.adaptor.port}');
 }
 
 Response _echoRequest(final Request request) {

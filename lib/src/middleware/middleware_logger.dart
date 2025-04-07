@@ -1,7 +1,7 @@
 import 'dart:async';
 
-import '../hijack/exception/hijack_exception.dart';
 import '../logger/logger.dart';
+import '../message/request.dart';
 import '../method/request_method.dart';
 import 'middleware.dart';
 

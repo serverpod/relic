@@ -1,7 +1,6 @@
 import 'package:http_parser/http_parser.dart';
 
 import '../../../relic.dart';
-import '../../method/request_method.dart';
 import '../extension/string_list_extensions.dart';
 
 /// Parses a URI from the given [value] and returns it as a `Uri`.

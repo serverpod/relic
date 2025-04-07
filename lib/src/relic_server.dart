@@ -1,23 +1,25 @@
 import 'dart:async';
-import 'dart:io';
 
+import 'adaptor/address_type.dart';
+import 'adaptor/security_options.dart';
+import 'adaptor/server_adaptor.dart';
+import 'adaptor/server_adaptor_factory.dart';
 import 'body/body.dart';
 import 'handler/handler.dart';
 import 'headers/exception/header_exception.dart';
 import 'headers/standard_headers_extensions.dart';
-import 'hijack/exception/hijack_exception.dart';
 import 'logger/logger.dart';
 import 'message/request.dart';
 import 'message/response.dart';
 import 'util/util.dart';
 
-/// A [Server] backed by a `dart:io` [HttpServer].
+/// A server that uses a [ServerAdaptor] to handle HTTP requests.
 class RelicServer {
   /// The default powered by header to use for responses.
   static const String defaultPoweredByHeader = 'Relic';
 
-  /// The underlying [HttpServer].
-  final HttpServer server;
+  /// The underlying server adaptor.
+  final ServerAdaptor adaptor;
 
   /// Whether to enforce strict header parsing.
   final bool strictHeaders;
@@ -25,69 +27,64 @@ class RelicServer {
   /// Whether [mountAndStart] has been called.
   Handler? _handler;
 
+  StreamSubscription<RequestContext>? _subscription;
+
   /// The powered by header to use for responses.
   final String poweredByHeader;
 
   /// Creates a server with the given parameters.
   static Future<RelicServer> createServer(
-    final InternetAddress address,
+    final Address address,
     final int port, {
-    final SecurityContext? securityContext,
+    final SecurityOptions? security,
     int? backlog,
     final bool shared = false,
     final bool strictHeaders = true,
     final String? poweredByHeader,
   }) async {
     backlog ??= 0;
-    final server = securityContext == null
-        ? await HttpServer.bind(
-            address.address,
-            port,
-            backlog: backlog,
-            shared: shared,
-          )
-        : await HttpServer.bindSecure(
-            address.address,
-            port,
-            securityContext,
-            backlog: backlog,
-            shared: shared,
-          );
+    final adaptor = await ServerAdaptorFactory.create(
+      address: address,
+      port: port,
+      security: security,
+      backlog: backlog,
+      shared: shared,
+    );
 
     return RelicServer._(
-      server,
+      adaptor,
       strictHeaders: strictHeaders,
       poweredByHeader: poweredByHeader ?? defaultPoweredByHeader,
     );
   }
 
-  /// Mounts a handler to the server. Only one handler can be mounted at a time,
-  /// and starts listening for requests.
-  void mountAndStart(
-    final Handler handler,
-  ) {
+  /// Mounts a handler to the server and starts listening for requests.
+  ///
+  /// Only one handler can be mounted at a time.
+  Future<void> mountAndStart(final Handler handler) async {
     if (_handler != null) {
       throw StateError(
         'Relic server already has a handler mounted.',
       );
     }
-    _handler = handler;
-    _startListening();
+    _handler = _wrapHandlerWithMiddleware(handler);
+    await _startListening();
   }
 
-  Future<void> close() => server.close();
+  /// Close the server
+  Future<void> close() async => await _subscription?.cancel();
 
   /// Creates a server with the given parameters.
   RelicServer._(
-    this.server, {
+    this.adaptor, {
     required this.strictHeaders,
     required this.poweredByHeader,
   });
 
   /// Starts listening for requests.
-  void _startListening() {
+  Future<void> _startListening() async {
     catchTopLevelErrors(() {
-      server.listen(_handleRequest);
+      adaptor.requests.listen(_handleRequest);
     }, (final error, final stackTrace) {
       logMessage(
         'Asynchronous error\n$error',
@@ -97,102 +94,31 @@ class RelicServer {
     });
   }
 
-  /// Handles incoming HTTP requests, passing them to the handler.
-  Future<void> _handleRequest(final HttpRequest request) async {
-    final handler = _handler;
-    if (handler == null) {
-      throw StateError(
-        'No handler mounted. Ensure the server has a handler before handling requests.',
-      );
-    }
-
-    // Parsing and converting the HTTP request to a relic request
-    Request relicRequest;
+  Future<void> _handleRequest(final RequestContext requestContext) async {
+    // Wrap the handler with our middleware
+    late Request request;
     try {
-      relicRequest = Request.fromHttpRequest(
-        request,
-        strictHeaders: strictHeaders,
-        poweredByHeader: poweredByHeader,
-      );
-    } on HeaderException catch (error, stackTrace) {
-      // If the request headers are invalid, respond with a 400 Bad Request status.
-      logMessage(
-        'Error parsing request headers.\n$error',
-        stackTrace: stackTrace,
-        type: LoggerType.error,
-      );
-      // Write the response to the HTTP response.
-      return Response.badRequest(
-        body: Body.fromString(error.httpResponseBody),
-      ).writeHttpResponse(request.response);
-    } catch (error, stackTrace) {
-      // Catch any other errors.
-      logMessage(
-        'Error parsing request.\n$error',
-        stackTrace: stackTrace,
-        type: LoggerType.error,
-      );
-
-      // If the error is an [ArgumentError] with the name 'method' or 'requestedUri',
-      // respond with a 400 Bad Request status.
-      if (error is ArgumentError &&
-          (error.name == 'method' || error.name == 'requestedUri')) {
-        return Response.badRequest().writeHttpResponse(request.response);
-      }
-
-      // Write the response to the HTTP response.
-      return Response.internalServerError().writeHttpResponse(
-        request.response,
-      );
+      request = requestContext.request;
+    } catch (_) {
+      await requestContext.respond(Response.badRequest());
+      return;
     }
 
-    // Handling the request with the handler
     Response? response;
     try {
-      response = await handler(relicRequest);
-
-      // If the response doesn't have a powered-by or date header, add the default ones
-      response = response.copyWith(
-        headers: response.headers.transform((final mh) {
-          mh.xPoweredBy ??= poweredByHeader;
-          mh.date ??= DateTime.now();
-        }),
-      );
-    } on HeaderException catch (error, stackTrace) {
-      // If the request headers are invalid, respond with a 400 Bad Request status.
-      _logError(
-        relicRequest,
-        'Error parsing request headers.\n$error',
-        stackTrace,
-      );
-      return Response.badRequest(
-        body: Body.fromString(error.httpResponseBody),
-      ).writeHttpResponse(request.response);
-    } on HijackException catch (error, stackTrace) {
+      response = await _handler!(request);
+    } on HijackException {
       // If the request is already hijacked, meaning it's being handled by
       // another handler, like a websocket, then don't respond with an error.
-      if (relicRequest.isHijacked) return;
+      if (request.isHijacked) return;
+    } catch (_) {} // squash all an report internal error
 
-      _logError(
-        relicRequest,
-        "Caught HijackException, but the request wasn't hijacked.",
-        stackTrace,
-      );
-      return Response.internalServerError().writeHttpResponse(
-        request.response,
-      );
-    } catch (error, stackTrace) {
-      _logError(
-        relicRequest,
-        'Error thrown by handler.\n$error',
-        stackTrace,
-      );
-      return Response.internalServerError().writeHttpResponse(
-        request.response,
-      );
+    if (response == null) {
+      await requestContext.respond(Response.internalServerError());
+      return;
     }
 
-    if (relicRequest.isHijacked) {
+    if (request.isHijacked) {
       throw StateError(
         'The request has been hijacked by another handler (e.g., a WebSocket) '
         'but the HijackException was never thrown. If a request is hijacked '
@@ -200,24 +126,46 @@ class RelicServer {
       );
     }
 
-    // When writing the response to the HTTP response, if the response headers
-    // are invalid, respond with a 400 Bad Request status.
-    try {
-      return await response.writeHttpResponse(request.response);
-    } on HeaderException catch (error) {
-      return Response.badRequest(
-        body: Body.fromString(error.toString()),
-      ).writeHttpResponse(request.response);
-    } catch (error, stackTrace) {
-      _logError(
-        relicRequest,
-        'Error thrown by handler.\n$error',
-        stackTrace,
-      );
-      return Response.internalServerError().writeHttpResponse(
-        request.response,
-      );
-    }
+    await requestContext.respond(response);
+  }
+
+  /// Wraps a handler with middleware for error handling, header normalization, etc.
+  Handler _wrapHandlerWithMiddleware(final Handler handler) {
+    return (final request) async {
+      Response? response;
+      try {
+        response = await handler(request);
+
+        // If the response doesn't have a powered-by or date header, add the default ones
+        response = response.copyWith(
+          headers: response.headers.transform((final mh) {
+            mh.xPoweredBy ??= poweredByHeader;
+            mh.date ??= DateTime.now();
+          }),
+        );
+
+        return response;
+      } on HijackException {
+        rethrow;
+      } on HeaderException catch (error, stackTrace) {
+        // If the request headers are invalid, respond with a 400 Bad Request status.
+        _logError(
+          request,
+          'Error parsing request headers.\n$error',
+          stackTrace,
+        );
+        return Response.badRequest(
+          body: Body.fromString(error.httpResponseBody),
+        );
+      } catch (error, stackTrace) {
+        _logError(
+          request,
+          'Error thrown by handler.\n$error',
+          stackTrace,
+        );
+        return Response.internalServerError();
+      }
+    };
   }
 }
 

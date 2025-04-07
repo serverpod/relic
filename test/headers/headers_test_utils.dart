@@ -14,6 +14,7 @@ class BadRequestException implements Exception {
   );
 }
 
+/// Extension methods for RelicServer
 extension RelicServerTestEx on RelicServer {
   static final Expando<Uri> _serverUrls = Expando();
 
@@ -27,22 +28,22 @@ extension RelicServerTestEx on RelicServer {
   /// actual request arrives, but for testing purposes we can infer a URL based
   /// on the server's address.
   Uri _inferUrl() {
-    if (server.address.isLoopback) {
-      return Uri(scheme: 'http', host: 'localhost', port: server.port);
+    if (adaptor.address.isLoopback) {
+      return Uri(scheme: 'http', host: 'localhost', port: adaptor.port);
     }
 
-    if (server.address.type == InternetAddressType.IPv6) {
+    if (adaptor.address.isIpV6) {
       return Uri(
         scheme: 'http',
-        host: '[${server.address.address}]',
-        port: server.port,
+        host: '[${adaptor.address.address}]',
+        port: adaptor.port,
       );
     }
 
     return Uri(
       scheme: 'http',
-      host: server.address.address,
-      port: server.port,
+      host: adaptor.address.address,
+      port: adaptor.port,
     );
   }
 }
@@ -55,13 +56,13 @@ Future<RelicServer> createServer({
 }) async {
   try {
     return await RelicServer.createServer(
-      InternetAddress.loopbackIPv6,
+      Address.loopback(isIpV6: true),
       0,
       strictHeaders: strictHeaders,
     );
   } on SocketException catch (_) {
     return await RelicServer.createServer(
-      InternetAddress.loopbackIPv4,
+      Address.loopback(),
       0,
       strictHeaders: strictHeaders,
     );
@@ -77,7 +78,7 @@ Future<Headers> getServerRequestHeaders({
 }) async {
   var requestHeaders = Headers.empty();
 
-  server.mountAndStart(
+  await server.mountAndStart(
     (final Request request) {
       requestHeaders = request.headers;
       touchHeaders(requestHeaders);

@@ -1,5 +1,3 @@
-import 'dart:io';
-
 /// A mime type.
 class MimeType {
   /// Text mime types.
@@ -75,11 +73,4 @@ class MimeType {
 
   @override
   String toString() => 'MimeType(primaryType: $primaryType, subType: $subType)';
-}
-
-/// Extension to convert a [ContentType] to a [MimeType].
-extension ContentTypeExtension on ContentType {
-  /// Converts a [ContentType] to a [MimeType].
-  /// We are calling this method 'toMimeType' to avoid conflict with the 'mimeType' property.
-  MimeType get toMimeType => MimeType(primaryType, subType);
 }

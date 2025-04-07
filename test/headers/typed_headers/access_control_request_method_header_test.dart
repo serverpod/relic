@@ -1,6 +1,5 @@
 import 'package:relic/relic.dart';
 import 'package:relic/src/headers/standard_headers_extensions.dart';
-import 'package:relic/src/method/request_method.dart';
 import 'package:test/test.dart';
 
 import '../docs/strict_validation_docs.dart';
