@@ -1,3 +1,4 @@
+import "package:relic/relic.dart";
 import 'package:relic/src/headers/extension/string_list_extensions.dart';
 
 /// A class representing the HTTP Access-Control-Expose-Headers header.
@@ -5,6 +6,8 @@ import 'package:relic/src/headers/extension/string_list_extensions.dart';
 /// This header specifies which headers can be exposed as part of the response
 /// by listing them explicitly or using a wildcard (`*`) to expose all headers.
 final class AccessControlExposeHeadersHeader {
+  static const codec =
+      HeaderCodec(AccessControlExposeHeadersHeader.parse, encode);
   static List<String> encode(AccessControlExposeHeadersHeader value) =>
       [value.toHeaderString()];
 

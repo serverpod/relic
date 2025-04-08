@@ -1,3 +1,4 @@
+import "package:relic/relic.dart";
 import 'package:relic/src/headers/extension/string_list_extensions.dart';
 
 /// A class representing the HTTP Content-Security-Policy (CSP) header.
@@ -5,6 +6,8 @@ import 'package:relic/src/headers/extension/string_list_extensions.dart';
 /// This class manages CSP directives, providing functionality to parse, add,
 /// remove, and generate CSP header values.
 final class ContentSecurityPolicyHeader {
+  static const codec =
+      HeaderCodec.single(ContentSecurityPolicyHeader.parse, encode);
   static List<String> encode(ContentSecurityPolicyHeader value) =>
       [value.toHeaderString()];
 

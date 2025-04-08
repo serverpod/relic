@@ -1,7 +1,10 @@
+import "package:relic/relic.dart";
+
 /// A class representing the HTTP Sec-Fetch-Mode header.
 ///
 /// This header indicates the mode of the request.
 final class SecFetchModeHeader {
+  static const codec = HeaderCodec.single(SecFetchModeHeader.parse, encode);
   static List<String> encode(SecFetchModeHeader value) =>
       [value.toHeaderString()];
 

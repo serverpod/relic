@@ -1,3 +1,4 @@
+
 /// Validates the cookie name and returns a string representation of the cookie name.
 String validateCookieName(String name) {
   // Allow empty names

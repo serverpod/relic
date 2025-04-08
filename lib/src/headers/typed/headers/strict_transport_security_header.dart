@@ -1,8 +1,11 @@
+import "package:relic/relic.dart";
 import 'package:relic/src/headers/extension/string_list_extensions.dart';
 
 /// Represents the HTTP Strict-Transport-Security (HSTS) header for managing
 /// HSTS settings.
 final class StrictTransportSecurityHeader {
+  static const codec =
+      HeaderCodec.single(StrictTransportSecurityHeader.parse, encode);
   static List<String> encode(StrictTransportSecurityHeader value) =>
       [value.toHeaderString()];
 

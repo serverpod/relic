@@ -1,5 +1,5 @@
+import "package:relic/relic.dart";
 import 'package:relic/src/headers/extension/string_list_extensions.dart';
-import 'package:relic/src/headers/typed/typed_headers.dart';
 
 /// Base class for ETag-based conditional headers (If-Match and If-None-Match).
 abstract class ETagConditionHeader {
@@ -26,6 +26,7 @@ abstract class ETagConditionHeader {
 
 /// A class representing the HTTP If-Match header.
 final class IfMatchHeader extends ETagConditionHeader {
+  static const codec = HeaderCodec(IfMatchHeader.parse, encode);
   static List<String> encode(IfMatchHeader value) => [value.toHeaderString()];
 
   /// Creates an [IfMatchHeader] with specific ETags.
@@ -65,6 +66,7 @@ final class IfMatchHeader extends ETagConditionHeader {
 
 /// A class representing the HTTP If-None-Match header.
 final class IfNoneMatchHeader extends ETagConditionHeader {
+  static const codec = HeaderCodec(IfNoneMatchHeader.parse, encode);
   static List<String> encode(IfNoneMatchHeader value) =>
       [value.toHeaderString()];
 

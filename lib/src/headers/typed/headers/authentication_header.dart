@@ -1,5 +1,8 @@
+import "package:relic/relic.dart";
+
 /// A class representing the HTTP Authentication header.
 final class AuthenticationHeader {
+  static const codec = HeaderCodec.single(AuthenticationHeader.parse, encode);
   static List<String> encode(AuthenticationHeader value) =>
       [value.toHeaderString()];
 

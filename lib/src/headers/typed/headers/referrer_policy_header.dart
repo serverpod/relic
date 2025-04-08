@@ -1,8 +1,11 @@
+import "package:relic/relic.dart";
+
 /// A class representing the HTTP Referrer-Policy header.
 ///
 /// This class manages the referrer policy, providing functionality to parse
 /// and generate referrer policy header values.
 final class ReferrerPolicyHeader {
+  static const codec = HeaderCodec.single(ReferrerPolicyHeader.parse, encode);
   static List<String> encode(ReferrerPolicyHeader value) =>
       [value.toHeaderString()];
 

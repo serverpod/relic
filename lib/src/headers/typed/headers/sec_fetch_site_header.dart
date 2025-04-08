@@ -1,8 +1,11 @@
+import "package:relic/relic.dart";
+
 /// A class representing the HTTP Sec-Fetch-Site header.
 ///
 /// This header indicates the relationship between the origin of the request
 /// initiator and the origin of the requested resource.
 final class SecFetchSiteHeader {
+  static const codec = HeaderCodec.single(SecFetchSiteHeader.parse, encode);
   static List<String> encode(SecFetchSiteHeader value) =>
       [value.toHeaderString()];
 

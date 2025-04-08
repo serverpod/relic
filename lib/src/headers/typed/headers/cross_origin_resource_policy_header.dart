@@ -1,7 +1,11 @@
+import "package:relic/relic.dart";
+
 /// A class representing the HTTP Cross-Origin-Resource-Policy header.
 ///
 /// This header specifies the policy for sharing resources across origins.
 final class CrossOriginResourcePolicyHeader {
+  static const codec =
+      HeaderCodec.single(CrossOriginResourcePolicyHeader.parse, encode);
   static List<String> encode(CrossOriginResourcePolicyHeader value) =>
       [value.toHeaderString()];
 

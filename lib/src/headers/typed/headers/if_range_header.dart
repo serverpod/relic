@@ -1,10 +1,11 @@
+import "package:relic/relic.dart";
 import 'package:http_parser/http_parser.dart';
-import 'package:relic/src/headers/typed/typed_headers.dart';
 
 /// A class representing the HTTP `If-Range` header.
 ///
 /// The `If-Range` header can contain either an HTTP date or an ETag.
 final class IfRangeHeader {
+  static const codec = HeaderCodec.single(IfRangeHeader.parse, encode);
   static List<String> encode(IfRangeHeader value) => [value.toHeaderString()];
 
   /// The HTTP date if the `If-Range` header contains a date.

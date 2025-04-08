@@ -1,8 +1,12 @@
+import "package:relic/relic.dart";
+
 /// A class representing the HTTP Access-Control-Allow-Origin header.
 ///
 /// This header specifies which origins are allowed to access the resource.
 /// It can be a specific origin or a wildcard (`*`) to allow any origin.
 final class AccessControlAllowOriginHeader {
+  static const codec =
+      HeaderCodec.single(AccessControlAllowOriginHeader.parse, encode);
   static List<String> encode(AccessControlAllowOriginHeader value) =>
       [value.toHeaderString()];
 

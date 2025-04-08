@@ -1,3 +1,4 @@
+import "package:relic/relic.dart";
 import 'package:relic/src/headers/extension/string_list_extensions.dart';
 import 'package:relic/src/headers/typed/headers/util/cookie_util.dart';
 import 'package:collection/collection.dart';
@@ -6,6 +7,7 @@ import 'package:collection/collection.dart';
 ///
 /// This class manages the parsing and representation of cookies.
 final class CookieHeader {
+  static const codec = HeaderCodec.single(CookieHeader.parse, encode);
   static List<String> encode(CookieHeader value) => [value.toHeaderString()];
 
   /// The list of cookies.

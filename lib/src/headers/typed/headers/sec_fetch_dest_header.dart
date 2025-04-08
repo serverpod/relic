@@ -1,7 +1,10 @@
+import "package:relic/relic.dart";
+
 /// A class representing the HTTP Sec-Fetch-Dest header.
 ///
 /// This header indicates the destination of the request.
 final class SecFetchDestHeader {
+  static const codec = HeaderCodec.single(SecFetchDestHeader.parse, encode);
   static List<String> encode(SecFetchDestHeader value) =>
       [value.toHeaderString()];
 

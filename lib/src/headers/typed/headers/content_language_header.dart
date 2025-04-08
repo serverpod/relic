@@ -1,9 +1,11 @@
+import "package:relic/relic.dart";
 import 'package:relic/src/headers/extension/string_list_extensions.dart';
 
 /// A class representing the HTTP Content-Language header.
 ///
 /// This class manages the language codes specified in the Content-Language header.
 final class ContentLanguageHeader {
+  static const codec = HeaderCodec(ContentLanguageHeader.parse, encode);
   static List<String> encode(ContentLanguageHeader value) =>
       [value.toHeaderString()];
 

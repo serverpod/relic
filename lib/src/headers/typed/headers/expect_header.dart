@@ -1,8 +1,11 @@
+import "package:relic/relic.dart";
+
 /// A class representing the HTTP Expect header.
 ///
 /// This class manages the directive for the Expect header, such as `100-continue`.
 /// It provides functionality to parse and generate Expect header values.
 final class ExpectHeader {
+  static const codec = HeaderCodec.single(ExpectHeader.parse, encode);
   static List<String> encode(ExpectHeader value) => [value.toHeaderString()];
 
   /// The string representation of the expectation directive.

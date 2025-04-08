@@ -1,3 +1,4 @@
+import "package:relic/relic.dart";
 import 'package:relic/src/headers/extension/string_list_extensions.dart';
 
 /// A class representing the HTTP Content-Encoding header.
@@ -6,6 +7,7 @@ import 'package:relic/src/headers/extension/string_list_extensions.dart';
 /// `br`, and `identity`. It provides functionality to parse and generate
 /// content encoding header values.
 final class ContentEncodingHeader {
+  static const codec = HeaderCodec(ContentEncodingHeader.parse, encode);
   static List<String> encode(ContentEncodingHeader value) =>
       [value.toHeaderString()];
 

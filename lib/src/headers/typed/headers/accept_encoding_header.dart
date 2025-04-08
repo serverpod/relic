@@ -1,9 +1,11 @@
+import "package:relic/relic.dart";
 import 'package:relic/src/headers/extension/string_list_extensions.dart';
 
 /// A class representing the HTTP Accept-Encoding header.
 ///
 /// This header specifies the content encoding that the client can understand.
 final class AcceptEncodingHeader {
+  static const codec = HeaderCodec(AcceptEncodingHeader.parse, encode);
   static List<String> encode(AcceptEncodingHeader value) =>
       [value.toHeaderString()];
 

@@ -1,3 +1,4 @@
+import "package:relic/relic.dart";
 import 'package:relic/src/headers/extension/string_list_extensions.dart';
 
 /// A class representing the HTTP Cache-Control header.
@@ -6,6 +7,7 @@ import 'package:relic/src/headers/extension/string_list_extensions.dart';
 /// `must-revalidate`, etc. It supports parsing header values and generating
 /// the appropriate header string.
 final class CacheControlHeader {
+  static const codec = HeaderCodec(CacheControlHeader.parse, encode);
   static List<String> encode(CacheControlHeader value) =>
       [value.toHeaderString()];
   // Cache-Control directive constants

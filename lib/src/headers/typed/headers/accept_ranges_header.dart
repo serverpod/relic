@@ -1,7 +1,10 @@
+import "package:relic/relic.dart";
+
 /// A class representing the HTTP Accept-Ranges header.
 ///
 /// This class manages the range units that the server supports.
 final class AcceptRangesHeader {
+  static const codec = HeaderCodec.single(AcceptRangesHeader.parse, encode);
   static List<String> encode(AcceptRangesHeader value) =>
       [value.toHeaderString()];
 

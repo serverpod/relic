@@ -1,3 +1,4 @@
+import "package:relic/relic.dart";
 import 'package:relic/src/headers/extension/string_list_extensions.dart';
 
 /// A class representing the HTTP Content-Disposition header.
@@ -7,6 +8,8 @@ import 'package:relic/src/headers/extension/string_list_extensions.dart';
 /// `filename*`. It provides functionality to parse the header value and
 /// construct the appropriate header string.
 final class ContentDispositionHeader {
+  static const codec =
+      HeaderCodec.single(ContentDispositionHeader.parse, encode);
   static List<String> encode(ContentDispositionHeader value) =>
       [value.toHeaderString()];
 

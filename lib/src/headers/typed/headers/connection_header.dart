@@ -1,3 +1,4 @@
+import "package:relic/relic.dart";
 import 'package:relic/src/headers/extension/string_list_extensions.dart';
 
 /// A class representing the HTTP Connection header.
@@ -6,6 +7,7 @@ import 'package:relic/src/headers/extension/string_list_extensions.dart';
 /// directives (e.g., `upgrade, keep-alive`). It provides functionality to parse and generate
 /// connection header values.
 final class ConnectionHeader {
+  static const codec = HeaderCodec(ConnectionHeader.parse, encode);
   static List<String> encode(ConnectionHeader value) =>
       [value.toHeaderString()];
 

@@ -1,3 +1,4 @@
+import "package:relic/relic.dart";
 import 'package:relic/src/headers/extension/string_list_extensions.dart';
 
 /// A class representing the HTTP Vary header.
@@ -6,6 +7,7 @@ import 'package:relic/src/headers/extension/string_list_extensions.dart';
 /// and can also handle the wildcard value "*", which indicates that the
 /// response varies on all request headers.
 final class VaryHeader {
+  static const codec = HeaderCodec(VaryHeader.parse, encode);
   static List<String> encode(VaryHeader value) => [value.toHeaderString()];
 
   /// A list of headers that the response varies on.

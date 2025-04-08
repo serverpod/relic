@@ -1,3 +1,4 @@
+import "package:relic/relic.dart";
 import 'package:relic/src/headers/extension/string_list_extensions.dart';
 import 'package:relic/src/method/request_method.dart';
 
@@ -6,6 +7,8 @@ import 'package:relic/src/method/request_method.dart';
 /// This header specifies which methods are allowed when accessing the resource
 /// in response to a preflight request.
 final class AccessControlAllowMethodsHeader {
+  static const codec =
+      HeaderCodec(AccessControlAllowMethodsHeader.parse, encode);
   static List<String> encode(AccessControlAllowMethodsHeader value) =>
       [value.toHeaderString()];
 

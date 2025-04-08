@@ -1,3 +1,4 @@
+import "package:relic/relic.dart";
 import 'package:relic/src/headers/extension/string_list_extensions.dart';
 
 /// A class representing the HTTP Upgrade header.
@@ -5,6 +6,7 @@ import 'package:relic/src/headers/extension/string_list_extensions.dart';
 /// This class manages the protocols that the client supports for upgrading the
 /// connection.
 final class UpgradeHeader {
+  static const codec = HeaderCodec(UpgradeHeader.parse, encode);
   static List<String> encode(UpgradeHeader value) => [value.toHeaderString()];
 
   /// The list of protocols that the client supports.

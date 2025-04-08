@@ -1,3 +1,4 @@
+import "package:relic/relic.dart";
 import 'package:http_parser/http_parser.dart';
 
 /// A class representing the HTTP Retry-After header.
@@ -6,6 +7,7 @@ import 'package:http_parser/http_parser.dart';
 /// The Retry-After header can contain either an HTTP date or a delay in seconds
 /// indicating when the client should retry the request.
 final class RetryAfterHeader {
+  static const codec = HeaderCodec.single(RetryAfterHeader.parse, encode);
   static List<String> encode(RetryAfterHeader value) =>
       [value.toHeaderString()];
 

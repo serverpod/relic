@@ -1,3 +1,4 @@
+import "package:relic/relic.dart";
 import 'package:relic/src/headers/extension/string_list_extensions.dart';
 
 /// A class representing the HTTP `From` header.
@@ -6,6 +7,7 @@ import 'package:relic/src/headers/extension/string_list_extensions.dart';
 /// It usually contains a single email address, but in edge cases, it could contain multiple
 /// email addresses separated by commas.
 final class FromHeader {
+  static const codec = HeaderCodec(FromHeader.parse, encode);
   static List<String> encode(FromHeader value) => [value.toHeaderString()];
 
   /// A list of email addresses provided in the `From` header.

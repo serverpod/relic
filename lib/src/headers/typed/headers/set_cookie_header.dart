@@ -1,3 +1,4 @@
+import "package:relic/relic.dart";
 import 'package:http_parser/http_parser.dart';
 
 import '../../codecs/common_types_codecs.dart';
@@ -8,6 +9,7 @@ import 'util/cookie_util.dart';
 ///
 /// This class manages the parsing and representation of set cookie.
 final class SetCookieHeader {
+  static const codec = HeaderCodec.single(SetCookieHeader.parse, encode);
   static List<String> encode(SetCookieHeader value) => [value.toHeaderString()];
 
   /// The keys used for the Set-Cookie header.

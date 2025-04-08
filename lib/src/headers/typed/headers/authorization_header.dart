@@ -1,3 +1,4 @@
+import "package:relic/relic.dart";
 import 'dart:convert';
 
 /// An abstract base class representing an HTTP Authorization header.
@@ -6,6 +7,7 @@ import 'dart:convert';
 /// such as Bearer and Basic, by defining a method to return the header value.
 /// The concrete subclasses handle specific header formats.
 abstract class AuthorizationHeader {
+  static const codec = HeaderCodec.single(AuthorizationHeader.parse, encode);
   static List<String> encode(AuthorizationHeader value) =>
       [value.toHeaderString()];
 
