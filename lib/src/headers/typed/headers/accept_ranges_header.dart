@@ -1,7 +1,7 @@
 /// A class representing the HTTP Accept-Ranges header.
 ///
 /// This class manages the range units that the server supports.
-class AcceptRangesHeader {
+final class AcceptRangesHeader {
   static List<String> encode(AcceptRangesHeader value) =>
       [value.toHeaderString()];
 

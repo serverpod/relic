@@ -47,7 +47,7 @@ abstract class AuthorizationHeader {
 /// Represents a Bearer token for HTTP Authorization.
 ///
 /// Commonly used for stateless authentication in web APIs.
-class BearerAuthorizationHeader extends AuthorizationHeader {
+final class BearerAuthorizationHeader extends AuthorizationHeader {
   /// The default prefix used for Bearer token authentication.
   static const String prefix = 'Bearer ';
 
@@ -100,7 +100,7 @@ class BearerAuthorizationHeader extends AuthorizationHeader {
 /// Represents Basic authentication using a username and password.
 ///
 /// The credentials are Base64-encoded and prefixed with "Basic ".
-class BasicAuthorizationHeader extends AuthorizationHeader {
+final class BasicAuthorizationHeader extends AuthorizationHeader {
   /// The default prefix used for Basic authentication.
   static const String prefix = 'Basic ';
 
@@ -170,7 +170,7 @@ class BasicAuthorizationHeader extends AuthorizationHeader {
 ///
 /// Digest authentication is a more secure method than Basic authentication
 /// as it uses a challenge-response mechanism to verify credentials.
-class DigestAuthorizationHeader extends AuthorizationHeader {
+final class DigestAuthorizationHeader extends AuthorizationHeader {
   /// The default prefix used for Digest authentication.
   static const String prefix = 'Digest ';
 

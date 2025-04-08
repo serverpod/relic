@@ -3,7 +3,7 @@ import 'package:relic/src/headers/extension/string_list_extensions.dart';
 /// A class representing the HTTP Accept header.
 ///
 /// This class manages media ranges and their associated quality values.
-class AcceptHeader {
+final class AcceptHeader {
   static List<String> encode(AcceptHeader value) => [value.toHeaderString()];
 
   /// The list of media ranges accepted by the client.

@@ -5,7 +5,7 @@ import 'package:http_parser/http_parser.dart';
 /// This class manages both date-based and delay-based retry values.
 /// The Retry-After header can contain either an HTTP date or a delay in seconds
 /// indicating when the client should retry the request.
-class RetryAfterHeader {
+final class RetryAfterHeader {
   static List<String> encode(RetryAfterHeader value) =>
       [value.toHeaderString()];
 

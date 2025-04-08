@@ -5,7 +5,7 @@ import 'package:collection/collection.dart';
 /// A class representing the HTTP Cookie header.
 ///
 /// This class manages the parsing and representation of cookies.
-class CookieHeader {
+final class CookieHeader {
   static List<String> encode(CookieHeader value) => [value.toHeaderString()];
 
   /// The list of cookies.

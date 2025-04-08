@@ -5,7 +5,7 @@ import 'package:relic/src/headers/extension/string_list_extensions.dart';
 /// This class manages cache directives like `no-cache`, `no-store`, `max-age`,
 /// `must-revalidate`, etc. It supports parsing header values and generating
 /// the appropriate header string.
-class CacheControlHeader {
+final class CacheControlHeader {
   static List<String> encode(CacheControlHeader value) =>
       [value.toHeaderString()];
   // Cache-Control directive constants

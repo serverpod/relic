@@ -5,7 +5,7 @@ import 'package:relic/src/headers/extension/string_list_extensions.dart';
 /// The `From` header is used to indicate the email address of the user making the request.
 /// It usually contains a single email address, but in edge cases, it could contain multiple
 /// email addresses separated by commas.
-class FromHeader {
+final class FromHeader {
   static List<String> encode(FromHeader value) => [value.toHeaderString()];
 
   /// A list of email addresses provided in the `From` header.

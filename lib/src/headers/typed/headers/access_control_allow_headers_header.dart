@@ -4,7 +4,7 @@ import 'package:relic/src/headers/extension/string_list_extensions.dart';
 ///
 /// This header specifies which HTTP headers can be used during the actual request
 /// by listing them explicitly or using a wildcard (`*`) to allow all headers.
-class AccessControlAllowHeadersHeader {
+final class AccessControlAllowHeadersHeader {
   static List<String> encode(AccessControlAllowHeadersHeader value) =>
       [value.toHeaderString()];
 

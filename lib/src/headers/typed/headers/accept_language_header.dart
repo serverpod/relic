@@ -3,7 +3,7 @@ import 'package:relic/src/headers/extension/string_list_extensions.dart';
 /// A class representing the HTTP Accept-Language header.
 ///
 /// This header specifies the natural languages that are preferred in the response.
-class AcceptLanguageHeader {
+final class AcceptLanguageHeader {
   static List<String> encode(AcceptLanguageHeader value) =>
       [value.toHeaderString()];
 

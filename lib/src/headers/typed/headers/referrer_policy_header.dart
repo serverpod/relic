@@ -2,7 +2,7 @@
 ///
 /// This class manages the referrer policy, providing functionality to parse
 /// and generate referrer policy header values.
-class ReferrerPolicyHeader {
+final class ReferrerPolicyHeader {
   static List<String> encode(ReferrerPolicyHeader value) =>
       [value.toHeaderString()];
 

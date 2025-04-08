@@ -3,7 +3,7 @@
 /// This class manages the ETag value, which can be either strong or weak.
 /// It provides functionality to parse the header value and construct the
 /// appropriate header string.
-class ETagHeader {
+final class ETagHeader {
   static List<String> encode(ETagHeader value) => [value.toHeaderString()];
 
   /// The ETag value without quotes.

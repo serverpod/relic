@@ -5,7 +5,7 @@ import 'package:relic/src/headers/extension/string_list_extensions.dart';
 /// This class manages content encodings such as `gzip`, `compress`, `deflate`,
 /// `br`, and `identity`. It provides functionality to parse and generate
 /// content encoding header values.
-class ContentEncodingHeader {
+final class ContentEncodingHeader {
   static List<String> encode(ContentEncodingHeader value) =>
       [value.toHeaderString()];
 

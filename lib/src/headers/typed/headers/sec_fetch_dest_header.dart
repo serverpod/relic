@@ -1,7 +1,7 @@
 /// A class representing the HTTP Sec-Fetch-Dest header.
 ///
 /// This header indicates the destination of the request.
-class SecFetchDestHeader {
+final class SecFetchDestHeader {
   static List<String> encode(SecFetchDestHeader value) =>
       [value.toHeaderString()];
 

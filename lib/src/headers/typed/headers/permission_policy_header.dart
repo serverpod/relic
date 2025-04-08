@@ -4,7 +4,7 @@ import 'package:relic/src/headers/extension/string_list_extensions.dart';
 ///
 /// This class manages Permissions-Policy directives, providing functionality to parse,
 /// add, remove, and generate Permissions-Policy header values.
-class PermissionsPolicyHeader {
+final class PermissionsPolicyHeader {
   static List<String> encode(PermissionsPolicyHeader value) =>
       [value.toHeaderString()];
 

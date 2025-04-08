@@ -5,7 +5,7 @@ import 'package:relic/src/headers/extension/string_list_extensions.dart';
 /// This class manages the list of headers that the response may vary on,
 /// and can also handle the wildcard value "*", which indicates that the
 /// response varies on all request headers.
-class VaryHeader {
+final class VaryHeader {
   static List<String> encode(VaryHeader value) => [value.toHeaderString()];
 
   /// A list of headers that the response varies on.

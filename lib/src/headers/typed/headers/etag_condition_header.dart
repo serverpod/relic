@@ -25,7 +25,7 @@ abstract class ETagConditionHeader {
 }
 
 /// A class representing the HTTP If-Match header.
-class IfMatchHeader extends ETagConditionHeader {
+final class IfMatchHeader extends ETagConditionHeader {
   static List<String> encode(IfMatchHeader value) => [value.toHeaderString()];
 
   /// Creates an [IfMatchHeader] with specific ETags.
@@ -64,7 +64,7 @@ class IfMatchHeader extends ETagConditionHeader {
 }
 
 /// A class representing the HTTP If-None-Match header.
-class IfNoneMatchHeader extends ETagConditionHeader {
+final class IfNoneMatchHeader extends ETagConditionHeader {
   static List<String> encode(IfNoneMatchHeader value) =>
       [value.toHeaderString()];
 

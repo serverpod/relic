@@ -2,7 +2,7 @@
 ///
 /// This class is used to manage byte ranges in HTTP requests or responses,
 /// including cases for unsatisfiable range requests.
-class ContentRangeHeader {
+final class ContentRangeHeader {
   static List<String> encode(ContentRangeHeader value) =>
       [value.toHeaderString()];
 

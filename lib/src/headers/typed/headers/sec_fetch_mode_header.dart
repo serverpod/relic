@@ -1,7 +1,7 @@
 /// A class representing the HTTP Sec-Fetch-Mode header.
 ///
 /// This header indicates the mode of the request.
-class SecFetchModeHeader {
+final class SecFetchModeHeader {
   static List<String> encode(SecFetchModeHeader value) =>
       [value.toHeaderString()];
 

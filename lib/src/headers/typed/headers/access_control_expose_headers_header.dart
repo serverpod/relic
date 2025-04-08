@@ -4,7 +4,7 @@ import 'package:relic/src/headers/extension/string_list_extensions.dart';
 ///
 /// This header specifies which headers can be exposed as part of the response
 /// by listing them explicitly or using a wildcard (`*`) to expose all headers.
-class AccessControlExposeHeadersHeader {
+final class AccessControlExposeHeadersHeader {
   static List<String> encode(AccessControlExposeHeadersHeader value) =>
       [value.toHeaderString()];
 

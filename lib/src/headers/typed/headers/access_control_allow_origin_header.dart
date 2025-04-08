@@ -2,7 +2,7 @@
 ///
 /// This header specifies which origins are allowed to access the resource.
 /// It can be a specific origin or a wildcard (`*`) to allow any origin.
-class AccessControlAllowOriginHeader {
+final class AccessControlAllowOriginHeader {
   static List<String> encode(AccessControlAllowOriginHeader value) =>
       [value.toHeaderString()];
 

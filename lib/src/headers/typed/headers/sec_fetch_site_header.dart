@@ -2,7 +2,7 @@
 ///
 /// This header indicates the relationship between the origin of the request
 /// initiator and the origin of the requested resource.
-class SecFetchSiteHeader {
+final class SecFetchSiteHeader {
   static List<String> encode(SecFetchSiteHeader value) =>
       [value.toHeaderString()];
 

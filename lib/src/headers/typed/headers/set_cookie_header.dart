@@ -7,7 +7,7 @@ import 'util/cookie_util.dart';
 /// A class representing the HTTP Set-Cookie header.
 ///
 /// This class manages the parsing and representation of set cookie.
-class SetCookieHeader {
+final class SetCookieHeader {
   static List<String> encode(SetCookieHeader value) => [value.toHeaderString()];
 
   /// The keys used for the Set-Cookie header.

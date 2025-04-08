@@ -3,7 +3,7 @@ import 'package:relic/src/headers/extension/string_list_extensions.dart';
 /// A class representing the HTTP Clear-Site-Data header.
 ///
 /// This header specifies which types of browsing data should be cleared.
-class ClearSiteDataHeader {
+final class ClearSiteDataHeader {
   static List<String> encode(ClearSiteDataHeader value) =>
       [value.toHeaderString()];
 

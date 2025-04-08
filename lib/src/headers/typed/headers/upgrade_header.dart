@@ -4,7 +4,7 @@ import 'package:relic/src/headers/extension/string_list_extensions.dart';
 ///
 /// This class manages the protocols that the client supports for upgrading the
 /// connection.
-class UpgradeHeader {
+final class UpgradeHeader {
   static List<String> encode(UpgradeHeader value) => [value.toHeaderString()];
 
   /// The list of protocols that the client supports.

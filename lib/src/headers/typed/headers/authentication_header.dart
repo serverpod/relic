@@ -1,5 +1,5 @@
 /// A class representing the HTTP Authentication header.
-class AuthenticationHeader {
+final class AuthenticationHeader {
   static List<String> encode(AuthenticationHeader value) =>
       [value.toHeaderString()];
 

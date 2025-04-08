@@ -6,7 +6,7 @@ import 'package:relic/src/headers/extension/string_list_extensions.dart';
 /// or `form-data`, and optional attributes like `filename`, `name`, and
 /// `filename*`. It provides functionality to parse the header value and
 /// construct the appropriate header string.
-class ContentDispositionHeader {
+final class ContentDispositionHeader {
   static List<String> encode(ContentDispositionHeader value) =>
       [value.toHeaderString()];
 

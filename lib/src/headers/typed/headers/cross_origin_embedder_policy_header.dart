@@ -1,7 +1,7 @@
 /// A class representing the HTTP Cross-Origin-Embedder-Policy header.
 ///
 /// This header specifies the policy for embedding cross-origin resources.
-class CrossOriginEmbedderPolicyHeader {
+final class CrossOriginEmbedderPolicyHeader {
   static List<String> encode(CrossOriginEmbedderPolicyHeader value) =>
       [value.toHeaderString()];
 

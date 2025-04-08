@@ -5,7 +5,7 @@
 /// request specific parts of a resource. It provides functionality to
 /// parse and generate range header values for different range units like
 /// bytes or custom units.
-class RangeHeader {
+final class RangeHeader {
   static List<String> encode(RangeHeader value) => [value.toHeaderString()];
 
   /// The unit of the range (e.g., "bytes").

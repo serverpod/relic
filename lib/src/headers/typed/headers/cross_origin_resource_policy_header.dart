@@ -1,7 +1,7 @@
 /// A class representing the HTTP Cross-Origin-Resource-Policy header.
 ///
 /// This header specifies the policy for sharing resources across origins.
-class CrossOriginResourcePolicyHeader {
+final class CrossOriginResourcePolicyHeader {
   static List<String> encode(CrossOriginResourcePolicyHeader value) =>
       [value.toHeaderString()];
 

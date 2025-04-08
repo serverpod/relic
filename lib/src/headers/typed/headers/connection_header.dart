@@ -5,7 +5,7 @@ import 'package:relic/src/headers/extension/string_list_extensions.dart';
 /// This class manages connection directives, such as `keep-alive`, `close`, or multiple
 /// directives (e.g., `upgrade, keep-alive`). It provides functionality to parse and generate
 /// connection header values.
-class ConnectionHeader {
+final class ConnectionHeader {
   static List<String> encode(ConnectionHeader value) =>
       [value.toHeaderString()];
 
