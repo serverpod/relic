@@ -5,8 +5,8 @@ import "package:relic/relic.dart";
 /// This header specifies the policy for embedding cross-origin resources.
 final class CrossOriginEmbedderPolicyHeader {
   static const codec =
-      HeaderCodec.single(CrossOriginEmbedderPolicyHeader.parse, encode);
-  static List<String> encode(CrossOriginEmbedderPolicyHeader value) =>
+      HeaderCodec.single(CrossOriginEmbedderPolicyHeader.parse, _encode);
+  static List<String> _encode(CrossOriginEmbedderPolicyHeader value) =>
       [value.toHeaderString()];
 
   /// The policy value of the header.

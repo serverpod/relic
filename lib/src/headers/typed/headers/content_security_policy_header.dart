@@ -7,8 +7,8 @@ import 'package:relic/src/headers/extension/string_list_extensions.dart';
 /// remove, and generate CSP header values.
 final class ContentSecurityPolicyHeader {
   static const codec =
-      HeaderCodec.single(ContentSecurityPolicyHeader.parse, encode);
-  static List<String> encode(ContentSecurityPolicyHeader value) =>
+      HeaderCodec.single(ContentSecurityPolicyHeader.parse, _encode);
+  static List<String> _encode(ContentSecurityPolicyHeader value) =>
       [value.toHeaderString()];
 
   /// A list of CSP directives.

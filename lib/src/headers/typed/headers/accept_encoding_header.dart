@@ -5,8 +5,8 @@ import 'package:relic/src/headers/extension/string_list_extensions.dart';
 ///
 /// This header specifies the content encoding that the client can understand.
 final class AcceptEncodingHeader {
-  static const codec = HeaderCodec(AcceptEncodingHeader.parse, encode);
-  static List<String> encode(AcceptEncodingHeader value) =>
+  static const codec = HeaderCodec(AcceptEncodingHeader.parse, _encode);
+  static List<String> _encode(AcceptEncodingHeader value) =>
       [value.toHeaderString()];
 
   /// The list of encodings that are accepted.

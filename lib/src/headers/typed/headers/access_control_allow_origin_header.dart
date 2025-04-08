@@ -6,8 +6,8 @@ import "package:relic/relic.dart";
 /// It can be a specific origin or a wildcard (`*`) to allow any origin.
 final class AccessControlAllowOriginHeader {
   static const codec =
-      HeaderCodec.single(AccessControlAllowOriginHeader.parse, encode);
-  static List<String> encode(AccessControlAllowOriginHeader value) =>
+      HeaderCodec.single(AccessControlAllowOriginHeader.parse, _encode);
+  static List<String> _encode(AccessControlAllowOriginHeader value) =>
       [value.toHeaderString()];
 
   /// The allowed origin URI, if specified.

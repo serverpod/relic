@@ -26,8 +26,8 @@ abstract class ETagConditionHeader {
 
 /// A class representing the HTTP If-Match header.
 final class IfMatchHeader extends ETagConditionHeader {
-  static const codec = HeaderCodec(IfMatchHeader.parse, encode);
-  static List<String> encode(IfMatchHeader value) => [value.toHeaderString()];
+  static const codec = HeaderCodec(IfMatchHeader.parse, _encode);
+  static List<String> _encode(IfMatchHeader value) => [value.toHeaderString()];
 
   /// Creates an [IfMatchHeader] with specific ETags.
   const IfMatchHeader.etags(super.etags) : super.etags();
@@ -66,8 +66,8 @@ final class IfMatchHeader extends ETagConditionHeader {
 
 /// A class representing the HTTP If-None-Match header.
 final class IfNoneMatchHeader extends ETagConditionHeader {
-  static const codec = HeaderCodec(IfNoneMatchHeader.parse, encode);
-  static List<String> encode(IfNoneMatchHeader value) =>
+  static const codec = HeaderCodec(IfNoneMatchHeader.parse, _encode);
+  static List<String> _encode(IfNoneMatchHeader value) =>
       [value.toHeaderString()];
 
   /// Creates an [IfNoneMatchHeader] with specific ETags.

@@ -4,8 +4,8 @@ import "package:relic/relic.dart";
 ///
 /// This class manages the range units that the server supports.
 final class AcceptRangesHeader {
-  static const codec = HeaderCodec.single(AcceptRangesHeader.parse, encode);
-  static List<String> encode(AcceptRangesHeader value) =>
+  static const codec = HeaderCodec.single(AcceptRangesHeader.parse, _encode);
+  static List<String> _encode(AcceptRangesHeader value) =>
       [value.toHeaderString()];
 
   /// The range unit supported by the server, or `null` if no specific unit is supported.

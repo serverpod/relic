@@ -5,8 +5,8 @@ import 'package:relic/src/headers/extension/string_list_extensions.dart';
 /// HSTS settings.
 final class StrictTransportSecurityHeader {
   static const codec =
-      HeaderCodec.single(StrictTransportSecurityHeader.parse, encode);
-  static List<String> encode(StrictTransportSecurityHeader value) =>
+      HeaderCodec.single(StrictTransportSecurityHeader.parse, _encode);
+  static List<String> _encode(StrictTransportSecurityHeader value) =>
       [value.toHeaderString()];
 
   /// The max-age directive specifies the time, in seconds, that the browser

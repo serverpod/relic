@@ -6,8 +6,8 @@ import "package:relic/relic.dart";
 /// It provides functionality to parse the header value and construct the
 /// appropriate header string.
 final class ETagHeader {
-  static const codec = HeaderCodec.single(ETagHeader.parse, encode);
-  static List<String> encode(ETagHeader value) => [value.toHeaderString()];
+  static const codec = HeaderCodec.single(ETagHeader.parse, _encode);
+  static List<String> _encode(ETagHeader value) => [value.toHeaderString()];
 
   /// The ETag value without quotes.
   final String value;

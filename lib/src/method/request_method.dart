@@ -63,8 +63,8 @@ class RequestMethod {
         throw FormatException('Invalid value');
     }
   }
-  static const codec = HeaderCodec.single(RequestMethod.parse, encode);
-  static List<String> encode(RequestMethod value) => [value.toString()];
+  static const codec = HeaderCodec.single(RequestMethod.parse, _encode);
+  static List<String> _encode(RequestMethod value) => [value.toString()];
 
   @override
   String toString() => 'Method($value)';

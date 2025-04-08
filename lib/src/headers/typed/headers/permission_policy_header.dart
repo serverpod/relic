@@ -7,8 +7,8 @@ import 'package:relic/src/headers/extension/string_list_extensions.dart';
 /// add, remove, and generate Permissions-Policy header values.
 final class PermissionsPolicyHeader {
   static const codec =
-      HeaderCodec.single(PermissionsPolicyHeader.parse, encode);
-  static List<String> encode(PermissionsPolicyHeader value) =>
+      HeaderCodec.single(PermissionsPolicyHeader.parse, _encode);
+  static List<String> _encode(PermissionsPolicyHeader value) =>
       [value.toHeaderString()];
 
   /// A list of Permissions-Policy directives.

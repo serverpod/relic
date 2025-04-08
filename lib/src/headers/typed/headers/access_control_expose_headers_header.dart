@@ -7,8 +7,8 @@ import 'package:relic/src/headers/extension/string_list_extensions.dart';
 /// by listing them explicitly or using a wildcard (`*`) to expose all headers.
 final class AccessControlExposeHeadersHeader {
   static const codec =
-      HeaderCodec(AccessControlExposeHeadersHeader.parse, encode);
-  static List<String> encode(AccessControlExposeHeadersHeader value) =>
+      HeaderCodec(AccessControlExposeHeadersHeader.parse, _encode);
+  static List<String> _encode(AccessControlExposeHeadersHeader value) =>
       [value.toHeaderString()];
 
   /// The list of headers that can be exposed.

@@ -7,8 +7,8 @@ import 'package:http_parser/http_parser.dart';
 /// The Retry-After header can contain either an HTTP date or a delay in seconds
 /// indicating when the client should retry the request.
 final class RetryAfterHeader {
-  static const codec = HeaderCodec.single(RetryAfterHeader.parse, encode);
-  static List<String> encode(RetryAfterHeader value) =>
+  static const codec = HeaderCodec.single(RetryAfterHeader.parse, _encode);
+  static List<String> _encode(RetryAfterHeader value) =>
       [value.toHeaderString()];
 
   /// The retry delay in seconds, if present.

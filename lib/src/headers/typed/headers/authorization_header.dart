@@ -7,8 +7,8 @@ import 'dart:convert';
 /// such as Bearer and Basic, by defining a method to return the header value.
 /// The concrete subclasses handle specific header formats.
 abstract class AuthorizationHeader {
-  static const codec = HeaderCodec.single(AuthorizationHeader.parse, encode);
-  static List<String> encode(AuthorizationHeader value) =>
+  static const codec = HeaderCodec.single(AuthorizationHeader.parse, _encode);
+  static List<String> _encode(AuthorizationHeader value) =>
       [value.toHeaderString()];
 
   /// Returns the value of the Authorization header as a string.

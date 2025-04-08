@@ -7,8 +7,8 @@ import 'package:collection/collection.dart';
 ///
 /// This class manages the parsing and representation of cookies.
 final class CookieHeader {
-  static const codec = HeaderCodec.single(CookieHeader.parse, encode);
-  static List<String> encode(CookieHeader value) => [value.toHeaderString()];
+  static const codec = HeaderCodec.single(CookieHeader.parse, _encode);
+  static List<String> _encode(CookieHeader value) => [value.toHeaderString()];
 
   /// The list of cookies.
   final List<Cookie> cookies;

@@ -5,8 +5,8 @@ import "package:relic/relic.dart";
 /// This header specifies the policy for sharing resources across origins.
 final class CrossOriginResourcePolicyHeader {
   static const codec =
-      HeaderCodec.single(CrossOriginResourcePolicyHeader.parse, encode);
-  static List<String> encode(CrossOriginResourcePolicyHeader value) =>
+      HeaderCodec.single(CrossOriginResourcePolicyHeader.parse, _encode);
+  static List<String> _encode(CrossOriginResourcePolicyHeader value) =>
       [value.toHeaderString()];
 
   /// The policy value of the header.

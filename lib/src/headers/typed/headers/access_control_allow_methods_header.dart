@@ -8,8 +8,8 @@ import 'package:relic/src/method/request_method.dart';
 /// in response to a preflight request.
 final class AccessControlAllowMethodsHeader {
   static const codec =
-      HeaderCodec(AccessControlAllowMethodsHeader.parse, encode);
-  static List<String> encode(AccessControlAllowMethodsHeader value) =>
+      HeaderCodec(AccessControlAllowMethodsHeader.parse, _encode);
+  static List<String> _encode(AccessControlAllowMethodsHeader value) =>
       [value.toHeaderString()];
 
   /// The list of methods that are allowed.

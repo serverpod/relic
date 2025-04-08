@@ -8,8 +8,8 @@ import "package:relic/relic.dart";
 /// parse and generate range header values for different range units like
 /// bytes or custom units.
 final class RangeHeader {
-  static const codec = HeaderCodec.single(RangeHeader.parse, encode);
-  static List<String> encode(RangeHeader value) => [value.toHeaderString()];
+  static const codec = HeaderCodec.single(RangeHeader.parse, _encode);
+  static List<String> _encode(RangeHeader value) => [value.toHeaderString()];
 
   /// The unit of the range (e.g., "bytes").
   final String unit;

@@ -7,8 +7,8 @@ import 'package:relic/src/headers/extension/string_list_extensions.dart';
 /// `must-revalidate`, etc. It supports parsing header values and generating
 /// the appropriate header string.
 final class CacheControlHeader {
-  static const codec = HeaderCodec(CacheControlHeader.parse, encode);
-  static List<String> encode(CacheControlHeader value) =>
+  static const codec = HeaderCodec(CacheControlHeader.parse, _encode);
+  static List<String> _encode(CacheControlHeader value) =>
       [value.toHeaderString()];
   // Cache-Control directive constants
   static const String _noCacheDirective = 'no-cache';

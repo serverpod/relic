@@ -5,8 +5,8 @@ import 'package:relic/src/headers/extension/string_list_extensions.dart';
 ///
 /// This class manages the language codes specified in the Content-Language header.
 final class ContentLanguageHeader {
-  static const codec = HeaderCodec(ContentLanguageHeader.parse, encode);
-  static List<String> encode(ContentLanguageHeader value) =>
+  static const codec = HeaderCodec(ContentLanguageHeader.parse, _encode);
+  static List<String> _encode(ContentLanguageHeader value) =>
       [value.toHeaderString()];
 
   /// The list of language codes specified in the header.

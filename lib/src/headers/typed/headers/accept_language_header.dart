@@ -5,8 +5,8 @@ import 'package:relic/src/headers/extension/string_list_extensions.dart';
 ///
 /// This header specifies the natural languages that are preferred in the response.
 final class AcceptLanguageHeader {
-  static const codec = HeaderCodec(AcceptLanguageHeader.parse, encode);
-  static List<String> encode(AcceptLanguageHeader value) =>
+  static const codec = HeaderCodec(AcceptLanguageHeader.parse, _encode);
+  static List<String> _encode(AcceptLanguageHeader value) =>
       [value.toHeaderString()];
 
   /// The list of languages that are accepted.

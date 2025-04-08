@@ -5,8 +5,8 @@ import 'package:http_parser/http_parser.dart';
 ///
 /// The `If-Range` header can contain either an HTTP date or an ETag.
 final class IfRangeHeader {
-  static const codec = HeaderCodec.single(IfRangeHeader.parse, encode);
-  static List<String> encode(IfRangeHeader value) => [value.toHeaderString()];
+  static const codec = HeaderCodec.single(IfRangeHeader.parse, _encode);
+  static List<String> _encode(IfRangeHeader value) => [value.toHeaderString()];
 
   /// The HTTP date if the `If-Range` header contains a date.
   final DateTime? lastModified;

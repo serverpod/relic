@@ -5,8 +5,8 @@ import 'package:relic/src/headers/extension/string_list_extensions.dart';
 ///
 /// This class manages media ranges and their associated quality values.
 final class AcceptHeader {
-  static const codec = HeaderCodec(AcceptHeader.parse, encode);
-  static List<String> encode(AcceptHeader value) => [value.toHeaderString()];
+  static const codec = HeaderCodec(AcceptHeader.parse, _encode);
+  static List<String> _encode(AcceptHeader value) => [value.toHeaderString()];
 
   /// The list of media ranges accepted by the client.
   final List<MediaRange> mediaRanges;

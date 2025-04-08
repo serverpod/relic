@@ -5,8 +5,8 @@ import 'package:relic/src/headers/extension/string_list_extensions.dart';
 ///
 /// This header specifies which types of browsing data should be cleared.
 final class ClearSiteDataHeader {
-  static const codec = HeaderCodec(ClearSiteDataHeader.parse, encode);
-  static List<String> encode(ClearSiteDataHeader value) =>
+  static const codec = HeaderCodec(ClearSiteDataHeader.parse, _encode);
+  static List<String> _encode(ClearSiteDataHeader value) =>
       [value.toHeaderString()];
 
   /// The list of data types to be cleared.

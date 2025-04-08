@@ -7,8 +7,8 @@ import 'package:relic/src/headers/extension/string_list_extensions.dart';
 /// directives (e.g., `upgrade, keep-alive`). It provides functionality to parse and generate
 /// connection header values.
 final class ConnectionHeader {
-  static const codec = HeaderCodec(ConnectionHeader.parse, encode);
-  static List<String> encode(ConnectionHeader value) =>
+  static const codec = HeaderCodec(ConnectionHeader.parse, _encode);
+  static List<String> _encode(ConnectionHeader value) =>
       [value.toHeaderString()];
 
   /// A list of connection directives (e.g., `keep-alive`, `close`, `upgrade`).

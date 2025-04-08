@@ -4,8 +4,8 @@ import "package:relic/relic.dart";
 ///
 /// This header indicates the destination of the request.
 final class SecFetchDestHeader {
-  static const codec = HeaderCodec.single(SecFetchDestHeader.parse, encode);
-  static List<String> encode(SecFetchDestHeader value) =>
+  static const codec = HeaderCodec.single(SecFetchDestHeader.parse, _encode);
+  static List<String> _encode(SecFetchDestHeader value) =>
       [value.toHeaderString()];
 
   /// The destination value of the request.

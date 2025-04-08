@@ -6,8 +6,8 @@ import 'package:relic/src/headers/extension/string_list_extensions.dart';
 /// The TE header indicates the transfer encodings the client is willing to accept,
 /// optionally with quality values.
 final class TEHeader {
-  static const codec = HeaderCodec(TEHeader.parse, encode);
-  static List<String> encode(TEHeader value) => [value.toHeaderString()];
+  static const codec = HeaderCodec(TEHeader.parse, _encode);
+  static List<String> _encode(TEHeader value) => [value.toHeaderString()];
 
   /// The list of encodings with their quality values.
   final List<TeQuality> encodings;

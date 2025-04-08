@@ -7,8 +7,8 @@ import 'package:relic/src/headers/extension/string_list_extensions.dart';
 /// `br`, and `identity`. It provides functionality to parse and generate
 /// content encoding header values.
 final class ContentEncodingHeader {
-  static const codec = HeaderCodec(ContentEncodingHeader.parse, encode);
-  static List<String> encode(ContentEncodingHeader value) =>
+  static const codec = HeaderCodec(ContentEncodingHeader.parse, _encode);
+  static List<String> _encode(ContentEncodingHeader value) =>
       [value.toHeaderString()];
 
   /// A list of content encodings.
