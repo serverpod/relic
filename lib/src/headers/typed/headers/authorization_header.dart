@@ -1,19 +1,20 @@
 import 'dart:convert';
 
-import 'package:relic/src/headers/typed/typed_header_interface.dart';
-
 /// An abstract base class representing an HTTP Authorization header.
 ///
 /// This class serves as a blueprint for different types of authorization headers,
 /// such as Bearer and Basic, by defining a method to return the header value.
 /// The concrete subclasses handle specific header formats.
-abstract class AuthorizationHeader implements TypedHeader {
+abstract class AuthorizationHeader {
+  static List<String> encode(AuthorizationHeader value) =>
+      [value.toHeaderString()];
+
   /// Returns the value of the Authorization header as a string.
   String get headerValue;
 
   /// Converts the [AuthorizationHeader] instance into a string
   /// representation suitable for HTTP headers.
-  @override
+
   String toHeaderString() => headerValue;
 
   /// Parses and creates the appropriate [AuthorizationHeader]

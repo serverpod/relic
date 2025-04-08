@@ -1,11 +1,13 @@
 import 'package:relic/src/headers/extension/string_list_extensions.dart';
-import 'package:relic/src/headers/typed/typed_header_interface.dart';
 
 /// A class representing the HTTP Permissions-Policy header.
 ///
 /// This class manages Permissions-Policy directives, providing functionality to parse,
 /// add, remove, and generate Permissions-Policy header values.
-class PermissionsPolicyHeader implements TypedHeader {
+class PermissionsPolicyHeader {
+  static List<String> encode(PermissionsPolicyHeader value) =>
+      [value.toHeaderString()];
+
   /// A list of Permissions-Policy directives.
   final List<PermissionsPolicyDirective> directives;
 
@@ -48,7 +50,7 @@ class PermissionsPolicyHeader implements TypedHeader {
 
   /// Converts the [PermissionsPolicyHeader] instance into a string
   /// representation suitable for HTTP headers.
-  @override
+
   String toHeaderString() {
     return directives.map((directive) => directive.toHeaderString()).join(', ');
   }

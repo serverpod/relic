@@ -1,12 +1,13 @@
 import 'package:relic/src/headers/extension/string_list_extensions.dart';
-import 'package:relic/src/headers/typed/typed_header_interface.dart';
 
 /// A class representing the HTTP Cache-Control header.
 ///
 /// This class manages cache directives like `no-cache`, `no-store`, `max-age`,
 /// `must-revalidate`, etc. It supports parsing header values and generating
 /// the appropriate header string.
-class CacheControlHeader implements TypedHeader {
+class CacheControlHeader {
+  static List<String> encode(CacheControlHeader value) =>
+      [value.toHeaderString()];
   // Cache-Control directive constants
   static const String _noCacheDirective = 'no-cache';
   static const String _noStoreDirective = 'no-store';
@@ -221,7 +222,6 @@ class CacheControlHeader implements TypedHeader {
   /// Converts the [CacheControlHeader] instance into a string representation suitable for HTTP headers.
   ///
   /// This method generates the header string by concatenating the set directives.
-  @override
   String toHeaderString() {
     List<String> directives = [];
     if (noCache) directives.add(_noCacheDirective);

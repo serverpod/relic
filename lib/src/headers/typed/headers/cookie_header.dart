@@ -1,12 +1,13 @@
 import 'package:relic/src/headers/extension/string_list_extensions.dart';
 import 'package:relic/src/headers/typed/headers/util/cookie_util.dart';
-import 'package:relic/src/headers/typed/typed_header_interface.dart';
 import 'package:collection/collection.dart';
 
 /// A class representing the HTTP Cookie header.
 ///
 /// This class manages the parsing and representation of cookies.
-class CookieHeader implements TypedHeader {
+class CookieHeader {
+  static List<String> encode(CookieHeader value) => [value.toHeaderString()];
+
   /// The list of cookies.
   final List<Cookie> cookies;
 
@@ -40,7 +41,7 @@ class CookieHeader implements TypedHeader {
 
   /// Converts the [CookieHeader] instance into a string representation
   /// suitable for HTTP headers.
-  @override
+
   String toHeaderString() {
     return cookies.map((cookie) => cookie.toHeaderString()).join('; ');
   }

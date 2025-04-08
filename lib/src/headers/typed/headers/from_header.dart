@@ -1,12 +1,13 @@
 import 'package:relic/src/headers/extension/string_list_extensions.dart';
-import 'package:relic/src/headers/typed/typed_header_interface.dart';
 
 /// A class representing the HTTP `From` header.
 ///
 /// The `From` header is used to indicate the email address of the user making the request.
 /// It usually contains a single email address, but in edge cases, it could contain multiple
 /// email addresses separated by commas.
-class FromHeader implements TypedHeader {
+class FromHeader {
+  static List<String> encode(FromHeader value) => [value.toHeaderString()];
+
   /// A list of email addresses provided in the `From` header.
   final Iterable<String> emails;
 
@@ -34,7 +35,7 @@ class FromHeader implements TypedHeader {
 
   /// Converts the [FromHeader] instance into a string representation
   /// suitable for HTTP headers.
-  @override
+
   String toHeaderString() => emails.join(', ');
 
   @override

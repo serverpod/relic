@@ -1,9 +1,10 @@
-import 'package:relic/src/headers/typed/typed_header_interface.dart';
-
 /// A class representing the HTTP Accept-Ranges header.
 ///
 /// This class manages the range units that the server supports.
-class AcceptRangesHeader implements TypedHeader {
+class AcceptRangesHeader {
+  static List<String> encode(AcceptRangesHeader value) =>
+      [value.toHeaderString()];
+
   /// The range unit supported by the server, or `null` if no specific unit is supported.
   final String? rangeUnit;
 
@@ -35,7 +36,7 @@ class AcceptRangesHeader implements TypedHeader {
   bool get isNone => rangeUnit == 'none' || rangeUnit == null;
 
   /// Converts the [AcceptRangesHeader] instance into a string representation suitable for HTTP headers.
-  @override
+
   String toHeaderString() => rangeUnit ?? 'none';
   @override
   String toString() {

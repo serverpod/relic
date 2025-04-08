@@ -1,13 +1,15 @@
 import 'package:http_parser/http_parser.dart';
-import 'package:relic/src/headers/extension/string_list_extensions.dart';
-import 'package:relic/src/headers/parser/common_types_parser.dart';
-import 'package:relic/src/headers/typed/headers/util/cookie_util.dart';
-import 'package:relic/src/headers/typed/typed_header_interface.dart';
+
+import '../../codecs/common_types_codecs.dart';
+import '../../extension/string_list_extensions.dart';
+import 'util/cookie_util.dart';
 
 /// A class representing the HTTP Set-Cookie header.
 ///
 /// This class manages the parsing and representation of set cookie.
-class SetCookieHeader implements TypedHeader {
+class SetCookieHeader {
+  static List<String> encode(SetCookieHeader value) => [value.toHeaderString()];
+
   /// The keys used for the Set-Cookie header.
   static const String _expires = 'Expires=';
   static const String _maxAge = 'Max-Age=';
@@ -176,7 +178,7 @@ class SetCookieHeader implements TypedHeader {
   }
 
   /// Converts the [Cookie] instance into a string representation suitable for HTTP headers.
-  @override
+
   String toHeaderString() {
     // Use a set to ensure unique attributes
     final attributes = <String>{};

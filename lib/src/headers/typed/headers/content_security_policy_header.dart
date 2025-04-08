@@ -1,11 +1,13 @@
 import 'package:relic/src/headers/extension/string_list_extensions.dart';
-import 'package:relic/src/headers/typed/typed_header_interface.dart';
 
 /// A class representing the HTTP Content-Security-Policy (CSP) header.
 ///
 /// This class manages CSP directives, providing functionality to parse, add,
 /// remove, and generate CSP header values.
-class ContentSecurityPolicyHeader implements TypedHeader {
+class ContentSecurityPolicyHeader {
+  static List<String> encode(ContentSecurityPolicyHeader value) =>
+      [value.toHeaderString()];
+
   /// A list of CSP directives.
   final List<ContentSecurityPolicyDirective> directives;
 
@@ -40,7 +42,7 @@ class ContentSecurityPolicyHeader implements TypedHeader {
 
   /// Converts the [ContentSecurityPolicyHeader] instance into a string
   /// representation suitable for HTTP headers.
-  @override
+
   String toHeaderString() {
     return directives.map((directive) => directive.toHeaderString()).join('; ');
   }

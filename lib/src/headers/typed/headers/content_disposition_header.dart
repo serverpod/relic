@@ -1,5 +1,4 @@
 import 'package:relic/src/headers/extension/string_list_extensions.dart';
-import 'package:relic/src/headers/typed/typed_header_interface.dart';
 
 /// A class representing the HTTP Content-Disposition header.
 ///
@@ -7,7 +6,10 @@ import 'package:relic/src/headers/typed/typed_header_interface.dart';
 /// or `form-data`, and optional attributes like `filename`, `name`, and
 /// `filename*`. It provides functionality to parse the header value and
 /// construct the appropriate header string.
-class ContentDispositionHeader implements TypedHeader {
+class ContentDispositionHeader {
+  static List<String> encode(ContentDispositionHeader value) =>
+      [value.toHeaderString()];
+
   /// The disposition type, usually "inline", "attachment", or "form-data".
   final String type;
 
@@ -49,7 +51,6 @@ class ContentDispositionHeader implements TypedHeader {
 
   /// Converts the [ContentDispositionHeader] instance into a string
   /// representation suitable for HTTP headers.
-  @override
   String toHeaderString() {
     List<String> parts = [type];
     parts.addAll(parameters.map((p) => p.toHeaderString()));

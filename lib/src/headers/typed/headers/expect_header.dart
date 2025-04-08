@@ -1,10 +1,10 @@
-import 'package:relic/src/headers/typed/typed_header_interface.dart';
-
 /// A class representing the HTTP Expect header.
 ///
 /// This class manages the directive for the Expect header, such as `100-continue`.
 /// It provides functionality to parse and generate Expect header values.
-class ExpectHeader implements TypedHeader {
+class ExpectHeader {
+  static List<String> encode(ExpectHeader value) => [value.toHeaderString()];
+
   /// The string representation of the expectation directive.
   final String value;
 
@@ -33,7 +33,7 @@ class ExpectHeader implements TypedHeader {
 
   /// Converts the [ExpectHeader] instance into a string representation
   /// suitable for HTTP headers.
-  @override
+
   String toHeaderString() => value;
 
   @override

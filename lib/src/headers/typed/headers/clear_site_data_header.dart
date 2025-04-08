@@ -1,10 +1,12 @@
 import 'package:relic/src/headers/extension/string_list_extensions.dart';
-import 'package:relic/src/headers/typed/typed_header_interface.dart';
 
 /// A class representing the HTTP Clear-Site-Data header.
 ///
 /// This header specifies which types of browsing data should be cleared.
-class ClearSiteDataHeader implements TypedHeader {
+class ClearSiteDataHeader {
+  static List<String> encode(ClearSiteDataHeader value) =>
+      [value.toHeaderString()];
+
   /// The list of data types to be cleared.
   final List<ClearSiteDataType>? dataTypes;
 
@@ -51,7 +53,6 @@ class ClearSiteDataHeader implements TypedHeader {
   /// Converts the [ClearSiteDataHeader] instance into a string representation suitable for HTTP headers.
   ///
   /// This method generates the header string by concatenating the data types.
-  @override
   String toHeaderString() {
     return isWildcard
         ? '*'

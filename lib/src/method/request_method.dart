@@ -61,6 +61,7 @@ class RequestMethod {
         throw FormatException('Invalid value');
     }
   }
+  static List<String> encode(RequestMethod value) => [value.toString()];
 
   @override
   String toString() => 'Method($value)';

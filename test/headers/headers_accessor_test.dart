@@ -1,18 +1,18 @@
+import 'package:relic/src/headers/codecs/common_types_codecs.dart';
 import 'package:relic/src/headers/header_accessor.dart';
 import 'package:relic/src/headers/headers.dart';
-import 'package:relic/src/headers/parser/common_types_parser.dart';
 import 'package:test/test.dart';
 
 import 'headers_test_utils.dart';
 
 const _anInt = HeaderAccessor<int>(
   'anInt',
-  HeaderCodec.single(parseInt),
+  HeaderCodec.single(parseInt, encodeInt),
 );
 
 const _someStrings = HeaderAccessor<List<String>>(
   'someStrings',
-  HeaderCodec(parseStringList),
+  HeaderCodec(parseStringList, encodeStringList),
 );
 
 class Custom {
@@ -179,10 +179,12 @@ void main() {
       // This header accessor is not const constructed since we want
       // a non-const decoder that increment local the local variable count
       // whenever called. This is not good practice, but useful in the test!
-      accessor = HeaderAccessor('tmp', HeaderCodec.single((i) {
-        ++count;
-        return int.parse(i);
-      }));
+      accessor = HeaderAccessor(
+          'tmp',
+          HeaderCodec.single((s) {
+            ++count;
+            return int.parse(s);
+          }, encodeInt));
     });
 
     test(

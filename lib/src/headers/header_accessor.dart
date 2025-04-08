@@ -1,8 +1,5 @@
 import 'dart:collection';
 
-import 'package:http_parser/http_parser.dart';
-import 'package:relic/src/headers/typed/typed_header_interface.dart';
-
 import 'exception/header_exception.dart';
 import 'headers.dart';
 
@@ -153,9 +150,9 @@ sealed class HeaderCodec<T extends Object>
   /// - [decode]: Function that converts a collection of header values to type [T]
   /// - [encode]: Optional function to convert type [T] back to header values
   const factory HeaderCodec(
-    T Function(Iterable<String> encoded) decode, [
-    Iterable<String> Function(T decoded)? encode,
-  ]) = _MultiDecodeHeaderCodec;
+    T Function(Iterable<String> encoded) decode,
+    Iterable<String> Function(T decoded) encode,
+  ) = _MultiDecodeHeaderCodec<T>;
 
   /// Factory constructor for creating a [HeaderCodec] that processes a single value.
   ///
@@ -165,18 +162,18 @@ sealed class HeaderCodec<T extends Object>
   /// This is a simplified constructor for headers that only need to process the first
   /// value in a collection of header values.
   const factory HeaderCodec.single(
-    T Function(String) singleDecode, [
-    Iterable<String> Function(T)? encode,
-  ]) = _SingleDecodeHeaderCodec;
+    T Function(String) singleDecode,
+    Iterable<String> Function(T) encode,
+  ) = _SingleDecodeHeaderCodec<T>;
 }
 
 final class _MultiDecodeHeaderCodec<T extends Object> extends HeaderCodec<T> {
   final T Function(Iterable<String>) _decode;
 
   const _MultiDecodeHeaderCodec(
-    this._decode, [
-    Iterable<String> Function(T)? encode,
-  ]) : super._(encode ?? _commonEncode);
+    this._decode,
+    Iterable<String> Function(T) encode,
+  ) : super._(encode);
 
   @override
   T decode(Iterable<String> encoded) => _decode(encoded);
@@ -186,9 +183,9 @@ final class _SingleDecodeHeaderCodec<T extends Object> extends HeaderCodec<T> {
   final T Function(String) singleDecode;
 
   const _SingleDecodeHeaderCodec(
-    this.singleDecode, [
-    Iterable<String> Function(T)? encode,
-  ]) : super._(encode ?? _commonEncode);
+    this.singleDecode,
+    Iterable<String> Function(T) encode,
+  ) : super._(encode);
 
   @override
   T decode(Iterable<String> encoded) => singleDecode(encoded.first);
@@ -255,15 +252,4 @@ Never _throwException(
     },
     headerType: key,
   );
-}
-
-Iterable<String> _commonEncode<T>(T value) {
-  final result = switch (value) {
-    String s => [s],
-    DateTime d => [formatHttpDate(d)],
-    TypedHeader t => [t.toHeaderString()],
-    Iterable<String> i => i,
-    Object o => [o.toString()],
-  };
-  return List.unmodifiable(result);
 }

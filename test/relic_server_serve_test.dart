@@ -7,7 +7,7 @@ import 'package:async/async.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart' as parser;
 import 'package:relic/relic.dart';
-import 'package:relic/src/headers/parser/common_types_parser.dart';
+import 'package:relic/src/headers/codecs/common_types_codecs.dart';
 import 'package:relic/src/headers/standard_headers_extensions.dart';
 import 'package:relic/src/method/request_method.dart';
 import 'package:relic/src/relic_server_serve.dart' as relic_server;
@@ -128,7 +128,7 @@ void main() {
   test('custom request headers are received by the handler', () async {
     const multi = HeaderAccessor<List<String>>(
       'multi-header',
-      HeaderCodec(parseStringList),
+      HeaderCodec(parseStringList, encodeStringList),
     );
     await _scheduleServer((request) {
       expect(

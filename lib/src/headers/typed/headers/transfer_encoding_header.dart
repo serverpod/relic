@@ -1,12 +1,14 @@
 import 'package:collection/collection.dart';
 import 'package:relic/src/headers/extension/string_list_extensions.dart';
-import 'package:relic/src/headers/typed/typed_header_interface.dart';
 
 /// A class representing the HTTP Transfer-Encoding header.
 ///
 /// This class manages transfer encodings such as `chunked`, `compress`, `deflate`, and `gzip`.
 /// It provides functionality to parse and generate transfer encoding header values.
-class TransferEncodingHeader implements TypedHeader {
+class TransferEncodingHeader {
+  static List<String> encode(TransferEncodingHeader value) =>
+      [value.toHeaderString()];
+
   /// A list of transfer encodings.
   final List<TransferEncoding> encodings;
 
@@ -31,7 +33,6 @@ class TransferEncodingHeader implements TypedHeader {
 
   /// Converts the [TransferEncodingHeader] instance into a string
   /// representation suitable for HTTP headers.
-  @override
   String toHeaderString() => encodings.map((e) => e.name).join(', ');
 
   @override

@@ -1,11 +1,12 @@
 import 'package:relic/src/headers/extension/string_list_extensions.dart';
-import 'package:relic/src/headers/typed/typed_header_interface.dart';
 
 /// A class representing the HTTP TE header.
 ///
 /// The TE header indicates the transfer encodings the client is willing to accept,
 /// optionally with quality values.
-class TEHeader implements TypedHeader {
+class TEHeader {
+  static List<String> encode(TEHeader value) => [value.toHeaderString()];
+
   /// The list of encodings with their quality values.
   final List<TeQuality> encodings;
 
@@ -45,7 +46,7 @@ class TEHeader implements TypedHeader {
 
   /// Converts the [TEHeader] instance into a string representation
   /// suitable for HTTP headers.
-  @override
+
   String toHeaderString() =>
       encodings.map((e) => e.toHeaderString()).join(', ');
 

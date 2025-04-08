@@ -1,10 +1,12 @@
 import 'package:relic/src/headers/extension/string_list_extensions.dart';
-import 'package:relic/src/headers/typed/typed_header_interface.dart';
 
 /// A class representing the HTTP Content-Language header.
 ///
 /// This class manages the language codes specified in the Content-Language header.
-class ContentLanguageHeader implements TypedHeader {
+class ContentLanguageHeader {
+  static List<String> encode(ContentLanguageHeader value) =>
+      [value.toHeaderString()];
+
   /// The list of language codes specified in the header.
   final Iterable<String> languages;
 
@@ -32,7 +34,7 @@ class ContentLanguageHeader implements TypedHeader {
 
   /// Converts the [ContentLanguageHeader] instance into a string representation
   /// suitable for HTTP headers.
-  @override
+
   String toHeaderString() => languages.join(', ');
 
   @override

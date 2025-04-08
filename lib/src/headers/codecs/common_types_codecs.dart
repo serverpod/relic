@@ -120,3 +120,28 @@ List<RequestMethod> parseMethodList(Iterable<String> values) {
   }
   return tempValues.map(RequestMethod.parse).toList();
 }
+
+/// Encodes a DateTime to a iterable of string in HTTP date format.
+Iterable<String> encodeDateTime(DateTime d) => [formatHttpDate(d)];
+
+/// Encode a Uri to a iterable of string.
+Iterable<String> encodeUri(Uri uri) => [uri.toString()];
+
+/// Encode a boolean to a iterable of string, if true.
+Iterable<String> encodePositiveBool(bool b) => [if (b) b.toString()];
+
+/// Encode an integer to a iterable of string.
+Iterable<String> encodeInt(int i) => [i.toString()];
+
+/// Encode a positive integer to a iterable of string, otherwise throws an error.
+Iterable<String> encodePositiveInt(int i) =>
+    i < 0 ? throw ArgumentError() : [i.toString()];
+
+/// Encode a string to a iterable of string.
+Iterable<String> encodeString(String s) => [s];
+
+/// Encode a list of strings to a iterable of string.
+Iterable<String> encodeStringList(List<String> i) => i;
+
+/// Encode a list of methods to a iterable of string.
+Iterable<String> encodeMethodList(List<RequestMethod> l) => l.map((r) => '$r');

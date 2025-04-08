@@ -1,7 +1,8 @@
-import 'package:relic/src/headers/typed/typed_header_interface.dart';
-
 /// A class representing the HTTP Authentication header.
-class AuthenticationHeader implements TypedHeader {
+class AuthenticationHeader {
+  static List<String> encode(AuthenticationHeader value) =>
+      [value.toHeaderString()];
+
   /// The authentication scheme (e.g., "Basic", "Bearer", "Digest").
   final String scheme;
 
@@ -54,7 +55,6 @@ class AuthenticationHeader implements TypedHeader {
 
   /// Converts the [AuthenticationHeader] instance into a string representation
   /// suitable for HTTP headers.
-  @override
   String toHeaderString() {
     final paramsString = parameters.map((param) {
       if (param.key.isEmpty) return param.value;
