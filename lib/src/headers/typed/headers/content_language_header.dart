@@ -5,9 +5,9 @@ import 'package:relic/src/headers/extension/string_list_extensions.dart';
 ///
 /// This class manages the language codes specified in the Content-Language header.
 final class ContentLanguageHeader {
-  static const codec = HeaderCodec(ContentLanguageHeader.parse, _encode);
-  static List<String> _encode(ContentLanguageHeader value) =>
-      [value.toHeaderString()];
+  static const codec = HeaderCodec(ContentLanguageHeader.parse, __encode);
+  static List<String> __encode(ContentLanguageHeader value) =>
+      [value._encode()];
 
   /// The list of language codes specified in the header.
   final Iterable<String> languages;
@@ -37,7 +37,7 @@ final class ContentLanguageHeader {
   /// Converts the [ContentLanguageHeader] instance into a string representation
   /// suitable for HTTP headers.
 
-  String toHeaderString() => languages.join(', ');
+  String _encode() => languages.join(', ');
 
   @override
   String toString() {

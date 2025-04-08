@@ -7,8 +7,8 @@ import 'package:relic/src/headers/extension/string_list_extensions.dart';
 /// It usually contains a single email address, but in edge cases, it could contain multiple
 /// email addresses separated by commas.
 final class FromHeader {
-  static const codec = HeaderCodec(FromHeader.parse, _encode);
-  static List<String> _encode(FromHeader value) => [value.toHeaderString()];
+  static const codec = HeaderCodec(FromHeader.parse, __encode);
+  static List<String> __encode(FromHeader value) => [value._encode()];
 
   /// A list of email addresses provided in the `From` header.
   final Iterable<String> emails;
@@ -38,7 +38,7 @@ final class FromHeader {
   /// Converts the [FromHeader] instance into a string representation
   /// suitable for HTTP headers.
 
-  String toHeaderString() => emails.join(', ');
+  String _encode() => emails.join(', ');
 
   @override
   String toString() {

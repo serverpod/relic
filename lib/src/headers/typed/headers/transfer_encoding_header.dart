@@ -7,9 +7,9 @@ import 'package:relic/src/headers/extension/string_list_extensions.dart';
 /// This class manages transfer encodings such as `chunked`, `compress`, `deflate`, and `gzip`.
 /// It provides functionality to parse and generate transfer encoding header values.
 final class TransferEncodingHeader {
-  static const codec = HeaderCodec(TransferEncodingHeader.parse, _encode);
-  static List<String> _encode(TransferEncodingHeader value) =>
-      [value.toHeaderString()];
+  static const codec = HeaderCodec(TransferEncodingHeader.parse, __encode);
+  static List<String> __encode(TransferEncodingHeader value) =>
+      [value._encode()];
 
   /// A list of transfer encodings.
   final List<TransferEncoding> encodings;
@@ -35,7 +35,7 @@ final class TransferEncodingHeader {
 
   /// Converts the [TransferEncodingHeader] instance into a string
   /// representation suitable for HTTP headers.
-  String toHeaderString() => encodings.map((e) => e.name).join(', ');
+  String _encode() => encodings.map((e) => e.name).join(', ');
 
   @override
   String toString() {
@@ -115,9 +115,6 @@ class TransferEncoding {
         throw FormatException('Invalid value');
     }
   }
-
-  /// Returns the string representation of the transfer encoding.
-  String toHeaderString() => name;
 
   @override
   String toString() => name;

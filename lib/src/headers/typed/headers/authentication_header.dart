@@ -2,9 +2,8 @@ import "package:relic/relic.dart";
 
 /// A class representing the HTTP Authentication header.
 final class AuthenticationHeader {
-  static const codec = HeaderCodec.single(AuthenticationHeader.parse, _encode);
-  static List<String> _encode(AuthenticationHeader value) =>
-      [value.toHeaderString()];
+  static const codec = HeaderCodec.single(AuthenticationHeader.parse, __encode);
+  static List<String> __encode(AuthenticationHeader value) => [value._encode()];
 
   /// The authentication scheme (e.g., "Basic", "Bearer", "Digest").
   final String scheme;
@@ -58,7 +57,7 @@ final class AuthenticationHeader {
 
   /// Converts the [AuthenticationHeader] instance into a string representation
   /// suitable for HTTP headers.
-  String toHeaderString() {
+  String _encode() {
     final paramsString = parameters.map((param) {
       if (param.key.isEmpty) return param.value;
       return '${param.key}="${param.value}"';

@@ -5,8 +5,8 @@ import 'package:relic/src/headers/extension/string_list_extensions.dart';
 ///
 /// This class manages media ranges and their associated quality values.
 final class AcceptHeader {
-  static const codec = HeaderCodec(AcceptHeader.parse, _encode);
-  static List<String> _encode(AcceptHeader value) => [value.toHeaderString()];
+  static const codec = HeaderCodec(AcceptHeader.parse, __encode);
+  static List<String> __encode(AcceptHeader value) => [value._encode()];
 
   /// The list of media ranges accepted by the client.
   final List<MediaRange> mediaRanges;
@@ -30,8 +30,7 @@ final class AcceptHeader {
   }
 
   /// Converts the [AcceptHeader] instance into a string representation suitable for HTTP headers.
-  String toHeaderString() =>
-      mediaRanges.map((mr) => mr.toHeaderString()).join(', ');
+  String _encode() => mediaRanges.map((mr) => mr._encode()).join(', ');
 
   @override
   String toString() => 'AcceptHeader(mediaRanges: $mediaRanges)';
@@ -88,7 +87,7 @@ class MediaRange {
   }
 
   /// Converts the [MediaRange] instance into a string representation suitable for HTTP headers.
-  String toHeaderString() {
+  String _encode() {
     final qualityStr = quality == 1.0 ? '' : ';q=$quality';
     return '$type/$subtype$qualityStr';
   }

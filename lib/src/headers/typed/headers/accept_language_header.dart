@@ -5,9 +5,8 @@ import 'package:relic/src/headers/extension/string_list_extensions.dart';
 ///
 /// This header specifies the natural languages that are preferred in the response.
 final class AcceptLanguageHeader {
-  static const codec = HeaderCodec(AcceptLanguageHeader.parse, _encode);
-  static List<String> _encode(AcceptLanguageHeader value) =>
-      [value.toHeaderString()];
+  static const codec = HeaderCodec(AcceptLanguageHeader.parse, __encode);
+  static List<String> __encode(AcceptLanguageHeader value) => [value._encode()];
 
   /// The list of languages that are accepted.
   final List<LanguageQuality>? languages;
@@ -61,9 +60,8 @@ final class AcceptLanguageHeader {
   }
 
   /// Converts the [AcceptLanguageHeader] instance into a string representation suitable for HTTP headers.
-  String toHeaderString() => isWildcard
-      ? '*'
-      : languages?.map((e) => e.toHeaderString()).join(', ') ?? '';
+  String _encode() =>
+      isWildcard ? '*' : languages?.map((e) => e._encode()).join(', ') ?? '';
 
   @override
   String toString() => 'AcceptLanguageHeader(languages: $languages)';
@@ -81,7 +79,7 @@ class LanguageQuality {
   LanguageQuality(this.language, [double? quality]) : quality = quality ?? 1.0;
 
   /// Converts the [LanguageQuality] instance into a string representation suitable for HTTP headers.
-  String toHeaderString() => quality == 1.0 ? language : '$language;q=$quality';
+  String _encode() => quality == 1.0 ? language : '$language;q=$quality';
 
   @override
   String toString() =>

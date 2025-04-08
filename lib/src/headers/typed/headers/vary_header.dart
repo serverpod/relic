@@ -7,8 +7,8 @@ import 'package:relic/src/headers/extension/string_list_extensions.dart';
 /// and can also handle the wildcard value "*", which indicates that the
 /// response varies on all request headers.
 final class VaryHeader {
-  static const codec = HeaderCodec(VaryHeader.parse, _encode);
-  static List<String> _encode(VaryHeader value) => [value.toHeaderString()];
+  static const codec = HeaderCodec(VaryHeader.parse, ___encode);
+  static List<String> ___encode(VaryHeader value) => [value._encode()];
 
   /// A list of headers that the response varies on.
   /// If the list contains only "*", it means all headers are varied on.
@@ -48,7 +48,7 @@ final class VaryHeader {
 
   /// Converts the [VaryHeader] instance into a string representation
   /// suitable for HTTP headers.
-  String toHeaderString() => isWildcard ? '*' : fields!.join(', ');
+  String _encode() => isWildcard ? '*' : fields!.join(', ');
 
   @override
   String toString() {

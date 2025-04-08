@@ -5,9 +5,8 @@ import 'package:relic/src/headers/extension/string_list_extensions.dart';
 ///
 /// This header specifies which types of browsing data should be cleared.
 final class ClearSiteDataHeader {
-  static const codec = HeaderCodec(ClearSiteDataHeader.parse, _encode);
-  static List<String> _encode(ClearSiteDataHeader value) =>
-      [value.toHeaderString()];
+  static const codec = HeaderCodec(ClearSiteDataHeader.parse, __encode);
+  static List<String> __encode(ClearSiteDataHeader value) => [value._encode()];
 
   /// The list of data types to be cleared.
   final List<ClearSiteDataType>? dataTypes;
@@ -55,7 +54,7 @@ final class ClearSiteDataHeader {
   /// Converts the [ClearSiteDataHeader] instance into a string representation suitable for HTTP headers.
   ///
   /// This method generates the header string by concatenating the data types.
-  String toHeaderString() {
+  String _encode() {
     return isWildcard
         ? '*'
         : dataTypes!.map((dataType) => '"${dataType.value}"').join(', ');
@@ -105,9 +104,6 @@ class ClearSiteDataType {
         throw FormatException('Invalid value');
     }
   }
-
-  /// Converts the [ClearSiteDataType] instance into a string representation.
-  String toHeaderString() => value;
 
   @override
   String toString() => 'ClearSiteDataType(value: $value)';

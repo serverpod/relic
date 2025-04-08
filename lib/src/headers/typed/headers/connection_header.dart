@@ -7,9 +7,8 @@ import 'package:relic/src/headers/extension/string_list_extensions.dart';
 /// directives (e.g., `upgrade, keep-alive`). It provides functionality to parse and generate
 /// connection header values.
 final class ConnectionHeader {
-  static const codec = HeaderCodec(ConnectionHeader.parse, _encode);
-  static List<String> _encode(ConnectionHeader value) =>
-      [value.toHeaderString()];
+  static const codec = HeaderCodec(ConnectionHeader.parse, __encode);
+  static List<String> __encode(ConnectionHeader value) => [value._encode()];
 
   /// A list of connection directives (e.g., `keep-alive`, `close`, `upgrade`).
   final List<ConnectionHeaderType> directives;
@@ -49,7 +48,7 @@ final class ConnectionHeader {
   /// Converts the [ConnectionHeader] instance into a string representation suitable for HTTP headers.
   ///
   /// This method generates the header string by concatenating the connection directives.
-  String toHeaderString() {
+  String _encode() {
     return directives.map((directive) => directive.value).join(', ');
   }
 
@@ -98,9 +97,6 @@ class ConnectionHeaderType {
         throw FormatException('Invalid value');
     }
   }
-
-  /// Returns the string representation of the connection directive.
-  String toHeaderString() => value;
 
   @override
   String toString() => 'ConnectionHeaderType(value: $value)';

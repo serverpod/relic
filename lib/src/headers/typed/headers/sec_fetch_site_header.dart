@@ -5,9 +5,8 @@ import "package:relic/relic.dart";
 /// This header indicates the relationship between the origin of the request
 /// initiator and the origin of the requested resource.
 final class SecFetchSiteHeader {
-  static const codec = HeaderCodec.single(SecFetchSiteHeader.parse, _encode);
-  static List<String> _encode(SecFetchSiteHeader value) =>
-      [value.toHeaderString()];
+  static const codec = HeaderCodec.single(SecFetchSiteHeader.parse, __encode);
+  static List<String> __encode(SecFetchSiteHeader value) => [value._encode()];
 
   /// The site value of the request.
   final String site;
@@ -51,7 +50,7 @@ final class SecFetchSiteHeader {
   /// Converts the [SecFetchSiteHeader] instance into a string representation
   /// suitable for HTTP headers.
 
-  String toHeaderString() => site;
+  String _encode() => site;
 
   @override
   String toString() {

@@ -9,9 +9,9 @@ import 'package:relic/src/headers/extension/string_list_extensions.dart';
 /// construct the appropriate header string.
 final class ContentDispositionHeader {
   static const codec =
-      HeaderCodec.single(ContentDispositionHeader.parse, _encode);
-  static List<String> _encode(ContentDispositionHeader value) =>
-      [value.toHeaderString()];
+      HeaderCodec.single(ContentDispositionHeader.parse, __encode);
+  static List<String> __encode(ContentDispositionHeader value) =>
+      [value._encode()];
 
   /// The disposition type, usually "inline", "attachment", or "form-data".
   final String type;
@@ -54,9 +54,9 @@ final class ContentDispositionHeader {
 
   /// Converts the [ContentDispositionHeader] instance into a string
   /// representation suitable for HTTP headers.
-  String toHeaderString() {
+  String _encode() {
     List<String> parts = [type];
-    parts.addAll(parameters.map((p) => p.toHeaderString()));
+    parts.addAll(parameters.map((p) => p._encode()));
     return parts.join('; ');
   }
 
@@ -129,7 +129,7 @@ class ContentDispositionParameter {
 
   /// Converts the [ContentDispositionParameter] instance into a string
   /// representation suitable for HTTP headers.
-  String toHeaderString() {
+  String _encode() {
     if (isExtended) {
       // If language is provided, format as encoding'language'filename
       if (language != null) {

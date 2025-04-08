@@ -4,9 +4,8 @@ import "package:relic/relic.dart";
 ///
 /// This header indicates the mode of the request.
 final class SecFetchModeHeader {
-  static const codec = HeaderCodec.single(SecFetchModeHeader.parse, _encode);
-  static List<String> _encode(SecFetchModeHeader value) =>
-      [value.toHeaderString()];
+  static const codec = HeaderCodec.single(SecFetchModeHeader.parse, __encode);
+  static List<String> __encode(SecFetchModeHeader value) => [value._encode()];
 
   /// The mode value of the request.
   final String mode;
@@ -58,7 +57,7 @@ final class SecFetchModeHeader {
   /// Converts the [SecFetchModeHeader] instance into a string representation
   /// suitable for HTTP headers.
 
-  String toHeaderString() => mode;
+  String _encode() => mode;
 
   @override
   String toString() {

@@ -8,8 +8,8 @@ import "package:relic/relic.dart";
 /// parse and generate range header values for different range units like
 /// bytes or custom units.
 final class RangeHeader {
-  static const codec = HeaderCodec.single(RangeHeader.parse, _encode);
-  static List<String> _encode(RangeHeader value) => [value.toHeaderString()];
+  static const codec = HeaderCodec.single(RangeHeader.parse, __encode);
+  static List<String> __encode(RangeHeader value) => [value._encode()];
 
   /// The unit of the range (e.g., "bytes").
   final String unit;
@@ -71,8 +71,8 @@ final class RangeHeader {
 
   /// Converts the [RangeHeader] instance into a string representation
   /// suitable for HTTP headers.
-  String toHeaderString() {
-    final rangesStr = ranges.map((range) => range.toHeaderString()).join(', ');
+  String _encode() {
+    final rangesStr = ranges.map((range) => range._encode()).join(', ');
     return '$unit=$rangesStr';
   }
 
@@ -103,7 +103,7 @@ class Range {
 
   /// Converts the [Range] instance into a string representation suitable
   /// for HTTP headers.
-  String toHeaderString() {
+  String _encode() {
     final startStr = start?.toString() ?? '';
     final endStr = end?.toString() ?? '';
     return '$startStr-$endStr';

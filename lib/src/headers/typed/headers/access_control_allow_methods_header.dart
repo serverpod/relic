@@ -8,9 +8,9 @@ import 'package:relic/src/method/request_method.dart';
 /// in response to a preflight request.
 final class AccessControlAllowMethodsHeader {
   static const codec =
-      HeaderCodec(AccessControlAllowMethodsHeader.parse, _encode);
-  static List<String> _encode(AccessControlAllowMethodsHeader value) =>
-      [value.toHeaderString()];
+      HeaderCodec(AccessControlAllowMethodsHeader.parse, __encode);
+  static List<String> __encode(AccessControlAllowMethodsHeader value) =>
+      [value._encode()];
 
   /// The list of methods that are allowed.
   final List<RequestMethod>? methods;
@@ -55,7 +55,7 @@ final class AccessControlAllowMethodsHeader {
   /// Converts the [AccessControlAllowMethodsHeader] instance into a string
   /// representation suitable for HTTP headers.
 
-  String toHeaderString() => isWildcard ? '*' : methods!.join(', ');
+  String _encode() => isWildcard ? '*' : methods!.join(', ');
 
   @override
   String toString() =>

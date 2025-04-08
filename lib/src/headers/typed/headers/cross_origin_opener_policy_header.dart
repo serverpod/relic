@@ -5,9 +5,9 @@ import "package:relic/relic.dart";
 /// This header specifies the policy for opening cross-origin resources.
 final class CrossOriginOpenerPolicyHeader {
   static const codec =
-      HeaderCodec.single(CrossOriginOpenerPolicyHeader.parse, _encode);
-  static List<String> _encode(CrossOriginOpenerPolicyHeader value) =>
-      [value.toHeaderString()];
+      HeaderCodec.single(CrossOriginOpenerPolicyHeader.parse, __encode);
+  static List<String> __encode(CrossOriginOpenerPolicyHeader value) =>
+      [value._encode()];
 
   /// The policy value of the header.
   final String policy;
@@ -48,7 +48,7 @@ final class CrossOriginOpenerPolicyHeader {
   /// Converts the [CrossOriginOpenerPolicyHeader] instance into a string
   /// representation suitable for HTTP headers.
 
-  String toHeaderString() => policy;
+  String _encode() => policy;
 
   @override
   String toString() {

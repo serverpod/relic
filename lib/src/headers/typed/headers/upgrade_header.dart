@@ -6,8 +6,8 @@ import 'package:relic/src/headers/extension/string_list_extensions.dart';
 /// This class manages the protocols that the client supports for upgrading the
 /// connection.
 final class UpgradeHeader {
-  static const codec = HeaderCodec(UpgradeHeader.parse, _encode);
-  static List<String> _encode(UpgradeHeader value) => [value.toHeaderString()];
+  static const codec = HeaderCodec(UpgradeHeader.parse, __encode);
+  static List<String> __encode(UpgradeHeader value) => [value._encode()];
 
   /// The list of protocols that the client supports.
   final List<UpgradeProtocol> protocols;
@@ -33,8 +33,8 @@ final class UpgradeHeader {
   /// Converts the [UpgradeHeader] instance into a string representation
   /// suitable for HTTP headers.
 
-  String toHeaderString() {
-    return protocols.map((protocol) => protocol.toHeaderString()).join(', ');
+  String _encode() {
+    return protocols.map((protocol) => protocol._encode()).join(', ');
   }
 
   @override
@@ -91,7 +91,7 @@ class UpgradeProtocol {
   }
 
   /// Converts the [UpgradeProtocol] instance into a string representation.
-  String toHeaderString() => '$protocol${version != null ? '/$version' : ''}';
+  String _encode() => '$protocol${version != null ? '/$version' : ''}';
 
   @override
   String toString() {

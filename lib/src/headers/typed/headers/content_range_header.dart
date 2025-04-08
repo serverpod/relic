@@ -5,9 +5,8 @@ import "package:relic/relic.dart";
 /// This class is used to manage byte ranges in HTTP requests or responses,
 /// including cases for unsatisfiable range requests.
 final class ContentRangeHeader {
-  static const codec = HeaderCodec.single(ContentRangeHeader.parse, _encode);
-  static List<String> _encode(ContentRangeHeader value) =>
-      [value.toHeaderString()];
+  static const codec = HeaderCodec.single(ContentRangeHeader.parse, __encode);
+  static List<String> __encode(ContentRangeHeader value) => [value._encode()];
 
   /// The unit of the range, e.g. "bytes".
   final String unit;
@@ -70,7 +69,7 @@ final class ContentRangeHeader {
   ///
   /// If the total size is unknown, it uses "*" in place of the total size.
 
-  String toHeaderString() {
+  String _encode() {
     final sizeStr = size?.toString() ?? '*';
     if (start == null && end == null) {
       return '$unit */$sizeStr';

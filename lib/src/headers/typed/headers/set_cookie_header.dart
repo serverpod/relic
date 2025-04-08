@@ -9,9 +9,8 @@ import 'util/cookie_util.dart';
 ///
 /// This class manages the parsing and representation of set cookie.
 final class SetCookieHeader {
-  static const codec = HeaderCodec.single(SetCookieHeader.parse, _encode);
-  static List<String> _encode(SetCookieHeader value) =>
-      [value.toHeaderString()];
+  static const codec = HeaderCodec.single(SetCookieHeader.parse, __encode);
+  static List<String> __encode(SetCookieHeader value) => [value._encode()];
 
   /// The keys used for the Set-Cookie header.
   static const String _expires = 'Expires=';
@@ -182,7 +181,7 @@ final class SetCookieHeader {
 
   /// Converts the [Cookie] instance into a string representation suitable for HTTP headers.
 
-  String toHeaderString() {
+  String _encode() {
     // Use a set to ensure unique attributes
     final attributes = <String>{};
     if (name.isNotEmpty) attributes.add('$name=$value');

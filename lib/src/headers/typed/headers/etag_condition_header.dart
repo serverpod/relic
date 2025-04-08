@@ -18,16 +18,16 @@ abstract class ETagConditionHeader {
         isWildcard = true;
 
   /// Converts the header instance to its string representation.
-  String toHeaderString() {
+  String _encode() {
     if (isWildcard) return '*';
-    return etags.map((e) => e.toHeaderString()).join(', ');
+    return etags.map((e) => e.encode()).join(', ');
   }
 }
 
 /// A class representing the HTTP If-Match header.
 final class IfMatchHeader extends ETagConditionHeader {
-  static const codec = HeaderCodec(IfMatchHeader.parse, _encode);
-  static List<String> _encode(IfMatchHeader value) => [value.toHeaderString()];
+  static const codec = HeaderCodec(IfMatchHeader.parse, __encode);
+  static List<String> __encode(IfMatchHeader value) => [value._encode()];
 
   /// Creates an [IfMatchHeader] with specific ETags.
   const IfMatchHeader.etags(super.etags) : super.etags();
@@ -66,9 +66,8 @@ final class IfMatchHeader extends ETagConditionHeader {
 
 /// A class representing the HTTP If-None-Match header.
 final class IfNoneMatchHeader extends ETagConditionHeader {
-  static const codec = HeaderCodec(IfNoneMatchHeader.parse, _encode);
-  static List<String> _encode(IfNoneMatchHeader value) =>
-      [value.toHeaderString()];
+  static const codec = HeaderCodec(IfNoneMatchHeader.parse, __encode);
+  static List<String> __encode(IfNoneMatchHeader value) => [value._encode()];
 
   /// Creates an [IfNoneMatchHeader] with specific ETags.
   const IfNoneMatchHeader.etags(super.etags) : super.etags();
