@@ -13,7 +13,7 @@ String validateCookieName(final String name) {
     ',',
     ';',
     ':',
-    '\',
+    r'\',
     '"',
     '/',
     '[',
