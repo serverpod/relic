@@ -26,7 +26,7 @@ dev_dependencies:
   # The following are not used directly, but are included transitively.
   # Due to bad semver hygiene we need to bound the versions higher than
   # our direct dependencies indicate.
-  file: ^7.0.0
+  file: ^7.0.0 # ignore: sort_pub_dependencies
   frontend_server_client: ^4.0.0
   meta: ^1.9.1
   pub_semver: ^2.1.4
