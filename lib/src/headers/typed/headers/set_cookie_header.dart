@@ -1,5 +1,5 @@
-import "package:relic/relic.dart";
 import 'package:http_parser/http_parser.dart';
+import '../../../../relic.dart';
 
 import '../../codecs/common_types_codecs.dart';
 import '../../extension/string_list_extensions.dart';
@@ -10,7 +10,8 @@ import 'util/cookie_util.dart';
 /// This class manages the parsing and representation of set cookie.
 final class SetCookieHeader {
   static const codec = HeaderCodec.single(SetCookieHeader.parse, __encode);
-  static List<String> __encode(SetCookieHeader value) => [value._encode()];
+  static List<String> __encode(final SetCookieHeader value) =>
+      [value._encode()];
 
   /// The keys used for the Set-Cookie header.
   static const String _expires = 'Expires=';
@@ -56,8 +57,8 @@ final class SetCookieHeader {
 
   /// Constructs a [Cookie] instance with the specified name and value.
   SetCookieHeader({
-    required String name,
-    required String value,
+    required final String name,
+    required final String value,
     this.expires,
     this.maxAge,
     this.domain,
@@ -68,10 +69,10 @@ final class SetCookieHeader {
   })  : name = validateCookieName(name),
         value = validateCookieValue(value);
 
-  factory SetCookieHeader.parse(String value) {
-    var splitValue = value.splitTrimAndFilterUnique(separator: ';');
+  factory SetCookieHeader.parse(final String value) {
+    final splitValue = value.splitTrimAndFilterUnique(separator: ';');
     if (splitValue.isEmpty) {
-      throw FormatException('Value cannot be empty');
+      throw const FormatException('Value cannot be empty');
     }
 
     bool secure = false;
@@ -84,17 +85,18 @@ final class SetCookieHeader {
     Uri? domain;
     Uri? path;
 
-    for (var cookie in splitValue) {
+    for (final cookie in splitValue) {
       // Handle SameSite attribute
       if (cookie.toLowerCase().contains(_sameSite.toLowerCase())) {
         if (sameSite != null) {
-          throw FormatException('Supplied multiple SameSite attributes');
+          throw const FormatException('Supplied multiple SameSite attributes');
         }
-        var samesiteValue = cookie.split('=')[1].trim();
+        final samesiteValue = cookie.split('=')[1].trim();
         sameSite = SameSite.values.firstWhere(
-          (sameSite) =>
+          (final sameSite) =>
               sameSite.name.toLowerCase() == samesiteValue.toLowerCase(),
-          orElse: () => throw FormatException('Invalid SameSite attribute'),
+          orElse: () =>
+              throw const FormatException('Invalid SameSite attribute'),
         );
         continue;
       }
@@ -102,9 +104,9 @@ final class SetCookieHeader {
       // Handle Path attribute;
       if (cookie.toLowerCase().contains(_path.toLowerCase())) {
         if (path != null) {
-          throw FormatException('Supplied multiple Path attributes');
+          throw const FormatException('Supplied multiple Path attributes');
         }
-        var pathValue = cookie.split('=')[1].trim();
+        final pathValue = cookie.split('=')[1].trim();
         path = parseUri(pathValue);
         continue;
       }
@@ -112,9 +114,9 @@ final class SetCookieHeader {
       // Handle Domain attribute
       if (cookie.toLowerCase().contains(_domain.toLowerCase())) {
         if (domain != null) {
-          throw FormatException('Supplied multiple Domain attributes');
+          throw const FormatException('Supplied multiple Domain attributes');
         }
-        var domainValue = cookie.split('=')[1].trim();
+        final domainValue = cookie.split('=')[1].trim();
         domain = parseUri(domainValue);
         continue;
       }
@@ -122,9 +124,9 @@ final class SetCookieHeader {
       // Handle Max-Age attribute
       if (cookie.toLowerCase().contains(_maxAge.toLowerCase())) {
         if (maxAge != null) {
-          throw FormatException('Supplied multiple Max-Age attributes');
+          throw const FormatException('Supplied multiple Max-Age attributes');
         }
-        var maxAgeValue = cookie.split('=')[1].trim();
+        final maxAgeValue = cookie.split('=')[1].trim();
         maxAge = parseInt(maxAgeValue);
         continue;
       }
@@ -132,9 +134,9 @@ final class SetCookieHeader {
       // Handle Expires attribute
       if (cookie.toLowerCase().contains(_expires.toLowerCase())) {
         if (expires != null) {
-          throw FormatException('Supplied multiple Expires attributes');
+          throw const FormatException('Supplied multiple Expires attributes');
         }
-        var expiresValue = cookie.split('=')[1].trim();
+        final expiresValue = cookie.split('=')[1].trim();
         expires = parseDate(expiresValue);
         continue;
       }
@@ -155,7 +157,8 @@ final class SetCookieHeader {
       // If non of the other attributes are present, then the cookie is a name and value pair
       if (cookie.contains('=')) {
         if (cookieName.isNotEmpty || cookieValue.isNotEmpty) {
-          throw FormatException('Supplied multiple Name and Value attributes');
+          throw const FormatException(
+              'Supplied multiple Name and Value attributes');
         }
         final parts = cookie.split('=');
         cookieName = parts.first.trim();
@@ -163,7 +166,7 @@ final class SetCookieHeader {
         continue;
       }
 
-      throw FormatException('Invalid cookie format');
+      throw const FormatException('Invalid cookie format');
     }
 
     return SetCookieHeader(
@@ -222,16 +225,16 @@ final class SetCookieHeader {
 final class SameSite {
   /// Default value, cookie with this value will generally not be sent on
   /// cross-site requests, unless the user is navigated to the original site.
-  static const lax = SameSite._("Lax");
+  static const lax = SameSite._('Lax');
 
   /// Cookie with this value will never be sent on cross-site requests.
-  static const strict = SameSite._("Strict");
+  static const strict = SameSite._('Strict');
 
   /// Cookie with this value will be sent in all requests.
   ///
   /// [Cookie.secure] must also be set to true, otherwise the `none` value
   /// will have no effect.
-  static const none = SameSite._("None");
+  static const none = SameSite._('None');
 
   static const List<SameSite> values = [lax, strict, none];
 
@@ -240,5 +243,5 @@ final class SameSite {
   const SameSite._(this.name);
 
   @override
-  String toString() => "SameSite($name)";
+  String toString() => 'SameSite($name)';
 }

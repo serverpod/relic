@@ -1,9 +1,9 @@
 import 'package:relic/relic.dart';
-import 'package:test/test.dart';
 import 'package:relic/src/headers/standard_headers_extensions.dart';
+import 'package:test/test.dart';
 
-import '../headers_test_utils.dart';
 import '../docs/strict_validation_docs.dart';
+import '../headers_test_utils.dart';
 
 /// Reference: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy
 /// About empty value test, check the [StrictValidationDocs] class for more details.
@@ -24,11 +24,11 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (h) => h.contentSecurityPolicy,
+            touchHeaders: (final h) => h.contentSecurityPolicy,
             headers: {'content-security-policy': ''},
           ),
           throwsA(isA<BadRequestException>().having(
-            (e) => e.message,
+            (final e) => e.message,
             'message',
             contains('Value cannot be empty'),
           )),
@@ -41,9 +41,9 @@ void main() {
       'then the server does not respond with a bad request if the headers '
       'is not actually used',
       () async {
-        var headers = await getServerRequestHeaders(
+        final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (_) {},
+          touchHeaders: (final _) {},
           headers: {'content-security-policy': ''},
         );
 
@@ -54,9 +54,9 @@ void main() {
     test(
       'when a valid Content-Security-Policy header is passed then it should parse the directives correctly',
       () async {
-        var headers = await getServerRequestHeaders(
+        final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (_) {},
+          touchHeaders: (final _) {},
           headers: {
             'content-security-policy': "default-src 'self'; script-src 'none'"
           },
@@ -74,9 +74,9 @@ void main() {
     test(
       'when a Content-Security-Policy header with multiple directives is passed then it should parse correctly',
       () async {
-        var headers = await getServerRequestHeaders(
+        final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (_) {},
+          touchHeaders: (final _) {},
           headers: {
             'content-security-policy':
                 "default-src 'self'; img-src *; media-src media1.com media2.com"
@@ -97,9 +97,9 @@ void main() {
     test(
       'when no Content-Security-Policy header is passed then it should return null',
       () async {
-        var headers = await getServerRequestHeaders(
+        final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (h) => h.contentSecurityPolicy,
+          touchHeaders: (final h) => h.contentSecurityPolicy,
           headers: {},
         );
 
@@ -122,9 +122,9 @@ void main() {
       test(
         'then it should return null',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
-            touchHeaders: (_) {},
+            touchHeaders: (final _) {},
             headers: {'content-security-policy': ''},
           );
 

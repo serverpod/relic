@@ -1,5 +1,6 @@
-import "package:relic/relic.dart";
 import 'package:http_parser/http_parser.dart';
+import '../../../../relic.dart';
+
 import 'etag_header.dart';
 
 /// A class representing the HTTP `If-Range` header.
@@ -7,7 +8,7 @@ import 'etag_header.dart';
 /// The `If-Range` header can contain either an HTTP date or an ETag.
 final class IfRangeHeader {
   static const codec = HeaderCodec.single(IfRangeHeader.parse, __encode);
-  static List<String> __encode(IfRangeHeader value) => [value._encode()];
+  static List<String> __encode(final IfRangeHeader value) => [value._encode()];
 
   /// The HTTP date if the `If-Range` header contains a date.
   final DateTime? lastModified;
@@ -23,17 +24,17 @@ final class IfRangeHeader {
     this.etag,
   }) {
     if (lastModified == null && etag == null) {
-      throw FormatException('Either date or etag must be provided');
+      throw const FormatException('Either date or etag must be provided');
     }
   }
 
   /// Parses the `If-Range` header value and returns an [IfRangeHeader] instance.
   ///
   /// Determines if the value is an ETag or a date and creates the appropriate instance.
-  factory IfRangeHeader.parse(String value) {
+  factory IfRangeHeader.parse(final String value) {
     final trimmed = value.trim();
     if (trimmed.isEmpty) {
-      throw FormatException('Value cannot be empty');
+      throw const FormatException('Value cannot be empty');
     }
 
     // Check if the value is a valid ETag
@@ -45,7 +46,7 @@ final class IfRangeHeader {
       final parsedDate = parseHttpDate(trimmed);
       return IfRangeHeader(lastModified: parsedDate);
     } catch (_) {
-      throw FormatException('Invalid format');
+      throw const FormatException('Invalid format');
     }
   }
 

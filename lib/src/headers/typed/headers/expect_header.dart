@@ -1,4 +1,4 @@
-import "package:relic/relic.dart";
+import '../../../../relic.dart';
 
 /// A class representing the HTTP Expect header.
 ///
@@ -6,7 +6,7 @@ import "package:relic/relic.dart";
 /// It provides functionality to parse and generate Expect header values.
 final class ExpectHeader {
   static const codec = HeaderCodec.single(ExpectHeader.parse, __encode);
-  static List<String> __encode(ExpectHeader value) => [value._encode()];
+  static List<String> __encode(final ExpectHeader value) => [value._encode()];
 
   /// The string representation of the expectation directive.
   final String value;
@@ -21,16 +21,16 @@ final class ExpectHeader {
 
   /// Parses a [value] and returns the corresponding [ExpectHeader] instance.
   /// If the value does not match any predefined types, it returns a custom instance.
-  factory ExpectHeader.parse(String value) {
+  factory ExpectHeader.parse(final String value) {
     final trimmed = value.trim();
     if (trimmed.isEmpty) {
-      throw FormatException('Value cannot be empty');
+      throw const FormatException('Value cannot be empty');
     }
     switch (trimmed) {
       case _continue100:
         return continue100;
       default:
-        throw FormatException('Invalid value');
+        throw const FormatException('Invalid value');
     }
   }
 

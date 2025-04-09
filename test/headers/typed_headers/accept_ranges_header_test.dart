@@ -24,11 +24,11 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (h) => h.acceptRanges,
+            touchHeaders: (final h) => h.acceptRanges,
             headers: {'accept-ranges': ''},
           ),
           throwsA(isA<BadRequestException>().having(
-            (e) => e.message,
+            (final e) => e.message,
             'message',
             contains('Value cannot be empty'),
           )),
@@ -41,9 +41,9 @@ void main() {
       'then the server does not respond with a bad request if the headers '
       'is not actually used',
       () async {
-        var headers = await getServerRequestHeaders(
+        final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (_) {},
+          touchHeaders: (final _) {},
           headers: {'accept-ranges': ''},
         );
 
@@ -54,9 +54,9 @@ void main() {
     test(
       'when a valid Accept-Ranges header is passed then it should parse the range unit correctly',
       () async {
-        var headers = await getServerRequestHeaders(
+        final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (h) => h.acceptRanges,
+          touchHeaders: (final h) => h.acceptRanges,
           headers: {'accept-ranges': 'bytes'},
         );
 
@@ -68,9 +68,9 @@ void main() {
     test(
       'when a Accept-Ranges header with "none" is passed then it should parse correctly',
       () async {
-        var headers = await getServerRequestHeaders(
+        final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (h) => h.acceptRanges,
+          touchHeaders: (final h) => h.acceptRanges,
           headers: {'accept-ranges': 'none'},
         );
 
@@ -82,9 +82,9 @@ void main() {
     test(
       'when no Accept-Ranges header is passed then it should return null',
       () async {
-        var headers = await getServerRequestHeaders(
+        final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (h) => h.acceptRanges,
+          touchHeaders: (final h) => h.acceptRanges,
           headers: {},
         );
 
@@ -106,9 +106,9 @@ void main() {
       test(
         'then it should return null',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
-            touchHeaders: (_) {},
+            touchHeaders: (final _) {},
             headers: {'accept-ranges': ''},
           );
 

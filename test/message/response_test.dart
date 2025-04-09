@@ -1,10 +1,10 @@
-import 'package:relic/relic.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:http_parser/http_parser.dart';
 import 'package:relic/relic.dart' hide Request;
+import 'package:relic/relic.dart';
 import 'package:relic/src/headers/standard_headers_extensions.dart';
 import 'package:test/test.dart';
 
@@ -13,13 +13,13 @@ import '../util/test_util.dart';
 void main() {
   group('Given a response with a String body', () {
     test('when readAsString is called then it returns the correct string', () {
-      var response = Response.ok(body: Body.fromString('hello, world'));
+      final response = Response.ok(body: Body.fromString('hello, world'));
       expect(response.readAsString(), completion(equals('hello, world')));
     });
 
     test('when read is called then it returns the correct byte list', () {
-      var helloWorldBytes = [...helloBytes, ...worldBytes];
-      var response = Response.ok(body: Body.fromString('hello, world'));
+      final helloWorldBytes = [...helloBytes, ...worldBytes];
+      final response = Response.ok(body: Body.fromString('hello, world'));
       expect(response.read().toList(), completion(equals([helloWorldBytes])));
     });
   });
@@ -27,8 +27,8 @@ void main() {
   test(
       'Given a response with a Uint8List body when read then it does not copy the body',
       () async {
-    var bytes = Uint8List(10);
-    var response = Response.ok(body: Body.fromData(bytes));
+    final bytes = Uint8List(10);
+    final response = Response.ok(body: Body.fromData(bytes));
     expect(response.body.contentLength, 10);
     expect(await response.read().single, same(bytes));
   });
@@ -36,8 +36,8 @@ void main() {
   test(
       'Given a response with a Stream<Uint8List> body when read then it does not copy the body',
       () async {
-    var bytes = Stream.value(Uint8List.fromList([1, 2, 3, 4]));
-    var response = Response.ok(body: Body.fromDataStream(bytes));
+    final bytes = Stream.value(Uint8List.fromList([1, 2, 3, 4]));
+    final response = Response.ok(body: Body.fromDataStream(bytes));
     expect(response.read(), same(bytes));
   });
 
@@ -45,7 +45,7 @@ void main() {
     test(
         'when readAsString is called then it sets the body to "Internal Server Error"',
         () {
-      var response = Response.internalServerError();
+      final response = Response.internalServerError();
       expect(
         response.readAsString(),
         completion(equals('Internal Server Error')),
@@ -53,8 +53,8 @@ void main() {
     });
 
     test('when checked then it sets the content-type header to text/plain', () {
-      var response = Response.internalServerError();
-      var contentType = response.body.getContentType();
+      final response = Response.internalServerError();
+      final contentType = response.body.getContentType();
       expect(
         contentType?.primaryType,
         equals('text'),
@@ -73,12 +73,12 @@ void main() {
 
   group('Given a Response.badRequest', () {
     test('when no body is supplied then it results in "Bad Request"', () {
-      var response = Response.badRequest();
+      final response = Response.badRequest();
       expect(response.readAsString(), completion(equals('Bad Request')));
     });
 
     test('when a body is set then it returns the correct body', () {
-      var response =
+      final response =
           Response.badRequest(body: Body.fromString('missing token'));
       expect(response.readAsString(), completion(equals('missing token')));
     });
@@ -87,7 +87,7 @@ void main() {
   group('Given a Response.unauthorized', () {
     test('when a body is set then it returns the correct body and status code',
         () {
-      var response =
+      final response =
           Response.unauthorized(body: Body.fromString('request unauthorized'));
       expect(
           response.readAsString(), completion(equals('request unauthorized')));
@@ -98,12 +98,12 @@ void main() {
   group('Given a Response redirect', () {
     test('when a String is used then it sets the location header correctly',
         () {
-      var response = Response.found(Uri.parse('/foo'));
+      final response = Response.found(Uri.parse('/foo'));
       expect(response.headers.location.toString(), equals('/foo'));
     });
 
     test('when a Uri is used then it sets the location header correctly', () {
-      var response = Response.found(Uri(path: '/foo'));
+      final response = Response.found(Uri(path: '/foo'));
       expect(response.headers.location.toString(), equals('/foo'));
     });
   });
@@ -119,7 +119,7 @@ void main() {
       expect(
         Response.ok(
           body: Body.fromString('okay!'),
-          headers: Headers.build((mh) =>
+          headers: Headers.build((final mh) =>
               mh.expires = parseHttpDate('Sun, 06 Nov 1994 08:49:37 GMT')),
         ).headers.expires,
         equals(DateTime.parse('1994-11-06 08:49:37z')),
@@ -140,7 +140,7 @@ void main() {
       expect(
         Response.ok(
           body: Body.fromString('okay!'),
-          headers: Headers.build((mh) =>
+          headers: Headers.build((final mh) =>
               mh.lastModified = parseHttpDate('Sun, 06 Nov 1994 08:49:37 GMT')),
         ).headers.lastModified,
         equals(DateTime.parse('1994-11-06 08:49:37z')),
@@ -152,17 +152,18 @@ void main() {
     test(
         'when no arguments are provided then it returns an instance with equal values',
         () {
-      var controller = StreamController<Object>();
+      final controller = StreamController<Object>();
 
-      var response = Response(
+      final response = Response(
         345,
         body: Body.fromString('hèllo, world'),
         encoding: latin1,
-        headers: Headers.build((mh) => mh['header1'] = ['header value 1']),
+        headers:
+            Headers.build((final mh) => mh['header1'] = ['header value 1']),
         context: {'context1': 'context value 1'},
       );
 
-      var copy = response.copyWith();
+      final copy = response.copyWith();
 
       expect(copy.statusCode, response.statusCode);
       expect(copy.readAsString(), completion('hèllo, world'));
@@ -180,25 +181,25 @@ void main() {
     });
 
     test('when the original response is read then it allows reading', () {
-      var response = Response.ok(body: null);
-      var changed = response.copyWith();
+      final response = Response.ok(body: null);
+      final changed = response.copyWith();
 
       expect(response.read().toList(), completion(isEmpty));
       expect(changed.read, throwsStateError);
     });
 
     test('when the changed response is read then it allows reading', () {
-      var response = Response.ok(body: null);
-      var changed = response.copyWith();
+      final response = Response.ok(body: null);
+      final changed = response.copyWith();
 
       expect(changed.read().toList(), completion(isEmpty));
       expect(response.read, throwsStateError);
     });
 
     test('when another changed response is read then it allows reading', () {
-      var response = Response.ok(body: null);
-      var changed1 = response.copyWith();
-      var changed2 = response.copyWith();
+      final response = Response.ok(body: null);
+      final changed1 = response.copyWith();
+      final changed2 = response.copyWith();
 
       expect(changed2.read().toList(), completion(isEmpty));
       expect(changed1.read, throwsStateError);

@@ -1,5 +1,5 @@
-import "package:relic/relic.dart";
-import 'package:relic/src/headers/extension/string_list_extensions.dart';
+import '../../../../relic.dart';
+import '../../extension/string_list_extensions.dart';
 
 /// A class representing the HTTP Content-Security-Policy (CSP) header.
 ///
@@ -8,7 +8,7 @@ import 'package:relic/src/headers/extension/string_list_extensions.dart';
 final class ContentSecurityPolicyHeader {
   static const codec =
       HeaderCodec.single(ContentSecurityPolicyHeader.parse, __encode);
-  static List<String> __encode(ContentSecurityPolicyHeader value) =>
+  static List<String> __encode(final ContentSecurityPolicyHeader value) =>
       [value._encode()];
 
   /// A list of CSP directives.
@@ -23,14 +23,15 @@ final class ContentSecurityPolicyHeader {
   ///
   /// This method splits the header value by semicolons, trims each directive,
   /// and processes the directive and its values.
-  factory ContentSecurityPolicyHeader.parse(String value) {
+  factory ContentSecurityPolicyHeader.parse(final String value) {
     final splitValues = value.splitTrimAndFilterUnique(separator: ';');
     if (splitValues.isEmpty) {
-      throw FormatException('Value cannot be empty');
+      throw const FormatException('Value cannot be empty');
     }
 
-    var directiveSeparator = RegExp(r'\s+');
-    final directives = splitValues.map<ContentSecurityPolicyDirective>((part) {
+    final directiveSeparator = RegExp(r'\s+');
+    final directives =
+        splitValues.map<ContentSecurityPolicyDirective>((final part) {
       final directiveParts = part.split(directiveSeparator);
       final name = directiveParts.first;
       final values = directiveParts.skip(1).toList();
@@ -47,7 +48,7 @@ final class ContentSecurityPolicyHeader {
   /// representation suitable for HTTP headers.
 
   String _encode() {
-    return directives.map((directive) => directive._encode()).join('; ');
+    return directives.map((final directive) => directive._encode()).join('; ');
   }
 
   @override

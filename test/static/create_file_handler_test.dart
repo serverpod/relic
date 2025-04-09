@@ -1,7 +1,7 @@
-import 'package:relic/relic.dart';
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
+import 'package:relic/relic.dart';
 import 'package:relic/src/headers/standard_headers_extensions.dart';
 import 'package:test/test.dart';
 import 'package:test_descriptor/test_descriptor.dart' as d;
@@ -83,7 +83,7 @@ void main() {
         handler,
         '/file.txt',
         headers: Headers.build(
-          (mh) => mh.range = RangeHeader.parse('bytes=0-4'),
+          (final mh) => mh.range = RangeHeader.parse('bytes=0-4'),
         ),
       );
       expect(response.statusCode, equals(HttpStatus.partialContent));
@@ -104,7 +104,7 @@ void main() {
         handler,
         '/file.txt',
         headers: Headers.build(
-          (mh) => mh.range = RangeHeader.parse('bytes=0-9'),
+          (final mh) => mh.range = RangeHeader.parse('bytes=0-9'),
         ),
       );
       expect(
@@ -131,7 +131,7 @@ void main() {
         handler,
         '/file.txt',
         headers: Headers.build(
-          (mh) => mh.range = RangeHeader.parse('bytes=8-9'),
+          (final mh) => mh.range = RangeHeader.parse('bytes=8-9'),
         ),
       );
 
@@ -158,7 +158,7 @@ void main() {
         handler,
         '/file.txt',
         headers: Headers.build(
-          (mh) => mh.range = RangeHeader.parse('bytes=2-1'),
+          (final mh) => mh.range = RangeHeader.parse('bytes=2-1'),
         ),
       );
       expect(response.statusCode, equals(HttpStatus.ok));
@@ -174,7 +174,7 @@ void main() {
         handler,
         '/file.txt',
         headers: Headers.build(
-          (mh) => mh.range = RangeHeader.parse('bytes=2-1'),
+          (final mh) => mh.range = RangeHeader.parse('bytes=2-1'),
         ),
       );
       expect(response.statusCode, equals(HttpStatus.ok));

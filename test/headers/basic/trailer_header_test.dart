@@ -25,10 +25,10 @@ void main() {
           getServerRequestHeaders(
             server: server,
             headers: {'trailer': ''},
-            touchHeaders: (h) => h.trailer,
+            touchHeaders: (final h) => h.trailer,
           ),
           throwsA(isA<BadRequestException>().having(
-            (e) => e.message,
+            (final e) => e.message,
             'message',
             contains('Value cannot be empty'),
           )),
@@ -41,9 +41,9 @@ void main() {
       'then the server does not respond with a bad request if the headers '
       'is not actually used',
       () async {
-        var headers = await getServerRequestHeaders(
+        final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (_) {},
+          touchHeaders: (final _) {},
           headers: {'trailer': ''},
         );
 
@@ -54,10 +54,10 @@ void main() {
     test(
       'when a valid Trailer header is passed then it should parse correctly',
       () async {
-        var headers = await getServerRequestHeaders(
+        final headers = await getServerRequestHeaders(
           server: server,
           headers: {'trailer': 'Expires, Content-MD5, Content-Language'},
-          touchHeaders: (h) => h.trailer,
+          touchHeaders: (final h) => h.trailer,
         );
 
         expect(
@@ -70,10 +70,10 @@ void main() {
     test(
       'when a Trailer header with whitespace is passed then it should parse correctly',
       () async {
-        var headers = await getServerRequestHeaders(
+        final headers = await getServerRequestHeaders(
           server: server,
           headers: {'trailer': ' Expires , Content-MD5 , Content-Language '},
-          touchHeaders: (h) => h.trailer,
+          touchHeaders: (final h) => h.trailer,
         );
 
         expect(
@@ -86,10 +86,10 @@ void main() {
     test(
       'when a Trailer header with custom values is passed then it should parse correctly',
       () async {
-        var headers = await getServerRequestHeaders(
+        final headers = await getServerRequestHeaders(
           server: server,
           headers: {'trailer': 'custom-header, AnotherHeader'},
-          touchHeaders: (h) => h.trailer,
+          touchHeaders: (final h) => h.trailer,
         );
 
         expect(
@@ -102,10 +102,10 @@ void main() {
     test(
       'when no Trailer header is passed then it should return null',
       () async {
-        var headers = await getServerRequestHeaders(
+        final headers = await getServerRequestHeaders(
           server: server,
           headers: {},
-          touchHeaders: (h) => h.lastModified,
+          touchHeaders: (final h) => h.lastModified,
         );
 
         expect(headers.trailer, isNull);
@@ -125,9 +125,9 @@ void main() {
     test(
       'when a custom Trailer header is passed then it should parse correctly',
       () async {
-        var headers = await getServerRequestHeaders(
+        final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (_) {},
+          touchHeaders: (final _) {},
           headers: {'trailer': 'custom-header'},
         );
 

@@ -17,8 +17,8 @@ const _someStrings = HeaderAccessor<List<String>>(
 
 class Custom {
   Custom();
-  factory Custom.parse(String s) => Custom();
-  static Iterable<String> encode(Custom c) => ['foo'];
+  factory Custom.parse(final String s) => Custom();
+  static Iterable<String> encode(final Custom c) => ['foo'];
 }
 
 const _customClass = HeaderAccessor<Custom>(
@@ -31,7 +31,7 @@ extension on Headers {
 
 extension on MutableHeaders {
   int? get anInt => _anInt[this]();
-  set anInt(int? value) => _anInt[this].set(value);
+  set anInt(final int? value) => _anInt[this].set(value);
 }
 
 void main() {
@@ -104,7 +104,7 @@ void main() {
   test(
       'When setting a header on a mutable headers collection '
       'then it succeeds', () {
-    final headers = Headers.build((mh) {
+    final headers = Headers.build((final mh) {
       expect(() => mh.anInt = 42, returnsNormally);
     });
     expect(headers.anInt, 42);
@@ -114,12 +114,12 @@ void main() {
       'Given a mutable headers collection '
       'When removing a header by setting to null '
       'then it succeeds', () {
-    final headers = Headers.build((mh) {
+    final headers = Headers.build((final mh) {
       expect(() => mh.anInt = 42, returnsNormally);
     });
     expect(headers.anInt, 42);
 
-    final headers2 = headers.transform((mh) => mh.anInt = null);
+    final headers2 = headers.transform((final mh) => mh.anInt = null);
 
     expect(headers.anInt, 42); // still in original
     expect(headers2.anInt, isNull);
@@ -130,11 +130,11 @@ void main() {
       'Given a mutable headers collection '
       'When removing a header using removeFrom '
       'then it succeeds', () {
-    final headers = Headers.build((mh) {
+    final headers = Headers.build((final mh) {
       expect(() => mh.anInt = 42, returnsNormally);
     });
     expect(headers.anInt, 42);
-    final headers2 = headers.transform((mh) => _anInt.removeFrom(mh));
+    final headers2 = headers.transform((final mh) => _anInt.removeFrom(mh));
 
     expect(headers.anInt, 42); // still in original
     expect(headers2.anInt, isNull);
@@ -146,7 +146,7 @@ void main() {
       'Given a immutable headers collection '
       'When trying to set a header '
       'then it fails', () {
-    final headers = Headers.build((mh) {
+    final headers = Headers.build((final mh) {
       expect(() => mh.anInt = 42, returnsNormally);
     });
     final header = _anInt[headers];
@@ -160,7 +160,7 @@ void main() {
       'Given a header accessor '
       'when updating a value on a mutable headers collection '
       'then you can read the value immediately', () {
-    Headers.build((mh) {
+    Headers.build((final mh) {
       mh.anInt = 42;
       expect(mh.anInt, 42);
       mh.anInt = 1202;
@@ -181,7 +181,7 @@ void main() {
       // whenever called. This is not good practice, but useful in the test!
       accessor = HeaderAccessor(
           'tmp',
-          HeaderCodec.single((s) {
+          HeaderCodec.single((final s) {
             ++count;
             return int.parse(s);
           }, encodeInt));
@@ -208,7 +208,8 @@ void main() {
       final headers = Headers.fromMap({
         accessor.key: ['1202']
       });
-      final headers2 = headers.transform((mh) => mh[accessor.key] = ['42']);
+      final headers2 =
+          headers.transform((final mh) => mh[accessor.key] = ['42']);
 
       expect(accessor[headers].value, 1202);
       expect(count, 1);
@@ -225,7 +226,7 @@ void main() {
         'when reading the value from a headers collection '
         'where the encoded value is set via the accessor '
         'then decode is not needed at all', () {
-      final headers = Headers.build((mh) => accessor[mh].set(51));
+      final headers = Headers.build((final mh) => accessor[mh].set(51));
       expect(accessor[headers].value, 51);
       expect(count, 0);
     });
@@ -236,7 +237,7 @@ void main() {
       'then it is possible to setup header accessor for it with a custom encode',
       () {
     final c = Custom();
-    final headers = Headers.build((mh) => _customClass[mh].set(c));
+    final headers = Headers.build((final mh) => _customClass[mh].set(c));
     expect(headers[_customClass.key], ['foo']);
     expect(_customClass[headers].raw, ['foo']);
     expect(_customClass[headers].value, same(c));

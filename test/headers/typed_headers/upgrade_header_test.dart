@@ -1,9 +1,9 @@
 import 'package:relic/relic.dart';
-import 'package:test/test.dart';
 import 'package:relic/src/headers/standard_headers_extensions.dart';
+import 'package:test/test.dart';
 
-import '../headers_test_utils.dart';
 import '../docs/strict_validation_docs.dart';
+import '../headers_test_utils.dart';
 
 /// Reference: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Upgrade
 /// About empty value test, check the [StrictValidationDocs] class for more details.
@@ -24,11 +24,11 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (h) => h.upgrade,
+            touchHeaders: (final h) => h.upgrade,
             headers: {'upgrade': ''},
           ),
           throwsA(isA<BadRequestException>().having(
-            (e) => e.message,
+            (final e) => e.message,
             'message',
             contains('Value cannot be empty'),
           )),
@@ -44,11 +44,11 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (h) => h.upgrade,
+            touchHeaders: (final h) => h.upgrade,
             headers: {'upgrade': 'InvalidProtocol/abc'},
           ),
           throwsA(isA<BadRequestException>().having(
-            (e) => e.message,
+            (final e) => e.message,
             'message',
             contains('Invalid version'),
           )),
@@ -61,9 +61,9 @@ void main() {
       'then the server does not respond with a bad request if the headers '
       'is not actually used',
       () async {
-        var headers = await getServerRequestHeaders(
+        final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (_) {},
+          touchHeaders: (final _) {},
           headers: {'upgrade': 'InvalidProtocol/abc'},
         );
 
@@ -74,9 +74,9 @@ void main() {
     test(
       'when no Upgrade header is passed then it should return null',
       () async {
-        var headers = await getServerRequestHeaders(
+        final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (_) {},
+          touchHeaders: (final _) {},
           headers: {},
         );
 
@@ -92,11 +92,11 @@ void main() {
           expect(
             getServerRequestHeaders(
               server: server,
-              touchHeaders: (h) => h.upgrade,
+              touchHeaders: (final h) => h.upgrade,
               headers: {'upgrade': 'HTTP/2.0, HTTP/abc'},
             ),
             throwsA(isA<BadRequestException>().having(
-              (e) => e.message,
+              (final e) => e.message,
               'message',
               contains('Invalid version'),
             )),
@@ -107,9 +107,9 @@ void main() {
       test(
         'then it should parse the protocols correctly',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
-            touchHeaders: (h) => h.upgrade,
+            touchHeaders: (final h) => h.upgrade,
             headers: {'upgrade': 'HTTP/2.0, WebSocket'},
           );
 
@@ -126,9 +126,9 @@ void main() {
         'with duplicate protocols then it should parse the protocols correctly '
         'and remove the duplicates',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
-            touchHeaders: (h) => h.upgrade,
+            touchHeaders: (final h) => h.upgrade,
             headers: {'upgrade': 'HTTP/2.0, WebSocket, HTTP/2.0'},
           );
 

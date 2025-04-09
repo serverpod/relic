@@ -1,16 +1,15 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:relic/src/body/body.dart';
-import 'package:relic/src/headers/exception/header_exception.dart';
-import 'package:relic/src/headers/standard_headers_extensions.dart';
-import 'package:relic/src/hijack/exception/hijack_exception.dart';
-import 'package:relic/src/logger/logger.dart';
-import 'package:relic/src/message/request.dart';
-import 'package:relic/src/message/response.dart';
-import 'package:relic/src/util/util.dart';
-
+import 'body/body.dart';
 import 'handler/handler.dart';
+import 'headers/exception/header_exception.dart';
+import 'headers/standard_headers_extensions.dart';
+import 'hijack/exception/hijack_exception.dart';
+import 'logger/logger.dart';
+import 'message/request.dart';
+import 'message/response.dart';
+import 'util/util.dart';
 
 /// A [Server] backed by a `dart:io` [HttpServer].
 class RelicServer {
@@ -31,16 +30,16 @@ class RelicServer {
 
   /// Creates a server with the given parameters.
   static Future<RelicServer> createServer(
-    InternetAddress address,
-    int port, {
-    SecurityContext? securityContext,
+    final InternetAddress address,
+    final int port, {
+    final SecurityContext? securityContext,
     int? backlog,
-    bool shared = false,
-    bool strictHeaders = true,
-    String? poweredByHeader,
+    final bool shared = false,
+    final bool strictHeaders = true,
+    final String? poweredByHeader,
   }) async {
     backlog ??= 0;
-    var server = securityContext == null
+    final server = securityContext == null
         ? await HttpServer.bind(
             address.address,
             port,
@@ -65,11 +64,11 @@ class RelicServer {
   /// Mounts a handler to the server. Only one handler can be mounted at a time,
   /// and starts listening for requests.
   void mountAndStart(
-    Handler handler,
+    final Handler handler,
   ) {
     if (_handler != null) {
       throw StateError(
-        "Relic server already has a handler mounted.",
+        'Relic server already has a handler mounted.',
       );
     }
     _handler = handler;
@@ -89,7 +88,7 @@ class RelicServer {
   void _startListening() {
     catchTopLevelErrors(() {
       server.listen(_handleRequest);
-    }, (error, stackTrace) {
+    }, (final error, final stackTrace) {
       logMessage(
         'Asynchronous error\n$error',
         stackTrace: stackTrace,
@@ -99,11 +98,11 @@ class RelicServer {
   }
 
   /// Handles incoming HTTP requests, passing them to the handler.
-  Future<void> _handleRequest(HttpRequest request) async {
-    var handler = _handler;
+  Future<void> _handleRequest(final HttpRequest request) async {
+    final handler = _handler;
     if (handler == null) {
       throw StateError(
-        "No handler mounted. Ensure the server has a handler before handling requests.",
+        'No handler mounted. Ensure the server has a handler before handling requests.',
       );
     }
 
@@ -154,7 +153,7 @@ class RelicServer {
 
       // If the response doesn't have a powered-by or date header, add the default ones
       response = response.copyWith(
-        headers: response.headers.transform((mh) {
+        headers: response.headers.transform((final mh) {
           mh.xPoweredBy ??= poweredByHeader;
           mh.date ??= DateTime.now();
         }),
@@ -222,8 +221,9 @@ class RelicServer {
   }
 }
 
-void _logError(Request request, String message, StackTrace stackTrace) {
-  var buffer = StringBuffer();
+void _logError(
+    final Request request, final String message, final StackTrace stackTrace) {
+  final buffer = StringBuffer();
   buffer.write('${request.method} ${request.requestedUri.path}');
   if (request.requestedUri.query.isNotEmpty) {
     buffer.write('?${request.requestedUri.query}');

@@ -13,9 +13,9 @@ void main() {
   });
 
   void logger(
-    String msg, {
-    LoggerType type = LoggerType.info,
-    StackTrace? stackTrace,
+    final String msg, {
+    final LoggerType type = LoggerType.info,
+    final StackTrace? stackTrace,
   }) {
     expect(gotLog, isFalse);
     gotLog = true;
@@ -27,7 +27,7 @@ void main() {
   test(
       'Given a request with a synchronous response when logged then it logs the request',
       () async {
-    var handler = const Pipeline()
+    final handler = const Pipeline()
         .addMiddleware(logRequests(logger: logger))
         .addHandler(syncHandler);
 
@@ -38,7 +38,7 @@ void main() {
   test(
       'Given a request with an asynchronous response when logged then it logs the request',
       () async {
-    var handler = const Pipeline()
+    final handler = const Pipeline()
         .addMiddleware(logRequests(logger: logger))
         .addHandler(asyncHandler);
 
@@ -49,11 +49,11 @@ void main() {
   test(
     'Given a request with an asynchronous error response when logged then it logs the error',
     () {
-      var handler = const Pipeline().addMiddleware(logRequests(
+      final handler = const Pipeline().addMiddleware(logRequests(
         logger: (
-          msg, {
-          LoggerType type = LoggerType.info,
-          StackTrace? stackTrace,
+          final msg, {
+          final LoggerType type = LoggerType.info,
+          final StackTrace? stackTrace,
         }) {
           expect(gotLog, isFalse);
           gotLog = true;
@@ -62,7 +62,7 @@ void main() {
           expect(msg, contains('oh no'));
         },
       )).addHandler(
-        (request) {
+        (final request) {
           throw StateError('oh no');
         },
       );
@@ -73,9 +73,9 @@ void main() {
 
   test("Given a HijackException when thrown then it doesn't log the exception",
       () {
-    var handler = const Pipeline()
+    final handler = const Pipeline()
         .addMiddleware(logRequests(logger: logger))
-        .addHandler((request) => throw const HijackException());
+        .addHandler((final request) => throw const HijackException());
 
     expect(
         makeSimpleRequest(handler).whenComplete(() {

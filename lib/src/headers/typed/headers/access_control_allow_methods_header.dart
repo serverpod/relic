@@ -1,6 +1,6 @@
-import "package:relic/relic.dart";
-import 'package:relic/src/headers/extension/string_list_extensions.dart';
-import 'package:relic/src/method/request_method.dart';
+import '../../../../relic.dart';
+import '../../../method/request_method.dart';
+import '../../extension/string_list_extensions.dart';
 
 /// A class representing the HTTP Access-Control-Allow-Methods header.
 ///
@@ -9,7 +9,7 @@ import 'package:relic/src/method/request_method.dart';
 final class AccessControlAllowMethodsHeader {
   static const codec =
       HeaderCodec(AccessControlAllowMethodsHeader.parse, __encode);
-  static List<String> __encode(AccessControlAllowMethodsHeader value) =>
+  static List<String> __encode(final AccessControlAllowMethodsHeader value) =>
       [value._encode()];
 
   /// The list of methods that are allowed.
@@ -29,20 +29,20 @@ final class AccessControlAllowMethodsHeader {
 
   /// Parses the Access-Control-Allow-Methods header value and returns an
   /// [AccessControlAllowMethodsHeader] instance.
-  factory AccessControlAllowMethodsHeader.parse(Iterable<String> values) {
-    var splitValues = values.splitTrimAndFilterUnique();
+  factory AccessControlAllowMethodsHeader.parse(final Iterable<String> values) {
+    final splitValues = values.splitTrimAndFilterUnique();
     if (splitValues.isEmpty) {
-      throw FormatException(
+      throw const FormatException(
         'Value cannot be empty',
       );
     }
 
     if (splitValues.length == 1 && splitValues.first == '*') {
-      return AccessControlAllowMethodsHeader.wildcard();
+      return const AccessControlAllowMethodsHeader.wildcard();
     }
 
     if (splitValues.length > 1 && splitValues.contains('*')) {
-      throw FormatException(
+      throw const FormatException(
         'Wildcard (*) cannot be used with other values',
       );
     }

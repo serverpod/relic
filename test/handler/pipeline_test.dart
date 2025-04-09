@@ -10,7 +10,7 @@ void main() {
     accessLocation = 0;
   });
 
-  Handler middlewareA(Handler innerHandler) => (request) {
+  Handler middlewareA(final Handler innerHandler) => (final request) {
         expect(accessLocation, 0);
         accessLocation = 1;
         final response = innerHandler(request);
@@ -19,7 +19,7 @@ void main() {
         return response;
       };
 
-  Handler middlewareB(Handler innerHandler) => (request) {
+  Handler middlewareB(final Handler innerHandler) => (final request) {
         expect(accessLocation, 1);
         accessLocation = 2;
         final response = innerHandler(request);
@@ -28,7 +28,7 @@ void main() {
         return response;
       };
 
-  Response innerHandler(Request request) {
+  Response innerHandler(final Request request) {
     expect(accessLocation, 2);
     accessLocation = 3;
     return syncHandler(request);
@@ -37,7 +37,7 @@ void main() {
   test(
       'Given a pipeline with middlewareA and middlewareB when a request is processed then it completes with accessLocation 5',
       () async {
-    var handler = const Pipeline()
+    final handler = const Pipeline()
         .addMiddleware(middlewareA)
         .addMiddleware(middlewareB)
         .addHandler(innerHandler);
@@ -50,7 +50,7 @@ void main() {
   test(
       'Given middlewareA and middlewareB when composed using extensions then a request completes with accessLocation 5',
       () async {
-    var handler =
+    final handler =
         middlewareA.addMiddleware(middlewareB).addHandler(innerHandler);
 
     final response = await makeSimpleRequest(handler);
@@ -61,10 +61,10 @@ void main() {
   test(
       'Given a pipeline used as middleware when a request is processed then it completes with accessLocation 5',
       () async {
-    var innerPipeline =
+    final innerPipeline =
         const Pipeline().addMiddleware(middlewareA).addMiddleware(middlewareB);
 
-    var handler = const Pipeline()
+    final handler = const Pipeline()
         .addMiddleware(innerPipeline.middleware)
         .addHandler(innerHandler);
 

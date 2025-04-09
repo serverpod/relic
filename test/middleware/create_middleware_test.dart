@@ -1,8 +1,8 @@
-import 'package:relic/relic.dart';
 // ignore_for_file: only_throw_errors
 
 import 'dart:async';
 
+import 'package:relic/relic.dart';
 import 'package:relic/src/headers/standard_headers_extensions.dart';
 import 'package:test/test.dart';
 
@@ -12,12 +12,12 @@ void main() {
   test(
       'Given a middleware with null handlers when a request is processed then it forwards the request and response',
       () async {
-    var handler = const Pipeline()
+    final handler = const Pipeline()
         .addMiddleware(createMiddleware())
-        .addHandler((request) {
+        .addHandler((final request) {
       return syncHandler(
         request,
-        headers: Headers.build((mh) =>
+        headers: Headers.build((final mh) =>
             mh.from = FromHeader(emails: ['innerHandler@serverpod.dev'])),
       );
     });
@@ -31,8 +31,9 @@ void main() {
     test(
         'when sync null response is returned then it forwards to inner handler',
         () async {
-      var handler = const Pipeline()
-          .addMiddleware(createMiddleware(requestHandler: (request) => null))
+      final handler = const Pipeline()
+          .addMiddleware(
+              createMiddleware(requestHandler: (final request) => null))
           .addHandler(syncHandler);
 
       final response = await makeSimpleRequest(handler);
@@ -42,9 +43,9 @@ void main() {
     test(
         'when async null response is returned then it forwards to inner handler',
         () async {
-      var handler = const Pipeline()
-          .addMiddleware(
-              createMiddleware(requestHandler: (request) => Future.value(null)))
+      final handler = const Pipeline()
+          .addMiddleware(createMiddleware(
+              requestHandler: (final request) => Future.value(null)))
           .addHandler(syncHandler);
 
       final response = await makeSimpleRequest(handler);
@@ -52,9 +53,9 @@ void main() {
     });
 
     test('when sync response is returned then it is used', () async {
-      var handler = const Pipeline()
+      final handler = const Pipeline()
           .addMiddleware(createMiddleware(
-              requestHandler: (request) => _middlewareResponse))
+              requestHandler: (final request) => _middlewareResponse))
           .addHandler(_failHandler);
 
       final response = await makeSimpleRequest(handler);
@@ -63,9 +64,10 @@ void main() {
     });
 
     test('when async response is returned then it is used', () async {
-      var handler = const Pipeline()
+      final handler = const Pipeline()
           .addMiddleware(createMiddleware(
-              requestHandler: (request) => Future.value(_middlewareResponse)))
+              requestHandler: (final request) =>
+                  Future.value(_middlewareResponse)))
           .addHandler(_failHandler);
 
       final response = await makeSimpleRequest(handler);
@@ -76,11 +78,11 @@ void main() {
     group('Given a responseHandler', () {
       test('when sync result is returned then responseHandler is not called',
           () async {
-        var middleware = createMiddleware(
-            requestHandler: (request) => _middlewareResponse,
-            responseHandler: (response) => fail('should not be called'));
+        final middleware = createMiddleware(
+            requestHandler: (final request) => _middlewareResponse,
+            responseHandler: (final response) => fail('should not be called'));
 
-        var handler =
+        final handler =
             const Pipeline().addMiddleware(middleware).addHandler(syncHandler);
 
         final response = await makeSimpleRequest(handler);
@@ -90,10 +92,11 @@ void main() {
 
       test('when async result is returned then responseHandler is not called',
           () async {
-        var middleware = createMiddleware(
-            requestHandler: (request) => Future.value(_middlewareResponse),
-            responseHandler: (response) => fail('should not be called'));
-        var handler =
+        final middleware = createMiddleware(
+            requestHandler: (final request) =>
+                Future.value(_middlewareResponse),
+            responseHandler: (final response) => fail('should not be called'));
+        final handler =
             const Pipeline().addMiddleware(middleware).addHandler(syncHandler);
 
         final response = await makeSimpleRequest(handler);
@@ -107,18 +110,18 @@ void main() {
     test(
         'when innerHandler sync response is seen then replaced value continues',
         () async {
-      var handler = const Pipeline()
-          .addMiddleware(createMiddleware(responseHandler: (response) {
+      final handler = const Pipeline()
+          .addMiddleware(createMiddleware(responseHandler: (final response) {
         expect(
           response.headers.from?.emails,
           contains('handler@serverpod.dev'),
         );
         return _middlewareResponse;
-      })).addHandler((request) {
+      })).addHandler((final request) {
         return syncHandler(
           request,
-          headers: Headers.build(
-              (mh) => mh.from = FromHeader(emails: ['handler@serverpod.dev'])),
+          headers: Headers.build((final mh) =>
+              mh.from = FromHeader(emails: ['handler@serverpod.dev'])),
         );
       });
 
@@ -131,9 +134,9 @@ void main() {
 
     test('when innerHandler async response is seen then async value continues',
         () async {
-      var handler = const Pipeline().addMiddleware(
+      final handler = const Pipeline().addMiddleware(
         createMiddleware(
-          responseHandler: (response) {
+          responseHandler: (final response) {
             expect(
               response.headers.from?.emails,
               contains('handler@serverpod.dev'),
@@ -141,11 +144,11 @@ void main() {
             return Future.value(_middlewareResponse);
           },
         ),
-      ).addHandler((request) {
+      ).addHandler((final request) {
         return Future(
           () => syncHandler(
             request,
-            headers: Headers.build((mh) =>
+            headers: Headers.build((final mh) =>
                 mh.from = FromHeader(emails: ['handler@serverpod.dev'])),
           ),
         );
@@ -162,9 +165,9 @@ void main() {
   group('Given error handling', () {
     test('when sync error is thrown by requestHandler then it bubbles down',
         () {
-      var handler = const Pipeline()
+      final handler = const Pipeline()
           .addMiddleware(createMiddleware(
-              requestHandler: (request) => throw 'middleware error'))
+              requestHandler: (final request) => throw 'middleware error'))
           .addHandler(_failHandler);
 
       expect(makeSimpleRequest(handler), throwsA('middleware error'));
@@ -172,9 +175,10 @@ void main() {
 
     test('when async error is thrown by requestHandler then it bubbles down',
         () {
-      var handler = const Pipeline()
+      final handler = const Pipeline()
           .addMiddleware(createMiddleware(
-              requestHandler: (request) => Future.error('middleware error')))
+              requestHandler: (final request) =>
+                  Future.error('middleware error')))
           .addHandler(_failHandler);
 
       expect(makeSimpleRequest(handler), throwsA('middleware error'));
@@ -182,26 +186,26 @@ void main() {
 
     test('when throw from responseHandler then it does not hit error handler',
         () {
-      var middleware = createMiddleware(
-          responseHandler: (response) {
+      final middleware = createMiddleware(
+          responseHandler: (final response) {
             throw 'middleware error';
           },
-          errorHandler: (e, s) => fail('should never get here'));
+          errorHandler: (final e, final s) => fail('should never get here'));
 
-      var handler =
+      final handler =
           const Pipeline().addMiddleware(middleware).addHandler(syncHandler);
 
       expect(makeSimpleRequest(handler), throwsA('middleware error'));
     });
 
     test('when requestHandler throw then it does not hit errorHandlers', () {
-      var middleware = createMiddleware(
-          requestHandler: (request) {
+      final middleware = createMiddleware(
+          requestHandler: (final request) {
             throw 'middleware error';
           },
-          errorHandler: (e, s) => fail('should never get here'));
+          errorHandler: (final e, final s) => fail('should never get here'));
 
-      var handler =
+      final handler =
           const Pipeline().addMiddleware(middleware).addHandler(syncHandler);
 
       expect(makeSimpleRequest(handler), throwsA('middleware error'));
@@ -210,13 +214,15 @@ void main() {
     test(
         'when inner handler throws then it is caught by errorHandler with response',
         () async {
-      var middleware = createMiddleware(errorHandler: (error, stack) {
+      final middleware =
+          createMiddleware(errorHandler: (final error, final stack) {
         expect(error, 'bad handler');
         return _middlewareResponse;
       });
 
-      var handler =
-          const Pipeline().addMiddleware(middleware).addHandler((request) {
+      final handler = const Pipeline()
+          .addMiddleware(middleware)
+          .addHandler((final request) {
         throw 'bad handler';
       });
 
@@ -230,13 +236,15 @@ void main() {
     test(
         'when inner handler throws then it is caught by errorHandler and rethrown',
         () {
-      var middleware = createMiddleware(errorHandler: (Object error, stack) {
+      final middleware =
+          createMiddleware(errorHandler: (final Object error, final stack) {
         expect(error, 'bad handler');
         throw error;
       });
 
-      var handler =
-          const Pipeline().addMiddleware(middleware).addHandler((request) {
+      final handler = const Pipeline()
+          .addMiddleware(middleware)
+          .addHandler((final request) {
         throw 'bad handler';
       });
 
@@ -246,10 +254,11 @@ void main() {
     test(
         'when error is thrown by inner handler without a middleware errorHandler then it is rethrown',
         () {
-      var middleware = createMiddleware();
+      final middleware = createMiddleware();
 
-      var handler =
-          const Pipeline().addMiddleware(middleware).addHandler((request) {
+      final handler = const Pipeline()
+          .addMiddleware(middleware)
+          .addHandler((final request) {
         throw 'bad handler';
       });
 
@@ -257,24 +266,25 @@ void main() {
     });
 
     test("when HijackException is thrown then it doesn't handle it", () {
-      var middleware = createMiddleware(errorHandler: (error, stack) {
+      final middleware =
+          createMiddleware(errorHandler: (final error, final stack) {
         fail("error handler shouldn't be called");
       });
 
-      var handler = const Pipeline()
+      final handler = const Pipeline()
           .addMiddleware(middleware)
-          .addHandler((request) => throw const HijackException());
+          .addHandler((final request) => throw const HijackException());
 
       expect(makeSimpleRequest(handler), throwsHijackException);
     });
   });
 }
 
-Response _failHandler(Request request) => fail('should never get here');
+Response _failHandler(final Request request) => fail('should never get here');
 
 final Response _middlewareResponse = Response.ok(
   body: Body.fromString('middleware content'),
   headers: Headers.build(
-    (mh) => mh.from = FromHeader(emails: ['middleware@serverpod.dev']),
+    (final mh) => mh.from = FromHeader(emails: ['middleware@serverpod.dev']),
   ),
 );

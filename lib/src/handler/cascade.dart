@@ -1,7 +1,7 @@
 import 'dart:async';
 
-import 'handler.dart';
 import '../message/response.dart';
+import 'handler.dart';
 
 /// A typedef for [Cascade._shouldCascade].
 typedef _ShouldCascade = bool Function(Response response);
@@ -37,7 +37,9 @@ class Cascade {
   /// considered unacceptable. If [shouldCascade] is passed, responses for which
   /// it returns `true` are considered unacceptable. [statusCodes] and
   /// [shouldCascade] may not both be passed.
-  Cascade({Iterable<int>? statusCodes, bool Function(Response)? shouldCascade})
+  Cascade(
+      {final Iterable<int>? statusCodes,
+      final bool Function(Response)? shouldCascade})
       : _shouldCascade = _computeShouldCascade(statusCodes, shouldCascade),
         _parent = null,
         _handler = null {
@@ -53,7 +55,8 @@ class Cascade {
   ///
   /// [handler] will only be called if all previous handlers in the cascade
   /// return unacceptable responses.
-  Cascade add(Handler handler) => Cascade._(this, handler, _shouldCascade);
+  Cascade add(final Handler handler) =>
+      Cascade._(this, handler, _shouldCascade);
 
   /// Exposes this cascade as a single handler.
   ///
@@ -67,9 +70,9 @@ class Cascade {
           'handlers.');
     }
 
-    return (request) {
+    return (final request) {
       if (_parent!._handler == null) return handler(request);
-      return Future.sync(() => _parent.handler(request)).then((response) {
+      return Future.sync(() => _parent.handler(request)).then((final response) {
         if (_shouldCascade(response)) return handler(request);
         return response;
       });
@@ -80,9 +83,9 @@ class Cascade {
 /// Computes the [Cascade._shouldCascade] function based on the user's
 /// parameters.
 _ShouldCascade _computeShouldCascade(
-    Iterable<int>? statusCodes, bool Function(Response)? shouldCascade) {
+    Iterable<int>? statusCodes, final bool Function(Response)? shouldCascade) {
   if (shouldCascade != null) return shouldCascade;
   statusCodes ??= [404, 405];
   final statusCodeSet = statusCodes.toSet();
-  return (response) => statusCodeSet.contains(response.statusCode);
+  return (final response) => statusCodeSet.contains(response.statusCode);
 }

@@ -1,9 +1,9 @@
 import 'package:relic/relic.dart';
-import 'package:test/test.dart';
 import 'package:relic/src/headers/standard_headers_extensions.dart';
+import 'package:test/test.dart';
 
-import '../headers_test_utils.dart';
 import '../docs/strict_validation_docs.dart';
+import '../headers_test_utils.dart';
 
 /// Reference: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Clear-Site-Data
 /// About empty value test, check the [StrictValidationDocs] class for more details.
@@ -25,11 +25,11 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (h) => h.clearSiteData,
+            touchHeaders: (final h) => h.clearSiteData,
             headers: {'clear-site-data': ''},
           ),
           throwsA(isA<BadRequestException>().having(
-            (e) => e.message,
+            (final e) => e.message,
             'message',
             contains('Value cannot be empty'),
           )),
@@ -45,11 +45,11 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (h) => h.clearSiteData,
+            touchHeaders: (final h) => h.clearSiteData,
             headers: {'clear-site-data': 'invalidValue'},
           ),
           throwsA(isA<BadRequestException>().having(
-            (e) => e.message,
+            (final e) => e.message,
             'message',
             contains('Invalid value'),
           )),
@@ -65,11 +65,11 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (h) => h.clearSiteData,
+            touchHeaders: (final h) => h.clearSiteData,
             headers: {'clear-site-data': '"cache", "*", "cookies"'},
           ),
           throwsA(isA<BadRequestException>().having(
-            (e) => e.message,
+            (final e) => e.message,
             'message',
             contains('Wildcard (*) cannot be used with other values'),
           )),
@@ -82,9 +82,9 @@ void main() {
       'then the server does not respond with a bad request if the headers '
       'is not actually used',
       () async {
-        var headers = await getServerRequestHeaders(
+        final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (_) {},
+          touchHeaders: (final _) {},
           headers: {'clear-site-data': '"cache", "*", "cookies"'},
         );
         expect(headers, isNotNull);
@@ -94,16 +94,16 @@ void main() {
     test(
       'when a valid Clear-Site-Data header is passed then it should parse the data types correctly',
       () async {
-        var headers = await getServerRequestHeaders(
+        final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (h) => h.clearSiteData,
+          touchHeaders: (final h) => h.clearSiteData,
           headers: {'clear-site-data': '"cache", "cookies", "storage"'},
         );
 
         final dataTypes = headers.clearSiteData?.dataTypes;
         expect(dataTypes?.length, equals(3));
         expect(
-          dataTypes?.map((dt) => dt.value).toList(),
+          dataTypes?.map((final dt) => dt.value).toList(),
           containsAll(['cache', 'cookies', 'storage']),
         );
       },
@@ -112,9 +112,9 @@ void main() {
     test(
       'when a Clear-Site-Data header with wildcard is passed then it should parse correctly',
       () async {
-        var headers = await getServerRequestHeaders(
+        final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (h) => h.clearSiteData,
+          touchHeaders: (final h) => h.clearSiteData,
           headers: {'clear-site-data': '*'},
         );
 
@@ -125,9 +125,9 @@ void main() {
     test(
       'when no Clear-Site-Data header is passed then it should return null',
       () async {
-        var headers = await getServerRequestHeaders(
+        final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (h) => h.clearSiteData,
+          touchHeaders: (final h) => h.clearSiteData,
           headers: {},
         );
 
@@ -149,9 +149,9 @@ void main() {
       test(
         'then it should return null',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
-            touchHeaders: (_) {},
+            touchHeaders: (final _) {},
             headers: {'clear-site-data': ''},
           );
 

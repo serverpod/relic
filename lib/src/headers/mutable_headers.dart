@@ -6,7 +6,7 @@ class MutableHeaders extends HeadersBase
 
   MutableHeaders() : this._(_BackingStore());
 
-  MutableHeaders._from(Headers headers)
+  MutableHeaders._from(final Headers headers)
       : this._(_BackingStore.from(headers._backing));
 
   Headers _freeze() {
@@ -19,10 +19,10 @@ class MutableHeaders extends HeadersBase
   }
 
   @override
-  Iterable<String>? operator [](Object? key) => _backing[key];
+  Iterable<String>? operator [](final Object? key) => _backing[key];
 
   @override
-  void operator []=(String key, Iterable<String>? value) {
+  void operator []=(final String key, final Iterable<String>? value) {
     if (value == null) {
       _backing.remove(key);
     } else {
@@ -37,5 +37,5 @@ class MutableHeaders extends HeadersBase
   Iterable<String> get keys => _backing.keys;
 
   @override
-  Iterable<String>? remove(Object? key) => _backing.remove(key);
+  Iterable<String>? remove(final Object? key) => _backing.remove(key);
 }

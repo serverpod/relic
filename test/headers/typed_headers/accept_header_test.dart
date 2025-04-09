@@ -1,9 +1,9 @@
 import 'package:relic/relic.dart';
-import 'package:test/test.dart';
 import 'package:relic/src/headers/standard_headers_extensions.dart';
+import 'package:test/test.dart';
 
-import '../headers_test_utils.dart';
 import '../docs/strict_validation_docs.dart';
+import '../headers_test_utils.dart';
 
 /// Reference: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Accept
 /// About empty value test, check the [StrictValidationDocs] class for more details.
@@ -24,11 +24,11 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (h) => h.accept,
+            touchHeaders: (final h) => h.accept,
             headers: {'accept': ''},
           ),
           throwsA(isA<BadRequestException>().having(
-            (e) => e.message,
+            (final e) => e.message,
             'message',
             contains('Value cannot be empty'),
           )),
@@ -44,11 +44,11 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (h) => h.accept,
+            touchHeaders: (final h) => h.accept,
             headers: {'accept': 'text/html;q=abc'},
           ),
           throwsA(isA<BadRequestException>().having(
-            (e) => e.message,
+            (final e) => e.message,
             'message',
             contains('Invalid quality value'),
           )),
@@ -61,9 +61,9 @@ void main() {
       'then the server does not respond with a bad request if the headers '
       'is not actually used',
       () async {
-        var headers = await getServerRequestHeaders(
+        final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (_) {},
+          touchHeaders: (final _) {},
           headers: {'accept': 'text/html;q=abc'},
         );
 
@@ -74,9 +74,9 @@ void main() {
     test(
       'when a valid Accept header is passed then it should parse the media types correctly',
       () async {
-        var headers = await getServerRequestHeaders(
+        final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (h) => h.accept,
+          touchHeaders: (final h) => h.accept,
           headers: {'accept': 'text/html'},
         );
 
@@ -91,9 +91,9 @@ void main() {
       'when a valid Accept header with no quality value is passed then the '
       'quality value should set to default of 1.0',
       () async {
-        var headers = await getServerRequestHeaders(
+        final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (h) => h.accept,
+          touchHeaders: (final h) => h.accept,
           headers: {'accept': 'text/html'},
         );
 
@@ -106,9 +106,9 @@ void main() {
     test(
       'when a valid Accept header with quality value is passed then it should parse the quality value correctly',
       () async {
-        var headers = await getServerRequestHeaders(
+        final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (h) => h.accept,
+          touchHeaders: (final h) => h.accept,
           headers: {'accept': 'text/html;q=0.8'},
         );
 
@@ -121,9 +121,9 @@ void main() {
     test(
       'when an Accept header with wildcard (*) is passed then it should parse the wildcard correctly',
       () async {
-        var headers = await getServerRequestHeaders(
+        final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (h) => h.accept,
+          touchHeaders: (final h) => h.accept,
           headers: {'accept': '*/*'},
         );
 
@@ -137,9 +137,9 @@ void main() {
     test(
       'when no Accept header is passed then it should return null',
       () async {
-        var headers = await getServerRequestHeaders(
+        final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (h) => h.accept,
+          touchHeaders: (final h) => h.accept,
           headers: {},
         );
 
@@ -155,13 +155,13 @@ void main() {
           expect(
             getServerRequestHeaders(
               server: server,
-              touchHeaders: (h) => h.accept,
+              touchHeaders: (final h) => h.accept,
               headers: {
                 'accept': 'text/html;q=test, application/json;q=abc, */*;q=0.5'
               },
             ),
             throwsA(isA<BadRequestException>().having(
-              (e) => e.message,
+              (final e) => e.message,
               'message',
               contains('Invalid quality value'),
             )),
@@ -171,9 +171,9 @@ void main() {
       test(
         'with different quality values are passed then they should parse correctly',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
-            touchHeaders: (h) => h.accept,
+            touchHeaders: (final h) => h.accept,
             headers: {
               'accept': 'text/html;q=0.8, application/json;q=0.9, */*;q=0.5'
             },
@@ -193,9 +193,9 @@ void main() {
       test(
         'with different quality values are passed then it should parse the quality values correctly',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
-            touchHeaders: (h) => h.accept,
+            touchHeaders: (final h) => h.accept,
             headers: {
               'accept': 'text/html;q=0.8, application/json;q=0.9, */*;q=0.5'
             },
@@ -224,9 +224,9 @@ void main() {
       test(
         'then it should return null',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
-            touchHeaders: (_) {},
+            touchHeaders: (final _) {},
             headers: {'accept': 'text/html;q=abc'},
           );
 

@@ -1,8 +1,9 @@
 import 'package:relic/relic.dart';
-import 'package:test/test.dart';
 import 'package:relic/src/headers/standard_headers_extensions.dart';
-import '../headers_test_utils.dart';
+import 'package:test/test.dart';
+
 import '../docs/strict_validation_docs.dart';
+import '../headers_test_utils.dart';
 
 /// Reference: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Host
 /// About empty value test, check the [StrictValidationDocs] class for more details.
@@ -26,11 +27,11 @@ void main() {
             getServerRequestHeaders(
               server: server,
               headers: {'host': ''},
-              touchHeaders: (h) => h.host,
+              touchHeaders: (final h) => h.host,
             ),
             throwsA(
               isA<BadRequestException>().having(
-                (e) => e.message,
+                (final e) => e.message,
                 'message',
                 contains('Value cannot be empty'),
               ),
@@ -48,11 +49,11 @@ void main() {
             getServerRequestHeaders(
               server: server,
               headers: {'host': 'h@ttp://example.com'},
-              touchHeaders: (h) => h.host,
+              touchHeaders: (final h) => h.host,
             ),
             throwsA(
               isA<BadRequestException>().having(
-                (e) => e.message,
+                (final e) => e.message,
                 'message',
                 contains('Invalid URI format'),
               ),
@@ -70,11 +71,11 @@ void main() {
             getServerRequestHeaders(
               server: server,
               headers: {'host': 'http://example.com:test'},
-              touchHeaders: (h) => h.host,
+              touchHeaders: (final h) => h.host,
             ),
             throwsA(
               isA<BadRequestException>().having(
-                (e) => e.message,
+                (final e) => e.message,
                 'message',
                 contains('Invalid URI format'),
               ),
@@ -88,9 +89,9 @@ void main() {
         'then the server does not respond with a bad request if the headers '
         'is not actually used',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
-            touchHeaders: (_) {},
+            touchHeaders: (final _) {},
             headers: {'host': 'http://example.com:test'},
           );
 
@@ -101,10 +102,10 @@ void main() {
       test(
         'when a valid Host header is passed then it should parse the URI correctly',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
             headers: {'host': 'https://example.com'},
-            touchHeaders: (h) => h.host,
+            touchHeaders: (final h) => h.host,
           );
 
           expect(headers.host, equals(Uri.parse('https://example.com')));
@@ -115,10 +116,10 @@ void main() {
         'when a Host header with a port number is passed then it should parse '
         'the port number correctly',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
             headers: {'host': 'https://example.com:8080'},
-            touchHeaders: (h) => h.host,
+            touchHeaders: (final h) => h.host,
           );
 
           expect(
@@ -131,10 +132,10 @@ void main() {
       test(
         'when a Host header with extra whitespace is passed then it should parse the URI correctly',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
             headers: {'host': ' https://example.com '},
-            touchHeaders: (h) => h.host,
+            touchHeaders: (final h) => h.host,
           );
 
           expect(headers.host, equals(Uri.parse('https://example.com')));
@@ -144,10 +145,10 @@ void main() {
       test(
         'when no Host header is passed then it should default to machine address',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
             headers: {},
-            touchHeaders: (h) => h.host,
+            touchHeaders: (final h) => h.host,
           );
 
           expect(headers.host, isNotNull);
@@ -170,9 +171,9 @@ void main() {
       test(
         'then it should return null',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
-            touchHeaders: (_) {},
+            touchHeaders: (final _) {},
             headers: {'host': 'h@ttp://example.com'},
           );
 
@@ -185,10 +186,10 @@ void main() {
     test(
       'when no Host header is passed then it should default to machine address',
       () async {
-        var headers = await getServerRequestHeaders(
+        final headers = await getServerRequestHeaders(
           server: server,
           headers: {},
-          touchHeaders: (h) => h.host,
+          touchHeaders: (final h) => h.host,
         );
 
         expect(headers.host, isNotNull);

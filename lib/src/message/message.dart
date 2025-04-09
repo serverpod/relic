@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
-import 'package:relic/relic.dart';
+import '../../relic.dart';
 
 abstract class Message {
   /// The HTTP headers associated with this message.
@@ -41,8 +41,8 @@ abstract class Message {
 
   /// Creates a new message by copying existing values and applying specified changes.
   Message copyWith({
-    Headers headers,
-    Map<String, Object> context,
-    Body? body,
+    final Headers headers,
+    final Map<String, Object> context,
+    final Body? body,
   });
 }

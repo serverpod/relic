@@ -1,10 +1,10 @@
 import 'package:relic/relic.dart';
-import 'package:test/test.dart';
 import 'package:relic/src/headers/standard_headers_extensions.dart';
 import 'package:relic/src/relic_server.dart';
+import 'package:test/test.dart';
 
-import '../headers_test_utils.dart';
 import '../docs/strict_validation_docs.dart';
+import '../headers_test_utils.dart';
 
 /// About empty value test, check the [StrictValidationDocs] class for more details.
 void main() {
@@ -27,10 +27,10 @@ void main() {
           getServerRequestHeaders(
               server: server,
               headers: {'x-powered-by': ''},
-              touchHeaders: (h) => h.xPoweredBy),
+              touchHeaders: (final h) => h.xPoweredBy),
           throwsA(
             isA<BadRequestException>().having(
-              (e) => e.message,
+              (final e) => e.message,
               'message',
               contains('Value cannot be empty'),
             ),
@@ -41,10 +41,10 @@ void main() {
       test(
         'when a valid X-Powered-By value is passed then it should parse correctly',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
             headers: {'x-powered-by': 'Express'},
-            touchHeaders: (h) => h.xPoweredBy,
+            touchHeaders: (final h) => h.xPoweredBy,
           );
 
           expect(headers.xPoweredBy, equals('Express'));

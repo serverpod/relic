@@ -1,7 +1,7 @@
-import 'package:relic/relic.dart';
 import 'dart:async';
 
 import 'package:http/http.dart' as http;
+import 'package:relic/relic.dart';
 import 'package:relic/src/relic_server.dart';
 import 'package:test/test.dart';
 
@@ -48,13 +48,13 @@ void main() {
     test(
         'when a handler is already mounted '
         'then mounting another handler throws a StateError', () async {
-      server.mountAndStart((_) => throw UnimplementedError());
+      server.mountAndStart((final _) => throw UnimplementedError());
       expect(
-        () => server.mountAndStart((_) => throw UnimplementedError()),
+        () => server.mountAndStart((final _) => throw UnimplementedError()),
         throwsStateError,
       );
       expect(
-        () => server.mountAndStart((_) => throw UnimplementedError()),
+        () => server.mountAndStart((final _) => throw UnimplementedError()),
         throwsStateError,
       );
     });

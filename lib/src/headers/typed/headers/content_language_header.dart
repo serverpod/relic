@@ -1,12 +1,12 @@
-import "package:relic/relic.dart";
-import 'package:relic/src/headers/extension/string_list_extensions.dart';
+import '../../../../relic.dart';
+import '../../extension/string_list_extensions.dart';
 
 /// A class representing the HTTP Content-Language header.
 ///
 /// This class manages the language codes specified in the Content-Language header.
 final class ContentLanguageHeader {
   static const codec = HeaderCodec(ContentLanguageHeader.parse, __encode);
-  static List<String> __encode(ContentLanguageHeader value) =>
+  static List<String> __encode(final ContentLanguageHeader value) =>
       [value._encode()];
 
   /// The list of language codes specified in the header.
@@ -18,15 +18,15 @@ final class ContentLanguageHeader {
   /// Parses the Content-Language header value and returns a [ContentLanguageHeader] instance.
   ///
   /// This method splits the header value by commas and trims each language code.
-  factory ContentLanguageHeader.parse(Iterable<String> values) {
+  factory ContentLanguageHeader.parse(final Iterable<String> values) {
     final splitValues = values.splitTrimAndFilterUnique();
     if (splitValues.isEmpty) {
-      throw FormatException('Value cannot be empty');
+      throw const FormatException('Value cannot be empty');
     }
 
-    var languages = splitValues.map((language) {
+    final languages = splitValues.map((final language) {
       if (!language.isValidLanguageCode()) {
-        throw FormatException('Invalid language code');
+        throw const FormatException('Invalid language code');
       }
       return language;
     }).toList();

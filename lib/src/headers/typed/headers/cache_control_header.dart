@@ -1,5 +1,5 @@
-import "package:relic/relic.dart";
-import 'package:relic/src/headers/extension/string_list_extensions.dart';
+import '../../../../relic.dart';
+import '../../extension/string_list_extensions.dart';
 
 /// A class representing the HTTP Cache-Control header.
 ///
@@ -8,7 +8,8 @@ import 'package:relic/src/headers/extension/string_list_extensions.dart';
 /// the appropriate header string.
 final class CacheControlHeader {
   static const codec = HeaderCodec(CacheControlHeader.parse, __encode);
-  static List<String> __encode(CacheControlHeader value) => [value._encode()];
+  static List<String> __encode(final CacheControlHeader value) =>
+      [value._encode()];
   // Cache-Control directive constants
   static const String _noCacheDirective = 'no-cache';
   static const String _noStoreDirective = 'no-store';
@@ -114,10 +115,10 @@ final class CacheControlHeader {
     this.mustUnderstand = false,
   }) {
     if (publicCache == true && privateCache == true) {
-      throw FormatException('Must be either public or private');
+      throw const FormatException('Must be either public or private');
     }
     if (maxAge != null && staleWhileRevalidate != null) {
-      throw FormatException(
+      throw const FormatException(
         'Cannot have both max-age and stale-while-revalidate directives',
       );
     }
@@ -127,49 +128,49 @@ final class CacheControlHeader {
   ///
   /// This method splits the header value by commas, trims each directive, and processes
   /// common cache directives like `no-cache`, `no-store`, `max-age`, etc.
-  factory CacheControlHeader.parse(Iterable<String> values) {
-    var directives = values.splitTrimAndFilterUnique();
+  factory CacheControlHeader.parse(final Iterable<String> values) {
+    final directives = values.splitTrimAndFilterUnique();
 
     if (directives.isEmpty) {
-      throw FormatException('Directives cannot be empty');
+      throw const FormatException('Directives cannot be empty');
     }
 
     // Check if at least one directive is valid
-    var foundOneDirective = directives.any(
-      (directive) => _validDirectives.any(
-        (validDirective) => directive.startsWith(validDirective),
+    final foundOneDirective = directives.any(
+      (final directive) => _validDirectives.any(
+        (final validDirective) => directive.startsWith(validDirective),
       ),
     );
 
     // Check for invalid directives
-    var invalidDirectives = directives.where(
-      (directive) => !_validDirectives.any(
-        (validDirective) => directive.startsWith(validDirective),
+    final invalidDirectives = directives.where(
+      (final directive) => !_validDirectives.any(
+        (final validDirective) => directive.startsWith(validDirective),
       ),
     );
 
     if (!foundOneDirective || invalidDirectives.isNotEmpty) {
-      throw FormatException('Invalid directive');
+      throw const FormatException('Invalid directive');
     }
 
-    bool noCache = directives.contains(_noCacheDirective);
-    bool noStore = directives.contains(_noStoreDirective);
-    bool mustRevalidate = directives.contains(_mustRevalidateDirective);
-    bool proxyRevalidate = directives.contains(_proxyRevalidateDirective);
-    bool noTransform = directives.contains(_noTransformDirective);
-    bool onlyIfCached = directives.contains(_onlyIfCachedDirective);
-    bool immutable = directives.contains(_immutableDirective);
-    bool mustUnderstand = directives.contains(_mustUnderstandDirective);
+    final bool noCache = directives.contains(_noCacheDirective);
+    final bool noStore = directives.contains(_noStoreDirective);
+    final bool mustRevalidate = directives.contains(_mustRevalidateDirective);
+    final bool proxyRevalidate = directives.contains(_proxyRevalidateDirective);
+    final bool noTransform = directives.contains(_noTransformDirective);
+    final bool onlyIfCached = directives.contains(_onlyIfCachedDirective);
+    final bool immutable = directives.contains(_immutableDirective);
+    final bool mustUnderstand = directives.contains(_mustUnderstandDirective);
     int? maxAge;
     int? staleWhileRevalidate;
     int? sMaxAge;
     int? staleIfError;
     int? maxStale;
     int? minFresh;
-    bool? publicCache = directives.contains(_publicDirective);
-    bool? privateCache = directives.contains(_privateDirective);
+    final bool publicCache = directives.contains(_publicDirective);
+    final bool privateCache = directives.contains(_privateDirective);
 
-    for (var directive in directives) {
+    for (final directive in directives) {
       if (directive.startsWith('$_maxAgeDirective=')) {
         maxAge = int.tryParse(directive.substring(_maxAgeDirective.length + 1));
       } else if (directive.startsWith('$_staleWhileRevalidateDirective=')) {
@@ -191,11 +192,11 @@ final class CacheControlHeader {
     }
 
     if (publicCache == true && privateCache == true) {
-      throw FormatException('Cannot be both public and private');
+      throw const FormatException('Cannot be both public and private');
     }
 
     if (maxAge != null && staleWhileRevalidate != null) {
-      throw FormatException(
+      throw const FormatException(
         'Cannot have both max-age and stale-while-revalidate directives',
       );
     }
@@ -224,7 +225,7 @@ final class CacheControlHeader {
   ///
   /// This method generates the header string by concatenating the set directives.
   String _encode() {
-    List<String> directives = [];
+    final List<String> directives = [];
     if (noCache) directives.add(_noCacheDirective);
     if (noStore) directives.add(_noStoreDirective);
     if (mustRevalidate) directives.add(_mustRevalidateDirective);

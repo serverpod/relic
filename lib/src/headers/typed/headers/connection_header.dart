@@ -1,5 +1,5 @@
-import "package:relic/relic.dart";
-import 'package:relic/src/headers/extension/string_list_extensions.dart';
+import '../../../../relic.dart';
+import '../../extension/string_list_extensions.dart';
 
 /// A class representing the HTTP Connection header.
 ///
@@ -8,7 +8,8 @@ import 'package:relic/src/headers/extension/string_list_extensions.dart';
 /// connection header values.
 final class ConnectionHeader {
   static const codec = HeaderCodec(ConnectionHeader.parse, __encode);
-  static List<String> __encode(ConnectionHeader value) => [value._encode()];
+  static List<String> __encode(final ConnectionHeader value) =>
+      [value._encode()];
 
   /// A list of connection directives (e.g., `keep-alive`, `close`, `upgrade`).
   final List<ConnectionHeaderType> directives;
@@ -21,14 +22,14 @@ final class ConnectionHeader {
   /// Parses the Connection header value and returns a [ConnectionHeader] instance.
   ///
   /// This method splits the value by commas and trims each directive.
-  factory ConnectionHeader.parse(Iterable<String> values) {
-    var splitValues = values.splitTrimAndFilterUnique();
+  factory ConnectionHeader.parse(final Iterable<String> values) {
+    final splitValues = values.splitTrimAndFilterUnique();
 
     if (splitValues.isEmpty) {
-      throw FormatException('Value cannot be empty');
+      throw const FormatException('Value cannot be empty');
     }
 
-    var directives = splitValues.map(ConnectionHeaderType.parse).toList();
+    final directives = splitValues.map(ConnectionHeaderType.parse).toList();
 
     return ConnectionHeader(directives: directives);
   }
@@ -49,7 +50,7 @@ final class ConnectionHeader {
   ///
   /// This method generates the header string by concatenating the connection directives.
   String _encode() {
-    return directives.map((directive) => directive.value).join(', ');
+    return directives.map((final directive) => directive.value).join(', ');
   }
 
   @override
@@ -79,10 +80,10 @@ class ConnectionHeaderType {
 
   /// Parses a [value] and returns the corresponding [ConnectionHeaderType] instance.
   /// If the value does not match any predefined types, it returns a custom instance.
-  factory ConnectionHeaderType.parse(String value) {
+  factory ConnectionHeaderType.parse(final String value) {
     final trimmed = value.trim();
     if (trimmed.isEmpty) {
-      throw FormatException('Value cannot be empty');
+      throw const FormatException('Value cannot be empty');
     }
     switch (trimmed) {
       case _keepAlive:
@@ -94,7 +95,7 @@ class ConnectionHeaderType {
       case _downgrade:
         return downgrade;
       default:
-        throw FormatException('Invalid value');
+        throw const FormatException('Invalid value');
     }
   }
 

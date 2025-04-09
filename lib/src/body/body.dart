@@ -3,8 +3,8 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:relic/src/body/types/body_type.dart';
-import 'package:relic/src/body/types/mime_type.dart';
+import 'types/body_type.dart';
+import 'types/mime_type.dart';
 
 /// The body of a request or response.
 ///
@@ -42,18 +42,18 @@ class Body {
   Body._(
     this._stream,
     this.contentLength, {
-    Encoding? encoding,
-    MimeType? mimeType,
+    final Encoding? encoding,
+    final MimeType? mimeType,
   }) : bodyType = mimeType == null
             ? null
             : BodyType(mimeType: mimeType, encoding: encoding);
 
   /// Creates an empty body.
-  factory Body.empty() => Body._(Stream.empty(), 0);
+  factory Body.empty() => Body._(const Stream.empty(), 0);
 
   /// Creates a body from a [HttpRequest].
-  factory Body.fromHttpRequest(HttpRequest request) {
-    var contentType = request.headers.contentType;
+  factory Body.fromHttpRequest(final HttpRequest request) {
+    final contentType = request.headers.contentType;
     return Body._(
       request,
       request.contentLength <= 0 ? null : request.contentLength,
@@ -64,11 +64,11 @@ class Body {
 
   /// Creates a body from a string.
   factory Body.fromString(
-    String body, {
-    Encoding encoding = utf8,
-    MimeType mimeType = MimeType.plainText,
+    final String body, {
+    final Encoding encoding = utf8,
+    final MimeType mimeType = MimeType.plainText,
   }) {
-    Uint8List encoded = Uint8List.fromList(encoding.encode(body));
+    final Uint8List encoded = Uint8List.fromList(encoding.encode(body));
     return Body._(
       Stream.value(encoded),
       encoded.length,
@@ -79,10 +79,10 @@ class Body {
 
   /// Creates a body from a [Stream] of [Uint8List].
   factory Body.fromDataStream(
-    Stream<Uint8List> body, {
-    Encoding? encoding = utf8,
-    MimeType? mimeType = MimeType.plainText,
-    int? contentLength,
+    final Stream<Uint8List> body, {
+    final Encoding? encoding = utf8,
+    final MimeType? mimeType = MimeType.plainText,
+    final int? contentLength,
   }) {
     return Body._(
       body,
@@ -94,9 +94,9 @@ class Body {
 
   /// Creates a body from a [Uint8List].
   factory Body.fromData(
-    Uint8List body, {
-    Encoding? encoding,
-    MimeType mimeType = MimeType.octetStream,
+    final Uint8List body, {
+    final Encoding? encoding,
+    final MimeType mimeType = MimeType.octetStream,
   }) {
     return Body._(
       Stream.value(body),
@@ -110,7 +110,7 @@ class Body {
   ///
   /// Can only be called once.
   Stream<Uint8List> read() {
-    var stream = _stream;
+    final stream = _stream;
     if (stream == null) {
       throw StateError(
         "The 'read' method can only be called once on a "
@@ -125,7 +125,7 @@ class Body {
   ///
   /// This is a convenience method that combines [mimeType] and [encoding].
   ContentType? getContentType() {
-    var mBodyType = bodyType;
+    final mBodyType = bodyType;
     if (mBodyType == null) return null;
     return ContentType(
       mBodyType.mimeType.primaryType,

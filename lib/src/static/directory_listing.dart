@@ -8,7 +8,7 @@ import 'package:path/path.dart' as path;
 import '../body/body.dart';
 import '../message/response.dart';
 
-String _getHeader(String sanitizedHeading) => '''<!DOCTYPE html>
+String _getHeader(final String sanitizedHeading) => '''<!DOCTYPE html>
 <html>
 <head>
   <title>Directory listing for $sanitizedHeading</title>
@@ -49,12 +49,12 @@ const String _trailer = '''  </ul>
 </html>
 ''';
 
-Response listDirectory(String fileSystemPath, String dirPath) {
+Response listDirectory(final String fileSystemPath, final String dirPath) {
   final controller = StreamController<Uint8List>();
   const encoding = Utf8Codec();
   const sanitizer = HtmlEscape();
 
-  void add(String string) {
+  void add(final String string) {
     controller.add(encoding.encode(string));
   }
 
@@ -68,8 +68,8 @@ Response listDirectory(String fileSystemPath, String dirPath) {
   add(_getHeader(sanitizer.convert(heading)));
 
   // Return a sorted listing of the directory contents asynchronously.
-  Directory(dirPath).list().toList().then((entities) {
-    entities.sort((e1, e2) {
+  Directory(dirPath).list().toList().then((final entities) {
+    entities.sort((final e1, final e2) {
       if (e1 is Directory && e2 is! Directory) {
         return -1;
       }
@@ -79,7 +79,7 @@ Response listDirectory(String fileSystemPath, String dirPath) {
       return e1.path.compareTo(e2.path);
     });
 
-    for (var entity in entities) {
+    for (final entity in entities) {
       var name = path.relative(entity.path, from: dirPath);
       if (entity is Directory) name += '/';
       final sanitizedName = sanitizer.convert(name);

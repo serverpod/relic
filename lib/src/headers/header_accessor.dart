@@ -60,8 +60,8 @@ final class HeaderAccessor<T extends Object> {
   /// Throws:
   /// - [InvalidHeaderException] if parsing fails and no [orElse] is provided
   T? getValueFrom(
-    HeadersBase external, {
-    T? Function(Exception)? orElse,
+    final HeadersBase external, {
+    final T? Function(Exception)? orElse,
   }) {
     try {
       final raw = external[key];
@@ -80,18 +80,18 @@ final class HeaderAccessor<T extends Object> {
   }
 
   /// Checks if the header is set in the given [external] headers.
-  bool isSetIn(HeadersBase external) => external[key] != null;
+  bool isSetIn(final HeadersBase external) => external[key] != null;
 
   /// Checks if the header is valid in the given [external] headers.
-  bool isValidIn(HeadersBase external) =>
+  bool isValidIn(final HeadersBase external) =>
       getValueFrom(external, orElse: _returnNull) != null;
 
   /// Creates a new [Header] instance for the given [external] headers.
-  Header<T> operator [](HeadersBase external) =>
+  Header<T> operator [](final HeadersBase external) =>
       Header((accessor: this, headers: external));
 
   /// If [value] is [null] it implies removing the header
-  void setValueOn(MutableHeaders external, T? value) {
+  void setValueOn(final MutableHeaders external, final T? value) {
     if (value != null) {
       final raw = codec.encode(value);
       external[key] = raw;
@@ -104,10 +104,10 @@ final class HeaderAccessor<T extends Object> {
   }
 
   /// Removes the header from the given [external] headers.
-  void removeFrom(MutableHeaders external) => external.remove(key);
+  void removeFrom(final MutableHeaders external) => external.remove(key);
 }
 
-Null _returnNull<T>(Exception ex) => null;
+Null _returnNull<T>(final Exception ex) => null;
 
 /// An interface defining a bidirectional conversion between types [T] and [StorageT].
 ///
@@ -118,8 +118,8 @@ Null _returnNull<T>(Exception ex) => null;
 /// This interface is used as a foundation for the [HeaderCodec] which specializes
 /// in converting between header values and their string representations.
 abstract interface class Codec<T, StorageT> {
-  T decode(StorageT encoded);
-  StorageT encode(T decoded);
+  T decode(final StorageT encoded);
+  StorageT encode(final T decoded);
 }
 
 /// A specialized codec for HTTP headers that defines conversion between a typed
@@ -143,15 +143,15 @@ sealed class HeaderCodec<T extends Object>
   const HeaderCodec._(this._encode);
 
   @override
-  Iterable<String> encode(T value) => _encode(value);
+  Iterable<String> encode(final T value) => _encode(value);
 
   /// Factory constructor for creating a [HeaderCodec] that processes multiple values.
   ///
   /// - [decode]: Function that converts a collection of header values to type [T]
   /// - [encode]: Optional function to convert type [T] back to header values
   const factory HeaderCodec(
-    T Function(Iterable<String> encoded) decode,
-    Iterable<String> Function(T decoded) encode,
+    final T Function(Iterable<String> encoded) decode,
+    final Iterable<String> Function(T decoded) encode,
   ) = _MultiDecodeHeaderCodec<T>;
 
   /// Factory constructor for creating a [HeaderCodec] that processes a single value.
@@ -162,8 +162,8 @@ sealed class HeaderCodec<T extends Object>
   /// This is a simplified constructor for headers that only need to process the first
   /// value in a collection of header values.
   const factory HeaderCodec.single(
-    T Function(String) singleDecode,
-    Iterable<String> Function(T) encode,
+    final T Function(String) singleDecode,
+    final Iterable<String> Function(T) encode,
   ) = _SingleDecodeHeaderCodec<T>;
 }
 
@@ -172,11 +172,11 @@ final class _MultiDecodeHeaderCodec<T extends Object> extends HeaderCodec<T> {
 
   const _MultiDecodeHeaderCodec(
     this._decode,
-    Iterable<String> Function(T) encode,
+    final Iterable<String> Function(T) encode,
   ) : super._(encode);
 
   @override
-  T decode(Iterable<String> encoded) => _decode(encoded);
+  T decode(final Iterable<String> encoded) => _decode(encoded);
 }
 
 final class _SingleDecodeHeaderCodec<T extends Object> extends HeaderCodec<T> {
@@ -184,11 +184,11 @@ final class _SingleDecodeHeaderCodec<T extends Object> extends HeaderCodec<T> {
 
   const _SingleDecodeHeaderCodec(
     this.singleDecode,
-    Iterable<String> Function(T) encode,
+    final Iterable<String> Function(T) encode,
   ) : super._(encode);
 
   @override
-  T decode(Iterable<String> encoded) => singleDecode(encoded.first);
+  T decode(final Iterable<String> encoded) => singleDecode(encoded.first);
 }
 
 /// A "class" representing a typed header.
@@ -217,7 +217,8 @@ extension type const Header<T extends Object>(HeaderTuple<T> tuple) {
       _accessor.getValueFrom(_headers) ??
       (throw MissingHeaderException('', headerType: key));
 
-  void set(T? value) => _accessor.setValueOn(_headers as MutableHeaders, value);
+  void set(final T? value) =>
+      _accessor.setValueOn(_headers as MutableHeaders, value);
 }
 
 /// Internal record for bundling an [accessor] with its externalized state [headers].
@@ -240,14 +241,14 @@ typedef HeaderTuple<T extends Object> = ({
 /// - [InvalidHeaderException]: Always thrown with the extracted message and
 /// the specified header type.
 Never _throwException(
-  Object exception, {
-  required String key,
+  final Object exception, {
+  required final String key,
 }) {
   if (exception is InvalidHeaderException) throw exception;
   throw InvalidHeaderException(
     switch (exception) {
-      FormatException f => f.message,
-      ArgumentError e => e.message,
+      final FormatException f => f.message,
+      final ArgumentError e => e.message,
       _ => '$exception',
     },
     headerType: key,

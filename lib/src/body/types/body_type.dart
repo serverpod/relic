@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:relic/src/body/types/mime_type.dart';
+import 'mime_type.dart';
 
 /// A body type.
 class BodyType {

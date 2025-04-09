@@ -1,9 +1,10 @@
-import 'package:relic/relic.dart';
 import 'package:http_parser/http_parser.dart';
-import 'package:test/test.dart';
+import 'package:relic/relic.dart';
 import 'package:relic/src/headers/standard_headers_extensions.dart';
-import '../headers_test_utils.dart';
+import 'package:test/test.dart';
+
 import '../docs/strict_validation_docs.dart';
+import '../headers_test_utils.dart';
 
 /// Reference: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Expires
 /// About empty value test, check the [StrictValidationDocs] class for more details.
@@ -28,11 +29,11 @@ void main() {
             getServerRequestHeaders(
               server: server,
               headers: {'expires': ''},
-              touchHeaders: (h) => h.expires,
+              touchHeaders: (final h) => h.expires,
             ),
             throwsA(
               isA<BadRequestException>().having(
-                (e) => e.message,
+                (final e) => e.message,
                 'message',
                 contains('Value cannot be empty'),
               ),
@@ -50,11 +51,11 @@ void main() {
             getServerRequestHeaders(
               server: server,
               headers: {'expires': 'invalid-date-format'},
-              touchHeaders: (h) => h.expires,
+              touchHeaders: (final h) => h.expires,
             ),
             throwsA(
               isA<BadRequestException>().having(
-                (e) => e.message,
+                (final e) => e.message,
                 'message',
                 contains('Invalid date format'),
               ),
@@ -68,9 +69,9 @@ void main() {
         'then the server does not respond with a bad request if the headers '
         'is not actually used',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
-            touchHeaders: (_) {},
+            touchHeaders: (final _) {},
             headers: {'expires': 'invalid-date-format'},
           );
 
@@ -81,10 +82,10 @@ void main() {
       test(
         'when a valid Expires header is passed then it should parse the date correctly',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
             headers: {'expires': 'Wed, 21 Oct 2015 07:28:00 GMT'},
-            touchHeaders: (h) => h.expires,
+            touchHeaders: (final h) => h.expires,
           );
 
           expect(
@@ -97,10 +98,10 @@ void main() {
       test(
         'when an Expires header with extra whitespace is passed then it should parse the date correctly',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
             headers: {'expires': ' Wed, 21 Oct 2015 07:28:00 GMT '},
-            touchHeaders: (h) => h.expires,
+            touchHeaders: (final h) => h.expires,
           );
 
           expect(
@@ -113,10 +114,10 @@ void main() {
       test(
         'when no Expires header is passed then it should return null',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
             headers: {},
-            touchHeaders: (h) => h.expires,
+            touchHeaders: (final h) => h.expires,
           );
 
           expect(headers.expires, isNull);
@@ -138,9 +139,9 @@ void main() {
       test(
         'then it should return null',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
-            touchHeaders: (_) {},
+            touchHeaders: (final _) {},
             headers: {'expires': ''},
           );
 
@@ -154,9 +155,9 @@ void main() {
       test(
         'then it should return null',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
-            touchHeaders: (_) {},
+            touchHeaders: (final _) {},
             headers: {'expires': 'invalid-date-format'},
           );
 

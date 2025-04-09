@@ -2,8 +2,8 @@ import 'package:relic/relic.dart';
 import 'package:relic/src/headers/standard_headers_extensions.dart';
 import 'package:test/test.dart';
 
-import '../headers_test_utils.dart';
 import '../docs/strict_validation_docs.dart';
+import '../headers_test_utils.dart';
 
 /// Reference: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Connection
 /// About empty value test, check the [StrictValidationDocs] class for more details.
@@ -25,12 +25,12 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (h) => h.connection,
+            touchHeaders: (final h) => h.connection,
             headers: {'connection': ''},
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (e) => e.message,
+              (final e) => e.message,
               'message',
               contains('Value cannot be empty'),
             ),
@@ -47,12 +47,12 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (h) => h.connection,
+            touchHeaders: (final h) => h.connection,
             headers: {'connection': 'custom-directive'},
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (e) => e.message,
+              (final e) => e.message,
               'message',
               contains('Invalid value'),
             ),
@@ -66,9 +66,9 @@ void main() {
       'then the server does not respond with a bad request if the headers '
       'is not actually used',
       () async {
-        var headers = await getServerRequestHeaders(
+        final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (_) {},
+          touchHeaders: (final _) {},
           headers: {'connection': 'invalid-connection-format'},
         );
 
@@ -79,14 +79,14 @@ void main() {
     test(
       'when a Connection header with directives are passed then they should be parsed correctly',
       () async {
-        var headers = await getServerRequestHeaders(
+        final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (h) => h.connection,
+          touchHeaders: (final h) => h.connection,
           headers: {'connection': 'keep-alive, upgrade'},
         );
 
         expect(
-          headers.connection?.directives.map((d) => d.value),
+          headers.connection?.directives.map((final d) => d.value),
           containsAll(['keep-alive', 'upgrade']),
         );
       },
@@ -96,14 +96,14 @@ void main() {
       'when a Connection header with duplicate directives are passed then '
       'they should be parsed correctly and remove duplicates',
       () async {
-        var headers = await getServerRequestHeaders(
+        final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (h) => h.connection,
+          touchHeaders: (final h) => h.connection,
           headers: {'connection': 'keep-alive, upgrade, keep-alive'},
         );
 
         expect(
-          headers.connection?.directives.map((d) => d.value),
+          headers.connection?.directives.map((final d) => d.value),
           containsAll(['keep-alive', 'upgrade']),
         );
       },
@@ -112,9 +112,9 @@ void main() {
     test(
       'when a Connection header with keep-alive is passed then isKeepAlive should be true',
       () async {
-        var headers = await getServerRequestHeaders(
+        final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (h) => h.connection,
+          touchHeaders: (final h) => h.connection,
           headers: {'connection': 'keep-alive'},
         );
 
@@ -125,9 +125,9 @@ void main() {
     test(
       'when a Connection header with close is passed then isClose should be true',
       () async {
-        var headers = await getServerRequestHeaders(
+        final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (h) => h.connection,
+          touchHeaders: (final h) => h.connection,
           headers: {'connection': 'close'},
         );
 
@@ -151,9 +151,9 @@ void main() {
         test(
           'then it should return null',
           () async {
-            var headers = await getServerRequestHeaders(
+            final headers = await getServerRequestHeaders(
               server: server,
-              touchHeaders: (_) {},
+              touchHeaders: (final _) {},
               headers: {'connection': ''},
             );
 

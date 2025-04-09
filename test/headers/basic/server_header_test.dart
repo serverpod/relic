@@ -1,8 +1,9 @@
 import 'package:relic/relic.dart';
-import 'package:test/test.dart';
 import 'package:relic/src/headers/standard_headers_extensions.dart';
-import '../headers_test_utils.dart';
+import 'package:test/test.dart';
+
 import '../docs/strict_validation_docs.dart';
+import '../headers_test_utils.dart';
 
 /// Reference: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Server
 /// About empty value test, check the [StrictValidationDocs] class for more details.
@@ -27,11 +28,11 @@ void main() {
             getServerRequestHeaders(
               server: server,
               headers: {'server': ''},
-              touchHeaders: (h) => h.server,
+              touchHeaders: (final h) => h.server,
             ),
             throwsA(
               isA<BadRequestException>().having(
-                (e) => e.message,
+                (final e) => e.message,
                 'message',
                 contains('Value cannot be empty'),
               ),
@@ -45,9 +46,9 @@ void main() {
         'then the server does not respond with a bad request if the headers '
         'is not actually used',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
-            touchHeaders: (_) {},
+            touchHeaders: (final _) {},
             headers: {'server': ''},
           );
 
@@ -58,9 +59,9 @@ void main() {
       test(
         'when a valid Server header is passed then it should parse the server correctly',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
-            touchHeaders: (_) {},
+            touchHeaders: (final _) {},
             headers: {'server': 'MyServer/1.0'},
           );
 
@@ -71,10 +72,10 @@ void main() {
       test(
         'when a Server header with extra whitespace is passed then it should parse the server correctly',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
             headers: {'server': ' MyServer/1.0 '},
-            touchHeaders: (h) => h.server,
+            touchHeaders: (final h) => h.server,
           );
 
           expect(headers.server, equals('MyServer/1.0'));
@@ -84,10 +85,10 @@ void main() {
       test(
         'when no Server header is passed then it should return null',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
             headers: {},
-            touchHeaders: (h) => h.server,
+            touchHeaders: (final h) => h.server,
           );
 
           expect(headers.server, isNull);
@@ -109,9 +110,9 @@ void main() {
       test(
         'then it should return null',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
-            touchHeaders: (_) {},
+            touchHeaders: (final _) {},
             headers: {'server': ''},
           );
 

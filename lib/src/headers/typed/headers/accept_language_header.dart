@@ -1,12 +1,13 @@
-import "package:relic/relic.dart";
-import 'package:relic/src/headers/extension/string_list_extensions.dart';
+import '../../../../relic.dart';
+import '../../extension/string_list_extensions.dart';
 
 /// A class representing the HTTP Accept-Language header.
 ///
 /// This header specifies the natural languages that are preferred in the response.
 final class AcceptLanguageHeader {
   static const codec = HeaderCodec(AcceptLanguageHeader.parse, __encode);
-  static List<String> __encode(AcceptLanguageHeader value) => [value._encode()];
+  static List<String> __encode(final AcceptLanguageHeader value) =>
+      [value._encode()];
 
   /// The list of languages that are accepted.
   final List<LanguageQuality>? languages;
@@ -24,32 +25,33 @@ final class AcceptLanguageHeader {
         isWildcard = true;
 
   /// Parses the Accept-Language header value and returns an [AcceptLanguageHeader] instance.
-  factory AcceptLanguageHeader.parse(Iterable<String> values) {
-    var splitValues = values.splitTrimAndFilterUnique();
+  factory AcceptLanguageHeader.parse(final Iterable<String> values) {
+    final splitValues = values.splitTrimAndFilterUnique();
 
     if (splitValues.isEmpty) {
-      throw FormatException('Value cannot be empty');
+      throw const FormatException('Value cannot be empty');
     }
 
     if (splitValues.length == 1 && splitValues.first == '*') {
-      return AcceptLanguageHeader.wildcard();
+      return const AcceptLanguageHeader.wildcard();
     }
 
     if (splitValues.length > 1 && splitValues.contains('*')) {
-      throw FormatException('Wildcard (*) cannot be used with other values');
+      throw const FormatException(
+          'Wildcard (*) cannot be used with other values');
     }
 
-    var languages = splitValues.map((value) {
-      var languageParts = value.split(';q=');
-      var language = languageParts[0].trim().toLowerCase();
+    final languages = splitValues.map((final value) {
+      final languageParts = value.split(';q=');
+      final language = languageParts[0].trim().toLowerCase();
       if (language.isEmpty) {
-        throw FormatException('Invalid language');
+        throw const FormatException('Invalid language');
       }
       double? quality;
       if (languageParts.length > 1) {
-        var value = double.tryParse(languageParts[1].trim());
+        final value = double.tryParse(languageParts[1].trim());
         if (value == null || value < 0 || value > 1) {
-          throw FormatException('Invalid quality value');
+          throw const FormatException('Invalid quality value');
         }
         quality = value;
       }
@@ -60,8 +62,9 @@ final class AcceptLanguageHeader {
   }
 
   /// Converts the [AcceptLanguageHeader] instance into a string representation suitable for HTTP headers.
-  String _encode() =>
-      isWildcard ? '*' : languages?.map((e) => e._encode()).join(', ') ?? '';
+  String _encode() => isWildcard
+      ? '*'
+      : languages?.map((final e) => e._encode()).join(', ') ?? '';
 
   @override
   String toString() => 'AcceptLanguageHeader(languages: $languages)';
@@ -76,7 +79,8 @@ class LanguageQuality {
   final double? quality;
 
   /// Constructs an instance of [LanguageQuality].
-  LanguageQuality(this.language, [double? quality]) : quality = quality ?? 1.0;
+  LanguageQuality(this.language, [final double? quality])
+      : quality = quality ?? 1.0;
 
   /// Converts the [LanguageQuality] instance into a string representation suitable for HTTP headers.
   String _encode() => quality == 1.0 ? language : '$language;q=$quality';

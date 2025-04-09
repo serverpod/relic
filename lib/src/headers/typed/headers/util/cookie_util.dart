@@ -1,31 +1,31 @@
 /// Validates the cookie name and returns a string representation of the cookie name.
-String validateCookieName(String name) {
+String validateCookieName(final String name) {
   // Allow empty names
   if (name.isEmpty) return name;
 
   // Disallowed characters (separators)
   const separators = {
-    "(",
-    ")",
-    "<",
-    ">",
-    "@",
-    ",",
-    ";",
-    ":",
-    "\\",
+    '(',
+    ')',
+    '<',
+    '>',
+    '@',
+    ',',
+    ';',
+    ':',
+    '\',
     '"',
-    "/",
-    "[",
-    "]",
-    "?",
-    "=",
-    "{",
-    "}"
+    '/',
+    '[',
+    ']',
+    '?',
+    '=',
+    '{',
+    '}'
   };
 
   for (int i = 0; i < name.length; i++) {
-    int codeUnit = name.codeUnitAt(i);
+    final int codeUnit = name.codeUnitAt(i);
 
     // Disallow control characters, non-ASCII characters, and reserved separators
     if (
@@ -35,7 +35,7 @@ String validateCookieName(String name) {
             codeUnit >= 127 ||
             // Disallows reserved separator characters [separators], based on RFC 6265
             separators.contains(name[i])) {
-      throw FormatException("Invalid cookie name");
+      throw const FormatException('Invalid cookie name');
     }
   }
 
@@ -43,7 +43,7 @@ String validateCookieName(String name) {
 }
 
 /// Validates the cookie value and returns a string representation of the cookie value.
-String validateCookieValue(String value) {
+String validateCookieValue(final String value) {
   // Allow empty values
   if (value.isEmpty) return value;
 
@@ -62,7 +62,7 @@ String validateCookieValue(String value) {
 
   // Validate characters inside the string
   for (int i = start; i < end; i++) {
-    int codeUnit = value.codeUnitAt(i);
+    final int codeUnit = value.codeUnitAt(i);
 
     if (!(
         // '!' (ASCII 33) is allowed
@@ -75,7 +75,7 @@ String validateCookieValue(String value) {
             (codeUnit >= 0x3C && codeUnit <= 0x5B) ||
             // ']' (93) to '~' (126) are allowed, covering ']', '^', '_', '`', 'a-z', '{', '|', '}', and '~'
             (codeUnit >= 0x5D && codeUnit <= 0x7E))) {
-      throw FormatException("Invalid cookie value");
+      throw const FormatException('Invalid cookie value');
     }
   }
 

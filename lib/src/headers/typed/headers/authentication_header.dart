@@ -1,9 +1,10 @@
-import "package:relic/relic.dart";
+import '../../../../relic.dart';
 
 /// A class representing the HTTP Authentication header.
 final class AuthenticationHeader {
   static const codec = HeaderCodec.single(AuthenticationHeader.parse, __encode);
-  static List<String> __encode(AuthenticationHeader value) => [value._encode()];
+  static List<String> __encode(final AuthenticationHeader value) =>
+      [value._encode()];
 
   /// The authentication scheme (e.g., "Basic", "Bearer", "Digest").
   final String scheme;
@@ -18,16 +19,16 @@ final class AuthenticationHeader {
   });
 
   /// Parses the Authentication header value and returns an [AuthenticationHeader] instance.
-  factory AuthenticationHeader.parse(String value) {
+  factory AuthenticationHeader.parse(final String value) {
     final trimmed = value.trim();
     if (trimmed.isEmpty) {
-      throw FormatException('Value cannot be empty');
+      throw const FormatException('Value cannot be empty');
     }
 
     // Split into scheme and parameters part
     final firstSpace = trimmed.indexOf(' ');
     if (firstSpace == -1) {
-      throw FormatException('Missing scheme or parameters');
+      throw const FormatException('Missing scheme or parameters');
     }
 
     final scheme = trimmed.substring(0, firstSpace).trim();
@@ -58,7 +59,7 @@ final class AuthenticationHeader {
   /// Converts the [AuthenticationHeader] instance into a string representation
   /// suitable for HTTP headers.
   String _encode() {
-    final paramsString = parameters.map((param) {
+    final paramsString = parameters.map((final param) {
       if (param.key.isEmpty) return param.value;
       return '${param.key}="${param.value}"';
     }).join(', ');

@@ -1,9 +1,9 @@
 import 'package:relic/relic.dart';
-import 'package:test/test.dart';
 import 'package:relic/src/headers/standard_headers_extensions.dart';
-import '../headers_test_utils.dart';
+import 'package:test/test.dart';
 
 import '../docs/strict_validation_docs.dart';
+import '../headers_test_utils.dart';
 
 /// Reference: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/From
 /// About empty value test, check the [StrictValidationDocs] class for more details.
@@ -25,12 +25,12 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (h) => h.from,
+            touchHeaders: (final h) => h.from,
             headers: {'from': ''},
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (e) => e.message,
+              (final e) => e.message,
               'message',
               contains('Value cannot be empty'),
             ),
@@ -47,12 +47,12 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (h) => h.from,
+            touchHeaders: (final h) => h.from,
             headers: {'from': 'invalid-email-format'},
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (e) => e.message,
+              (final e) => e.message,
               'message',
               contains('Invalid email format'),
             ),
@@ -66,9 +66,9 @@ void main() {
       'then the server does not respond with a bad request if the headers '
       'is not actually used',
       () async {
-        var headers = await getServerRequestHeaders(
+        final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (_) {},
+          touchHeaders: (final _) {},
           headers: {'from': 'invalid-email-format'},
         );
 
@@ -79,9 +79,9 @@ void main() {
     test(
       'when a valid From header is passed then it should parse the email correctly',
       () async {
-        var headers = await getServerRequestHeaders(
+        final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (h) => h.from,
+          touchHeaders: (final h) => h.from,
           headers: {'from': 'user@example.com'},
         );
 
@@ -92,9 +92,9 @@ void main() {
     test(
       'when a From header with extra whitespace is passed then it should parse the email correctly',
       () async {
-        var headers = await getServerRequestHeaders(
+        final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (h) => h.from,
+          touchHeaders: (final h) => h.from,
           headers: {'from': ' user@example.com '},
         );
 
@@ -106,9 +106,9 @@ void main() {
       test(
         'From headers are passed then they should parse all emails correctly',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
-            touchHeaders: (h) => h.from,
+            touchHeaders: (final h) => h.from,
             headers: {'from': 'user1@example.com, user2@example.com'},
           );
 
@@ -122,9 +122,9 @@ void main() {
       test(
         'From headers with extra whitespace are passed then they should parse all emails correctly',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
-            touchHeaders: (h) => h.from,
+            touchHeaders: (final h) => h.from,
             headers: {'from': ' user1@example.com , user2@example.com '},
           );
 
@@ -139,9 +139,9 @@ void main() {
         'From headers with extra duplicate values are passed then they should '
         'parse all emails correctly and remove duplicates',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
-            touchHeaders: (h) => h.from,
+            touchHeaders: (final h) => h.from,
             headers: {
               'from': 'user1@example.com, user2@example.com, user1@example.com'
             },
@@ -162,7 +162,7 @@ void main() {
           expect(
             getServerRequestHeaders(
               server: server,
-              touchHeaders: (h) => h.from,
+              touchHeaders: (final h) => h.from,
               headers: {
                 'from':
                     'user1@example.com, invalid-email-format, user2@example.com'
@@ -170,7 +170,7 @@ void main() {
             ),
             throwsA(
               isA<BadRequestException>().having(
-                (e) => e.message,
+                (final e) => e.message,
                 'message',
                 contains('Invalid email format'),
               ),
@@ -183,9 +183,9 @@ void main() {
     test(
       'when no From header is passed then it should return null',
       () async {
-        var headers = await getServerRequestHeaders(
+        final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (h) => h.from,
+          touchHeaders: (final h) => h.from,
           headers: {},
         );
 
@@ -207,9 +207,9 @@ void main() {
       test(
         'then it should return null',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
-            touchHeaders: (_) {},
+            touchHeaders: (final _) {},
             headers: {'from': 'invalid-email-format'},
           );
 

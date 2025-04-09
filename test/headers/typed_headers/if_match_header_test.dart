@@ -1,9 +1,9 @@
 import 'package:relic/relic.dart';
-import 'package:test/test.dart';
 import 'package:relic/src/headers/standard_headers_extensions.dart';
+import 'package:test/test.dart';
 
-import '../headers_test_utils.dart';
 import '../docs/strict_validation_docs.dart';
+import '../headers_test_utils.dart';
 
 /// Reference: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/If-Match
 /// About empty value test, check the [StrictValidationDocs] class for more details.
@@ -25,12 +25,12 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (h) => h.ifMatch,
+            touchHeaders: (final h) => h.ifMatch,
             headers: {'if-match': ''},
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (e) => e.message,
+              (final e) => e.message,
               'message',
               contains('Value cannot be empty'),
             ),
@@ -46,12 +46,12 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (h) => h.ifMatch,
+            touchHeaders: (final h) => h.ifMatch,
             headers: {'if-match': 'invalid-etag'},
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (e) => e.message,
+              (final e) => e.message,
               'message',
               contains('Invalid ETag format'),
             ),
@@ -68,12 +68,12 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (h) => h.ifMatch,
+            touchHeaders: (final h) => h.ifMatch,
             headers: {'if-match': '*, 123456"'},
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (e) => e.message,
+              (final e) => e.message,
               'message',
               contains('Wildcard (*) cannot be used with other values'),
             ),
@@ -87,9 +87,9 @@ void main() {
       'then the server does not respond with a bad request if the headers '
       'is not actually used',
       () async {
-        var headers = await getServerRequestHeaders(
+        final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (_) {},
+          touchHeaders: (final _) {},
           headers: {'if-match': 'invalid-etag'},
         );
 
@@ -101,9 +101,9 @@ void main() {
       'when an If-Match header with a single valid ETag is passed then it '
       'should parse correctly',
       () async {
-        var headers = await getServerRequestHeaders(
+        final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (h) => h.ifMatch,
+          touchHeaders: (final h) => h.ifMatch,
           headers: {'if-match': '"123456"'},
         );
 
@@ -117,9 +117,9 @@ void main() {
       'when an If-Match header with a wildcard (*) is passed then it '
       'should parse correctly',
       () async {
-        var headers = await getServerRequestHeaders(
+        final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (h) => h.ifMatch,
+          touchHeaders: (final h) => h.ifMatch,
           headers: {'if-match': '*'},
         );
 
@@ -131,9 +131,9 @@ void main() {
     test(
       'when no If-Match header is passed then it should return null',
       () async {
-        var headers = await getServerRequestHeaders(
+        final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (h) => h.ifMatch,
+          touchHeaders: (final h) => h.ifMatch,
           headers: {},
         );
 
@@ -145,15 +145,15 @@ void main() {
       test(
         'ETags are passed then they should parse correctly',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
-            touchHeaders: (h) => h.ifMatch,
+            touchHeaders: (final h) => h.ifMatch,
             headers: {'if-match': '"123", "456", "789"'},
           );
 
           expect(headers.ifMatch?.etags.length, equals(3));
           expect(
-            headers.ifMatch?.etags.map((e) => e.value).toList(),
+            headers.ifMatch?.etags.map((final e) => e.value).toList(),
             equals(['123', '456', '789']),
           );
         },
@@ -162,15 +162,15 @@ void main() {
       test(
         'with W/ weak validator prefix should be accepted',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
-            touchHeaders: (h) => h.ifMatch,
+            touchHeaders: (final h) => h.ifMatch,
             headers: {'if-match': 'W/"123", W/"456"'},
           );
 
           expect(headers.ifMatch?.etags.length, equals(2));
           expect(
-            headers.ifMatch?.etags.every((e) => e.isWeak),
+            headers.ifMatch?.etags.every((final e) => e.isWeak),
             isTrue,
           );
         },
@@ -179,15 +179,15 @@ void main() {
       test(
         'with extra whitespace are passed then they should parse correctly',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
-            touchHeaders: (h) => h.ifMatch,
+            touchHeaders: (final h) => h.ifMatch,
             headers: {'if-match': ' "123" , "456" , "789" '},
           );
 
           expect(headers.ifMatch?.etags.length, equals(3));
           expect(
-            headers.ifMatch?.etags.map((e) => e.value).toList(),
+            headers.ifMatch?.etags.map((final e) => e.value).toList(),
             equals(['123', '456', '789']),
           );
         },
@@ -197,15 +197,15 @@ void main() {
         'with duplicate values are passed then they should parse correctly '
         'and remove duplicates',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
-            touchHeaders: (h) => h.ifMatch,
+            touchHeaders: (final h) => h.ifMatch,
             headers: {'if-match': '"123", "456", "789", "123"'},
           );
 
           expect(headers.ifMatch?.etags.length, equals(3));
           expect(
-            headers.ifMatch?.etags.map((e) => e.value).toList(),
+            headers.ifMatch?.etags.map((final e) => e.value).toList(),
             equals(['123', '456', '789']),
           );
         },
@@ -226,9 +226,9 @@ void main() {
       test(
         'then it should return null',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
-            touchHeaders: (_) {},
+            touchHeaders: (final _) {},
             headers: {'if-match': 'invalid-etag'},
           );
 

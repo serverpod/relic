@@ -1,5 +1,5 @@
-import "package:relic/relic.dart";
-import 'package:relic/src/headers/extension/string_list_extensions.dart';
+import '../../../../relic.dart';
+import '../../extension/string_list_extensions.dart';
 
 /// A class representing the HTTP `From` header.
 ///
@@ -8,7 +8,7 @@ import 'package:relic/src/headers/extension/string_list_extensions.dart';
 /// email addresses separated by commas.
 final class FromHeader {
   static const codec = HeaderCodec(FromHeader.parse, __encode);
-  static List<String> __encode(FromHeader value) => [value._encode()];
+  static List<String> __encode(final FromHeader value) => [value._encode()];
 
   /// A list of email addresses provided in the `From` header.
   final Iterable<String> emails;
@@ -17,15 +17,15 @@ final class FromHeader {
   FromHeader({required this.emails});
 
   /// Parses a `From` header value and returns a [FromHeader] instance.
-  factory FromHeader.parse(Iterable<String> values) {
-    var emails = values.splitTrimAndFilterUnique();
+  factory FromHeader.parse(final Iterable<String> values) {
+    final emails = values.splitTrimAndFilterUnique();
     if (emails.isEmpty) {
-      throw FormatException('Value cannot be empty');
+      throw const FormatException('Value cannot be empty');
     }
 
-    for (var email in emails) {
+    for (final email in emails) {
       if (!email.isValidEmail()) {
-        throw FormatException('Invalid email format');
+        throw const FormatException('Invalid email format');
       }
     }
 

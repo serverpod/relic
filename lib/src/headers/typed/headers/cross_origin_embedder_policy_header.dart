@@ -1,4 +1,4 @@
-import "package:relic/relic.dart";
+import '../../../../relic.dart';
 
 /// A class representing the HTTP Cross-Origin-Embedder-Policy header.
 ///
@@ -6,7 +6,7 @@ import "package:relic/relic.dart";
 final class CrossOriginEmbedderPolicyHeader {
   static const codec =
       HeaderCodec.single(CrossOriginEmbedderPolicyHeader.parse, __encode);
-  static List<String> __encode(CrossOriginEmbedderPolicyHeader value) =>
+  static List<String> __encode(final CrossOriginEmbedderPolicyHeader value) =>
       [value._encode()];
 
   /// The policy value of the header.
@@ -27,10 +27,10 @@ final class CrossOriginEmbedderPolicyHeader {
 
   /// Parses a [value] and returns the corresponding [CrossOriginEmbedderPolicyHeader] instance.
   /// If the value does not match any predefined types, it returns a custom instance.
-  factory CrossOriginEmbedderPolicyHeader.parse(String value) {
+  factory CrossOriginEmbedderPolicyHeader.parse(final String value) {
     final trimmed = value.trim();
     if (trimmed.isEmpty) {
-      throw FormatException('Value cannot be empty');
+      throw const FormatException('Value cannot be empty');
     }
 
     switch (trimmed) {
@@ -41,7 +41,7 @@ final class CrossOriginEmbedderPolicyHeader {
       case _credentialless:
         return credentialless;
       default:
-        throw FormatException('Invalid value');
+        throw const FormatException('Invalid value');
     }
   }
 

@@ -45,26 +45,27 @@ typedef Middleware = Handler Function(Handler innerHandler);
 Middleware createMiddleware({
   FutureOr<Response?> Function(Request)? requestHandler,
   FutureOr<Response> Function(Response)? responseHandler,
-  FutureOr<Response> Function(Object error, StackTrace)? errorHandler,
+  final FutureOr<Response> Function(Object error, StackTrace)? errorHandler,
 }) {
-  requestHandler ??= (request) => null;
-  responseHandler ??= (response) => response;
+  requestHandler ??= (final request) => null;
+  responseHandler ??= (final response) => response;
 
   FutureOr<Response> Function(Object, StackTrace)? onError;
   if (errorHandler != null) {
-    onError = (error, stackTrace) {
+    onError = (final error, final stackTrace) {
       if (error is HijackException) throw error;
       return errorHandler(error, stackTrace);
     };
   }
 
-  return (Handler innerHandler) {
-    return (request) {
-      return Future.sync(() => requestHandler!(request)).then((response) {
+  return (final Handler innerHandler) {
+    return (final request) {
+      return Future.sync(() => requestHandler!(request)).then((final response) {
         if (response != null) return response;
 
-        return Future.sync(() => innerHandler(request))
-            .then((response) => responseHandler!(response), onError: onError);
+        return Future.sync(() => innerHandler(request)).then(
+            (final response) => responseHandler!(response),
+            onError: onError);
       });
     };
   };

@@ -1,5 +1,6 @@
-import "package:relic/relic.dart";
 import 'dart:convert';
+
+import '../../../../relic.dart';
 
 /// An abstract base class representing an HTTP Authorization header.
 ///
@@ -8,7 +9,8 @@ import 'dart:convert';
 /// The concrete subclasses handle specific header formats.
 abstract class AuthorizationHeader {
   static const codec = HeaderCodec.single(AuthorizationHeader.parse, __encode);
-  static List<String> __encode(AuthorizationHeader value) => [value._encode()];
+  static List<String> __encode(final AuthorizationHeader value) =>
+      [value._encode()];
 
   /// Returns the value of the Authorization header as a string.
   String get headerValue;
@@ -25,9 +27,9 @@ abstract class AuthorizationHeader {
   /// or Basic authorization type and returns the corresponding header object.
   ///
   /// Throws a [FormatException] if the header value is invalid or unrecognized.
-  static AuthorizationHeader parse(String value) {
+  static AuthorizationHeader parse(final String value) {
     if (value.isEmpty) {
-      throw FormatException('Value cannot be empty');
+      throw const FormatException('Value cannot be empty');
     }
 
     if (value.startsWith(BearerAuthorizationHeader.prefix.trim())) {
@@ -38,7 +40,7 @@ abstract class AuthorizationHeader {
       return DigestAuthorizationHeader.parse(value);
     }
 
-    throw FormatException('Invalid header format');
+    throw const FormatException('Invalid header format');
   }
 
   @override
@@ -63,7 +65,7 @@ final class BearerAuthorizationHeader extends AuthorizationHeader {
     required this.token,
   }) {
     if (token.isEmpty) {
-      throw FormatException('Bearer token cannot be empty.');
+      throw const FormatException('Bearer token cannot be empty.');
     }
   }
 
@@ -71,18 +73,18 @@ final class BearerAuthorizationHeader extends AuthorizationHeader {
   ///
   /// If the token starts with the "Bearer " prefix, the prefix is stripped
   /// from the token value. Otherwise, it throws a [FormatException].
-  factory BearerAuthorizationHeader.parse(String value) {
+  factory BearerAuthorizationHeader.parse(final String value) {
     if (value.isEmpty) {
-      throw FormatException('Bearer token cannot be empty.');
+      throw const FormatException('Bearer token cannot be empty.');
     }
 
     if (!value.startsWith(prefix)) {
-      throw FormatException('Invalid bearer prefix');
+      throw const FormatException('Invalid bearer prefix');
     }
 
     final token = value.substring(prefix.length).trim();
     if (token.isEmpty) {
-      throw FormatException('Bearer token cannot be empty.');
+      throw const FormatException('Bearer token cannot be empty.');
     }
 
     return BearerAuthorizationHeader(
@@ -120,10 +122,10 @@ final class BasicAuthorizationHeader extends AuthorizationHeader {
     required this.password,
   }) {
     if (username.isEmpty) {
-      throw FormatException('Username cannot be empty');
+      throw const FormatException('Username cannot be empty');
     }
     if (password.isEmpty) {
-      throw FormatException('Password cannot be empty');
+      throw const FormatException('Password cannot be empty');
     }
   }
 
@@ -132,13 +134,13 @@ final class BasicAuthorizationHeader extends AuthorizationHeader {
   /// The token should start with the "Basic " prefix, followed by Base64-encoded
   /// credentials. This method validates the Base64 format and splits the decoded
   /// string into username and password. If the token is invalid, it throws a [FormatException].
-  factory BasicAuthorizationHeader.parse(String value) {
+  factory BasicAuthorizationHeader.parse(final String value) {
     if (value.isEmpty) {
-      throw FormatException('Basic token cannot be empty.');
+      throw const FormatException('Basic token cannot be empty.');
     }
 
     if (!value.startsWith(prefix)) {
-      throw FormatException('Invalid basic prefix');
+      throw const FormatException('Invalid basic prefix');
     }
 
     final base64Part = value.substring(prefix.length).trim();
@@ -151,7 +153,7 @@ final class BasicAuthorizationHeader extends AuthorizationHeader {
         password: parts[1],
       );
     } catch (e) {
-      throw FormatException('Invalid basic token format');
+      throw const FormatException('Invalid basic token format');
     }
   }
 
@@ -230,19 +232,19 @@ final class DigestAuthorizationHeader extends AuthorizationHeader {
     this.opaque,
   }) {
     if (username.isEmpty) {
-      throw FormatException('Username cannot be empty');
+      throw const FormatException('Username cannot be empty');
     }
     if (realm.isEmpty) {
-      throw FormatException('Realm cannot be empty');
+      throw const FormatException('Realm cannot be empty');
     }
     if (nonce.isEmpty) {
-      throw FormatException('Nonce cannot be empty');
+      throw const FormatException('Nonce cannot be empty');
     }
     if (uri.isEmpty) {
-      throw FormatException('URI cannot be empty');
+      throw const FormatException('URI cannot be empty');
     }
     if (response.isEmpty) {
-      throw FormatException('Response cannot be empty');
+      throw const FormatException('Response cannot be empty');
     }
   }
 
@@ -250,9 +252,9 @@ final class DigestAuthorizationHeader extends AuthorizationHeader {
   ///
   /// This method extracts the various components of the Digest header from the provided string.
   /// Throws a [FormatException] if the header value is invalid or unrecognized.
-  factory DigestAuthorizationHeader.parse(String value) {
+  factory DigestAuthorizationHeader.parse(final String value) {
     if (value.isEmpty) {
-      throw FormatException('Digest token cannot be empty.');
+      throw const FormatException('Digest token cannot be empty.');
     }
 
     final Map<String, String> params = {};
@@ -262,31 +264,31 @@ final class DigestAuthorizationHeader extends AuthorizationHeader {
     }
 
     if (params.isEmpty) {
-      throw FormatException('Invalid digest token format');
+      throw const FormatException('Invalid digest token format');
     }
 
-    var username = params[_username];
+    final username = params[_username];
     if (username == null || username.isEmpty) {
-      throw FormatException('Username is required and cannot be empty');
+      throw const FormatException('Username is required and cannot be empty');
     }
 
-    var realm = params[_realm];
+    final realm = params[_realm];
     if (realm == null || realm.isEmpty) {
-      throw FormatException('Realm is required and cannot be empty');
+      throw const FormatException('Realm is required and cannot be empty');
     }
 
-    var nonce = params[_nonce];
+    final nonce = params[_nonce];
     if (nonce == null || nonce.isEmpty) {
-      throw FormatException('Nonce is required and cannot be empty  ');
+      throw const FormatException('Nonce is required and cannot be empty  ');
     }
 
-    var uri = params[_uri];
+    final uri = params[_uri];
     if (uri == null || uri.isEmpty) {
-      throw FormatException('URI is required and cannot be empty');
+      throw const FormatException('URI is required and cannot be empty');
     }
-    var response = params[_response];
+    final response = params[_response];
     if (response == null || response.isEmpty) {
-      throw FormatException('Response is required and cannot be empty ');
+      throw const FormatException('Response is required and cannot be empty ');
     }
 
     return DigestAuthorizationHeader(

@@ -44,7 +44,7 @@ void main() {
   test(
       'When assigning a value during Headers.build '
       'then its present in the returned headers collection', () {
-    final headers = Headers.build((mh) {
+    final headers = Headers.build((final mh) {
       mh['foo'] = ['bar'];
     });
     expect(headers['foo'], ['bar']);

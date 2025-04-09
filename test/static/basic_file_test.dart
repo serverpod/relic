@@ -125,7 +125,8 @@ void main() {
       final rootPath = p.join(d.sandbox, 'root.txt');
       final modified = File(rootPath).statSync().modified.toUtc();
 
-      final headers = Headers.build((mh) => mh.ifModifiedSince = modified);
+      final headers =
+          Headers.build((final mh) => mh.ifModifiedSince = modified);
 
       final response =
           await makeRequest(handler, '/root.txt', headers: headers);
@@ -139,7 +140,7 @@ void main() {
       final rootPath = p.join(d.sandbox, 'root.txt');
       final modified = File(rootPath).statSync().modified.toUtc();
 
-      final headers = Headers.build((mh) =>
+      final headers = Headers.build((final mh) =>
           mh.ifModifiedSince = modified.subtract(const Duration(seconds: 1)));
 
       final response = await makeRequest(
@@ -161,7 +162,8 @@ void main() {
       final rootPath = p.join(d.sandbox, 'root.txt');
       final modified = File(rootPath).statSync().modified.toUtc();
 
-      final headers = Headers.build((mh) => mh.ifModifiedSince = modified);
+      final headers =
+          Headers.build((final mh) => mh.ifModifiedSince = modified);
 
       final response = await makeRequest(
         handler,
@@ -185,8 +187,8 @@ void main() {
       await Future<void>.delayed(const Duration(seconds: 2));
       File(rootPath).writeAsStringSync('updated root txt');
 
-      final headers =
-          Headers.build((mh) => mh.ifModifiedSince = originalModificationDate);
+      final headers = Headers.build(
+          (final mh) => mh.ifModifiedSince = originalModificationDate);
 
       final response2 = await makeRequest(
         handler,

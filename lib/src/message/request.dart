@@ -1,14 +1,13 @@
 import 'dart:io' as io;
 
-import 'package:relic/src/method/request_method.dart';
-
-import '../body/body.dart';
 import 'package:stream_channel/stream_channel.dart';
 
-import '../hijack/exception/hijack_exception.dart';
-import 'message.dart';
+import '../body/body.dart';
 import '../headers/headers.dart';
+import '../hijack/exception/hijack_exception.dart';
+import '../method/request_method.dart';
 import '../util/util.dart';
+import 'message.dart';
 
 part '../hijack/hijack.dart';
 
@@ -120,16 +119,16 @@ class Request extends Message {
   ///
   /// See also [hijack].
   Request(
-    RequestMethod method,
-    Uri requestedUri, {
-    io.HttpConnectionInfo? connectionInfo,
-    String? protocolVersion,
-    Headers? headers,
-    String? handlerPath,
-    Uri? url,
-    Body? body,
-    Map<String, Object>? context,
-    HijackHandler? onHijack,
+    final RequestMethod method,
+    final Uri requestedUri, {
+    final io.HttpConnectionInfo? connectionInfo,
+    final String? protocolVersion,
+    final Headers? headers,
+    final String? handlerPath,
+    final Uri? url,
+    final Body? body,
+    final Map<String, Object>? context,
+    final HijackHandler? onHijack,
   }) : this._(
           method,
           requestedUri,
@@ -148,9 +147,9 @@ class Request extends Message {
   /// [strictHeaders] determines whether to strictly enforce header parsing
   /// rules. [poweredByHeader] sets the value of the `X-Powered-By` header.
   factory Request.fromHttpRequest(
-    io.HttpRequest request, {
-    bool strictHeaders = false,
-    String? poweredByHeader,
+    final io.HttpRequest request, {
+    final bool strictHeaders = false,
+    final String? poweredByHeader,
   }) {
     return Request(
       RequestMethod.parse(request.method),
@@ -163,7 +162,7 @@ class Request extends Message {
         xPoweredBy: poweredByHeader,
       ),
       body: Body.fromHttpRequest(request),
-      onHijack: (callback) => onHijack(request.response, callback),
+      onHijack: (final callback) => onHijack(request.response, callback),
       context: {},
     );
   }
@@ -178,13 +177,13 @@ class Request extends Message {
     this.method,
     this.requestedUri,
     this.connectionInfo,
-    Headers headers, {
-    String? protocolVersion,
-    String? handlerPath,
-    Uri? url,
-    Body? body,
-    Map<String, Object>? context,
-    _OnHijack? onHijack,
+    final Headers headers, {
+    final String? protocolVersion,
+    final String? handlerPath,
+    final Uri? url,
+    final Body? body,
+    final Map<String, Object>? context,
+    final _OnHijack? onHijack,
   })  : protocolVersion = protocolVersion ?? '1.1',
         url = _computeUrl(requestedUri, handlerPath, url),
         handlerPath = _computeHandlerPath(requestedUri, handlerPath, url),
@@ -262,10 +261,10 @@ class Request extends Message {
   ///     print(request.url);        // => file.html
   @override
   Request copyWith({
-    Headers? headers,
-    Uri? requestedUri,
-    Map<String, Object?>? context,
-    String? path,
+    final Headers? headers,
+    final Uri? requestedUri,
+    final Map<String, Object?>? context,
+    final String? path,
     Body? body,
   }) {
     // final headersAll = updateHeaders(this.headersAll, headers);
@@ -300,7 +299,7 @@ class Request extends Message {
   /// hijacking, such as the `dart:io` adapter. In addition, a given request may
   /// only be hijacked once. [canHijack] can be used to detect whether this
   /// request can be hijacked.
-  Never hijack(HijackCallback callback) {
+  Never hijack(final HijackCallback callback) {
     if (_onHijack == null) {
       throw StateError("This request can't be hijacked.");
     }
@@ -315,7 +314,7 @@ class Request extends Message {
 ///
 /// If [url] is `null`, the value is inferred from [requestedUri] and
 /// [handlerPath] if available. Otherwise [url] is returned.
-Uri _computeUrl(Uri requestedUri, String? handlerPath, Uri? url) {
+Uri _computeUrl(final Uri requestedUri, String? handlerPath, final Uri? url) {
   if (handlerPath != null &&
       handlerPath != requestedUri.path &&
       !handlerPath.endsWith('/')) {
@@ -342,7 +341,7 @@ Uri _computeUrl(Uri requestedUri, String? handlerPath, Uri? url) {
       throw ArgumentError('url "$url" must be relative.');
     }
 
-    var startOfUrl = requestedUri.path.length - url.path.length;
+    final startOfUrl = requestedUri.path.length - url.path.length;
     if (url.path.isNotEmpty &&
         requestedUri.path.substring(startOfUrl - 1, startOfUrl) != '/') {
       throw ArgumentError('url "$url" must be on a path boundary in '
@@ -356,7 +355,7 @@ Uri _computeUrl(Uri requestedUri, String? handlerPath, Uri? url) {
         query: requestedUri.query);
   } else {
     // Skip the initial "/".
-    var path = requestedUri.path.substring(1);
+    final path = requestedUri.path.substring(1);
     return Uri(path: path, query: requestedUri.query);
   }
 }
@@ -365,7 +364,8 @@ Uri _computeUrl(Uri requestedUri, String? handlerPath, Uri? url) {
 ///
 /// If [handlerPath] is `null`, the value is inferred from [requestedUri] and
 /// [url] if available. Otherwise [handlerPath] is returned.
-String _computeHandlerPath(Uri requestedUri, String? handlerPath, Uri? url) {
+String _computeHandlerPath(
+    final Uri requestedUri, String? handlerPath, final Uri? url) {
   if (handlerPath != null &&
       handlerPath != requestedUri.path &&
       !handlerPath.endsWith('/')) {
@@ -386,7 +386,7 @@ String _computeHandlerPath(Uri requestedUri, String? handlerPath, Uri? url) {
   } else if (url != null) {
     if (url.path.isEmpty) return requestedUri.path;
 
-    var index = requestedUri.path.indexOf(url.path);
+    final index = requestedUri.path.indexOf(url.path);
     return requestedUri.path.substring(0, index);
   } else {
     return '/';

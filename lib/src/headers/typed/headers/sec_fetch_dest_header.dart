@@ -1,11 +1,12 @@
-import "package:relic/relic.dart";
+import '../../../../relic.dart';
 
 /// A class representing the HTTP Sec-Fetch-Dest header.
 ///
 /// This header indicates the destination of the request.
 final class SecFetchDestHeader {
   static const codec = HeaderCodec.single(SecFetchDestHeader.parse, __encode);
-  static List<String> __encode(SecFetchDestHeader value) => [value._encode()];
+  static List<String> __encode(final SecFetchDestHeader value) =>
+      [value._encode()];
 
   /// The destination value of the request.
   final String destination;
@@ -64,10 +65,10 @@ final class SecFetchDestHeader {
 
   /// Parses a [value] and returns the corresponding [SecFetchDestHeader] instance.
   /// If the value does not match any predefined types, it returns a custom instance.
-  factory SecFetchDestHeader.parse(String value) {
+  factory SecFetchDestHeader.parse(final String value) {
     final trimmed = value.trim();
     if (trimmed.isEmpty) {
-      throw FormatException('Value cannot be empty');
+      throw const FormatException('Value cannot be empty');
     }
 
     switch (trimmed) {
@@ -118,7 +119,7 @@ final class SecFetchDestHeader {
       case _xslt:
         return xslt;
       default:
-        throw FormatException('Invalid value');
+        throw const FormatException('Invalid value');
     }
   }
 

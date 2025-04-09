@@ -1,12 +1,12 @@
-import "package:relic/relic.dart";
-import 'package:relic/src/headers/extension/string_list_extensions.dart';
+import '../../../../relic.dart';
+import '../../extension/string_list_extensions.dart';
 
 /// A class representing the HTTP Accept header.
 ///
 /// This class manages media ranges and their associated quality values.
 final class AcceptHeader {
   static const codec = HeaderCodec(AcceptHeader.parse, __encode);
-  static List<String> __encode(AcceptHeader value) => [value._encode()];
+  static List<String> __encode(final AcceptHeader value) => [value._encode()];
 
   /// The list of media ranges accepted by the client.
   final List<MediaRange> mediaRanges;
@@ -18,10 +18,10 @@ final class AcceptHeader {
   ///
   /// This method processes the header value, extracting media types and
   /// their quality values.
-  factory AcceptHeader.parse(Iterable<String> values) {
+  factory AcceptHeader.parse(final Iterable<String> values) {
     final splitValues = values.splitTrimAndFilterUnique();
     if (splitValues.isEmpty) {
-      throw FormatException('Value cannot be empty');
+      throw const FormatException('Value cannot be empty');
     }
 
     final mediaRanges = splitValues.map(MediaRange.parse).toList();
@@ -30,7 +30,7 @@ final class AcceptHeader {
   }
 
   /// Converts the [AcceptHeader] instance into a string representation suitable for HTTP headers.
-  String _encode() => mediaRanges.map((mr) => mr._encode()).join(', ');
+  String _encode() => mediaRanges.map((final mr) => mr._encode()).join(', ');
 
   @override
   String toString() => 'AcceptHeader(mediaRanges: $mediaRanges)';
@@ -49,18 +49,18 @@ class MediaRange {
 
   /// Constructs a [MediaRange] instance with the specified type, subtype,
   /// quality, and parameters.
-  MediaRange(this.type, this.subtype, {double? quality})
+  MediaRange(this.type, this.subtype, {final double? quality})
       : quality = quality ?? 1.0;
 
   /// Parses a media range string and returns a [MediaRange] instance.
   ///
   /// This method processes the media range string, extracting the type,
   /// subtype, quality, and parameters.
-  factory MediaRange.parse(String value) {
+  factory MediaRange.parse(final String value) {
     final parts = value.splitTrimAndFilterUnique(separator: ';').toList();
     final typeSubtype = parts.first.split('/');
     if (typeSubtype.length != 2) {
-      throw FormatException('Invalid media range');
+      throw const FormatException('Invalid media range');
     }
 
     final type = typeSubtype[0].trim();
@@ -71,9 +71,9 @@ class MediaRange {
       final qualityParts =
           parts[1].splitTrimAndFilterUnique(separator: 'q=').firstOrNull;
       if (qualityParts != null) {
-        var value = double.tryParse(qualityParts);
+        final value = double.tryParse(qualityParts);
         if (value == null || value < 0 || value > 1) {
-          throw FormatException('Invalid quality value');
+          throw const FormatException('Invalid quality value');
         }
         quality = value;
       }

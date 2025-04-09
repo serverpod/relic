@@ -6,18 +6,18 @@ import 'dart:typed_data';
 import 'package:convert/convert.dart';
 import 'package:mime/mime.dart';
 import 'package:path/path.dart' as p;
-import 'package:relic/src/headers/standard_headers_extensions.dart';
-import 'package:relic/src/headers/typed/typed_headers.dart';
-import 'package:relic/src/method/request_method.dart';
-import 'package:relic/src/static/extension/datetime_extension.dart';
 
 import '../body/body.dart';
 import '../body/types/mime_type.dart';
 import '../handler/handler.dart';
 import '../headers/headers.dart';
+import '../headers/standard_headers_extensions.dart';
+import '../headers/typed/typed_headers.dart';
 import '../message/request.dart';
 import '../message/response.dart';
+import '../method/request_method.dart';
 import 'directory_listing.dart';
+import 'extension/datetime_extension.dart';
 
 /// The default resolver for MIME types based on file extensions.
 final _defaultMimeTypeResolver = MimeTypeResolver();
@@ -43,11 +43,11 @@ final _defaultMimeTypeResolver = MimeTypeResolver();
 /// detection.
 Handler createStaticHandler(
   String fileSystemPath, {
-  bool serveFilesOutsidePath = false,
-  String? defaultDocument,
-  bool listDirectories = false,
-  bool useHeaderBytesForContentType = false,
-  MimeTypeResolver? contentTypeResolver,
+  final bool serveFilesOutsidePath = false,
+  final String? defaultDocument,
+  final bool listDirectories = false,
+  final bool useHeaderBytesForContentType = false,
+  final MimeTypeResolver? contentTypeResolver,
 }) {
   final rootDir = Directory(fileSystemPath);
   if (!rootDir.existsSync()) {
@@ -65,7 +65,7 @@ Handler createStaticHandler(
 
   final mimeResolver = contentTypeResolver ?? _defaultMimeTypeResolver;
 
-  return (Request request) {
+  return (final Request request) {
     final segs = [fileSystemPath, ...request.url.pathSegments];
 
     final fsPath = p.joinAll(segs);
@@ -120,12 +120,13 @@ Handler createStaticHandler(
 
         await file.openRead(0, length).listen(byteSink.add).asFuture<void>();
 
-        var type = mimeResolver.lookup(file.path, headerBytes: byteSink.bytes);
+        final type =
+            mimeResolver.lookup(file.path, headerBytes: byteSink.bytes);
         if (type == null) return null;
 
         return MimeType.parse(type);
       } else {
-        var type = mimeResolver.lookup(file.path);
+        final type = mimeResolver.lookup(file.path);
         if (type == null) return null;
         return MimeType.parse(type);
       }
@@ -133,7 +134,7 @@ Handler createStaticHandler(
   };
 }
 
-Response _redirectToAddTrailingSlash(Uri uri) {
+Response _redirectToAddTrailingSlash(final Uri uri) {
   final location = Uri(
       scheme: uri.scheme,
       userInfo: uri.userInfo,
@@ -145,7 +146,7 @@ Response _redirectToAddTrailingSlash(Uri uri) {
   return Response.movedPermanently(location);
 }
 
-File? _tryDefaultFile(String dirPath, String? defaultFile) {
+File? _tryDefaultFile(final String dirPath, final String? defaultFile) {
   if (defaultFile == null) return null;
 
   final filePath = p.join(dirPath, defaultFile);
@@ -168,9 +169,9 @@ File? _tryDefaultFile(String dirPath, String? defaultFile) {
 /// to looking up a content type based on [path]'s file extension, and failing
 /// that doesn't sent a [contentType] header at all.
 Handler createFileHandler(
-  String path, {
+  final String path, {
   String? url,
-  MimeType? contentType,
+  final MimeType? contentType,
 }) {
   final file = File(path);
   if (!file.existsSync()) {
@@ -181,7 +182,7 @@ Handler createFileHandler(
 
   url ??= p.toUri(p.basename(path)).toString();
 
-  return (request) {
+  return (final request) {
     if (request.url.path != url) {
       return Response.notFound(
         body: Body.fromString(
@@ -192,7 +193,7 @@ Handler createFileHandler(
 
     var mimeType = contentType;
     if (mimeType == null) {
-      var type = _defaultMimeTypeResolver.lookup(path);
+      final type = _defaultMimeTypeResolver.lookup(path);
       if (type != null) {
         mimeType = MimeType.parse(type);
       }
@@ -211,9 +212,9 @@ Handler createFileHandler(
 /// indicates that it has the latest version of a file. Otherwise, it calls
 /// [getContentType] and uses it to populate the Content-Type header.
 Future<Response> _handleFile(
-  Request request,
-  File file, {
-  required FutureOr<MimeType?> Function() getContentType,
+  final Request request,
+  final File file, {
+  required final FutureOr<MimeType?> Function() getContentType,
 }) async {
   final stat = file.statSync();
   final ifModifiedSince = request.headers.ifModifiedSince;
@@ -224,12 +225,12 @@ Future<Response> _handleFile(
       return Response.notModified();
     }
   }
-  final headers = Headers.build((mh) {
+  final headers = Headers.build((final mh) {
     mh.lastModified = stat.modified;
     mh.acceptRanges = AcceptRangesHeader.bytes();
   });
 
-  var response = _fileRangeResponse(request, file, headers);
+  final response = _fileRangeResponse(request, file, headers);
   if (response != null) return response;
 
   Body? body;
@@ -244,7 +245,8 @@ Future<Response> _handleFile(
 
   return Response.ok(
     body: body,
-    headers: Headers.build((mh) => mh.lastModified = file.lastModifiedSync()),
+    headers:
+        Headers.build((final mh) => mh.lastModified = file.lastModifiedSync()),
   );
 }
 
@@ -258,9 +260,9 @@ Future<Response> _handleFile(
 ///
 /// Ranges that end past the end of the file are truncated.
 Response? _fileRangeResponse(
-  Request request,
-  File file,
-  Headers headers,
+  final Request request,
+  final File file,
+  final Headers headers,
 ) {
   final range = request.headers.range;
   if (range == null) return null;
@@ -315,7 +317,7 @@ Response? _fileRangeResponse(
     HttpStatus.partialContent,
     body: body,
     headers: headers.transform(
-      (mh) => mh.contentRange = ContentRangeHeader(
+      (final mh) => mh.contentRange = ContentRangeHeader(
         start: start,
         end: end,
         size: actualLength,

@@ -40,7 +40,7 @@ class InvalidHeaderException extends HeaderException {
   const InvalidHeaderException(super.description, {required super.headerType});
 
   @override
-  String get httpResponseBody => 'Invalid \'$headerType\' header: $description';
+  String get httpResponseBody => "Invalid '$headerType' header: $description";
 
   @override
   String toString() =>
@@ -64,7 +64,7 @@ class MissingHeaderException extends HeaderException {
   const MissingHeaderException(super.description, {required super.headerType});
 
   @override
-  String get httpResponseBody => 'Missing \'$headerType\' header';
+  String get httpResponseBody => "Missing '$headerType' header";
 
   @override
   String toString() =>

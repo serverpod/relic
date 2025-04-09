@@ -27,12 +27,12 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (h) => h.accessControlExposeHeaders,
+            touchHeaders: (final h) => h.accessControlExposeHeaders,
             headers: {'access-control-expose-headers': ''},
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (e) => e.message,
+              (final e) => e.message,
               'message',
               contains('Value cannot be empty'),
             ),
@@ -50,12 +50,12 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (h) => h.accessControlExposeHeaders,
+            touchHeaders: (final h) => h.accessControlExposeHeaders,
             headers: {'access-control-expose-headers': '*, X-Custom-Header'},
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (e) => e.message,
+              (final e) => e.message,
               'message',
               contains('Wildcard (*) cannot be used with other values'),
             ),
@@ -69,9 +69,9 @@ void main() {
       'then the server does not respond with a bad request if the headers '
       'is not actually used',
       () async {
-        var headers = await getServerRequestHeaders(
+        final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (_) {},
+          touchHeaders: (final _) {},
           headers: {'access-control-expose-headers': '*, X-Custom-Header'},
         );
 
@@ -83,9 +83,9 @@ void main() {
       'when a Access-Control-Expose-Headers header with a single valid header is '
       'passed then it should parse correctly',
       () async {
-        var headers = await getServerRequestHeaders(
+        final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (h) => h.accessControlExposeHeaders,
+          touchHeaders: (final h) => h.accessControlExposeHeaders,
           headers: {'access-control-expose-headers': 'X-Custom-Header'},
         );
 
@@ -99,9 +99,9 @@ void main() {
     test(
       'when a wildcard (*) is passed then it should parse correctly',
       () async {
-        var headers = await getServerRequestHeaders(
+        final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (h) => h.accessControlExposeHeaders,
+          touchHeaders: (final h) => h.accessControlExposeHeaders,
           headers: {'access-control-expose-headers': '*'},
         );
 
@@ -113,9 +113,9 @@ void main() {
     test(
       'when no Access-Control-Expose-Headers header is passed then it should return null',
       () async {
-        var headers = await getServerRequestHeaders(
+        final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (h) => h.accessControlExposeHeaders,
+          touchHeaders: (final h) => h.accessControlExposeHeaders,
           headers: {},
         );
 
@@ -127,9 +127,9 @@ void main() {
       test(
         'then they should parse correctly',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
-            touchHeaders: (_) {},
+            touchHeaders: (final _) {},
             headers: {
               'access-control-expose-headers':
                   'X-Custom-Header, X-Another-Header'
@@ -146,9 +146,9 @@ void main() {
       test(
         'with extra whitespace then they should parse correctly',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
-            touchHeaders: (_) {},
+            touchHeaders: (final _) {},
             headers: {
               'access-control-expose-headers':
                   ' X-Custom-Header , X-Another-Header '
@@ -179,9 +179,9 @@ void main() {
       test(
         'then it should return null',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
-            touchHeaders: (_) {},
+            touchHeaders: (final _) {},
             headers: {'access-control-expose-headers': ''},
           );
 

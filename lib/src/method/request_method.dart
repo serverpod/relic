@@ -1,4 +1,4 @@
-import 'package:relic/relic.dart';
+import '../../relic.dart';
 
 /// Represents the HTTP methods used in requests as constants.
 class RequestMethod {
@@ -35,9 +35,9 @@ class RequestMethod {
   /// Throws an [ArgumentError] if the [method] string is empty.
   /// If the method is not found in the predefined values,
   /// it returns a new [RequestMethod] instance with the method name in uppercase.
-  factory RequestMethod.parse(String method) {
+  factory RequestMethod.parse(final String method) {
     if (method.isEmpty) {
-      throw FormatException('Value cannot be empty');
+      throw const FormatException('Value cannot be empty');
     }
 
     switch (method.toUpperCase()) {
@@ -60,11 +60,11 @@ class RequestMethod {
       case _connect:
         return connect;
       default:
-        throw FormatException('Invalid value');
+        throw const FormatException('Invalid value');
     }
   }
   static const codec = HeaderCodec.single(RequestMethod.parse, __encode);
-  static List<String> __encode(RequestMethod value) => [value.toString()];
+  static List<String> __encode(final RequestMethod value) => [value.toString()];
 
   @override
   String toString() => 'Method($value)';

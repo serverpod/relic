@@ -1,5 +1,5 @@
-import "package:relic/relic.dart";
-import 'package:relic/src/headers/extension/string_list_extensions.dart';
+import '../../../../relic.dart';
+import '../../extension/string_list_extensions.dart';
 
 /// A class representing the HTTP Upgrade header.
 ///
@@ -7,7 +7,7 @@ import 'package:relic/src/headers/extension/string_list_extensions.dart';
 /// connection.
 final class UpgradeHeader {
   static const codec = HeaderCodec(UpgradeHeader.parse, __encode);
-  static List<String> __encode(UpgradeHeader value) => [value._encode()];
+  static List<String> __encode(final UpgradeHeader value) => [value._encode()];
 
   /// The list of protocols that the client supports.
   final List<UpgradeProtocol> protocols;
@@ -18,14 +18,15 @@ final class UpgradeHeader {
   /// Parses the Upgrade header value and returns an [UpgradeHeader] instance.
   ///
   /// This method processes the header value, extracting the list of protocols.
-  factory UpgradeHeader.parse(Iterable<String> values) {
+  factory UpgradeHeader.parse(final Iterable<String> values) {
     final splitValues = values.splitTrimAndFilterUnique(separator: ',');
     if (splitValues.isEmpty) {
-      throw FormatException('Value cannot be empty');
+      throw const FormatException('Value cannot be empty');
     }
 
-    final protocols =
-        splitValues.map((protocol) => UpgradeProtocol.parse(protocol)).toList();
+    final protocols = splitValues
+        .map((final protocol) => UpgradeProtocol.parse(protocol))
+        .toList();
 
     return UpgradeHeader(protocols: protocols);
   }
@@ -34,7 +35,7 @@ final class UpgradeHeader {
   /// suitable for HTTP headers.
 
   String _encode() {
-    return protocols.map((protocol) => protocol._encode()).join(', ');
+    return protocols.map((final protocol) => protocol._encode()).join(', ');
   }
 
   @override
@@ -58,30 +59,30 @@ class UpgradeProtocol {
   });
 
   /// Parses a protocol string and returns an [UpgradeProtocol] instance.
-  factory UpgradeProtocol.parse(String value) {
+  factory UpgradeProtocol.parse(final String value) {
     final trimmed = value.trim();
     if (trimmed.isEmpty) {
-      throw FormatException('Protocol cannot be empty');
+      throw const FormatException('Protocol cannot be empty');
     }
 
-    var split = trimmed.split('/');
+    final split = trimmed.split('/');
     if (split.length == 1) {
       return UpgradeProtocol(protocol: split[0]);
     }
 
-    var protocol = split[0];
+    final protocol = split[0];
     if (protocol.isEmpty) {
-      throw FormatException('Protocol cannot be empty');
+      throw const FormatException('Protocol cannot be empty');
     }
 
-    var version = split[1];
+    final version = split[1];
     if (version.isEmpty) {
-      throw FormatException('Version cannot be empty');
+      throw const FormatException('Version cannot be empty');
     }
 
-    var parsedVersion = double.tryParse(version);
+    final parsedVersion = double.tryParse(version);
     if (parsedVersion == null) {
-      throw FormatException('Invalid version');
+      throw const FormatException('Invalid version');
     }
 
     return UpgradeProtocol(

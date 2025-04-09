@@ -1,6 +1,6 @@
-import "package:relic/relic.dart";
 import 'package:collection/collection.dart';
-import 'package:relic/src/headers/extension/string_list_extensions.dart';
+import '../../../../relic.dart';
+import '../../extension/string_list_extensions.dart';
 
 /// A class representing the HTTP Transfer-Encoding header.
 ///
@@ -8,7 +8,7 @@ import 'package:relic/src/headers/extension/string_list_extensions.dart';
 /// It provides functionality to parse and generate transfer encoding header values.
 final class TransferEncodingHeader {
   static const codec = HeaderCodec(TransferEncodingHeader.parse, __encode);
-  static List<String> __encode(TransferEncodingHeader value) =>
+  static List<String> __encode(final TransferEncodingHeader value) =>
       [value._encode()];
 
   /// A list of transfer encodings.
@@ -16,26 +16,26 @@ final class TransferEncodingHeader {
 
   /// Constructs a [TransferEncodingHeader] instance with the specified transfer encodings.
   TransferEncodingHeader({
-    required List<TransferEncoding> encodings,
+    required final List<TransferEncoding> encodings,
   }) : encodings = _reorderEncodings(encodings);
 
   /// Parses the Transfer-Encoding header value and returns a [TransferEncodingHeader] instance.
   ///
   /// This method splits the value by commas and trims each encoding.
-  factory TransferEncodingHeader.parse(Iterable<String> values) {
-    var splitValues = values.splitTrimAndFilterUnique();
+  factory TransferEncodingHeader.parse(final Iterable<String> values) {
+    final splitValues = values.splitTrimAndFilterUnique();
     if (splitValues.isEmpty) {
-      throw FormatException('Value cannot be empty');
+      throw const FormatException('Value cannot be empty');
     }
 
-    var encodings = splitValues.map(TransferEncoding.parse).toList();
+    final encodings = splitValues.map(TransferEncoding.parse).toList();
 
     return TransferEncodingHeader(encodings: encodings);
   }
 
   /// Converts the [TransferEncodingHeader] instance into a string
   /// representation suitable for HTTP headers.
-  String _encode() => encodings.map((e) => e.name).join(', ');
+  String _encode() => encodings.map((final e) => e.name).join(', ');
 
   @override
   String toString() {
@@ -58,15 +58,15 @@ final class TransferEncodingHeader {
   /// This function reorders the encodings to comply with the standard and
   /// ensures compatibility with HTTP clients and intermediaries.
   static List<TransferEncoding> _reorderEncodings(
-    List<TransferEncoding> encodings,
+    final List<TransferEncoding> encodings,
   ) {
     final TransferEncoding? chunked = encodings.firstWhereOrNull(
-      (e) => e.name == TransferEncoding.chunked.name,
+      (final e) => e.name == TransferEncoding.chunked.name,
     );
     if (chunked == null) return encodings;
 
-    var reordered = List<TransferEncoding>.from(encodings);
-    reordered.removeWhere((e) => e.name == TransferEncoding.chunked.name);
+    final reordered = List<TransferEncoding>.from(encodings);
+    reordered.removeWhere((final e) => e.name == TransferEncoding.chunked.name);
     reordered.add(chunked);
     return reordered;
   }
@@ -95,10 +95,10 @@ class TransferEncoding {
 
   /// Parses a [name] and returns the corresponding [TransferEncoding] instance.
   /// If the name does not match any predefined encodings, it returns a custom instance.
-  factory TransferEncoding.parse(String name) {
+  factory TransferEncoding.parse(final String name) {
     final trimmed = name.trim();
     if (trimmed.isEmpty) {
-      throw FormatException('Name cannot be empty');
+      throw const FormatException('Name cannot be empty');
     }
     switch (trimmed) {
       case _identity:
@@ -112,7 +112,7 @@ class TransferEncoding {
       case _gzip:
         return gzip;
       default:
-        throw FormatException('Invalid value');
+        throw const FormatException('Invalid value');
     }
   }
 
