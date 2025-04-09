@@ -1,5 +1,7 @@
 import "package:relic/relic.dart";
-import 'package:relic/src/headers/extension/string_list_extensions.dart';
+import '../../extension/string_list_extensions.dart';
+
+import 'etag_header.dart' show InternalEx;
 
 /// Base class for ETag-based conditional headers (If-Match and If-None-Match).
 abstract class ETagConditionHeader {

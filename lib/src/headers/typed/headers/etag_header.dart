@@ -7,7 +7,7 @@ import "package:relic/relic.dart";
 /// appropriate header string.
 final class ETagHeader {
   static const codec = HeaderCodec.single(ETagHeader.parse, __encode);
-  static List<String> __encode(ETagHeader value) => [value.encode()];
+  static List<String> __encode(ETagHeader value) => [value._encode()];
 
   /// The ETag value without quotes.
   final String value;
@@ -62,7 +62,7 @@ final class ETagHeader {
 
   /// Converts the [ETagHeader] instance into a string representation suitable
   /// for HTTP headers.
-  String encode() {
+  String _encode() {
     final prefix = isWeak ? _weakPrefix : '';
     return '$prefix$_quote$value$_quote';
   }
@@ -71,4 +71,9 @@ final class ETagHeader {
   String toString() {
     return 'ETagHeader(value: $value, isWeak: $isWeak)';
   }
+}
+
+// This class should be hidden on public export
+extension InternalEx on ETagHeader {
+  String encode() => _encode();
 }
