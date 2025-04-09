@@ -1,9 +1,10 @@
-import 'package:relic/src/headers/extension/string_list_extensions.dart';
-import 'package:relic/src/headers/typed/typed_header_interface.dart';
-import 'package:relic/src/headers/typed/typed_headers.dart';
+import "package:relic/relic.dart";
+import '../../extension/string_list_extensions.dart';
+
+import 'etag_header.dart' show InternalEx;
 
 /// Base class for ETag-based conditional headers (If-Match and If-None-Match).
-abstract class ETagConditionHeader implements TypedHeader {
+abstract class ETagConditionHeader {
   /// The list of ETags to match against.
   final List<ETagHeader> etags;
 
@@ -19,15 +20,17 @@ abstract class ETagConditionHeader implements TypedHeader {
         isWildcard = true;
 
   /// Converts the header instance to its string representation.
-  @override
-  String toHeaderString() {
+  String _encode() {
     if (isWildcard) return '*';
-    return etags.map((e) => e.toHeaderString()).join(', ');
+    return etags.map((e) => e.encode()).join(', ');
   }
 }
 
 /// A class representing the HTTP If-Match header.
-class IfMatchHeader extends ETagConditionHeader {
+final class IfMatchHeader extends ETagConditionHeader {
+  static const codec = HeaderCodec(IfMatchHeader.parse, __encode);
+  static List<String> __encode(IfMatchHeader value) => [value._encode()];
+
   /// Creates an [IfMatchHeader] with specific ETags.
   const IfMatchHeader.etags(super.etags) : super.etags();
 
@@ -64,7 +67,10 @@ class IfMatchHeader extends ETagConditionHeader {
 }
 
 /// A class representing the HTTP If-None-Match header.
-class IfNoneMatchHeader extends ETagConditionHeader {
+final class IfNoneMatchHeader extends ETagConditionHeader {
+  static const codec = HeaderCodec(IfNoneMatchHeader.parse, __encode);
+  static List<String> __encode(IfNoneMatchHeader value) => [value._encode()];
+
   /// Creates an [IfNoneMatchHeader] with specific ETags.
   const IfNoneMatchHeader.etags(super.etags) : super.etags();
 

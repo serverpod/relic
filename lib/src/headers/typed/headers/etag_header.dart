@@ -1,11 +1,14 @@
-import 'package:relic/src/headers/typed/typed_header_interface.dart';
+import "package:relic/relic.dart";
 
 /// A class representing the HTTP ETag header.
 ///
 /// This class manages the ETag value, which can be either strong or weak.
 /// It provides functionality to parse the header value and construct the
 /// appropriate header string.
-class ETagHeader implements TypedHeader {
+final class ETagHeader {
+  static const codec = HeaderCodec.single(ETagHeader.parse, __encode);
+  static List<String> __encode(ETagHeader value) => [value._encode()];
+
   /// The ETag value without quotes.
   final String value;
 
@@ -59,8 +62,7 @@ class ETagHeader implements TypedHeader {
 
   /// Converts the [ETagHeader] instance into a string representation suitable
   /// for HTTP headers.
-  @override
-  String toHeaderString() {
+  String _encode() {
     final prefix = isWeak ? _weakPrefix : '';
     return '$prefix$_quote$value$_quote';
   }
@@ -69,4 +71,9 @@ class ETagHeader implements TypedHeader {
   String toString() {
     return 'ETagHeader(value: $value, isWeak: $isWeak)';
   }
+}
+
+// This class should be hidden on public export
+extension InternalEx on ETagHeader {
+  String encode() => _encode();
 }

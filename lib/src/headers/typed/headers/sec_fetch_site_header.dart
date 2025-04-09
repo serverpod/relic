@@ -1,10 +1,13 @@
-import 'package:relic/src/headers/typed/typed_header_interface.dart';
+import "package:relic/relic.dart";
 
 /// A class representing the HTTP Sec-Fetch-Site header.
 ///
 /// This header indicates the relationship between the origin of the request
 /// initiator and the origin of the requested resource.
-class SecFetchSiteHeader implements TypedHeader {
+final class SecFetchSiteHeader {
+  static const codec = HeaderCodec.single(SecFetchSiteHeader.parse, __encode);
+  static List<String> __encode(SecFetchSiteHeader value) => [value._encode()];
+
   /// The site value of the request.
   final String site;
 
@@ -46,8 +49,8 @@ class SecFetchSiteHeader implements TypedHeader {
 
   /// Converts the [SecFetchSiteHeader] instance into a string representation
   /// suitable for HTTP headers.
-  @override
-  String toHeaderString() => site;
+
+  String _encode() => site;
 
   @override
   String toString() {

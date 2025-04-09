@@ -1,3 +1,5 @@
+import 'package:relic/relic.dart';
+
 /// Represents the HTTP methods used in requests as constants.
 class RequestMethod {
   /// Predefined HTTP method constants.
@@ -61,6 +63,8 @@ class RequestMethod {
         throw FormatException('Invalid value');
     }
   }
+  static const codec = HeaderCodec.single(RequestMethod.parse, __encode);
+  static List<String> __encode(RequestMethod value) => [value.toString()];
 
   @override
   String toString() => 'Method($value)';

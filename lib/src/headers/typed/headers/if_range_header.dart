@@ -1,11 +1,14 @@
+import "package:relic/relic.dart";
 import 'package:http_parser/http_parser.dart';
-import 'package:relic/src/headers/typed/typed_header_interface.dart';
-import 'package:relic/src/headers/typed/typed_headers.dart';
+import 'etag_header.dart';
 
 /// A class representing the HTTP `If-Range` header.
 ///
 /// The `If-Range` header can contain either an HTTP date or an ETag.
-class IfRangeHeader implements TypedHeader {
+final class IfRangeHeader {
+  static const codec = HeaderCodec.single(IfRangeHeader.parse, __encode);
+  static List<String> __encode(IfRangeHeader value) => [value._encode()];
+
   /// The HTTP date if the `If-Range` header contains a date.
   final DateTime? lastModified;
 
@@ -48,10 +51,9 @@ class IfRangeHeader implements TypedHeader {
 
   /// Converts the [IfRangeHeader] instance into a string representation
   /// suitable for HTTP headers.
-  @override
-  String toHeaderString() => lastModified != null
-      ? formatHttpDate(lastModified!)
-      : etag!.toHeaderString();
+
+  String _encode() =>
+      lastModified != null ? formatHttpDate(lastModified!) : etag!.encode();
 
   @override
   String toString() {

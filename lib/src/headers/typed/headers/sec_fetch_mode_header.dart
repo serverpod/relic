@@ -1,9 +1,12 @@
-import 'package:relic/src/headers/typed/typed_header_interface.dart';
+import "package:relic/relic.dart";
 
 /// A class representing the HTTP Sec-Fetch-Mode header.
 ///
 /// This header indicates the mode of the request.
-class SecFetchModeHeader implements TypedHeader {
+final class SecFetchModeHeader {
+  static const codec = HeaderCodec.single(SecFetchModeHeader.parse, __encode);
+  static List<String> __encode(SecFetchModeHeader value) => [value._encode()];
+
   /// The mode value of the request.
   final String mode;
 
@@ -53,8 +56,8 @@ class SecFetchModeHeader implements TypedHeader {
 
   /// Converts the [SecFetchModeHeader] instance into a string representation
   /// suitable for HTTP headers.
-  @override
-  String toHeaderString() => mode;
+
+  String _encode() => mode;
 
   @override
   String toString() {

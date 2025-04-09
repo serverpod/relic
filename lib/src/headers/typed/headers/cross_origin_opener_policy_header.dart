@@ -1,9 +1,14 @@
-import 'package:relic/src/headers/typed/typed_header_interface.dart';
+import "package:relic/relic.dart";
 
 /// A class representing the HTTP Cross-Origin-Opener-Policy header.
 ///
 /// This header specifies the policy for opening cross-origin resources.
-class CrossOriginOpenerPolicyHeader implements TypedHeader {
+final class CrossOriginOpenerPolicyHeader {
+  static const codec =
+      HeaderCodec.single(CrossOriginOpenerPolicyHeader.parse, __encode);
+  static List<String> __encode(CrossOriginOpenerPolicyHeader value) =>
+      [value._encode()];
+
   /// The policy value of the header.
   final String policy;
 
@@ -42,8 +47,8 @@ class CrossOriginOpenerPolicyHeader implements TypedHeader {
 
   /// Converts the [CrossOriginOpenerPolicyHeader] instance into a string
   /// representation suitable for HTTP headers.
-  @override
-  String toHeaderString() => policy;
+
+  String _encode() => policy;
 
   @override
   String toString() {

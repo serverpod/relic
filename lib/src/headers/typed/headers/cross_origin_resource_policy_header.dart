@@ -1,9 +1,14 @@
-import 'package:relic/src/headers/typed/typed_header_interface.dart';
+import "package:relic/relic.dart";
 
 /// A class representing the HTTP Cross-Origin-Resource-Policy header.
 ///
 /// This header specifies the policy for sharing resources across origins.
-class CrossOriginResourcePolicyHeader implements TypedHeader {
+final class CrossOriginResourcePolicyHeader {
+  static const codec =
+      HeaderCodec.single(CrossOriginResourcePolicyHeader.parse, __encode);
+  static List<String> __encode(CrossOriginResourcePolicyHeader value) =>
+      [value._encode()];
+
   /// The policy value of the header.
   final String policy;
 
@@ -40,8 +45,8 @@ class CrossOriginResourcePolicyHeader implements TypedHeader {
 
   /// Converts the [CrossOriginResourcePolicyHeader] instance into a string
   /// representation suitable for HTTP headers.
-  @override
-  String toHeaderString() => policy;
+
+  String _encode() => policy;
 
   @override
   String toString() {

@@ -1,12 +1,15 @@
+import "package:relic/relic.dart";
 import 'package:relic/src/headers/extension/string_list_extensions.dart';
-import 'package:relic/src/headers/typed/typed_header_interface.dart';
 
 /// A class representing the HTTP Vary header.
 ///
 /// This class manages the list of headers that the response may vary on,
 /// and can also handle the wildcard value "*", which indicates that the
 /// response varies on all request headers.
-class VaryHeader implements TypedHeader {
+final class VaryHeader {
+  static const codec = HeaderCodec(VaryHeader.parse, ___encode);
+  static List<String> ___encode(VaryHeader value) => [value._encode()];
+
   /// A list of headers that the response varies on.
   /// If the list contains only "*", it means all headers are varied on.
   final Iterable<String>? fields;
@@ -45,8 +48,7 @@ class VaryHeader implements TypedHeader {
 
   /// Converts the [VaryHeader] instance into a string representation
   /// suitable for HTTP headers.
-  @override
-  String toHeaderString() => isWildcard ? '*' : fields!.join(', ');
+  String _encode() => isWildcard ? '*' : fields!.join(', ');
 
   @override
   String toString() {

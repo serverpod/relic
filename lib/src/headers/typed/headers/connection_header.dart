@@ -1,12 +1,15 @@
+import "package:relic/relic.dart";
 import 'package:relic/src/headers/extension/string_list_extensions.dart';
-import 'package:relic/src/headers/typed/typed_header_interface.dart';
 
 /// A class representing the HTTP Connection header.
 ///
 /// This class manages connection directives, such as `keep-alive`, `close`, or multiple
 /// directives (e.g., `upgrade, keep-alive`). It provides functionality to parse and generate
 /// connection header values.
-class ConnectionHeader implements TypedHeader {
+final class ConnectionHeader {
+  static const codec = HeaderCodec(ConnectionHeader.parse, __encode);
+  static List<String> __encode(ConnectionHeader value) => [value._encode()];
+
   /// A list of connection directives (e.g., `keep-alive`, `close`, `upgrade`).
   final List<ConnectionHeaderType> directives;
 
@@ -45,8 +48,7 @@ class ConnectionHeader implements TypedHeader {
   /// Converts the [ConnectionHeader] instance into a string representation suitable for HTTP headers.
   ///
   /// This method generates the header string by concatenating the connection directives.
-  @override
-  String toHeaderString() {
+  String _encode() {
     return directives.map((directive) => directive.value).join(', ');
   }
 
@@ -95,9 +97,6 @@ class ConnectionHeaderType {
         throw FormatException('Invalid value');
     }
   }
-
-  /// Returns the string representation of the connection directive.
-  String toHeaderString() => value;
 
   @override
   String toString() => 'ConnectionHeaderType(value: $value)';

@@ -1,12 +1,15 @@
+import "package:relic/relic.dart";
 import 'package:relic/src/headers/extension/string_list_extensions.dart';
 import 'package:relic/src/headers/typed/headers/util/cookie_util.dart';
-import 'package:relic/src/headers/typed/typed_header_interface.dart';
 import 'package:collection/collection.dart';
 
 /// A class representing the HTTP Cookie header.
 ///
 /// This class manages the parsing and representation of cookies.
-class CookieHeader implements TypedHeader {
+final class CookieHeader {
+  static const codec = HeaderCodec.single(CookieHeader.parse, __encode);
+  static List<String> __encode(CookieHeader value) => [value._encode()];
+
   /// The list of cookies.
   final List<Cookie> cookies;
 
@@ -40,9 +43,9 @@ class CookieHeader implements TypedHeader {
 
   /// Converts the [CookieHeader] instance into a string representation
   /// suitable for HTTP headers.
-  @override
-  String toHeaderString() {
-    return cookies.map((cookie) => cookie.toHeaderString()).join('; ');
+
+  String _encode() {
+    return cookies.map((cookie) => cookie._encode()).join('; ');
   }
 
   @override
@@ -78,7 +81,7 @@ class Cookie {
   }
 
   /// Converts the [Cookie] instance into a string representation suitable for HTTP headers.
-  String toHeaderString() => '$name=$value';
+  String _encode() => '$name=$value';
 
   @override
   String toString() {

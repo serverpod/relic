@@ -1,10 +1,13 @@
-import 'package:relic/src/headers/typed/typed_header_interface.dart';
+import "package:relic/relic.dart";
 
 /// A class representing the HTTP Referrer-Policy header.
 ///
 /// This class manages the referrer policy, providing functionality to parse
 /// and generate referrer policy header values.
-class ReferrerPolicyHeader implements TypedHeader {
+final class ReferrerPolicyHeader {
+  static const codec = HeaderCodec.single(ReferrerPolicyHeader.parse, __encode);
+  static List<String> __encode(ReferrerPolicyHeader value) => [value._encode()];
+
   /// The string representation of the referrer policy directive.
   final String directive;
 
@@ -65,8 +68,8 @@ class ReferrerPolicyHeader implements TypedHeader {
 
   /// Converts the [ReferrerPolicyHeader] instance into a string
   /// representation suitable for HTTP headers.
-  @override
-  String toHeaderString() => directive;
+
+  String _encode() => directive;
 
   @override
   String toString() {

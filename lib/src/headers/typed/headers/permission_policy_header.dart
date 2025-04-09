@@ -1,11 +1,16 @@
+import "package:relic/relic.dart";
 import 'package:relic/src/headers/extension/string_list_extensions.dart';
-import 'package:relic/src/headers/typed/typed_header_interface.dart';
 
 /// A class representing the HTTP Permissions-Policy header.
 ///
 /// This class manages Permissions-Policy directives, providing functionality to parse,
 /// add, remove, and generate Permissions-Policy header values.
-class PermissionsPolicyHeader implements TypedHeader {
+final class PermissionsPolicyHeader {
+  static const codec =
+      HeaderCodec.single(PermissionsPolicyHeader.parse, __encode);
+  static List<String> __encode(PermissionsPolicyHeader value) =>
+      [value._encode()];
+
   /// A list of Permissions-Policy directives.
   final List<PermissionsPolicyDirective> directives;
 
@@ -48,9 +53,9 @@ class PermissionsPolicyHeader implements TypedHeader {
 
   /// Converts the [PermissionsPolicyHeader] instance into a string
   /// representation suitable for HTTP headers.
-  @override
-  String toHeaderString() {
-    return directives.map((directive) => directive.toHeaderString()).join(', ');
+
+  String _encode() {
+    return directives.map((directive) => directive._encode()).join(', ');
   }
 
   @override
@@ -74,7 +79,7 @@ class PermissionsPolicyDirective {
   });
 
   /// Converts the [PermissionsPolicyDirective] instance into a string representation.
-  String toHeaderString() {
+  String _encode() {
     final valuesStr = values.isNotEmpty ? '(${values.join(' ')})' : '()';
     return '$name=$valuesStr';
   }

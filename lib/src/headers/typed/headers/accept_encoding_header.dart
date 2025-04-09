@@ -1,10 +1,13 @@
+import "package:relic/relic.dart";
 import 'package:relic/src/headers/extension/string_list_extensions.dart';
-import 'package:relic/src/headers/typed/typed_header_interface.dart';
 
 /// A class representing the HTTP Accept-Encoding header.
 ///
 /// This header specifies the content encoding that the client can understand.
-class AcceptEncodingHeader implements TypedHeader {
+final class AcceptEncodingHeader {
+  static const codec = HeaderCodec(AcceptEncodingHeader.parse, __encode);
+  static List<String> __encode(AcceptEncodingHeader value) => [value._encode()];
+
   /// The list of encodings that are accepted.
   final List<EncodingQuality>? encodings;
 
@@ -57,10 +60,9 @@ class AcceptEncodingHeader implements TypedHeader {
   }
 
   /// Converts the [AcceptEncodingHeader] instance into a string representation suitable for HTTP headers.
-  @override
-  String toHeaderString() => isWildcard
-      ? '*'
-      : encodings?.map((e) => e.toHeaderString()).join(', ') ?? '';
+
+  String _encode() =>
+      isWildcard ? '*' : encodings?.map((e) => e._encode()).join(', ') ?? '';
 
   @override
   String toString() => 'AcceptEncodingHeader(encodings: $encodings)';
@@ -78,7 +80,7 @@ class EncodingQuality {
   EncodingQuality(this.encoding, [double? quality]) : quality = quality ?? 1.0;
 
   /// Converts the [EncodingQuality] instance into a string representation suitable for HTTP headers.
-  String toHeaderString() => quality == 1.0 ? encoding : '$encoding;q=$quality';
+  String _encode() => quality == 1.0 ? encoding : '$encoding;q=$quality';
 
   @override
   String toString() =>

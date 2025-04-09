@@ -1,12 +1,16 @@
+import "package:relic/relic.dart";
 import 'package:relic/src/headers/extension/string_list_extensions.dart';
-import 'package:relic/src/headers/typed/typed_header_interface.dart';
 
 /// A class representing the HTTP Content-Encoding header.
 ///
 /// This class manages content encodings such as `gzip`, `compress`, `deflate`,
 /// `br`, and `identity`. It provides functionality to parse and generate
 /// content encoding header values.
-class ContentEncodingHeader implements TypedHeader {
+final class ContentEncodingHeader {
+  static const codec = HeaderCodec(ContentEncodingHeader.parse, __encode);
+  static List<String> __encode(ContentEncodingHeader value) =>
+      [value._encode()];
+
   /// A list of content encodings.
   final List<ContentEncoding> encodings;
 
@@ -39,8 +43,7 @@ class ContentEncodingHeader implements TypedHeader {
 
   /// Converts the [ContentEncodingHeader] instance into a string representation
   /// suitable for HTTP headers.
-  @override
-  String toHeaderString() => encodings.map((e) => e.name).join(', ');
+  String _encode() => encodings.map((e) => e.name).join(', ');
 
   @override
   String toString() {
@@ -96,9 +99,6 @@ class ContentEncoding {
         throw FormatException('Invalid value');
     }
   }
-
-  /// Returns the string representation of the content encoding.
-  String toHeaderString() => name;
 
   @override
   String toString() => 'ContentEncoding(name: $name)';
