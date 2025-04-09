@@ -1,6 +1,7 @@
-include: package:lints/recommended.yaml
+include: package:serverpod_lints/public.yaml
 
 linter:
   rules:
-      - avoid_dynamic_calls
-      - unawaited_futures
+    avoid_relative_lib_imports: true
+    prefer_relative_imports: true
+    public_member_api_docs: false # TODO: This is temporary until we get closer to release
