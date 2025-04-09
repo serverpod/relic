@@ -107,7 +107,7 @@ final class HeaderAccessor<T extends Object> {
   void removeFrom(final MutableHeaders external) => external.remove(key);
 }
 
-Null _returnNull<T>(final Exception ex) => null;
+Null _returnNull(final Exception ex) => null;
 
 /// An interface defining a bidirectional conversion between types [T] and [StorageT].
 ///
@@ -248,7 +248,7 @@ Never _throwException(
   throw InvalidHeaderException(
     switch (exception) {
       final FormatException f => f.message,
-      final ArgumentError e => e.message,
+      final ArgumentError e => e.message.toString(),
       _ => '$exception',
     },
     headerType: key,

@@ -37,7 +37,7 @@ void main() {
         'when clearing '
         'then all values is removed', () {
       expect(() => mutable.clear(), returnsNormally);
-      expect(mutable, {});
+      expect(mutable, MutableHeaders());
     });
   });
 
