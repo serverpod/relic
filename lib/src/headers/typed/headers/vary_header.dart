@@ -1,5 +1,5 @@
-import "package:relic/relic.dart";
-import 'package:relic/src/headers/extension/string_list_extensions.dart';
+import '../../../../relic.dart';
+import '../../extension/string_list_extensions.dart';
 
 /// A class representing the HTTP Vary header.
 ///
@@ -8,7 +8,7 @@ import 'package:relic/src/headers/extension/string_list_extensions.dart';
 /// response varies on all request headers.
 final class VaryHeader {
   static const codec = HeaderCodec(VaryHeader.parse, ___encode);
-  static List<String> ___encode(VaryHeader value) => [value._encode()];
+  static List<String> ___encode(final VaryHeader value) => [value._encode()];
 
   /// A list of headers that the response varies on.
   /// If the list contains only "*", it means all headers are varied on.
@@ -28,11 +28,11 @@ final class VaryHeader {
   /// Parses the Vary header value and returns a [VaryHeader] instance.
   ///
   /// This method handles the wildcard value "*" or splits the value by commas and trims each field.
-  factory VaryHeader.parse(Iterable<String> values) {
-    var splitValues = values.splitTrimAndFilterUnique();
+  factory VaryHeader.parse(final Iterable<String> values) {
+    final splitValues = values.splitTrimAndFilterUnique();
 
     if (splitValues.isEmpty) {
-      throw FormatException('Value cannot be empty');
+      throw const FormatException('Value cannot be empty');
     }
 
     if (splitValues.length == 1 && splitValues.first == '*') {
@@ -40,7 +40,8 @@ final class VaryHeader {
     }
 
     if (splitValues.length > 1 && splitValues.contains('*')) {
-      throw FormatException('Wildcard (*) cannot be used with other values');
+      throw const FormatException(
+          'Wildcard (*) cannot be used with other values');
     }
 
     return VaryHeader.headers(fields: splitValues);

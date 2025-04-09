@@ -1,9 +1,9 @@
 import 'package:relic/relic.dart';
-import 'package:test/test.dart';
 import 'package:relic/src/headers/standard_headers_extensions.dart';
+import 'package:test/test.dart';
 
-import '../headers_test_utils.dart';
 import '../docs/strict_validation_docs.dart';
+import '../headers_test_utils.dart';
 
 /// Reference: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Range
 /// About empty value test, check the [StrictValidationDocs] class for more details.
@@ -25,12 +25,12 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (h) => h.contentRange,
+            touchHeaders: (final h) => h.contentRange,
             headers: {'content-range': ''},
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (e) => e.message,
+              (final e) => e.message,
               'message',
               contains('Value cannot be empty'),
             ),
@@ -47,12 +47,12 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (h) => h.contentRange,
+            touchHeaders: (final h) => h.contentRange,
             headers: {'content-range': 'bytes 0-abc/1234'},
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (e) => e.message,
+              (final e) => e.message,
               'message',
               contains('Invalid format'),
             ),
@@ -69,12 +69,12 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (h) => h.contentRange,
+            touchHeaders: (final h) => h.contentRange,
             headers: {'content-range': 'bytes -10-499/1234'},
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (e) => e.message,
+              (final e) => e.message,
               'message',
               contains('Invalid format'),
             ),
@@ -91,12 +91,12 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (h) => h.contentRange,
+            touchHeaders: (final h) => h.contentRange,
             headers: {'content-range': 'bytes 500-499/1234'},
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (e) => e.message,
+              (final e) => e.message,
               'message',
               contains('Invalid range'),
             ),
@@ -110,9 +110,9 @@ void main() {
       'then the server does not respond with a bad request if the headers '
       'is not actually used',
       () async {
-        var headers = await getServerRequestHeaders(
+        final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (_) {},
+          touchHeaders: (final _) {},
           headers: {'content-range': 'bytes 500-499/1234'},
         );
 
@@ -124,9 +124,9 @@ void main() {
       'when a Content-Range header with a valid byte range is passed then it '
       'should parse correctly',
       () async {
-        var headers = await getServerRequestHeaders(
+        final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (h) => h.contentRange,
+          touchHeaders: (final h) => h.contentRange,
           headers: {'content-range': 'bytes 0-499/1234'},
         );
 
@@ -141,9 +141,9 @@ void main() {
       'when a Content-Range header with a valid byte range and unknown size is '
       'passed then it should parse correctly',
       () async {
-        var headers = await getServerRequestHeaders(
+        final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (h) => h.contentRange,
+          touchHeaders: (final h) => h.contentRange,
           headers: {'content-range': 'bytes 0-499/*'},
         );
 
@@ -158,9 +158,9 @@ void main() {
       'when a Content-Range header with a valid unsatisfiable range is passed '
       'then it should parse correctly',
       () async {
-        var headers = await getServerRequestHeaders(
+        final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (h) => h.contentRange,
+          touchHeaders: (final h) => h.contentRange,
           headers: {'content-range': 'bytes */1234'},
         );
 
@@ -174,9 +174,9 @@ void main() {
     test(
       'when no Content-Range header is passed then it should return null',
       () async {
-        var headers = await getServerRequestHeaders(
+        final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (h) => h.contentRange,
+          touchHeaders: (final h) => h.contentRange,
           headers: {},
         );
 
@@ -198,9 +198,9 @@ void main() {
       test(
         'then it should return null',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
-            touchHeaders: (_) {},
+            touchHeaders: (final _) {},
             headers: {'content-range': 'bytes 0-499/invalid'},
           );
 

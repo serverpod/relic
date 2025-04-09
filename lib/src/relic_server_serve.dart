@@ -20,7 +20,7 @@ library;
 import 'dart:async';
 import 'dart:io' as io;
 
-import 'package:relic/relic.dart';
+import '../relic.dart';
 
 /// Starts an [HttpServer] that listens on the specified [address] and
 /// [port] and sends requests to [handler].
@@ -38,18 +38,18 @@ import 'package:relic/relic.dart';
 /// pass `null` to omit this header.
 /// {@endtemplate}
 Future<io.HttpServer> serve(
-  Handler handler,
-  InternetAddress address,
-  int port, {
-  io.SecurityContext? securityContext,
+  final Handler handler,
+  final InternetAddress address,
+  final int port, {
+  final io.SecurityContext? securityContext,
   int? backlog,
-  bool shared = false,
-  bool strictHeaders = false,
-  String? poweredByHeader,
+  final bool shared = false,
+  final bool strictHeaders = false,
+  final String? poweredByHeader,
 }) async {
   backlog ??= 0;
 
-  var server = await RelicServer.createServer(
+  final server = await RelicServer.createServer(
     address,
     port,
     securityContext: securityContext,

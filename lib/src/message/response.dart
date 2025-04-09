@@ -37,10 +37,10 @@ class Response extends Message {
   /// An empty list will cause the header to be omitted.
   /// {@endtemplate}
   Response.ok({
-    Body? body,
-    Headers? headers,
-    Encoding? encoding,
-    Map<String, Object>? context,
+    final Body? body,
+    final Headers? headers,
+    final Encoding? encoding,
+    final Map<String, Object>? context,
   }) : this(
           200,
           body: body ?? Body.empty(),
@@ -57,11 +57,11 @@ class Response extends Message {
   ///
   /// {@macro relic_response_body_and_encoding_param}
   Response.movedPermanently(
-    Uri location, {
-    Body? body,
-    Headers? headers,
-    Encoding? encoding,
-    Map<String, Object>? context,
+    final Uri location, {
+    final Body? body,
+    final Headers? headers,
+    final Encoding? encoding,
+    final Map<String, Object>? context,
   }) : this._redirect(
           301,
           location,
@@ -79,11 +79,11 @@ class Response extends Message {
   ///
   /// {@macro relic_response_body_and_encoding_param}
   Response.found(
-    Uri location, {
-    Body? body,
-    Headers? headers,
-    Encoding? encoding,
-    Map<String, Object>? context,
+    final Uri location, {
+    final Body? body,
+    final Headers? headers,
+    final Encoding? encoding,
+    final Map<String, Object>? context,
   }) : this._redirect(
           302,
           location,
@@ -102,27 +102,27 @@ class Response extends Message {
   ///
   /// {@macro relic_response_body_and_encoding_param}
   Response.seeOther(
-    Uri location, {
-    Body? body,
-    Headers? headers,
-    Encoding? encoding,
-    Map<String, Object>? context,
+    final Uri location, {
+    final Body? body,
+    final Headers? headers,
+    final Encoding? encoding,
+    final Map<String, Object>? context,
   }) : this._redirect(303, location, body, headers, encoding, context: context);
 
   /// Constructs a helper constructor for redirect responses.
   Response._redirect(
-    int statusCode,
-    Uri location,
-    Body? body,
-    Headers? headers,
-    Encoding? encoding, {
-    Map<String, Object>? context,
+    final int statusCode,
+    final Uri location,
+    final Body? body,
+    final Headers? headers,
+    final Encoding? encoding, {
+    final Map<String, Object>? context,
   }) : this(
           statusCode,
           body: body ?? Body.empty(),
           encoding: encoding,
           headers: (headers ?? Headers.empty())
-              .transform((mh) => mh.location = location),
+              .transform((final mh) => mh.location = location),
           context: context,
         );
 
@@ -133,8 +133,8 @@ class Response extends Message {
   ///
   /// {@macro relic_response_body_and_encoding_param}
   Response.noContent({
-    Headers? headers,
-    Map<String, Object>? context,
+    final Headers? headers,
+    final Map<String, Object>? context,
   }) : this(
           204,
           body: Body.empty(),
@@ -154,8 +154,8 @@ class Response extends Message {
   ///
   /// If [headers] contains a value for `content-length` it will be removed.
   Response.notModified({
-    Headers? headers,
-    Map<String, Object>? context,
+    final Headers? headers,
+    final Map<String, Object>? context,
   }) : this(
           304,
           body: Body.empty(),
@@ -169,10 +169,10 @@ class Response extends Message {
   ///
   /// {@macro relic_response_body_and_encoding_param}
   Response.badRequest({
-    Body? body,
-    Headers? headers,
-    Encoding? encoding,
-    Map<String, Object>? context,
+    final Body? body,
+    final Headers? headers,
+    final Encoding? encoding,
+    final Map<String, Object>? context,
   }) : this(
           400,
           headers: headers ?? Headers.empty(),
@@ -188,10 +188,10 @@ class Response extends Message {
   ///
   /// {@macro relic_response_body_and_encoding_param}
   Response.unauthorized({
-    Body? body,
-    Headers? headers,
-    Encoding? encoding,
-    Map<String, Object>? context,
+    final Body? body,
+    final Headers? headers,
+    final Encoding? encoding,
+    final Map<String, Object>? context,
   }) : this(
           401,
           headers: headers ?? Headers.empty(),
@@ -206,10 +206,10 @@ class Response extends Message {
   ///
   /// {@macro relic_response_body_and_encoding_param}
   Response.forbidden({
-    Body? body,
-    Headers? headers,
-    Encoding? encoding,
-    Map<String, Object>? context,
+    final Body? body,
+    final Headers? headers,
+    final Encoding? encoding,
+    final Map<String, Object>? context,
   }) : this(
           403,
           headers: headers ?? Headers.empty(),
@@ -225,10 +225,10 @@ class Response extends Message {
   ///
   /// {@macro relic_response_body_and_encoding_param}
   Response.notFound({
-    Body? body,
-    Headers? headers,
-    Encoding? encoding,
-    Map<String, Object>? context,
+    final Body? body,
+    final Headers? headers,
+    final Encoding? encoding,
+    final Map<String, Object>? context,
   }) : this(
           404,
           headers: headers ?? Headers.empty(),
@@ -244,10 +244,10 @@ class Response extends Message {
   ///
   /// {@macro relic_response_body_and_encoding_param}
   Response.internalServerError({
-    Body? body,
-    Headers? headers,
-    Encoding? encoding,
-    Map<String, Object>? context,
+    final Body? body,
+    final Headers? headers,
+    final Encoding? encoding,
+    final Map<String, Object>? context,
   }) : this(
           500,
           headers: headers ?? Headers.empty(),
@@ -263,10 +263,10 @@ class Response extends Message {
   ///
   /// {@macro relic_response_body_and_encoding_param}
   Response.notImplemented({
-    Body? body,
-    Headers? headers,
-    Encoding? encoding,
-    Map<String, Object>? context,
+    final Body? body,
+    final Headers? headers,
+    final Encoding? encoding,
+    final Map<String, Object>? context,
   }) : this(
           501,
           headers: headers ?? Headers.empty(),
@@ -282,10 +282,10 @@ class Response extends Message {
   /// {@macro relic_response_body_and_encoding_param}
   Response(
     this.statusCode, {
-    Body? body,
-    Headers? headers,
-    Encoding? encoding,
-    Map<String, Object>? context,
+    final Body? body,
+    final Headers? headers,
+    final Encoding? encoding,
+    final Map<String, Object>? context,
   }) : super(
           body: body ?? Body.empty(),
           headers: headers ?? Headers.empty(),
@@ -317,9 +317,9 @@ class Response extends Message {
   /// [Stream<List<int>>], or `<int>[]` (empty list) to indicate no body.
   @override
   Response copyWith({
-    Headers? headers,
-    Map<String, Object?>? context,
-    Body? body,
+    final Headers? headers,
+    final Map<String, Object?>? context,
+    final Body? body,
   }) {
     final newContext = updateMap(this.context, context);
 
@@ -336,7 +336,7 @@ class Response extends Message {
   /// This method sets the status code, headers, and body on the [httpResponse]
   /// and returns a [Future] that completes when the body has been written.
   Future<void> writeHttpResponse(
-    HttpResponse httpResponse,
+    final HttpResponse httpResponse,
   ) async {
     if (context.containsKey('relic_server.buffer_output')) {
       httpResponse.bufferOutput = context['relic_server.buffer_output'] as bool;
@@ -350,6 +350,6 @@ class Response extends Message {
 
     return httpResponse
         .addStream(body.read())
-        .then((_) => httpResponse.close());
+        .then((final _) => httpResponse.close());
   }
 }

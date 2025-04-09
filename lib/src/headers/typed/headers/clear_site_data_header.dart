@@ -1,12 +1,13 @@
-import "package:relic/relic.dart";
-import 'package:relic/src/headers/extension/string_list_extensions.dart';
+import '../../../../relic.dart';
+import '../../extension/string_list_extensions.dart';
 
 /// A class representing the HTTP Clear-Site-Data header.
 ///
 /// This header specifies which types of browsing data should be cleared.
 final class ClearSiteDataHeader {
   static const codec = HeaderCodec(ClearSiteDataHeader.parse, __encode);
-  static List<String> __encode(ClearSiteDataHeader value) => [value._encode()];
+  static List<String> __encode(final ClearSiteDataHeader value) =>
+      [value._encode()];
 
   /// The list of data types to be cleared.
   final List<ClearSiteDataType>? dataTypes;
@@ -27,26 +28,27 @@ final class ClearSiteDataHeader {
   ///
   /// This method splits the header value by commas, trims each data type,
   /// and processes the data type values.
-  factory ClearSiteDataHeader.parse(Iterable<String> values) {
-    var splitValues = values
+  factory ClearSiteDataHeader.parse(final Iterable<String> values) {
+    final splitValues = values
         .splitTrimAndFilterUnique()
-        .map((s) => s.replaceAll('"', ''))
-        .where((s) => s.isNotEmpty)
+        .map((final s) => s.replaceAll('"', ''))
+        .where((final s) => s.isNotEmpty)
         .toList();
 
     if (splitValues.isEmpty) {
-      throw FormatException('Value cannot be empty');
+      throw const FormatException('Value cannot be empty');
     }
 
     if (splitValues.length == 1 && splitValues.first == '*') {
-      return ClearSiteDataHeader.wildcard();
+      return const ClearSiteDataHeader.wildcard();
     }
 
     if (splitValues.length > 1 && splitValues.contains('*')) {
-      throw FormatException('Wildcard (*) cannot be used with other values');
+      throw const FormatException(
+          'Wildcard (*) cannot be used with other values');
     }
 
-    var dataTypes = splitValues.map(ClearSiteDataType.parse).toList();
+    final dataTypes = splitValues.map(ClearSiteDataType.parse).toList();
 
     return ClearSiteDataHeader.dataTypes(dataTypes: dataTypes);
   }
@@ -57,7 +59,7 @@ final class ClearSiteDataHeader {
   String _encode() {
     return isWildcard
         ? '*'
-        : dataTypes!.map((dataType) => '"${dataType.value}"').join(', ');
+        : dataTypes!.map((final dataType) => '"${dataType.value}"').join(', ');
   }
 
   @override
@@ -86,10 +88,10 @@ class ClearSiteDataType {
 
   /// Parses a [value] and returns the corresponding [ClearSiteDataType] instance.
   /// If the value does not match any predefined types, it returns a custom instance.
-  factory ClearSiteDataType.parse(String value) {
+  factory ClearSiteDataType.parse(final String value) {
     final trimmed = value.trim();
     if (trimmed.isEmpty) {
-      throw FormatException('Value cannot be empty');
+      throw const FormatException('Value cannot be empty');
     }
     switch (trimmed) {
       case _cache:
@@ -101,7 +103,7 @@ class ClearSiteDataType {
       case _executionContexts:
         return executionContexts;
       default:
-        throw FormatException('Invalid value');
+        throw const FormatException('Invalid value');
     }
   }
 

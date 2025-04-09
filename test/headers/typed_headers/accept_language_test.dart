@@ -27,12 +27,12 @@ void main() {
           expect(
             getServerRequestHeaders(
               server: server,
-              touchHeaders: (h) => h.acceptLanguage,
+              touchHeaders: (final h) => h.acceptLanguage,
               headers: {'accept-language': ''},
             ),
             throwsA(
               isA<BadRequestException>().having(
-                (e) => e.message,
+                (final e) => e.message,
                 'message',
                 contains('Value cannot be empty'),
               ),
@@ -49,12 +49,12 @@ void main() {
           expect(
             getServerRequestHeaders(
               server: server,
-              touchHeaders: (h) => h.acceptLanguage,
+              touchHeaders: (final h) => h.acceptLanguage,
               headers: {'accept-language': 'en;q=abc'},
             ),
             throwsA(
               isA<BadRequestException>().having(
-                (e) => e.message,
+                (final e) => e.message,
                 'message',
                 contains('Invalid quality value'),
               ),
@@ -71,12 +71,12 @@ void main() {
           expect(
             getServerRequestHeaders(
               server: server,
-              touchHeaders: (h) => h.acceptLanguage,
+              touchHeaders: (final h) => h.acceptLanguage,
               headers: {'accept-language': '*, en'},
             ),
             throwsA(
               isA<BadRequestException>().having(
-                (e) => e.message,
+                (final e) => e.message,
                 'message',
                 contains('Wildcard (*) cannot be used with other values'),
               ),
@@ -93,12 +93,12 @@ void main() {
           expect(
             getServerRequestHeaders(
               server: server,
-              touchHeaders: (h) => h.acceptLanguage,
+              touchHeaders: (final h) => h.acceptLanguage,
               headers: {'accept-language': ';q=0.5'},
             ),
             throwsA(
               isA<BadRequestException>().having(
-                (e) => e.message,
+                (final e) => e.message,
                 'message',
                 contains('Invalid language'),
               ),
@@ -112,9 +112,9 @@ void main() {
         'then the server does not respond with a bad request if the headers '
         'is not actually used',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
-            touchHeaders: (_) {},
+            touchHeaders: (final _) {},
             headers: {'accept-language': ';q=0.5'},
           );
 
@@ -126,14 +126,16 @@ void main() {
         'when an Accept-Language header is passed then it should parse the '
         'language correctly',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
-            touchHeaders: (h) => h.acceptLanguage,
+            touchHeaders: (final h) => h.acceptLanguage,
             headers: {'accept-language': 'en'},
           );
 
           expect(
-            headers.acceptLanguage?.languages?.map((e) => e.language).toList(),
+            headers.acceptLanguage?.languages
+                ?.map((final e) => e.language)
+                .toList(),
             equals(['en']),
           );
         },
@@ -143,14 +145,16 @@ void main() {
         'when an Accept-Language header is passed without quality then the '
         'default quality value should be set',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
-            touchHeaders: (h) => h.acceptLanguage,
+            touchHeaders: (final h) => h.acceptLanguage,
             headers: {'accept-language': 'en'},
           );
 
           expect(
-            headers.acceptLanguage?.languages?.map((e) => e.quality).toList(),
+            headers.acceptLanguage?.languages
+                ?.map((final e) => e.quality)
+                .toList(),
             equals([1.0]),
           );
         },
@@ -160,14 +164,16 @@ void main() {
         'when a mixed case Accept-Language header is passed then it should parse '
         'the language correctly',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
-            touchHeaders: (h) => h.acceptLanguage,
+            touchHeaders: (final h) => h.acceptLanguage,
             headers: {'accept-language': 'En'},
           );
 
           expect(
-            headers.acceptLanguage?.languages?.map((e) => e.language).toList(),
+            headers.acceptLanguage?.languages
+                ?.map((final e) => e.language)
+                .toList(),
             equals(['en']),
           );
         },
@@ -176,9 +182,9 @@ void main() {
       test(
         'when no Accept-Language header is passed then it should return null',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
-            touchHeaders: (h) => h.acceptLanguage,
+            touchHeaders: (final h) => h.acceptLanguage,
             headers: {},
           );
 
@@ -189,9 +195,9 @@ void main() {
       test(
         'when an Accept-Language header with wildcard (*) is passed then it should parse correctly',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
-            touchHeaders: (h) => h.acceptLanguage,
+            touchHeaders: (final h) => h.acceptLanguage,
             headers: {'accept-language': '*'},
           );
 
@@ -204,18 +210,22 @@ void main() {
         'when an Accept-Language header with wildcard (*) and quality value is passed '
         'then it should parse the encoding correctly',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
-            touchHeaders: (h) => h.acceptLanguage,
+            touchHeaders: (final h) => h.acceptLanguage,
             headers: {'accept-language': '*;q=0.5'},
           );
 
           expect(
-            headers.acceptLanguage?.languages?.map((e) => e.language).toList(),
+            headers.acceptLanguage?.languages
+                ?.map((final e) => e.language)
+                .toList(),
             equals(['*']),
           );
           expect(
-            headers.acceptLanguage?.languages?.map((e) => e.quality).toList(),
+            headers.acceptLanguage?.languages
+                ?.map((final e) => e.quality)
+                .toList(),
             equals([0.5]),
           );
         },
@@ -225,15 +235,15 @@ void main() {
         test(
           'then they should parse the languages correctly',
           () async {
-            var headers = await getServerRequestHeaders(
+            final headers = await getServerRequestHeaders(
               server: server,
-              touchHeaders: (h) => h.acceptLanguage,
+              touchHeaders: (final h) => h.acceptLanguage,
               headers: {'accept-language': 'en, fr, de'},
             );
 
             expect(
               headers.acceptLanguage?.languages
-                  ?.map((e) => e.language)
+                  ?.map((final e) => e.language)
                   .toList(),
               equals(['en', 'fr', 'de']),
             );
@@ -243,14 +253,16 @@ void main() {
         test(
           'then they should parse the qualities correctly',
           () async {
-            var headers = await getServerRequestHeaders(
+            final headers = await getServerRequestHeaders(
               server: server,
-              touchHeaders: (h) => h.acceptLanguage,
+              touchHeaders: (final h) => h.acceptLanguage,
               headers: {'accept-language': 'en, fr, de'},
             );
 
             expect(
-              headers.acceptLanguage?.languages?.map((e) => e.quality).toList(),
+              headers.acceptLanguage?.languages
+                  ?.map((final e) => e.quality)
+                  .toList(),
               equals([1.0, 1.0, 1.0]),
             );
           },
@@ -259,15 +271,15 @@ void main() {
         test(
           'with quality values then they should parse the languages correctly',
           () async {
-            var headers = await getServerRequestHeaders(
+            final headers = await getServerRequestHeaders(
               server: server,
-              touchHeaders: (h) => h.acceptLanguage,
+              touchHeaders: (final h) => h.acceptLanguage,
               headers: {'accept-language': 'en;q=1.0, fr;q=0.5, de;q=0.8'},
             );
 
             expect(
               headers.acceptLanguage?.languages
-                  ?.map((e) => e.language)
+                  ?.map((final e) => e.language)
                   .toList(),
               equals(['en', 'fr', 'de']),
             );
@@ -277,14 +289,16 @@ void main() {
         test(
           'with quality values then they should parse the qualities correctly',
           () async {
-            var headers = await getServerRequestHeaders(
+            final headers = await getServerRequestHeaders(
               server: server,
-              touchHeaders: (h) => h.acceptLanguage,
+              touchHeaders: (final h) => h.acceptLanguage,
               headers: {'accept-language': 'en;q=1.0, fr;q=0.5, de;q=0.8'},
             );
 
             expect(
-              headers.acceptLanguage?.languages?.map((e) => e.quality).toList(),
+              headers.acceptLanguage?.languages
+                  ?.map((final e) => e.quality)
+                  .toList(),
               equals([1.0, 0.5, 0.8]),
             );
           },
@@ -293,15 +307,15 @@ void main() {
         test(
           'with duplicated values then it should remove duplicates and parse the languages correctly',
           () async {
-            var headers = await getServerRequestHeaders(
+            final headers = await getServerRequestHeaders(
               server: server,
-              touchHeaders: (h) => h.acceptLanguage,
+              touchHeaders: (final h) => h.acceptLanguage,
               headers: {'accept-language': 'en, en, fr, de'},
             );
 
             expect(
               headers.acceptLanguage?.languages
-                  ?.map((e) => e.language)
+                  ?.map((final e) => e.language)
                   .toList(),
               equals(['en', 'fr', 'de']),
             );
@@ -311,14 +325,16 @@ void main() {
         test(
           'with duplicated values then it should remove duplicates and parse the qualities correctly',
           () async {
-            var headers = await getServerRequestHeaders(
+            final headers = await getServerRequestHeaders(
               server: server,
-              touchHeaders: (h) => h.acceptLanguage,
+              touchHeaders: (final h) => h.acceptLanguage,
               headers: {'accept-language': 'en, en, fr, de'},
             );
 
             expect(
-              headers.acceptLanguage?.languages?.map((e) => e.quality).toList(),
+              headers.acceptLanguage?.languages
+                  ?.map((final e) => e.quality)
+                  .toList(),
               equals([1.0, 1.0, 1.0]),
             );
           },
@@ -327,15 +343,15 @@ void main() {
         test(
           'with extra whitespace then it should parse the languages correctly',
           () async {
-            var headers = await getServerRequestHeaders(
+            final headers = await getServerRequestHeaders(
               server: server,
-              touchHeaders: (h) => h.acceptLanguage,
+              touchHeaders: (final h) => h.acceptLanguage,
               headers: {'accept-language': ' en , fr , de '},
             );
 
             expect(
               headers.acceptLanguage?.languages
-                  ?.map((e) => e.language)
+                  ?.map((final e) => e.language)
                   .toList(),
               equals(['en', 'fr', 'de']),
             );
@@ -345,14 +361,16 @@ void main() {
         test(
           'with extra whitespace then it should parse the qualities correctly',
           () async {
-            var headers = await getServerRequestHeaders(
+            final headers = await getServerRequestHeaders(
               server: server,
-              touchHeaders: (h) => h.acceptLanguage,
+              touchHeaders: (final h) => h.acceptLanguage,
               headers: {'accept-language': ' en , fr , de '},
             );
 
             expect(
-              headers.acceptLanguage?.languages?.map((e) => e.quality).toList(),
+              headers.acceptLanguage?.languages
+                  ?.map((final e) => e.quality)
+                  .toList(),
               equals([1.0, 1.0, 1.0]),
             );
           },
@@ -376,9 +394,9 @@ void main() {
         test(
           'then it should return null',
           () async {
-            var headers = await getServerRequestHeaders(
+            final headers = await getServerRequestHeaders(
               server: server,
-              touchHeaders: (_) {},
+              touchHeaders: (final _) {},
               headers: {'accept-language': ''},
             );
 
@@ -395,9 +413,9 @@ void main() {
           test(
             'then it should return null',
             () async {
-              var headers = await getServerRequestHeaders(
+              final headers = await getServerRequestHeaders(
                 server: server,
-                touchHeaders: (_) {},
+                touchHeaders: (final _) {},
                 headers: {'accept-language': 'en;q=abc, fr, de'},
               );
 

@@ -1,7 +1,7 @@
-import 'package:relic/relic.dart';
 import 'dart:io' as io;
 
-import 'package:relic/src/headers/standard_headers_extensions.dart';
+import '../../relic.dart';
+import '../headers/standard_headers_extensions.dart';
 
 /// Extension for [io.HttpResponse] to apply headers and body.
 extension HttpResponseExtension on io.HttpResponse {
@@ -9,12 +9,12 @@ extension HttpResponseExtension on io.HttpResponse {
   ///
   /// Transfer encoding 'chunked' may be added to the response if it is required
   /// and does not conflict with existing headers.
-  void applyHeaders(Headers headers, Body body) {
-    var responseHeaders = this.headers;
+  void applyHeaders(final Headers headers, final Body body) {
+    final responseHeaders = this.headers;
     responseHeaders.clear();
 
     // Apply all headers from the provided headers map.
-    for (var entry in headers.entries) {
+    for (final entry in headers.entries) {
       responseHeaders.set(entry.key, entry.value);
     }
 
@@ -22,16 +22,16 @@ extension HttpResponseExtension on io.HttpResponse {
     responseHeaders.contentType = body.getContentType();
 
     // If the content length is known, set it and return.
-    var contentLength = body.contentLength;
+    final contentLength = body.contentLength;
     if (contentLength != null) {
       responseHeaders.contentLength = contentLength;
       return;
     }
 
-    var encodings = headers.transferEncoding?.encodings ?? [];
-    var isChunked = headers.transferEncoding?.isChunked ?? false;
-    var isIdentity = headers.transferEncoding?.isIdentity ?? false;
-    var shouldEnableChunkedEncoding = _shouldEnableChunkedEncoding(body);
+    final encodings = headers.transferEncoding?.encodings ?? [];
+    final isChunked = headers.transferEncoding?.isChunked ?? false;
+    final isIdentity = headers.transferEncoding?.isIdentity ?? false;
+    final shouldEnableChunkedEncoding = _shouldEnableChunkedEncoding(body);
 
     // If the transfer encoding is not chunked or identity and chunked encoding
     // should be enabled, add chunked encoding to the response.
@@ -42,7 +42,7 @@ extension HttpResponseExtension on io.HttpResponse {
     // Set the transfer encoding header.
     responseHeaders.set(
       Headers.transferEncodingHeader,
-      encodings.map((e) => e.name).toList(),
+      encodings.map((final e) => e.name).toList(),
     );
   }
 
@@ -60,7 +60,7 @@ extension HttpResponseExtension on io.HttpResponse {
   /// This logic ensures compliance with HTTP/1.1 by:
   /// - Excluding status codes 1xx, 204, and 304 from chunked encoding.
   /// - Handling multipart/byteranges responses according to their specific requirements.
-  bool _shouldEnableChunkedEncoding(Body body) {
+  bool _shouldEnableChunkedEncoding(final Body body) {
     return
         // Exclude 1xx status codes (no body allowed).
         statusCode >= 200 &&
@@ -77,7 +77,7 @@ extension HttpResponseExtension on io.HttpResponse {
 extension _BodyExtension on Body {
   /// Check if the body is multipart/byteranges.
   bool get isMultipartByteranges {
-    var multipartByteranges = MimeType.multipartByteranges;
+    const multipartByteranges = MimeType.multipartByteranges;
     return bodyType?.mimeType.primaryType == multipartByteranges.primaryType &&
         bodyType?.mimeType.subType == multipartByteranges.subType;
   }
@@ -85,8 +85,8 @@ extension _BodyExtension on Body {
 
 extension _TransferEncodingHeaderExtension on TransferEncodingHeader {
   /// Checks if the Transfer-Encoding contains the specified encoding.
-  bool _exists(TransferEncoding encoding) {
-    return encodings.any((e) => e.name == encoding.name);
+  bool _exists(final TransferEncoding encoding) {
+    return encodings.any((final e) => e.name == encoding.name);
   }
 
   /// Checks if the Transfer-Encoding contains `chunked`.

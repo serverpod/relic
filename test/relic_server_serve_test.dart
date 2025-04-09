@@ -18,10 +18,10 @@ import 'util/test_util.dart';
 
 void main() {
   tearDown(() async {
-    var server = _server;
+    final server = _server;
     if (server != null) {
       try {
-        await server.close().timeout(Duration(seconds: 5));
+        await server.close().timeout(const Duration(seconds: 5));
       } catch (e) {
         await server.close(force: true);
       } finally {
@@ -33,7 +33,7 @@ void main() {
   test('sync handler returns a value to the client', () async {
     await _scheduleServer(syncHandler);
 
-    var response = await _get();
+    final response = await _get();
     expect(response.statusCode, HttpStatus.ok);
     expect(response.body, 'Hello from /');
   });
@@ -41,27 +41,27 @@ void main() {
   test('async handler returns a value to the client', () async {
     await _scheduleServer(asyncHandler);
 
-    var response = await _get();
+    final response = await _get();
     expect(response.statusCode, HttpStatus.ok);
     expect(response.body, 'Hello from /');
   });
 
   test('thrown error leads to a 500', () async {
-    await _scheduleServer((request) {
+    await _scheduleServer((final request) {
       throw UnsupportedError('test');
     });
 
-    var response = await _get();
+    final response = await _get();
     expect(response.statusCode, HttpStatus.internalServerError);
     expect(response.body, 'Internal Server Error');
   });
 
   test('async error leads to a 500', () async {
-    await _scheduleServer((request) {
+    await _scheduleServer((final request) {
       return Future.error('test');
     });
 
-    var response = await _get();
+    final response = await _get();
     expect(response.statusCode, HttpStatus.internalServerError);
     expect(response.body, 'Internal Server Error');
   });
@@ -69,7 +69,7 @@ void main() {
   test('Request is populated correctly', () async {
     late Uri uri;
 
-    await _scheduleServer((request) {
+    await _scheduleServer((final request) {
       expect(request.method, RequestMethod.get);
 
       expect(request.requestedUri, uri);
@@ -84,7 +84,7 @@ void main() {
     });
 
     uri = Uri.http('localhost:$_serverPort', '/foo/bar', {'qs': 'value'});
-    var response = await http.get(uri);
+    final response = await http.get(uri);
 
     expect(response.statusCode, HttpStatus.ok);
     expect(response.body, 'Hello from /foo/bar');
@@ -93,13 +93,13 @@ void main() {
   test('Request can handle colon in first path segment', () async {
     await _scheduleServer(syncHandler);
 
-    var response = await _get(path: 'user:42');
+    final response = await _get(path: 'user:42');
     expect(response.statusCode, HttpStatus.ok);
     expect(response.body, 'Hello from /user:42');
   });
 
   test('custom response headers are received by the client', () async {
-    await _scheduleServer((request) {
+    await _scheduleServer((final request) {
       return Response.ok(
         body: Body.fromString('Hello from /'),
         headers: Headers.fromMap({
@@ -109,18 +109,18 @@ void main() {
       );
     });
 
-    var response = await _get();
+    final response = await _get();
     expect(response.statusCode, HttpStatus.ok);
     expect(response.headers['test-header'], 'test-value');
     expect(response.body, 'Hello from /');
   });
 
   test('custom status code is received by the client', () async {
-    await _scheduleServer((request) {
+    await _scheduleServer((final request) {
       return Response(299, body: Body.fromString('Hello from /'));
     });
 
-    var response = await _get();
+    final response = await _get();
     expect(response.statusCode, 299);
     expect(response.body, 'Hello from /');
   });
@@ -130,7 +130,7 @@ void main() {
       'multi-header',
       HeaderCodec(parseStringList, encodeStringList),
     );
-    await _scheduleServer((request) {
+    await _scheduleServer((final request) {
       expect(
         request.headers,
         containsPair('custom-header', ['client value']),
@@ -151,56 +151,56 @@ void main() {
       return syncHandler(request);
     });
 
-    var headers = {
+    final headers = {
       'custom-header': 'client value',
       'multi-header': 'foo,bar,baz'
     };
 
-    var response = await _get(headers: headers);
+    final response = await _get(headers: headers);
     expect(response.statusCode, HttpStatus.ok);
     expect(response.body, 'Hello from /');
   });
 
   test('post with empty content', () async {
-    await _scheduleServer((request) async {
+    await _scheduleServer((final request) async {
       expect(request.mimeType, isNull);
       expect(request.encoding, isNull);
       expect(request.method, RequestMethod.post);
       expect(request.body.contentLength, isNull);
 
-      var body = await request.readAsString();
+      final body = await request.readAsString();
       expect(body, '');
       return syncHandler(request);
     });
 
-    var response = await _post();
+    final response = await _post();
     expect(response.statusCode, HttpStatus.ok);
     expect(response.stream.bytesToString(), completion('Hello from /'));
   });
 
   test('post with request content', () async {
-    await _scheduleServer((request) async {
+    await _scheduleServer((final request) async {
       expect(request.mimeType?.primaryType, 'text');
       expect(request.mimeType?.subType, 'plain');
       expect(request.encoding, utf8);
       expect(request.method, RequestMethod.post);
       expect(request.body.contentLength, 9);
 
-      var body = await request.readAsString();
+      final body = await request.readAsString();
       expect(body, 'test body');
       return syncHandler(request);
     });
 
-    var response = await _post(body: 'test body');
+    final response = await _post(body: 'test body');
     expect(response.statusCode, HttpStatus.ok);
     expect(response.stream.bytesToString(), completion('Hello from /'));
   });
 
   test('supports request hijacking', () async {
-    await _scheduleServer((request) {
+    await _scheduleServer((final request) {
       expect(request.method, RequestMethod.post);
 
-      request.hijack(expectAsync1((channel) {
+      request.hijack(expectAsync1((final channel) {
         expect(channel.stream.first, completion(equals('Hello'.codeUnits)));
 
         channel.sink.add('HTTP/1.1 404 Not Found\r\n'
@@ -213,7 +213,7 @@ void main() {
       }));
     });
 
-    var response = await _post(body: 'Hello');
+    final response = await _post(body: 'Hello');
     expect(response.statusCode, HttpStatus.notFound);
     expect(response.headers['date'], 'Mon, 23 May 2005 22:38:34 GMT');
     expect(
@@ -222,16 +222,16 @@ void main() {
 
   test('reports an error if a HijackException is thrown without hijacking',
       () async {
-    await _scheduleServer((request) => throw const HijackException());
+    await _scheduleServer((final request) => throw const HijackException());
 
-    var response = await _get();
+    final response = await _get();
     expect(response.statusCode, HttpStatus.internalServerError);
   });
 
   test('passes asynchronous exceptions to the parent error zone', () async {
     await runZonedGuarded(() async {
-      var server = await relic_server.serve(
-        (request) {
+      final server = await relic_server.serve(
+        (final request) {
           Future(() => throw StateError('oh no'));
           return syncHandler(request);
         },
@@ -239,19 +239,20 @@ void main() {
         0,
       );
 
-      var response = await http.get(Uri.http('localhost:${server.port}', '/'));
+      final response =
+          await http.get(Uri.http('localhost:${server.port}', '/'));
       expect(response.statusCode, HttpStatus.ok);
       expect(response.body, 'Hello from /');
       await server.close();
-    }, expectAsync2((error, stack) {
+    }, expectAsync2((final error, final stack) {
       expect(error, isOhNoStateError);
     }));
   });
 
   test("doesn't pass asynchronous exceptions to the root error zone", () async {
-    var response = await Zone.root.run(() async {
-      var server = await relic_server.serve(
-        (request) {
+    final response = await Zone.root.run(() async {
+      final server = await relic_server.serve(
+        (final request) {
           Future(() => throw StateError('oh no'));
           return syncHandler(request);
         },
@@ -273,7 +274,7 @@ void main() {
   test('a bad HTTP host request results in a 500 response', () async {
     await _scheduleServer(syncHandler);
 
-    var socket = await Socket.connect('localhost', _serverPort);
+    final socket = await Socket.connect('localhost', _serverPort);
 
     try {
       socket.write('GET / HTTP/1.1\r\n');
@@ -309,28 +310,28 @@ void main() {
       // Update beforeRequest to be one second earlier. HTTP dates only have
       // second-level granularity and the request will likely take less than a
       // second.
-      var beforeRequest = DateTime.now().subtract(const Duration(seconds: 1));
+      final beforeRequest = DateTime.now().subtract(const Duration(seconds: 1));
 
-      var response = await _get();
+      final response = await _get();
       expect(response.headers, contains('date'));
-      var responseDate = parser.parseHttpDate(response.headers['date']!);
+      final responseDate = parser.parseHttpDate(response.headers['date']!);
 
       expect(responseDate.isAfter(beforeRequest), isTrue);
       expect(responseDate.isBefore(DateTime.now()), isTrue);
     });
 
     test('defers to header in response', () async {
-      var date = DateTime.utc(1981, 6, 5);
-      await _scheduleServer((request) {
+      final date = DateTime.utc(1981, 6, 5);
+      await _scheduleServer((final request) {
         return Response.ok(
           body: Body.fromString('test'),
-          headers: Headers.build((mh) => mh.date = date),
+          headers: Headers.build((final mh) => mh.date = date),
         );
       });
 
-      var response = await _get();
+      final response = await _get();
       expect(response.headers, contains('date'));
-      var responseDate = parser.parseHttpDate(response.headers['date']!);
+      final responseDate = parser.parseHttpDate(response.headers['date']!);
       expect(responseDate, date);
     });
   });
@@ -340,7 +341,7 @@ void main() {
     test('defaults to "Relic"', () async {
       await _scheduleServer(syncHandler);
 
-      var response = await _get();
+      final response = await _get();
       expect(
         response.headers[poweredBy],
         equals('Relic'),
@@ -348,14 +349,14 @@ void main() {
     });
 
     test('defers to header in response when default', () async {
-      await _scheduleServer((request) {
+      await _scheduleServer((final request) {
         return Response.ok(
           body: Body.fromString('test'),
-          headers: Headers.build((mh) => mh.xPoweredBy = 'myServer'),
+          headers: Headers.build((final mh) => mh.xPoweredBy = 'myServer'),
         );
       });
 
-      var response = await _get();
+      final response = await _get();
       expect(response.headers, containsPair(poweredBy, 'myServer'));
     });
 
@@ -366,7 +367,7 @@ void main() {
         0,
         poweredByHeader: 'ourServer',
       );
-      var response = await _get();
+      final response = await _get();
       expect(
         response.headers,
         containsPair(poweredBy, 'ourServer'),
@@ -375,10 +376,10 @@ void main() {
 
     test('defers to header in response when set at the server level', () async {
       _server = await relic_server.serve(
-        (request) {
+        (final request) {
           return Response.ok(
             body: Body.fromString('test'),
-            headers: Headers.build((mh) => mh.xPoweredBy = 'myServer'),
+            headers: Headers.build((final mh) => mh.xPoweredBy = 'myServer'),
           );
         },
         InternetAddress.loopbackIPv4,
@@ -386,7 +387,7 @@ void main() {
         poweredByHeader: 'ourServer',
       );
 
-      var response = await _get();
+      final response = await _get();
       expect(response.headers, containsPair(poweredBy, 'myServer'));
     });
   });
@@ -397,38 +398,38 @@ void main() {
       'then the chunked transfer encoding header is removed from the response',
       () async {
     await _scheduleServer(
-      (_) => Response.ok(
+      (final _) => Response.ok(
         body: Body.empty(),
-        headers: Headers.build((mh) => mh.transferEncoding =
+        headers: Headers.build((final mh) => mh.transferEncoding =
             TransferEncodingHeader(encodings: [TransferEncoding.chunked])),
       ),
     );
 
-    var response = await _get();
+    final response = await _get();
     expect(response.body, isEmpty);
     expect(response.headers['transfer-encoding'], isNull);
   });
 
   test('respects the "relic_server.buffer_output" context parameter', () async {
-    var controller = StreamController<String>();
-    await _scheduleServer((request) {
+    final controller = StreamController<String>();
+    await _scheduleServer((final request) {
       controller.add('Hello, ');
 
       return Response.ok(
         body: Body.fromDataStream(
           utf8.encoder
               .bind(controller.stream)
-              .map((list) => Uint8List.fromList(list)),
+              .map((final list) => Uint8List.fromList(list)),
         ),
         context: {'relic_server.buffer_output': false},
       );
     });
 
-    var request = http.Request(
+    final request = http.Request(
         RequestMethod.get.value, Uri.http('localhost:$_serverPort', ''));
 
-    var response = await request.send();
-    var stream = StreamQueue(utf8.decoder.bind(response.stream));
+    final response = await request.send();
+    final stream = StreamQueue(utf8.decoder.bind(response.stream));
 
     var data = await stream.next;
     expect(data, equals('Hello, '));
@@ -441,27 +442,27 @@ void main() {
   });
 
   test('includes the dart:io HttpConnectionInfo in request', () async {
-    await _scheduleServer((request) {
+    await _scheduleServer((final request) {
       expect(request.connectionInfo, isNotNull);
 
-      var connectionInfo = request.connectionInfo!;
+      final connectionInfo = request.connectionInfo!;
       expect(connectionInfo.remoteAddress, equals(_server!.address));
       expect(connectionInfo.localPort, equals(_server!.port));
 
       return syncHandler(request);
     });
 
-    var response = await _get();
+    final response = await _get();
     expect(response.statusCode, HttpStatus.ok);
   });
 
   group('ssl tests', () {
-    var securityContext = SecurityContext()
+    final securityContext = SecurityContext()
       ..setTrustedCertificatesBytes(certChainBytes)
       ..useCertificateChainBytes(certChainBytes)
       ..usePrivateKeyBytes(certKeyBytes, password: 'dartdart');
 
-    var sslClient = HttpClient(context: securityContext);
+    final sslClient = HttpClient(context: securityContext);
 
     Future<HttpClientRequest> scheduleSecureGet() =>
         sslClient.getUrl(Uri.https('localhost:${_server!.port}', ''));
@@ -469,9 +470,9 @@ void main() {
     test('secure sync handler returns a value to the client', () async {
       await _scheduleServer(syncHandler, securityContext: securityContext);
 
-      var req = await scheduleSecureGet();
+      final req = await scheduleSecureGet();
 
-      var response = await req.close();
+      final response = await req.close();
       expect(response.statusCode, HttpStatus.ok);
       expect(await response.cast<List<int>>().transform(utf8.decoder).single,
           'Hello from /');
@@ -480,8 +481,8 @@ void main() {
     test('secure async handler returns a value to the client', () async {
       await _scheduleServer(asyncHandler, securityContext: securityContext);
 
-      var req = await scheduleSecureGet();
-      var response = await req.close();
+      final req = await scheduleSecureGet();
+      final response = await req.close();
       expect(response.statusCode, HttpStatus.ok);
       expect(
         await response.cast<List<int>>().transform(utf8.decoder).single,
@@ -496,8 +497,8 @@ int get _serverPort => _server!.port;
 HttpServer? _server;
 
 Future<void> _scheduleServer(
-  Handler handler, {
-  SecurityContext? securityContext,
+  final Handler handler, {
+  final SecurityContext? securityContext,
 }) async {
   assert(_server == null);
   _server = await relic_server.serve(
@@ -509,25 +510,26 @@ Future<void> _scheduleServer(
 }
 
 Future<http.Response> _get({
-  Map<String, String>? headers,
-  String path = '',
+  final Map<String, String>? headers,
+  final String path = '',
 }) async {
-  var request = http.Request(
+  final request = http.Request(
     RequestMethod.get.value,
     Uri.http('localhost:$_serverPort', path),
   );
 
   if (headers != null) request.headers.addAll(headers);
 
-  var response = await request.send();
-  return await http.Response.fromStream(response).timeout(Duration(seconds: 1));
+  final response = await request.send();
+  return await http.Response.fromStream(response)
+      .timeout(const Duration(seconds: 1));
 }
 
 Future<http.StreamedResponse> _post({
-  Map<String, String>? headers,
-  String? body,
+  final Map<String, String>? headers,
+  final String? body,
 }) {
-  var request = http.Request(
+  final request = http.Request(
     RequestMethod.post.value,
     Uri.http('localhost:$_serverPort', ''),
   );

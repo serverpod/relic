@@ -1,5 +1,5 @@
-import 'package:relic/relic.dart';
 import 'package:http_parser/http_parser.dart';
+import 'package:relic/relic.dart';
 import 'package:relic/src/headers/standard_headers_extensions.dart';
 import 'package:test/test.dart';
 
@@ -29,11 +29,11 @@ void main() {
             getServerRequestHeaders(
               server: server,
               headers: {'date': ''},
-              touchHeaders: (h) => h.date,
+              touchHeaders: (final h) => h.date,
             ),
             throwsA(
               isA<BadRequestException>().having(
-                (e) => e.message,
+                (final e) => e.message,
                 'message',
                 contains('Value cannot be empty'),
               ),
@@ -51,11 +51,11 @@ void main() {
             getServerRequestHeaders(
               server: server,
               headers: {'date': 'invalid-date-format'},
-              touchHeaders: (h) => h.date,
+              touchHeaders: (final h) => h.date,
             ),
             throwsA(
               isA<BadRequestException>().having(
-                (e) => e.message,
+                (final e) => e.message,
                 'message',
                 contains('Invalid date format'),
               ),
@@ -69,9 +69,9 @@ void main() {
         'then the server does not respond with a bad request if the headers '
         'is not actually used',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
-            touchHeaders: (_) {},
+            touchHeaders: (final _) {},
             headers: {'date': 'invalid-date-format'},
           );
 
@@ -82,10 +82,10 @@ void main() {
       test(
         'when a valid Date header is passed then it should parse the date correctly',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
             headers: {'date': 'Wed, 21 Oct 2015 07:28:00 GMT'},
-            touchHeaders: (h) => h.date,
+            touchHeaders: (final h) => h.date,
           );
 
           expect(
@@ -98,10 +98,10 @@ void main() {
       test(
         'when a Date header with extra whitespace is passed then it should parse the date correctly',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
             headers: {'date': ' Wed, 21 Oct 2015 07:28:00 GMT '},
-            touchHeaders: (h) => h.date,
+            touchHeaders: (final h) => h.date,
           );
 
           expect(
@@ -114,10 +114,10 @@ void main() {
       test(
         'when no Date header is passed then it should return null',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
             headers: {},
-            touchHeaders: (h) => h.date,
+            touchHeaders: (final h) => h.date,
           );
 
           expect(headers.date, isNull);
@@ -139,9 +139,9 @@ void main() {
       test(
         'then it should return null',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
-            touchHeaders: (_) {},
+            touchHeaders: (final _) {},
             headers: {'date': ''},
           );
 
@@ -155,9 +155,9 @@ void main() {
       test(
         'then it should return null',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
-            touchHeaders: (_) {},
+            touchHeaders: (final _) {},
             headers: {'date': 'invalid-date-format'},
           );
 

@@ -1,9 +1,10 @@
-import 'package:relic/relic.dart';
 import 'package:http_parser/http_parser.dart';
-import 'package:test/test.dart';
+import 'package:relic/relic.dart';
 import 'package:relic/src/headers/standard_headers_extensions.dart';
-import '../headers_test_utils.dart';
+import 'package:test/test.dart';
+
 import '../docs/strict_validation_docs.dart';
+import '../headers_test_utils.dart';
 
 /// Reference: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/If-Modified-Since
 /// About empty value test, check the [StrictValidationDocs] class for more details.
@@ -26,11 +27,11 @@ void main() {
           getServerRequestHeaders(
             server: server,
             headers: {'if-modified-since': ''},
-            touchHeaders: (h) => h.ifModifiedSince,
+            touchHeaders: (final h) => h.ifModifiedSince,
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (e) => e.message,
+              (final e) => e.message,
               'message',
               contains('Value cannot be empty'),
             ),
@@ -48,11 +49,11 @@ void main() {
           getServerRequestHeaders(
             server: server,
             headers: {'if-modified-since': 'invalid-date-format'},
-            touchHeaders: (h) => h.ifModifiedSince,
+            touchHeaders: (final h) => h.ifModifiedSince,
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (e) => e.message,
+              (final e) => e.message,
               'message',
               contains('Invalid date format'),
             ),
@@ -66,9 +67,9 @@ void main() {
       'then the server does not respond with a bad request if the headers '
       'is not actually used',
       () async {
-        var headers = await getServerRequestHeaders(
+        final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (_) {},
+          touchHeaders: (final _) {},
           headers: {'if-modified-since': 'invalid-date-format'},
         );
 
@@ -80,10 +81,10 @@ void main() {
       'when a valid If-Modified-Since header is passed then it should parse the '
       'date correctly',
       () async {
-        var headers = await getServerRequestHeaders(
+        final headers = await getServerRequestHeaders(
           server: server,
           headers: {'if-modified-since': 'Wed, 21 Oct 2015 07:28:00 GMT'},
-          touchHeaders: (h) => h.ifModifiedSince,
+          touchHeaders: (final h) => h.ifModifiedSince,
         );
 
         expect(
@@ -96,10 +97,10 @@ void main() {
     test(
       'when an If-Modified-Since header with extra whitespace is passed then it should parse the date correctly',
       () async {
-        var headers = await getServerRequestHeaders(
+        final headers = await getServerRequestHeaders(
           server: server,
           headers: {'if-modified-since': ' Wed, 21 Oct 2015 07:28:00 GMT '},
-          touchHeaders: (h) => h.ifModifiedSince,
+          touchHeaders: (final h) => h.ifModifiedSince,
         );
 
         expect(
@@ -112,10 +113,10 @@ void main() {
     test(
       'when no If-Modified-Since header is passed then it should return null',
       () async {
-        var headers = await getServerRequestHeaders(
+        final headers = await getServerRequestHeaders(
           server: server,
           headers: {},
-          touchHeaders: (h) => h.ifModifiedSince,
+          touchHeaders: (final h) => h.ifModifiedSince,
         );
 
         expect(headers.ifModifiedSince, isNull);
@@ -136,9 +137,9 @@ void main() {
       test(
         'then it should return null',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
-            touchHeaders: (_) {},
+            touchHeaders: (final _) {},
             headers: {'if-modified-since': ''},
           );
 
@@ -152,9 +153,9 @@ void main() {
       test(
         'then it should return null',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
-            touchHeaders: (_) {},
+            touchHeaders: (final _) {},
             headers: {'if-modified-since': 'invalid-date-format'},
           );
 

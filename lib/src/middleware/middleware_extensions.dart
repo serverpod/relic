@@ -6,9 +6,9 @@ import 'middleware.dart';
 /// These members can be used in place of [Pipeline].
 extension MiddlewareExtensions on Middleware {
   /// Merges `this` and [other] into a new [Middleware].
-  Middleware addMiddleware(Middleware other) =>
-      (Handler handler) => this(other(handler));
+  Middleware addMiddleware(final Middleware other) =>
+      (final Handler handler) => this(other(handler));
 
   /// Merges `this` and [handler] into a new [Handler].
-  Handler addHandler(Handler handler) => this(handler);
+  Handler addHandler(final Handler handler) => this(handler);
 }

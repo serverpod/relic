@@ -1,9 +1,8 @@
 import 'dart:async';
 
-import 'package:relic/src/logger/logger.dart';
-import 'package:relic/src/method/request_method.dart';
-
 import '../hijack/exception/hijack_exception.dart';
+import '../logger/logger.dart';
+import '../method/request_method.dart';
 import 'middleware.dart';
 
 /// Middleware which prints the time of the request, the elapsed time for the
@@ -17,20 +16,20 @@ import 'middleware.dart';
 ///
 /// If [logger] is not passed, the message is just passed to [print].
 Middleware logRequests({
-  Logger? logger,
+  final Logger? logger,
 }) =>
-    (innerHandler) {
+    (final innerHandler) {
       final localLogger = logger ?? logMessage;
 
-      return (request) {
-        var startTime = DateTime.now();
-        var watch = Stopwatch()..start();
+      return (final request) {
+        final startTime = DateTime.now();
+        final watch = Stopwatch()..start();
 
         return Future.sync(
           () => innerHandler(request),
         ).then(
-          (response) {
-            var msg = _message(
+          (final response) {
+            final msg = _message(
               startTime,
               response.statusCode,
               request.requestedUri,
@@ -42,10 +41,10 @@ Middleware logRequests({
 
             return response;
           },
-          onError: (Object error, StackTrace stackTrace) {
+          onError: (final Object error, final StackTrace stackTrace) {
             if (error is HijackException) throw error;
 
-            var msg = _errorMessage(
+            final msg = _errorMessage(
               startTime,
               request.requestedUri,
               request.method,
@@ -66,16 +65,16 @@ Middleware logRequests({
       };
     };
 
-String _formatQuery(String query) {
+String _formatQuery(final String query) {
   return query == '' ? '' : '?$query';
 }
 
 String _message(
-  DateTime requestTime,
-  int statusCode,
-  Uri requestedUri,
-  String method,
-  Duration elapsedTime,
+  final DateTime requestTime,
+  final int statusCode,
+  final Uri requestedUri,
+  final String method,
+  final Duration elapsedTime,
 ) {
   return '${requestTime.toIso8601String()} '
       '${elapsedTime.toString().padLeft(15)} '
@@ -84,11 +83,11 @@ String _message(
 }
 
 String _errorMessage(
-  DateTime requestTime,
-  Uri requestedUri,
-  RequestMethod method,
-  Duration elapsedTime,
-  Object error,
+  final DateTime requestTime,
+  final Uri requestedUri,
+  final RequestMethod method,
+  final Duration elapsedTime,
+  final Object error,
 ) {
   return '$requestTime\t'
       '$elapsedTime\t'

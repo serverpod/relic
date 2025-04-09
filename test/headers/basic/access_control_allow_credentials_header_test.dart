@@ -34,11 +34,11 @@ void main() {
             getServerRequestHeaders(
               server: server,
               headers: {'access-control-allow-credentials': ''},
-              touchHeaders: (h) => h.accessControlAllowCredentials,
+              touchHeaders: (final h) => h.accessControlAllowCredentials,
             ),
             throwsA(
               isA<BadRequestException>().having(
-                (e) => e.message,
+                (final e) => e.message,
                 'message',
                 contains('Value cannot be empty'),
               ),
@@ -55,11 +55,11 @@ void main() {
             getServerRequestHeaders(
               server: server,
               headers: {'access-control-allow-credentials': 'blabla'},
-              touchHeaders: (h) => h.accessControlAllowCredentials,
+              touchHeaders: (final h) => h.accessControlAllowCredentials,
             ),
             throwsA(
               isA<BadRequestException>().having(
-                (e) => e.message,
+                (final e) => e.message,
                 'message',
                 contains('Invalid boolean'),
               ),
@@ -77,11 +77,11 @@ void main() {
             getServerRequestHeaders(
               server: server,
               headers: {'access-control-allow-credentials': 'false'},
-              touchHeaders: (h) => h.accessControlAllowCredentials,
+              touchHeaders: (final h) => h.accessControlAllowCredentials,
             ),
             throwsA(
               isA<BadRequestException>().having(
-                (e) => e.message,
+                (final e) => e.message,
                 'message',
                 contains('Must be true or null'),
               ),
@@ -95,9 +95,9 @@ void main() {
         'then the server does not respond with a bad request if the headers '
         'is not actually used',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
-            touchHeaders: (_) {},
+            touchHeaders: (final _) {},
             headers: {'access-control-allow-credentials': 'test'},
           );
 
@@ -109,10 +109,10 @@ void main() {
         'when a Access-Control-Allow-Credentials header with a value "true" '
         'is passed then it should parse correctly',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
             headers: {'access-control-allow-credentials': 'true'},
-            touchHeaders: (h) => h.accessControlAllowCredentials,
+            touchHeaders: (final h) => h.accessControlAllowCredentials,
           );
 
           expect(headers.accessControlAllowCredentials, isTrue);
@@ -122,10 +122,10 @@ void main() {
       test(
         'when no Access-Control-Allow-Credentials header is passed then it should return null',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
             headers: {},
-            touchHeaders: (h) => h.accessControlAllowCredentials,
+            touchHeaders: (final h) => h.accessControlAllowCredentials,
           );
 
           expect(headers.accessControlAllowCredentials, isNull);
@@ -150,9 +150,9 @@ void main() {
       test(
         'then it should return null',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
-            touchHeaders: (_) {},
+            touchHeaders: (final _) {},
             headers: {'access-control-allow-credentials': ''},
           );
 

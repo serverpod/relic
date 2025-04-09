@@ -1,5 +1,5 @@
-import "package:relic/relic.dart";
-import 'package:relic/src/headers/extension/string_list_extensions.dart';
+import '../../../../relic.dart';
+import '../../extension/string_list_extensions.dart';
 
 /// A class representing the HTTP Content-Disposition header.
 ///
@@ -10,7 +10,7 @@ import 'package:relic/src/headers/extension/string_list_extensions.dart';
 final class ContentDispositionHeader {
   static const codec =
       HeaderCodec.single(ContentDispositionHeader.parse, __encode);
-  static List<String> __encode(ContentDispositionHeader value) =>
+  static List<String> __encode(final ContentDispositionHeader value) =>
       [value._encode()];
 
   /// The disposition type, usually "inline", "attachment", or "form-data".
@@ -31,19 +31,19 @@ final class ContentDispositionHeader {
   /// [ContentDispositionHeader] instance.
   ///
   /// This method splits the header by `;` and processes the type and attributes.
-  factory ContentDispositionHeader.parse(String value) {
-    var splitValues = value.splitTrimAndFilterUnique(separator: ';');
+  factory ContentDispositionHeader.parse(final String value) {
+    final splitValues = value.splitTrimAndFilterUnique(separator: ';');
 
     if (splitValues.isEmpty) {
-      throw FormatException('Value cannot be empty');
+      throw const FormatException('Value cannot be empty');
     }
 
-    var type = splitValues.first;
+    final type = splitValues.first;
     if (type.isEmpty || type.contains('=')) {
-      throw FormatException('Type cannot be empty or a parameter');
+      throw const FormatException('Type cannot be empty or a parameter');
     }
 
-    var parameters =
+    final parameters =
         splitValues.skip(1).map(ContentDispositionParameter.parse).toList();
 
     return ContentDispositionHeader(
@@ -55,8 +55,8 @@ final class ContentDispositionHeader {
   /// Converts the [ContentDispositionHeader] instance into a string
   /// representation suitable for HTTP headers.
   String _encode() {
-    List<String> parts = [type];
-    parts.addAll(parameters.map((p) => p._encode()));
+    final List<String> parts = [type];
+    parts.addAll(parameters.map((final p) => p._encode()));
     return parts.join('; ');
   }
 
@@ -95,22 +95,22 @@ class ContentDispositionParameter {
 
   /// Parses a parameter string and returns a [ContentDispositionParameter]
   /// instance.
-  factory ContentDispositionParameter.parse(String part) {
-    var keyValue = part.split('=').map((e) => e.trim()).toList();
+  factory ContentDispositionParameter.parse(final String part) {
+    final keyValue = part.split('=').map((final e) => e.trim()).toList();
 
     if (keyValue.length != 2) {
-      throw FormatException('Invalid parameter format');
+      throw const FormatException('Invalid parameter format');
     }
 
-    var name = keyValue[0];
+    final name = keyValue[0];
     var value = keyValue[1].replaceAll('"', '');
-    bool isExtended = name.endsWith('*');
+    final bool isExtended = name.endsWith('*');
     String? encoding;
     String? language;
 
     if (isExtended) {
-      var extendedRegex = RegExp(r"^([\w-]+)''?([\w-]*)'(.*)");
-      var match = extendedRegex.firstMatch(value);
+      final extendedRegex = RegExp(r"^([\w-]+)''?([\w-]*)'(.*)");
+      final match = extendedRegex.firstMatch(value);
       if (match != null) {
         encoding = match.group(1);
         language = match.group(2)?.isNotEmpty != true ? null : match.group(2);
@@ -133,10 +133,10 @@ class ContentDispositionParameter {
     if (isExtended) {
       // If language is provided, format as encoding'language'filename
       if (language != null) {
-        return '$name*=$encoding\'$language\'${Uri.encodeComponent(value)}';
+        return "$name*=$encoding'$language'${Uri.encodeComponent(value)}";
       }
       // If no language, format as encoding''filename without adding extra quotes
-      return '$name*=$encoding\'\'${Uri.encodeComponent(value)}';
+      return "$name*=$encoding''${Uri.encodeComponent(value)}";
     }
     return '$name="$value"';
   }

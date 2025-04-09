@@ -1,9 +1,9 @@
 import 'package:relic/relic.dart';
-import 'package:test/test.dart';
 import 'package:relic/src/headers/standard_headers_extensions.dart';
+import 'package:test/test.dart';
 
-import '../headers_test_utils.dart';
 import '../docs/strict_validation_docs.dart';
+import '../headers_test_utils.dart';
 
 /// Reference: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security
 /// About empty value test, check the [StrictValidationDocs] class for more details.
@@ -26,11 +26,11 @@ void main() {
           expect(
             getServerRequestHeaders(
               server: server,
-              touchHeaders: (h) => h.strictTransportSecurity,
+              touchHeaders: (final h) => h.strictTransportSecurity,
               headers: {'strict-transport-security': ''},
             ),
             throwsA(isA<BadRequestException>().having(
-              (e) => e.message,
+              (final e) => e.message,
               'message',
               contains('Value cannot be empty'),
             )),
@@ -46,11 +46,11 @@ void main() {
           expect(
             getServerRequestHeaders(
               server: server,
-              touchHeaders: (h) => h.strictTransportSecurity,
+              touchHeaders: (final h) => h.strictTransportSecurity,
               headers: {'strict-transport-security': 'max-age=abc'},
             ),
             throwsA(isA<BadRequestException>().having(
-              (e) => e.message,
+              (final e) => e.message,
               'message',
               contains('Max-age directive is missing or invalid'),
             )),
@@ -66,11 +66,11 @@ void main() {
           expect(
             getServerRequestHeaders(
               server: server,
-              touchHeaders: (h) => h.strictTransportSecurity,
+              touchHeaders: (final h) => h.strictTransportSecurity,
               headers: {'strict-transport-security': 'includeSubDomains'},
             ),
             throwsA(isA<BadRequestException>().having(
-              (e) => e.message,
+              (final e) => e.message,
               'message',
               contains('Max-age directive is missing or invalid'),
             )),
@@ -83,9 +83,9 @@ void main() {
         'then the server does not respond with a bad request if the headers '
         'is not actually used',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
-            touchHeaders: (_) {},
+            touchHeaders: (final _) {},
             headers: {'strict-transport-security': 'max-age=abc'},
           );
 
@@ -96,9 +96,9 @@ void main() {
       test(
         'when a valid Strict-Transport-Security header is passed then it should parse the directives correctly',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
-            touchHeaders: (_) {},
+            touchHeaders: (final _) {},
             headers: {
               'strict-transport-security': 'max-age=31536000; includeSubDomains'
             },
@@ -113,9 +113,9 @@ void main() {
       test(
         'when a Strict-Transport-Security header without includeSubDomains is passed then it should parse correctly',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
-            touchHeaders: (h) => h.strictTransportSecurity,
+            touchHeaders: (final h) => h.strictTransportSecurity,
             headers: {'strict-transport-security': 'max-age=31536000'},
           );
 
@@ -128,9 +128,9 @@ void main() {
       test(
         'when a Strict-Transport-Security header with preload is passed then it should parse correctly',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
-            touchHeaders: (h) => h.strictTransportSecurity,
+            touchHeaders: (final h) => h.strictTransportSecurity,
             headers: {'strict-transport-security': 'max-age=31536000; preload'},
           );
 
@@ -143,9 +143,9 @@ void main() {
       test(
         'when no Strict-Transport-Security header is passed then it should return null',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
-            touchHeaders: (h) => h.strictTransportSecurity,
+            touchHeaders: (final h) => h.strictTransportSecurity,
             headers: {},
           );
 
@@ -169,9 +169,9 @@ void main() {
       test(
         'then it should return null',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
-            touchHeaders: (_) {},
+            touchHeaders: (final _) {},
             headers: {'strict-transport-security': ''},
           );
 

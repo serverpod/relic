@@ -1,9 +1,9 @@
 import 'package:relic/relic.dart';
-import 'package:test/test.dart';
 import 'package:relic/src/headers/standard_headers_extensions.dart';
+import 'package:test/test.dart';
 
-import '../headers_test_utils.dart';
 import '../docs/strict_validation_docs.dart';
+import '../headers_test_utils.dart';
 
 /// Reference: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Max-Forwards
 /// About empty value test, check the [StrictValidationDocs] class for more details.
@@ -28,11 +28,11 @@ void main() {
             getServerRequestHeaders(
               server: server,
               headers: {'max-forwards': ''},
-              touchHeaders: (h) => h.maxForwards,
+              touchHeaders: (final h) => h.maxForwards,
             ),
             throwsA(
               isA<BadRequestException>().having(
-                (e) => e.message,
+                (final e) => e.message,
                 'message',
                 contains('Value cannot be empty'),
               ),
@@ -50,11 +50,11 @@ void main() {
             getServerRequestHeaders(
               server: server,
               headers: {'max-forwards': '-1'},
-              touchHeaders: (h) => h.maxForwards,
+              touchHeaders: (final h) => h.maxForwards,
             ),
             throwsA(
               isA<BadRequestException>().having(
-                (e) => e.message,
+                (final e) => e.message,
                 'message',
                 contains('Must be non-negative'),
               ),
@@ -72,11 +72,11 @@ void main() {
             getServerRequestHeaders(
               server: server,
               headers: {'max-forwards': '5.5'},
-              touchHeaders: (h) => h.maxForwards,
+              touchHeaders: (final h) => h.maxForwards,
             ),
             throwsA(
               isA<BadRequestException>().having(
-                (e) => e.message,
+                (final e) => e.message,
                 'message',
                 contains('Must be an integer'),
               ),
@@ -90,9 +90,9 @@ void main() {
         'then the server does not respond with a bad request if the headers '
         'is not actually used',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
-            touchHeaders: (_) {},
+            touchHeaders: (final _) {},
             headers: {'max-forwards': 'invalid-value'},
           );
 
@@ -104,10 +104,10 @@ void main() {
         'when a Max-Forwards header with a valid integer is passed then it '
         'should parse correctly',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
             headers: {'max-forwards': '5'},
-            touchHeaders: (h) => h.maxForwards,
+            touchHeaders: (final h) => h.maxForwards,
           );
 
           expect(headers.maxForwards, equals(5));
@@ -117,10 +117,10 @@ void main() {
       test(
         'when a Max-Forwards header with zero is passed then it should parse correctly',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
             headers: {'max-forwards': '0'},
-            touchHeaders: (h) => h.maxForwards,
+            touchHeaders: (final h) => h.maxForwards,
           );
 
           expect(headers.maxForwards, equals(0));
@@ -130,10 +130,10 @@ void main() {
       test(
         'when no Max-Forwards header is passed then it should return null',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
             headers: {},
-            touchHeaders: (h) => h.maxForwards,
+            touchHeaders: (final h) => h.maxForwards,
           );
 
           expect(headers.maxForwards, isNull);
@@ -155,9 +155,9 @@ void main() {
       test(
         'then it should return null',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
-            touchHeaders: (_) {},
+            touchHeaders: (final _) {},
             headers: {'max-forwards': 'invalid'},
           );
 

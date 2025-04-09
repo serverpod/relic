@@ -26,12 +26,12 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (h) => h.accessControlAllowOrigin,
+            touchHeaders: (final h) => h.accessControlAllowOrigin,
             headers: {'access-control-allow-origin': ''},
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (e) => e.message,
+              (final e) => e.message,
               'message',
               contains('Value cannot be empty'),
             ),
@@ -48,12 +48,12 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (h) => h.accessControlAllowOrigin,
+            touchHeaders: (final h) => h.accessControlAllowOrigin,
             headers: {'access-control-allow-origin': 'ht!tp://invalid-url'},
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (e) => e.message,
+              (final e) => e.message,
               'message',
               contains('Invalid URI format'),
             ),
@@ -70,14 +70,14 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (h) => h.accessControlAllowOrigin,
+            touchHeaders: (final h) => h.accessControlAllowOrigin,
             headers: {
               'access-control-allow-origin': 'https://example.com:test'
             },
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (e) => e.message,
+              (final e) => e.message,
               'message',
               contains('Invalid URI format'),
             ),
@@ -91,9 +91,9 @@ void main() {
       'then the server does not respond with a bad request if the headers '
       'is not actually used',
       () async {
-        var headers = await getServerRequestHeaders(
+        final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (_) {},
+          touchHeaders: (final _) {},
           headers: {'access-control-allow-origin': 'https://example.com:test'},
         );
 
@@ -105,9 +105,9 @@ void main() {
       'when a Access-Control-Allow-Origin header with a valid URI origin is passed '
       'then it should parse correctly',
       () async {
-        var headers = await getServerRequestHeaders(
+        final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (h) => h.accessControlAllowOrigin,
+          touchHeaders: (final h) => h.accessControlAllowOrigin,
           headers: {'access-control-allow-origin': 'https://example.com'},
         );
 
@@ -122,9 +122,9 @@ void main() {
       'when a Access-Control-Allow-Origin header with a valid URI origin and port is passed '
       'then it should parse correctly',
       () async {
-        var headers = await getServerRequestHeaders(
+        final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (h) => h.accessControlAllowOrigin,
+          touchHeaders: (final h) => h.accessControlAllowOrigin,
           headers: {'access-control-allow-origin': 'https://example.com:8080'},
         );
 
@@ -139,9 +139,9 @@ void main() {
       'when a Access-Control-Allow-Origin header with a valid URI origin with '
       'spaces is passed then it should parse correctly',
       () async {
-        var headers = await getServerRequestHeaders(
+        final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (h) => h.accessControlAllowOrigin,
+          touchHeaders: (final h) => h.accessControlAllowOrigin,
           headers: {'access-control-allow-origin': ' https://example.com '},
         );
 
@@ -156,9 +156,9 @@ void main() {
       'when a Access-Control-Allow-Origin header with a wildcard (*) is passed '
       'then it should parse correctly',
       () async {
-        var headers = await getServerRequestHeaders(
+        final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (h) => h.accessControlAllowOrigin,
+          touchHeaders: (final h) => h.accessControlAllowOrigin,
           headers: {'access-control-allow-origin': '*'},
         );
 
@@ -170,9 +170,9 @@ void main() {
     test(
       'when no Access-Control-Allow-Origin header is passed then it should return null',
       () async {
-        var headers = await getServerRequestHeaders(
+        final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (h) => h.accessControlAllowOrigin,
+          touchHeaders: (final h) => h.accessControlAllowOrigin,
           headers: {},
         );
 
@@ -196,9 +196,9 @@ void main() {
       test(
         'then it should return null',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
-            touchHeaders: (_) {},
+            touchHeaders: (final _) {},
             headers: {'access-control-allow-origin': 'ht!tp://invalid-url'},
           );
 

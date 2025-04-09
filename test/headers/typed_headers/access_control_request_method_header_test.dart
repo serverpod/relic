@@ -1,10 +1,10 @@
 import 'package:relic/relic.dart';
+import 'package:relic/src/headers/standard_headers_extensions.dart';
 import 'package:relic/src/method/request_method.dart';
 import 'package:test/test.dart';
-import 'package:relic/src/headers/standard_headers_extensions.dart';
 
-import '../headers_test_utils.dart';
 import '../docs/strict_validation_docs.dart';
+import '../headers_test_utils.dart';
 
 /// Reference: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Request-Method
 /// About empty value test, check the [StrictValidationDocs] class for more details.
@@ -28,12 +28,12 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (h) => h.accessControlRequestMethod,
+            touchHeaders: (final h) => h.accessControlRequestMethod,
             headers: {'access-control-request-method': ''},
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (e) => e.message,
+              (final e) => e.message,
               'message',
               contains('Value cannot be empty'),
             ),
@@ -50,12 +50,12 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (h) => h.accessControlRequestMethod,
+            touchHeaders: (final h) => h.accessControlRequestMethod,
             headers: {'access-control-request-method': 'CUSTOM'},
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (e) => e.message,
+              (final e) => e.message,
               'message',
               contains('Invalid value'),
             ),
@@ -69,9 +69,9 @@ void main() {
       'passed then the server does not respond with a bad request if the '
       'headers is not actually used',
       () async {
-        var headers = await getServerRequestHeaders(
+        final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (_) {},
+          touchHeaders: (final _) {},
           headers: {'access-control-request-method': 'TEST'},
         );
 
@@ -83,9 +83,9 @@ void main() {
       'when a valid Access-Control-Request-Method header is passed then it '
       'should parse the method correctly',
       () async {
-        var headers = await getServerRequestHeaders(
+        final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (h) => h.accessControlRequestMethod,
+          touchHeaders: (final h) => h.accessControlRequestMethod,
           headers: {'access-control-request-method': 'POST'},
         );
 
@@ -100,9 +100,9 @@ void main() {
       'when an Access-Control-Request-Method header with extra whitespace is '
       'passed then it should parse the method correctly',
       () async {
-        var headers = await getServerRequestHeaders(
+        final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (h) => h.accessControlRequestMethod,
+          touchHeaders: (final h) => h.accessControlRequestMethod,
           headers: {'access-control-request-method': ' POST '},
         );
 
@@ -114,10 +114,10 @@ void main() {
       'when no Access-Control-Request-Method header is passed then it should '
       'default to null',
       () async {
-        var headers = await getServerRequestHeaders(
+        final headers = await getServerRequestHeaders(
           server: server,
           headers: {},
-          touchHeaders: (h) => h.accessControlRequestMethod,
+          touchHeaders: (final h) => h.accessControlRequestMethod,
         );
 
         expect(headers.accessControlRequestMethod, isNull);
@@ -140,9 +140,9 @@ void main() {
       test(
         'then it should return null',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
-            touchHeaders: (_) {},
+            touchHeaders: (final _) {},
             headers: {'access-control-request-method': ''},
           );
 

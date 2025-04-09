@@ -1,4 +1,4 @@
-import "package:relic/relic.dart";
+import '../../../../relic.dart';
 
 /// A class representing an HTTP Content-Range header for byte ranges.
 ///
@@ -6,7 +6,8 @@ import "package:relic/relic.dart";
 /// including cases for unsatisfiable range requests.
 final class ContentRangeHeader {
   static const codec = HeaderCodec.single(ContentRangeHeader.parse, __encode);
-  static List<String> __encode(ContentRangeHeader value) => [value._encode()];
+  static List<String> __encode(final ContentRangeHeader value) =>
+      [value._encode()];
 
   /// The unit of the range, e.g. "bytes".
   final String unit;
@@ -28,34 +29,34 @@ final class ContentRangeHeader {
     this.size,
   }) {
     if (start != null && end != null && start! > end!) {
-      throw FormatException('Invalid range');
+      throw const FormatException('Invalid range');
     }
   }
 
   /// Factory constructor to create a [ContentRangeHeader] from the header string.
-  factory ContentRangeHeader.parse(String value) {
-    var trimmed = value.trim();
+  factory ContentRangeHeader.parse(final String value) {
+    final trimmed = value.trim();
     if (trimmed.isEmpty) {
-      throw FormatException('Value cannot be empty');
+      throw const FormatException('Value cannot be empty');
     }
 
     final regex = RegExp(r'(\w+) (?:(\d+)-(\d+)|\*)/(\*|\d+)');
     final match = regex.firstMatch(trimmed);
 
     if (match == null) {
-      throw FormatException('Invalid format');
+      throw const FormatException('Invalid format');
     }
 
-    var unit = match.group(1)!;
-    var start = match.group(2) != null ? int.tryParse(match.group(2)!) : null;
-    var end = match.group(3) != null ? int.tryParse(match.group(3)!) : null;
+    final unit = match.group(1)!;
+    final start = match.group(2) != null ? int.tryParse(match.group(2)!) : null;
+    final end = match.group(3) != null ? int.tryParse(match.group(3)!) : null;
     if (start != null && end != null && start > end) {
-      throw FormatException('Invalid range');
+      throw const FormatException('Invalid range');
     }
-    var sizeGroup = match.group(4)!;
+    final sizeGroup = match.group(4)!;
 
     // If totalSize is '*', it means the total size is unknown
-    var size = sizeGroup == '*' ? null : int.parse(sizeGroup);
+    final size = sizeGroup == '*' ? null : int.parse(sizeGroup);
 
     return ContentRangeHeader(
       unit: unit,

@@ -1,9 +1,9 @@
 import 'package:relic/relic.dart';
-import 'package:test/test.dart';
 import 'package:relic/src/headers/standard_headers_extensions.dart';
+import 'package:test/test.dart';
 
-import '../headers_test_utils.dart';
 import '../docs/strict_validation_docs.dart';
+import '../headers_test_utils.dart';
 
 /// Reference: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Sec-Fetch-Mode
 /// About empty value test, check the [StrictValidationDocs] class for more details.
@@ -24,11 +24,11 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (h) => h.secFetchMode,
+            touchHeaders: (final h) => h.secFetchMode,
             headers: {'sec-fetch-mode': ''},
           ),
           throwsA(isA<BadRequestException>().having(
-            (e) => e.message,
+            (final e) => e.message,
             'message',
             contains('Value cannot be empty'),
           )),
@@ -43,11 +43,11 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (h) => h.secFetchMode,
+            touchHeaders: (final h) => h.secFetchMode,
             headers: {'sec-fetch-mode': 'custom-mode'},
           ),
           throwsA(isA<BadRequestException>().having(
-            (e) => e.message,
+            (final e) => e.message,
             'message',
             contains('Invalid value'),
           )),
@@ -60,9 +60,9 @@ void main() {
       'then the server does not respond with a bad request if the headers '
       'is not actually used',
       () async {
-        var headers = await getServerRequestHeaders(
+        final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (_) {},
+          touchHeaders: (final _) {},
           headers: {'sec-fetch-mode': 'custom-mode'},
         );
         expect(headers, isNotNull);
@@ -72,9 +72,9 @@ void main() {
     test(
       'when a valid Sec-Fetch-Mode header is passed then it should parse the mode correctly',
       () async {
-        var headers = await getServerRequestHeaders(
+        final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (h) => h.secFetchMode,
+          touchHeaders: (final h) => h.secFetchMode,
           headers: {'sec-fetch-mode': 'cors'},
         );
 
@@ -85,9 +85,9 @@ void main() {
     test(
       'when no Sec-Fetch-Mode header is passed then it should return null',
       () async {
-        var headers = await getServerRequestHeaders(
+        final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (h) => h.secFetchMode,
+          touchHeaders: (final h) => h.secFetchMode,
           headers: {},
         );
 
@@ -109,9 +109,9 @@ void main() {
       test(
         'then it should return null',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
-            touchHeaders: (_) {},
+            touchHeaders: (final _) {},
             headers: {},
           );
 

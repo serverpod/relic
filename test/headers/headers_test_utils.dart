@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:relic/relic.dart';
 import 'package:http/http.dart' as http;
+import 'package:relic/relic.dart';
 import 'package:test/test.dart';
 
 /// Thrown when the server returns a 400 status code.
@@ -19,7 +19,7 @@ extension RelicServerTestEx on RelicServer {
 
   /// Fake [url] property for the [RelicServer] for testing purposes.
   Uri get url => _serverUrls[this] ??= _inferUrl();
-  set url(Uri value) => _serverUrls[this] = value;
+  set url(final Uri value) => _serverUrls[this] = value;
 
   /// Infer a probable URL for the server.
   ///
@@ -51,7 +51,7 @@ extension RelicServerTestEx on RelicServer {
 /// If the IPv6 address is not available, it will listen on the loopback IPv4
 /// address.
 Future<RelicServer> createServer({
-  required bool strictHeaders,
+  required final bool strictHeaders,
 }) async {
   try {
     return await RelicServer.createServer(
@@ -71,14 +71,14 @@ Future<RelicServer> createServer({
 /// Returns the headers from the server request if the server returns a 200
 /// status code. Otherwise, throws an exception.
 Future<Headers> getServerRequestHeaders({
-  required RelicServer server,
-  required Map<String, String> headers,
-  required void Function(Headers) touchHeaders,
+  required final RelicServer server,
+  required final Map<String, String> headers,
+  required final void Function(Headers) touchHeaders,
 }) async {
   var requestHeaders = Headers.empty();
 
   server.mountAndStart(
-    (Request request) {
+    (final Request request) {
       requestHeaders = request.headers;
       touchHeaders(requestHeaders);
       return Response.ok();
@@ -87,7 +87,7 @@ Future<Headers> getServerRequestHeaders({
 
   final response = await http.get(server.url, headers: headers);
 
-  var statusCode = response.statusCode;
+  final statusCode = response.statusCode;
 
   if (statusCode == 400) {
     throw BadRequestException(

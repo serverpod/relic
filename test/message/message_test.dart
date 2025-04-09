@@ -1,9 +1,9 @@
-import 'package:relic/relic.dart';
-import 'package:relic/src/headers/standard_headers_extensions.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:relic/relic.dart';
+import 'package:relic/src/headers/standard_headers_extensions.dart';
 import 'package:relic/src/message/message.dart';
 import 'package:test/test.dart';
 
@@ -11,9 +11,9 @@ import '../util/test_util.dart';
 
 class _TestMessage extends Message {
   _TestMessage(
-    Headers? headers,
-    Map<String, Object>? context, {
-    Body? body,
+    final Headers? headers,
+    final Map<String, Object>? context, {
+    final Body? body,
   }) : super(
           headers: headers ?? Headers.empty(),
           body: body ?? Body.empty(),
@@ -22,18 +22,18 @@ class _TestMessage extends Message {
 
   @override
   Message copyWith({
-    Headers? headers,
-    Map<String, Object>? context,
-    Body? body,
+    final Headers? headers,
+    final Map<String, Object>? context,
+    final Body? body,
   }) {
     throw UnimplementedError();
   }
 }
 
 Message _createMessage({
-  Headers? headers,
-  Map<String, Object>? context,
-  Body? body,
+  final Headers? headers,
+  final Map<String, Object>? context,
+  final Body? body,
 }) {
   return _TestMessage(headers, context, body: body);
 }
@@ -41,8 +41,8 @@ Message _createMessage({
 void main() {
   group('Given message headers', () {
     test('when accessed then they are case insensitive', () {
-      var message = _createMessage(
-        headers: Headers.build((mh) => mh['foo'] = ['bar']),
+      final message = _createMessage(
+        headers: Headers.build((final mh) => mh['foo'] = ['bar']),
       );
 
       expect(message.headers, containsPair('foo', ['bar']));
@@ -51,8 +51,8 @@ void main() {
     });
 
     test('when modified then they are immutable', () {
-      var message = _createMessage(
-        headers: Headers.build((mh) => mh['foo'] = ['bar']),
+      final message = _createMessage(
+        headers: Headers.build((final mh) => mh['foo'] = ['bar']),
       );
       expect(
         () => message.headers['h1'] = ['value1'],
@@ -70,7 +70,7 @@ void main() {
 
     test('when containing multiple values then they are handled correctly', () {
       final message = _createMessage(
-        headers: Headers.build((mh) {
+        headers: Headers.build((final mh) {
           mh['a'] = ['A'];
           mh['b'] = ['B1', 'B2'];
         }),
@@ -85,13 +85,13 @@ void main() {
 
   group('Given readAsString', () {
     test('when the body is null then it returns an empty string', () {
-      var request = _createMessage();
+      final request = _createMessage();
       expect(request.readAsString(), completion(equals('')));
     });
 
     test('when the body is a Stream<Uint8List> then it reads correctly', () {
-      var controller = StreamController<Uint8List>();
-      var request =
+      final controller = StreamController<Uint8List>();
+      final request =
           _createMessage(body: Body.fromDataStream(controller.stream));
       expect(request.readAsString(), completion(equals('hello, world')));
 
@@ -104,7 +104,7 @@ void main() {
     });
 
     test('when no encoding is specified then it defaults to UTF-8', () {
-      var request = _createMessage(
+      final request = _createMessage(
         body: Body.fromData(Uint8List.fromList([195, 168])),
       );
       expect(request.readAsString(), completion(equals('è')));
@@ -113,13 +113,13 @@ void main() {
 
   group('Given read', () {
     test('when the body is null then it returns an empty list', () {
-      var request = _createMessage();
+      final request = _createMessage();
       expect(request.read().toList(), completion(isEmpty));
     });
 
     test('when the body is a Stream<Uint8List> then it reads correctly', () {
-      var controller = StreamController<Uint8List>();
-      var request = _createMessage(
+      final controller = StreamController<Uint8List>();
+      final request = _createMessage(
         body: Body.fromDataStream(controller.stream),
       );
       expect(request.read().toList(),
@@ -134,7 +134,7 @@ void main() {
     });
 
     test('when the body is a List<int> then it reads correctly', () {
-      var request = _createMessage(body: Body.fromData(helloBytes));
+      final request = _createMessage(body: Body.fromData(helloBytes));
       expect(request.read().toList(), completion(equals([helloBytes])));
     });
 
@@ -165,19 +165,19 @@ void main() {
     test(
         'when the body is default and no content-length header is present then it is 0',
         () {
-      var request = _createMessage();
+      final request = _createMessage();
       expect(request.body.contentLength, 0);
     });
 
     test('when the body is a byte body then it is set correctly', () {
-      var request = _createMessage(
+      final request = _createMessage(
         body: Body.fromData(Uint8List.fromList([1, 2, 3])),
       );
       expect(request.body.contentLength, 3);
     });
 
     test('when the body is a string then it is set correctly', () {
-      var request = _createMessage(body: Body.fromString('foobar'));
+      final request = _createMessage(body: Body.fromString('foobar'));
       expect(request.body.contentLength, 6);
     });
 
@@ -192,17 +192,17 @@ void main() {
     });
 
     test('when the body is a stream then it is null', () {
-      var request = _createMessage(
-        body: Body.fromDataStream(Stream.empty()),
+      final request = _createMessage(
+        body: Body.fromDataStream(const Stream.empty()),
       );
       expect(request.body.contentLength, isNull);
     });
 
     test('when identity transfer encoding is set then it is set correctly', () {
-      var request = _createMessage(
+      final request = _createMessage(
         body: Body.fromString('1\r\na0\r\n\r\n'),
         headers: Headers.build(
-          (mh) => mh.transferEncoding = TransferEncodingHeader(
+          (final mh) => mh.transferEncoding = TransferEncodingHeader(
             encodings: [TransferEncoding.identity],
           ),
         ),

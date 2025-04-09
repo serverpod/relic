@@ -54,14 +54,14 @@ class MimeType {
   /// It splits the string on the '/' character and expects exactly two parts.
   /// First part is the primary type, second is the sub type.
   /// If the string is not a valid mime type then a [FormatException] is thrown.
-  factory MimeType.parse(String type) {
-    var parts = type.split('/');
+  factory MimeType.parse(final String type) {
+    final parts = type.split('/');
     if (parts.length != 2) {
       throw FormatException('Invalid mime type $type');
     }
 
-    var primaryType = parts[0];
-    var subType = parts[1];
+    final primaryType = parts[0];
+    final subType = parts[1];
 
     if (primaryType.isEmpty || subType.isEmpty) {
       throw FormatException('Invalid mime type $type');

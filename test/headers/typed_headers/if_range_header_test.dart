@@ -1,10 +1,10 @@
-import 'package:relic/relic.dart';
 import 'package:http_parser/http_parser.dart';
-import 'package:test/test.dart';
+import 'package:relic/relic.dart';
 import 'package:relic/src/headers/standard_headers_extensions.dart';
+import 'package:test/test.dart';
 
-import '../headers_test_utils.dart';
 import '../docs/strict_validation_docs.dart';
+import '../headers_test_utils.dart';
 
 /// Reference: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/If-Range
 /// About empty value test, check the [StrictValidationDocs] class for more details.
@@ -26,12 +26,12 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (h) => h.ifRange,
+            touchHeaders: (final h) => h.ifRange,
             headers: {'if-range': ''},
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (e) => e.message,
+              (final e) => e.message,
               'message',
               contains('Value cannot be empty'),
             ),
@@ -47,12 +47,12 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (h) => h.ifRange,
+            touchHeaders: (final h) => h.ifRange,
             headers: {'if-range': 'invalid-etag'},
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (e) => e.message,
+              (final e) => e.message,
               'message',
               contains('Invalid format'),
             ),
@@ -66,9 +66,9 @@ void main() {
       'then the server does not respond with a bad request if the headers '
       'is not actually used',
       () async {
-        var headers = await getServerRequestHeaders(
+        final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (_) {},
+          touchHeaders: (final _) {},
           headers: {'if-range': 'invalid-value'},
         );
 
@@ -79,9 +79,9 @@ void main() {
     test(
       'when an If-Range header with a valid ETag is passed then it should parse correctly',
       () async {
-        var headers = await getServerRequestHeaders(
+        final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (h) => h.ifRange,
+          touchHeaders: (final h) => h.ifRange,
           headers: {'if-range': '"123456"'},
         );
 
@@ -94,9 +94,9 @@ void main() {
     test(
       'when an If-Range header with a weak ETag is passed then it should parse correctly',
       () async {
-        var headers = await getServerRequestHeaders(
+        final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (h) => h.ifRange,
+          touchHeaders: (final h) => h.ifRange,
           headers: {'if-range': 'W/"123456"'},
         );
 
@@ -109,9 +109,9 @@ void main() {
     test(
       'when an If-Range header with a valid HTTP date is passed then it should parse correctly',
       () async {
-        var headers = await getServerRequestHeaders(
+        final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (h) => h.ifRange,
+          touchHeaders: (final h) => h.ifRange,
           headers: {'if-range': 'Wed, 21 Oct 2015 07:28:00 GMT'},
         );
 
@@ -126,9 +126,9 @@ void main() {
     test(
       'when no If-Range header is passed then it should default to null',
       () async {
-        var headers = await getServerRequestHeaders(
+        final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (h) => h.ifRange,
+          touchHeaders: (final h) => h.ifRange,
           headers: {},
         );
 
@@ -150,9 +150,9 @@ void main() {
       test(
         'then it should return null',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
-            touchHeaders: (_) {},
+            touchHeaders: (final _) {},
             headers: {'if-range': 'invalid-value'},
           );
 

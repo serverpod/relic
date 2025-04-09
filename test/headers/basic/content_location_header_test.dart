@@ -28,11 +28,11 @@ void main() {
             getServerRequestHeaders(
               server: server,
               headers: {'content-location': ''},
-              touchHeaders: (h) => h.contentLocation,
+              touchHeaders: (final h) => h.contentLocation,
             ),
             throwsA(
               isA<BadRequestException>().having(
-                (e) => e.message,
+                (final e) => e.message,
                 'message',
                 contains('Value cannot be empty'),
               ),
@@ -50,11 +50,11 @@ void main() {
             getServerRequestHeaders(
               server: server,
               headers: {'content-location': 'ht!tp://invalid-url'},
-              touchHeaders: (h) => h.contentLocation,
+              touchHeaders: (final h) => h.contentLocation,
             ),
             throwsA(
               isA<BadRequestException>().having(
-                (e) => e.message,
+                (final e) => e.message,
                 'message',
                 contains('Invalid URI format'),
               ),
@@ -72,11 +72,11 @@ void main() {
             getServerRequestHeaders(
               server: server,
               headers: {'content-location': 'https://example.com:test'},
-              touchHeaders: (h) => h.contentLocation,
+              touchHeaders: (final h) => h.contentLocation,
             ),
             throwsA(
               isA<BadRequestException>().having(
-                (e) => e.message,
+                (final e) => e.message,
                 'message',
                 contains('Invalid URI format'),
               ),
@@ -90,9 +90,9 @@ void main() {
         'then the server does not respond with a bad request if the headers '
         'is not actually used',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
-            touchHeaders: (_) {},
+            touchHeaders: (final _) {},
             headers: {'content-location': 'https://example.com:test'},
           );
 
@@ -104,10 +104,10 @@ void main() {
         'when a Content-Location header with a valid URI is passed then it '
         'should parse correctly',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
             headers: {'content-location': 'https://example.com/resource'},
-            touchHeaders: (h) => h.contentLocation,
+            touchHeaders: (final h) => h.contentLocation,
           );
 
           expect(
@@ -121,10 +121,10 @@ void main() {
         'when a Content-Location header with a valid URI and port is passed then '
         'it should parse correctly',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
             headers: {'content-location': 'https://example.com:8080'},
-            touchHeaders: (h) => h.contentLocation,
+            touchHeaders: (final h) => h.contentLocation,
           );
 
           expect(
@@ -137,10 +137,10 @@ void main() {
       test(
         'when no Content-Location header is passed then it should return null',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
             headers: {},
-            touchHeaders: (h) => h.contentLocation,
+            touchHeaders: (final h) => h.contentLocation,
           );
 
           expect(headers.contentLocation, isNull);
@@ -162,9 +162,9 @@ void main() {
       test(
         'then it should return null',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
-            touchHeaders: (_) {},
+            touchHeaders: (final _) {},
             headers: {'content-location': 'ht!tp://invalid-url'},
           );
 

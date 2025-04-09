@@ -1,9 +1,9 @@
 import 'package:relic/relic.dart';
-import 'package:test/test.dart';
 import 'package:relic/src/headers/standard_headers_extensions.dart';
+import 'package:test/test.dart';
 
-import '../headers_test_utils.dart';
 import '../docs/strict_validation_docs.dart';
+import '../headers_test_utils.dart';
 
 /// Reference: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Disposition
 /// About empty value test, check the [StrictValidationDocs] class for more details.
@@ -24,11 +24,11 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (h) => h.contentDisposition,
+            touchHeaders: (final h) => h.contentDisposition,
             headers: {'content-disposition': ''},
           ),
           throwsA(isA<BadRequestException>().having(
-            (e) => e.message,
+            (final e) => e.message,
             'message',
             contains('Value cannot be empty'),
           )),
@@ -41,9 +41,9 @@ void main() {
       'then the server does not respond with a bad request if the headers '
       'is not actually used',
       () async {
-        var headers = await getServerRequestHeaders(
+        final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (_) {},
+          touchHeaders: (final _) {},
           headers: {'content-disposition': ''},
         );
 
@@ -54,9 +54,9 @@ void main() {
     test(
       'when a Content-Disposition header is passed then it should parse correctly',
       () async {
-        var headers = await getServerRequestHeaders(
+        final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (_) {},
+          touchHeaders: (final _) {},
           headers: {
             'content-disposition': 'attachment; filename="example.txt"'
           },
@@ -77,9 +77,9 @@ void main() {
     test(
       'when a Content-Disposition header with "inline" type is passed then it should parse correctly',
       () async {
-        var headers = await getServerRequestHeaders(
+        final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (h) => h.contentDisposition,
+          touchHeaders: (final h) => h.contentDisposition,
           headers: {'content-disposition': 'inline'},
         );
 
@@ -91,9 +91,9 @@ void main() {
     test(
       'when a Content-Disposition header with multiple parameters is passed then it should parse correctly',
       () async {
-        var headers = await getServerRequestHeaders(
+        final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (_) {},
+          touchHeaders: (final _) {},
           headers: {
             'content-disposition':
                 'attachment; filename="example.txt"; size=12345'
@@ -123,9 +123,9 @@ void main() {
     test(
       'when no Content-Disposition header is passed then it should return null',
       () async {
-        var headers = await getServerRequestHeaders(
+        final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (h) => h.contentDisposition,
+          touchHeaders: (final h) => h.contentDisposition,
           headers: {},
         );
 
@@ -147,9 +147,9 @@ void main() {
       test(
         'then it should return null',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
-            touchHeaders: (_) {},
+            touchHeaders: (final _) {},
             headers: {'content-disposition': ''},
           );
 

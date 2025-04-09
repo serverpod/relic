@@ -1,9 +1,9 @@
 import 'package:relic/relic.dart';
-import 'package:test/test.dart';
 import 'package:relic/src/headers/standard_headers_extensions.dart';
+import 'package:test/test.dart';
 
-import '../headers_test_utils.dart';
 import '../docs/strict_validation_docs.dart';
+import '../headers_test_utils.dart';
 
 /// Reference: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Referer
 /// About empty value test, check the [StrictValidationDocs] class for more details.
@@ -28,11 +28,11 @@ void main() {
             getServerRequestHeaders(
               server: server,
               headers: {'referer': ''},
-              touchHeaders: (h) => h.referer,
+              touchHeaders: (final h) => h.referer,
             ),
             throwsA(
               isA<BadRequestException>().having(
-                (e) => e.message,
+                (final e) => e.message,
                 'message',
                 contains('Value cannot be empty'),
               ),
@@ -50,11 +50,11 @@ void main() {
             getServerRequestHeaders(
               server: server,
               headers: {'referer': 'ht!tp://invalid-url'},
-              touchHeaders: (h) => h.referer,
+              touchHeaders: (final h) => h.referer,
             ),
             throwsA(
               isA<BadRequestException>().having(
-                (e) => e.message,
+                (final e) => e.message,
                 'message',
                 contains('Invalid URI'),
               ),
@@ -72,11 +72,11 @@ void main() {
             getServerRequestHeaders(
               server: server,
               headers: {'referer': 'http://example.com:test'},
-              touchHeaders: (h) => h.referer,
+              touchHeaders: (final h) => h.referer,
             ),
             throwsA(
               isA<BadRequestException>().having(
-                (e) => e.message,
+                (final e) => e.message,
                 'message',
                 contains('Invalid URI format'),
               ),
@@ -90,9 +90,9 @@ void main() {
         'then the server does not respond with a bad request if the headers '
         'is not actually used',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
-            touchHeaders: (_) {},
+            touchHeaders: (final _) {},
             headers: {'referer': 'http://example.com:test'},
           );
 
@@ -104,10 +104,10 @@ void main() {
         'when a Referer header with a valid URI is passed then it should parse '
         'correctly',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
             headers: {'referer': 'https://example.com/page'},
-            touchHeaders: (h) => h.referer,
+            touchHeaders: (final h) => h.referer,
           );
 
           expect(
@@ -119,10 +119,10 @@ void main() {
         'when a Referer header with a port number is passed then it should parse '
         'the port number correctly',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
             headers: {'referer': 'https://example.com:8080'},
-            touchHeaders: (h) => h.referer,
+            touchHeaders: (final h) => h.referer,
           );
 
           expect(
@@ -136,10 +136,10 @@ void main() {
         'when a Referer header with extra whitespace is passed then it should '
         'parse the URI correctly',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
             headers: {'referer': ' https://example.com '},
-            touchHeaders: (h) => h.referer,
+            touchHeaders: (final h) => h.referer,
           );
 
           expect(headers.referer, equals(Uri.parse('https://example.com')));
@@ -149,10 +149,10 @@ void main() {
       test(
         'when no Referer header is passed then it should return null',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
             headers: {},
-            touchHeaders: (h) => h.referer,
+            touchHeaders: (final h) => h.referer,
           );
 
           expect(headers.referer, isNull);
@@ -174,9 +174,9 @@ void main() {
       test(
         'then it should return null',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
-            touchHeaders: (_) {},
+            touchHeaders: (final _) {},
             headers: {'referer': 'ht!tp://invalid-url'},
           );
 

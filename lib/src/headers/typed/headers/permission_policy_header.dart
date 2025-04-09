@@ -1,5 +1,5 @@
-import "package:relic/relic.dart";
-import 'package:relic/src/headers/extension/string_list_extensions.dart';
+import '../../../../relic.dart';
+import '../../extension/string_list_extensions.dart';
 
 /// A class representing the HTTP Permissions-Policy header.
 ///
@@ -8,7 +8,7 @@ import 'package:relic/src/headers/extension/string_list_extensions.dart';
 final class PermissionsPolicyHeader {
   static const codec =
       HeaderCodec.single(PermissionsPolicyHeader.parse, __encode);
-  static List<String> __encode(PermissionsPolicyHeader value) =>
+  static List<String> __encode(final PermissionsPolicyHeader value) =>
       [value._encode()];
 
   /// A list of Permissions-Policy directives.
@@ -21,14 +21,14 @@ final class PermissionsPolicyHeader {
   ///
   /// This method splits the header value by commas, trims each directive,
   /// and processes the directive and its values.
-  factory PermissionsPolicyHeader.parse(String value) {
+  factory PermissionsPolicyHeader.parse(final String value) {
     final splitValues = value.splitTrimAndFilterUnique(separator: ',');
     if (splitValues.isEmpty) {
-      throw FormatException('Value cannot be empty');
+      throw const FormatException('Value cannot be empty');
     }
 
     final directives = <PermissionsPolicyDirective>[];
-    for (var part in splitValues) {
+    for (final part in splitValues) {
       final directiveParts = part.split('=');
       final name = directiveParts.first.trim();
       final values = directiveParts.length > 1
@@ -36,7 +36,7 @@ final class PermissionsPolicyHeader {
               .replaceAll('(', '')
               .replaceAll(')', '')
               .split(' ')
-              .map((s) => s.trim())
+              .map((final s) => s.trim())
               .toList()
           : <String>[];
 
@@ -55,7 +55,7 @@ final class PermissionsPolicyHeader {
   /// representation suitable for HTTP headers.
 
   String _encode() {
-    return directives.map((directive) => directive._encode()).join(', ');
+    return directives.map((final directive) => directive._encode()).join(', ');
   }
 
   @override

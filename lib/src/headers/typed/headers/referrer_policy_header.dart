@@ -1,4 +1,4 @@
-import "package:relic/relic.dart";
+import '../../../../relic.dart';
 
 /// A class representing the HTTP Referrer-Policy header.
 ///
@@ -6,7 +6,8 @@ import "package:relic/relic.dart";
 /// and generate referrer policy header values.
 final class ReferrerPolicyHeader {
   static const codec = HeaderCodec.single(ReferrerPolicyHeader.parse, __encode);
-  static List<String> __encode(ReferrerPolicyHeader value) => [value._encode()];
+  static List<String> __encode(final ReferrerPolicyHeader value) =>
+      [value._encode()];
 
   /// The string representation of the referrer policy directive.
   final String directive;
@@ -38,10 +39,10 @@ final class ReferrerPolicyHeader {
 
   /// Parses a [directive] and returns the corresponding [ReferrerPolicyHeader] instance.
   /// If the directive does not match any predefined types, it returns a custom instance.
-  factory ReferrerPolicyHeader.parse(String value) {
+  factory ReferrerPolicyHeader.parse(final String value) {
     final trimmed = value.trim();
     if (trimmed.isEmpty) {
-      throw FormatException('Value cannot be empty');
+      throw const FormatException('Value cannot be empty');
     }
 
     switch (trimmed) {
@@ -62,7 +63,7 @@ final class ReferrerPolicyHeader {
       case _unsafeUrl:
         return unsafeUrl;
       default:
-        throw FormatException('Invalid value');
+        throw const FormatException('Invalid value');
     }
   }
 

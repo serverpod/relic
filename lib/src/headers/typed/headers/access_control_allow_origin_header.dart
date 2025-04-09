@@ -1,4 +1,4 @@
-import "package:relic/relic.dart";
+import '../../../../relic.dart';
 
 /// A class representing the HTTP Access-Control-Allow-Origin header.
 ///
@@ -7,7 +7,7 @@ import "package:relic/relic.dart";
 final class AccessControlAllowOriginHeader {
   static const codec =
       HeaderCodec.single(AccessControlAllowOriginHeader.parse, __encode);
-  static List<String> __encode(AccessControlAllowOriginHeader value) =>
+  static List<String> __encode(final AccessControlAllowOriginHeader value) =>
       [value._encode()];
 
   /// The allowed origin URI, if specified.
@@ -29,14 +29,14 @@ final class AccessControlAllowOriginHeader {
   /// returns an [AccessControlAllowOriginHeader] instance.
   ///
   /// This method checks if the value is a wildcard or a specific origin.
-  factory AccessControlAllowOriginHeader.parse(String value) {
+  factory AccessControlAllowOriginHeader.parse(final String value) {
     final trimmed = value.trim();
     if (trimmed.isEmpty) {
-      throw FormatException('Value cannot be empty');
+      throw const FormatException('Value cannot be empty');
     }
 
     if (trimmed == '*') {
-      return AccessControlAllowOriginHeader.wildcard();
+      return const AccessControlAllowOriginHeader.wildcard();
     }
 
     try {
@@ -44,7 +44,7 @@ final class AccessControlAllowOriginHeader {
         origin: Uri.parse(trimmed),
       );
     } catch (_) {
-      throw FormatException('Invalid URI format');
+      throw const FormatException('Invalid URI format');
     }
   }
 

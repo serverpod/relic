@@ -1,5 +1,5 @@
-import "package:relic/relic.dart";
 import 'package:http_parser/http_parser.dart';
+import '../../../../relic.dart';
 
 /// A class representing the HTTP Retry-After header.
 ///
@@ -8,7 +8,8 @@ import 'package:http_parser/http_parser.dart';
 /// indicating when the client should retry the request.
 final class RetryAfterHeader {
   static const codec = HeaderCodec.single(RetryAfterHeader.parse, __encode);
-  static List<String> __encode(RetryAfterHeader value) => [value._encode()];
+  static List<String> __encode(final RetryAfterHeader value) =>
+      [value._encode()];
 
   /// The retry delay in seconds, if present.
   final int? delay;
@@ -22,12 +23,12 @@ final class RetryAfterHeader {
     this.date,
   }) {
     if (delay == null && date == null) {
-      throw FormatException(
+      throw const FormatException(
         'Either delay or date must be specified',
       );
     }
     if (delay != null && date != null) {
-      throw FormatException(
+      throw const FormatException(
         'Both delay and date cannot be specified at the same time',
       );
     }
@@ -36,16 +37,16 @@ final class RetryAfterHeader {
   /// Parses the Retry-After header value and returns a [RetryAfterHeader] instance.
   ///
   /// This method checks if the value is an integer (for delay) or a date string.
-  factory RetryAfterHeader.parse(String value) {
+  factory RetryAfterHeader.parse(final String value) {
     final trimmed = value.trim();
     if (trimmed.isEmpty) {
-      throw FormatException('Value cannot be empty');
+      throw const FormatException('Value cannot be empty');
     }
 
-    var delay = int.tryParse(trimmed);
+    final delay = int.tryParse(trimmed);
     if (delay != null) {
       if (delay < 0) {
-        throw FormatException('Delay cannot be negative');
+        throw const FormatException('Delay cannot be negative');
       }
       return RetryAfterHeader(delay: delay);
     } else {
@@ -53,7 +54,7 @@ final class RetryAfterHeader {
         final date = parseHttpDate(trimmed);
         return RetryAfterHeader(date: date);
       } catch (e) {
-        throw FormatException('Invalid date format');
+        throw const FormatException('Invalid date format');
       }
     }
   }

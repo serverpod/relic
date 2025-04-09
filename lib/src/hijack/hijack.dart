@@ -21,7 +21,7 @@ class _OnHijack {
   /// Calls `this`.
   ///
   /// Throws a [StateError] if `this` has already been called.
-  void run(HijackCallback callback) {
+  void run(final HijackCallback callback) {
     if (called) throw StateError('This request has already been hijacked.');
     called = true;
     Future.microtask(() => _callback(callback));
@@ -29,8 +29,8 @@ class _OnHijack {
 }
 
 /// Detaches the socket from the response and passes it to the callback.
-void onHijack(io.HttpResponse response, HijackCallback callback) {
+void onHijack(final io.HttpResponse response, final HijackCallback callback) {
   response
       .detachSocket(writeHeaders: false)
-      .then((socket) => callback(StreamChannel(socket, socket)));
+      .then((final socket) => callback(StreamChannel(socket, socket)));
 }

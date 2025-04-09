@@ -1,4 +1,4 @@
-import "package:relic/relic.dart";
+import '../../../../relic.dart';
 
 /// A class representing the HTTP Sec-Fetch-Site header.
 ///
@@ -6,7 +6,8 @@ import "package:relic/relic.dart";
 /// initiator and the origin of the requested resource.
 final class SecFetchSiteHeader {
   static const codec = HeaderCodec.single(SecFetchSiteHeader.parse, __encode);
-  static List<String> __encode(SecFetchSiteHeader value) => [value._encode()];
+  static List<String> __encode(final SecFetchSiteHeader value) =>
+      [value._encode()];
 
   /// The site value of the request.
   final String site;
@@ -27,10 +28,10 @@ final class SecFetchSiteHeader {
 
   /// Parses a [value] and returns the corresponding [SecFetchSiteHeader] instance.
   /// If the value does not match any predefined types, it returns a custom instance.
-  factory SecFetchSiteHeader.parse(String value) {
+  factory SecFetchSiteHeader.parse(final String value) {
     final trimmed = value.trim();
     if (trimmed.isEmpty) {
-      throw FormatException('Value cannot be empty');
+      throw const FormatException('Value cannot be empty');
     }
 
     switch (trimmed) {
@@ -43,7 +44,7 @@ final class SecFetchSiteHeader {
       case _none:
         return none;
       default:
-        throw FormatException('Invalid value');
+        throw const FormatException('Invalid value');
     }
   }
 

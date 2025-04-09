@@ -28,11 +28,11 @@ void main() {
             getServerRequestHeaders(
               server: server,
               headers: {'access-control-request-headers': ''},
-              touchHeaders: (h) => h.accessControlRequestHeaders,
+              touchHeaders: (final h) => h.accessControlRequestHeaders,
             ),
             throwsA(
               isA<BadRequestException>().having(
-                (e) => e.message,
+                (final e) => e.message,
                 'message',
                 contains('Value cannot be empty'),
               ),
@@ -46,9 +46,9 @@ void main() {
         'passed then the server does not respond with a bad request if the '
         'headers is not actually used',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
-            touchHeaders: (_) {},
+            touchHeaders: (final _) {},
             headers: {'access-control-request-headers': ''},
           );
 
@@ -60,13 +60,13 @@ void main() {
         'when an Access-Control-Request-Headers header is passed then it '
         'should parse the headers correctly',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
             headers: {
               'access-control-request-headers':
                   'X-Custom-Header, X-Another-Header'
             },
-            touchHeaders: (h) => h.accessControlRequestHeaders,
+            touchHeaders: (final h) => h.accessControlRequestHeaders,
           );
 
           expect(
@@ -80,13 +80,13 @@ void main() {
         'when an Access-Control-Request-Headers header with extra whitespace is '
         'passed then it should parse the headers correctly',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
             headers: {
               'access-control-request-headers':
                   ' X-Custom-Header , X-Another-Header '
             },
-            touchHeaders: (h) => h.accessControlRequestHeaders,
+            touchHeaders: (final h) => h.accessControlRequestHeaders,
           );
 
           expect(
@@ -100,13 +100,13 @@ void main() {
         'when an Access-Control-Request-Headers header with duplicate headers is '
         'passed then it should parse the headers correctly and remove duplicates',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
             headers: {
               'access-control-request-headers':
                   'X-Custom-Header, X-Another-Header, X-Custom-Header'
             },
-            touchHeaders: (h) => h.accessControlRequestHeaders,
+            touchHeaders: (final h) => h.accessControlRequestHeaders,
           );
 
           expect(
@@ -120,10 +120,10 @@ void main() {
         'when no Access-Control-Request-Headers header is passed then it should '
         'default to null',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
             headers: {},
-            touchHeaders: (h) => h.accessControlRequestHeaders,
+            touchHeaders: (final h) => h.accessControlRequestHeaders,
           );
 
           expect(headers.accessControlRequestHeaders, isNull);
@@ -147,9 +147,9 @@ void main() {
       test(
         'then it should return null',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
-            touchHeaders: (_) {},
+            touchHeaders: (final _) {},
             headers: {'access-control-request-headers': ''},
           );
 

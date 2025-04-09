@@ -1,9 +1,9 @@
 import 'package:relic/relic.dart';
-import 'package:test/test.dart';
 import 'package:relic/src/headers/standard_headers_extensions.dart';
+import 'package:test/test.dart';
 
-import '../headers_test_utils.dart';
 import '../docs/strict_validation_docs.dart';
+import '../headers_test_utils.dart';
 
 /// Reference: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control
 /// About empty value test, check the [StrictValidationDocs] class for more details.
@@ -25,12 +25,12 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (h) => h.cacheControl,
+            touchHeaders: (final h) => h.cacheControl,
             headers: {'cache-control': ''},
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (e) => e.message,
+              (final e) => e.message,
               'message',
               contains('Directives cannot be empty'),
             ),
@@ -46,12 +46,12 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (h) => h.cacheControl,
+            touchHeaders: (final h) => h.cacheControl,
             headers: {'cache-control': 'invalid-directive'},
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (e) => e.message,
+              (final e) => e.message,
               'message',
               contains('Invalid directive'),
             ),
@@ -67,12 +67,12 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (h) => h.cacheControl,
+            touchHeaders: (final h) => h.cacheControl,
             headers: {'cache-control': 'public, invalid-directive'},
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (e) => e.message,
+              (final e) => e.message,
               'message',
               contains('Invalid directive'),
             ),
@@ -88,12 +88,12 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (h) => h.cacheControl,
+            touchHeaders: (final h) => h.cacheControl,
             headers: {'cache-control': 'public, private'},
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (e) => e.message,
+              (final e) => e.message,
               'message',
               contains('Cannot be both public and private'),
             ),
@@ -109,14 +109,14 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (h) => h.cacheControl,
+            touchHeaders: (final h) => h.cacheControl,
             headers: {
               'cache-control': 'max-age=3600, stale-while-revalidate=300'
             },
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (e) => e.message,
+              (final e) => e.message,
               'message',
               contains(
                 'Cannot have both max-age and stale-while-revalidate directives',
@@ -132,9 +132,9 @@ void main() {
       'then the server does not respond with a bad request if the headers '
       'is not actually used',
       () async {
-        var headers = await getServerRequestHeaders(
+        final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (_) {},
+          touchHeaders: (final _) {},
           headers: {},
         );
 
@@ -145,9 +145,9 @@ void main() {
     test(
       'when a valid Cache-Control header is passed then it should parse the directives correctly',
       () async {
-        var headers = await getServerRequestHeaders(
+        final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (h) => h.cacheControl,
+          touchHeaders: (final h) => h.cacheControl,
           headers: {'cache-control': 'no-cache, no-store, must-revalidate'},
         );
 
@@ -160,9 +160,9 @@ void main() {
     test(
       'when a Cache-Control header with max-age is passed then it should parse the max-age correctly',
       () async {
-        var headers = await getServerRequestHeaders(
+        final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (h) => h.cacheControl,
+          touchHeaders: (final h) => h.cacheControl,
           headers: {'cache-control': 'max-age=3600'},
         );
 
@@ -173,9 +173,9 @@ void main() {
     test(
       'when a Cache-Control header with s-maxage is passed then it should parse the s-maxage correctly',
       () async {
-        var headers = await getServerRequestHeaders(
+        final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (h) => h.cacheControl,
+          touchHeaders: (final h) => h.cacheControl,
           headers: {'cache-control': 's-maxage=7200'},
         );
 
@@ -186,9 +186,9 @@ void main() {
     test(
       'when a Cache-Control header with stale-while-revalidate is passed then it should parse the directive correctly',
       () async {
-        var headers = await getServerRequestHeaders(
+        final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (h) => h.cacheControl,
+          touchHeaders: (final h) => h.cacheControl,
           headers: {'cache-control': 'stale-while-revalidate=300'},
         );
 
@@ -199,9 +199,9 @@ void main() {
     test(
       'when a Cache-Control header with stale-if-error is passed then it should parse the directive correctly',
       () async {
-        var headers = await getServerRequestHeaders(
+        final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (h) => h.cacheControl,
+          touchHeaders: (final h) => h.cacheControl,
           headers: {'cache-control': 'stale-if-error=600'},
         );
 
@@ -212,9 +212,9 @@ void main() {
     test(
       'when a Cache-Control header with max-stale is passed then it should parse the directive correctly',
       () async {
-        var headers = await getServerRequestHeaders(
+        final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (h) => h.cacheControl,
+          touchHeaders: (final h) => h.cacheControl,
           headers: {'cache-control': 'max-stale=100'},
         );
 
@@ -225,9 +225,9 @@ void main() {
     test(
       'when a Cache-Control header with min-fresh is passed then it should parse the directive correctly',
       () async {
-        var headers = await getServerRequestHeaders(
+        final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (h) => h.cacheControl,
+          touchHeaders: (final h) => h.cacheControl,
           headers: {'cache-control': 'min-fresh=200'},
         );
 
@@ -238,9 +238,9 @@ void main() {
     test(
       'when a Cache-Control header with public is passed then it should parse the directive correctly',
       () async {
-        var headers = await getServerRequestHeaders(
+        final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (h) => h.cacheControl,
+          touchHeaders: (final h) => h.cacheControl,
           headers: {'cache-control': 'public'},
         );
 
@@ -251,9 +251,9 @@ void main() {
     test(
       'when a Cache-Control header with private is passed then it should parse the directive correctly',
       () async {
-        var headers = await getServerRequestHeaders(
+        final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (h) => h.cacheControl,
+          touchHeaders: (final h) => h.cacheControl,
           headers: {'cache-control': 'private'},
         );
 
@@ -264,9 +264,9 @@ void main() {
     test(
       'when a Cache-Control header with no-transform is passed then it should parse the directive correctly',
       () async {
-        var headers = await getServerRequestHeaders(
+        final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (h) => h.cacheControl,
+          touchHeaders: (final h) => h.cacheControl,
           headers: {'cache-control': 'no-transform'},
         );
 
@@ -277,9 +277,9 @@ void main() {
     test(
       'when a Cache-Control header with only-if-cached is passed then it should parse the directive correctly',
       () async {
-        var headers = await getServerRequestHeaders(
+        final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (h) => h.cacheControl,
+          touchHeaders: (final h) => h.cacheControl,
           headers: {'cache-control': 'only-if-cached'},
         );
 
@@ -290,9 +290,9 @@ void main() {
     test(
       'when a Cache-Control header with immutable is passed then it should parse the directive correctly',
       () async {
-        var headers = await getServerRequestHeaders(
+        final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (h) => h.cacheControl,
+          touchHeaders: (final h) => h.cacheControl,
           headers: {'cache-control': 'immutable'},
         );
 
@@ -303,9 +303,9 @@ void main() {
     test(
       'when a Cache-Control header with must-understand is passed then it should parse the directive correctly',
       () async {
-        var headers = await getServerRequestHeaders(
+        final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (h) => h.cacheControl,
+          touchHeaders: (final h) => h.cacheControl,
           headers: {'cache-control': 'must-understand'},
         );
 
@@ -316,9 +316,9 @@ void main() {
     test(
       'when no Cache-Control header is passed then it should return null',
       () async {
-        var headers = await getServerRequestHeaders(
+        final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (h) => h.cacheControl,
+          touchHeaders: (final h) => h.cacheControl,
           headers: {},
         );
 
@@ -340,9 +340,9 @@ void main() {
       test(
         'then it should return null',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
-            touchHeaders: (_) {},
+            touchHeaders: (final _) {},
             headers: {'cache-control': 'invalid-directive'},
           );
 

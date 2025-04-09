@@ -28,11 +28,11 @@ void main() {
             getServerRequestHeaders(
               server: server,
               headers: {'allow': ''},
-              touchHeaders: (h) => h.allow,
+              touchHeaders: (final h) => h.allow,
             ),
             throwsA(
               isA<BadRequestException>().having(
-                (e) => e.message,
+                (final e) => e.message,
                 'message',
                 contains('Value cannot be empty'),
               ),
@@ -50,11 +50,11 @@ void main() {
             getServerRequestHeaders(
               server: server,
               headers: {'allow': 'CUSTOM'},
-              touchHeaders: (h) => h.allow,
+              touchHeaders: (final h) => h.allow,
             ),
             throwsA(
               isA<BadRequestException>().having(
-                (e) => e.message,
+                (final e) => e.message,
                 'message',
                 contains('Invalid value'),
               ),
@@ -68,9 +68,9 @@ void main() {
         'then the server does not respond with a bad request if the headers '
         'is not actually used',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
-            touchHeaders: (_) {},
+            touchHeaders: (final _) {},
             headers: {'allow': 'CUSTOM'},
           );
 
@@ -81,14 +81,14 @@ void main() {
       test(
         'when a valid Allow header is passed then it should parse the methods correctly',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
             headers: {'allow': 'GET, POST, DELETE'},
-            touchHeaders: (h) => h.allow,
+            touchHeaders: (final h) => h.allow,
           );
 
           expect(
-            headers.allow?.map((method) => method.value).toList(),
+            headers.allow?.map((final method) => method.value).toList(),
             equals(['GET', 'POST', 'DELETE']),
           );
         },
@@ -98,14 +98,14 @@ void main() {
         'when an Allow header with duplicate methods is passed then it should '
         'parse the methods correctly and remove duplicates',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
             headers: {'allow': 'GET, POST, GET'},
-            touchHeaders: (h) => h.allow,
+            touchHeaders: (final h) => h.allow,
           );
 
           expect(
-            headers.allow?.map((method) => method.value).toList(),
+            headers.allow?.map((final method) => method.value).toList(),
             equals(['GET', 'POST']),
           );
         },
@@ -115,14 +115,14 @@ void main() {
         'when an Allow header with spaces is passed then it should parse the '
         'methods correctly',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
             headers: {'allow': ' GET , POST , DELETE '},
-            touchHeaders: (h) => h.allow,
+            touchHeaders: (final h) => h.allow,
           );
 
           expect(
-            headers.allow?.map((method) => method.value).toList(),
+            headers.allow?.map((final method) => method.value).toList(),
             equals(['GET', 'POST', 'DELETE']),
           );
         },
@@ -143,9 +143,9 @@ void main() {
       test(
         'then it should return null',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
-            touchHeaders: (_) {},
+            touchHeaders: (final _) {},
             headers: {'allow': ''},
           );
 

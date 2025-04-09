@@ -16,7 +16,8 @@ final Matcher throwsHijackException = throwsA(isA<HijackException>());
 ///
 /// By default, replies with a status code 200, empty headers, and
 /// `Hello from ${request.url.path}`.
-Response syncHandler(Request request, {int? statusCode, Headers? headers}) {
+Response syncHandler(final Request request,
+    {final int? statusCode, final Headers? headers}) {
   return Response(
     statusCode ?? 200,
     headers: headers ?? Headers.empty(),
@@ -25,11 +26,11 @@ Response syncHandler(Request request, {int? statusCode, Headers? headers}) {
 }
 
 /// Calls [syncHandler] and wraps the response in a [Future].
-Future<Response> asyncHandler(Request request) =>
+Future<Response> asyncHandler(final Request request) =>
     Future(() => syncHandler(request));
 
 /// Makes a simple GET request to [handler] and returns the result.
-Future<Response> makeSimpleRequest(Handler handler) =>
+Future<Response> makeSimpleRequest(final Handler handler) =>
     Future.sync(() => handler(_request));
 
 final _request = Request(RequestMethod.get, localhostUri);
@@ -37,7 +38,7 @@ final _request = Request(RequestMethod.get, localhostUri);
 final localhostUri = Uri.parse('http://localhost/');
 
 final isOhNoStateError =
-    isA<StateError>().having((e) => e.message, 'message', 'oh no');
+    isA<StateError>().having((final e) => e.message, 'message', 'oh no');
 
 /// Like [group], but takes a [variants] argument and creates a group for each
 /// variant.
@@ -64,11 +65,11 @@ final isOhNoStateError =
 /// ```
 @isTestGroup
 void parameterizedGroup<T>(
-  String Function(T) descriptionBuilder,
-  void Function(T) body, {
-  required Iterable<T> variants,
+  final String Function(T) descriptionBuilder,
+  final void Function(T) body, {
+  required final Iterable<T> variants,
 }) {
-  for (var v in variants) {
+  for (final v in variants) {
     group(descriptionBuilder(v), () => body(v));
   }
 }
@@ -95,11 +96,11 @@ void parameterizedGroup<T>(
 /// ```
 @isTest
 void parameterizedTest<T>(
-  String Function(T) descriptionBuilder,
-  void Function(T) body, {
-  required Iterable<T> variants,
+  final String Function(T) descriptionBuilder,
+  final void Function(T) body, {
+  required final Iterable<T> variants,
 }) {
-  for (var v in variants) {
+  for (final v in variants) {
     test(descriptionBuilder(v), () => body(v));
   }
 }
@@ -115,9 +116,9 @@ void parameterizedTest<T>(
 /// ```
 @isTest
 void singleTest(
-  String description,
-  dynamic actual,
-  dynamic expected,
+  final String description,
+  final dynamic actual,
+  final dynamic expected,
 ) {
   test(description, () {
     expect(actual, expected);

@@ -1,4 +1,4 @@
-import "package:relic/relic.dart";
+import '../../../../relic.dart';
 
 /// A class representing the HTTP ETag header.
 ///
@@ -7,7 +7,7 @@ import "package:relic/relic.dart";
 /// appropriate header string.
 final class ETagHeader {
   static const codec = HeaderCodec.single(ETagHeader.parse, __encode);
-  static List<String> __encode(ETagHeader value) => [value._encode()];
+  static List<String> __encode(final ETagHeader value) => [value._encode()];
 
   /// The ETag value without quotes.
   final String value;
@@ -30,10 +30,10 @@ final class ETagHeader {
   /// Returns true if the string is either:
   /// - A strong ETag: quoted string (e.g., "123456")
   /// - A weak ETag: W/ followed by a quoted string (e.g., W/"123456")
-  static bool isValidETag(String value) {
+  static bool isValidETag(final String value) {
     final trimmed = value.trim();
     if (trimmed.isEmpty) {
-      throw FormatException('Value cannot be empty');
+      throw const FormatException('Value cannot be empty');
     }
 
     // Check for weak ETag format
@@ -50,13 +50,13 @@ final class ETagHeader {
   ///
   /// This method validates the format of the ETag string and parses
   /// the ETag value and whether it is weak.
-  factory ETagHeader.parse(String value) {
+  factory ETagHeader.parse(final String value) {
     if (!isValidETag(value)) {
-      throw FormatException('Invalid format');
+      throw const FormatException('Invalid format');
     }
 
-    var isWeak = value.startsWith(_weakPrefix);
-    var tagValue = isWeak ? value.substring(2).trim() : value.trim();
+    final isWeak = value.startsWith(_weakPrefix);
+    final tagValue = isWeak ? value.substring(2).trim() : value.trim();
     return ETagHeader(value: tagValue.replaceAll(_quote, ''), isWeak: isWeak);
   }
 

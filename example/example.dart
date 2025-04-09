@@ -1,10 +1,11 @@
+// ignore_for_file: avoid_print
 import 'package:relic/relic.dart';
 
 void main() async {
-  var handler =
+  final handler =
       const Pipeline().addMiddleware(logRequests()).addHandler(_echoRequest);
 
-  var server = await serve(
+  final server = await serve(
     handler,
     InternetAddress.loopbackIPv4,
     8080,
@@ -16,7 +17,7 @@ void main() async {
   print('Serving at http://${server.address.host}:${server.port}');
 }
 
-Response _echoRequest(Request request) {
+Response _echoRequest(final Request request) {
   return Response.ok(
     body: Body.fromString(
       'Request for "${request.url}"',

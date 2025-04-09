@@ -1,4 +1,4 @@
-import "package:relic/relic.dart";
+import '../../../../relic.dart';
 
 /// A class representing the HTTP Range header.
 ///
@@ -9,7 +9,7 @@ import "package:relic/relic.dart";
 /// bytes or custom units.
 final class RangeHeader {
   static const codec = HeaderCodec.single(RangeHeader.parse, __encode);
-  static List<String> __encode(RangeHeader value) => [value._encode()];
+  static List<String> __encode(final RangeHeader value) => [value._encode()];
 
   /// The unit of the range (e.g., "bytes").
   final String unit;
@@ -28,39 +28,39 @@ final class RangeHeader {
   ///
   /// This method processes the range header and extracts the unit and
   /// multiple range values.
-  factory RangeHeader.parse(String value) {
+  factory RangeHeader.parse(final String value) {
     final trimmed = value.trim();
     if (trimmed.isEmpty) {
-      throw FormatException('Value cannot be empty');
+      throw const FormatException('Value cannot be empty');
     }
 
-    var regex = RegExp(r'^\s*(\w+)\s*=\s*(.*)$');
-    var match = regex.firstMatch(trimmed);
+    final regex = RegExp(r'^\s*(\w+)\s*=\s*(.*)$');
+    final match = regex.firstMatch(trimmed);
 
     if (match == null) {
-      throw FormatException('Invalid Range header: invalid format');
+      throw const FormatException('Invalid Range header: invalid format');
     }
 
-    var unit = match.group(1) ?? 'bytes';
-    var rangesPart = match.group(2);
+    final unit = match.group(1) ?? 'bytes';
+    final rangesPart = match.group(2);
 
     if (rangesPart == null) {
-      throw FormatException('Invalid Range header: missing ranges');
+      throw const FormatException('Invalid Range header: missing ranges');
     }
 
-    var rangeStrings = rangesPart.split(',');
-    var ranges = rangeStrings.map((rangeStr) {
-      var trimmedRange = rangeStr.trim();
-      var rangeMatch = RegExp(r'^(\d*)-(\d*)$').firstMatch(trimmedRange);
+    final rangeStrings = rangesPart.split(',');
+    final ranges = rangeStrings.map((final rangeStr) {
+      final trimmedRange = rangeStr.trim();
+      final rangeMatch = RegExp(r'^(\d*)-(\d*)$').firstMatch(trimmedRange);
       if (rangeMatch == null) {
-        throw FormatException('Invalid range');
+        throw const FormatException('Invalid range');
       }
 
-      var start = int.tryParse(rangeMatch.group(1) ?? '');
-      var end = int.tryParse(rangeMatch.group(2) ?? '');
+      final start = int.tryParse(rangeMatch.group(1) ?? '');
+      final end = int.tryParse(rangeMatch.group(2) ?? '');
 
       if (start == null && end == null) {
-        throw FormatException('Both start and end cannot be empty');
+        throw const FormatException('Both start and end cannot be empty');
       }
 
       return Range(start: start, end: end);
@@ -72,7 +72,7 @@ final class RangeHeader {
   /// Converts the [RangeHeader] instance into a string representation
   /// suitable for HTTP headers.
   String _encode() {
-    final rangesStr = ranges.map((range) => range._encode()).join(', ');
+    final rangesStr = ranges.map((final range) => range._encode()).join(', ');
     return '$unit=$rangesStr';
   }
 
@@ -97,7 +97,8 @@ class Range {
     this.end,
   }) {
     if (start == null && end == null) {
-      throw FormatException('At least one of start or end must be specified');
+      throw const FormatException(
+          'At least one of start or end must be specified');
     }
   }
 

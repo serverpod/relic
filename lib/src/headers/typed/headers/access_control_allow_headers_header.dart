@@ -1,5 +1,5 @@
-import "package:relic/relic.dart";
-import 'package:relic/src/headers/extension/string_list_extensions.dart';
+import '../../../../relic.dart';
+import '../../extension/string_list_extensions.dart';
 
 /// A class representing the HTTP Access-Control-Allow-Headers header.
 ///
@@ -8,7 +8,7 @@ import 'package:relic/src/headers/extension/string_list_extensions.dart';
 final class AccessControlAllowHeadersHeader {
   static const codec =
       HeaderCodec(AccessControlAllowHeadersHeader.parse, __encode);
-  static List<String> __encode(AccessControlAllowHeadersHeader value) =>
+  static List<String> __encode(final AccessControlAllowHeadersHeader value) =>
       [value._encode()];
 
   /// The list of headers that are allowed.
@@ -28,18 +28,19 @@ final class AccessControlAllowHeadersHeader {
 
   /// Parses the Access-Control-Allow-Headers header value and returns an
   /// [AccessControlAllowHeadersHeader] instance.
-  factory AccessControlAllowHeadersHeader.parse(Iterable<String> values) {
-    var splitValues = values.splitTrimAndFilterUnique();
+  factory AccessControlAllowHeadersHeader.parse(final Iterable<String> values) {
+    final splitValues = values.splitTrimAndFilterUnique();
     if (splitValues.isEmpty) {
-      throw FormatException('Value cannot be empty');
+      throw const FormatException('Value cannot be empty');
     }
 
     if (splitValues.length == 1 && splitValues.first == '*') {
-      return AccessControlAllowHeadersHeader.wildcard();
+      return const AccessControlAllowHeadersHeader.wildcard();
     }
 
     if (splitValues.length > 1 && splitValues.contains('*')) {
-      throw FormatException('Wildcard (*) cannot be used with other headers');
+      throw const FormatException(
+          'Wildcard (*) cannot be used with other headers');
     }
 
     return AccessControlAllowHeadersHeader.headers(

@@ -1,5 +1,5 @@
-import "package:relic/relic.dart";
-import 'package:relic/src/headers/extension/string_list_extensions.dart';
+import '../../../../relic.dart';
+import '../../extension/string_list_extensions.dart';
 
 /// A class representing the HTTP Content-Encoding header.
 ///
@@ -8,7 +8,7 @@ import 'package:relic/src/headers/extension/string_list_extensions.dart';
 /// content encoding header values.
 final class ContentEncodingHeader {
   static const codec = HeaderCodec(ContentEncodingHeader.parse, __encode);
-  static List<String> __encode(ContentEncodingHeader value) =>
+  static List<String> __encode(final ContentEncodingHeader value) =>
       [value._encode()];
 
   /// A list of content encodings.
@@ -24,26 +24,26 @@ final class ContentEncodingHeader {
   /// [ContentEncodingHeader] instance.
   ///
   /// This method splits the value by commas and trims each encoding.
-  factory ContentEncodingHeader.parse(Iterable<String> values) {
-    var splitValues = values.splitTrimAndFilterUnique();
+  factory ContentEncodingHeader.parse(final Iterable<String> values) {
+    final splitValues = values.splitTrimAndFilterUnique();
     if (splitValues.isEmpty) {
-      throw FormatException('Value cannot be empty');
+      throw const FormatException('Value cannot be empty');
     }
 
-    var parsedEncodings =
-        splitValues.map((e) => ContentEncoding.parse(e)).toList();
+    final parsedEncodings =
+        splitValues.map((final e) => ContentEncoding.parse(e)).toList();
 
     return ContentEncodingHeader(encodings: parsedEncodings);
   }
 
   /// Checks if the Content-Encoding contains a specific encoding.
-  bool containsEncoding(ContentEncoding encoding) {
+  bool containsEncoding(final ContentEncoding encoding) {
     return encodings.contains(encoding);
   }
 
   /// Converts the [ContentEncodingHeader] instance into a string representation
   /// suitable for HTTP headers.
-  String _encode() => encodings.map((e) => e.name).join(', ');
+  String _encode() => encodings.map((final e) => e.name).join(', ');
 
   @override
   String toString() {
@@ -77,10 +77,10 @@ class ContentEncoding {
   /// Parses a [name] and returns the corresponding [ContentEncoding] instance.
   /// If the name does not match any predefined encodings, it returns a custom
   /// instance.
-  factory ContentEncoding.parse(String name) {
+  factory ContentEncoding.parse(final String name) {
     final trimmed = name.trim();
     if (trimmed.isEmpty) {
-      throw FormatException('Name cannot be empty');
+      throw const FormatException('Name cannot be empty');
     }
     switch (trimmed) {
       case _gzip:
@@ -96,7 +96,7 @@ class ContentEncoding {
       case _zstd:
         return zstd;
       default:
-        throw FormatException('Invalid value');
+        throw const FormatException('Invalid value');
     }
   }
 

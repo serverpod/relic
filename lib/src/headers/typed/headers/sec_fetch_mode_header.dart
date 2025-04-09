@@ -1,11 +1,12 @@
-import "package:relic/relic.dart";
+import '../../../../relic.dart';
 
 /// A class representing the HTTP Sec-Fetch-Mode header.
 ///
 /// This header indicates the mode of the request.
 final class SecFetchModeHeader {
   static const codec = HeaderCodec.single(SecFetchModeHeader.parse, __encode);
-  static List<String> __encode(SecFetchModeHeader value) => [value._encode()];
+  static List<String> __encode(final SecFetchModeHeader value) =>
+      [value._encode()];
 
   /// The mode value of the request.
   final String mode;
@@ -30,10 +31,10 @@ final class SecFetchModeHeader {
 
   /// Parses a [value] and returns the corresponding [SecFetchModeHeader] instance.
   /// If the value does not match any predefined types, it returns a custom instance.
-  factory SecFetchModeHeader.parse(String value) {
+  factory SecFetchModeHeader.parse(final String value) {
     final trimmed = value.trim();
     if (trimmed.isEmpty) {
-      throw FormatException('Value cannot be empty');
+      throw const FormatException('Value cannot be empty');
     }
 
     switch (trimmed) {
@@ -50,7 +51,7 @@ final class SecFetchModeHeader {
       case _webSocket:
         return webSocket;
       default:
-        throw FormatException('Invalid value');
+        throw const FormatException('Invalid value');
     }
   }
 

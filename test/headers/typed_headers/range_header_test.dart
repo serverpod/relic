@@ -1,9 +1,9 @@
 import 'package:relic/relic.dart';
-import 'package:test/test.dart';
 import 'package:relic/src/headers/standard_headers_extensions.dart';
+import 'package:test/test.dart';
 
-import '../headers_test_utils.dart';
 import '../docs/strict_validation_docs.dart';
+import '../headers_test_utils.dart';
 
 /// Reference: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Range
 /// About empty value test, check the [StrictValidationDocs] class for more details.
@@ -25,12 +25,12 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (h) => h.range,
+            touchHeaders: (final h) => h.range,
             headers: {'range': ''},
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (e) => e.message,
+              (final e) => e.message,
               'message',
               contains('Value cannot be empty'),
             ),
@@ -46,12 +46,12 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (h) => h.range,
+            touchHeaders: (final h) => h.range,
             headers: {'range': 'bytes=abc-xyz'},
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (e) => e.message,
+              (final e) => e.message,
               'message',
               contains('Invalid range'),
             ),
@@ -67,12 +67,12 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (h) => h.range,
+            touchHeaders: (final h) => h.range,
             headers: {'range': 'bytes=-'},
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (e) => e.message,
+              (final e) => e.message,
               'message',
               contains('Both start and end cannot be empty'),
             ),
@@ -86,9 +86,9 @@ void main() {
       'then the server does not respond with a bad request if the headers '
       'is not actually used',
       () async {
-        var headers = await getServerRequestHeaders(
+        final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (_) {},
+          touchHeaders: (final _) {},
           headers: {'range': 'invalid-value'},
         );
 
@@ -100,9 +100,9 @@ void main() {
       'when a Range header with a single valid range is passed then it '
       'should parse correctly',
       () async {
-        var headers = await getServerRequestHeaders(
+        final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (h) => h.range,
+          touchHeaders: (final h) => h.range,
           headers: {'range': 'bytes=0-499'},
         );
 
@@ -117,9 +117,9 @@ void main() {
       'when a Range header with a range that only has a start is passed then it '
       'should parse correctly',
       () async {
-        var headers = await getServerRequestHeaders(
+        final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (h) => h.range,
+          touchHeaders: (final h) => h.range,
           headers: {'range': 'bytes=500-'},
         );
 
@@ -134,9 +134,9 @@ void main() {
       'when a Range header with a range that only has an end is passed then it '
       'should parse correctly',
       () async {
-        var headers = await getServerRequestHeaders(
+        final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (h) => h.range,
+          touchHeaders: (final h) => h.range,
           headers: {'range': 'bytes=-500'},
         );
 
@@ -150,9 +150,9 @@ void main() {
     test(
       'when no Range header is passed then it should return null',
       () async {
-        var headers = await getServerRequestHeaders(
+        final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (h) => h.range,
+          touchHeaders: (final h) => h.range,
           headers: {},
         );
 
@@ -164,16 +164,16 @@ void main() {
       test(
         'then they should parse correctly',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
-            touchHeaders: (h) => h.range,
+            touchHeaders: (final h) => h.range,
             headers: {'range': 'bytes=0-499, 500-999, 1000-'},
           );
 
           expect(headers.range?.unit, equals('bytes'));
           expect(headers.range?.ranges.length, equals(3));
 
-          var ranges = headers.range!.ranges;
+          final ranges = headers.range!.ranges;
           expect(ranges[0].start, equals(0));
           expect(ranges[0].end, equals(499));
           expect(ranges[1].start, equals(500));
@@ -186,9 +186,9 @@ void main() {
       test(
         'with extra whitespace are passed then they should parse correctly',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
-            touchHeaders: (h) => h.range,
+            touchHeaders: (final h) => h.range,
             headers: {'range': ' bytes = 0-499 , 500-999 , 1000- '},
           );
 
@@ -212,9 +212,9 @@ void main() {
       test(
         'then it should return null',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
-            touchHeaders: (_) {},
+            touchHeaders: (final _) {},
             headers: {'range': 'invalid-range'},
           );
 

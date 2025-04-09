@@ -1,11 +1,12 @@
-import "package:relic/relic.dart";
+import '../../../../relic.dart';
 
 /// A class representing the HTTP Accept-Ranges header.
 ///
 /// This class manages the range units that the server supports.
 final class AcceptRangesHeader {
   static const codec = HeaderCodec.single(AcceptRangesHeader.parse, __encode);
-  static List<String> __encode(AcceptRangesHeader value) => [value._encode()];
+  static List<String> __encode(final AcceptRangesHeader value) =>
+      [value._encode()];
 
   /// The range unit supported by the server, or `null` if no specific unit is supported.
   final String? rangeUnit;
@@ -14,18 +15,20 @@ final class AcceptRangesHeader {
   const AcceptRangesHeader({this.rangeUnit});
 
   /// Constructs an [AcceptRangesHeader] instance with the range unit set to 'none'.
-  factory AcceptRangesHeader.none() => AcceptRangesHeader(rangeUnit: 'none');
+  factory AcceptRangesHeader.none() =>
+      const AcceptRangesHeader(rangeUnit: 'none');
 
   /// Constructs an [AcceptRangesHeader] instance with the range unit set to 'bytes'.
-  factory AcceptRangesHeader.bytes() => AcceptRangesHeader(rangeUnit: 'bytes');
+  factory AcceptRangesHeader.bytes() =>
+      const AcceptRangesHeader(rangeUnit: 'bytes');
 
   /// Parses the Accept-Ranges header value and returns an [AcceptRangesHeader] instance.
   ///
   /// This method processes the header value, extracting the range unit.
-  factory AcceptRangesHeader.parse(String value) {
+  factory AcceptRangesHeader.parse(final String value) {
     final trimmed = value.trim();
     if (trimmed.isEmpty) {
-      throw FormatException('Value cannot be empty');
+      throw const FormatException('Value cannot be empty');
     }
 
     return AcceptRangesHeader(rangeUnit: trimmed);

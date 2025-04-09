@@ -1,9 +1,9 @@
 import 'package:relic/relic.dart';
-import 'package:test/test.dart';
 import 'package:relic/src/headers/standard_headers_extensions.dart';
+import 'package:test/test.dart';
 
-import '../headers_test_utils.dart';
 import '../docs/strict_validation_docs.dart';
+import '../headers_test_utils.dart';
 
 /// Reference: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/TE
 /// About empty value test, check the [StrictValidationDocs] class for more details.
@@ -25,12 +25,12 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (h) => h.te,
+            touchHeaders: (final h) => h.te,
             headers: {'te': ''},
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (e) => e.message,
+              (final e) => e.message,
               'message',
               contains('Value cannot be empty'),
             ),
@@ -47,12 +47,12 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (h) => h.te,
+            touchHeaders: (final h) => h.te,
             headers: {'te': 'trailers;q=abc'},
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (e) => e.message,
+              (final e) => e.message,
               'message',
               contains('Invalid quality value'),
             ),
@@ -69,12 +69,12 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (h) => h.te,
+            touchHeaders: (final h) => h.te,
             headers: {'te': ';q=1.0'},
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (e) => e.message,
+              (final e) => e.message,
               'message',
               contains('Invalid encoding'),
             ),
@@ -88,9 +88,9 @@ void main() {
       'then the server does not respond with a bad request if the headers '
       'is not actually used',
       () async {
-        var headers = await getServerRequestHeaders(
+        final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (_) {},
+          touchHeaders: (final _) {},
           headers: {'te': 'trailers;q=abc'},
         );
 
@@ -102,14 +102,14 @@ void main() {
       'when a TE header is passed then it should parse the '
       'encoding correctly',
       () async {
-        var headers = await getServerRequestHeaders(
+        final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (h) => h.te,
+          touchHeaders: (final h) => h.te,
           headers: {'te': 'trailers'},
         );
 
         expect(
-          headers.te?.encodings.map((e) => e.encoding).toList(),
+          headers.te?.encodings.map((final e) => e.encoding).toList(),
           equals(['trailers']),
         );
       },
@@ -119,14 +119,14 @@ void main() {
       'when a TE header is passed without quality then the '
       'default quality value should be set',
       () async {
-        var headers = await getServerRequestHeaders(
+        final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (h) => h.te,
+          touchHeaders: (final h) => h.te,
           headers: {'te': 'trailers'},
         );
 
         expect(
-          headers.te?.encodings.map((e) => e.quality).toList(),
+          headers.te?.encodings.map((final e) => e.quality).toList(),
           equals([1.0]),
         );
       },
@@ -135,9 +135,9 @@ void main() {
     test(
       'when no TE header is passed then it should return null',
       () async {
-        var headers = await getServerRequestHeaders(
+        final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (h) => h.te,
+          touchHeaders: (final h) => h.te,
           headers: {},
         );
 
@@ -149,14 +149,14 @@ void main() {
       test(
         'then they should parse the encodings correctly',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
-            touchHeaders: (h) => h.te,
+            touchHeaders: (final h) => h.te,
             headers: {'te': 'trailers, deflate, gzip'},
           );
 
           expect(
-            headers.te?.encodings.map((e) => e.encoding).toList(),
+            headers.te?.encodings.map((final e) => e.encoding).toList(),
             equals(['trailers', 'deflate', 'gzip']),
           );
         },
@@ -165,14 +165,14 @@ void main() {
       test(
         'with quantities then they should parse the encodings correctly',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
-            touchHeaders: (h) => h.te,
+            touchHeaders: (final h) => h.te,
             headers: {'te': 'trailers;q=1.0, deflate;q=0.5, gzip;q=0.8'},
           );
 
           expect(
-            headers.te?.encodings.map((e) => e.encoding).toList(),
+            headers.te?.encodings.map((final e) => e.encoding).toList(),
             equals(['trailers', 'deflate', 'gzip']),
           );
         },
@@ -181,14 +181,14 @@ void main() {
       test(
         'with quality values then they should parse the qualities correctly',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
-            touchHeaders: (h) => h.te,
+            touchHeaders: (final h) => h.te,
             headers: {'te': 'trailers;q=1.0, deflate;q=0.5, gzip;q=0.8'},
           );
 
           expect(
-            headers.te?.encodings.map((e) => e.quality).toList(),
+            headers.te?.encodings.map((final e) => e.quality).toList(),
             equals([1.0, 0.5, 0.8]),
           );
         },
@@ -197,14 +197,14 @@ void main() {
       test(
         'with extra whitespace then they should parse the encodings correctly',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
-            touchHeaders: (h) => h.te,
+            touchHeaders: (final h) => h.te,
             headers: {'te': ' trailers , deflate , gzip '},
           );
 
           expect(
-            headers.te?.encodings.map((e) => e.encoding).toList(),
+            headers.te?.encodings.map((final e) => e.encoding).toList(),
             equals(['trailers', 'deflate', 'gzip']),
           );
         },
@@ -225,9 +225,9 @@ void main() {
       test(
         'then it should return null',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
-            touchHeaders: (_) {},
+            touchHeaders: (final _) {},
             headers: {'te': ''},
           );
 
@@ -241,9 +241,9 @@ void main() {
       test(
         'then it should return null',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
-            touchHeaders: (_) {},
+            touchHeaders: (final _) {},
             headers: {'te': 'trailers;q=abc, deflate, gzip'},
           );
 

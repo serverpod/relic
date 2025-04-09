@@ -1,12 +1,12 @@
-import "package:relic/relic.dart";
-import 'package:relic/src/headers/extension/string_list_extensions.dart';
+import '../../../../relic.dart';
+import '../../extension/string_list_extensions.dart';
 
 /// Represents the HTTP Strict-Transport-Security (HSTS) header for managing
 /// HSTS settings.
 final class StrictTransportSecurityHeader {
   static const codec =
       HeaderCodec.single(StrictTransportSecurityHeader.parse, __encode);
-  static List<String> __encode(StrictTransportSecurityHeader value) =>
+  static List<String> __encode(final StrictTransportSecurityHeader value) =>
       [value._encode()];
 
   /// The max-age directive specifies the time, in seconds, that the browser
@@ -35,17 +35,17 @@ final class StrictTransportSecurityHeader {
   /// Parses the Strict-Transport-Security header value into a [StrictTransportSecurityHeader] instance.
   ///
   /// Throws a [FormatException] if the max-age directive is missing or invalid.
-  factory StrictTransportSecurityHeader.parse(String value) {
+  factory StrictTransportSecurityHeader.parse(final String value) {
     final splitValues = value.splitTrimAndFilterUnique(separator: ';');
     if (splitValues.isEmpty) {
-      throw FormatException('Value cannot be empty');
+      throw const FormatException('Value cannot be empty');
     }
 
     int? maxAge;
     bool includeSubDomains = false;
     bool preload = false;
 
-    for (var directive in splitValues) {
+    for (final directive in splitValues) {
       if (directive.startsWith(_maxAgePrefix)) {
         maxAge = int.tryParse(directive.substring(_maxAgePrefix.length));
       } else if (directive == _includeSubDomains) {
@@ -56,7 +56,7 @@ final class StrictTransportSecurityHeader {
     }
 
     if (maxAge == null) {
-      throw FormatException('Max-age directive is missing or invalid');
+      throw const FormatException('Max-age directive is missing or invalid');
     }
 
     return StrictTransportSecurityHeader(

@@ -15,12 +15,12 @@ extension StringListExtensions on Iterable<String> {
   ///
   /// The default separator is comma (",").
   Iterable<String> splitTrimAndFilterUnique({
-    String separator = ',',
-    bool emptyCheck = true,
+    final String separator = ',',
+    final bool emptyCheck = true,
   }) {
-    var filtered = expand((element) => element.split(separator))
-        .map((el) => el.trim())
-        .where((e) => !emptyCheck || e.isNotEmpty);
+    final filtered = expand((final element) => element.split(separator))
+        .map((final el) => el.trim())
+        .where((final e) => !emptyCheck || e.isNotEmpty);
     return LinkedHashSet<String>.from(filtered);
   }
 }
@@ -40,13 +40,13 @@ extension StringExtensions on String {
   ///
   /// The default separator is comma (",").
   Iterable<String> splitTrimAndFilterUnique({
-    String separator = ',',
-    bool emptyCheck = true,
-    bool noTrim = false,
+    final String separator = ',',
+    final bool emptyCheck = true,
+    final bool noTrim = false,
   }) {
-    var filtered = split(separator)
-        .map((el) => noTrim ? el : el.trim())
-        .where((e) => !emptyCheck || e.isNotEmpty);
+    final filtered = split(separator)
+        .map((final el) => noTrim ? el : el.trim())
+        .where((final e) => !emptyCheck || e.isNotEmpty);
     return LinkedHashSet<String>.from(filtered);
   }
 

@@ -1,14 +1,14 @@
-import "package:relic/relic.dart";
-import 'package:relic/src/headers/extension/string_list_extensions.dart';
-import 'package:relic/src/headers/typed/headers/util/cookie_util.dart';
 import 'package:collection/collection.dart';
+import '../../../../relic.dart';
+import '../../extension/string_list_extensions.dart';
+import 'util/cookie_util.dart';
 
 /// A class representing the HTTP Cookie header.
 ///
 /// This class manages the parsing and representation of cookies.
 final class CookieHeader {
   static const codec = HeaderCodec.single(CookieHeader.parse, __encode);
-  static List<String> __encode(CookieHeader value) => [value._encode()];
+  static List<String> __encode(final CookieHeader value) => [value._encode()];
 
   /// The list of cookies.
   final List<Cookie> cookies;
@@ -19,33 +19,35 @@ final class CookieHeader {
   /// Parses the Cookie header value and returns a [CookieHeader] instance.
   ///
   /// This method processes the header value, extracting the cookies into a list.
-  factory CookieHeader.parse(String value) {
+  factory CookieHeader.parse(final String value) {
     if (value.isEmpty) {
-      throw FormatException('Value cannot be empty');
+      throw const FormatException('Value cannot be empty');
     }
 
     final splitValues = value.splitTrimAndFilterUnique(separator: ';');
 
     final cookies = splitValues.map(Cookie.parse).toList();
-    var names = cookies.map((cookie) => cookie.name.toLowerCase()).toList();
-    var uniqueNames = names.toSet();
+    final names =
+        cookies.map((final cookie) => cookie.name.toLowerCase()).toList();
+    final uniqueNames = names.toSet();
 
     if (names.length != uniqueNames.length) {
-      throw FormatException('Supplied multiple Name and Value attributes');
+      throw const FormatException(
+          'Supplied multiple Name and Value attributes');
     }
 
     return CookieHeader(cookies: cookies);
   }
 
-  Cookie? getCookie(String name) {
-    return cookies.firstWhereOrNull((cookie) => cookie.name == name);
+  Cookie? getCookie(final String name) {
+    return cookies.firstWhereOrNull((final cookie) => cookie.name == name);
   }
 
   /// Converts the [CookieHeader] instance into a string representation
   /// suitable for HTTP headers.
 
   String _encode() {
-    return cookies.map((cookie) => cookie._encode()).join('; ');
+    return cookies.map((final cookie) => cookie._encode()).join('; ');
   }
 
   @override
@@ -63,15 +65,15 @@ class Cookie {
   final String value;
 
   Cookie({
-    required String name,
-    required String value,
+    required final String name,
+    required final String value,
   })  : name = validateCookieName(name),
         value = validateCookieValue(value);
 
-  factory Cookie.parse(String value) {
-    var splitValue = value.split('=');
+  factory Cookie.parse(final String value) {
+    final splitValue = value.split('=');
     if (splitValue.length != 2) {
-      throw FormatException('Invalid cookie format');
+      throw const FormatException('Invalid cookie format');
     }
 
     return Cookie(

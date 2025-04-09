@@ -27,11 +27,11 @@ void main() {
             getServerRequestHeaders(
               server: server,
               headers: {'age': ''},
-              touchHeaders: (h) => h.age,
+              touchHeaders: (final h) => h.age,
             ),
             throwsA(
               isA<BadRequestException>().having(
-                (e) => e.message,
+                (final e) => e.message,
                 'message',
                 contains('Value cannot be empty'),
               ),
@@ -48,11 +48,11 @@ void main() {
             getServerRequestHeaders(
               server: server,
               headers: {'age': 'invalid'},
-              touchHeaders: (h) => h.age,
+              touchHeaders: (final h) => h.age,
             ),
             throwsA(
               isA<BadRequestException>().having(
-                (e) => e.message,
+                (final e) => e.message,
                 'message',
                 contains('Invalid number'),
               ),
@@ -69,11 +69,11 @@ void main() {
             getServerRequestHeaders(
               server: server,
               headers: {'age': '-3600'},
-              touchHeaders: (h) => h.age,
+              touchHeaders: (final h) => h.age,
             ),
             throwsA(
               isA<BadRequestException>().having(
-                (e) => e.message,
+                (final e) => e.message,
                 'message',
                 contains('Must be non-negative'),
               ),
@@ -90,11 +90,11 @@ void main() {
             getServerRequestHeaders(
               server: server,
               headers: {'age': '3.14'},
-              touchHeaders: (h) => h.age,
+              touchHeaders: (final h) => h.age,
             ),
             throwsA(
               isA<BadRequestException>().having(
-                (e) => e.message,
+                (final e) => e.message,
                 'message',
                 contains('Must be an integer'),
               ),
@@ -108,9 +108,9 @@ void main() {
         'then the server does not respond with a bad request if the headers '
         'is not actually used',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
-            touchHeaders: (_) {},
+            touchHeaders: (final _) {},
             headers: {'age': 'invalid-age-format'},
           );
 
@@ -121,10 +121,10 @@ void main() {
       test(
         'when a valid Age header is passed then it should parse the age correctly',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
             headers: {'age': '3600'},
-            touchHeaders: (h) => h.age,
+            touchHeaders: (final h) => h.age,
           );
 
           expect(headers.age, equals(3600));
@@ -135,10 +135,10 @@ void main() {
         'when an Age header with extra whitespace is passed then it should parse '
         'the age correctly',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
             headers: {'age': ' 3600 '},
-            touchHeaders: (h) => h.age,
+            touchHeaders: (final h) => h.age,
           );
 
           expect(headers.age, equals(3600));
@@ -148,10 +148,10 @@ void main() {
       test(
         'when no Age header is passed then it should return null',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
             headers: {},
-            touchHeaders: (h) => h.age,
+            touchHeaders: (final h) => h.age,
           );
 
           expect(headers.age, isNull);
@@ -173,9 +173,9 @@ void main() {
       test(
         'then it should return null',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
-            touchHeaders: (_) {},
+            touchHeaders: (final _) {},
             headers: {'age': ''},
           );
 
@@ -189,9 +189,9 @@ void main() {
       test(
         'then it should return null',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
-            touchHeaders: (_) {},
+            touchHeaders: (final _) {},
             headers: {'age': 'invalid'},
           );
 

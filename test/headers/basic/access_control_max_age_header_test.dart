@@ -28,11 +28,11 @@ void main() {
             getServerRequestHeaders(
               server: server,
               headers: {'access-control-max-age': ''},
-              touchHeaders: (h) => h.accessControlMaxAge,
+              touchHeaders: (final h) => h.accessControlMaxAge,
             ),
             throwsA(
               isA<BadRequestException>().having(
-                (e) => e.message,
+                (final e) => e.message,
                 'message',
                 contains('Value cannot be empty'),
               ),
@@ -49,11 +49,11 @@ void main() {
             getServerRequestHeaders(
               server: server,
               headers: {'access-control-max-age': 'invalid'},
-              touchHeaders: (h) => h.accessControlMaxAge,
+              touchHeaders: (final h) => h.accessControlMaxAge,
             ),
             throwsA(
               isA<BadRequestException>().having(
-                (e) => e.message,
+                (final e) => e.message,
                 'message',
                 contains('Invalid number'),
               ),
@@ -67,9 +67,9 @@ void main() {
         'then the server does not respond with a bad request if the headers '
         'is not actually used',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
-            touchHeaders: (_) {},
+            touchHeaders: (final _) {},
             headers: {'access-control-max-age': 'test'},
           );
 
@@ -80,10 +80,10 @@ void main() {
       test(
         'when a Access-Control-Max-Age header is passed then it should parse the value correctly',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
             headers: {'access-control-max-age': '600'},
-            touchHeaders: (h) => h.accessControlMaxAge,
+            touchHeaders: (final h) => h.accessControlMaxAge,
           );
 
           expect(headers.accessControlMaxAge, equals(600));
@@ -93,10 +93,10 @@ void main() {
       test(
         'when a Access-Control-Max-Age header with extra whitespace is passed then it should parse the value correctly',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
             headers: {'access-control-max-age': ' 600 '},
-            touchHeaders: (h) => h.accessControlMaxAge,
+            touchHeaders: (final h) => h.accessControlMaxAge,
           );
 
           expect(headers.accessControlMaxAge, equals(600));
@@ -106,10 +106,10 @@ void main() {
       test(
         'when no Access-Control-Max-Age header is passed then it should return null',
         () async {
-          var headers = await getServerRequestHeaders(
+          final headers = await getServerRequestHeaders(
             server: server,
             headers: {},
-            touchHeaders: (h) => h.accessControlMaxAge,
+            touchHeaders: (final h) => h.accessControlMaxAge,
           );
 
           expect(headers.accessControlMaxAge, isNull);
