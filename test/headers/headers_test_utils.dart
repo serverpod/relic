@@ -3,7 +3,8 @@ import 'dart:io';
 
 import 'package:http/http.dart' as http;
 import 'package:relic/relic.dart';
-import 'package:relic/src/adaptor/io/io_adaptor_factory.dart';
+import 'package:relic/src/adaptor/io/bind_http_server.dart';
+import 'package:relic/src/adaptor/io/io_adaptor.dart';
 import 'package:test/test.dart';
 
 /// Thrown when the server returns a 400 status code.
@@ -55,12 +56,12 @@ extension RelicServerTestEx on RelicServer {
 Future<RelicServer> createServer({
   required final bool strictHeaders,
 }) async {
-  for (final a in [
-    Address.loopback(isIpV6: true), // try IPv6 first
-    Address.loopback(), // .. fallback
+  for (final address in [
+    InternetAddress.loopbackIPv6,
+    InternetAddress.loopbackIPv4
   ]) {
     try {
-      final adaptor = await createIOAdaptor(address: a, port: 0);
+      final adaptor = IOAdaptor(await bindHttpServer(address));
       return RelicServer(adaptor, strictHeaders: strictHeaders);
     } on SocketException catch (_) {
       continue;
