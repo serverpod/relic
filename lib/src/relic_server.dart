@@ -1,9 +1,6 @@
 import 'dart:async';
 
 import 'adaptor/adaptor.dart';
-import 'adaptor/adaptor_factory.dart';
-import 'adaptor/address.dart';
-import 'adaptor/security_options.dart';
 import 'body/body.dart';
 import 'handler/handler.dart';
 import 'headers/exception/header_exception.dart';
@@ -33,30 +30,11 @@ class RelicServer {
   final String poweredByHeader;
 
   /// Creates a server with the given parameters.
-  static Future<RelicServer> createServer(
-    final Address address,
-    final int port, {
-    final SecurityOptions? security,
-    int? backlog,
-    final bool shared = false,
-    final bool strictHeaders = true,
+  RelicServer(
+    this.adaptor, {
+    this.strictHeaders = false,
     final String? poweredByHeader,
-  }) async {
-    backlog ??= 0;
-    final adaptor = await AdaptorFactory.create(
-      address: address,
-      port: port,
-      security: security,
-      backlog: backlog,
-      shared: shared,
-    );
-
-    return RelicServer._(
-      adaptor,
-      strictHeaders: strictHeaders,
-      poweredByHeader: poweredByHeader ?? defaultPoweredByHeader,
-    );
-  }
+  }) : poweredByHeader = poweredByHeader ?? defaultPoweredByHeader;
 
   /// Mounts a handler to the server and starts listening for requests.
   ///
@@ -73,13 +51,6 @@ class RelicServer {
 
   /// Close the server
   Future<void> close() async => await _subscription?.cancel();
-
-  /// Creates a server with the given parameters.
-  RelicServer._(
-    this.adaptor, {
-    required this.strictHeaders,
-    required this.poweredByHeader,
-  });
 
   /// Starts listening for requests.
   Future<void> _startListening() async {

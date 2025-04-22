@@ -7,17 +7,13 @@ import '../security_options.dart';
 import 'io_adaptor.dart';
 
 /// Create an IO adaptor
-///
-/// This function is used by the ServerAdaptorFactory when running on platforms
-/// that support dart:io.
-Future<Adaptor> createServerAdaptor({
+Future<Adaptor> createIOAdaptor({
   required final Address address,
   required final int port,
   final SecurityOptions? security,
   final int? backlog,
   final bool shared = false,
 }) async {
-  // Convert AddressType to io.InternetAddress
   final ioAddress = io.InternetAddress(address.address);
 
   final server = security == null

@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:http/http.dart' as http;
 import 'package:relic/relic.dart';
+import 'package:relic/src/adaptor/io/io_adaptor_factory.dart';
 import 'package:test/test.dart';
 
 /// Thrown when the server returns a 400 status code.
@@ -54,19 +55,18 @@ extension RelicServerTestEx on RelicServer {
 Future<RelicServer> createServer({
   required final bool strictHeaders,
 }) async {
-  try {
-    return await RelicServer.createServer(
-      Address.loopback(isIpV6: true),
-      0,
-      strictHeaders: strictHeaders,
-    );
-  } on SocketException catch (_) {
-    return await RelicServer.createServer(
-      Address.loopback(),
-      0,
-      strictHeaders: strictHeaders,
-    );
+  for (final a in [
+    Address.loopback(isIpV6: true), // try IPv6 first
+    Address.loopback(), // .. fallback
+  ]) {
+    try {
+      final adaptor = await createIOAdaptor(address: a, port: 0);
+      return RelicServer(adaptor, strictHeaders: strictHeaders);
+    } on SocketException catch (_) {
+      continue;
+    }
   }
+  throw ArgumentError('Failed to load');
 }
 
 /// Returns the headers from the server request if the server returns a 200

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'adaptor/address.dart';
+import 'adaptor/io/io_adaptor_factory.dart';
 import 'adaptor/security_options.dart';
 import 'handler/handler.dart';
 import 'relic_server.dart';
@@ -27,16 +28,12 @@ Future<RelicServer> serve(
   final bool strictHeaders = false,
   final String? poweredByHeader,
 }) async {
-  final server = await RelicServer.createServer(
-    address,
-    port,
-    security: security,
-    backlog: backlog,
-    shared: shared,
+  final adaptor = await createIOAdaptor(address: address, port: port);
+  final server = RelicServer(
+    adaptor,
     strictHeaders: strictHeaders,
     poweredByHeader: poweredByHeader,
   );
-
   await server.mountAndStart(handler);
   return server;
 }

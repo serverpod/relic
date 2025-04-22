@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'adaptor.dart';
 import 'address.dart';
-import 'io/io_implementation.dart';
+import 'io/io_adaptor_factory.dart';
 import 'security_options.dart';
 
 /// Factory for creating adaptors based on the current platform
@@ -19,7 +19,7 @@ abstract class AdaptorFactory {
     final bool shared = false,
   }) {
     // The import mechanism above will determine the right implementation
-    return createServerAdaptor(
+    return createIOAdaptor(
       address: address,
       port: port,
       security: security,
