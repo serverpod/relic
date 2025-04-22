@@ -5,6 +5,7 @@ export 'dart:io' show InternetAddress;
 
 /// Server adaptor abstractions for platform independence
 export 'src/adaptor/adaptor.dart';
+export 'src/adaptor/address.dart';
 
 /// Body related exports
 export 'src/body/body.dart' show Body;

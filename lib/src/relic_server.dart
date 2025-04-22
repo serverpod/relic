@@ -1,9 +1,9 @@
 import 'dart:async';
 
-import 'adaptor/address_type.dart';
+import 'adaptor/adaptor.dart';
+import 'adaptor/adaptor_factory.dart';
+import 'adaptor/address.dart';
 import 'adaptor/security_options.dart';
-import 'adaptor/server_adaptor.dart';
-import 'adaptor/server_adaptor_factory.dart';
 import 'body/body.dart';
 import 'handler/handler.dart';
 import 'headers/exception/header_exception.dart';
@@ -13,13 +13,13 @@ import 'message/request.dart';
 import 'message/response.dart';
 import 'util/util.dart';
 
-/// A server that uses a [ServerAdaptor] to handle HTTP requests.
+/// A server that uses a [Adaptor] to handle HTTP requests.
 class RelicServer {
   /// The default powered by header to use for responses.
   static const String defaultPoweredByHeader = 'Relic';
 
-  /// The underlying server adaptor.
-  final ServerAdaptor adaptor;
+  /// The underlying adaptor.
+  final Adaptor adaptor;
 
   /// Whether to enforce strict header parsing.
   final bool strictHeaders;
@@ -43,7 +43,7 @@ class RelicServer {
     final String? poweredByHeader,
   }) async {
     backlog ??= 0;
-    final adaptor = await ServerAdaptorFactory.create(
+    final adaptor = await AdaptorFactory.create(
       address: address,
       port: port,
       security: security,

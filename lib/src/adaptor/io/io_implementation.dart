@@ -1,16 +1,16 @@
 import 'dart:async';
 import 'dart:io' as io;
 
-import '../address_type.dart';
+import '../adaptor.dart';
+import '../address.dart';
 import '../security_options.dart';
-import '../server_adaptor.dart';
-import 'io_server_adaptor.dart';
+import 'io_adaptor.dart';
 
-/// Create an IO server adaptor
+/// Create an IO adaptor
 ///
 /// This function is used by the ServerAdaptorFactory when running on platforms
 /// that support dart:io.
-Future<ServerAdaptor> createServerAdaptor({
+Future<Adaptor> createServerAdaptor({
   required final Address address,
   required final int port,
   final SecurityOptions? security,
@@ -35,5 +35,5 @@ Future<ServerAdaptor> createServerAdaptor({
           shared: shared,
         );
 
-  return IOServerAdaptor(server);
+  return IOAdaptor(server);
 }

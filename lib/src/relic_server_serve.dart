@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'adaptor/address_type.dart';
+import 'adaptor/address.dart';
 import 'adaptor/security_options.dart';
 import 'handler/handler.dart';
 import 'relic_server.dart';

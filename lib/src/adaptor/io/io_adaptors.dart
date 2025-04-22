@@ -1,6 +1,6 @@
 import 'dart:io' as io;
 
-import '../address_type.dart';
+import '../address.dart';
 import '../security_options.dart';
 
 /// Extension to convert dart:io InternetAddress to AddressType

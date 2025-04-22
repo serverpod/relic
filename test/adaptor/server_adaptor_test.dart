@@ -18,7 +18,7 @@ void main() {
 
   tearDown(() => server.close());
 
-  group('Using the server adaptor abstraction', () {
+  group('Using the adaptor abstraction', () {
     test('it should handle basic requests', () async {
       // Create a URI using the port assigned by the OS
       final uri = Uri.parse('http://localhost:${server.adaptor.port}/');

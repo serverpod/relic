@@ -1,17 +1,17 @@
 import 'dart:async';
 
-import 'address_type.dart';
+import 'adaptor.dart';
+import 'address.dart';
 import 'io/io_implementation.dart';
 import 'security_options.dart';
-import 'server_adaptor.dart';
 
-/// Factory for creating server adaptors based on the current platform
-abstract class ServerAdaptorFactory {
-  /// Create a server adaptor
+/// Factory for creating adaptors based on the current platform
+abstract class AdaptorFactory {
+  /// Create an adaptor
   ///
-  /// This will create the appropriate server adaptor implementation
+  /// This will create the appropriate adaptor implementation
   /// based on the current platform.
-  static Future<ServerAdaptor> create({
+  static Future<Adaptor> create({
     required final Address address,
     required final int port,
     final SecurityOptions? security,

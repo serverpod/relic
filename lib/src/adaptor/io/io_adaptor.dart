@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io' as io;
 
 import '../../../relic.dart';
+import 'io_adaptors.dart';
 import 'request.dart';
 import 'response.dart';
 
@@ -22,11 +23,11 @@ class _IORequestContext implements RequestContext {
 }
 
 /// IO-specific implementation of ServerAdaptor using dart:io's HttpServer
-class IOServerAdaptor implements ServerAdaptor {
+class IOAdaptor implements Adaptor {
   final io.HttpServer _server;
 
   /// Creates a new IOServerAdaptor wrapping the given HttpServer
-  IOServerAdaptor(this._server);
+  IOAdaptor(this._server);
 
   @override
   late Stream<RequestContext> requests = _server.map(_IORequestContext.new);
