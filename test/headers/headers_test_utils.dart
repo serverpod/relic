@@ -60,7 +60,7 @@ Future<RelicServer> createServer({
   required final bool strictHeaders,
 }) async {
   for (final address in [
-    InternetAddress.loopbackIPv6,
+//    InternetAddress.loopbackIPv6,
     InternetAddress.loopbackIPv4
   ]) {
     try {
