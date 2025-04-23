@@ -30,11 +30,14 @@ extension RelicServerTestEx on RelicServer {
   /// actual request arrives, but for testing purposes we can infer a URL based
   /// on the server's address.
   Uri _inferUrl() {
+    final adaptor = this.adaptor;
+    if (adaptor is! IOAdaptor) throw ArgumentError();
+
     if (adaptor.address.isLoopback) {
       return Uri(scheme: 'http', host: 'localhost', port: adaptor.port);
     }
 
-    if (adaptor.address.isIpV6) {
+    if (adaptor.address.type == InternetAddressType.IPv6) {
       return Uri(
         scheme: 'http',
         host: '[${adaptor.address.address}]',

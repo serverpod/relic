@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:io' as io;
 
 import '../../../relic.dart';
-import 'io_adaptors.dart';
 import 'request.dart';
 import 'response.dart';
 
@@ -32,9 +31,7 @@ class IOAdaptor implements Adaptor {
   @override
   late Stream<RequestContext> requests = _server.map(_IORequestContext.new);
 
-  @override
-  Address get address => _server.address.toAddressType();
+  io.InternetAddress get address => _server.address;
 
-  @override
   int get port => _server.port;
 }

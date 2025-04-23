@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:meta/meta.dart';
 import 'package:relic/relic.dart';
@@ -38,6 +39,19 @@ final localhostUri = Uri.parse('http://localhost/');
 
 final isOhNoStateError =
     isA<StateError>().having((final e) => e.message, 'message', 'oh no');
+
+Future<RelicServer> testServe(
+  final Handler handler, {
+  final SecurityContext? context,
+  final String? poweredByHeader,
+}) =>
+    serve(
+      handler,
+      InternetAddress.loopbackIPv4,
+      0,
+      context: context,
+      poweredByHeader: poweredByHeader,
+    );
 
 /// Like [group], but takes a [variants] argument and creates a group for each
 /// variant.

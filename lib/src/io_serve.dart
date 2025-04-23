@@ -1,10 +1,8 @@
 import 'dart:async';
+import 'dart:io';
 
-import 'adaptor/address.dart';
 import 'adaptor/io/bind_http_server.dart';
 import 'adaptor/io/io_adaptor.dart';
-import 'adaptor/io/io_adaptors.dart';
-import 'adaptor/security_options.dart';
 import 'handler/handler.dart';
 import 'relic_server.dart';
 
@@ -22,18 +20,18 @@ import 'relic_server.dart';
 /// {@endtemplate}
 Future<RelicServer> serve(
   final Handler handler,
-  final Address address,
+  final InternetAddress address,
   final int port, {
-  final SecurityOptions? security,
+  final SecurityContext? context,
   final int? backlog,
   final bool shared = false,
   final bool strictHeaders = false,
   final String? poweredByHeader,
 }) async {
   final adaptor = IOAdaptor(await bindHttpServer(
-    address.toInternetAddress(),
+    address,
     port: port,
-    context: security?.toSecurityContext(),
+    context: context,
     backlog: backlog ?? 0,
     shared: shared,
   ));

@@ -2,7 +2,6 @@ import 'dart:async';
 
 import '../message/request.dart';
 import '../message/response.dart';
-import 'address.dart';
 
 /// An abstraction for the context of a request.
 abstract class RequestContext {
@@ -20,10 +19,4 @@ abstract class Adaptor {
   /// The request may be is accompanied by an adaptor specific [context]. If so, it
   /// must be passed back along with the response.
   Stream<RequestContext> get requests;
-
-  /// Address information (platform agnostic)
-  Address get address;
-
-  /// Port the server is listening on
-  int get port;
 }

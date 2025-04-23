@@ -11,6 +11,7 @@ import 'package:relic/src/headers/codecs/common_types_codecs.dart';
 import 'package:relic/src/headers/standard_headers_extensions.dart';
 import 'package:test/test.dart';
 
+import 'headers/headers_test_utils.dart';
 import 'ssl/ssl_certs.dart';
 import 'util/test_util.dart';
 
@@ -228,17 +229,14 @@ void main() {
 
   test('passes asynchronous exceptions to the parent error zone', () async {
     await runZonedGuarded(() async {
-      final server = await serve(
+      final server = await testServe(
         (final request) {
           Future(() => throw StateError('oh no'));
           return syncHandler(request);
         },
-        Address.loopback(),
-        0,
       );
 
-      final response =
-          await http.get(Uri.http('localhost:${server.adaptor.port}', '/'));
+      final response = await http.get(server.url);
       expect(response.statusCode, HttpStatus.ok);
       expect(response.body, 'Hello from /');
       await server.close();
@@ -249,18 +247,15 @@ void main() {
 
   test("doesn't pass asynchronous exceptions to the root error zone", () async {
     final response = await Zone.root.run(() async {
-      final server = await serve(
+      final server = await testServe(
         (final request) {
           Future(() => throw StateError('oh no'));
           return syncHandler(request);
         },
-        Address.loopback(),
-        0,
       );
 
       try {
-        return await http
-            .get(Uri.http('localhost:${server.adaptor.port}', '/'));
+        return await http.get(server.url);
       } finally {
         await server.close();
       }
@@ -359,10 +354,8 @@ void main() {
     });
 
     test('can be set at the server level', () async {
-      _server = await serve(
+      _server = await testServe(
         syncHandler,
-        Address.loopback(),
-        0,
         poweredByHeader: 'ourServer',
       );
       final response = await _get();
@@ -373,15 +366,13 @@ void main() {
     });
 
     test('defers to header in response when set at the server level', () async {
-      _server = await serve(
+      _server = await testServe(
         (final request) {
           return Response.ok(
             body: Body.fromString('test'),
             headers: Headers.build((final mh) => mh.xPoweredBy = 'myServer'),
           );
         },
-        Address.loopback(),
-        0,
         poweredByHeader: 'ourServer',
       );
 
@@ -465,7 +456,7 @@ void main() {
     final sslClient = HttpClient(context: securityContext);
 
     Future<HttpClientRequest> scheduleSecureGet() =>
-        sslClient.getUrl(Uri.https('localhost:${_server!.adaptor.port}', ''));
+        sslClient.getUrl(_server!.url.replace(scheme: 'https'));
 
     test('secure sync handler returns a value to the client', () async {
       await _scheduleServer(syncHandler, securityContext: securityContext);
@@ -489,10 +480,10 @@ void main() {
         'Hello from /',
       );
     });
-  }, skip: 'TODO: Support SecurityContext in a portable way');
+  });
 }
 
-int get _serverPort => _server!.adaptor.port;
+int get _serverPort => _server!.url.port;
 
 RelicServer? _server;
 
@@ -501,11 +492,9 @@ Future<void> _scheduleServer(
   final SecurityContext? securityContext,
 }) async {
   assert(_server == null);
-  _server = await serve(
+  _server = await testServe(
     handler,
-    Address.loopback(),
-    0,
-    //securityContext: securityContext,
+    context: securityContext,
   );
 }
 

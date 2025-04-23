@@ -4,6 +4,9 @@ import 'package:http/http.dart' as http;
 import 'package:relic/relic.dart';
 import 'package:test/test.dart';
 
+import '../headers/headers_test_utils.dart';
+import '../util/test_util.dart';
+
 void main() {
   tearDown(() async {
     final server = _server;
@@ -65,17 +68,13 @@ void main() {
   });
 }
 
-int get _serverPort => _server!.adaptor.port;
-
 RelicServer? _server;
 
 Future<void> _scheduleServer(final Handler handler) async {
   assert(_server == null);
-  _server = await serve(
+  _server = await testServe(
     handler,
-    Address.loopback(),
-    0,
-    //securityContext: securityContext,
+    // context: securityContext,
   );
 }
 
@@ -85,7 +84,7 @@ Future<http.Response> _get({
 }) async {
   final request = http.Request(
     RequestMethod.get.value,
-    Uri.http('localhost:$_serverPort', path),
+    _server!.url.replace(path: path),
   );
 
   if (headers != null) request.headers.addAll(headers);
