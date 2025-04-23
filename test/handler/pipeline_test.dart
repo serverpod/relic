@@ -28,11 +28,11 @@ void main() {
         return response;
       };
 
-  Response innerHandler(final Request request) {
+  Handler innerHandler = respondWith((final Request request) {
     expect(accessLocation, 2);
     accessLocation = 3;
     return syncHandler(request);
-  }
+  });
 
   test(
       'Given a pipeline with middlewareA and middlewareB when a request is processed then it completes with accessLocation 5',

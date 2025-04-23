@@ -7,25 +7,25 @@ void main() {
   group('Given a cascade with several handlers', () {
     late Handler handler;
     setUp(() {
-      handler = Cascade().add((final request) {
+      handler = Cascade().add(respondWith((final request) {
         if (request.headers['one']?.first == 'false') {
           return Response.notFound(body: Body.fromString('handler 1'));
         } else {
           return Response.ok(body: Body.fromString('handler 1'));
         }
-      }).add((final request) {
+      })).add(respondWith((final request) {
         if (request.headers['two']?.first == 'false') {
           return Response.notFound(body: Body.fromString('handler 2'));
         } else {
           return Response.ok(body: Body.fromString('handler 2'));
         }
-      }).add((final request) {
+      })).add(respondWith((final request) {
         if (request.headers['three']?.first == 'false') {
           return Response.notFound(body: Body.fromString('handler 3'));
         } else {
           return Response.ok(body: Body.fromString('handler 3'));
         }
-      }).handler;
+      })).handler;
     });
 
     test(
@@ -39,7 +39,8 @@ void main() {
     test(
         'when a request with header "one: false" is processed then the second response should be returned',
         () async {
-      final response = await handler(
+      final response = await makeSimpleRequest(
+        handler,
         Request(
           RequestMethod.get,
           localhostUri,
@@ -53,7 +54,8 @@ void main() {
     test(
         'when a request with headers "one: false" and "two: false" is processed then the third response should be returned',
         () async {
-      final response = await handler(
+      final response = await makeSimpleRequest(
+        handler,
         Request(
           RequestMethod.get,
           localhostUri,
@@ -71,7 +73,8 @@ void main() {
     test(
         'when a request with headers "one: false", "two: false", and "three: false" is processed then a 404 response should be returned',
         () async {
-      final response = await handler(
+      final response = await makeSimpleRequest(
+        handler,
         Request(
           RequestMethod.get,
           localhostUri,
@@ -91,9 +94,10 @@ void main() {
       'Given a cascade with a 404 response when processed then it triggers the next handler',
       () async {
     final handler = Cascade()
-        .add((final _) =>
-            Response.notFound(body: Body.fromString(('handler 1'))))
-        .add((final _) => Response.ok(body: Body.fromString('handler 2')))
+        .add(respondWith((final _) =>
+            Response.notFound(body: Body.fromString(('handler 1')))))
+        .add(respondWith(
+            (final _) => Response.ok(body: Body.fromString('handler 2'))))
         .handler;
 
     final response = await makeSimpleRequest(handler);
@@ -105,8 +109,9 @@ void main() {
       'Given a cascade with a 405 response when processed then it triggers the next handler',
       () async {
     final handler = Cascade()
-        .add((final _) => Response(405))
-        .add((final _) => Response.ok(body: Body.fromString('handler 2')))
+        .add(respondWith((final _) => Response(405)))
+        .add(respondWith(
+            (final _) => Response.ok(body: Body.fromString('handler 2'))))
         .handler;
 
     final response = await makeSimpleRequest(handler);
@@ -118,11 +123,13 @@ void main() {
       'Given a cascade with specific statusCodes when processed then it controls which statuses cause cascading',
       () async {
     final handler = Cascade(statusCodes: [302, 403])
-        .add((final _) => Response.found(Uri.parse('/')))
-        .add(
-            (final _) => Response.forbidden(body: Body.fromString('handler 2')))
-        .add((final _) => Response.notFound(body: Body.fromString('handler 3')))
-        .add((final _) => Response.ok(body: Body.fromString('handler 4')))
+        .add(respondWith((final _) => Response.found(Uri.parse('/'))))
+        .add(respondWith((final _) =>
+            Response.forbidden(body: Body.fromString('handler 2'))))
+        .add(respondWith(
+            (final _) => Response.notFound(body: Body.fromString('handler 3'))))
+        .add(respondWith(
+            (final _) => Response.ok(body: Body.fromString('handler 4'))))
         .handler;
 
     final response = await makeSimpleRequest(handler);
@@ -135,11 +142,14 @@ void main() {
       () async {
     final handler = Cascade(
             shouldCascade: (final response) => response.statusCode.isOdd)
-        .add((final _) => Response.movedPermanently(Uri.parse('/')))
         .add(
-            (final _) => Response.forbidden(body: Body.fromString('handler 2')))
-        .add((final _) => Response.notFound(body: Body.fromString('handler 3')))
-        .add((final _) => Response.ok(body: Body.fromString('handler 4')))
+            respondWith((final _) => Response.movedPermanently(Uri.parse('/'))))
+        .add(respondWith((final _) =>
+            Response.forbidden(body: Body.fromString('handler 2'))))
+        .add(respondWith(
+            (final _) => Response.notFound(body: Body.fromString('handler 3'))))
+        .add(respondWith(
+            (final _) => Response.ok(body: Body.fromString('handler 4'))))
         .handler;
 
     final response = await makeSimpleRequest(handler);

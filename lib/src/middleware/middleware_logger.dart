@@ -1,7 +1,5 @@
-import 'dart:async';
-
+import '../adaptor/context.dart';
 import '../logger/logger.dart';
-import '../message/request.dart';
 import '../method/request_method.dart';
 import 'middleware.dart';
 
@@ -21,47 +19,42 @@ Middleware logRequests({
     (final innerHandler) {
       final localLogger = logger ?? logMessage;
 
-      return (final request) {
+      return (final request) async {
         final startTime = DateTime.now();
         final watch = Stopwatch()..start();
 
-        return Future.sync(
-          () => innerHandler(request),
-        ).then(
-          (final response) {
-            final msg = _message(
-              startTime,
-              response.statusCode,
-              request.requestedUri,
-              request.method.value,
-              watch.elapsed,
-            );
+        try {
+          final newCtx = await innerHandler(request);
+          final msg = switch (newCtx) {
+            final ResponseContext rc => _message(
+                startTime,
+                rc.response.statusCode,
+                rc.request.requestedUri,
+                rc.request.method.value,
+                watch.elapsed,
+              ),
+            final HijackContext hc => '$hc', // TODO
+            final NewContext nc => '$nc', // TODO
+          };
+          localLogger(msg);
+          return newCtx;
+        } catch (error, stackTrace) {
+          final msg = _errorMessage(
+            startTime,
+            request.request.requestedUri,
+            request.request.method,
+            watch.elapsed,
+            error,
+          );
 
-            localLogger(msg);
+          localLogger(
+            msg,
+            type: LoggerType.error,
+            stackTrace: stackTrace,
+          );
 
-            return response;
-          },
-          onError: (final Object error, final StackTrace stackTrace) {
-            if (error is HijackException) throw error;
-
-            final msg = _errorMessage(
-              startTime,
-              request.requestedUri,
-              request.method,
-              watch.elapsed,
-              error,
-            );
-
-            localLogger(
-              msg,
-              type: LoggerType.error,
-              stackTrace: stackTrace,
-            );
-
-            // ignore: only_throw_errors
-            throw error;
-          },
-        );
+          rethrow;
+        }
       };
     };
 

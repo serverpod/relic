@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import '../adaptor/context.dart';
 import '../message/request.dart';
 import '../message/response.dart';
 
@@ -15,7 +16,12 @@ import '../message/response.dart';
 /// may have been touched by other middleware. Similarly, the response may be
 /// directly returned by an HTTP server or have further processing done by other
 /// middleware.
-typedef Handler = FutureOr<Response> Function(Request request);
+typedef Handler = FutureOr<RequestContext> Function(RequestContext ctx);
+
+typedef ResponseHandler = FutureOr<ResponseContext> Function(
+    RespondableContext ctx);
+
+typedef HijackHandler = FutureOr<HijackContext> Function(HijackableContext ctx);
 
 /// A function which handles exceptions.
 ///
@@ -26,3 +32,21 @@ typedef ExceptionHandler = FutureOr<Response> Function(
   Object error,
   StackTrace stackTrace,
 );
+
+typedef Responder = FutureOr<Response> Function(Request);
+
+Handler respondWith(final Responder responder) {
+  return (final ctx) async {
+    return switch (ctx) {
+      final RespondableContext rc =>
+        rc.withResponse(await responder(rc.request)),
+      _ => throw ArgumentError(ctx.runtimeType),
+    };
+  };
+}
+
+HijackHandler hijack(final HijackCallback callback) {
+  return (final ctx) {
+    return ctx.hijack(callback);
+  };
+}

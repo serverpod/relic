@@ -1,5 +1,4 @@
-import 'dart:async';
-
+import '../adaptor/context.dart';
 import '../message/response.dart';
 import 'handler.dart';
 
@@ -70,12 +69,13 @@ class Cascade {
           'handlers.');
     }
 
-    return (final request) {
-      if (_parent!._handler == null) return handler(request);
-      return Future.sync(() => _parent.handler(request)).then((final response) {
-        if (_shouldCascade(response)) return handler(request);
-        return response;
-      });
+    return (final ctx) async {
+      if (_parent!._handler == null) return handler(ctx);
+      final newCtx = await _parent.handler(ctx);
+      if (newCtx is ResponseContext && _shouldCascade(newCtx.response)) {
+        return handler(ctx);
+      }
+      return newCtx;
     };
   }
 }

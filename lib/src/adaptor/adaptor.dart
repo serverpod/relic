@@ -3,16 +3,15 @@ import 'dart:async';
 import '../message/request.dart';
 import '../message/response.dart';
 
-/// An abstraction for the context of a request.
-abstract class RequestContext {
-  Request get request;
-  Future<void> respond(final Response response);
+abstract class AdaptorRequest {
+  Request toRequest();
 }
 
-/// An abstraction for adaptors that can produce HTTP requests and consume responses.
 abstract class Adaptor {
-  /// The producer of [requests].
-  Stream<RequestContext> get requests;
+  Stream<AdaptorRequest> get requests;
+  Future<void> respond(final AdaptorRequest request, final Response response);
+  Future<void> hijack(
+      final AdaptorRequest request, final HijackCallback callback);
 
   /// Gracefully close this [Adaptor].
   Future<void> close();

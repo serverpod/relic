@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'adaptor/adaptor.dart';
+import 'adaptor/context.dart';
 import 'body/body.dart';
 import 'handler/handler.dart';
 import 'headers/exception/header_exception.dart';
@@ -24,7 +25,7 @@ class RelicServer {
   /// Whether [mountAndStart] has been called.
   Handler? _handler;
 
-  StreamSubscription<RequestContext>? _subscription;
+  StreamSubscription<AdaptorRequest>? _subscription;
 
   /// The powered by header to use for responses.
   final String poweredByHeader;
@@ -73,92 +74,72 @@ class RelicServer {
     });
   }
 
-  Future<void> _handleRequest(final RequestContext requestContext) async {
+  Future<void> _handleRequest(final AdaptorRequest adaptorRequest) async {
     // Wrap the handler with our middleware
     late Request request;
     try {
-      request = requestContext.request;
+      request = adaptorRequest.toRequest();
     } catch (error, stackTrace) {
       logMessage(
         'Error reading request.\n$error',
         stackTrace: stackTrace,
         type: LoggerType.error,
       );
-      await requestContext.respond(Response.badRequest());
+      await adaptor.respond(adaptorRequest, Response.badRequest());
       return;
     }
 
-    Response? response;
     try {
-      response = await _handler!(request);
-    } on HijackException catch (error, stackTrace) {
-      // If the request is already hijacked, meaning it's being handled by
-      // another handler, like a websocket, then don't respond with an error.
-      if (request.isHijacked) return;
-      _logError(
-        request,
-        'HijackException raised, but request not hijacked.\n$error',
-        stackTrace,
-      );
+      final ctx = adaptorRequest.toRequest().toContext();
+      final newCtx = await _handler!(ctx);
+      return switch (newCtx) {
+        final ResponseContext rc =>
+          adaptor.respond(adaptorRequest, rc.response),
+        final HijackContext hc => adaptor.hijack(adaptorRequest, hc.callback),
+        NewContext _ => adaptor.respond(adaptorRequest, Response.notFound()),
+      };
     } catch (error, stackTrace) {
       _logError(
         request,
         'Unhandled error in mounted handler.\n$error',
         stackTrace,
       );
-    }
-
-    if (response == null) {
-      await requestContext.respond(Response.internalServerError());
+      await adaptor.respond(adaptorRequest, Response.internalServerError());
       return;
     }
-
-    if (request.isHijacked) {
-      throw StateError(
-        'The request has been hijacked by another handler (e.g., a WebSocket) '
-        'but the HijackException was never thrown. If a request is hijacked '
-        'then a HijackException is expected to be thrown.',
-      );
-    }
-
-    await requestContext.respond(response);
   }
 
   /// Wraps a handler with middleware for error handling, header normalization, etc.
   Handler _wrapHandlerWithMiddleware(final Handler handler) {
     return (final request) async {
-      Response? response;
       try {
-        response = await handler(request);
-
-        // If the response doesn't have a powered-by or date header, add the default ones
-        response = response.copyWith(
-          headers: response.headers.transform((final mh) {
-            mh.xPoweredBy ??= poweredByHeader;
-            mh.date ??= DateTime.now();
-          }),
-        );
-
-        return response;
-      } on HijackException {
-        rethrow;
+        final newCtx = await handler(request);
+        return switch (newCtx) {
+          final ResponseContext rc =>
+            // If the response doesn't have a powered-by or date header, add the default ones
+            rc.withResponse(
+              rc.response.copyWith(headers: rc.response.headers.transform(
+                (final mh) {
+                  mh.xPoweredBy ??= poweredByHeader;
+                  mh.date ??= DateTime.now();
+                },
+              )),
+            ),
+          _ => newCtx,
+        };
       } on HeaderException catch (error, stackTrace) {
         // If the request headers are invalid, respond with a 400 Bad Request status.
         _logError(
-          request,
+          request.request,
           'Error parsing request headers.\n$error',
           stackTrace,
         );
-        return Response.badRequest(
-          body: Body.fromString(error.httpResponseBody),
-        );
-      } catch (error, stackTrace) {
-        _logError(
-          request,
-          'Error thrown by handler.\n$error',
-          stackTrace,
-        );
-        return Response.internalServerError();
+        return switch (request) {
+          final RespondableContext rc => rc.withResponse(Response.badRequest(
+              body: Body.fromString(error.httpResponseBody),
+            )),
+          _ => request,
+        };
       }
     };
   }

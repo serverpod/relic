@@ -17,23 +17,14 @@ Request fromHttpRequest(
     RequestMethod.parse(request.method),
     request.requestedUri,
     protocolVersion: request.protocolVersion,
-    headers: headersFromHttpRequest(
-      request,
-      strict: strictHeaders,
-      xPoweredBy: poweredByHeader,
-    ),
+    headers: headersFromHttpRequest(request),
     body: bodyFromHttpRequest(request),
     onHijack: (final callback) => onHijack(request.response, callback),
     context: {},
   );
 }
 
-Headers headersFromHttpRequest(
-  final io.HttpRequest request, {
-  final bool strict = false,
-  required final String? xPoweredBy,
-  final DateTime? date,
-}) {
+Headers headersFromHttpRequest(final io.HttpRequest request) {
   return Headers.build((final mh) {
     request.headers.forEach((final k, final v) => mh[k] = v);
   });

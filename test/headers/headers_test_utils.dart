@@ -83,11 +83,11 @@ Future<Headers> getServerRequestHeaders({
   var requestHeaders = Headers.empty();
 
   await server.mountAndStart(
-    (final Request request) {
+    respondWith((final Request request) {
       requestHeaders = request.headers;
       touchHeaders(requestHeaders);
       return Response.ok();
-    },
+    }),
   );
 
   final response = await http.get(server.url, headers: headers);

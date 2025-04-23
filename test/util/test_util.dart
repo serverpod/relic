@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:meta/meta.dart';
 import 'package:relic/relic.dart';
+import 'package:relic/src/adaptor/context.dart';
 import 'package:test/test.dart';
 
 final helloBytes = utf8.encode('hello,');
@@ -16,13 +17,12 @@ final Matcher throwsHijackException = throwsA(isA<HijackException>());
 ///
 /// By default, replies with a status code 200, empty headers, and
 /// `Hello from ${request.url.path}`.
-Response syncHandler(final Request request,
-    {final int? statusCode, final Headers? headers}) {
-  return Response(
-    statusCode ?? 200,
-    headers: headers ?? Headers.empty(),
-    body: Body.fromString('Hello from ${request.requestedUri.path}'),
-  );
+Handler syncHandler({final int? statusCode, final Headers? headers}) {
+  return respondWith((final Request request) => Response(
+        statusCode ?? 200,
+        headers: headers ?? Headers.empty(),
+        body: Body.fromString('Hello from ${request.requestedUri.path}'),
+      ));
 }
 
 /// Calls [syncHandler] and wraps the response in a [Future].
@@ -30,10 +30,14 @@ Future<Response> asyncHandler(final Request request) =>
     Future(() => syncHandler(request));
 
 /// Makes a simple GET request to [handler] and returns the result.
-Future<Response> makeSimpleRequest(final Handler handler) =>
-    Future.sync(() => handler(_request));
+Future<Response> makeSimpleRequest(final Handler handler,
+    [final Request? request]) async {
+  final newCtx = await handler((request ?? _defaultRequest).toContext());
+  if (newCtx is! ResponseContext) throw ArgumentError(newCtx);
+  return newCtx.response;
+}
 
-final _request = Request(RequestMethod.get, localhostUri);
+final _defaultRequest = Request(RequestMethod.get, localhostUri);
 
 final localhostUri = Uri.parse('http://localhost/');
 

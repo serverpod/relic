@@ -27,7 +27,7 @@ void main() {
         'then it returns a 400 Bad Request response with exception message '
         'included in the response body', () async {
       await _scheduleServer(
-        (final Request request) => throw const InvalidHeaderException(
+        (final _) => throw const InvalidHeaderException(
           'Value cannot be empty',
           headerType: 'test',
         ),
@@ -41,7 +41,7 @@ void main() {
         'when a handler throws an UnimplementedError '
         'then it returns a 500 Internal Server Error response', () async {
       await _scheduleServer(
-        (final Request request) => throw UnimplementedError(),
+        (final _) => throw UnimplementedError(),
       );
       final response = await _get();
       expect(response.statusCode, 500);
@@ -51,7 +51,7 @@ void main() {
     test(
         'when a handler throws an Exception '
         'then it returns a 500 Internal Server Error response', () async {
-      await _scheduleServer((final Request request) => throw Exception());
+      await _scheduleServer((final _) => throw Exception());
       final response = await _get();
       expect(response.statusCode, 500);
       expect(response.body, 'Internal Server Error');
@@ -60,7 +60,7 @@ void main() {
     test(
         'when a handler throws an Error '
         'then it returns a 500 Internal Server Error response', () async {
-      await _scheduleServer((final Request request) => throw Error());
+      await _scheduleServer((final _) => throw Error());
       final response = await _get();
       expect(response.statusCode, 500);
       expect(response.body, 'Internal Server Error');

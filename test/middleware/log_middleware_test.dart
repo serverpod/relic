@@ -28,7 +28,7 @@ void main() {
       () async {
     final handler = const Pipeline()
         .addMiddleware(logRequests(logger: logger))
-        .addHandler(syncHandler);
+        .addHandler(respondWith(syncHandler));
 
     await makeSimpleRequest(handler);
     expect(gotLog, isTrue);
@@ -39,7 +39,7 @@ void main() {
       () async {
     final handler = const Pipeline()
         .addMiddleware(logRequests(logger: logger))
-        .addHandler(asyncHandler);
+        .addHandler(respondWith(asyncHandler));
 
     await makeSimpleRequest(handler);
     expect(gotLog, isTrue);

@@ -21,8 +21,9 @@ void main() async {
 }
 
 Future<void> _serve() async {
-  final handler =
-      const Pipeline().addMiddleware(logRequests()).addHandler(_echoRequest);
+  final handler = const Pipeline()
+      .addMiddleware(logRequests())
+      .addHandler(respondWith(_echoRequest));
   await serve(handler, InternetAddress.anyIPv4, 8080, shared: true);
   print('serving on ${Isolate.current.debugName}');
 }
