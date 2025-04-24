@@ -55,7 +55,7 @@ class RelicServer {
   /// Starts listening for requests.
   Future<void> _startListening() async {
     catchTopLevelErrors(() {
-      adaptor.requests.listen(_handleRequest);
+      _subscription = adaptor.requests.listen(_handleRequest);
     }, (final error, final stackTrace) {
       logMessage(
         'Asynchronous error\n$error',
