@@ -10,8 +10,6 @@ import 'message.dart';
 
 part '../hijack/hijack.dart';
 
-class ConnectionInfo {}
-
 /// An exception used to indicate that a request has been hijacked.
 ///
 /// This shouldn't be captured by any code other than the relic server adapter that
@@ -68,9 +66,6 @@ class Request extends Message {
 
   /// The original [Uri] for the request.
   final Uri requestedUri;
-
-  /// The [ConnectionInfo] info associated with this request, if available.
-  final ConnectionInfo? connectionInfo;
 
   /// The callback wrapper for hijacking this request.
   ///
@@ -139,7 +134,6 @@ class Request extends Message {
   Request(
     final RequestMethod method,
     final Uri requestedUri, {
-    final ConnectionInfo? connectionInfo,
     final String? protocolVersion,
     final Headers? headers,
     final String? handlerPath,
@@ -150,7 +144,6 @@ class Request extends Message {
   }) : this._(
           method,
           requestedUri,
-          connectionInfo,
           headers ?? Headers.empty(),
           protocolVersion: protocolVersion,
           url: url,
@@ -169,7 +162,6 @@ class Request extends Message {
   Request._(
     this.method,
     this.requestedUri,
-    this.connectionInfo,
     final Headers headers, {
     final String? protocolVersion,
     final String? handlerPath,
@@ -270,7 +262,6 @@ class Request extends Message {
     return Request._(
       method,
       requestedUri ?? this.requestedUri,
-      connectionInfo,
       headers ?? this.headers,
       protocolVersion: protocolVersion,
       handlerPath: handlerPath,

@@ -430,23 +430,6 @@ void main() {
     expect(stream.hasNext, completion(isFalse));
   }, skip: 'TODO: Find another way to probagate buffer_output');
 
-  test('includes the dart:io HttpConnectionInfo in request', () async {
-    await _scheduleServer((final request) {
-      expect(request.connectionInfo, isNotNull);
-
-      // ignore: unused_local_variable
-      final connectionInfo = request.connectionInfo!;
-      /* TODO:
-      expect(connectionInfo.remoteAddress, equals(_server!.address));
-      expect(connectionInfo.localPort, equals(_server!.port));
-      */
-      return syncHandler(request);
-    });
-
-    final response = await _get();
-    expect(response.statusCode, HttpStatus.ok);
-  });
-
   group('ssl tests', () {
     final securityContext = SecurityContext()
       ..setTrustedCertificatesBytes(certChainBytes)

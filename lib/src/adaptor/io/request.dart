@@ -16,7 +16,6 @@ Request fromHttpRequest(
   return Request(
     RequestMethod.parse(request.method),
     request.requestedUri,
-    connectionInfo: request.connectionInfo?.toConnectionInfo(),
     protocolVersion: request.protocolVersion,
     headers: headersFromHttpRequest(
       request,
@@ -27,10 +26,6 @@ Request fromHttpRequest(
     onHijack: (final callback) => onHijack(request.response, callback),
     context: {},
   );
-}
-
-extension on io.HttpConnectionInfo {
-  ConnectionInfo toConnectionInfo() => ConnectionInfo(); // TODO: Implement this
 }
 
 Headers headersFromHttpRequest(
