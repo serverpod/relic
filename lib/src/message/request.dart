@@ -1,5 +1,3 @@
-import 'dart:io' as io;
-
 import 'package:stream_channel/stream_channel.dart';
 
 import '../body/body.dart';

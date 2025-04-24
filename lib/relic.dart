@@ -14,7 +14,7 @@ export 'src/headers/headers.dart';
 export 'src/headers/typed/typed_headers.dart';
 export 'src/io/static/static_handler.dart';
 export 'src/io_serve.dart';
-export 'src/message/request.dart' show Request, HijackException;
+export 'src/message/request.dart' show Request;
 export 'src/message/response.dart' show Response;
 export 'src/method/request_method.dart' show RequestMethod;
 export 'src/middleware/middleware.dart' show Middleware, createMiddleware;

@@ -21,21 +21,22 @@ class IOAdaptor extends Adaptor {
 
   @override
   Future<void> respond(
-    covariant final _IOAdaptorRequest request,
+    final AdaptorRequest request,
     final Response response,
   ) async {
-    final httpResponse = request._httpRequest.response;
+    final httpResponse = (request as _IOAdaptorRequest)._httpRequest.response;
     await response.writeHttpResponse(httpResponse);
   }
 
   @override
   Future<void> hijack(
-    covariant final _IOAdaptorRequest request,
+    final AdaptorRequest request,
     final HijackCallback callback,
   ) async {
-    final socket = await request._httpRequest.response.detachSocket(
-      writeHeaders: false,
-    );
+    final socket = await (request as _IOAdaptorRequest)
+        ._httpRequest
+        .response
+        .detachSocket(writeHeaders: false);
     callback(StreamChannel(socket, socket));
   }
 

@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'dart:io' as io;
 
 import '../../../relic.dart';
-import '../../message/request.dart';
 
 /// Creates a new [Request] from an [io.HttpRequest].
 ///
