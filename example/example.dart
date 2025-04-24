@@ -16,7 +16,7 @@ void main() async {
   await ProcessSignal.sigint.watch().first;
 
   for (final i in isolates) {
-    i.kill();
+    i.kill(priority: Isolate.immediate);
   }
 }
 

@@ -72,10 +72,7 @@ RelicServer? _server;
 
 Future<void> _scheduleServer(final Handler handler) async {
   assert(_server == null);
-  _server = await testServe(
-    handler,
-    // context: securityContext,
-  );
+  _server = await testServe(handler);
 }
 
 Future<http.Response> _get({
