@@ -34,4 +34,7 @@ class IOAdaptor implements Adaptor {
   io.InternetAddress get address => _server.address;
 
   int get port => _server.port;
+
+  @override
+  Future<void> close() => _server.close(force: true);
 }

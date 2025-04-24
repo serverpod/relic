@@ -13,10 +13,13 @@ abstract class RequestContext {
 abstract class Adaptor {
   /// The producer of [requests].
   ///
-  /// For each request a [Response] must be produced and passed to the
-  /// [responses] consumer.
+  /// For each request a [Response] must be produced and passed to this
+  /// adaptor
   ///
   /// The request may be is accompanied by an adaptor specific [context]. If so, it
   /// must be passed back along with the response.
   Stream<RequestContext> get requests;
+
+  /// Gracefully close this [Adaptor].
+  Future<void> close();
 }

@@ -50,7 +50,15 @@ class RelicServer {
   }
 
   /// Close the server
-  Future<void> close() async => await _subscription?.cancel();
+  Future<void> close() async {
+    await _stopListening();
+    await adaptor.close();
+  }
+
+  Future<void> _stopListening() async {
+    await _subscription?.cancel();
+    _handler = null;
+  }
 
   /// Starts listening for requests.
   Future<void> _startListening() async {
