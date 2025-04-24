@@ -36,7 +36,7 @@ class IOAdaptor extends Adaptor {
     final socket = await request._httpRequest.response.detachSocket(
       writeHeaders: false,
     );
-    callback(StreamChannel.withGuarantees(socket, socket));
+    callback(StreamChannel(socket, socket));
   }
 
   @override

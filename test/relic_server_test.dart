@@ -24,7 +24,7 @@ void main() {
     test(
         'when a valid HTTP request is made '
         'then it serves the request using the mounted handler', () async {
-      await server.mountAndStart(respondWith(syncHandler));
+      await server.mountAndStart(syncHandler);
       // Use toUri to ensure we have a valid Uri object
       final response = await http.read(server.url);
       expect(response, equals('Hello from /'));
@@ -33,7 +33,7 @@ void main() {
     test(
         'when a malformed HTTP request is made '
         'then it returns a 400 Bad Request response', () async {
-      await server.mountAndStart(respondWith(syncHandler));
+      await server.mountAndStart(syncHandler);
       final rs = await http
           .get(Uri.parse('${server.url}/%D0%C2%BD%A8%CE%C4%BC%FE%BC%D0.zip'));
       expect(rs.statusCode, 400);
@@ -45,7 +45,7 @@ void main() {
         'then it delays requests until a handler is mounted', () async {
       final delayedResponse = http.read(server.url);
       await Future<void>.delayed(Duration.zero);
-      await server.mountAndStart(respondWith(asyncHandler));
+      await server.mountAndStart(asyncHandler);
       expect(delayedResponse, completion(equals('Hello from /')));
     });
 

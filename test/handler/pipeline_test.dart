@@ -1,4 +1,5 @@
 import 'package:relic/relic.dart';
+import 'package:relic/src/adaptor/context.dart';
 import 'package:test/test.dart';
 
 import '../util/test_util.dart';
@@ -28,11 +29,11 @@ void main() {
         return response;
       };
 
-  Handler innerHandler = respondWith((final Request request) {
+  RequestContext innerHandler(final RequestContext request) {
     expect(accessLocation, 2);
     accessLocation = 3;
     return syncHandler(request);
-  });
+  }
 
   test(
       'Given a pipeline with middlewareA and middlewareB when a request is processed then it completes with accessLocation 5',

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:path/path.dart' as p;
 import 'package:relic/relic.dart';
+import 'package:relic/src/adaptor/context.dart';
 import 'package:relic/src/io/static/extension/datetime_extension.dart';
 import 'package:test/test.dart';
 
@@ -16,7 +17,10 @@ Future<Response> makeRequest(
   final RequestMethod method = RequestMethod.get,
 }) async {
   final rootedHandler = _rootHandler(handlerPath, handler);
-  return rootedHandler(_fromPath(path, headers, method: method));
+  final request = _fromPath(path, headers, method: method);
+  final ctx = await rootedHandler(request.toContext());
+  if (ctx is! ResponseContext) throw ArgumentError(ctx);
+  return ctx.response;
 }
 
 Request _fromPath(
@@ -35,19 +39,21 @@ Handler _rootHandler(final String? path, final Handler handler) {
     return handler;
   }
 
-  return (final Request request) {
+  return (final requestCtx) {
+    final ctx = requestCtx as RespondableContext;
+    final request = ctx.request;
     if (!_ctx.isWithin('/$path', request.requestedUri.path)) {
-      return Response.notFound(
+      return ctx.withResponse(Response.notFound(
         body: Body.fromString(
           'not found',
         ),
-      );
+      ));
     }
     assert(request.handlerPath == '/');
 
     final relativeRequest = request.copyWith(path: path);
 
-    return handler(relativeRequest);
+    return handler(relativeRequest.toContext());
   };
 }
 

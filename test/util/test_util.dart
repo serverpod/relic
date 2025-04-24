@@ -11,23 +11,33 @@ final helloBytes = utf8.encode('hello,');
 
 final worldBytes = utf8.encode(' world');
 
-final Matcher throwsHijackException = throwsA(isA<HijackException>());
+typedef SyncHandler = RequestContext Function(RequestContext);
 
-/// A simple, synchronous handler for [Request].
+/// A simple, synchronous handler.
 ///
 /// By default, replies with a status code 200, empty headers, and
-/// `Hello from ${request.url.path}`.
-Handler syncHandler({final int? statusCode, final Headers? headers}) {
-  return respondWith((final Request request) => Response(
-        statusCode ?? 200,
-        headers: headers ?? Headers.empty(),
-        body: Body.fromString('Hello from ${request.requestedUri.path}'),
-      ));
+/// `Hello from ${ctx.request.url.path}`.
+SyncHandler createSyncHandler(
+    {final int statusCode = 200, final Headers? headers, final Body? body}) {
+  return (final RequestContext ctx) {
+    return switch (ctx) {
+      final RespondableContext rc => rc.withResponse(Response(
+          statusCode,
+          headers: headers ?? Headers.empty(),
+          body: body ??
+              Body.fromString('Hello from ${ctx.request.requestedUri.path}'),
+        )),
+      _ => ctx,
+    };
+  };
 }
 
-/// Calls [syncHandler] and wraps the response in a [Future].
-Future<Response> asyncHandler(final Request request) =>
-    Future(() => syncHandler(request));
+final SyncHandler syncHandler = createSyncHandler();
+
+/// Calls [createSyncHandler] and wraps the response in a [Future].
+Future<RequestContext> asyncHandler(final RequestContext ctx) async {
+  return syncHandler(ctx);
+}
 
 /// Makes a simple GET request to [handler] and returns the result.
 Future<Response> makeSimpleRequest(final Handler handler,

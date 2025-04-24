@@ -28,7 +28,7 @@ void main() {
       () async {
     final handler = const Pipeline()
         .addMiddleware(logRequests(logger: logger))
-        .addHandler(respondWith(syncHandler));
+        .addHandler(syncHandler);
 
     await makeSimpleRequest(handler);
     expect(gotLog, isTrue);
@@ -39,7 +39,7 @@ void main() {
       () async {
     final handler = const Pipeline()
         .addMiddleware(logRequests(logger: logger))
-        .addHandler(respondWith(asyncHandler));
+        .addHandler(asyncHandler);
 
     await makeSimpleRequest(handler);
     expect(gotLog, isTrue);
@@ -69,17 +69,4 @@ void main() {
       expect(makeSimpleRequest(handler), throwsA(isOhNoStateError));
     },
   );
-
-  test("Given a HijackException when thrown then it doesn't log the exception",
-      () {
-    final handler = const Pipeline()
-        .addMiddleware(logRequests(logger: logger))
-        .addHandler((final request) => throw const HijackException());
-
-    expect(
-        makeSimpleRequest(handler).whenComplete(() {
-          expect(gotLog, isFalse);
-        }),
-        throwsHijackException);
-  });
 }

@@ -51,21 +51,22 @@ Middleware createMiddleware({
   onResponse ??= (final response) => response;
 
   return (final innerHandler) {
-    //if (innerHandler is! ResponseHandler) return innerHandler;
     return (final requestCtx) async {
-      final ctx = requestCtx as ResponseContext;
-      final response = await onRequest!(ctx.request);
+      if (requestCtx is! RespondableContext) return requestCtx;
+      final ctx = requestCtx as RespondableContext; // why is this needed
+      var response = await onRequest!(ctx.request);
       if (response != null) return ctx.withResponse(response);
+      late ResponseContext newCtx;
       try {
-        final newCtx = await innerHandler(requestCtx);
-        final response = (newCtx as ResponseContext).response;
-        return newCtx.withResponse(await onResponse!(response));
+        newCtx = await innerHandler(requestCtx) as ResponseContext;
       } catch (e, s) {
         if (onError != null) {
           return ctx.withResponse(await onError(e, s));
         }
         rethrow;
       }
+      response = await onResponse!(newCtx.response);
+      return newCtx.withResponse(response);
     };
   };
 }

@@ -19,7 +19,6 @@ Request fromHttpRequest(
     protocolVersion: request.protocolVersion,
     headers: headersFromHttpRequest(request),
     body: bodyFromHttpRequest(request),
-    onHijack: (final callback) => onHijack(request.response, callback),
     context: {},
   );
 }

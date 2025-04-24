@@ -7,6 +7,7 @@ import 'package:async/async.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart' as parser;
 import 'package:relic/relic.dart';
+import 'package:relic/src/adaptor/context.dart';
 import 'package:relic/src/headers/codecs/common_types_codecs.dart';
 import 'package:relic/src/headers/standard_headers_extensions.dart';
 import 'package:test/test.dart';
@@ -68,7 +69,8 @@ void main() {
   test('Request is populated correctly', () async {
     late Uri uri;
 
-    await _scheduleServer((final request) {
+    await _scheduleServer((final ctx) {
+      final request = ctx.request;
       expect(request.method, RequestMethod.get);
 
       expect(request.requestedUri, uri);
@@ -79,7 +81,7 @@ void main() {
       expect(request.url.query, 'qs=value');
       expect(request.handlerPath, '/');
 
-      return syncHandler(request);
+      return syncHandler(ctx);
     });
 
     uri = Uri.http('localhost:$_serverPort', '/foo/bar', {'qs': 'value'});
@@ -98,15 +100,15 @@ void main() {
   });
 
   test('custom response headers are received by the client', () async {
-    await _scheduleServer((final request) {
-      return Response.ok(
+    await _scheduleServer(
+      createSyncHandler(
         body: Body.fromString('Hello from /'),
         headers: Headers.fromMap({
           'test-header': ['test-value'],
           'test-list': ['a', 'b', 'c'],
         }),
-      );
-    });
+      ),
+    );
 
     final response = await _get();
     expect(response.statusCode, HttpStatus.ok);
@@ -115,9 +117,10 @@ void main() {
   });
 
   test('custom status code is received by the client', () async {
-    await _scheduleServer((final request) {
-      return Response(299, body: Body.fromString('Hello from /'));
-    });
+    await _scheduleServer((createSyncHandler(
+      statusCode: 299,
+      body: Body.fromString('Hello from /'),
+    )));
 
     final response = await _get();
     expect(response.statusCode, 299);
@@ -129,7 +132,8 @@ void main() {
       'multi-header',
       HeaderCodec(parseStringList, encodeStringList),
     );
-    await _scheduleServer((final request) {
+    await _scheduleServer((final ctx) {
+      final request = ctx.request;
       expect(
         request.headers,
         containsPair('custom-header', ['client value']),
@@ -147,7 +151,7 @@ void main() {
         ['foo', 'bar', 'baz'],
       );
 
-      return syncHandler(request);
+      return syncHandler(ctx);
     });
 
     final headers = {
@@ -161,7 +165,8 @@ void main() {
   });
 
   test('post with empty content', () async {
-    await _scheduleServer((final request) async {
+    await _scheduleServer((final ctx) async {
+      final request = ctx.request;
       expect(request.mimeType, isNull);
       expect(request.encoding, isNull);
       expect(request.method, RequestMethod.post);
@@ -169,7 +174,7 @@ void main() {
 
       final body = await request.readAsString();
       expect(body, '');
-      return syncHandler(request);
+      return syncHandler(ctx);
     });
 
     final response = await _post();
@@ -178,7 +183,9 @@ void main() {
   });
 
   test('post with request content', () async {
-    await _scheduleServer((final request) async {
+    await _scheduleServer((final ctx) async {
+      final request = ctx.request;
+
       expect(request.mimeType?.primaryType, 'text');
       expect(request.mimeType?.subType, 'plain');
       expect(request.encoding, utf8);
@@ -187,7 +194,8 @@ void main() {
 
       final body = await request.readAsString();
       expect(body, 'test body');
-      return syncHandler(request);
+
+      return syncHandler(ctx);
     });
 
     final response = await _post(body: 'test body');
@@ -196,10 +204,14 @@ void main() {
   });
 
   test('supports request hijacking', () async {
-    await _scheduleServer((final request) {
+    await _scheduleServer((final ctx) {
+      final request = ctx.request;
+
       expect(request.method, RequestMethod.post);
 
-      request.hijack(expectAsync1((final channel) {
+      final hijackableContext = ctx as HijackableContext;
+
+      return hijackableContext.hijack(expectAsync1((final channel) {
         expect(channel.stream.first, completion(equals('Hello'.codeUnits)));
 
         channel.sink.add('HTTP/1.1 404 Not Found\r\n'
@@ -219,20 +231,12 @@ void main() {
         response.stream.bytesToString(), completion(equals('Hello, world!')));
   });
 
-  test('reports an error if a HijackException is thrown without hijacking',
-      () async {
-    await _scheduleServer((final request) => throw const HijackException());
-
-    final response = await _get();
-    expect(response.statusCode, HttpStatus.internalServerError);
-  });
-
   test('passes asynchronous exceptions to the parent error zone', () async {
     await runZonedGuarded(() async {
       final server = await testServe(
-        (final request) {
+        (final ctx) {
           Future(() => throw StateError('oh no'));
-          return syncHandler(request);
+          return syncHandler(ctx);
         },
       );
 
@@ -315,12 +319,10 @@ void main() {
 
     test('defers to header in response', () async {
       final date = DateTime.utc(1981, 6, 5);
-      await _scheduleServer((final request) {
-        return Response.ok(
-          body: Body.fromString('test'),
-          headers: Headers.build((final mh) => mh.date = date),
-        );
-      });
+      await _scheduleServer(createSyncHandler(
+        body: Body.fromString('test'),
+        headers: Headers.build((final mh) => mh.date = date),
+      ));
 
       final response = await _get();
       expect(response.headers, contains('date'));
@@ -342,12 +344,12 @@ void main() {
     });
 
     test('defers to header in response when default', () async {
-      await _scheduleServer((final request) {
+      await _scheduleServer(respondWith((final request) {
         return Response.ok(
           body: Body.fromString('test'),
           headers: Headers.build((final mh) => mh.xPoweredBy = 'myServer'),
         );
-      });
+      }));
 
       final response = await _get();
       expect(response.headers, containsPair(poweredBy, 'myServer'));
@@ -367,12 +369,8 @@ void main() {
 
     test('defers to header in response when set at the server level', () async {
       _server = await testServe(
-        (final request) {
-          return Response.ok(
-            body: Body.fromString('test'),
-            headers: Headers.build((final mh) => mh.xPoweredBy = 'myServer'),
-          );
-        },
+        createSyncHandler(
+            headers: Headers.build((final mh) => mh.xPoweredBy = 'myServer')),
         poweredByHeader: 'ourServer',
       );
 
@@ -387,7 +385,7 @@ void main() {
       'then the chunked transfer encoding header is removed from the response',
       () async {
     await _scheduleServer(
-      (final _) => Response.ok(
+      createSyncHandler(
         body: Body.empty(),
         headers: Headers.build((final mh) => mh.transferEncoding =
             TransferEncodingHeader(encodings: [TransferEncoding.chunked])),
@@ -401,7 +399,7 @@ void main() {
 
   test('respects the "buffer_output" context parameter', () async {
     final controller = StreamController<String>();
-    await _scheduleServer((final request) {
+    await _scheduleServer(respondWith((final request) {
       controller.add('Hello, ');
 
       return Response.ok(
@@ -412,7 +410,7 @@ void main() {
         ),
         context: {'buffer_output': false},
       );
-    });
+    }));
 
     final request = http.Request(
         RequestMethod.get.value, Uri.http('localhost:$_serverPort', ''));

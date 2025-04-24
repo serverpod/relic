@@ -10,23 +10,6 @@ import 'message.dart';
 
 part '../hijack/hijack.dart';
 
-/// An exception used to indicate that a request has been hijacked.
-///
-/// This shouldn't be captured by any code other than the relic server adapter that
-/// created the hijackable request. Middleware that captures exceptions should
-/// make sure to pass on HijackExceptions.
-///
-/// See also [Request.hijack].
-class HijackException implements Exception {
-  const HijackException();
-
-  @override
-  String toString() =>
-      "A relic server request's underlying data stream was hijacked.\n"
-      'This exception is used for control flow and should only be handled by a '
-      'relic server adapter.';
-}
-
 /// An HTTP request to be processed by a Relic Server application.
 class Request extends Message {
   /// The URL path from the current handler to the requested resource, relative
@@ -67,25 +50,6 @@ class Request extends Message {
   /// The original [Uri] for the request.
   final Uri requestedUri;
 
-  /// The callback wrapper for hijacking this request.
-  ///
-  /// This will be `null` if this request can't be hijacked.
-  final _OnHijack? _onHijack;
-
-  /// Whether this request can be hijacked.
-  ///
-  /// This will be `false` either if the adapter doesn't support hijacking, or
-  /// if the request has already been hijacked.
-  bool get canHijack => _onHijack != null && !_onHijack.called;
-
-  /// Whether this request has been hijacked.
-  ///
-  /// This is `true` if the request is already hijacked.
-  ///
-  /// Useful for clearer intent in cases where checking the hijacked state is
-  /// more relevant than the ability to hijack.
-  bool get isHijacked => !canHijack;
-
   /// Creates a new [Request].
   ///
   /// [handlerPath] must be root-relative. [url]'s path must be fully relative,
@@ -107,30 +71,6 @@ class Request extends Message {
   /// An empty list will cause the header to be omitted.
   ///
   /// The default value for [protocolVersion] is '1.1'.
-  ///
-  /// ## `onHijack`
-  ///
-  /// [onHijack] allows handlers to take control of the underlying socket for
-  /// the request. It should be passed by adapters that can provide access to
-  /// the bidirectional socket underlying the HTTP connection stream.
-  ///
-  /// The [onHijack] callback will only be called once per request. It will be
-  /// passed another callback which takes a byte StreamChannel. [onHijack] must
-  /// pass the channel for the connection stream to this callback, although it
-  /// may do so asynchronously.
-  ///
-  /// If a request is hijacked, the adapter should expect to receive a
-  /// [HijackException] from the handler. This is a special exception used to
-  /// indicate that hijacking has occurred. The adapter should avoid either
-  /// sending a response or notifying the user of an error if a
-  /// [HijackException] is caught.
-  ///
-  /// An adapter can check whether a request was hijacked using [canHijack],
-  /// which will be `false` for a hijacked request. The adapter may throw an
-  /// error if a [HijackException] is received for a non-hijacked request, or if
-  /// no [HijackException] is received for a hijacked request.
-  ///
-  /// See also [hijack].
   Request(
     final RequestMethod method,
     final Uri requestedUri, {
@@ -140,7 +80,6 @@ class Request extends Message {
     final Uri? url,
     final Body? body,
     final Map<String, Object>? context,
-    final HijackHandler? onHijack,
   }) : this._(
           method,
           requestedUri,
@@ -150,7 +89,6 @@ class Request extends Message {
           handlerPath: handlerPath,
           body: body,
           context: context,
-          onHijack: onHijack == null ? null : _OnHijack(onHijack),
         );
 
   /// This constructor has the same signature as [Request.new] except that
@@ -168,11 +106,9 @@ class Request extends Message {
     final Uri? url,
     final Body? body,
     final Map<String, Object>? context,
-    final _OnHijack? onHijack,
   })  : protocolVersion = protocolVersion ?? '1.1',
         url = _computeUrl(requestedUri, handlerPath, url),
         handlerPath = _computeHandlerPath(requestedUri, handlerPath, url),
-        _onHijack = onHijack,
         super(
             body: body ?? Body.empty(),
             headers: headers,
@@ -267,29 +203,7 @@ class Request extends Message {
       handlerPath: handlerPath,
       body: body,
       context: newContext,
-      onHijack: _onHijack,
     );
-  }
-
-  /// Takes control of the underlying request socket.
-  ///
-  /// Synchronously, this throws a [HijackException] that indicates to the
-  /// adapter that it shouldn't emit a response itself. Asynchronously,
-  /// [callback] is called with a [StreamChannel<List<int>>] that provides
-  /// access to the underlying request socket.
-  ///
-  /// This may only be called when using a Relic Server adapter that supports
-  /// hijacking, such as the `dart:io` adapter. In addition, a given request may
-  /// only be hijacked once. [canHijack] can be used to detect whether this
-  /// request can be hijacked.
-  Never hijack(final HijackCallback callback) {
-    if (_onHijack == null) {
-      throw StateError("This request can't be hijacked.");
-    }
-
-    _onHijack.run(callback);
-
-    throw const HijackException();
   }
 }
 
