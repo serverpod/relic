@@ -70,7 +70,12 @@ class RelicServer {
     late Request request;
     try {
       request = requestContext.request;
-    } catch (_) {
+    } catch (error, stackTrace) {
+      logMessage(
+        'Error reading request.\n$error',
+        stackTrace: stackTrace,
+        type: LoggerType.error,
+      );
       await requestContext.respond(Response.badRequest());
       return;
     }
@@ -78,11 +83,22 @@ class RelicServer {
     Response? response;
     try {
       response = await _handler!(request);
-    } on HijackException {
+    } on HijackException catch (error, stackTrace) {
       // If the request is already hijacked, meaning it's being handled by
       // another handler, like a websocket, then don't respond with an error.
       if (request.isHijacked) return;
-    } catch (_) {} // squash all an report internal error
+      _logError(
+        request,
+        'HijackException raised, but request not hijacked.\n$error',
+        stackTrace,
+      );
+    } catch (error, stackTrace) {
+      _logError(
+        request,
+        'Unhandled error in mounted handler.\n$error',
+        stackTrace,
+      );
+    }
 
     if (response == null) {
       await requestContext.respond(Response.internalServerError());
