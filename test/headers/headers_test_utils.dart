@@ -53,24 +53,10 @@ extension RelicServerTestEx on RelicServer {
   }
 }
 
-/// Creates a [RelicServer] that listens on the loopback IPv6 address.
-/// If the IPv6 address is not available, it will listen on the loopback IPv4
-/// address.
-Future<RelicServer> createServer({
-  required final bool strictHeaders,
-}) async {
-  for (final address in [
-//    InternetAddress.loopbackIPv6,
-    InternetAddress.loopbackIPv4
-  ]) {
-    try {
-      final adaptor = IOAdaptor(await bindHttpServer(address));
-      return RelicServer(adaptor, strictHeaders: strictHeaders);
-    } on SocketException catch (_) {
-      continue;
-    }
-  }
-  throw ArgumentError('Failed to load');
+/// Creates a [RelicServer] that listens on the loopback IPv4 address.
+Future<RelicServer> createServer({required final bool strictHeaders}) async {
+  final adaptor = IOAdaptor(await bindHttpServer(InternetAddress.loopbackIPv4));
+  return RelicServer(adaptor, strictHeaders: strictHeaders);
 }
 
 /// Returns the headers from the server request if the server returns a 200
