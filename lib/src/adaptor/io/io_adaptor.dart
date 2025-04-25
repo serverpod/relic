@@ -11,10 +11,16 @@ import 'response.dart';
 class IOAdaptor extends Adaptor {
   final io.HttpServer _server;
 
+  /// Creates an [IOAdaptor] that wraps the provided [io.HttpServer].
+  ///
+  /// The adaptor will listen for incoming requests from the [_server] and
+  /// expose them through the [requests] stream.
   IOAdaptor(this._server);
 
+  /// The [io.InternetAddress] the underlying server is listening on.
   io.InternetAddress get address => _server.address;
 
+  /// The port number the underlying server is listening on.
   int get port => _server.port;
   @override
   Stream<AdaptorRequest> get requests => _server.map(_IOAdaptorRequest.new);

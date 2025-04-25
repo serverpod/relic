@@ -3,6 +3,9 @@ import '../message/response.dart';
 import 'handler.dart';
 
 /// A typedef for [Cascade._shouldCascade].
+/// The signature for the function used by [Cascade] to determine if it
+/// should try the next handler based on the current [response].
+/// Returns `true` if the next handler should be tried, `false` otherwise.
 typedef _ShouldCascade = bool Function(Response response);
 
 /// A helper that calls several handlers in sequence and returns the first
