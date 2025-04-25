@@ -1,12 +1,8 @@
-import 'package:stream_channel/stream_channel.dart';
-
 import '../body/body.dart';
 import '../headers/headers.dart';
 import '../method/request_method.dart';
 import '../util/util.dart';
 import 'message.dart';
-
-part '../hijack/hijack.dart';
 
 /// An HTTP request to be processed by a Relic Server application.
 class Request extends Message {

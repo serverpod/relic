@@ -1,4 +1,4 @@
-part of '../message/request.dart';
+import 'package:stream_channel/stream_channel.dart';
 
 /// Hijacking allows low-level control of an HTTP connection, bypassing the normal
 /// request-response lifecycle. This is often used for advanced use cases such as
