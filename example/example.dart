@@ -1,38 +1,27 @@
-// ignore_for_file: avoid_print
 import 'dart:io';
-import 'dart:isolate';
 
 import 'package:relic/relic.dart';
 
-void main() async {
-  final isolateCount = Platform.numberOfProcessors * 2;
+Future<void> main() async {
+  /// Setup a handler.
+  ///
+  /// A [Handler] is function consuming and producing [RequestContext]s,
+  /// but if you are mostly concerned with converting [Request]s to [Response]s
+  /// (known as a [Responder] in relic parlor) you can use [respondWith] to
+  /// wrap a [Responder] into a [Handler]
+  final handler = respondWith(hello);
 
-  print('Starting $isolateCount isolates');
-  final isolates = await Future.wait(List.generate(
-      isolateCount,
-      (final index) =>
-          Isolate.spawn((final _) => _serve(), null, debugName: '$index')));
+  /// Start the server with the handler
+  ///
+  /// [serve] is just short-hand for
+  /// ```dart
+  /// RelicServer(IOAdator(HttpServer.bind(InternetAddress.anyIPv4, 8080)))
+  /// ```
+  await serve(handler, InternetAddress.anyIPv4, 8080);
 
-  await ProcessSignal.sigint.watch().first;
-
-  for (final i in isolates) {
-    i.kill(priority: Isolate.immediate);
-  }
+  /// Check the _example_ directory for other examples.
 }
 
-Future<void> _serve() async {
-  final handler = const Pipeline()
-      .addMiddleware(logRequests())
-      .addHandler(respondWith(_echoRequest));
-  await serve(handler, InternetAddress.anyIPv4, 8080, shared: true);
-  print('serving on ${Isolate.current.debugName}');
-}
-
-Response _echoRequest(final Request request) {
-  sleep(const Duration(seconds: 1)); // pretend to be really slow
-  return Response.ok(
-    body: Body.fromString(
-      'Request for "${request.url}" handled by isolate ${Isolate.current.debugName}',
-    ),
-  );
-}
+/// A very simple [Handler].
+Response hello(final Request request) =>
+    Response.ok(body: Body.fromString('Hello World'));
