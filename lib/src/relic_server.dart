@@ -75,6 +75,9 @@ class RelicServer {
   }
 
   Future<void> _handleRequest(final AdaptorRequest adaptorRequest) async {
+    final handler = _handler;
+    if (handler == null) return; // if close has been called
+
     // Wrap the handler with our middleware
     late Request request;
     try {
@@ -90,8 +93,8 @@ class RelicServer {
     }
 
     try {
-      final ctx = adaptorRequest.toRequest().toContext();
-      final newCtx = await _handler!(ctx);
+      final ctx = request.toContext();
+      final newCtx = await handler(ctx);
       return switch (newCtx) {
         final ResponseContext rc =>
           adaptor.respond(adaptorRequest, rc.response),
