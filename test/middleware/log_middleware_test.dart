@@ -57,7 +57,6 @@ void main() {
           expect(gotLog, isFalse);
           gotLog = true;
           expect(type, LoggerType.error);
-          expect(msg, contains('\tGET\t/'));
           expect(msg, contains('oh no'));
         },
       )).addHandler(

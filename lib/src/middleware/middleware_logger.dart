@@ -1,7 +1,6 @@
+import '../../relic.dart';
 import '../adaptor/context.dart';
 import '../logger/logger.dart';
-import '../method/request_method.dart';
-import 'middleware.dart';
 
 /// Middleware which prints the time of the request, the elapsed time for the
 /// inner handlers, the response's status code and the request URI.
@@ -26,29 +25,15 @@ Middleware logRequests({
         try {
           final newCtx = await innerHandler(request);
           final msg = switch (newCtx) {
-            final ResponseContext rc => _message(
-                startTime,
-                rc.response.statusCode,
-                rc.request.requestedUri,
-                rc.request.method.value,
-                watch.elapsed,
-              ),
-            final HijackContext hc => '$hc', // TODO
-            final NewContext nc => '$nc', // TODO
+            final ResponseContext rc => '${rc.response.statusCode}',
+            final HijackContext _ => 'hijacked',
+            final NewContext _ => 'unhandled',
           };
-          localLogger(msg);
+          localLogger(_message(startTime, newCtx.request, watch.elapsed, msg));
           return newCtx;
         } catch (error, stackTrace) {
-          final msg = _errorMessage(
-            startTime,
-            request.request.requestedUri,
-            request.request.method,
-            watch.elapsed,
-            error,
-          );
-
           localLogger(
-            msg,
+            _errorMessage(startTime, request.request, watch.elapsed, error),
             type: LoggerType.error,
             stackTrace: stackTrace,
           );
@@ -64,27 +49,24 @@ String _formatQuery(final String query) {
 
 String _message(
   final DateTime requestTime,
-  final int statusCode,
-  final Uri requestedUri,
-  final String method,
+  final Request request,
   final Duration elapsedTime,
+  final String message,
 ) {
+  final method = request.method.value;
+  final requestedUri = request.url;
+
   return '${requestTime.toIso8601String()} '
       '${elapsedTime.toString().padLeft(15)} '
-      '${method.padRight(7)} [$statusCode] ' // 7 - longest standard HTTP method
+      '${method.padRight(7)} [$message] ' // 7 - longest standard HTTP method
       '${requestedUri.path}${_formatQuery(requestedUri.query)}';
 }
 
 String _errorMessage(
   final DateTime requestTime,
-  final Uri requestedUri,
-  final RequestMethod method,
+  final Request request,
   final Duration elapsedTime,
   final Object error,
 ) {
-  return '$requestTime\t'
-      '$elapsedTime\t'
-      '${method.value}\t'
-      '${requestedUri.path}'
-      '${_formatQuery(requestedUri.query)}\n$error';
+  return _message(requestTime, request, elapsedTime, 'ERROR: $error');
 }

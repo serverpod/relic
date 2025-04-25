@@ -4,6 +4,7 @@ import 'dart:io' as io;
 import 'package:stream_channel/stream_channel.dart';
 
 import '../../../relic.dart';
+import '../../hijack/hijack.dart';
 import '../../message/request.dart';
 import 'request.dart';
 import 'response.dart';
