@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:http/http.dart' as http;
 import 'package:relic/relic.dart';
-import 'package:relic/src/adaptor/context.dart';
+import 'package:relic/src/adapter/context.dart';
 import 'package:test/test.dart';
 
 import '../headers/headers_test_utils.dart';
@@ -49,10 +49,7 @@ RelicServer? _server;
 
 Future<void> _scheduleServer(final Handler handler) async {
   assert(_server == null);
-  _server = await testServe(
-    handler,
-    //TODO: securityContext: securityContext,
-  );
+  _server = await testServe(handler);
 }
 
 Future<http.Response> _get({

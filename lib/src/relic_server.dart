@@ -1,7 +1,7 @@
 import 'dart:async';
 
-import 'adaptor/adaptor.dart';
-import 'adaptor/context.dart';
+import 'adapter/adapter.dart';
+import 'adapter/context.dart';
 import 'body/body.dart';
 import 'handler/handler.dart';
 import 'headers/exception/header_exception.dart';
@@ -11,13 +11,13 @@ import 'message/request.dart';
 import 'message/response.dart';
 import 'util/util.dart';
 
-/// A server that uses a [Adaptor] to handle HTTP requests.
+/// A server that uses a [Adapter] to handle HTTP requests.
 class RelicServer {
   /// The default powered by header to use for responses.
   static const String defaultPoweredByHeader = 'Relic';
 
-  /// The underlying adaptor.
-  final Adaptor adaptor;
+  /// The underlying adapter.
+  final Adapter adapter;
 
   /// Whether to enforce strict header parsing.
   final bool strictHeaders;
@@ -25,14 +25,14 @@ class RelicServer {
   /// Whether [mountAndStart] has been called.
   Handler? _handler;
 
-  StreamSubscription<AdaptorRequest>? _subscription;
+  StreamSubscription<AdapterRequest>? _subscription;
 
   /// The powered by header to use for responses.
   final String poweredByHeader;
 
   /// Creates a server with the given parameters.
   RelicServer(
-    this.adaptor, {
+    this.adapter, {
     this.strictHeaders = false,
     final String? poweredByHeader,
   }) : poweredByHeader = poweredByHeader ?? defaultPoweredByHeader;
@@ -53,7 +53,7 @@ class RelicServer {
   /// Close the server
   Future<void> close() async {
     await _stopListening();
-    await adaptor.close();
+    await adapter.close();
   }
 
   Future<void> _stopListening() async {
@@ -64,7 +64,7 @@ class RelicServer {
   /// Starts listening for requests.
   Future<void> _startListening() async {
     catchTopLevelErrors(() {
-      _subscription = adaptor.requests.listen(_handleRequest);
+      _subscription = adapter.requests.listen(_handleRequest);
     }, (final error, final stackTrace) {
       logMessage(
         'Asynchronous error\n$error',
@@ -74,21 +74,21 @@ class RelicServer {
     });
   }
 
-  Future<void> _handleRequest(final AdaptorRequest adaptorRequest) async {
+  Future<void> _handleRequest(final AdapterRequest adapterRequest) async {
     final handler = _handler;
     if (handler == null) return; // if close has been called
 
     // Wrap the handler with our middleware
     late Request request;
     try {
-      request = adaptorRequest.toRequest();
+      request = adapterRequest.toRequest();
     } catch (error, stackTrace) {
       logMessage(
         'Error reading request.\n$error',
         stackTrace: stackTrace,
         type: LoggerType.error,
       );
-      await adaptor.respond(adaptorRequest, Response.badRequest());
+      await adapter.respond(adapterRequest, Response.badRequest());
       return;
     }
 
@@ -97,9 +97,9 @@ class RelicServer {
       final newCtx = await handler(ctx);
       return switch (newCtx) {
         final ResponseContext rc =>
-          adaptor.respond(adaptorRequest, rc.response),
-        final HijackContext hc => adaptor.hijack(adaptorRequest, hc.callback),
-        NewContext _ => adaptor.respond(adaptorRequest, Response.notFound()),
+          adapter.respond(adapterRequest, rc.response),
+        final HijackContext hc => adapter.hijack(adapterRequest, hc.callback),
+        NewContext _ => adapter.respond(adapterRequest, Response.notFound()),
       };
     } catch (error, stackTrace) {
       _logError(
@@ -107,7 +107,7 @@ class RelicServer {
         'Unhandled error in mounted handler.\n$error',
         stackTrace,
       );
-      await adaptor.respond(adaptorRequest, Response.internalServerError());
+      await adapter.respond(adapterRequest, Response.internalServerError());
       return;
     }
   }

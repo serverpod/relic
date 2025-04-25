@@ -1,6 +1,6 @@
 library;
 
-export 'src/adaptor/adaptor.dart';
+export 'src/adapter/adapter.dart';
 export 'src/body/body.dart' show Body;
 export 'src/body/types/body_type.dart' show BodyType;
 export 'src/body/types/mime_type.dart' show MimeType;

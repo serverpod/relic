@@ -3,8 +3,8 @@ import 'dart:io';
 
 import 'package:http/http.dart' as http;
 import 'package:relic/relic.dart';
-import 'package:relic/src/adaptor/io/bind_http_server.dart';
-import 'package:relic/src/adaptor/io/io_adaptor.dart';
+import 'package:relic/src/adapter/io/bind_http_server.dart';
+import 'package:relic/src/adapter/io/io_adapter.dart';
 import 'package:test/test.dart';
 
 /// Thrown when the server returns a 400 status code.
@@ -30,33 +30,33 @@ extension RelicServerTestEx on RelicServer {
   /// actual request arrives, but for testing purposes we can infer a URL based
   /// on the server's address.
   Uri _inferUrl() {
-    final adaptor = this.adaptor;
-    if (adaptor is! IOAdaptor) throw ArgumentError();
+    final adapter = this.adapter;
+    if (adapter is! IOAdapter) throw ArgumentError();
 
-    if (adaptor.address.isLoopback) {
-      return Uri(scheme: 'http', host: 'localhost', port: adaptor.port);
+    if (adapter.address.isLoopback) {
+      return Uri(scheme: 'http', host: 'localhost', port: adapter.port);
     }
 
-    if (adaptor.address.type == InternetAddressType.IPv6) {
+    if (adapter.address.type == InternetAddressType.IPv6) {
       return Uri(
         scheme: 'http',
-        host: '[${adaptor.address.address}]',
-        port: adaptor.port,
+        host: '[${adapter.address.address}]',
+        port: adapter.port,
       );
     }
 
     return Uri(
       scheme: 'http',
-      host: adaptor.address.address,
-      port: adaptor.port,
+      host: adapter.address.address,
+      port: adapter.port,
     );
   }
 }
 
 /// Creates a [RelicServer] that listens on the loopback IPv4 address.
 Future<RelicServer> createServer({required final bool strictHeaders}) async {
-  final adaptor = IOAdaptor(await bindHttpServer(InternetAddress.loopbackIPv4));
-  return RelicServer(adaptor, strictHeaders: strictHeaders);
+  final adapter = IOAdapter(await bindHttpServer(InternetAddress.loopbackIPv4));
+  return RelicServer(adapter, strictHeaders: strictHeaders);
 }
 
 /// Returns the headers from the server request if the server returns a 200

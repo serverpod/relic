@@ -8,14 +8,14 @@ import '../../hijack/hijack.dart';
 import 'request.dart';
 import 'response.dart';
 
-class IOAdaptor extends Adaptor {
+class IOAdapter extends Adapter {
   final io.HttpServer _server;
 
-  /// Creates an [IOAdaptor] that wraps the provided [io.HttpServer].
+  /// Creates an [IOAdapter] that wraps the provided [io.HttpServer].
   ///
-  /// The adaptor will listen for incoming requests from the [_server] and
+  /// The adapter will listen for incoming requests from the [_server] and
   /// expose them through the [requests] stream.
-  IOAdaptor(this._server);
+  IOAdapter(this._server);
 
   /// The [io.InternetAddress] the underlying server is listening on.
   io.InternetAddress get address => _server.address;
@@ -23,23 +23,23 @@ class IOAdaptor extends Adaptor {
   /// The port number the underlying server is listening on.
   int get port => _server.port;
   @override
-  Stream<AdaptorRequest> get requests => _server.map(_IOAdaptorRequest.new);
+  Stream<AdapterRequest> get requests => _server.map(_IOAdapterRequest.new);
 
   @override
   Future<void> respond(
-    final AdaptorRequest request,
+    final AdapterRequest request,
     final Response response,
   ) async {
-    final httpResponse = (request as _IOAdaptorRequest)._httpRequest.response;
+    final httpResponse = (request as _IOAdapterRequest)._httpRequest.response;
     await response.writeHttpResponse(httpResponse);
   }
 
   @override
   Future<void> hijack(
-    final AdaptorRequest request,
+    final AdapterRequest request,
     final HijackCallback callback,
   ) async {
-    final socket = await (request as _IOAdaptorRequest)
+    final socket = await (request as _IOAdapterRequest)
         ._httpRequest
         .response
         .detachSocket(writeHeaders: false);
@@ -50,9 +50,9 @@ class IOAdaptor extends Adaptor {
   Future<void> close() => _server.close(force: true);
 }
 
-class _IOAdaptorRequest extends AdaptorRequest {
+class _IOAdapterRequest extends AdapterRequest {
   final io.HttpRequest _httpRequest;
-  _IOAdaptorRequest(this._httpRequest);
+  _IOAdapterRequest(this._httpRequest);
 
   @override
   Request toRequest() => fromHttpRequest(_httpRequest);

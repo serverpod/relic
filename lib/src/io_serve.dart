@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'adaptor/io/bind_http_server.dart';
-import 'adaptor/io/io_adaptor.dart';
+import 'adapter/io/bind_http_server.dart';
+import 'adapter/io/io_adapter.dart';
 import 'handler/handler.dart';
 import 'relic_server.dart';
 
@@ -28,7 +28,7 @@ Future<RelicServer> serve(
   final bool strictHeaders = false,
   final String? poweredByHeader,
 }) async {
-  final adaptor = IOAdaptor(await bindHttpServer(
+  final adapter = IOAdapter(await bindHttpServer(
     address,
     port: port,
     context: context,
@@ -36,7 +36,7 @@ Future<RelicServer> serve(
     shared: shared,
   ));
   final server = RelicServer(
-    adaptor,
+    adapter,
     strictHeaders: strictHeaders,
     poweredByHeader: poweredByHeader,
   );
