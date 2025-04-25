@@ -96,14 +96,6 @@ extension on TransferEncodingHeader {
   bool get isIdentity => _exists(TransferEncoding.identity);
 }
 
-// TODO(nielsenko): This is currently dead-code, but perhaps useful.
-/// Extension to convert a [ContentType] to a [MimeType].
-extension ContentTypeExtension on io.ContentType {
-  /// Converts a [ContentType] to a [MimeType].
-  /// We are calling this method 'toMimeType' to avoid conflict with the 'mimeType' property.
-  MimeType get toMimeType => MimeType(primaryType, subType);
-}
-
 extension on Body {
   /// Returns the content type of the body as a [ContentType].
   ///
