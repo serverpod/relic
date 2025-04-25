@@ -1,5 +1,4 @@
 import '../../relic.dart';
-import '../hijack/hijack.dart';
 
 abstract interface class _RequestContextInterface {
   /// The original incoming request associated with this context.
