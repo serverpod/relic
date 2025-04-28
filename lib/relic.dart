@@ -21,3 +21,4 @@ export 'src/middleware/middleware.dart' show Middleware, createMiddleware;
 export 'src/middleware/middleware_extensions.dart' show MiddlewareExtensions;
 export 'src/middleware/middleware_logger.dart' show logRequests;
 export 'src/relic_server.dart';
+export 'src/router/router.dart';
