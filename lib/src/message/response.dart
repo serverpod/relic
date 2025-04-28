@@ -1,8 +1,6 @@
 import 'dart:convert';
-import 'dart:io';
 
 import '../body/body.dart';
-import '../extensions/http_response_extension.dart';
 import '../headers/headers.dart';
 import '../headers/standard_headers_extensions.dart';
 
@@ -329,27 +327,5 @@ class Response extends Message {
       headers: headers ?? this.headers,
       context: newContext,
     );
-  }
-
-  /// Writes the response to an [HttpResponse].
-  ///
-  /// This method sets the status code, headers, and body on the [httpResponse]
-  /// and returns a [Future] that completes when the body has been written.
-  Future<void> writeHttpResponse(
-    final HttpResponse httpResponse,
-  ) async {
-    if (context.containsKey('relic_server.buffer_output')) {
-      httpResponse.bufferOutput = context['relic_server.buffer_output'] as bool;
-    }
-
-    // Set the status code.
-    httpResponse.statusCode = statusCode;
-
-    // Apply all headers to the response.
-    httpResponse.applyHeaders(headers, body);
-
-    return httpResponse
-        .addStream(body.read())
-        .then((final _) => httpResponse.close());
   }
 }

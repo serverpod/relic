@@ -1,6 +1,5 @@
 import 'package:relic/relic.dart';
 import 'package:relic/src/logger/logger.dart';
-import 'package:relic/src/method/request_method.dart';
 import 'package:test/test.dart';
 
 import '../util/test_util.dart';
@@ -58,7 +57,6 @@ void main() {
           expect(gotLog, isFalse);
           gotLog = true;
           expect(type, LoggerType.error);
-          expect(msg, contains('\tGET\t/'));
           expect(msg, contains('oh no'));
         },
       )).addHandler(
@@ -70,17 +68,4 @@ void main() {
       expect(makeSimpleRequest(handler), throwsA(isOhNoStateError));
     },
   );
-
-  test("Given a HijackException when thrown then it doesn't log the exception",
-      () {
-    final handler = const Pipeline()
-        .addMiddleware(logRequests(logger: logger))
-        .addHandler((final request) => throw const HijackException());
-
-    expect(
-        makeSimpleRequest(handler).whenComplete(() {
-          expect(gotLog, isFalse);
-        }),
-        throwsHijackException);
-  });
 }

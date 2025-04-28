@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
 import 'dart:typed_data';
 
 import 'types/body_type.dart';
@@ -50,17 +49,6 @@ class Body {
 
   /// Creates an empty body.
   factory Body.empty() => Body._(const Stream.empty(), 0);
-
-  /// Creates a body from a [HttpRequest].
-  factory Body.fromHttpRequest(final HttpRequest request) {
-    final contentType = request.headers.contentType;
-    return Body._(
-      request,
-      request.contentLength <= 0 ? null : request.contentLength,
-      encoding: Encoding.getByName(contentType?.charset),
-      mimeType: contentType?.toMimeType,
-    );
-  }
 
   /// Creates a body from a string.
   factory Body.fromString(
@@ -119,18 +107,5 @@ class Body {
     }
     _stream = null;
     return stream;
-  }
-
-  /// Returns the content type of the body as a [ContentType].
-  ///
-  /// This is a convenience method that combines [mimeType] and [encoding].
-  ContentType? getContentType() {
-    final mBodyType = bodyType;
-    if (mBodyType == null) return null;
-    return ContentType(
-      mBodyType.mimeType.primaryType,
-      mBodyType.mimeType.subType,
-      charset: mBodyType.encoding?.name,
-    );
   }
 }

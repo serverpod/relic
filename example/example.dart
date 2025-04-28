@@ -1,26 +1,23 @@
-// ignore_for_file: avoid_print
+import 'dart:io';
+
 import 'package:relic/relic.dart';
 
-void main() async {
-  final handler =
-      const Pipeline().addMiddleware(logRequests()).addHandler(_echoRequest);
+/// A simple 'Hello World' server
+Future<void> main() async {
+  // Setup a handler.
+  //
+  // A [Handler] is function consuming and producing [RequestContext]s,
+  // but if you are mostly concerned with converting [Request]s to [Response]s
+  // (known as a [Responder] in relic parlor) you can use [respondWith] to
+  // wrap a [Responder] into a [Handler]
+  final handler = respondWith(hello);
 
-  final server = await serve(
-    handler,
-    InternetAddress.loopbackIPv4,
-    8080,
-  );
+  // Start the server with the handler
+  await serve(handler, InternetAddress.anyIPv4, 8080);
 
-  // Enable content compression
-  server.autoCompress = true;
-
-  print('Serving at http://${server.address.host}:${server.port}');
+  // Check the _example_ directory for other examples.
 }
 
-Response _echoRequest(final Request request) {
-  return Response.ok(
-    body: Body.fromString(
-      'Request for "${request.url}"',
-    ),
-  );
-}
+/// A very simple [Responder].
+Response hello(final Request request) =>
+    Response.ok(body: Body.fromString('Hello World'));

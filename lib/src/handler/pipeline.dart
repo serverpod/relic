@@ -14,6 +14,7 @@ import 'handler.dart';
 /// Note: this package also provides `addMiddleware` and `addHandler` extensions
 ///  members on [Middleware], which may be easier to use.
 class Pipeline {
+  /// Creates a new, empty pipeline.
   const Pipeline();
 
   /// Returns a new [Pipeline] with [middleware] added to the existing set of

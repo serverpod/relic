@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:http_parser/http_parser.dart';
-import 'package:relic/relic.dart' hide Request;
 import 'package:relic/relic.dart';
 import 'package:relic/src/headers/standard_headers_extensions.dart';
 import 'package:test/test.dart';
@@ -54,7 +53,8 @@ void main() {
 
     test('when checked then it sets the content-type header to text/plain', () {
       final response = Response.internalServerError();
-      final contentType = response.body.getContentType();
+      final contentType = response.body.bodyType?.mimeType;
+      final encoding = response.body.bodyType?.encoding;
       expect(
         contentType?.primaryType,
         equals('text'),
@@ -64,7 +64,7 @@ void main() {
         equals('plain'),
       );
       expect(
-        contentType?.charset,
+        encoding?.name,
         equals('utf-8'),
       );
       expect(response.body.contentLength, equals(21));

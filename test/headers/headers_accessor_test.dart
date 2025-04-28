@@ -170,7 +170,7 @@ void main() {
     });
   });
 
-  group('Given a header accessor ', () {
+  group('Given a header accessor that counts decodes', () {
     late HeaderAccessor<int> accessor;
     int count = 0;
 

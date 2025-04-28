@@ -1,44 +1,71 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:meta/meta.dart';
 import 'package:relic/relic.dart';
-import 'package:relic/src/method/request_method.dart';
+import 'package:relic/src/adapter/context.dart';
 import 'package:test/test.dart';
 
 final helloBytes = utf8.encode('hello,');
 
 final worldBytes = utf8.encode(' world');
 
-final Matcher throwsHijackException = throwsA(isA<HijackException>());
+typedef SyncHandler = RequestContext Function(RequestContext);
 
-/// A simple, synchronous handler for [Request].
+/// A simple, synchronous handler.
 ///
 /// By default, replies with a status code 200, empty headers, and
-/// `Hello from ${request.url.path}`.
-Response syncHandler(final Request request,
-    {final int? statusCode, final Headers? headers}) {
-  return Response(
-    statusCode ?? 200,
-    headers: headers ?? Headers.empty(),
-    body: Body.fromString('Hello from ${request.requestedUri.path}'),
-  );
+/// `Hello from ${ctx.request.url.path}`.
+SyncHandler createSyncHandler(
+    {final int statusCode = 200, final Headers? headers, final Body? body}) {
+  return (final RequestContext ctx) {
+    return switch (ctx) {
+      final RespondableContext rc => rc.withResponse(Response(
+          statusCode,
+          headers: headers ?? Headers.empty(),
+          body: body ??
+              Body.fromString('Hello from ${ctx.request.requestedUri.path}'),
+        )),
+      _ => ctx,
+    };
+  };
 }
 
-/// Calls [syncHandler] and wraps the response in a [Future].
-Future<Response> asyncHandler(final Request request) =>
-    Future(() => syncHandler(request));
+final SyncHandler syncHandler = createSyncHandler();
+
+/// Calls [createSyncHandler] and wraps the response in a [Future].
+Future<RequestContext> asyncHandler(final RequestContext ctx) async {
+  return syncHandler(ctx);
+}
 
 /// Makes a simple GET request to [handler] and returns the result.
-Future<Response> makeSimpleRequest(final Handler handler) =>
-    Future.sync(() => handler(_request));
+Future<Response> makeSimpleRequest(final Handler handler,
+    [final Request? request]) async {
+  final newCtx = await handler((request ?? _defaultRequest).toContext());
+  if (newCtx is! ResponseContext) throw ArgumentError(newCtx);
+  return newCtx.response;
+}
 
-final _request = Request(RequestMethod.get, localhostUri);
+final _defaultRequest = Request(RequestMethod.get, localhostUri);
 
 final localhostUri = Uri.parse('http://localhost/');
 
 final isOhNoStateError =
     isA<StateError>().having((final e) => e.message, 'message', 'oh no');
+
+Future<RelicServer> testServe(
+  final Handler handler, {
+  final SecurityContext? context,
+  final String? poweredByHeader,
+}) =>
+    serve(
+      handler,
+      InternetAddress.loopbackIPv4,
+      0,
+      context: context,
+      poweredByHeader: poweredByHeader,
+    );
 
 /// Like [group], but takes a [variants] argument and creates a group for each
 /// variant.

@@ -1,11 +1,11 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:http/http.dart' as http;
 import 'package:relic/relic.dart';
-import 'package:relic/src/method/request_method.dart';
-import 'package:relic/src/relic_server_serve.dart' as relic_server;
 import 'package:test/test.dart';
+
+import '../headers/headers_test_utils.dart';
+import '../util/test_util.dart';
 
 void main() {
   tearDown(() async {
@@ -14,7 +14,7 @@ void main() {
       try {
         await server.close().timeout(const Duration(seconds: 5));
       } catch (e) {
-        await server.close(force: true);
+        await server.close();
       } finally {
         _server = null;
       }
@@ -27,7 +27,7 @@ void main() {
         'then it returns a 400 Bad Request response with exception message '
         'included in the response body', () async {
       await _scheduleServer(
-        (final Request request) => throw const InvalidHeaderException(
+        (final _) => throw const InvalidHeaderException(
           'Value cannot be empty',
           headerType: 'test',
         ),
@@ -41,7 +41,7 @@ void main() {
         'when a handler throws an UnimplementedError '
         'then it returns a 500 Internal Server Error response', () async {
       await _scheduleServer(
-        (final Request request) => throw UnimplementedError(),
+        (final _) => throw UnimplementedError(),
       );
       final response = await _get();
       expect(response.statusCode, 500);
@@ -51,7 +51,7 @@ void main() {
     test(
         'when a handler throws an Exception '
         'then it returns a 500 Internal Server Error response', () async {
-      await _scheduleServer((final Request request) => throw Exception());
+      await _scheduleServer((final _) => throw Exception());
       final response = await _get();
       expect(response.statusCode, 500);
       expect(response.body, 'Internal Server Error');
@@ -60,7 +60,7 @@ void main() {
     test(
         'when a handler throws an Error '
         'then it returns a 500 Internal Server Error response', () async {
-      await _scheduleServer((final Request request) => throw Error());
+      await _scheduleServer((final _) => throw Error());
       final response = await _get();
       expect(response.statusCode, 500);
       expect(response.body, 'Internal Server Error');
@@ -68,21 +68,11 @@ void main() {
   });
 }
 
-int get _serverPort => _server!.port;
+RelicServer? _server;
 
-HttpServer? _server;
-
-Future<void> _scheduleServer(
-  final Handler handler, {
-  final SecurityContext? securityContext,
-}) async {
+Future<void> _scheduleServer(final Handler handler) async {
   assert(_server == null);
-  _server = await relic_server.serve(
-    handler,
-    InternetAddress.loopbackIPv4,
-    0,
-    securityContext: securityContext,
-  );
+  _server = await testServe(handler);
 }
 
 Future<http.Response> _get({
@@ -91,7 +81,7 @@ Future<http.Response> _get({
 }) async {
   final request = http.Request(
     RequestMethod.get.value,
-    Uri.http('localhost:$_serverPort', path),
+    _server!.url.replace(path: path),
   );
 
   if (headers != null) request.headers.addAll(headers);

@@ -7,15 +7,15 @@ import 'package:convert/convert.dart';
 import 'package:mime/mime.dart';
 import 'package:path/path.dart' as p;
 
-import '../body/body.dart';
-import '../body/types/mime_type.dart';
-import '../handler/handler.dart';
-import '../headers/headers.dart';
-import '../headers/standard_headers_extensions.dart';
-import '../headers/typed/typed_headers.dart';
-import '../message/request.dart';
-import '../message/response.dart';
-import '../method/request_method.dart';
+import '../../body/body.dart';
+import '../../body/types/mime_type.dart';
+import '../../handler/handler.dart';
+import '../../headers/headers.dart';
+import '../../headers/standard_headers_extensions.dart';
+import '../../headers/typed/typed_headers.dart';
+import '../../message/request.dart';
+import '../../message/response.dart';
+import '../../method/request_method.dart';
 import 'directory_listing.dart';
 import 'extension/datetime_extension.dart';
 
@@ -65,7 +65,7 @@ Handler createStaticHandler(
 
   final mimeResolver = contentTypeResolver ?? _defaultMimeTypeResolver;
 
-  return (final Request request) {
+  return respondWith((final Request request) {
     final segs = [fileSystemPath, ...request.url.pathSegments];
 
     final fsPath = p.joinAll(segs);
@@ -131,7 +131,7 @@ Handler createStaticHandler(
         return MimeType.parse(type);
       }
     });
-  };
+  });
 }
 
 Response _redirectToAddTrailingSlash(final Uri uri) {
@@ -182,7 +182,7 @@ Handler createFileHandler(
 
   url ??= p.toUri(p.basename(path)).toString();
 
-  return (final request) {
+  return respondWith((final request) {
     if (request.url.path != url) {
       return Response.notFound(
         body: Body.fromString(
@@ -203,7 +203,7 @@ Handler createFileHandler(
       file,
       getContentType: () => mimeType,
     );
-  };
+  });
 }
 
 /// Serves the contents of [file] in response to [request].

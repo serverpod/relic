@@ -2,6 +2,7 @@
 .dart_tool/
 .pub/
 build/
+coverage/
 pubspec.lock
 
 # macOS system files
@@ -12,4 +13,3 @@ pubspec.lock
 .idea/
 .vscode/
 .vscode-test/
-

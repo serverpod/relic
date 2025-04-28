@@ -80,6 +80,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     continue-on-error: ${{ matrix.dart_sdk != '3.3.0' }} # env context not available for continue-on-error
     strategy:
+      fail-fast: false
       matrix:
         os: [windows-latest, ubuntu-latest, macos-latest]
         dart_sdk: ["3.3.0", stable, beta] # env context not available for strategy

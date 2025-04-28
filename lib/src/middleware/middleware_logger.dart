@@ -1,9 +1,6 @@
-import 'dart:async';
-
-import '../hijack/exception/hijack_exception.dart';
+import '../../relic.dart';
+import '../adapter/context.dart';
 import '../logger/logger.dart';
-import '../method/request_method.dart';
-import 'middleware.dart';
 
 /// Middleware which prints the time of the request, the elapsed time for the
 /// inner handlers, the response's status code and the request URI.
@@ -21,47 +18,28 @@ Middleware logRequests({
     (final innerHandler) {
       final localLogger = logger ?? logMessage;
 
-      return (final request) {
+      return (final request) async {
         final startTime = DateTime.now();
         final watch = Stopwatch()..start();
 
-        return Future.sync(
-          () => innerHandler(request),
-        ).then(
-          (final response) {
-            final msg = _message(
-              startTime,
-              response.statusCode,
-              request.requestedUri,
-              request.method.value,
-              watch.elapsed,
-            );
+        try {
+          final newCtx = await innerHandler(request);
+          final msg = switch (newCtx) {
+            final ResponseContext rc => '${rc.response.statusCode}',
+            final HijackContext _ => 'hijacked',
+            final NewContext _ => 'unhandled',
+          };
+          localLogger(_message(startTime, newCtx.request, watch.elapsed, msg));
+          return newCtx;
+        } catch (error, stackTrace) {
+          localLogger(
+            _errorMessage(startTime, request.request, watch.elapsed, error),
+            type: LoggerType.error,
+            stackTrace: stackTrace,
+          );
 
-            localLogger(msg);
-
-            return response;
-          },
-          onError: (final Object error, final StackTrace stackTrace) {
-            if (error is HijackException) throw error;
-
-            final msg = _errorMessage(
-              startTime,
-              request.requestedUri,
-              request.method,
-              watch.elapsed,
-              error,
-            );
-
-            localLogger(
-              msg,
-              type: LoggerType.error,
-              stackTrace: stackTrace,
-            );
-
-            // ignore: only_throw_errors
-            throw error;
-          },
-        );
+          rethrow;
+        }
       };
     };
 
@@ -71,27 +49,24 @@ String _formatQuery(final String query) {
 
 String _message(
   final DateTime requestTime,
-  final int statusCode,
-  final Uri requestedUri,
-  final String method,
+  final Request request,
   final Duration elapsedTime,
+  final String message,
 ) {
+  final method = request.method.value;
+  final requestedUri = request.url;
+
   return '${requestTime.toIso8601String()} '
       '${elapsedTime.toString().padLeft(15)} '
-      '${method.padRight(7)} [$statusCode] ' // 7 - longest standard HTTP method
+      '${method.padRight(7)} [$message] ' // 7 - longest standard HTTP method
       '${requestedUri.path}${_formatQuery(requestedUri.query)}';
 }
 
 String _errorMessage(
   final DateTime requestTime,
-  final Uri requestedUri,
-  final RequestMethod method,
+  final Request request,
   final Duration elapsedTime,
   final Object error,
 ) {
-  return '$requestTime\t'
-      '$elapsedTime\t'
-      '${method.value}\t'
-      '${requestedUri.path}'
-      '${_formatQuery(requestedUri.query)}\n$error';
+  return _message(requestTime, request, elapsedTime, 'ERROR: $error');
 }
