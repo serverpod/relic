@@ -1,3 +1,4 @@
+import 'package:mockito/mockito.dart';
 import 'package:relic/src/router/normalized_path.dart';
 import 'package:test/test.dart';
 
@@ -180,10 +181,52 @@ void main() {
     test(
         'Given different types, '
         'when comparing, '
-        'then returns false', () {
-      final path1 = NormalizedPath('/a/b');
+        'then == returns false', () {
+      final path = NormalizedPath('/a/b');
       const other = '/a/b';
-      expect(path1, isNot(equals(other)));
+      // ignore: unrelated_type_equality_checks
+      expect(path == other, isFalse); // use == to avoid matcher smartness
+    });
+
+    group('Given different instances, but same hashCode (collision), ', () {
+      late final real = NormalizedPath('/a/b');
+      test(
+        'when segment count differs, '
+        'then == returns false via length check',
+        () {
+          // Force same hashCode but only one segment
+          final fake = _FakeNormalizedPath(NormalizedPath('/a'), real.hashCode);
+
+          // hashCode check passes, then length check kicks in and returns false
+          expect(real == fake, isFalse); // use == to avoid matcher smartness
+        },
+      );
+
+      test(
+        'when segments differs, '
+        'then == returns false via length check',
+        () {
+          // Force same hashCode but only one segment
+          final fake =
+              _FakeNormalizedPath(NormalizedPath('/a/x'), real.hashCode);
+
+          // hashCode and length check passes, then segment check kicks in and returns false
+          expect(real == fake, isFalse); // use == to avoid matcher smartness
+        },
+      );
+
+      test(
+        'when segment are equal, '
+        'then == returns true',
+        () {
+          // Force same hashCode but only one segment
+          final fake =
+              _FakeNormalizedPath(NormalizedPath('/a/b'), real.hashCode);
+
+          // These are equal despite not being same instance
+          expect(real == fake, isTrue); // use == to avoid matcher smartness
+        },
+      );
     });
   });
 
@@ -199,4 +242,16 @@ void main() {
       expect(NormalizedPath('a/../b').toString(), equals('/b'));
     });
   });
+}
+
+// A test‐only subclass to override hashCode to simulate collisions
+class _FakeNormalizedPath extends Fake implements NormalizedPath {
+  final NormalizedPath original;
+  @override
+  final int hashCode; // ignore: hash_and_equals
+
+  _FakeNormalizedPath(this.original, this.hashCode);
+
+  @override
+  List<String> get segments => original.segments;
 }
