@@ -207,6 +207,13 @@ void main() {
           reason: 'Original route should remain after failed add',
         );
       });
+
+      test(
+          'Given a normalizedPath with an unnamed parameter, '
+          'when trying to add to a trie, '
+          'then it fails ', () {
+        expect(() => trie.add(NormalizedPath('/:'), 1), throwsArgumentError);
+      });
     });
 
     group('Edge Cases', () {
@@ -259,7 +266,8 @@ void main() {
           'when looking up different matching and non-matching paths, '
           'then returns correct values/parameters or null appropriately', () {
         trie.add(NormalizedPath('/api/v1/users/:userId/data'), 1);
-        trie.add(NormalizedPath('/api/v1/users/:userId/settings/:settingId'), 2);
+        trie.add(
+            NormalizedPath('/api/v1/users/:userId/settings/:settingId'), 2);
         trie.add(NormalizedPath('/api/v1/posts/:postId'), 3);
         trie.add(
           NormalizedPath('/api/v1/posts/latest'),

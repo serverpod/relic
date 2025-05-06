@@ -53,7 +53,11 @@ final class PathTrie<T> {
 
     for (final segment in segments) {
       if (segment.startsWith(':')) {
-        final paramName = segment.substring(1);
+        final paramName = segment.substring(1).trim();
+        if (paramName.isEmpty) {
+          throw ArgumentError.value(normalizedPath, 'normalizedPath',
+              'Parameter name cannot be empty');
+        }
         // Ensure parameter child exists and handle name conflicts
         var parameter = currentNode.parameter;
         if (parameter == null) {
