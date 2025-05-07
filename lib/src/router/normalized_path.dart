@@ -40,10 +40,9 @@ class NormalizedPath {
   ///
   /// Handles `.` and `..` segments and removes empty ones.
   static List<String> _normalize(final String path) {
-    final segments = path.split('/');
     final result = <String>[];
 
-    for (final segment in segments) {
+    for (final segment in path.split('/')) {
       if (segment == '..') {
         if (result.isNotEmpty) {
           result.removeLast();
