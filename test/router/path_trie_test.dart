@@ -86,14 +86,6 @@ void main() {
         expect(result, isNotNull);
         expect(result!.value, equals(2));
         expect(result.parameters, equals({#id: '789'}));
-
-        // Should not match the first route if a more specific one exists later
-        result = trie.lookup(NormalizedPath('/users/789'));
-        expect(
-          result,
-          isNull,
-          reason: 'Should be null as /users/789 does not have a value itself',
-        );
       });
     });
 
@@ -117,6 +109,22 @@ void main() {
         expect(result!.value, equals(1));
         expect(result.parameters, equals({#id: '123'}));
       });
+
+      test(
+        'Given overlapping parameterized routes, '
+        'when looking up paths, '
+        'then literal segments are prioritized over parameters, even if it prevents a match',
+        () {
+          trie.add(NormalizedPath('/:entity/:id'), 1);
+          trie.add(NormalizedPath('/users/:id/profile'), 2);
+
+          final result = trie.lookup(NormalizedPath('/users/789'));
+          expect(result, isNull,
+              reason:
+                  'Should not match the first route, as literal match has priority at each level. '
+                  'Should not match the second route, as /profile segment is missing.');
+        },
+      );
     });
 
     group('Error Handling', () {
