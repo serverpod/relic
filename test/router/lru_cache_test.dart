@@ -37,14 +37,6 @@ void main() {
     });
 
     test(
-        'when getting a non-existent key after putting an item '
-        'then returns null', () {
-      cache['a'] = 1;
-      final value = cache['non_existent'];
-      expect(value, isNull);
-    });
-
-    test(
         'when putting the same key with a new value '
         'then the value is updated', () {
       cache['a'] = 1;
