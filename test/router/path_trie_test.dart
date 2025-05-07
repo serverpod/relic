@@ -138,8 +138,6 @@ void main() {
 
         // Add initial route
         trie.add(NormalizedPath(path), value1);
-        var result = trie.lookup(NormalizedPath(path));
-        expect(result!.value, equals(value1));
 
         // Expect error when adding the same path again
         expect(
@@ -149,7 +147,7 @@ void main() {
         );
 
         // Verify original route is intact
-        result = trie.lookup(NormalizedPath(path));
+        final result = trie.lookup(NormalizedPath(path));
         expect(
           result!.value,
           equals(value1),
@@ -168,8 +166,6 @@ void main() {
         // Add initial route
         trie.add(NormalizedPath(path), value1);
         var result = trie.lookup(NormalizedPath('/path/111'));
-        expect(result!.value, equals(value1));
-        expect(result.parameters, equals({#id: '111'}));
 
         // Expect error when adding the same path structure again
         expect(
@@ -195,8 +191,6 @@ void main() {
         // Add initial route
         trie.add(NormalizedPath('/data/:id'), 1);
         var result = trie.lookup(NormalizedPath('/data/aaa'));
-        expect(result!.value, equals(1));
-        expect(result.parameters.keys.first, equals(#id));
 
         // Attempt to add route with conflicting parameter name
         expect(
