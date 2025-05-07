@@ -56,10 +56,13 @@ class NormalizedPath {
     return result;
   }
 
+  /// Whether path has parameters or not
+  late final bool hasParameters = segments.any((final s) => s.startsWith(':'));
+
   /// The string representation of the normalized path, always starting with `/`.
   ///
   /// For example, `NormalizedPath('a/b//c/./../d')` results in a path of `/a/b/d`.
-  late final path = '/${segments.join('/')}';
+  late final String path = '/${segments.join('/')}';
 
   /// Returns the normalized path string.
   @override
