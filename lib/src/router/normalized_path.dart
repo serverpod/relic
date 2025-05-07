@@ -10,7 +10,8 @@ import 'lru_cache.dart';
 /// Instances are interned using an LRU cache for efficiency, meaning identical
 /// normalized paths will often share the same object instance.
 class NormalizedPath {
-  static final _interned = LruCache<String, NormalizedPath>(10000);
+  /// Cache of interned instances
+  static var interned = LruCache<String, NormalizedPath>(10000);
 
   /// The individual segments of the normalized path.
   /// For example, the path `/a/b/c` would have segments `['a', 'b', 'c']`.
@@ -26,12 +27,12 @@ class NormalizedPath {
   /// retrieved from a cache if an identical normalized path has been created
   /// recently.
   factory NormalizedPath(final String path) {
-    var result = _interned[path];
+    var result = interned[path];
     if (result == null) {
       result = NormalizedPath._(_normalize(path));
       // intern for both normalized path and path
-      result = _interned[result.path] ??= result;
-      _interned[path] = result; // cache for original path as well
+      result = interned[result.path] ??= result;
+      interned[path] = result; // cache for original path as well
     }
     return result;
   }
