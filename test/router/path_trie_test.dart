@@ -87,6 +87,18 @@ void main() {
         expect(result!.value, equals(2));
         expect(result.parameters, equals({#id: '789'}));
       });
+
+      test(
+          'Given a path with repeated parameters at different levels, '
+          'when looked up'
+          'then last extracted parameter wins', () {
+        trie.add(NormalizedPath('/:id/:id'), 1);
+
+        final result = trie.lookup(NormalizedPath('/123/456'));
+        expect(result, isNotNull);
+        expect(result!.value, equals(1));
+        expect(result.parameters, equals({#id: '456'}));
+      });
     });
 
     group('Route Precedence', () {
