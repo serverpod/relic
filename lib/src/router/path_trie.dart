@@ -124,7 +124,11 @@ final class PathTrie<T> {
     final node = trie._root;
     final currentNode = _build(prefixPath);
     if (currentNode.children.containsKey(lastSegment)) {
-      throw ArgumentError('Path already exists');
+      throw ArgumentError.value(
+        normalizedPath,
+        'normalizedPath',
+        'Path already exists',
+      );
     }
 
     currentNode.children[lastSegment] = node;
