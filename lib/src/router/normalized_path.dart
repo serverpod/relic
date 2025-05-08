@@ -56,7 +56,10 @@ class NormalizedPath {
     return result;
   }
 
+  /// Returns a new [NormalizedPath] representing a subpath of this path.
   ///
+  /// The [start] parameter specifies the starting segment index (inclusive).
+  /// The optional [end] parameter specifies the ending segment index (exclusive).
   NormalizedPath subPath(final int start, [final int? end]) =>
       NormalizedPath._(segments.sublist(start, end));
 
