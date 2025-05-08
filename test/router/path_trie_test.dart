@@ -358,26 +358,75 @@ void main() {
       });
 
       test(
-          'Given a trie, '
+          'Given an empty trie, '
           'when attempting to attach another trie at the root path ("/"), '
-          'then throws ArgumentError', () {
+          'then it succeeds', () {
+        // This wasn't always so: https://github.com/serverpod/relic/pull/61/files#r2079670738
         expect(
           () => trieA.attach(NormalizedPath('/'), trieB),
-          throwsArgumentError,
-          reason: 'Cannot attach at root',
+          returnsNormally,
         );
       });
 
       test(
           'Given a trie with an existing path, '
-          'when attempting to attach another trie at that same path, '
-          'then throws ArgumentError', () {
-        trieA.add(NormalizedPath('/pathA/existing'), 1);
+          'when attempting to attach another trie on a sub-path, '
+          'then it succeeds and both tries are updated', () {
+        trieA.add(NormalizedPath('/pathA/existing/A'), 1);
+        trieB.add(NormalizedPath('/pathB/'), 2);
 
         expect(
           () => trieA.attach(NormalizedPath('/pathA/existing'), trieB),
+          returnsNormally,
+        );
+
+        // We can see B in A ..
+        var result = trieA.lookup(NormalizedPath('/pathA/existing/pathB'));
+        expect(result, isNotNull);
+        expect(result!.value, equals(2));
+
+        // .. but we can also see part of A in B
+        result = trieB.lookup(NormalizedPath('/A'));
+        expect(result, isNotNull);
+        expect(result!.value, equals(1));
+      });
+
+      test(
+          'Given a trie with an existing path, '
+          'when attempting to attach another trie at that same path that, '
+          'then it fails', () {
+        trieA.add(NormalizedPath('/existing'), 1);
+        trieB.add(NormalizedPath('/'), 2);
+        expect(
+          () => trieA.attach(NormalizedPath('/existing'), trieB),
           throwsArgumentError,
-          reason: 'Path already exists',
+          reason: 'Conflicting values',
+        );
+      });
+
+      test(
+          'Given a trie with an existing path, '
+          'when attempting to attach another trie at that same path that, '
+          'then it fails', () {
+        trieA.add(NormalizedPath('/existing/:a'), 1);
+        trieB.add(NormalizedPath('/:b'), 2);
+        expect(
+          () => trieA.attach(NormalizedPath('/existing'), trieB),
+          throwsArgumentError,
+          reason: 'Conflicting parameters',
+        );
+      });
+
+      test(
+          'Given a trie with an existing path, '
+          'when attempting to attach another trie at that same path that, '
+          'then it fails', () {
+        trieA.add(NormalizedPath('/existing/foo'), 1);
+        trieB.add(NormalizedPath('/foo'), 2);
+        expect(
+          () => trieA.attach(NormalizedPath('/existing'), trieB),
+          throwsArgumentError,
+          reason: 'Conflicting children',
         );
       });
 

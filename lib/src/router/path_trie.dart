@@ -36,7 +36,8 @@ typedef _Parameter<T> = ({_TrieNode<T> node, String name});
 /// Supports literal segments and parameterized segments (e.g., `:id`). Allows
 /// associating a value of type [T] with each complete path.
 final class PathTrie<T> {
-  final _TrieNode<T> _root = _TrieNode<T>();
+  // Note: not final since we update in attach
+  var _root = _TrieNode<T>();
 
   /// Adds a route path and its associated value to the trie.
   ///
@@ -111,27 +112,31 @@ final class PathTrie<T> {
   /// at `/a/b/c`, the attached trie's root will be accessible via `/a/b/c`.
   ///
   /// Throws an [ArgumentError] if:
-  /// - The [normalizedPath] has a length less than 1 (i.e., attempting to attach at the root).
-  /// - A node already exists at the target attachment path.
+  /// - The node at [normalizedPath] has a value, and the root of [trie] has as well
+  /// - There are overlapping children between the node at [normalizedPath] and
   void attach(final NormalizedPath normalizedPath, final PathTrie<T> trie) {
-    final pathLength = normalizedPath.length;
-    if (pathLength < 1) {
-      throw ArgumentError('Cannot attach at root');
-    }
-    final lastSegment = normalizedPath.segments.last;
-    final prefixPath = normalizedPath.subPath(0, pathLength - 1);
-
     final node = trie._root;
-    final currentNode = _build(prefixPath);
-    if (currentNode.children.containsKey(lastSegment)) {
-      throw ArgumentError.value(
-        normalizedPath,
-        'normalizedPath',
-        'Path already exists',
-      );
+    final currentNode = _build(normalizedPath);
+
+    if (currentNode.value != null && node.value != null) {
+      throw ArgumentError('Conflicting value');
     }
 
-    currentNode.children[lastSegment] = node;
+    if (currentNode.parameter != null && node.parameter != null) {
+      throw ArgumentError('Conflicting parameter');
+    }
+
+    final keys = currentNode.children.keys.toSet();
+    final otherKeys = node.children.keys.toSet();
+    if (keys.intersection(otherKeys).isNotEmpty) {
+      throw ArgumentError('Conflicting children');
+    }
+
+    // No conflicts so safe to update
+    currentNode.value ??= node.value;
+    currentNode.parameter ??= node.parameter;
+    currentNode.children.addAll(node.children);
+    trie._root = currentNode;
   }
 
   /// Looks up a path in the trie and extracts parameters.
