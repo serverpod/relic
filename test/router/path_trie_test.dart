@@ -90,7 +90,7 @@ void main() {
 
       test(
           'Given a path with repeated parameters at different levels, '
-          'when looked up'
+          'when looked up, '
           'then last extracted parameter wins', () {
         trie.add(NormalizedPath('/:id/:id'), 1);
 
@@ -487,6 +487,20 @@ void main() {
             #paramB: 'val456',
           }),
         );
+      });
+
+      test(
+          'Given a path with repeated parameters at different levels introduced by attach, '
+          'when looked up, '
+          'then last extracted parameter wins', () {
+        trieA.add(NormalizedPath('/:id/'), 1);
+        trieB.add(NormalizedPath('/:id/'), 2);
+        trieA.attach(NormalizedPath('/:id/'), trieB);
+
+        final result = trieA.lookup(NormalizedPath('/123/456'));
+        expect(result, isNotNull);
+        expect(result!.value, equals(2));
+        expect(result.parameters, equals({#id: '456'}));
       });
     });
   });
