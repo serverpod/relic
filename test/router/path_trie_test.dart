@@ -330,5 +330,115 @@ void main() {
         );
       });
     });
+
+    group('Attaching Tries', () {
+      late PathTrie<int> trieA;
+      late PathTrie<int> trieB;
+
+      setUp(() {
+        trieA = PathTrie<int>();
+        trieB = PathTrie<int>();
+      });
+
+      test(
+          'Given two tries, one with a route, '
+          'when the second trie is attached to the first, '
+          'then routes from the second trie are accessible via the first', () {
+        // Setup trieB
+        trieB.add(NormalizedPath('/routeB'), 10);
+
+        // Attach trieB to trieA
+        trieA.attach(NormalizedPath('/pathA'), trieB);
+
+        // Lookup in trieA
+        final result = trieA.lookup(NormalizedPath('/pathA/routeB'));
+        expect(result, isNotNull);
+        expect(result!.value, equals(10));
+        expect(result.parameters, isEmpty);
+      });
+
+      test(
+          'Given a trie, '
+          'when attempting to attach another trie at the root path ("/"), '
+          'then throws ArgumentError', () {
+        expect(
+          () => trieA.attach(NormalizedPath('/'), trieB),
+          throwsArgumentError,
+          reason: 'Cannot attach at root',
+        );
+      });
+
+      test(
+          'Given a trie with an existing path, '
+          'when attempting to attach another trie at that same path, '
+          'then throws ArgumentError', () {
+        trieA.add(NormalizedPath('/pathA/existing'), 1);
+
+        expect(
+          () => trieA.attach(NormalizedPath('/pathA/existing'), trieB),
+          throwsArgumentError,
+          reason: 'Path already exists',
+        );
+      });
+
+      test(
+          'Given trie B attached to trie A, '
+          'when trie B is updated with a new route after attachment, '
+          'then the new route is accessible via trie A', () {
+        // Initial setup and attachment
+        trieB.add(NormalizedPath('/route1'), 10);
+        trieA.attach(NormalizedPath('/prefixB'), trieB);
+
+        // Add new route to trieB *after* attachment
+        trieB.add(NormalizedPath('/route2'), 20);
+
+        // Verify new route is accessible via trieA
+        final result = trieA.lookup(NormalizedPath('/prefixB/route2'));
+        expect(result, isNotNull);
+        expect(result!.value, equals(20));
+      });
+
+      test(
+          'Given trie B with parameterized routes attached to trie A, '
+          'when looking up paths in trie A that extend into trie B, '
+          'then parameters from trieB are correctly resolved', () {
+        // Setup trieB with a parameterized route
+        trieB.add(NormalizedPath('/items/:itemId'), 100);
+        trieA.attach(NormalizedPath('/api'), trieB); // Attach trieB at /api
+
+        // Lookup a path that goes through trieA into trieB
+        final result = trieA.lookup(NormalizedPath('/api/items/abc'));
+        expect(result, isNotNull);
+        expect(result!.value, equals(100));
+        expect(result.parameters, equals({#itemId: 'abc'}));
+      });
+
+      test(
+          'Given trie B with parameterized routes attached to trie A under a parameterized route, '
+          'when looking up paths in trie A that extend into trie B, '
+          'then parameters from both tries are correctly resolved', () {
+        // More complex scenario: trieA has parameters, trieB is attached under that
+        trieB.add(NormalizedPath('/:paramB/endpoint'), 300);
+        trieA.add(NormalizedPath('/users/:userId'), 200); // A route in trieA
+        trieA.attach(NormalizedPath('/users/:userId/data'), trieB);
+
+        // Lookup path spanning trieA (with param) and trieB (with param)
+        final result =
+            trieA.lookup(NormalizedPath('/users/user123/data/val456/endpoint'));
+        expect(
+          result,
+          isNotNull,
+          reason: 'Should find path through attached trieB',
+        );
+        expect(result!.value, equals(300));
+        expect(
+          result.parameters,
+          equals({
+            #userId: 'user123',
+            #paramB: 'val456',
+          }),
+        );
+      });
+    });
   });
 }

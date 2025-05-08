@@ -56,6 +56,13 @@ class NormalizedPath {
     return result;
   }
 
+  ///
+  NormalizedPath subPath(final int start, [final int? end]) =>
+      NormalizedPath._(segments.sublist(start, end));
+
+  /// The number of segments in this path
+  int get length => segments.length;
+
   /// Whether path has parameters or not
   late final bool hasParameters = segments.any((final s) => s.startsWith(':'));
 

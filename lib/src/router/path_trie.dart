@@ -48,6 +48,22 @@ final class PathTrie<T> {
   /// the same level (e.g., adding `/users/:id` after `/users/:userId`), an
   /// [ArgumentError] is also thrown.
   void add(final NormalizedPath normalizedPath, final T value) {
+    final currentNode = _build(normalizedPath);
+    // Mark the end node and handle potential overwrites
+    if (currentNode.value != null) {
+      throw ArgumentError(
+        'Value already registered: '
+            'Existing: "${currentNode.value}" '
+            'New: "$value" '
+            'for path $normalizedPath',
+        'normalizedPath',
+      );
+    }
+    currentNode.value = value;
+  }
+
+  /// Builds a trie node for the given normalized path.
+  _TrieNode<T> _build(final NormalizedPath normalizedPath) {
     final segments = normalizedPath.segments;
     _TrieNode<T> currentNode = _root;
 
@@ -82,17 +98,36 @@ final class PathTrie<T> {
         );
       }
     }
-    // Mark the end node and handle potential overwrites
-    if (currentNode.value != null) {
-      throw ArgumentError(
-        'Value already registered: '
-            'Existing: "${currentNode.value}" '
-            'New: "$value" '
-            'for path $normalizedPath',
-        'normalizedPath',
-      );
+    return currentNode;
+  }
+
+  /// Attaches another [PathTrie] at the specified [normalizedPath] within this trie.
+  ///
+  /// The [normalizedPath] determines the location where the root of the [trie]
+  /// will be attached. The last segment of the [normalizedPath] will become
+  /// the key for the attached trie's root node in the current trie.
+  ///
+  /// For example, if this trie has a path `/a/b` and you attach another trie
+  /// at `/a/b/c`, the attached trie's root will be accessible via `/a/b/c`.
+  ///
+  /// Throws an [ArgumentError] if:
+  /// - The [normalizedPath] has a length less than 1 (i.e., attempting to attach at the root).
+  /// - A node already exists at the target attachment path.
+  void attach(final NormalizedPath normalizedPath, final PathTrie<T> trie) {
+    final pathLength = normalizedPath.length;
+    if (pathLength < 1) {
+      throw ArgumentError('Cannot attach at root');
     }
-    currentNode.value = value;
+    final lastSegment = normalizedPath.segments.last;
+    final prefixPath = normalizedPath.subPath(0, pathLength - 1);
+
+    final node = trie._root;
+    final currentNode = _build(prefixPath);
+    if (currentNode.children.containsKey(lastSegment)) {
+      throw ArgumentError('Path already exists');
+    }
+
+    currentNode.children[lastSegment] = node;
   }
 
   /// Looks up a path in the trie and extracts parameters.
