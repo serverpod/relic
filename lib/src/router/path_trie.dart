@@ -8,8 +8,11 @@ final class LookupResult<T> {
   /// A map of parameter names to their extracted values from the path.
   final Map<Symbol, String> parameters;
 
+  /// Indicates whether the matched route is dynamic (contains parameters).
+  final bool isDynamic;
+
   /// Creates a [LookupResult] with the given [value] and [parameters].
-  const LookupResult(this.value, this.parameters);
+  const LookupResult(this.value, this.parameters, this.isDynamic);
 }
 
 /// A node within the path trie.
@@ -150,6 +153,7 @@ final class PathTrie<T> {
     final segments = normalizedPath.segments;
     _TrieNode<T> currentNode = _root;
     final parameters = <Symbol, String>{};
+    var isDynamic = false;
 
     for (final segment in segments) {
       final child = currentNode.children[segment];
@@ -162,6 +166,7 @@ final class PathTrie<T> {
           // Match parameter
           parameters[Symbol(parameter.name)] = segment;
           currentNode = parameter.node;
+          isDynamic = true;
         } else {
           // No match
           return null;
@@ -170,6 +175,6 @@ final class PathTrie<T> {
     }
 
     final value = currentNode.value;
-    return value != null ? LookupResult(value, parameters) : null;
+    return value != null ? LookupResult(value, parameters, isDynamic) : null;
   }
 }

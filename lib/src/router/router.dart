@@ -10,42 +10,31 @@ import 'path_trie.dart';
 final class Router<T> {
   /// Stores static routes (no parameters) for fast lookups using a HashMap.
   /// The key is the [NormalizedPath] representation of the route.
-  final staticRoutes = HashMap<NormalizedPath, T>();
+  ///
+  /// This cache is build lazily on lookup.
+  final _staticCache = HashMap<NormalizedPath, T>();
 
-  /// Stores dynamic routes (with parameters) in a [PathTrie] for efficient
+  /// Stores all routes (with or without parameters) in a [PathTrie] for efficient
   /// matching and parameter extraction.
-  final PathTrie<T> dynamicRoutes = PathTrie<T>();
+  final PathTrie<T> _allRoutes = PathTrie<T>();
 
   /// Adds a route definition to the router.
   ///
   /// The [path] string defines the route pattern. Segments starting with `:` (e.g.,
   /// `:id`) are treated as parameters. The associated [value] (e.g., a request
   /// handler) is stored for this route.
-  ///
-  /// Routes are classified as static or dynamic based on whether the [path]'s
-  /// normalized segments contain a parameter (like `:id`). Static routes are stored
-  /// in a HashMap for O(1) average lookup, while dynamic routes are stored in a
-  /// [PathTrie].
-  ///
-  /// If a static route with the same normalized path already exists, an
-  /// [ArgumentError] is thrown. If adding a dynamic route path that already
-  /// exists, an [ArgumentError] is thrown by the underlying [PathTrie].
   void add(final String path, final T value) {
     final normalizedPath = NormalizedPath(path);
+    _allRoutes.add(normalizedPath, value);
+  }
 
-    if (normalizedPath.hasParameters) {
-      dynamicRoutes.add(normalizedPath, value);
-    } else {
-      if (staticRoutes.containsKey(normalizedPath)) {
-        throw ArgumentError(
-          'Duplicate static route: '
-              'A route for the normalized path "$normalizedPath" already exists '
-              '(from original path "$path").',
-          'path',
-        );
-      }
-      staticRoutes[normalizedPath] = value;
-    }
+  /// Attaches a sub-router to this router at the specified [path].
+  ///
+  /// The [path] string defines the route prefix for the sub-router. All routes
+  /// defined in the sub-router will be prefixed with this path when matched.
+  void attach(final String path, final Router<T> subRouter) {
+    _allRoutes.attach(NormalizedPath(path), subRouter._allRoutes);
+    subRouter._staticCache.clear();
   }
 
   /// Looks up a route matching the provided [path].
@@ -58,9 +47,18 @@ final class Router<T> {
   LookupResult<T>? lookup(final String path) {
     final normalizedPath = NormalizedPath(path); // Normalize upfront
 
-    final value = staticRoutes[normalizedPath];
-    return value != null
-        ? LookupResult(value, {}) // No parameters for static routes
-        : dynamicRoutes.lookup(normalizedPath);
+    // Try cache first
+    final value = _staticCache[normalizedPath];
+    if (value != null) return LookupResult(value, {}, false);
+
+    // Fall back to trie
+    final result = _allRoutes.lookup(normalizedPath);
+
+    // Cache static routes for future lookups
+    if (result != null && !result.isDynamic) {
+      _staticCache[normalizedPath] = result.value;
+    }
+
+    return result;
   }
 }
