@@ -26,6 +26,8 @@ final class Router<T> {
   void add(final String path, final T value) {
     final normalizedPath = NormalizedPath(path);
     _allRoutes.add(normalizedPath, value);
+    // Avoid possible stale cache entry, ir path is re-added.
+    _staticCache.remove(normalizedPath);
   }
 
   /// Attaches a sub-router to this router at the specified [path].
