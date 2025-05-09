@@ -13,3 +13,5 @@ pubspec.lock
 .idea/
 .vscode/
 .vscode-test/
+
+*.exe

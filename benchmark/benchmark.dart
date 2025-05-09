@@ -5,14 +5,13 @@ import 'dart:math';
 
 import 'package:benchmark_harness/benchmark_harness.dart';
 import 'package:relic/src/router/router.dart';
+import 'package:routingkit/routingkit.dart' as kit;
 
 const int routeCount = 10000;
 
 late final List<int> indexes;
 late final List<String> staticRoutesToLookup;
 late final List<String> dynamicRoutesToLookup;
-late final Router<int> staticRouterForLookup;
-late final Router<int> dynamicRouterForLookup;
 
 void setupBenchmarkData() {
   print('Setting up benchmark data with $routeCount routes...');
@@ -31,17 +30,6 @@ void setupBenchmarkData() {
             '/profile$i',
       )
       .toList();
-
-  // Create and populate routers specifically for lookup benchmarks
-  staticRouterForLookup = Router<int>();
-  for (final i in indexes) {
-    staticRouterForLookup.add('/path$i', i);
-  }
-
-  dynamicRouterForLookup = Router<int>();
-  for (final i in indexes) {
-    dynamicRouterForLookup.add('/users/:id/items/:itemId/profile$i', i);
-  }
   print('Setup complete.');
 }
 
@@ -69,6 +57,16 @@ class StaticAddBenchmark extends RouterBenchmark {
 class StaticLookupBenchmark extends RouterBenchmark {
   StaticLookupBenchmark() : super('Router Lookup Static x$routeCount');
 
+  late final Router<int> staticRouterForLookup;
+
+  @override
+  void setup() {
+    staticRouterForLookup = Router<int>();
+    for (final i in indexes) {
+      staticRouterForLookup.add('/path$i', i);
+    }
+  }
+
   @override
   void run() {
     for (final route in staticRoutesToLookup) {
@@ -95,11 +93,95 @@ class DynamicAddBenchmark extends RouterBenchmark {
 class DynamicLookupBenchmark extends RouterBenchmark {
   DynamicLookupBenchmark() : super('Router Lookup Dynamic x$routeCount');
 
+  late final Router<int> dynamicRouterForLookup;
+
+  @override
+  void setup() {
+    // Create and populate routers specifically for lookup benchmarks
+    dynamicRouterForLookup = Router<int>();
+    for (final i in indexes) {
+      dynamicRouterForLookup.add('/users/:id/items/:itemId/profile$i', i);
+    }
+  }
+
   @override
   void run() {
     for (final route in dynamicRoutesToLookup) {
       // Access value to ensure lookup isn't optimized away
       dynamicRouterForLookup.lookup(route)?.value;
+    }
+  }
+}
+
+class StaticAddRoutingkitBenchmark extends RouterBenchmark {
+  StaticAddRoutingkitBenchmark() : super('Routingkit Add Static x$routeCount');
+
+  @override
+  void run() {
+    final router = kit.createRouter<int>();
+    for (final i in indexes) {
+      router.add('GET', '/path$i', i);
+    }
+  }
+}
+
+class StaticLookupRoutingkitBenchmark extends RouterBenchmark {
+  StaticLookupRoutingkitBenchmark()
+      : super('Routingkit Lookup Static x$routeCount');
+
+  late final kit.Router<int> staticRouterForLookup;
+
+  @override
+  void setup() {
+    staticRouterForLookup = kit.createRouter<int>();
+    for (final i in indexes) {
+      staticRouterForLookup.add('GET', '/path$i', i);
+    }
+  }
+
+  @override
+  void run() {
+    for (final route in staticRoutesToLookup) {
+      // Access value to ensure lookup isn't optimized away
+      staticRouterForLookup.find('GET', route)?.data;
+    }
+  }
+}
+
+class DynamicAddRoutingkitBenchmark extends RouterBenchmark {
+  DynamicAddRoutingkitBenchmark()
+      : super('Routingkit Add Dynamic x$routeCount');
+
+  @override
+  void run() {
+    final router = kit.createRouter<int>();
+    for (final i in indexes) {
+      router.add('GET', '/users/:id/items/:itemId/profile$i', i);
+    }
+  }
+}
+
+class DynamicLookupRoutingkitBenchmark extends RouterBenchmark {
+  DynamicLookupRoutingkitBenchmark()
+      : super('Routingkit Lookup Dynamic x$routeCount');
+
+  late final kit.Router<int> dynamicRouterForLookup;
+
+  @override
+  void setup() {
+    // Create and populate routers specifically for lookup benchmarks
+    dynamicRouterForLookup = kit.createRouter<int>();
+    for (final i in indexes) {
+      dynamicRouterForLookup.add(
+          'GET', '/users/:id/items/:itemId/profile$i', i);
+    }
+  }
+
+  @override
+  void run() {
+    for (final route in dynamicRoutesToLookup) {
+      // Access value to ensure lookup isn't optimized away
+      dynamicRouterForLookup.find('GET', route)?.data;
     }
   }
 }
@@ -120,8 +202,12 @@ Future<void> driver() async {
 
   print('Starting benchmarks');
   StaticAddBenchmark().report();
+  StaticAddRoutingkitBenchmark().report();
   StaticLookupBenchmark().report();
+  StaticLookupRoutingkitBenchmark().report();
   DynamicAddBenchmark().report();
+  DynamicAddRoutingkitBenchmark().report();
   DynamicLookupBenchmark().report();
+  DynamicLookupRoutingkitBenchmark().report();
   print('Done');
 }
