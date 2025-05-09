@@ -119,11 +119,11 @@ final class PathTrie<T> {
     final currentNode = _build(normalizedPath);
 
     if (currentNode.value != null && node.value != null) {
-      throw ArgumentError('Conflicting value');
+      throw ArgumentError('Conflicting values');
     }
 
     if (currentNode.parameter != null && node.parameter != null) {
-      throw ArgumentError('Conflicting parameter');
+      throw ArgumentError('Conflicting parameters');
     }
 
     final keys = currentNode.children.keys.toSet();

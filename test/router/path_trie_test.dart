@@ -361,7 +361,6 @@ void main() {
           'Given an empty trie, '
           'when attempting to attach another trie at the root path ("/"), '
           'then it succeeds', () {
-        // This wasn't always so: https://github.com/serverpod/relic/pull/61/files#r2079670738
         expect(
           () => trieA.attach(NormalizedPath('/'), trieB),
           returnsNormally,
@@ -399,34 +398,34 @@ void main() {
         trieB.add(NormalizedPath('/'), 2);
         expect(
           () => trieA.attach(NormalizedPath('/existing'), trieB),
-          throwsArgumentError,
-          reason: 'Conflicting values',
+          throwsA(isA<ArgumentError>().having(
+              (final e) => e.message, 'message', equals('Conflicting values'))),
         );
       });
 
       test(
-          'Given a trie with an existing path, '
-          'when attempting to attach another trie at that same path that, '
-          'then it fails', () {
+          'Given a trie with an existing parameterized path, '
+          'when attempting to attach another trie with a parameterized root path at that level'
+          'then it fails due to conflicting parameters', () {
         trieA.add(NormalizedPath('/existing/:a'), 1);
         trieB.add(NormalizedPath('/:b'), 2);
         expect(
           () => trieA.attach(NormalizedPath('/existing'), trieB),
-          throwsArgumentError,
-          reason: 'Conflicting parameters',
+          throwsA(isA<ArgumentError>().having((final e) => e.message, 'message',
+              equals('Conflicting parameters'))),
         );
       });
 
       test(
           'Given a trie with an existing path, '
-          'when attempting to attach another trie at that same path that, '
-          'then it fails', () {
+          'when attempting to attach another trie such that children names would overlap, '
+          'then it fails due to conflicting children', () {
         trieA.add(NormalizedPath('/existing/foo'), 1);
         trieB.add(NormalizedPath('/foo'), 2);
         expect(
           () => trieA.attach(NormalizedPath('/existing'), trieB),
-          throwsArgumentError,
-          reason: 'Conflicting children',
+          throwsA(isA<ArgumentError>().having((final e) => e.message, 'message',
+              equals('Conflicting children'))),
         );
       });
 
