@@ -57,7 +57,7 @@ class StaticAddBenchmark extends RouterBenchmark {
 class StaticLookupBenchmark extends RouterBenchmark {
   StaticLookupBenchmark() : super('Router Lookup Static x$routeCount');
 
-  late Router<int> staticRouterForLookup;
+  late final Router<int> staticRouterForLookup;
 
   @override
   void setup() {
@@ -93,7 +93,7 @@ class DynamicAddBenchmark extends RouterBenchmark {
 class DynamicLookupBenchmark extends RouterBenchmark {
   DynamicLookupBenchmark() : super('Router Lookup Dynamic x$routeCount');
 
-  late Router<int> dynamicRouterForLookup;
+  late final Router<int> dynamicRouterForLookup;
 
   @override
   void setup() {
@@ -129,7 +129,7 @@ class StaticLookupRoutingkitBenchmark extends RouterBenchmark {
   StaticLookupRoutingkitBenchmark()
       : super('Routingkit Lookup Static x$routeCount');
 
-  late kit.Router<int> staticRouterForLookup;
+  late final kit.Router<int> staticRouterForLookup;
 
   @override
   void setup() {
@@ -165,7 +165,7 @@ class DynamicLookupRoutingkitBenchmark extends RouterBenchmark {
   DynamicLookupRoutingkitBenchmark()
       : super('Routingkit Lookup Dynamic x$routeCount');
 
-  late kit.Router<int> dynamicRouterForLookup;
+  late final kit.Router<int> dynamicRouterForLookup;
 
   @override
   void setup() {

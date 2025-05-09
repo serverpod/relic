@@ -49,7 +49,7 @@ final class Router<T> {
 
     // Try cache first
     final value = _staticCache[normalizedPath];
-    if (value != null) return LookupResult(value, {}, false);
+    if (value != null) return LookupResult(value, const {}, false);
 
     // Fall back to trie
     final result = _allRoutes.lookup(normalizedPath);
