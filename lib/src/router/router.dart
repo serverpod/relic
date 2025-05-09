@@ -16,10 +16,6 @@ final class Router<T> {
   /// matching and parameter extraction.
   final PathTrie<T> dynamicRoutes = PathTrie<T>();
 
-  /// Checks if a [NormalizedPath] contains any parameter segments (e.g., `:id`).
-  static bool _isDynamic(final NormalizedPath path) =>
-      path.segments.any((final s) => s.startsWith(':'));
-
   /// Adds a route definition to the router.
   ///
   /// The [path] string defines the route pattern. Segments starting with `:` (e.g.,
@@ -37,7 +33,7 @@ final class Router<T> {
   void add(final String path, final T value) {
     final normalizedPath = NormalizedPath(path);
 
-    if (_isDynamic(normalizedPath)) {
+    if (normalizedPath.hasParameters) {
       dynamicRoutes.add(normalizedPath, value);
     } else {
       if (staticRoutes.containsKey(normalizedPath)) {

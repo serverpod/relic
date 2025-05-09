@@ -90,7 +90,7 @@ void main() {
 
       test(
           'Given a path with repeated parameters at different levels, '
-          'when looked up'
+          'when looked up, '
           'then last extracted parameter wins', () {
         trie.add(NormalizedPath('/:id/:id'), 1);
 
@@ -328,6 +328,178 @@ void main() {
           isNull,
           reason: 'v2 does not match v1',
         );
+      });
+    });
+
+    group('Attaching Tries', () {
+      late PathTrie<int> trieA;
+      late PathTrie<int> trieB;
+
+      setUp(() {
+        trieA = PathTrie<int>();
+        trieB = PathTrie<int>();
+      });
+
+      test(
+          'Given two tries, one with a route, '
+          'when the second trie is attached to the first, '
+          'then routes from the second trie are accessible via the first', () {
+        // Setup trieB
+        trieB.add(NormalizedPath('/routeB'), 10);
+
+        // Attach trieB to trieA
+        trieA.attach(NormalizedPath('/pathA'), trieB);
+
+        // Lookup in trieA
+        final result = trieA.lookup(NormalizedPath('/pathA/routeB'));
+        expect(result, isNotNull);
+        expect(result!.value, equals(10));
+        expect(result.parameters, isEmpty);
+      });
+
+      test(
+          'Given an empty trie, '
+          'when attempting to attach another trie at the root path ("/"), '
+          'then it succeeds', () {
+        expect(
+          () => trieA.attach(NormalizedPath('/'), trieB),
+          returnsNormally,
+        );
+      });
+
+      test(
+          'Given a trie with an existing path, '
+          'when attempting to attach another trie on a sub-path, '
+          'then it succeeds and both tries are updated', () {
+        trieA.add(NormalizedPath('/pathA/existing/A'), 1);
+        trieB.add(NormalizedPath('/pathB/'), 2);
+
+        expect(
+          () => trieA.attach(NormalizedPath('/pathA/existing'), trieB),
+          returnsNormally,
+        );
+
+        // We can see B in A ..
+        var result = trieA.lookup(NormalizedPath('/pathA/existing/pathB'));
+        expect(result, isNotNull);
+        expect(result!.value, equals(2));
+
+        // .. but we can also see part of A in B
+        result = trieB.lookup(NormalizedPath('/A'));
+        expect(result, isNotNull);
+        expect(result!.value, equals(1));
+      });
+
+      test(
+          'Given a trie with an existing path, '
+          'when attempting to attach another trie at that same path that, '
+          'then it fails', () {
+        trieA.add(NormalizedPath('/existing'), 1);
+        trieB.add(NormalizedPath('/'), 2);
+        expect(
+          () => trieA.attach(NormalizedPath('/existing'), trieB),
+          throwsA(isA<ArgumentError>().having(
+              (final e) => e.message, 'message', equals('Conflicting values'))),
+        );
+      });
+
+      test(
+          'Given a trie with an existing parameterized path, '
+          'when attempting to attach another trie with a parameterized root path at that level'
+          'then it fails due to conflicting parameters', () {
+        trieA.add(NormalizedPath('/existing/:a'), 1);
+        trieB.add(NormalizedPath('/:b'), 2);
+        expect(
+          () => trieA.attach(NormalizedPath('/existing'), trieB),
+          throwsA(isA<ArgumentError>().having((final e) => e.message, 'message',
+              equals('Conflicting parameters'))),
+        );
+      });
+
+      test(
+          'Given a trie with an existing path, '
+          'when attempting to attach another trie such that children names would overlap, '
+          'then it fails due to conflicting children', () {
+        trieA.add(NormalizedPath('/existing/foo'), 1);
+        trieB.add(NormalizedPath('/foo'), 2);
+        expect(
+          () => trieA.attach(NormalizedPath('/existing'), trieB),
+          throwsA(isA<ArgumentError>().having((final e) => e.message, 'message',
+              equals('Conflicting children'))),
+        );
+      });
+
+      test(
+          'Given trie B attached to trie A, '
+          'when trie B is updated with a new route after attachment, '
+          'then the new route is accessible via trie A', () {
+        // Initial setup and attachment
+        trieB.add(NormalizedPath('/route1'), 10);
+        trieA.attach(NormalizedPath('/prefixB'), trieB);
+
+        // Add new route to trieB *after* attachment
+        trieB.add(NormalizedPath('/route2'), 20);
+
+        // Verify new route is accessible via trieA
+        final result = trieA.lookup(NormalizedPath('/prefixB/route2'));
+        expect(result, isNotNull);
+        expect(result!.value, equals(20));
+      });
+
+      test(
+          'Given trie B with parameterized routes attached to trie A, '
+          'when looking up paths in trie A that extend into trie B, '
+          'then parameters from trieB are correctly resolved', () {
+        // Setup trieB with a parameterized route
+        trieB.add(NormalizedPath('/items/:itemId'), 100);
+        trieA.attach(NormalizedPath('/api'), trieB); // Attach trieB at /api
+
+        // Lookup a path that goes through trieA into trieB
+        final result = trieA.lookup(NormalizedPath('/api/items/abc'));
+        expect(result, isNotNull);
+        expect(result!.value, equals(100));
+        expect(result.parameters, equals({#itemId: 'abc'}));
+      });
+
+      test(
+          'Given trie B with parameterized routes attached to trie A under a parameterized route, '
+          'when looking up paths in trie A that extend into trie B, '
+          'then parameters from both tries are correctly resolved', () {
+        // More complex scenario: trieA has parameters, trieB is attached under that
+        trieB.add(NormalizedPath('/:paramB/endpoint'), 300);
+        trieA.add(NormalizedPath('/users/:userId'), 200); // A route in trieA
+        trieA.attach(NormalizedPath('/users/:userId/data'), trieB);
+
+        // Lookup path spanning trieA (with param) and trieB (with param)
+        final result =
+            trieA.lookup(NormalizedPath('/users/user123/data/val456/endpoint'));
+        expect(
+          result,
+          isNotNull,
+          reason: 'Should find path through attached trieB',
+        );
+        expect(result!.value, equals(300));
+        expect(
+          result.parameters,
+          equals({
+            #userId: 'user123',
+            #paramB: 'val456',
+          }),
+        );
+      });
+
+      test(
+          'Given a path with repeated parameters at different levels introduced by attach, '
+          'when looked up, '
+          'then last extracted parameter wins', () {
+        trieA.add(NormalizedPath('/:id/'), 1);
+        trieB.add(NormalizedPath('/:id/'), 2);
+        trieA.attach(NormalizedPath('/:id/'), trieB);
+
+        final result = trieA.lookup(NormalizedPath('/123/456'));
+        expect(result, isNotNull);
+        expect(result!.value, equals(2));
+        expect(result.parameters, equals({#id: '456'}));
       });
     });
   });

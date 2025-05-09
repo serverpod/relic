@@ -36,7 +36,8 @@ typedef _Parameter<T> = ({_TrieNode<T> node, String name});
 /// Supports literal segments and parameterized segments (e.g., `:id`). Allows
 /// associating a value of type [T] with each complete path.
 final class PathTrie<T> {
-  final _TrieNode<T> _root = _TrieNode<T>();
+  // Note: not final since we update in attach
+  var _root = _TrieNode<T>();
 
   /// Adds a route path and its associated value to the trie.
   ///
@@ -48,6 +49,22 @@ final class PathTrie<T> {
   /// the same level (e.g., adding `/users/:id` after `/users/:userId`), an
   /// [ArgumentError] is also thrown.
   void add(final NormalizedPath normalizedPath, final T value) {
+    final currentNode = _build(normalizedPath);
+    // Mark the end node and handle potential overwrites
+    if (currentNode.value != null) {
+      throw ArgumentError(
+        'Value already registered: '
+            'Existing: "${currentNode.value}" '
+            'New: "$value" '
+            'for path $normalizedPath',
+        'normalizedPath',
+      );
+    }
+    currentNode.value = value;
+  }
+
+  /// Builds a trie node for the given normalized path.
+  _TrieNode<T> _build(final NormalizedPath normalizedPath) {
     final segments = normalizedPath.segments;
     _TrieNode<T> currentNode = _root;
 
@@ -82,17 +99,44 @@ final class PathTrie<T> {
         );
       }
     }
-    // Mark the end node and handle potential overwrites
-    if (currentNode.value != null) {
-      throw ArgumentError(
-        'Value already registered: '
-            'Existing: "${currentNode.value}" '
-            'New: "$value" '
-            'for path $normalizedPath',
-        'normalizedPath',
-      );
+    return currentNode;
+  }
+
+  /// Attaches another [PathTrie] at the specified [normalizedPath] within this trie.
+  ///
+  /// The [normalizedPath] determines the location where the root of the [trie]
+  /// will be attached. The last segment of the [normalizedPath] will become
+  /// the key for the attached trie's root node in the current trie.
+  ///
+  /// For example, if this trie has a path `/a/b` and you attach another trie
+  /// at `/a/b/c`, the attached trie's root will be accessible via `/a/b/c`.
+  ///
+  /// Throws an [ArgumentError] if:
+  /// - The node at [normalizedPath] has a value, and the root of [trie] has as well
+  /// - There are overlapping children between the node at [normalizedPath] and
+  void attach(final NormalizedPath normalizedPath, final PathTrie<T> trie) {
+    final node = trie._root;
+    final currentNode = _build(normalizedPath);
+
+    if (currentNode.value != null && node.value != null) {
+      throw ArgumentError('Conflicting values');
     }
-    currentNode.value = value;
+
+    if (currentNode.parameter != null && node.parameter != null) {
+      throw ArgumentError('Conflicting parameters');
+    }
+
+    final keys = currentNode.children.keys.toSet();
+    final otherKeys = node.children.keys.toSet();
+    if (keys.intersection(otherKeys).isNotEmpty) {
+      throw ArgumentError('Conflicting children');
+    }
+
+    // No conflicts so safe to update
+    currentNode.value ??= node.value;
+    currentNode.parameter ??= node.parameter;
+    currentNode.children.addAll(node.children);
+    trie._root = currentNode;
   }
 
   /// Looks up a path in the trie and extracts parameters.
