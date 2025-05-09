@@ -66,6 +66,48 @@ final class PathTrie<T> {
     currentNode.value = value;
   }
 
+  bool addOrUpdate(final NormalizedPath normalizedPath, final T value) {
+    final currentNode = _build(normalizedPath);
+    final updated = currentNode.value != null;
+    currentNode.value = value;
+    return updated;
+  }
+
+  void update(final NormalizedPath normalizedPath, final T value) {
+    final currentNode = _find(normalizedPath);
+    if (currentNode == null || currentNode.value == null) {
+      throw ArgumentError.value(
+          normalizedPath, 'normalizedPath', 'No value registered');
+    }
+    currentNode.value = value;
+  }
+
+  T? remove(final NormalizedPath normalizedPath) {
+    final currentNode = _find(normalizedPath);
+    if (currentNode == null) return null;
+    final removed = currentNode.value;
+    currentNode.value = null;
+    return removed;
+  }
+
+  _TrieNode<T>? _find(final NormalizedPath normalizedPath) {
+    final segments = normalizedPath.segments;
+    _TrieNode<T> currentNode = _root;
+
+    for (final segment in segments) {
+      var nextNode = currentNode.children[segment];
+      if (nextNode == null && segment.startsWith(':')) {
+        final parameter = currentNode.parameter;
+        if (parameter != null && parameter.name == segment.substring(1)) {
+          nextNode = parameter.node;
+        }
+      }
+      if (nextNode == null) return null; // early exit
+      currentNode = nextNode;
+    }
+    return currentNode;
+  }
+
   /// Builds a trie node for the given normalized path.
   _TrieNode<T> _build(final NormalizedPath normalizedPath) {
     final segments = normalizedPath.segments;
