@@ -115,8 +115,9 @@ final class PathTrie<T> {
   /// at `/a/b/c`, the attached trie's root will be accessible via `/a/b/c`.
   ///
   /// Throws an [ArgumentError] if:
-  /// - The node at [normalizedPath] has a value, and the root of [trie] has as well
-  /// - There are overlapping children between the node at [normalizedPath] and
+  /// - The node at [normalizedPath] has a value, and the root node of [trie] has as well.
+  /// - Both nodes has an associated parameter.
+  /// - There are overlapping children between the nodes.
   void attach(final NormalizedPath normalizedPath, final PathTrie<T> trie) {
     final node = trie._root;
     final currentNode = _build(normalizedPath);
