@@ -66,6 +66,81 @@ final class PathTrie<T> {
     currentNode.value = value;
   }
 
+  /// Adds a route path and its associated value to the trie, or updates the
+  /// value if the path already exists.
+  ///
+  /// Returns `true` if a new value was added to the path (either the path was
+  /// newly created, or it existed as an intermediate path without a value)
+  /// or `false` if an existing value at the specific path was updated,
+  ///
+  /// Throws an [ArgumentError] if [normalizedPath] contains conflicting
+  /// parameter definitions (e.g., adding `/users/:id` when `/users/:userId`
+  /// exists at the same parameter level, or if a parameter name is empty).
+  bool addOrUpdate(final NormalizedPath normalizedPath, final T value) {
+    final currentNode = _build(normalizedPath);
+    final added = currentNode.value == null;
+    currentNode.value = value;
+    return added;
+  }
+
+  /// Updates the value associated with an existing route path.
+  ///
+  /// The [normalizedPath] must exactly match an already registered path that
+  /// currently has a value.
+  ///
+  /// Throws an [ArgumentError] if the [normalizedPath] is not found in the
+  /// trie, or if the node found at the path does not currently have a value
+  /// (i.e., it's an intermediate path segment or its value was previously removed).
+  ///
+  /// Use [addOrUpdate] to set a value on a path that might not exist or
+  /// might not currently have a value.
+  void update(final NormalizedPath normalizedPath, final T value) {
+    final currentNode = _find(normalizedPath);
+    if (currentNode == null || currentNode.value == null) {
+      throw ArgumentError.value(
+          normalizedPath, 'normalizedPath', 'No value registered');
+    }
+    currentNode.value = value;
+  }
+
+  /// Removes the value associated with a specific route path.
+  ///
+  /// If found, the node's value is set to `null`.
+  /// The node itself is not removed from the trie, allowing any child paths
+  /// to remain accessible.
+  ///
+  /// The [normalizedPath] should represent the exact path definition, including
+  /// any parameter segments (e.g., `/:id`).
+  ///
+  /// Returns the value that was previously associated with the path, or `null`
+  /// if the path was not found or if the node at the path did not have a value.
+  T? remove(final NormalizedPath normalizedPath) {
+    final currentNode = _find(normalizedPath);
+    if (currentNode == null) return null;
+    final removed = currentNode.value;
+    currentNode.value = null;
+    return removed;
+  }
+
+  /// Finds the [_TrieNode] that exactly matches the given [normalizedPath].
+  _TrieNode<T>? _find(final NormalizedPath normalizedPath) {
+    final segments = normalizedPath.segments;
+    _TrieNode<T> currentNode = _root;
+
+    for (final segment in segments) {
+      var nextNode = currentNode.children[segment];
+      if (nextNode == null && segment.startsWith(':')) {
+        final parameter = currentNode.parameter;
+        if (parameter != null && parameter.name == segment.substring(1)) {
+          nextNode = parameter.node;
+        }
+      }
+      if (nextNode == null) return null; // early exit
+      currentNode = nextNode;
+    }
+    return currentNode;
+  }
+
   /// Builds a trie node for the given normalized path.
   _TrieNode<T> _build(final NormalizedPath normalizedPath) {
     final segments = normalizedPath.segments;
@@ -115,8 +190,9 @@ final class PathTrie<T> {
   /// at `/a/b/c`, the attached trie's root will be accessible via `/a/b/c`.
   ///
   /// Throws an [ArgumentError] if:
-  /// - The node at [normalizedPath] has a value, and the root of [trie] has as well
-  /// - There are overlapping children between the node at [normalizedPath] and
+  /// - The node at [normalizedPath] has a value, and the root node of [trie] has as well.
+  /// - Both nodes has an associated parameter.
+  /// - There are overlapping children between the nodes.
   void attach(final NormalizedPath normalizedPath, final PathTrie<T> trie) {
     final node = trie._root;
     final currentNode = _build(normalizedPath);
