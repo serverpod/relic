@@ -17,10 +17,10 @@ enum Method {
 
 /// A wrapper around a fix length list used for mapping between method and value
 /// for each registered path.
-final class _RouterEntry<T> {
-  // One entry per method.
-  final _routeByVerb =
-      List<T?>.filled(Method.values.length, null, growable: false);
+extension type _RouterEntry<T>._(List<T?> _routeByVerb) {
+  _RouterEntry()
+      : _routeByVerb =
+            List<T?>.filled(Method.values.length, null, growable: false);
 
   @pragma('vm:prefer-inline')
   void add(final Method method, final T route) {
