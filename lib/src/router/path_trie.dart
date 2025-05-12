@@ -69,18 +69,18 @@ final class PathTrie<T> {
   /// Adds a route path and its associated value to the trie, or updates the
   /// value if the path already exists.
   ///
-  /// Returns `true` if an existing value at the specific path was updated,
-  /// or `false` if a new value was added to the path (either the path was
-  /// newly created, or it existed as an intermediate path without a value).
+  /// Returns `true` if a new value was added to the path (either the path was
+  /// newly created, or it existed as an intermediate path without a value)
+  /// or `false` if an existing value at the specific path was updated,
   ///
   /// Throws an [ArgumentError] if [normalizedPath] contains conflicting
   /// parameter definitions (e.g., adding `/users/:id` when `/users/:userId`
   /// exists at the same parameter level, or if a parameter name is empty).
   bool addOrUpdate(final NormalizedPath normalizedPath, final T value) {
     final currentNode = _build(normalizedPath);
-    final updated = currentNode.value != null;
+    final added = currentNode.value == null;
     currentNode.value = value;
-    return updated;
+    return added;
   }
 
   /// Updates the value associated with an existing route path.
