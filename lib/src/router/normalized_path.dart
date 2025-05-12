@@ -12,7 +12,7 @@ import 'lru_cache.dart';
 class NormalizedPath {
   /// Cache of interned instances
   static var interned =
-      <String, NormalizedPath>{}; // LruCache<String, NormalizedPath>(10000);
+      LruCache<String, NormalizedPath>(10000); // <String, NormalizedPath>{};
 
   /// The individual segments of the normalized path.
   /// For example, the path `/a/b/c` would have segments `['a', 'b', 'c']`.
