@@ -19,7 +19,8 @@ enum Method {
 /// for each registered path.
 final class _RouterEntry<T> {
   // One entry per method.
-  final _routeByVerb = List<T?>.filled(8, null, growable: false);
+  final _routeByVerb =
+      List<T?>.filled(Method.values.length, null, growable: false);
 
   @pragma('vm:prefer-inline')
   void add(final Method method, final T route) {
