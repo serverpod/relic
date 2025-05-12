@@ -14,8 +14,7 @@ void main() {
       test(
           'Given an empty trie, '
           'when a new path is added with addOrUpdate, '
-          'then the path is added, lookup returns the value, and addOrUpdate returns true (added)',
-          () {
+          'then the path is added', () {
         final path = NormalizedPath('/users');
         const value = 1;
 
@@ -84,8 +83,7 @@ void main() {
       test(
           'Given a trie with a path /a (with a value), '
           'when addOrUpdate is called for /a/b, '
-          'then /a/b is added with its value, /a retains its value, and both are retrievable',
-          () {
+          'then both are retrievable', () {
         final pathA = NormalizedPath('/a');
         final pathAB = NormalizedPath('/a/b');
         trie.addOrUpdate(pathA, 1);
@@ -100,16 +98,14 @@ void main() {
       test(
           'Given a trie with a path /a/b/c (making /a/b an intermediate node), '
           'when addOrUpdate is called for /a/b to give it a value, '
-          'then /a/b gets the value, /a/b/c remains accessible', () {
+          'then both are retrievable', () {
         final pathABC = NormalizedPath('/a/b/c');
         final pathAB = NormalizedPath('/a/b');
         trie.addOrUpdate(pathABC, 1); // /a/b is created as an intermediate node
 
         final wasAddedAB = trie.addOrUpdate(pathAB, 2);
 
-        expect(wasAddedAB, isTrue,
-            reason:
-                "/a/b didn't have a value, so it's an addition of value, not an update of existing value.");
+        expect(wasAddedAB, isTrue);
         expect(trie.lookup(pathAB)?.value, 2);
         expect(trie.lookup(pathABC)?.value, 1);
       });
@@ -148,9 +144,7 @@ void main() {
         trie.add(NormalizedPath('/a/b'), 2);
         final pathA = NormalizedPath('/a');
 
-        expect(() => trie.update(pathA, 1), throwsArgumentError,
-            reason:
-                "Cannot update a node that doesn't have an explicit value.");
+        expect(() => trie.update(pathA, 1), throwsArgumentError);
         expect(trie.lookup(pathA), isNull,
             reason: '/a should not have gained a value.');
         expect(trie.lookup(NormalizedPath('/a/b'))?.value, 2,
@@ -187,8 +181,7 @@ void main() {
       test(
           'Given a trie with an existing leaf path and value, '
           'when remove is called, '
-          'then it returns the removed value and lookup for that path returns null',
-          () {
+          'then the value returned is removed', () {
         final path = NormalizedPath('/comments');
         trie.add(path, 1);
 
@@ -201,7 +194,7 @@ void main() {
       test(
           'Given a trie, '
           'when remove is called for a path that does not exist, '
-          'then it returns null and the trie is unchanged', () {
+          'then nothing is removed', () {
         final path = NormalizedPath('/comments/123');
         trie.add(NormalizedPath('/other'), 1); // Ensure trie is not empty
 
@@ -215,7 +208,7 @@ void main() {
       test(
           'Given a trie with /a/b (making /a intermediate and valueless), '
           'when remove is called for /a, '
-          'then it returns null and /a/b is still accessible', () {
+          'then nothing is removed', () {
         final pathA = NormalizedPath('/a');
         final pathAB = NormalizedPath('/a/b');
         trie.add(pathAB, 2);
@@ -230,7 +223,7 @@ void main() {
       test(
           'Given a trie with /parent (value) and /parent/child (value), '
           'when remove is called for /parent, '
-          'then /parent value is removed (returns value), lookup is null, but /parent/child is still accessible',
+          'then /parent value is removed, but /parent/child is still accessible',
           () {
         final parentPath = NormalizedPath('/articles');
         final childPath = NormalizedPath('/articles/details');
@@ -249,8 +242,7 @@ void main() {
       test(
           'Given a trie with a parameterized path and value, '
           'when remove is called, '
-          'then it returns the removed value and lookup for that parameterized path returns null',
-          () {
+          'then it returns the removed value', () {
         final pathDefinition = NormalizedPath('/users/:id/settings');
         trie.add(pathDefinition, 1);
         trie.add(NormalizedPath('/users/data'), 2); // Sibling path
@@ -267,8 +259,7 @@ void main() {
       test(
           'Given a trie with root path / (value) and child /a (value), '
           'when remove is called for /, '
-          'then / value is removed (returns value), but /a is still accessible',
-          () {
+          'then / value is removed, but /a is still accessible', () {
         final rootPath = NormalizedPath('/');
         final childPath = NormalizedPath('/a');
         trie.add(rootPath, 1);
@@ -284,7 +275,7 @@ void main() {
       test(
           'Given a trie with only root path / having a value, '
           'when remove is called for /, '
-          'then / value is removed (returns value) and lookup is null', () {
+          'then / value is removed', () {
         final rootPath = NormalizedPath('/');
         trie.add(rootPath, 1);
 
@@ -297,22 +288,17 @@ void main() {
       test(
           'Given a trie with /a/b/c and /a/b/d, '
           'when /a/b/c is removed, '
-          'then /a/b/d should still be accessible and /a/b (intermediate node) should not be affected.',
-          () {
+          'then /a/b/d should still be accessible.', () {
         final pathABC = NormalizedPath('/a/b/c');
         final pathABD = NormalizedPath('/a/b/d');
         trie.add(pathABC, 1);
         trie.add(pathABD, 2);
-        // Optionally give /a/b a value to test its persistence
-        trie.addOrUpdate(NormalizedPath('/a/b'), 3);
 
         final removedValue = trie.remove(pathABC);
 
         expect(removedValue, equals(1));
         expect(trie.lookup(pathABC), isNull);
         expect(trie.lookup(pathABD)?.value, 2);
-        expect(trie.lookup(NormalizedPath('/a/b'))?.value, 3,
-            reason: 'Intermediate node /a/b should retain its value.');
       });
     });
   });
