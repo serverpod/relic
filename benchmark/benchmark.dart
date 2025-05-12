@@ -49,7 +49,7 @@ class StaticAddBenchmark extends RouterBenchmark {
   void run() {
     final router = Router<int>();
     for (final i in indexes) {
-      router.add('/path$i', i);
+      router.get('/path$i', i);
     }
   }
 }
@@ -58,13 +58,13 @@ class StaticAddBenchmark extends RouterBenchmark {
 class StaticLookupBenchmark extends RouterBenchmark {
   StaticLookupBenchmark() : super('Router Lookup Static x$routeCount');
 
-  late final Router<int> staticRouterForLookup;
+  late final Router<int> router;
 
   @override
   void setup() {
-    staticRouterForLookup = Router<int>();
+    router = Router<int>();
     for (final i in indexes) {
-      staticRouterForLookup.add('/path$i', i);
+      router.get('/path$i', i);
     }
   }
 
@@ -72,7 +72,7 @@ class StaticLookupBenchmark extends RouterBenchmark {
   void run() {
     for (final route in staticRoutesToLookup) {
       // Access value to ensure lookup isn't optimized away
-      staticRouterForLookup.lookup(route)?.value;
+      router.lookup(Method.get, route)?.value;
     }
   }
 }
@@ -85,7 +85,7 @@ class DynamicAddBenchmark extends RouterBenchmark {
   void run() {
     final router = Router<int>();
     for (final i in indexes) {
-      router.add('/users/:id/items/:itemId/profile$i', i);
+      router.get('/users/:id/items/:itemId/profile$i', i);
     }
   }
 }
@@ -94,14 +94,14 @@ class DynamicAddBenchmark extends RouterBenchmark {
 class DynamicLookupBenchmark extends RouterBenchmark {
   DynamicLookupBenchmark() : super('Router Lookup Dynamic x$routeCount');
 
-  late final Router<int> dynamicRouterForLookup;
+  late final Router<int> router;
 
   @override
   void setup() {
     // Create and populate routers specifically for lookup benchmarks
-    dynamicRouterForLookup = Router<int>();
+    router = Router<int>();
     for (final i in indexes) {
-      dynamicRouterForLookup.add('/users/:id/items/:itemId/profile$i', i);
+      router.get('/users/:id/items/:itemId/profile$i', i);
     }
   }
 
@@ -109,7 +109,7 @@ class DynamicLookupBenchmark extends RouterBenchmark {
   void run() {
     for (final route in dynamicRoutesToLookup) {
       // Access value to ensure lookup isn't optimized away
-      dynamicRouterForLookup.lookup(route)?.value;
+      router.lookup(Method.get, route)?.value;
     }
   }
 }
@@ -130,13 +130,13 @@ class StaticLookupRoutingkitBenchmark extends RouterBenchmark {
   StaticLookupRoutingkitBenchmark()
       : super('Routingkit Lookup Static x$routeCount');
 
-  late final routingkit.Router<int> staticRouterForLookup;
+  late final routingkit.Router<int> router;
 
   @override
   void setup() {
-    staticRouterForLookup = routingkit.createRouter<int>();
+    router = routingkit.createRouter<int>();
     for (final i in indexes) {
-      staticRouterForLookup.add('GET', '/path$i', i);
+      router.add('GET', '/path$i', i);
     }
   }
 
@@ -144,7 +144,7 @@ class StaticLookupRoutingkitBenchmark extends RouterBenchmark {
   void run() {
     for (final route in staticRoutesToLookup) {
       // Access value to ensure lookup isn't optimized away
-      staticRouterForLookup.find('GET', route)?.data;
+      router.find('GET', route)?.data;
     }
   }
 }
@@ -166,15 +166,14 @@ class DynamicLookupRoutingkitBenchmark extends RouterBenchmark {
   DynamicLookupRoutingkitBenchmark()
       : super('Routingkit Lookup Dynamic x$routeCount');
 
-  late final routingkit.Router<int> dynamicRouterForLookup;
+  late final routingkit.Router<int> router;
 
   @override
   void setup() {
     // Create and populate routers specifically for lookup benchmarks
-    dynamicRouterForLookup = routingkit.createRouter<int>();
+    router = routingkit.createRouter<int>();
     for (final i in indexes) {
-      dynamicRouterForLookup.add(
-          'GET', '/users/:id/items/:itemId/profile$i', i);
+      router.add('GET', '/users/:id/items/:itemId/profile$i', i);
     }
   }
 
@@ -182,7 +181,7 @@ class DynamicLookupRoutingkitBenchmark extends RouterBenchmark {
   void run() {
     for (final route in dynamicRoutesToLookup) {
       // Access value to ensure lookup isn't optimized away
-      dynamicRouterForLookup.find('GET', route)?.data;
+      router.find('GET', route)?.data;
     }
   }
 }
@@ -202,13 +201,13 @@ class StaticAddSpannerBenchmark extends RouterBenchmark {
 class StaticLookupSpannerBenchmark extends RouterBenchmark {
   StaticLookupSpannerBenchmark() : super('Spanner Lookup Static x$routeCount');
 
-  late final spanner.Spanner staticRouterForLookup;
+  late final spanner.Spanner router;
 
   @override
   void setup() {
-    staticRouterForLookup = spanner.Spanner();
+    router = spanner.Spanner();
     for (final i in indexes) {
-      staticRouterForLookup.addRoute(spanner.HTTPMethod.GET, '/path$i', i);
+      router.addRoute(spanner.HTTPMethod.GET, '/path$i', i);
     }
   }
 
@@ -216,7 +215,7 @@ class StaticLookupSpannerBenchmark extends RouterBenchmark {
   void run() {
     for (final route in staticRoutesToLookup) {
       // Access value to ensure lookup isn't optimized away
-      staticRouterForLookup.lookup(spanner.HTTPMethod.GET, route)?.values;
+      router.lookup(spanner.HTTPMethod.GET, route)?.values;
     }
   }
 }
@@ -237,14 +236,14 @@ class DynamicAddSpannerBenchmark extends RouterBenchmark {
 class DynamicLookupSpanneBenchmark extends RouterBenchmark {
   DynamicLookupSpanneBenchmark() : super('Spanner Lookup Dynamic x$routeCount');
 
-  late final spanner.Spanner dynamicRouterForLookup;
+  late final spanner.Spanner router;
 
   @override
   void setup() {
     // Create and populate routers specifically for lookup benchmarks
-    dynamicRouterForLookup = spanner.Spanner();
+    router = spanner.Spanner();
     for (final i in indexes) {
-      dynamicRouterForLookup.addRoute(
+      router.addRoute(
           spanner.HTTPMethod.GET, '/users/<id>/items/<itemId>/profile$i', i);
     }
   }
@@ -253,7 +252,7 @@ class DynamicLookupSpanneBenchmark extends RouterBenchmark {
   void run() {
     for (final route in dynamicRoutesToLookup) {
       // Access value to ensure lookup isn't optimized away
-      dynamicRouterForLookup.lookup(spanner.HTTPMethod.GET, route)?.values;
+      router.lookup(spanner.HTTPMethod.GET, route)?.values;
     }
   }
 }
@@ -276,27 +275,27 @@ Future<void> driver() async {
 
   print('---');
   print('Static Add');
-  StaticAddBenchmark().report();
   StaticAddRoutingkitBenchmark().report();
   StaticAddSpannerBenchmark().report();
+  StaticAddBenchmark().report();
 
   print('---');
   print('Static Lookup');
-  StaticLookupBenchmark().report();
   StaticLookupRoutingkitBenchmark().report();
   StaticLookupSpannerBenchmark().report();
+  StaticLookupBenchmark().report();
 
   print('---');
   print('Dynamic Add');
-  DynamicAddBenchmark().report();
   DynamicAddRoutingkitBenchmark().report();
   DynamicAddSpannerBenchmark().report();
+  DynamicAddBenchmark().report();
 
   print('---');
   print('Dynamic Lookup');
-  DynamicLookupBenchmark().report();
   DynamicLookupRoutingkitBenchmark().report();
   DynamicLookupSpanneBenchmark().report();
+  DynamicLookupBenchmark().report();
 
   print('Done');
 }
