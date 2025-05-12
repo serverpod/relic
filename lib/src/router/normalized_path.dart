@@ -11,7 +11,8 @@ import 'lru_cache.dart';
 /// normalized paths will often share the same object instance.
 class NormalizedPath {
   /// Cache of interned instances
-  static var interned = LruCache<String, NormalizedPath>(10000);
+  static var interned =
+      <String, NormalizedPath>{}; // LruCache<String, NormalizedPath>(10000);
 
   /// The individual segments of the normalized path.
   /// For example, the path `/a/b/c` would have segments `['a', 'b', 'c']`.
