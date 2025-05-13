@@ -233,8 +233,9 @@ class DynamicAddSpannerBenchmark extends RouterBenchmark {
   }
 }
 
-class DynamicLookupSpanneBenchmark extends RouterBenchmark {
-  DynamicLookupSpanneBenchmark() : super('Spanner Lookup Dynamic x$routeCount');
+class DynamicLookupSpannerBenchmark extends RouterBenchmark {
+  DynamicLookupSpannerBenchmark()
+      : super('Spanner Lookup Dynamic x$routeCount');
 
   late final spanner.Spanner router;
 
@@ -294,7 +295,7 @@ Future<void> driver() async {
   print('---');
   print('Dynamic Lookup');
   DynamicLookupRoutingkitBenchmark().report();
-  DynamicLookupSpanneBenchmark().report();
+  DynamicLookupSpannerBenchmark().report();
   DynamicLookupBenchmark().report();
 
   print('Done');
