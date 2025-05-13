@@ -23,10 +23,14 @@ extension type _RouterEntry<T>._(List<T?> _routeByVerb) {
             List<T?>.filled(Method.values.length, null, growable: false);
 
   @pragma('vm:prefer-inline')
-  void add(final Method method, final T route) {
+  void add(
+    final Method method,
+    final NormalizedPath normalizedPath, // only used for error message
+    final T route,
+  ) {
     final idx = method.index;
     if (_routeByVerb[idx] != null) {
-      throw ArgumentError('$method already registered');
+      throw ArgumentError('"$method" already registered for "$normalizedPath"');
     }
     _routeByVerb[idx] = route;
   }
@@ -63,7 +67,7 @@ final class Router<T> {
     final normalizedPath = NormalizedPath(path); // Normalize upfront
     final entry = _allRoutes.addOrUpdateInPlace(
       normalizedPath,
-      (final r) => (r.orNew)..add(method, route),
+      (final r) => (r.orNew)..add(method, normalizedPath, route),
     );
     if (!normalizedPath.hasParameters) {
       // Prime cache on add (but not on attach)
