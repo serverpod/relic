@@ -228,7 +228,7 @@ class DynamicAddSpannerBenchmark extends RouterBenchmark {
     final router = spanner.Spanner();
     for (final i in indexes) {
       router.addRoute(
-          spanner.HTTPMethod.GET, '/users/:id/items/:itemId/profile$i', i);
+          spanner.HTTPMethod.GET, '/users/<id>/items/<itemId>/profile$i', i);
     }
   }
 }
