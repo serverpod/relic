@@ -1,5 +1,12 @@
 ![Relic web server banner](https://github.com/serverpod/relic/raw/main/misc/images/github-banner.jpg)
 
+<p align="center">
+<a href="https://github.com/serverpod/relic/actions"><img src="https://github.com/serverpod/relic/workflows/Relic CI/badge.svg" alt="build"></a>
+<a href="https://codecov.io/gh/serverpod/relic"><img src="https://codecov.io/gh/serverpod/relic/branch/main/graph/badge.svg" alt="codecov"></a>
+<a href="https://github.com/serverpod/relic"><img src="https://img.shields.io/github/stars/serverpod/relic.svg?style=flat&logo=github&colorB=deeppink&label=stars" alt="Stars on Github"></a>
+<a href="https://opensource.org/license/bsd-3-clause"><img src="https://img.shields.io/badge/license/bsd-3-clause.svg" alt="License: BSD-3-Clause"></a>
+</p>
+
 # Relic web server
 
 Relic is a web server based on Shelf that supports middleware. It's currently available as a tech preview to gather feedback before we release a stable version. __Beware that the API is still subject to change.__ The best way to provide your feedback is through issues on GitHub here:
