@@ -8,11 +8,8 @@ final class LookupResult<T> {
   /// A map of parameter names to their extracted values from the path.
   final Map<Symbol, String> parameters;
 
-  /// Indicates whether the matched route is dynamic (contains parameters).
-  final bool isDynamic;
-
   /// Creates a [LookupResult] with the given [value] and [parameters].
-  const LookupResult(this.value, this.parameters, this.isDynamic);
+  const LookupResult(this.value, this.parameters);
 }
 
 /// A node within the path trie.
@@ -81,6 +78,32 @@ final class PathTrie<T> {
     final added = currentNode.value == null;
     currentNode.value = value;
     return added;
+  }
+
+  /// Adds or updates the value associated with a route path using an [action]
+  /// function.
+  ///
+  /// This method locates or creates the node for the given [normalizedPath].
+  /// It then calls the [action] function, passing the current value at that node
+  /// (which may be `null` if the path is new or had no value). The value
+  /// returned by [action] is then stored at the node.
+  ///
+  /// This is useful for scenarios where the new value depends on the old one,
+  /// like incrementing a counter or modifying an existing object in place.
+  ///
+  /// Returns the computed value that was stored in the trie.
+  ///
+  /// Throws an [ArgumentError] if [normalizedPath] contains conflicting
+  /// parameter definitions (e.g., adding `/users/:id` when `/users/:userId`
+  /// exists at the same parameter level, or if a parameter name is empty).
+  T addOrUpdateInPlace(
+    final NormalizedPath normalizedPath,
+    final T Function(T? old) action,
+  ) {
+    final currentNode = _build(normalizedPath);
+    final value = action(currentNode.value);
+    currentNode.value = value;
+    return value;
   }
 
   /// Updates the value associated with an existing route path.
@@ -229,7 +252,6 @@ final class PathTrie<T> {
     final segments = normalizedPath.segments;
     _TrieNode<T> currentNode = _root;
     final parameters = <Symbol, String>{};
-    var isDynamic = false;
 
     for (final segment in segments) {
       final child = currentNode.children[segment];
@@ -242,7 +264,6 @@ final class PathTrie<T> {
           // Match parameter
           parameters[Symbol(parameter.name)] = segment;
           currentNode = parameter.node;
-          isDynamic = true;
         } else {
           // No match
           return null;
@@ -251,6 +272,6 @@ final class PathTrie<T> {
     }
 
     final value = currentNode.value;
-    return value != null ? LookupResult(value, parameters, isDynamic) : null;
+    return value != null ? LookupResult(value, parameters) : null;
   }
 }
