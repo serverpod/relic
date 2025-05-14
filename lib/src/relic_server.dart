@@ -93,7 +93,8 @@ class RelicServer {
     }
 
     try {
-      final ctx = request.toContext();
+      final ctx = request
+          .toContext(adapterRequest); // adaptor request will be the token
       final newCtx = await handler(ctx);
       return switch (newCtx) {
         final ResponseContext rc =>

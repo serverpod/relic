@@ -42,7 +42,8 @@ Future<RequestContext> asyncHandler(final RequestContext ctx) async {
 /// Makes a simple GET request to [handler] and returns the result.
 Future<Response> makeSimpleRequest(final Handler handler,
     [final Request? request]) async {
-  final newCtx = await handler((request ?? _defaultRequest).toContext());
+  final newCtx =
+      await handler((request ?? _defaultRequest).toContext(Object()));
   if (newCtx is! ResponseContext) throw ArgumentError(newCtx);
   return newCtx.response;
 }
