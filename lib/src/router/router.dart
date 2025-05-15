@@ -96,7 +96,14 @@ final class Router<T> {
 
     // Try static cache first
     final value = _staticCache[normalizedPath]?.find(method);
-    if (value != null) return LookupResult(value, const {});
+    if (value != null) {
+      return LookupResult(
+        value,
+        const {},
+        normalizedPath,
+        NormalizedPath.empty,
+      );
+    }
 
     // Fall back to trie
     final entry = _allRoutes.lookup(normalizedPath);
@@ -110,7 +117,12 @@ final class Router<T> {
       _staticCache[normalizedPath] = entry.value;
     }
 
-    return LookupResult(route, entry.parameters);
+    return LookupResult(
+      route,
+      entry.parameters,
+      entry.matched,
+      entry.remaining,
+    );
   }
 }
 
