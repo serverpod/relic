@@ -11,6 +11,7 @@ dependencies:
   collection: ^1.18.0
   convert: ^3.1.1
   http_parser: ^4.0.2
+  meta: ^1.16.0
   mime: ">=1.0.6 <3.0.0"
   path: ^1.8.3
   stack_trace: ^1.10.0
@@ -31,6 +32,5 @@ dev_dependencies:
   # our direct dependencies indicate.
   file: ^7.0.0 # ignore: sort_pub_dependencies
   frontend_server_client: ^4.0.0
-  meta: ^1.9.1
   pub_semver: ^2.1.4
   watcher: ^1.1.0

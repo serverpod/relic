@@ -1,3 +1,5 @@
+import 'package:meta/meta.dart';
+
 import 'lru_cache.dart';
 
 /// Represents a URL path that has been normalized.
@@ -9,6 +11,7 @@ import 'lru_cache.dart';
 ///
 /// Instances are interned using an LRU cache for efficiency, meaning identical
 /// normalized paths will often share the same object instance.
+@immutable
 class NormalizedPath {
   /// Cache of interned instances
   static var interned = LruCache<String, NormalizedPath>(10000);
@@ -19,6 +22,9 @@ class NormalizedPath {
 
   /// Private constructor to create an instance with already normalized segments.
   NormalizedPath._(this.segments);
+
+  /// Empty normalized path instance.
+  static NormalizedPath empty = NormalizedPath._(const []);
 
   /// Creates a [NormalizedPath] from a given [path] string.
   ///
@@ -60,8 +66,14 @@ class NormalizedPath {
   ///
   /// The [start] parameter specifies the starting segment index (inclusive).
   /// The optional [end] parameter specifies the ending segment index (exclusive).
-  NormalizedPath subPath(final int start, [final int? end]) =>
-      NormalizedPath._(segments.sublist(start, end));
+  NormalizedPath subPath(final int start, [int? end]) {
+    end ??= length;
+    if (start == end) return NormalizedPath.empty;
+    if (start == 0 && end == length) {
+      return this; // since NormalizedPath is immutable
+    }
+    return NormalizedPath._(segments.sublist(start, end));
+  }
 
   /// The number of segments in this path
   int get length => segments.length;
