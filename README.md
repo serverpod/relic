@@ -18,6 +18,7 @@ This package was born out of the needs of [Serverpod](https://serverpod.dev), as
 - We made everything type-safe (no more dynamic).
 - Encoding types have been moved to the `Body` of a `Request`/`Response` to simplify the logic when syncing up the headers and to have a single source of truth.
 - We've added parsers and validation for all commonly used HTTP headers. E.g., times are represented by `DateTime`, cookies have their own class with validation of formatting, etc.
+- Routing has been implemented using a [trie](https://en.wikipedia.org/wiki/Trie) data-structure (`PathTrie`) for efficient route matching and parameter extraction.
 - Extended test coverage.
 - There are lots of smaller fixes here and there.
 
@@ -25,7 +26,6 @@ Although the structure is very similar to Shelf, this is no longer backward comp
 
 Before a stable release, we're also planning on adding the following features:
 - We want to more tightly integrate a http server (i.e., start with `HttpServer` from `dart:io` as a base) with Relic so that everything uses the same types. This will also improve performance as fewer conversions will be needed.
-- Routing can be improved by using Radix trees. Currently, there is just a list being traversed, which can be an issue if you have many routes.
 - We're planning to add an improved testing framework.
 - Performance testing and optimizations.
 
@@ -33,33 +33,45 @@ In addition, we're planning to include Relic in [Serverpod](https://serverpod.de
 
 ## Example
 
-See `example/example.dart`
+See `relic/example/example.dart` for a runnable example. The following code demonstrates basic routing and request handling:
 
 ```dart
+import 'dart:io';
+
 import 'package:relic/relic.dart';
+import 'package:relic/src/adapter/context.dart';
+import 'package:relic/src/middleware/routing_middleware.dart';
 
-void main() async {
-  var handler =
-      const Pipeline().addMiddleware(logRequests()).addHandler(_echoRequest);
+/// A simple 'Hello World' server
+Future<void> main() async {
+  // Setup router
+  final router = Router<Handler>()..get('/user/:name/age/:age', hello);
 
-  var server = await serve(
-    handler,
-    RelicAddress.fromHostname('localhost'),
-    8080,
-  );
+  // Setup a handler.
+  //
+  // A [Handler] is function consuming and producing [RequestContext]s,
+  // but if you are mostly concerned with converting [Request]s to [Response]s
+  // (known as a [Responder] in relic parlor) you can use [respondWith] to
+  // wrap a [Responder] into a [Handler]
+  final handler = const Pipeline()
+      .addMiddleware(logRequests())
+      .addMiddleware(routeWith(router))
+      .addHandler(respondWith((final _) => Response.notFound(
+          body: Body.fromString("Sorry, that doesn't compute"))));
 
-  // Enable content compression
-  server.autoCompress = true;
+  // Start the server with the handler
+  await serve(handler, InternetAddress.anyIPv4, 8080);
 
-  print('Serving at http://${server.address.host}:${server.port}');
+  print('Serving at http://localhost:8080');
+  // Check the _example_ directory for other examples.
 }
 
-Response _echoRequest(Request request) {
-  return Response.ok(
-    body: Body.fromString(
-      'Request for "${request.url}"',
-    ),
-  );
+ResponseContext hello(final RequestContext ctx) {
+  final name = ctx.pathParameters[#name];
+  final age = int.parse(ctx.pathParameters[#age]!);
+
+  return (ctx as RespondableContext).withResponse(Response.ok(
+      body: Body.fromString('Hello $name! To think you are $age years old.')));
 }
 ```
 

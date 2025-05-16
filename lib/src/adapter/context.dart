@@ -6,10 +6,18 @@ abstract interface class _RequestContextInterface {
 }
 
 sealed class RequestContext implements _RequestContextInterface {
-  /// The original incoming request associated with this context.
+  /// The request associated with this context.
   @override
   final Request request;
-  RequestContext._(this.request);
+
+  /// A token representing the request through out its lifetime.
+  /// The [RequestContext] may change, but the [token] will remain
+  /// the same.
+  ///
+  /// This is useful to anchor [Expando] objects for storing request
+  /// specific state for middleware.
+  final Object token;
+  RequestContext._(this.request, this.token);
 }
 
 abstract interface class RespondableContext
@@ -39,14 +47,15 @@ abstract interface class HijackableContext implements _RequestContextInterface {
 /// or a [HijackContext] via [hijack].
 final class NewContext extends RequestContext
     implements RespondableContext, HijackableContext {
-  NewContext._(super.request) : super._();
+  NewContext._(super.request, super.token) : super._();
 
   @override
-  HijackContext hijack(final HijackCallback c) => HijackContext._(request, c);
+  HijackContext hijack(final HijackCallback c) =>
+      HijackContext._(request, token, c);
 
   @override
   ResponseContext withResponse(final Response r) =>
-      ResponseContext._(request, r);
+      ResponseContext._(request, token, r);
 }
 
 /// Marker interface for contexts that represent a handled request,
@@ -58,20 +67,20 @@ final class ResponseContext extends RequestContext
     implements RespondableContext, HandledContext {
   /// The response associated with this context.
   final Response response;
-  ResponseContext._(super.request, this.response) : super._();
+  ResponseContext._(super.request, super.token, this.response) : super._();
 
   @override
   ResponseContext withResponse(final Response r) =>
-      ResponseContext._(request, r);
+      ResponseContext._(request, token, r);
 }
 
 final class HijackContext extends RequestContext implements HandledContext {
   /// The callback function provided to handle the hijacked connection.
   final HijackCallback callback;
-  HijackContext._(super.request, this.callback) : super._();
+  HijackContext._(super.request, super.token, this.callback) : super._();
 }
 
 extension RequestInternal on Request {
   /// Creates a new [NewContext] from this [Request].
-  NewContext toContext() => NewContext._(this);
+  NewContext toContext(final Object token) => NewContext._(this, token);
 }
