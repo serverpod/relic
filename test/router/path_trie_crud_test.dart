@@ -175,6 +175,61 @@ void main() {
         expect(() => trie.update(pathDefinition, 1), throwsArgumentError);
         expect(trie.lookup(NormalizedPath('/articles/any')), isNull);
       });
+
+      test(
+          'Given a trie with an existing wildcard path /data/* and value, '
+          'when update is called for /data/* with a new value, '
+          'then lookup for a matching path returns the new value', () {
+        final pathDefinition = NormalizedPath('/data/*');
+        trie.add(pathDefinition, 1);
+
+        trie.update(pathDefinition, 2);
+
+        // Verify by looking up a path that would match the wildcard definition
+        final result = trie.lookup(NormalizedPath('/data/something'));
+        expect(result, isNotNull);
+        expect(result!.value, equals(2));
+        expect(
+            result.parameters, isEmpty); // Wildcards don't produce parameters
+        expect(result.matched.toString(), '/data/something');
+        expect(result.remaining.segments, isEmpty);
+      });
+
+      test(
+          'Given a trie, '
+          'when update is called for a wildcard path /data/* that does not exist as a defined route, '
+          'then an ArgumentError is thrown', () {
+        final pathDefinition = NormalizedPath('/data/*');
+        expect(() => trie.update(pathDefinition, 1), throwsArgumentError);
+        expect(trie.lookup(NormalizedPath('/data/anything')), isNull);
+      });
+
+      test(
+          'Given a trie with an existing tail path /files/** and value, '
+          'when update is called for /files/** with a new value, '
+          'then lookup for a matching path returns the new value', () {
+        final pathDefinition = NormalizedPath('/files/**');
+        trie.add(pathDefinition, 1);
+
+        trie.update(pathDefinition, 2);
+
+        // Verify by looking up a path that would match the tail definition
+        final result = trie.lookup(NormalizedPath('/files/a/b.txt'));
+        expect(result, isNotNull);
+        expect(result!.value, equals(2));
+        expect(result.parameters, isEmpty);
+        expect(result.matched.toString(), '/files');
+        expect(result.remaining.toString(), '/a/b.txt');
+      });
+
+      test(
+          'Given a trie, '
+          'when update is called for a tail path /files/** that does not exist as a defined route, '
+          'then an ArgumentError is thrown', () {
+        final pathDefinition = NormalizedPath('/files/**');
+        expect(() => trie.update(pathDefinition, 1), throwsArgumentError);
+        expect(trie.lookup(NormalizedPath('/files/anything/else')), isNull);
+      });
     });
 
     group('remove', () {
@@ -299,6 +354,72 @@ void main() {
         expect(removedValue, equals(1));
         expect(trie.lookup(pathABC), isNull);
         expect(trie.lookup(pathABD)?.value, 2);
+      });
+
+      test(
+          'Given a trie with an existing wildcard path /data/* and value, '
+          'when remove is called for /data/*, '
+          'then the value is removed and lookup for matching paths returns null',
+          () {
+        final pathDefinition = NormalizedPath('/data/*');
+        trie.add(pathDefinition, 10);
+        trie.add(NormalizedPath('/data/fixed'), 20); // Sibling literal
+
+        final removedValue = trie.remove(pathDefinition);
+
+        expect(removedValue, equals(10));
+        expect(trie.lookup(NormalizedPath('/data/any')), isNull,
+            reason: 'Wildcard path should be removed.');
+        expect(trie.lookup(NormalizedPath('/data/fixed'))?.value, 20,
+            reason: 'Sibling literal path should be unaffected.');
+      });
+
+      test(
+          'Given a trie, '
+          'when remove is called for a wildcard path /data/* that does not exist as a defined route, '
+          'then null is returned and no other paths are affected', () {
+        final pathDefinition = NormalizedPath('/data/*');
+        trie.add(
+            NormalizedPath('/other/*'), 1); // Add a different wildcard path
+
+        final removedValue = trie.remove(pathDefinition);
+
+        expect(removedValue, isNull);
+        expect(trie.lookup(NormalizedPath('/other/something'))?.value, 1);
+      });
+
+      test(
+          'Given a trie with an existing tail path /files/** and value, '
+          'when remove is called for /files/**, '
+          'then the value is removed and lookup for matching paths returns null',
+          () {
+        final pathDefinition = NormalizedPath('/files/**');
+        trie.add(pathDefinition, 30);
+        trie.add(NormalizedPath('/files/specific/file.txt'),
+            40); // More specific child
+
+        final removedValue = trie.remove(pathDefinition);
+
+        expect(removedValue, equals(30));
+        expect(trie.lookup(NormalizedPath('/files/a/b/c')), isNull,
+            reason: 'Tail path should be removed.');
+        final specificLookup =
+            trie.lookup(NormalizedPath('/files/specific/file.txt'));
+        expect(specificLookup?.value, 40,
+            reason:
+                'More specific path should ideally remain if structured correctly.');
+      });
+
+      test(
+          'Given a trie, '
+          'when remove is called for a tail path /files/** that does not exist as a defined route, '
+          'then null is returned and no other paths are affected', () {
+        final pathDefinition = NormalizedPath('/files/**');
+        trie.add(NormalizedPath('/archive/**'), 1); // Add a different tail path
+
+        final removedValue = trie.remove(pathDefinition);
+        expect(removedValue, isNull);
+        expect(trie.lookup(NormalizedPath('/archive/some/file'))?.value, 1);
       });
     });
   });
