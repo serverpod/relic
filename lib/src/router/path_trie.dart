@@ -15,7 +15,7 @@ final class LookupResult<T> {
 
   /// If a match, does not consume the full path, then stores the [remaining]
   ///
-  /// This can only happen with path that ends with a tail-match /:: or /::name,
+  /// This can only happen with a path that ends with a tail segment `/**`,
   /// otherwise it will be empty.
   final NormalizedPath remaining;
 
@@ -55,8 +55,8 @@ final class _Tail<T> extends _DynamicSegment<T> {}
 
 /// A Trie (prefix tree) data structure optimized for matching URL paths.
 ///
-/// Supports literal segments and parameterized segments (e.g., `:id`). Allows
-/// associating a value of type [T] with each complete path.
+/// Supports literal segments, parameterized segments (e.g., `:id`), wildcard segments (`*`),
+/// and tail segments (`**`). Allows associating a value of type [T] with each complete path.
 final class PathTrie<T> {
   // Note: not final since we update in attach
   var _root = _TrieNode<T>();
@@ -215,16 +215,11 @@ final class PathTrie<T> {
     void isA<U extends _DynamicSegment<T>>(
         final _DynamicSegment<T>? dynamicSegment, final int segmentNo) {
       if (dynamicSegment != null && dynamicSegment is! U) {
-        final kind = switch (dynamicSegment) {
-          _Parameter<T>() => 'parameter ":name"',
-          _Wildcard<T>() => 'wildcard "*"',
-          _Tail<T>() => 'tail "**"',
-        };
         normalizedPath.raiseInvalidSegment(
             segmentNo,
             'Conflicting segment type at the same level: '
-            'Existing: $kind, '
-            'New: "$U"');
+            'Existing: ${dynamicSegment.runtimeType}, '
+            'New: $U');
       }
     }
 
@@ -264,7 +259,7 @@ final class PathTrie<T> {
           parameter = _Parameter(paramName);
         } else if (parameter.name != paramName) {
           // Throw an error if a different parameter name already exists at this level.
-          throw normalizedPath.raiseInvalidSegment(
+          normalizedPath.raiseInvalidSegment(
             i,
             'Conflicting parameter names at the same level: '
             'Existing: ":${parameter.name}", '
