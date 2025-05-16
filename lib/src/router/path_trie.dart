@@ -172,16 +172,29 @@ final class PathTrie<T> {
     final segments = normalizedPath.segments;
     _TrieNode<T> currentNode = _root;
 
+    // Helper function
+    @pragma('vm:prefer-inline')
+    _TrieNode<T>? nextIf<U extends _DynamicSegment<T>>(
+        final _DynamicSegment<T>? dynamicSegment) {
+      if (dynamicSegment != null && dynamicSegment is U) {
+        return dynamicSegment.node;
+      }
+      return null;
+    }
+
     for (final segment in segments) {
       var nextNode = currentNode.children[segment];
       if (nextNode == null) {
+        final dynamicSegment = currentNode.dynamicSegment;
         if (segment == '**') {
           // Handle tail segment
+          nextNode = nextIf<_Tail<T>>(dynamicSegment);
         } else if (segment == '*') {
           // Handle wildcard segment
+          nextNode = nextIf<_Wildcard<T>>(dynamicSegment);
         } else if (segment.startsWith(':')) {
           // Handle parameter segment
-          final parameter = currentNode.dynamicSegment as _Parameter<T>?;
+          final parameter = dynamicSegment as _Parameter<T>?;
           if (parameter != null && parameter.name == segment.substring(1)) {
             nextNode = parameter.node;
           }
