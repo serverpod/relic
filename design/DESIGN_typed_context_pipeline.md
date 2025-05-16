@@ -310,10 +310,142 @@ This typed pipeline introduces a shift from the traditional `Middleware = Handle
     *   **Gained**: Strong compile-time type safety for the data flowing through the request context. This significantly reduces a class of runtime errors due to misconfigured pipelines.
     *   **Different Flexibility**: Some dynamic flexibility found in the `Handler Function(Handler)` pattern (e.g., complex around-logic, dynamically choosing the next handler in the chain from within a middleware) is handled differently (e.g., via exceptions, or by moving logic into handlers). For many common middleware tasks (logging, data enrichment, simple auth checks), the typed pipeline offers a clearer and safer model.
 
-## 8. General Considerations
+## 8. Integrating with Routing
+
+The typed context pipeline is designed to prepare a rich, type-safe context that can then be utilized by a routing system to dispatch requests to appropriate endpoint handlers. Relic's `Router<T>` class can be seamlessly integrated with this pipeline.
+
+The core idea is that the `PipelineBuilder` sets up a chain of common middleware (e.g., authentication, session management, logging). The final function passed to `PipelineBuilder.build(...)` will be a "routing dispatcher." This dispatcher uses the context prepared by the common middleware, performs route matching, potentially adds route-specific data (like path parameters) to the context, and then executes the endpoint handler chosen by the router.
+
+### 8.1. Context for Route Parameters
+
+Endpoint handlers often need access to path parameters extracted during routing (e.g., the `:id` in `/users/:id`). A `ContextProperty` and corresponding view should be defined for these.
+
+```dart
+// Example: Data class for route parameters
+class RouteParameters {
+  final Map<Symbol, String> params;
+  RouteParameters(this.params);
+
+  String? operator [](Symbol key) => params[key];
+  // Potentially add other useful accessors
+}
+
+// Example: Private ContextProperty for route parameters
+// (Typically defined in a routing-related module/library)
+final _routeParametersProperty =
+  ContextProperty<RouteParameters>('relic.routing.parameters');
+```
+
+### 8.2. Context Views for Endpoint Handlers
+
+Endpoint handlers will require a context view that provides access to both the common context data (prepared by the initial pipeline) and the specific `RouteParameters`.
+
+```dart
+// Example: A view that combines UserContext (from common pipeline) and RouteParameters
+// (Assumes UserContextView is already defined)
+extension type UserRouteContextView(RequestContext _relicContext) implements UserContextView {
+  RouteParameters get routeParams => _routeParametersProperty.get(_relicContext);
+
+  // This method will be called by the routing dispatcher after parameters are extracted.
+  void attachRouteParameters(RouteParameters params) {
+    _routeParametersProperty.set(_relicContext, params);
+  }
+}
+
+// Other combinations can be created as needed (e.g., BaseRouteContextView, UserSessionRouteContextView).
+```
+
+### 8.3. Router's Generic Type `T`
+
+The generic type `T` in `Router<T>` will represent the actual endpoint handler functions. These functions will expect an enriched context view that includes common context data and route parameters.
+
+For example, `T` could be:
+`FutureOr<Response> Function(UserRouteContextView context)`
+
+### 8.4. The Routing Dispatcher Function
+
+This function is passed to `PipelineBuilder.build(...)`. It receives the context prepared by the common middleware chain (e.g., `UserContextView`). Its responsibilities are:
+1.  Use the incoming request details (from the context) to perform a route lookup via `Router<T>`.
+2.  Handle cases where no route is matched (e.g., by throwing a `RouteNotFoundException` or returning a 404 `Response`).
+3.  If a route is matched, extract the endpoint handler and any path parameters.
+4.  Create the specific context view required by the endpoint handler (e.g., `UserRouteContextView`), attaching the extracted `RouteParameters` to it.
+5.  Execute the chosen endpoint handler with this enriched context.
+
+```dart
+// Example: Routing Dispatcher
+// Assume 'myAppRouter' is an instance of Router<FutureOr<Response> Function(UserRouteContextView)>
+// Assume 'UserContextView' is the output view from the common middleware pipeline.
+
+FutureOr<Response> routingDispatcher(UserContextView commonContext) {
+  final request = commonContext.request;
+
+  // Perform route lookup using Relic's Router.
+  final lookupResult = myAppRouter.lookup(
+      request.method.convert(), // Or however method is represented
+      request.uri.path);
+
+  if (lookupResult == null || lookupResult.value == null) {
+    // Option 1: Throw a specific RouteNotFoundException for centralized error handling.
+    throw RouteNotFoundException(
+        'Route not found for ${request.method.value} ${request.uri.path}');
+    // Option 2: Directly return a 404 Response (less flexible for global error handling).
+    // return Response.notFound(...);
+  }
+
+  final endpointHandler = lookupResult.value;
+  final pathParams = RouteParameters(lookupResult.parameters);
+
+  // Create the specific context view for the endpoint handler by wrapping the same
+  // underlying RequestContext and attaching the extracted route parameters.
+  final endpointContext = UserRouteContextView(commonContext._relicContext);
+  endpointContext.attachRouteParameters(pathParams);
+
+  // Execute the chosen endpoint handler.
+  return endpointHandler(endpointContext);
+}
+```
+
+### 8.5. Pipeline Setup with Routing
+
+The `PipelineBuilder` is used to construct the common middleware chain, with the `routingDispatcher` as the final step.
+
+```dart
+// Example: In your server setup
+void setupServer(Router<FutureOr<Response> Function(UserRouteContextView)> myAppRouter) { // Pass your router
+  final requestHandler = PipelineBuilder.start()      // Input: BaseContextView
+      .add(authenticationMiddleware)                 // Output: UserContextView
+      // ... other common middleware (e.g., session, logging) ...
+      // The output view of the last common middleware must match
+      // the input view expected by `routingDispatcher`.
+      .build(routingDispatcher);                     // `routingDispatcher` uses UserContextView
+
+  // This `requestHandler` can now be used with Relic's server mechanism.
+  // e.g., relicServe(requestHandler, ...);
+}
+```
+
+### 8.6. Implications
+
+*   **Separation of Concerns**: Common middleware (auth, logging, sessions) are managed by the `PipelineBuilder`, preparing a general-purpose typed context. The `routingDispatcher` then handles routing-specific concerns and further context enrichment (route parameters) for the final endpoint handlers.
+*   **Type Safety End-to-End**: Endpoint handlers receive a context view that is guaranteed by the type system to contain all necessary data from both the common pipeline and the routing process.
+*   **Flexibility**: This pattern allows different sets of common middleware to be composed for distinct parts of an application. By creating multiple `PipelineBuilder` instances, each tailored with specific middleware and culminating in a different routing dispatcher (or final handler), an application can support varied requirements across its modules.
+
+    For example, an application might have:
+    *   An `/api/v1` section with `apiAuthMiddleware` leading to an API router, producing an `ApiUserContextView`. The `PipelineBuilder.build(...)` for this would result in an `apiV1RequestHandler: FutureOr<Response> Function(NewContext)`.
+    *   An `/admin` section with `adminAuthMiddleware` and `sessionMiddleware` leading to an admin router, producing an `AdminSessionContextView`. This would result in an `adminRequestHandler: FutureOr<Response> Function(NewContext)`.
+    *   A `/public` section with `cachingMiddleware` leading to a simpler router, using a `BaseContextView`. This would result in a `publicRequestHandler: FutureOr<Response> Function(NewContext)`.
+
+    A top-level Relic `Router<FutureOr<Response> Function(NewContext)>` can then be used to select the appropriate pre-built pipeline handler based on path prefixes (e.g., requests to `/api/v1/**` lead to invoking `apiV1RequestHandler`). The main server entry point would create the initial `NewContext`, look up the target pipeline handler using this top-level router, and then pass the `NewContext` to the chosen handler. This top-level router doesn't deal with the typed context views itself but delegates to handlers that encapsulate their own typed pipelines. This maintains type safety within each specialized pipeline while allowing for a clean, router-based architecture at the highest level. *See Appendix A for a conceptual code sketch illustrating this top-level routing approach.*
+
+## 9. General Considerations
 
 *   **PipelineBuilder Complexity**: The implementation of `PipelineBuilder`, especially its generic typing, is somewhat complex, but this complexity is encapsulated for the end-user.
 *   **Boilerplate for `ContextProperty` and Views**: Each new piece of context data requires defining a `ContextProperty` instance and corresponding view methods. However, this is more structured and less error-prone than raw `Expando` usage.
 *   **Learning Curve**: Developers using the framework will need to understand context views, `ContextProperty`, the role of `requestToken`, the pipeline builder, and the implications of the new middleware paradigm.
 *   **Discipline with `requestToken`**: The `ContextProperty` helper ensures that data is keyed off the stable `token` within the `RequestContext`, mitigating direct misuse of `Expando`s with transient `RequestContext` instances themselves as keys.
 *   **Middleware Return Types**: Middleware authors must be careful to return the correct context view type that accurately reflects the data they've attached via `ContextProperty` and the `requestToken`.
+
+
+## Appendix A: Conceptual Code Example for Top-Level Routing
+
+This appendix provides a conceptual, runnable (with stubs) Dart code sketch to illustrate how different `PipelineBuilder` instances can create specialized request handling chains, and how a top-level router can direct traffic to the appropriate chain, all starting with a common `NewContext`. See [appendix_a.dart](appendix_a.dart).
