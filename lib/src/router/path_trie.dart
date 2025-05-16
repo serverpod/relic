@@ -74,13 +74,12 @@ final class PathTrie<T> {
     final currentNode = _build(normalizedPath);
     // Mark the end node and handle potential overwrites
     if (currentNode.value != null) {
-      throw ArgumentError(
-        'Value already registered: '
-            'Existing: "${currentNode.value}" '
-            'New: "$value" '
-            'for path $normalizedPath',
-        'normalizedPath',
-      );
+      throw ArgumentError.value(
+          normalizedPath,
+          'normalizedPath',
+          'Value already registered: '
+              'Existing: "${currentNode.value}" '
+              'New: "$value"');
     }
     currentNode.value = value;
   }
@@ -214,9 +213,18 @@ final class PathTrie<T> {
     // Helper function
     @pragma('vm:prefer-inline')
     void isA<U extends _DynamicSegment<T>>(
-        final _DynamicSegment<T>? dynamicSegment) {
+        final _DynamicSegment<T>? dynamicSegment, final int segmentNo) {
       if (dynamicSegment != null && dynamicSegment is! U) {
-        throw ArgumentError();
+        final kind = switch (dynamicSegment) {
+          _Parameter<T>() => 'parameter ":name"',
+          _Wildcard<T>() => 'wildcard "*"',
+          _Tail<T>() => 'tail "**"',
+        };
+        normalizedPath.raiseInvalidSegment(
+            segmentNo,
+            'Conflicting segment type at the same level: '
+            'Existing: $kind, '
+            'New: "$U"');
       }
     }
 
@@ -227,30 +235,28 @@ final class PathTrie<T> {
       if (segment.startsWith('**')) {
         // Handle tail segment
         if (segment != '**') {
-          throw ArgumentError.value(normalizedPath, 'normalizedPath',
-              '"$segment" not allowed. Starts with "**"');
+          normalizedPath.raiseInvalidSegment(i, 'Starts with "**"');
         }
         if (i < segments.length - 1) {
-          throw ArgumentError.value(normalizedPath, 'normalizedPath',
+          normalizedPath.raiseInvalidSegment(i,
               'Tail segment (**) must be the last segment in the path definition.');
         }
-        isA<_Tail<T>>(dynamicSegment);
+        isA<_Tail<T>>(dynamicSegment, i);
         currentNode = (currentNode.dynamicSegment ??= _Tail()).node;
       } else if (segment.startsWith('*')) {
         // Handle wildcard segment
         if (segment != '*') {
-          throw ArgumentError.value(normalizedPath, 'normalizedPath',
-              '"$segment" not allowed. Starts with "*"');
+          normalizedPath.raiseInvalidSegment(i, 'Starts with "*"');
         }
-        isA<_Wildcard<T>>(dynamicSegment);
+        isA<_Wildcard<T>>(dynamicSegment, i);
         currentNode = (currentNode.dynamicSegment ??= _Wildcard()).node;
       } else if (segment.startsWith(':')) {
         // Handle parameter segment
-        isA<_Parameter<T>>(dynamicSegment);
+        isA<_Parameter<T>>(dynamicSegment, i);
         final paramName = segment.substring(1).trim();
         if (paramName.isEmpty) {
-          throw ArgumentError.value(normalizedPath, 'normalizedPath',
-              'Parameter name cannot be empty');
+          normalizedPath.raiseInvalidSegment(
+              i, 'Parameter name cannot be empty');
         }
         // Ensure parameter child exists and handle name conflicts
         var parameter = dynamicSegment as _Parameter<T>?;
@@ -258,12 +264,11 @@ final class PathTrie<T> {
           parameter = _Parameter(paramName);
         } else if (parameter.name != paramName) {
           // Throw an error if a different parameter name already exists at this level.
-          throw ArgumentError(
+          throw normalizedPath.raiseInvalidSegment(
+            i,
             'Conflicting parameter names at the same level: '
-                'Existing: ":${parameter.name}", '
-                'New: ":$paramName" '
-                'for path $normalizedPath',
-            'normalizedPath',
+            'Existing: ":${parameter.name}", '
+            'New: ":$paramName"',
           );
         }
         currentNode.dynamicSegment = parameter;
@@ -365,5 +370,13 @@ final class PathTrie<T> {
     return value != null
         ? LookupResult(value, parameters, matchedPath, remainingPath)
         : null;
+  }
+}
+
+extension on NormalizedPath {
+  Never raiseInvalidSegment(final int segmentNo, final String message,
+      {final String name = 'normalizedPath'}) {
+    throw ArgumentError.value(this, name,
+        'Segment no $segmentNo: "${segments[segmentNo]}" is invalid. $message');
   }
 }
