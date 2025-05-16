@@ -18,7 +18,7 @@ This package was born out of the needs of [Serverpod](https://serverpod.dev), as
 - We made everything type-safe (no more dynamic).
 - Encoding types have been moved to the `Body` of a `Request`/`Response` to simplify the logic when syncing up the headers and to have a single source of truth.
 - We've added parsers and validation for all commonly used HTTP headers. E.g., times are represented by `DateTime`, cookies have their own class with validation of formatting, etc.
-- Routing has been implemented using a `PathTrie` structure for efficient route matching and parameter extraction.
+- Routing has been implemented using a [trie](https://en.wikipedia.org/wiki/Trie) data-structure (`PathTrie`) for efficient route matching and parameter extraction.
 - Extended test coverage.
 - There are lots of smaller fixes here and there.
 
