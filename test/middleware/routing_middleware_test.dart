@@ -4,14 +4,17 @@ import 'package:relic/src/adapter/context.dart';
 import 'package:relic/src/middleware/routing_middleware.dart';
 import 'package:test/test.dart';
 
+import '../util/test_util.dart';
+
 // Simple fake implementations for testing
 class _FakeRequest extends Fake implements Request {
   @override
   final Uri url;
   @override
-  final RequestMethod method = RequestMethod.get;
+  final RequestMethod method;
 
-  _FakeRequest(final String path) : url = Uri.parse('http://localhost$path');
+  _FakeRequest(final String path, {this.method = RequestMethod.get})
+      : url = Uri.parse('http://localhost$path');
 }
 
 void main() {
@@ -327,4 +330,39 @@ void main() {
       });
     });
   });
+
+  // Due to the decoupling of Router<T> a mapping has to happen
+  // for verbs. These test ensures all mappings are exercised.
+  parameterizedTest(
+    variants: {
+      RequestMethod.get: Method.get,
+      RequestMethod.head: Method.head,
+      RequestMethod.post: Method.post,
+      RequestMethod.put: Method.put,
+      RequestMethod.delete: Method.delete,
+      RequestMethod.patch: Method.patch,
+      RequestMethod.options: Method.options,
+      RequestMethod.connect: Method.connect,
+      RequestMethod.trace: Method.trace,
+    }.entries,
+    (final v) => 'Given a route for verb: "${v.value}", '
+        'when responding, '
+        'then the request.method is "${v.key}"',
+    (final v) async {
+      late RequestMethod method;
+      final middleware = routeWith(Router()
+        ..add(v.value, '/', respondWith((final req) {
+          method = req.method;
+          return Response.ok();
+        })));
+      final request = _FakeRequest('/', method: v.key);
+      final newCtx =
+          await middleware(respondWith((final _) => Response.notFound()))(
+              request.toContext(Object()));
+      expect(newCtx, isA<ResponseContext>());
+      final response = (newCtx as ResponseContext).response;
+      expect(response.statusCode, 200);
+      expect(method, equals(v.key));
+    },
+  );
 }
