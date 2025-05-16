@@ -407,7 +407,7 @@ void main() {
             trie.lookup(NormalizedPath('/files/specific/file.txt'));
         expect(specificLookup?.value, 40,
             reason:
-                'More specific path should ideally remain if structured correctly.');
+                'More specific path should remain');
       });
 
       test(
