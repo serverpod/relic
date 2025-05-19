@@ -112,7 +112,7 @@ Comprehensive testing is crucial for maintaining the quality and stability of Re
 **1. Structure and Naming:**
 
 - **Grouping:** Tests should be organized into `group()` blocks. The description of the group should clearly state the component or functionality being tested (e.g., `'Normalization Logic'`, `'Request Parsing'`).
-- **Test Descriptions (Given-When-Then):** Individual `test()` descriptions MUST follow a strict Given-When-Then format, concatenated into a single string. This structure is vital for clarity for all contributors (human and AI).
+- **Test Descriptions (Given-When-Then):** Individual `test()` descriptions should follow a Given-When-Then format. This structure gives clarity for all contributors.
 
   - Start with `'Given ...,'` describing the initial state, context, or preconditions.
   - Follow with `'when ...,'` describing the action, event, or operation being performed.
