@@ -59,7 +59,7 @@ class NormalizedPath {
         result.add(segment);
       }
     }
-    return result;
+    return List.unmodifiable(result);
   }
 
   /// Returns a new [NormalizedPath] representing a subpath of this path.
