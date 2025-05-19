@@ -1,15 +1,26 @@
 import 'normalized_path.dart';
 
+typedef Parameters = Map<Symbol, String>;
+
 /// Represents the result of a route lookup.
 final class LookupResult<T> {
   /// The value associated with the matched route.
   final T value;
 
   /// A map of parameter names to their extracted values from the path.
-  final Map<Symbol, String> parameters;
+  final Parameters parameters;
+
+  /// The normalized path that was matched.
+  final NormalizedPath matched;
+
+  /// If a match, does not consume the full path, then stores the [remaining]
+  ///
+  /// This can only happen with a path that ends with a tail segment `/**`,
+  /// otherwise it will be empty.
+  final NormalizedPath remaining;
 
   /// Creates a [LookupResult] with the given [value] and [parameters].
-  const LookupResult(this.value, this.parameters);
+  const LookupResult(this.value, this.parameters, this.matched, this.remaining);
 }
 
 /// A node within the path trie.
@@ -18,10 +29,7 @@ final class _TrieNode<T> {
   final Map<String, _TrieNode<T>> children = {};
 
   /// Parameter definition associated with this node, if any.
-  ///
-  /// Stores the parameter name and the child node that represents the
-  /// parameterized path segment.
-  _Parameter<T>? parameter;
+  _DynamicSegment<T>? dynamicSegment;
 
   /// The value associated with the route ending at this node.
   ///
@@ -29,12 +37,26 @@ final class _TrieNode<T> {
   T? value;
 }
 
-typedef _Parameter<T> = ({_TrieNode<T> node, String name});
+sealed class _DynamicSegment<T> {
+  final node = _TrieNode<T>();
+}
+
+/// Stores the parameter [name] and the child [node] that represents the
+/// parameterized path segment.
+final class _Parameter<T> extends _DynamicSegment<T> {
+  final String name;
+
+  _Parameter(this.name);
+}
+
+final class _Wildcard<T> extends _DynamicSegment<T> {}
+
+final class _Tail<T> extends _DynamicSegment<T> {}
 
 /// A Trie (prefix tree) data structure optimized for matching URL paths.
 ///
-/// Supports literal segments and parameterized segments (e.g., `:id`). Allows
-/// associating a value of type [T] with each complete path.
+/// Supports literal segments, parameterized segments (e.g., `:id`), wildcard segments (`*`),
+/// and tail segments (`**`). Allows associating a value of type [T] with each complete path.
 final class PathTrie<T> {
   // Note: not final since we update in attach
   var _root = _TrieNode<T>();
@@ -52,13 +74,12 @@ final class PathTrie<T> {
     final currentNode = _build(normalizedPath);
     // Mark the end node and handle potential overwrites
     if (currentNode.value != null) {
-      throw ArgumentError(
-        'Value already registered: '
-            'Existing: "${currentNode.value}" '
-            'New: "$value" '
-            'for path $normalizedPath',
-        'normalizedPath',
-      );
+      throw ArgumentError.value(
+          normalizedPath,
+          'normalizedPath',
+          'Value already registered: '
+              'Existing: "${currentNode.value}" '
+              'New: "$value"');
     }
     currentNode.value = value;
   }
@@ -150,12 +171,32 @@ final class PathTrie<T> {
     final segments = normalizedPath.segments;
     _TrieNode<T> currentNode = _root;
 
+    // Helper function
+    @pragma('vm:prefer-inline')
+    _TrieNode<T>? nextIf<U extends _DynamicSegment<T>>(
+        final _DynamicSegment<T>? dynamicSegment) {
+      if (dynamicSegment != null && dynamicSegment is U) {
+        return dynamicSegment.node;
+      }
+      return null;
+    }
+
     for (final segment in segments) {
       var nextNode = currentNode.children[segment];
-      if (nextNode == null && segment.startsWith(':')) {
-        final parameter = currentNode.parameter;
-        if (parameter != null && parameter.name == segment.substring(1)) {
-          nextNode = parameter.node;
+      if (nextNode == null) {
+        final dynamicSegment = currentNode.dynamicSegment;
+        if (segment == '**') {
+          // Handle tail segment
+          nextNode = nextIf<_Tail<T>>(dynamicSegment);
+        } else if (segment == '*') {
+          // Handle wildcard segment
+          nextNode = nextIf<_Wildcard<T>>(dynamicSegment);
+        } else if (segment.startsWith(':')) {
+          // Handle parameter segment
+          final parameter = dynamicSegment as _Parameter<T>?;
+          if (parameter != null && parameter.name == segment.substring(1)) {
+            nextNode = parameter.node;
+          }
         }
       }
       if (nextNode == null) return null; // early exit
@@ -169,28 +210,63 @@ final class PathTrie<T> {
     final segments = normalizedPath.segments;
     _TrieNode<T> currentNode = _root;
 
-    for (final segment in segments) {
-      if (segment.startsWith(':')) {
+    // Helper function
+    @pragma('vm:prefer-inline')
+    void isA<U extends _DynamicSegment<T>>(
+        final _DynamicSegment<T>? dynamicSegment, final int segmentNo) {
+      if (dynamicSegment != null && dynamicSegment is! U) {
+        normalizedPath.raiseInvalidSegment(
+            segmentNo,
+            'Conflicting segment type at the same level: '
+            'Existing: ${dynamicSegment.runtimeType}, '
+            'New: $U');
+      }
+    }
+
+    for (int i = 0; i < segments.length; i++) {
+      final segment = segments[i];
+      final dynamicSegment = currentNode.dynamicSegment;
+
+      if (segment.startsWith('**')) {
+        // Handle tail segment
+        if (segment != '**') {
+          normalizedPath.raiseInvalidSegment(i, 'Starts with "**"');
+        }
+        if (i < segments.length - 1) {
+          normalizedPath.raiseInvalidSegment(i,
+              'Tail segment (**) must be the last segment in the path definition.');
+        }
+        isA<_Tail<T>>(dynamicSegment, i);
+        currentNode = (currentNode.dynamicSegment ??= _Tail()).node;
+      } else if (segment.startsWith('*')) {
+        // Handle wildcard segment
+        if (segment != '*') {
+          normalizedPath.raiseInvalidSegment(i, 'Starts with "*"');
+        }
+        isA<_Wildcard<T>>(dynamicSegment, i);
+        currentNode = (currentNode.dynamicSegment ??= _Wildcard()).node;
+      } else if (segment.startsWith(':')) {
+        // Handle parameter segment
+        isA<_Parameter<T>>(dynamicSegment, i);
         final paramName = segment.substring(1).trim();
         if (paramName.isEmpty) {
-          throw ArgumentError.value(normalizedPath, 'normalizedPath',
-              'Parameter name cannot be empty');
+          normalizedPath.raiseInvalidSegment(
+              i, 'Parameter name cannot be empty');
         }
         // Ensure parameter child exists and handle name conflicts
-        var parameter = currentNode.parameter;
+        var parameter = dynamicSegment as _Parameter<T>?;
         if (parameter == null) {
-          parameter = (node: _TrieNode<T>(), name: paramName);
+          parameter = _Parameter(paramName);
         } else if (parameter.name != paramName) {
           // Throw an error if a different parameter name already exists at this level.
-          throw ArgumentError(
+          normalizedPath.raiseInvalidSegment(
+            i,
             'Conflicting parameter names at the same level: '
-                'Existing: ":${parameter.name}", '
-                'New: ":$paramName" '
-                'for path $normalizedPath',
-            'normalizedPath',
+            'Existing: ":${parameter.name}", '
+            'New: ":$paramName"',
           );
         }
-        currentNode.parameter = parameter;
+        currentNode.dynamicSegment = parameter;
         currentNode = parameter.node;
       } else {
         // Handle literal segment
@@ -214,7 +290,7 @@ final class PathTrie<T> {
   ///
   /// Throws an [ArgumentError] if:
   /// - The node at [normalizedPath] has a value, and the root node of [trie] has as well.
-  /// - Both nodes has an associated parameter.
+  /// - Both nodes has an associated dynamic segment.
   /// - There are overlapping children between the nodes.
   void attach(final NormalizedPath normalizedPath, final PathTrie<T> trie) {
     final node = trie._root;
@@ -224,7 +300,7 @@ final class PathTrie<T> {
       throw ArgumentError('Conflicting values');
     }
 
-    if (currentNode.parameter != null && node.parameter != null) {
+    if (currentNode.dynamicSegment != null && node.dynamicSegment != null) {
       throw ArgumentError('Conflicting parameters');
     }
 
@@ -236,7 +312,7 @@ final class PathTrie<T> {
 
     // No conflicts so safe to update
     currentNode.value ??= node.value;
-    currentNode.parameter ??= node.parameter;
+    currentNode.dynamicSegment ??= node.dynamicSegment;
     currentNode.children.addAll(node.children);
     trie._root = currentNode;
   }
@@ -253,25 +329,49 @@ final class PathTrie<T> {
     _TrieNode<T> currentNode = _root;
     final parameters = <Symbol, String>{};
 
-    for (final segment in segments) {
+    int i = 0;
+    for (; i < segments.length; i++) {
+      final segment = segments[i];
       final child = currentNode.children[segment];
       if (child != null) {
         // Prioritize literal match
         currentNode = child;
       } else {
-        final parameter = currentNode.parameter;
-        if (parameter != null) {
-          // Match parameter
+        final dynamicSegment = currentNode.dynamicSegment;
+        if (dynamicSegment == null) return null; // no match
+        currentNode = dynamicSegment.node;
+        if (dynamicSegment case final _Parameter<T> parameter) {
           parameters[Symbol(parameter.name)] = segment;
-          currentNode = parameter.node;
-        } else {
-          // No match
-          return null;
         }
+        if (dynamicSegment is _Tail<T>) break; // possible early match
       }
     }
 
-    final value = currentNode.value;
-    return value != null ? LookupResult(value, parameters) : null;
+    T? value = currentNode.value;
+    final matchedPath = normalizedPath.subPath(0, i);
+    final remainingPath = normalizedPath.subPath(i);
+
+    // If no value found after iterating through all segments, check if
+    // currentNode has a tail. If so proceed one more step. This handles cases
+    // like /archive/** matching /archive, where remainingPath would be empty.
+    if (value == null && i == segments.length) {
+      final dynamicSegment = currentNode.dynamicSegment;
+      if (dynamicSegment is _Tail<T>) {
+        currentNode = dynamicSegment.node;
+        value = currentNode.value;
+      }
+    }
+
+    return value != null
+        ? LookupResult(value, parameters, matchedPath, remainingPath)
+        : null;
+  }
+}
+
+extension on NormalizedPath {
+  Never raiseInvalidSegment(final int segmentNo, final String message,
+      {final String name = 'normalizedPath'}) {
+    throw ArgumentError.value(this, name,
+        'Segment no $segmentNo: "${segments[segmentNo]}" is invalid. $message');
   }
 }
