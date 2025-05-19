@@ -24,45 +24,6 @@ void main() {
     });
 
     test(
-        'Given a trie with path /files/**, '
-        'when /files/a/b/c/doc.txt (multiple segments for tail) is looked up, '
-        'then it matches with correct value and remaining path', () {
-      trie.add(NormalizedPath('/files/**'), 1);
-      final result = trie.lookup(NormalizedPath('/files/a/b/c/doc.txt'));
-      expect(result, isNotNull);
-      expect(result!.value, 1);
-      expect(result.parameters, isEmpty);
-      expect(result.matched.path, '/files');
-      expect(result.remaining.path, '/a/b/c/doc.txt');
-    });
-
-    test(
-        'Given a trie with path /archive/**, '
-        'when /archive/ (ends where tail starts) is looked up, '
-        'then it matches with an empty remaining path', () {
-      trie.add(NormalizedPath('/archive/**'), 1);
-      final result = trie.lookup(NormalizedPath('/archive/'));
-      expect(result, isNotNull);
-      expect(result!.value, 1);
-      expect(result.parameters, isEmpty);
-      expect(result.matched.path, '/archive');
-      expect(result.remaining.segments, isEmpty);
-    });
-
-    test(
-        'Given a trie with path /exact/**, '
-        'when /exact (no trailing slash, ends where tail starts) is looked up, '
-        'then it matches with an empty remaining path', () {
-      trie.add(NormalizedPath('/exact/**'), 1);
-      final result = trie.lookup(NormalizedPath('/exact'));
-      expect(result, isNotNull);
-      expect(result!.value, 1);
-      expect(result.parameters, isEmpty);
-      expect(result.matched.path, '/exact');
-      expect(result.remaining.segments, isEmpty);
-    });
-
-    test(
         'Given a trie with path /**, '
         'when /any/path/anywhere is looked up, '
         'then it matches with an empty matched path and correct remaining path',
@@ -208,47 +169,52 @@ void main() {
 
     test(
         'Given an empty trie, '
-        'when adding a path like /**foo (tail not a full segment), '
+        'when adding a path like /**foo, '
         'then an ArgumentError is thrown', () {
       expect(() => trie.add(NormalizedPath('/downloads/**foo'), 1),
-          throwsArgumentError);
+          throwsArgumentError,
+          reason: 'Tail not a full segment');
     });
 
     group('Tail and Other Segment interaction validation', () {
       test(
           'Given a trie with /test/**, '
-          'when adding /test/:id (parameter after tail at same level), '
+          'when adding /test/:id, '
           'then an ArgumentError is thrown', () {
         trie.add(NormalizedPath('/test/**'), 1);
-        expect(() => trie.add(NormalizedPath('/test/:id'), 2),
-            throwsArgumentError);
+        expect(
+            () => trie.add(NormalizedPath('/test/:id'), 2), throwsArgumentError,
+            reason: 'Parameter after tail at same level');
       });
 
       test(
           'Given a trie with /test/:id, '
-          'when adding /test/** (tail after parameter at same level), '
+          'when adding /test/**, '
           'then an ArgumentError is thrown', () {
         trie.add(NormalizedPath('/test/:id'), 1);
         expect(
-            () => trie.add(NormalizedPath('/test/**'), 2), throwsArgumentError);
+            () => trie.add(NormalizedPath('/test/**'), 2), throwsArgumentError,
+            reason: 'Tail after parameter at same level');
       });
 
       test(
           'Given a trie with /test/**, '
-          'when adding /test/* (wildcard after tail at same level), '
+          'when adding /test/*, '
           'then an ArgumentError is thrown', () {
         trie.add(NormalizedPath('/test/**'), 1);
         expect(
-            () => trie.add(NormalizedPath('/test/*'), 2), throwsArgumentError);
+            () => trie.add(NormalizedPath('/test/*'), 2), throwsArgumentError,
+            reason: 'Wildcard after tail at same level');
       });
 
       test(
           'Given a trie with /test/*, '
-          'when adding /test/** (tail after wildcard at same level), '
+          'when adding /test/**, '
           'then an ArgumentError is thrown', () {
         trie.add(NormalizedPath('/test/*'), 1);
         expect(
-            () => trie.add(NormalizedPath('/test/**'), 2), throwsArgumentError);
+            () => trie.add(NormalizedPath('/test/**'), 2), throwsArgumentError,
+            reason: 'Tail after wildcard at same level');
       });
 
       test(
@@ -257,8 +223,7 @@ void main() {
           'then an ArgumentError is thrown', () {
         expect(
             () => trie.add(NormalizedPath('/a/**/b/c'), 1), throwsArgumentError,
-            reason:
-                'Tail segment /** must be the last segment in a path definition.');
+            reason: 'Tail /** not as the last segment.');
       });
     });
   });

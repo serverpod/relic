@@ -88,7 +88,7 @@ void main() {
 
     test(
         'Given a trie with path /assets/*, '
-        'when /assets/img/logo.png (wildcard part spans multiple segments) is looked up, '
+        'when /assets/img/logo.png is looked up, '
         'then no match is found', () {
       trie.add(NormalizedPath('/assets/*'), 1);
       expect(trie.lookup(NormalizedPath('/assets/img/logo.png')), isNull);
@@ -125,29 +125,32 @@ void main() {
 
     test(
         'Given an empty trie, '
-        'when adding a path like /*foo/bar (wildcard not a full segment), '
+        'when adding a path like /*foo/bar, '
         'then an ArgumentError is thrown', () {
       expect(
-          () => trie.add(NormalizedPath('/*foo/bar'), 1), throwsArgumentError);
+          () => trie.add(NormalizedPath('/*foo/bar'), 1), throwsArgumentError,
+          reason: 'Wildcard not a full segment');
     });
 
     group('Wildcard and Parameter interaction validation', () {
       test(
           'Given a trie with /test/*, '
-          'when adding /test/:id (parameter after wildcard at same level), '
+          'when adding /test/:id, '
           'then an ArgumentError is thrown', () {
         trie.add(NormalizedPath('/test/*'), 1);
-        expect(() => trie.add(NormalizedPath('/test/:id'), 2),
-            throwsArgumentError);
+        expect(
+            () => trie.add(NormalizedPath('/test/:id'), 2), throwsArgumentError,
+            reason: 'Parameter after wildcard at same level');
       });
 
       test(
           'Given a trie with /test/:id, '
-          'when adding /test/* (wildcard after parameter at same level), '
+          'when adding /test/*, '
           'then an ArgumentError is thrown', () {
         trie.add(NormalizedPath('/test/:id'), 1);
         expect(
-            () => trie.add(NormalizedPath('/test/*'), 2), throwsArgumentError);
+            () => trie.add(NormalizedPath('/test/*'), 2), throwsArgumentError,
+            reason: 'Wildcard after parameter at same level');
       });
     });
   });
