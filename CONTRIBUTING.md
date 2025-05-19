@@ -111,7 +111,7 @@ Comprehensive testing is crucial for maintaining the quality and stability of Re
 
 **1. Structure and Naming:**
 
-- **Grouping:** Tests should be organized into `group()` blocks. The description of the group should clearly state the component or functionality being tested (e.g., `'Normalization Logic'`, `'Request Parsing'`).
+- **Grouping:** Tests should be organized into files and `group()` blocks. The name of the file and the description of the group should clearly state the component or functionality being tested (e.g., file `normalized_path_test.dart` with groups, such as `'Normalization Logic'`, `'Request Parsing'`).
 - **Test Descriptions (Given-When-Then):** Individual `test()` descriptions should follow a Given-When-Then format. This structure gives clarity for all contributors.
 
   - Start with `'Given ...,'` describing the initial state, context, or preconditions.
@@ -144,7 +144,9 @@ Comprehensive testing is crucial for maintaining the quality and stability of Re
     }
     ```
 
-- **File Naming:** Test files must end with `_test.dart` (e.g., `my_feature_test.dart`) and should generally mirror the name of the file they are testing, placed in a corresponding directory structure under `test/`.
+It is okay to split the `Given ...` and `When ...` descriptions into groups as well.
+
+- **File Naming:** Test files must end with `_test.dart` (e.g., `my_feature_test.dart`) and should generally mirror the name of the file they are testing, placed in a corresponding directory structure under `test/`. They can also be names after scenarios being tested. There may be multiple test files for the same feature, but try to keep closely related tests grouped together in the same file.
 
 **2. Test Body (Arrange-Act-Assert):**
 
@@ -167,7 +169,7 @@ Comprehensive testing is crucial for maintaining the quality and stability of Re
   - Happy paths (valid inputs, expected behavior).
   - Edge cases (empty inputs, nulls, boundaries, extremes).
   - Error conditions (invalid inputs, exceptions).
-- **Maintainability:** Write tests that are robust to minor, unrelated code changes in the SUT (System Under Test).
+- **Maintainability:** Write tests that are robust to minor, unrelated code changes in the SUT (System Under Test). Focus on the public interface, so test are likely to remain valid despite internal rewrites.
 
 **Example (revisiting `normalized_path_test.dart` style):**
 Based on `relic/test/router/normalized_path_test.dart`:
