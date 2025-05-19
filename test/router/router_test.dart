@@ -20,6 +20,10 @@ void main() {
       router = Router<String>();
     });
 
+    test('then isEmpty should be true', () {
+      expect(router.isEmpty, isTrue);
+    });
+
     test(
         'when looking up an empty string, '
         'then it should return null', () {
@@ -47,6 +51,13 @@ void main() {
       router.get('/', 'root_handler');
       final result = router.lookup(Method.get, '/');
       expectLookupResult(result, 'root_handler');
+    });
+
+    test(
+        'when adding a route, '
+        'then isEmpty should be false', () {
+      router.get('/test', 'test_handler');
+      expect(router.isEmpty, isFalse);
     });
 
     test(
