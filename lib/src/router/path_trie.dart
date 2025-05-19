@@ -15,6 +15,10 @@ final class _TrieNode<T> {
   ///
   /// A non-null value indicates the end of a path
   T? value;
+
+  /// Indicates whether this node is empty.
+  bool get isEmpty =>
+      children.isEmpty && dynamicSegment == null && value == null;
 }
 
 sealed class _DynamicSegment<T> {
@@ -346,6 +350,9 @@ final class PathTrie<T> {
         ? LookupResult(value, parameters, matchedPath, remainingPath)
         : null;
   }
+
+  /// Returns true if the path trie has no routes.
+  bool get isEmpty => _root.isEmpty;
 }
 
 extension on NormalizedPath {

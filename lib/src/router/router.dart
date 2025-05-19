@@ -125,6 +125,9 @@ final class Router<T> {
       entry.remaining,
     );
   }
+
+  /// Returns true if the router has no routes.
+  bool get isEmpty => _allRoutes.isEmpty;
 }
 
 extension RouteEx<T> on Router<T> {
