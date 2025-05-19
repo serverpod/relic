@@ -1,4 +1,4 @@
-import 'package:relic/src/router/path_trie.dart';
+import 'package:relic/src/router/lookup_result.dart';
 import 'package:relic/src/router/router.dart';
 import 'package:test/test.dart';
 

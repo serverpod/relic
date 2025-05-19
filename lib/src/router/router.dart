@@ -1,5 +1,6 @@
 import 'dart:collection';
 
+import 'lookup_result.dart';
 import 'normalized_path.dart';
 import 'path_trie.dart';
 
