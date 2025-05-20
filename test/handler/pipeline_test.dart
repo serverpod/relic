@@ -28,7 +28,7 @@ void main() {
         return response;
       };
 
-  RequestContext innerHandler(final RequestContext request) {
+  HandledContext innerHandler(final NewContext request) {
     expect(accessLocation, 2);
     accessLocation = 3;
     return syncHandler(request);

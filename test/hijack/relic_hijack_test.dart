@@ -29,7 +29,6 @@ void main() {
       () async {
         await _scheduleServer(
           (final ctx) {
-            if (ctx is! NewContext) throw ArgumentError(ctx);
             final newCtx = ctx.hijack((final _) {});
             expect(newCtx, isA<HijackContext>());
             return newCtx;

@@ -11,31 +11,31 @@ final helloBytes = utf8.encode('hello,');
 
 final worldBytes = utf8.encode(' world');
 
-typedef SyncHandler = RequestContext Function(RequestContext);
+typedef SyncHandler = HandledContext Function(NewContext);
 
 /// A simple, synchronous handler.
 ///
 /// By default, replies with a status code 200, empty headers, and
 /// `Hello from ${ctx.request.url.path}`.
-SyncHandler createSyncHandler(
-    {final int statusCode = 200, final Headers? headers, final Body? body}) {
-  return (final RequestContext ctx) {
-    return switch (ctx) {
-      final RespondableContext rc => rc.withResponse(Response(
-          statusCode,
-          headers: headers ?? Headers.empty(),
-          body: body ??
-              Body.fromString('Hello from ${ctx.request.requestedUri.path}'),
-        )),
-      _ => ctx,
-    };
+SyncHandler createSyncHandler({
+  final int statusCode = 200,
+  final Headers? headers,
+  final Body? body,
+}) {
+  return (final NewContext ctx) {
+    return ctx.withResponse(Response(
+      statusCode,
+      headers: headers ?? Headers.empty(),
+      body: body ??
+          Body.fromString('Hello from ${ctx.request.requestedUri.path}'),
+    ));
   };
 }
 
 final SyncHandler syncHandler = createSyncHandler();
 
 /// Calls [createSyncHandler] and wraps the response in a [Future].
-Future<RequestContext> asyncHandler(final RequestContext ctx) async {
+Future<HandledContext> asyncHandler(final NewContext ctx) async {
   return syncHandler(ctx);
 }
 

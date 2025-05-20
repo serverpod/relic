@@ -17,7 +17,7 @@ import '../message/response.dart';
 /// may have been touched by other middleware. Similarly, the response may be
 /// directly returned by an HTTP server or have further processing done by other
 /// middleware.
-typedef Handler = FutureOr<RequestContext> Function(RequestContext ctx);
+typedef Handler = FutureOr<HandledContext> Function(NewContext ctx);
 
 /// A handler specifically designed to produce a [ResponseContext].
 ///
@@ -58,11 +58,7 @@ typedef Responder = FutureOr<Response> Function(Request);
 /// Throws an [ArgumentError] if the incoming context is not [RespondableContext].
 Handler respondWith(final Responder responder) {
   return (final ctx) async {
-    return switch (ctx) {
-      final RespondableContext rc =>
-        rc.withResponse(await responder(rc.request)),
-      _ => throw ArgumentError(ctx.runtimeType),
-    };
+    return ctx.withResponse(await responder(ctx.request));
   };
 }
 

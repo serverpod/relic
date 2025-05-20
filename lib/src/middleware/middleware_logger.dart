@@ -17,22 +17,22 @@ Middleware logRequests({
     (final innerHandler) {
       final localLogger = logger ?? logMessage;
 
-      return (final request) async {
+      return (final ctx) async {
         final startTime = DateTime.now();
         final watch = Stopwatch()..start();
 
         try {
-          final newCtx = await innerHandler(request);
-          final msg = switch (newCtx) {
+          final handledCtx = await innerHandler(ctx);
+          final msg = switch (handledCtx) {
             final ResponseContext rc => '${rc.response.statusCode}',
             final HijackContext _ => 'hijacked',
-            final NewContext _ => 'unhandled',
           };
-          localLogger(_message(startTime, newCtx.request, watch.elapsed, msg));
-          return newCtx;
+          localLogger(
+              _message(startTime, handledCtx.request, watch.elapsed, msg));
+          return handledCtx;
         } catch (error, stackTrace) {
           localLogger(
-            _errorMessage(startTime, request.request, watch.elapsed, error),
+            _errorMessage(startTime, ctx.request, watch.elapsed, error),
             type: LoggerType.error,
             stackTrace: stackTrace,
           );
