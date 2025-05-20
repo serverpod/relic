@@ -1,8 +1,7 @@
 import 'dart:io';
 
+import 'package:relic/io_adapter.dart';
 import 'package:relic/relic.dart';
-import 'package:relic/src/adapter/context.dart';
-import 'package:relic/src/middleware/routing_middleware.dart';
 
 /// A simple 'Hello World' server
 Future<void> main() async {

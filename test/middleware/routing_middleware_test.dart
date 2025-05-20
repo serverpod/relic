@@ -1,6 +1,5 @@
 import 'package:mockito/mockito.dart';
 import 'package:relic/relic.dart';
-import 'package:relic/src/adapter/context.dart';
 import 'package:relic/src/middleware/routing_middleware.dart';
 import 'package:test/test.dart';
 

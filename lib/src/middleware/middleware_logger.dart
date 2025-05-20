@@ -1,5 +1,4 @@
 import '../../relic.dart';
-import '../adapter/context.dart';
 import '../logger/logger.dart';
 
 /// Middleware which prints the time of the request, the elapsed time for the

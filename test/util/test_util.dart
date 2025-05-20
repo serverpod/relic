@@ -3,8 +3,8 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:meta/meta.dart';
+import 'package:relic/io_adapter.dart';
 import 'package:relic/relic.dart';
-import 'package:relic/src/adapter/context.dart';
 import 'package:test/test.dart';
 
 final helloBytes = utf8.encode('hello,');
