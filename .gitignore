@@ -15,3 +15,4 @@ pubspec.lock
 .vscode-test/
 
 *.exe
+benchmark_results.csv
