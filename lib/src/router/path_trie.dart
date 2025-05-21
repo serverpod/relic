@@ -1,27 +1,7 @@
+import 'lookup_result.dart';
 import 'normalized_path.dart';
 
 typedef Parameters = Map<Symbol, String>;
-
-/// Represents the result of a route lookup.
-final class LookupResult<T> {
-  /// The value associated with the matched route.
-  final T value;
-
-  /// A map of parameter names to their extracted values from the path.
-  final Parameters parameters;
-
-  /// The normalized path that was matched.
-  final NormalizedPath matched;
-
-  /// If a match, does not consume the full path, then stores the [remaining]
-  ///
-  /// This can only happen with a path that ends with a tail segment `/**`,
-  /// otherwise it will be empty.
-  final NormalizedPath remaining;
-
-  /// Creates a [LookupResult] with the given [value] and [parameters].
-  const LookupResult(this.value, this.parameters, this.matched, this.remaining);
-}
 
 /// A node within the path trie.
 final class _TrieNode<T> {
@@ -35,6 +15,10 @@ final class _TrieNode<T> {
   ///
   /// A non-null value indicates the end of a path
   T? value;
+
+  /// Indicates whether this node is empty.
+  bool get isEmpty =>
+      children.isEmpty && dynamicSegment == null && value == null;
 }
 
 sealed class _DynamicSegment<T> {
@@ -366,6 +350,9 @@ final class PathTrie<T> {
         ? LookupResult(value, parameters, matchedPath, remainingPath)
         : null;
   }
+
+  /// Returns true if the path trie has no routes.
+  bool get isEmpty => _root.isEmpty;
 }
 
 extension on NormalizedPath {
