@@ -23,3 +23,4 @@ export 'src/middleware/middleware_logger.dart' show logRequests;
 export 'src/relic_server.dart';
 export 'src/router/lookup_result.dart';
 export 'src/router/router.dart';
+export 'src/util/functional.dart';
