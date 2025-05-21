@@ -350,7 +350,7 @@ void main() {
         'then the request.method is "${v.key}"',
     (final v) async {
       late RequestMethod method;
-      final middleware = routeWith(Router()
+      final middleware = routeWith(Router<Handler>()
         ..add(v.value, '/', respondWith((final req) {
           method = req.method;
           return Response.ok();
