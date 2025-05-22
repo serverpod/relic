@@ -465,8 +465,8 @@ Future<int> main(final List<String> args) async {
     ]);
   try {
     await runner.run(args);
-  } on UsageException catch (_) {
-    print(runner.usage);
+  } on UsageException catch (ex) {
+    print('${ex.message}\n\n${ex.usage}');
     return 1;
   }
   return 0;
