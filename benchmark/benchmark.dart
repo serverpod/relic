@@ -1,5 +1,3 @@
-// ignore_for_file: avoid_print
-
 import 'dart:async';
 import 'dart:developer';
 import 'dart:io';
@@ -10,15 +8,14 @@ import 'package:cli_tools/cli_tools.dart';
 import 'package:relic/relic.dart';
 import 'package:routingkit/routingkit.dart' as routingkit;
 import 'package:spanner/spanner.dart' as spanner;
-
-const int routeCount = 10000;
+import 'package:path/path.dart' as p;
 
 late final List<int> indexes;
 late final List<String> staticRoutesToLookup;
 late final List<String> dynamicRoutesToLookup;
 
-void setupBenchmarkData() {
-  print('Setting up benchmark data with $routeCount routes...');
+void setupBenchmarkData(int routeCount) {
+  logger.info('Setting up benchmark data with $routeCount routes...');
   indexes = List.generate(routeCount, (final i) => i);
   final permutedIndexes = indexes.toList()
     ..shuffle(Random(123)); // Use fixed seed for reproducibility
@@ -34,14 +31,15 @@ void setupBenchmarkData() {
             '/profile$i',
       )
       .toList();
-  print('Setup complete.');
+  logger.info('Setup complete.');
 }
+
+int get routeCount => indexes.length;
 
 class Emitter extends ScoreEmitterV2 {
   final IOSink _output;
-  final bool _tee;
 
-  Emitter(final File output, this._tee) : _output = output.openWrite();
+  Emitter(final File output) : _output = output.openWrite();
 
   @override
   void emit(
@@ -51,17 +49,14 @@ class Emitter extends ScoreEmitterV2 {
     final String unit = 'us',
   }) {
     final csvLine = [testName, metric, value, unit].join(';');
-    for (final s in [_output, if (_tee) stdout]) {
-      s.writeln(csvLine);
-    }
+    _output.writeln(csvLine);
+    logger.debug(csvLine);
   }
 }
 
-late final ScoreEmitterV2 _emitter;
-
 abstract class RouterBenchmark extends PerfBenchmarkBase {
-  RouterBenchmark(final Iterable<String> grouping)
-      : super(grouping.join(';'), emitter: _emitter);
+  RouterBenchmark(final Iterable<String> grouping, Emitter emitter)
+      : super(grouping.join(';'), emitter: emitter);
 
   @override
   void exercise() => run();
@@ -69,7 +64,8 @@ abstract class RouterBenchmark extends PerfBenchmarkBase {
 
 // Benchmark for adding static routes
 class StaticAddBenchmark extends RouterBenchmark {
-  StaticAddBenchmark() : super(['Add', 'Static', 'x$routeCount', 'Router']);
+  StaticAddBenchmark(Emitter emitter)
+      : super(['Add', 'Static', 'x$routeCount', 'Router'], emitter);
 
   @override
   void run() {
@@ -82,8 +78,8 @@ class StaticAddBenchmark extends RouterBenchmark {
 
 // Benchmark for looking up static routes
 class StaticLookupBenchmark extends RouterBenchmark {
-  StaticLookupBenchmark()
-      : super(['Lookup', 'Static', 'x$routeCount', 'Router']);
+  StaticLookupBenchmark(Emitter emitter)
+      : super(['Lookup', 'Static', 'x$routeCount', 'Router'], emitter);
 
   late final Router<int> router;
 
@@ -106,7 +102,8 @@ class StaticLookupBenchmark extends RouterBenchmark {
 
 // Benchmark for adding dynamic routes
 class DynamicAddBenchmark extends RouterBenchmark {
-  DynamicAddBenchmark() : super(['Add', 'Dynamic', 'x$routeCount', 'Router']);
+  DynamicAddBenchmark(Emitter emitter)
+      : super(['Add', 'Dynamic', 'x$routeCount', 'Router'], emitter);
 
   @override
   void run() {
@@ -119,8 +116,8 @@ class DynamicAddBenchmark extends RouterBenchmark {
 
 // Benchmark for looking up dynamic routes
 class DynamicLookupBenchmark extends RouterBenchmark {
-  DynamicLookupBenchmark()
-      : super(['Lookup', 'Dynamic', 'x$routeCount', 'Router']);
+  DynamicLookupBenchmark(Emitter emitter)
+      : super(['Lookup', 'Dynamic', 'x$routeCount', 'Router'], emitter);
 
   late final Router<int> router;
 
@@ -143,8 +140,8 @@ class DynamicLookupBenchmark extends RouterBenchmark {
 }
 
 class StaticAddRoutingkitBenchmark extends RouterBenchmark {
-  StaticAddRoutingkitBenchmark()
-      : super(['Add', 'Static', 'x$routeCount', 'Routingkit']);
+  StaticAddRoutingkitBenchmark(Emitter emitter)
+      : super(['Add', 'Static', 'x$routeCount', 'Routingkit'], emitter);
 
   @override
   void run() {
@@ -156,8 +153,8 @@ class StaticAddRoutingkitBenchmark extends RouterBenchmark {
 }
 
 class StaticLookupRoutingkitBenchmark extends RouterBenchmark {
-  StaticLookupRoutingkitBenchmark()
-      : super(['Lookup', 'Static', 'x$routeCount', 'Routingkit']);
+  StaticLookupRoutingkitBenchmark(Emitter emitter)
+      : super(['Lookup', 'Static', 'x$routeCount', 'Routingkit'], emitter);
 
   late final routingkit.Router<int> router;
 
@@ -179,8 +176,8 @@ class StaticLookupRoutingkitBenchmark extends RouterBenchmark {
 }
 
 class DynamicAddRoutingkitBenchmark extends RouterBenchmark {
-  DynamicAddRoutingkitBenchmark()
-      : super(['Add', 'Dynamic', 'x$routeCount', 'Routingkit']);
+  DynamicAddRoutingkitBenchmark(Emitter emitter)
+      : super(['Add', 'Dynamic', 'x$routeCount', 'Routingkit'], emitter);
 
   @override
   void run() {
@@ -192,8 +189,8 @@ class DynamicAddRoutingkitBenchmark extends RouterBenchmark {
 }
 
 class DynamicLookupRoutingkitBenchmark extends RouterBenchmark {
-  DynamicLookupRoutingkitBenchmark()
-      : super(['Lookup', 'Dynamic', 'x$routeCount', 'Routingkit']);
+  DynamicLookupRoutingkitBenchmark(Emitter emitter)
+      : super(['Lookup', 'Dynamic', 'x$routeCount', 'Routingkit'], emitter);
 
   late final routingkit.Router<int> router;
 
@@ -216,8 +213,8 @@ class DynamicLookupRoutingkitBenchmark extends RouterBenchmark {
 }
 
 class StaticAddSpannerBenchmark extends RouterBenchmark {
-  StaticAddSpannerBenchmark()
-      : super(['Add', 'Static', 'x$routeCount', 'Spanner']);
+  StaticAddSpannerBenchmark(Emitter emitter)
+      : super(['Add', 'Static', 'x$routeCount', 'Spanner'], emitter);
 
   @override
   void run() {
@@ -229,8 +226,8 @@ class StaticAddSpannerBenchmark extends RouterBenchmark {
 }
 
 class StaticLookupSpannerBenchmark extends RouterBenchmark {
-  StaticLookupSpannerBenchmark()
-      : super(['Lookup', 'Static', 'x$routeCount', 'Spanner']);
+  StaticLookupSpannerBenchmark(Emitter emitter)
+      : super(['Lookup', 'Static', 'x$routeCount', 'Spanner'], emitter);
 
   late final spanner.Spanner router;
 
@@ -252,8 +249,8 @@ class StaticLookupSpannerBenchmark extends RouterBenchmark {
 }
 
 class DynamicAddSpannerBenchmark extends RouterBenchmark {
-  DynamicAddSpannerBenchmark()
-      : super(['Add', 'Dynamic', 'x$routeCount', 'Spanner']);
+  DynamicAddSpannerBenchmark(Emitter emitter)
+      : super(['Add', 'Dynamic', 'x$routeCount', 'Spanner'], emitter);
 
   @override
   void run() {
@@ -266,8 +263,8 @@ class DynamicAddSpannerBenchmark extends RouterBenchmark {
 }
 
 class DynamicLookupSpannerBenchmark extends RouterBenchmark {
-  DynamicLookupSpannerBenchmark()
-      : super(['Lookup', 'Dynamic', 'x$routeCount', 'Spanner']);
+  DynamicLookupSpannerBenchmark(Emitter emitter)
+      : super(['Lookup', 'Dynamic', 'x$routeCount', 'Spanner'], emitter);
 
   late final spanner.Spanner router;
 
@@ -299,18 +296,26 @@ enum Option<V> implements OptionDefinition<V> {
     mode: PathExistMode.mustNotExist,
   )),
 
+  iterations(IntOption(
+    argName: 'iterations',
+    argAbbrev: 'i',
+    helpText: 'Something to do with scale',
+    defaultsTo: 1000,
+  )),
+
+  storeInNotes(FlagOption(
+    argName: 'store-in-git-notes',
+    argAbbrev: 's',
+    helpText: 'Store benchmark result with git notes',
+    defaultsTo: false,
+  )),
+
   pause(FlagOption(
     argName: 'pause-on-startup',
     argAbbrev: 'p',
     helpText: 'Pause on startup to allow devtools to attach',
     defaultsTo: false,
     hideNegatedUsage: true,
-  )),
-
-  tee(FlagOption(
-    argName: 'tee',
-    helpText: 'Mirror output to stdout',
-    defaultsTo: true,
   ));
 
   const Option(this.option);
@@ -319,7 +324,10 @@ enum Option<V> implements OptionDefinition<V> {
   final ConfigOptionBase<V> option;
 }
 
-File _defaultFile() => File('benchmark_results.csv');
+File _defaultFile() {
+  final tmpDir = Directory.systemTemp.createTempSync();
+  return File(p.join(tmpDir.path, 'benchmark_results.csv'));
+}
 
 class RunCommand extends BetterCommand<Option<dynamic>, void> {
   RunCommand({super.env}) : super(options: Option.values);
@@ -332,12 +340,11 @@ class RunCommand extends BetterCommand<Option<dynamic>, void> {
 
   @override
   FutureOr<void>? runWithConfig(
-      final Configuration<Option<dynamic>> commandConfig) async {
+    final Configuration<Option<dynamic>> commandConfig,
+  ) async {
     final file = commandConfig.value(Option.file);
     final pause = commandConfig.value(Option.pause);
-    final tee = commandConfig.value(Option.tee);
-
-    _emitter = Emitter(file, tee);
+    final iterations = commandConfig.value(Option.iterations);
 
     if (pause) {
       final info = await Service.getInfo();
@@ -349,7 +356,13 @@ class RunCommand extends BetterCommand<Option<dynamic>, void> {
         await stdin.first;
       }
     }
-    await driver();
+
+    setupBenchmarkData(iterations);
+
+    final emitter = Emitter(file);
+    logger.info('Starting benchmarks');
+    await driver(emitter);
+    logger.info('Done');
   }
 }
 
@@ -373,15 +386,30 @@ class ExtractHistoricDataCommand
 
   @override
   FutureOr<void>? runWithConfig(
-      final Configuration<ExtractHistoricOptions<dynamic>> commandConfig) {
-    throw UnimplementedError();
-  }
+    final Configuration<ExtractHistoricOptions<dynamic>> commandConfig,
+  ) async {}
+}
+
+final logger = StdOutLogger(LogLevel.info);
+
+void setLogLevel({
+  required CommandRunnerLogLevel parsedLogLevel,
+  String? commandName,
+}) {
+  logger.logLevel = switch (parsedLogLevel) {
+    CommandRunnerLogLevel.quiet => LogLevel.error,
+    CommandRunnerLogLevel.verbose => LogLevel.debug,
+    CommandRunnerLogLevel.normal => LogLevel.info,
+  };
 }
 
 Future<int> main(final List<String> args) async {
   // ignore: inference_failure_on_instance_creation
-  final runner = BetterCommandRunner('benchmark', 'Relic Benchmark Tool')
-    ..addCommands([
+  final runner = BetterCommandRunner(
+    'benchmark',
+    'Relic Benchmark Tool',
+    setLogLevel: setLogLevel,
+  )..addCommands([
       RunCommand(),
       ExtractHistoricDataCommand(),
     ]);
@@ -394,28 +422,26 @@ Future<int> main(final List<String> args) async {
   return 0;
 }
 
-Future<void> driver() async {
-  setupBenchmarkData();
-
-  print('Starting benchmarks');
-
+Future<bool> driver(Emitter emitter) async {
   for (final benchmark in [
-    StaticAddRoutingkitBenchmark(),
-    StaticAddSpannerBenchmark(),
-    StaticAddBenchmark(),
-    StaticLookupRoutingkitBenchmark(),
-    StaticLookupSpannerBenchmark(),
-    StaticLookupBenchmark(),
-    DynamicAddRoutingkitBenchmark(),
-    DynamicAddSpannerBenchmark(),
-    DynamicAddBenchmark(),
-    DynamicLookupRoutingkitBenchmark(),
-    DynamicLookupSpannerBenchmark(),
-    DynamicLookupBenchmark(),
+    StaticAddRoutingkitBenchmark(emitter),
+    StaticAddSpannerBenchmark(emitter),
+    StaticAddBenchmark(emitter),
+    StaticLookupRoutingkitBenchmark(emitter),
+    StaticLookupSpannerBenchmark(emitter),
+    StaticLookupBenchmark(emitter),
+    DynamicAddRoutingkitBenchmark(emitter),
+    DynamicAddSpannerBenchmark(emitter),
+    DynamicAddBenchmark(emitter),
+    DynamicLookupRoutingkitBenchmark(emitter),
+    DynamicLookupSpannerBenchmark(emitter),
+    DynamicLookupBenchmark(emitter),
   ]) {
+    await _yield;
     benchmark.report();
     if (Platform.isLinux) await benchmark.reportPerf();
   }
-
-  print('Done');
+  return true;
 }
+
+Future<void> get _yield => Future<void>.delayed(Duration.zero);
