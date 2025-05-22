@@ -5,6 +5,7 @@ import 'dart:math';
 
 import 'package:benchmark_harness/perf_benchmark_harness.dart';
 import 'package:cli_tools/cli_tools.dart';
+import 'package:git/git.dart';
 import 'package:relic/relic.dart';
 import 'package:routingkit/routingkit.dart' as routingkit;
 import 'package:spanner/spanner.dart' as spanner;
@@ -287,7 +288,7 @@ class DynamicLookupSpannerBenchmark extends RouterBenchmark {
   }
 }
 
-enum Option<V> implements OptionDefinition<V> {
+enum RunOption<V> implements OptionDefinition<V> {
   file(FileOption(
     argName: 'output',
     argAbbrev: 'o',
@@ -318,7 +319,7 @@ enum Option<V> implements OptionDefinition<V> {
     hideNegatedUsage: true,
   ));
 
-  const Option(this.option);
+  const RunOption(this.option);
 
   @override
   final ConfigOptionBase<V> option;
@@ -329,8 +330,8 @@ File _defaultFile() {
   return File(p.join(tmpDir.path, 'benchmark_results.csv'));
 }
 
-class RunCommand extends BetterCommand<Option<dynamic>, void> {
-  RunCommand({super.env}) : super(options: Option.values);
+class RunCommand extends BetterCommand<RunOption<dynamic>, void> {
+  RunCommand({super.env}) : super(options: RunOption.values);
 
   @override
   final description = 'Run comparative router benchmarks';
@@ -340,11 +341,17 @@ class RunCommand extends BetterCommand<Option<dynamic>, void> {
 
   @override
   FutureOr<void>? runWithConfig(
-    final Configuration<Option<dynamic>> commandConfig,
+    final Configuration<RunOption<dynamic>> commandConfig,
   ) async {
-    final file = commandConfig.value(Option.file);
-    final pause = commandConfig.value(Option.pause);
-    final iterations = commandConfig.value(Option.iterations);
+    final file = commandConfig.value(RunOption.file);
+    final pause = commandConfig.value(RunOption.pause);
+    final iterations = commandConfig.value(RunOption.iterations);
+    final storeInNotes = commandConfig.value(RunOption.storeInNotes);
+
+    final git = await GitDir.fromExisting(p.current, allowSubdirectory: true);
+    if (storeInNotes && !await git.isWorkingTreeClean()) {
+      throw StateError('Working copy not clean!');
+    }
 
     if (pause) {
       final info = await Service.getInfo();
@@ -363,31 +370,67 @@ class RunCommand extends BetterCommand<Option<dynamic>, void> {
     logger.info('Starting benchmarks');
     await driver(emitter);
     logger.info('Done');
+
+    if (storeInNotes) {
+      final head = await git.commitFromRevision('HEAD');
+      logger.info("Appending benchmark results to: ${head.treeSha} (tree)");
+      await git.runCommand(
+        ['notes', '--ref=benchmarks', 'append', '-F', file.path, head.treeSha],
+        echoOutput: logger.shouldLog(LogLevel.debug),
+      );
+    }
   }
 }
 
-enum ExtractHistoricOptions<V> implements OptionDefinition<V> {
-  from(StringOption(argName: 'from', argAbbrev: 'f')),
-  to(StringOption(argName: 'to', argAbbrev: 't'));
+enum ExtractOption<V> implements OptionDefinition<V> {
+  from(StringOption(argName: 'from', argAbbrev: 'f', defaultsTo: 'HEAD^')),
+  to(StringOption(argName: 'to', argAbbrev: 't', defaultsTo: 'HEAD'));
 
-  const ExtractHistoricOptions(this.option);
+  const ExtractOption(this.option);
 
   @override
   final ConfigOptionBase<V> option;
 }
 
-class ExtractHistoricDataCommand
-    extends BetterCommand<ExtractHistoricOptions<dynamic>, void> {
+class ExtractCommand extends BetterCommand<ExtractOption<dynamic>, void> {
+  ExtractCommand({super.env}) : super(options: ExtractOption.values);
+
   @override
-  final description = 'Extract historic benchmark data';
+  final description = 'Extract benchmark data';
 
   @override
   final name = 'extract';
 
   @override
   FutureOr<void>? runWithConfig(
-    final Configuration<ExtractHistoricOptions<dynamic>> commandConfig,
-  ) async {}
+    final Configuration<ExtractOption<dynamic>> commandConfig,
+  ) async {
+    final from = commandConfig.value(ExtractOption.from);
+    final to = commandConfig.value(ExtractOption.to);
+
+    final git = await GitDir.fromExisting(p.current, allowSubdirectory: true);
+    final result = await git.runCommand(
+      ['log', '--format=%aI %H %T', '${from}..${to}'],
+    );
+
+    final sb = StringBuffer();
+    for (final line in (result.stdout as String).split('\n')) {
+      final hashes = line.split(' ');
+      if (hashes.length < 2) continue;
+
+      final authorTime = DateTime.parse(hashes[0]);
+      final commitSha = hashes[1];
+      final treeSha = hashes[2];
+      logger.debug('$commitSha $treeSha $authorTime');
+
+      final result = await git.runCommand(
+        ['notes', '--ref=benchmarks', 'show', treeSha],
+        throwOnError: false,
+      );
+      if (result.exitCode == 0) sb.writeln(result.stdout);
+    }
+    logger.info(sb.toString());
+  }
 }
 
 final logger = StdOutLogger(LogLevel.info);
@@ -411,7 +454,7 @@ Future<int> main(final List<String> args) async {
     setLogLevel: setLogLevel,
   )..addCommands([
       RunCommand(),
-      ExtractHistoricDataCommand(),
+      ExtractCommand(),
     ]);
   try {
     await runner.run(args);
@@ -437,11 +480,8 @@ Future<bool> driver(Emitter emitter) async {
     DynamicLookupSpannerBenchmark(emitter),
     DynamicLookupBenchmark(emitter),
   ]) {
-    await _yield;
     benchmark.report();
     if (Platform.isLinux) await benchmark.reportPerf();
   }
   return true;
 }
-
-Future<void> get _yield => Future<void>.delayed(Duration.zero);
