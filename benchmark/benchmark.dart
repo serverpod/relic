@@ -54,6 +54,10 @@ class Emitter extends ScoreEmitterV2 {
     _output.writeln(csvLine);
     logger.debug(csvLine);
   }
+
+  Future<void> close() async {
+    await _output.close();
+  }
 }
 
 abstract class RouterBenchmark extends PerfBenchmarkBase {
@@ -303,6 +307,7 @@ enum RunOption<V> implements OptionDefinition<V> {
     argAbbrev: 'i',
     helpText: 'Something to do with scale',
     defaultsTo: 1000,
+    min: 1,
   )),
 
   storeInNotes(FlagOption(
@@ -371,6 +376,7 @@ class RunCommand extends BetterCommand<RunOption<dynamic>, void> {
     logger.info('Starting benchmarks');
     await driver(emitter);
     logger.info('Done');
+    await emitter.close();
 
     if (storeInNotes) {
       final head = await git.commitFromRevision('HEAD');
