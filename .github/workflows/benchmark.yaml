@@ -28,7 +28,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ${{ env.PUB_CACHE_PATH }}
-          key: ${{ runner.os }}-pub-cache-${{ matrix.dart_sdk }}
+          key: ${{ runner.os }}-pub-cache-stable
           restore-keys: ${{ runner.os }}-pub-cache-
 
       - name: Configure Git
