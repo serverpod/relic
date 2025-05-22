@@ -481,7 +481,8 @@ Future<bool> driver(Emitter emitter) async {
     DynamicLookupBenchmark(emitter),
   ]) {
     benchmark.report();
-    if (Platform.isLinux) await benchmark.reportPerf();
+    // TODO(kasper): This hangs on CI
+    // if (Platform.isLinux) await benchmark.reportPerf();
   }
   return true;
 }
