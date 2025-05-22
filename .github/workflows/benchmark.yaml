@@ -36,11 +36,14 @@ jobs:
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
 
-      - name: Run benchmarks
+      - name: Fetch Existing Benchmark Data
+        run: git fetch origin refs/notes/benchmarks:refs/notes/benchmarks
+
+      - name: Run Benchmark
         id: run-benchmark
         run: |
           dart compile exe benchmark/benchmark.dart
           ./benchmark/benchmark.exe run --store-in-git-notes --verbose
 
-      - name: Push git notes
+      - name: Push Benchmark Data
         run: git push origin refs/notes/benchmarks # This
