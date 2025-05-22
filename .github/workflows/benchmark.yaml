@@ -1,0 +1,46 @@
+name: Benchmark and Store as Git Notes
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: "0 0 * * 0" # every Sunday at 00:00 UTC
+  workflow_dispatch: # allow manual triggering
+
+env:
+  PUB_CACHE_PATH: ~/.pub-cache
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Dart
+        uses: dart-lang/setup-dart@v1.3
+        with:
+          sdk: stable
+
+      - name: Cache Dart Dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.PUB_CACHE_PATH }}
+          key: ${{ runner.os }}-pub-cache-${{ matrix.dart_sdk }}
+          restore-keys: ${{ runner.os }}-pub-cache-
+
+      - name: Configure Git
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+
+      - name: Run benchmarks
+        id: run-benchmark
+        run: |
+          dart compile exe benchmark/benchmark.dart
+          ./benchmark/benchmark.exe run --store-in-git-notes --verbose
+
+      - name: Push git notes
+        run: git push origin refs/notes/benchmarks # This
