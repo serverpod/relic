@@ -26,10 +26,10 @@ Future<void> main() async {
   // Check the _example_ directory for other examples.
 }
 
-ResponseContext hello(final RequestContext ctx) {
+ResponseContext hello(final NewContext ctx) {
   final name = ctx.pathParameters[#name];
   final age = int.parse(ctx.pathParameters[#age]!);
 
-  return (ctx as RespondableContext).withResponse(Response.ok(
+  return ctx.withResponse(Response.ok(
       body: Body.fromString('Hello $name! To think you are $age years old.')));
 }
