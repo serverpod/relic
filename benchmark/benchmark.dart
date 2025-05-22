@@ -1,3 +1,4 @@
+// ignore_for_file: avoid_print
 import 'dart:async';
 import 'dart:developer';
 import 'dart:io';
@@ -6,16 +7,16 @@ import 'dart:math';
 import 'package:benchmark_harness/perf_benchmark_harness.dart';
 import 'package:cli_tools/cli_tools.dart';
 import 'package:git/git.dart';
+import 'package:path/path.dart' as p;
 import 'package:relic/relic.dart';
 import 'package:routingkit/routingkit.dart' as routingkit;
 import 'package:spanner/spanner.dart' as spanner;
-import 'package:path/path.dart' as p;
 
 late final List<int> indexes;
 late final List<String> staticRoutesToLookup;
 late final List<String> dynamicRoutesToLookup;
 
-void setupBenchmarkData(int routeCount) {
+void setupBenchmarkData(final int routeCount) {
   logger.info('Setting up benchmark data with $routeCount routes...');
   indexes = List.generate(routeCount, (final i) => i);
   final permutedIndexes = indexes.toList()
@@ -56,7 +57,7 @@ class Emitter extends ScoreEmitterV2 {
 }
 
 abstract class RouterBenchmark extends PerfBenchmarkBase {
-  RouterBenchmark(final Iterable<String> grouping, Emitter emitter)
+  RouterBenchmark(final Iterable<String> grouping, final Emitter emitter)
       : super(grouping.join(';'), emitter: emitter);
 
   @override
@@ -65,7 +66,7 @@ abstract class RouterBenchmark extends PerfBenchmarkBase {
 
 // Benchmark for adding static routes
 class StaticAddBenchmark extends RouterBenchmark {
-  StaticAddBenchmark(Emitter emitter)
+  StaticAddBenchmark(final Emitter emitter)
       : super(['Add', 'Static', 'x$routeCount', 'Router'], emitter);
 
   @override
@@ -79,7 +80,7 @@ class StaticAddBenchmark extends RouterBenchmark {
 
 // Benchmark for looking up static routes
 class StaticLookupBenchmark extends RouterBenchmark {
-  StaticLookupBenchmark(Emitter emitter)
+  StaticLookupBenchmark(final Emitter emitter)
       : super(['Lookup', 'Static', 'x$routeCount', 'Router'], emitter);
 
   late final Router<int> router;
@@ -103,7 +104,7 @@ class StaticLookupBenchmark extends RouterBenchmark {
 
 // Benchmark for adding dynamic routes
 class DynamicAddBenchmark extends RouterBenchmark {
-  DynamicAddBenchmark(Emitter emitter)
+  DynamicAddBenchmark(final Emitter emitter)
       : super(['Add', 'Dynamic', 'x$routeCount', 'Router'], emitter);
 
   @override
@@ -117,7 +118,7 @@ class DynamicAddBenchmark extends RouterBenchmark {
 
 // Benchmark for looking up dynamic routes
 class DynamicLookupBenchmark extends RouterBenchmark {
-  DynamicLookupBenchmark(Emitter emitter)
+  DynamicLookupBenchmark(final Emitter emitter)
       : super(['Lookup', 'Dynamic', 'x$routeCount', 'Router'], emitter);
 
   late final Router<int> router;
@@ -141,7 +142,7 @@ class DynamicLookupBenchmark extends RouterBenchmark {
 }
 
 class StaticAddRoutingkitBenchmark extends RouterBenchmark {
-  StaticAddRoutingkitBenchmark(Emitter emitter)
+  StaticAddRoutingkitBenchmark(final Emitter emitter)
       : super(['Add', 'Static', 'x$routeCount', 'Routingkit'], emitter);
 
   @override
@@ -154,7 +155,7 @@ class StaticAddRoutingkitBenchmark extends RouterBenchmark {
 }
 
 class StaticLookupRoutingkitBenchmark extends RouterBenchmark {
-  StaticLookupRoutingkitBenchmark(Emitter emitter)
+  StaticLookupRoutingkitBenchmark(final Emitter emitter)
       : super(['Lookup', 'Static', 'x$routeCount', 'Routingkit'], emitter);
 
   late final routingkit.Router<int> router;
@@ -177,7 +178,7 @@ class StaticLookupRoutingkitBenchmark extends RouterBenchmark {
 }
 
 class DynamicAddRoutingkitBenchmark extends RouterBenchmark {
-  DynamicAddRoutingkitBenchmark(Emitter emitter)
+  DynamicAddRoutingkitBenchmark(final Emitter emitter)
       : super(['Add', 'Dynamic', 'x$routeCount', 'Routingkit'], emitter);
 
   @override
@@ -190,7 +191,7 @@ class DynamicAddRoutingkitBenchmark extends RouterBenchmark {
 }
 
 class DynamicLookupRoutingkitBenchmark extends RouterBenchmark {
-  DynamicLookupRoutingkitBenchmark(Emitter emitter)
+  DynamicLookupRoutingkitBenchmark(final Emitter emitter)
       : super(['Lookup', 'Dynamic', 'x$routeCount', 'Routingkit'], emitter);
 
   late final routingkit.Router<int> router;
@@ -214,7 +215,7 @@ class DynamicLookupRoutingkitBenchmark extends RouterBenchmark {
 }
 
 class StaticAddSpannerBenchmark extends RouterBenchmark {
-  StaticAddSpannerBenchmark(Emitter emitter)
+  StaticAddSpannerBenchmark(final Emitter emitter)
       : super(['Add', 'Static', 'x$routeCount', 'Spanner'], emitter);
 
   @override
@@ -227,7 +228,7 @@ class StaticAddSpannerBenchmark extends RouterBenchmark {
 }
 
 class StaticLookupSpannerBenchmark extends RouterBenchmark {
-  StaticLookupSpannerBenchmark(Emitter emitter)
+  StaticLookupSpannerBenchmark(final Emitter emitter)
       : super(['Lookup', 'Static', 'x$routeCount', 'Spanner'], emitter);
 
   late final spanner.Spanner router;
@@ -250,7 +251,7 @@ class StaticLookupSpannerBenchmark extends RouterBenchmark {
 }
 
 class DynamicAddSpannerBenchmark extends RouterBenchmark {
-  DynamicAddSpannerBenchmark(Emitter emitter)
+  DynamicAddSpannerBenchmark(final Emitter emitter)
       : super(['Add', 'Dynamic', 'x$routeCount', 'Spanner'], emitter);
 
   @override
@@ -264,7 +265,7 @@ class DynamicAddSpannerBenchmark extends RouterBenchmark {
 }
 
 class DynamicLookupSpannerBenchmark extends RouterBenchmark {
-  DynamicLookupSpannerBenchmark(Emitter emitter)
+  DynamicLookupSpannerBenchmark(final Emitter emitter)
       : super(['Lookup', 'Dynamic', 'x$routeCount', 'Spanner'], emitter);
 
   late final spanner.Spanner router;
@@ -373,7 +374,7 @@ class RunCommand extends BetterCommand<RunOption<dynamic>, void> {
 
     if (storeInNotes) {
       final head = await git.commitFromRevision('HEAD');
-      logger.info("Appending benchmark results to: ${head.treeSha} (tree)");
+      logger.info('Appending benchmark results to: ${head.treeSha} (tree)');
       await git.runCommand(
         ['notes', '--ref=benchmarks', 'append', '-F', file.path, head.treeSha],
         echoOutput: logger.shouldLog(LogLevel.debug),
@@ -410,7 +411,7 @@ class ExtractCommand extends BetterCommand<ExtractOption<dynamic>, void> {
 
     final git = await GitDir.fromExisting(p.current, allowSubdirectory: true);
     final result = await git.runCommand(
-      ['log', '--format=%aI %H %T', '${from}..${to}'],
+      ['log', '--format=%aI %H %T', '$from..$to'],
     );
 
     final sb = StringBuffer();
@@ -436,8 +437,8 @@ class ExtractCommand extends BetterCommand<ExtractOption<dynamic>, void> {
 final logger = StdOutLogger(LogLevel.info);
 
 void setLogLevel({
-  required CommandRunnerLogLevel parsedLogLevel,
-  String? commandName,
+  required final CommandRunnerLogLevel parsedLogLevel,
+  final String? commandName,
 }) {
   logger.logLevel = switch (parsedLogLevel) {
     CommandRunnerLogLevel.quiet => LogLevel.error,
@@ -465,7 +466,7 @@ Future<int> main(final List<String> args) async {
   return 0;
 }
 
-Future<bool> driver(Emitter emitter) async {
+Future<bool> driver(final Emitter emitter) async {
   for (final benchmark in [
     StaticAddRoutingkitBenchmark(emitter),
     StaticAddSpannerBenchmark(emitter),
