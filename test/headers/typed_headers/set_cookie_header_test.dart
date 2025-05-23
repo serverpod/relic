@@ -1,5 +1,4 @@
 import 'package:relic/relic.dart';
-import 'package:relic/src/headers/standard_headers_extensions.dart';
 import 'package:test/test.dart';
 
 import '../headers_test_utils.dart';

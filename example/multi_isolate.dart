@@ -2,6 +2,7 @@
 import 'dart:io';
 import 'dart:isolate';
 
+import 'package:relic/io_adapter.dart';
 import 'package:relic/relic.dart';
 
 void main() async {

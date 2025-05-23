@@ -100,7 +100,6 @@ class RelicServer {
         final ResponseContext rc =>
           adapter.respond(adapterRequest, rc.response),
         final HijackContext hc => adapter.hijack(adapterRequest, hc.callback),
-        NewContext _ => adapter.respond(adapterRequest, Response.notFound()),
       };
     } catch (error, stackTrace) {
       _logError(
@@ -115,10 +114,10 @@ class RelicServer {
 
   /// Wraps a handler with middleware for error handling, header normalization, etc.
   Handler _wrapHandlerWithMiddleware(final Handler handler) {
-    return (final request) async {
+    return (final ctx) async {
       try {
-        final newCtx = await handler(request);
-        return switch (newCtx) {
+        final handledCtx = await handler(ctx);
+        return switch (handledCtx) {
           final ResponseContext rc =>
             // If the response doesn't have a powered-by or date header, add the default ones
             rc.withResponse(
@@ -129,21 +128,18 @@ class RelicServer {
                 },
               )),
             ),
-          _ => newCtx,
+          _ => handledCtx,
         };
       } on HeaderException catch (error, stackTrace) {
         // If the request headers are invalid, respond with a 400 Bad Request status.
         _logError(
-          request.request,
+          ctx.request,
           'Error parsing request headers.\n$error',
           stackTrace,
         );
-        return switch (request) {
-          final RespondableContext rc => rc.withResponse(Response.badRequest(
-              body: Body.fromString(error.httpResponseBody),
-            )),
-          _ => request,
-        };
+        return ctx.withResponse(Response.badRequest(
+          body: Body.fromString(error.httpResponseBody),
+        ));
       }
     };
   }

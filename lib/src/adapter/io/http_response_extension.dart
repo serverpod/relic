@@ -1,7 +1,6 @@
 import 'dart:io' as io;
 
 import '../../../relic.dart';
-import '../../headers/standard_headers_extensions.dart';
 
 /// Extension for [io.HttpResponse] to apply headers and body.
 extension HttpResponseExtension on io.HttpResponse {

@@ -1,5 +1,4 @@
 import 'package:relic/relic.dart';
-import 'package:relic/src/adapter/context.dart';
 import 'package:test/test.dart';
 
 import '../util/test_util.dart';
@@ -29,7 +28,7 @@ void main() {
         return response;
       };
 
-  RequestContext innerHandler(final RequestContext request) {
+  HandledContext innerHandler(final NewContext request) {
     expect(accessLocation, 2);
     accessLocation = 3;
     return syncHandler(request);
