@@ -10,7 +10,7 @@ Future<void> main() async {
 
   // Setup a handler.
   //
-  // A [Handler] is function consuming and producing [RequestContext]s,
+  // A [Handler] is function consuming [NewContext]s and producing [HandledContext]s,
   // but if you are mostly concerned with converting [Request]s to [Response]s
   // (known as a [Responder] in relic parlor) you can use [respondWith] to
   // wrap a [Responder] into a [Handler]
