@@ -1,10 +1,10 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'adapter/io/bind_http_server.dart';
-import 'adapter/io/io_adapter.dart';
-import 'handler/handler.dart';
-import 'relic_server.dart';
+import '../../handler/handler.dart';
+import '../../relic_server.dart';
+import 'bind_http_server.dart';
+import 'io_adapter.dart';
 
 /// Starts a server that listens on the specified [address] and
 /// [port] and sends requests to [handler].

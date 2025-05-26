@@ -5,19 +5,20 @@ import '../adapter/context.dart';
 import '../message/request.dart';
 import '../message/response.dart';
 
-/// A function which handles a [Request].
+/// A function that processes a [NewContext] to produce a [HandledContext].
 ///
-/// For example, a static file handler may read the requested URI from the
-/// filesystem and return it as the body of the [Response].
+/// For example, a static file handler may access the [Request] via the [NewContext],
+/// read the requested URI from the filesystem, and return a [ResponseContext]
+/// (a type of [HandledContext]) containing the file data as its body.
 ///
-/// A [Handler] which wraps one or more other handlers to perform pre or post
-/// processing is known as a "middleware".
+/// A function which produces a [Handler], either by wrapping one or more other handlers,
+//  or using function composition is known as a "middleware".
 ///
-/// A [Handler] may receive a request directly from an HTTP server or it
-/// may have been touched by other middleware. Similarly, the response may be
-/// directly returned by an HTTP server or have further processing done by other
-/// middleware.
-typedef Handler = FutureOr<RequestContext> Function(RequestContext ctx);
+/// A [Handler] may receive a [NewContext] directly from an HTTP server adapter or it
+/// may have been processed by other middleware. Similarly, the resulting [HandledContext]
+/// may be directly returned to an HTTP server adapter or have further processing
+/// done by other middleware.
+typedef Handler = FutureOr<HandledContext> Function(NewContext ctx);
 
 /// A handler specifically designed to produce a [ResponseContext].
 ///
@@ -53,25 +54,26 @@ typedef Responder = FutureOr<Response> Function(Request);
 /// a response.
 ///
 /// This adapts a simpler `Request -> Response` function ([Responder]) into
-/// the standard [Handler] format, which operates on [RequestContext].
-/// It ensures the resulting context is a [ResponseContext].
-/// Throws an [ArgumentError] if the incoming context is not [RespondableContext].
+/// the standard [Handler] format. The returned [Handler] takes a [NewContext],
+/// retrieves its [Request] (which is passed to the [responder]), and then uses
+/// the [Response] from the [responder] to create a [ResponseContext].
+///
+/// The input [NewContext] to the generated [Handler] must be a
+/// [RespondableContext] (i.e., capable of producing a response) for the
+/// `withResponse` call to succeed. The handler ensures the resulting context is
+/// a [ResponseContext].
 Handler respondWith(final Responder responder) {
   return (final ctx) async {
-    return switch (ctx) {
-      final RespondableContext rc =>
-        rc.withResponse(await responder(rc.request)),
-      _ => throw ArgumentError(ctx.runtimeType),
-    };
+    return ctx.withResponse(await responder(ctx.request));
   };
 }
 
 /// Creates a [HijackHandler] that uses the given [HijackCallback] to
 /// take control of the connection.
 ///
-/// This adapts a [HijackCallback] into the [HijackHandler] format,
-/// which operates on [RequestContext]. It ensures the resulting context
-/// is a [HijackContext].
+/// This adapts a [HijackCallback] into the [HijackHandler] format.
+/// The returned handler takes a [HijackableContext], invokes the [callback]
+/// to take control of the connection, and produces a [HijackContext].
 HijackHandler hijack(final HijackCallback callback) {
   return (final ctx) {
     return ctx.hijack(callback);

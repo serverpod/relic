@@ -58,13 +58,15 @@ final class NewContext extends RequestContext
       ResponseContext._(request, token, r);
 }
 
-/// Marker interface for contexts that represent a handled request,
+/// Common base for contexts that represent a handled request,
 /// either by providing a response ([ResponseContext]) or by hijacking
 /// the connection ([HijackContext]).
-abstract class HandledContext implements _RequestContextInterface {}
+sealed class HandledContext extends RequestContext {
+  HandledContext._(super.request, super.token) : super._();
+}
 
-final class ResponseContext extends RequestContext
-    implements RespondableContext, HandledContext {
+final class ResponseContext extends HandledContext
+    implements RespondableContext {
   /// The response associated with this context.
   final Response response;
   ResponseContext._(super.request, super.token, this.response) : super._();
@@ -74,7 +76,7 @@ final class ResponseContext extends RequestContext
       ResponseContext._(request, token, r);
 }
 
-final class HijackContext extends RequestContext implements HandledContext {
+final class HijackContext extends HandledContext {
   /// The callback function provided to handle the hijacked connection.
   final HijackCallback callback;
   HijackContext._(super.request, super.token, this.callback) : super._();

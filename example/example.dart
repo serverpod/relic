@@ -1,8 +1,7 @@
 import 'dart:io';
 
+import 'package:relic/io_adapter.dart';
 import 'package:relic/relic.dart';
-import 'package:relic/src/adapter/context.dart';
-import 'package:relic/src/middleware/routing_middleware.dart';
 
 /// A simple 'Hello World' server
 Future<void> main() async {
@@ -11,7 +10,7 @@ Future<void> main() async {
 
   // Setup a handler.
   //
-  // A [Handler] is function consuming and producing [RequestContext]s,
+  // A [Handler] is function consuming [NewContext]s and producing [HandledContext]s,
   // but if you are mostly concerned with converting [Request]s to [Response]s
   // (known as a [Responder] in relic parlor) you can use [respondWith] to
   // wrap a [Responder] into a [Handler]
@@ -27,10 +26,10 @@ Future<void> main() async {
   // Check the _example_ directory for other examples.
 }
 
-ResponseContext hello(final RequestContext ctx) {
+ResponseContext hello(final NewContext ctx) {
   final name = ctx.pathParameters[#name];
   final age = int.parse(ctx.pathParameters[#age]!);
 
-  return (ctx as RespondableContext).withResponse(Response.ok(
+  return ctx.withResponse(Response.ok(
       body: Body.fromString('Hello $name! To think you are $age years old.')));
 }

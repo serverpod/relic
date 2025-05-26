@@ -7,9 +7,7 @@ import 'package:async/async.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart' as parser;
 import 'package:relic/relic.dart';
-import 'package:relic/src/adapter/context.dart';
 import 'package:relic/src/headers/codecs/common_types_codecs.dart';
-import 'package:relic/src/headers/standard_headers_extensions.dart';
 import 'package:test/test.dart';
 
 import 'headers/headers_test_utils.dart';
