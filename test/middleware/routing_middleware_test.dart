@@ -327,6 +327,28 @@ void main() {
     });
   });
 
+  test(
+    'Given `routeWith` adapting a `Router<String>`, '
+    'When a request matches a route, '
+    "Then the `toHandler` processes the route's string value",
+    () async {
+      final strRouter = Router<String>()..add(Method.get, '/', 'Hurrah!');
+      final mw = routeWith<String>(
+        strRouter,
+        toHandler: (final s) =>
+            respondWith((final _) => Response.ok(body: Body.fromString(s))),
+      );
+
+      final ctx = _FakeRequest('/').toContext(Object());
+      final resCtx =
+          await mw(respondWith((final _) => Response.notFound()))(ctx)
+              as ResponseContext;
+
+      expect(resCtx.response.statusCode, 200);
+      expect(await resCtx.response.readAsString(), 'Hurrah!');
+    },
+  );
+
   // Due to the decoupling of Router<T> a mapping has to happen
   // for verbs. These test ensures all mappings are exercised.
   parameterizedTest(

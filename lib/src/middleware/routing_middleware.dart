@@ -4,30 +4,46 @@ import '../method/request_method.dart';
 import '../router/router.dart';
 import 'middleware.dart';
 
-Middleware routeWith(final Router<Handler> router) =>
-    RoutingMiddleware(router).meddle;
+Middleware routeWith<T>(
+  final Router<T> router, {
+  final Handler Function(T)? toHandler,
+}) =>
+    _RoutingMiddlewareBuilder(router, toHandler: toHandler).build();
 
 final _pathParametersStorage = Expando<Map<Symbol, String>>();
 
-class RoutingMiddleware {
-  final Router<Handler> _router;
+class _RoutingMiddlewareBuilder<T> {
+  final Router<T> _router;
+  late final Handler Function(T) _toHandler;
 
-  RoutingMiddleware(this._router);
+  _RoutingMiddlewareBuilder(
+    this._router, {
+    final Handler Function(T)? toHandler,
+  }) {
+    if (toHandler != null) {
+      _toHandler = toHandler;
+    } else if (_isSubtype<T, Handler>()) {
+      _toHandler = (final x) => x as Handler;
+    }
+    ArgumentError.checkNotNull(_toHandler, 'toHandler');
+  }
 
-  Handler meddle(final Handler next) {
+  Handler _meddle(final Handler next) {
     return (final ctx) async {
       final req = ctx.request;
       final url = ctx.request.url; // TODO: Use requestUri
       final match = _router.lookup(req.method.convert(), url.path);
       if (match != null) {
         ctx._pathParameters = match.parameters;
-        final handler = match.value;
+        final handler = _toHandler(match.value);
         return await handler(ctx);
       } else {
         return await next(ctx);
       }
     };
   }
+
+  Middleware build() => _meddle;
 }
 
 extension RequestContextEx on RequestContext {
@@ -38,6 +54,8 @@ extension RequestContextEx on RequestContext {
   set _pathParameters(final Map<Symbol, String> value) =>
       _pathParametersStorage[token] = value;
 }
+
+bool _isSubtype<S, T>() => <S>[] is List<T>;
 
 extension on RequestMethod {
   Method convert() {
