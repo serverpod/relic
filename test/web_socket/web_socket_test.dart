@@ -234,5 +234,43 @@ void main() {
       // Expect the client-side stream to complete because the server closed it
       await expectLater(clientSocket, emits(emitsDone));
     });
+
+    test(
+        'Given a WebSocket server with a ping interval, '
+        'when a client connects and remains idle for a period, '
+        'then the connection is maintained by pings and subsequent communication is successful',
+        () async {
+      const pingInterval = Duration(milliseconds: 15);
+      final tooLong = pingInterval * 3; // Must be > pingInterval
+
+      _server = await testServe(
+        (final ctx) {
+          return ctx.connect(
+            (final channel) async {
+              await for (final _ in channel.stream) {
+                // Server remains idle for a period, relying on pings to keep connection alive.
+                await Future<void>.delayed(tooLong);
+                channel.sink.add(const TextPayload('tock'));
+              }
+            },
+          );
+        },
+      );
+
+      final clientSocket =
+          await WebSocket.connect('ws://localhost:$_serverPort');
+      clientSocket.pingInterval = pingInterval;
+
+      final check = expectLater(
+          clientSocket, emitsInOrder(['tock', 'tock', 'tock', 'tock', 'tock']));
+
+      for (int i = 0; i < 5; ++i) {
+        // Client remains idle for a period, relying on pings to keep connection alive.
+        await Future<void>.delayed(tooLong);
+        clientSocket.add('tick');
+      }
+
+      await check;
+    });
   });
 }
