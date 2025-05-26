@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:stream_channel/stream_channel.dart';
 
@@ -13,6 +14,24 @@ import '../message/response.dart';
 /// Once a connection is hijacked, the server stops managing it, and the developer
 /// gains direct access to the underlying socket or data stream.
 typedef HijackCallback = void Function(StreamChannel<List<int>>);
+
+sealed class Payload {
+  const Payload();
+}
+
+final class BinaryPayload extends Payload {
+  final Uint8List data;
+  const BinaryPayload(this.data);
+}
+
+final class TextPayload extends Payload {
+  final String data;
+  const TextPayload(this.data);
+}
+
+typedef DuplexStreamChannel = StreamChannel<Payload>;
+
+typedef DuplexStreamCallback = void Function(DuplexStreamChannel);
 
 /// Base class for [Adapter] specific requests.
 ///
@@ -34,6 +53,20 @@ abstract class Adapter {
   /// Hijack [request], and let [callback] handle communication.
   Future<void> hijack(
       final AdapterRequest request, final HijackCallback callback);
+
+  /// Establishes a duplex stream connection (e.g., WebSocket) for the given
+  /// [AdapterRequest].
+  ///
+  /// This method is used to upgrade a connection or establish a new
+  /// bi-directional communication channel. The provided [wsCallback] will
+  /// be invoked with a [DuplexStreamChannel] that allows sending and
+  /// receiving [Payload] messages.
+  ///
+  /// - [request]: The [AdapterRequest] for which to establish the connection.
+  /// - [wsCallback]: The [DuplexStreamCallback] that will handle the duplex
+  /// stream.
+  Future<void> connect(
+      final AdapterRequest request, final DuplexStreamCallback wsCallback);
 
   /// Gracefully shuts down the adapter, releasing any resources it holds.
   ///
