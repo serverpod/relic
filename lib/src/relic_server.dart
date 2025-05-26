@@ -100,6 +100,7 @@ class RelicServer {
         final ResponseContext rc =>
           adapter.respond(adapterRequest, rc.response),
         final HijackContext hc => adapter.hijack(adapterRequest, hc.callback),
+        final ConnectContext cc => adapter.connect(adapterRequest, cc.callback),
       };
     } catch (error, stackTrace) {
       _logError(

@@ -53,6 +53,15 @@ final class NewContext extends RequestContext
   HijackContext hijack(final HijackCallback c) =>
       HijackContext._(request, token, c);
 
+  /// Transitions this context to a state where a duplex stream (e.g., WebSocket)
+  /// connection is established.
+  ///
+  /// The provided [DuplexStreamCallback] [c] will be invoked with a
+  /// [DuplexStreamChannel] for managing the bi-directional communication.
+  /// Returns a [ConnectContext].
+  ConnectContext connect(final DuplexStreamCallback c) =>
+      ConnectContext._(request, token, c);
+
   @override
   ResponseContext withResponse(final Response r) =>
       ResponseContext._(request, token, r);
@@ -82,6 +91,15 @@ final class HijackContext extends HandledContext {
   HijackContext._(super.request, super.token, this.callback) : super._();
 }
 
+/// A [RequestContext] state indicating that a duplex stream connection
+/// (e.g., WebSocket) has been established.
+final class ConnectContext extends HandledContext {
+  /// The callback function provided to handle the duplex stream connection.
+  final DuplexStreamCallback callback;
+  ConnectContext._(super.request, super.token, this.callback) : super._();
+}
+
+/// Internal extension methods for [Request].
 extension RequestInternal on Request {
   /// Creates a new [NewContext] from this [Request].
   NewContext toContext(final Object token) => NewContext._(this, token);
