@@ -4,7 +4,7 @@ import 'package:stream_channel/stream_channel.dart';
 
 import '../message/request.dart';
 import '../message/response.dart';
-import 'duplex_stream_channel.dart';
+import 'relic_web_socket.dart';
 
 /// A callback function that handles a hijacked connection.
 ///
@@ -78,14 +78,14 @@ abstract class Adapter {
   ///
   /// This method is used to upgrade a connection or establish a new
   /// bi-directional communication channel. The provided [callback] will
-  /// be invoked with a [DuplexStreamChannel] that allows sending and
+  /// be invoked with a [RelicWebSocket] that allows sending and
   /// receiving [Payload] messages.
   ///
   /// - [request]: The [AdapterRequest] for which to establish the connection.
-  /// - [callback]: The [DuplexStreamCallback] that will handle the duplex
+  /// - [callback]: The [WebSocketCallback] that will handle the duplex
   /// stream.
   Future<void> connect(
-      final AdapterRequest request, final DuplexStreamCallback callback);
+      final AdapterRequest request, final WebSocketCallback callback);
 
   /// Gracefully shuts down the adapter.
   ///

@@ -4,7 +4,6 @@ import 'dart:isolate';
 import 'dart:typed_data';
 
 import 'package:relic/relic.dart';
-import 'package:relic/src/adapter/duplex_stream_channel.dart';
 import 'package:test/test.dart';
 import 'package:web_socket/web_socket.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
@@ -39,30 +38,31 @@ void main() {
         'then the server responds with "tock" and the client receives it',
         () async {
       await scheduleServer((final ctx) {
-        return ctx.connect(expectAsync1((final channel) async {
+        return ctx.connect(expectAsync1((final serverSocket) async {
           // Expect a message from the client
           expect(
-            channel.stream.first,
-            completion(isA<TextPayload>()
-                .having((final p) => p.data, 'data', equals('tick'))),
+            serverSocket.events.first,
+            completion(isA<TextDataReceived>()
+                .having((final p) => p.text, 'text', equals('tick'))),
           );
           // Send a message back to the client
-          channel.sink.add(const TextPayload('tock'));
+          serverSocket.sendText('tock');
+          await serverSocket.flush();
           // Close the server-side of the connection after sending the message.
           // This also signals the client that no more messages are coming from the server.
-          await channel.close();
+          await serverSocket.close();
         }));
       });
 
-      final socket =
+      final clientSocket =
           await WebSocket.connect(Uri.parse('ws://localhost:$_serverPort'));
 
       // Send a message to the server
-      socket.sendText('tick');
+      clientSocket.sendText('tick');
 
       // Expect a response from the server
       expect(
-          socket.events,
+          clientSocket.events,
           emitsInOrder(
               [TextDataReceived('tock'), CloseReceived(1005), emitsDone]));
     });
@@ -73,13 +73,13 @@ void main() {
         'then the server receives all messages in order', () async {
       final serverReceivedMessages = <String>[];
       await scheduleServer((final ctx) {
-        return ctx.connect(expectAsync1((final channel) {
-          channel.stream.listen(
+        return ctx.connect(expectAsync1((final serverSocket) {
+          serverSocket.events.listen(
             (final message) async {
-              if (message is TextPayload) {
-                serverReceivedMessages.add(message.data);
+              if (message is TextDataReceived) {
+                serverReceivedMessages.add(message.text);
                 if (serverReceivedMessages.length == 2) {
-                  await channel.close();
+                  await serverSocket.close();
                 }
               }
             },
@@ -103,9 +103,9 @@ void main() {
         'when a client connects and sends an initial message, '
         'then the client receives all server messages in order', () async {
       await scheduleServer((final ctx) {
-        return ctx.connect(expectAsync1((final channel) async {
-          channel.sink.add(const TextPayload('tock1'));
-          channel.sink.add(const TextPayload('tock2'));
+        return ctx.connect(expectAsync1((final serverSocket) async {
+          serverSocket.sendText('tock1');
+          serverSocket.sendText('tock2');
         }));
       });
 
@@ -181,13 +181,13 @@ void main() {
           Uint8List.fromList(List<int>.generate(10, (final i) => i * 2));
 
       await scheduleServer((final ctx) {
-        return ctx.connect(expectAsync1((final channel) async {
-          final message = await channel.stream.first;
-          expect(message, isA<BinaryPayload>());
-          expect((message as BinaryPayload).data, equals(binaryData));
+        return ctx.connect(expectAsync1((final serverSocket) async {
+          final message = await serverSocket.events.first;
+          expect(message, isA<BinaryDataReceived>());
+          expect((message as BinaryDataReceived).data, equals(binaryData));
 
-          channel.sink.add(BinaryPayload(responseBinaryData));
-          await channel.close();
+          serverSocket.sendBytes(responseBinaryData);
+          await serverSocket.close();
         }));
       });
 
@@ -209,15 +209,15 @@ void main() {
     test(
         'Given a WebSocket server, '
         'when a client connects and then closes the connection, '
-        'then the server-side channel stream completes', () async {
-      final serverChannelClosed = Completer<void>();
+        'then the server-side events stream completes', () async {
+      final serverSocketClosed = Completer<void>();
 
       await scheduleServer((final ctx) {
-        return ctx.connect(expectAsync1((final channel) async {
+        return ctx.connect(expectAsync1((final serverSocket) async {
           // Wait for the client to close the connection by
           // consuming the stream until it's done
-          await channel.stream.drain(null);
-          serverChannelClosed.complete();
+          await serverSocket.events.drain(null);
+          serverSocketClosed.complete();
         }));
       });
 
@@ -227,8 +227,8 @@ void main() {
       // Client closes the connection
       unawaited(clientSocket.close());
 
-      // Verify that the server-side channel stream completed
-      expect(serverChannelClosed.future, completes);
+      // Verify that the server-side events stream completed
+      expect(serverSocketClosed.future, completes);
     });
 
     test(
@@ -236,9 +236,9 @@ void main() {
         'when a client connects, '
         'then the client-side stream completes', () async {
       await scheduleServer((final ctx) {
-        return ctx.connect(expectAsync1((final channel) async {
+        return ctx.connect(expectAsync1((final serverSocket) async {
           // Server immediately closes the connection
-          await channel.close();
+          await serverSocket.close();
         }));
       });
 
@@ -251,21 +251,23 @@ void main() {
     });
 
     test(
-        'Given a WebSocket with a ping interval, '
+        'Given a web socket connection with a ping interval, '
         'when a client connects and remains idle for a period, '
         'then the connection is maintained by pings and subsequent communication is successful',
         () async {
-      const pingInterval = Duration(milliseconds: 15);
+      const pingInterval = Duration(milliseconds: 5);
       final tooLong = pingInterval * 3; // Must be > pingInterval
 
       _server = await testServe(
         (final ctx) {
           return ctx.connect(
-            (final channel) async {
-              await for (final _ in channel.stream) {
+            (final serverSocket) async {
+              serverSocket.pingInterval = pingInterval;
+              await for (final e in serverSocket.events) {
+                if (e is CloseReceived) break;
                 // Server remains idle for a period, relying on pings to keep connection alive.
                 await Future<void>.delayed(tooLong);
-                channel.sink.add(const TextPayload('tock'));
+                serverSocket.sendText('tock');
               }
             },
           );
@@ -273,68 +275,89 @@ void main() {
       );
 
       final clientSocket =
-          await io.WebSocket.connect('ws://localhost:$_serverPort');
-      clientSocket.pingInterval = pingInterval;
+          await WebSocket.connect(Uri.parse('ws://localhost:$_serverPort'));
 
       final check = expectLater(
-          clientSocket, emitsInOrder(['tock', 'tock', 'tock', 'tock', 'tock']));
+        clientSocket.events,
+        emitsInOrder(List.filled(n, TextDataReceived('tock'))),
+      );
 
-      for (int i = 0; i < 5; ++i) {
+      for (int i = 0; i < n; ++i) {
         // Client remains idle for a period, relying on pings to keep connection alive.
         await Future<void>.delayed(tooLong);
-        clientSocket.add('tick');
+        clientSocket.sendText('tick');
       }
 
       await check;
     });
 
-    test('timeout if server blocks', () async {
-      const pingInterval = Duration(milliseconds: 15);
+    test(
+      'Given a web socket connection with a ping interval, '
+      'when the server side disappear, '
+      'then client socket closes',
+      () async {
+        const pingInterval = Duration(milliseconds: 5);
 
-      final recv = ReceivePort();
-      final isolate = await Isolate.spawn((final sendPort) async {
-        final server = await testServe((final ctx) {
-          return ctx.connect((final channel) async {
-            channel.pingInterval = pingInterval;
-            await Future<void>.delayed(const Duration(milliseconds: 10));
-            // block server by busy waiting, causing timeout on client
-            while (true) {}
+        final recv = ReceivePort();
+        final isolate = await Isolate.spawn((final sendPort) async {
+          final server = await testServe((final ctx) {
+            return ctx.connect((final serverSocket) async {
+              serverSocket.pingInterval = pingInterval;
+              serverSocket.sendText('running');
+            });
           });
-        });
-        sendPort.send(server.url.port);
-      }, recv.sendPort);
+          sendPort.send(server.url.port);
+        }, recv.sendPort);
 
-      final port = (await recv.first) as int;
-      final clientSocket = await io.WebSocket.connect('ws://localhost:$port');
-
-      await expectLater(clientSocket, emitsInOrder([emitsDone]));
-
-      isolate.kill();
-    });
-
-    test('timeout if client blocks', () async {
-      const pingInterval = Duration(milliseconds: 45);
-      final done = Completer<void>();
-
-      await scheduleServer((final ctx) {
-        return ctx.connect(expectAsync1((final channel) async {
-          channel.pingInterval = pingInterval;
-          await expectLater(channel.stream,
-              emitsInOrder([const TextPayload('running'), emitsDone]));
-          done.complete();
-        }));
-      });
-
-      final isolate = await Isolate.spawn((final port) async {
+        final port = (await recv.first) as int;
         final clientSocket =
             await WebSocket.connect(Uri.parse('ws://localhost:$port'));
-        clientSocket.sendText('running');
-        while (true) {} // busy wait to simulate offline client
-      }, _serverPort);
 
-      await done.future;
+        isolate.kill(); // kill the isolate to stop the server
 
-      isolate.kill();
-    });
+        await expectLater(
+            clientSocket.events,
+            emitsInOrder([
+              TextDataReceived('running'),
+              CloseReceived(1005), // 1005 indicates no status code
+              emitsDone,
+            ]));
+      },
+    );
+
+    test(
+      'Given a web socket connection with a ping interval, '
+      'when the client side blocks, '
+      'then the server socket closes',
+      () async {
+        const pingInterval = Duration(milliseconds: 5);
+        final done = Completer<void>();
+
+        await scheduleServer((final ctx) {
+          return ctx.connect(expectAsync1((final serverSocket) async {
+            serverSocket.pingInterval = pingInterval;
+            await expectLater(
+                serverSocket.events,
+                emitsInOrder([
+                  TextDataReceived('running'),
+                  CloseReceived(1001), // 1001 indicates normal closure?!
+                  emitsDone,
+                ]));
+            done.complete();
+          }));
+        });
+
+        final isolate = await Isolate.spawn((final port) async {
+          final clientSocket =
+              await WebSocket.connect(Uri.parse('ws://localhost:$port'));
+          clientSocket.sendText('running');
+          while (true) {} // busy wait to simulate offline client
+        }, _serverPort);
+
+        await done.future;
+
+        isolate.kill();
+      },
+    );
   });
 }
