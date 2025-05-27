@@ -7,6 +7,7 @@ import 'package:async/async.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart' as parser;
 import 'package:relic/relic.dart';
+import 'package:relic/src/adapter/duplex_stream_channel.dart';
 import 'package:relic/src/headers/codecs/common_types_codecs.dart';
 import 'package:test/test.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
@@ -234,7 +235,7 @@ void main() {
         expect(
           channel.stream.first,
           completion(isA<TextPayload>()
-              .having((p) => p.data, 'data', equals('Hello'))),
+              .having((final p) => p.data, 'data', equals('Hello'))),
         );
         channel.sink.add(const TextPayload('Hello, world!'));
         channel.sink.close();

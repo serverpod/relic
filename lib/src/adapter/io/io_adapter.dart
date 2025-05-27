@@ -8,6 +8,7 @@ import 'package:web_socket_channel/adapter_web_socket_channel.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 import '../../../relic.dart';
+import '../duplex_stream_channel.dart';
 import 'request.dart';
 import 'response.dart';
 

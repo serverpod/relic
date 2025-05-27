@@ -1,4 +1,5 @@
 import '../../relic.dart';
+import 'duplex_stream_channel.dart';
 
 abstract interface class _RequestContextInterface {
   /// The original incoming request associated with this context.
