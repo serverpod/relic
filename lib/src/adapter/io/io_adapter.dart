@@ -4,11 +4,10 @@ import 'dart:typed_data';
 
 import 'package:stream_channel/stream_channel.dart';
 import 'package:web_socket/io_web_socket.dart';
-import 'package:web_socket_channel/adapter_web_socket_channel.dart';
-import 'package:web_socket_channel/web_socket_channel.dart';
+import 'package:web_socket/web_socket.dart';
 
 import '../../../relic.dart';
-import '../duplex_stream_channel.dart';
+import '../relic_web_socket.dart';
 import 'request.dart';
 import 'response.dart';
 
@@ -57,11 +56,11 @@ class IOAdapter extends Adapter {
   @override
   Future<void> connect(
     covariant final IOAdapterRequest request,
-    final DuplexStreamCallback callback,
+    final WebSocketCallback callback,
   ) async {
     final webSocket =
         await io.WebSocketTransformer.upgrade(request._httpRequest);
-    callback(_IODuplexStreamChannel(webSocket));
+    callback(_IORelicWebSocket(webSocket));
   }
 
   @override
@@ -76,54 +75,45 @@ class IOAdapterRequest extends AdapterRequest {
   Request toRequest() => fromHttpRequest(_httpRequest);
 }
 
-/// A [DuplexStreamChannel] implementation for `dart:io` [WebSocket]s.
+/// A [RelicWebSocket] implementation for `dart:io` [WebSocket]s.
 ///
 /// This class wraps an [io.WebSocket] and provides a standard stream and sink
 /// interface for sending and receiving [Payload] messages (binary or text).
-class _IODuplexStreamChannel extends DuplexStreamChannel {
-  final io.WebSocket _socket;
-  final WebSocketChannel _socketChannel;
+class _IORelicWebSocket implements RelicWebSocket {
+  final io.WebSocket _wrappedSocket;
+  final IOWebSocket _socket;
 
-  _IODuplexStreamChannel(final io.WebSocket socket)
-      : _socket = socket,
-        _socketChannel =
-            AdapterWebSocketChannel(IOWebSocket.fromWebSocket(socket));
-
-  @override
-  Duration? get pingInterval => _socket.pingInterval;
+  _IORelicWebSocket(final io.WebSocket socket)
+      : _wrappedSocket = socket,
+        _socket = IOWebSocket.fromWebSocket(socket);
 
   @override
-  set pingInterval(final Duration? value) => _socket.pingInterval = value;
+  Duration? get pingInterval => _wrappedSocket.pingInterval;
 
   @override
-  Future<void> close([final int? closeCode, final String? closeReason]) async {
-    // Yield to the event loop to allow pending data to be flushed before closing
-    await Future<void>.delayed(const Duration(microseconds: 0));
-    await _socket.close(closeCode, closeReason);
-  }
+  set pingInterval(final Duration? value) =>
+      _wrappedSocket.pingInterval = value;
 
   @override
-  StreamSink<Payload> get sink => _socketChannel.sink.mapFrom(_decode);
+  Future<void> close([final int? code, final String? reason]) =>
+      _socket.close(code, reason);
 
   @override
-  Stream<Payload> get stream => _socketChannel.stream.map(_encode);
+  Stream<WebSocketEvent> get events => _socket.events;
 
-  /// Encodes a raw WebSocket message (String or Uint8List) into a [Payload].
-  static Payload _encode(final dynamic decoded) {
-    return switch (decoded) {
-      final String s => TextPayload(s),
-      final Uint8List b => BinaryPayload(b),
-      _ => throw UnsupportedError(
-          '${decoded.runtimeType} must be either String or Uint8List'),
-    };
-  }
+  @override
+  String get protocol => _socket.protocol;
 
-  /// Decodes a [Payload] into a raw WebSocket message (String or Uint8List).
-  static dynamic _decode(final Payload payload) {
-    return switch (payload) {
-      BinaryPayload() => payload.data,
-      TextPayload() => payload.data,
-    };
+  @override
+  void sendBytes(final Uint8List b) => _socket.sendBytes(b);
+
+  @override
+  void sendText(final String s) => _socket.sendText(s);
+
+  @override
+  Future<void> flush() async {
+    await Future<void>.delayed(const Duration(milliseconds: 100));
+    // TODO: Ensure outstanding messages are written to network before returning
   }
 }
 
