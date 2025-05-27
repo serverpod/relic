@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'package:stream_channel/stream_channel.dart';
 import 'package:web_socket/io_web_socket.dart';
 import 'package:web_socket_channel/adapter_web_socket_channel.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
 
 import '../../../relic.dart';
 import 'request.dart';
@@ -58,12 +59,7 @@ class IOAdapter extends Adapter {
     final webSocket =
         await io.WebSocketTransformer.upgrade(request._httpRequest);
     webSocket.pingInterval = const Duration(seconds: 15);
-    final channel =
-        AdapterWebSocketChannel(IOWebSocket.fromWebSocket(webSocket));
-    callback(DuplexStreamChannel(
-      channel.stream.map(_encode),
-      channel.sink.mapFrom(_decode),
-    ));
+    callback(_IODuplexStreamChannel(webSocket));
   }
 
   @override
@@ -81,20 +77,45 @@ class _IOAdapterRequest extends AdapterRequest {
   Request toRequest() => fromHttpRequest(_httpRequest);
 }
 
-Payload _encode(final dynamic decoded) {
-  return switch (decoded) {
-    final String s => TextPayload(s),
-    final Uint8List b => BinaryPayload(b),
-    _ => throw UnsupportedError(
-        '${decoded.runtimeType} must be either String or Uint8List'),
-  };
-}
+class _IODuplexStreamChannel extends DuplexStreamChannel {
+  final io.WebSocket _socket;
+  final WebSocketChannel _socketChannel;
 
-dynamic _decode(final Payload payload) {
-  return switch (payload) {
-    BinaryPayload() => payload.data,
-    TextPayload() => payload.data,
-  };
+  _IODuplexStreamChannel(final io.WebSocket socket)
+      : _socket = socket,
+        _socketChannel =
+            AdapterWebSocketChannel(IOWebSocket.fromWebSocket(socket));
+
+  @override
+  Future<void> close([final int? closeCode, final String? closeReason]) async {
+    // Yield before close to drain socket
+    await Future<void>.delayed(const Duration(microseconds: 0));
+    await _socket.close(closeCode, closeReason);
+  }
+
+  @override
+  StreamSink<Payload> get sink => _socketChannel.sink.mapFrom(_decode);
+
+  @override
+  Stream<Payload> get stream => _socketChannel.stream.map(_encode);
+
+  /// Encodes a raw WebSocket message (String or Uint8List) into a [Payload].
+  static Payload _encode(final dynamic decoded) {
+    return switch (decoded) {
+      final String s => TextPayload(s),
+      final Uint8List b => BinaryPayload(b),
+      _ => throw UnsupportedError(
+          '${decoded.runtimeType} must be either String or Uint8List'),
+    };
+  }
+
+  /// Decodes a [Payload] into a raw WebSocket message (String or Uint8List).
+  static dynamic _decode(final Payload payload) {
+    return switch (payload) {
+      BinaryPayload() => payload.data,
+      TextPayload() => payload.data,
+    };
+  }
 }
 
 extension<T> on Sink<T> {

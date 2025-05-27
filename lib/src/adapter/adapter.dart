@@ -29,7 +29,11 @@ final class TextPayload extends Payload {
   const TextPayload(this.data);
 }
 
-typedef DuplexStreamChannel = StreamChannel<Payload>;
+abstract class DuplexStreamChannel
+    with StreamChannelMixin<Payload>
+    implements StreamChannel<Payload> {
+  Future<void> close([final int? closeCode, final String? closeReason]);
+}
 
 typedef DuplexStreamCallback = void Function(DuplexStreamChannel);
 
