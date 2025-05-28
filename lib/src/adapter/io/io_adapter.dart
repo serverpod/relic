@@ -12,6 +12,11 @@ import '../duplex_stream_channel.dart';
 import 'request.dart';
 import 'response.dart';
 
+/// An [Adapter] implementation for `dart:io` [HttpServer].
+///
+/// This adapter bridges Relic with a standard Dart HTTP server, allowing
+/// Relic applications to handle HTTP requests and responses, as well as
+/// WebSocket connections.
 class IOAdapter extends Adapter {
   final io.HttpServer _server;
 
@@ -78,6 +83,10 @@ class _IOAdapterRequest extends AdapterRequest {
   Request toRequest() => fromHttpRequest(_httpRequest);
 }
 
+/// A [DuplexStreamChannel] implementation for `dart:io` [WebSocket]s.
+///
+/// This class wraps an [io.WebSocket] and provides a standard stream and sink
+/// interface for sending and receiving [Payload] messages (binary or text).
 class _IODuplexStreamChannel extends DuplexStreamChannel {
   final io.WebSocket _socket;
   final WebSocketChannel _socketChannel;
