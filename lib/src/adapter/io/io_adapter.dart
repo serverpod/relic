@@ -128,13 +128,17 @@ class _IODuplexStreamChannel extends DuplexStreamChannel {
   }
 }
 
-extension<T> on Sink<T> {
+extension<T> on EventSink<T> {
   /// Creates a new [StreamSink<R>] that maps its incoming values of type [R]
   /// to type [T] using the provided [mapper] function, and then adds them
   /// to this sink.
   StreamSink<R> mapFrom<R>(final T Function(R) mapper) {
     final controller = StreamController<R>();
-    controller.stream.map(mapper).listen(add);
+    controller.stream.map(mapper).listen(
+          add,
+          onError: addError,
+          onDone: close,
+        );
     return controller.sink;
   }
 }

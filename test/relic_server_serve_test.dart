@@ -10,7 +10,6 @@ import 'package:relic/relic.dart';
 import 'package:relic/src/adapter/duplex_stream_channel.dart';
 import 'package:relic/src/headers/codecs/common_types_codecs.dart';
 import 'package:test/test.dart';
-import 'package:web_socket_channel/web_socket_channel.dart';
 
 import 'headers/headers_test_utils.dart';
 import 'ssl/ssl_certs.dart';
@@ -238,14 +237,13 @@ void main() {
               .having((final p) => p.data, 'data', equals('Hello'))),
         );
         channel.sink.add(const TextPayload('Hello, world!'));
-        channel.sink.close();
+        channel.close();
       }));
     });
 
-    final ws =
-        WebSocketChannel.connect(Uri.parse('ws://localhost:$_serverPort'));
-    ws.sink.add('Hello');
-    expect(ws.stream.first, completion(equals('Hello, world!')));
+    final ws = await WebSocket.connect('ws://localhost:$_serverPort');
+    ws.add('Hello');
+    expect(ws.first, completion(equals('Hello, world!')));
   });
 
   test('passes asynchronous exceptions to the parent error zone', () async {

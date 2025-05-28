@@ -152,9 +152,8 @@ void main() {
         // capture the error.
         final wsUri = Uri.parse('ws://localhost:$_serverPort');
         final channel = WebSocketChannel.connect(wsUri); // <-- why not async!!
-        // Waiting for ready will just hang here, unless a timeout is configured :-/
-        // It is also easy to forget
-        // await channel.ready;
+        // Waiting for ready is easy to forget
+        // await channel.ready; // <-- will raise
         channel.sink.add('ping');
         // Now we have caused an unhandled error from an un-awaited future,
         // which is really annoying and require runZoneGuarded to capture.
