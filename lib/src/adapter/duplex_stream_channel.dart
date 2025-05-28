@@ -10,6 +10,11 @@ import 'package:stream_channel/stream_channel.dart';
 abstract class DuplexStreamChannel
     with StreamChannelMixin<Payload>
     implements StreamChannel<Payload> {
+  /// The interval at which ping messages are sent to keep the connection alive.
+  ///
+  /// If null, no ping messages are sent.
+  Duration? pingInterval;
+
   /// Closes the duplex stream channel.
   ///
   /// Implementations should gracefully terminate the connection.

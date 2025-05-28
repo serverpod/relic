@@ -28,8 +28,8 @@ void main() {
   group('WebSocket Tests', () {
     test(
         'Given a WebSocket server, '
-        'when a client connects and sends "ping", '
-        'then the server responds with "pong" and the client receives it',
+        'when a client connects and sends "tick", '
+        'then the server responds with "tock" and the client receives it',
         () async {
       await scheduleServer((final ctx) {
         return ctx.connect(expectAsync1((final channel) async {
@@ -37,10 +37,10 @@ void main() {
           expect(
             channel.stream.first,
             completion(isA<TextPayload>()
-                .having((final p) => p.data, 'data', equals('ping'))),
+                .having((final p) => p.data, 'data', equals('tick'))),
           );
           // Send a message back to the client
-          channel.sink.add(const TextPayload('pong'));
+          channel.sink.add(const TextPayload('tock'));
           // Close the server-side of the connection after sending the message.
           // This also signals the client that no more messages are coming from the server.
           await channel.close();
@@ -50,10 +50,10 @@ void main() {
       final socket = await WebSocket.connect('ws://localhost:$_serverPort');
 
       // Send a message to the server
-      socket.add('ping');
+      socket.add('tick');
 
       // Expect a response from the server
-      expect(socket, emitsInOrder(['pong', emitsDone]));
+      expect(socket, emitsInOrder(['tock', emitsDone]));
     });
 
     test(
@@ -94,23 +94,17 @@ void main() {
         'then the client receives all server messages in order', () async {
       await scheduleServer((final ctx) {
         return ctx.connect(expectAsync1((final channel) async {
-          // Wait for first client message
-          await channel.stream.first;
-
-          channel.sink.add(const TextPayload('server_msg1'));
-          channel.sink.add(const TextPayload('server_msg2'));
+          channel.sink.add(const TextPayload('tock1'));
+          channel.sink.add(const TextPayload('tock2'));
         }));
       });
 
       final clientSocket =
           await WebSocket.connect('ws://localhost:$_serverPort');
 
-      // Send one message to trigger server responses
-      clientSocket.add('initial_ping');
-
       await expectLater(
         clientSocket,
-        emitsInOrder(['server_msg1', 'server_msg2']),
+        emitsInOrder(['tock1', 'tock2']),
       );
       await clientSocket.close();
     });
@@ -138,7 +132,7 @@ void main() {
         final channel = WebSocketChannel.connect(wsUri); // <-- why not async!!
         // Waiting for ready is easy to forget
         // await channel.ready; // <-- will raise
-        channel.sink.add('ping');
+        channel.sink.add('tick');
         // Now we have caused an unhandled error from an un-awaited future,
         // which is really annoying and require runZoneGuarded to capture.
         endOfScope = true; // to prove we make it here without error
@@ -204,9 +198,6 @@ void main() {
         'then the server-side channel stream completes', () async {
       final serverChannelClosed = Completer<void>();
 
-      // Verify that the server-side channel stream completed
-      unawaited(expectLater(serverChannelClosed.future, completes));
-
       await scheduleServer((final ctx) {
         return ctx.connect(expectAsync1((final channel) async {
           // Wait for the client to close the connection by
@@ -220,7 +211,10 @@ void main() {
           await WebSocket.connect('ws://localhost:$_serverPort');
 
       // Client closes the connection
-      await clientSocket.close();
+      unawaited(clientSocket.close());
+
+      // Verify that the server-side channel stream completed
+      expect(serverChannelClosed.future, completes);
     });
 
     test(

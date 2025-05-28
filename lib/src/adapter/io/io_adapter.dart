@@ -61,7 +61,6 @@ class IOAdapter extends Adapter {
   ) async {
     final webSocket =
         await io.WebSocketTransformer.upgrade(request._httpRequest);
-    webSocket.pingInterval = const Duration(seconds: 15);
     callback(_IODuplexStreamChannel(webSocket));
   }
 
@@ -89,6 +88,12 @@ class _IODuplexStreamChannel extends DuplexStreamChannel {
       : _socket = socket,
         _socketChannel =
             AdapterWebSocketChannel(IOWebSocket.fromWebSocket(socket));
+
+  @override
+  Duration? get pingInterval => _socket.pingInterval;
+
+  @override
+  set pingInterval(final Duration? value) => _socket.pingInterval = value;
 
   @override
   Future<void> close([final int? closeCode, final String? closeReason]) async {
