@@ -44,10 +44,6 @@ abstract interface class RespondableContext
 
 /// An interface for request contexts that allow hijacking the underlying connection.
 abstract interface class HijackableContext implements _RequestContextInterface {
-  /// Takes control of the underlying socket.
-  ///
-  /// [callback] is called with a [StreamChannel<List<int>>] that provides
-  /// access to the underlying socket.
   /// Takes control of the underlying communication channel (e.g., socket).
   ///
   /// The provided [callback] [c] will be invoked with a [StreamChannel]

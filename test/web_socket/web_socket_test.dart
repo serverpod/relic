@@ -17,7 +17,7 @@ Future<void> scheduleServer(
   final Handler handler, {
   final SecurityContext? securityContext,
 }) async {
-  assert(_server == null, 'Server already scheduled. Call tearDown first.');
+  await _server?.close(); // close previous, if any
   _server = await testServe(
     handler,
     context: securityContext,
@@ -25,22 +25,6 @@ Future<void> scheduleServer(
 }
 
 void main() {
-  tearDown(() async {
-    final server = _server;
-    if (server != null) {
-      try {
-        // Attempt a graceful shutdown with a timeout.
-        await server.close().timeout(const Duration(seconds: 5));
-      } catch (e) {
-        // If timeout or other error occurs, force close.
-        // This is important to ensure tests don't hang or affect subsequent tests.
-        await server.close();
-      } finally {
-        _server = null;
-      }
-    }
-  });
-
   group('WebSocket Tests', () {
     test(
         'Given a WebSocket server, '
@@ -131,7 +115,7 @@ void main() {
       await clientSocket.close();
     });
 
-    // This test is mostly a proof for why you should not never use
+    // This test is mostly a proof for why you should never use
     // WebSocketChannel client-side.
     test(
         'Given a server that does not upgrade to WebSocket, '

@@ -92,7 +92,7 @@ class _IODuplexStreamChannel extends DuplexStreamChannel {
 
   @override
   Future<void> close([final int? closeCode, final String? closeReason]) async {
-    // Yield before close to drain socket
+    // Yield to the event loop to allow pending data to be flushed before closing
     await Future<void>.delayed(const Duration(microseconds: 0));
     await _socket.close(closeCode, closeReason);
   }
