@@ -33,24 +33,22 @@ class IOAdapter extends Adapter {
   int get port => _server.port;
 
   @override
-  Stream<AdapterRequest> get requests => _server.map(_IOAdapterRequest.new);
+  Stream<AdapterRequest> get requests => _server.map(IOAdapterRequest.new);
 
   @override
   Future<void> respond(
-    final AdapterRequest request,
+    covariant final IOAdapterRequest request,
     final Response response,
   ) async {
-    if (request is! _IOAdapterRequest) _fatal();
     final httpResponse = request._httpRequest.response;
     await response.writeHttpResponse(httpResponse);
   }
 
   @override
   Future<void> hijack(
-    final AdapterRequest request,
+    covariant final IOAdapterRequest request,
     final HijackCallback callback,
   ) async {
-    if (request is! _IOAdapterRequest) _fatal();
     final socket =
         await request._httpRequest.response.detachSocket(writeHeaders: false);
     callback(StreamChannel(socket, socket));
@@ -58,10 +56,9 @@ class IOAdapter extends Adapter {
 
   @override
   Future<void> connect(
-    final AdapterRequest request,
+    covariant final IOAdapterRequest request,
     final DuplexStreamCallback callback,
   ) async {
-    if (request is! _IOAdapterRequest) _fatal();
     final webSocket =
         await io.WebSocketTransformer.upgrade(request._httpRequest);
     webSocket.pingInterval = const Duration(seconds: 15);
@@ -72,12 +69,9 @@ class IOAdapter extends Adapter {
   Future<void> close() => _server.close(force: true);
 }
 
-Never _fatal() =>
-    throw StateError('Fatal: Unexpected request type for IOAdapter.');
-
-class _IOAdapterRequest extends AdapterRequest {
+class IOAdapterRequest extends AdapterRequest {
   final io.HttpRequest _httpRequest;
-  _IOAdapterRequest(this._httpRequest);
+  IOAdapterRequest(this._httpRequest);
 
   @override
   Request toRequest() => fromHttpRequest(_httpRequest);
