@@ -11,7 +11,7 @@ on:
 
 env:
   PUB_CACHE_PATH: ~/.pub-cache
-  LOWEST_DART_SDK: "3.3.0"
+  LOWEST_DART_SDK: "3.4.0"
 
 jobs:
   build:
@@ -23,7 +23,7 @@ jobs:
         dart_sdk:
           # ${{ env.LOWEST_DART_SDK }} won't work at job level as env context not available for strategy ¯\_(ツ)_/¯
           # (see https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/accessing-contextual-information-about-workflow-runs#context-availability)
-          - "3.3.0"
+          - "3.4.0"
           - stable
     steps:
       - name: Checkout Code
@@ -83,7 +83,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [windows-latest, ubuntu-latest, macos-latest]
-        dart_sdk: ["3.3.0", stable, beta] # env context not available for strategy
+        dart_sdk: ["3.4.0", stable, beta] # env context not available for strategy
         deps: [downgrade, upgrade]
     steps:
       - name: Checkout Code

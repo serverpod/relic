@@ -77,15 +77,15 @@ abstract class Adapter {
   /// [AdapterRequest].
   ///
   /// This method is used to upgrade a connection or establish a new
-  /// bi-directional communication channel. The provided [wsCallback] will
+  /// bi-directional communication channel. The provided [callback] will
   /// be invoked with a [DuplexStreamChannel] that allows sending and
   /// receiving [Payload] messages.
   ///
   /// - [request]: The [AdapterRequest] for which to establish the connection.
-  /// - [wsCallback]: The [DuplexStreamCallback] that will handle the duplex
+  /// - [callback]: The [DuplexStreamCallback] that will handle the duplex
   /// stream.
   Future<void> connect(
-      final AdapterRequest request, final DuplexStreamCallback wsCallback);
+      final AdapterRequest request, final DuplexStreamCallback callback);
 
   /// Gracefully shuts down the adapter.
   ///

@@ -4,7 +4,7 @@ version: 0.3.0
 repository: https://github.com/serverpod/relic
 
 environment:
-  sdk: ^3.3.0
+  sdk: ^3.4.0
 
 dependencies:
   async: ^2.11.0
@@ -17,7 +17,7 @@ dependencies:
   stack_trace: ^1.10.0
   stream_channel: ^2.1.1
   web_socket: ^1.0.0
-  web_socket_channel: ^3.0.0
+  web_socket_channel: ^3.0.3
 
 dev_dependencies:
   benchmark_harness: ^2.3.1
@@ -29,7 +29,7 @@ dev_dependencies:
   routingkit: ^5.1.2
   serverpod_lints: ^2.5.0
   spanner: ^1.0.5
-  test: ^1.25.0
+  test: ^1.25.5
   test_descriptor: ^2.0.1
   # The following are not used directly, but are included transitively.
   # Due to bad semver hygiene we need to bound the versions higher than
