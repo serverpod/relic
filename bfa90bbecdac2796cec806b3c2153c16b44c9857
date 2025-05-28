@@ -1,0 +1,12 @@
+Add;Static;x1000;Routingkit;RunTime;625.67325;us
+Add;Static;x1000;Spanner;RunTime;1237.9455;us
+Add;Static;x1000;Router;RunTime;417.5433152852978;us
+Lookup;Static;x1000;Routingkit;RunTime;236.65628318584072;us
+Lookup;Static;x1000;Spanner;RunTime;190.25078369905955;us
+Lookup;Static;x1000;Router;RunTime;118.60943239720346;us
+Add;Dynamic;x1000;Routingkit;RunTime;850.52775;us
+Add;Dynamic;x1000;Spanner;RunTime;6544.792207792208;us
+Add;Dynamic;x1000;Router;RunTime;634.21525;us
+Lookup;Dynamic;x1000;Routingkit;RunTime;2300.157;us
+Lookup;Dynamic;x1000;Spanner;RunTime;624.6235;us
+Lookup;Dynamic;x1000;Router;RunTime;334.75059665871123;us
