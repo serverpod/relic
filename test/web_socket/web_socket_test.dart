@@ -176,14 +176,13 @@ void main() {
           Uint8List.fromList(List<int>.generate(10, (final i) => i * 2));
 
       await scheduleServer((final ctx) {
-        return ctx.connect(expectAsync1((final channel) {
-          channel.stream.first.then((final message) {
-            expect(message, isA<BinaryPayload>());
-            expect((message as BinaryPayload).data, equals(binaryData));
+        return ctx.connect(expectAsync1((final channel) async {
+          final message = await channel.stream.first;
+          expect(message, isA<BinaryPayload>());
+          expect((message as BinaryPayload).data, equals(binaryData));
 
-            channel.sink.add(BinaryPayload(responseBinaryData));
-            channel.close();
-          });
+          channel.sink.add(BinaryPayload(responseBinaryData));
+          await channel.close();
         }));
       });
 
@@ -197,6 +196,49 @@ void main() {
         emitsInOrder([responseBinaryData, emitsDone]),
       );
       await clientSocket.close();
+    });
+
+    test(
+        'Given a WebSocket server, '
+        'when a client connects and then closes the connection, '
+        'then the server-side channel stream completes', () async {
+      final serverChannelClosed = Completer<void>();
+
+      // Verify that the server-side channel stream completed
+      unawaited(expectLater(serverChannelClosed.future, completes));
+
+      await scheduleServer((final ctx) {
+        return ctx.connect(expectAsync1((final channel) async {
+          // Wait for the client to close the connection by
+          // consuming the stream until it's done
+          await channel.stream.drain(null);
+          serverChannelClosed.complete();
+        }));
+      });
+
+      final clientSocket =
+          await WebSocket.connect('ws://localhost:$_serverPort');
+
+      // Client closes the connection
+      await clientSocket.close();
+    });
+
+    test(
+        'Given a WebSocket server that closes the connection immediately, '
+        'when a client connects, '
+        'then the client-side stream completes', () async {
+      await scheduleServer((final ctx) {
+        return ctx.connect(expectAsync1((final channel) async {
+          // Server immediately closes the connection
+          await channel.close();
+        }));
+      });
+
+      final clientSocket =
+          await WebSocket.connect('ws://localhost:$_serverPort');
+
+      // Expect the client-side stream to complete because the server closed it
+      await expectLater(clientSocket, emits(emitsDone));
     });
   });
 }
