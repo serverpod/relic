@@ -1,5 +1,6 @@
 import 'package:mockito/mockito.dart';
 import 'package:relic/relic.dart';
+import 'package:relic/src/adapter/context.dart';
 import 'package:test/test.dart';
 
 import '../util/test_util.dart';

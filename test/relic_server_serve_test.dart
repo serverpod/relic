@@ -7,6 +7,7 @@ import 'package:async/async.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart' as parser;
 import 'package:relic/relic.dart';
+import 'package:relic/src/adapter/duplex_stream_channel.dart';
 import 'package:relic/src/headers/codecs/common_types_codecs.dart';
 import 'package:test/test.dart';
 
@@ -207,9 +208,7 @@ void main() {
 
       expect(request.method, RequestMethod.post);
 
-      final hijackableContext = ctx as HijackableContext;
-
-      return hijackableContext.hijack(expectAsync1((final channel) {
+      return ctx.hijack(expectAsync1((final channel) {
         expect(channel.stream.first, completion(equals('Hello'.codeUnits)));
 
         channel.sink.add('HTTP/1.1 404 Not Found\r\n'
@@ -227,6 +226,24 @@ void main() {
     expect(response.headers['date'], 'Mon, 23 May 2005 22:38:34 GMT');
     expect(
         response.stream.bytesToString(), completion(equals('Hello, world!')));
+  });
+
+  test('supports web socket connetions', () async {
+    await _scheduleServer((final ctx) {
+      return ctx.connect(expectAsync1((final channel) {
+        expect(
+          channel.stream.first,
+          completion(isA<TextPayload>()
+              .having((final p) => p.data, 'data', equals('Hello'))),
+        );
+        channel.sink.add(const TextPayload('Hello, world!'));
+        channel.close();
+      }));
+    });
+
+    final ws = await WebSocket.connect('ws://localhost:$_serverPort');
+    ws.add('Hello');
+    expect(ws.first, completion(equals('Hello, world!')));
   });
 
   test('passes asynchronous exceptions to the parent error zone', () async {
