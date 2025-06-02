@@ -1,10 +1,12 @@
 import 'dart:async';
-import 'dart:io';
+import 'dart:io' as io;
+import 'dart:isolate';
 import 'dart:typed_data';
 
 import 'package:relic/relic.dart';
 import 'package:relic/src/adapter/duplex_stream_channel.dart';
 import 'package:test/test.dart';
+import 'package:web_socket/web_socket.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 import '../headers/headers_test_utils.dart';
@@ -15,7 +17,7 @@ int get _serverPort => _server!.url.port;
 
 Future<void> scheduleServer(
   final Handler handler, {
-  final SecurityContext? securityContext,
+  final io.SecurityContext? securityContext,
 }) async {
   await _server?.close(); // close previous, if any
   _server = await testServe(
@@ -25,6 +27,11 @@ Future<void> scheduleServer(
 }
 
 void main() {
+  tearDown(() async {
+    await _server?.close(); // close previous, if any
+    _server = null;
+  });
+
   group('WebSocket Tests', () {
     test(
         'Given a WebSocket server, '
@@ -47,13 +54,17 @@ void main() {
         }));
       });
 
-      final socket = await WebSocket.connect('ws://localhost:$_serverPort');
+      final socket =
+          await WebSocket.connect(Uri.parse('ws://localhost:$_serverPort'));
 
       // Send a message to the server
-      socket.add('tick');
+      socket.sendText('tick');
 
       // Expect a response from the server
-      expect(socket, emitsInOrder(['tock', emitsDone]));
+      expect(
+          socket.events,
+          emitsInOrder(
+              [TextDataReceived('tock'), CloseReceived(1005), emitsDone]));
     });
 
     test(
@@ -77,15 +88,14 @@ void main() {
       });
 
       final clientSocket =
-          await WebSocket.connect('ws://localhost:$_serverPort');
+          await WebSocket.connect(Uri.parse('ws://localhost:$_serverPort'));
 
-      clientSocket.add('msg1');
-      clientSocket.add('msg2');
+      clientSocket.sendText('msg1');
+      clientSocket.sendText('msg2');
 
-      await expectLater(clientSocket, emits(emitsDone));
+      await expectLater(
+          clientSocket.events, emitsInOrder([CloseReceived(1005), emitsDone]));
       expect(serverReceivedMessages, equals(['msg1', 'msg2']));
-
-      await clientSocket.close();
     });
 
     test(
@@ -100,11 +110,11 @@ void main() {
       });
 
       final clientSocket =
-          await WebSocket.connect('ws://localhost:$_serverPort');
+          await WebSocket.connect(Uri.parse('ws://localhost:$_serverPort'));
 
       await expectLater(
-        clientSocket,
-        emitsInOrder(['tock1', 'tock2']),
+        clientSocket.events,
+        emitsInOrder(['tock1', 'tock2'].map(TextDataReceived.new)),
       );
       await clientSocket.close();
     });
@@ -156,7 +166,7 @@ void main() {
       }));
 
       // Attempt to send a message should cause a failure
-      expect(WebSocket.connect('ws://localhost:$_serverPort'),
+      expect(WebSocket.connect(Uri.parse('ws://localhost:$_serverPort')),
           throwsA(isA<WebSocketException>())); // <-- this is the way!!
     });
 
@@ -165,7 +175,8 @@ void main() {
         'when a client sends a binary message, '
         'then the server processes it and sends a binary response which the client receives',
         () async {
-      final binaryData = List<int>.generate(10, (final i) => i);
+      final binaryData =
+          Uint8List.fromList(List<int>.generate(10, (final i) => i));
       final responseBinaryData =
           Uint8List.fromList(List<int>.generate(10, (final i) => i * 2));
 
@@ -181,15 +192,18 @@ void main() {
       });
 
       final clientSocket =
-          await WebSocket.connect('ws://localhost:$_serverPort');
+          await WebSocket.connect(Uri.parse('ws://localhost:$_serverPort'));
 
-      clientSocket.add(binaryData);
+      clientSocket.sendBytes(binaryData);
 
       await expectLater(
-        clientSocket,
-        emitsInOrder([responseBinaryData, emitsDone]),
+        clientSocket.events,
+        emitsInOrder([
+          BinaryDataReceived(responseBinaryData),
+          CloseReceived(1005),
+          emitsDone
+        ]),
       );
-      await clientSocket.close();
     });
 
     test(
@@ -208,7 +222,7 @@ void main() {
       });
 
       final clientSocket =
-          await WebSocket.connect('ws://localhost:$_serverPort');
+          await WebSocket.connect(Uri.parse('ws://localhost:$_serverPort'));
 
       // Client closes the connection
       unawaited(clientSocket.close());
@@ -229,14 +243,15 @@ void main() {
       });
 
       final clientSocket =
-          await WebSocket.connect('ws://localhost:$_serverPort');
+          await WebSocket.connect(Uri.parse('ws://localhost:$_serverPort'));
 
       // Expect the client-side stream to complete because the server closed it
-      await expectLater(clientSocket, emits(emitsDone));
+      await expectLater(
+          clientSocket.events, emitsInOrder([CloseReceived(1005), emitsDone]));
     });
 
     test(
-        'Given a WebSocket server with a ping interval, '
+        'Given a WebSocket with a ping interval, '
         'when a client connects and remains idle for a period, '
         'then the connection is maintained by pings and subsequent communication is successful',
         () async {
@@ -258,7 +273,7 @@ void main() {
       );
 
       final clientSocket =
-          await WebSocket.connect('ws://localhost:$_serverPort');
+          await io.WebSocket.connect('ws://localhost:$_serverPort');
       clientSocket.pingInterval = pingInterval;
 
       final check = expectLater(
@@ -271,6 +286,55 @@ void main() {
       }
 
       await check;
+    });
+
+    test('timeout if server blocks', () async {
+      const pingInterval = Duration(milliseconds: 15);
+
+      final recv = ReceivePort();
+      final isolate = await Isolate.spawn((final sendPort) async {
+        final server = await testServe((final ctx) {
+          return ctx.connect((final channel) async {
+            channel.pingInterval = pingInterval;
+            await Future<void>.delayed(const Duration(milliseconds: 10));
+            // block server by busy waiting, causing timeout on client
+            while (true) {}
+          });
+        });
+        sendPort.send(server.url.port);
+      }, recv.sendPort);
+
+      final port = (await recv.first) as int;
+      final clientSocket = await io.WebSocket.connect('ws://localhost:$port');
+
+      await expectLater(clientSocket, emitsInOrder([emitsDone]));
+
+      isolate.kill();
+    });
+
+    test('timeout if client blocks', () async {
+      const pingInterval = Duration(milliseconds: 45);
+      final done = Completer<void>();
+
+      await scheduleServer((final ctx) {
+        return ctx.connect(expectAsync1((final channel) async {
+          channel.pingInterval = pingInterval;
+          await expectLater(channel.stream,
+              emitsInOrder([const TextPayload('running'), emitsDone]));
+          done.complete();
+        }));
+      });
+
+      final isolate = await Isolate.spawn((final port) async {
+        final clientSocket =
+            await WebSocket.connect(Uri.parse('ws://localhost:$port'));
+        clientSocket.sendText('running');
+        while (true) {} // busy wait to simulate offline client
+      }, _serverPort);
+
+      await done.future;
+
+      isolate.kill();
     });
   });
 }

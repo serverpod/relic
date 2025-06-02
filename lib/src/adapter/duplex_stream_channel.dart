@@ -52,6 +52,16 @@ final class TextPayload extends Payload {
 
   /// Creates a new [TextPayload] with the given [data].
   const TextPayload(this.data);
+
+  @override
+  bool operator ==(final Object other) {
+    if (identical(this, other)) return true;
+    if (other is! TextPayload) return false;
+    return data == other.data;
+  }
+
+  @override
+  int get hashCode => data.hashCode;
 }
 
 /// A callback function that handles a [DuplexStreamChannel].
