@@ -133,51 +133,51 @@ final class Router<T> {
 extension RouteEx<T> on Router<T> {
   /// Adds a route definition for the GET HTTP method.
   ///
-  /// Equivalent to calling `add(Verb.get, path, value)`.
+  /// Equivalent to calling `add(Method.get, path, value)`.
   void get(final String path, final T value) => add(Method.get, path, value);
 
   /// Adds a route definition for the HEAD HTTP method.
   ///
-  /// Equivalent to calling `add(Verb.head, path, value)`.
+  /// Equivalent to calling `add(Method.head, path, value)`.
   void head(final String path, final T value) => add(Method.head, path, value);
 
   /// Adds a route definition for the POST HTTP method.
   ///
-  /// Equivalent to calling `add(Verb.post, path, value)`.
+  /// Equivalent to calling `add(Method.post, path, value)`.
   void post(final String path, final T value) => add(Method.post, path, value);
 
   /// Adds a route definition for the PUT HTTP method.
   ///
-  /// Equivalent to calling `add(Verb.put, path, value)`.
+  /// Equivalent to calling `add(Method.put, path, value)`.
   void put(final String path, final T value) => add(Method.put, path, value);
 
   /// Adds a route definition for the DELETE HTTP method.
   ///
-  /// Equivalent to calling `add(Verb.delete, path, value)`.
+  /// Equivalent to calling `add(Method.delete, path, value)`.
   void delete(final String path, final T value) =>
       add(Method.delete, path, value);
 
   /// Adds a route definition for the PATCH HTTP method.
   ///
-  /// Equivalent to calling `add(Verb.patch, path, value)`.
+  /// Equivalent to calling `add(Method.patch, path, value)`.
   void patch(final String path, final T value) =>
       add(Method.patch, path, value);
 
   /// Adds a route definition for the OPTIONS HTTP method.
   ///
-  /// Equivalent to calling `add(Verb.options, path, value)`.
+  /// Equivalent to calling `add(Method.options, path, value)`.
   void options(final String path, final T value) =>
       add(Method.options, path, value);
 
   /// Adds a route definition for the TRACE HTTP method.
   ///
-  /// Equivalent to calling `add(Verb.trace, path, value)`.
+  /// Equivalent to calling `add(Method.trace, path, value)`.
   void trace(final String path, final T value) =>
       add(Method.trace, path, value);
 
   /// Adds a route definition for the CONNECT HTTP method.
   ///
-  /// Equivalent to calling `add(Verb.connect, path, value)`.
+  /// Equivalent to calling `add(Method.connect, path, value)`.
   void connect(final String path, final T value) =>
       add(Method.connect, path, value);
 
