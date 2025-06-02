@@ -16,7 +16,7 @@ enum Method {
   connect,
 }
 
-/// A wrapper around a fix length list used for mapping between method and value
+/// A wrapper around a fixed-length list used for mapping between method and value
 /// for each registered path.
 extension type _RouterEntry<T>._(List<T?> _routeByVerb) {
   _RouterEntry()
