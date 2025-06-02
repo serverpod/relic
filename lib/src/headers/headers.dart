@@ -332,8 +332,8 @@ class Headers extends HeadersBase {
     xPoweredBy,
   };
 
-  static const response = {..._common, ..._requestOnly};
-  static const request = {..._common, ..._responseOnly};
+  static const response = {..._common, ..._responseOnly};
+  static const request = {..._common, ..._requestOnly};
   static const all = {..._common, ..._requestOnly, ..._responseOnly};
 
   /// Request Headers
