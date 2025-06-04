@@ -3,6 +3,7 @@ import 'dart:io' as io;
 import 'dart:isolate';
 import 'dart:typed_data';
 
+import 'package:meta/meta.dart';
 import 'package:relic/relic.dart';
 import 'package:test/test.dart';
 import 'package:web_socket/web_socket.dart';
@@ -259,15 +260,15 @@ void main() {
       const pingInterval = Duration(milliseconds: 5);
       final tooLong = pingInterval * 3; // Must be > pingInterval
 
-      _server = await testServe(
+      final server = await testServe(
         (final ctx) {
           return ctx.connect(
             (final serverSocket) async {
               serverSocket.pingInterval = pingInterval;
               int i = 0;
               await for (final e in serverSocket.events) {
-                expect(e, TextDataReceived('tick-$i'));
                 if (e is CloseReceived) break;
+                expect(e, TextDataReceived('tick-$i'));
                 // Server remains idle for a period, relying on pings to keep connection alive.
                 await Future<void>.delayed(tooLong);
                 serverSocket.sendText('tock-$i');
@@ -278,8 +279,8 @@ void main() {
         },
       );
 
-      final clientSocket =
-          await WebSocket.connect(Uri.parse('ws://localhost:$_serverPort'));
+      final clientSocket = await WebSocket.connect(
+          Uri.parse('ws://localhost:${server.url.port}'));
 
       final check = expectLater(
         clientSocket.events,
@@ -294,6 +295,7 @@ void main() {
       }
 
       await check;
+      await server.close();
     });
 
     test(
@@ -303,21 +305,30 @@ void main() {
       () async {
         const pingInterval = Duration(milliseconds: 5);
 
+        // Setup wait points, signalled from isolate
+        final port = Completer<int>();
+        final ready = Completer<bool>();
+        final completers = [port, ready];
         final recv = ReceivePort();
+        int idx = 0;
+        recv.listen((final e) {
+          // signal received, update associated completer
+          completers[idx++].complete(e);
+        });
+
         final isolate = await Isolate.spawn((final sendPort) async {
           final server = await testServe((final ctx) {
             return ctx.connect((final serverSocket) async {
-              serverSocket.events.listen((final _) {});
               serverSocket.pingInterval = pingInterval;
               serverSocket.sendText('running');
+              sendPort.send(true); // signal ready
             });
           });
-          sendPort.send(server.url.port);
+          sendPort.send(server.url.port); // signal port
         }, recv.sendPort);
 
-        final port = (await recv.first) as int;
-        final clientSocket =
-            await WebSocket.connect(Uri.parse('ws://localhost:$port'));
+        final clientSocket = await WebSocket.connect(
+            Uri.parse('ws://localhost:${await port.future}'));
 
         final check = expectLater(
             clientSocket.events,
@@ -331,7 +342,10 @@ void main() {
               emitsDone,
             ]));
 
-        isolate.kill(); // kill the isolate to stop the server
+        await ready.future;
+
+        // kill the isolate to stop the server abruptly
+        isolate.kill(priority: Isolate.immediate);
 
         await check;
       },
