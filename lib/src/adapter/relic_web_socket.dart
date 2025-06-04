@@ -1,22 +1,17 @@
-import 'package:stream_channel/stream_channel.dart';
 import 'package:web_socket/web_socket.dart';
 
-/// An abstract class representing a bi-directional communication channel.
+/// An relic specific interface for bi-directional communication over
+/// web-sockets.
 ///
-/// This class mixes in [StreamChannelMixin] and implements [StreamChannel]
-/// for [Payload] types. It defines a common interface for duplex streams,
-/// such as WebSockets, allowing for sending and receiving [Payload] messages.
-abstract class RelicWebSocket implements WebSocket {
-  /// The interval at which ping messages are sent to keep the connection alive.
+/// Extends [WebSocket] with [pingInterval] property for configuring
+/// ping/pong frame timeout.
+abstract interface class RelicWebSocket implements WebSocket {
+  /// The interval at which ping frames are sent to keep the web-socker
+  /// connection alive.
   ///
-  /// If null, no ping messages are sent.
+  /// If `null`, no ping messages are sent.
   Duration? pingInterval;
-
-  Future<void> flush();
 }
 
-/// A callback function that handles a [RelicWebSocket].
-///
-/// This is typically used when a connection is established (e.g., a WebSocket
-/// connection), providing the handler with the channel to manage communication.
-typedef WebSocketCallback = void Function(RelicWebSocket channel);
+/// A callback function invoked when a [socket] connection is established.
+typedef WebSocketCallback = void Function(RelicWebSocket webSocket);
