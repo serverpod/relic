@@ -1,5 +1,4 @@
 import '../../relic.dart';
-import 'relic_web_socket.dart';
 
 /// An internal interface defining the base contract for request contexts.
 ///

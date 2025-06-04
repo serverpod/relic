@@ -7,7 +7,6 @@ import 'package:web_socket/io_web_socket.dart';
 import 'package:web_socket/web_socket.dart';
 
 import '../../../relic.dart';
-import '../relic_web_socket.dart';
 import 'request.dart';
 import 'response.dart';
 
