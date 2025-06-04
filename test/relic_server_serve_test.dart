@@ -230,14 +230,12 @@ void main() {
 
   test('supports web socket connetions', () async {
     await _scheduleServer((final ctx) {
-      return ctx.connect(expectAsync1((final channel) {
-        expect(
-          channel.events.first,
-          completion(isA<TextDataReceived>()
-              .having((final p) => p.text, 'text', equals('Hello'))),
-        );
-        channel.sendText('Hello, world!');
-        channel.close();
+      return ctx.connect(expectAsync1((final serverSocket) async {
+        await for (final e in serverSocket.events) {
+          expect(e, TextDataReceived('Hello'));
+          serverSocket.sendText('Hello, world!');
+          await serverSocket.close();
+        }
       }));
     });
 

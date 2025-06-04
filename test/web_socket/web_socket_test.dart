@@ -40,17 +40,14 @@ void main() {
       await scheduleServer((final ctx) {
         return ctx.connect(expectAsync1((final serverSocket) async {
           // Expect a message from the client
-          expect(
-            serverSocket.events.first,
-            completion(isA<TextDataReceived>()
-                .having((final p) => p.text, 'text', equals('tick'))),
-          );
-          // Send a message back to the client
-          serverSocket.sendText('tock');
-          await serverSocket.flush();
-          // Close the server-side of the connection after sending the message.
-          // This also signals the client that no more messages are coming from the server.
-          await serverSocket.close();
+          await for (final e in serverSocket.events) {
+            expect(e, TextDataReceived('tick'));
+            // Send a message back to the client
+            serverSocket.sendText('tock');
+            // Close the server-side of the connection after sending the message.
+            // This also signals the client that no more messages are coming from the server.
+            await serverSocket.close();
+          }
         }));
       });
 
@@ -61,10 +58,14 @@ void main() {
       clientSocket.sendText('tick');
 
       // Expect a response from the server
-      expect(
-          clientSocket.events,
-          emitsInOrder(
-              [TextDataReceived('tock'), CloseReceived(1005), emitsDone]));
+      await expectLater(
+        clientSocket.events,
+        emitsInOrder([
+          TextDataReceived('tock'),
+          CloseReceived(1005),
+          emitsDone,
+        ]),
+      );
     });
 
     test(

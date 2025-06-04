@@ -75,10 +75,10 @@ class IOAdapterRequest extends AdapterRequest {
   Request toRequest() => fromHttpRequest(_httpRequest);
 }
 
-/// A [RelicWebSocket] implementation for `dart:io` [WebSocket]s.
+/// A [RelicWebSocket] implementation for `dart:io` [io.WebSocket]s.
 ///
-/// This class wraps an [io.WebSocket] and provides a standard stream and sink
-/// interface for sending and receiving [Payload] messages (binary or text).
+/// This class wraps an [io.WebSocket] and provides a [WebSocket]]
+/// interface for sending and receiving events (binary or text).
 class _IORelicWebSocket implements RelicWebSocket {
   final io.WebSocket _wrappedSocket;
   final IOWebSocket _socket;
@@ -109,25 +109,4 @@ class _IORelicWebSocket implements RelicWebSocket {
 
   @override
   void sendText(final String s) => _socket.sendText(s);
-
-  @override
-  Future<void> flush() async {
-    await Future<void>.delayed(const Duration(milliseconds: 100));
-    // TODO: Ensure outstanding messages are written to network before returning
-  }
-}
-
-extension<T> on EventSink<T> {
-  /// Creates a new [StreamSink<R>] that maps its incoming values of type [R]
-  /// to type [T] using the provided [mapper] function, and then adds them
-  /// to this sink.
-  StreamSink<R> mapFrom<R>(final T Function(R) mapper) {
-    final controller = StreamController<R>();
-    controller.stream.map(mapper).listen(
-          add,
-          onError: addError,
-          onDone: close,
-        );
-    return controller.sink;
-  }
 }
