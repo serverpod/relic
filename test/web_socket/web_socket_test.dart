@@ -264,11 +264,14 @@ void main() {
           return ctx.connect(
             (final serverSocket) async {
               serverSocket.pingInterval = pingInterval;
+              int i = 0;
               await for (final e in serverSocket.events) {
+                expect(e, TextDataReceived('tick-$i'));
                 if (e is CloseReceived) break;
                 // Server remains idle for a period, relying on pings to keep connection alive.
                 await Future<void>.delayed(tooLong);
-                serverSocket.sendText('tock');
+                serverSocket.sendText('tock-$i');
+                ++i;
               }
             },
           );
@@ -280,13 +283,14 @@ void main() {
 
       final check = expectLater(
         clientSocket.events,
-        emitsInOrder(List.filled(n, TextDataReceived('tock'))),
+        emitsInOrder(
+            List.generate(n, (final i) => TextDataReceived('tock-$i'))),
       );
 
       for (int i = 0; i < n; ++i) {
         // Client remains idle for a period, relying on pings to keep connection alive.
         await Future<void>.delayed(tooLong);
-        clientSocket.sendText('tick');
+        clientSocket.sendText('tick-$i');
       }
 
       await check;
@@ -303,6 +307,7 @@ void main() {
         final isolate = await Isolate.spawn((final sendPort) async {
           final server = await testServe((final ctx) {
             return ctx.connect((final serverSocket) async {
+              serverSocket.events.listen((final _) {});
               serverSocket.pingInterval = pingInterval;
               serverSocket.sendText('running');
             });
@@ -314,15 +319,21 @@ void main() {
         final clientSocket =
             await WebSocket.connect(Uri.parse('ws://localhost:$port'));
 
-        isolate.kill(); // kill the isolate to stop the server
-
-        await expectLater(
+        final check = expectLater(
             clientSocket.events,
             emitsInOrder([
               TextDataReceived('running'),
-              CloseReceived(1005), // 1005 indicates no status code
+              // 1006 CLOSE_ABNORMAL. Indicates that the connection was closed
+              // abnormally, e.g., without sending or receiving a Close control
+              // frame.
+              //CloseReceived(1006), // <-- correct, but
+              isA<CloseReceived>(), // older dart versions gets it wrong
               emitsDone,
             ]));
+
+        isolate.kill(); // kill the isolate to stop the server
+
+        await check;
       },
     );
 
@@ -352,6 +363,8 @@ void main() {
           final clientSocket =
               await WebSocket.connect(Uri.parse('ws://localhost:$port'));
           clientSocket.sendText('running');
+          // no flush, so leave a bit of time before blocking
+          await Future<void>.delayed(const Duration(milliseconds: 100));
           while (true) {} // busy wait to simulate offline client
         }, _serverPort);
 
