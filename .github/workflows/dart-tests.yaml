@@ -48,7 +48,6 @@ jobs:
         run: dart format --output=none --set-exit-if-changed .
 
       - name: Check Dependency Bounds
-        if: ${{ matrix.dart_sdk != env.LOWEST_DART_SDK }} # --tighten available from 3.5
         run: >-
           dart pub downgrade --tighten &&
           dart pub upgrade --major-versions &&

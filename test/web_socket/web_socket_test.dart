@@ -3,7 +3,6 @@ import 'dart:io' as io;
 import 'dart:isolate';
 import 'dart:typed_data';
 
-import 'package:meta/meta.dart';
 import 'package:relic/relic.dart';
 import 'package:test/test.dart';
 import 'package:web_socket/web_socket.dart';
