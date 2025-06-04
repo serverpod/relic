@@ -77,7 +77,7 @@ class IOAdapterRequest extends AdapterRequest {
 
 /// A [RelicWebSocket] implementation for `dart:io` [io.WebSocket]s.
 ///
-/// This class wraps an [io.WebSocket] and provides a [WebSocket]]
+/// This class wraps an [io.WebSocket] and provides a [WebSocket]
 /// interface for sending and receiving events (binary or text).
 class _IORelicWebSocket implements RelicWebSocket {
   final io.WebSocket _wrappedSocket;

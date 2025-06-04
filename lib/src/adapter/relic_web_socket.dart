@@ -6,7 +6,7 @@ import 'package:web_socket/web_socket.dart';
 /// Extends [WebSocket] with [pingInterval] property for configuring
 /// ping/pong frame timeout.
 abstract interface class RelicWebSocket implements WebSocket {
-  /// The interval at which ping frames are sent to keep the web-socker
+  /// The interval at which ping frames are sent to keep the web-socket
   /// connection alive.
   ///
   /// If `null`, no ping messages are sent.
