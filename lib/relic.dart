@@ -2,6 +2,7 @@ library;
 
 export 'src/adapter/adapter.dart';
 export 'src/adapter/context.dart' hide RequestInternal;
+export 'src/adapter/relic_web_socket.dart';
 export 'src/body/body.dart' show Body;
 export 'src/body/types/body_type.dart' show BodyType;
 export 'src/body/types/mime_type.dart' show MimeType;

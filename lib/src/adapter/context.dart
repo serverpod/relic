@@ -1,5 +1,4 @@
 import '../../relic.dart';
-import 'duplex_stream_channel.dart';
 
 /// An internal interface defining the base contract for request contexts.
 ///
@@ -68,9 +67,9 @@ final class NewContext extends RequestContext
   /// connection is established.
   ///
   /// The provided [DuplexStreamCallback] [c] will be invoked with a
-  /// [DuplexStreamChannel] for managing the bi-directional communication.
+  /// [RelicWebSocket] for managing the bi-directional communication.
   /// Returns a [ConnectContext].
-  ConnectContext connect(final DuplexStreamCallback c) =>
+  ConnectContext connect(final WebSocketCallback c) =>
       ConnectContext._(request, token, c);
 
   @override
@@ -111,7 +110,7 @@ final class HijackContext extends HandledContext {
 /// (e.g., WebSocket) has been established.
 final class ConnectContext extends HandledContext {
   /// The callback function provided to handle the duplex stream connection.
-  final DuplexStreamCallback callback;
+  final WebSocketCallback callback;
   ConnectContext._(super.request, super.token, this.callback) : super._();
 }
 
