@@ -1,12 +1,10 @@
 import 'dart:async';
 import 'dart:io' as io;
-import 'dart:typed_data';
 
 import 'package:stream_channel/stream_channel.dart';
-import 'package:web_socket/io_web_socket.dart';
-import 'package:web_socket/web_socket.dart';
 
 import '../../../relic.dart';
+import 'io_relic_web_socket.dart';
 import 'request.dart';
 import 'response.dart';
 
@@ -57,9 +55,7 @@ class IOAdapter extends Adapter {
     covariant final IOAdapterRequest request,
     final WebSocketCallback callback,
   ) async {
-    final webSocket =
-        await io.WebSocketTransformer.upgrade(request._httpRequest);
-    callback(_IORelicWebSocket(webSocket));
+    callback(await IORelicWebSocket.fromHttpRequest(request._httpRequest));
   }
 
   @override
@@ -72,40 +68,4 @@ class IOAdapterRequest extends AdapterRequest {
 
   @override
   Request toRequest() => fromHttpRequest(_httpRequest);
-}
-
-/// A [RelicWebSocket] implementation for `dart:io` [io.WebSocket]s.
-///
-/// This class wraps an [io.WebSocket] and provides a [WebSocket]
-/// interface for sending and receiving events (binary or text).
-class _IORelicWebSocket implements RelicWebSocket {
-  final io.WebSocket _wrappedSocket;
-  final IOWebSocket _socket;
-
-  _IORelicWebSocket(final io.WebSocket socket)
-      : _wrappedSocket = socket,
-        _socket = IOWebSocket.fromWebSocket(socket);
-
-  @override
-  Duration? get pingInterval => _wrappedSocket.pingInterval;
-
-  @override
-  set pingInterval(final Duration? value) =>
-      _wrappedSocket.pingInterval = value;
-
-  @override
-  Future<void> close([final int? code, final String? reason]) =>
-      _socket.close(code, reason);
-
-  @override
-  Stream<WebSocketEvent> get events => _socket.events;
-
-  @override
-  String get protocol => _socket.protocol;
-
-  @override
-  void sendBytes(final Uint8List b) => _socket.sendBytes(b);
-
-  @override
-  void sendText(final String s) => _socket.sendText(s);
 }

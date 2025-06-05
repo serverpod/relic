@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io' as io;
 import 'dart:isolate';
 import 'dart:typed_data';
@@ -303,16 +304,17 @@ void main() {
       'when the server side disappear, '
       'then client socket closes',
       () async {
-        const pingInterval = Duration(milliseconds: 5);
+        const pingInterval = Duration(milliseconds: 15);
 
         // Setup wait points, signalled from isolate
         final port = Completer<int>();
         final ready = Completer<bool>();
-        final completers = [port, ready];
+        final killed = Completer<bool>();
+        final completers = [port, ready, killed];
         final recv = ReceivePort();
         int idx = 0;
         recv.listen((final e) {
-          // signal received, update associated completer
+          // Signal received! Update associated completer
           completers[idx++].complete(e);
         });
 
@@ -325,7 +327,8 @@ void main() {
             });
           });
           sendPort.send(server.url.port); // signal port
-        }, recv.sendPort);
+        }, recv.sendPort)
+          ..addOnExitListener(recv.sendPort, response: true); // signal killed
 
         final clientSocket = await WebSocket.connect(
             Uri.parse('ws://localhost:${await port.future}'));
@@ -337,15 +340,15 @@ void main() {
               // 1006 CLOSE_ABNORMAL. Indicates that the connection was closed
               // abnormally, e.g., without sending or receiving a Close control
               // frame.
-              //CloseReceived(1006), // <-- correct, but
-              isA<CloseReceived>(), // older dart versions gets it wrong
+              //CloseReceived(1006), // <-- correct, but older dart versions gets it wrong, ..
+              isA<CloseReceived>(), // .. so don't check closeCode
               emitsDone,
             ]));
 
         await ready.future;
 
-        // kill the isolate to stop the server abruptly
-        isolate.kill(priority: Isolate.immediate);
+        isolate.kill();
+        await killed.future;
 
         await check;
       },
@@ -388,4 +391,31 @@ void main() {
       },
     );
   });
+
+  test('closed', () async {
+    await scheduleServer((final ctx) {
+      return ctx.connect(expectAsync1((final serverSocket) async {
+        await for (final _ in serverSocket.events) {
+          expect(serverSocket.close(), _throwsWscClosed);
+          expect(() => serverSocket.sendText('hello'), _throwsWscClosed);
+          expect(() => serverSocket.sendBytes(utf8.encode('hello')),
+              _throwsWscClosed);
+          expect(serverSocket.protocol, '');
+          expect(() => serverSocket.toString(), returnsNormally);
+        }
+      }));
+    });
+    final clientSocket =
+        await WebSocket.connect(Uri.parse('ws://localhost:$_serverPort'));
+    await clientSocket.close();
+    expect(clientSocket.close(), _throwsWscClosed);
+    expect(() => clientSocket.sendText('hello'), _throwsWscClosed);
+    expect(
+        () => clientSocket.sendBytes(utf8.encode('hello')), _throwsWscClosed);
+    expect(clientSocket.events, emitsDone);
+    expect(clientSocket.protocol, '');
+    expect(() => clientSocket.toString(), returnsNormally);
+  });
 }
+
+final _throwsWscClosed = throwsA(isA<WebSocketConnectionClosed>());
