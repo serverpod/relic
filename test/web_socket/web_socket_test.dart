@@ -1,9 +1,11 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io' as io;
 import 'dart:isolate';
 import 'dart:typed_data';
 
 import 'package:relic/relic.dart';
+import 'package:relic/src/adapter/io/io_relic_web_socket.dart';
 import 'package:test/test.dart';
 import 'package:web_socket/web_socket.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
@@ -302,32 +304,34 @@ void main() {
       'when the server side disappear, '
       'then client socket closes',
       () async {
-        const pingInterval = Duration(milliseconds: 5);
+        const pingInterval = Duration(milliseconds: 15);
 
         // Setup wait points, signalled from isolate
         final port = Completer<int>();
         final ready = Completer<bool>();
-        final completers = [port, ready];
+        final killed = Completer<bool>();
+        final completers = [port, ready, killed];
         final recv = ReceivePort();
         int idx = 0;
         recv.listen((final e) {
-          // signal received, update associated completer
+          // Signal received! Update associated completer
           completers[idx++].complete(e);
         });
 
         final isolate = await Isolate.spawn((final sendPort) async {
           final server = await testServe((final ctx) {
             return ctx.connect((final serverSocket) async {
-              serverSocket.pingInterval = pingInterval;
               serverSocket.sendText('running');
               sendPort.send(true); // signal ready
             });
           });
           sendPort.send(server.url.port); // signal port
-        }, recv.sendPort);
+        }, recv.sendPort)
+          ..addOnExitListener(recv.sendPort, response: true); // signal killed
 
-        final clientSocket = await WebSocket.connect(
+        final clientSocket = await IORelicWebSocket.connect(
             Uri.parse('ws://localhost:${await port.future}'));
+        clientSocket.pingInterval = pingInterval;
 
         final check = expectLater(
             clientSocket.events,
@@ -336,15 +340,15 @@ void main() {
               // 1006 CLOSE_ABNORMAL. Indicates that the connection was closed
               // abnormally, e.g., without sending or receiving a Close control
               // frame.
-              //CloseReceived(1006), // <-- correct, but
-              isA<CloseReceived>(), // older dart versions gets it wrong
+              //CloseReceived(1006), // <-- correct, but older dart versions gets it wrong, ..
+              isA<CloseReceived>(), // .. so don't check closeCode
               emitsDone,
             ]));
 
         await ready.future;
 
-        // kill the isolate to stop the server abruptly
-        isolate.kill(priority: Isolate.immediate);
+        isolate.kill();
+        await killed.future;
 
         await check;
       },
@@ -361,6 +365,7 @@ void main() {
         await scheduleServer((final ctx) {
           return ctx.connect(expectAsync1((final serverSocket) async {
             serverSocket.pingInterval = pingInterval;
+            expect(serverSocket.pingInterval, pingInterval);
             await expectLater(
                 serverSocket.events,
                 emitsInOrder([
@@ -387,4 +392,73 @@ void main() {
       },
     );
   });
+
+  test(
+      'Given a web socket connection that has been closed, '
+      'when trying to use close, sendText, or sendBytes, '
+      'then it throws WebSocketConnectionClosed', () async {
+    await scheduleServer((final ctx) {
+      return ctx.connect(expectAsync1((final serverSocket) async {
+        await for (final _ in serverSocket.events) {
+          expect(serverSocket.close(), _throwsWscClosed);
+          expect(() => serverSocket.sendText('hello'), _throwsWscClosed);
+          expect(() => serverSocket.sendBytes(utf8.encode('hello')),
+              _throwsWscClosed);
+          expect(serverSocket.protocol, '');
+          expect(() => serverSocket.toString(), returnsNormally);
+        }
+      }));
+    });
+    final clientSocket =
+        await WebSocket.connect(Uri.parse('ws://localhost:$_serverPort'));
+    await clientSocket.close();
+    expect(clientSocket.close(), _throwsWscClosed);
+    expect(() => clientSocket.sendText('hello'), _throwsWscClosed);
+    expect(
+        () => clientSocket.sendBytes(utf8.encode('hello')), _throwsWscClosed);
+    expect(clientSocket.events, emitsDone);
+    expect(clientSocket.protocol, '');
+    expect(() => clientSocket.toString(), returnsNormally);
+  });
+
+  test(
+      'Given a web socket connection that has been closed, '
+      'when trying to use tryClose, trySendText, or trySendBytes, '
+      'then they return false', () async {
+    await scheduleServer((final ctx) {
+      return ctx.connect(expectAsync1((final serverSocket) async {
+        await for (final _ in serverSocket.events) {
+          expect(serverSocket.tryClose(), completion(isFalse));
+          expect(serverSocket.trySendText('hello'), isFalse);
+          expect(serverSocket.trySendBytes(utf8.encode('hello')), isFalse);
+          expect(serverSocket.protocol, '');
+          expect(() => serverSocket.toString(), returnsNormally);
+        }
+      }));
+    });
+    final clientSocket = await IORelicWebSocket.connect(
+        Uri.parse('ws://localhost:$_serverPort'));
+    await clientSocket.close();
+    expect(clientSocket.tryClose(), completion(isFalse));
+    expect(clientSocket.trySendText('hello'), isFalse);
+    expect(clientSocket.trySendBytes(utf8.encode('hello')), isFalse);
+    expect(clientSocket.events, emitsDone);
+    expect(clientSocket.protocol, '');
+    expect(() => clientSocket.toString(), returnsNormally);
+  });
+
+  test(
+      'Given a web socket connection, '
+      'when calling close, '
+      'then arguments are validated', () async {
+    await scheduleServer((final ctx) {
+      return ctx.connect(expectAsync1((final serverSocket) async {}));
+    });
+    final clientSocket = await IORelicWebSocket.connect(
+        Uri.parse('ws://localhost:$_serverPort'));
+    expect(clientSocket.close(1002), throwsArgumentError);
+    expect(clientSocket.close(3000, '-' * 124), throwsArgumentError);
+  });
 }
+
+final _throwsWscClosed = throwsA(isA<WebSocketConnectionClosed>());
