@@ -336,11 +336,7 @@ void main() {
             clientSocket.events,
             emitsInOrder([
               TextDataReceived('running'),
-              // 1006 CLOSE_ABNORMAL. Indicates that the connection was closed
-              // abnormally, e.g., without sending or receiving a Close control
-              // frame.
-              //CloseReceived(1006), // <-- correct, but older dart versions gets it wrong, ..
-              isA<CloseReceived>(), // .. so don't check closeCode
+              CloseReceived(1001),
               emitsDone,
             ]));
 
