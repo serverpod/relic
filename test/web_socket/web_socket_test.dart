@@ -4,7 +4,6 @@ import 'dart:io' as io;
 import 'dart:isolate';
 import 'dart:typed_data';
 
-import 'package:http/http.dart' as http;
 import 'package:relic/relic.dart';
 import 'package:relic/src/adapter/io/io_relic_web_socket.dart';
 import 'package:test/test.dart';
@@ -284,19 +283,18 @@ void main() {
       final clientSocket = await WebSocket.connect(
           Uri.parse('ws://localhost:${server.url.port}'));
 
-      final check = expectLater(
-        clientSocket.events,
-        emitsInOrder(
-            List.generate(n, (final i) => TextDataReceived('tock-$i'))),
-      );
-
       for (int i = 0; i < n; ++i) {
         // Client remains idle for a period, relying on pings to keep connection alive.
         await Future<void>.delayed(tooLong);
         clientSocket.sendText('tick-$i');
       }
 
-      await check;
+      await expectLater(
+        clientSocket.events,
+        emitsInOrder(
+            List.generate(n, (final i) => TextDataReceived('tock-$i'))),
+      );
+
       await server.close();
     });
 
@@ -459,16 +457,6 @@ void main() {
         Uri.parse('ws://localhost:$_serverPort'));
     expect(clientSocket.close(1002), throwsArgumentError);
     expect(clientSocket.close(3000, '-' * 124), throwsArgumentError);
-  });
-
-  test('f', () async {
-    await scheduleServer((final ctx) {
-      return ctx.connect(expectAsync1((final serverSocket) async {}));
-    });
-    await expectLater(
-        IORelicWebSocket.connect(Uri.parse('ws://localhost:$_serverPort'),
-            protocols: ['not-a-protocol']),
-        throwsA(isA<WebSocketException>()));
   });
 }
 

@@ -50,11 +50,3 @@ abstract interface class RelicWebSocket implements WebSocket {
 
 /// A callback function invoked when a [socket] connection is established.
 typedef WebSocketCallback = void Function(RelicWebSocket webSocket);
-
-abstract interface class Bar {
-  bool tryClose();
-  bool trySendText();
-  bool trySendBytes();
-}
-
-extension type Foo(WebSocket base) implements WebSocket {}
