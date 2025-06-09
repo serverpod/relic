@@ -7,9 +7,9 @@ import 'package:async/async.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart' as parser;
 import 'package:relic/relic.dart';
-import 'package:relic/src/adapter/duplex_stream_channel.dart';
 import 'package:relic/src/headers/codecs/common_types_codecs.dart';
 import 'package:test/test.dart';
+import 'package:web_socket/web_socket.dart';
 
 import 'headers/headers_test_utils.dart';
 import 'ssl/ssl_certs.dart';
@@ -230,20 +230,19 @@ void main() {
 
   test('supports web socket connetions', () async {
     await _scheduleServer((final ctx) {
-      return ctx.connect(expectAsync1((final channel) {
-        expect(
-          channel.stream.first,
-          completion(isA<TextPayload>()
-              .having((final p) => p.data, 'data', equals('Hello'))),
-        );
-        channel.sink.add(const TextPayload('Hello, world!'));
-        channel.close();
+      return ctx.connect(expectAsync1((final serverSocket) async {
+        await for (final e in serverSocket.events) {
+          expect(e, TextDataReceived('Hello'));
+          serverSocket.sendText('Hello, world!');
+          await serverSocket.close();
+        }
       }));
     });
 
-    final ws = await WebSocket.connect('ws://localhost:$_serverPort');
-    ws.add('Hello');
-    expect(ws.first, completion(equals('Hello, world!')));
+    final ws =
+        await WebSocket.connect(Uri.parse('ws://localhost:$_serverPort'));
+    ws.sendText('Hello');
+    expect(ws.events.first, completion(TextDataReceived('Hello, world!')));
   });
 
   test('passes asynchronous exceptions to the parent error zone', () async {

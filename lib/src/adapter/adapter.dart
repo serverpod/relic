@@ -4,7 +4,7 @@ import 'package:stream_channel/stream_channel.dart';
 
 import '../message/request.dart';
 import '../message/response.dart';
-import 'duplex_stream_channel.dart';
+import 'relic_web_socket.dart';
 
 /// A callback function that handles a hijacked connection.
 ///
@@ -61,9 +61,9 @@ abstract class Adapter {
   /// to the provided [callback]. The callback receives a [StreamChannel]
   /// for direct, low-level interaction with the client.
   ///
-  /// This is typically used for protocols like SSE or other custom
-  /// streaming scenarios where the standard request-response model is
-  /// insufficient.
+  /// This is typically used for protocols like SSE or to support custom
+  /// streaming scenarios where the standard request-response model, or
+  /// web-socket communication is insufficient.
   ///
   /// - [request]: The [AdapterRequest] whose connection is to be hijacked.
   /// - [callback]: The [HijackCallback] that will manage the hijacked
@@ -73,19 +73,16 @@ abstract class Adapter {
   Future<void> hijack(
       final AdapterRequest request, final HijackCallback callback);
 
-  /// Establishes a duplex stream connection (e.g., WebSocket) for the given
-  /// [AdapterRequest].
+  /// Establishes a web-socket connection for the given [AdapterRequest].
   ///
-  /// This method is used to upgrade a connection or establish a new
-  /// bi-directional communication channel. The provided [callback] will
-  /// be invoked with a [DuplexStreamChannel] that allows sending and
-  /// receiving [Payload] messages.
+  /// The provided [callback] will be invoked with a [RelicWebSocket] that
+  /// allows sending and receiving messages the web-socket connection.
   ///
   /// - [request]: The [AdapterRequest] for which to establish the connection.
-  /// - [callback]: The [DuplexStreamCallback] that will handle the duplex
-  /// stream.
+  /// - [callback]: The [WebSocketCallback] that will be invoked on inbound
+  ///   connection requests.
   Future<void> connect(
-      final AdapterRequest request, final DuplexStreamCallback callback);
+      final AdapterRequest request, final WebSocketCallback callback);
 
   /// Gracefully shuts down the adapter.
   ///
