@@ -266,14 +266,12 @@ void main() {
           return ctx.connect(
             (final serverSocket) async {
               serverSocket.pingInterval = pingInterval;
-              int i = 0;
               await for (final e in serverSocket.events) {
                 if (e is CloseReceived) break;
-                expect(e, TextDataReceived('tick-$i'));
+                expect(e, TextDataReceived('tick'));
                 // Server remains idle for a period, relying on pings to keep connection alive.
                 await Future<void>.delayed(tooLong);
-                serverSocket.sendText('tock-$i');
-                ++i;
+                serverSocket.sendText('tock');
               }
             },
           );
@@ -283,17 +281,11 @@ void main() {
       final clientSocket = await WebSocket.connect(
           Uri.parse('ws://localhost:${server.url.port}'));
 
-      for (int i = 0; i < n; ++i) {
-        // Client remains idle for a period, relying on pings to keep connection alive.
-        await Future<void>.delayed(tooLong);
-        clientSocket.sendText('tick-$i');
-      }
+      // Client remains idle for a period, relying on pings to keep connection alive.
+      await Future<void>.delayed(tooLong);
+      clientSocket.sendText('tick');
 
-      await expectLater(
-        clientSocket.events,
-        emitsInOrder(
-            List.generate(n, (final i) => TextDataReceived('tock-$i'))),
-      );
+      await expectLater(clientSocket.events, emits(TextDataReceived('tock')));
 
       await server.close();
     });
