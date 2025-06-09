@@ -261,7 +261,7 @@ void main() {
       const pingInterval = Duration(milliseconds: 5);
       final tooLong = pingInterval * 3; // Must be > pingInterval
 
-      final server = await testServe(
+      await scheduleServer(
         (final ctx) {
           return ctx.connect(
             (final serverSocket) async {
@@ -278,16 +278,14 @@ void main() {
         },
       );
 
-      final clientSocket = await WebSocket.connect(
-          Uri.parse('ws://localhost:${server.url.port}'));
+      final clientSocket =
+          await WebSocket.connect(Uri.parse('ws://localhost:$_serverPort'));
 
       // Client remains idle for a period, relying on pings to keep connection alive.
       await Future<void>.delayed(tooLong);
       clientSocket.sendText('tick');
 
       await expectLater(clientSocket.events, emits(TextDataReceived('tock')));
-
-      await server.close();
     });
 
     test(
