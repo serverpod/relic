@@ -4,6 +4,7 @@ import 'dart:io' as io;
 import 'dart:isolate';
 import 'dart:typed_data';
 
+import 'package:http/http.dart' as http;
 import 'package:relic/relic.dart';
 import 'package:relic/src/adapter/io/io_relic_web_socket.dart';
 import 'package:test/test.dart';
@@ -458,6 +459,16 @@ void main() {
         Uri.parse('ws://localhost:$_serverPort'));
     expect(clientSocket.close(1002), throwsArgumentError);
     expect(clientSocket.close(3000, '-' * 124), throwsArgumentError);
+  });
+
+  test('f', () async {
+    await scheduleServer((final ctx) {
+      return ctx.connect(expectAsync1((final serverSocket) async {}));
+    });
+    await expectLater(
+        IORelicWebSocket.connect(Uri.parse('ws://localhost:$_serverPort'),
+            protocols: ['not-a-protocol']),
+        throwsA(isA<WebSocketException>()));
   });
 }
 
