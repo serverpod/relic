@@ -2,6 +2,7 @@ import '../adapter/context.dart';
 import '../handler/handler.dart';
 import '../method/request_method.dart';
 import '../router/router.dart';
+import 'context_property.dart';
 import 'middleware.dart';
 
 Middleware routeWith<T>(
@@ -10,7 +11,7 @@ Middleware routeWith<T>(
 }) =>
     _RoutingMiddlewareBuilder(router, toHandler: toHandler).build();
 
-final _pathParametersStorage = Expando<Map<Symbol, String>>();
+final _pathParametersStorage = ContextProperty<Map<Symbol, String>>();
 
 class _RoutingMiddlewareBuilder<T> {
   final Router<T> _router;
@@ -47,12 +48,10 @@ class _RoutingMiddlewareBuilder<T> {
 }
 
 extension RequestContextEx on RequestContext {
-  Map<Symbol, String> get pathParameters =>
-      _pathParametersStorage[token] ??
-      (throw StateError('Add RoutingMiddleware!'));
+  Map<Symbol, String> get pathParameters => _pathParametersStorage[this];
 
   set _pathParameters(final Map<Symbol, String> value) =>
-      _pathParametersStorage[token] = value;
+      _pathParametersStorage[this] = value;
 }
 
 bool _isSubtype<S, T>() => <S>[] is List<T>;
