@@ -23,11 +23,12 @@ class ConnectionInfo {
   });
 
   /// A [ConnectionInfo] object representing an unknown connection.
-  static ConnectionInfo empty = ConnectionInfo(
-    remoteAddress: IPv6Address.any,
-    remotePort: 0,
-    localPort: 0,
-  );
+  ConnectionInfo.unknown()
+      : this(
+          remoteAddress: IPv6Address.any,
+          remotePort: 0,
+          localPort: 0,
+        );
 
   @override
   String toString() {

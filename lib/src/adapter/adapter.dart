@@ -2,8 +2,9 @@ import 'dart:async';
 
 import 'package:stream_channel/stream_channel.dart';
 
-import '../message/request.dart';
 import '../message/response.dart';
+import 'context.dart';
+import 'ip_address.dart';
 import 'relic_web_socket.dart';
 
 /// A callback function that handles a hijacked connection.
@@ -17,19 +18,13 @@ import 'relic_web_socket.dart';
 /// gains direct access to the underlying socket or data stream.
 typedef HijackCallback = void Function(StreamChannel<List<int>>);
 
-/// Base class for adapter-specific request objects.
+/// Interface for adapter-specific request objects.
 ///
 /// This allows an [Adapter] to encapsulate and track internal state
 /// associated with an incoming request. Adapter-specific requests
-/// can then be converted into a standard [Request] object for processing
+/// can then be converted into a standard [RequestContext] object for processing
 /// by the application.
-abstract class AdapterRequest {
-  /// Converts this adapter-specific request into a standard [Request] object.
-  ///
-  /// This allows the core application logic to work with a consistent
-  /// request model, abstracting away the details of the underlying adapter.
-  Request toRequest();
-}
+abstract interface class AdapterRequest {}
 
 /// An interface for adapters that bridge Relic to specific server implementations.
 ///
@@ -38,11 +33,24 @@ abstract class AdapterRequest {
 /// [AdapterRequest] format, and then handing them off to the Relic core.
 /// They also handle sending back responses or managing hijacked connections.
 abstract class Adapter {
+  /// The [IPAddress] the underlying server is listening on.
+  IPAddress get address;
+
+  /// The port number the underlying server is listening on.
+  int get port;
+
   /// A stream of incoming requests from the underlying source.
   ///
   /// Each event in the stream is an [AdapterRequest] representing a new
   /// request that needs to be processed by the application.
   Stream<AdapterRequest> get requests;
+
+  /// Converts an [AdapterRequest] into a [NewContext].
+  ///
+  /// This method is called by the Relic core when a new request is received.
+  /// The adapter is responsible for translating the [request]
+  /// into a [NewContext] that can be used by the application.
+  NewContext convert(final AdapterRequest request);
 
   /// Sends a [Response] back to the client for the given [AdapterRequest].
   ///
