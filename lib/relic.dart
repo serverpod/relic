@@ -1,7 +1,7 @@
 library;
 
 export 'src/adapter/adapter.dart';
-export 'src/adapter/context.dart' hide RequestInternal;
+export 'src/adapter/context.dart' hide buildNewContext;
 export 'src/adapter/relic_web_socket.dart';
 export 'src/body/body.dart' show Body;
 export 'src/body/types/body_type.dart' show BodyType;

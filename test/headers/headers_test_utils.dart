@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:relic/relic.dart';
 import 'package:relic/src/adapter/io/bind_http_server.dart';
 import 'package:relic/src/adapter/io/io_adapter.dart';
+import 'package:relic/src/adapter/ip_address.dart';
 import 'package:test/test.dart';
 
 /// Thrown when the server returns a 400 status code.
@@ -33,21 +34,17 @@ extension RelicServerTestEx on RelicServer {
     final adapter = this.adapter;
     if (adapter is! IOAdapter) throw ArgumentError();
 
-    if (adapter.address.isLoopback) {
-      return Uri(scheme: 'http', host: 'localhost', port: adapter.port);
-    }
-
-    if (adapter.address.type == InternetAddressType.IPv6) {
+    if (adapter.address is IPv6Address) {
       return Uri(
         scheme: 'http',
-        host: '[${adapter.address.address}]',
+        host: '[${adapter.address}]',
         port: adapter.port,
       );
     }
 
     return Uri(
       scheme: 'http',
-      host: adapter.address.address,
+      host: adapter.address.toString(),
       port: adapter.port,
     );
   }

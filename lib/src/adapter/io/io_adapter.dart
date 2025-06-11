@@ -4,6 +4,8 @@ import 'dart:io' as io;
 import 'package:stream_channel/stream_channel.dart';
 
 import '../../../relic.dart';
+import '../context.dart';
+import '../ip_address.dart';
 import 'io_relic_web_socket.dart';
 import 'request.dart';
 import 'response.dart';
@@ -22,14 +24,22 @@ class IOAdapter extends Adapter {
   /// expose them through the [requests] stream.
   IOAdapter(this._server);
 
-  /// The [io.InternetAddress] the underlying server is listening on.
-  io.InternetAddress get address => _server.address;
+  @override
+  late final IPAddress address =
+      IPAddress.fromBytes(_server.address.rawAddress);
 
-  /// The port number the underlying server is listening on.
-  int get port => _server.port;
+  @override
+  late final int port = _server.port;
 
   @override
   Stream<AdapterRequest> get requests => _server.map(IOAdapterRequest.new);
+
+  @override
+  NewContext convert(covariant final IOAdapterRequest request) {
+    final httpRequest = request._httpRequest;
+    return buildNewContext(fromHttpRequest(httpRequest),
+        connectionInfoFromHttpRequest(httpRequest));
+  }
 
   @override
   Future<void> respond(
@@ -62,10 +72,7 @@ class IOAdapter extends Adapter {
   Future<void> close() => _server.close(force: true);
 }
 
-class IOAdapterRequest extends AdapterRequest {
+class IOAdapterRequest implements AdapterRequest {
   final io.HttpRequest _httpRequest;
   IOAdapterRequest(this._httpRequest);
-
-  @override
-  Request toRequest() => fromHttpRequest(_httpRequest);
 }

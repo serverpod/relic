@@ -33,6 +33,9 @@ void main() {
           'Given ConnectionInfo.empty, '
           'when its properties are accessed, '
           'then they match the expected default values.', () {
+        // Act
+        final emptyInfo = ConnectionInfo.unknown();
+
         // Assert
         final emptyInfo = ConnectionInfo.empty;
         expect(emptyInfo.remoteAddress, equals(IPv6Address.any));
@@ -83,7 +86,7 @@ void main() {
           'when toString() is called, '
           'then it returns the correctly formatted string for empty.', () {
         // Arrange
-        final emptyInfo = ConnectionInfo.empty;
+        final emptyInfo = ConnectionInfo.unknown();
         const expectedString = 'ConnectionInfo(remote: [::]:0, local port:0)';
 
         // Act & Assert

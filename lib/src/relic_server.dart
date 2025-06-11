@@ -7,7 +7,6 @@ import 'handler/handler.dart';
 import 'headers/exception/header_exception.dart';
 import 'headers/standard_headers_extensions.dart';
 import 'logger/logger.dart';
-import 'message/request.dart';
 import 'message/response.dart';
 import 'util/util.dart';
 
@@ -79,9 +78,9 @@ class RelicServer {
     if (handler == null) return; // if close has been called
 
     // Wrap the handler with our middleware
-    late Request request;
+    final NewContext ctx;
     try {
-      request = adapterRequest.toRequest();
+      ctx = adapter.convert(adapterRequest);
     } catch (error, stackTrace) {
       logMessage(
         'Error reading request.\n$error',
@@ -93,8 +92,6 @@ class RelicServer {
     }
 
     try {
-      final ctx = request
-          .toContext(adapterRequest); // adapter request will be the token
       final newCtx = await handler(ctx);
       return switch (newCtx) {
         final ResponseContext rc =>
@@ -104,7 +101,7 @@ class RelicServer {
       };
     } catch (error, stackTrace) {
       _logError(
-        request,
+        ctx,
         'Unhandled error in mounted handler.\n$error',
         stackTrace,
       );
@@ -134,7 +131,7 @@ class RelicServer {
       } on HeaderException catch (error, stackTrace) {
         // If the request headers are invalid, respond with a 400 Bad Request status.
         _logError(
-          ctx.request,
+          ctx,
           'Error parsing request headers.\n$error',
           stackTrace,
         );
@@ -146,8 +143,9 @@ class RelicServer {
   }
 }
 
-void _logError(
-    final Request request, final String message, final StackTrace stackTrace) {
+void _logError(final RequestContext ctx, final String message,
+    final StackTrace stackTrace) {
+  final request = ctx.request;
   final buffer = StringBuffer();
   buffer.write('${request.method} ${request.requestedUri.path}');
   if (request.requestedUri.query.isNotEmpty) {

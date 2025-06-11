@@ -18,7 +18,7 @@ Future<Response> makeRequest(
 }) async {
   final rootedHandler = _rootHandler(handlerPath, handler);
   final request = _fromPath(path, headers, method: method);
-  final ctx = await rootedHandler(request.toContext(Object()));
+  final ctx = await rootedHandler(buildNewContext(request));
   if (ctx is! ResponseContext) throw ArgumentError(ctx);
   return ctx.response;
 }
@@ -53,7 +53,7 @@ Handler _rootHandler(final String? path, final Handler handler) {
 
     final relativeRequest = request.copyWith(path: path);
 
-    return handler(relativeRequest.toContext(Object()));
+    return handler(buildNewContext(relativeRequest));
   };
 }
 
