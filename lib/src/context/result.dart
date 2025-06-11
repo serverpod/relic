@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import '../../relic.dart';
+import '../adapter/connection_info.dart';
 
 part 'message.dart';
 part 'request.dart';

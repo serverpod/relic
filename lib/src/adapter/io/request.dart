@@ -5,7 +5,9 @@ import '../../body/body.dart';
 import '../../body/types/mime_type.dart';
 import '../../context/result.dart';
 import '../../headers/headers.dart';
+import '../../ip_address/ip_address.dart';
 import '../../router/method.dart';
+import '../connection_info.dart';
 
 /// Creates a new [Request] from an [io.HttpRequest].
 Request fromHttpRequest(final io.HttpRequest request) {
@@ -16,6 +18,22 @@ Request fromHttpRequest(final io.HttpRequest request) {
     protocolVersion: request.protocolVersion,
     headers: headersFromHttpRequest(request),
     body: bodyFromHttpRequest(request),
+    connectionInfo: connectionInfoFromHttpConnectionInfo(
+      request.connectionInfo,
+    ),
+  );
+}
+
+ConnectionInfo connectionInfoFromHttpConnectionInfo(
+  final io.HttpConnectionInfo? info,
+) {
+  if (info == null) return ConnectionInfo.empty;
+  return ConnectionInfo(
+    remote: SocketAddress(
+      address: IPAddress.fromBytes(info.remoteAddress.rawAddress),
+      port: info.remotePort,
+    ),
+    localPort: info.localPort,
   );
 }
 

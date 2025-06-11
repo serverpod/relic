@@ -58,6 +58,13 @@ class Request extends Message {
   /// The original [Uri] for the request.
   final Uri url;
 
+  /// Information about the IP connection carrying the request.
+  ///
+  /// Be aware that this only contains information about the last leg of the
+  /// overall HTTP connection, typically from the nearest load balancer to the
+  /// server.
+  final ConnectionInfo connectionInfo;
+
   /// Creates a new [Request].
   Request._(
     this.method,
@@ -66,7 +73,9 @@ class Request extends Message {
     final Headers? headers,
     final String? protocolVersion,
     final Body? body,
+    final ConnectionInfo? connectionInfo,
   }) : protocolVersion = protocolVersion ?? '1.1',
+       connectionInfo = connectionInfo ?? ConnectionInfo.empty,
        super(body: body ?? Body.empty(), headers: headers ?? Headers.empty()) {
     try {
       // Trigger URI parsing methods that may throw format exception (in Request
@@ -99,6 +108,7 @@ class Request extends Message {
       headers: headers ?? this.headers,
       protocolVersion: protocolVersion,
       body: body ?? this.body,
+      connectionInfo: connectionInfo,
     );
   }
 
