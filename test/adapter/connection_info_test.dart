@@ -28,19 +28,18 @@ void main() {
       });
     });
 
-    group('Static ConnectionInfo.empty', () {
+    group('Static ConnectionInfo.unknown()', () {
       test(
-          'Given ConnectionInfo.empty, '
+          'Given ConnectionInfo.unknown(), '
           'when its properties are accessed, '
           'then they match the expected default values.', () {
         // Act
-        final emptyInfo = ConnectionInfo.unknown();
+        final unknownInfo = ConnectionInfo.unknown();
 
         // Assert
-        final emptyInfo = ConnectionInfo.empty;
-        expect(emptyInfo.remoteAddress, equals(IPv6Address.any));
-        expect(emptyInfo.remotePort, equals(0));
-        expect(emptyInfo.localPort, equals(0));
+        expect(unknownInfo.remoteAddress, equals(IPv6Address.any));
+        expect(unknownInfo.remotePort, equals(0));
+        expect(unknownInfo.localPort, equals(0));
       });
     });
 
@@ -82,7 +81,7 @@ void main() {
       });
 
       test(
-          'Given ConnectionInfo.empty, '
+          'Given ConnectionInfo.unknown(), '
           'when toString() is called, '
           'then it returns the correctly formatted string for empty.', () {
         // Arrange
