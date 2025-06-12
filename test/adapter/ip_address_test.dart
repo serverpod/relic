@@ -278,7 +278,7 @@ void main() {
       // Adding a test for this behavior if it's intended.
       test(
           'Given octets out of 0-255 range, '
-          'when created, '
+          'when IPAddress created via IPAddress.fromBytes, '
           'then bytes are truncated (due to Uint8List behavior)', () {
         // Arrange
         const a = 256, b = -1, c = 511, d = 0; // Will be 0, 255, 255, 0
@@ -286,12 +286,20 @@ void main() {
         const expectedString = '0.255.255.0';
 
         // Act
-        final ipAddress = IPv4Address.fromOctets(a, b, c, d);
+        final ipAddress = IPAddress.fromBytes(Uint8List.fromList([a, b, c, d]));
 
         // Assert
         expect(ipAddress.bytes, equals(expectedBytes));
         expect(ipAddress.toString(), equals(expectedString));
       });
+    });
+
+    test(
+        'Given octets out of 0-255 range, '
+        'when created, '
+        'then ArgumentError is thrown', () {
+      expect(
+          () => IPv4Address.fromOctets(256, -1, 511, 0), throwsArgumentError);
     });
 
     group('Factory IPv4Address.fromInt()', () {
@@ -886,6 +894,20 @@ void main() {
       final ip = IPAddress.parse('::');
       // Act & Assert
       expect(() => ip.bytes[0] = 1, throwsUnsupportedError);
+    });
+
+    test('Changing Uint8List passed in ctor has no effect', () {
+      // Arange
+      final bytes = Uint8List(16);
+      final ip = IPAddress.fromBytes(bytes);
+      expect(ip, IPv6Address.any);
+
+      // Act
+      bytes[0] = 1;
+
+      // Assert
+      expect(ip, IPv6Address.any);
+      expect(ip.bytes[0], isNot(1));
     });
   });
 }
