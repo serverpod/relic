@@ -46,4 +46,7 @@ jobs:
           ./benchmark/benchmark.exe run --store-in-git-notes --verbose
 
       - name: Push Benchmark Data
+        # This step runs only if the pull request is NOT from a fork.
+        # Otherwise it would fail as it requires git push access
+        if: github.event.pull_request.head.repo.fork == false
         run: git push origin refs/notes/benchmarks # This
