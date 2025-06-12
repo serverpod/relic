@@ -1,13 +1,13 @@
 import 'dart:typed_data';
 
-import 'package:collection/collection.dart';
 import 'package:meta/meta.dart';
 
 @immutable
 sealed class IPAddress {
   final Uint8List bytes; // immutable, network order (big-endian)
 
-  IPAddress._(final Uint8List bytes) : bytes = bytes.asUnmodifiableView();
+  IPAddress._(final Uint8List bytes)
+      : bytes = Uint8List.fromList(bytes).asUnmodifiableView();
 
   /// Factory constructor for automatic type detection
   factory IPAddress.parse(final String address) {
@@ -31,11 +31,20 @@ sealed class IPAddress {
   bool operator ==(final Object other) {
     if (identical(this, other)) return true;
     if (other is! IPAddress) return false;
-    return bytes.equals(other.bytes);
+    return _bytesEqual(bytes, other.bytes);
   }
 
+  static bool _bytesEqual(final Uint8List a, final Uint8List b) {
+    if (a.length != b.length) return false;
+    for (var i = 0; i < a.length; i++) {
+      if (a[i] != b[i]) return false;
+    }
+    return true;
+  }
+
+  late final int _hash = Object.hashAll(bytes);
   @override
-  int get hashCode => Object.hashAll(bytes);
+  int get hashCode => _hash;
 }
 
 /// IPv4 address implementation
@@ -64,7 +73,13 @@ final class IPv4Address extends IPAddress {
   /// Create IPv4 from individual octets
   factory IPv4Address.fromOctets(
       final int a, final int b, final int c, final int d) {
-    return IPv4Address._(Uint8List.fromList([a, b, c, d]));
+    final bytes = <int>[a, b, c, d];
+    for (final segment in bytes) {
+      if (segment < 0 || segment > 0xFF) {
+        throw ArgumentError('Invalid IPv4 segment: $segment');
+      }
+    }
+    return IPv4Address._(Uint8List.fromList(bytes));
   }
 
   /// Create IPv4 from 32-bit integer
