@@ -1,4 +1,5 @@
 import '../../relic.dart';
+import 'connection_info.dart';
 
 /// An internal interface defining the base contract for request contexts.
 ///
@@ -27,8 +28,11 @@ sealed class RequestContext implements _RequestContextInterface {
   /// [ResponseContext]), this [token] remains constant. This is useful for
   /// associating request-specific state, for example, with [Expando] objects
   /// in middleware.
-  final Object token;
-  RequestContext._(this.request, this.token);
+  Object get token => connectionInfo;
+
+  final ConnectionInfo connectionInfo;
+
+  RequestContext._(this.request, this.connectionInfo);
 }
 
 /// An interface for request contexts that can be transitioned to a state
@@ -57,11 +61,11 @@ abstract interface class HijackableContext implements _RequestContextInterface {
 /// a [HijackContext] via [hijack], or a [ConnectContext] via [connect].
 final class NewContext extends RequestContext
     implements RespondableContext, HijackableContext {
-  NewContext._(super.request, super.token) : super._();
+  NewContext._(super.request, super.connectionInfo) : super._();
 
   @override
   HijackContext hijack(final HijackCallback c) =>
-      HijackContext._(request, token, c);
+      HijackContext._(request, connectionInfo, c);
 
   /// Transitions this context to a state where a duplex stream (e.g., WebSocket)
   /// connection is established.
@@ -70,11 +74,11 @@ final class NewContext extends RequestContext
   /// [RelicWebSocket] for managing the bi-directional communication.
   /// Returns a [ConnectContext].
   ConnectContext connect(final WebSocketCallback c) =>
-      ConnectContext._(request, token, c);
+      ConnectContext._(request, connectionInfo, c);
 
   @override
   ResponseContext withResponse(final Response r) =>
-      ResponseContext._(request, token, r);
+      ResponseContext._(request, connectionInfo, r);
 }
 
 /// A sealed base class for contexts that represent a handled request.
@@ -83,7 +87,7 @@ final class NewContext extends RequestContext
 /// ([ResponseContext]), the connection has been hijacked ([HijackContext]),
 /// or a duplex stream connection has been established ([ConnectContext]).
 sealed class HandledContext extends RequestContext {
-  HandledContext._(super.request, super.token) : super._();
+  HandledContext._(super.request, super.connectionInfo) : super._();
 }
 
 /// A [RequestContext] state indicating that a [Response] has been generated.
@@ -91,11 +95,12 @@ final class ResponseContext extends HandledContext
     implements RespondableContext {
   /// The response associated with this context.
   final Response response;
-  ResponseContext._(super.request, super.token, this.response) : super._();
+  ResponseContext._(super.request, super.connectionInfo, this.response)
+      : super._();
 
   @override
   ResponseContext withResponse(final Response r) =>
-      ResponseContext._(request, token, r);
+      ResponseContext._(request, connectionInfo, r);
 }
 
 /// A [RequestContext] state indicating that the underlying connection has been
@@ -103,7 +108,8 @@ final class ResponseContext extends HandledContext
 final class HijackContext extends HandledContext {
   /// The callback function provided to handle the hijacked connection.
   final HijackCallback callback;
-  HijackContext._(super.request, super.token, this.callback) : super._();
+  HijackContext._(super.request, super.connectionInfo, this.callback)
+      : super._();
 }
 
 /// A [RequestContext] state indicating that a duplex stream connection
@@ -111,14 +117,10 @@ final class HijackContext extends HandledContext {
 final class ConnectContext extends HandledContext {
   /// The callback function provided to handle the duplex stream connection.
   final WebSocketCallback callback;
-  ConnectContext._(super.request, super.token, this.callback) : super._();
+  ConnectContext._(super.request, super.connectionInfo, this.callback)
+      : super._();
 }
 
-/// Internal extension methods for [Request].
-extension RequestInternal on Request {
-  /// Creates a new [NewContext] from this [Request].
-  ///
-  /// This is the initial context state for an incoming request, using the
-  /// provided [token] to uniquely identify the request throughout its lifecycle.
-  NewContext toContext(final Object token) => NewContext._(this, token);
-}
+NewContext buildNewContext(final Request request,
+        [final ConnectionInfo? connectionInfo]) =>
+    NewContext._(request, connectionInfo ?? ConnectionInfo.unknown());
