@@ -10,21 +10,21 @@ void main() {
           'when a ConnectionInfo object is created, '
           'then its properties are set correctly.', () {
         // Arrange
-        final remoteIp = IPAddress.parse('192.168.1.100');
-        const remoteP = 12345;
-        const localP = 8080;
+        final remoteAddress = IPAddress.parse('192.168.1.100');
+        const remotePort = 12345;
+        const localPort = 8080;
 
         // Act
         final connectionInfo = ConnectionInfo(
-          remoteAddress: remoteIp,
-          remotePort: remoteP,
-          localPort: localP,
+          remoteAddress: remoteAddress,
+          remotePort: remotePort,
+          localPort: localPort,
         );
 
         // Assert
-        expect(connectionInfo.remoteAddress, equals(remoteIp));
-        expect(connectionInfo.remotePort, equals(remoteP));
-        expect(connectionInfo.localPort, equals(localP));
+        expect(connectionInfo.remoteAddress, equals(remoteAddress));
+        expect(connectionInfo.remotePort, equals(remotePort));
+        expect(connectionInfo.localPort, equals(localPort));
       });
     });
 
@@ -33,10 +33,8 @@ void main() {
           'Given ConnectionInfo.empty, '
           'when its properties are accessed, '
           'then they match the expected default values.', () {
-        // Act
-        final emptyInfo = ConnectionInfo.empty;
-
         // Assert
+        final emptyInfo = ConnectionInfo.empty;
         expect(emptyInfo.remoteAddress, equals(IPv6Address.any));
         expect(emptyInfo.remotePort, equals(0));
         expect(emptyInfo.localPort, equals(0));
@@ -49,22 +47,35 @@ void main() {
           'when toString() is called, '
           'then it returns the correctly formatted string.', () {
         // Arrange
-        final remoteIp = IPAddress.parse('10.0.0.5');
-        const remoteP = 54321;
-        const localP = 9000;
         final connectionInfo = ConnectionInfo(
-          remoteAddress: remoteIp,
-          remotePort: remoteP,
-          localPort: localP,
+          remoteAddress: IPAddress.parse('10.0.0.5'),
+          remotePort: 54321,
+          localPort: 9000,
         );
         const expectedString =
             'ConnectionInfo(remote: 10.0.0.5:54321, local port:9000)';
 
         // Act
-        final actualString = connectionInfo.toString();
 
         // Assert
-        expect(actualString, equals(expectedString));
+        expect(connectionInfo.toString(), equals(expectedString));
+      });
+
+      test(
+          'Given a ConnectionInfo object with IPv6 address, '
+          'when toString() is called, '
+          'then it returns the correctly formatted string with brackets.', () {
+        // Arrange
+        final connectionInfo = ConnectionInfo(
+          remoteAddress: IPAddress.parse('2001:db8::1'),
+          remotePort: 443,
+          localPort: 8080,
+        );
+        const expectedString =
+            'ConnectionInfo(remote: [2001:db8::1]:443, local port:8080)';
+
+        // Act & Assert
+        expect(connectionInfo.toString(), equals(expectedString));
       });
 
       test(
@@ -75,11 +86,8 @@ void main() {
         final emptyInfo = ConnectionInfo.empty;
         const expectedString = 'ConnectionInfo(remote: [::]:0, local port:0)';
 
-        // Act
-        final actualString = emptyInfo.toString();
-
-        // Assert
-        expect(actualString, equals(expectedString));
+        // Act & Assert
+        expect(emptyInfo.toString(), equals(expectedString));
       });
     });
   });
