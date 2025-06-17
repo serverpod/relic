@@ -1,7 +1,7 @@
 import '../method/request_method.dart';
 import 'headers.dart';
 import 'typed/typed_headers.dart';
-import 'typed/forwarded_header.dart';
+import 'typed/headers/forwarded_header.dart';
 
 extension HeadersEx on Headers {
   DateTime? get date => Headers.date[this]();
@@ -87,6 +87,7 @@ extension HeadersEx on Headers {
       Headers.crossOriginEmbedderPolicy[this]();
   CrossOriginOpenerPolicyHeader? get crossOriginOpenerPolicy =>
       Headers.crossOriginOpenerPolicy[this]();
+  ForwardedHeader? get forwarded => Headers.forwarded[this]();
 }
 
 extension MutableHeadersEx on MutableHeaders {
