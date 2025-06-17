@@ -23,6 +23,7 @@ export 'headers/cross_origin_resource_policy_header.dart';
 export 'headers/etag_condition_header.dart';
 export 'headers/etag_header.dart' hide InternalEx;
 export 'headers/expect_header.dart';
+export 'headers/forwarded_header.dart';
 export 'headers/from_header.dart';
 export 'headers/if_range_header.dart';
 export 'headers/permission_policy_header.dart';
