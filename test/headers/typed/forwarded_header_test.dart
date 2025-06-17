@@ -8,14 +8,11 @@ void main() {
           'when parsing "for=_gazonk", '
           'then the ForwardedHeader contains one element with a ForwardedNode for "for".',
           () {
-        // Arrange
         const headerValue = 'for="_gazonk"';
         const expectedNode = ForwardedIdentifier('_gazonk');
 
-        // Act
         final parsedHeader = ForwardedHeader.parse([headerValue]);
 
-        // Assert
         expect(parsedHeader, isNotNull);
         expect(parsedHeader.elements, hasLength(1));
         final element = parsedHeader.elements.first;
@@ -30,14 +27,11 @@ void main() {
           'when parsing \'For="[2001:db8:cafe::17]:4711"\', '
           'then the ForwardedHeader contains one element with an IPv6 ForwardedNode for "for".',
           () {
-        // Arrange
         const headerValue = 'For="[2001:db8:cafe::17]:4711"';
         const expectedNode = ForwardedIdentifier('[2001:db8:cafe::17]', '4711');
 
-        // Act
         final parsedHeader = ForwardedHeader.parse([headerValue]);
 
-        // Assert
         expect(parsedHeader, isNotNull);
         expect(parsedHeader.elements, hasLength(1));
         final element = parsedHeader.elements.first;
@@ -47,15 +41,12 @@ void main() {
       test(
           'when parsing "for=192.0.2.60;proto=http;by=203.0.113.43", '
           'then all parameters are correctly parsed.', () {
-        // Arrange
         const headerValue = 'for=192.0.2.60;proto=http;by=203.0.113.43';
         const expectedForNode = ForwardedIdentifier('192.0.2.60');
         const expectedByNode = ForwardedIdentifier('203.0.113.43');
 
-        // Act
         final parsedHeader = ForwardedHeader.parse([headerValue]);
 
-        // Assert
         expect(parsedHeader, isNotNull);
         expect(parsedHeader.elements, hasLength(1));
         final element = parsedHeader.elements.first;
@@ -68,14 +59,11 @@ void main() {
       test(
           'when parsing "by=example.com;host=myhost.local;ext=foo", '
           'then by, host, and extension parameters are correctly parsed.', () {
-        // Arrange
         const headerValue = 'by=example.com;host=myhost.local;ext=foo';
         const expectedByNode = ForwardedIdentifier('example.com');
 
-        // Act
         final parsedHeader = ForwardedHeader.parse([headerValue]);
 
-        // Assert
         expect(parsedHeader, isNotNull);
         expect(parsedHeader.elements, hasLength(1));
         final element = parsedHeader.elements.first;
@@ -90,14 +78,11 @@ void main() {
       test(
           'when parsing "for=unknown", '
           'then the "for" node is "unknown".', () {
-        // Arrange
         const headerValue = 'for=unknown';
         const expectedNode = ForwardedIdentifier('unknown');
 
-        // Act
         final parsedHeader = ForwardedHeader.parse([headerValue]);
 
-        // Assert
         expect(parsedHeader, isNotNull);
         expect(parsedHeader.elements.first.forwardedFor, equals(expectedNode));
       });
@@ -105,14 +90,11 @@ void main() {
       test(
           'when parsing with mixed case parameter names like "FoR=1.2.3.4;PrOtO=https", '
           'then parameters are parsed case-insensitively.', () {
-        // Arrange
         const headerValue = 'FoR=1.2.3.4;PrOtO=https';
         const expectedForNode = ForwardedIdentifier('1.2.3.4');
 
-        // Act
         final parsedHeader = ForwardedHeader.parse([headerValue]);
 
-        // Assert
         expect(parsedHeader, isNotNull);
         expect(parsedHeader.elements, hasLength(1));
         final element = parsedHeader.elements.first;
@@ -125,15 +107,12 @@ void main() {
       test(
           'when parsing "for=192.0.2.43, for=198.51.100.17", '
           'then two elements are parsed correctly.', () {
-        // Arrange
         const headerValue = 'for=192.0.2.43, for=198.51.100.17';
         const expectedNode1 = ForwardedIdentifier('192.0.2.43');
         const expectedNode2 = ForwardedIdentifier('198.51.100.17');
 
-        // Act
         final parsedHeader = ForwardedHeader.parse([headerValue]);
 
-        // Assert
         expect(parsedHeader, isNotNull);
         expect(parsedHeader.elements, hasLength(2));
         expect(parsedHeader.elements[0].forwardedFor, equals(expectedNode1));
@@ -143,19 +122,14 @@ void main() {
       test(
           'when parsing from multiple header lines ["for=client1", "for=proxy1"], '
           'then they are combined and parsed as two elements.', () {
-        // Arrange
-        final headerValues = [
-          'for=client1',
-          'for=proxy1'
-        ]; // Simulates multiple header fields
+        // Simulates multiple header fields
+        final headerValues = ['for=client1', 'for=proxy1'];
         const expectedNode1 = ForwardedIdentifier('client1');
         const expectedNode2 = ForwardedIdentifier('proxy1');
 
-        // Act
         // ForwardedHeader.parse internally joins with ", " which simulates HTTP combining them
         final parsedHeader = ForwardedHeader.parse(headerValues);
 
-        // Assert
         expect(parsedHeader, isNotNull);
         expect(parsedHeader.elements, hasLength(2));
         expect(parsedHeader.elements[0].forwardedFor, equals(expectedNode1));
@@ -165,13 +139,10 @@ void main() {
       test(
           'when parsing complex mixed elements "for=a;host=x, by=b;proto=y, for=c;ext=z", '
           'then all elements and their parameters are parsed.', () {
-        // Arrange
         const headerValue = 'for=a;host=x, by=b;proto=y, for=c;ext=z';
 
-        // Act
         final parsedHeader = ForwardedHeader.parse([headerValue]);
 
-        // Assert
         expect(parsedHeader, isNotNull);
         expect(parsedHeader.elements, hasLength(3));
 
@@ -198,117 +169,115 @@ void main() {
       });
     });
 
-    group('Given quoted values,',
-        skip: 'Quoted values are not handled correctly yet', () {
-      test(
+    group(
+      'Given quoted values,',
+      skip: 'Quoted values are not handled correctly yet',
+      () {
+        test(
           'when parsing \'host="example.com, inc."\', '
-          'then host is parsed as "example.com, inc."', () {
-        // Arrange
-        const headerValue = 'host="example.com, inc."';
-        // The _tryUnquoteString correctly handles this simple quoted value.
-        // The parameter splitting (by ';') is not affected here.
+          'then host is parsed as "example.com, inc."',
+          () {
+            const headerValue = 'host="example.com, inc."';
 
-        // Act
-        final parsedHeader = ForwardedHeader.parse([headerValue]);
+            final parsedHeader = ForwardedHeader.parse([headerValue]);
 
-        // Assert
-        expect(parsedHeader, isNotNull);
-        expect(parsedHeader.elements, hasLength(1));
-        expect(parsedHeader.elements.first.host, equals('example.com, inc.'));
-      });
+            expect(parsedHeader, isNotNull);
+            expect(parsedHeader.elements, hasLength(1));
+            expect(
+                parsedHeader.elements.first.host, equals('example.com, inc.'));
+          },
+        );
 
-      test(
+        test(
           'when parsing \'ext="value with ; semicolon"\', '
-          'then ext is parsed as "value with ; semicolon"', () {
-        // Arrange
-        const headerValue = 'ext="value with ; semicolon"';
-        // This tests if the _tryUnquoteString works. The _splitHeaderList for parameters
-        // would split this if the semicolon was outside quotes. Here it's inside.
+          'then ext is parsed as "value with ; semicolon"',
+          () {
+            const headerValue = 'ext="value with ; semicolon"';
 
-        // Act
-        final parsedHeader = ForwardedHeader.parse([headerValue]);
+            final parsedHeader = ForwardedHeader.parse([headerValue]);
 
-        // Assert
-        expect(parsedHeader, isNotNull);
-        expect(parsedHeader.elements, hasLength(1));
-        expect(parsedHeader.elements.first.extensions, isNotNull);
-        expect(parsedHeader.elements.first.extensions,
-            containsPair('ext', 'value with ; semicolon'));
-      });
+            expect(parsedHeader, isNotNull);
+            expect(parsedHeader.elements, hasLength(1));
+            expect(parsedHeader.elements.first.extensions, isNotNull);
+            expect(parsedHeader.elements.first.extensions,
+                containsPair('ext', 'value with ; semicolon'));
+          },
+        );
 
-      test(
+        test(
           'when parsing \'param1="val1"; param2="val2,still_val2"; param3="val3"\', '
           'then param2 is currently split if simple split is used after unquoting for params (KNOWN LIMITATION).',
           () {
-        // Arrange
-        const headerValueForElementSplit = 'for="user,group", host=example.com';
+            const headerValueForElementSplit =
+                'for="user,group", host=example.com';
 
-        // Act
-        final parsed = ForwardedHeader.parse([headerValueForElementSplit]);
+            final parsed = ForwardedHeader.parse([headerValueForElementSplit]);
 
-        // Assert for element split (this demonstrates the current simplified behavior)
-        // String.split(',') on 'for="user,group", host=example.com' yields:
-        // 1. 'for="user' --> ForwardedElement(forwardedFor: ForwardedNode('user'))
-        // 2. 'group"'   --> ForwardedElement() (empty, as 'group"' is not a valid pair)
-        // 3. ' host=example.com' --> ForwardedElement(host: 'example.com')
-        // This is because splitTrimAndFilterUnique (which relies on String.split(',')) is not quote-aware.
-        expect(parsed.elements, hasLength(1));
-        final element = parsed.elements[0];
-        expect(element.forwardedFor, const ForwardedIdentifier('user,group'));
-        expect(element.host, 'example.com');
-        expect(element.by, isNull);
-        expect(element.proto, isNull);
-        expect(element.extensions, isNull);
-      });
-    });
+            // Assert for element split (this demonstrates the current simplified behavior)
+            // String.split(',') on 'for="user,group", host=example.com' yields:
+            // 1. 'for="user' --> ForwardedElement(forwardedFor: ForwardedNode('user'))
+            // 2. 'group"'   --> ForwardedElement() (empty, as 'group"' is not a valid pair)
+            // 3. ' host=example.com' --> ForwardedElement(host: 'example.com')
+            // This is because splitTrimAndFilterUnique (which relies on String.split(',')) is not quote-aware.
+            expect(parsed.elements, hasLength(1));
+            final element = parsed.elements[0];
+            expect(
+                element.forwardedFor, const ForwardedIdentifier('user,group'));
+            expect(element.host, 'example.com');
+            expect(element.by, isNull);
+            expect(element.proto, isNull);
+            expect(element.extensions, isNull);
+          },
+        );
+      },
+    );
 
     group('Error Handling and Edge Cases,', () {
       test(
-          'Given completely empty header values, '
-          'when parsing, '
-          'then FormatException is thrown by ForwardedHeader.parse.', () {
-        // Arrange
-        final headerValues = <String>[]; // No values
+        'Given completely empty header values, '
+        'when parsing, '
+        'then FormatException is thrown by ForwardedHeader.parse.',
+        () {
+          final headerValues = <String>[]; // No values
 
-        // Act & Assert
-        expect(() => ForwardedHeader.parse(headerValues),
-            throwsA(isA<FormatException>()));
-      });
-
-      test(
-          'Given header values that are empty strings or only whitespace, '
-          'when parsing, '
-          'then FormatException is thrown', () {
-        // Arrange
-        final headerValues = ['', '   '];
-
-        // Act & Assert
-        // splitTrimAndFilterUnique will result in an empty list for ForwardedHeader.parse
-        expect(() => ForwardedHeader.parse(headerValues),
-            throwsA(isA<FormatException>()));
-      });
+          expect(() => ForwardedHeader.parse(headerValues),
+              throwsA(isA<FormatException>()));
+        },
+      );
 
       test(
-          'Given malformed pairs like "for=", "keyonly", or "=value", '
-          'when parsing, '
-          'then they are currently ignored by the pair splitting logic.', () {
-        // Arrange
-        const headerValue = 'for=1.2.3.4;keyonly;by=;proto=http;=novalue';
+        'Given header values that are empty strings or only whitespace, '
+        'when parsing, '
+        'then FormatException is thrown',
+        () {
+          final headerValues = ['', '   '];
 
-        // Act
-        final parsedHeader = ForwardedHeader.parse([headerValue]);
+          // splitTrimAndFilterUnique will result in an empty list for ForwardedHeader.parse
+          expect(() => ForwardedHeader.parse(headerValues),
+              throwsA(isA<FormatException>()));
+        },
+      );
 
-        // Assert
-        // The pairs 'keyonly', 'by=', and '=novalue' will be skipped because parts.length != 2.
-        expect(parsedHeader, isNotNull);
-        expect(parsedHeader.elements, hasLength(1));
-        final element = parsedHeader.elements.first;
-        expect(
-            element.forwardedFor, equals(const ForwardedIdentifier('1.2.3.4')));
-        expect(element.proto, equals('http'));
-        expect(element.by, isNull); // 'by=' results in no 'by' node
-        expect(element.extensions, isNull);
-      });
+      test(
+        'Given malformed pairs like "for=", "keyonly", or "=value", '
+        'when parsing, '
+        'then they are currently ignored by the pair splitting logic.',
+        () {
+          const headerValue = 'for=1.2.3.4;keyonly;by=;proto=http;=novalue';
+
+          final parsedHeader = ForwardedHeader.parse([headerValue]);
+
+          // The pairs 'keyonly', 'by=', and '=novalue' will be skipped because parts.length != 2.
+          expect(parsedHeader, isNotNull);
+          expect(parsedHeader.elements, hasLength(1));
+          final element = parsedHeader.elements.first;
+          expect(element.forwardedFor,
+              equals(const ForwardedIdentifier('1.2.3.4')));
+          expect(element.proto, equals('http'));
+          expect(element.by, isNull); // 'by=' results in no 'by' node
+          expect(element.extensions, isNull);
+        },
+      );
     });
   });
 
@@ -317,7 +286,6 @@ void main() {
         'Given a ForwardedHeader with one element (for, proto, by), '
         'when toStrings() is called, '
         'then it returns the correct string representation.', () {
-      // Arrange
       final element = ForwardedElement(
         forwardedFor: const ForwardedIdentifier('192.0.2.60'),
         proto: 'http',
@@ -326,10 +294,8 @@ void main() {
       final header = ForwardedHeader([element]);
       const expectedString = 'for=192.0.2.60;by=203.0.113.43;proto=http';
 
-      // Act
       final encoded = header.toStrings();
 
-      // Assert
       expect(encoded, equals([expectedString]));
     });
 
@@ -337,7 +303,6 @@ void main() {
         'Given a ForwardedHeader with an IPv6 address that needs quoting, '
         'when toStrings() is called, '
         'then the IPv6 address is quoted.', () {
-      // Arrange
       final element = ForwardedElement(
         forwardedFor: const ForwardedIdentifier('[2001:db8::1]', '8080'),
         host: 'example.com',
@@ -346,10 +311,8 @@ void main() {
       // _formatValueForPair will quote "[2001:db8::1]:8080" because it contains ':' and '[' ']'
       const expectedString = 'for="[2001:db8::1]:8080";host=example.com';
 
-      // Act
       final encoded = header.toStrings();
 
-      // Assert
       expect(encoded, equals([expectedString]));
     });
 
@@ -357,7 +320,6 @@ void main() {
         'Given a ForwardedHeader with multiple elements, '
         'when toStrings() is called, '
         'then elements are comma-separated.', () {
-      // Arrange
       final element1 =
           ForwardedElement(forwardedFor: const ForwardedIdentifier('client1'));
       final element2 = ForwardedElement(
@@ -365,10 +327,8 @@ void main() {
       final header = ForwardedHeader([element1, element2]);
       const expectedString = 'for=client1, by=proxy1;proto=https';
 
-      // Act
       final encoded = header.toStrings();
 
-      // Assert
       expect(encoded, equals([expectedString]));
     });
 
@@ -376,7 +336,6 @@ void main() {
         'Given a ForwardedHeader with extension parameters, '
         'when toStrings() is called, '
         'then extensions are included.', () {
-      // Arrange
       final element = ForwardedElement(
         forwardedFor: const ForwardedIdentifier('10.0.0.1'),
         extensions: {'secret': 'foo', 'other-ext': '"bar"'},
@@ -385,7 +344,6 @@ void main() {
       // Order of extensions is not guaranteed by CaseInsensitiveMap, so test flexibly
       final resultString = header.toStrings().first;
 
-      // Act & Assert
       expect(resultString, contains('for=10.0.0.1'));
       // The value '\"bar\"' is not a token, so _formatValueForPair will quote it:
       // it becomes "\"\\\"bar\\\"\""
@@ -398,15 +356,12 @@ void main() {
         'Given a ForwardedHeader with a value requiring quoting (e.g. host with space), '
         'when toStrings() is called, '
         'then the value is quoted.', () {
-      // Arrange
       final element = ForwardedElement(host: 'my server');
       final header = ForwardedHeader([element]);
       const expectedString = 'host="my server"';
 
-      // Act
       final encoded = header.toStrings();
 
-      // Assert
       expect(encoded, equals([expectedString]));
     });
 
@@ -414,13 +369,10 @@ void main() {
         'Given an empty ForwardedHeader, '
         'when toStrings() is called, '
         'then an empty iterable is returned.', () {
-      // Arrange
       final header = ForwardedHeader.empty();
 
-      // Act
       final encoded = header.toStrings();
 
-      // Assert
       expect(encoded, isEmpty);
     });
   });
