@@ -4,6 +4,7 @@ import 'package:http_parser/http_parser.dart';
 import '../../relic.dart';
 
 import 'codecs/common_types_codecs.dart';
+import 'typed/headers/forwarded_header.dart';
 
 part 'mutable_headers.dart';
 
@@ -245,6 +246,9 @@ class Headers extends HeadersBase {
   static const secFetchSite =
       HeaderAccessor(Headers.secFetchSiteHeader, SecFetchSiteHeader.codec);
 
+  static const forwarded =
+      HeaderAccessor(Headers.forwardedHeader, ForwardedHeader.codec);
+
   static const crossOriginResourcePolicy = HeaderAccessor(
       Headers.crossOriginResourcePolicyHeader,
       CrossOriginResourcePolicyHeader.codec);
@@ -300,6 +304,7 @@ class Headers extends HeadersBase {
     secFetchDest,
     secFetchMode,
     secFetchSite,
+    forwarded,
   };
 
   static const _responseOnly = {
@@ -359,6 +364,7 @@ class Headers extends HeadersBase {
       'access-control-request-headers';
   static const accessControlRequestMethodHeader =
       'access-control-request-method';
+  static const forwardedHeader = 'forwarded';
 
   /// Response Headers
   static const accessControlAllowCredentialsHeader =
