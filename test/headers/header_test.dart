@@ -176,6 +176,7 @@ void main() {
       Headers.userAgent,
       Headers.vary,
       Headers.via,
+      Headers.xForwardedFor,
       Headers.xPoweredBy,
     }),
   );
