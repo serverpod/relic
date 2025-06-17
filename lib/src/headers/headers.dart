@@ -4,7 +4,6 @@ import 'package:http_parser/http_parser.dart';
 import '../../relic.dart';
 
 import 'codecs/common_types_codecs.dart';
-import 'typed/headers/forwarded_header.dart';
 
 part 'mutable_headers.dart';
 

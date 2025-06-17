@@ -1,7 +1,6 @@
 import '../method/request_method.dart';
 import 'headers.dart';
 import 'typed/typed_headers.dart';
-import 'typed/headers/forwarded_header.dart';
 
 extension HeadersEx on Headers {
   DateTime? get date => Headers.date[this]();
