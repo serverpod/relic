@@ -204,6 +204,7 @@ final class ForwardedHeader {
       final extensionsMap = <String, String>{};
 
       // TODO: Simple split. Fails for quoted strings containing the delimiter.
+      // see https://github.com/serverpod/relic/issues/102
       final pairStrings = elementStr.split(';');
 
       for (final pairStr in pairStrings) {
