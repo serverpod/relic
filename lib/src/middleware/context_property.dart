@@ -1,4 +1,4 @@
-import '../../relic.dart';
+import '../adapter/context.dart';
 
 /// Manages a piece of data associated with a specific [RequestContext].
 ///
