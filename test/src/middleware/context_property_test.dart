@@ -2,61 +2,124 @@ import 'package:relic/relic.dart';
 import 'package:relic/src/adapter/context.dart';
 import 'package:test/test.dart';
 
+RequestContext _createContextInstance([final String uriSuffix = 'test']) {
+  final request =
+      Request(RequestMethod.get, Uri.parse('http://test.com/$uriSuffix'));
+  return request.toContext(Object());
+}
+
 void main() {
-  group('ContextProperty', () {
+  group('Given a ContextProperty<String> and a RequestContext,', () {
     late ContextProperty<String> stringProperty;
-    late ContextProperty<int> intProperty;
-    late RequestContext context1;
-    late RequestContext context2;
+    late RequestContext context;
 
     setUp(() {
       stringProperty = ContextProperty<String>('testStringProperty');
-      intProperty = ContextProperty<int>();
-
-      final request1 =
-          Request(RequestMethod.get, Uri.parse('http://test.com/test1'));
-      final request2 =
-          Request(RequestMethod.get, Uri.parse('http://test.com/test2'));
-
-      context1 = request1.toContext(Object());
-      context2 = request2.toContext(Object());
+      context = _createContextInstance('singleCtx');
     });
 
     test(
-        'Given a ContextProperty and a RequestContext, '
         'when a value is set for the context using the property, '
-        'then the same value can be retrieved', () {
+        'then the same value can be retrieved using [].', () {
       const value = 'hello world';
-
-      stringProperty[context1] = value;
-      final retrievedValue = stringProperty[context1];
-
+      stringProperty[context] = value;
+      final retrievedValue = stringProperty[context];
       expect(retrievedValue, value);
     });
 
     test(
-        'Given a ContextProperty with a debug name and a RequestContext for which no value is set, '
-        'when the value is accessed using the [] operator, '
-        'then a StateError is thrown with a message containing the debug name',
-        () {
+        'when no value is set for the context, '
+        'then getOrNull returns null.', () {
+      final result = stringProperty.getOrNull(context);
+      expect(result, isNull);
+    });
+
+    test(
+        'when a value is set for the context and then retrieved using getOrNull, '
+        'then the originally set value is returned.', () {
+      const value = 'test value';
+      stringProperty[context] = value;
+      final retrievedValue = stringProperty.getOrNull(context);
+      expect(retrievedValue, value);
+    });
+
+    test(
+        'when no value is set for the context, '
+        'then exists returns false.', () {
+      final result = stringProperty.exists(context);
+      expect(result, isFalse);
+    });
+
+    test(
+        'when a value is set for the context and exists is called, '
+        'then true is returned.', () {
+      const value = 'exists';
+      stringProperty[context] = value;
+      final result = stringProperty.exists(context);
+      expect(result, isTrue);
+    });
+
+    test(
+        'when a value is set and then clear is called for the context, '
+        'then the value is removed and subsequent accesses reflect this.', () {
+      stringProperty[context] = 'to be cleared';
+      expect(stringProperty.exists(context), isTrue,
+          reason: 'Pre-condition: value should exist');
+
+      stringProperty.clear(context);
+
+      expect(stringProperty.exists(context), isFalse);
+      expect(stringProperty.getOrNull(context), isNull);
       expect(
-        () => stringProperty[context1],
+        () => stringProperty[context],
+        throwsStateError,
+      );
+    });
+
+    test(
+        'when a value is set and then clear is called, '
+        'then exists returns true after setting and false after clearing.', () {
+      const value = 'temporary';
+
+      stringProperty[context] = value;
+      expect(stringProperty.exists(context), isTrue,
+          reason: 'Value should exist after being set');
+
+      stringProperty.clear(context);
+
+      expect(stringProperty.exists(context), isFalse,
+          reason: 'Value should not exist after clear');
+    });
+  });
+
+  group(
+      'Given a RequestContext and a ContextProperty for which no value is set,',
+      () {
+    test(
+        'when the property has a debug name and the value is accessed using [], '
+        'then a StateError is thrown with a message containing the debug name.',
+        () {
+      final property = ContextProperty<String>('debugNameProperty');
+      final context = _createContextInstance('errorCtxDebug');
+      expect(
+        () => property[context],
         throwsA(isA<StateError>().having(
           (final e) => e.message,
           'message',
           contains(
-              'ContextProperty value not found. Property: testStringProperty.'),
+              'ContextProperty value not found. Property: debugNameProperty.'),
         )),
       );
     });
 
     test(
-        'Given a ContextProperty (for int type, no debug name) and a RequestContext for which no value is set, '
-        'when the value is accessed using the [] operator, '
-        'then a StateError is thrown with a message containing the type name',
+        'when the property (e.g., for int type) has no debug name and the value is accessed using [], '
+        'then a StateError is thrown with a message containing the type name.',
         () {
+      final property = ContextProperty<int>(); // No debug name
+      final context = _createContextInstance('errorCtxType');
       expect(
-        () => intProperty[context1],
+        () => property[context],
         throwsA(isA<StateError>().having(
           (final e) => e.message,
           'message',
@@ -64,85 +127,22 @@ void main() {
         )),
       );
     });
+  });
 
-    test(
-        'Given a ContextProperty and a RequestContext for which no value is set, '
-        'when getOrNull is called, '
-        'then null is returned', () {
-      final result = stringProperty.getOrNull(context1);
-      expect(result, isNull);
+  group('Given a ContextProperty<String> and two RequestContexts,', () {
+    late ContextProperty<String> stringProperty;
+    late RequestContext context1;
+    late RequestContext context2;
+
+    setUp(() {
+      stringProperty = ContextProperty<String>('multiContextProp');
+      context1 = _createContextInstance('ctx1');
+      context2 = _createContextInstance('ctx2');
     });
 
     test(
-        'Given a ContextProperty and a RequestContext, '
-        'when a value is set and then retrieved using getOrNull, '
-        'then the originally set value is returned', () {
-      const value = 'test value';
-      stringProperty[context1] = value;
-
-      final retrievedValue = stringProperty.getOrNull(context1);
-
-      expect(retrievedValue, value);
-    });
-
-    test(
-        'Given a ContextProperty and a RequestContext for which no value is set, '
-        'when exists is called, '
-        'then false is returned', () {
-      final result = stringProperty.exists(context1);
-
-      expect(result, isFalse);
-    });
-
-    test(
-        'Given a ContextProperty and a RequestContext, '
-        'when a value is set and exists is called, '
-        'then true is returned', () {
-      const value = 'exists';
-      stringProperty[context1] = value;
-
-      final result = stringProperty.exists(context1);
-
-      expect(result, isTrue);
-    });
-
-    test(
-        'Given a ContextProperty and a RequestContext with a set value, '
-        'when clear is called for the context, '
-        'then the value is removed and subsequent accesses reflect this', () {
-      stringProperty[context1] = 'to be cleared';
-      expect(stringProperty.exists(context1), isTrue,
-          reason: 'Pre-condition: value should exist');
-
-      stringProperty.clear(context1);
-
-      expect(stringProperty.exists(context1), isFalse);
-      expect(stringProperty.getOrNull(context1), isNull);
-      expect(
-        () => stringProperty[context1],
-        throwsStateError,
-      );
-    });
-
-    test(
-        'Given a ContextProperty and two RequestContexts with values set for both, '
-        'when clear is called for the first context, '
-        'then only the first context value is removed and the second remains unaffected',
-        () {
-      stringProperty[context1] = 'value1';
-      stringProperty[context2] = 'value2';
-
-      stringProperty.clear(context1);
-
-      expect(stringProperty.exists(context1), isFalse);
-      expect(stringProperty.exists(context2), isTrue);
-      expect(stringProperty[context2], 'value2');
-    });
-
-    test(
-        'Given a ContextProperty and two different RequestContext instances, '
         'when different values are set for each context using the same property, '
-        'then retrieving values for each context returns their respective, isolated values',
+        'then retrieving values for each context returns their respective, isolated values.',
         () {
       const value1 = 'value for context1';
       const value2 = 'value for context2';
@@ -157,71 +157,80 @@ void main() {
     });
 
     test(
-        'Given a single RequestContext and multiple different ContextProperty instances, '
-        'when different values are set for the same context using these different properties, '
-        'then retrieving values using each property returns its respective, isolated value',
+        'when values are set for both contexts and clear is called for the first context, '
+        'then only the first context value is removed and the second remains unaffected.',
         () {
+      stringProperty[context1] = 'value1';
+      stringProperty[context2] = 'value2';
+
+      stringProperty.clear(context1);
+
+      expect(stringProperty.exists(context1), isFalse);
+      expect(stringProperty.exists(context2), isTrue);
+      expect(stringProperty[context2], 'value2');
+    });
+  });
+
+  group(
+      'Given a single RequestContext and multiple different ContextProperty instances,',
+      () {
+    test(
+        'when different values are set for the same context using these different properties, '
+        'then retrieving values using each property returns its respective, isolated value.',
+        () {
+      final context = _createContextInstance('multiPropCtx');
+      final stringProperty = ContextProperty<String>('testStringProperty');
       final anotherStringProperty = ContextProperty<String>('anotherString');
+      final intProperty = ContextProperty<int>(); // No debug name
+
       const valStrProp = 'value for stringProperty';
       const valAnotherStrProp = 'value for anotherStringProperty';
       const valIntProp = 123;
 
-      stringProperty[context1] = valStrProp;
-      anotherStringProperty[context1] = valAnotherStrProp;
-      intProperty[context1] = valIntProp;
+      stringProperty[context] = valStrProp;
+      anotherStringProperty[context] = valAnotherStrProp;
+      intProperty[context] = valIntProp;
 
-      expect(stringProperty[context1], valStrProp);
-      expect(anotherStringProperty[context1], valAnotherStrProp);
-      expect(intProperty[context1], valIntProp);
+      expect(stringProperty[context], valStrProp);
+      expect(anotherStringProperty[context], valAnotherStrProp);
+      expect(intProperty[context], valIntProp);
     });
+  });
 
+  group(
+      'Given a RequestContext and a ContextProperty for a specific data type,',
+      () {
     test(
-        'Given a ContextProperty and a RequestContext, '
-        'when a value is set and then clear is called, '
-        'then exists returns true after setting and false after clearing', () {
-      const value = 'temporary';
-
-      stringProperty[context1] = value;
-      expect(stringProperty.exists(context1), isTrue,
-          reason: 'Value should exist after being set');
-
-      stringProperty.clear(context1);
-
-      expect(stringProperty.exists(context1), isFalse,
-          reason: 'Value should not exist after clear');
-    });
-
-    test(
-        'Given a ContextProperty for int and a RequestContext, '
-        'when an int value is set, retrieved, its existence checked, and then cleared, '
-        'then all operations behave as expected', () {
+        'when the type is int, an int value is set, retrieved, its existence checked, and then cleared, '
+        'then all operations behave as expected.', () {
       final numberProperty = ContextProperty<int>('numberProperty');
+      final context = _createContextInstance('intTypeCtx');
       const value = 42;
 
-      numberProperty[context1] = value;
-      expect(numberProperty[context1], value);
-      expect(numberProperty.getOrNull(context1), value);
-      expect(numberProperty.exists(context1), isTrue);
+      numberProperty[context] = value;
+      expect(numberProperty[context], value);
+      expect(numberProperty.getOrNull(context), value);
+      expect(numberProperty.exists(context), isTrue);
 
-      numberProperty.clear(context1);
-      expect(numberProperty.exists(context1), isFalse);
+      numberProperty.clear(context);
+      expect(numberProperty.exists(context), isFalse);
     });
 
     test(
-        'Given a ContextProperty for a custom User object and a RequestContext, '
-        'when a User instance is set, retrieved, its existence checked, and then cleared, '
-        'then all operations behave as expected and the same instance is retrieved',
+        'when the type is a custom User object, a User instance is set, retrieved, its existence checked, and then cleared, '
+        'then all operations behave as expected and the same instance is retrieved.',
         () {
       final userProperty = ContextProperty<User>('userProperty');
+      final context = _createContextInstance('userTypeCtx');
       final user = User('Test User', 30);
 
-      userProperty[context1] = user;
-      expect(userProperty[context1], same(user));
-      expect(userProperty.getOrNull(context1), same(user));
-      expect(userProperty.exists(context1), isTrue);
+      userProperty[context] = user;
+      expect(userProperty[context], same(user));
+      expect(userProperty.getOrNull(context), same(user));
+      expect(userProperty.exists(context), isTrue);
 
-      userProperty.clear(context1);
-      expect(userProperty.exists(context1), isFalse);
+      userProperty.clear(context);
+      expect(userProperty.exists(context), isFalse);
     });
   });
 }
