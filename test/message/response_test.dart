@@ -169,7 +169,6 @@ void main() {
       expect(copy.headers.hashCode, response.headers.hashCode);
       expect(copy.headers, same(response.headers));
       expect(copy.encoding, response.encoding);
-      expect(copy.context, same(response.context));
 
       controller.add(helloBytes);
       return Future(() {

@@ -8,16 +8,12 @@ abstract class Message {
   /// The HTTP headers associated with this message.
   final Headers headers;
 
-  /// Extra context for middleware and handlers.
-  final Map<String, Object> context;
-
   /// The streaming body of the message.
   Body body;
 
   Message({
     required this.body,
     required this.headers,
-    this.context = const {},
   });
 
   /// Returns the MIME type from the Body-Type (Content-Type header), if available.
@@ -42,7 +38,6 @@ abstract class Message {
   /// Creates a new message by copying existing values and applying specified changes.
   Message copyWith({
     final Headers headers,
-    final Map<String, Object> context,
     final Body? body,
   });
 }

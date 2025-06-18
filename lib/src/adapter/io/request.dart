@@ -18,7 +18,6 @@ Request fromHttpRequest(
     protocolVersion: request.protocolVersion,
     headers: headersFromHttpRequest(request),
     body: bodyFromHttpRequest(request),
-    context: {},
   );
 }
 

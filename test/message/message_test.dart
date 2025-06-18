@@ -16,7 +16,6 @@ class _TestMessage extends Message {
   }) : super(
           headers: headers ?? Headers.empty(),
           body: body ?? Body.empty(),
-          context: context ?? {},
         );
 
   @override

@@ -1,7 +1,6 @@
 import '../body/body.dart';
 import '../headers/headers.dart';
 import '../method/request_method.dart';
-import '../util/util.dart';
 import 'message.dart';
 
 /// An HTTP request to be processed by a Relic Server application.
@@ -73,7 +72,6 @@ class Request extends Message {
     final String? handlerPath,
     final Uri? url,
     final Body? body,
-    final Map<String, Object>? context,
   }) : this._(
           method,
           requestedUri,
@@ -82,7 +80,6 @@ class Request extends Message {
           url: url,
           handlerPath: handlerPath,
           body: body,
-          context: context,
         );
 
   /// This constructor has the same signature as [Request.new] except that
@@ -99,14 +96,10 @@ class Request extends Message {
     final String? handlerPath,
     final Uri? url,
     final Body? body,
-    final Map<String, Object>? context,
   })  : protocolVersion = protocolVersion ?? '1.1',
         url = _computeUrl(requestedUri, handlerPath, url),
         handlerPath = _computeHandlerPath(requestedUri, handlerPath, url),
-        super(
-            body: body ?? Body.empty(),
-            headers: headers,
-            context: context ?? {}) {
+        super(body: body ?? Body.empty(), headers: headers) {
     try {
       // Trigger URI parsing methods that may throw format exception (in Request
       // constructor or in handlers / routing).
@@ -147,18 +140,6 @@ class Request extends Message {
   /// Creates a new [Request] by copying existing values and applying specified
   /// changes.
   ///
-  /// New key-value pairs in [context] and [headers] will be added to the copied
-  /// [Request]. If [context] or [headers] includes a key that already exists,
-  /// the key-value pair will replace the corresponding entry in the copied
-  /// [Request]. If [context] or [headers] contains a `null` value the
-  /// corresponding `key` will be removed if it exists, otherwise the `null`
-  /// value will be ignored.
-  /// For [headers] a value which is an empty list will also cause the
-  /// corresponding key to be removed.
-  ///
-  /// All other context and header values from the [Request] will be
-  /// included in the copied [Request] unchanged.
-  ///
   /// [body] is the request body. It may be either a [String], a [List<int>], a
   /// [Stream<List<int>>], or `null` to indicate no body.
   ///
@@ -167,23 +148,21 @@ class Request extends Message {
   /// the next handler. It must be a prefix of [url]; [handlerPath] becomes
   /// `handlerPath + "/" + path`, and [url] becomes relative to that. For
   /// example:
-  ///
-  ///     print(request.handlerPath); // => /static/
-  ///     print(request.url);        // => dir/file.html
-  ///
-  ///     request = request.change(path: "dir");
-  ///     print(request.handlerPath); // => /static/dir/
-  ///     print(request.url);        // => file.html
+  /// ```dart
+  /// print(request.handlerPath); // => /static/
+  /// print(request.url);        // => dir/file.html
+
+  /// request = request.change(path: "dir");
+  /// print(request.handlerPath); // => /static/dir/
+  /// print(request.url);        // => file.html
+  /// ```
   @override
   Request copyWith({
     final Headers? headers,
     final Uri? requestedUri,
-    final Map<String, Object?>? context,
     final String? path,
     Body? body,
   }) {
-    final newContext = updateMap(this.context, context);
-
     body ??= this.body;
 
     var handlerPath = this.handlerPath;
@@ -196,7 +175,6 @@ class Request extends Message {
       protocolVersion: protocolVersion,
       handlerPath: handlerPath,
       body: body,
-      context: newContext,
     );
   }
 }
