@@ -12,10 +12,6 @@ extension ResponseExIo on Response {
   Future<void> writeHttpResponse(
     final HttpResponse httpResponse,
   ) async {
-    if (context.containsKey('relic_server.buffer_output')) {
-      httpResponse.bufferOutput = context['relic_server.buffer_output'] as bool;
-    }
-
     // Set the status code.
     httpResponse.statusCode = statusCode;
 

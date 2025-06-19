@@ -274,7 +274,6 @@ void main() {
         url: Uri.parse('file.html'),
         handlerPath: '/static/',
         body: Body.fromDataStream(controller.stream),
-        context: {'context1': 'context value 1'},
       );
 
       final copy = request.copyWith();
@@ -286,7 +285,6 @@ void main() {
       expect(copy.headers, same(request.headers));
       expect(copy.url, request.url);
       expect(copy.handlerPath, request.handlerPath);
-      expect(copy.context, same(request.context));
       expect(copy.readAsString(), completion('hello, world'));
 
       controller.add(helloBytes);

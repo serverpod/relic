@@ -4,7 +4,6 @@ import '../body/body.dart';
 import '../headers/headers.dart';
 import '../headers/standard_headers_extensions.dart';
 
-import '../util/util.dart';
 import 'message.dart';
 
 /// The response returned by a [Handler].
@@ -287,7 +286,6 @@ class Response extends Message {
   }) : super(
           body: body ?? Body.empty(),
           headers: headers ?? Headers.empty(),
-          context: context ?? {},
         ) {
     if (statusCode < 100) {
       throw ArgumentError('Invalid status code: $statusCode.');
@@ -319,13 +317,10 @@ class Response extends Message {
     final Map<String, Object?>? context,
     final Body? body,
   }) {
-    final newContext = updateMap(this.context, context);
-
     return Response(
       statusCode,
       body: body ?? this.body,
       headers: headers ?? this.headers,
-      context: newContext,
     );
   }
 }
