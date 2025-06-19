@@ -17,12 +17,17 @@ extension StringListExtensions on Iterable<String> {
   Iterable<String> splitTrimAndFilterUnique({
     final String separator = ',',
     final bool emptyCheck = true,
-  }) {
-    final filtered = expand((final element) => element.split(separator))
-        .map((final el) => el.trim())
-        .where((final e) => !emptyCheck || e.isNotEmpty);
-    return LinkedHashSet<String>.from(filtered);
-  }
+  }) =>
+      LinkedHashSet<String>.from(
+          splitAndTrim(separator: separator, emptyCheck: emptyCheck));
+
+  Iterable<String> splitAndTrim({
+    final String separator = ',',
+    final bool emptyCheck = true,
+  }) =>
+      expand((final element) => element.split(separator))
+          .map((final el) => el.trim())
+          .where((final e) => !emptyCheck || e.isNotEmpty);
 }
 
 extension StringExtensions on String {

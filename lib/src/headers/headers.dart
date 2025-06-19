@@ -1,9 +1,10 @@
 import 'dart:collection';
 
 import 'package:http_parser/http_parser.dart';
-import '../../relic.dart';
 
+import '../../relic.dart';
 import 'codecs/common_types_codecs.dart';
+import 'typed/headers/x_forwarded_for_header.dart';
 
 part 'mutable_headers.dart';
 
@@ -65,7 +66,7 @@ class Headers extends HeadersBase {
   static const ifUnmodifiedSince =
       HeaderAccessor(Headers.ifUnmodifiedSinceHeader, dateTimeHeaderCodec);
 
-// General Headers
+  /// General Headers
   static const origin = HeaderAccessor(Headers.originHeader, uriHeaderCodec);
 
   static const server = HeaderAccessor(Headers.serverHeader, stringHeaderCodec);
@@ -134,7 +135,6 @@ class Headers extends HeadersBase {
       HeaderAccessor(Headers.upgradeHeader, UpgradeHeader.codec);
 
   /// Response Headers
-
   static const location =
       HeaderAccessor(Headers.locationHeader, uriHeaderCodec);
 
@@ -191,7 +191,6 @@ class Headers extends HeadersBase {
       Headers.contentDispositionHeader, ContentDispositionHeader.codec);
 
   /// Common Headers (Used in Both Requests and Responses)
-
   static const accept =
       HeaderAccessor(Headers.acceptHeader, AcceptHeader.codec);
 
@@ -208,7 +207,6 @@ class Headers extends HeadersBase {
       HeaderAccessor(Headers.setCookieHeader, SetCookieHeader.codec);
 
   /// Security and Modern Headers
-
   static const strictTransportSecurity = HeaderAccessor(
       Headers.strictTransportSecurityHeader,
       StrictTransportSecurityHeader.codec);
@@ -247,6 +245,9 @@ class Headers extends HeadersBase {
 
   static const forwarded =
       HeaderAccessor(Headers.forwardedHeader, ForwardedHeader.codec);
+
+  static const xForwardedFor =
+      HeaderAccessor(Headers.xForwardedForHeader, XForwardedForHeader.codec);
 
   static const crossOriginResourcePolicy = HeaderAccessor(
       Headers.crossOriginResourcePolicyHeader,
@@ -304,6 +305,7 @@ class Headers extends HeadersBase {
     secFetchMode,
     secFetchSite,
     forwarded,
+    xForwardedFor,
   };
 
   static const _responseOnly = {
@@ -364,6 +366,7 @@ class Headers extends HeadersBase {
   static const accessControlRequestMethodHeader =
       'access-control-request-method';
   static const forwardedHeader = 'forwarded';
+  static const xForwardedForHeader = 'x-forwarded-for';
 
   /// Response Headers
   static const accessControlAllowCredentialsHeader =
