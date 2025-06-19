@@ -1,4 +1,5 @@
 import 'package:relic/relic.dart';
+import 'package:relic/src/headers/typed/headers/x_forwarded_for_header.dart';
 import 'package:test/test.dart';
 
 import '../util/test_util.dart';
@@ -264,6 +265,8 @@ void main() {
       Headers.via: (final h) => h.via,
       Headers.wwwAuthenticate: (final h) => h.wwwAuthenticate,
       Headers.xPoweredBy: (final h) => h.xPoweredBy,
+      Headers.forwarded: (final h) => h.forwarded,
+      Headers.xForwardedFor: (final h) => h.xForwardedFor,
     }.entries,
   );
 
@@ -350,6 +353,8 @@ void main() {
       Headers.via: (final h) => h.via,
       Headers.wwwAuthenticate: (final h) => h.wwwAuthenticate,
       Headers.xPoweredBy: (final h) => h.xPoweredBy,
+      Headers.forwarded: (final h) => h.forwarded,
+      Headers.xForwardedFor: (final h) => h.xForwardedFor,
     }.entries,
   );
 
@@ -439,6 +444,8 @@ void main() {
       Headers.via: (final h) => h.via = null,
       Headers.wwwAuthenticate: (final h) => h.wwwAuthenticate = null,
       Headers.xPoweredBy: (final h) => h.xPoweredBy = null,
+      Headers.forwarded: (final h) => h.forwarded = null,
+      Headers.xForwardedFor: (final h) => h.xForwardedFor = null,
     }.entries,
   );
 
@@ -558,6 +565,9 @@ void main() {
       Headers.wwwAuthenticate: (final h) => h.wwwAuthenticate =
           const AuthenticationHeader(scheme: '', parameters: []),
       Headers.xPoweredBy: (final h) => h.xPoweredBy = 'null',
+      Headers.forwarded: (final h) => h.forwarded = ForwardedHeader([]),
+      Headers.xForwardedFor: (final h) =>
+          h.xForwardedFor = XForwardedForHeader([]),
     }.entries,
   );
 }

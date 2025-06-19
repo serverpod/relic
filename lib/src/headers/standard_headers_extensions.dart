@@ -1,5 +1,6 @@
 import '../method/request_method.dart';
 import 'headers.dart';
+import 'typed/headers/x_forwarded_for_header.dart';
 import 'typed/typed_headers.dart';
 
 extension HeadersEx on Headers {
@@ -87,6 +88,7 @@ extension HeadersEx on Headers {
   CrossOriginOpenerPolicyHeader? get crossOriginOpenerPolicy =>
       Headers.crossOriginOpenerPolicy[this]();
   ForwardedHeader? get forwarded => Headers.forwarded[this]();
+  XForwardedForHeader? get xForwardedFor => Headers.xForwardedFor[this]();
 }
 
 extension MutableHeadersEx on MutableHeaders {
@@ -199,6 +201,8 @@ extension MutableHeadersEx on MutableHeaders {
       Headers.crossOriginOpenerPolicy[this].set(value);
   set forwarded(final ForwardedHeader? value) =>
       Headers.forwarded[this].set(value);
+  set xForwardedFor(final XForwardedForHeader? value) =>
+      Headers.xForwardedFor[this].set(value);
 
   // We have to repeat these read props, since dart cannot have getter and setter defined on two different
   // classes as extensions
@@ -286,4 +290,5 @@ extension MutableHeadersEx on MutableHeaders {
   CrossOriginOpenerPolicyHeader? get crossOriginOpenerPolicy =>
       Headers.crossOriginOpenerPolicy[this]();
   ForwardedHeader? get forwarded => Headers.forwarded[this]();
+  XForwardedForHeader? get xForwardedFor => Headers.xForwardedFor[this]();
 }
