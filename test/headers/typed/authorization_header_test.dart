@@ -137,7 +137,7 @@ void main() {
         'when a Basic token is passed then it should parse the credentials '
         'correctly',
         () async {
-          final credentials = base64Encode(utf8.encode('user:pass'));
+          final credentials = base64Encode(utf8.encode('user:pass:word'));
           final headers = await getServerRequestHeaders(
             server: server,
             touchHeaders: (final h) => h.authorization,
@@ -148,7 +148,7 @@ void main() {
             headers.authorization,
             isA<BasicAuthorizationHeader>()
                 .having((final auth) => auth.username, 'username', 'user')
-                .having((final auth) => auth.password, 'password', 'pass'),
+                .having((final auth) => auth.password, 'password', 'pass:word'),
           );
         },
       );
