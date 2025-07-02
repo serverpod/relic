@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:relic/relic.dart';
 import 'package:test/test.dart';
 
+import '../../util/test_util.dart';
 import '../docs/strict_validation_docs.dart';
 import '../headers_test_utils.dart';
 
@@ -137,7 +138,7 @@ void main() {
         'when a Basic token is passed then it should parse the credentials '
         'correctly',
         () async {
-          final credentials = base64Encode(utf8.encode('user:pass'));
+          final credentials = base64Encode(utf8.encode('user:pass:word'));
           final headers = await getServerRequestHeaders(
             server: server,
             touchHeaders: (final h) => h.authorization,
@@ -148,7 +149,7 @@ void main() {
             headers.authorization,
             isA<BasicAuthorizationHeader>()
                 .having((final auth) => auth.username, 'username', 'user')
-                .having((final auth) => auth.password, 'password', 'pass'),
+                .having((final auth) => auth.password, 'password', 'pass:word'),
           );
         },
       );
@@ -513,4 +514,26 @@ void main() {
       );
     });
   });
+
+  parameterizedGroup(
+    variants: [
+      ('valid', 'valid:Password', returnsNormally), // : in password is legal
+      ('invalid:Username', 'validPassword', throwsFormatException),
+      ('validUsername', '', throwsFormatException), // empty password
+      ('', 'validPassword', throwsFormatException), // empty username
+    ],
+    (final v) => //
+        'Given a username: "${v.$1}" and password: "${v.$2}", '
+        'when constructing a BasicAuthorizationHeader,',
+    (final v) {
+      final matcher = v.$3;
+      singleTest(
+          'then it ${matcher.describe(StringDescription())}',
+          () => BasicAuthorizationHeader(
+                username: v.$1,
+                password: v.$2,
+              ),
+          matcher);
+    },
+  );
 }
