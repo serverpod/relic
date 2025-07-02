@@ -27,3 +27,4 @@ export 'src/middleware/routing_middleware.dart';
 export 'src/relic_server.dart';
 export 'src/router/lookup_result.dart';
 export 'src/router/router.dart';
+export 'src/util/functional.dart';
