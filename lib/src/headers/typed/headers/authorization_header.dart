@@ -124,6 +124,9 @@ final class BasicAuthorizationHeader extends AuthorizationHeader {
     if (username.isEmpty) {
       throw const FormatException('Username cannot be empty');
     }
+    if (username.contains(':')) {
+      throw const FormatException('Username cannot contain ":"');
+    }
     if (password.isEmpty) {
       throw const FormatException('Password cannot be empty');
     }
@@ -147,10 +150,10 @@ final class BasicAuthorizationHeader extends AuthorizationHeader {
 
     try {
       final decoded = utf8.decode(base64Decode(base64Part));
-      final parts = decoded.split(':');
+      final split = decoded.indexOf(':');
       return BasicAuthorizationHeader(
-        username: parts[0],
-        password: parts[1],
+        username: decoded.substring(0, split),
+        password: decoded.substring(split + 1),
       );
     } catch (e) {
       throw const FormatException('Invalid basic token format');
