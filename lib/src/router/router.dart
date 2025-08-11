@@ -189,4 +189,11 @@ extension RouteEx<T> on Router<T> {
       add(method, path, value);
     }
   }
+
+  /// Create a subrouter for a path
+  Router<T> group(final String path) {
+    final subRouter = Router<T>();
+    attach(path, subRouter);
+    return subRouter;
+  }
 }
