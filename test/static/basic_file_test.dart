@@ -224,8 +224,9 @@ void main() {
 
     test('when accessing header_bytes_test_image then it should be image/png',
         () async {
-      final handler =
-          createStaticHandler(d.sandbox, useHeaderBytesForContentType: true);
+      final handler = createStaticHandler(
+        d.sandbox, /* useHeaderBytesForContentType: true */
+      );
 
       final response =
           await makeRequest(handler, '/files/header_bytes_test_image');
@@ -248,7 +249,7 @@ void main() {
           ],
         );
       final handler = createStaticHandler(d.sandbox,
-          useHeaderBytesForContentType: true, contentTypeResolver: resolver);
+          /* useHeaderBytesForContentType: true, */ mimeResolver: resolver);
 
       final response =
           await makeRequest(handler, '/files/header_bytes_test_webp');

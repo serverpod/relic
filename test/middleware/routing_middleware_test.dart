@@ -81,7 +81,7 @@ void main() {
         bool nextCalled = false;
         Future<ResponseContext> nextHandler(final NewContext ctx) async {
           nextCalled = true;
-          expect(() => ctx.pathParameters, throwsStateError);
+          expect(ctx.pathParameters, isEmpty);
           return ctx.withResponse(Response(404));
         }
 

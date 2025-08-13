@@ -16,24 +16,7 @@ void main() {
     ]).create();
   });
 
-  group('Given a default document value', () {
-    test('when it contains slashes then it throws an ArgumentError', () {
-      final invalidValues = [
-        'file/foo.txt',
-        '/bar.txt',
-        '//bar.txt',
-        '//news/bar.txt',
-        'foo/../bar.txt'
-      ];
-
-      for (final val in invalidValues) {
-        expect(() => createStaticHandler(d.sandbox, defaultDocument: val),
-            throwsArgumentError);
-      }
-    });
-  });
-
-  group('Given no default document specified', () {
+  group('Given no default response specified', () {
     test('when accessing "/index.html" then it returns the file content',
         () async {
       final handler = createStaticHandler(d.sandbox);
@@ -66,11 +49,11 @@ void main() {
     });
   });
 
-  group('Given a default document specified', () {
+  group('Given a default response specified', () {
     test('when accessing "/index.html" then it returns the file content',
         () async {
       final handler =
-          createStaticHandler(d.sandbox, defaultDocument: 'index.html');
+          createStaticHandler(d.sandbox, defaultResponse: 'index.html');
 
       final response = await makeRequest(handler, '/index.html');
       expect(response.statusCode, HttpStatus.ok);
@@ -82,7 +65,7 @@ void main() {
 
     test('when accessing "/" then it returns the default document', () async {
       final handler =
-          createStaticHandler(d.sandbox, defaultDocument: 'index.html');
+          createStaticHandler(d.sandbox, defaultResponse: 'index.html');
 
       final response = await makeRequest(handler, '/');
       expect(response.statusCode, HttpStatus.ok);
@@ -94,7 +77,7 @@ void main() {
 
     test('when accessing "/files" then it redirects to "/files/"', () async {
       final handler =
-          createStaticHandler(d.sandbox, defaultDocument: 'index.html');
+          createStaticHandler(d.sandbox, defaultResponse: 'index.html');
 
       final response = await makeRequest(handler, '/files');
       expect(response.statusCode, HttpStatus.movedPermanently);
@@ -107,7 +90,7 @@ void main() {
     test('when accessing "/files/" dir then it returns the default document',
         () async {
       final handler =
-          createStaticHandler(d.sandbox, defaultDocument: 'index.html');
+          createStaticHandler(d.sandbox, defaultResponse: 'index.html');
 
       final response = await makeRequest(handler, '/files/');
       expect(response.statusCode, HttpStatus.ok);

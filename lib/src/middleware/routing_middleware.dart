@@ -1,6 +1,8 @@
 import '../adapter/context.dart';
 import '../handler/handler.dart';
 import '../method/request_method.dart';
+import '../router/normalized_path.dart';
+import '../router/path_trie.dart';
 import '../router/router.dart';
 import 'context_property.dart';
 import 'middleware.dart';
@@ -11,7 +13,12 @@ Middleware routeWith<T>(
 }) =>
     _RoutingMiddlewareBuilder(router, toHandler: toHandler).build();
 
-final _pathParametersStorage = ContextProperty<Map<Symbol, String>>();
+final _routingContext = ContextProperty<
+    ({
+      Parameters parameters,
+      NormalizedPath matched,
+      NormalizedPath remaining
+    })>();
 
 class _RoutingMiddlewareBuilder<T> {
   final Router<T> _router;
@@ -32,10 +39,14 @@ class _RoutingMiddlewareBuilder<T> {
   Handler _meddle(final Handler next) {
     return (final ctx) async {
       final req = ctx.request;
-      final url = ctx.request.url; // TODO: Use requestUri
-      final match = _router.lookup(req.method.convert(), url.path);
+      final match =
+          _router.lookup(req.method.convert(), Uri.decodeFull(req.url.path));
       if (match != null) {
-        ctx._pathParameters = match.parameters;
+        _routingContext[ctx] = (
+          parameters: match.parameters,
+          matched: match.matched,
+          remaining: match.remaining,
+        );
         final handler = _toHandler(match.value);
         return await handler(ctx);
       } else {
@@ -48,10 +59,13 @@ class _RoutingMiddlewareBuilder<T> {
 }
 
 extension RequestContextEx on RequestContext {
-  Map<Symbol, String> get pathParameters => _pathParametersStorage[this];
-
-  set _pathParameters(final Map<Symbol, String> value) =>
-      _pathParametersStorage[this] = value;
+  Map<Symbol, String> get pathParameters =>
+      _routingContext.getOrNull(this)?.parameters ?? const <Symbol, String>{};
+  NormalizedPath get matchedPath =>
+      _routingContext.getOrNull(this)?.matched ?? NormalizedPath.empty;
+  NormalizedPath get remainingPath =>
+      _routingContext.getOrNull(this)?.remaining ??
+      NormalizedPath(Uri.decodeFull(request.url.path));
 }
 
 bool _isSubtype<S, T>() => <S>[] is List<T>;

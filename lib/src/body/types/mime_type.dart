@@ -68,6 +68,8 @@ class MimeType {
     return MimeType(primaryType, subType);
   }
 
+  bool get isText => primaryType == 'text';
+
   /// Returns the value to use for the Content-Type header.
   String toHeaderValue() => '$primaryType/$subType';
 
