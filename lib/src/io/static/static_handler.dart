@@ -400,8 +400,9 @@ Future<int> _writeMultipartSection(
   int totalBytes = 0;
 
   // Write part header
+  final mimeType = fileInfo.mimeType ?? MimeType.octetStream;
   final partHeader = '\r\n--$boundary\r\n'
-      'Content-Type: ${fileInfo.mimeType!.toHeaderValue()}\r\n'
+      'Content-Type: ${mimeType.toHeaderValue()}\r\n'
       'Content-Range: bytes $start-${end - 1}/${fileInfo.stat.size}\r\n\r\n';
 
   final partHeaderBytes = utf8.encode(partHeader);
