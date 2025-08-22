@@ -424,7 +424,7 @@ Body _createFileBody(
   return Body.fromDataStream(
     file.openRead().cast(),
     contentLength: contentLength,
-    mimeType: fileInfo.mimeType,
+    mimeType: fileInfo.mimeType ?? MimeType.octetStream,
     encoding: fileInfo.mimeType?.isText == true ? utf8 : null,
   );
 }

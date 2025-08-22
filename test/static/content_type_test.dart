@@ -149,14 +149,8 @@ void main() {
       final response = await makeRequest(handler, '/no_extension');
 
       expect(response.statusCode, HttpStatus.ok);
-      // The default MIME type for unknown files - might be null if no MIME type is detected
-      if (response.body.bodyType != null) {
-        expect(response.body.bodyType!.mimeType.primaryType, 'application');
-        expect(response.body.bodyType!.mimeType.subType, 'octet-stream');
-      } else {
-        // If bodyType is null, that's also acceptable for files without extension
-        expect(response.body.bodyType, isNull);
-      }
+      expect(response.body.bodyType!.mimeType.primaryType, 'application');
+      expect(response.body.bodyType!.mimeType.subType, 'octet-stream');
     });
   });
 

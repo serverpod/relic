@@ -215,11 +215,13 @@ void main() {
       expect(response.mimeType?.subType, 'html');
     });
 
-    test('when accessing random.unknown then it should be null', () async {
+    test(
+        'when accessing random.unknown, '
+        'then it should be application/octet-stream', () async {
       final handler = createStaticHandler(d.sandbox);
 
       final response = await makeRequest(handler, '/random.unknown');
-      expect(response.mimeType, isNull);
+      expect(response.mimeType, MimeType.octetStream);
     });
 
     test('when accessing header_bytes_test_image then it should be image/png',

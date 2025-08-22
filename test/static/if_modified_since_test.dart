@@ -19,9 +19,8 @@ void main() {
       'Given an If-Modified-Since header with a matching date, '
       'when a request is made for the file, '
       'then a 304 Not Modified status is returned with no body', () async {
-    // Get the actual last modified time of the file created by d.file
-    final file = File(d.path('test_file.txt'));
-    final lastModified = file.statSync().modified.toUtc();
+    final initialResponse = await makeRequest(handler, '/test_file.txt');
+    final lastModified = initialResponse.headers.lastModified!;
 
     final headers =
         Headers.build((final mh) => mh.ifModifiedSince = lastModified);
@@ -38,9 +37,9 @@ void main() {
       'Given an If-Modified-Since header with an earlier date, '
       'when a request is made for the file, '
       'then a 200 OK status is returned with the full body', () async {
-    // Get the actual last modified time of the file created by d.file
-    final file = File(d.path('test_file.txt'));
-    final lastModified = file.statSync().modified.toUtc();
+    final initialResponse = await makeRequest(handler, '/test_file.txt');
+    final lastModified = initialResponse.headers.lastModified!;
+
     // Create an earlier date, simulating the client's cached date
     final earlierDate = lastModified.subtract(const Duration(days: 1));
 
@@ -59,9 +58,9 @@ void main() {
       'Given an If-Modified-Since header with a future date, '
       'when a request is made for the file, '
       'then a 304 Not Modified status is returned with no body', () async {
-    // Get the actual last modified time of the file created by d.file
-    final file = File(d.path('test_file.txt'));
-    final lastModified = file.statSync().modified.toUtc();
+    final initialResponse = await makeRequest(handler, '/test_file.txt');
+    final lastModified = initialResponse.headers.lastModified!;
+
     // Create a future date, simulating a client with a somehow "newer" cached date
     final futureDate = lastModified.add(const Duration(days: 1));
 
