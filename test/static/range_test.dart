@@ -65,7 +65,7 @@ void main() {
         'then a 206 Partial Content status with partial content and Content-Range is returned',
         () async {
       final headers = Headers.build((final mh) =>
-          mh.range = RangeHeader(ranges: [Range(end: 5)])); // last 6 bytes
+          mh.range = RangeHeader(ranges: [Range(end: 5)])); // last 5 bytes
 
       final response =
           await makeRequest(handler, '/test_file.txt', headers: headers);
