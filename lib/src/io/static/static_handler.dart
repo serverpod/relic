@@ -58,17 +58,20 @@ Handler createStaticHandler(
     final requestPath = ctx.remainingPath.path;
     final filePath = p.join(resolvedRootPath, requestPath.substring(1));
 
+    // Ensure file exists and is not a directory
+    final entityType = FileSystemEntity.typeSync(filePath, followLinks: false);
+    if (entityType == FileSystemEntityType.notFound ||
+        entityType == FileSystemEntityType.directory) {
+      return ctx.withResponse(notFoundResponse);
+    }
+
     // Security check for symbolic links: ensure resolved path stays within root directory
-    final file = File(filePath);
+    var file = File(filePath);
     final resolvedFilePath = file.resolveSymbolicLinksSync();
     if (!p.isWithin(resolvedRootPath, resolvedFilePath)) {
       return ctx.withResponse(notFoundResponse);
     }
-
-    final entityType = FileSystemEntity.typeSync(filePath);
-    if (entityType != FileSystemEntityType.file) {
-      return ctx.withResponse(notFoundResponse);
-    }
+    file = File(resolvedFilePath);
 
     return await _serveFile(
       file,
