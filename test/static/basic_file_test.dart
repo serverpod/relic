@@ -72,7 +72,7 @@ void main() {
       () async {
     final handler = createStaticHandler(d.sandbox);
 
-    final response = await makeRequest(handler, '/files/with%20space.txt');
+    final response = await makeRequest(handler, '/files/with space.txt');
     expect(response.statusCode, HttpStatus.ok);
     expect(response.body.contentLength, 18);
     expect(response.readAsString(), completion('with space content'));

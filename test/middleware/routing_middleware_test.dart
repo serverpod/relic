@@ -76,7 +76,7 @@ void main() {
       test(
           'Given RoutingMiddleware and a request that does not match any route, '
           'When the middleware processes the request, '
-          'Then the next handler is called and pathParameters access throws StateError',
+          'Then the next handler is called and pathParameters is empty',
           () async {
         bool nextCalled = false;
         Future<ResponseContext> nextHandler(final NewContext ctx) async {
