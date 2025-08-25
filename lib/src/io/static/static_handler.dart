@@ -41,7 +41,7 @@ final _fileInfoCache = LruCache<String, _FileInfo>(10000);
 /// The [cacheControl] header can be customized; defaults to no-cache with private cache.
 Handler createStaticHandler(
   final String fileSystemPath, {
-  final Response? defaultResponse,
+  Handler? defaultHandler,
   final MimeTypeResolver? mimeResolver,
   final CacheControlHeader? cacheControl,
 }) {
@@ -52,7 +52,7 @@ Handler createStaticHandler(
   }
 
   final resolvedRootPath = rootDir.resolveSymbolicLinksSync();
-  final notFoundResponse = defaultResponse ?? Response.notFound();
+  defaultHandler ??= respondWith((final _) => Response.notFound());
 
   return (final NewContext ctx) async {
     final requestPath = ctx.remainingPath.path;
@@ -62,14 +62,14 @@ Handler createStaticHandler(
     final entityType = FileSystemEntity.typeSync(filePath, followLinks: false);
     if (entityType == FileSystemEntityType.notFound ||
         entityType == FileSystemEntityType.directory) {
-      return ctx.withResponse(notFoundResponse);
+      return defaultHandler!(ctx);
     }
 
     // Security check for symbolic links: ensure resolved path stays within root directory
     var file = File(filePath);
     final resolvedFilePath = file.resolveSymbolicLinksSync();
     if (!p.isWithin(resolvedRootPath, resolvedFilePath)) {
-      return ctx.withResponse(notFoundResponse);
+      return defaultHandler!(ctx);
     }
     file = File(resolvedFilePath);
 
