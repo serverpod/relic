@@ -214,6 +214,7 @@ Response? _checkConditionalHeaders(
   // Handle If-None-Match
   final ifNoneMatch = ctx.request.headers.ifNoneMatch;
   if (ifNoneMatch != null) {
+    if (ifNoneMatch.isWildcard) return Response.notModified(headers: headers);
     for (final etag in ifNoneMatch.etags) {
       if (etag.value == fileInfo.etag) {
         return Response.notModified(headers: headers);

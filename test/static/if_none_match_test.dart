@@ -72,4 +72,19 @@ void main() {
     expect(response.body.contentLength, 0);
     expect(await response.readAsString(), isEmpty);
   });
+
+  test(
+      'Given an If-None-Match header with wildcard, '
+      'when a request is made for the file, '
+      'then a 304 Not Modified status is returned with no body', () async {
+    final headers = Headers.build(
+      (final mh) => mh.ifNoneMatch = const IfNoneMatchHeader.wildcard(),
+    );
+    final response =
+        await makeRequest(handler, '/test_file.txt', headers: headers);
+
+    expect(response.statusCode, HttpStatus.notModified);
+    expect(response.body.contentLength, 0);
+    expect(await response.readAsString(), isEmpty);
+  });
 }
