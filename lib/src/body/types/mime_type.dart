@@ -68,7 +68,20 @@ class MimeType {
     return MimeType(primaryType, subType);
   }
 
-  bool get isText => primaryType == 'text';
+  bool get isText {
+    if (primaryType == 'text') return true;
+    if (primaryType == 'application') {
+      final st = subType.toLowerCase();
+      // Common text-like app types and structured syntax suffixes.
+      return st == 'json' ||
+          st == 'xml' ||
+          st == 'javascript' ||
+          st == 'x-www-form-urlencoded' ||
+          st.endsWith('+json') ||
+          st.endsWith('+xml');
+    }
+    return false;
+  }
 
   /// Returns the value to use for the Content-Type header.
   String toHeaderValue() => '$primaryType/$subType';
