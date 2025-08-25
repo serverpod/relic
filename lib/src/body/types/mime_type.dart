@@ -88,4 +88,13 @@ class MimeType {
 
   @override
   String toString() => 'MimeType(primaryType: $primaryType, subType: $subType)';
+
+  @override
+  bool operator ==(final Object other) {
+    if (other is! MimeType) return false;
+    return primaryType == other.primaryType && subType == other.subType;
+  }
+
+  @override
+  int get hashCode => Object.hash(primaryType, subType);
 }

@@ -5,6 +5,7 @@ import 'package:relic/relic.dart';
 import 'package:test/test.dart';
 import 'package:test_descriptor/test_descriptor.dart' as d;
 
+import '../util/test_util.dart';
 import 'test_util.dart'; // Provides the makeRequest helper
 
 void main() {
@@ -22,137 +23,41 @@ void main() {
     await d.file('image.jpg', 'fake jpeg content').create();
     await d.file('image.png', 'fake png content').create();
     await d.file('image.gif', 'fake gif content').create();
+    await d.file('image.svg', '<svg></svg>').create();
+    await d.file('app.wasm', 'fake wasm content').create();
     await d.file('no_extension', 'content without extension').create();
     handler = createStaticHandler(d.sandbox);
   });
 
-  group('Given files with different extensions', () {
-    test(
-        'Given an HTML file, '
+  parameterizedTest(
+    (final v) => 'Given a file "${v.key}", '
         'when requested, '
-        'then the Content-Type is text/html', () async {
-      final response = await makeRequest(handler, '/test.html');
+        'then the mimetype is "${v.value.toHeaderValue()}"',
+    variants: {
+      '/test.html': MimeType.html,
+      '/test.json': MimeType.json,
+      '/test.css': MimeType.css,
+      '/test.js': MimeType.javascript,
+      '/test.txt': MimeType.plainText,
+      '/test.xml': MimeType.xml,
+      '/test.pdf': MimeType.pdf,
+      '/image.jpg': const MimeType('image', 'jpeg'),
+      '/image.png': const MimeType('image', 'png'),
+      '/image.gif': const MimeType('image', 'gif'),
+      '/image.svg': const MimeType('image', 'svg+xml'),
+      '/app.wasm': const MimeType('application', 'wasm'),
+      '/no_extension': MimeType.octetStream,
+    }.entries,
+    (final v) async {
+      final fileName = v.key;
+      final mimeType = v.value;
+
+      final response = await makeRequest(handler, fileName);
 
       expect(response.statusCode, HttpStatus.ok);
-      expect(response.body.bodyType!.mimeType.primaryType, 'text');
-      expect(response.body.bodyType!.mimeType.subType, 'html');
-    });
-
-    test(
-        'Given a JSON file, '
-        'when requested, '
-        'then the Content-Type is application/json', () async {
-      final response = await makeRequest(handler, '/test.json');
-
-      expect(response.statusCode, HttpStatus.ok);
-      expect(response.body.bodyType!.mimeType.primaryType, 'application');
-      expect(response.body.bodyType!.mimeType.subType, 'json');
-    });
-
-    test(
-        'Given a CSS file, '
-        'when requested, '
-        'then the Content-Type is text/css', () async {
-      final response = await makeRequest(handler, '/test.css');
-
-      expect(response.statusCode, HttpStatus.ok);
-      expect(response.body.bodyType!.mimeType.primaryType, 'text');
-      expect(response.body.bodyType!.mimeType.subType, 'css');
-    });
-
-    test(
-        'Given a JavaScript file, '
-        'when requested, '
-        'then the Content-Type is text/javascript or application/javascript',
-        () async {
-      final response = await makeRequest(handler, '/test.js');
-
-      expect(response.statusCode, HttpStatus.ok);
-      final mimeType = response.body.bodyType!.mimeType;
-      expect(mimeType.subType, 'javascript');
-      // Accept either text/javascript or application/javascript
-      expect(['text', 'application'], contains(mimeType.primaryType));
-    });
-
-    test(
-        'Given a plain text file, '
-        'when requested, '
-        'then the Content-Type is text/plain', () async {
-      final response = await makeRequest(handler, '/test.txt');
-
-      expect(response.statusCode, HttpStatus.ok);
-      expect(response.body.bodyType!.mimeType.primaryType, 'text');
-      expect(response.body.bodyType!.mimeType.subType, 'plain');
-    });
-
-    test(
-        'Given an XML file, '
-        'when requested, '
-        'then the Content-Type is text/xml or application/xml', () async {
-      final response = await makeRequest(handler, '/test.xml');
-
-      expect(response.statusCode, HttpStatus.ok);
-      final mimeType = response.body.bodyType!.mimeType;
-      expect(mimeType.subType, 'xml');
-      // Accept either text/xml or application/xml
-      expect(['text', 'application'], contains(mimeType.primaryType));
-    });
-
-    test(
-        'Given a PDF file, '
-        'when requested, '
-        'then the Content-Type is application/pdf', () async {
-      final response = await makeRequest(handler, '/test.pdf');
-
-      expect(response.statusCode, HttpStatus.ok);
-      expect(response.body.bodyType!.mimeType.primaryType, 'application');
-      expect(response.body.bodyType!.mimeType.subType, 'pdf');
-    });
-
-    test(
-        'Given a JPEG image file, '
-        'when requested, '
-        'then the Content-Type is image/jpeg', () async {
-      final response = await makeRequest(handler, '/image.jpg');
-
-      expect(response.statusCode, HttpStatus.ok);
-      expect(response.body.bodyType!.mimeType.primaryType, 'image');
-      expect(response.body.bodyType!.mimeType.subType, 'jpeg');
-    });
-
-    test(
-        'Given a PNG image file, '
-        'when requested, '
-        'then the Content-Type is image/png', () async {
-      final response = await makeRequest(handler, '/image.png');
-
-      expect(response.statusCode, HttpStatus.ok);
-      expect(response.body.bodyType!.mimeType.primaryType, 'image');
-      expect(response.body.bodyType!.mimeType.subType, 'png');
-    });
-
-    test(
-        'Given a GIF image file, '
-        'when requested, '
-        'then the Content-Type is image/gif', () async {
-      final response = await makeRequest(handler, '/image.gif');
-
-      expect(response.statusCode, HttpStatus.ok);
-      expect(response.body.bodyType!.mimeType.primaryType, 'image');
-      expect(response.body.bodyType!.mimeType.subType, 'gif');
-    });
-
-    test(
-        'Given a file without extension, '
-        'when requested, '
-        'then the Content-Type defaults to application/octet-stream', () async {
-      final response = await makeRequest(handler, '/no_extension');
-
-      expect(response.statusCode, HttpStatus.ok);
-      expect(response.body.bodyType!.mimeType.primaryType, 'application');
-      expect(response.body.bodyType!.mimeType.subType, 'octet-stream');
-    });
-  });
+      expect(response.body.bodyType!.mimeType, mimeType);
+    },
+  );
 
   group('Given a custom MIME type resolver', () {
     test(
@@ -187,31 +92,29 @@ void main() {
     });
   });
 
-  group('Given text files with charset encoding', () {
-    test(
-        'Given a text file, '
-        'when requested, '
-        'then the Content-Type includes charset=utf-8', () async {
-      final response = await makeRequest(handler, '/test.html');
+  test(
+      'Given a text file, '
+      'when requested, '
+      'then the Content-Type includes charset=utf-8', () async {
+    final response = await makeRequest(handler, '/test.html');
 
-      expect(response.statusCode, HttpStatus.ok);
-      final mimeType = response.body.bodyType!.mimeType;
-      expect(mimeType.isText, isTrue);
-      // For text files, the encoding should be set to UTF-8
-      expect(response.body.bodyType?.encoding?.name, 'utf-8');
-    });
+    expect(response.statusCode, HttpStatus.ok);
+    final mimeType = response.body.bodyType!.mimeType;
+    expect(mimeType.isText, isTrue);
+    // For text files, the encoding should be set to UTF-8
+    expect(response.body.bodyType?.encoding?.name, 'utf-8');
+  });
 
-    test(
-        'Given a non-text file, '
-        'when requested, '
-        'then the Content-Type does not include charset', () async {
-      final response = await makeRequest(handler, '/image.jpg');
+  test(
+      'Given a non-text file, '
+      'when requested, '
+      'then the Content-Type does not include charset', () async {
+    final response = await makeRequest(handler, '/image.jpg');
 
-      expect(response.statusCode, HttpStatus.ok);
-      final mimeType = response.body.bodyType!.mimeType;
-      expect(mimeType.isText, isFalse);
-      // For binary files, encoding should be null
-      expect(response.body.bodyType?.encoding, isNull);
-    });
+    expect(response.statusCode, HttpStatus.ok);
+    final mimeType = response.body.bodyType!.mimeType;
+    expect(mimeType.isText, isFalse);
+    // For binary files, encoding should be null
+    expect(response.body.bodyType?.encoding, isNull);
   });
 }
