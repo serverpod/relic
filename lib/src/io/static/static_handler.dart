@@ -30,16 +30,20 @@ final _fileInfoCache = LruCache<String, _FileInfo>(10000);
 ///
 /// When a file is requested, it is served with appropriate headers including
 /// ETag, Last-Modified, and Cache-Control. The handler supports:
-/// - Conditional requests (If-None-Match, If-Modified-Since)
-/// - Range requests for partial content
-/// - Proper MIME type detection
+/// - Conditional requests (If-None-Match, If-Modified-Since, If-Range (for range request))
+/// - Range requests for partial content (multi-range is supported, but ranges are not coalesed)
+/// - Proper MIME type detection (from magic-bytes prefixes, or file extension)
 ///
 /// If the requested path doesn't correspond to a file, the [defaultHandler] is called.
 /// If no [defaultHandler] is provided, a 404 Not Found response is returned.
 /// Directory listings are not supported for security reasons.
 ///
+/// The handler requires the request method to be either GET, or HEAD.
+/// Otherwise, a 405 Method Not Allowed response is returned witn an
+/// appropriate Allow header.
+///
 /// The [mimeResolver] can be provided to customize MIME type detection.
-/// The [cacheControl] header can be customized; defaults to no-cache with private cache.
+/// The [cacheControl] header can be customized; defaults to not being set.
 Handler createStaticHandler(
   final String fileSystemPath, {
   final Handler? defaultHandler,
