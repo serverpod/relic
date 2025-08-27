@@ -34,7 +34,8 @@ final _fileInfoCache = LruCache<String, _FileInfo>(10000);
 /// - Range requests for partial content
 /// - Proper MIME type detection
 ///
-/// If the requested path doesn't correspond to a file, returns [defaultResponse].
+/// If the requested path doesn't correspond to a file, the [defaultHandler] is called.
+/// If no [defaultHandler] is provided, a 404 Not Found response is returned.
 /// Directory listings are not supported for security reasons.
 ///
 /// The [mimeResolver] can be provided to customize MIME type detection.
