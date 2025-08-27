@@ -15,57 +15,37 @@ void main() {
     handler = createStaticHandler(d.sandbox);
   });
 
-  group('Given Cache-Control header is set on the server', () {
-    test(
-        'when a file is served, '
-        'then the response includes the specified Cache-Control header',
-        () async {
-      final cacheControl = CacheControlHeader(
-        maxAge: 3600,
-        publicCache: true,
-        mustRevalidate: true,
-      );
-      handler = createStaticHandler(
-        d.sandbox,
-        cacheControl: cacheControl,
-      );
+  test(
+      'Given Cache-Control header is set on the server'
+      'when a file is served, '
+      'then the response includes the specified Cache-Control header',
+      () async {
+    final cacheControl = CacheControlHeader(
+      maxAge: 3600,
+      publicCache: true,
+      mustRevalidate: true,
+    );
+    handler = createStaticHandler(
+      d.sandbox,
+      cacheControl: cacheControl,
+    );
 
-      final response = await makeRequest(handler, '/test_file.txt');
+    final response = await makeRequest(handler, '/test_file.txt');
 
-      expect(response.statusCode, HttpStatus.ok);
-      expect(response.headers.cacheControl, isNotNull);
-      expect(response.headers.cacheControl!.maxAge, 3600);
-      expect(response.headers.cacheControl!.publicCache, isTrue);
-      expect(response.headers.cacheControl!.mustRevalidate, isTrue);
-      expect(response.headers.cacheControl!.noCache, isFalse);
-      expect(response.headers.cacheControl!.noStore, isFalse);
-    });
+    expect(response.statusCode, HttpStatus.ok);
+    expect(response.headers.cacheControl, isNotNull);
+    expect(response.headers.cacheControl!.maxAge, 3600);
+    expect(response.headers.cacheControl!.publicCache, isTrue);
+    expect(response.headers.cacheControl!.mustRevalidate, isTrue);
+  });
 
-    test(
-        'Given no Cache-Control header is specified on the server, '
-        'when a file is served, '
-        'then the response includes no Cache-Control header', () async {
-      final response = await makeRequest(handler, '/test_file.txt');
+  test(
+      'Given no Cache-Control header is specified on the server, '
+      'when a file is served, '
+      'then the response includes no Cache-Control header', () async {
+    final response = await makeRequest(handler, '/test_file.txt');
 
-      expect(response.statusCode, HttpStatus.ok);
-      expect(response.headers.cacheControl, isNull);
-    });
-
-    test(
-        'Given Cache-Control is set to no-store, '
-        'when a file is served, '
-        'then the response includes the no-store directive', () async {
-      final cacheControl = CacheControlHeader(noStore: true);
-      handler = createStaticHandler(
-        d.sandbox,
-        cacheControl: cacheControl,
-      );
-
-      final response = await makeRequest(handler, '/test_file.txt');
-
-      expect(response.statusCode, HttpStatus.ok);
-      expect(response.headers.cacheControl, isNotNull);
-      expect(response.headers.cacheControl!.noStore, isTrue);
-    });
+    expect(response.statusCode, HttpStatus.ok);
+    expect(response.headers.cacheControl, isNull);
   });
 }

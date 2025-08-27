@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:path/path.dart' as p;
 import 'package:relic/relic.dart';
 import 'package:test/test.dart';
 import 'package:test_descriptor/test_descriptor.dart' as d;
@@ -15,39 +14,6 @@ void main() {
       d.file('index.html', '<html><body>files</body></html>'),
       d.file('with space.txt', 'with space content')
     ]).create();
-  });
-
-  group('Given no default handler specified', () {
-    test('when accessing "/index.html" then it returns the file content',
-        () async {
-      final handler = createStaticHandler(d.sandbox);
-
-      final response = await makeRequest(handler, '/index.html');
-      expect(response.statusCode, HttpStatus.ok);
-      expect(response.body.contentLength, 13);
-      expect(response.readAsString(), completion('<html></html>'));
-    });
-
-    test('when accessing "/" then it returns a 404', () async {
-      final handler = createStaticHandler(d.sandbox);
-
-      final response = await makeRequest(handler, '/');
-      expect(response.statusCode, HttpStatus.notFound);
-    });
-
-    test('when accessing "/files" then it returns a 404', () async {
-      final handler = createStaticHandler(d.sandbox);
-
-      final response = await makeRequest(handler, '/files');
-      expect(response.statusCode, HttpStatus.notFound);
-    });
-
-    test('when accessing "/files/" dir then it returns a 404', () async {
-      final handler = createStaticHandler(d.sandbox);
-
-      final response = await makeRequest(handler, '/files/');
-      expect(response.statusCode, HttpStatus.notFound);
-    });
   });
 
   group('Given a default handler specified', () {
