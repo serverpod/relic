@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:isolate';
 import 'dart:math';
 import 'dart:typed_data';
 
@@ -177,10 +178,10 @@ Future<_FileInfo> _getFileInfo(
   }
 
   // Generate new file info
-  final etag = await _generateETag(file);
+  final etag = Isolate.run(() => _generateETag(file));
   final mimeType = await _detectMimeType(file, mimeResolver);
 
-  final fileInfo = _FileInfo(mimeType, stat, etag);
+  final fileInfo = _FileInfo(mimeType, stat, await etag);
   _fileInfoCache[file.path] = fileInfo;
   return fileInfo;
 }
