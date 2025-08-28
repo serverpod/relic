@@ -60,11 +60,11 @@ typedef Responder = FutureOr<Response> Function(Request);
 ///
 /// The input [NewContext] to the generated [Handler] must be a
 /// [RespondableContext] (i.e., capable of producing a response) for the
-/// `withResponse` call to succeed. The handler ensures the resulting context is
+/// `respond` call to succeed. The handler ensures the resulting context is
 /// a [ResponseContext].
 Handler respondWith(final Responder responder) {
   return (final ctx) async {
-    return ctx.withResponse(await responder(ctx.request));
+    return ctx.respond(await responder(ctx.request));
   };
 }
 

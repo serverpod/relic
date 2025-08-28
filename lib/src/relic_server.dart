@@ -121,7 +121,7 @@ class RelicServer {
         return switch (handledCtx) {
           final ResponseContext rc =>
             // If the response doesn't have a powered-by or date header, add the default ones
-            rc.withResponse(
+            rc.respond(
               rc.response.copyWith(headers: rc.response.headers.transform(
                 (final mh) {
                   mh.xPoweredBy ??= poweredByHeader;
@@ -138,7 +138,7 @@ class RelicServer {
           'Error parsing request headers.\n$error',
           stackTrace,
         );
-        return ctx.withResponse(Response.badRequest(
+        return ctx.respond(Response.badRequest(
           body: Body.fromString(error.httpResponseBody),
         ));
       }

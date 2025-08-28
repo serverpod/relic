@@ -53,7 +53,7 @@ Middleware createMiddleware({
   return (final innerHandler) {
     return (final ctx) async {
       var response = await onRequest!(ctx.request);
-      if (response != null) return ctx.withResponse(response);
+      if (response != null) return ctx.respond(response);
       late ResponseContext responseCtx;
       try {
         final newCtx = await innerHandler(ctx);
@@ -61,12 +61,12 @@ Middleware createMiddleware({
         responseCtx = newCtx;
       } catch (e, s) {
         if (onError != null) {
-          return ctx.withResponse(await onError(e, s));
+          return ctx.respond(await onError(e, s));
         }
         rethrow;
       }
       response = await onResponse!(responseCtx.response);
-      return responseCtx.withResponse(response);
+      return responseCtx.respond(response);
     };
   };
 }

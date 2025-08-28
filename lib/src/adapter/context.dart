@@ -38,7 +38,7 @@ abstract interface class RespondableContext
   /// Transitions the context to a state where a response has been associated.
   ///
   /// Takes a [Response] object [r] and returns a [ResponseContext].
-  ResponseContext withResponse(final Response r);
+  ResponseContext respond(final Response r);
 }
 
 /// An interface for request contexts that allow hijacking the underlying connection.
@@ -53,7 +53,7 @@ abstract interface class HijackableContext implements _RequestContextInterface {
 /// Represents the initial state of a request context before it has been
 /// handled (i.e., before a response is generated or the connection is hijacked).
 ///
-/// This context can transition to either a [ResponseContext] via [withResponse],
+/// This context can transition to either a [ResponseContext] via [respond],
 /// a [HijackContext] via [hijack], or a [ConnectContext] via [connect].
 final class NewContext extends RequestContext
     implements RespondableContext, HijackableContext {
@@ -73,7 +73,7 @@ final class NewContext extends RequestContext
       ConnectContext._(request, token, c);
 
   @override
-  ResponseContext withResponse(final Response r) =>
+  ResponseContext respond(final Response r) =>
       ResponseContext._(request, token, r);
 }
 
@@ -94,7 +94,7 @@ final class ResponseContext extends HandledContext
   ResponseContext._(super.request, super.token, this.response) : super._();
 
   @override
-  ResponseContext withResponse(final Response r) =>
+  ResponseContext respond(final Response r) =>
       ResponseContext._(request, token, r);
 }
 

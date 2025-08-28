@@ -69,7 +69,7 @@ ResponseContext hello(final RequestContext ctx) {
   final name = ctx.pathParameters[#name];
   final age = int.parse(ctx.pathParameters[#age]!);
 
-  return (ctx as RespondableContext).withResponse(Response.ok(
+  return (ctx as RespondableContext).respond(Response.ok(
       body: Body.fromString('Hello $name! To think you are $age years old.')));
 }
 ```
