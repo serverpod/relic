@@ -7,7 +7,7 @@ on:
     branches: 
       - "main"
     paths:
-      - 'docsite/**'
+      - 'doc/site/**'
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -36,7 +36,7 @@ jobs:
         with:
             node-version: 20 
             cache: npm
-            cache-dependency-path: docsite/package-lock.json
+            cache-dependency-path: doc/site/package-lock.json
       - name: Install dependencies
         run: npm ci 
         working-directory: ./docs
