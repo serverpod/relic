@@ -94,6 +94,10 @@ Handler createStaticHandler(
 /// The file must exist at the specified path or an [ArgumentError] is thrown.
 /// Supports the same features as [createStaticHandler] but for a single file.
 ///
+/// The handler requires the request method to be either GET, or HEAD.
+/// Otherwise, a 405 Method Not Allowed response is returned witn an
+/// appropriate Allow header.
+///
 /// The [mimeResolver] can be provided to customize MIME type detection.
 /// The [cacheControl] header can be customized; defaults to no-cache with private cache.
 Handler createFileHandler(
