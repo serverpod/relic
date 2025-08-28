@@ -1,5 +1,5 @@
 # Simple workflow for deploying static content to GitHub Pages
-name: Deploy Relic documentation
+name: Publish Documentation
 
 on:
   # Runs on pushes targeting the default branch
@@ -7,7 +7,7 @@ on:
     branches: 
       - "main"
     paths:
-      - 'docsite/**'
+      - 'doc/site/**'
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -36,28 +36,26 @@ jobs:
         with:
             node-version: 20 
             cache: npm
-            cache-dependency-path: docsite/package-lock.json
+            cache-dependency-path: doc/site/package-lock.json
       - name: Install dependencies
         run: npm ci 
-        working-directory: ./docs
+        working-directory: ./doc/site
       - name: Build docs
         run: npm run build
-        working-directory: ./docs
+        working-directory: ./doc/site
       - name: Upload build artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: './doc/site/build'
           
   deploy:
-    name: Deploy documentation
+    name: Publish documentation
     needs: build
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
-      # - name: Setup Pages
-      #   uses: actions/configure-pages@v5
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
