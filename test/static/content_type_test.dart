@@ -26,7 +26,7 @@ void main() {
     await d.file('image.svg', '<svg></svg>').create();
     await d.file('app.wasm', 'fake wasm content').create();
     await d.file('no_extension', 'content without extension').create();
-    handler = createStaticHandler(d.sandbox);
+    handler = createStaticHandler(cacheControl: null, d.sandbox);
   });
 
   parameterizedTest(
@@ -66,7 +66,8 @@ void main() {
         'then the Content-Type is application/x-my-text', () async {
       final customResolver = MimeTypeResolver()
         ..addExtension('txt', 'application/x-my-text');
-      handler = createStaticHandler(d.sandbox, mimeResolver: customResolver);
+      handler = createStaticHandler(
+          cacheControl: null, d.sandbox, mimeResolver: customResolver);
 
       final response = await makeRequest(handler, '/test.txt');
 
@@ -82,7 +83,8 @@ void main() {
       await d.file('test.custom', 'custom file content').create();
       final customResolver = MimeTypeResolver()
         ..addExtension('custom', 'text/custom');
-      handler = createStaticHandler(d.sandbox, mimeResolver: customResolver);
+      handler = createStaticHandler(
+          cacheControl: null, d.sandbox, mimeResolver: customResolver);
 
       final response = await makeRequest(handler, '/test.custom');
 

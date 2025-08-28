@@ -49,7 +49,7 @@ Handler createStaticHandler(
   final String fileSystemPath, {
   final Handler? defaultHandler,
   final MimeTypeResolver? mimeResolver,
-  final CacheControlHeader? cacheControl,
+  required final CacheControlHeader? cacheControl,
 }) {
   final rootDir = Directory(fileSystemPath);
   if (!rootDir.existsSync()) {
