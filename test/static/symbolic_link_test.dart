@@ -8,17 +8,24 @@ import 'package:test_descriptor/test_descriptor.dart' as d;
 
 import 'test_util.dart';
 
-const _skipSymlinksOnWindows = {
-  'windows': Skip('Skip tests for sym-linked files on Windows'),
-};
-
 void main() {
-  setUp(() async {
-    await d.dir('originals', [
-      d.file('index.html', '<html></html>'),
-    ]).create();
+  setUpAll(() async {
+    // Setup the following directory hierarchy:
+    //
+    // originals/
+    //   index.html
+    // alt_root/
+    //   link_index.html ../originals/index.html
+    //   link_dir -> ../originals/
+    // link_index.html -> originals/index.html
+    // link_dir -> originals/
 
-    await d.dir('alt_root').create();
+    await d.dir('', [
+      d.dir('originals', [
+        d.file('index.html', '<html></html>'),
+      ]),
+      d.dir('alt_root'),
+    ]).create();
 
     final originalsDir = p.join(d.sandbox, 'originals');
     final originalsIndex = p.join(originalsDir, 'index.html');
@@ -33,129 +40,51 @@ void main() {
     Link(p.join(d.sandbox, 'alt_root', 'link_dir')).createSync(originalsDir);
   });
 
-  group('Given access outside of root is disabled', () {
-    test('when accessing a real file then it returns the file content',
-        () async {
-      final handler = createStaticHandler(d.sandbox);
+  group('Given links pointing inside root dir', () {
+    test(
+      'when accessing a sym linked file in a real dir, '
+      'then it returns the file content',
+      () async {
+        final handler = createStaticHandler(cacheControl: null, d.sandbox);
 
-      final response = await makeRequest(handler, '/originals/index.html');
-      expect(response.statusCode, HttpStatus.ok);
-      expect(response.body.contentLength, 13);
-      expect(response.readAsString(), completion('<html></html>'));
-    });
-
-    group('Given links under root dir', () {
-      test(
-        'when accessing a sym linked file in a real dir then it returns the file content',
-        () async {
-          final handler = createStaticHandler(d.sandbox);
-
-          final response = await makeRequest(handler, '/link_index.html');
-          expect(response.statusCode, HttpStatus.ok);
-          expect(response.body.contentLength, 13);
-          expect(response.readAsString(), completion('<html></html>'));
-        },
-        onPlatform: _skipSymlinksOnWindows,
-      );
-
-      test(
-          'when accessing a file in a sym linked dir then it returns the file content',
-          () async {
-        final handler = createStaticHandler(d.sandbox);
-
-        final response = await makeRequest(handler, '/link_dir/index.html');
+        final response = await makeRequest(handler, '/link_index.html');
         expect(response.statusCode, HttpStatus.ok);
         expect(response.body.contentLength, 13);
         expect(response.readAsString(), completion('<html></html>'));
-      });
-    });
+      },
+    );
 
-    group('Given links not under root dir', () {
-      test(
-          'when accessing a sym linked file in a real dir then it returns a 404',
-          () async {
-        final handler = createStaticHandler(p.join(d.sandbox, 'alt_root'));
+    test(
+        'when accessing a file in a sym linked dir, '
+        'then it returns the file content', () async {
+      final handler = createStaticHandler(cacheControl: null, d.sandbox);
 
-        final response = await makeRequest(handler, '/link_index.html');
-        expect(response.statusCode, HttpStatus.notFound);
-      });
-
-      test('when accessing a file in a sym linked dir then it returns a 404',
-          () async {
-        final handler = createStaticHandler(p.join(d.sandbox, 'alt_root'));
-
-        final response = await makeRequest(handler, '/link_dir/index.html');
-        expect(response.statusCode, HttpStatus.notFound);
-      });
+      final response = await makeRequest(handler, '/link_dir/index.html');
+      expect(response.statusCode, HttpStatus.ok);
+      expect(response.body.contentLength, 13);
+      expect(response.readAsString(), completion('<html></html>'));
     });
   });
 
-  group('Given access outside of root is enabled', () {
-    test('when accessing a real file then it returns the file content',
-        () async {
-      final handler =
-          createStaticHandler(d.sandbox, serveFilesOutsidePath: true);
+  group('Given links pointing out of root dir', () {
+    test(
+        'when accessing a sym linked file in a real dir, '
+        'then it returns a 404', () async {
+      final handler = createStaticHandler(
+          cacheControl: null, p.join(d.sandbox, 'alt_root'));
 
-      final response = await makeRequest(handler, '/originals/index.html');
-      expect(response.statusCode, HttpStatus.ok);
-      expect(response.body.contentLength, 13);
-      expect(response.readAsString(), completion('<html></html>'));
+      final response = await makeRequest(handler, '/link_index.html');
+      expect(response.statusCode, HttpStatus.notFound);
     });
 
-    group('Given links under root dir', () {
-      test(
-        'when accessing a sym linked file in a real dir then it returns the file content',
-        () async {
-          final handler =
-              createStaticHandler(d.sandbox, serveFilesOutsidePath: true);
+    test(
+        'when accessing a real file in a sym linked dir, '
+        'then it returns a 404', () async {
+      final handler = createStaticHandler(
+          cacheControl: null, p.join(d.sandbox, 'alt_root'));
 
-          final response = await makeRequest(handler, '/link_index.html');
-          expect(response.statusCode, HttpStatus.ok);
-          expect(response.body.contentLength, 13);
-          expect(response.readAsString(), completion('<html></html>'));
-        },
-        onPlatform: _skipSymlinksOnWindows,
-      );
-
-      test(
-          'when accessing a file in a sym linked dir then it returns the file content',
-          () async {
-        final handler =
-            createStaticHandler(d.sandbox, serveFilesOutsidePath: true);
-
-        final response = await makeRequest(handler, '/link_dir/index.html');
-        expect(response.statusCode, HttpStatus.ok);
-        expect(response.body.contentLength, 13);
-        expect(response.readAsString(), completion('<html></html>'));
-      });
-    });
-
-    group('Given links not under root dir', () {
-      test(
-        'when accessing a sym linked file in a real dir then it returns the file content',
-        () async {
-          final handler = createStaticHandler(p.join(d.sandbox, 'alt_root'),
-              serveFilesOutsidePath: true);
-
-          final response = await makeRequest(handler, '/link_index.html');
-          expect(response.statusCode, HttpStatus.ok);
-          expect(response.body.contentLength, 13);
-          expect(response.readAsString(), completion('<html></html>'));
-        },
-        onPlatform: _skipSymlinksOnWindows,
-      );
-
-      test(
-          'when accessing a file in a sym linked dir then it returns the file content',
-          () async {
-        final handler = createStaticHandler(p.join(d.sandbox, 'alt_root'),
-            serveFilesOutsidePath: true);
-
-        final response = await makeRequest(handler, '/link_dir/index.html');
-        expect(response.statusCode, HttpStatus.ok);
-        expect(response.body.contentLength, 13);
-        expect(response.readAsString(), completion('<html></html>'));
-      });
+      final response = await makeRequest(handler, '/link_dir/index.html');
+      expect(response.statusCode, HttpStatus.notFound);
     });
   });
 }

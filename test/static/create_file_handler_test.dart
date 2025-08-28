@@ -16,61 +16,60 @@ void main() {
   test('Given a file when served then it returns the file contents', () async {
     final handler = createFileHandler(p.join(d.sandbox, 'file.txt'));
     final response = await makeRequest(handler, '/file.txt');
-    expect(response.statusCode, equals(HttpStatus.ok));
-    expect(response.body.contentLength, equals(8));
-    expect(response.readAsString(), completion(equals('contents')));
+    expect(response.statusCode, HttpStatus.ok);
+    expect(response.body.contentLength, 8);
+    expect(response.readAsString(), completion('contents'));
   });
 
   test('Given a non-matching URL when served then it returns a 404', () async {
-    final handler = createFileHandler(p.join(d.sandbox, 'file.txt'));
+    final handler = const Pipeline()
+        .addMiddleware(routeWith(Router<Handler>()
+          ..get('/foo/bar', createFileHandler(p.join(d.sandbox, 'file.txt')))))
+        .addHandler(respondWith((final _) => Response.notFound()));
     final response = await makeRequest(handler, '/foo/file.txt');
-    expect(response.statusCode, equals(HttpStatus.notFound));
+    expect(response.statusCode, HttpStatus.notFound);
   });
 
   test(
       'Given a file under a custom URL when served then it returns the file contents',
       () async {
-    final handler =
-        createFileHandler(p.join(d.sandbox, 'file.txt'), url: 'foo/bar');
+    final handler = const Pipeline()
+        .addMiddleware(routeWith(Router<Handler>()
+          ..get('/foo/bar', createFileHandler(p.join(d.sandbox, 'file.txt')))))
+        .addHandler(respondWith((final _) => Response.notFound()));
     final response = await makeRequest(handler, '/foo/bar');
-    expect(response.statusCode, equals(HttpStatus.ok));
-    expect(response.body.contentLength, equals(8));
-    expect(response.readAsString(), completion(equals('contents')));
+    expect(response.statusCode, HttpStatus.ok);
+    expect(response.body.contentLength, 8);
+    expect(response.readAsString(), completion('contents'));
   });
 
   test(
       "Given a custom URL that isn't matched when served then it returns a 404",
       () async {
-    final handler =
-        createFileHandler(p.join(d.sandbox, 'file.txt'), url: 'foo/bar');
+    final handler = const Pipeline()
+        .addMiddleware(routeWith(Router<Handler>()
+          ..get('/foo/bar', createFileHandler(p.join(d.sandbox, 'file.txt')))))
+        .addHandler(respondWith((final _) => Response.notFound()));
     final response = await makeRequest(handler, '/file.txt');
-    expect(response.statusCode, equals(HttpStatus.notFound));
+    expect(response.statusCode, HttpStatus.notFound);
   });
 
   group('Given the content type header', () {
     test('when inferred from the file path then it is set correctly', () async {
       final handler = createFileHandler(p.join(d.sandbox, 'file.txt'));
       final response = await makeRequest(handler, '/file.txt');
-      expect(response.statusCode, equals(HttpStatus.ok));
-      expect(response.mimeType?.primaryType, equals('text'));
-      expect(response.mimeType?.subType, equals('plain'));
+      expect(response.statusCode, HttpStatus.ok);
+      expect(response.mimeType?.primaryType, 'text');
+      expect(response.mimeType?.subType, 'plain');
     });
 
-    test("when it can't be inferred then it is omitted", () async {
+    test(
+        "when it can't be inferred then it defaults to application/octet-stream",
+        () async {
       final handler = createFileHandler(p.join(d.sandbox, 'random.unknown'));
       final response = await makeRequest(handler, '/random.unknown');
-      expect(response.statusCode, equals(HttpStatus.ok));
-      expect(response.mimeType, isNull);
-    });
-
-    test('when provided by the contentType parameter then it is used',
-        () async {
-      final handler = createFileHandler(p.join(d.sandbox, 'file.txt'),
-          contentType: MimeType.parse('something/weird'));
-      final response = await makeRequest(handler, '/file.txt');
-      expect(response.statusCode, equals(HttpStatus.ok));
-      expect(response.mimeType?.primaryType, equals('something'));
-      expect(response.mimeType?.subType, equals('weird'));
+      expect(response.statusCode, HttpStatus.ok);
+      expect(response.mimeType, MimeType.octetStream);
     });
   });
 
@@ -85,11 +84,8 @@ void main() {
           (final mh) => mh.range = RangeHeader.parse('bytes=0-4'),
         ),
       );
-      expect(response.statusCode, equals(HttpStatus.partialContent));
-      expect(
-        response.headers.acceptRanges?.isBytes,
-        isTrue,
-      );
+      expect(response.statusCode, HttpStatus.partialContent);
+      expect(response.headers.acceptRanges?.isBytes, isTrue);
       expect(response.headers.contentRange?.start, 0);
       expect(response.headers.contentRange?.end, 4);
       expect(response.headers.contentRange?.size, 8);
@@ -106,14 +102,8 @@ void main() {
           (final mh) => mh.range = RangeHeader.parse('bytes=0-9'),
         ),
       );
-      expect(
-        response.statusCode,
-        equals(HttpStatus.partialContent),
-      );
-      expect(
-        response.headers.acceptRanges?.isBytes,
-        isTrue,
-      );
+      expect(response.statusCode, HttpStatus.partialContent);
+      expect(response.headers.acceptRanges?.isBytes, isTrue);
 
       expect(response.headers.contentRange?.start, 0);
       expect(response.headers.contentRange?.end, 7);
@@ -123,8 +113,8 @@ void main() {
     });
 
     test(
-        'when range at the start overflows from 8 to 9 then it returns requested range not satisfiable',
-        () async {
+        'when range at the start overflows from 8 to 9, '
+        'then it returns 416 Request Range Not Satisfiable', () async {
       final handler = createFileHandler(p.join(d.sandbox, 'file.txt'));
       final response = await makeRequest(
         handler,
@@ -134,24 +124,14 @@ void main() {
         ),
       );
 
-      expect(
-        response.body.contentLength,
-        0,
-      );
-
-      expect(
-        response.headers.acceptRanges?.isBytes,
-        isTrue,
-      );
-      expect(
-        response.statusCode,
-        HttpStatus.requestedRangeNotSatisfiable,
-      );
+      expect(response.statusCode, HttpStatus.requestedRangeNotSatisfiable);
+      expect(response.body.contentLength, 0);
+      expect(response.headers.acceptRanges?.isBytes, isTrue);
     });
 
     test(
-        'when invalid request with start > end is ignored then it returns the full content',
-        () async {
+        'when invalid request with start > end is received, '
+        'then it returns 416 Request Range Not Satisfiable', () async {
       final handler = createFileHandler(p.join(d.sandbox, 'file.txt'));
       final response = await makeRequest(
         handler,
@@ -160,14 +140,14 @@ void main() {
           (final mh) => mh.range = RangeHeader.parse('bytes=2-1'),
         ),
       );
-      expect(response.statusCode, equals(HttpStatus.ok));
-      expect(response.body.contentLength, equals(8));
-      expect(response.readAsString(), completion(equals('contents')));
+      expect(response.statusCode, HttpStatus.requestedRangeNotSatisfiable);
+      expect(response.body.contentLength, 0);
+      expect(response.headers.acceptRanges?.isBytes, isTrue);
     });
 
     test(
-        'when request with start > end is ignored then it returns the full content',
-        () async {
+        'when request with start > end is received, '
+        'then it returns 416 Request Range Not Satisfiable', () async {
       final handler = createFileHandler(p.join(d.sandbox, 'file.txt'));
       final response = await makeRequest(
         handler,
@@ -176,9 +156,9 @@ void main() {
           (final mh) => mh.range = RangeHeader.parse('bytes=2-1'),
         ),
       );
-      expect(response.statusCode, equals(HttpStatus.ok));
-      expect(response.body.contentLength, equals(8));
-      expect(response.readAsString(), completion(equals('contents')));
+      expect(response.statusCode, HttpStatus.requestedRangeNotSatisfiable);
+      expect(response.body.contentLength, 0);
+      expect(response.headers.acceptRanges?.isBytes, isTrue);
     });
   });
 
@@ -186,15 +166,6 @@ void main() {
     test("when a file doesn't exist then it throws an ArgumentError", () {
       expect(
         () => createFileHandler(p.join(d.sandbox, 'nothing.txt')),
-        throwsArgumentError,
-      );
-    });
-
-    test('when an absolute URL is provided then it throws an ArgumentError',
-        () {
-      expect(
-        () => createFileHandler(p.join(d.sandbox, 'nothing.txt'),
-            url: '/foo/bar'),
         throwsArgumentError,
       );
     });

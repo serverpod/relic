@@ -68,9 +68,33 @@ class MimeType {
     return MimeType(primaryType, subType);
   }
 
+  bool get isText {
+    if (primaryType == 'text') return true;
+    if (primaryType == 'application') {
+      final st = subType.toLowerCase();
+      // Common text-like app types and structured syntax suffixes.
+      return st == 'json' ||
+          st == 'xml' ||
+          st == 'javascript' ||
+          st == 'x-www-form-urlencoded' ||
+          st.endsWith('+json') ||
+          st.endsWith('+xml');
+    }
+    return false;
+  }
+
   /// Returns the value to use for the Content-Type header.
   String toHeaderValue() => '$primaryType/$subType';
 
   @override
   String toString() => 'MimeType(primaryType: $primaryType, subType: $subType)';
+
+  @override
+  bool operator ==(final Object other) {
+    if (other is! MimeType) return false;
+    return primaryType == other.primaryType && subType == other.subType;
+  }
+
+  @override
+  int get hashCode => Object.hash(primaryType, subType);
 }

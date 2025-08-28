@@ -18,7 +18,7 @@ void main() {
 
   test('Given a root file when accessed then it returns the file content',
       () async {
-    final handler = createStaticHandler(d.sandbox);
+    final handler = createStaticHandler(cacheControl: null, d.sandbox);
 
     final response = await makeRequest(
       handler,
@@ -33,7 +33,7 @@ void main() {
   test(
       'Given a root file with space when accessed then it returns the file content',
       () async {
-    final handler = createStaticHandler(d.sandbox);
+    final handler = createStaticHandler(cacheControl: null, d.sandbox);
 
     final response = await makeRequest(
         handler, '/static/files/with%20space.txt',
@@ -46,7 +46,7 @@ void main() {
   test(
       'Given a root file with unencoded space when accessed then it returns the file content',
       () async {
-    final handler = createStaticHandler(d.sandbox);
+    final handler = createStaticHandler(cacheControl: null, d.sandbox);
 
     final response = await makeRequest(
         handler, '/static/files/with%20space.txt',
@@ -59,7 +59,7 @@ void main() {
   test(
       'Given a file under directory when accessed then it returns the file content',
       () async {
-    final handler = createStaticHandler(d.sandbox);
+    final handler = createStaticHandler(cacheControl: null, d.sandbox);
 
     final response = await makeRequest(handler, '/static/files/test.txt',
         handlerPath: 'static');
@@ -70,7 +70,7 @@ void main() {
 
   test('Given a non-existent file when accessed then it returns a 404 status',
       () async {
-    final handler = createStaticHandler(d.sandbox);
+    final handler = createStaticHandler(cacheControl: null, d.sandbox);
 
     final response = await makeRequest(handler, '/static/not_here.txt',
         handlerPath: 'static');

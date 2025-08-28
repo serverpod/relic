@@ -68,14 +68,14 @@ class Body {
   /// Creates a body from a [Stream] of [Uint8List].
   factory Body.fromDataStream(
     final Stream<Uint8List> body, {
-    final Encoding? encoding = utf8,
-    final MimeType? mimeType = MimeType.plainText,
+    final Encoding? encoding,
+    final MimeType? mimeType = MimeType.octetStream,
     final int? contentLength,
   }) {
     return Body._(
       body,
       contentLength,
-      encoding: encoding,
+      encoding: encoding ?? (mimeType?.isText == true ? utf8 : null),
       mimeType: mimeType,
     );
   }
@@ -89,7 +89,7 @@ class Body {
     return Body._(
       Stream.value(body),
       body.length,
-      encoding: encoding,
+      encoding: encoding ?? (mimeType.isText == true ? utf8 : null),
       mimeType: mimeType,
     );
   }
