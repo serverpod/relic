@@ -65,6 +65,9 @@ jobs:
           dart pub get &&
           dart analyze ${{ matrix.dart_sdk == env.LOWEST_DART_SDK && '--fatal-infos' || '--fatal-warnings' }}
 
+      - name: Doc Dry Run
+        run: dart doc --dry-run
+
       - name: Check Pana Score
         if: ${{ matrix.dart_sdk == 'stable' }}
         run: >-

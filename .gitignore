@@ -3,6 +3,7 @@
 .pub/
 build/
 coverage/
+doc/api/
 pubspec.lock
 
 # macOS system files
@@ -14,5 +15,6 @@ pubspec.lock
 .vscode/
 .vscode-test/
 
+# Local build artifacts
 *.exe
 benchmark_results.csv
