@@ -116,3 +116,33 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: coverage/lcov.info
+
+  docs-markdown-lint:
+    name: Markdown lint for docs
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run markdownlint on maintained docs
+        uses: articulate/actions-markdownlint@v1
+        with:
+            config: ./doc/site/.markdownlint.yaml
+            files: ./doc/site/**/*.md
+
+  docs-test-build:
+    name: Test build docs 
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v3
+        with:
+            node-version: 20 
+            cache: npm
+            cache-dependency-path: doc/site/package-lock.json
+      - name: Install dependencies
+        run: npm ci 
+        working-directory: ./doc/site
+      - name: Build
+        run: npm run build
+        working-directory: ./doc/site
