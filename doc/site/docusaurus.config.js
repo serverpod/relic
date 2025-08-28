@@ -9,7 +9,7 @@ const darkCodeTheme = themes.dracula;
 const config = {
   title: 'Relic',
   tagline: 'Strictly typed HTTP server with incredible performance.',
-  url: 'https://docs.relic.dev',
+  url: 'https://docs.dartrelic.dev',
   baseUrl: '/',
   onBrokenLinks: 'throw',
   onBrokenMarkdownLinks: 'warn',
