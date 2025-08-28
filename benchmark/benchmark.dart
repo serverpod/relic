@@ -6,6 +6,7 @@ import 'dart:math';
 
 import 'package:benchmark_harness/perf_benchmark_harness.dart';
 import 'package:cli_tools/cli_tools.dart';
+import 'package:config/config.dart';
 import 'package:git/git.dart';
 import 'package:path/path.dart' as p;
 import 'package:relic/relic.dart';
