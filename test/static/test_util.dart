@@ -43,7 +43,7 @@ Handler _rootHandler(final String? path, final Handler handler) {
     final ctx = requestCtx as RespondableContext;
     final request = ctx.request;
     if (!_ctx.isWithin('/$path', request.requestedUri.path)) {
-      return ctx.withResponse(Response.notFound(
+      return ctx.respond(Response.notFound(
         body: Body.fromString(
           'not found',
         ),

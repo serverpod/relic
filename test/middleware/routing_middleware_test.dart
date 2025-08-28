@@ -34,7 +34,7 @@ void main() {
         Map<Symbol, String>? capturedParams;
         Future<HandledContext> testHandler(final NewContext ctx) async {
           capturedParams = ctx.pathParameters;
-          return ctx.withResponse(Response(200));
+          return ctx.respond(Response(200));
         }
 
         router.add(Method.get, '/users/:id', testHandler);
@@ -57,7 +57,7 @@ void main() {
         Map<Symbol, String>? capturedParams;
         Future<ResponseContext> testHandler(final NewContext ctx) async {
           capturedParams = ctx.pathParameters;
-          return ctx.withResponse(Response(200));
+          return ctx.respond(Response(200));
         }
 
         router.add(Method.get, '/users', testHandler);
@@ -82,7 +82,7 @@ void main() {
         Future<ResponseContext> nextHandler(final NewContext ctx) async {
           nextCalled = true;
           expect(ctx.pathParameters, isEmpty);
-          return ctx.withResponse(Response(404));
+          return ctx.respond(Response(404));
         }
 
         final initialCtx = _FakeRequest('/nonexistent').toContext(Object());
@@ -121,7 +121,7 @@ void main() {
         router1.add(Method.get, '/router1/:item', (final NewContext ctx) async {
           handler1Called = true;
           params1 = ctx.pathParameters;
-          return ctx.withResponse(Response(201));
+          return ctx.respond(Response(201));
         });
         router2.add(Method.get, '/router2/:item', respondWith((final _) {
           handler2Called = true;
@@ -157,7 +157,7 @@ void main() {
         router2.add(Method.get, '/router2/:data', (final NewContext ctx) async {
           handler2Called = true;
           params2 = ctx.pathParameters;
-          return ctx.withResponse(Response(202));
+          return ctx.respond(Response(202));
         });
 
         final pipelineHandler =
@@ -222,7 +222,7 @@ void main() {
             (final NewContext ctx) async {
           nestedHandlerCalled = true;
           capturedParams = ctx.pathParameters;
-          return ctx.withResponse(Response(200));
+          return ctx.respond(Response(200));
         });
 
         // Attach nestedRouter to mainRouter under /resource/:resourceId
@@ -263,7 +263,7 @@ void main() {
             (final NewContext ctx) async {
           deeplyNestedHandlerCalled = true;
           capturedParams = ctx.pathParameters;
-          return ctx.withResponse(Response(200));
+          return ctx.respond(Response(200));
         });
 
         // Attach leafRouter to intermediateRouter under a parameterized path
@@ -305,7 +305,7 @@ void main() {
         subRouter.add(Method.get, '/:id/end', (final NewContext ctx) async {
           // sub-router uses :id
           capturedParams = ctx.pathParameters;
-          return ctx.withResponse(Response(200));
+          return ctx.respond(Response(200));
         });
 
         mainRouter.attach('/:id/sub', subRouter); // main router uses :id

@@ -24,7 +24,7 @@ SyncHandler createSyncHandler({
   final Body? body,
 }) {
   return (final NewContext ctx) {
-    return ctx.withResponse(Response(
+    return ctx.respond(Response(
       statusCode,
       headers: headers ?? Headers.empty(),
       body: body ??

@@ -138,7 +138,7 @@ Future<ResponseContext> _serveFile(
 
   // Handle conditional requests
   final conditionalResponse = _checkConditionalHeaders(ctx, fileInfo, headers);
-  if (conditionalResponse != null) return ctx.withResponse(conditionalResponse);
+  if (conditionalResponse != null) return ctx.respond(conditionalResponse);
 
   // Handle range requests
   final rangeHeader = ctx.request.headers.range;
@@ -157,7 +157,7 @@ bool _isMethodAllowed(final RequestMethod method) {
 
 /// Returns a 405 Method Not Allowed response.
 ResponseContext _methodNotAllowedResponse(final NewContext ctx) {
-  return ctx.withResponse(Response(
+  return ctx.respond(Response(
     HttpStatus.methodNotAllowed,
     headers: Headers.build((final mh) => mh.allow = [
           RequestMethod.get,
@@ -296,7 +296,7 @@ ResponseContext _serveFullFile(
   final Headers headers,
   final RequestMethod method,
 ) {
-  return ctx.withResponse(Response.ok(
+  return ctx.respond(Response.ok(
     headers: headers,
     body: method == RequestMethod.head
         ? null
@@ -316,12 +316,12 @@ ResponseContext _serveSingleRange(
 
   // If range is invalid
   if (start == end) {
-    return ctx.withResponse(Response(416, headers: headers));
+    return ctx.respond(Response(416, headers: headers));
   }
 
   final length = end - start;
 
-  return ctx.withResponse(Response(
+  return ctx.respond(Response(
     HttpStatus.partialContent,
     headers: headers.transform((final mh) => mh
       ..contentRange = ContentRangeHeader(
@@ -365,7 +365,7 @@ Future<ResponseContext> _serveMultipleRanges(
 
   unawaited(controller.close());
 
-  return ctx.withResponse(Response(
+  return ctx.respond(Response(
     HttpStatus.partialContent,
     headers: headers.transform((final mh) => mh
       ..contentLength = totalLength
