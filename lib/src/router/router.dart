@@ -181,14 +181,21 @@ extension RouteEx<T> on Router<T> {
   void connect(final String path, final T value) =>
       add(Method.connect, path, value);
 
-  /// Adds a route definition for all HTTP methods (GET, POST, PUT, etc.).
+  /// Adds a route definition for a set of HTTP methods.
   ///
-  /// This is a convenience method that calls `add` for each method in the [Method] enum.
-  void any(final String path, final T value) {
-    for (final method in Method.values) {
+  /// This is a convenience method that calls `add` for each method in the provided set
+  /// [methods].
+  void anyOf(final Set<Method> methods, final String path, final T value) {
+    for (final method in methods) {
       add(method, path, value);
     }
   }
+
+  /// Adds a route definition for all HTTP methods (GET, POST, PUT, etc.).
+  ///
+  /// This is a convenience method that calls `add` for each method in the [Method] enum.
+  void any(final String path, final T value) =>
+      anyOf(Method.values.toSet(), path, value);
 
   /// Create a subrouter for a path
   Router<T> group(final String path) {
