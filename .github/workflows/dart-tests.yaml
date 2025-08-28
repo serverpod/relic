@@ -127,16 +127,8 @@ jobs:
       - name: Run markdownlint on maintained docs
         uses: articulate/actions-markdownlint@v1
         with:
-            config: ./docs/.markdownlint.yaml
-            files: |
-              ./docs/**/*.md
-              !./docs/_generated/**
-      
-      - name: Run markdownlint on generated commands
-        uses: articulate/actions-markdownlint@v1
-        with:
-            config: ./docs/_generated/.markdownlint.yaml
-            files: ./docs/_generated/**/*.md
+            config: ./doc/site/.markdownlint.yaml
+            files: ./doc/site/**/*.md
 
   docs-test-build:
     name: Test build docs 
@@ -147,10 +139,10 @@ jobs:
         with:
             node-version: 20 
             cache: npm
-            cache-dependency-path: docs/package-lock.json
+            cache-dependency-path: doc/site/package-lock.json
       - name: Install dependencies
         run: npm ci 
-        working-directory: ./docs
+        working-directory: ./doc/site
       - name: Build
         run: npm run build
-        working-directory: ./docs
+        working-directory: ./doc/site

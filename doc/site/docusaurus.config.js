@@ -27,7 +27,7 @@ const config = {
           sidebarPath: require.resolve('./sidebars.js'),
           // Please change this to your repo.
           editUrl:
-            'https://github.com/serverpod/relic/tree/main/docs/',
+            'https://github.com/serverpod/relic/tree/main/doc/site/',
           breadcrumbs: false,
         },
         blog: false,

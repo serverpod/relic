@@ -1,6 +1,6 @@
-# Serverpod Cloud documentation website
+# Relic documentation website
 
-This is the code for Serverpod Clouds official documentation. You can view the updated documentation by choosing the _Next_ option in the top menu bar.
+This is the code for Relic's official documentation. You can view the updated documentation by choosing the _Next_ option in the top menu bar.
 
 ### Install
 
@@ -59,10 +59,10 @@ Install the `markdownlint-cli` globally, by running the following command from y
 $ npm install -g markdownlint-cli
 ```
 
-Formatting is only enforced in `/serverpod_docs/docs/` directory so therefore you only need to run the markdownlint-cli in this folder with:
+Formatting is only enforced in `/doc/site/` directory so therefore you only need to run the markdownlint-cli in this folder with:
 
 ```bash
-$ markdownlint './docs/**/*.md'
+$ markdownlint './doc/site/**/*.md'
 ```
 
 ### Force deploy from branch
