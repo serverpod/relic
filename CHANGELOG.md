@@ -1,3 +1,8 @@
+## 0.5.0
+- refactor!: Rename withResponse to respond (matches connect/hijack) ([#134](https://github.com/serverpod/relic/pull/134))
+- docs: Adds a docusaurus documentation page for relic. ([#132](https://github.com/serverpod/relic/pull/132))
+- refactor!: Static File Handler Overhaul ([#127](https://github.com/serverpod/relic/pull/127))
+
 ## 0.4.1
 - fix: Export bindHttpServer in io_adapter.dart ([#114](https://github.com/serverpod/relic/pull/114))
 - fix: Handle ':' in BasicAuthorizationHeader parser correctly ([#112](https://github.com/serverpod/relic/pull/112))
