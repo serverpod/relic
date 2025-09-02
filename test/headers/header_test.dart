@@ -687,7 +687,7 @@ void main() {
         Headers.from,
         (final h) => h.from = FromHeader(emails: ['info@serverpod.com'])
       ),
-      (Headers.host, (final h) => h.host = Uri.parse('www.example.com:80')),
+      (Headers.host, (final h) => h.host = HostHeader('www.example.com', 80)),
       (
         Headers.ifMatch,
         (final h) => h.ifMatch = const IfMatchHeader.wildcard()
