@@ -1,3 +1,6 @@
+@Timeout.none
+library;
+
 import 'package:relic/relic.dart';
 import 'package:test/test.dart';
 
@@ -40,9 +43,9 @@ void main() {
       );
 
       test(
-        'when a Host header with an invalid URI format is passed '
+        'when a Host header with an invalid format is passed '
         'then the server responds with a bad request including a message that '
-        'states the URI format is invalid',
+        'states the format is invalid',
         () async {
           expect(
             getServerRequestHeaders(
@@ -54,7 +57,7 @@ void main() {
               isA<BadRequestException>().having(
                 (final e) => e.message,
                 'message',
-                contains('Invalid URI format'),
+                contains('Invalid radix-10 number'),
               ),
             ),
           );
@@ -64,21 +67,15 @@ void main() {
       test(
         'when a Host header with an invalid port number is passed '
         'then the server responds with a bad request including a message that '
-        'states the URI format is invalid',
+        'states the format is invalid',
         () async {
           expect(
             getServerRequestHeaders(
               server: server,
-              headers: {'host': 'http://example.com:test'},
+              headers: {'host': 'example.com:test'},
               touchHeaders: (final h) => h.host,
             ),
-            throwsA(
-              isA<BadRequestException>().having(
-                (final e) => e.message,
-                'message',
-                contains('Invalid URI format'),
-              ),
-            ),
+            throwsA(isA<BadRequestException>()),
           );
         },
       );
@@ -91,7 +88,7 @@ void main() {
           final headers = await getServerRequestHeaders(
             server: server,
             touchHeaders: (final _) {},
-            headers: {'host': 'http://example.com:test'},
+            headers: {'host': 'http://example.com'}, // scheme not allowed!
           );
 
           expect(headers, isNotNull);
@@ -99,15 +96,15 @@ void main() {
       );
 
       test(
-        'when a valid Host header is passed then it should parse the URI correctly',
+        'when a valid Host header is passed then it should parse the host correctly',
         () async {
           final headers = await getServerRequestHeaders(
             server: server,
-            headers: {'host': 'https://example.com'},
+            headers: {'host': 'example.com'},
             touchHeaders: (final h) => h.host,
           );
 
-          expect(headers.host, equals(Uri.parse('https://example.com')));
+          expect(headers.host, equals(HostHeader('example.com', null)));
         },
       );
 
@@ -117,27 +114,24 @@ void main() {
         () async {
           final headers = await getServerRequestHeaders(
             server: server,
-            headers: {'host': 'https://example.com:8080'},
+            headers: {'host': 'example.com:8080'},
             touchHeaders: (final h) => h.host,
           );
 
-          expect(
-            headers.host?.port,
-            equals(8080),
-          );
+          expect(headers.host?.port, equals(8080));
         },
       );
 
       test(
-        'when a Host header with extra whitespace is passed then it should parse the URI correctly',
+        'when a Host header with extra whitespace is passed then it should parse correctly',
         () async {
           final headers = await getServerRequestHeaders(
             server: server,
-            headers: {'host': ' https://example.com '},
+            headers: {'host': ' example.com '},
             touchHeaders: (final h) => h.host,
           );
 
-          expect(headers.host, equals(Uri.parse('https://example.com')));
+          expect(headers.host, equals(HostHeader('example.com', null)));
         },
       );
 
@@ -151,7 +145,6 @@ void main() {
           );
 
           expect(headers.host, isNotNull);
-          expect(headers.host, isA<Uri>());
         },
       );
     },
@@ -192,7 +185,6 @@ void main() {
         );
 
         expect(headers.host, isNotNull);
-        expect(headers.host, isA<Uri>());
       },
     );
   });
