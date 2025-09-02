@@ -16,6 +16,13 @@ void main() {
 
     tearDown(() => server.close());
 
+    test('x', () {
+      final x = VaryHeader.headers(fields: ['foo']);
+      final r = Headers.vary.codec.encode(x);
+      final y = Headers.vary.codec.decode(r);
+      expect(x, y);
+    });
+
     test(
       'when an empty Vary header is passed then the server should respond with a bad request '
       'including a message that states the value cannot be empty',

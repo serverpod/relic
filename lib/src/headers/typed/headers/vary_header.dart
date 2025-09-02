@@ -1,3 +1,5 @@
+import 'package:collection/collection.dart';
+
 import '../../../../relic.dart';
 import '../../extension/string_list_extensions.dart';
 
@@ -8,22 +10,20 @@ import '../../extension/string_list_extensions.dart';
 /// response varies on all request headers.
 final class VaryHeader {
   static const codec = HeaderCodec(VaryHeader.parse, ___encode);
-  static List<String> ___encode(final VaryHeader value) => [value._encode()];
 
   /// A list of headers that the response varies on.
   /// If the list contains only "*", it means all headers are varied on.
-  final Iterable<String>? fields;
+  final Iterable<String> fields;
 
   /// Whether all headers are allowed to vary (`*`).
   final bool isWildcard;
 
   /// Constructs an instance allowing specific headers to vary.
-  VaryHeader.headers({required this.fields}) : isWildcard = false;
-
-  /// Constructs an instance allowing all headers to vary (`*`).
-  VaryHeader.wildcard()
-      : fields = null,
-        isWildcard = true;
+  VaryHeader.headers({required this.fields}) : isWildcard = false {
+    if (fields.isEmpty) {
+      throw ArgumentError.value(fields, 'fields', 'cannot be empty');
+    }
+  }
 
   /// Parses the Vary header value and returns a [VaryHeader] instance.
   ///
@@ -47,12 +47,34 @@ final class VaryHeader {
     return VaryHeader.headers(fields: splitValues);
   }
 
-  /// Converts the [VaryHeader] instance into a string representation
-  /// suitable for HTTP headers.
-  String _encode() => isWildcard ? '*' : fields!.join(', ');
+  /// Constructs an instance allowing all headers to vary (`*`).
+  VaryHeader.wildcard()
+      : fields = const [],
+        isWildcard = true;
 
   @override
-  String toString() {
-    return 'VaryHeader(fields: $fields, isWildcard: $isWildcard)';
+  bool operator ==(final Object other) {
+    if (identical(this, other)) return true;
+    if (other is! VaryHeader) return false;
+
+    // Fast path: compare wildcard and hash codes first
+    if (isWildcard != other.isWildcard || hashCode != other.hashCode) {
+      return false;
+    }
+
+    // Compare fields only if needed
+    return const IterableEquality<String>().equals(fields, other.fields);
   }
+
+  @override
+  late int hashCode = Object.hashAll([isWildcard, ...fields]);
+
+  @override
+  String toString() => 'VaryHeader(fields: $fields, isWildcard: $isWildcard)';
+
+  /// Converts the [VaryHeader] instance into a string representation
+  /// suitable for HTTP headers.
+  String _encode() => isWildcard ? '*' : fields.join(', ');
+
+  static List<String> ___encode(final VaryHeader value) => [value._encode()];
 }

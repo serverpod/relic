@@ -449,12 +449,51 @@ void main() {
     }.entries,
   );
 
-  parameterizedTest(
-    (final v) => 'Given a "${v.key.key}" header '
-        'when using the named extension property on an empty MutableHeaders instance '
-        'then setting to value succeeds',
+  parameterizedGroup(
+    (final v) => 'Given a "${v.key.key}" header ',
     (final v) {
-      expect(() => Headers.build((final mh) => v.value(mh)), returnsNormally);
+      test(
+          'when using the named extension property on an empty MutableHeaders instance '
+          'then setting to value succeeds', () {
+        expect(() => Headers.build(v.value), returnsNormally);
+      });
+
+      test('when round-tripping', () {
+        final headers1 = Headers.build(v.value);
+        final header1 = v.key.getValueFrom(headers1);
+
+        final raw = v.key.codec.encode(header1!);
+        final header3 = v.key.codec.decode(raw);
+        expect(header1, equals(header3));
+        expect(header1.hashCode, equals(header3.hashCode));
+      });
+
+      test('when comparing', () {
+        final headers1 = Headers.build(v.value);
+        final headers2 = Headers.build(v.value);
+        expect(identical(headers1, headers2), isFalse);
+
+        final header1 = v.key.getValueFrom(headers1);
+        final header2 = v.key.getValueFrom(headers2);
+        expect(header1, isNotNull);
+        expect(header2, isNotNull);
+        //expect(identical(header1, header2), isFalse);
+        expect(header1, equals(header1));
+        expect(header1, equals(header2));
+        expect(header1.hashCode, equals(header2.hashCode));
+
+        final raw = v.key.codec.encode(header1!);
+        final header3 = v.key.codec.decode(raw);
+        expect(header1, equals(header3));
+        expect(header1.hashCode, equals(header3.hashCode));
+
+        final headers4 = Headers.build((final mh) => mh[v.key.key] = raw);
+        expect(v.key.isSetIn(headers4), isTrue);
+        expect(v.key.isValidIn(headers4), isTrue);
+        final header4 = v.key.getValueFrom(headers4);
+        expect(header1, equals(header4));
+        expect(header1.hashCode, equals(header4.hashCode));
+      });
     },
     variants: <HeaderAccessor, dynamic Function(MutableHeaders)>{
       Headers.accept: (final h) =>
@@ -534,7 +573,7 @@ void main() {
       Headers.permissionsPolicy: (final h) =>
           h.permissionsPolicy = const PermissionsPolicyHeader(directives: []),
       Headers.proxyAuthenticate: (final h) => h.proxyAuthenticate =
-          const AuthenticationHeader(scheme: '', parameters: []),
+          AuthenticationHeader(scheme: '', parameters: []),
       Headers.proxyAuthorization: (final h) =>
           h.proxyAuthorization = BearerAuthorizationHeader(token: 'foobar'),
       Headers.range: (final h) => h.range = const RangeHeader(ranges: []),
@@ -556,14 +595,14 @@ void main() {
           h.strictTransportSecurity = StrictTransportSecurityHeader(maxAge: 42),
       Headers.te: (final h) => h.te = TEHeader(encodings: []),
       Headers.trailer: (final h) => h.trailer = [],
-      Headers.transferEncoding: (final h) =>
-          h.transferEncoding = TransferEncodingHeader(encodings: []),
+      Headers.transferEncoding: (final h) => h.transferEncoding =
+          TransferEncodingHeader(encodings: [TransferEncoding.gzip]),
       Headers.upgrade: (final h) => h.upgrade = UpgradeHeader(protocols: []),
       Headers.userAgent: (final h) => h.userAgent = 'null',
-      Headers.vary: (final h) => h.vary = VaryHeader.headers(fields: []),
+      Headers.vary: (final h) => h.vary = VaryHeader.wildcard(),
       Headers.via: (final h) => h.via = [],
-      Headers.wwwAuthenticate: (final h) => h.wwwAuthenticate =
-          const AuthenticationHeader(scheme: '', parameters: []),
+      Headers.wwwAuthenticate: (final h) =>
+          h.wwwAuthenticate = AuthenticationHeader(scheme: '', parameters: []),
       Headers.xPoweredBy: (final h) => h.xPoweredBy = 'null',
       Headers.forwarded: (final h) => h.forwarded = ForwardedHeader([]),
       Headers.xForwardedFor: (final h) =>
