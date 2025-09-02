@@ -68,14 +68,16 @@ void main() {
     });
 
     test('when a managed header is removed then it is no longer present', () {
-      var headers = Headers.build((final mh) => mh.date = DateTime.now());
+      var headers =
+          Headers.build((final mh) => mh.date = DateTime.utc(2025, 9, 23));
       headers = headers.transform((final mh) => mh.date = null);
       expect(headers.date, isNull);
     });
 
     test('when a managed header is updated then it is correctly replaced', () {
-      var headers = Headers.build((final mh) => mh.date = DateTime.now());
-      final newDate = DateTime.now()
+      var headers =
+          Headers.build((final mh) => mh.date = DateTime.utc(2025, 9, 23));
+      final newDate = DateTime.utc(2025, 9, 23)
           .add(const Duration(days: 1))
           .toUtc()
           .copyWith(microsecond: 0, millisecond: 0);
@@ -449,12 +451,58 @@ void main() {
     }.entries,
   );
 
-  parameterizedTest(
-    (final v) => 'Given a "${v.key.key}" header '
-        'when using the named extension property on an empty MutableHeaders instance '
-        'then setting to value succeeds',
+  parameterizedGroup(
+    (final v) => 'Given a "${v.key.key}" header ',
     (final v) {
-      expect(() => Headers.build((final mh) => v.value(mh)), returnsNormally);
+      test(
+          'when using the named extension property on an empty MutableHeaders instance '
+          'then setting to value succeeds', () {
+        expect(() => Headers.build(v.value), returnsNormally);
+      });
+
+      test('when round-tripping', () {
+        final headers1 = Headers.build(v.value);
+        final header1 = v.key.getValueFrom(headers1);
+
+        final raw = v.key.codec.encode(header1!);
+        final header3 = v.key.codec.decode(raw);
+        if (header1 is! List) {
+          expect(header1, equals(header3));
+          expect(header1.hashCode, equals(header3.hashCode));
+        }
+      });
+
+      test('when comparing', () {
+        final headers1 = Headers.build(v.value);
+        final headers2 = Headers.build(v.value);
+        expect(identical(headers1, headers2), isFalse);
+
+        final header1 = v.key.getValueFrom(headers1);
+        final header2 = v.key.getValueFrom(headers2);
+        expect(header1, isNotNull);
+        expect(header2, isNotNull);
+        //expect(identical(header1, header2), isFalse);
+        expect(header1, equals(header1));
+        if (header1 is! List) {
+          expect(header1, equals(header2));
+          expect(header1.hashCode, equals(header2.hashCode));
+        }
+
+        final raw = v.key.codec.encode(header1!);
+        final header3 = v.key.codec.decode(raw);
+        if (header1 is! List) {
+          expect(header1, equals(header3));
+          expect(header1.hashCode, equals(header3.hashCode));
+        }
+        final headers4 = Headers.build((final mh) => mh[v.key.key] = raw);
+        expect(v.key.isSetIn(headers4), isTrue);
+        expect(v.key.isValidIn(headers4), isTrue);
+        final header4 = v.key.getValueFrom(headers4);
+        if (header1 is! List) {
+          expect(header1, equals(header4));
+          expect(header1.hashCode, equals(header4.hashCode));
+        }
+      });
     },
     variants: <HeaderAccessor, dynamic Function(MutableHeaders)>{
       Headers.accept: (final h) =>
@@ -474,14 +522,14 @@ void main() {
           h.accessControlAllowMethods =
               const AccessControlAllowMethodsHeader.wildcard(),
       Headers.accessControlAllowOrigin: (final h) =>
-          h.accessControlAllowOrigin =
-              AccessControlAllowOriginHeader.origin(origin: Uri()),
+          h.accessControlAllowOrigin = AccessControlAllowOriginHeader.origin(
+              origin: Uri.parse('https://example.com')),
       Headers.accessControlExposeHeaders: (final h) =>
           h.accessControlExposeHeaders =
-              const AccessControlExposeHeadersHeader.headers(headers: null),
+              const AccessControlExposeHeadersHeader.headers(headers: ['foo']),
       Headers.accessControlMaxAge: (final h) => h.accessControlMaxAge = 42,
       Headers.accessControlRequestHeaders: (final h) =>
-          h.accessControlRequestHeaders = [''],
+          h.accessControlRequestHeaders = ['foo'],
       Headers.accessControlRequestMethod: (final h) =>
           h.accessControlRequestMethod = RequestMethod.get,
       Headers.age: (final h) => h.age = 42,
@@ -496,16 +544,20 @@ void main() {
           const ConnectionHeader(directives: [ConnectionHeaderType.keepAlive]),
       Headers.contentDisposition: (final h) => h.contentDisposition =
           ContentDispositionHeader.parse('attachment; filename="report.pdf"'),
-      Headers.contentEncoding: (final h) =>
-          h.contentEncoding = const ContentEncodingHeader(encodings: []),
+      Headers.contentEncoding: (final h) => h.contentEncoding =
+          const ContentEncodingHeader(encodings: [ContentEncoding.gzip]),
       Headers.contentLanguage: (final h) =>
-          h.contentLanguage = const ContentLanguageHeader(languages: []),
+          h.contentLanguage = const ContentLanguageHeader(languages: ['en']),
       Headers.contentLength: (final h) => h.contentLength = 1202,
-      Headers.contentLocation: (final h) => h.contentLocation = Uri(),
+      Headers.contentLocation: (final h) =>
+          h.contentLocation = Uri.parse('https://example.com'),
       Headers.contentRange: (final h) => h.contentRange = ContentRangeHeader(),
       Headers.contentSecurityPolicy: (final h) => h.contentSecurityPolicy =
-          const ContentSecurityPolicyHeader(directives: []),
-      Headers.cookie: (final h) => h.cookie = const CookieHeader(cookies: []),
+              ContentSecurityPolicyHeader(directives: [
+            ContentSecurityPolicyDirective(name: 'foo', values: [])
+          ]),
+      Headers.cookie: (final h) =>
+          h.cookie = CookieHeader(cookies: [Cookie(name: 'foo', value: 'bar')]),
       Headers.crossOriginEmbedderPolicy: (final h) =>
           h.crossOriginEmbedderPolicy =
               CrossOriginEmbedderPolicyHeader.unsafeNone,
@@ -513,32 +565,42 @@ void main() {
           h.crossOriginOpenerPolicy = CrossOriginOpenerPolicyHeader.unsafeNone,
       Headers.crossOriginResourcePolicy: (final h) => h
           .crossOriginResourcePolicy = CrossOriginResourcePolicyHeader.sameSite,
-      Headers.date: (final h) => h.date = DateTime.now(),
+      Headers.date: (final h) => h.date = DateTime.utc(2025, 9, 23),
       Headers.etag: (final h) => h.etag = const ETagHeader(value: ''),
       Headers.expect: (final h) => h.expect = ExpectHeader.continue100,
-      Headers.expires: (final h) => h.expires = DateTime.now(),
-      Headers.from: (final h) => h.from = FromHeader(emails: []),
-      Headers.host: (final h) => h.host = Uri(),
+      Headers.expires: (final h) => h.expires = DateTime.utc(2025, 9, 23),
+      Headers.from: (final h) =>
+          h.from = FromHeader(emails: ['info@serverpod.com']),
+      Headers.host: (final h) => h.host = Uri.parse('https://example.com'),
       Headers.ifMatch: (final h) => h.ifMatch = const IfMatchHeader.wildcard(),
-      Headers.ifModifiedSince: (final h) => h.ifModifiedSince = DateTime.now(),
+      Headers.ifModifiedSince: (final h) =>
+          h.ifModifiedSince = DateTime.utc(2025, 9, 23),
       Headers.ifNoneMatch: (final h) =>
           h.ifNoneMatch = const IfNoneMatchHeader.wildcard(),
       Headers.ifRange: (final h) =>
-          h.ifRange = IfRangeHeader(lastModified: DateTime.now()),
+          h.ifRange = IfRangeHeader(lastModified: DateTime.utc(2025, 9, 23)),
       Headers.ifUnmodifiedSince: (final h) =>
-          h.ifUnmodifiedSince = DateTime.now(),
-      Headers.lastModified: (final h) => h.lastModified = DateTime.now(),
-      Headers.location: (final h) => h.location = Uri(),
+          h.ifUnmodifiedSince = DateTime.utc(2025, 9, 23),
+      Headers.lastModified: (final h) =>
+          h.lastModified = DateTime.utc(2025, 9, 23),
+      Headers.location: (final h) =>
+          h.location = Uri.parse('https://example.com'),
       Headers.maxForwards: (final h) => h.maxForwards = 42,
-      Headers.origin: (final h) => h.origin = Uri(),
-      Headers.permissionsPolicy: (final h) =>
-          h.permissionsPolicy = const PermissionsPolicyHeader(directives: []),
+      Headers.origin: (final h) => h.origin = Uri.parse('https://example.com'),
+      Headers.permissionsPolicy: (final h) => h.permissionsPolicy =
+              const PermissionsPolicyHeader(directives: [
+            PermissionsPolicyDirective(name: 'foo', values: [])
+          ]),
       Headers.proxyAuthenticate: (final h) => h.proxyAuthenticate =
-          const AuthenticationHeader(scheme: '', parameters: []),
+          const AuthenticationHeader(
+              scheme: 'Bearer',
+              parameters: [AuthenticationParameter('foo', 'bar')]),
       Headers.proxyAuthorization: (final h) =>
           h.proxyAuthorization = BearerAuthorizationHeader(token: 'foobar'),
-      Headers.range: (final h) => h.range = const RangeHeader(ranges: []),
-      Headers.referer: (final h) => h.referer = Uri(),
+      Headers.range: (final h) =>
+          h.range = RangeHeader(ranges: [Range(start: 1)]),
+      Headers.referer: (final h) =>
+          h.referer = Uri.parse('https://example.com'),
       Headers.referrerPolicy: (final h) =>
           h.referrerPolicy = ReferrerPolicyHeader.origin,
       Headers.retryAfter: (final h) =>
@@ -554,20 +616,26 @@ void main() {
           h.setCookie = SetCookieHeader(name: 'foo', value: 'bar'),
       Headers.strictTransportSecurity: (final h) =>
           h.strictTransportSecurity = StrictTransportSecurityHeader(maxAge: 42),
-      Headers.te: (final h) => h.te = TEHeader(encodings: []),
-      Headers.trailer: (final h) => h.trailer = [],
-      Headers.transferEncoding: (final h) =>
-          h.transferEncoding = TransferEncodingHeader(encodings: []),
-      Headers.upgrade: (final h) => h.upgrade = UpgradeHeader(protocols: []),
+      Headers.te: (final h) => h.te = TEHeader(encodings: [TeQuality('foo')]),
+      Headers.trailer: (final h) => h.trailer = ['foo'],
+      Headers.transferEncoding: (final h) => h.transferEncoding =
+          TransferEncodingHeader(encodings: [TransferEncoding.gzip]),
+      Headers.upgrade: (final h) => h.upgrade =
+          UpgradeHeader(protocols: [UpgradeProtocol(protocol: 'foo')]),
       Headers.userAgent: (final h) => h.userAgent = 'null',
-      Headers.vary: (final h) => h.vary = VaryHeader.headers(fields: []),
-      Headers.via: (final h) => h.via = [],
+      Headers.vary: (final h) => h.vary = VaryHeader.wildcard(),
+      Headers.via: (final h) => h.via = ['foo'],
       Headers.wwwAuthenticate: (final h) => h.wwwAuthenticate =
-          const AuthenticationHeader(scheme: '', parameters: []),
+          const AuthenticationHeader(
+              scheme: 'Bearer',
+              parameters: [AuthenticationParameter('foo', 'bar')]),
       Headers.xPoweredBy: (final h) => h.xPoweredBy = 'null',
-      Headers.forwarded: (final h) => h.forwarded = ForwardedHeader([]),
+      Headers.forwarded: (final h) => h.forwarded = ForwardedHeader([
+            ForwardedElement(
+                forwardedFor: const ForwardedIdentifier('192.1.0.1'))
+          ]),
       Headers.xForwardedFor: (final h) =>
-          h.xForwardedFor = XForwardedForHeader([]),
+          h.xForwardedFor = XForwardedForHeader(['192.1.0.1']),
     }.entries,
   );
 }
