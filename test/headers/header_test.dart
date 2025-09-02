@@ -1,5 +1,4 @@
 import 'package:relic/relic.dart';
-import 'package:relic/src/headers/typed/headers/x_forwarded_for_header.dart';
 import 'package:test/test.dart';
 
 import '../util/test_util.dart';
@@ -518,7 +517,7 @@ void main() {
       Headers.expect: (final h) => h.expect = ExpectHeader.continue100,
       Headers.expires: (final h) => h.expires = DateTime.now(),
       Headers.from: (final h) => h.from = FromHeader(emails: []),
-      Headers.host: (final h) => h.host = Uri(),
+      Headers.host: (final h) => h.host = HostHeader('www.example.com', 80),
       Headers.ifMatch: (final h) => h.ifMatch = const IfMatchHeader.wildcard(),
       Headers.ifModifiedSince: (final h) => h.ifModifiedSince = DateTime.now(),
       Headers.ifNoneMatch: (final h) =>

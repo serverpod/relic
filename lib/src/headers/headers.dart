@@ -4,7 +4,6 @@ import 'package:http_parser/http_parser.dart';
 
 import '../../relic.dart';
 import 'codecs/common_types_codecs.dart';
-import 'typed/headers/x_forwarded_for_header.dart';
 
 part 'mutable_headers.dart';
 
@@ -76,7 +75,7 @@ class Headers extends HeadersBase {
   /// Request Headers
   static const from = HeaderAccessor(Headers.fromHeader, FromHeader.codec);
 
-  static const host = HeaderAccessor(Headers.hostHeader, uriHeaderCodec);
+  static const host = HeaderAccessor(Headers.hostHeader, HostHeader.codec);
 
   static const acceptEncoding =
       HeaderAccessor(Headers.acceptEncodingHeader, AcceptEncodingHeader.codec);
