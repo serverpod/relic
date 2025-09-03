@@ -43,6 +43,15 @@ final class AcceptRangesHeader {
   /// Converts the [AcceptRangesHeader] instance into a string representation suitable for HTTP headers.
 
   String _encode() => rangeUnit ?? 'none';
+
+  @override
+  bool operator ==(final Object other) =>
+      identical(this, other) ||
+      other is AcceptRangesHeader && rangeUnit == other.rangeUnit;
+
+  @override
+  int get hashCode => rangeUnit.hashCode;
+
   @override
   String toString() {
     return 'AcceptRangesHeader(rangeUnit: $rangeUnit)';

@@ -1,3 +1,5 @@
+import 'package:collection/collection.dart';
+
 import '../../../../relic.dart';
 import '../../extension/string_list_extensions.dart';
 
@@ -39,6 +41,15 @@ final class FromHeader {
   /// suitable for HTTP headers.
 
   String _encode() => emails.join(', ');
+
+  @override
+  bool operator ==(final Object other) =>
+      identical(this, other) ||
+      other is FromHeader &&
+          const IterableEquality<String>().equals(emails, other.emails);
+
+  @override
+  int get hashCode => const IterableEquality<String>().hash(emails);
 
   @override
   String toString() {

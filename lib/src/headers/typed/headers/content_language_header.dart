@@ -1,3 +1,5 @@
+import 'package:collection/collection.dart';
+
 import '../../../../relic.dart';
 import '../../extension/string_list_extensions.dart';
 
@@ -38,6 +40,15 @@ final class ContentLanguageHeader {
   /// suitable for HTTP headers.
 
   String _encode() => languages.join(', ');
+
+  @override
+  bool operator ==(final Object other) =>
+      identical(this, other) ||
+      other is ContentLanguageHeader &&
+          const IterableEquality<String>().equals(languages, other.languages);
+
+  @override
+  int get hashCode => const IterableEquality<String>().hash(languages);
 
   @override
   String toString() {

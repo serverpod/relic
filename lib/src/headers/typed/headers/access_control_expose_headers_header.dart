@@ -1,3 +1,5 @@
+import 'package:collection/collection.dart';
+
 import '../../../../relic.dart';
 import '../../extension/string_list_extensions.dart';
 
@@ -53,6 +55,17 @@ final class AccessControlExposeHeadersHeader {
   /// representation suitable for HTTP headers.
 
   String _encode() => isWildcard ? '*' : headers?.join(', ') ?? '';
+
+  @override
+  bool operator ==(final Object other) =>
+      identical(this, other) ||
+      other is AccessControlExposeHeadersHeader &&
+          isWildcard == other.isWildcard &&
+          const IterableEquality<String>().equals(headers, other.headers);
+
+  @override
+  int get hashCode =>
+      Object.hash(isWildcard, const IterableEquality<String>().hash(headers));
 
   @override
   String toString() =>

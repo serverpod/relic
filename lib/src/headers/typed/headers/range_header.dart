@@ -1,3 +1,5 @@
+import 'package:collection/collection.dart';
+
 import '../../../../relic.dart';
 
 /// A class representing the HTTP Range header.
@@ -77,6 +79,17 @@ final class RangeHeader {
   }
 
   @override
+  bool operator ==(final Object other) =>
+      identical(this, other) ||
+      other is RangeHeader &&
+          unit == other.unit &&
+          const ListEquality<Range>().equals(ranges, other.ranges);
+
+  @override
+  int get hashCode =>
+      Object.hash(unit, const ListEquality<Range>().hash(ranges));
+
+  @override
   String toString() {
     return 'RangeHeader(unit: $unit, ranges: $ranges)';
   }
@@ -109,6 +122,14 @@ class Range {
     final endStr = end?.toString() ?? '';
     return '$startStr-$endStr';
   }
+
+  @override
+  bool operator ==(final Object other) =>
+      identical(this, other) ||
+      other is Range && start == other.start && end == other.end;
+
+  @override
+  int get hashCode => Object.hash(start, end);
 
   @override
   String toString() {

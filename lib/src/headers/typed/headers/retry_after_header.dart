@@ -73,6 +73,14 @@ final class RetryAfterHeader {
   }
 
   @override
+  bool operator ==(final Object other) =>
+      identical(this, other) ||
+      other is RetryAfterHeader && delay == other.delay && date == other.date;
+
+  @override
+  int get hashCode => Object.hash(delay, date);
+
+  @override
   String toString() {
     return 'RetryAfterHeader(delay: $delay, date: $date)';
   }

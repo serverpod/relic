@@ -77,6 +77,17 @@ final class StrictTransportSecurityHeader {
   }
 
   @override
+  bool operator ==(final Object other) =>
+      identical(this, other) ||
+      other is StrictTransportSecurityHeader &&
+          maxAge == other.maxAge &&
+          includeSubDomains == other.includeSubDomains &&
+          preload == other.preload;
+
+  @override
+  int get hashCode => Object.hash(maxAge, includeSubDomains, preload);
+
+  @override
   String toString() {
     return 'StrictTransportSecurityHeader(maxAge: $maxAge, includeSubDomains: $includeSubDomains, preload: $preload)';
   }

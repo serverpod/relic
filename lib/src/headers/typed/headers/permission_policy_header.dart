@@ -1,3 +1,5 @@
+import 'package:collection/collection.dart';
+
 import '../../../../relic.dart';
 import '../../extension/string_list_extensions.dart';
 
@@ -59,6 +61,17 @@ final class PermissionsPolicyHeader {
   }
 
   @override
+  bool operator ==(final Object other) =>
+      identical(this, other) ||
+      other is PermissionsPolicyHeader &&
+          const ListEquality<PermissionsPolicyDirective>()
+              .equals(directives, other.directives);
+
+  @override
+  int get hashCode =>
+      const ListEquality<PermissionsPolicyDirective>().hash(directives);
+
+  @override
   String toString() {
     return 'PermissionsPolicyHeader(directives: $directives)';
   }
@@ -83,6 +96,17 @@ class PermissionsPolicyDirective {
     final valuesStr = values.isNotEmpty ? '(${values.join(' ')})' : '()';
     return '$name=$valuesStr';
   }
+
+  @override
+  bool operator ==(final Object other) =>
+      identical(this, other) ||
+      other is PermissionsPolicyDirective &&
+          name == other.name &&
+          const IterableEquality<String>().equals(values, other.values);
+
+  @override
+  int get hashCode =>
+      Object.hash(name, const IterableEquality<String>().hash(values));
 
   @override
   String toString() {

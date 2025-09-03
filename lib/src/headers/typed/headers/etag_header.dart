@@ -68,6 +68,14 @@ final class ETagHeader {
   }
 
   @override
+  bool operator ==(final Object other) =>
+      identical(this, other) ||
+      other is ETagHeader && value == other.value && isWeak == other.isWeak;
+
+  @override
+  int get hashCode => Object.hash(value, isWeak);
+
+  @override
   String toString() {
     return 'ETagHeader(value: $value, isWeak: $isWeak)';
   }

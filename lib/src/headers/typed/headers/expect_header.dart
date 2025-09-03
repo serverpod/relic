@@ -40,6 +40,13 @@ final class ExpectHeader {
   String _encode() => value;
 
   @override
+  bool operator ==(final Object other) =>
+      identical(this, other) || other is ExpectHeader && value == other.value;
+
+  @override
+  int get hashCode => value.hashCode;
+
+  @override
   String toString() {
     return 'ExpectHeader(value: $value)';
   }
