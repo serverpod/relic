@@ -79,6 +79,18 @@ final class ContentRangeHeader {
   }
 
   @override
+  bool operator ==(final Object other) =>
+      identical(this, other) ||
+      other is ContentRangeHeader &&
+          unit == other.unit &&
+          start == other.start &&
+          end == other.end &&
+          size == other.size;
+
+  @override
+  int get hashCode => Object.hash(unit, start, end, size);
+
+  @override
   String toString() {
     return 'ContentRangeHeader(unit: $unit, start: $start, end: $end, size: $size)';
   }

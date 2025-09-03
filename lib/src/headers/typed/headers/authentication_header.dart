@@ -1,3 +1,5 @@
+import 'package:collection/collection.dart';
+
 import '../../../../relic.dart';
 
 /// A class representing the HTTP Authentication header.
@@ -67,6 +69,18 @@ final class AuthenticationHeader {
   }
 
   @override
+  bool operator ==(final Object other) =>
+      identical(this, other) ||
+      other is AuthenticationHeader &&
+          scheme == other.scheme &&
+          const ListEquality<AuthenticationParameter>()
+              .equals(parameters, other.parameters);
+
+  @override
+  int get hashCode => Object.hash(
+      scheme, const ListEquality<AuthenticationParameter>().hash(parameters));
+
+  @override
   String toString() {
     return 'AuthenticationHeader(scheme: $scheme, parameters: $parameters)';
   }
@@ -78,6 +92,16 @@ class AuthenticationParameter {
   final String value;
 
   const AuthenticationParameter(this.key, this.value);
+
+  @override
+  bool operator ==(final Object other) =>
+      identical(this, other) ||
+      other is AuthenticationParameter &&
+          key == other.key &&
+          value == other.value;
+
+  @override
+  int get hashCode => Object.hash(key, value);
 
   @override
   String toString() => 'AuthenticationParameter(key: $key, value: $value)';

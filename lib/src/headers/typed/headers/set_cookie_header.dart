@@ -53,7 +53,7 @@ final class SetCookieHeader {
   /// This value is `null` if the SameSite attribute is not present.
   ///
   /// See [SameSite] for more information.
-  SameSite? sameSite;
+  final SameSite? sameSite;
 
   /// Constructs a [Cookie] instance with the specified name and value.
   SetCookieHeader({
@@ -201,6 +201,33 @@ final class SetCookieHeader {
 
     return attributes.join('; ');
   }
+
+  @override
+  bool operator ==(final Object other) =>
+      identical(this, other) ||
+      other is SetCookieHeader &&
+          name == other.name &&
+          value == other.value &&
+          expires == other.expires &&
+          maxAge == other.maxAge &&
+          domain == other.domain &&
+          path == other.path &&
+          secure == other.secure &&
+          httpOnly == other.httpOnly &&
+          sameSite == other.sameSite;
+
+  @override
+  int get hashCode => Object.hashAll([
+        name,
+        value,
+        expires,
+        maxAge,
+        domain,
+        path,
+        secure,
+        httpOnly,
+        sameSite,
+      ]);
 
   @override
   String toString() {

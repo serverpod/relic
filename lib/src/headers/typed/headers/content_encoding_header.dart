@@ -1,3 +1,5 @@
+import 'package:collection/collection.dart';
+
 import '../../../../relic.dart';
 import '../../extension/string_list_extensions.dart';
 
@@ -16,9 +18,8 @@ final class ContentEncodingHeader {
 
   /// Constructs a [ContentEncodingHeader] instance with the specified content
   /// encodings.
-  const ContentEncodingHeader({
-    required this.encodings,
-  });
+  ContentEncodingHeader({required this.encodings})
+      : assert(encodings.isNotEmpty);
 
   /// Parses the Content-Encoding header value and returns a
   /// [ContentEncodingHeader] instance.
@@ -44,6 +45,16 @@ final class ContentEncodingHeader {
   /// Converts the [ContentEncodingHeader] instance into a string representation
   /// suitable for HTTP headers.
   String _encode() => encodings.map((final e) => e.name).join(', ');
+
+  @override
+  bool operator ==(final Object other) =>
+      identical(this, other) ||
+      other is ContentEncodingHeader &&
+          const ListEquality<ContentEncoding>()
+              .equals(encodings, other.encodings);
+
+  @override
+  int get hashCode => const ListEquality<ContentEncoding>().hash(encodings);
 
   @override
   String toString() {
@@ -99,6 +110,13 @@ class ContentEncoding {
         throw const FormatException('Invalid value');
     }
   }
+
+  @override
+  bool operator ==(final Object other) =>
+      identical(this, other) || other is ContentEncoding && name == other.name;
+
+  @override
+  int get hashCode => name.hashCode;
 
   @override
   String toString() => 'ContentEncoding(name: $name)';

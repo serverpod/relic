@@ -17,7 +17,11 @@ final class TransferEncodingHeader {
   /// Constructs a [TransferEncodingHeader] instance with the specified transfer encodings.
   TransferEncodingHeader({
     required final List<TransferEncoding> encodings,
-  }) : encodings = _reorderEncodings(encodings);
+  }) : encodings = List.unmodifiable(_reorderEncodings(encodings)) {
+    if (encodings.isEmpty) {
+      throw ArgumentError.value(encodings, 'encodings', 'cannot be empty');
+    }
+  }
 
   /// Parses the Transfer-Encoding header value and returns a [TransferEncodingHeader] instance.
   ///
@@ -36,6 +40,17 @@ final class TransferEncodingHeader {
   /// Converts the [TransferEncodingHeader] instance into a string
   /// representation suitable for HTTP headers.
   String _encode() => encodings.map((final e) => e.name).join(', ');
+
+  @override
+  bool operator ==(final Object other) {
+    if (identical(this, other)) return true;
+    if (other is! TransferEncodingHeader) return false;
+    return const ListEquality<TransferEncoding>()
+        .equals(encodings, other.encodings);
+  }
+
+  @override
+  int get hashCode => const ListEquality<TransferEncoding>().hash(encodings);
 
   @override
   String toString() {

@@ -1,3 +1,5 @@
+import 'package:collection/collection.dart';
+
 import '../../../../relic.dart';
 import '../../extension/string_list_extensions.dart';
 
@@ -59,6 +61,18 @@ final class ContentDispositionHeader {
     parts.addAll(parameters.map((final p) => p._encode()));
     return parts.join('; ');
   }
+
+  @override
+  bool operator ==(final Object other) =>
+      identical(this, other) ||
+      other is ContentDispositionHeader &&
+          type == other.type &&
+          const ListEquality<ContentDispositionParameter>()
+              .equals(parameters, other.parameters);
+
+  @override
+  int get hashCode => Object.hash(
+      type, const ListEquality<ContentDispositionParameter>().hash(parameters));
 
   @override
   String toString() {
@@ -140,6 +154,19 @@ class ContentDispositionParameter {
     }
     return '$name="$value"';
   }
+
+  @override
+  bool operator ==(final Object other) =>
+      identical(this, other) ||
+      other is ContentDispositionParameter &&
+          name == other.name &&
+          value == other.value &&
+          isExtended == other.isExtended &&
+          encoding == other.encoding &&
+          language == other.language;
+
+  @override
+  int get hashCode => Object.hash(name, value, isExtended, encoding, language);
 
   @override
   String toString() {

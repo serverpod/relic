@@ -1,3 +1,5 @@
+import 'package:collection/collection.dart';
+
 import '../../../../relic.dart';
 import '../../extension/string_list_extensions.dart';
 
@@ -12,18 +14,19 @@ final class AccessControlExposeHeadersHeader {
       [value._encode()];
 
   /// The list of headers that can be exposed.
-  final Iterable<String>? headers;
+  final Iterable<String> headers;
 
   /// Whether all headers are allowed to be exposed (`*`).
   final bool isWildcard;
 
   /// Constructs an instance allowing specific headers to be exposed.
-  const AccessControlExposeHeadersHeader.headers({required this.headers})
-      : isWildcard = false;
+  AccessControlExposeHeadersHeader.headers({required this.headers})
+      : assert(headers.isNotEmpty),
+        isWildcard = false;
 
   /// Constructs an instance allowing all headers to be exposed (`*`).
   const AccessControlExposeHeadersHeader.wildcard()
-      : headers = null,
+      : headers = const [],
         isWildcard = true;
 
   /// Parses the Access-Control-Expose-Headers header value and returns an
@@ -52,7 +55,18 @@ final class AccessControlExposeHeadersHeader {
   /// Converts the [AccessControlExposeHeadersHeader] instance into a string
   /// representation suitable for HTTP headers.
 
-  String _encode() => isWildcard ? '*' : headers?.join(', ') ?? '';
+  String _encode() => isWildcard ? '*' : headers.join(', ');
+
+  @override
+  bool operator ==(final Object other) =>
+      identical(this, other) ||
+      other is AccessControlExposeHeadersHeader &&
+          isWildcard == other.isWildcard &&
+          const IterableEquality<String>().equals(headers, other.headers);
+
+  @override
+  int get hashCode =>
+      Object.hash(isWildcard, const IterableEquality<String>().hash(headers));
 
   @override
   String toString() =>

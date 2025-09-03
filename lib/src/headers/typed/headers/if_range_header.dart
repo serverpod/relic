@@ -57,6 +57,16 @@ final class IfRangeHeader {
       lastModified != null ? formatHttpDate(lastModified!) : etag!.encode();
 
   @override
+  bool operator ==(final Object other) =>
+      identical(this, other) ||
+      other is IfRangeHeader &&
+          lastModified == other.lastModified &&
+          etag == other.etag;
+
+  @override
+  int get hashCode => Object.hash(lastModified, etag);
+
+  @override
   String toString() {
     return 'IfRangeHeader(lastModified: $lastModified, etag: $etag)';
   }

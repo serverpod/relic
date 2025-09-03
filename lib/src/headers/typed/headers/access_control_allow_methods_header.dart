@@ -1,3 +1,5 @@
+import 'package:collection/collection.dart';
+
 import '../../../../relic.dart';
 import '../../extension/string_list_extensions.dart';
 
@@ -55,6 +57,17 @@ final class AccessControlAllowMethodsHeader {
   /// representation suitable for HTTP headers.
 
   String _encode() => isWildcard ? '*' : methods!.join(', ');
+
+  @override
+  bool operator ==(final Object other) =>
+      identical(this, other) ||
+      other is AccessControlAllowMethodsHeader &&
+          isWildcard == other.isWildcard &&
+          const ListEquality<RequestMethod>().equals(methods, other.methods);
+
+  @override
+  int get hashCode => Object.hash(
+      isWildcard, const ListEquality<RequestMethod>().hash(methods));
 
   @override
   String toString() =>

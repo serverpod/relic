@@ -73,6 +73,14 @@ final class ReferrerPolicyHeader {
   String _encode() => directive;
 
   @override
+  bool operator ==(final Object other) =>
+      identical(this, other) ||
+      other is ReferrerPolicyHeader && directive == other.directive;
+
+  @override
+  int get hashCode => directive.hashCode;
+
+  @override
   String toString() {
     return 'ReferrerPolicyHeader(directive: $directive)';
   }

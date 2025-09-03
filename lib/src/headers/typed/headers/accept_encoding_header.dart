@@ -1,3 +1,5 @@
+import 'package:collection/collection.dart';
+
 import '../../../../relic.dart';
 import '../../extension/string_list_extensions.dart';
 
@@ -68,6 +70,18 @@ final class AcceptEncodingHeader {
       : encodings?.map((final e) => e._encode()).join(', ') ?? '';
 
   @override
+  bool operator ==(final Object other) =>
+      identical(this, other) ||
+      other is AcceptEncodingHeader &&
+          isWildcard == other.isWildcard &&
+          const ListEquality<EncodingQuality>()
+              .equals(encodings, other.encodings);
+
+  @override
+  int get hashCode => Object.hash(
+      isWildcard, const ListEquality<EncodingQuality>().hash(encodings));
+
+  @override
   String toString() => 'AcceptEncodingHeader(encodings: $encodings)';
 }
 
@@ -85,6 +99,16 @@ class EncodingQuality {
 
   /// Converts the [EncodingQuality] instance into a string representation suitable for HTTP headers.
   String _encode() => quality == 1.0 ? encoding : '$encoding;q=$quality';
+
+  @override
+  bool operator ==(final Object other) =>
+      identical(this, other) ||
+      other is EncodingQuality &&
+          encoding == other.encoding &&
+          quality == other.quality;
+
+  @override
+  int get hashCode => Object.hash(encoding, quality);
 
   @override
   String toString() =>
