@@ -114,7 +114,7 @@ void main() {
         );
 
         expect(headers.vary?.isWildcard, isTrue);
-        expect(headers.vary?.fields, isNull);
+        expect(headers.vary?.fields, isEmpty);
       },
     );
 

@@ -129,6 +129,14 @@ final class SecFetchDestHeader {
   String _encode() => destination;
 
   @override
+  bool operator ==(final Object other) =>
+      identical(this, other) ||
+      other is SecFetchDestHeader && destination == other.destination;
+
+  @override
+  int get hashCode => destination.hashCode;
+
+  @override
   String toString() {
     return 'SecFetchDestHeader(value: $destination)';
   }

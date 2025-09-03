@@ -1,6 +1,7 @@
+import 'package:collection/collection.dart';
+
 import '../../../../relic.dart';
 import '../../extension/string_list_extensions.dart';
-
 import 'etag_header.dart' show InternalEx;
 
 /// Base class for ETag-based conditional headers (If-Match and If-None-Match).
@@ -24,6 +25,17 @@ abstract class ETagConditionHeader {
     if (isWildcard) return '*';
     return etags.map((final e) => e.encode()).join(', ');
   }
+
+  @override
+  bool operator ==(final Object other) =>
+      identical(this, other) ||
+      other is ETagConditionHeader &&
+          isWildcard == other.isWildcard &&
+          const ListEquality<ETagHeader>().equals(etags, other.etags);
+
+  @override
+  int get hashCode =>
+      Object.hash(isWildcard, const ListEquality<ETagHeader>().hash(etags));
 }
 
 /// A class representing the HTTP If-Match header.
@@ -62,6 +74,17 @@ final class IfMatchHeader extends ETagConditionHeader {
 
     return IfMatchHeader.etags(parsedEtags);
   }
+
+  @override
+  bool operator ==(final Object other) =>
+      identical(this, other) ||
+      other is IfMatchHeader &&
+          isWildcard == other.isWildcard &&
+          const ListEquality<ETagHeader>().equals(etags, other.etags);
+
+  @override
+  int get hashCode =>
+      Object.hash(isWildcard, const ListEquality<ETagHeader>().hash(etags));
 
   @override
   String toString() => 'IfMatchHeader(etags: $etags, isWildcard: $isWildcard)';
@@ -104,6 +127,17 @@ final class IfNoneMatchHeader extends ETagConditionHeader {
 
     return IfNoneMatchHeader.etags(parsedEtags);
   }
+
+  @override
+  bool operator ==(final Object other) =>
+      identical(this, other) ||
+      other is IfNoneMatchHeader &&
+          isWildcard == other.isWildcard &&
+          const ListEquality<ETagHeader>().equals(etags, other.etags);
+
+  @override
+  int get hashCode =>
+      Object.hash(isWildcard, const ListEquality<ETagHeader>().hash(etags));
 
   @override
   String toString() =>

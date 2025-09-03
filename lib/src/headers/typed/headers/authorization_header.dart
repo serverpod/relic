@@ -44,6 +44,14 @@ abstract class AuthorizationHeader {
   }
 
   @override
+  bool operator ==(final Object other) =>
+      identical(this, other) ||
+      other is AuthorizationHeader && headerValue == other.headerValue;
+
+  @override
+  int get hashCode => headerValue.hashCode;
+
+  @override
   String toString() => 'AuthorizationHeader(headerValue: $headerValue)';
 }
 
@@ -95,6 +103,14 @@ final class BearerAuthorizationHeader extends AuthorizationHeader {
   /// Returns the full authorization string, including the "Bearer " prefix.
   @override
   String get headerValue => '$prefix$token';
+
+  @override
+  bool operator ==(final Object other) =>
+      identical(this, other) ||
+      other is BearerAuthorizationHeader && token == other.token;
+
+  @override
+  int get hashCode => token.hashCode;
 
   @override
   String toString() => 'BearerAuthorizationHeader(token: $token)';
@@ -166,6 +182,16 @@ final class BasicAuthorizationHeader extends AuthorizationHeader {
     final credentials = base64Encode(utf8.encode('$username:$password'));
     return '$prefix$credentials';
   }
+
+  @override
+  bool operator ==(final Object other) =>
+      identical(this, other) ||
+      other is BasicAuthorizationHeader &&
+          username == other.username &&
+          password == other.password;
+
+  @override
+  int get hashCode => Object.hash(username, password);
 
   @override
   String toString() =>
@@ -325,6 +351,35 @@ final class DigestAuthorizationHeader extends AuthorizationHeader {
       if (opaque != null) '$_opaque="$opaque"'
     ].join(', ');
   }
+
+  @override
+  bool operator ==(final Object other) =>
+      identical(this, other) ||
+      other is DigestAuthorizationHeader &&
+          username == other.username &&
+          realm == other.realm &&
+          nonce == other.nonce &&
+          uri == other.uri &&
+          response == other.response &&
+          algorithm == other.algorithm &&
+          qop == other.qop &&
+          nc == other.nc &&
+          cnonce == other.cnonce &&
+          opaque == other.opaque;
+
+  @override
+  int get hashCode => Object.hashAll([
+        username,
+        realm,
+        nonce,
+        uri,
+        response,
+        algorithm,
+        qop,
+        nc,
+        cnonce,
+        opaque,
+      ]);
 
   @override
   String toString() {

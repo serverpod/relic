@@ -256,7 +256,7 @@ void main() {
         'when a request is made for the file, '
         'then a 200 OK status is returned with full content', () async {
       final headers =
-          Headers.build((final mh) => mh.range = const RangeHeader(ranges: []));
+          Headers.build((final mh) => mh.range = RangeHeader(ranges: []));
 
       final response =
           await makeRequest(handler, '/test_file.txt', headers: headers);

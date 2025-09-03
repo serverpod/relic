@@ -61,6 +61,14 @@ final class SecFetchModeHeader {
   String _encode() => mode;
 
   @override
+  bool operator ==(final Object other) =>
+      identical(this, other) ||
+      other is SecFetchModeHeader && mode == other.mode;
+
+  @override
+  int get hashCode => mode.hashCode;
+
+  @override
   String toString() {
     return 'SecFetchModeHeader(value: $mode)';
   }

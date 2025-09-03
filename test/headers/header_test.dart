@@ -1,5 +1,4 @@
 import 'package:relic/relic.dart';
-import 'package:relic/src/headers/typed/headers/x_forwarded_for_header.dart';
 import 'package:test/test.dart';
 
 import '../util/test_util.dart';
@@ -526,7 +525,7 @@ void main() {
               origin: Uri.parse('https://example.com')),
       Headers.accessControlExposeHeaders: (final h) =>
           h.accessControlExposeHeaders =
-              const AccessControlExposeHeadersHeader.headers(headers: ['foo']),
+              AccessControlExposeHeadersHeader.headers(headers: ['foo']),
       Headers.accessControlMaxAge: (final h) => h.accessControlMaxAge = 42,
       Headers.accessControlRequestHeaders: (final h) =>
           h.accessControlRequestHeaders = ['foo'],
@@ -545,9 +544,9 @@ void main() {
       Headers.contentDisposition: (final h) => h.contentDisposition =
           ContentDispositionHeader.parse('attachment; filename="report.pdf"'),
       Headers.contentEncoding: (final h) => h.contentEncoding =
-          const ContentEncodingHeader(encodings: [ContentEncoding.gzip]),
+          ContentEncodingHeader(encodings: [ContentEncoding.gzip]),
       Headers.contentLanguage: (final h) =>
-          h.contentLanguage = const ContentLanguageHeader(languages: ['en']),
+          h.contentLanguage = ContentLanguageHeader(languages: ['en']),
       Headers.contentLength: (final h) => h.contentLength = 1202,
       Headers.contentLocation: (final h) =>
           h.contentLocation = Uri.parse('https://example.com'),
@@ -588,8 +587,8 @@ void main() {
       Headers.maxForwards: (final h) => h.maxForwards = 42,
       Headers.origin: (final h) => h.origin = Uri.parse('https://example.com'),
       Headers.permissionsPolicy: (final h) => h.permissionsPolicy =
-              const PermissionsPolicyHeader(directives: [
-            PermissionsPolicyDirective(name: 'foo', values: [])
+              PermissionsPolicyHeader(directives: [
+            const PermissionsPolicyDirective(name: 'foo', values: [])
           ]),
       Headers.proxyAuthenticate: (final h) => h.proxyAuthenticate =
           const AuthenticationHeader(

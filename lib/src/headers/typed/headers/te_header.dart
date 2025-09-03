@@ -1,3 +1,5 @@
+import 'package:collection/collection.dart';
+
 import '../../../../relic.dart';
 import '../../extension/string_list_extensions.dart';
 
@@ -13,7 +15,7 @@ final class TEHeader {
   final List<TeQuality> encodings;
 
   /// Constructs a [TEHeader] instance with the specified list of encodings.
-  TEHeader({required this.encodings});
+  TEHeader({required this.encodings}) : assert(encodings.isNotEmpty);
 
   /// Parses the TE header value and returns a [TEHeader] instance.
   ///
@@ -52,6 +54,15 @@ final class TEHeader {
   String _encode() => encodings.map((final e) => e._encode()).join(', ');
 
   @override
+  bool operator ==(final Object other) =>
+      identical(this, other) ||
+      other is TEHeader &&
+          const ListEquality<TeQuality>().equals(encodings, other.encodings);
+
+  @override
+  int get hashCode => const ListEquality<TeQuality>().hash(encodings);
+
+  @override
   String toString() => 'TEHeader(encodings: $encodings)';
 }
 
@@ -68,6 +79,16 @@ class TeQuality {
 
   /// Converts the [TeQuality] instance into a string representation suitable for HTTP headers.
   String _encode() => quality == 1.0 ? encoding : '$encoding;q=$quality';
+
+  @override
+  bool operator ==(final Object other) =>
+      identical(this, other) ||
+      other is TeQuality &&
+          encoding == other.encoding &&
+          quality == other.quality;
+
+  @override
+  int get hashCode => Object.hash(encoding, quality);
 
   @override
   String toString() => 'TeQuality(encoding: $encoding, quality: $quality)';

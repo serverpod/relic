@@ -1,3 +1,5 @@
+import 'package:collection/collection.dart';
+
 import '../../../../relic.dart';
 import '../../extension/string_list_extensions.dart';
 
@@ -63,6 +65,18 @@ final class ClearSiteDataHeader {
   }
 
   @override
+  bool operator ==(final Object other) =>
+      identical(this, other) ||
+      other is ClearSiteDataHeader &&
+          isWildcard == other.isWildcard &&
+          const ListEquality<ClearSiteDataType>()
+              .equals(dataTypes, other.dataTypes);
+
+  @override
+  int get hashCode => Object.hash(
+      isWildcard, const ListEquality<ClearSiteDataType>().hash(dataTypes));
+
+  @override
   String toString() =>
       'ClearSiteDataHeader(dataTypes: $dataTypes, isWildcard: $isWildcard)';
 }
@@ -106,6 +120,14 @@ class ClearSiteDataType {
         throw const FormatException('Invalid value');
     }
   }
+
+  @override
+  bool operator ==(final Object other) =>
+      identical(this, other) ||
+      other is ClearSiteDataType && value == other.value;
+
+  @override
+  int get hashCode => value.hashCode;
 
   @override
   String toString() => 'ClearSiteDataType(value: $value)';

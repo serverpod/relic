@@ -51,6 +51,14 @@ final class CrossOriginOpenerPolicyHeader {
   String _encode() => policy;
 
   @override
+  bool operator ==(final Object other) =>
+      identical(this, other) ||
+      other is CrossOriginOpenerPolicyHeader && policy == other.policy;
+
+  @override
+  int get hashCode => policy.hashCode;
+
+  @override
   String toString() {
     return 'CrossOriginOpenerPolicyHeader(value: $policy)';
   }
