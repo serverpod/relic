@@ -254,17 +254,12 @@ void main() {
     test(
         'Given a Range header with no ranges, '
         'when a request is made for the file, '
-        'then a 200 OK status is returned with full content', () async {
-      final headers =
-          Headers.build((final mh) => mh.range = RangeHeader(ranges: []));
-
-      final response =
-          await makeRequest(handler, '/test_file.txt', headers: headers);
-
-      expect(response.statusCode, HttpStatus.ok);
-      expect(response.body.contentLength, fileContent.length);
-      expect(response.readAsString(), completion(fileContent));
-      expect(response.headers.contentRange, isNull);
+        'then an InvalidHeaderException is thrown', () async {
+      final headers = Headers.build((final mh) => mh['Range'] = ['bytes=']);
+      await expectLater(
+        makeRequest(handler, '/test_file.txt', headers: headers),
+        throwsA(isA<InvalidHeaderException>()),
+      );
     });
   });
 }
