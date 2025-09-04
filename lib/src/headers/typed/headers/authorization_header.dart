@@ -42,17 +42,6 @@ abstract class AuthorizationHeader {
 
     throw const FormatException('Invalid header format');
   }
-
-  @override
-  bool operator ==(final Object other) =>
-      identical(this, other) ||
-      other is AuthorizationHeader && headerValue == other.headerValue;
-
-  @override
-  int get hashCode => headerValue.hashCode;
-
-  @override
-  String toString() => 'AuthorizationHeader(headerValue: $headerValue)';
 }
 
 /// Represents a Bearer token for HTTP Authorization.

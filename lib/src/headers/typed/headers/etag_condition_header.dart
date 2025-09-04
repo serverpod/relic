@@ -5,7 +5,7 @@ import '../../extension/string_list_extensions.dart';
 import 'etag_header.dart' show InternalEx;
 
 /// Base class for ETag-based conditional headers (If-Match and If-None-Match).
-abstract class ETagConditionHeader {
+sealed class ETagConditionHeader {
   /// The list of ETags to match against.
   final List<ETagHeader> etags;
 
@@ -25,17 +25,6 @@ abstract class ETagConditionHeader {
     if (isWildcard) return '*';
     return etags.map((final e) => e.encode()).join(', ');
   }
-
-  @override
-  bool operator ==(final Object other) =>
-      identical(this, other) ||
-      other is ETagConditionHeader &&
-          isWildcard == other.isWildcard &&
-          const ListEquality<ETagHeader>().equals(etags, other.etags);
-
-  @override
-  int get hashCode =>
-      Object.hash(isWildcard, const ListEquality<ETagHeader>().hash(etags));
 }
 
 /// A class representing the HTTP If-Match header.
