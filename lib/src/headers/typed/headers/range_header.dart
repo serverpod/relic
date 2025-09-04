@@ -21,10 +21,10 @@ final class RangeHeader {
 
   /// Constructs a [RangeHeader] instance with the specified unit and list
   /// of ranges.
-  const RangeHeader({
+  RangeHeader({
     this.unit = 'bytes',
     required this.ranges,
-  });
+  }) : assert(ranges.isNotEmpty);
 
   /// Parses the Range header value and returns a [RangeHeader] instance.
   ///

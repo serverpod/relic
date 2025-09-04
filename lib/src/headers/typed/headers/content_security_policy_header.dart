@@ -18,7 +18,8 @@ final class ContentSecurityPolicyHeader {
 
   /// Constructs a [ContentSecurityPolicyHeader] instance with the specified
   /// directives.
-  const ContentSecurityPolicyHeader({required this.directives});
+  ContentSecurityPolicyHeader({required this.directives})
+      : assert(directives.isNotEmpty);
 
   /// Parses a CSP header value and returns a [ContentSecurityPolicyHeader]
   /// instance.

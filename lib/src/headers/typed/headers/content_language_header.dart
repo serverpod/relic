@@ -15,7 +15,8 @@ final class ContentLanguageHeader {
   final Iterable<String> languages;
 
   /// Constructs a [ContentLanguageHeader] instance with the specified language codes.
-  const ContentLanguageHeader({required this.languages});
+  ContentLanguageHeader({required this.languages})
+      : assert(languages.isNotEmpty);
 
   /// Parses the Content-Language header value and returns a [ContentLanguageHeader] instance.
   ///

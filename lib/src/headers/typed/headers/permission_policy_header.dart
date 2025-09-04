@@ -17,7 +17,8 @@ final class PermissionsPolicyHeader {
   final List<PermissionsPolicyDirective> directives;
 
   /// Constructs a [PermissionsPolicyHeader] instance with the specified directives.
-  const PermissionsPolicyHeader({required this.directives});
+  PermissionsPolicyHeader({required this.directives})
+      : assert(directives.isNotEmpty);
 
   /// Parses the Permissions-Policy header value and returns a [PermissionsPolicyHeader] instance.
   ///
@@ -39,6 +40,7 @@ final class PermissionsPolicyHeader {
               .replaceAll(')', '')
               .split(' ')
               .map((final s) => s.trim())
+              .where((final s) => s.isNotEmpty)
               .toList()
           : <String>[];
 

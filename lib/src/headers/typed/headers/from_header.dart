@@ -16,7 +16,7 @@ final class FromHeader {
   final Iterable<String> emails;
 
   /// Private constructor for initializing the [emails] list.
-  FromHeader({required this.emails});
+  FromHeader({required this.emails}) : assert(emails.isNotEmpty);
 
   /// Parses a `From` header value and returns a [FromHeader] instance.
   factory FromHeader.parse(final Iterable<String> values) {

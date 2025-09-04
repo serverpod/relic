@@ -15,7 +15,7 @@ final class UpgradeHeader {
   final List<UpgradeProtocol> protocols;
 
   /// Constructs an [UpgradeHeader] instance with the specified protocols.
-  UpgradeHeader({required this.protocols});
+  UpgradeHeader({required this.protocols}) : assert(protocols.isNotEmpty);
 
   /// Parses the Upgrade header value and returns an [UpgradeHeader] instance.
   ///

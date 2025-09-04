@@ -18,9 +18,8 @@ final class ContentEncodingHeader {
 
   /// Constructs a [ContentEncodingHeader] instance with the specified content
   /// encodings.
-  const ContentEncodingHeader({
-    required this.encodings,
-  });
+  ContentEncodingHeader({required this.encodings})
+      : assert(encodings.isNotEmpty);
 
   /// Parses the Content-Encoding header value and returns a
   /// [ContentEncodingHeader] instance.

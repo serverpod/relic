@@ -14,7 +14,7 @@ final class CookieHeader {
   final List<Cookie> cookies;
 
   /// Constructs a [CookieHeader] instance with the specified cookies.
-  const CookieHeader({required this.cookies});
+  CookieHeader({required this.cookies}) : assert(cookies.isNotEmpty);
 
   /// Parses the Cookie header value and returns a [CookieHeader] instance.
   ///

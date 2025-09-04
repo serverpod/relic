@@ -23,7 +23,8 @@ final class AuthenticationHeader {
   AuthenticationHeader({
     required this.scheme,
     required final List<AuthenticationParameter> parameters,
-  }) : parameters = List.unmodifiable(parameters);
+  })  : assert(parameters.isNotEmpty),
+        parameters = List.unmodifiable(parameters);
 
   /// Parses the Authentication header value and returns an [AuthenticationHeader] instance.
   factory AuthenticationHeader.parse(final String value) {

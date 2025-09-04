@@ -39,3 +39,4 @@ export 'headers/te_header.dart';
 export 'headers/transfer_encoding_header.dart';
 export 'headers/upgrade_header.dart';
 export 'headers/vary_header.dart';
+export 'headers/x_forwarded_for_header.dart';
