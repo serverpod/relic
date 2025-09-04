@@ -480,11 +480,12 @@ void main() {
         final header2 = v.accessor.getValueFrom(headers2);
         expect(header1, isNotNull);
         expect(header2, isNotNull);
-        //expect(identical(header1, header2), isFalse);
+
         expect(header1, equals(header1));
         if (header1 is! List) {
           expect(header1, equals(header2));
-          expect(header1.hashCode, equals(header2.hashCode));
+          expect(header1.hashCode, equals(header2.hashCode),
+              reason: 'hashCode for: $header1');
         }
 
         final raw = v.accessor.codec.encode(header1!);
@@ -549,6 +550,12 @@ void main() {
         Headers.accessControlAllowMethods,
         (final h) => h.accessControlAllowMethods =
             const AccessControlAllowMethodsHeader.wildcard()
+      ),
+      (
+        Headers.accessControlAllowMethods,
+        (final h) => h.accessControlAllowMethods =
+            AccessControlAllowMethodsHeader.methods(
+                methods: RequestMethod.values)
       ),
       (
         Headers.accessControlAllowOrigin,
