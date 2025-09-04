@@ -204,7 +204,7 @@ void main() {
         );
 
         expect(headers.acceptEncoding?.isWildcard, isTrue);
-        expect(headers.acceptEncoding?.encodings, isNull);
+        expect(headers.acceptEncoding?.encodings, isEmpty);
       },
     );
 

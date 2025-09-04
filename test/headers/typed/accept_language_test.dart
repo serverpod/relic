@@ -201,7 +201,7 @@ void main() {
           );
 
           expect(headers.acceptLanguage?.isWildcard, isTrue);
-          expect(headers.acceptLanguage?.languages, isNull);
+          expect(headers.acceptLanguage?.languages, isEmpty);
         },
       );
 
