@@ -14,18 +14,19 @@ final class AccessControlAllowHeadersHeader {
       [value._encode()];
 
   /// The list of headers that are allowed.
-  final Iterable<String>? headers;
+  final Iterable<String> headers;
 
   /// Whether all headers are allowed (`*`).
   final bool isWildcard;
 
   /// Constructs an instance allowing specific headers to be allowed.
-  const AccessControlAllowHeadersHeader.headers({required this.headers})
-      : isWildcard = false;
+  AccessControlAllowHeadersHeader.headers({required this.headers})
+      : assert(headers.isNotEmpty),
+        isWildcard = false;
 
   /// Constructs an instance allowing all headers to be allowed (`*`).
   const AccessControlAllowHeadersHeader.wildcard()
-      : headers = null,
+      : headers = const [],
         isWildcard = true;
 
   /// Parses the Access-Control-Allow-Headers header value and returns an
@@ -53,7 +54,7 @@ final class AccessControlAllowHeadersHeader {
   /// Converts the [AccessControlAllowHeadersHeader] instance into a string
   /// representation suitable for HTTP headers.
 
-  String _encode() => isWildcard ? '*' : headers!.join(', ');
+  String _encode() => isWildcard ? '*' : headers.join(', ');
 
   @override
   bool operator ==(final Object other) =>

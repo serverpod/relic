@@ -14,11 +14,16 @@ final class AuthenticationHeader {
   /// The parameters associated with the authentication scheme.
   final List<AuthenticationParameter> parameters;
 
-  /// Constructs an [AuthenticationHeader] instance with the specified scheme and parameters.
-  const AuthenticationHeader({
+  const AuthenticationHeader._({
     required this.scheme,
     required this.parameters,
   });
+
+  /// Constructs an [AuthenticationHeader] instance with the specified scheme and parameters.
+  AuthenticationHeader({
+    required this.scheme,
+    required final List<AuthenticationParameter> parameters,
+  }) : parameters = List.unmodifiable(parameters);
 
   /// Parses the Authentication header value and returns an [AuthenticationHeader] instance.
   factory AuthenticationHeader.parse(final String value) {
@@ -55,7 +60,7 @@ final class AuthenticationHeader {
       }
     }
 
-    return AuthenticationHeader(scheme: scheme, parameters: parameters);
+    return AuthenticationHeader._(scheme: scheme, parameters: parameters);
   }
 
   /// Converts the [AuthenticationHeader] instance into a string representation

@@ -129,7 +129,7 @@ void main() {
 
         expect(
           headers.acceptEncoding?.encodings
-              ?.map((final e) => e.encoding)
+              .map((final e) => e.encoding)
               .toList(),
           equals(['gzip']),
         );
@@ -148,7 +148,7 @@ void main() {
 
         expect(
           headers.acceptEncoding?.encodings
-              ?.map((final e) => e.quality)
+              .map((final e) => e.quality)
               .toList(),
           equals([1.0]),
         );
@@ -167,7 +167,7 @@ void main() {
 
         expect(
           headers.acceptEncoding?.encodings
-              ?.map((final e) => e.quality)
+              .map((final e) => e.quality)
               .toList(),
           equals([0.5]),
         );
@@ -186,7 +186,7 @@ void main() {
 
         expect(
           headers.acceptEncoding?.encodings
-              ?.map((final e) => e.encoding)
+              .map((final e) => e.encoding)
               .toList(),
           equals(['gzip']),
         );
@@ -220,13 +220,13 @@ void main() {
 
         expect(
           headers.acceptEncoding?.encodings
-              ?.map((final e) => e.encoding)
+              .map((final e) => e.encoding)
               .toList(),
           equals(['*']),
         );
         expect(
           headers.acceptEncoding?.encodings
-              ?.map((final e) => e.quality)
+              .map((final e) => e.quality)
               .toList(),
           equals([0.5]),
         );
@@ -244,13 +244,13 @@ void main() {
 
         expect(
           headers.acceptEncoding?.encodings
-              ?.map((final e) => e.encoding)
+              .map((final e) => e.encoding)
               .toList(),
           equals(['gzip']),
         );
         expect(
           headers.acceptEncoding?.encodings
-              ?.map((final e) => e.quality)
+              .map((final e) => e.quality)
               .toList(),
           equals([1.0]),
         );
@@ -269,7 +269,7 @@ void main() {
 
           expect(
             headers.acceptEncoding?.encodings
-                ?.map((final e) => e.encoding)
+                .map((final e) => e.encoding)
                 .toList(),
             equals(['gzip', 'deflate', 'br']),
           );
@@ -287,7 +287,7 @@ void main() {
 
           expect(
             headers.acceptEncoding?.encodings
-                ?.map((final e) => e.encoding)
+                .map((final e) => e.encoding)
                 .toList(),
             equals(['gzip', 'deflate', 'br']),
           );
@@ -305,7 +305,7 @@ void main() {
 
           expect(
             headers.acceptEncoding?.encodings
-                ?.map((final e) => e.quality)
+                .map((final e) => e.quality)
                 .toList(),
             equals([1.0, 0.5, 0.8]),
           );
@@ -324,7 +324,7 @@ void main() {
 
           expect(
             headers.acceptEncoding?.encodings
-                ?.map((final e) => e.encoding)
+                .map((final e) => e.encoding)
                 .toList(),
             equals(['gzip', 'deflate', 'br']),
           );
@@ -342,7 +342,7 @@ void main() {
 
           expect(
             headers.acceptEncoding?.encodings
-                ?.map((final e) => e.encoding)
+                .map((final e) => e.encoding)
                 .toList(),
             equals(['gzip', 'deflate', 'br']),
           );

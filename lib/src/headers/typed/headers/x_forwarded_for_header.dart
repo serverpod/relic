@@ -20,7 +20,11 @@ final class XForwardedForHeader {
 
   /// Creates an [XForwardedForHeader] with the given list of addresses.
   XForwardedForHeader(final Iterable<String> addresses)
-      : addresses = List.unmodifiable(addresses);
+      : addresses = List.unmodifiable(addresses) {
+    if (addresses.isEmpty) {
+      throw ArgumentError.value(addresses, 'addresses', 'cannot be empty');
+    }
+  }
 
   /// Parses the `X-Forwarded-For` header values into an [XForwardedForHeader].
   factory XForwardedForHeader.parse(final Iterable<String> values) {

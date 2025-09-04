@@ -507,7 +507,7 @@ void main() {
       Headers.accept: (final h) =>
           h.accept = AcceptHeader.parse(['application/vnd.example.api+json']),
       Headers.acceptEncoding: (final h) =>
-          h.acceptEncoding = AcceptEncodingHeader.wildcard(),
+          h.acceptEncoding = const AcceptEncodingHeader.wildcard(),
       Headers.acceptLanguage: (final h) =>
           h.acceptLanguage = const AcceptLanguageHeader.wildcard(),
       Headers.acceptRanges: (final h) =>
@@ -591,9 +591,9 @@ void main() {
             const PermissionsPolicyDirective(name: 'foo', values: [])
           ]),
       Headers.proxyAuthenticate: (final h) => h.proxyAuthenticate =
-          const AuthenticationHeader(
+          AuthenticationHeader(
               scheme: 'Bearer',
-              parameters: [AuthenticationParameter('foo', 'bar')]),
+              parameters: [const AuthenticationParameter('foo', 'bar')]),
       Headers.proxyAuthorization: (final h) =>
           h.proxyAuthorization = BearerAuthorizationHeader(token: 'foobar'),
       Headers.range: (final h) =>
@@ -625,9 +625,9 @@ void main() {
       Headers.vary: (final h) => h.vary = VaryHeader.wildcard(),
       Headers.via: (final h) => h.via = ['foo'],
       Headers.wwwAuthenticate: (final h) => h.wwwAuthenticate =
-          const AuthenticationHeader(
+          AuthenticationHeader(
               scheme: 'Bearer',
-              parameters: [AuthenticationParameter('foo', 'bar')]),
+              parameters: [const AuthenticationParameter('foo', 'bar')]),
       Headers.xPoweredBy: (final h) => h.xPoweredBy = 'null',
       Headers.forwarded: (final h) => h.forwarded = ForwardedHeader([
             ForwardedElement(
