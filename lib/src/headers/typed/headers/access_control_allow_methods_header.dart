@@ -14,18 +14,19 @@ final class AccessControlAllowMethodsHeader {
       [value._encode()];
 
   /// The list of methods that are allowed.
-  final List<RequestMethod>? methods;
+  final List<RequestMethod> methods;
 
   /// Whether all methods are allowed (`*`).
   final bool isWildcard;
 
   /// Constructs an instance allowing specific methods to be allowed.
-  const AccessControlAllowMethodsHeader.methods({required this.methods})
-      : isWildcard = false;
+  AccessControlAllowMethodsHeader.methods({required this.methods})
+      : assert(methods.isNotEmpty),
+        isWildcard = false;
 
   /// Constructs an instance allowing all methods to be allowed (`*`).
   const AccessControlAllowMethodsHeader.wildcard()
-      : methods = null,
+      : methods = const [],
         isWildcard = true;
 
   /// Parses the Access-Control-Allow-Methods header value and returns an
@@ -56,7 +57,7 @@ final class AccessControlAllowMethodsHeader {
   /// Converts the [AccessControlAllowMethodsHeader] instance into a string
   /// representation suitable for HTTP headers.
 
-  String _encode() => isWildcard ? '*' : methods!.join(', ');
+  String _encode() => isWildcard ? '*' : methods.join(', ');
 
   @override
   bool operator ==(final Object other) =>
