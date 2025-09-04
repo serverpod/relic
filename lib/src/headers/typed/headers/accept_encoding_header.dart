@@ -12,18 +12,19 @@ final class AcceptEncodingHeader {
       [value._encode()];
 
   /// The list of encodings that are accepted.
-  final List<EncodingQuality>? encodings;
+  final List<EncodingQuality> encodings;
 
   /// A boolean value indicating whether the Accept-Encoding header is a wildcard.
   final bool isWildcard;
 
   /// Constructs an instance of [AcceptEncodingHeader] with the given encodings.
   AcceptEncodingHeader.encodings({required this.encodings})
-      : isWildcard = false;
+      : assert(encodings.isNotEmpty),
+        isWildcard = false;
 
   /// Constructs an instance of [AcceptEncodingHeader] with a wildcard encoding.
-  AcceptEncodingHeader.wildcard()
-      : encodings = null,
+  const AcceptEncodingHeader.wildcard()
+      : encodings = const [],
         isWildcard = true;
 
   /// Parses the Accept-Encoding header value and returns an [AcceptEncodingHeader] instance.
@@ -35,7 +36,7 @@ final class AcceptEncodingHeader {
     }
 
     if (splitValues.length == 1 && splitValues.first == '*') {
-      return AcceptEncodingHeader.wildcard();
+      return const AcceptEncodingHeader.wildcard();
     }
 
     if (splitValues.length > 1 && splitValues.contains('*')) {
@@ -65,9 +66,8 @@ final class AcceptEncodingHeader {
 
   /// Converts the [AcceptEncodingHeader] instance into a string representation suitable for HTTP headers.
 
-  String _encode() => isWildcard
-      ? '*'
-      : encodings?.map((final e) => e._encode()).join(', ') ?? '';
+  String _encode() =>
+      isWildcard ? '*' : encodings.map((final e) => e._encode()).join(', ');
 
   @override
   bool operator ==(final Object other) =>
