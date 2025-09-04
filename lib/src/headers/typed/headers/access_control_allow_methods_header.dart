@@ -57,7 +57,8 @@ final class AccessControlAllowMethodsHeader {
   /// Converts the [AccessControlAllowMethodsHeader] instance into a string
   /// representation suitable for HTTP headers.
 
-  String _encode() => isWildcard ? '*' : methods.join(', ');
+  String _encode() =>
+      isWildcard ? '*' : methods.map((final m) => m.name).join(', ');
 
   @override
   bool operator ==(final Object other) =>
