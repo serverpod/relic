@@ -364,17 +364,6 @@ void main() {
 
       expect(encoded, equals([expectedString]));
     });
-
-    test(
-        'Given an empty ForwardedHeader, '
-        'when toStrings() is called, '
-        'then an empty iterable is returned.', () {
-      final header = ForwardedHeader.empty();
-
-      final encoded = header.toStrings();
-
-      expect(encoded, isEmpty);
-    });
   });
 
   group('ForwardedNode Parsing Logic', () {

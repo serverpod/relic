@@ -105,7 +105,7 @@ void main() {
         );
 
         expect(headers.accessControlExposeHeaders?.isWildcard, isTrue);
-        expect(headers.accessControlExposeHeaders?.headers, isNull);
+        expect(headers.accessControlExposeHeaders?.headers, isEmpty);
       },
     );
 

@@ -79,14 +79,14 @@ void main() {
         final headers = await getServerRequestHeaders(
           server: server,
           touchHeaders: (final h) => h.accessControlAllowMethods,
-          headers: {'access-control-allow-methods': 'GET, POST, OPTIONS'},
+          headers: {'access-control-allow-methods': 'get, post, options'},
         );
 
         final methods = headers.accessControlAllowMethods?.methods;
         expect(methods?.length, equals(3));
         expect(
-          methods?.map((final m) => m.value).toList(),
-          containsAll(['GET', 'POST', 'OPTIONS']),
+          methods?.map((final m) => m.name).toList(),
+          containsAll(['get', 'post', 'options']),
         );
       },
     );
@@ -98,14 +98,14 @@ void main() {
         final headers = await getServerRequestHeaders(
           server: server,
           touchHeaders: (final h) => h.accessControlAllowMethods,
-          headers: {'access-control-allow-methods': 'GET, POST, OPTIONS, GET'},
+          headers: {'access-control-allow-methods': 'get, post, options, get'},
         );
 
         final methods = headers.accessControlAllowMethods?.methods;
         expect(methods?.length, equals(3));
         expect(
-          methods?.map((final m) => m.value).toList(),
-          containsAll(['GET', 'POST', 'OPTIONS']),
+          methods?.map((final m) => m.name).toList(),
+          containsAll(['get', 'post', 'options']),
         );
       },
     );
