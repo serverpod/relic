@@ -12,18 +12,19 @@ final class AcceptLanguageHeader {
       [value._encode()];
 
   /// The list of languages that are accepted.
-  final List<LanguageQuality>? languages;
+  final List<LanguageQuality> languages;
 
   /// A boolean value indicating whether the Accept-Language header is a wildcard.
   final bool isWildcard;
 
   /// Constructs an instance of [AcceptLanguageHeader] with the given languages.
-  const AcceptLanguageHeader.languages({required this.languages})
-      : isWildcard = false;
+  AcceptLanguageHeader.languages({required this.languages})
+      : assert(languages.isNotEmpty),
+        isWildcard = false;
 
   /// Constructs an instance of [AcceptLanguageHeader] with a wildcard language.
   const AcceptLanguageHeader.wildcard()
-      : languages = null,
+      : languages = const [],
         isWildcard = true;
 
   /// Parses the Accept-Language header value and returns an [AcceptLanguageHeader] instance.
@@ -64,9 +65,8 @@ final class AcceptLanguageHeader {
   }
 
   /// Converts the [AcceptLanguageHeader] instance into a string representation suitable for HTTP headers.
-  String _encode() => isWildcard
-      ? '*'
-      : languages?.map((final e) => e._encode()).join(', ') ?? '';
+  String _encode() =>
+      isWildcard ? '*' : languages.map((final e) => e._encode()).join(', ');
 
   @override
   bool operator ==(final Object other) =>
@@ -93,7 +93,7 @@ class LanguageQuality {
   final double? quality;
 
   /// Constructs an instance of [LanguageQuality].
-  LanguageQuality(this.language, [final double? quality])
+  const LanguageQuality(this.language, [final double? quality])
       : quality = quality ?? 1.0;
 
   /// Converts the [LanguageQuality] instance into a string representation suitable for HTTP headers.
