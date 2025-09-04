@@ -1,34 +1,21 @@
 import '../../relic.dart';
 
 /// Represents the HTTP methods used in requests as constants.
-class RequestMethod {
+enum RequestMethod {
   /// Predefined HTTP method constants.
-  static const _get = 'GET';
-  static const _post = 'POST';
-  static const _put = 'PUT';
-  static const _delete = 'DELETE';
-  static const _patch = 'PATCH';
-  static const _head = 'HEAD';
-  static const _options = 'OPTIONS';
-  static const _trace = 'TRACE';
-  static const _connect = 'CONNECT';
+  get,
+  post,
+  put,
+  delete,
+  patch,
+  head,
+  options,
+  trace,
+  connect;
 
-  /// The string representation of the HTTP method.
-  final String value;
-
-  /// Creates a new [RequestMethod] instance with the given HTTP method [value].
-  const RequestMethod._(this.value);
-
-  /// Predefined HTTP method constants.
-  static const get = RequestMethod._(_get);
-  static const post = RequestMethod._(_post);
-  static const put = RequestMethod._(_put);
-  static const delete = RequestMethod._(_delete);
-  static const patch = RequestMethod._(_patch);
-  static const head = RequestMethod._(_head);
-  static const options = RequestMethod._(_options);
-  static const trace = RequestMethod._(_trace);
-  static const connect = RequestMethod._(_connect);
+  static final _reverseMap = <String, RequestMethod>{
+    for (final r in values) r.name: r
+  };
 
   /// Parses a [method] string and returns the corresponding [RequestMethod] instance.
   ///
@@ -40,32 +27,12 @@ class RequestMethod {
       throw const FormatException('Value cannot be empty');
     }
 
-    switch (method.toUpperCase()) {
-      case _get:
-        return get;
-      case _post:
-        return post;
-      case _put:
-        return put;
-      case _delete:
-        return delete;
-      case _patch:
-        return patch;
-      case _head:
-        return head;
-      case _options:
-        return options;
-      case _trace:
-        return trace;
-      case _connect:
-        return connect;
-      default:
-        throw const FormatException('Invalid value');
-    }
+    return _reverseMap[method.trim().toLowerCase()] ??
+        (throw FormatException('Invalid value', method));
   }
-  static const codec = HeaderCodec.single(RequestMethod.parse, __encode);
-  static List<String> __encode(final RequestMethod value) => [value.toString()];
 
-  @override
-  String toString() => 'Method($value)';
+  String get value => name.toUpperCase();
+
+  static const codec = HeaderCodec.single(RequestMethod.parse, __encode);
+  static List<String> __encode(final RequestMethod value) => [value.value];
 }
