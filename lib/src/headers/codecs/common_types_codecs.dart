@@ -162,6 +162,6 @@ List<RequestMethod> parseMethodList(final Iterable<String> values) {
 
 /// Encode a list of methods to a iterable of string.
 Iterable<String> encodeMethodList(final List<RequestMethod> l) =>
-    l.map((final r) => '$r');
+    l.expand((final r) => RequestMethod.codec.encode(r));
 
 const methodListCodec = HeaderCodec(parseMethodList, encodeMethodList);
