@@ -1,3 +1,5 @@
+import 'package:collection/collection.dart';
+
 import '../../../../relic.dart';
 import '../../extension/string_list_extensions.dart';
 
@@ -15,7 +17,10 @@ final class PermissionsPolicyHeader {
   final List<PermissionsPolicyDirective> directives;
 
   /// Constructs a [PermissionsPolicyHeader] instance with the specified directives.
-  const PermissionsPolicyHeader({required this.directives});
+  PermissionsPolicyHeader(
+      {required final List<PermissionsPolicyDirective> directives})
+      : assert(directives.isNotEmpty),
+        directives = List.unmodifiable(directives);
 
   /// Parses the Permissions-Policy header value and returns a [PermissionsPolicyHeader] instance.
   ///
@@ -37,6 +42,7 @@ final class PermissionsPolicyHeader {
               .replaceAll(')', '')
               .split(' ')
               .map((final s) => s.trim())
+              .where((final s) => s.isNotEmpty)
               .toList()
           : <String>[];
 
@@ -57,6 +63,17 @@ final class PermissionsPolicyHeader {
   String _encode() {
     return directives.map((final directive) => directive._encode()).join(', ');
   }
+
+  @override
+  bool operator ==(final Object other) =>
+      identical(this, other) ||
+      other is PermissionsPolicyHeader &&
+          const ListEquality<PermissionsPolicyDirective>()
+              .equals(directives, other.directives);
+
+  @override
+  int get hashCode =>
+      const ListEquality<PermissionsPolicyDirective>().hash(directives);
 
   @override
   String toString() {
@@ -83,6 +100,17 @@ class PermissionsPolicyDirective {
     final valuesStr = values.isNotEmpty ? '(${values.join(' ')})' : '()';
     return '$name=$valuesStr';
   }
+
+  @override
+  bool operator ==(final Object other) =>
+      identical(this, other) ||
+      other is PermissionsPolicyDirective &&
+          name == other.name &&
+          const IterableEquality<String>().equals(values, other.values);
+
+  @override
+  int get hashCode =>
+      Object.hash(name, const IterableEquality<String>().hash(values));
 
   @override
   String toString() {

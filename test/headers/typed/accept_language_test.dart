@@ -133,7 +133,7 @@ void main() {
 
           expect(
             headers.acceptLanguage?.languages
-                ?.map((final e) => e.language)
+                .map((final e) => e.language)
                 .toList(),
             equals(['en']),
           );
@@ -152,7 +152,7 @@ void main() {
 
           expect(
             headers.acceptLanguage?.languages
-                ?.map((final e) => e.quality)
+                .map((final e) => e.quality)
                 .toList(),
             equals([1.0]),
           );
@@ -171,7 +171,7 @@ void main() {
 
           expect(
             headers.acceptLanguage?.languages
-                ?.map((final e) => e.language)
+                .map((final e) => e.language)
                 .toList(),
             equals(['en']),
           );
@@ -201,7 +201,7 @@ void main() {
           );
 
           expect(headers.acceptLanguage?.isWildcard, isTrue);
-          expect(headers.acceptLanguage?.languages, isNull);
+          expect(headers.acceptLanguage?.languages, isEmpty);
         },
       );
 
@@ -217,13 +217,13 @@ void main() {
 
           expect(
             headers.acceptLanguage?.languages
-                ?.map((final e) => e.language)
+                .map((final e) => e.language)
                 .toList(),
             equals(['*']),
           );
           expect(
             headers.acceptLanguage?.languages
-                ?.map((final e) => e.quality)
+                .map((final e) => e.quality)
                 .toList(),
             equals([0.5]),
           );
@@ -242,7 +242,7 @@ void main() {
 
             expect(
               headers.acceptLanguage?.languages
-                  ?.map((final e) => e.language)
+                  .map((final e) => e.language)
                   .toList(),
               equals(['en', 'fr', 'de']),
             );
@@ -260,7 +260,7 @@ void main() {
 
             expect(
               headers.acceptLanguage?.languages
-                  ?.map((final e) => e.quality)
+                  .map((final e) => e.quality)
                   .toList(),
               equals([1.0, 1.0, 1.0]),
             );
@@ -278,7 +278,7 @@ void main() {
 
             expect(
               headers.acceptLanguage?.languages
-                  ?.map((final e) => e.language)
+                  .map((final e) => e.language)
                   .toList(),
               equals(['en', 'fr', 'de']),
             );
@@ -296,7 +296,7 @@ void main() {
 
             expect(
               headers.acceptLanguage?.languages
-                  ?.map((final e) => e.quality)
+                  .map((final e) => e.quality)
                   .toList(),
               equals([1.0, 0.5, 0.8]),
             );
@@ -314,7 +314,7 @@ void main() {
 
             expect(
               headers.acceptLanguage?.languages
-                  ?.map((final e) => e.language)
+                  .map((final e) => e.language)
                   .toList(),
               equals(['en', 'fr', 'de']),
             );
@@ -332,7 +332,7 @@ void main() {
 
             expect(
               headers.acceptLanguage?.languages
-                  ?.map((final e) => e.quality)
+                  .map((final e) => e.quality)
                   .toList(),
               equals([1.0, 1.0, 1.0]),
             );
@@ -350,7 +350,7 @@ void main() {
 
             expect(
               headers.acceptLanguage?.languages
-                  ?.map((final e) => e.language)
+                  .map((final e) => e.language)
                   .toList(),
               equals(['en', 'fr', 'de']),
             );
@@ -368,7 +368,7 @@ void main() {
 
             expect(
               headers.acceptLanguage?.languages
-                  ?.map((final e) => e.quality)
+                  .map((final e) => e.quality)
                   .toList(),
               equals([1.0, 1.0, 1.0]),
             );

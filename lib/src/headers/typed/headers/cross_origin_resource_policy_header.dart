@@ -49,6 +49,14 @@ final class CrossOriginResourcePolicyHeader {
   String _encode() => policy;
 
   @override
+  bool operator ==(final Object other) =>
+      identical(this, other) ||
+      other is CrossOriginResourcePolicyHeader && policy == other.policy;
+
+  @override
+  int get hashCode => policy.hashCode;
+
+  @override
   String toString() {
     return 'CrossOriginResourcePolicyHeader(value: $policy)';
   }

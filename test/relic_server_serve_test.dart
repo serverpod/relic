@@ -427,7 +427,7 @@ void main() {
     }));
 
     final request = http.Request(
-        RequestMethod.get.value, Uri.http('localhost:$_serverPort', ''));
+        RequestMethod.get.name, Uri.http('localhost:$_serverPort', ''));
 
     final response = await request.send();
     final stream = StreamQueue(utf8.decoder.bind(response.stream));
@@ -498,7 +498,7 @@ Future<http.Response> _get({
   final String path = '',
 }) async {
   final request = http.Request(
-    RequestMethod.get.value,
+    RequestMethod.get.name,
     Uri.http('localhost:$_serverPort', path),
   );
 
@@ -514,7 +514,7 @@ Future<http.StreamedResponse> _post({
   final String? body,
 }) {
   final request = http.Request(
-    RequestMethod.post.value,
+    RequestMethod.post.name,
     Uri.http('localhost:$_serverPort', ''),
   );
 

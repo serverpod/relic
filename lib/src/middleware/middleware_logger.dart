@@ -53,7 +53,7 @@ String _message(
   final Duration elapsedTime,
   final String message,
 ) {
-  final method = request.method.value;
+  final method = request.method.name;
   final requestedUri = request.url;
 
   return '${requestTime.toIso8601String()} '

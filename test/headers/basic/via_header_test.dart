@@ -15,6 +15,7 @@ void main() {
     });
 
     tearDown(() => server.close());
+
     test(
       'when an empty Via header is passed then the server responds '
       'with a bad request including a message that states the header value '

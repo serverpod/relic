@@ -1,3 +1,5 @@
+import 'package:collection/collection.dart';
+
 import '../../../../relic.dart';
 import '../../extension/string_list_extensions.dart';
 
@@ -61,6 +63,18 @@ final class ContentDispositionHeader {
   }
 
   @override
+  bool operator ==(final Object other) =>
+      identical(this, other) ||
+      other is ContentDispositionHeader &&
+          type == other.type &&
+          const ListEquality<ContentDispositionParameter>()
+              .equals(parameters, other.parameters);
+
+  @override
+  int get hashCode => Object.hash(
+      type, const ListEquality<ContentDispositionParameter>().hash(parameters));
+
+  @override
   String toString() {
     return 'ContentDispositionHeader(type: $type, parameters: $parameters)';
   }
@@ -109,12 +123,20 @@ class ContentDispositionParameter {
     String? language;
 
     if (isExtended) {
-      final extendedRegex = RegExp(r"^([\w-]+)''?([\w-]*)'(.*)");
+      /* Legal extended forms
+      filename*=UTF-8'en'example.txt    // charset and language
+      filename*=UTF-8''example.txt      // charset only
+      filename*='en'example.txt         // language only
+      filename*=''example.txt           // neither
+      */
+      final extendedRegex = RegExp(r"^([\w-]*)'([\w-]*)'(.*)$");
       final match = extendedRegex.firstMatch(value);
       if (match != null) {
-        encoding = match.group(1);
-        language = match.group(2)?.isNotEmpty != true ? null : match.group(2);
-        value = Uri.decodeComponent(match.group(3)!);
+        // match guarentees 3 groups, some may be empty
+        final groups = match.groups([0, 1, 2, 3]).cast<String>();
+        encoding = groups[1].nullIfEmpty;
+        language = groups[2].nullIfEmpty;
+        value = Uri.decodeComponent(groups[3]);
       }
     }
 
@@ -131,19 +153,31 @@ class ContentDispositionParameter {
   /// representation suitable for HTTP headers.
   String _encode() {
     if (isExtended) {
-      // If language is provided, format as encoding'language'filename
-      if (language != null) {
-        return "$name*=$encoding'$language'${Uri.encodeComponent(value)}";
-      }
-      // If no language, format as encoding''filename without adding extra quotes
-      return "$name*=$encoding''${Uri.encodeComponent(value)}";
+      return "$name*=${encoding ?? ''}'${language ?? ''}'${Uri.encodeComponent(value)}";
     }
     return '$name="$value"';
   }
+
+  @override
+  bool operator ==(final Object other) =>
+      identical(this, other) ||
+      other is ContentDispositionParameter &&
+          name == other.name &&
+          value == other.value &&
+          isExtended == other.isExtended &&
+          encoding == other.encoding &&
+          language == other.language;
+
+  @override
+  int get hashCode => Object.hash(name, value, isExtended, encoding, language);
 
   @override
   String toString() {
     return 'ContentDispositionParameter(name: $name, value: $value, '
         'isExtended: $isExtended, encoding: $encoding, language: $language)';
   }
+}
+
+extension on String {
+  String? get nullIfEmpty => isEmpty ? null : this;
 }

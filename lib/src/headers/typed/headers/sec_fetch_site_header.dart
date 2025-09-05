@@ -54,6 +54,14 @@ final class SecFetchSiteHeader {
   String _encode() => site;
 
   @override
+  bool operator ==(final Object other) =>
+      identical(this, other) ||
+      other is SecFetchSiteHeader && site == other.site;
+
+  @override
+  int get hashCode => site.hashCode;
+
+  @override
   String toString() {
     return 'SecFetchSiteHeader(value: $site)';
   }

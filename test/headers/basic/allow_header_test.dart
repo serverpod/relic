@@ -82,13 +82,13 @@ void main() {
         () async {
           final headers = await getServerRequestHeaders(
             server: server,
-            headers: {'allow': 'GET, POST, DELETE'},
+            headers: {'allow': 'get, post, delete'},
             touchHeaders: (final h) => h.allow,
           );
 
           expect(
-            headers.allow?.map((final method) => method.value).toList(),
-            equals(['GET', 'POST', 'DELETE']),
+            headers.allow?.map((final method) => method.name).toList(),
+            equals(['get', 'post', 'delete']),
           );
         },
       );
@@ -99,13 +99,13 @@ void main() {
         () async {
           final headers = await getServerRequestHeaders(
             server: server,
-            headers: {'allow': 'GET, POST, GET'},
+            headers: {'allow': 'get, post, get'},
             touchHeaders: (final h) => h.allow,
           );
 
           expect(
-            headers.allow?.map((final method) => method.value).toList(),
-            equals(['GET', 'POST']),
+            headers.allow?.map((final method) => method.name).toList(),
+            equals(['get', 'post']),
           );
         },
       );
@@ -121,8 +121,8 @@ void main() {
           );
 
           expect(
-            headers.allow?.map((final method) => method.value).toList(),
-            equals(['GET', 'POST', 'DELETE']),
+            headers.allow?.map((final method) => method.name).toList(),
+            equals(['get', 'post', 'delete']),
           );
         },
       );

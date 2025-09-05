@@ -14,7 +14,9 @@ final class CookieHeader {
   final List<Cookie> cookies;
 
   /// Constructs a [CookieHeader] instance with the specified cookies.
-  const CookieHeader({required this.cookies});
+  CookieHeader({required final List<Cookie> cookies})
+      : assert(cookies.isNotEmpty),
+        cookies = List.unmodifiable(cookies);
 
   /// Parses the Cookie header value and returns a [CookieHeader] instance.
   ///
@@ -51,6 +53,15 @@ final class CookieHeader {
   }
 
   @override
+  bool operator ==(final Object other) =>
+      identical(this, other) ||
+      other is CookieHeader &&
+          const ListEquality<Cookie>().equals(cookies, other.cookies);
+
+  @override
+  int get hashCode => const ListEquality<Cookie>().hash(cookies);
+
+  @override
   String toString() {
     return 'CookieHeader(cookies: $cookies)';
   }
@@ -84,6 +95,14 @@ class Cookie {
 
   /// Converts the [Cookie] instance into a string representation suitable for HTTP headers.
   String _encode() => '$name=$value';
+
+  @override
+  bool operator ==(final Object other) =>
+      identical(this, other) ||
+      other is Cookie && name == other.name && value == other.value;
+
+  @override
+  int get hashCode => Object.hash(name, value);
 
   @override
   String toString() {

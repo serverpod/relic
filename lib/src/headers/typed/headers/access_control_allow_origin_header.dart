@@ -54,6 +54,16 @@ final class AccessControlAllowOriginHeader {
   String _encode() => isWildcard ? '*' : origin.toString();
 
   @override
+  bool operator ==(final Object other) =>
+      identical(this, other) ||
+      other is AccessControlAllowOriginHeader &&
+          isWildcard == other.isWildcard &&
+          origin == other.origin;
+
+  @override
+  int get hashCode => Object.hash(isWildcard, origin);
+
+  @override
   String toString() =>
       'AccessControlAllowOriginHeader(origin: $origin, isWildcard: $isWildcard)';
 }

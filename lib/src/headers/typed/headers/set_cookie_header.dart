@@ -203,6 +203,33 @@ final class SetCookieHeader {
   }
 
   @override
+  bool operator ==(final Object other) =>
+      identical(this, other) ||
+      other is SetCookieHeader &&
+          name == other.name &&
+          value == other.value &&
+          expires == other.expires &&
+          maxAge == other.maxAge &&
+          domain == other.domain &&
+          path == other.path &&
+          secure == other.secure &&
+          httpOnly == other.httpOnly &&
+          sameSite == other.sameSite;
+
+  @override
+  int get hashCode => Object.hashAll([
+        name,
+        value,
+        expires,
+        maxAge,
+        domain,
+        path,
+        secure,
+        httpOnly,
+        sameSite,
+      ]);
+
+  @override
   String toString() {
     return 'SetCookieHeader(name: $name, '
         'value: $value, '

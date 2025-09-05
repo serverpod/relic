@@ -1,6 +1,5 @@
 import '../method/request_method.dart';
 import 'headers.dart';
-import 'typed/headers/x_forwarded_for_header.dart';
 import 'typed/typed_headers.dart';
 
 extension HeadersEx on Headers {
