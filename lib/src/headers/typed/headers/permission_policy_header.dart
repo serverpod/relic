@@ -17,8 +17,10 @@ final class PermissionsPolicyHeader {
   final List<PermissionsPolicyDirective> directives;
 
   /// Constructs a [PermissionsPolicyHeader] instance with the specified directives.
-  PermissionsPolicyHeader({required this.directives})
-      : assert(directives.isNotEmpty);
+  PermissionsPolicyHeader(
+      {required final List<PermissionsPolicyDirective> directives})
+      : assert(directives.isNotEmpty),
+        directives = List.unmodifiable(directives);
 
   /// Parses the Permissions-Policy header value and returns a [PermissionsPolicyHeader] instance.
   ///

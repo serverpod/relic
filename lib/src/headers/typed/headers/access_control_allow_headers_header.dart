@@ -14,14 +14,16 @@ final class AccessControlAllowHeadersHeader {
       [value._encode()];
 
   /// The list of headers that are allowed.
-  final Iterable<String> headers;
+  final List<String> headers;
 
   /// Whether all headers are allowed (`*`).
   final bool isWildcard;
 
   /// Constructs an instance allowing specific headers to be allowed.
-  AccessControlAllowHeadersHeader.headers({required this.headers})
+  AccessControlAllowHeadersHeader.headers(
+      {required final Iterable<String> headers})
       : assert(headers.isNotEmpty),
+        headers = List.unmodifiable(headers),
         isWildcard = false;
 
   /// Constructs an instance allowing all headers to be allowed (`*`).
@@ -61,11 +63,11 @@ final class AccessControlAllowHeadersHeader {
       identical(this, other) ||
       other is AccessControlAllowHeadersHeader &&
           isWildcard == other.isWildcard &&
-          const IterableEquality<String>().equals(headers, other.headers);
+          const ListEquality<String>().equals(headers, other.headers);
 
   @override
   int get hashCode =>
-      Object.hash(isWildcard, const IterableEquality<String>().hash(headers));
+      Object.hash(isWildcard, const ListEquality<String>().hash(headers));
 
   @override
   String toString() =>

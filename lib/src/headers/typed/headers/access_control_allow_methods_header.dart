@@ -20,8 +20,10 @@ final class AccessControlAllowMethodsHeader {
   final bool isWildcard;
 
   /// Constructs an instance allowing specific methods to be allowed.
-  AccessControlAllowMethodsHeader.methods({required this.methods})
+  AccessControlAllowMethodsHeader.methods(
+      {required final List<RequestMethod> methods})
       : assert(methods.isNotEmpty),
+        methods = List.unmodifiable(methods),
         isWildcard = false;
 
   /// Constructs an instance allowing all methods to be allowed (`*`).

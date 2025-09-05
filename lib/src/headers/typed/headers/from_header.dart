@@ -13,10 +13,12 @@ final class FromHeader {
   static List<String> __encode(final FromHeader value) => [value._encode()];
 
   /// A list of email addresses provided in the `From` header.
-  final Iterable<String> emails;
+  final List<String> emails;
 
   /// Private constructor for initializing the [emails] list.
-  FromHeader({required this.emails}) : assert(emails.isNotEmpty);
+  FromHeader({required final Iterable<String> emails})
+      : assert(emails.isNotEmpty),
+        emails = List.unmodifiable(emails);
 
   /// Parses a `From` header value and returns a [FromHeader] instance.
   factory FromHeader.parse(final Iterable<String> values) {
@@ -46,10 +48,10 @@ final class FromHeader {
   bool operator ==(final Object other) =>
       identical(this, other) ||
       other is FromHeader &&
-          const IterableEquality<String>().equals(emails, other.emails);
+          const ListEquality<String>().equals(emails, other.emails);
 
   @override
-  int get hashCode => const IterableEquality<String>().hash(emails);
+  int get hashCode => const ListEquality<String>().hash(emails);
 
   @override
   String toString() {

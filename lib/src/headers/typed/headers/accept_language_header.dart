@@ -18,8 +18,10 @@ final class AcceptLanguageHeader {
   final bool isWildcard;
 
   /// Constructs an instance of [AcceptLanguageHeader] with the given languages.
-  AcceptLanguageHeader.languages({required this.languages})
+  AcceptLanguageHeader.languages(
+      {required final List<LanguageQuality> languages})
       : assert(languages.isNotEmpty),
+        languages = List.unmodifiable(languages),
         isWildcard = false;
 
   /// Constructs an instance of [AcceptLanguageHeader] with a wildcard language.

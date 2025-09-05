@@ -608,8 +608,8 @@ void main() {
       ),
       (
         Headers.clearSiteData,
-        (final h) => h.clearSiteData = const ClearSiteDataHeader.dataTypes(
-            dataTypes: [ClearSiteDataType.cache])
+        (final h) => h.clearSiteData =
+            ClearSiteDataHeader.dataTypes(dataTypes: [ClearSiteDataType.cache])
       ),
       (
         Headers.connection,
