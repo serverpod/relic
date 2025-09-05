@@ -18,8 +18,10 @@ final class AcceptEncodingHeader {
   final bool isWildcard;
 
   /// Constructs an instance of [AcceptEncodingHeader] with the given encodings.
-  AcceptEncodingHeader.encodings({required this.encodings})
+  AcceptEncodingHeader.encodings(
+      {required final List<EncodingQuality> encodings})
       : assert(encodings.isNotEmpty),
+        encodings = List.unmodifiable(encodings),
         isWildcard = false;
 
   /// Constructs an instance of [AcceptEncodingHeader] with a wildcard encoding.

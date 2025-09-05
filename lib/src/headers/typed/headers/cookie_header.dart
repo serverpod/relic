@@ -14,7 +14,9 @@ final class CookieHeader {
   final List<Cookie> cookies;
 
   /// Constructs a [CookieHeader] instance with the specified cookies.
-  CookieHeader({required this.cookies}) : assert(cookies.isNotEmpty);
+  CookieHeader({required final List<Cookie> cookies})
+      : assert(cookies.isNotEmpty),
+        cookies = List.unmodifiable(cookies);
 
   /// Parses the Cookie header value and returns a [CookieHeader] instance.
   ///
