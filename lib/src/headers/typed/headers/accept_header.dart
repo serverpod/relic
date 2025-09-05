@@ -14,7 +14,9 @@ final class AcceptHeader {
   final List<MediaRange> mediaRanges;
 
   /// Constructs an [AcceptHeader] instance with the specified media ranges.
-  const AcceptHeader({required this.mediaRanges});
+  AcceptHeader({required final List<MediaRange> mediaRanges})
+      : assert(mediaRanges.isNotEmpty),
+        mediaRanges = List.unmodifiable(mediaRanges);
 
   /// Parses the Accept header value and returns an [AcceptHeader] instance.
   ///

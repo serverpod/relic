@@ -12,18 +12,21 @@ final class ClearSiteDataHeader {
       [value._encode()];
 
   /// The list of data types to be cleared.
-  final List<ClearSiteDataType>? dataTypes;
+  final List<ClearSiteDataType> dataTypes;
 
   /// Whether all data types are allowed to be cleared (`*`).
   final bool isWildcard;
 
   /// Constructs an instance allowing specific data types to be cleared.
-  const ClearSiteDataHeader.dataTypes({required this.dataTypes})
-      : isWildcard = false;
+  ClearSiteDataHeader.dataTypes(
+      {required final List<ClearSiteDataType> dataTypes})
+      : assert(dataTypes.isNotEmpty),
+        dataTypes = List.unmodifiable(dataTypes),
+        isWildcard = false;
 
   /// Constructs an instance allowing all data types to be cleared (`*`).
   const ClearSiteDataHeader.wildcard()
-      : dataTypes = null,
+      : dataTypes = const [],
         isWildcard = true;
 
   /// Parses the Clear-Site-Data header value and returns a [ClearSiteDataHeader] instance.
@@ -61,7 +64,7 @@ final class ClearSiteDataHeader {
   String _encode() {
     return isWildcard
         ? '*'
-        : dataTypes!.map((final dataType) => '"${dataType.value}"').join(', ');
+        : dataTypes.map((final dataType) => '"${dataType.value}"').join(', ');
   }
 
   @override

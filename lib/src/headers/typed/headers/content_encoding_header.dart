@@ -18,8 +18,9 @@ final class ContentEncodingHeader {
 
   /// Constructs a [ContentEncodingHeader] instance with the specified content
   /// encodings.
-  ContentEncodingHeader({required this.encodings})
-      : assert(encodings.isNotEmpty);
+  ContentEncodingHeader({required final List<ContentEncoding> encodings})
+      : assert(encodings.isNotEmpty),
+        encodings = List.unmodifiable(encodings);
 
   /// Parses the Content-Encoding header value and returns a
   /// [ContentEncodingHeader] instance.

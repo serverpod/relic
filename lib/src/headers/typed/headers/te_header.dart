@@ -15,7 +15,9 @@ final class TEHeader {
   final List<TeQuality> encodings;
 
   /// Constructs a [TEHeader] instance with the specified list of encodings.
-  TEHeader({required this.encodings}) : assert(encodings.isNotEmpty);
+  TEHeader({required final List<TeQuality> encodings})
+      : assert(encodings.isNotEmpty),
+        encodings = List.unmodifiable(encodings);
 
   /// Parses the TE header value and returns a [TEHeader] instance.
   ///

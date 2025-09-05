@@ -12,11 +12,12 @@ final class ContentLanguageHeader {
       [value._encode()];
 
   /// The list of language codes specified in the header.
-  final Iterable<String> languages;
+  final List<String> languages;
 
   /// Constructs a [ContentLanguageHeader] instance with the specified language codes.
-  ContentLanguageHeader({required this.languages})
-      : assert(languages.isNotEmpty);
+  ContentLanguageHeader({required final Iterable<String> languages})
+      : assert(languages.isNotEmpty),
+        languages = List.unmodifiable(languages);
 
   /// Parses the Content-Language header value and returns a [ContentLanguageHeader] instance.
   ///
@@ -46,10 +47,10 @@ final class ContentLanguageHeader {
   bool operator ==(final Object other) =>
       identical(this, other) ||
       other is ContentLanguageHeader &&
-          const IterableEquality<String>().equals(languages, other.languages);
+          const ListEquality<String>().equals(languages, other.languages);
 
   @override
-  int get hashCode => const IterableEquality<String>().hash(languages);
+  int get hashCode => const ListEquality<String>().hash(languages);
 
   @override
   String toString() {
