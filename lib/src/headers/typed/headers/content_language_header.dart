@@ -1,3 +1,5 @@
+import 'package:collection/collection.dart';
+
 import '../../../../relic.dart';
 import '../../extension/string_list_extensions.dart';
 
@@ -10,10 +12,12 @@ final class ContentLanguageHeader {
       [value._encode()];
 
   /// The list of language codes specified in the header.
-  final Iterable<String> languages;
+  final List<String> languages;
 
   /// Constructs a [ContentLanguageHeader] instance with the specified language codes.
-  const ContentLanguageHeader({required this.languages});
+  ContentLanguageHeader({required final Iterable<String> languages})
+      : assert(languages.isNotEmpty),
+        languages = List.unmodifiable(languages);
 
   /// Parses the Content-Language header value and returns a [ContentLanguageHeader] instance.
   ///
@@ -38,6 +42,15 @@ final class ContentLanguageHeader {
   /// suitable for HTTP headers.
 
   String _encode() => languages.join(', ');
+
+  @override
+  bool operator ==(final Object other) =>
+      identical(this, other) ||
+      other is ContentLanguageHeader &&
+          const ListEquality<String>().equals(languages, other.languages);
+
+  @override
+  int get hashCode => const ListEquality<String>().hash(languages);
 
   @override
   String toString() {

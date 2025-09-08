@@ -64,7 +64,7 @@ void main() {
         expect(policies?[0].name, equals('geolocation'));
         expect(policies?[0].values, equals(['self']));
         expect(policies?[1].name, equals('microphone'));
-        expect(policies?[1].values, equals(['']));
+        expect(policies?[1].values, isEmpty);
       },
     );
 

@@ -182,9 +182,8 @@ final class ForwardedHeader {
   final List<ForwardedElement> elements;
 
   ForwardedHeader(final List<ForwardedElement> elements)
-      : elements = List.unmodifiable(elements);
-
-  ForwardedHeader.empty() : elements = const [];
+      : assert(elements.isNotEmpty),
+        elements = List.unmodifiable(elements);
 
   factory ForwardedHeader.parse(final Iterable<String> values) {
     final splitValues = values.splitTrimAndFilterUnique();

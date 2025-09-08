@@ -1,3 +1,5 @@
+import 'package:collection/collection.dart';
+
 import '../../../../relic.dart';
 import '../../extension/string_list_extensions.dart';
 
@@ -10,18 +12,21 @@ final class AcceptEncodingHeader {
       [value._encode()];
 
   /// The list of encodings that are accepted.
-  final List<EncodingQuality>? encodings;
+  final List<EncodingQuality> encodings;
 
   /// A boolean value indicating whether the Accept-Encoding header is a wildcard.
   final bool isWildcard;
 
   /// Constructs an instance of [AcceptEncodingHeader] with the given encodings.
-  AcceptEncodingHeader.encodings({required this.encodings})
-      : isWildcard = false;
+  AcceptEncodingHeader.encodings(
+      {required final List<EncodingQuality> encodings})
+      : assert(encodings.isNotEmpty),
+        encodings = List.unmodifiable(encodings),
+        isWildcard = false;
 
   /// Constructs an instance of [AcceptEncodingHeader] with a wildcard encoding.
-  AcceptEncodingHeader.wildcard()
-      : encodings = null,
+  const AcceptEncodingHeader.wildcard()
+      : encodings = const [],
         isWildcard = true;
 
   /// Parses the Accept-Encoding header value and returns an [AcceptEncodingHeader] instance.
@@ -33,7 +38,7 @@ final class AcceptEncodingHeader {
     }
 
     if (splitValues.length == 1 && splitValues.first == '*') {
-      return AcceptEncodingHeader.wildcard();
+      return const AcceptEncodingHeader.wildcard();
     }
 
     if (splitValues.length > 1 && splitValues.contains('*')) {
@@ -63,9 +68,20 @@ final class AcceptEncodingHeader {
 
   /// Converts the [AcceptEncodingHeader] instance into a string representation suitable for HTTP headers.
 
-  String _encode() => isWildcard
-      ? '*'
-      : encodings?.map((final e) => e._encode()).join(', ') ?? '';
+  String _encode() =>
+      isWildcard ? '*' : encodings.map((final e) => e._encode()).join(', ');
+
+  @override
+  bool operator ==(final Object other) =>
+      identical(this, other) ||
+      other is AcceptEncodingHeader &&
+          isWildcard == other.isWildcard &&
+          const ListEquality<EncodingQuality>()
+              .equals(encodings, other.encodings);
+
+  @override
+  int get hashCode => Object.hash(
+      isWildcard, const ListEquality<EncodingQuality>().hash(encodings));
 
   @override
   String toString() => 'AcceptEncodingHeader(encodings: $encodings)';
@@ -85,6 +101,16 @@ class EncodingQuality {
 
   /// Converts the [EncodingQuality] instance into a string representation suitable for HTTP headers.
   String _encode() => quality == 1.0 ? encoding : '$encoding;q=$quality';
+
+  @override
+  bool operator ==(final Object other) =>
+      identical(this, other) ||
+      other is EncodingQuality &&
+          encoding == other.encoding &&
+          quality == other.quality;
+
+  @override
+  int get hashCode => Object.hash(encoding, quality);
 
   @override
   String toString() =>

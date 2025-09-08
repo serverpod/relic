@@ -1,3 +1,5 @@
+import 'package:collection/collection.dart';
+
 import '../../../../relic.dart';
 import '../../extension/string_list_extensions.dart';
 
@@ -16,7 +18,10 @@ final class ContentSecurityPolicyHeader {
 
   /// Constructs a [ContentSecurityPolicyHeader] instance with the specified
   /// directives.
-  const ContentSecurityPolicyHeader({required this.directives});
+  ContentSecurityPolicyHeader(
+      {required final List<ContentSecurityPolicyDirective> directives})
+      : assert(directives.isNotEmpty),
+        directives = List.unmodifiable(directives);
 
   /// Parses a CSP header value and returns a [ContentSecurityPolicyHeader]
   /// instance.
@@ -52,6 +57,17 @@ final class ContentSecurityPolicyHeader {
   }
 
   @override
+  bool operator ==(final Object other) =>
+      identical(this, other) ||
+      other is ContentSecurityPolicyHeader &&
+          const ListEquality<ContentSecurityPolicyDirective>()
+              .equals(directives, other.directives);
+
+  @override
+  int get hashCode =>
+      const ListEquality<ContentSecurityPolicyDirective>().hash(directives);
+
+  @override
   String toString() {
     return 'ContentSecurityPolicyHeader(directives: $directives)';
   }
@@ -76,6 +92,17 @@ class ContentSecurityPolicyDirective {
   /// Converts the [ContentSecurityPolicyDirective] instance into a string
   /// representation.
   String _encode() => '$name ${values.join(' ')}';
+
+  @override
+  bool operator ==(final Object other) =>
+      identical(this, other) ||
+      other is ContentSecurityPolicyDirective &&
+          name == other.name &&
+          const IterableEquality<String>().equals(values, other.values);
+
+  @override
+  int get hashCode =>
+      Object.hash(name, const IterableEquality<String>().hash(values));
 
   @override
   String toString() {

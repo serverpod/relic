@@ -8,19 +8,19 @@ final class AcceptRangesHeader {
   static List<String> __encode(final AcceptRangesHeader value) =>
       [value._encode()];
 
-  /// The range unit supported by the server, or `null` if no specific unit is supported.
-  final String? rangeUnit;
+  /// The range unit supported by the server, or `none` if not supported.
+  final String rangeUnit;
 
   /// Constructs an [AcceptRangesHeader] instance with the specified range unit.
-  const AcceptRangesHeader({this.rangeUnit});
+  const AcceptRangesHeader._({required this.rangeUnit});
 
   /// Constructs an [AcceptRangesHeader] instance with the range unit set to 'none'.
   factory AcceptRangesHeader.none() =>
-      const AcceptRangesHeader(rangeUnit: 'none');
+      const AcceptRangesHeader._(rangeUnit: 'none');
 
   /// Constructs an [AcceptRangesHeader] instance with the range unit set to 'bytes'.
   factory AcceptRangesHeader.bytes() =>
-      const AcceptRangesHeader(rangeUnit: 'bytes');
+      const AcceptRangesHeader._(rangeUnit: 'bytes');
 
   /// Parses the Accept-Ranges header value and returns an [AcceptRangesHeader] instance.
   ///
@@ -31,18 +31,27 @@ final class AcceptRangesHeader {
       throw const FormatException('Value cannot be empty');
     }
 
-    return AcceptRangesHeader(rangeUnit: trimmed);
+    return AcceptRangesHeader._(rangeUnit: trimmed);
   }
 
   /// Returns `true` if the range unit is 'bytes', otherwise `false`.
   bool get isBytes => rangeUnit == 'bytes';
 
   /// Returns `true` if the range unit is 'none' or `null`, otherwise `false`.
-  bool get isNone => rangeUnit == 'none' || rangeUnit == null;
+  bool get isNone => rangeUnit == 'none';
 
   /// Converts the [AcceptRangesHeader] instance into a string representation suitable for HTTP headers.
 
-  String _encode() => rangeUnit ?? 'none';
+  String _encode() => rangeUnit;
+
+  @override
+  bool operator ==(final Object other) =>
+      identical(this, other) ||
+      other is AcceptRangesHeader && rangeUnit == other.rangeUnit;
+
+  @override
+  int get hashCode => rangeUnit.hashCode;
+
   @override
   String toString() {
     return 'AcceptRangesHeader(rangeUnit: $rangeUnit)';

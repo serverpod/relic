@@ -251,6 +251,47 @@ final class CacheControlHeader {
   }
 
   @override
+  bool operator ==(final Object other) =>
+      identical(this, other) ||
+      other is CacheControlHeader &&
+          noCache == other.noCache &&
+          noStore == other.noStore &&
+          maxAge == other.maxAge &&
+          staleWhileRevalidate == other.staleWhileRevalidate &&
+          publicCache == other.publicCache &&
+          privateCache == other.privateCache &&
+          mustRevalidate == other.mustRevalidate &&
+          proxyRevalidate == other.proxyRevalidate &&
+          sMaxAge == other.sMaxAge &&
+          noTransform == other.noTransform &&
+          onlyIfCached == other.onlyIfCached &&
+          staleIfError == other.staleIfError &&
+          maxStale == other.maxStale &&
+          minFresh == other.minFresh &&
+          immutable == other.immutable &&
+          mustUnderstand == other.mustUnderstand;
+
+  @override
+  int get hashCode => Object.hashAll([
+        noCache,
+        noStore,
+        maxAge,
+        staleWhileRevalidate,
+        publicCache,
+        privateCache,
+        mustRevalidate,
+        proxyRevalidate,
+        sMaxAge,
+        noTransform,
+        onlyIfCached,
+        staleIfError,
+        maxStale,
+        minFresh,
+        immutable,
+        mustUnderstand,
+      ]);
+
+  @override
   String toString() {
     return 'CacheControlHeader('
         'noCache: $noCache, '

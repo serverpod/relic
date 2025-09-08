@@ -82,7 +82,6 @@ extension on RequestMethod {
       RequestMethod.patch => Method.patch,
       RequestMethod.trace => Method.trace,
       RequestMethod.connect => Method.connect,
-      _ => throw UnimplementedError(),
     };
   }
 }

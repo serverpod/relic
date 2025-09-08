@@ -1,3 +1,5 @@
+import 'package:collection/collection.dart';
+
 import '../../../../relic.dart';
 import '../../extension/string_list_extensions.dart';
 
@@ -13,7 +15,9 @@ final class UpgradeHeader {
   final List<UpgradeProtocol> protocols;
 
   /// Constructs an [UpgradeHeader] instance with the specified protocols.
-  UpgradeHeader({required this.protocols});
+  UpgradeHeader({required final List<UpgradeProtocol> protocols})
+      : assert(protocols.isNotEmpty),
+        protocols = List.unmodifiable(protocols);
 
   /// Parses the Upgrade header value and returns an [UpgradeHeader] instance.
   ///
@@ -37,6 +41,16 @@ final class UpgradeHeader {
   String _encode() {
     return protocols.map((final protocol) => protocol._encode()).join(', ');
   }
+
+  @override
+  bool operator ==(final Object other) =>
+      identical(this, other) ||
+      other is UpgradeHeader &&
+          const ListEquality<UpgradeProtocol>()
+              .equals(protocols, other.protocols);
+
+  @override
+  int get hashCode => const ListEquality<UpgradeProtocol>().hash(protocols);
 
   @override
   String toString() {
@@ -93,6 +107,16 @@ class UpgradeProtocol {
 
   /// Converts the [UpgradeProtocol] instance into a string representation.
   String _encode() => '$protocol${version != null ? '/$version' : ''}';
+
+  @override
+  bool operator ==(final Object other) =>
+      identical(this, other) ||
+      other is UpgradeProtocol &&
+          protocol == other.protocol &&
+          version == other.version;
+
+  @override
+  int get hashCode => Object.hash(protocol, version);
 
   @override
   String toString() {

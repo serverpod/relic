@@ -39,16 +39,5 @@ void main() {
 
       expect(header1 == header2, isFalse);
     });
-
-    test(
-        'Given two empty ForwardedHeader instances (one via .empty(), one via empty list), '
-        'when compared with ==, '
-        'then they should be equal and have the same hashCode.', () {
-      final header1 = ForwardedHeader.empty();
-      final header2 = ForwardedHeader([]);
-
-      expect(header1 == header2, isTrue);
-      expect(header1.hashCode, equals(header2.hashCode));
-    });
   });
 }

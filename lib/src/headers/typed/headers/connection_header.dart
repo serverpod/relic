@@ -1,3 +1,5 @@
+import 'package:collection/collection.dart';
+
 import '../../../../relic.dart';
 import '../../extension/string_list_extensions.dart';
 
@@ -54,6 +56,17 @@ final class ConnectionHeader {
   }
 
   @override
+  bool operator ==(final Object other) =>
+      identical(this, other) ||
+      other is ConnectionHeader &&
+          const ListEquality<ConnectionHeaderType>()
+              .equals(directives, other.directives);
+
+  @override
+  int get hashCode =>
+      const ListEquality<ConnectionHeaderType>().hash(directives);
+
+  @override
   String toString() {
     return 'ConnectionHeader(directives: $directives)';
   }
@@ -98,6 +111,14 @@ class ConnectionHeaderType {
         throw const FormatException('Invalid value');
     }
   }
+
+  @override
+  bool operator ==(final Object other) =>
+      identical(this, other) ||
+      other is ConnectionHeaderType && value == other.value;
+
+  @override
+  int get hashCode => value.hashCode;
 
   @override
   String toString() => 'ConnectionHeaderType(value: $value)';

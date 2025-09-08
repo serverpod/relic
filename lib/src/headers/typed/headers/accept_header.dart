@@ -1,3 +1,5 @@
+import 'package:collection/collection.dart';
+
 import '../../../../relic.dart';
 import '../../extension/string_list_extensions.dart';
 
@@ -12,7 +14,9 @@ final class AcceptHeader {
   final List<MediaRange> mediaRanges;
 
   /// Constructs an [AcceptHeader] instance with the specified media ranges.
-  const AcceptHeader({required this.mediaRanges});
+  AcceptHeader({required final List<MediaRange> mediaRanges})
+      : assert(mediaRanges.isNotEmpty),
+        mediaRanges = List.unmodifiable(mediaRanges);
 
   /// Parses the Accept header value and returns an [AcceptHeader] instance.
   ///
@@ -31,6 +35,16 @@ final class AcceptHeader {
 
   /// Converts the [AcceptHeader] instance into a string representation suitable for HTTP headers.
   String _encode() => mediaRanges.map((final mr) => mr._encode()).join(', ');
+
+  @override
+  bool operator ==(final Object other) =>
+      identical(this, other) ||
+      other is AcceptHeader &&
+          const ListEquality<MediaRange>()
+              .equals(mediaRanges, other.mediaRanges);
+
+  @override
+  int get hashCode => const ListEquality<MediaRange>().hash(mediaRanges);
 
   @override
   String toString() => 'AcceptHeader(mediaRanges: $mediaRanges)';
@@ -91,6 +105,17 @@ class MediaRange {
     final qualityStr = quality == 1.0 ? '' : ';q=$quality';
     return '$type/$subtype$qualityStr';
   }
+
+  @override
+  bool operator ==(final Object other) =>
+      identical(this, other) ||
+      other is MediaRange &&
+          type == other.type &&
+          subtype == other.subtype &&
+          quality == other.quality;
+
+  @override
+  int get hashCode => Object.hash(type, subtype, quality);
 
   @override
   String toString() =>

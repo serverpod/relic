@@ -1,3 +1,5 @@
+import 'package:collection/collection.dart';
+
 import '../../../../relic.dart';
 import '../../extension/string_list_extensions.dart';
 
@@ -12,18 +14,21 @@ final class AccessControlAllowMethodsHeader {
       [value._encode()];
 
   /// The list of methods that are allowed.
-  final List<RequestMethod>? methods;
+  final List<RequestMethod> methods;
 
   /// Whether all methods are allowed (`*`).
   final bool isWildcard;
 
   /// Constructs an instance allowing specific methods to be allowed.
-  const AccessControlAllowMethodsHeader.methods({required this.methods})
-      : isWildcard = false;
+  AccessControlAllowMethodsHeader.methods(
+      {required final List<RequestMethod> methods})
+      : assert(methods.isNotEmpty),
+        methods = List.unmodifiable(methods),
+        isWildcard = false;
 
   /// Constructs an instance allowing all methods to be allowed (`*`).
   const AccessControlAllowMethodsHeader.wildcard()
-      : methods = null,
+      : methods = const [],
         isWildcard = true;
 
   /// Parses the Access-Control-Allow-Methods header value and returns an
@@ -54,7 +59,19 @@ final class AccessControlAllowMethodsHeader {
   /// Converts the [AccessControlAllowMethodsHeader] instance into a string
   /// representation suitable for HTTP headers.
 
-  String _encode() => isWildcard ? '*' : methods!.join(', ');
+  String _encode() =>
+      isWildcard ? '*' : methods.map((final m) => m.name).join(', ');
+
+  @override
+  bool operator ==(final Object other) =>
+      identical(this, other) ||
+      other is AccessControlAllowMethodsHeader &&
+          isWildcard == other.isWildcard &&
+          const ListEquality<RequestMethod>().equals(methods, other.methods);
+
+  @override
+  int get hashCode => Object.hash(
+      isWildcard, const ListEquality<RequestMethod>().hash(methods));
 
   @override
   String toString() =>
