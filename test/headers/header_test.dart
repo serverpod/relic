@@ -695,7 +695,7 @@ void main() {
       (
         Headers.ifMatch,
         (final h) =>
-            h.ifMatch = const IfMatchHeader.etags([ETagHeader(value: 'foobar')])
+            h.ifMatch = IfMatchHeader.etags([const ETagHeader(value: 'foobar')])
       ),
       (
         Headers.ifModifiedSince,

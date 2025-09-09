@@ -39,8 +39,8 @@ void main() {
       'when a request is made for the file, '
       'then a 200 OK status is returned with the full body', () async {
     const nonMatchingEtag = ETagHeader(value: 'non-existent-etag');
-    final headers = Headers.build(
-        (final mh) => mh.ifNoneMatch = const IfNoneMatchHeader.etags(
+    final headers =
+        Headers.build((final mh) => mh.ifNoneMatch = IfNoneMatchHeader.etags(
               [nonMatchingEtag],
             ));
 
