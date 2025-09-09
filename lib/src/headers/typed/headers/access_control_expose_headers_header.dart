@@ -1,76 +1,50 @@
-import 'package:collection/collection.dart';
-
 import '../../../../relic.dart';
-import '../../extension/string_list_extensions.dart';
+import 'wildcard_list_header.dart';
 
 /// A class representing the HTTP Access-Control-Expose-Headers header.
 ///
 /// This header specifies which headers can be exposed as part of the response
 /// by listing them explicitly or using a wildcard (`*`) to expose all headers.
-final class AccessControlExposeHeadersHeader {
-  static const codec =
-      HeaderCodec(AccessControlExposeHeadersHeader.parse, __encode);
-  static List<String> __encode(final AccessControlExposeHeadersHeader value) =>
-      [value._encode()];
-
-  /// The list of headers that can be exposed.
-  final List<String> headers;
-
-  /// Whether all headers are allowed to be exposed (`*`).
-  final bool isWildcard;
+final class AccessControlExposeHeadersHeader
+    extends WildcardListHeader<String> {
+  static const codec = HeaderCodec(_parse, _encode);
 
   /// Constructs an instance allowing specific headers to be exposed.
   AccessControlExposeHeadersHeader.headers(
       {required final Iterable<String> headers})
-      : assert(headers.isNotEmpty),
-        headers = List.unmodifiable(headers),
-        isWildcard = false;
+      : super(List.from(headers));
 
   /// Constructs an instance allowing all headers to be exposed (`*`).
-  const AccessControlExposeHeadersHeader.wildcard()
-      : headers = const [],
-        isWildcard = true;
+  const AccessControlExposeHeadersHeader.wildcard() : super.wildcard();
 
   /// Parses the Access-Control-Expose-Headers header value and returns an
   /// [AccessControlExposeHeadersHeader] instance.
   factory AccessControlExposeHeadersHeader.parse(
       final Iterable<String> values) {
-    final splitValues = values.splitTrimAndFilterUnique();
-    if (splitValues.isEmpty) {
-      throw const FormatException('Value cannot be empty');
-    }
-
-    if (splitValues.length == 1 && splitValues.first == '*') {
-      return const AccessControlExposeHeadersHeader.wildcard();
-    }
-
-    if (splitValues.length > 1 && splitValues.contains('*')) {
-      throw const FormatException(
-          'Wildcard (*) cannot be used with other values');
-    }
-
-    return AccessControlExposeHeadersHeader.headers(
-      headers: splitValues,
-    );
+    return _parse(values);
   }
 
-  /// Converts the [AccessControlExposeHeadersHeader] instance into a string
-  /// representation suitable for HTTP headers.
+  /// The list of headers that can be exposed
+  List<String> get headers => values;
 
-  String _encode() => isWildcard ? '*' : headers.join(', ');
+  static AccessControlExposeHeadersHeader _parse(
+      final Iterable<String> values) {
+    final parsed =
+        WildcardListHeader.parse(values, (final String value) => value);
 
-  @override
-  bool operator ==(final Object other) =>
-      identical(this, other) ||
-      other is AccessControlExposeHeadersHeader &&
-          isWildcard == other.isWildcard &&
-          const ListEquality<String>().equals(headers, other.headers);
+    if (parsed.isWildcard) {
+      return const AccessControlExposeHeadersHeader.wildcard();
+    } else {
+      return AccessControlExposeHeadersHeader.headers(headers: parsed.values);
+    }
+  }
 
-  @override
-  int get hashCode =>
-      Object.hash(isWildcard, const ListEquality<String>().hash(headers));
+  static List<String> encodeHeader(
+      final AccessControlExposeHeadersHeader header) {
+    return header.encode((final String str) => str).toList();
+  }
 
-  @override
-  String toString() =>
-      'AccessControlExposeHeadersHeader(headers: $headers, isWildcard: $isWildcard)';
+  static List<String> _encode(final AccessControlExposeHeadersHeader header) {
+    return encodeHeader(header);
+  }
 }
