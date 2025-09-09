@@ -52,7 +52,7 @@ void main() {
           throwsA(isA<BadRequestException>().having(
             (final e) => e.message,
             'message',
-            contains('Wildcard (*) cannot be used with other headers'),
+            contains('Wildcard (*) cannot be used with other values'),
           )),
         );
       },
