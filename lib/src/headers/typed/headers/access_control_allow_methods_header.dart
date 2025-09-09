@@ -60,7 +60,7 @@ final class AccessControlAllowMethodsHeader {
   /// representation suitable for HTTP headers.
 
   String _encode() =>
-      isWildcard ? '*' : methods.map((final m) => m.name).join(', ');
+      isWildcard ? '*' : methods.map((final m) => m.value).join(', ');
 
   @override
   bool operator ==(final Object other) =>
