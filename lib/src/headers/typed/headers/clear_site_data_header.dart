@@ -51,7 +51,7 @@ final class ClearSiteDataHeader extends WildcardListHeader<ClearSiteDataType> {
 
   static List<String> encodeHeader(final ClearSiteDataHeader header) {
     if (header.isWildcard) {
-      return ['*'];
+      return ['"*"'];
     } else {
       return [
         header.dataTypes
