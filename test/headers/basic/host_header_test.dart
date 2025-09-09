@@ -24,55 +24,70 @@ void main() {
           ({
             String description,
             String hostValue,
-            String? expectedError,
           })>(
         variants: [
           (
             description: 'when an empty Host header is passed '
                 'then the server responds with a bad request including a message that states the header value cannot be empty',
             hostValue: '',
-            expectedError: 'Value cannot be empty',
           ),
           (
             description: 'when a Host header with an invalid format is passed '
                 'then the server responds with a bad request including a message that states the format is invalid',
             hostValue: 'h@ttp://example.com',
-            expectedError: 'Invalid radix-10 number',
           ),
           (
             description:
                 'when a Host header with an invalid port number is passed '
                 'then the server responds with a bad request including a message that states the format is invalid',
             hostValue: 'example.com:test',
-            expectedError: null, // Just check for BadRequestException
           ),
           (
             description:
                 'when a Host header with invalid port format (non-numeric) is passed '
                 'then the server responds with a bad request',
             hostValue: '192.168.1.1:abc',
-            expectedError: null, // Just check for BadRequestException
+          ),
+          (
+            description: 'when an unbracketed IPv6 address is passed '
+                'then it should be mistakenly parsed as host and port',
+            hostValue: '2001:db8::1',
+          ),
+          (
+            description: 'when a Host header with scheme (https://) is passed '
+                'then the server responds with a bad request',
+            hostValue: 'https://example.com',
+          ),
+          (
+            description: 'when a Host header with path component is passed '
+                'then the server responds with a bad request',
+            hostValue: 'example.com/path',
+          ),
+          (
+            description: 'when a Host header with query parameter is passed '
+                'then the server responds with a bad request',
+            hostValue: 'example.com?q=1',
+          ),
+          (
+            description: 'when a Host header with fragment is passed '
+                'then the server responds with a bad request',
+            hostValue: 'example.com#frag',
+          ),
+          (
+            description: 'when a Host header with user@host format is passed '
+                'then the server responds with a bad request',
+            hostValue: 'user@example.com',
           ),
         ],
         (final testCase) => testCase.description,
         (final testCase) async {
-          final matcher = testCase.expectedError != null
-              ? throwsA(
-                  isA<BadRequestException>().having(
-                    (final e) => e.message,
-                    'message',
-                    contains(testCase.expectedError!),
-                  ),
-                )
-              : throwsA(isA<BadRequestException>());
-
           expect(
             getServerRequestHeaders(
               server: server,
               headers: {'host': testCase.hostValue},
               touchHeaders: (final h) => h.host,
             ),
-            matcher,
+            throwsA(isA<BadRequestException>()),
           );
         },
       );

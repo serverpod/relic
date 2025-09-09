@@ -6,10 +6,6 @@ final class HostHeader {
   static List<String> __encode(final HostHeader value) => [value._encode()];
 
   final String host;
-  // TODO: This should default 80 for http, or 443 for https, but we don't have
-  // access to the scheme in HostHeader.parse. Will require some refactoring,
-  // perhaps allowing Header instances to know what Request instance they belong
-  // to. For now allow port to be null, at leave it to the client to handle.
   final int? port;
   HostHeader._(this.host, this.port);
 
@@ -17,27 +13,45 @@ final class HostHeader {
     return HostHeader._(host.trim().toLowerCase(), port);
   }
 
-  factory HostHeader.parse(final String value) {
-    String hostFrom(final String value) {
-      final trimmed = value.trim();
-      if (trimmed.isEmpty) {
-        throw const FormatException('Value cannot be empty');
-      }
-      return trimmed;
+  factory HostHeader.parse(String value) {
+    value = value.trim();
+    if (value.isEmpty) {
+      throw const FormatException('Value cannot be empty');
     }
 
+    // Delegate to Uri to handle the grunt of parsing
+    // Add schema as prefix as it is not (/should not be)
+    // included in Host header itself.
+    final uri = Uri.tryParse('http://$value');
+    if (uri == null ||
+        !uri.hasEmptyPath ||
+        uri.hasQuery ||
+        uri.hasFragment ||
+        uri.userInfo.isNotEmpty) {
+      // Only host and port allowed!
+      throw FormatException('Invalid host', value);
+    }
+
+    final String host;
+
+    // IPv6, or not?
+    final lastBracket = value.lastIndexOf(']');
+    if (lastBracket >= 0) {
+      Uri.parseIPv6Address(uri.host); // throws if invalid
+      host = '[${uri.host}]'; // preserve brackets
+    } else {
+      host = uri.host;
+    }
+
+    // We need to parse port explicitly, as Uri adds implicit port
     final lastColon = value.lastIndexOf(':');
-    if (lastColon < 0) {
-      // no port, and not IPv6
-      return HostHeader(hostFrom(value), null);
+    if (lastColon <= lastBracket) {
+      // no port
+      return HostHeader(host, null);
+    } else {
+      final port = int.parse(value.substring(lastColon + 1));
+      return HostHeader(host, port);
     }
-    final ipV6End = value.lastIndexOf(']');
-    if (ipV6End > lastColon) {
-      // IPv6 no port
-      return HostHeader(hostFrom(value), null);
-    }
-    final port = int.parse(value.substring(lastColon + 1));
-    return HostHeader(hostFrom(value.substring(0, lastColon)), port);
   }
 
   HostHeader.fromUri(final Uri uri) : this._(uri.host, uri.port);
@@ -53,4 +67,7 @@ final class HostHeader {
 
   @override
   int get hashCode => Object.hash(host, port);
+
+  @override
+  String toString() => 'Host(host: $host, port: $port)';
 }
