@@ -59,7 +59,7 @@ final isOhNoStateError =
 Future<RelicServer> testServe(
   final Handler handler, {
   final SecurityContext? context,
-  final String? poweredByHeader,
+  final String? poweredByHeader = RelicServer.defaultPoweredByHeader,
 }) =>
     serve(
       handler,

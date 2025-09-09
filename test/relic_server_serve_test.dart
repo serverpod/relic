@@ -391,6 +391,15 @@ void main() {
       final response = await _get();
       expect(response.headers, containsPair(poweredBy, 'myServer'));
     });
+
+    test('can be unset at the server level', () async {
+      _server = await testServe(
+        syncHandler,
+        poweredByHeader: null,
+      );
+      final response = await _get();
+      expect(response.headers[poweredBy], isNull);
+    });
   });
 
   test(

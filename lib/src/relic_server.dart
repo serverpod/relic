@@ -28,14 +28,14 @@ class RelicServer {
   StreamSubscription<AdapterRequest>? _subscription;
 
   /// The powered by header to use for responses.
-  final String poweredByHeader;
+  final String? poweredByHeader;
 
   /// Creates a server with the given parameters.
   RelicServer(
     this.adapter, {
     this.strictHeaders = false,
-    final String? poweredByHeader,
-  }) : poweredByHeader = poweredByHeader ?? defaultPoweredByHeader;
+    this.poweredByHeader = defaultPoweredByHeader,
+  });
 
   /// Mounts a handler to the server and starts listening for requests.
   ///
