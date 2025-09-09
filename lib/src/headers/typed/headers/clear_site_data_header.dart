@@ -1,43 +1,35 @@
-import 'package:collection/collection.dart';
-
 import '../../../../relic.dart';
-import '../../extension/string_list_extensions.dart';
+import 'wildcard_list_header.dart';
 
 /// A class representing the HTTP Clear-Site-Data header.
 ///
 /// This header specifies which types of browsing data should be cleared.
-final class ClearSiteDataHeader {
-  static const codec = HeaderCodec(ClearSiteDataHeader.parse, __encode);
-  static List<String> __encode(final ClearSiteDataHeader value) =>
-      [value._encode()];
-
-  /// The list of data types to be cleared.
-  final List<ClearSiteDataType> dataTypes;
-
-  /// Whether all data types are allowed to be cleared (`*`).
-  final bool isWildcard;
+final class ClearSiteDataHeader extends WildcardListHeader<ClearSiteDataType> {
+  static const codec = HeaderCodec(_parse, _encode);
 
   /// Constructs an instance allowing specific data types to be cleared.
   ClearSiteDataHeader.dataTypes(
       {required final List<ClearSiteDataType> dataTypes})
-      : assert(dataTypes.isNotEmpty),
-        dataTypes = List.unmodifiable(dataTypes),
-        isWildcard = false;
+      : super(dataTypes);
 
   /// Constructs an instance allowing all data types to be cleared (`*`).
-  const ClearSiteDataHeader.wildcard()
-      : dataTypes = const [],
-        isWildcard = true;
+  const ClearSiteDataHeader.wildcard() : super.wildcard();
 
   /// Parses the Clear-Site-Data header value and returns a [ClearSiteDataHeader] instance.
-  ///
-  /// This method splits the header value by commas, trims each data type,
-  /// and processes the data type values.
   factory ClearSiteDataHeader.parse(final Iterable<String> values) {
+    return _parse(values);
+  }
+
+  /// The list of data types to be cleared
+  List<ClearSiteDataType> get dataTypes => values;
+
+  static ClearSiteDataHeader _parse(final Iterable<String> values) {
+    // Custom parsing logic for ClearSiteData with quote removal
     final splitValues = values
-        .splitTrimAndFilterUnique()
-        .map((final s) => s.replaceAll('"', ''))
+        .expand((final value) => value.split(','))
+        .map((final s) => s.trim().replaceAll('"', ''))
         .where((final s) => s.isNotEmpty)
+        .toSet()
         .toList();
 
     if (splitValues.isEmpty) {
@@ -54,34 +46,24 @@ final class ClearSiteDataHeader {
     }
 
     final dataTypes = splitValues.map(ClearSiteDataType.parse).toList();
-
     return ClearSiteDataHeader.dataTypes(dataTypes: dataTypes);
   }
 
-  /// Converts the [ClearSiteDataHeader] instance into a string representation suitable for HTTP headers.
-  ///
-  /// This method generates the header string by concatenating the data types.
-  String _encode() {
-    return isWildcard
-        ? '*'
-        : dataTypes.map((final dataType) => '"${dataType.value}"').join(', ');
+  static List<String> encodeHeader(final ClearSiteDataHeader header) {
+    if (header.isWildcard) {
+      return ['*'];
+    } else {
+      return [
+        header.dataTypes
+            .map((final dataType) => '"${dataType.value}"')
+            .join(', ')
+      ];
+    }
   }
 
-  @override
-  bool operator ==(final Object other) =>
-      identical(this, other) ||
-      other is ClearSiteDataHeader &&
-          isWildcard == other.isWildcard &&
-          const ListEquality<ClearSiteDataType>()
-              .equals(dataTypes, other.dataTypes);
-
-  @override
-  int get hashCode => Object.hash(
-      isWildcard, const ListEquality<ClearSiteDataType>().hash(dataTypes));
-
-  @override
-  String toString() =>
-      'ClearSiteDataHeader(dataTypes: $dataTypes, isWildcard: $isWildcard)';
+  static List<String> _encode(final ClearSiteDataHeader header) {
+    return encodeHeader(header);
+  }
 }
 
 /// A class representing a single Clear-Site-Data type.
