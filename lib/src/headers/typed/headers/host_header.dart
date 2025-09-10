@@ -10,6 +10,7 @@ final class HostHeader {
   HostHeader._(this.host, this.port);
 
   factory HostHeader(final String host, [final int? port]) {
+    RangeError.checkValueInInterval(port ?? 0, 0, 65535);
     return HostHeader._(host.trim().toLowerCase(), port);
   }
 
@@ -50,6 +51,9 @@ final class HostHeader {
       return HostHeader(host, null);
     } else {
       final port = int.parse(value.substring(lastColon + 1));
+      if (port < 0 || port > 65535) {
+        throw FormatException('Port out of range', value);
+      }
       return HostHeader(host, port);
     }
   }

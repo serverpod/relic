@@ -27,59 +27,61 @@ void main() {
           })>(
         variants: [
           (
-            description: 'when an empty Host header is passed '
-                'then the server responds with a bad request including a message that states the header value cannot be empty',
+            description: 'when an empty Host header is passed',
             hostValue: '',
           ),
           (
-            description: 'when a Host header with an invalid format is passed '
-                'then the server responds with a bad request including a message that states the format is invalid',
+            description: 'when a Host header with an invalid format is passed',
             hostValue: 'h@ttp://example.com',
           ),
           (
             description:
-                'when a Host header with an invalid port number is passed '
-                'then the server responds with a bad request including a message that states the format is invalid',
+                'when a Host header with an invalid port number is passed',
             hostValue: 'example.com:test',
           ),
           (
             description:
-                'when a Host header with invalid port format (non-numeric) is passed '
-                'then the server responds with a bad request',
+                'when a Host header with invalid port format (non-numeric) is passed',
             hostValue: '192.168.1.1:abc',
           ),
           (
-            description: 'when an unbracketed IPv6 address is passed '
-                'then it should be mistakenly parsed as host and port',
+            description:
+                'when a Host header with too big port number is passed',
+            hostValue: '192.168.1.1:1000000',
+          ),
+          (
+            description:
+                'when a Host header with a negagtive port number is passed',
+            hostValue: '192.168.1.1:-1',
+          ),
+          (
+            description: 'when an unbracketed IPv6 address is passed',
             hostValue: '2001:db8::1',
           ),
           (
-            description: 'when a Host header with scheme (https://) is passed '
-                'then the server responds with a bad request',
+            description: 'when a Host header with scheme (https://) is passed',
             hostValue: 'https://example.com',
           ),
           (
-            description: 'when a Host header with path component is passed '
-                'then the server responds with a bad request',
+            description: 'when a Host header with path component is passed',
             hostValue: 'example.com/path',
           ),
           (
-            description: 'when a Host header with query parameter is passed '
-                'then the server responds with a bad request',
+            description: 'when a Host header with query parameter is passed',
             hostValue: 'example.com?q=1',
           ),
           (
-            description: 'when a Host header with fragment is passed '
-                'then the server responds with a bad request',
+            description: 'when a Host header with fragment is passed',
             hostValue: 'example.com#frag',
           ),
           (
-            description: 'when a Host header with user@host format is passed '
-                'then the server responds with a bad request',
+            description: 'when a Host header with user@host format is passed',
             hostValue: 'user@example.com',
           ),
+          (description: 'foo', hostValue: '::1'),
         ],
-        (final testCase) => testCase.description,
+        (final testCase) =>
+            '${testCase.description} then the server responds with a bad request',
         (final testCase) async {
           expect(
             getServerRequestHeaders(
@@ -99,28 +101,14 @@ void main() {
         () async {
           final headers = await getServerRequestHeaders(
             server: server,
-            touchHeaders: (final _) {},
-            headers: {'host': 'http://example.com'}, // scheme not allowed!
+            touchHeaders: (final _) {}, // server don't use the header
+            headers: {'host': 'http://example.com'}, // sch eme not allowed!
           );
 
-          expect(headers, isNotNull);
+          expect(Headers.host[headers].valueOrNullIfInvalid, isNull);
+          expect(() => headers.host, throwsInvalidHeader);
         },
       );
-      group('when an invalid Host header is passed', () {
-        test(
-          'then it should return null',
-          () async {
-            final headers = await getServerRequestHeaders(
-              server: server,
-              touchHeaders: (final _) {},
-              headers: {'host': 'h@ttp://example.com'},
-            );
-
-            expect(Headers.host[headers].valueOrNullIfInvalid, isNull);
-            expect(() => headers.host, throwsInvalidHeader);
-          },
-        );
-      });
 
       // Basic host parsing tests
       parameterizedTest<
@@ -343,9 +331,6 @@ void main() {
             hostValue: '[64:ff9b::192.0.2.80]:80',
             expectedHost: HostHeader('[64:ff9b::192.0.2.80]', 80),
           ),
-          // Note: Unbracketed IPv6 addresses like '::1' cannot be tested here
-          // because they cause URL parsing failures at the HTTP client level
-          // before reaching the header validation logic.
         ],
         (final testCase) => testCase.description,
         (final testCase) async {

@@ -12,7 +12,7 @@ final class HeaderAccessor<T extends Object> {
   /// Using an identity map ensures each accessor gets its own unique cache.
   ///
   /// As this is static container and we only ever add to it, each added Expando will
-  /// live until proess terminates. However there should only be a finite number of
+  /// live until process terminates. However there should only be a finite number of
   /// const constructed [HeaderAccessor] objects, so this is fine.
   ///
   /// Note that the cached values stored in the [Expando]s follows the lifetime of the
@@ -63,18 +63,18 @@ final class HeaderAccessor<T extends Object> {
     final HeadersBase external, {
     final T? Function(Exception)? orElse,
   }) {
+    final raw = external[key];
+    if (raw == null) return null; // nothing to decode
+
+    var result = _cache[raw];
+    if (result != null) return result; // found in cache
+
     try {
-      final raw = external[key];
-      if (raw == null) return null; // nothing to decode
-
-      var result = _cache[raw];
-      if (result != null) return result; // found in cache
-
       result = codec.decode(raw);
       _cache[raw] = result;
       return result;
     } on Exception catch (e) {
-      if (orElse == null) _throwException(e, key: key);
+      if (orElse == null) _throwException(e, key: key, raw: raw);
       return orElse(e);
     }
   }
@@ -148,7 +148,7 @@ sealed class HeaderCodec<T extends Object>
   /// Factory constructor for creating a [HeaderCodec] that processes multiple values.
   ///
   /// - [decode]: Function that converts a collection of header values to type [T]
-  /// - [encode]: Optional function to convert type [T] back to header values
+  /// - [encode]: Function to convert type [T] back to header values
   const factory HeaderCodec(
     final T Function(Iterable<String> encoded) decode,
     final Iterable<String> Function(T decoded) encode,
@@ -157,7 +157,7 @@ sealed class HeaderCodec<T extends Object>
   /// Factory constructor for creating a [HeaderCodec] that processes a single value.
   ///
   /// - [singleDecode]: Function that converts a single header value to type [T]
-  /// - [encode]: Optional function to convert type [T] back to header values
+  /// - [encode]: Function to convert type [T] back to header values
   ///
   /// This is a simplified constructor for headers that only need to process the first
   /// value in a collection of header values.
@@ -243,6 +243,7 @@ typedef HeaderTuple<T extends Object> = ({
 Never _throwException(
   final Object exception, {
   required final String key,
+  required final Iterable<String> raw,
 }) {
   if (exception is InvalidHeaderException) throw exception;
   throw InvalidHeaderException(
@@ -252,5 +253,6 @@ Never _throwException(
       _ => '$exception',
     },
     headerType: key,
+    raw: raw,
   );
 }
