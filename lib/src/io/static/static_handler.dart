@@ -213,7 +213,6 @@ Headers _buildBaseHeaders(
     final _FileInfo fileInfo, final CacheControlHeader? cacheControl) {
   return Headers.build((final mh) => mh
     ..acceptRanges = AcceptRangesHeader.bytes()
-    ..contentLength = fileInfo.stat.size
     ..etag = ETagHeader(value: fileInfo.etag)
     ..lastModified = fileInfo.stat.modified
     ..cacheControl = cacheControl);
@@ -319,8 +318,6 @@ ResponseContext _serveSingleRange(
     return ctx.respond(Response(416, headers: headers));
   }
 
-  final length = end - start;
-
   return ctx.respond(Response(
     HttpStatus.partialContent,
     headers: headers.transform((final mh) => mh
@@ -328,8 +325,7 @@ ResponseContext _serveSingleRange(
         start: start,
         end: end - 1,
         size: fileInfo.stat.size,
-      )
-      ..contentLength = length),
+      )),
     body: _createRangeBody(file, fileInfo, start, end),
   ));
 }
@@ -368,7 +364,6 @@ Future<ResponseContext> _serveMultipleRanges(
   return ctx.respond(Response(
     HttpStatus.partialContent,
     headers: headers.transform((final mh) => mh
-      ..contentLength = totalLength
       ..[Headers.contentTypeHeader] = [
         '${MimeType.multipartByteranges.toHeaderValue()}; boundary=$boundary'
       ]),
