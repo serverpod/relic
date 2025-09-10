@@ -75,7 +75,7 @@ class Headers extends HeadersBase {
   /// Request Headers
   static const from = HeaderAccessor(Headers.fromHeader, FromHeader.codec);
 
-  static const host = HeaderAccessor(Headers.hostHeader, uriHeaderCodec);
+  static const host = HeaderAccessor(Headers.hostHeader, HostHeader.codec);
 
   static const acceptEncoding =
       HeaderAccessor(Headers.acceptEncodingHeader, AcceptEncodingHeader.codec);

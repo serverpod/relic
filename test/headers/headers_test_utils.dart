@@ -54,7 +54,7 @@ extension RelicServerTestEx on RelicServer {
 }
 
 /// Creates a [RelicServer] that listens on the loopback IPv4 address.
-Future<RelicServer> createServer({required final bool strictHeaders}) async {
+Future<RelicServer> createServer({final bool strictHeaders = false}) async {
   final adapter = IOAdapter(await bindHttpServer(InternetAddress.loopbackIPv4));
   return RelicServer(adapter, strictHeaders: strictHeaders);
 }

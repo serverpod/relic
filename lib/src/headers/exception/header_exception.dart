@@ -35,16 +35,22 @@ sealed class HeaderException implements Exception {
 /// The error details, including the header type and description, are also
 /// available in a formatted string for use in HTTP responses via [httpResponseBody].
 class InvalidHeaderException extends HeaderException {
+  /// The raw header values that caused the error.
+  ///
+  /// This can be useful for debugging purposes to see what values were provided.
+  final Iterable<String> raw;
+
   /// Creates an [InvalidHeaderException] with a [description] describing the error
   /// and the [headerType] indicating the problematic header.
-  const InvalidHeaderException(super.description, {required super.headerType});
+  const InvalidHeaderException(super.description,
+      {required super.headerType, this.raw = const []});
 
   @override
   String get httpResponseBody => "Invalid '$headerType' header: $description";
 
   @override
   String toString() =>
-      'InvalidHeaderException(description: $description, headerType: $headerType)';
+      'InvalidHeaderException(description: $description, headerType: $headerType, raw: $raw)';
 }
 
 /// Exception thrown when a required HTTP header is missing.

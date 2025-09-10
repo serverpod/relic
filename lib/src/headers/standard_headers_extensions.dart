@@ -12,7 +12,7 @@ extension HeadersEx on Headers {
   String? get server => Headers.server[this]();
   List<String>? get via => Headers.via[this]();
   FromHeader? get from => Headers.from[this]();
-  Uri? get host => Headers.host[this]();
+  HostHeader? get host => Headers.host[this]();
   AcceptEncodingHeader? get acceptEncoding => Headers.acceptEncoding[this]();
   AcceptLanguageHeader? get acceptLanguage => Headers.acceptLanguage[this]();
   List<String>? get accessControlRequestHeaders =>
@@ -103,7 +103,7 @@ extension MutableHeadersEx on MutableHeaders {
   set server(final String? value) => Headers.server[this].set(value);
   set via(final List<String>? value) => Headers.via[this].set(value);
   set from(final FromHeader? value) => Headers.from[this].set(value);
-  set host(final Uri? value) => Headers.host[this].set(value);
+  set host(final HostHeader? value) => Headers.host[this].set(value);
   set acceptEncoding(final AcceptEncodingHeader? value) =>
       Headers.acceptEncoding[this].set(value);
   set acceptLanguage(final AcceptLanguageHeader? value) =>
@@ -214,7 +214,7 @@ extension MutableHeadersEx on MutableHeaders {
   String? get server => Headers.server[this]();
   List<String>? get via => Headers.via[this]();
   FromHeader? get from => Headers.from[this]();
-  Uri? get host => Headers.host[this]();
+  HostHeader? get host => Headers.host[this]();
   AcceptEncodingHeader? get acceptEncoding => Headers.acceptEncoding[this]();
   AcceptLanguageHeader? get acceptLanguage => Headers.acceptLanguage[this]();
   List<String>? get accessControlRequestHeaders =>
