@@ -1,75 +1,47 @@
-import 'package:collection/collection.dart';
-
 import '../../../../relic.dart';
-import '../../extension/string_list_extensions.dart';
+import 'wildcard_list_header.dart';
 
 /// A class representing the HTTP Access-Control-Allow-Headers header.
 ///
 /// This header specifies which HTTP headers can be used during the actual request
 /// by listing them explicitly or using a wildcard (`*`) to allow all headers.
-final class AccessControlAllowHeadersHeader {
-  static const codec =
-      HeaderCodec(AccessControlAllowHeadersHeader.parse, __encode);
-  static List<String> __encode(final AccessControlAllowHeadersHeader value) =>
-      [value._encode()];
-
-  /// The list of headers that are allowed.
-  final List<String> headers;
-
-  /// Whether all headers are allowed (`*`).
-  final bool isWildcard;
+final class AccessControlAllowHeadersHeader extends WildcardListHeader<String> {
+  static const codec = HeaderCodec(_parse, _encode);
 
   /// Constructs an instance allowing specific headers to be allowed.
   AccessControlAllowHeadersHeader.headers(
       {required final Iterable<String> headers})
-      : assert(headers.isNotEmpty),
-        headers = List.unmodifiable(headers),
-        isWildcard = false;
+      : super(List.from(headers));
 
   /// Constructs an instance allowing all headers to be allowed (`*`).
-  const AccessControlAllowHeadersHeader.wildcard()
-      : headers = const [],
-        isWildcard = true;
+  const AccessControlAllowHeadersHeader.wildcard() : super.wildcard();
 
   /// Parses the Access-Control-Allow-Headers header value and returns an
   /// [AccessControlAllowHeadersHeader] instance.
   factory AccessControlAllowHeadersHeader.parse(final Iterable<String> values) {
-    final splitValues = values.splitTrimAndFilterUnique();
-    if (splitValues.isEmpty) {
-      throw const FormatException('Value cannot be empty');
-    }
-
-    if (splitValues.length == 1 && splitValues.first == '*') {
-      return const AccessControlAllowHeadersHeader.wildcard();
-    }
-
-    if (splitValues.length > 1 && splitValues.contains('*')) {
-      throw const FormatException(
-          'Wildcard (*) cannot be used with other headers');
-    }
-
-    return AccessControlAllowHeadersHeader.headers(
-      headers: splitValues,
-    );
+    return _parse(values);
   }
 
-  /// Converts the [AccessControlAllowHeadersHeader] instance into a string
-  /// representation suitable for HTTP headers.
+  /// The list of headers that are allowed
+  List<String> get headers => values;
 
-  String _encode() => isWildcard ? '*' : headers.join(', ');
+  static AccessControlAllowHeadersHeader _parse(final Iterable<String> values) {
+    final parsed =
+        WildcardListHeader.parse(values, (final String value) => value);
 
-  @override
-  bool operator ==(final Object other) =>
-      identical(this, other) ||
-      other is AccessControlAllowHeadersHeader &&
-          isWildcard == other.isWildcard &&
-          const ListEquality<String>().equals(headers, other.headers);
+    if (parsed.isWildcard) {
+      return const AccessControlAllowHeadersHeader.wildcard();
+    } else {
+      return AccessControlAllowHeadersHeader.headers(headers: parsed.values);
+    }
+  }
 
-  @override
-  int get hashCode =>
-      Object.hash(isWildcard, const ListEquality<String>().hash(headers));
+  static List<String> encodeHeader(
+      final AccessControlAllowHeadersHeader header) {
+    return header.encode((final String str) => str).toList();
+  }
 
-  @override
-  String toString() =>
-      'AccessControlAllowHeadersHeader(headers: $headers, isWildcard: $isWildcard)';
+  static List<String> _encode(final AccessControlAllowHeadersHeader header) {
+    return encodeHeader(header);
+  }
 }
