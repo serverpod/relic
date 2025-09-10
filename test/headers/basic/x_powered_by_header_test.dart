@@ -1,7 +1,6 @@
 import 'package:relic/relic.dart';
 import 'package:test/test.dart';
 
-import '../../static/test_util.dart';
 import '../docs/strict_validation_docs.dart';
 import '../headers_test_utils.dart';
 

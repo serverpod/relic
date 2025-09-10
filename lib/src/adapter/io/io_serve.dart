@@ -23,7 +23,6 @@ Future<RelicServer> serve(
   final SecurityContext? securityContext,
   final int? backlog,
   final bool shared = false,
-  final bool strictHeaders = false,
 }) async {
   final adapter = IOAdapter(await bindHttpServer(
     address,
@@ -32,10 +31,7 @@ Future<RelicServer> serve(
     backlog: backlog ?? 0,
     shared: shared,
   ));
-  final server = RelicServer(
-    adapter,
-    strictHeaders: strictHeaders,
-  );
+  final server = RelicServer(adapter);
   await server.mountAndStart(handler);
   return server;
 }

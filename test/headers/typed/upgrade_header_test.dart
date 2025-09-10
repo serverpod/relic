@@ -11,7 +11,7 @@ void main() {
     late RelicServer server;
 
     setUp(() async {
-      server = await createServer(strictHeaders: true);
+      server = await createServer();
     });
 
     tearDown(() => server.close());

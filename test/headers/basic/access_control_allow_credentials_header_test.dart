@@ -13,17 +13,17 @@ import '../headers_test_utils.dart';
 /// About empty value test, check the [StrictValidationDocs] class for more details.
 
 void main() {
+  late RelicServer server;
+
+  setUp(() async {
+    server = await createServer();
+  });
+
+  tearDown(() => server.close());
+
   group(
-    'Given an Access-Control-Allow-Credentials header with the strict flag true',
+    'Given an Access-Control-Allow-Credentials header with validation',
     () {
-      late RelicServer server;
-
-      setUp(() async {
-        server = await createServer(strictHeaders: true);
-      });
-
-      tearDown(() => server.close());
-
       test(
         'when an empty Access-Control-Allow-Credentials header is passed then the server responds '
         'with a bad request including a message that states the header value '
@@ -133,17 +133,8 @@ void main() {
     },
   );
 
-  group(
-      'Given an Access-Control-Allow-Credentials header with the strict flag false',
+  group('Given an Access-Control-Allow-Credentials header without validation',
       () {
-    late RelicServer server;
-
-    setUp(() async {
-      server = await createServer(strictHeaders: false);
-    });
-
-    tearDown(() => server.close());
-
     group('when an empty Access-Control-Allow-Credentials header is passed',
         () {
       test(

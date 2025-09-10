@@ -4,14 +4,7 @@ import 'dart:io' as io;
 import '../../../relic.dart';
 
 /// Creates a new [Request] from an [io.HttpRequest].
-///
-/// [strictHeaders] determines whether to strictly enforce header parsing
-/// rules. [poweredByHeader] sets the value of the `X-Powered-By` header.
-Request fromHttpRequest(
-  final io.HttpRequest request, {
-  final bool strictHeaders = false,
-  final String? poweredByHeader,
-}) {
+Request fromHttpRequest(final io.HttpRequest request) {
   return Request(
     RequestMethod.parse(request.method),
     request.requestedUri,

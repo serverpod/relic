@@ -12,7 +12,7 @@ void main() {
   late RelicServer server;
 
   setUp(() async {
-    server = await createServer(strictHeaders: false);
+    server = await createServer();
   });
 
   tearDown(() => server.close());
