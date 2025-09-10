@@ -13,18 +13,15 @@ class WildcardListHeader<T> {
   final List<T> values;
 
   /// A boolean value indicating whether the header is a wildcard
-  final bool isWildcard;
+  bool get isWildcard => values.isEmpty;
 
   /// Constructs an instance with the given values
   WildcardListHeader(final List<T> values)
       : assert(values.isNotEmpty, 'Values list cannot be empty'),
-        values = List.unmodifiable(values),
-        isWildcard = false;
+        values = List.unmodifiable(values);
 
   /// Constructs an instance with a wildcard
-  const WildcardListHeader.wildcard()
-      : values = const [],
-        isWildcard = true;
+  const WildcardListHeader.wildcard() : values = const [];
 
   /// Parses header values and returns a WildcardListHeader instance
   factory WildcardListHeader.parse(
