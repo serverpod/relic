@@ -26,7 +26,7 @@ Future<RelicServer> serve(
   final int? backlog,
   final bool shared = false,
   final bool strictHeaders = false,
-  final String? poweredByHeader,
+  final String? poweredByHeader = RelicServer.defaultPoweredByHeader,
 }) async {
   final adapter = IOAdapter(await bindHttpServer(
     address,
