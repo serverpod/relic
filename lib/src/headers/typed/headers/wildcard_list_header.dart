@@ -16,9 +16,14 @@ class WildcardListHeader<T> {
   bool get isWildcard => values.isEmpty;
 
   /// Constructs an instance with the given values
+  ///
+  /// Passing an empty list will raise an ArgumentError
   WildcardListHeader(final List<T> values)
-      : assert(values.isNotEmpty, 'Values list cannot be empty'),
-        values = List.unmodifiable(values);
+      : values = List.unmodifiable(values) {
+    if (values.isEmpty) {
+      throw ArgumentError.value(values, 'values', 'Cannot be empty');
+    }
+  }
 
   /// Constructs an instance with a wildcard
   const WildcardListHeader.wildcard() : values = const [];
@@ -59,9 +64,7 @@ class WildcardListHeader<T> {
   @override
   bool operator ==(final Object other) =>
       identical(this, other) ||
-      other is WildcardListHeader<T> &&
-          isWildcard == other.isWildcard &&
-          _listEquals(values, other.values);
+      other is WildcardListHeader<T> && _listEquals(values, other.values);
 
   @override
   int get hashCode => Object.hash(isWildcard, Object.hashAll(values));
