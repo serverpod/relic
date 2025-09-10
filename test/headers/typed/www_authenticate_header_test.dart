@@ -5,9 +5,9 @@ import '../docs/strict_validation_docs.dart';
 import '../headers_test_utils.dart';
 
 /// Reference: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/WWW-Authenticate
-/// About empty value test, check the [StrictValidationDocs] class for more details.
+/// For more details on header validation behavior, see the [HeaderValidationDocs] class.
 void main() {
-  group('Given a WWW-Authenticate header with the strict flag true', () {
+  group('Given a WWW-Authenticate header with validation', () {
     late RelicServer server;
 
     setUp(() async {
@@ -207,7 +207,7 @@ void main() {
     );
   });
 
-  group('Given a WWW-Authenticate header with the strict flag false', () {
+  group('Given a WWW-Authenticate header without validation', () {
     late RelicServer server;
 
     setUp(() async {

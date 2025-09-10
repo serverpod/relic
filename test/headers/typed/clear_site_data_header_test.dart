@@ -5,9 +5,9 @@ import '../docs/strict_validation_docs.dart';
 import '../headers_test_utils.dart';
 
 /// Reference: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Clear-Site-Data
-/// About empty value test, check the [StrictValidationDocs] class for more details.
+/// For more details on header validation behavior, see the [HeaderValidationDocs] class.
 void main() {
-  group('Given a Clear-Site-Data header with the strict flag true', () {
+  group('Given a Clear-Site-Data header with validation', () {
     late RelicServer server;
 
     setUp(() async {
@@ -135,7 +135,7 @@ void main() {
     );
   });
 
-  group('Given a Clear-Site-Data header with the strict flag false', () {
+  group('Given a Clear-Site-Data header without validation', () {
     late RelicServer server;
 
     setUp(() async {

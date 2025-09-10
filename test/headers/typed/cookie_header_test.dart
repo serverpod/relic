@@ -5,7 +5,7 @@ import '../headers_test_utils.dart';
 
 /// Reference: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cookie
 void main() {
-  group('Given a Cookie header with the strict flag true', () {
+  group('Given a Cookie header with validation', () {
     late RelicServer server;
 
     setUp(() async {
@@ -215,7 +215,7 @@ void main() {
     );
   });
 
-  group('Given a Cookie header with the strict flag false', () {
+  group('Given a Cookie header without validation', () {
     late RelicServer server;
 
     setUp(() async {

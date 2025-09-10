@@ -5,10 +5,10 @@ import '../docs/strict_validation_docs.dart';
 import '../headers_test_utils.dart';
 
 /// Reference: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Max-Age
-/// About empty value test, check the [StrictValidationDocs] class for more details.
+/// For more details on header validation behavior, see the [HeaderValidationDocs] class.
 void main() {
   group(
-    'Given an Access-Control-Max-Age header with the strict flag true',
+    'Given an Access-Control-Max-Age header with validation',
     () {
       late RelicServer server;
 

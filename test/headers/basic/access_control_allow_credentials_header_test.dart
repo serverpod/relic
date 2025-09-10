@@ -10,7 +10,7 @@ import '../headers_test_utils.dart';
 /// It indicates whether the response to the request can be exposed when the credentials flag is true.
 /// The tests cover both strict and non-strict modes, ensuring that invalid values are handled appropriately.
 /// Reference: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Allow-Credentials#directives
-/// About empty value test, check the [StrictValidationDocs] class for more details.
+/// For more details on header validation behavior, see the [HeaderValidationDocs] class.
 
 void main() {
   late RelicServer server;

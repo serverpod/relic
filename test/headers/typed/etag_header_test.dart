@@ -5,9 +5,9 @@ import '../docs/strict_validation_docs.dart';
 import '../headers_test_utils.dart';
 
 /// Reference: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/ETag
-/// About empty value test, check the [StrictValidationDocs] class for more details.
+/// For more details on header validation behavior, see the [HeaderValidationDocs] class.
 void main() {
-  group('Given an ETag header with the strict flag true', () {
+  group('Given an ETag header with validation', () {
     late RelicServer server;
 
     setUp(() async {
@@ -116,7 +116,7 @@ void main() {
     );
   });
 
-  group('Given an ETag header with the strict flag false', () {
+  group('Given an ETag header without validation', () {
     late RelicServer server;
 
     setUp(() async {
