@@ -74,6 +74,26 @@ ResponseContext hello(final RequestContext ctx) {
 }
 ```
 
+## Security
+
+### Error Message Sanitization
+
+Relic provides built-in protection against information leakage through error messages. When `sanitizeErrorMessages` is enabled, the server will return generic error messages instead of potentially exposing sensitive information from request bodies or application state.
+
+```dart
+// Enable secure error handling for production
+await serve(
+  handler, 
+  InternetAddress.anyIPv4, 
+  8080,
+  sanitizeErrorMessages: true, // Prevents information leakage
+);
+```
+
+This feature is particularly important when handling JSON parsing errors or other exceptions that might reflect user input back to the client, which can cause false positives in security scanners.
+
+See `example/secure_error_handling.dart` for a complete example.
+
 ## Handlers and Middleware
 
 A [Handler][] is any function that handles a [Request][] and returns a

@@ -27,6 +27,7 @@ Future<RelicServer> serve(
   final bool shared = false,
   final bool strictHeaders = false,
   final String? poweredByHeader = RelicServer.defaultPoweredByHeader,
+  final bool sanitizeErrorMessages = false,
 }) async {
   final adapter = IOAdapter(await bindHttpServer(
     address,
@@ -39,6 +40,7 @@ Future<RelicServer> serve(
     adapter,
     strictHeaders: strictHeaders,
     poweredByHeader: poweredByHeader,
+    sanitizeErrorMessages: sanitizeErrorMessages,
   );
   await server.mountAndStart(handler);
   return server;
