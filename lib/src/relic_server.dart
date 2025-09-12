@@ -22,6 +22,14 @@ class RelicServer {
   /// Whether to enforce strict header parsing.
   final bool strictHeaders;
 
+  /// Whether to sanitize error messages to prevent information leakage.
+  /// 
+  /// When enabled, error responses will use generic messages instead of
+  /// including potentially sensitive information from the request or
+  /// application state. This helps prevent false positives in security
+  /// scanners and information disclosure vulnerabilities.
+  final bool sanitizeErrorMessages;
+
   /// Whether [mountAndStart] has been called.
   Handler? _handler;
 
@@ -35,6 +43,7 @@ class RelicServer {
     this.adapter, {
     this.strictHeaders = false,
     this.poweredByHeader = defaultPoweredByHeader,
+    this.sanitizeErrorMessages = false,
   });
 
   /// Mounts a handler to the server and starts listening for requests.
@@ -139,8 +148,45 @@ class RelicServer {
           stackTrace,
         );
         return ctx.respond(Response.badRequest(
-          body: Body.fromString(error.httpResponseBody),
+          body: Body.fromString(
+            sanitizeErrorMessages 
+              ? 'Bad Request' 
+              : error.httpResponseBody
+          ),
         ));
+      } catch (error, stackTrace) {
+        // Catch all other exceptions that might contain sensitive information
+        _logError(
+          ctx.request,
+          'Error in request handler.\n$error',
+          stackTrace,
+        );
+        
+        // Check if this looks like a client error (4xx) based on common patterns
+        final errorString = error.toString().toLowerCase();
+        final isBadRequest = errorString.contains('invalid json') ||
+            errorString.contains('json') ||
+            errorString.contains('parse') ||
+            errorString.contains('format') ||
+            errorString.contains('syntax');
+            
+        if (isBadRequest) {
+          return ctx.respond(Response.badRequest(
+            body: Body.fromString(
+              sanitizeErrorMessages 
+                ? 'Bad Request' 
+                : error.toString()
+            ),
+          ));
+        } else {
+          return ctx.respond(Response.internalServerError(
+            body: Body.fromString(
+              sanitizeErrorMessages 
+                ? 'Internal Server Error' 
+                : error.toString()
+            ),
+          ));
+        }
       }
     };
   }
