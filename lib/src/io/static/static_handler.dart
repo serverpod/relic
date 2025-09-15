@@ -22,6 +22,12 @@ class FileInfo {
   final FileStat stat;
   final String etag;
 
+  bool get isStale {
+    final freshStat = file.statSync();
+    return stat.size != freshStat.size ||
+        stat.changed.isBefore(freshStat.changed);
+  }
+
   const FileInfo(this.file, this.mimeType, this.stat, this.etag);
 }
 
@@ -176,11 +182,7 @@ Future<FileInfo> _getFileInfo(
   final cachedInfo = _fileInfoCache[file.path];
 
   // Check if cache is valid
-  if (cachedInfo != null &&
-      stat.size == cachedInfo.stat.size &&
-      !stat.changed.isAfter(cachedInfo.stat.changed)) {
-    return cachedInfo;
-  }
+  if (cachedInfo != null && !cachedInfo.isStale) return cachedInfo;
 
   // Generate new file info
   final etag = Isolate.run(() => _generateETag(file));
