@@ -16,7 +16,12 @@ void main() {
       'when retrieving the same file twice '
       'then it should return 200 Ok both times', () async {
     final router = Router<Handler>()
-      ..get('/**', createStaticHandler(cacheControl: null, d.sandbox));
+      ..get(
+          '/**',
+          createStaticHandler(
+            cacheControl: (final _) => null,
+            d.sandbox,
+          ));
     final handler = const Pipeline()
         .addMiddleware(routeWith(router))
         .addHandler(respondWith((final _) => Response.notFound()));
