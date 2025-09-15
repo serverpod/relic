@@ -16,16 +16,16 @@ import '../../router/lru_cache.dart';
 final _defaultMimeTypeResolver = MimeTypeResolver();
 
 /// Cached file information including MIME type, file stats, and ETag.
-class _FileInfo {
+class FileInfo {
   final MimeType? mimeType;
   final FileStat stat;
   final String etag;
 
-  const _FileInfo(this.mimeType, this.stat, this.etag);
+  const FileInfo(this.mimeType, this.stat, this.etag);
 }
 
 /// LRU cache for file information to avoid repeated file system operations.
-final _fileInfoCache = LruCache<String, _FileInfo>(10000);
+final _fileInfoCache = LruCache<String, FileInfo>(10000);
 
 /// Creates a Relic [Handler] that serves files from the provided [fileSystemPath].
 ///
@@ -49,7 +49,7 @@ Handler createStaticHandler(
   final String fileSystemPath, {
   final Handler? defaultHandler,
   final MimeTypeResolver? mimeResolver,
-  required final CacheControlHeader? cacheControl,
+  required final CacheControlHeader? Function(FileInfo fileInfo) cacheControl,
 }) {
   final rootDir = Directory(fileSystemPath);
   if (!rootDir.existsSync()) {
@@ -103,7 +103,7 @@ Handler createStaticHandler(
 Handler createFileHandler(
   final String filePath, {
   final MimeTypeResolver? mimeResolver,
-  final CacheControlHeader? cacheControl,
+  required final CacheControlHeader? Function(FileInfo fileInfo) cacheControl,
 }) {
   final file = File(filePath);
   if (!file.existsSync()) {
@@ -115,7 +115,7 @@ Handler createFileHandler(
     return await _serveFile(
       file,
       mimeResolver ?? _defaultMimeTypeResolver,
-      cacheControl ?? CacheControlHeader(noCache: true, privateCache: true),
+      cacheControl,
       ctx,
     );
   };
@@ -125,7 +125,7 @@ Handler createFileHandler(
 Future<ResponseContext> _serveFile(
   final File file,
   final MimeTypeResolver mimeResolver,
-  final CacheControlHeader? cacheControl,
+  final CacheControlHeader? Function(FileInfo fileInfo) cacheControl,
   final NewContext ctx,
 ) async {
   // Validate HTTP method
@@ -134,7 +134,7 @@ Future<ResponseContext> _serveFile(
 
   // Get or update cached file information
   final fileInfo = await _getFileInfo(file, mimeResolver);
-  final headers = _buildBaseHeaders(fileInfo, cacheControl);
+  final headers = _buildBaseHeaders(fileInfo, cacheControl(fileInfo));
 
   // Handle conditional requests
   final conditionalResponse = _checkConditionalHeaders(ctx, fileInfo, headers);
@@ -167,7 +167,7 @@ ResponseContext _methodNotAllowedResponse(final NewContext ctx) {
 }
 
 /// Gets file information from cache or creates new cache entry.
-Future<_FileInfo> _getFileInfo(
+Future<FileInfo> _getFileInfo(
   final File file,
   final MimeTypeResolver mimeResolver,
 ) async {
@@ -185,7 +185,7 @@ Future<_FileInfo> _getFileInfo(
   final etag = Isolate.run(() => _generateETag(file));
   final mimeType = await _detectMimeType(file, mimeResolver);
 
-  final fileInfo = _FileInfo(mimeType, stat, await etag);
+  final fileInfo = FileInfo(mimeType, stat, await etag);
   _fileInfoCache[file.path] = fileInfo;
   return fileInfo;
 }
@@ -210,7 +210,7 @@ Future<MimeType?> _detectMimeType(
 
 /// Builds base response headers common to all responses.
 Headers _buildBaseHeaders(
-    final _FileInfo fileInfo, final CacheControlHeader? cacheControl) {
+    final FileInfo fileInfo, final CacheControlHeader? cacheControl) {
   return Headers.build((final mh) => mh
     ..acceptRanges = AcceptRangesHeader.bytes()
     ..etag = ETagHeader(value: fileInfo.etag)
@@ -221,7 +221,7 @@ Headers _buildBaseHeaders(
 /// Checks conditional request headers and returns 304 response if appropriate.
 Response? _checkConditionalHeaders(
   final NewContext ctx,
-  final _FileInfo fileInfo,
+  final FileInfo fileInfo,
   final Headers headers,
 ) {
   // Handle If-None-Match
@@ -250,7 +250,7 @@ Response? _checkConditionalHeaders(
 Future<ResponseContext> _handleRangeRequest(
   final NewContext ctx,
   final File file,
-  final _FileInfo fileInfo,
+  final FileInfo fileInfo,
   final Headers headers,
   final RangeHeader rangeHeader,
 ) async {
@@ -268,7 +268,7 @@ Future<ResponseContext> _handleRangeRequest(
 }
 
 /// Validates If-Range header for range requests.
-bool _isRangeRequestValid(final NewContext ctx, final _FileInfo fileInfo) {
+bool _isRangeRequestValid(final NewContext ctx, final FileInfo fileInfo) {
   final ifRange = ctx.request.headers.ifRange;
   if (ifRange == null) return true;
 
@@ -291,7 +291,7 @@ bool _isRangeRequestValid(final NewContext ctx, final _FileInfo fileInfo) {
 ResponseContext _serveFullFile(
   final NewContext ctx,
   final File file,
-  final _FileInfo fileInfo,
+  final FileInfo fileInfo,
   final Headers headers,
   final RequestMethod method,
 ) {
@@ -307,7 +307,7 @@ ResponseContext _serveFullFile(
 ResponseContext _serveSingleRange(
   final NewContext ctx,
   final File file,
-  final _FileInfo fileInfo,
+  final FileInfo fileInfo,
   final Headers headers,
   final Range range,
 ) {
@@ -334,7 +334,7 @@ ResponseContext _serveSingleRange(
 Future<ResponseContext> _serveMultipleRanges(
   final NewContext ctx,
   final File file,
-  final _FileInfo fileInfo,
+  final FileInfo fileInfo,
   final Headers headers,
   final List<Range> ranges,
 ) async {
@@ -402,7 +402,7 @@ Future<ResponseContext> _serveMultipleRanges(
 Future<int> _writeMultipartSection(
   final StreamController<Uint8List> controller,
   final File file,
-  final _FileInfo fileInfo,
+  final FileInfo fileInfo,
   final String boundary,
   final int start,
   final int end,
@@ -430,7 +430,7 @@ Future<int> _writeMultipartSection(
 
 /// Creates a Body for the full file or range.
 Body _createFileBody(
-    final File file, final _FileInfo fileInfo, final int contentLength) {
+    final File file, final FileInfo fileInfo, final int contentLength) {
   return Body.fromDataStream(
     file.openRead().cast(),
     contentLength: contentLength,
@@ -441,7 +441,7 @@ Body _createFileBody(
 
 /// Creates a Body for a specific range of the file.
 Body _createRangeBody(
-    final File file, final _FileInfo fileInfo, final int start, final int end) {
+    final File file, final FileInfo fileInfo, final int start, final int end) {
   return Body.fromDataStream(
     file.openRead(start, end).cast(),
     contentLength: end - start,
