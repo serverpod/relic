@@ -205,7 +205,7 @@ Future<MimeType?> _detectMimeType(
   final headerBytes = await file
       .openRead(0, mimeResolver.magicNumbersMaxLength)
       .cast<Uint8List>()
-      .first;
+      .firstOrNull;
 
   final mimeString = mimeResolver.lookup(file.path, headerBytes: headerBytes);
   return mimeString != null ? MimeType.parse(mimeString) : null;
@@ -444,4 +444,13 @@ Body _createRangeBody(final FileInfo fileInfo, final int start, final int end) {
     mimeType: fileInfo.mimeType,
     encoding: fileInfo.mimeType?.isText == true ? utf8 : null,
   );
+}
+
+extension<T> on Stream<T> {
+  Future<T?> get firstOrNull async {
+    await for (final value in this) {
+      return value;
+    }
+    return null;
+  }
 }
