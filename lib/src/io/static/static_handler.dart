@@ -17,11 +17,12 @@ final _defaultMimeTypeResolver = MimeTypeResolver();
 
 /// Cached file information including MIME type, file stats, and ETag.
 class FileInfo {
+  final File file;
   final MimeType? mimeType;
   final FileStat stat;
   final String etag;
 
-  const FileInfo(this.mimeType, this.stat, this.etag);
+  const FileInfo(this.file, this.mimeType, this.stat, this.etag);
 }
 
 /// LRU cache for file information to avoid repeated file system operations.
@@ -143,11 +144,11 @@ Future<ResponseContext> _serveFile(
   // Handle range requests
   final rangeHeader = ctx.request.headers.range;
   if (rangeHeader != null) {
-    return await _handleRangeRequest(ctx, file, fileInfo, headers, rangeHeader);
+    return await _handleRangeRequest(ctx, fileInfo, headers, rangeHeader);
   }
 
   // Serve full file
-  return _serveFullFile(ctx, file, fileInfo, headers, method);
+  return _serveFullFile(ctx, fileInfo, headers, method);
 }
 
 /// Checks if the HTTP method is allowed for file serving.
@@ -185,7 +186,7 @@ Future<FileInfo> _getFileInfo(
   final etag = Isolate.run(() => _generateETag(file));
   final mimeType = await _detectMimeType(file, mimeResolver);
 
-  final fileInfo = FileInfo(mimeType, stat, await etag);
+  final fileInfo = FileInfo(file, mimeType, stat, await etag);
   _fileInfoCache[file.path] = fileInfo;
   return fileInfo;
 }
@@ -249,21 +250,20 @@ Response? _checkConditionalHeaders(
 /// Handles HTTP range requests for partial content.
 Future<ResponseContext> _handleRangeRequest(
   final NewContext ctx,
-  final File file,
   final FileInfo fileInfo,
   final Headers headers,
   final RangeHeader rangeHeader,
 ) async {
   // Check If-Range header
   if (!_isRangeRequestValid(ctx, fileInfo)) {
-    return _serveFullFile(ctx, file, fileInfo, headers, ctx.request.method);
+    return _serveFullFile(ctx, fileInfo, headers, ctx.request.method);
   }
 
   final ranges = rangeHeader.ranges;
   return switch (ranges.length) {
-    0 => _serveFullFile(ctx, file, fileInfo, headers, ctx.request.method),
-    1 => _serveSingleRange(ctx, file, fileInfo, headers, ranges.first),
-    _ => await _serveMultipleRanges(ctx, file, fileInfo, headers, ranges),
+    0 => _serveFullFile(ctx, fileInfo, headers, ctx.request.method),
+    1 => _serveSingleRange(ctx, fileInfo, headers, ranges.first),
+    _ => await _serveMultipleRanges(ctx, fileInfo, headers, ranges),
   };
 }
 
@@ -290,7 +290,6 @@ bool _isRangeRequestValid(final NewContext ctx, final FileInfo fileInfo) {
 /// Serves the complete file without ranges.
 ResponseContext _serveFullFile(
   final NewContext ctx,
-  final File file,
   final FileInfo fileInfo,
   final Headers headers,
   final RequestMethod method,
@@ -299,14 +298,13 @@ ResponseContext _serveFullFile(
     headers: headers,
     body: method == RequestMethod.head
         ? null
-        : _createFileBody(file, fileInfo, fileInfo.stat.size),
+        : _createFileBody(fileInfo, fileInfo.stat.size),
   ));
 }
 
 /// Serves a single range of the file.
 ResponseContext _serveSingleRange(
   final NewContext ctx,
-  final File file,
   final FileInfo fileInfo,
   final Headers headers,
   final Range range,
@@ -326,14 +324,13 @@ ResponseContext _serveSingleRange(
         end: end - 1,
         size: fileInfo.stat.size,
       )),
-    body: _createRangeBody(file, fileInfo, start, end),
+    body: _createRangeBody(fileInfo, start, end),
   ));
 }
 
 /// Serves multiple ranges as multipart response.
 Future<ResponseContext> _serveMultipleRanges(
   final NewContext ctx,
-  final File file,
   final FileInfo fileInfo,
   final Headers headers,
   final List<Range> ranges,
@@ -346,7 +343,6 @@ Future<ResponseContext> _serveMultipleRanges(
     final (start, end) = _calculateRangeBounds(range, fileInfo.stat.size);
     totalLength += await _writeMultipartSection(
       controller,
-      file,
       fileInfo,
       boundary,
       start,
@@ -401,7 +397,6 @@ Future<ResponseContext> _serveMultipleRanges(
 /// Writes a single multipart section to the controller.
 Future<int> _writeMultipartSection(
   final StreamController<Uint8List> controller,
-  final File file,
   final FileInfo fileInfo,
   final String boundary,
   final int start,
@@ -420,7 +415,8 @@ Future<int> _writeMultipartSection(
   totalBytes += partHeaderBytes.length;
 
   // Write file content
-  await for (final chunk in file.openRead(start, end).cast<Uint8List>()) {
+  await for (final chunk
+      in fileInfo.file.openRead(start, end).cast<Uint8List>()) {
     controller.add(chunk);
     totalBytes += chunk.length;
   }
@@ -429,10 +425,9 @@ Future<int> _writeMultipartSection(
 }
 
 /// Creates a Body for the full file or range.
-Body _createFileBody(
-    final File file, final FileInfo fileInfo, final int contentLength) {
+Body _createFileBody(final FileInfo fileInfo, final int contentLength) {
   return Body.fromDataStream(
-    file.openRead().cast(),
+    fileInfo.file.openRead().cast(),
     contentLength: contentLength,
     mimeType: fileInfo.mimeType ?? MimeType.octetStream,
     encoding: fileInfo.mimeType?.isText == true ? utf8 : null,
@@ -440,10 +435,9 @@ Body _createFileBody(
 }
 
 /// Creates a Body for a specific range of the file.
-Body _createRangeBody(
-    final File file, final FileInfo fileInfo, final int start, final int end) {
+Body _createRangeBody(final FileInfo fileInfo, final int start, final int end) {
   return Body.fromDataStream(
-    file.openRead(start, end).cast(),
+    fileInfo.file.openRead(start, end).cast(),
     contentLength: end - start,
     mimeType: fileInfo.mimeType,
     encoding: fileInfo.mimeType?.isText == true ? utf8 : null,
