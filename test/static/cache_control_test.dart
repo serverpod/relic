@@ -15,7 +15,8 @@ void main() {
       d.file('test_file.txt', fileContent),
       d.file('image.jpg'),
     ]).create();
-    handler = createStaticHandler(cacheControl: (final _) => null, d.sandbox);
+    handler = createStaticHandler(
+        cacheControl: (final _, final __) => null, d.sandbox);
   });
 
   test(
@@ -30,7 +31,7 @@ void main() {
     );
     handler = createStaticHandler(
       d.sandbox,
-      cacheControl: (final _) => cacheControl,
+      cacheControl: (final _, final __) => cacheControl,
     );
 
     final response = await makeRequest(handler, '/test_file.txt');
@@ -64,7 +65,7 @@ void main() {
     );
     handler = createStaticHandler(
       d.sandbox,
-      cacheControl: (final fileInfo) =>
+      cacheControl: (final _, final fileInfo) =>
           fileInfo.file.path.endsWith('jpg') ? cacheControl : null,
     );
     var response = await makeRequest(handler, '/image.jpg');
