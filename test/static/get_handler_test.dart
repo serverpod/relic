@@ -17,7 +17,7 @@ void main() {
       () async {
     expect(
         () => createStaticHandler(
-            cacheControl: (final _) => null, 'random/relative'),
+            cacheControl: (final _, final __) => null, 'random/relative'),
         throwsArgumentError);
   });
 
@@ -27,7 +27,7 @@ void main() {
     final existingRelative = p.relative(d.sandbox);
     expect(
         () => createStaticHandler(
-            cacheControl: (final _) => null, existingRelative),
+            cacheControl: (final _, final __) => null, existingRelative),
         returnsNormally);
   });
 
@@ -37,7 +37,7 @@ void main() {
     final nonExistingAbsolute = p.join(d.sandbox, 'not_here');
     expect(
         () => createStaticHandler(
-            cacheControl: (final _) => null, nonExistingAbsolute),
+            cacheControl: (final _, final __) => null, nonExistingAbsolute),
         throwsArgumentError);
   });
 
@@ -45,7 +45,8 @@ void main() {
       'Given an existing absolute path when creating a static handler then it returns normally',
       () {
     expect(
-        () => createStaticHandler(cacheControl: (final _) => null, d.sandbox),
+        () => createStaticHandler(
+            cacheControl: (final _, final __) => null, d.sandbox),
         returnsNormally);
   });
 }

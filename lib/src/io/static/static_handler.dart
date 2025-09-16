@@ -31,6 +31,11 @@ class FileInfo {
   const FileInfo(this.file, this.mimeType, this.stat, this.etag);
 }
 
+typedef CacheControlFactory = CacheControlHeader? Function(
+  NewContext ctx,
+  FileInfo fileInfo,
+);
+
 /// LRU cache for file information to avoid repeated file system operations.
 final _fileInfoCache = LruCache<String, FileInfo>(10000);
 
@@ -56,7 +61,7 @@ Handler createStaticHandler(
   final String fileSystemPath, {
   final Handler? defaultHandler,
   final MimeTypeResolver? mimeResolver,
-  required final CacheControlHeader? Function(FileInfo fileInfo) cacheControl,
+  required final CacheControlFactory cacheControl,
 }) {
   final rootDir = Directory(fileSystemPath);
   if (!rootDir.existsSync()) {
@@ -110,7 +115,7 @@ Handler createStaticHandler(
 Handler createFileHandler(
   final String filePath, {
   final MimeTypeResolver? mimeResolver,
-  required final CacheControlHeader? Function(FileInfo fileInfo) cacheControl,
+  required final CacheControlFactory cacheControl,
 }) {
   final file = File(filePath);
   if (!file.existsSync()) {
@@ -132,7 +137,7 @@ Handler createFileHandler(
 Future<ResponseContext> _serveFile(
   final File file,
   final MimeTypeResolver mimeResolver,
-  final CacheControlHeader? Function(FileInfo fileInfo) cacheControl,
+  final CacheControlFactory cacheControl,
   final NewContext ctx,
 ) async {
   // Validate HTTP method
@@ -141,7 +146,7 @@ Future<ResponseContext> _serveFile(
 
   // Get or update cached file information
   final fileInfo = await _getFileInfo(file, mimeResolver);
-  final headers = _buildBaseHeaders(fileInfo, cacheControl(fileInfo));
+  final headers = _buildBaseHeaders(fileInfo, cacheControl(ctx, fileInfo));
 
   // Handle conditional requests
   final conditionalResponse = _checkConditionalHeaders(ctx, fileInfo, headers);

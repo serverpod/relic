@@ -19,7 +19,7 @@ void main() {
       ..get(
           '/**',
           createStaticHandler(
-            cacheControl: (final _) => null,
+            cacheControl: (final _, final __) => null,
             d.sandbox,
           ));
     final handler = const Pipeline()
