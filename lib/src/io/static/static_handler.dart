@@ -303,9 +303,8 @@ ResponseContext _serveFullFile(
 ) {
   return ctx.respond(Response.ok(
     headers: headers,
-    body: method == RequestMethod.head
-        ? null
-        : _createFileBody(fileInfo, fileInfo.stat.size),
+    body:
+        _createFileBody(fileInfo, isHeadRequest: method == RequestMethod.head),
   ));
 }
 
@@ -431,11 +430,14 @@ Future<int> _writeMultipartSection(
   return totalBytes;
 }
 
-/// Creates a Body for the full file or range.
-Body _createFileBody(final FileInfo fileInfo, final int contentLength) {
+/// Creates a Body for the full file.
+Body _createFileBody(
+  final FileInfo fileInfo, {
+  final bool isHeadRequest = false,
+}) {
   return Body.fromDataStream(
-    fileInfo.file.openRead().cast(),
-    contentLength: contentLength,
+    isHeadRequest ? const Stream.empty() : fileInfo.file.openRead().cast(),
+    contentLength: fileInfo.stat.size,
     mimeType: fileInfo.mimeType ?? MimeType.octetStream,
     encoding: fileInfo.mimeType?.isText == true ? utf8 : null,
   );
