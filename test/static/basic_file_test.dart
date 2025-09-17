@@ -54,7 +54,7 @@ void main() {
     final response =
         await makeRequest(handler, '/root.txt', method: RequestMethod.head);
     expect(response.statusCode, HttpStatus.ok);
-    expect(response.body.contentLength, 0);
+    expect(response.body.contentLength, 8);
     expect(await response.readAsString(), isEmpty);
   });
 
