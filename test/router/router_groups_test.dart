@@ -3,12 +3,12 @@ import 'package:test/test.dart';
 
 void main() {
   void expectLookupResult<T>(
-    final LookupResult<T>? actual,
+    final LookupResult actual,
     final T expectedValue, [
     final Map<Symbol, String> expectedParams = const {},
   ]) {
-    expect(actual, isNotNull);
-    if (actual == null) throw AssertionError();
+    expect(actual, isA<RouterMatch<T>>());
+    if (actual is! RouterMatch<T>) throw AssertionError();
     expect(actual.value, equals(expectedValue));
     expect(actual.parameters, equals(expectedParams));
   }
@@ -29,7 +29,7 @@ void main() {
 
     test('when looking up partial path, then it fails', () {
       final failedResult = router.lookup(Method.get, '/users');
-      expect(failedResult, null);
+      expect(failedResult, isA<PathMiss>());
     });
   });
 
@@ -50,12 +50,16 @@ void main() {
 
     test('when looking up partial path /v1/posts, then it fails', () {
       final failedResult = router.lookup(Method.get, '/v1/posts');
-      expect(failedResult, null);
+      expect(failedResult, isA<PathMiss>());
+    });
+    test('when looking up partial path /v1/posts, then it fails', () {
+      final failedResult = router.lookup(Method.get, '/v1/posts');
+      expect(failedResult, isA<PathMiss>());
     });
 
     test('when looking up partial path /posts, then it fails', () {
       final failedResult = router.lookup(Method.get, '/posts');
-      expect(failedResult, null);
+      expect(failedResult, isA<PathMiss>());
     });
   });
 
@@ -145,6 +149,6 @@ void main() {
     final router = Router<int>()..group('a');
     final result = router.lookup(Method.get, 'a');
     router.isEmpty;
-    expect(result, isNull);
+    expect(result, isA<PathMiss>());
   });
 }

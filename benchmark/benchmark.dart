@@ -102,7 +102,7 @@ class StaticLookupBenchmark extends RouterBenchmark {
   void run() {
     for (final route in staticRoutesToLookup) {
       // Access value to ensure lookup isn't optimized away
-      router.lookup(Method.get, route)?.value;
+      router.lookup(Method.get, route).asMatch.value;
     }
   }
 }
@@ -141,7 +141,7 @@ class DynamicLookupBenchmark extends RouterBenchmark {
   void run() {
     for (final route in dynamicRoutesToLookup) {
       // Access value to ensure lookup isn't optimized away
-      router.lookup(Method.get, route)?.value;
+      router.lookup(Method.get, route).asMatch.value;
     }
   }
 }

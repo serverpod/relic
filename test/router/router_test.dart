@@ -1,17 +1,19 @@
 import 'package:relic/src/router/lookup_result.dart';
+import 'package:relic/src/router/method.dart';
 import 'package:relic/src/router/router.dart';
 import 'package:test/test.dart';
 
 void main() {
   // Helper to check LookupResult - remains the same
-  void expectLookupResult(
-    final LookupResult<String>? actual,
-    final String expectedValue, [
+  void expectLookupResult<T>(
+    final LookupResult actual,
+    final T expectedValue, [
     final Map<Symbol, String> expectedParams = const {},
   ]) {
-    expect(actual, isNotNull);
-    expect(actual?.value, equals(expectedValue));
-    expect(actual?.parameters, equals(expectedParams));
+    expect(actual, isA<RouterMatch<T>>());
+    if (actual is! RouterMatch<T>) throw AssertionError();
+    expect(actual.value, equals(expectedValue));
+    expect(actual.parameters, equals(expectedParams));
   }
 
   group('Given an empty Router', () {
@@ -26,23 +28,23 @@ void main() {
 
     test(
         'when looking up an empty string, '
-        'then it should return null', () {
+        'then it should return PathMiss', () {
       final result = router.lookup(Method.get, '');
-      expect(result, isNull);
+      expect(result, isA<PathMiss>());
     });
 
     test(
         'when looking up a non-empty string, '
-        'then it should return null', () {
+        'then it should return PathMiss', () {
       final result = router.lookup(Method.get, '/hello');
-      expect(result, isNull);
+      expect(result, isA<PathMiss>());
     });
 
     test(
         'when looking up the root path "/", '
-        'then it should return null', () {
+        'then it should return PathMiss', () {
       final result = router.lookup(Method.get, '/');
-      expect(result, isNull);
+      expect(result, isA<PathMiss>());
     });
 
     test(
@@ -103,9 +105,9 @@ void main() {
 
     test(
         'when looking up a different path, '
-        'then it should return null', () {
+        'then it should return PathMiss', () {
       final result = router.lookup(Method.get, '/world');
-      expect(result, isNull);
+      expect(result, isA<PathMiss>());
     });
   });
 
@@ -128,9 +130,9 @@ void main() {
 
     test(
         'when looking up a prefix of the path, '
-        'then it should return null', () {
+        'then it should return PathMiss', () {
       final result = router.lookup(Method.get, '/admin/users');
-      expect(result, isNull);
+      expect(result, isA<PathMiss>());
     });
   });
 
@@ -244,16 +246,16 @@ void main() {
 
     test(
         'when looking up a non-matching path structure, '
-        'then it should return null', () {
+        'then it should return PathMiss', () {
       final result = router.lookup(Method.get, '/posts/123');
-      expect(result, isNull);
+      expect(result, isA<PathMiss>());
     });
 
     test(
         'when looking up a path matching only the prefix, '
-        'then it should return null', () {
+        'then it should return PathMiss', () {
       final result = router.lookup(Method.get, '/users');
-      expect(result, isNull);
+      expect(result, isA<PathMiss>());
     });
   });
 
@@ -275,9 +277,9 @@ void main() {
 
     test(
         'when looking up the root path "/", '
-        'then it should return null', () {
+        'then it should return PathMiss', () {
       final result = router.lookup(Method.get, '/');
-      expect(result, isNull);
+      expect(result, isA<PathMiss>());
     });
   });
 
@@ -299,17 +301,17 @@ void main() {
 
     test(
         'when looking up a path matching only the first parameter section, '
-        'then it should return null', () {
+        'then it should return PathMiss', () {
       final result = router.lookup(Method.get, '/users/abc');
-      expect(result, isNull);
+      expect(result, isA<PathMiss>());
     });
 
     test(
       'when looking up a path matching the first parameter section and part of the literal '
-      'then it should return null',
+      'then it should return PathMiss',
       () {
         final result = router.lookup(Method.get, '/users/abc/items');
-        expect(result, isNull);
+        expect(result, isA<PathMiss>());
       },
     );
   });
@@ -375,9 +377,9 @@ void main() {
 
       test(
           'when looking up a different initial segment '
-          'then it should return null', () {
+          'then it should return PathMiss', () {
         final result = router.lookup(Method.get, '/articles/xyz');
-        expect(result, isNull);
+        expect(result, isA<PathMiss>());
       });
     },
   );
@@ -553,9 +555,9 @@ void main() {
 
     test(
         'when looking up a path that looks dynamic '
-        'then it should return null', () {
+        'then it should return PathMiss', () {
       final result = router.lookup(Method.get, '/static1/123');
-      expect(result, isNull);
+      expect(result, isA<PathMiss>());
     });
   });
 
@@ -569,9 +571,9 @@ void main() {
 
     test(
         'when looking up a static path, '
-        'then it should return null', () {
+        'then it should return PathMiss', () {
       final result = router.lookup(Method.get, '/static/path');
-      expect(result, isNull);
+      expect(result, isA<PathMiss>());
     });
   });
 
@@ -657,9 +659,13 @@ void main() {
             mainRouter.lookup(Method.get, '/parent/'), 'sub_root_handler');
       });
 
-      test('then a non-existent sub-route (/parent/nonexistent) returns null',
+      test(
+          'then a non-existent sub-route (/parent/nonexistent) returns PathMiss',
           () {
-        expect(mainRouter.lookup(Method.get, '/parent/nonexistent'), isNull);
+        expect(
+          mainRouter.lookup(Method.get, '/parent/nonexistent'),
+          isA<PathMiss>(),
+        );
       });
     });
 
