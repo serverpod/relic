@@ -36,7 +36,8 @@ void main() {
 
   test('Given a root file when accessed then it returns the file content',
       () async {
-    final handler = createStaticHandler(cacheControl: null, d.sandbox);
+    final handler = createStaticHandler(
+        cacheControl: (final _, final __) => null, d.sandbox);
 
     final response = await makeRequest(handler, '/root.txt');
     expect(response.statusCode, HttpStatus.ok);
@@ -47,19 +48,21 @@ void main() {
   test(
       'Given a HEAD request when made then it returns the correct headers without body',
       () async {
-    final handler = createStaticHandler(cacheControl: null, d.sandbox);
+    final handler = createStaticHandler(
+        cacheControl: (final _, final __) => null, d.sandbox);
 
     final response =
         await makeRequest(handler, '/root.txt', method: RequestMethod.head);
     expect(response.statusCode, HttpStatus.ok);
-    expect(response.body.contentLength, 0);
+    expect(response.body.contentLength, 8);
     expect(await response.readAsString(), isEmpty);
   });
 
   test(
       'Given a root file with space when accessed then it returns the file content',
       () async {
-    final handler = createStaticHandler(cacheControl: null, d.sandbox);
+    final handler = createStaticHandler(
+        cacheControl: (final _, final __) => null, d.sandbox);
 
     final response = await makeRequest(handler, '/files/with%20space.txt');
     expect(response.statusCode, HttpStatus.ok);
@@ -70,7 +73,8 @@ void main() {
   test(
       'Given a root file with unencoded space when accessed then it returns the file content',
       () async {
-    final handler = createStaticHandler(cacheControl: null, d.sandbox);
+    final handler = createStaticHandler(
+        cacheControl: (final _, final __) => null, d.sandbox);
 
     final response = await makeRequest(handler, '/files/with space.txt');
     expect(response.statusCode, HttpStatus.ok);
@@ -81,7 +85,8 @@ void main() {
   test(
       'Given a file under directory when accessed then it returns the file content',
       () async {
-    final handler = createStaticHandler(cacheControl: null, d.sandbox);
+    final handler = createStaticHandler(
+        cacheControl: (final _, final __) => null, d.sandbox);
 
     final response = await makeRequest(handler, '/files/test.txt');
     expect(response.statusCode, HttpStatus.ok);
@@ -91,7 +96,8 @@ void main() {
 
   test('Given a non-existent file when accessed then it returns a 404 status',
       () async {
-    final handler = createStaticHandler(cacheControl: null, d.sandbox);
+    final handler = createStaticHandler(
+        cacheControl: (final _, final __) => null, d.sandbox);
 
     final response = await makeRequest(handler, '/not_here.txt');
     expect(response.statusCode, HttpStatus.notFound);
@@ -100,7 +106,8 @@ void main() {
   test(
       'Given a file when accessed then it returns the correct last modified date',
       () async {
-    final handler = createStaticHandler(cacheControl: null, d.sandbox);
+    final handler = createStaticHandler(
+        cacheControl: (final _, final __) => null, d.sandbox);
 
     final rootPath = p.join(d.sandbox, 'root.txt');
     final modified = File(rootPath).statSync().modified.toUtc();
@@ -115,7 +122,8 @@ void main() {
   group('Given if modified since', () {
     test('when it is the same as last modified then it returns not modified',
         () async {
-      final handler = createStaticHandler(cacheControl: null, d.sandbox);
+      final handler = createStaticHandler(
+          cacheControl: (final _, final __) => null, d.sandbox);
 
       final rootPath = p.join(d.sandbox, 'root.txt');
       final modified = File(rootPath).statSync().modified.toUtc();
@@ -130,7 +138,8 @@ void main() {
     });
 
     test('when it is before last modified then it returns the file', () async {
-      final handler = createStaticHandler(cacheControl: null, d.sandbox);
+      final handler = createStaticHandler(
+          cacheControl: (final _, final __) => null, d.sandbox);
 
       final rootPath = p.join(d.sandbox, 'root.txt');
       final modified = File(rootPath).statSync().modified.toUtc();
@@ -152,7 +161,8 @@ void main() {
 
     test('when it is after last modified then it returns not modified',
         () async {
-      final handler = createStaticHandler(cacheControl: null, d.sandbox);
+      final handler = createStaticHandler(
+          cacheControl: (final _, final __) => null, d.sandbox);
 
       final rootPath = p.join(d.sandbox, 'root.txt');
       final modified = File(rootPath).statSync().modified.toUtc();
@@ -173,7 +183,8 @@ void main() {
     test(
         'when file is modified after the request then it returns the updated file',
         () async {
-      final handler = createStaticHandler(cacheControl: null, d.sandbox);
+      final handler = createStaticHandler(
+          cacheControl: (final _, final __) => null, d.sandbox);
       final rootPath = p.join(d.sandbox, 'root.txt');
 
       final response1 = await makeRequest(handler, '/root.txt');
@@ -200,7 +211,8 @@ void main() {
 
   group('Given content type', () {
     test('when accessing root.txt then it should be text/plain', () async {
-      final handler = createStaticHandler(cacheControl: null, d.sandbox);
+      final handler = createStaticHandler(
+          cacheControl: (final _, final __) => null, d.sandbox);
 
       final response = await makeRequest(handler, '/root.txt');
       expect(response.mimeType?.primaryType, 'text');
@@ -208,7 +220,8 @@ void main() {
     });
 
     test('when accessing index.html then it should be text/html', () async {
-      final handler = createStaticHandler(cacheControl: null, d.sandbox);
+      final handler = createStaticHandler(
+          cacheControl: (final _, final __) => null, d.sandbox);
 
       final response = await makeRequest(handler, '/index.html');
       expect(response.mimeType?.primaryType, 'text');
@@ -218,7 +231,8 @@ void main() {
     test(
         'when accessing random.unknown, '
         'then it should be application/octet-stream', () async {
-      final handler = createStaticHandler(cacheControl: null, d.sandbox);
+      final handler = createStaticHandler(
+          cacheControl: (final _, final __) => null, d.sandbox);
 
       final response = await makeRequest(handler, '/random.unknown');
       expect(response.mimeType, MimeType.octetStream);
@@ -226,7 +240,8 @@ void main() {
 
     test('when accessing header_bytes_test_image then it should be image/png',
         () async {
-      final handler = createStaticHandler(cacheControl: null, d.sandbox);
+      final handler = createStaticHandler(
+          cacheControl: (final _, final __) => null, d.sandbox);
 
       final response =
           await makeRequest(handler, '/files/header_bytes_test_image');
@@ -249,7 +264,7 @@ void main() {
           ],
         );
       final handler = createStaticHandler(
-          cacheControl: null,
+          cacheControl: (final _, final __) => null,
           d.sandbox,
           /* useHeaderBytesForContentType: true, */ mimeResolver: resolver);
 
