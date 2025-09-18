@@ -78,15 +78,14 @@ ResponseContext hello(final RequestContext ctx) {
 
 ### Error Message Sanitization
 
-Relic provides built-in protection against information leakage through error messages. When `sanitizeErrorMessages` is enabled, the server will return generic error messages instead of potentially exposing sensitive information from request bodies or application state.
+Relic provides built-in protection against information leakage through error messages. The server will always return generic error messages instead of potentially exposing sensitive information from request bodies or application state.
 
 ```dart
-// Enable secure error handling for production
+// Secure error handling is always enabled
 await serve(
   handler, 
   InternetAddress.anyIPv4, 
   8080,
-  sanitizeErrorMessages: true, // Prevents information leakage
 );
 ```
 

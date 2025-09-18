@@ -24,8 +24,7 @@ void main() {
   group('Given a server', () {
     test(
         'when a handler throws an InvalidHeaderException '
-        'then it returns a 400 Bad Request response with exception message '
-        'included in the response body', () async {
+        'then it returns a 400 Bad Request response with sanitized message', () async {
       await _scheduleServer(
         (final _) => throw const InvalidHeaderException(
           'Value cannot be empty',
@@ -34,7 +33,7 @@ void main() {
       );
       final response = await _get();
       expect(response.statusCode, 400);
-      expect(response.body, "Invalid 'test' header: Value cannot be empty");
+      expect(response.body, 'Bad Request');
     });
 
     test(

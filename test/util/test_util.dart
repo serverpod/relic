@@ -60,7 +60,6 @@ Future<RelicServer> testServe(
   final Handler handler, {
   final SecurityContext? context,
   final String? poweredByHeader = RelicServer.defaultPoweredByHeader,
-  final bool sanitizeErrorMessages = false,
 }) =>
     serve(
       handler,
@@ -68,7 +67,6 @@ Future<RelicServer> testServe(
       0,
       context: context,
       poweredByHeader: poweredByHeader,
-      sanitizeErrorMessages: sanitizeErrorMessages,
     );
 
 /// Like [group], but takes a [variants] argument and creates a group for each

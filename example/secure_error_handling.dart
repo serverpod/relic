@@ -18,12 +18,11 @@ Future<void> main() async {
       .addHandler(respondWith((final _) => Response.notFound(
           body: Body.fromString("Sorry, that doesn't compute"))));
 
-  // Start the server with sanitized error messages enabled for production
+  // Start the server with secure error handling (always enabled)
   await serve(
     handler, 
     InternetAddress.anyIPv4, 
     8080,
-    sanitizeErrorMessages: true, // Enable secure error handling
   );
 
   print('Serving at http://localhost:8080');

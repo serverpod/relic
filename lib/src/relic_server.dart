@@ -22,14 +22,6 @@ class RelicServer {
   /// Whether to enforce strict header parsing.
   final bool strictHeaders;
 
-  /// Whether to sanitize error messages to prevent information leakage.
-  /// 
-  /// When enabled, error responses will use generic messages instead of
-  /// including potentially sensitive information from the request or
-  /// application state. This helps prevent false positives in security
-  /// scanners and information disclosure vulnerabilities.
-  final bool sanitizeErrorMessages;
-
   /// Whether [mountAndStart] has been called.
   Handler? _handler;
 
@@ -43,7 +35,6 @@ class RelicServer {
     this.adapter, {
     this.strictHeaders = false,
     this.poweredByHeader = defaultPoweredByHeader,
-    this.sanitizeErrorMessages = false,
   });
 
   /// Mounts a handler to the server and starts listening for requests.
@@ -148,11 +139,7 @@ class RelicServer {
           stackTrace,
         );
         return ctx.respond(Response.badRequest(
-          body: Body.fromString(
-            sanitizeErrorMessages 
-              ? 'Bad Request' 
-              : error.httpResponseBody
-          ),
+          body: Body.fromString('Bad Request'),
         ));
       } catch (error, stackTrace) {
         // Catch all other exceptions that might contain sensitive information
@@ -172,19 +159,11 @@ class RelicServer {
             
         if (isBadRequest) {
           return ctx.respond(Response.badRequest(
-            body: Body.fromString(
-              sanitizeErrorMessages 
-                ? 'Bad Request' 
-                : error.toString()
-            ),
+            body: Body.fromString('Bad Request'),
           ));
         } else {
           return ctx.respond(Response.internalServerError(
-            body: Body.fromString(
-              sanitizeErrorMessages 
-                ? 'Internal Server Error' 
-                : error.toString()
-            ),
+            body: Body.fromString('Internal Server Error'),
           ));
         }
       }
