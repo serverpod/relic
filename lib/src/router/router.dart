@@ -1,5 +1,3 @@
-import 'dart:collection';
-
 import 'lookup_result.dart';
 import 'normalized_path.dart';
 import 'path_trie.dart';
@@ -49,12 +47,6 @@ extension<T> on _RouterEntry<T>? {
 /// Supports static paths (e.g., `/users/profile`) and paths with named parameters
 /// (e.g., `/users/:id`). Normalizes paths before matching.
 final class Router<T> {
-  /// Stores static routes (no parameters) for fast lookups using a HashMap.
-  /// The key is the [NormalizedPath] representation of the route.
-  ///
-  /// This cache is build lazily on lookup.
-  final _staticCache = HashMap<NormalizedPath, _RouterEntry<T>>();
-
   /// Stores all routes (with or without parameters) in a [PathTrie] for efficient
   /// matching and parameter extraction.
   final _allRoutes = PathTrie<_RouterEntry<T>>();
@@ -66,14 +58,10 @@ final class Router<T> {
   /// handler) is stored for this route.
   void add(final Method method, final String path, final T route) {
     final normalizedPath = NormalizedPath(path); // Normalize upfront
-    final entry = _allRoutes.addOrUpdateInPlace(
+    _allRoutes.addOrUpdateInPlace(
       normalizedPath,
       (final r) => (r.orNew)..add(method, normalizedPath, route),
     );
-    if (!normalizedPath.hasParameters) {
-      // Prime cache on add (but not on attach)
-      _staticCache[normalizedPath] = entry;
-    }
   }
 
   /// Attaches a sub-router to this router at the specified [path].
@@ -82,7 +70,6 @@ final class Router<T> {
   /// defined in the sub-router will be prefixed with this path when matched.
   void attach(final String path, final Router<T> subRouter) {
     _allRoutes.attach(NormalizedPath(path), subRouter._allRoutes);
-    subRouter._staticCache.clear();
   }
 
   /// Looks up a route matching the provided [path].
@@ -94,29 +81,11 @@ final class Router<T> {
   /// parameters if a match is found. Returns `null` if no matching route exists.
   LookupResult<T>? lookup(final Method method, final String path) {
     final normalizedPath = NormalizedPath(path); // Normalize upfront
-
-    // Try static cache first
-    final value = _staticCache[normalizedPath]?.find(method);
-    if (value != null) {
-      return LookupResult(
-        value,
-        const {},
-        normalizedPath,
-        NormalizedPath.empty,
-      );
-    }
-
-    // Fall back to trie
     final entry = _allRoutes.lookup(normalizedPath);
     if (entry == null) return null;
 
     final route = entry.value.find(method);
     if (route == null) return null;
-
-    // Cache static routes for future lookups
-    if (entry.parameters.isEmpty) {
-      _staticCache[normalizedPath] = entry.value;
-    }
 
     return LookupResult(
       route,
