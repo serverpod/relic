@@ -55,7 +55,7 @@ Future<http.Response> _get({
   final String path = '',
 }) async {
   final request = http.Request(
-    RequestMethod.get.value,
+    Method.get.value,
     _server!.url.replace(path: path),
   );
 

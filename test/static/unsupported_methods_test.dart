@@ -25,7 +25,7 @@ void main() {
       final response = await makeRequest(
         handler,
         '/test_file.txt',
-        method: RequestMethod.post,
+        method: Method.post,
       );
 
       expect(response.statusCode, HttpStatus.methodNotAllowed);
@@ -34,8 +34,8 @@ void main() {
 
       final allowHeader = response.headers.allow;
       expect(allowHeader, isNotNull);
-      expect(allowHeader, contains(RequestMethod.get));
-      expect(allowHeader, contains(RequestMethod.head));
+      expect(allowHeader, contains(Method.get));
+      expect(allowHeader, contains(Method.head));
       expect(allowHeader!.length, 2);
     });
 
@@ -47,7 +47,7 @@ void main() {
       final response = await makeRequest(
         handler,
         '/test_file.txt',
-        method: RequestMethod.put,
+        method: Method.put,
       );
 
       expect(response.statusCode, HttpStatus.methodNotAllowed);
@@ -56,8 +56,8 @@ void main() {
 
       final allowHeader = response.headers.allow;
       expect(allowHeader, isNotNull);
-      expect(allowHeader, contains(RequestMethod.get));
-      expect(allowHeader, contains(RequestMethod.head));
+      expect(allowHeader, contains(Method.get));
+      expect(allowHeader, contains(Method.head));
       expect(allowHeader!.length, 2);
     });
 
@@ -69,7 +69,7 @@ void main() {
       final response = await makeRequest(
         handler,
         '/test_file.txt',
-        method: RequestMethod.delete,
+        method: Method.delete,
       );
 
       expect(response.statusCode, HttpStatus.methodNotAllowed);
@@ -78,8 +78,8 @@ void main() {
 
       final allowHeader = response.headers.allow;
       expect(allowHeader, isNotNull);
-      expect(allowHeader, contains(RequestMethod.get));
-      expect(allowHeader, contains(RequestMethod.head));
+      expect(allowHeader, contains(Method.get));
+      expect(allowHeader, contains(Method.head));
       expect(allowHeader!.length, 2);
     });
 
@@ -91,7 +91,7 @@ void main() {
       final response = await makeRequest(
         handler,
         '/test_file.txt',
-        method: RequestMethod.options,
+        method: Method.options,
       );
 
       expect(response.statusCode, HttpStatus.methodNotAllowed);
@@ -100,8 +100,8 @@ void main() {
 
       final allowHeader = response.headers.allow;
       expect(allowHeader, isNotNull);
-      expect(allowHeader, contains(RequestMethod.get));
-      expect(allowHeader, contains(RequestMethod.head));
+      expect(allowHeader, contains(Method.get));
+      expect(allowHeader, contains(Method.head));
       expect(allowHeader!.length, 2);
     });
   });

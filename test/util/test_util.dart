@@ -49,7 +49,7 @@ Future<Response> makeSimpleRequest(final Handler handler,
   return newCtx.response;
 }
 
-final _defaultRequest = Request(RequestMethod.get, localhostUri);
+final _defaultRequest = Request(Method.get, localhostUri);
 
 final localhostUri = Uri.parse('http://localhost/');
 

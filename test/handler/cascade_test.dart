@@ -42,7 +42,7 @@ void main() {
       final response = await makeSimpleRequest(
         handler,
         Request(
-          RequestMethod.get,
+          Method.get,
           localhostUri,
           headers: Headers.build((final mh) => mh['one'] = ['false']),
         ),
@@ -57,7 +57,7 @@ void main() {
       final response = await makeSimpleRequest(
         handler,
         Request(
-          RequestMethod.get,
+          Method.get,
           localhostUri,
           headers: Headers.build((final mh) {
             mh['one'] = ['false'];
@@ -76,7 +76,7 @@ void main() {
       final response = await makeSimpleRequest(
         handler,
         Request(
-          RequestMethod.get,
+          Method.get,
           localhostUri,
           headers: Headers.build((final mh) {
             mh['one'] = ['false'];

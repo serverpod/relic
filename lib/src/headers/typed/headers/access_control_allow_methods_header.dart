@@ -5,13 +5,11 @@ import 'wildcard_list_header.dart';
 ///
 /// This header specifies which methods are allowed when accessing the resource
 /// in response to a preflight request.
-final class AccessControlAllowMethodsHeader
-    extends WildcardListHeader<RequestMethod> {
+final class AccessControlAllowMethodsHeader extends WildcardListHeader<Method> {
   static const codec = HeaderCodec(_parse, _encode);
 
   /// Constructs an instance allowing specific methods to be allowed.
-  AccessControlAllowMethodsHeader.methods(
-      {required final List<RequestMethod> methods})
+  AccessControlAllowMethodsHeader.methods({required final List<Method> methods})
       : super(methods);
 
   /// Constructs an instance allowing all methods to be allowed (`*`).
@@ -24,10 +22,10 @@ final class AccessControlAllowMethodsHeader
   }
 
   /// The list of methods that are allowed
-  List<RequestMethod> get methods => values;
+  List<Method> get methods => values;
 
   static AccessControlAllowMethodsHeader _parse(final Iterable<String> values) {
-    final parsed = WildcardListHeader.parse(values, RequestMethod.parse);
+    final parsed = WildcardListHeader.parse(values, Method.parse);
 
     if (parsed.isWildcard) {
       return const AccessControlAllowMethodsHeader.wildcard();
@@ -38,7 +36,7 @@ final class AccessControlAllowMethodsHeader
 
   static List<String> encodeHeader(
       final AccessControlAllowMethodsHeader header) {
-    return header.encode((final RequestMethod rm) => rm.value).toList();
+    return header.encode((final Method m) => m.value).toList();
   }
 
   static List<String> _encode(final AccessControlAllowMethodsHeader header) {

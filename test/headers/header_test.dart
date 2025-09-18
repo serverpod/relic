@@ -465,7 +465,8 @@ void main() {
 
         final raw = v.accessor.codec.encode(header1!);
         final header3 = v.accessor.codec.decode(raw);
-        if (header1 is! List) {
+        if (header1 is! List && header1 is! Set) {
+          // We don't control hashCode for pure List and Set.
           expect(header1, equals(header3));
           expect(header1.hashCode, equals(header3.hashCode));
         }
@@ -482,7 +483,8 @@ void main() {
         expect(header2, isNotNull);
 
         expect(header1, equals(header1));
-        if (header1 is! List) {
+        if (header1 is! List && header1 is! Set) {
+          // We don't control hashCode for pure List and Set.
           expect(header1, equals(header2));
           expect(header1.hashCode, equals(header2.hashCode),
               reason: 'hashCode for: $header1');
@@ -490,7 +492,8 @@ void main() {
 
         final raw = v.accessor.codec.encode(header1!);
         final header3 = v.accessor.codec.decode(raw);
-        if (header1 is! List) {
+        if (header1 is! List && header1 is! Set) {
+          // We don't control hashCode for pure List and Set.
           expect(header1, equals(header3));
           expect(header1.hashCode, equals(header3.hashCode));
         }
@@ -498,7 +501,8 @@ void main() {
         expect(v.accessor.isSetIn(headers4), isTrue);
         expect(v.accessor.isValidIn(headers4), isTrue);
         final header4 = v.accessor.getValueFrom(headers4);
-        if (header1 is! List) {
+        if (header1 is! List && header1 is! Set) {
+          // We don't control hashCode for pure List and Set.
           expect(header1, equals(header4));
           expect(header1.hashCode, equals(header4.hashCode));
         }
@@ -554,8 +558,7 @@ void main() {
       (
         Headers.accessControlAllowMethods,
         (final h) => h.accessControlAllowMethods =
-            AccessControlAllowMethodsHeader.methods(
-                methods: RequestMethod.values)
+            AccessControlAllowMethodsHeader.methods(methods: Method.values)
       ),
       (
         Headers.accessControlAllowOrigin,
@@ -575,10 +578,10 @@ void main() {
       ),
       (
         Headers.accessControlRequestMethod,
-        (final h) => h.accessControlRequestMethod = RequestMethod.get
+        (final h) => h.accessControlRequestMethod = Method.get
       ),
       (Headers.age, (final h) => h.age = 42),
-      (Headers.allow, (final h) => h.allow = [RequestMethod.get]),
+      (Headers.allow, (final h) => h.allow = {Method.get}),
       (
         Headers.authorization,
         (final h) =>

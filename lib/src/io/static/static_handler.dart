@@ -163,18 +163,18 @@ Future<ResponseContext> _serveFile(
 }
 
 /// Checks if the HTTP method is allowed for file serving.
-bool _isMethodAllowed(final RequestMethod method) {
-  return method == RequestMethod.get || method == RequestMethod.head;
+bool _isMethodAllowed(final Method method) {
+  return method == Method.get || method == Method.head;
 }
 
 /// Returns a 405 Method Not Allowed response.
 ResponseContext _methodNotAllowedResponse(final NewContext ctx) {
   return ctx.respond(Response(
     HttpStatus.methodNotAllowed,
-    headers: Headers.build((final mh) => mh.allow = [
-          RequestMethod.get,
-          RequestMethod.head,
-        ]),
+    headers: Headers.build((final mh) => mh.allow = {
+          Method.get,
+          Method.head,
+        }),
   ));
 }
 
@@ -299,12 +299,11 @@ ResponseContext _serveFullFile(
   final NewContext ctx,
   final FileInfo fileInfo,
   final Headers headers,
-  final RequestMethod method,
+  final Method method,
 ) {
   return ctx.respond(Response.ok(
     headers: headers,
-    body:
-        _createFileBody(fileInfo, isHeadRequest: method == RequestMethod.head),
+    body: _createFileBody(fileInfo, isHeadRequest: method == Method.head),
   ));
 }
 

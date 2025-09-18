@@ -18,7 +18,6 @@ export 'src/headers/typed/typed_headers.dart';
 export 'src/io/static/static_handler.dart';
 export 'src/message/request.dart' show Request;
 export 'src/message/response.dart' show Response;
-export 'src/method/request_method.dart' show RequestMethod;
 export 'src/middleware/context_property.dart';
 export 'src/middleware/middleware.dart' show Middleware, createMiddleware;
 export 'src/middleware/middleware_extensions.dart' show MiddlewareExtensions;
