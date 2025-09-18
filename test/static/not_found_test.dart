@@ -13,8 +13,7 @@ void main() {
   setUp(() async {
     await d.file('test_file.txt', fileContent).create();
     await d.dir('test_directory').create();
-    handler = createStaticHandler(
-        cacheControl: (final _, final __) => null, d.sandbox);
+    handler = createStaticHandler(cacheControl: null, d.sandbox);
   });
 
   test(

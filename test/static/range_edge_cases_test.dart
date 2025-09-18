@@ -15,8 +15,7 @@ void main() {
 
   setUp(() async {
     await d.file('test_file.txt', fileContent).create();
-    handler = createStaticHandler(
-        cacheControl: (final _, final __) => null, d.sandbox);
+    handler = createStaticHandler(cacheControl: null, d.sandbox);
   });
 
   group('Given malformed Range headers', () {

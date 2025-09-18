@@ -14,9 +14,7 @@ void main() {
   });
 
   test('Given a file when served then it returns the file contents', () async {
-    final handler = createFileHandler(
-        cacheControl: (final _, final __) => null,
-        p.join(d.sandbox, 'file.txt'));
+    final handler = createFileHandler(p.join(d.sandbox, 'file.txt'));
     final response = await makeRequest(handler, '/file.txt');
     expect(response.statusCode, HttpStatus.ok);
     expect(response.body.contentLength, 8);
@@ -26,11 +24,7 @@ void main() {
   test('Given a non-matching URL when served then it returns a 404', () async {
     final handler = const Pipeline()
         .addMiddleware(routeWith(Router<Handler>()
-          ..get(
-              '/foo/bar',
-              createFileHandler(
-                  cacheControl: (final _, final __) => null,
-                  p.join(d.sandbox, 'file.txt')))))
+          ..get('/foo/bar', createFileHandler(p.join(d.sandbox, 'file.txt')))))
         .addHandler(respondWith((final _) => Response.notFound()));
     final response = await makeRequest(handler, '/foo/file.txt');
     expect(response.statusCode, HttpStatus.notFound);
@@ -41,11 +35,7 @@ void main() {
       () async {
     final handler = const Pipeline()
         .addMiddleware(routeWith(Router<Handler>()
-          ..get(
-              '/foo/bar',
-              createFileHandler(
-                  cacheControl: (final _, final __) => null,
-                  p.join(d.sandbox, 'file.txt')))))
+          ..get('/foo/bar', createFileHandler(p.join(d.sandbox, 'file.txt')))))
         .addHandler(respondWith((final _) => Response.notFound()));
     final response = await makeRequest(handler, '/foo/bar');
     expect(response.statusCode, HttpStatus.ok);
@@ -58,11 +48,7 @@ void main() {
       () async {
     final handler = const Pipeline()
         .addMiddleware(routeWith(Router<Handler>()
-          ..get(
-              '/foo/bar',
-              createFileHandler(
-                  cacheControl: (final _, final __) => null,
-                  p.join(d.sandbox, 'file.txt')))))
+          ..get('/foo/bar', createFileHandler(p.join(d.sandbox, 'file.txt')))))
         .addHandler(respondWith((final _) => Response.notFound()));
     final response = await makeRequest(handler, '/file.txt');
     expect(response.statusCode, HttpStatus.notFound);
@@ -70,9 +56,7 @@ void main() {
 
   group('Given the content type header', () {
     test('when inferred from the file path then it is set correctly', () async {
-      final handler = createFileHandler(
-          cacheControl: (final _, final __) => null,
-          p.join(d.sandbox, 'file.txt'));
+      final handler = createFileHandler(p.join(d.sandbox, 'file.txt'));
       final response = await makeRequest(handler, '/file.txt');
       expect(response.statusCode, HttpStatus.ok);
       expect(response.mimeType?.primaryType, 'text');
@@ -82,9 +66,7 @@ void main() {
     test(
         "when it can't be inferred then it defaults to application/octet-stream",
         () async {
-      final handler = createFileHandler(
-          cacheControl: (final _, final __) => null,
-          p.join(d.sandbox, 'random.unknown'));
+      final handler = createFileHandler(p.join(d.sandbox, 'random.unknown'));
       final response = await makeRequest(handler, '/random.unknown');
       expect(response.statusCode, HttpStatus.ok);
       expect(response.mimeType, MimeType.octetStream);
@@ -94,9 +76,7 @@ void main() {
   group('Given the content range header', () {
     test('when bytes from 0 to 4 are requested then it returns partial content',
         () async {
-      final handler = createFileHandler(
-          cacheControl: (final _, final __) => null,
-          p.join(d.sandbox, 'file.txt'));
+      final handler = createFileHandler(p.join(d.sandbox, 'file.txt'));
       final response = await makeRequest(
         handler,
         '/file.txt',
@@ -114,9 +94,7 @@ void main() {
     test(
         'when range at the end overflows from 0 to 9 then it returns partial content',
         () async {
-      final handler = createFileHandler(
-          cacheControl: (final _, final __) => null,
-          p.join(d.sandbox, 'file.txt'));
+      final handler = createFileHandler(p.join(d.sandbox, 'file.txt'));
       final response = await makeRequest(
         handler,
         '/file.txt',
@@ -137,9 +115,7 @@ void main() {
     test(
         'when range at the start overflows from 8 to 9, '
         'then it returns 416 Request Range Not Satisfiable', () async {
-      final handler = createFileHandler(
-          cacheControl: (final _, final __) => null,
-          p.join(d.sandbox, 'file.txt'));
+      final handler = createFileHandler(p.join(d.sandbox, 'file.txt'));
       final response = await makeRequest(
         handler,
         '/file.txt',
@@ -156,9 +132,7 @@ void main() {
     test(
         'when invalid request with start > end is received, '
         'then it returns 416 Request Range Not Satisfiable', () async {
-      final handler = createFileHandler(
-          cacheControl: (final _, final __) => null,
-          p.join(d.sandbox, 'file.txt'));
+      final handler = createFileHandler(p.join(d.sandbox, 'file.txt'));
       final response = await makeRequest(
         handler,
         '/file.txt',
@@ -174,9 +148,7 @@ void main() {
     test(
         'when request with start > end is received, '
         'then it returns 416 Request Range Not Satisfiable', () async {
-      final handler = createFileHandler(
-          cacheControl: (final _, final __) => null,
-          p.join(d.sandbox, 'file.txt'));
+      final handler = createFileHandler(p.join(d.sandbox, 'file.txt'));
       final response = await makeRequest(
         handler,
         '/file.txt',
@@ -193,9 +165,7 @@ void main() {
   group('Given an ArgumentError is thrown for', () {
     test("when a file doesn't exist then it throws an ArgumentError", () {
       expect(
-        () => createFileHandler(
-            cacheControl: (final _, final __) => null,
-            p.join(d.sandbox, 'nothing.txt')),
+        () => createFileHandler(p.join(d.sandbox, 'nothing.txt')),
         throwsArgumentError,
       );
     });

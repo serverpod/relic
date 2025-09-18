@@ -45,8 +45,7 @@ void main() {
       'when accessing a sym linked file in a real dir, '
       'then it returns the file content',
       () async {
-        final handler = createStaticHandler(
-            cacheControl: (final _, final __) => null, d.sandbox);
+        final handler = createStaticHandler(cacheControl: null, d.sandbox);
 
         final response = await makeRequest(handler, '/link_index.html');
         expect(response.statusCode, HttpStatus.ok);
@@ -58,8 +57,7 @@ void main() {
     test(
         'when accessing a file in a sym linked dir, '
         'then it returns the file content', () async {
-      final handler = createStaticHandler(
-          cacheControl: (final _, final __) => null, d.sandbox);
+      final handler = createStaticHandler(cacheControl: null, d.sandbox);
 
       final response = await makeRequest(handler, '/link_dir/index.html');
       expect(response.statusCode, HttpStatus.ok);
@@ -73,8 +71,7 @@ void main() {
         'when accessing a sym linked file in a real dir, '
         'then it returns a 404', () async {
       final handler = createStaticHandler(
-          cacheControl: (final _, final __) => null,
-          p.join(d.sandbox, 'alt_root'));
+          cacheControl: null, p.join(d.sandbox, 'alt_root'));
 
       final response = await makeRequest(handler, '/link_index.html');
       expect(response.statusCode, HttpStatus.notFound);
@@ -84,8 +81,7 @@ void main() {
         'when accessing a real file in a sym linked dir, '
         'then it returns a 404', () async {
       final handler = createStaticHandler(
-          cacheControl: (final _, final __) => null,
-          p.join(d.sandbox, 'alt_root'));
+          cacheControl: null, p.join(d.sandbox, 'alt_root'));
 
       final response = await makeRequest(handler, '/link_dir/index.html');
       expect(response.statusCode, HttpStatus.notFound);

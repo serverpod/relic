@@ -16,35 +16,23 @@ import '../../router/lru_cache.dart';
 final _defaultMimeTypeResolver = MimeTypeResolver();
 
 /// Cached file information including MIME type, file stats, and ETag.
-class FileInfo {
-  final File file;
+class _FileInfo {
   final MimeType? mimeType;
   final FileStat stat;
   final String etag;
 
-  bool get isStale {
-    final freshStat = file.statSync();
-    return stat.size != freshStat.size ||
-        stat.changed.isBefore(freshStat.changed);
-  }
-
-  const FileInfo(this.file, this.mimeType, this.stat, this.etag);
+  const _FileInfo(this.mimeType, this.stat, this.etag);
 }
 
-typedef CacheControlFactory = CacheControlHeader? Function(
-  NewContext ctx,
-  FileInfo fileInfo,
-);
-
 /// LRU cache for file information to avoid repeated file system operations.
-final _fileInfoCache = LruCache<String, FileInfo>(10000);
+final _fileInfoCache = LruCache<String, _FileInfo>(10000);
 
 /// Creates a Relic [Handler] that serves files from the provided [fileSystemPath].
 ///
 /// When a file is requested, it is served with appropriate headers including
 /// ETag, Last-Modified, and Cache-Control. The handler supports:
 /// - Conditional requests (If-None-Match, If-Modified-Since, If-Range (for range request))
-/// - Range requests for partial content (multi-range is supported, but ranges are not coalesced)
+/// - Range requests for partial content (multi-range is supported, but ranges are not coalesed)
 /// - Proper MIME type detection (from magic-bytes prefixes, or file extension)
 ///
 /// If the requested path doesn't correspond to a file, the [defaultHandler] is called.
@@ -52,16 +40,16 @@ final _fileInfoCache = LruCache<String, FileInfo>(10000);
 /// Directory listings are not supported for security reasons.
 ///
 /// The handler requires the request method to be either GET, or HEAD.
-/// Otherwise, a 405 Method Not Allowed response is returned with an
+/// Otherwise, a 405 Method Not Allowed response is returned witn an
 /// appropriate Allow header.
 ///
 /// The [mimeResolver] can be provided to customize MIME type detection.
-/// The [cacheControl] header can be customized using [cacheControl] callback.
+/// The [cacheControl] header can be customized; defaults to not being set.
 Handler createStaticHandler(
   final String fileSystemPath, {
   final Handler? defaultHandler,
   final MimeTypeResolver? mimeResolver,
-  required final CacheControlFactory cacheControl,
+  required final CacheControlHeader? cacheControl,
 }) {
   final rootDir = Directory(fileSystemPath);
   if (!rootDir.existsSync()) {
@@ -106,16 +94,16 @@ Handler createStaticHandler(
 /// The file must exist at the specified path or an [ArgumentError] is thrown.
 /// Supports the same features as [createStaticHandler] but for a single file.
 ///
-/// The handler requires the request method to be either GET or HEAD.
-/// Otherwise, a 405 Method Not Allowed response is returned with an
+/// The handler requires the request method to be either GET, or HEAD.
+/// Otherwise, a 405 Method Not Allowed response is returned witn an
 /// appropriate Allow header.
 ///
 /// The [mimeResolver] can be provided to customize MIME type detection.
-/// The [cacheControl] header can be customized using [cacheControl] callback.
+/// The [cacheControl] header can be customized; defaults to no-cache with private cache.
 Handler createFileHandler(
   final String filePath, {
   final MimeTypeResolver? mimeResolver,
-  required final CacheControlFactory cacheControl,
+  final CacheControlHeader? cacheControl,
 }) {
   final file = File(filePath);
   if (!file.existsSync()) {
@@ -127,7 +115,7 @@ Handler createFileHandler(
     return await _serveFile(
       file,
       mimeResolver ?? _defaultMimeTypeResolver,
-      cacheControl,
+      cacheControl ?? CacheControlHeader(noCache: true, privateCache: true),
       ctx,
     );
   };
@@ -137,7 +125,7 @@ Handler createFileHandler(
 Future<ResponseContext> _serveFile(
   final File file,
   final MimeTypeResolver mimeResolver,
-  final CacheControlFactory cacheControl,
+  final CacheControlHeader? cacheControl,
   final NewContext ctx,
 ) async {
   // Validate HTTP method
@@ -146,7 +134,7 @@ Future<ResponseContext> _serveFile(
 
   // Get or update cached file information
   final fileInfo = await _getFileInfo(file, mimeResolver);
-  final headers = _buildBaseHeaders(fileInfo, cacheControl(ctx, fileInfo));
+  final headers = _buildBaseHeaders(fileInfo, cacheControl);
 
   // Handle conditional requests
   final conditionalResponse = _checkConditionalHeaders(ctx, fileInfo, headers);
@@ -155,11 +143,11 @@ Future<ResponseContext> _serveFile(
   // Handle range requests
   final rangeHeader = ctx.request.headers.range;
   if (rangeHeader != null) {
-    return await _handleRangeRequest(ctx, fileInfo, headers, rangeHeader);
+    return await _handleRangeRequest(ctx, file, fileInfo, headers, rangeHeader);
   }
 
   // Serve full file
-  return _serveFullFile(ctx, fileInfo, headers, method);
+  return _serveFullFile(ctx, file, fileInfo, headers, method);
 }
 
 /// Checks if the HTTP method is allowed for file serving.
@@ -179,7 +167,7 @@ ResponseContext _methodNotAllowedResponse(final NewContext ctx) {
 }
 
 /// Gets file information from cache or creates new cache entry.
-Future<FileInfo> _getFileInfo(
+Future<_FileInfo> _getFileInfo(
   final File file,
   final MimeTypeResolver mimeResolver,
 ) async {
@@ -187,13 +175,17 @@ Future<FileInfo> _getFileInfo(
   final cachedInfo = _fileInfoCache[file.path];
 
   // Check if cache is valid
-  if (cachedInfo != null && !cachedInfo.isStale) return cachedInfo;
+  if (cachedInfo != null &&
+      stat.size == cachedInfo.stat.size &&
+      !stat.changed.isAfter(cachedInfo.stat.changed)) {
+    return cachedInfo;
+  }
 
   // Generate new file info
   final etag = Isolate.run(() => _generateETag(file));
   final mimeType = await _detectMimeType(file, mimeResolver);
 
-  final fileInfo = FileInfo(file, mimeType, stat, await etag);
+  final fileInfo = _FileInfo(mimeType, stat, await etag);
   _fileInfoCache[file.path] = fileInfo;
   return fileInfo;
 }
@@ -210,7 +202,7 @@ Future<MimeType?> _detectMimeType(
   final headerBytes = await file
       .openRead(0, mimeResolver.magicNumbersMaxLength)
       .cast<Uint8List>()
-      .firstOrNull;
+      .first;
 
   final mimeString = mimeResolver.lookup(file.path, headerBytes: headerBytes);
   return mimeString != null ? MimeType.parse(mimeString) : null;
@@ -218,7 +210,7 @@ Future<MimeType?> _detectMimeType(
 
 /// Builds base response headers common to all responses.
 Headers _buildBaseHeaders(
-    final FileInfo fileInfo, final CacheControlHeader? cacheControl) {
+    final _FileInfo fileInfo, final CacheControlHeader? cacheControl) {
   return Headers.build((final mh) => mh
     ..acceptRanges = AcceptRangesHeader.bytes()
     ..etag = ETagHeader(value: fileInfo.etag)
@@ -229,7 +221,7 @@ Headers _buildBaseHeaders(
 /// Checks conditional request headers and returns 304 response if appropriate.
 Response? _checkConditionalHeaders(
   final NewContext ctx,
-  final FileInfo fileInfo,
+  final _FileInfo fileInfo,
   final Headers headers,
 ) {
   // Handle If-None-Match
@@ -257,25 +249,26 @@ Response? _checkConditionalHeaders(
 /// Handles HTTP range requests for partial content.
 Future<ResponseContext> _handleRangeRequest(
   final NewContext ctx,
-  final FileInfo fileInfo,
+  final File file,
+  final _FileInfo fileInfo,
   final Headers headers,
   final RangeHeader rangeHeader,
 ) async {
   // Check If-Range header
   if (!_isRangeRequestValid(ctx, fileInfo)) {
-    return _serveFullFile(ctx, fileInfo, headers, ctx.request.method);
+    return _serveFullFile(ctx, file, fileInfo, headers, ctx.request.method);
   }
 
   final ranges = rangeHeader.ranges;
   return switch (ranges.length) {
-    0 => _serveFullFile(ctx, fileInfo, headers, ctx.request.method),
-    1 => _serveSingleRange(ctx, fileInfo, headers, ranges.first),
-    _ => await _serveMultipleRanges(ctx, fileInfo, headers, ranges),
+    0 => _serveFullFile(ctx, file, fileInfo, headers, ctx.request.method),
+    1 => _serveSingleRange(ctx, file, fileInfo, headers, ranges.first),
+    _ => await _serveMultipleRanges(ctx, file, fileInfo, headers, ranges),
   };
 }
 
 /// Validates If-Range header for range requests.
-bool _isRangeRequestValid(final NewContext ctx, final FileInfo fileInfo) {
+bool _isRangeRequestValid(final NewContext ctx, final _FileInfo fileInfo) {
   final ifRange = ctx.request.headers.ifRange;
   if (ifRange == null) return true;
 
@@ -297,21 +290,24 @@ bool _isRangeRequestValid(final NewContext ctx, final FileInfo fileInfo) {
 /// Serves the complete file without ranges.
 ResponseContext _serveFullFile(
   final NewContext ctx,
-  final FileInfo fileInfo,
+  final File file,
+  final _FileInfo fileInfo,
   final Headers headers,
   final RequestMethod method,
 ) {
   return ctx.respond(Response.ok(
     headers: headers,
-    body:
-        _createFileBody(fileInfo, isHeadRequest: method == RequestMethod.head),
+    body: method == RequestMethod.head
+        ? null
+        : _createFileBody(file, fileInfo, fileInfo.stat.size),
   ));
 }
 
 /// Serves a single range of the file.
 ResponseContext _serveSingleRange(
   final NewContext ctx,
-  final FileInfo fileInfo,
+  final File file,
+  final _FileInfo fileInfo,
   final Headers headers,
   final Range range,
 ) {
@@ -330,14 +326,15 @@ ResponseContext _serveSingleRange(
         end: end - 1,
         size: fileInfo.stat.size,
       )),
-    body: _createRangeBody(fileInfo, start, end),
+    body: _createRangeBody(file, fileInfo, start, end),
   ));
 }
 
 /// Serves multiple ranges as multipart response.
 Future<ResponseContext> _serveMultipleRanges(
   final NewContext ctx,
-  final FileInfo fileInfo,
+  final File file,
+  final _FileInfo fileInfo,
   final Headers headers,
   final List<Range> ranges,
 ) async {
@@ -349,6 +346,7 @@ Future<ResponseContext> _serveMultipleRanges(
     final (start, end) = _calculateRangeBounds(range, fileInfo.stat.size);
     totalLength += await _writeMultipartSection(
       controller,
+      file,
       fileInfo,
       boundary,
       start,
@@ -403,7 +401,8 @@ Future<ResponseContext> _serveMultipleRanges(
 /// Writes a single multipart section to the controller.
 Future<int> _writeMultipartSection(
   final StreamController<Uint8List> controller,
-  final FileInfo fileInfo,
+  final File file,
+  final _FileInfo fileInfo,
   final String boundary,
   final int start,
   final int end,
@@ -421,8 +420,7 @@ Future<int> _writeMultipartSection(
   totalBytes += partHeaderBytes.length;
 
   // Write file content
-  await for (final chunk
-      in fileInfo.file.openRead(start, end).cast<Uint8List>()) {
+  await for (final chunk in file.openRead(start, end).cast<Uint8List>()) {
     controller.add(chunk);
     totalBytes += chunk.length;
   }
@@ -430,34 +428,24 @@ Future<int> _writeMultipartSection(
   return totalBytes;
 }
 
-/// Creates a Body for the full file.
+/// Creates a Body for the full file or range.
 Body _createFileBody(
-  final FileInfo fileInfo, {
-  final bool isHeadRequest = false,
-}) {
+    final File file, final _FileInfo fileInfo, final int contentLength) {
   return Body.fromDataStream(
-    isHeadRequest ? const Stream.empty() : fileInfo.file.openRead().cast(),
-    contentLength: fileInfo.stat.size,
+    file.openRead().cast(),
+    contentLength: contentLength,
     mimeType: fileInfo.mimeType ?? MimeType.octetStream,
     encoding: fileInfo.mimeType?.isText == true ? utf8 : null,
   );
 }
 
 /// Creates a Body for a specific range of the file.
-Body _createRangeBody(final FileInfo fileInfo, final int start, final int end) {
+Body _createRangeBody(
+    final File file, final _FileInfo fileInfo, final int start, final int end) {
   return Body.fromDataStream(
-    fileInfo.file.openRead(start, end).cast(),
+    file.openRead(start, end).cast(),
     contentLength: end - start,
     mimeType: fileInfo.mimeType,
     encoding: fileInfo.mimeType?.isText == true ? utf8 : null,
   );
-}
-
-extension<T> on Stream<T> {
-  Future<T?> get firstOrNull async {
-    await for (final value in this) {
-      return value;
-    }
-    return null;
-  }
 }
