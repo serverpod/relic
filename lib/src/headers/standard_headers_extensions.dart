@@ -1,4 +1,6 @@
-import '../method/request_method.dart';
+import 'dart:collection';
+
+import '../router/method.dart';
 import 'headers.dart';
 import 'typed/typed_headers.dart';
 
@@ -17,7 +19,7 @@ extension HeadersEx on Headers {
   AcceptLanguageHeader? get acceptLanguage => Headers.acceptLanguage[this]();
   List<String>? get accessControlRequestHeaders =>
       Headers.accessControlRequestHeaders[this]();
-  RequestMethod? get accessControlRequestMethod =>
+  Method? get accessControlRequestMethod =>
       Headers.accessControlRequestMethod[this]();
   int? get age => Headers.age[this]();
   AuthorizationHeader? get authorization => Headers.authorization[this]();
@@ -42,7 +44,7 @@ extension HeadersEx on Headers {
   AccessControlExposeHeadersHeader? get accessControlExposeHeaders =>
       Headers.accessControlExposeHeaders[this]();
   int? get accessControlMaxAge => Headers.accessControlMaxAge[this]();
-  List<RequestMethod>? get allow => Headers.allow[this]();
+  Set<Method>? get allow => Headers.allow[this]();
   CacheControlHeader? get cacheControl => Headers.cacheControl[this]();
   ContentEncodingHeader? get contentEncoding => Headers.contentEncoding[this]();
   ContentLanguageHeader? get contentLanguage => Headers.contentLanguage[this]();
@@ -110,7 +112,7 @@ extension MutableHeadersEx on MutableHeaders {
       Headers.acceptLanguage[this].set(value);
   set accessControlRequestHeaders(final List<String>? value) =>
       Headers.accessControlRequestHeaders[this].set(value);
-  set accessControlRequestMethod(final RequestMethod? value) =>
+  set accessControlRequestMethod(final Method? value) =>
       Headers.accessControlRequestMethod[this].set(value);
   set age(final int? value) => Headers.age[this].set(value);
   set authorization(final AuthorizationHeader? value) =>
@@ -140,7 +142,8 @@ extension MutableHeadersEx on MutableHeaders {
       Headers.accessControlExposeHeaders[this].set(value);
   set accessControlMaxAge(final int? value) =>
       Headers.accessControlMaxAge[this].set(value);
-  set allow(final List<RequestMethod>? value) => Headers.allow[this].set(value);
+  set allow(final Set<Method>? value) => Headers.allow[this]
+      .set(value != null ? SplayTreeSet.of(value, Enum.compareByIndex) : null);
   set cacheControl(final CacheControlHeader? value) =>
       Headers.cacheControl[this].set(value);
   set contentEncoding(final ContentEncodingHeader? value) =>
@@ -219,7 +222,7 @@ extension MutableHeadersEx on MutableHeaders {
   AcceptLanguageHeader? get acceptLanguage => Headers.acceptLanguage[this]();
   List<String>? get accessControlRequestHeaders =>
       Headers.accessControlRequestHeaders[this]();
-  RequestMethod? get accessControlRequestMethod =>
+  Method? get accessControlRequestMethod =>
       Headers.accessControlRequestMethod[this]();
   int? get age => Headers.age[this]();
   AuthorizationHeader? get authorization => Headers.authorization[this]();
@@ -244,7 +247,7 @@ extension MutableHeadersEx on MutableHeaders {
   AccessControlExposeHeadersHeader? get accessControlExposeHeaders =>
       Headers.accessControlExposeHeaders[this]();
   int? get accessControlMaxAge => Headers.accessControlMaxAge[this]();
-  List<RequestMethod>? get allow => Headers.allow[this]();
+  Set<Method>? get allow => Headers.allow[this]();
   CacheControlHeader? get cacheControl => Headers.cacheControl[this]();
   ContentEncodingHeader? get contentEncoding => Headers.contentEncoding[this]();
   ContentLanguageHeader? get contentLanguage => Headers.contentLanguage[this]();

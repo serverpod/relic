@@ -52,7 +52,7 @@ void main() {
         cacheControl: (final _, final __) => null, d.sandbox);
 
     final response =
-        await makeRequest(handler, '/root.txt', method: RequestMethod.head);
+        await makeRequest(handler, '/root.txt', method: Method.head);
     expect(response.statusCode, HttpStatus.ok);
     expect(response.body.contentLength, 8);
     expect(await response.readAsString(), isEmpty);

@@ -1,6 +1,7 @@
 import '../body/body.dart';
 import '../headers/headers.dart';
-import '../method/request_method.dart';
+
+import '../router/method.dart';
 import 'message.dart';
 
 /// An HTTP request to be processed by a Relic Server application.
@@ -22,7 +23,7 @@ class Request extends Message {
   final Uri url;
 
   /// The HTTP request method, such as "GET" or "POST".
-  final RequestMethod method;
+  final Method method;
 
   /// The URL path to the current handler.
   ///
@@ -65,7 +66,7 @@ class Request extends Message {
   ///
   /// The default value for [protocolVersion] is '1.1'.
   Request(
-    final RequestMethod method,
+    final Method method,
     final Uri requestedUri, {
     final String? protocolVersion,
     final Headers? headers,

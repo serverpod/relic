@@ -87,7 +87,7 @@ void main() {
 
         expect(
           headers.accessControlRequestMethod,
-          equals(RequestMethod.post),
+          equals(Method.post),
         );
       },
     );
@@ -102,7 +102,7 @@ void main() {
           headers: {'access-control-request-method': ' POST '},
         );
 
-        expect(headers.accessControlRequestMethod, equals(RequestMethod.post));
+        expect(headers.accessControlRequestMethod, equals(Method.post));
       },
     );
 

@@ -70,7 +70,7 @@ void main() {
 
     await _scheduleServer((final ctx) {
       final request = ctx.request;
-      expect(request.method, RequestMethod.get);
+      expect(request.method, Method.get);
 
       expect(request.requestedUri, uri);
 
@@ -168,7 +168,7 @@ void main() {
       final request = ctx.request;
       expect(request.mimeType, isNull);
       expect(request.encoding, isNull);
-      expect(request.method, RequestMethod.post);
+      expect(request.method, Method.post);
       expect(request.body.contentLength, isNull);
 
       final body = await request.readAsString();
@@ -188,7 +188,7 @@ void main() {
       expect(request.mimeType?.primaryType, 'text');
       expect(request.mimeType?.subType, 'plain');
       expect(request.encoding, utf8);
-      expect(request.method, RequestMethod.post);
+      expect(request.method, Method.post);
       expect(request.body.contentLength, 9);
 
       final body = await request.readAsString();
@@ -206,7 +206,7 @@ void main() {
     await _scheduleServer((final ctx) {
       final request = ctx.request;
 
-      expect(request.method, RequestMethod.post);
+      expect(request.method, Method.post);
 
       return ctx.hijack(expectAsync1((final channel) {
         expect(channel.stream.first, completion(equals('Hello'.codeUnits)));
@@ -424,8 +424,8 @@ void main() {
       );
     }));
 
-    final request = http.Request(
-        RequestMethod.get.value, Uri.http('localhost:$_serverPort', ''));
+    final request =
+        http.Request(Method.get.value, Uri.http('localhost:$_serverPort', ''));
 
     final response = await request.send();
     final stream = StreamQueue(utf8.decoder.bind(response.stream));
@@ -496,7 +496,7 @@ Future<http.Response> _get({
   final String path = '',
 }) async {
   final request = http.Request(
-    RequestMethod.get.value,
+    Method.get.value,
     Uri.http('localhost:$_serverPort', path),
   );
 
@@ -512,7 +512,7 @@ Future<http.StreamedResponse> _post({
   final String? body,
 }) {
   final request = http.Request(
-    RequestMethod.post.value,
+    Method.post.value,
     Uri.http('localhost:$_serverPort', ''),
   );
 

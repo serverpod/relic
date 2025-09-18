@@ -10,10 +10,11 @@ class _FakeRequest extends Fake implements Request {
   @override
   final Uri url;
   @override
-  final RequestMethod method;
+  final Method method;
 
-  _FakeRequest(final String path, {this.method = RequestMethod.get})
-      : url = Uri.parse('http://localhost$path');
+  _FakeRequest(final String path,
+      {final String host = 'localhost', this.method = Method.get})
+      : url = Uri.parse('http://$host/$path');
 }
 
 void main() {
@@ -353,35 +354,25 @@ void main() {
   // Due to the decoupling of Router<T> a mapping has to happen
   // for verbs. These test ensures all mappings are exercised.
   parameterizedTest(
-    variants: {
-      RequestMethod.get: Method.get,
-      RequestMethod.head: Method.head,
-      RequestMethod.post: Method.post,
-      RequestMethod.put: Method.put,
-      RequestMethod.delete: Method.delete,
-      RequestMethod.patch: Method.patch,
-      RequestMethod.options: Method.options,
-      RequestMethod.connect: Method.connect,
-      RequestMethod.trace: Method.trace,
-    }.entries,
+    variants: Method.values,
     (final v) => 'Given a route for verb: "${v.value}", '
         'when responding, '
-        'then the request.method is "${v.key}"',
+        'then the request.method is "$v"',
     (final v) async {
-      late RequestMethod method;
+      late Method method;
       final middleware = routeWith(Router<Handler>()
-        ..add(v.value, '/', respondWith((final req) {
+        ..add(v, '/', respondWith((final req) {
           method = req.method;
           return Response.ok();
         })));
-      final request = _FakeRequest('/', method: v.key);
+      final request = _FakeRequest('/', method: v);
       final newCtx =
           await middleware(respondWith((final _) => Response.notFound()))(
               request.toContext(Object()));
       expect(newCtx, isA<ResponseContext>());
       final response = (newCtx as ResponseContext).response;
       expect(response.statusCode, 200);
-      expect(method, equals(v.key));
+      expect(method, equals(v));
     },
   );
 }

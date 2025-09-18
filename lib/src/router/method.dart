@@ -18,7 +18,9 @@ enum Method {
   ///
   /// Throws an [FormatException] if the [method] string is invalid.
   factory Method.parse(final String method) {
-    return _reverseMap[method.trim().toLowerCase()] ??
+    final trimmed = method.trim();
+    if (trimmed.isEmpty) throw const FormatException('Value cannot be empty');
+    return _reverseMap[trimmed.toLowerCase()] ??
         (throw FormatException('Invalid value', method));
   }
 

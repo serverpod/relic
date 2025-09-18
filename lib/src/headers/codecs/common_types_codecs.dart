@@ -1,3 +1,5 @@
+import 'dart:collection';
+
 import 'package:http_parser/http_parser.dart';
 
 import '../../../relic.dart';
@@ -149,19 +151,22 @@ Iterable<String> encodeStringList(final List<String> i) => i;
 
 const stringListCodec = HeaderCodec(parseStringList, encodeStringList);
 
+Iterable<String> encodeMethod(final Method m) => [m.value];
+const methodCodec = HeaderCodec.single(Method.parse, encodeMethod);
+
 /// Parses a list of methods from the given [values] and returns it as a `List<Method>`.
 ///
 /// - Throws a [FormatException] if the resulting list is empty.
-List<RequestMethod> parseMethodList(final Iterable<String> values) {
-  final tempValues = values.splitTrimAndFilterUnique(emptyCheck: false);
+SplayTreeSet<Method> parseMethodSet(final Iterable<String> values) {
+  final tempValues = values.splitTrimAndFilterUnique();
   if (tempValues.isEmpty) {
     throw const FormatException('Value cannot be empty');
   }
-  return tempValues.map(RequestMethod.parse).toList();
+  return SplayTreeSet.of(tempValues.map(Method.parse), Enum.compareByIndex);
 }
 
 /// Encode a list of methods to a iterable of string.
-Iterable<String> encodeMethodList(final List<RequestMethod> l) =>
-    l.expand((final r) => RequestMethod.codec.encode(r));
+Iterable<String> encodeMethodList(final Iterable<Method> l) =>
+    l.map((final r) => r.value);
 
-const methodListCodec = HeaderCodec(parseMethodList, encodeMethodList);
+const methodListCodec = HeaderCodec(parseMethodSet, encodeMethodList);
