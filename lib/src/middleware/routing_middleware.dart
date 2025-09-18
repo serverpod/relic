@@ -1,6 +1,8 @@
 import '../adapter/context.dart';
 import '../handler/handler.dart';
 import '../method/request_method.dart';
+import '../router/lookup_result.dart';
+import '../router/method.dart';
 import '../router/normalized_path.dart';
 import '../router/path_trie.dart';
 import '../router/router.dart';
@@ -39,9 +41,9 @@ class _RoutingMiddlewareBuilder<T> {
   Handler _meddle(final Handler next) {
     return (final ctx) async {
       final req = ctx.request;
-      final match =
-          _router.lookup(req.method.convert(), Uri.decodeFull(req.url.path));
-      if (match != null) {
+      final path = Uri.decodeFull(req.url.path);
+      final match = _router.lookup(req.method.convert(), path);
+      if (match is RouterMatch<T>) {
         _routingContext[ctx] = (
           parameters: match.parameters,
           matched: match.matched,

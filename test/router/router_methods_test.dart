@@ -11,6 +11,17 @@ void main() {
       router = Router<String>();
     });
 
+    void expectLookupResult<T>(
+      final LookupResult actual,
+      final T expectedValue, [
+      final Map<Symbol, String> expectedParams = const {},
+    ]) {
+      expect(actual, isA<RouterMatch<T>>());
+      if (actual is! RouterMatch<T>) throw AssertionError();
+      expect(actual.value, equals(expectedValue));
+      expect(actual.parameters, equals(expectedParams));
+    }
+
     parameterizedGroup(
       variants:
           <Method, void Function(String, String) Function(Router<String>)>{
@@ -33,17 +44,16 @@ void main() {
           () {
             v.value(router)('/path', 'handler'); // register handler
             final result = router.lookup(v.key, '/path');
-            expect(result, isNotNull);
-            expect(result!.value, 'handler');
+            expectLookupResult(result, 'handler');
           },
         );
 
         parameterizedTest(
           (final vv) => 'when looking up with $vv for that path, '
-              'then returns null',
+              'then returns PassMiss',
           (final vv) {
             final result = router.lookup(vv, '/path');
-            expect(result, isNull);
+            expect(result, isA<PathMiss>());
           },
           // all other verbs
           variants: Method.values.toSet().difference({v.key}).toList(),
@@ -54,10 +64,10 @@ void main() {
     test(
         'Given a GET handler registered for a path, '
         'when looking up with Method.post for the same path, '
-        'then returns null', () {
+        'then returns MethodMiss', () {
       router.get('/specific-method-mismatch', 'get_handler');
       final result = router.lookup(Method.post, '/specific-method-mismatch');
-      expect(result, isNull);
+      expect(result, isA<MethodMiss>());
     });
 
     group('ANY Method Registration (router.any)', () {
@@ -67,8 +77,7 @@ void main() {
           'then returns the handler registered by any()', () {
         router.any('/any-path', 'any_handler');
         final result = router.lookup(Method.get, '/any-path');
-        expect(result, isNotNull);
-        expect(result!.value, 'any_handler');
+        expectLookupResult(result, 'any_handler');
       });
 
       test(
@@ -77,8 +86,7 @@ void main() {
           'then returns the handler registered by any()', () {
         router.any('/any-path', 'any_handler');
         final result = router.lookup(Method.post, '/any-path');
-        expect(result, isNotNull);
-        expect(result!.value, 'any_handler');
+        expectLookupResult(result, 'any_handler');
       });
 
       test(
@@ -88,9 +96,7 @@ void main() {
         router.any('/any-path-all-methods', 'any_handler_all');
         for (final method in Method.values) {
           final result = router.lookup(method, '/any-path-all-methods');
-          expect(result, isNotNull, reason: 'Expected handler for $method');
-          expect(result!.value, 'any_handler_all',
-              reason: 'Expected correct value for $method');
+          expectLookupResult(result, 'any_handler_all');
         }
       });
     });
@@ -152,14 +158,12 @@ void main() {
         router.post('/path-beta', 'post_beta');
 
         final resultAlpha = router.lookup(Method.get, '/path-alpha');
-        expect(resultAlpha, isNotNull);
-        expect(resultAlpha!.value, 'get_alpha');
-        expect(router.lookup(Method.post, '/path-alpha'), isNull);
+        expectLookupResult(resultAlpha, 'get_alpha');
+        expect(router.lookup(Method.post, '/path-alpha'), isA<MethodMiss>());
 
         final resultBeta = router.lookup(Method.post, '/path-beta');
-        expect(resultBeta, isNotNull);
-        expect(resultBeta!.value, 'post_beta');
-        expect(router.lookup(Method.get, '/path-beta'), isNull);
+        expectLookupResult(resultBeta, 'post_beta');
+        expect(router.lookup(Method.get, '/path-beta'), isA<MethodMiss>());
       });
     });
 
@@ -170,9 +174,7 @@ void main() {
           'then returns the handler and correct parameters', () {
         router.get('/users/:id', 'get_user_handler');
         final result = router.lookup(Method.get, '/users/123');
-        expect(result, isNotNull);
-        expect(result!.value, 'get_user_handler');
-        expect(result.parameters, equals({#id: '123'}));
+        expectLookupResult(result, 'get_user_handler', {#id: '123'});
       });
 
       test(
@@ -181,9 +183,7 @@ void main() {
           'then returns the handler and correct parameters', () {
         router.post('/posts/:postId/comments', 'post_comment_handler');
         final result = router.lookup(Method.post, '/posts/abc/comments');
-        expect(result, isNotNull);
-        expect(result!.value, 'post_comment_handler');
-        expect(result.parameters, equals({#postId: 'abc'}));
+        expectLookupResult(result, 'post_comment_handler', {#postId: 'abc'});
       });
 
       test(
@@ -194,23 +194,19 @@ void main() {
         router.post('/data/:key', 'post_data_handler');
 
         final getResult = router.lookup(Method.get, '/data/xyz');
-        expect(getResult, isNotNull);
-        expect(getResult!.value, 'get_data_handler');
-        expect(getResult.parameters, equals({#key: 'xyz'}));
+        expectLookupResult(getResult, 'get_data_handler', {#key: 'xyz'});
 
         final postResult = router.lookup(Method.post, '/data/xyz');
-        expect(postResult, isNotNull);
-        expect(postResult!.value, 'post_data_handler');
-        expect(postResult.parameters, equals({#key: 'xyz'}));
+        expectLookupResult(postResult, 'post_data_handler', {#key: 'xyz'});
       });
 
       test(
           'Given a GET handler for parameterized path /files/:name, '
           'when looking up with Method.put for the same path pattern, '
-          'then returns null', () {
+          'then returns MethodMiss', () {
         router.get('/files/:name', 'get_file_handler');
         final result = router.lookup(Method.put, '/files/report.txt');
-        expect(result, isNull);
+        expect(result, isA<MethodMiss>());
       });
 
       test(
@@ -219,9 +215,7 @@ void main() {
           'then returns the any_handler and correct parameters', () {
         router.any('/items/:itemId', 'any_item_handler');
         final result = router.lookup(Method.delete, '/items/item001');
-        expect(result, isNotNull);
-        expect(result!.value, 'any_item_handler');
-        expect(result.parameters, equals({#itemId: 'item001'}));
+        expectLookupResult(result, 'any_item_handler', {#itemId: 'item001'});
       });
     });
 
@@ -229,27 +223,27 @@ void main() {
       test(
           'Given an empty router, '
           'when looking up any path with any method, '
-          'then returns null', () {
+          'then returns PathMiss', () {
         final result = router.lookup(Method.get, '/nonexistent');
-        expect(result, isNull);
+        expect(result, isA<PathMiss>());
       });
 
       test(
           'Given a router with some registrations, '
           'when looking up a completely different path, '
-          'then returns null', () {
+          'then returns PathMiss', () {
         router.get('/exists', 'handler_exists');
         final result = router.lookup(Method.get, '/does-not-exist');
-        expect(result, isNull);
+        expect(result, isA<PathMiss>());
       });
 
       test(
           'Given a GET handler for /path, '
           'when looking up /path with Method.post, '
-          'then returns null', () {
+          'then returns MethodMiss', () {
         router.get('/another-path', 'get_another');
         final result = router.lookup(Method.post, '/another-path');
-        expect(result, isNull);
+        expect(result, isA<MethodMiss>());
       });
     });
   });

@@ -3,12 +3,12 @@ import 'package:test/test.dart';
 
 void main() {
   void expectLookupResult<T>(
-    final LookupResult<T>? actual,
+    final LookupResult actual,
     final T expectedValue, [
     final Map<Symbol, String> expectedParams = const {},
   ]) {
-    expect(actual, isNotNull);
-    if (actual == null) throw AssertionError();
+    expect(actual, isA<RouterMatch<T>>());
+    if (actual is! RouterMatch<T>) throw AssertionError();
     expect(actual.value, equals(expectedValue));
     expect(actual.parameters, equals(expectedParams));
   }
@@ -32,7 +32,7 @@ void main() {
 
       test('when looking up the non-grouped path, then it fails', () {
         final failedResult = router.lookup(Method.get, '/users');
-        expect(failedResult, null);
+        expect(failedResult, isA<PathMiss>());
       });
     });
 
@@ -55,12 +55,12 @@ void main() {
 
       test('when looking up partial path /v1/posts, then it fails', () {
         final failedResult = router.lookup(Method.get, '/v1/posts');
-        expect(failedResult, null);
+        expect(failedResult, isA<PathMiss>());
       });
 
       test('when looking up partial path /posts, then it fails', () {
         final failedResult = router.lookup(Method.get, '/posts');
-        expect(failedResult, null);
+        expect(failedResult, isA<PathMiss>());
       });
     });
 
@@ -73,9 +73,7 @@ void main() {
       users.get('/profile', 'profile');
 
       final result = router.lookup(Method.get, '/users/123/profile');
-      expect(result, isNotNull);
-      expect(result!.value, 'profile');
-      expect(result.parameters, {#userId: '123'});
+      expectLookupResult(result, 'profile', {#userId: '123'});
     });
 
     group('Given a router with multiple sibling groups and registered paths',
@@ -167,9 +165,14 @@ void main() {
       group2.get('/data', 'some-data');
 
       final result = router.lookup(Method.get, '/tenant/abc/users/123/data');
-      expect(result, isNotNull);
-      expect(result!.value, 'some-data');
-      expect(result.parameters, {#tenantId: 'abc', #userId: '123'});
+      expectLookupResult(
+        result,
+        'some-data',
+        {
+          #tenantId: 'abc',
+          #userId: '123',
+        },
+      );
     });
 
     test(
@@ -190,8 +193,7 @@ void main() {
       final second = router.group('a');
       final result = second.lookup(Method.get, 'b');
       expect(first, isNot(second));
-      expect(result, isNotNull);
-      expect(result!.value, 1);
+      expectLookupResult(result, 1);
     });
 
     test(
@@ -201,7 +203,7 @@ void main() {
       final router = Router<int>()..group('a');
       final result = router.lookup(Method.get, 'a');
       router.isEmpty;
-      expect(result, isNull);
+      expect(result, isA<PathMiss>());
     });
   });
 }

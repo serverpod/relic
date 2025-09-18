@@ -9,6 +9,9 @@ void main() {
       '/foo'); // groups defined as the simple extension method from above
   child.get('/bar', 42);
   parent.get('/foo/doo', 1202);
-  print(parent.lookup(Method.get, '/foo/bar')?.value); // was added to child
-  print(child.lookup(Method.get, '/doo')?.value); // was added to parent
+  print(parent
+      .lookup(Method.get, '/foo/bar')
+      .asMatch
+      .value); // was added to child
+  print(child.lookup(Method.get, '/doo').asMatch.value); // was added to parent
 }
