@@ -85,6 +85,18 @@ The CI runs on multiple Dart versions (3.5.0, stable, beta) and OS (Ubuntu, Wind
 5. Publish dry run
 6. Unit tests with coverage
 7. Documentation site build test
+8. **PR Title Validation**: All PR titles must follow conventional commits format
+
+### Conventional Commits
+- **Required**: All PR titles must follow conventional commits format
+- **Validation**: CI check (`.github/workflows/title-validation.yaml`) validates PR titles
+- **Allowed types**: `build`, `chore`, `ci`, `docs`, `feat`, `fix`, `perf`, `refactor`, `revert`, `style`, `test`
+- **Format**: `type: description` where description starts with uppercase letter
+- **Examples**: 
+  - `feat: Add new router middleware support`
+  - `fix: Handle edge case in header parsing`
+  - `docs: Update API documentation for headers`
+  - `chore: Update dependencies to latest versions`
 
 ### Testing Guidelines
 - Follow Given-When-Then test descriptions
