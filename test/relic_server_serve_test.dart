@@ -347,17 +347,17 @@ void main() {
 
   group('X-Powered-By header', () {
     const poweredBy = 'x-powered-by';
-    test('defaults to "Relic"', () async {
+    test('is not automatically set', () async {
       await _scheduleServer(syncHandler);
 
       final response = await _get();
       expect(
         response.headers[poweredBy],
-        equals('Relic'),
+        isNull,
       );
     });
 
-    test('defers to header in response when default', () async {
+    test('can be set manually in response headers', () async {
       await _scheduleServer(respondWith((final request) {
         return Response.ok(
           body: Body.fromString('test'),
@@ -369,36 +369,25 @@ void main() {
       expect(response.headers, containsPair(poweredBy, 'myServer'));
     });
 
-    test('can be set at the server level', () async {
+    test('is not set by default at server level', () async {
       _server = await testServe(
         syncHandler,
-        poweredByHeader: 'ourServer',
       );
       final response = await _get();
       expect(
-        response.headers,
-        containsPair(poweredBy, 'ourServer'),
+        response.headers[poweredBy],
+        isNull,
       );
     });
 
-    test('defers to header in response when set at the server level', () async {
+    test('preserves manually set header in response', () async {
       _server = await testServe(
         createSyncHandler(
             headers: Headers.build((final mh) => mh.xPoweredBy = 'myServer')),
-        poweredByHeader: 'ourServer',
       );
 
       final response = await _get();
       expect(response.headers, containsPair(poweredBy, 'myServer'));
-    });
-
-    test('can be unset at the server level', () async {
-      _server = await testServe(
-        syncHandler,
-        poweredByHeader: null,
-      );
-      final response = await _get();
-      expect(response.headers[poweredBy], isNull);
     });
   });
 

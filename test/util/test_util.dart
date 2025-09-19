@@ -59,14 +59,12 @@ final isOhNoStateError =
 Future<RelicServer> testServe(
   final Handler handler, {
   final SecurityContext? context,
-  final String? poweredByHeader = RelicServer.defaultPoweredByHeader,
 }) =>
     serve(
       handler,
       InternetAddress.loopbackIPv4,
       0,
-      context: context,
-      poweredByHeader: poweredByHeader,
+      securityContext: context,
     );
 
 /// Like [group], but takes a [variants] argument and creates a group for each

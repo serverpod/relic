@@ -1,67 +1,62 @@
 import 'package:relic/relic.dart';
 import 'package:test/test.dart';
 
+import '../../static/test_util.dart';
 import '../docs/strict_validation_docs.dart';
 import '../headers_test_utils.dart';
 
 /// About empty value test, check the [StrictValidationDocs] class for more details.
 void main() {
   group(
-    'Given an X-Powered-By header with the strict flag true',
+    'Given an X-Powered-By header accessor',
     () {
       late RelicServer server;
 
       setUp(() async {
-        server = await createServer(strictHeaders: true);
+        server = await createServer();
       });
 
       tearDown(() => server.close());
 
       test(
-          'when an empty X-Powered-By header is passed then the server responds '
-          'with a bad request including a message that states the header value '
-          'cannot be empty', () async {
-        expect(
-          getServerRequestHeaders(
-              server: server,
-              headers: {'x-powered-by': ''},
-              touchHeaders: (final h) => h.xPoweredBy),
-          throwsA(
-            isA<BadRequestException>().having(
-              (final e) => e.message,
-              'message',
-              contains('Value cannot be empty'),
-            ),
-          ),
-        );
-      });
-
-      test(
-        'when a valid X-Powered-By value is passed then it should parse correctly',
-        () async {
-          final headers = await getServerRequestHeaders(
-            server: server,
-            headers: {'x-powered-by': 'Express'},
-            touchHeaders: (final h) => h.xPoweredBy,
-          );
+        'when setting a valid X-Powered-By value then it should be accessible',
+        () {
+          final headers = Headers.build((final h) {
+            h.xPoweredBy = 'Express';
+          });
 
           expect(headers.xPoweredBy, equals('Express'));
         },
       );
-    },
-  );
 
-  group(
-    'Given an X-Powered-By header with the strict flag false',
-    skip: 'x-powered-by is a response header (stripped on get request)',
-    () {
-      late RelicServer server;
+      test(
+        'when setting X-Powered-By to null then it should be null',
+        () {
+          final headers = Headers.build((final h) {
+            h.xPoweredBy = null;
+          });
 
-      setUp(() async {
-        server = await createServer(strictHeaders: false);
+          expect(headers.xPoweredBy, isNull);
+        },
+      );
+
+      test(
+        'when creating response with X-Powered-By header then it should be preserved',
+        () {
+          final response = Response.ok(headers: Headers.build((final h) {
+            h.xPoweredBy = 'Custom Framework';
+          }));
+
+          expect(response.headers.xPoweredBy, equals('Custom Framework'));
+        },
+      );
+
+      test(
+          'when creating response without X-Powered-By header then it should be null',
+          () {
+        final response = Response.ok();
+        expect(response.headers.xPoweredBy, isNull);
       });
-
-      tearDown(() => server.close());
     },
   );
 }

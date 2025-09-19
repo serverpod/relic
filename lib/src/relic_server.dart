@@ -13,9 +13,6 @@ import 'util/util.dart';
 
 /// A server that uses a [Adapter] to handle HTTP requests.
 class RelicServer {
-  /// The default powered by header to use for responses.
-  static const String defaultPoweredByHeader = 'Relic';
-
   /// The underlying adapter.
   final Adapter adapter;
 
@@ -27,14 +24,10 @@ class RelicServer {
 
   StreamSubscription<AdapterRequest>? _subscription;
 
-  /// The powered by header to use for responses.
-  final String? poweredByHeader;
-
   /// Creates a server with the given parameters.
   RelicServer(
     this.adapter, {
     this.strictHeaders = false,
-    this.poweredByHeader = defaultPoweredByHeader,
   });
 
   /// Mounts a handler to the server and starts listening for requests.
@@ -120,11 +113,10 @@ class RelicServer {
         final handledCtx = await handler(ctx);
         return switch (handledCtx) {
           final ResponseContext rc =>
-            // If the response doesn't have a powered-by or date header, add the default ones
+            // If the response doesn't have a date header, add the default one
             rc.respond(
               rc.response.copyWith(headers: rc.response.headers.transform(
                 (final mh) {
-                  mh.xPoweredBy ??= poweredByHeader;
                   mh.date ??= DateTime.now();
                 },
               )),
