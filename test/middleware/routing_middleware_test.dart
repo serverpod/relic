@@ -375,4 +375,161 @@ void main() {
       expect(method, equals(v));
     },
   );
+  group('Virtual hosting', () {
+    late final Handler handler;
+
+    setUpAll(() {
+      final globalRouter = Router<int>()..get('/bar', 2);
+      final router = Router<int>()
+        // Adding a route for a single host is the same as normal,
+        // just add the host as the first segment.
+        ..get('www.example.org/foo', 1)
+        // For global routes, ie. routes that can be reached no matter
+        // what host is used we need to attach a global router for every
+        // virtual host, as well as '*' (since we don't do back-tracking),
+        // but given that trie nodes are shared this is super efficient.
+        // (no duplication)
+        ..attach('www.example.org', globalRouter)
+        ..attach('*', globalRouter); // all other hosts
+
+      final middleware = routeWith(router,
+          toHandler: (final i) => respondWith(
+              (final _) => Response.ok(body: Body.fromString('$i'))));
+
+      handler = const Pipeline()
+          .addMiddleware(middleware)
+          .addHandler((respondWith((final _) => Response.notFound())));
+    });
+
+    test('foo', () async {
+      final request = _FakeRequest(host: 'www.example.org', 'foo');
+
+      final responseCtx = await handler(request.toContext(Object()));
+
+      expect(responseCtx, isA<ResponseContext>());
+      final response = (responseCtx as ResponseContext).response;
+      expect(response.statusCode, 200);
+      expect(await response.readAsString(), '1');
+    });
+
+    test('bar', () async {
+      final request = _FakeRequest(host: 'www.example.org', 'bar');
+
+      final responseCtx = await handler(request.toContext(Object()));
+
+      expect(responseCtx, isA<ResponseContext>());
+      final response = (responseCtx as ResponseContext).response;
+      expect(response.statusCode, 200);
+      expect(await response.readAsString(), '2');
+    });
+  });
+
+  group('Method Not Allowed (405) responses', () {
+    late Router<Handler> router;
+    late Middleware middleware;
+
+    setUp(() {
+      router = Router<Handler>();
+      middleware = routeWith(router);
+    });
+
+    test(
+        'Given a router with GET route only, '
+        'when a POST request is made to the same path, '
+        'then a 405 response is returned', () async {
+      router.add(Method.get, '/users', respondWith((final _) => Response(200)));
+
+      final initialCtx =
+          _FakeRequest('/users', method: Method.post).toContext(Object());
+      final resultingCtx =
+          await middleware(respondWith((final _) => Response(404)))(initialCtx);
+
+      expect(resultingCtx, isA<ResponseContext>());
+      final response = (resultingCtx as ResponseContext).response;
+      expect(response.statusCode, equals(405));
+    });
+
+    test(
+        'Given a router with GET route only, '
+        'when a POST request is made to the same path, '
+        'then the Allow header contains GET', () async {
+      router.add(Method.get, '/users', respondWith((final _) => Response(200)));
+
+      final initialCtx =
+          _FakeRequest('/users', method: Method.post).toContext(Object());
+      final resultingCtx =
+          await middleware(respondWith((final _) => Response(404)))(initialCtx);
+
+      expect(resultingCtx, isA<ResponseContext>());
+      final response = (resultingCtx as ResponseContext).response;
+      expect(response.statusCode, equals(405));
+      expect(response.headers.allow, contains(Method.get));
+    });
+
+    test(
+        'Given a router with GET and POST routes for the same path, '
+        'when a PUT request is made to that path, '
+        'then the Allow header contains both GET and POST', () async {
+      router.add(Method.get, '/users', respondWith((final _) => Response(200)));
+      router.add(
+          Method.post, '/users', respondWith((final _) => Response(201)));
+
+      final initialCtx =
+          _FakeRequest('/users', method: Method.put).toContext(Object());
+      final resultingCtx =
+          await middleware(respondWith((final _) => Response(404)))(initialCtx);
+
+      expect(resultingCtx, isA<ResponseContext>());
+      final response = (resultingCtx as ResponseContext).response;
+      expect(response.statusCode, equals(405));
+      final allowedMethods = response.headers.allow;
+      expect(allowedMethods, contains(Method.get));
+      expect(allowedMethods, contains(Method.post));
+      expect(allowedMethods, hasLength(2));
+    });
+
+    test(
+        'Given a router with multiple HTTP methods for a parameterized route, '
+        'when a non-matching method is used with valid parameters, '
+        'then a 405 response is returned with correct Allow header', () async {
+      router.add(
+          Method.get, '/users/:id', respondWith((final _) => Response(200)));
+      router.add(
+          Method.delete, '/users/:id', respondWith((final _) => Response(204)));
+
+      final initialCtx =
+          _FakeRequest('/users/123', method: Method.patch).toContext(Object());
+      final resultingCtx =
+          await middleware(respondWith((final _) => Response(404)))(initialCtx);
+
+      expect(resultingCtx, isA<ResponseContext>());
+      final response = (resultingCtx as ResponseContext).response;
+      expect(response.statusCode, equals(405));
+      final allowedMethods = response.headers.allow;
+      expect(allowedMethods, contains(Method.get));
+      expect(allowedMethods, contains(Method.delete));
+      expect(allowedMethods, hasLength(2));
+    });
+
+    test(
+        'Given a router with routes that do not match the requested path, '
+        'when a request is made, '
+        'then a path miss occurs and next handler is called (not 405)',
+        () async {
+      router.add(Method.get, '/users', respondWith((final _) => Response(200)));
+
+      bool nextCalled = false;
+      final initialCtx =
+          _FakeRequest('/posts', method: Method.get).toContext(Object());
+      final resultingCtx = await middleware((final ctx) async {
+        nextCalled = true;
+        return ctx.respond(Response(404));
+      })(initialCtx);
+
+      expect(nextCalled, isTrue);
+      expect(resultingCtx, isA<ResponseContext>());
+      final response = (resultingCtx as ResponseContext).response;
+      expect(response.statusCode, equals(404)); // Not 405
+    });
+  });
 }
