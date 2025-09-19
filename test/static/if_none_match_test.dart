@@ -12,7 +12,8 @@ void main() {
 
   setUp(() async {
     await d.file('test_file.txt', fileContent).create();
-    handler = createStaticHandler(cacheControl: null, d.sandbox);
+    handler = createStaticHandler(
+        cacheControl: (final _, final __) => null, d.sandbox);
   });
 
   test(
@@ -71,6 +72,34 @@ void main() {
     expect(response.statusCode, HttpStatus.notModified);
     expect(response.body.contentLength, 0);
     expect(await response.readAsString(), isEmpty);
+  });
+
+  test(
+      'Given an If-None-Match header with an original ETag that no longer match, '
+      'when a request is made for the file, '
+      'then a 200 OK status is returned with the full body', () async {
+    await d.file('changing', 'before').create();
+
+    final firstResponse = await makeRequest(handler, '/changing');
+    expect(firstResponse.statusCode, 200);
+    expect(await firstResponse.readAsString(), 'before');
+
+    final etag = firstResponse.headers.etag!;
+
+    final secondResponse = await makeRequest(handler, '/changing',
+        headers: Headers.build(
+            (final mh) => mh.ifNoneMatch = IfNoneMatchHeader.etags([etag])));
+
+    expect(secondResponse.statusCode, 304);
+    expect(await secondResponse.readAsString(), isEmpty);
+
+    await d.file('changing', 'after').create();
+
+    final thirdResponse = await makeRequest(handler, '/changing',
+        headers: Headers.build(
+            (final mh) => mh.ifNoneMatch = IfNoneMatchHeader.etags([etag])));
+    expect(thirdResponse.statusCode, 200);
+    expect(await thirdResponse.readAsString(), 'after');
   });
 
   test(
