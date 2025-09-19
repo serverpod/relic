@@ -19,7 +19,7 @@ void main() {
     expect(gotLog, isFalse);
     gotLog = true;
     expect(type, LoggerType.info);
-    expect(msg, contains(RequestMethod.get.value));
+    expect(msg, contains(Method.get.value));
     expect(msg, contains('[200]'));
   }
 

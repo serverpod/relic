@@ -1,18 +1,7 @@
 import 'lookup_result.dart';
+import 'method.dart';
 import 'normalized_path.dart';
 import 'path_trie.dart';
-
-enum Method {
-  get,
-  head,
-  post,
-  put,
-  delete,
-  patch,
-  options,
-  trace,
-  connect,
-}
 
 /// A wrapper around a fixed-length list used for mapping between method and value
 /// for each registered path.
@@ -36,6 +25,9 @@ extension type _RouterEntry<T>._(List<T?> _routeByVerb) {
 
   @pragma('vm:prefer-inline')
   T? find(final Method method) => _routeByVerb[method.index];
+
+  Set<Method> get allowed =>
+      Method.values.where((final method) => find(method) != null).toSet();
 }
 
 extension<T> on _RouterEntry<T>? {
@@ -77,17 +69,17 @@ final class Router<T> {
   /// The input [path] string is normalized before lookup. Static routes are
   /// checked first, followed by dynamic routes in the trie.
   ///
-  /// Returns a [LookupResult] containing the associated value and any extracted
+  /// Returns a [Match] containing the associated value and any extracted
   /// parameters if a match is found. Returns `null` if no matching route exists.
-  LookupResult<T>? lookup(final Method method, final String path) {
+  LookupResult<T> lookup(final Method method, final String path) {
     final normalizedPath = NormalizedPath(path); // Normalize upfront
     final entry = _allRoutes.lookup(normalizedPath);
-    if (entry == null) return null;
+    if (entry == null) return PathMiss(normalizedPath);
 
     final route = entry.value.find(method);
-    if (route == null) return null;
+    if (route == null) return MethodMiss(entry.value.allowed);
 
-    return LookupResult(
+    return RouterMatch(
       route,
       entry.parameters,
       entry.matched,
@@ -150,12 +142,24 @@ extension RouteEx<T> on Router<T> {
   void connect(final String path, final T value) =>
       add(Method.connect, path, value);
 
-  /// Adds a route definition for all HTTP methods (GET, POST, PUT, etc.).
+  /// Adds a route definition for a set of HTTP methods.
   ///
-  /// This is a convenience method that calls `add` for each method in the [Method] enum.
-  void any(final String path, final T value) {
-    for (final method in Method.values) {
+  /// This is a convenience method that calls `add` for each method in the provided set
+  /// [methods].
+  void anyOf(final Set<Method> methods, final String path, final T value) {
+    for (final method in methods) {
       add(method, path, value);
     }
+  }
+
+  /// Adds a route definition for all HTTP methods (GET, POST, PUT, etc.).
+  void any(final String path, final T value) =>
+      anyOf(Method.values.toSet(), path, value);
+
+  /// Create and attach a subrouter for a path. If one already exists they are merged.
+  Router<T> group(final String path) {
+    final subRouter = Router<T>();
+    attach(path, subRouter);
+    return subRouter;
   }
 }

@@ -6,7 +6,7 @@ import '../../../relic.dart';
 /// Creates a new [Request] from an [io.HttpRequest].
 Request fromHttpRequest(final io.HttpRequest request) {
   return Request(
-    RequestMethod.parse(request.method),
+    Method.parse(request.method),
     request.requestedUri,
     protocolVersion: request.protocolVersion,
     headers: headersFromHttpRequest(request),
