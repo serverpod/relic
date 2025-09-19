@@ -9,9 +9,11 @@ import 'middleware.dart';
 
 Middleware routeWith<T>(
   final Router<T> router, {
+  final bool useHostWhenRouting = false,
   final Handler Function(T)? toHandler,
 }) =>
-    _RoutingMiddlewareBuilder(router, toHandler: toHandler).build();
+    _RoutingMiddlewareBuilder(router, useHostWhenRouting, toHandler: toHandler)
+        .build();
 
 final _routingContext = ContextProperty<
     ({
@@ -22,10 +24,12 @@ final _routingContext = ContextProperty<
 
 class _RoutingMiddlewareBuilder<T> {
   final Router<T> _router;
+  final bool _useHostWhenRouting;
   late final Handler Function(T) _toHandler;
 
   _RoutingMiddlewareBuilder(
-    this._router, {
+    this._router,
+    this._useHostWhenRouting, {
     final Handler Function(T)? toHandler,
   }) {
     if (toHandler != null) {
@@ -39,8 +43,16 @@ class _RoutingMiddlewareBuilder<T> {
   Handler _meddle(final Handler next) {
     return (final ctx) async {
       final req = ctx.request;
-      final match =
-          _router.lookup(req.method.convert(), Uri.decodeFull(req.url.path));
+      final path = (StringBuffer()
+            ..writeAll(
+              [
+                if (_useHostWhenRouting) req.url.host,
+                Uri.decodeFull(req.url.path),
+              ],
+              '/',
+            ))
+          .toString();
+      final match = _router.lookup(req.method.convert(), path);
       if (match != null) {
         _routingContext[ctx] = (
           parameters: match.parameters,
