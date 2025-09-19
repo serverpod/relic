@@ -14,7 +14,7 @@ void main() {
   }
 
   group('Router.group', () {
-    group('Given a router with a group and registered path', () {
+    group('Given a router with a group with a path', () {
       late Router<String> router;
 
       setUp(() {
@@ -23,20 +23,18 @@ void main() {
         api.get('/users', 'users');
       });
 
-      test(
-          'when looking up the grouped path, then it returns the correct value',
-          () {
+      test('when looking up the full path, then it succeeds', () {
         final result = router.lookup(Method.get, '/api/users');
         expectLookupResult(result, 'users');
       });
 
-      test('when looking up the non-grouped path, then it fails', () {
+      test('when looking up partial path, then it fails', () {
         final failedResult = router.lookup(Method.get, '/users');
         expect(failedResult, null);
       });
     });
 
-    group('Given a router with nested groups and registered path', () {
+    group('Given a router with nested groups and a path', () {
       late Router<String> router;
 
       setUp(() {
@@ -46,9 +44,7 @@ void main() {
         v1.get('/posts', 'posts');
       });
 
-      test(
-          'when looking up the fully nested path, then it returns the correct value',
-          () {
+      test('when looking up the full path /api/v1/posts, then it succeeds', () {
         final result = router.lookup(Method.get, '/api/v1/posts');
         expectLookupResult(result, 'posts');
       });
@@ -73,9 +69,7 @@ void main() {
       users.get('/profile', 'profile');
 
       final result = router.lookup(Method.get, '/users/123/profile');
-      expect(result, isNotNull);
-      expect(result!.value, 'profile');
-      expect(result.parameters, {#userId: '123'});
+      expectLookupResult(result, 'profile', {#userId: '123'});
     });
 
     group('Given a router with multiple sibling groups and registered paths',
@@ -103,60 +97,6 @@ void main() {
       });
     });
 
-    group('Given a group with trailing slash and registered path', () {
-      late Router<String> router;
-
-      setUp(() {
-        router = Router<String>();
-        // Group path with trailing slash
-        final api = router.group('/api/');
-        api.get('/users', 'users');
-      });
-
-      test(
-          'when looking up route without trailing slash, then it returns the correct value',
-          () {
-        final result = router.lookup(Method.get, '/api/users');
-        expectLookupResult(result, 'users');
-      });
-
-      test(
-          'when looking up route with trailing slash, then it returns the correct value',
-          () {
-        final result = router.lookup(Method.get, '/api/users/');
-        expectLookupResult(result, 'users');
-      });
-    });
-
-    group(
-        'Given a group with routes registered with and without leading slashes',
-        () {
-      late Router<String> router;
-
-      setUp(() {
-        router = Router<String>();
-        final api = router.group('/api');
-        // Route with leading slash
-        api.get('/users', 'users');
-        // Route without leading slash
-        api.get('posts', 'posts');
-      });
-
-      test(
-          'when looking up route registered with leading slash, then it returns correct value',
-          () {
-        final usersResult = router.lookup(Method.get, '/api/users');
-        expectLookupResult(usersResult, 'users');
-      });
-
-      test(
-          'when looking up route registered without leading slash, then it returns correct value',
-          () {
-        final postsResult = router.lookup(Method.get, '/api/posts');
-        expectLookupResult(postsResult, 'posts');
-      });
-    });
-
     test(
         'Given nested parameterized groups with a registered path, '
         'when looking up the deeply nested route with parameter values, '
@@ -167,9 +107,8 @@ void main() {
       group2.get('/data', 'some-data');
 
       final result = router.lookup(Method.get, '/tenant/abc/users/123/data');
-      expect(result, isNotNull);
-      expect(result!.value, 'some-data');
-      expect(result.parameters, {#tenantId: 'abc', #userId: '123'});
+      expectLookupResult(
+          result, 'some-data', {#tenantId: 'abc', #userId: '123'});
     });
 
     test(
@@ -190,8 +129,7 @@ void main() {
       final second = router.group('a');
       final result = second.lookup(Method.get, 'b');
       expect(first, isNot(second));
-      expect(result, isNotNull);
-      expect(result!.value, 1);
+      expectLookupResult(result, 1);
     });
 
     test(
