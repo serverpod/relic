@@ -1,11 +1,10 @@
 import 'package:relic/relic.dart';
 import 'package:test/test.dart';
 
-import '../../static/test_util.dart';
 import '../docs/strict_validation_docs.dart';
 import '../headers_test_utils.dart';
 
-/// About empty value test, check the [StrictValidationDocs] class for more details.
+/// For more details on header validation behavior, see the [HeaderValidationDocs] class.
 void main() {
   group(
     'Given an X-Powered-By header accessor',

@@ -16,19 +16,13 @@ class RelicServer {
   /// The underlying adapter.
   final Adapter adapter;
 
-  /// Whether to enforce strict header parsing.
-  final bool strictHeaders;
-
   /// Whether [mountAndStart] has been called.
   Handler? _handler;
 
   StreamSubscription<AdapterRequest>? _subscription;
 
   /// Creates a server with the given parameters.
-  RelicServer(
-    this.adapter, {
-    this.strictHeaders = false,
-  });
+  RelicServer(this.adapter);
 
   /// Mounts a handler to the server and starts listening for requests.
   ///

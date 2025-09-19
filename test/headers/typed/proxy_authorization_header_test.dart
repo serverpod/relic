@@ -7,13 +7,13 @@ import '../docs/strict_validation_docs.dart';
 import '../headers_test_utils.dart';
 
 /// Reference: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Proxy-Authorization
-/// About empty value test, check the [StrictValidationDocs] class for more details.
+/// For more details on header validation behavior, see the [HeaderValidationDocs] class.
 void main() {
-  group('Given a Proxy-Authorization header with the strict flag true', () {
+  group('Given a Proxy-Authorization header with validation', () {
     late RelicServer server;
 
     setUp(() async {
-      server = await createServer(strictHeaders: true);
+      server = await createServer();
     });
 
     tearDown(() => server.close());
@@ -470,11 +470,11 @@ void main() {
     });
   });
 
-  group('Given a Proxy-Authorization header with the strict flag false', () {
+  group('Given a Proxy-Authorization header without validation', () {
     late RelicServer server;
 
     setUp(() async {
-      server = await createServer(strictHeaders: false);
+      server = await createServer();
     });
 
     tearDown(() => server.close());

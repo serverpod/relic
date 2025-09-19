@@ -10,20 +10,20 @@ import '../headers_test_utils.dart';
 /// It indicates whether the response to the request can be exposed when the credentials flag is true.
 /// The tests cover both strict and non-strict modes, ensuring that invalid values are handled appropriately.
 /// Reference: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Allow-Credentials#directives
-/// About empty value test, check the [StrictValidationDocs] class for more details.
+/// For more details on header validation behavior, see the [HeaderValidationDocs] class.
 
 void main() {
+  late RelicServer server;
+
+  setUp(() async {
+    server = await createServer();
+  });
+
+  tearDown(() => server.close());
+
   group(
-    'Given an Access-Control-Allow-Credentials header with the strict flag true',
+    'Given an Access-Control-Allow-Credentials header with validation',
     () {
-      late RelicServer server;
-
-      setUp(() async {
-        server = await createServer(strictHeaders: true);
-      });
-
-      tearDown(() => server.close());
-
       test(
         'when an empty Access-Control-Allow-Credentials header is passed then the server responds '
         'with a bad request including a message that states the header value '
@@ -133,17 +133,8 @@ void main() {
     },
   );
 
-  group(
-      'Given an Access-Control-Allow-Credentials header with the strict flag false',
+  group('Given an Access-Control-Allow-Credentials header without validation',
       () {
-    late RelicServer server;
-
-    setUp(() async {
-      server = await createServer(strictHeaders: false);
-    });
-
-    tearDown(() => server.close());
-
     group('when an empty Access-Control-Allow-Credentials header is passed',
         () {
       test(
