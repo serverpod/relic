@@ -141,31 +141,6 @@ class RelicServer {
         return ctx.respond(Response.badRequest(
           body: Body.fromString('Bad Request'),
         ));
-      } catch (error, stackTrace) {
-        // Catch all other exceptions that might contain sensitive information
-        _logError(
-          ctx.request,
-          'Error in request handler.\n$error',
-          stackTrace,
-        );
-        
-        // Check if this looks like a client error (4xx) based on common patterns
-        final errorString = error.toString().toLowerCase();
-        final isBadRequest = errorString.contains('invalid json') ||
-            errorString.contains('json') ||
-            errorString.contains('parse') ||
-            errorString.contains('format') ||
-            errorString.contains('syntax');
-            
-        if (isBadRequest) {
-          return ctx.respond(Response.badRequest(
-            body: Body.fromString('Bad Request'),
-          ));
-        } else {
-          return ctx.respond(Response.internalServerError(
-            body: Body.fromString('Internal Server Error'),
-          ));
-        }
       }
     };
   }
