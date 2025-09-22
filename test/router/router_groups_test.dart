@@ -112,12 +112,21 @@ void main() {
     });
 
     test(
-        'Given a router with conflicting group patterns, '
-        'when attempting to add incompatible groups, '
+        'Given a router with a group on a dynamic path "/:p", '
+        'when attempting to add a groups with an incompatible path "*", '
         'then an ArgumentError is thrown', () {
       final router = Router<String>();
       router.group(':p');
       expect(() => router.group('*'), throwsArgumentError);
+    });
+
+    test(
+        'Given a router with a group on a path "a", '
+        'when adding a group with a semantically equivalent path "///a//", '
+        'then it succeeds', () {
+      final router = Router<String>();
+      router.group('a');
+      expect(() => router.group('///a//'), returnsNormally);
     });
 
     test(
