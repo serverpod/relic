@@ -460,6 +460,7 @@ Future<int> main(final List<String> args) async {
     'benchmark',
     'Relic Benchmark Tool',
     setLogLevel: setLogLevel,
+    experimentalCompletionCommand: true,
   )..addCommands([
       RunCommand(),
       ExtractCommand(),
