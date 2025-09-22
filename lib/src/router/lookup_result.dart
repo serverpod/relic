@@ -1,23 +1,31 @@
+import 'method.dart';
 import 'normalized_path.dart';
 import 'path_trie.dart';
 
-/// Represents the result of a route lookup.
-final class LookupResult<T> {
-  /// The value associated with the matched route.
-  final T value;
+sealed class LookupResult<T> {
+  const LookupResult();
+}
 
-  /// A map of parameter names to their extracted values from the path.
-  final Parameters parameters;
+sealed class Miss<T> extends LookupResult<T> {
+  const Miss();
+}
 
-  /// The normalized path that was matched.
-  final NormalizedPath matched;
+final class PathMiss<T> extends Miss<T> {
+  final NormalizedPath path;
 
-  /// If a match, does not consume the full path, then stores the [remaining]
-  ///
-  /// This can only happen with a path that ends with a tail segment `/**`,
-  /// otherwise it will be empty.
-  final NormalizedPath remaining;
+  const PathMiss(this.path);
+}
 
-  /// Creates a [LookupResult] with the given [value] and [parameters].
-  const LookupResult(this.value, this.parameters, this.matched, this.remaining);
+final class MethodMiss<T> extends Miss<T> {
+  final Set<Method> allowed;
+
+  const MethodMiss(this.allowed);
+}
+
+final class RouterMatch<T> extends TrieMatch<T> implements LookupResult<T> {
+  RouterMatch(super.value, super.parameters, super.matched, super.remaining);
+}
+
+extension LookupResultExtension<T> on LookupResult<T> {
+  TrieMatch<T> get asMatch => this as RouterMatch<T>;
 }

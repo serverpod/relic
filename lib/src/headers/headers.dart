@@ -86,8 +86,8 @@ class Headers extends HeadersBase {
   static const accessControlRequestHeaders = HeaderAccessor(
       Headers.accessControlRequestHeadersHeader, stringListCodec);
 
-  static const accessControlRequestMethod = HeaderAccessor(
-      Headers.accessControlRequestMethodHeader, RequestMethod.codec);
+  static const accessControlRequestMethod =
+      HeaderAccessor(Headers.accessControlRequestMethodHeader, methodCodec);
 
   static const age = HeaderAccessor(
     Headers.ageHeader,
@@ -153,7 +153,7 @@ class Headers extends HeadersBase {
 
   static const allow = HeaderAccessor(
     Headers.allowHeader,
-    HeaderCodec(parseMethodList, encodeMethodList),
+    HeaderCodec(parseMethodSet, encodeMethodList),
   );
 
   static const cacheControl =
@@ -260,7 +260,7 @@ class Headers extends HeadersBase {
       Headers.crossOriginOpenerPolicyHeader,
       CrossOriginOpenerPolicyHeader.codec);
 
-  static const _common = {
+  static const _common = <HeaderAccessor>{
     cacheControl,
     connection,
     contentDisposition,
@@ -277,7 +277,7 @@ class Headers extends HeadersBase {
     via,
   };
 
-  static const _requestOnly = {
+  static const _requestOnly = <HeaderAccessor>{
     accept,
     acceptEncoding,
     acceptLanguage,
@@ -307,7 +307,7 @@ class Headers extends HeadersBase {
     xForwardedFor,
   };
 
-  static const _responseOnly = {
+  static const _responseOnly = <HeaderAccessor>{
     acceptRanges,
     accessControlAllowCredentials,
     accessControlAllowHeaders,

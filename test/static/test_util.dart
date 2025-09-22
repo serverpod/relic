@@ -14,7 +14,7 @@ Future<Response> makeRequest(
   final String path, {
   final String? handlerPath,
   final Headers? headers,
-  final RequestMethod method = RequestMethod.get,
+  final Method method = Method.get,
 }) async {
   final rootedHandler = _rootHandler(handlerPath, handler);
   final request = _fromPath(path, headers, method: method);
@@ -26,7 +26,7 @@ Future<Response> makeRequest(
 Request _fromPath(
   final String path,
   final Headers? headers, {
-  required final RequestMethod method,
+  required final Method method,
 }) =>
     Request(
       method,

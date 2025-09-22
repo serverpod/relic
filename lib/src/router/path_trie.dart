@@ -1,7 +1,27 @@
-import 'lookup_result.dart';
 import 'normalized_path.dart';
 
 typedef Parameters = Map<Symbol, String>;
+
+/// Represents the successfull result of a lookup.
+class TrieMatch<T> {
+  /// The value associated with the matched route.
+  final T value;
+
+  /// A map of parameter names to their extracted values from the path.
+  final Parameters parameters;
+
+  /// The normalized path that was matched.
+  final NormalizedPath matched;
+
+  /// If a match, does not consume the full path, then stores the [remaining]
+  ///
+  /// This can only happen with a path that ends with a tail segment `/**`,
+  /// otherwise it will be empty.
+  final NormalizedPath remaining;
+
+  /// Creates a [TrieMatch] with the given [value] and [parameters].
+  const TrieMatch(this.value, this.parameters, this.matched, this.remaining);
+}
 
 /// A node within the path trie.
 final class _TrieNode<T> {
@@ -11,7 +31,7 @@ final class _TrieNode<T> {
   /// Parameter definition associated with this node, if any.
   _DynamicSegment<T>? dynamicSegment;
 
-  /// The value associated with the route ending at this node.
+  /// The value associated with the path ending at this node.
   ///
   /// A non-null value indicates the end of a path
   T? value;
@@ -45,12 +65,12 @@ final class PathTrie<T> {
   // Note: not final since we update in attach
   var _root = _TrieNode<T>();
 
-  /// Adds a route path and its associated value to the trie.
+  /// Adds a path and its associated value to the trie.
   ///
   /// The [normalizedPath] is expected to be pre-normalized (e.g., using
   /// [NormalizedPath]). Path segments starting with `:` are treated as parameters.
   ///
-  /// If a route with the exact same path already exists, an [ArgumentError] is
+  /// If the path already exists, an [ArgumentError] is
   /// thrown. If adding a parameter conflicts with an existing parameter name at
   /// the same level (e.g., adding `/users/:id` after `/users/:userId`), an
   /// [ArgumentError] is also thrown.
@@ -68,7 +88,7 @@ final class PathTrie<T> {
     currentNode.value = value;
   }
 
-  /// Adds a route path and its associated value to the trie, or updates the
+  /// Adds a path and its associated value to the trie, or updates the
   /// value if the path already exists.
   ///
   /// Returns `true` if a new value was added to the path (either the path was
@@ -85,7 +105,7 @@ final class PathTrie<T> {
     return added;
   }
 
-  /// Adds or updates the value associated with a route path using an [action]
+  /// Adds or updates the value associated with a path using an [action]
   /// function.
   ///
   /// This method locates or creates the node for the given [normalizedPath].
@@ -306,9 +326,9 @@ final class PathTrie<T> {
   /// The [normalizedPath] is expected to be pre-normalized. Literal segments are
   /// prioritized over parameters during matching.
   ///
-  /// Returns a [LookupResult] containing the associated value and extracted
-  /// parameters if a matching route is found, otherwise returns `null`.
-  LookupResult<T>? lookup(final NormalizedPath normalizedPath) {
+  /// Returns a [TrieMatch] containing the associated value and extracted
+  /// parameters if a matching path is found, otherwise returns `null`.
+  TrieMatch<T>? lookup(final NormalizedPath normalizedPath) {
     final segments = normalizedPath.segments;
     _TrieNode<T> currentNode = _root;
     final parameters = <Symbol, String>{};
@@ -347,7 +367,7 @@ final class PathTrie<T> {
     }
 
     return value != null
-        ? LookupResult(value, parameters, matchedPath, remainingPath)
+        ? TrieMatch(value, parameters, matchedPath, remainingPath)
         : null;
   }
 

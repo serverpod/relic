@@ -1,5 +1,9 @@
 include: package:serverpod_lints/public.yaml
 
+analyzer:
+  language:
+    strict-raw-types: false
+
 linter:
   rules:
     avoid_relative_lib_imports: true
