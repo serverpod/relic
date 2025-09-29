@@ -1,19 +1,15 @@
 ## 0.6.0
 
-- feat!: Distinguish between path and method miss in router lookups ([#179](https://github.com/serverpod/relic/pull/179))
-- feat(router): Router.group ([#157](https://github.com/serverpod/relic/pull/157))
-- chore: Generate comprehensive GitHub Copilot instructions for Relic web server development ([#171](https://github.com/serverpod/relic/pull/171))
-- refactor!: Remove unused strict flag ([#181](https://github.com/serverpod/relic/pull/181))
-- refactor!: Remove automatic X-Powered-By header ([#169](https://github.com/serverpod/relic/pull/169))
-- fix: HEAD request should match GET except for body, including Content-Length ([#180](https://github.com/serverpod/relic/pull/180))
 - feat!: Custom CacheControl header per file ([#167](https://github.com/serverpod/relic/pull/167))
-- fix: Rip out Router.staticCache ([#172](https://github.com/serverpod/relic/pull/172))
-- refactor: Introduce WildcardListHeader<T> base-class ([#159](https://github.com/serverpod/relic/pull/159))
-- fix(server): Unset default `x-powered-by` header when null is passed ([#163](https://github.com/serverpod/relic/pull/163))
-- fix: Set content length on body, not headers ([#161](https://github.com/serverpod/relic/pull/161))
-- fix: Host header is not a Uri. Introduce an RFC3986 compliant HostHeader class ([#142](https://github.com/serverpod/relic/pull/142))
-- chore: Update the copyright ([#156](https://github.com/serverpod/relic/pull/156))
+- feat!: Distinguish between path and method miss in router lookups ([#179](https://github.com/serverpod/relic/pull/179))
+- feat!: Remove automatic X-Powered-By header ([#169](https://github.com/serverpod/relic/pull/169))
+- feat!: Remove unused strict flag ([#181](https://github.com/serverpod/relic/pull/181))
+- feat(router): Router.group ([#157](https://github.com/serverpod/relic/pull/157))
 - feat: Add operator== and hashCode on all header classes ([#155](https://github.com/serverpod/relic/pull/155))
+- fix: HEAD request should match GET except for body, including Content-Length ([#180](https://github.com/serverpod/relic/pull/180))
+- fix: Host header is not a Uri. Introduce an RFC3986 compliant HostHeader class ([#142](https://github.com/serverpod/relic/pull/142))
+- fix: Rip out Router.staticCache ([#172](https://github.com/serverpod/relic/pull/172))
+- fix: Set content length on body, not headers ([#161](https://github.com/serverpod/relic/pull/161))
 
 ## 0.5.0
 - refactor!: Rename withResponse to respond (matches connect/hijack) ([#134](https://github.com/serverpod/relic/pull/134))
