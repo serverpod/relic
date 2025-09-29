@@ -1,3 +1,16 @@
+## 0.6.0
+
+- feat!: Custom CacheControl header per file ([#167](https://github.com/serverpod/relic/pull/167))
+- feat!: Distinguish between path and method miss in router lookups ([#179](https://github.com/serverpod/relic/pull/179))
+- feat!: Remove automatic X-Powered-By header ([#169](https://github.com/serverpod/relic/pull/169))
+- feat!: Remove unused strict flag ([#181](https://github.com/serverpod/relic/pull/181))
+- feat(router): Router.group ([#157](https://github.com/serverpod/relic/pull/157))
+- feat: Add operator== and hashCode on all header classes ([#155](https://github.com/serverpod/relic/pull/155))
+- fix: HEAD request should match GET except for body, including Content-Length ([#180](https://github.com/serverpod/relic/pull/180))
+- fix: Host header is not a Uri. Introduce an RFC3986 compliant HostHeader class ([#142](https://github.com/serverpod/relic/pull/142))
+- fix: Rip out Router.staticCache ([#172](https://github.com/serverpod/relic/pull/172))
+- fix: Set content length on body, not headers ([#161](https://github.com/serverpod/relic/pull/161))
+
 ## 0.5.0
 - refactor!: Rename withResponse to respond (matches connect/hijack) ([#134](https://github.com/serverpod/relic/pull/134))
 - docs: Adds a docusaurus documentation page for relic. ([#132](https://github.com/serverpod/relic/pull/132))

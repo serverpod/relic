@@ -13,6 +13,8 @@ import 'package:relic/relic.dart';
 import 'package:routingkit/routingkit.dart' as routingkit;
 import 'package:spanner/spanner.dart' as spanner;
 
+import 'completion_script_carapace.dart';
+
 late final List<int> indexes;
 late final List<String> staticRoutesToLookup;
 late final List<String> dynamicRoutesToLookup;
@@ -460,6 +462,10 @@ Future<int> main(final List<String> args) async {
     'benchmark',
     'Relic Benchmark Tool',
     setLogLevel: setLogLevel,
+    enableCompletionCommand: true,
+    embeddedCompletions: [
+      completionScriptCarapace,
+    ],
   )..addCommands([
       RunCommand(),
       ExtractCommand(),
