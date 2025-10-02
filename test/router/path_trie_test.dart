@@ -502,5 +502,119 @@ void main() {
         expect(result.parameters, equals({#id: '456'}));
       });
     });
+
+    group('Use mapping', () {
+      test(
+          'Given a value at root, '
+          'when use is applied to root, '
+          'then the value is transformed', () {
+        final trie = PathTrie<int>();
+        final root = NormalizedPath('/');
+        trie.add(root, 1);
+        trie.use(root, (final i) => i * 2);
+        expect(trie.lookup(root)?.value, 2, reason: 'doubled');
+      });
+
+      test(
+          'Given a value at tail wildcard, '
+          'when use is applied to tail wildcard, '
+          'then matching paths are transformed', () {
+        final trie = PathTrie<int>();
+        final tail = NormalizedPath('/**');
+        trie.add(tail, 1);
+        trie.use(tail, (final i) => i * 2);
+        expect(trie.lookup(NormalizedPath('/a/b/c'))?.value, 2,
+            reason: 'doubled');
+      });
+
+      test(
+          'Given a value at parameterized path, '
+          'when use is applied to parameter prefix, '
+          'then descendant values are transformed', () {
+        final trie = PathTrie<int>();
+        trie.add(NormalizedPath('/:id/b/c'), 1);
+        trie.use(NormalizedPath('/:id'), (final i) => i * 2);
+        expect(trie.lookup(NormalizedPath('/a/b/c'))?.value, 2,
+            reason: 'doubled');
+      });
+
+      test(
+          'Given a value at wildcard path, '
+          'when use is applied to wildcard prefix, '
+          'then descendant values are transformed', () {
+        final trie = PathTrie<int>();
+        trie.add(NormalizedPath('/*/b/c'), 1);
+        trie.use(NormalizedPath('/*'), (final i) => i * 2);
+        expect(trie.lookup(NormalizedPath('/a/b/c'))?.value, 2,
+            reason: 'doubled');
+      });
+
+      test(
+          'Given multiple paths with values, '
+          'when use is applied to root, '
+          'then all descendant values are transformed', () {
+        final trie = PathTrie<int>();
+        final root = NormalizedPath('/');
+        final pathA = NormalizedPath('/a');
+        final pathB = NormalizedPath('/b');
+        trie.add(root, 1);
+        trie.add(pathA, 10);
+        trie.add(pathB, 100);
+        trie.use(root, (final i) => i * 2);
+        expect(trie.lookup(root)?.value, 2, reason: 'doubled');
+        expect(trie.lookup(pathA)?.value, 20, reason: 'doubled');
+        expect(trie.lookup(pathB)?.value, 200, reason: 'doubled');
+      });
+
+      test(
+          'Given multiple paths with values, '
+          'when use is applied to a specific path, '
+          'then only that path and its descendants are transformed', () {
+        final trie = PathTrie<int>();
+        final root = NormalizedPath('/');
+        final pathA = NormalizedPath('/a');
+        final pathB = NormalizedPath('/b');
+        trie.add(root, 1);
+        trie.add(pathA, 10);
+        trie.add(pathB, 100);
+        trie.use(pathA, (final i) => i * 2);
+        expect(trie.lookup(root)?.value, 1, reason: 'not changed');
+        expect(trie.lookup(pathA)?.value, 20, reason: 'doubled');
+        expect(trie.lookup(pathB)?.value, 100, reason: 'not changed');
+      });
+
+      test(
+          'Given two tries where one is attached to the other, '
+          'when use is applied to the attachment prefix, '
+          'then only attached trie values are transformed', () {
+        final trieA = PathTrie<int>();
+        final trieB = PathTrie<int>();
+        final pathA = NormalizedPath('/a');
+        final pathB = NormalizedPath('/b');
+        trieA.add(pathA, 10);
+        trieB.add(pathB, 100);
+        trieA.attach(NormalizedPath('/prefix'), trieB);
+        trieA.use(NormalizedPath('/prefix'), (final i) => i * 2);
+        expect(trieA.lookup(pathA)?.value, 10, reason: 'not changed');
+        expect(
+          trieA.lookup(NormalizedPath('/prefix/b'))?.value,
+          200,
+          reason: 'doubled',
+        );
+      });
+
+      test(
+          'Given multiple use mappings on ancestor and descendant paths, '
+          'when looking up a value, '
+          'then transformations are applied from leaf to root', () {
+        final trie = PathTrie<int>();
+        final pathA = NormalizedPath('/a');
+        final pathB = NormalizedPath('/a/b');
+        trie.add(pathB, 1);
+        trie.use(pathA, (final i) => i * 2);
+        trie.use(pathB, (final i) => i + 3);
+        expect(trie.lookup(pathB)?.value, 8, reason: 'add 3 then double');
+      });
+    });
   });
 }

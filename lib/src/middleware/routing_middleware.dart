@@ -10,7 +10,7 @@ final _routingContext = ContextProperty<
       NormalizedPath remaining
     })>();
 
-Middleware routeWith<T>(
+Middleware routeWith<T extends Object>(
   final Router<T> router, {
   final Handler Function(T)? toHandler,
 }) =>
@@ -18,7 +18,7 @@ Middleware routeWith<T>(
 
 bool _isSubtype<S, T>() => <S>[] is List<T>;
 
-class _RoutingMiddlewareBuilder<T> {
+class _RoutingMiddlewareBuilder<T extends Object> {
   final Router<T> _router;
   late final Handler Function(T) _toHandler;
 
