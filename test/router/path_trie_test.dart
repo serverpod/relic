@@ -523,7 +523,7 @@ void main() {
         final root = NormalizedPath('/');
         trie.add(root, 1);
         trie.use(root, (final i) => i * 2);
-        expect(trie.lookup(root)?.value, 2, reason: 'doubled');
+        expect(trie.lookup(root)?.value, 2, reason: 'Should double');
       });
 
       test(
@@ -534,7 +534,7 @@ void main() {
         final root = NormalizedPath('/');
         trie.use(root, (final i) => i * 2);
         trie.add(root, 1);
-        expect(trie.lookup(root)?.value, 2, reason: 'doubled');
+        expect(trie.lookup(root)?.value, 2, reason: 'Should double');
       });
 
       test(
@@ -546,7 +546,7 @@ void main() {
         trie.add(tail, 1);
         trie.use(tail, (final i) => i * 2);
         expect(trie.lookup(NormalizedPath('/a/b/c'))?.value, 2,
-            reason: 'doubled');
+            reason: 'Should double');
       });
 
       test(
@@ -557,7 +557,7 @@ void main() {
         trie.add(NormalizedPath('/:id/b/c'), 1);
         trie.use(NormalizedPath('/:id'), (final i) => i * 2);
         expect(trie.lookup(NormalizedPath('/a/b/c'))?.value, 2,
-            reason: 'doubled');
+            reason: 'Should double');
       });
 
       test(
@@ -568,7 +568,7 @@ void main() {
         trie.add(NormalizedPath('/*/b/c'), 1);
         trie.use(NormalizedPath('/*'), (final i) => i * 2);
         expect(trie.lookup(NormalizedPath('/a/b/c'))?.value, 2,
-            reason: 'doubled');
+            reason: 'Should double');
       });
 
       test(
@@ -583,9 +583,9 @@ void main() {
         trie.add(pathA, 10);
         trie.add(pathB, 100);
         trie.use(root, (final i) => i * 2);
-        expect(trie.lookup(root)?.value, 2, reason: 'doubled');
-        expect(trie.lookup(pathA)?.value, 20, reason: 'doubled');
-        expect(trie.lookup(pathB)?.value, 200, reason: 'doubled');
+        expect(trie.lookup(root)?.value, 2, reason: 'Should double');
+        expect(trie.lookup(pathA)?.value, 20, reason: 'Should double');
+        expect(trie.lookup(pathB)?.value, 200, reason: 'Should double');
       });
 
       test(
@@ -600,9 +600,9 @@ void main() {
         trie.add(pathA, 10);
         trie.add(pathB, 100);
         trie.use(pathA, (final i) => i * 2);
-        expect(trie.lookup(root)?.value, 1, reason: 'not changed');
-        expect(trie.lookup(pathA)?.value, 20, reason: 'doubled');
-        expect(trie.lookup(pathB)?.value, 100, reason: 'not changed');
+        expect(trie.lookup(root)?.value, 1, reason: 'Should not change');
+        expect(trie.lookup(pathA)?.value, 20, reason: 'Should double');
+        expect(trie.lookup(pathB)?.value, 100, reason: 'Should not change');
       });
 
       test(
@@ -617,11 +617,11 @@ void main() {
         trieB.add(pathB, 100);
         trieA.attach(NormalizedPath('/prefix'), trieB);
         trieA.use(NormalizedPath('/prefix'), (final i) => i * 2);
-        expect(trieA.lookup(pathA)?.value, 10, reason: 'not changed');
+        expect(trieA.lookup(pathA)?.value, 10, reason: 'Should not change');
         expect(
           trieA.lookup(NormalizedPath('/prefix/b'))?.value,
           200,
-          reason: 'doubled',
+          reason: 'Should double',
         );
       });
 
@@ -637,11 +637,11 @@ void main() {
         trieB.add(pathB, 100);
         trieB.use(NormalizedPath.empty, (final i) => i * 2);
         trieA.attach(NormalizedPath('/prefix'), trieB);
-        expect(trieA.lookup(pathA)?.value, 10, reason: 'not changed');
+        expect(trieA.lookup(pathA)?.value, 10, reason: 'Should not change');
         expect(
           trieA.lookup(NormalizedPath('/prefix/b'))?.value,
           200,
-          reason: 'doubled',
+          reason: 'Should double',
         );
       });
 
@@ -667,7 +667,27 @@ void main() {
         trie.add(pathB, 1);
         trie.use(pathA, (final i) => i * 2);
         trie.use(pathB, (final i) => i + 3);
-        expect(trie.lookup(pathB)?.value, 8, reason: 'add 3 then double');
+        expect(trie.lookup(pathB)?.value, 8,
+            reason: 'Should add 3 and then double');
+      });
+
+      test(
+          'Given a trie of functions with hierarchical use mappings, '
+          'when looking up the leaf function and applying it, '
+          'then the call order is root to leaf', () {
+        final trie = PathTrie<String Function(String)>();
+        final pathA = NormalizedPath('/a');
+        final pathB = NormalizedPath('/a/b');
+        final pathC = NormalizedPath('/a/b/c');
+        final pathD = NormalizedPath('/a/b/c/d');
+        trie.use(pathA, (final next) => (final s) => '<a>${next(s)}</a>');
+        trie.use(pathB, (final next) => (final s) => '<b>${next(s)}</b>');
+        trie.use(pathC, (final next) => (final s) => '<c>${next(s)}</c>');
+        trie.add(pathD, (final s) => s);
+        expect(
+          trie.lookup(pathD)?.value('request'),
+          '<a><b><c>request</c></b></a>',
+        );
       });
     });
   });
