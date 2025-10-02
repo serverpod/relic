@@ -337,6 +337,7 @@ final class PathTrie<T extends Object> {
     // No conflicts so safe to update
     currentNode.value ??= node.value;
     currentNode.dynamicSegment ??= node.dynamicSegment;
+    currentNode.map ??= node.map;
     currentNode.children.addAll(node.children);
     trie._root = currentNode;
   }

@@ -607,7 +607,7 @@ void main() {
 
       test(
           'Given two tries where one is attached to the other, '
-          'when use is applied to the attachment prefix, '
+          'when use is applied to the prefix on the parent, '
           'then only attached trie values are transformed', () {
         final trieA = PathTrie<int>();
         final trieB = PathTrie<int>();
@@ -623,6 +623,38 @@ void main() {
           200,
           reason: 'doubled',
         );
+      });
+
+      test(
+          'Given two tries where one is attached to the other, '
+          'when use is applied to the root of the child, '
+          'then only attached trie values are transformed', () {
+        final trieA = PathTrie<int>();
+        final trieB = PathTrie<int>();
+        final pathA = NormalizedPath('/a');
+        final pathB = NormalizedPath('/b');
+        trieA.add(pathA, 10);
+        trieB.add(pathB, 100);
+        trieB.use(NormalizedPath.empty, (final i) => i * 2);
+        trieA.attach(NormalizedPath('/prefix'), trieB);
+        expect(trieA.lookup(pathA)?.value, 10, reason: 'not changed');
+        expect(
+          trieA.lookup(NormalizedPath('/prefix/b'))?.value,
+          200,
+          reason: 'doubled',
+        );
+      });
+
+      test(
+          'Given two tries with use applied, '
+          'when attaching one to the other such that use collide, '
+          'then it fails', () {
+        final trieA = PathTrie<int>();
+        final trieB = PathTrie<int>();
+        final attachAt = NormalizedPath('/prefix');
+        trieA.use(attachAt, (final i) => i * 2);
+        trieB.use(NormalizedPath.empty, (final i) => i + 3);
+        expect(() => trieA.attach(attachAt, trieB), throwsArgumentError);
       });
 
       test(
