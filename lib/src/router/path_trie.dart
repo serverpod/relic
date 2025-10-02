@@ -178,11 +178,7 @@ final class PathTrie<T extends Object> {
   /// Sets the mapping to use on lookup for any path where [normalizedPath] is
   /// a sub-path.
   void use(final NormalizedPath normalizedPath, final T Function(T) map) {
-    final currentNode = _find(normalizedPath);
-    if (currentNode == null) {
-      throw ArgumentError.value(
-          normalizedPath, 'normalizedPath', "Path don't exist");
-    }
+    final currentNode = _build(normalizedPath);
     if (currentNode.map != null) {
       throw ArgumentError.value(
           normalizedPath, 'normalizedPath', 'Map already exists');

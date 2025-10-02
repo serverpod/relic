@@ -505,6 +505,17 @@ void main() {
 
     group('Use mapping', () {
       test(
+          'Given a value at path, '
+          'when use is applied twice to path, '
+          'then it fails the second time', () {
+        final trie = PathTrie<int>();
+        final root = NormalizedPath('/a');
+        trie.add(root, 1);
+        trie.use(root, (final i) => i * 2);
+        expect(() => trie.use(root, (final i) => i * 2), throwsArgumentError);
+      });
+
+      test(
           'Given a value at root, '
           'when use is applied to root, '
           'then the value is transformed', () {
@@ -512,6 +523,17 @@ void main() {
         final root = NormalizedPath('/');
         trie.add(root, 1);
         trie.use(root, (final i) => i * 2);
+        expect(trie.lookup(root)?.value, 2, reason: 'doubled');
+      });
+
+      test(
+          'Given an empty trie, '
+          'when use is applied before add, '
+          'then the value is transformed', () {
+        final trie = PathTrie<int>();
+        final root = NormalizedPath('/');
+        trie.use(root, (final i) => i * 2);
+        trie.add(root, 1);
         expect(trie.lookup(root)?.value, 2, reason: 'doubled');
       });
 
