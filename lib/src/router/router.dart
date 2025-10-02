@@ -57,6 +57,23 @@ final class Router<T extends Object> {
     );
   }
 
+  /// Adds a middleware function to the router.
+  ///
+  /// The [path] defines the route pattern. Segments starting with `:` (e.g.,
+  /// `:id`) are treated as parameters. The [map] function transforms matched route
+  /// values during lookup, without modifying the stored routes.
+  void use(final String path, final T Function(T) map) {
+    // TODO: While correct, it would be enough to map only the entry
+    // for the method that is actually looked up. However this is not
+    // easily achieved with the current implementation.
+    _allRoutes.use(
+        NormalizedPath(path),
+        (final r) => _RouterEntry._(List.of(
+              r.map((final v) => v == null ? null : map(v)),
+              growable: false,
+            )));
+  }
+
   /// Attaches a sub-router to this router at the specified [path].
   ///
   /// The [path] string defines the route prefix for the sub-router. All routes
