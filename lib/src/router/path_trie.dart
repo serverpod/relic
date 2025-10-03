@@ -176,14 +176,14 @@ final class PathTrie<T extends Object> {
   }
 
   /// Sets the mapping to use on lookup for any path where [normalizedPath] is
-  /// a sub-path.
+  /// a prefix-path.
+  ///
+  /// If an existing mapping already exists then the new mapping will be the
+  /// old composed with [map], otherwise [map] will be used directly.
   void use(final NormalizedPath normalizedPath, final T Function(T) map) {
     final currentNode = _build(normalizedPath);
-    if (currentNode.map != null) {
-      throw ArgumentError.value(
-          normalizedPath, 'normalizedPath', 'Map already exists');
-    }
-    currentNode.map = map;
+    final oldMap = currentNode.map;
+    currentNode.map = oldMap == null ? map : (final v) => oldMap(map(v));
   }
 
   /// Finds the [_TrieNode] that exactly matches the given [normalizedPath].
@@ -324,10 +324,6 @@ final class PathTrie<T extends Object> {
       throw ArgumentError('Conflicting parameters');
     }
 
-    if (currentNode.map != null && node.map != null) {
-      throw ArgumentError('Conflicting maps');
-    }
-
     final keys = currentNode.children.keys.toSet();
     final otherKeys = node.children.keys.toSet();
     if (keys.intersection(otherKeys).isNotEmpty) {
@@ -337,7 +333,12 @@ final class PathTrie<T extends Object> {
     // No conflicts so safe to update
     currentNode.value ??= node.value;
     currentNode.dynamicSegment ??= node.dynamicSegment;
-    currentNode.map ??= node.map;
+    final childMap = node.map;
+    if (childMap != null) {
+      final parentMap = currentNode.map;
+      currentNode.map =
+          parentMap == null ? childMap : (final v) => parentMap(childMap(v));
+    }
     currentNode.children.addAll(node.children);
     trie._root = currentNode;
   }

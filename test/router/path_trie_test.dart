@@ -507,12 +507,14 @@ void main() {
       test(
           'Given a value at path, '
           'when use is applied twice to path, '
-          'then it fails the second time', () {
+          'then the mappings compose', () {
         final trie = PathTrie<int>();
         final root = NormalizedPath('/a');
         trie.add(root, 1);
         trie.use(root, (final i) => i * 2);
-        expect(() => trie.use(root, (final i) => i * 2), throwsArgumentError);
+        trie.use(root, (final i) => i + 3);
+        expect(trie.lookup(root)?.value, 8,
+            reason: 'Should add 3 and then double');
       });
 
       test(
@@ -648,13 +650,16 @@ void main() {
       test(
           'Given two tries with use applied, '
           'when attaching one to the other such that use collide, '
-          'then it fails', () {
+          'then map functions are composed', () {
         final trieA = PathTrie<int>();
         final trieB = PathTrie<int>();
         final attachAt = NormalizedPath('/prefix');
         trieA.use(attachAt, (final i) => i * 2);
+        trieB.add(NormalizedPath('/suffix'), 1);
         trieB.use(NormalizedPath.empty, (final i) => i + 3);
-        expect(() => trieA.attach(attachAt, trieB), throwsArgumentError);
+        trieA.attach(attachAt, trieB);
+        expect(trieA.lookup(NormalizedPath('/prefix/suffix'))?.value, 8,
+            reason: 'Should add 3 and then double');
       });
 
       test(
