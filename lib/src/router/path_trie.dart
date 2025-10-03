@@ -36,6 +36,11 @@ final class _TrieNode<T> {
   /// A non-null value indicates the end of a path
   T? value;
 
+  /// A map function applied on lookup, before returning result.
+  ///
+  /// If null, no mapping is applied.
+  T Function(T value)? map;
+
   /// Indicates whether this node is empty.
   bool get isEmpty =>
       children.isEmpty && dynamicSegment == null && value == null;
@@ -61,7 +66,7 @@ final class _Tail<T> extends _DynamicSegment<T> {}
 ///
 /// Supports literal segments, parameterized segments (e.g., `:id`), wildcard segments (`*`),
 /// and tail segments (`**`). Allows associating a value of type [T] with each complete path.
-final class PathTrie<T> {
+final class PathTrie<T extends Object> {
   // Note: not final since we update in attach
   var _root = _TrieNode<T>();
 
@@ -168,6 +173,17 @@ final class PathTrie<T> {
     final removed = currentNode.value;
     currentNode.value = null;
     return removed;
+  }
+
+  /// Sets the mapping to use on lookup for any path where [normalizedPath] is
+  /// a prefix-path.
+  ///
+  /// If an existing mapping already exists then the new mapping will be the
+  /// old composed with [map], otherwise [map] will be used directly.
+  void use(final NormalizedPath normalizedPath, final T Function(T) map) {
+    final currentNode = _build(normalizedPath);
+    final oldMap = currentNode.map;
+    currentNode.map = oldMap == null ? map : (final v) => oldMap(map(v));
   }
 
   /// Finds the [_TrieNode] that exactly matches the given [normalizedPath].
@@ -317,6 +333,12 @@ final class PathTrie<T> {
     // No conflicts so safe to update
     currentNode.value ??= node.value;
     currentNode.dynamicSegment ??= node.dynamicSegment;
+    final childMap = node.map;
+    if (childMap != null) {
+      final parentMap = currentNode.map;
+      currentNode.map =
+          parentMap == null ? childMap : (final v) => parentMap(childMap(v));
+    }
     currentNode.children.addAll(node.children);
     trie._root = currentNode;
   }
@@ -330,8 +352,19 @@ final class PathTrie<T> {
   /// parameters if a matching path is found, otherwise returns `null`.
   TrieMatch<T>? lookup(final NormalizedPath normalizedPath) {
     final segments = normalizedPath.segments;
-    _TrieNode<T> currentNode = _root;
     final parameters = <Symbol, String>{};
+
+    var currentNode = _root;
+    var currentMap = currentNode.map;
+
+    // Helper function to update combinedMap when descending the trie
+    void updateMap() {
+      final cm = currentMap;
+      final m = currentNode.map;
+      currentMap = cm == null
+          ? m // may also be null
+          : (m == null ? cm : (final v) => cm(m(v))); // compose map function
+    }
 
     int i = 0;
     for (; i < segments.length; i++) {
@@ -340,10 +373,12 @@ final class PathTrie<T> {
       if (child != null) {
         // Prioritize literal match
         currentNode = child;
+        updateMap();
       } else {
         final dynamicSegment = currentNode.dynamicSegment;
         if (dynamicSegment == null) return null; // no match
         currentNode = dynamicSegment.node;
+        updateMap();
         if (dynamicSegment case final _Parameter<T> parameter) {
           parameters[Symbol(parameter.name)] = segment;
         }
@@ -366,9 +401,9 @@ final class PathTrie<T> {
       }
     }
 
-    return value != null
-        ? TrieMatch(value, parameters, matchedPath, remainingPath)
-        : null;
+    if (value == null) return null;
+    value = currentMap?.call(value) ?? value;
+    return TrieMatch(value, parameters, matchedPath, remainingPath);
   }
 
   /// Returns true if the path trie has no routes.

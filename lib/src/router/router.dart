@@ -5,7 +5,8 @@ import 'path_trie.dart';
 
 /// A wrapper around a fixed-length list used for mapping between method and value
 /// for each registered path.
-extension type _RouterEntry<T>._(List<T?> _routeByVerb) {
+extension type _RouterEntry<T extends Object>._(List<T?> _routeByVerb)
+    implements Iterable<T?> {
   _RouterEntry()
       : _routeByVerb =
             List<T?>.filled(Method.values.length, null, growable: false);
@@ -30,7 +31,7 @@ extension type _RouterEntry<T>._(List<T?> _routeByVerb) {
       Method.values.where((final method) => find(method) != null).toSet();
 }
 
-extension<T> on _RouterEntry<T>? {
+extension<T extends Object> on _RouterEntry<T>? {
   _RouterEntry<T> get orNew => this ?? _RouterEntry<T>();
 }
 
@@ -38,7 +39,7 @@ extension<T> on _RouterEntry<T>? {
 ///
 /// Supports static paths (e.g., `/users/profile`) and paths with named parameters
 /// (e.g., `/users/:id`). Normalizes paths before matching.
-final class Router<T> {
+final class Router<T extends Object> {
   /// Stores all routes (with or without parameters) in a [PathTrie] for efficient
   /// matching and parameter extraction.
   final _allRoutes = PathTrie<_RouterEntry<T>>();
@@ -92,7 +93,7 @@ final class Router<T> {
   bool get isEmpty => _allRoutes.isEmpty;
 }
 
-extension RouteEx<T> on Router<T> {
+extension RouteEx<T extends Object> on Router<T> {
   /// Adds a route definition for the GET HTTP method.
   ///
   /// Equivalent to calling `add(Method.get, path, value)`.
