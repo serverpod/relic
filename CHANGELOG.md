@@ -1,3 +1,8 @@
+## 0.7.0
+
+- feat(router): Add support for setting up mappings of values on lookup `router.use(path, map)` ([#186](https://github.com/serverpod/relic/pull/186))
+- feat(trie): Add support for setting up mappings of values on lookup `trie.use(path, map)` ([#185](https://github.com/serverpod/relic/pull/185))
+
 ## 0.6.0
 
 - feat!: Custom CacheControl header per file ([#167](https://github.com/serverpod/relic/pull/167))
