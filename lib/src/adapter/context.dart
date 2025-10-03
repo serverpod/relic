@@ -14,8 +14,29 @@ abstract interface class _RequestContextInterface {
 ///
 /// [RequestContext] holds the original [Request] and a unique [token]
 /// that remains constant throughout the request's lifecycle, even as the
-/// context itself might transition between different states (e.g., from
-/// [NewContext] to [ResponseContext]).
+/// context itself might transition between different states.
+///
+/// ## State Transitions
+///
+///                           ┌──────────────────┐
+///                           │ [RequestContext] │ (initial state)
+///                           └─────────┬────────┘
+///                                     │
+///               ┌─────────────────────┼────────────────────┐
+///               │                     │                    │
+///          .respond()             .hijack()            .connect()
+///               │                     │                    │
+///               ▼                     ▼                    ▼
+///     ┌───────────────────┐  ┌─────────────────┐  ┌──────────────────┐
+///  ┌─►│ [ResponseContext] │  │ [HijackContext] │  │ [ConnectContext] │
+///  │  └─────────┬─────────┘  └─────────────────┘  └──────────────────┘
+///  └────────────┘
+///   .respond() // update response
+///
+/// - [NewContext]: Initial state, can transition to any handled state
+/// - [ResponseContext]: A response has been generated (can be updated via `respond()`)
+/// - [HijackContext]: Connection hijacked for low-level I/O (WebSockets, etc.)
+/// - [ConnectContext]: Duplex stream connection established
 sealed class RequestContext implements _RequestContextInterface {
   /// The request associated with this context.
   @override
