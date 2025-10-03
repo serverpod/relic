@@ -1,7 +1,13 @@
+import 'package:relic/relic.dart';
 import 'package:relic/src/router/lookup_result.dart';
 import 'package:relic/src/router/method.dart';
 import 'package:relic/src/router/router.dart';
 import 'package:test/test.dart';
+
+import '../headers/headers_test_utils.dart';
+import '../util/test_util.dart';
+
+import 'package:http/http.dart' as http;
 
 void main() {
   test(
@@ -153,4 +159,54 @@ void main() {
       '<a><b><c>request</c></b></a>',
     );
   });
+
+  test(
+      'Given authentication middleware, '
+      'when a handler is invoked, '
+      'then it can retrieve the user', () async {
+    final router = Router<Handler>();
+    router
+      ..use('/', AuthMiddleware().call)
+      ..get(
+          '/api/user/info',
+          (final ctx) =>
+              ctx.respond(Response.ok(body: Body.fromString('${ctx.user}'))));
+
+    final relic = await testServe(const Pipeline()
+        .addMiddleware(routeWith(router))
+        .addHandler(respondWith((final _) => Response.notFound())));
+
+    final response =
+        await http.get(relic.url.replace(path: '/api/user/info'), headers: {
+      'Authorization': 'Bearer XYZ',
+    });
+
+    expect(response.statusCode, equals(200));
+    expect(response.body, '42');
+  });
+}
+
+typedef User = int;
+final _auth = ContextProperty<User>('auth');
+
+extension on RequestContext {
+  User get user => _auth[this];
+}
+
+class AuthMiddleware {
+  bool _validate(final String token) => true; // just an example
+  User _extractUser(final String token) => 42;
+
+  Handler call(final Handler next) {
+    return (final ctx) {
+      final bearer =
+          ctx.request.headers.authorization as BearerAuthorizationHeader?;
+      if (bearer == null || !_validate(bearer.token)) {
+        return ctx.respond(Response.unauthorized());
+      } else {
+        _auth[ctx] = _extractUser(bearer.token);
+        return next(ctx);
+      }
+    };
+  }
 }
