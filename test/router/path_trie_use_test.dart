@@ -91,7 +91,7 @@ void main() {
   test(
       'Given multiple paths with values, '
       'when use is applied to a specific path, '
-      'then only that path and its descendants are transformed', () {
+      'then only descendants of that path are transformed', () {
     final trie = PathTrie<int>();
     final root = NormalizedPath('/');
     final pathA = NormalizedPath('/a');
