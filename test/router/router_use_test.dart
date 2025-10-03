@@ -1,13 +1,9 @@
+import 'package:http/http.dart' as http;
 import 'package:relic/relic.dart';
-import 'package:relic/src/router/lookup_result.dart';
-import 'package:relic/src/router/method.dart';
-import 'package:relic/src/router/router.dart';
 import 'package:test/test.dart';
 
 import '../headers/headers_test_utils.dart';
 import '../util/test_util.dart';
-
-import 'package:http/http.dart' as http;
 
 void main() {
   test(
@@ -178,7 +174,7 @@ void main() {
 
     final response =
         await http.get(relic.url.replace(path: '/api/user/info'), headers: {
-      'Authorization': 'Bearer XYZ',
+      'Authorization': 'Bearer 42', // just an example
     });
 
     expect(response.statusCode, equals(200));
@@ -195,7 +191,7 @@ extension on RequestContext {
 
 class AuthMiddleware {
   bool _validate(final String token) => true; // just an example
-  User _extractUser(final String token) => 42;
+  User _extractUser(final String token) => int.parse(token);
 
   Handler call(final Handler next) {
     return (final ctx) {
