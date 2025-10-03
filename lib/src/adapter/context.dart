@@ -37,17 +37,17 @@ abstract interface class RespondableContext
     implements _RequestContextInterface {
   /// Transitions the context to a state where a response has been associated.
   ///
-  /// Takes a [Response] object [r] and returns a [ResponseContext].
-  ResponseContext respond(final Response r);
+  /// Takes a [response] and returns a [ResponseContext].
+  ResponseContext respond(final Response response);
 }
 
 /// An interface for request contexts that allow hijacking the underlying connection.
 abstract interface class HijackableContext implements _RequestContextInterface {
   /// Takes control of the underlying communication channel (e.g., socket).
   ///
-  /// The provided [callback] [c] will be invoked with a [StreamChannel]
+  /// The provided [callback] will be invoked with a [StreamChannel]
   /// allowing direct interaction with the connection. Returns a [HijackContext].
-  HijackContext hijack(final HijackCallback c);
+  HijackContext hijack(final HijackCallback callback);
 }
 
 /// Represents the initial state of a request context before it has been
@@ -81,24 +81,24 @@ final class NewContext extends RequestContext
   NewContext._(super.request, super.token) : super._();
 
   @override
-  HijackContext hijack(final HijackCallback c) =>
-      HijackContext._(request, token, c);
+  HijackContext hijack(final HijackCallback callback) =>
+      HijackContext._(request, token, callback);
 
   /// Transitions this context to a state where a duplex stream (e.g., WebSocket)
   /// connection is established.
   ///
-  /// The provided [DuplexStreamCallback] [c] will be invoked with a
+  /// The provided [WebSocketCallback] will be invoked with a
   /// [RelicWebSocket] for managing the bi-directional communication.
   /// Returns a [ConnectContext].
-  ConnectContext connect(final WebSocketCallback c) =>
-      ConnectContext._(request, token, c);
+  ConnectContext connect(final WebSocketCallback callback) =>
+      ConnectContext._(request, token, callback);
 
+  /// Creates a new [RequestContext] with a different [Request].
   NewContext withRequest(final Request req) => NewContext._(req, token);
 
   @override
   ResponseContext respond(final Response response) =>
       ResponseContext._(request, token, response);
-  /// Creates a new [RequestContext] with a different [Request].
 }
 
 /// A sealed base class for contexts that represent a handled request.
@@ -118,8 +118,8 @@ final class ResponseContext extends HandledContext
   ResponseContext._(super.request, super.token, this.response) : super._();
 
   @override
-  ResponseContext respond(final Response r) =>
-      ResponseContext._(request, token, r);
+  ResponseContext respond(final Response response) =>
+      ResponseContext._(request, token, response);
 }
 
 /// A [RequestContext] state indicating that the underlying connection has been
