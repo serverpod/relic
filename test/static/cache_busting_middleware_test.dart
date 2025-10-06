@@ -172,10 +172,10 @@ void main() {
             cacheControl: (final _, final __) => null,
           ));
 
-      // Requesting a directory trailing slash should not be rewritten and
+      // Requesting the mount prefix itself should not be rewritten and
       // directory listings are not supported -> 404.
       final response =
-          await makeRequest(handler, '/static/images/', handlerPath: 'static');
+          await makeRequest(handler, '/static/', handlerPath: 'static');
       expect(response.statusCode, HttpStatus.notFound);
     });
 

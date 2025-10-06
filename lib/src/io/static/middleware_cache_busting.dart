@@ -29,10 +29,10 @@ Middleware cacheBusting(final CacheBustingConfig config) {
 
       // Extract the portion after mount prefix
       final relative = fullPath.substring(config.mountPrefix.length);
-      final last = p.url.basename(relative);
-      if (last.isEmpty) {
+      if (relative.isEmpty) {
         return await inner(ctx);
       }
+      final last = p.url.basename(relative);
 
       final strippedLast = _stripHashFromFilename(last);
       if (strippedLast == last) {
