@@ -5,7 +5,7 @@ import 'package:relic/relic.dart';
 import 'package:test/test.dart';
 import 'package:test_descriptor/test_descriptor.dart' as d;
 
-import '../static/test_util.dart';
+import 'test_util.dart';
 
 void main() {
   group('Cache busting middleware', () {
@@ -129,6 +129,116 @@ void main() {
       const original = '/static/does-not-exist.txt';
       final result = await cfg.tryBust(original);
       expect(result, original);
+    });
+
+    test('bust/tryBust leave paths outside mountPrefix unchanged', () async {
+      final staticRoot = Directory(p.join(d.sandbox, 'static'));
+      final cfg = CacheBustingConfig(
+        mountPrefix: '/static',
+        fileSystemRoot: staticRoot,
+      );
+
+      const outside = '/other/logo.png';
+      expect(await cfg.tryBust(outside), outside);
+      expect(await cfg.bust(outside), outside);
+    });
+
+    test('middleware does not rewrite when not under mount prefix', () async {
+      final staticRoot = Directory(p.join(d.sandbox, 'static'));
+      final handler = const Pipeline()
+          .addMiddleware(cacheBusting(CacheBustingConfig(
+            mountPrefix: '/static',
+            fileSystemRoot: staticRoot,
+          )))
+          .addHandler(createStaticHandler(
+            staticRoot.path,
+            cacheControl: (final _, final __) => null,
+          ));
+
+      final response = await makeRequest(handler, '/other/logo.png');
+      expect(response.statusCode, HttpStatus.notFound);
+    });
+
+    test('bust/no-ext works and serves via middleware', () async {
+      // Add a no-extension file
+      await d.file(p.join('static', 'logo'), 'content-noext').create();
+
+      final staticRoot = Directory(p.join(d.sandbox, 'static'));
+      final cfg = CacheBustingConfig(
+        mountPrefix: '/static',
+        fileSystemRoot: staticRoot,
+      );
+      final handler = const Pipeline()
+          .addMiddleware(cacheBusting(cfg))
+          .addHandler(createStaticHandler(
+            staticRoot.path,
+            cacheControl: (final _, final __) => null,
+          ));
+
+      const original = '/static/logo';
+      final busted = await cfg.bust(original);
+      expect(busted, startsWith('/static/logo@'));
+      expect(busted, isNot(endsWith('.')));
+
+      final response =
+          await makeRequest(handler, busted, handlerPath: 'static');
+      expect(response.statusCode, HttpStatus.ok);
+      expect(await response.readAsString(), 'content-noext');
+    });
+
+    test('directory name containing @ is not affected', () async {
+      // Add nested directory with @ in its name
+      await d.dir(p.join('static', 'img@foo'), [
+        d.file('logo.png', 'dir-at-bytes'),
+      ]).create();
+
+      final staticRoot = Directory(p.join(d.sandbox, 'static'));
+      final cfg = CacheBustingConfig(
+        mountPrefix: '/static',
+        fileSystemRoot: staticRoot,
+      );
+      final handler = const Pipeline()
+          .addMiddleware(cacheBusting(cfg))
+          .addHandler(createStaticHandler(
+            staticRoot.path,
+            cacheControl: (final _, final __) => null,
+          ));
+
+      const original = '/static/img@foo/logo.png';
+      final busted = await cfg.bust(original);
+      expect(busted, startsWith('/static/img@foo/logo@'));
+      expect(busted, endsWith('.png'));
+
+      final response =
+          await makeRequest(handler, busted, handlerPath: 'static');
+      expect(response.statusCode, HttpStatus.ok);
+      expect(await response.readAsString(), 'dir-at-bytes');
+    });
+
+    test('filename starting with @ busts and strips correctly', () async {
+      await d.file(p.join('static', '@logo.png'), 'at-logo').create();
+
+      final staticRoot = Directory(p.join(d.sandbox, 'static'));
+      final cfg = CacheBustingConfig(
+        mountPrefix: '/static',
+        fileSystemRoot: staticRoot,
+      );
+      final handler = const Pipeline()
+          .addMiddleware(cacheBusting(cfg))
+          .addHandler(createStaticHandler(
+            staticRoot.path,
+            cacheControl: (final _, final __) => null,
+          ));
+
+      const original = '/static/@logo.png';
+      final busted = await cfg.bust(original);
+      expect(busted, startsWith('/static/@logo@'));
+      expect(busted, endsWith('.png'));
+
+      final response =
+          await makeRequest(handler, busted, handlerPath: 'static');
+      expect(response.statusCode, HttpStatus.ok);
+      expect(await response.readAsString(), 'at-logo');
     });
   });
 }
