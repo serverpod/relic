@@ -105,5 +105,30 @@ void main() {
       expect(response.statusCode, HttpStatus.ok);
       expect(await response.readAsString(), 'nested-bytes');
     });
+
+    test('bust throws when file does not exist', () async {
+      final staticRoot = Directory(p.join(d.sandbox, 'static'));
+      final cfg = CacheBustingConfig(
+        mountPrefix: '/static',
+        fileSystemRoot: staticRoot,
+      );
+
+      expect(
+        cfg.bust('/static/does-not-exist.txt'),
+        throwsA(isA<PathNotFoundException>()),
+      );
+    });
+
+    test('tryBust returns original path when file does not exist', () async {
+      final staticRoot = Directory(p.join(d.sandbox, 'static'));
+      final cfg = CacheBustingConfig(
+        mountPrefix: '/static',
+        fileSystemRoot: staticRoot,
+      );
+
+      const original = '/static/does-not-exist.txt';
+      final result = await cfg.tryBust(original);
+      expect(result, original);
+    });
   });
 }

@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:path/path.dart' as p;
 
 import '../../../relic.dart';
 import '../../adapter/context.dart';
@@ -21,42 +22,52 @@ import '../../adapter/context.dart';
 /// "/static", this rewrites the request URL to "/static/images/logo.png"
 /// before calling the next handler.
 Middleware cacheBusting(final CacheBustingConfig config) {
-  final normalizedMount = _normalizeMount(config.mountPrefix);
-
   return (final inner) {
     return (final ctx) async {
       final req = ctx.request;
-      final fullPath = Uri.decodeFull(req.requestedUri.path);
+      final fullPath = req.requestedUri.path;
 
-      if (!fullPath.startsWith(normalizedMount)) {
+      if (!fullPath.startsWith(config.mountPrefix)) {
         return await inner(ctx);
       }
 
       // Extract the portion after mount prefix
-      final relative = fullPath.substring(normalizedMount.length);
-      final segments = relative.split('/');
-      if (segments.isEmpty || segments.last.isEmpty) {
+      final relative = fullPath.substring(config.mountPrefix.length);
+      final last = p.url.basename(relative);
+      if (last.isEmpty) {
         return await inner(ctx);
       }
 
-      final last = segments.last;
       final strippedLast = _stripHashFromFilename(last);
-      if (identical(strippedLast, last)) {
+      if (strippedLast == last) {
         return await inner(ctx);
       }
 
-      segments[segments.length - 1] = strippedLast;
-      final rewrittenRelative = segments.join('/');
+      final directory = p.url.dirname(relative);
+      final rewrittenRelative =
+          directory == '.' ? strippedLast : p.url.join(directory, strippedLast);
 
       // Rebuild a new Request only by updating requestedUri path; do not touch
       // handlerPath so that routers and mounts continue to work as configured.
       final newRequested = req.requestedUri.replace(
-        path: '$normalizedMount$rewrittenRelative',
+        path: '${config.mountPrefix}$rewrittenRelative',
       );
       final rewrittenRequest = req.copyWith(requestedUri: newRequested);
       return await inner(rewrittenRequest.toContext(ctx.token));
     };
   };
+}
+
+String _stripHashFromFilename(final String fileName) {
+  // Match name@hash.ext or name@hash (no extension)
+  final ext = p.url.extension(fileName);
+  final base = p.url.basenameWithoutExtension(fileName);
+
+  final at = base.lastIndexOf('@');
+  if (at <= 0) return fileName; // no hash or starts with '@'
+
+  final cleanBase = base.substring(0, at);
+  return p.url.setExtension(cleanBase, ext);
 }
 
 /// Holds configuration for generating cache-busted asset URLs.
@@ -68,40 +79,53 @@ class CacheBustingConfig {
   final Directory fileSystemRoot;
 
   CacheBustingConfig({
-    required this.mountPrefix,
+    required final String mountPrefix,
     required final Directory fileSystemRoot,
-  }) : fileSystemRoot = fileSystemRoot.absolute;
+  })  : mountPrefix = _normalizeMount(mountPrefix),
+        fileSystemRoot = fileSystemRoot.absolute;
 
   /// Returns the cache-busted URL for the given [staticPath].
   ///
   /// Example: '/static/logo.svg' -> '/static/logo@etag.svg'
   Future<String> bust(final String staticPath) async {
-    final normalizedMount = _normalizeMount(mountPrefix);
-    if (!staticPath.startsWith(normalizedMount)) return staticPath;
+    if (!staticPath.startsWith(mountPrefix)) return staticPath;
 
-    final relative = staticPath.substring(normalizedMount.length);
-    final filePath = File(_joinPaths(fileSystemRoot.path, relative));
+    final relative = staticPath.substring(mountPrefix.length);
+    final filePath = File(p.join(fileSystemRoot.path, relative));
+
+    // Fail fast with a consistent exception type for non-existent files
+    if (!filePath.existsSync()) {
+      throw PathNotFoundException(
+        filePath.path,
+        const OSError('No such file or directory', 2),
+      );
+    }
 
     final info = await getStaticFileInfo(filePath);
 
-    final lastSlash = staticPath.lastIndexOf('/');
-    final dir = lastSlash >= 0 ? staticPath.substring(0, lastSlash + 1) : '';
-    final fileName =
-        lastSlash >= 0 ? staticPath.substring(lastSlash + 1) : staticPath;
+    // Build the busted URL using URL path helpers for readability/portability
+    final directory = p.url.dirname(staticPath);
+    final baseName = p.url.basenameWithoutExtension(staticPath);
+    final ext = p.url.extension(staticPath); // includes leading dot or ''
 
-    final dot = fileName.lastIndexOf('.');
-    if (dot <= 0 || dot == fileName.length - 1) {
-      return '$dir${_appendHashToBasename(fileName, info.etag)}';
+    final bustedName = '$baseName@${info.etag}$ext';
+    return directory == '.'
+        ? '/$bustedName'
+        : p.url.join(directory, bustedName);
+  }
+
+  /// Attempts to generate a cache-busted URL. If the underlying file cannot be
+  /// found or read, it returns [staticPath] unchanged.
+  Future<String> tryBust(final String staticPath) async {
+    try {
+      return await bust(staticPath);
+    } catch (_) {
+      return staticPath;
     }
-
-    final base = fileName.substring(0, dot);
-    final ext = fileName.substring(dot); // includes dot
-    return '$dir${_appendHashToBasename(base, info.etag)}$ext';
   }
 }
 
-String _appendHashToBasename(final String base, final String etag) =>
-    '$base@$etag';
+// removed helper for inlining
 
 String _normalizeMount(final String mountPrefix) {
   if (!mountPrefix.startsWith('/')) {
@@ -110,20 +134,4 @@ String _normalizeMount(final String mountPrefix) {
   return mountPrefix.endsWith('/') ? mountPrefix : '$mountPrefix/';
 }
 
-String _stripHashFromFilename(final String fileName) {
-  // Match name@hash.ext or name@hash (no extension)
-  final dot = fileName.lastIndexOf('.');
-  final main = dot > 0 ? fileName.substring(0, dot) : fileName;
-  final ext = dot > 0 ? fileName.substring(dot) : '';
-
-  final at = main.lastIndexOf('@');
-  if (at <= 0) return fileName; // no hash or starts with '@'
-
-  final base = main.substring(0, at);
-  return '$base$ext';
-}
-
-String _joinPaths(final String a, final String b) {
-  if (a.endsWith('/')) return '$a$b';
-  return '$a/$b';
-}
+// path joining handled by package:path's p.join
