@@ -179,6 +179,24 @@ void main() {
       expect(response.statusCode, HttpStatus.notFound);
     });
 
+    test('middleware early-returns for mount root (relative empty)', () async {
+      final staticRoot = Directory(p.join(d.sandbox, 'static'));
+      final cfg = CacheBustingConfig(
+        mountPrefix: '/static',
+        fileSystemRoot: staticRoot,
+      );
+
+      // Echo handler to observe the requestedUri.path after middleware.
+      final handler = const Pipeline()
+          .addMiddleware(cacheBusting(cfg))
+          .addHandler(respondWith((final ctx) =>
+              Response.ok(body: Body.fromString(ctx.requestedUri.path))));
+
+      final response = await makeRequest(handler, '/static/');
+      expect(response.statusCode, HttpStatus.ok);
+      expect(await response.readAsString(), '/static/');
+    });
+
     test('middleware passes through non-busted filenames (no @)', () async {
       final staticRoot = Directory(p.join(d.sandbox, 'static'));
       final cfg = CacheBustingConfig(
