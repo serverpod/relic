@@ -4,23 +4,19 @@ import 'package:path/path.dart' as p;
 import '../../../relic.dart';
 import '../../adapter/context.dart';
 
-/// Middleware and helpers for cache-busted asset URLs in the form
-/// "/path/name@`hash`.ext".
+/// Cache-busting for asset URLs that embed a content hash.
 ///
 /// Typical flow:
-/// - Outgoing URLs are generated with [withCacheBusting] using a known mount
-///   prefix (e.g. "/static") and a filesystem root directory to compute the
-///   file's ETag hash. This returns "/static/name@hash.ext".
-/// - Incoming requests are passed through [stripCacheBusting] so that
-///   downstream handlers (e.g. static handler) receive a path without the
-///   embedded hash.
-
-/// Returns a middleware that strips an inline cache-busting hash in the last
-/// path segment under the provided [mountPrefix].
+/// - Outgoing URLs: call [CacheBustingConfig.bust] (or
+///   [CacheBustingConfig.tryBust]) with a known mount prefix (e.g. "/static")
+///   to get "/static/name@hash.ext".
+/// - Incoming requests: add this [cacheBusting] middleware so downstream
+///   handlers (e.g., the static file handler) receive "/path/name.ext" without
+///   the hash.
 ///
-/// For a request like "/static/images/logo@abc123.png" and mountPrefix
-/// "/static", this rewrites the request URL to "/static/images/logo.png"
-/// before calling the next handler.
+/// This middleware strips an inline cache-busting hash from the last path segment
+/// for requests under [CacheBustingConfig.mountPrefix]. Example:
+/// "/static/images/logo@abc123.png" → "/static/images/logo.png".
 Middleware cacheBusting(final CacheBustingConfig config) {
   return (final inner) {
     return (final ctx) async {
@@ -58,8 +54,9 @@ Middleware cacheBusting(final CacheBustingConfig config) {
   };
 }
 
+/// Removes a trailing "@hash" segment from a file name, preserving any
+/// extension. Matches both "name@hash.ext" and "name@hash".
 String _stripHashFromFilename(final String fileName) {
-  // Match name@hash.ext or name@hash (no extension)
   final ext = p.url.extension(fileName);
   final base = p.url.basenameWithoutExtension(fileName);
 
@@ -70,7 +67,7 @@ String _stripHashFromFilename(final String fileName) {
   return p.url.setExtension(cleanBase, ext);
 }
 
-/// Holds configuration for generating cache-busted asset URLs.
+/// Configuration and helpers for generating cache-busted asset URLs.
 class CacheBustingConfig {
   /// The URL prefix under which static assets are served (e.g., "/static").
   final String mountPrefix;
@@ -86,7 +83,7 @@ class CacheBustingConfig {
 
   /// Returns the cache-busted URL for the given [staticPath].
   ///
-  /// Example: '/static/logo.svg' -> '/static/logo@etag.svg'
+  /// Example: '/static/logo.svg' → '/static/logo@hash.svg'.
   Future<String> bust(final String staticPath) async {
     if (!staticPath.startsWith(mountPrefix)) return staticPath;
 
@@ -114,8 +111,8 @@ class CacheBustingConfig {
         : p.url.join(directory, bustedName);
   }
 
-  /// Attempts to generate a cache-busted URL. If the underlying file cannot be
-  /// found or read, it returns [staticPath] unchanged.
+  /// Attempts to generate a cache-busted URL. If the file cannot be found or
+  /// read, returns [staticPath] unchanged.
   Future<String> tryBust(final String staticPath) async {
     try {
       return await bust(staticPath);
@@ -125,13 +122,10 @@ class CacheBustingConfig {
   }
 }
 
-// removed helper for inlining
-
+/// Ensures [mountPrefix] starts with '/' and ends with '/'.
 String _normalizeMount(final String mountPrefix) {
   if (!mountPrefix.startsWith('/')) {
     throw ArgumentError('mountPrefix must start with "/"');
   }
   return mountPrefix.endsWith('/') ? mountPrefix : '$mountPrefix/';
 }
-
-// path joining handled by package:path's p.join
