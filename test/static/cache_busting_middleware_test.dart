@@ -159,6 +159,77 @@ void main() {
       expect(response.statusCode, HttpStatus.notFound);
     });
 
+    test('middleware does not rewrite trailing-slash requests (empty basename)',
+        () async {
+      final staticRoot = Directory(p.join(d.sandbox, 'static'));
+      final handler = const Pipeline()
+          .addMiddleware(cacheBusting(CacheBustingConfig(
+            mountPrefix: '/static',
+            fileSystemRoot: staticRoot,
+          )))
+          .addHandler(createStaticHandler(
+            staticRoot.path,
+            cacheControl: (final _, final __) => null,
+          ));
+
+      // Requesting a directory trailing slash should not be rewritten and
+      // directory listings are not supported -> 404.
+      final response =
+          await makeRequest(handler, '/static/images/', handlerPath: 'static');
+      expect(response.statusCode, HttpStatus.notFound);
+    });
+
+    test('middleware passes through non-busted filenames (no @)', () async {
+      final staticRoot = Directory(p.join(d.sandbox, 'static'));
+      final cfg = CacheBustingConfig(
+        mountPrefix: '/static',
+        fileSystemRoot: staticRoot,
+      );
+      final handler = const Pipeline()
+          .addMiddleware(cacheBusting(cfg))
+          .addHandler(createStaticHandler(
+            staticRoot.path,
+            cacheControl: (final _, final __) => null,
+          ));
+
+      final response =
+          await makeRequest(handler, '/static/logo.png', handlerPath: 'static');
+      expect(response.statusCode, HttpStatus.ok);
+      expect(await response.readAsString(), 'png-bytes');
+    });
+
+    test('middleware does not strip leading @ when no hash present', () async {
+      await d.file(p.join('static', '@plain.txt'), 'plain-at').create();
+
+      final staticRoot = Directory(p.join(d.sandbox, 'static'));
+      final cfg = CacheBustingConfig(
+        mountPrefix: '/static',
+        fileSystemRoot: staticRoot,
+      );
+      final handler = const Pipeline()
+          .addMiddleware(cacheBusting(cfg))
+          .addHandler(createStaticHandler(
+            staticRoot.path,
+            cacheControl: (final _, final __) => null,
+          ));
+
+      final response = await makeRequest(handler, '/static/@plain.txt',
+          handlerPath: 'static');
+      expect(response.statusCode, HttpStatus.ok);
+      expect(await response.readAsString(), 'plain-at');
+    });
+
+    test('invalid mountPrefix throws (must start with /)', () async {
+      final staticRoot = Directory(p.join(d.sandbox, 'static'));
+      expect(
+        () => CacheBustingConfig(
+          mountPrefix: 'static',
+          fileSystemRoot: staticRoot,
+        ),
+        throwsA(isA<ArgumentError>()),
+      );
+    });
+
     test('bust/no-ext works and serves via middleware', () async {
       // Add a no-extension file
       await d.file(p.join('static', 'logo'), 'content-noext').create();
