@@ -8,7 +8,7 @@ Relic was in need of some love if it was to succeed, and we at Serverpod started
 
 ## Why not just shelf?
 
-Shelf has been hugely succesful in the Dart eco-system. However, Shelf has been around for a long time. Its first commit (by kevmoo himself) is from April 1st 2014. It stems from a time before Dart had a sound type system, or null safety, and predates the first commit to Flutter by 1.5 years.
+Shelf has been hugely successful in the Dart eco-system. However, Shelf has been around for a long time. Its first commit (by kevmoo himself) is from April 1st 2014. It stems from a time before Dart had a sound type system, or null safety, and predates the first commit to Flutter by 1.5 years.
 
 There are some early design decisions that feels out of place with modern Dart, that still exists to this day. And - as Flutter eventually took center stage - it seems to have slipped into maintenance mode.
 
@@ -22,7 +22,7 @@ Development took longer than anticipated - we announced the intention in March 2
 
 ### Handlers and the RequestContext
 
-Relic handlers differs from Shelf handlers. In shelf we have
+Relic handlers differ from Shelf handlers. In shelf we have
 ```dart
 typedef Handler = FutureOr<Response> Function(Request request);
 ```
@@ -109,7 +109,7 @@ Middleware authMiddleware() {
     return (RequestContext ctx) {
       final token = ctx.request.headers.authorization?.credentials;
       final user = validateToken(token);
-      _currentUser[this] = user;  // Type-safe assignment
+      _currentUser[ctx] = user;  // Type-safe assignment
       return innerHandler(ctx);
     };
   };
