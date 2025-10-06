@@ -39,6 +39,16 @@ typedef CacheControlFactory = CacheControlHeader? Function(
 /// LRU cache for file information to avoid repeated file system operations.
 final _fileInfoCache = LruCache<String, FileInfo>(10000);
 
+/// Public accessor for retrieving [FileInfo] for a given [file].
+///
+/// Uses the same logic as the internal cache/population used by the static
+/// file handler and respects MIME type detection.
+Future<FileInfo> getStaticFileInfo(
+  final File file, {
+  final MimeTypeResolver? mimeResolver,
+}) async =>
+    _getFileInfo(file, mimeResolver ?? _defaultMimeTypeResolver);
+
 /// Creates a Relic [Handler] that serves files from the provided [fileSystemPath].
 ///
 /// When a file is requested, it is served with appropriate headers including

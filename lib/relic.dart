@@ -20,6 +20,7 @@ export 'src/message/request.dart' show Request;
 export 'src/message/response.dart' show Response;
 export 'src/middleware/context_property.dart';
 export 'src/middleware/middleware.dart' show Middleware, createMiddleware;
+export 'src/middleware/middleware_cache_busting.dart';
 export 'src/middleware/middleware_extensions.dart' show MiddlewareExtensions;
 export 'src/middleware/middleware_logger.dart' show logRequests;
 export 'src/middleware/routing_middleware.dart';
