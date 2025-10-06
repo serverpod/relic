@@ -18,20 +18,23 @@ void main() {
 
     test('generates cache-busted URL and serves via root-mounted handler',
         () async {
-      final staticRoot = p.join(d.sandbox, 'static');
+      final staticRoot = Directory(p.join(d.sandbox, 'static'));
       final handler = const Pipeline()
-          .addMiddleware(stripCacheBusting('/static'))
+          .addMiddleware(cacheBusting(CacheBustingConfig(
+            mountPrefix: '/static',
+            fileSystemRoot: staticRoot,
+          )))
           .addHandler(createStaticHandler(
-            staticRoot,
+            staticRoot.path,
             cacheControl: (final _, final __) => null,
           ));
 
       const original = '/static/logo.png';
-      final busted = await withCacheBusting(
+      final cfg = CacheBustingConfig(
         mountPrefix: '/static',
         fileSystemRoot: staticRoot,
-        staticPath: original,
       );
+      final busted = await cfg.asset(original);
       expect(busted, isNot(original));
       expect(busted, startsWith('/static/logo@'));
       expect(busted, endsWith('.png'));
@@ -46,26 +49,29 @@ void main() {
     });
 
     test('works when static handler is mounted under router', () async {
-      final staticRoot = p.join(d.sandbox, 'static');
+      final staticRoot = Directory(p.join(d.sandbox, 'static'));
       final router = Router<Handler>()
         ..get(
             '/assets/**',
             createStaticHandler(
-              staticRoot,
+              staticRoot.path,
               cacheControl: (final _, final __) => null,
             ));
 
       final handler = const Pipeline()
-          .addMiddleware(stripCacheBusting('/assets'))
+          .addMiddleware(cacheBusting(CacheBustingConfig(
+            mountPrefix: '/assets',
+            fileSystemRoot: staticRoot,
+          )))
           .addMiddleware(routeWith(router))
           .addHandler(respondWith((final _) => Response.notFound()));
 
       const original = '/assets/images/logo.png';
-      final busted = await withCacheBusting(
+      final cfg = CacheBustingConfig(
         mountPrefix: '/assets',
         fileSystemRoot: staticRoot,
-        staticPath: original,
       );
+      final busted = await cfg.asset(original);
 
       final response = await makeRequest(handler, busted);
       expect(response.statusCode, HttpStatus.ok);
@@ -73,20 +79,23 @@ void main() {
     });
 
     test('works with custom handlerPath mounted under root', () async {
-      final staticRoot = p.join(d.sandbox, 'static');
+      final staticRoot = Directory(p.join(d.sandbox, 'static'));
       final handler = const Pipeline()
-          .addMiddleware(stripCacheBusting('/static'))
+          .addMiddleware(cacheBusting(CacheBustingConfig(
+            mountPrefix: '/static',
+            fileSystemRoot: staticRoot,
+          )))
           .addHandler(createStaticHandler(
-            staticRoot,
+            staticRoot.path,
             cacheControl: (final _, final __) => null,
           ));
 
       const original = '/static/images/logo.png';
-      final busted = await withCacheBusting(
+      final cfg = CacheBustingConfig(
         mountPrefix: '/static',
         fileSystemRoot: staticRoot,
-        staticPath: original,
       );
+      final busted = await cfg.asset(original);
 
       final response = await makeRequest(
         handler,

@@ -20,8 +20,8 @@ import '../adapter/context.dart';
 /// For a request like "/static/images/logo@abc123.png" and mountPrefix
 /// "/static", this rewrites the request URL to "/static/images/logo.png"
 /// before calling the next handler.
-Middleware stripCacheBusting(final String mountPrefix) {
-  final normalizedMount = _normalizeMount(mountPrefix);
+Middleware cacheBusting(final CacheBustingConfig config) {
+  final normalizedMount = _normalizeMount(config.mountPrefix);
 
   return (final inner) {
     return (final ctx) async {
@@ -59,43 +59,45 @@ Middleware stripCacheBusting(final String mountPrefix) {
   };
 }
 
-/// Produces a cache-busted path by appending `@etag` before the file
-/// extension, if any. Example: "/static/img/logo.png" ->
-/// "/static/img/logo@etag.png".
-///
-/// - [mountPrefix]: the URL prefix under which static assets are served
-///   (e.g., "/static"). Must start with "/".
-/// - [fileSystemRoot]: absolute or relative path to the directory used by the
-///   static handler to serve files. The path after [mountPrefix] is mapped onto
-///   this filesystem root to locate the actual file and its ETag.
-Future<String> withCacheBusting({
-  required final String mountPrefix,
-  required final String fileSystemRoot,
-  required final String staticPath,
-}) async {
-  final normalizedMount = _normalizeMount(mountPrefix);
-  if (!staticPath.startsWith(normalizedMount)) return staticPath;
+/// Holds configuration for generating cache-busted asset URLs.
+class CacheBustingConfig {
+  /// The URL prefix under which static assets are served (e.g., "/static").
+  final String mountPrefix;
 
-  // Determine relative path after the mount prefix
-  final relative = staticPath.substring(normalizedMount.length);
-  final filePath = File(_joinPaths(fileSystemRoot, relative));
+  /// Filesystem root corresponding to [mountPrefix].
+  final Directory fileSystemRoot;
 
-  final info = await getStaticFileInfo(filePath);
+  CacheBustingConfig({
+    required this.mountPrefix,
+    required final Directory fileSystemRoot,
+  }) : fileSystemRoot = fileSystemRoot.absolute;
 
-  // Insert @etag before extension
-  final lastSlash = staticPath.lastIndexOf('/');
-  final dir = lastSlash >= 0 ? staticPath.substring(0, lastSlash + 1) : '';
-  final fileName =
-      lastSlash >= 0 ? staticPath.substring(lastSlash + 1) : staticPath;
+  /// Returns the cache-busted URL for the given [staticPath].
+  ///
+  /// Example: '/static/logo.svg' -> '/static/logo@etag.svg'
+  Future<String> asset(final String staticPath) async {
+    final normalizedMount = _normalizeMount(mountPrefix);
+    if (!staticPath.startsWith(normalizedMount)) return staticPath;
 
-  final dot = fileName.lastIndexOf('.');
-  if (dot <= 0 || dot == fileName.length - 1) {
-    return '$dir${_appendHashToBasename(fileName, info.etag)}';
+    final relative = staticPath.substring(normalizedMount.length);
+    final filePath = File(_joinPaths(fileSystemRoot.path, relative));
+
+    final info = await getStaticFileInfo(filePath);
+
+    final lastSlash = staticPath.lastIndexOf('/');
+    final dir = lastSlash >= 0 ? staticPath.substring(0, lastSlash + 1) : '';
+    final fileName =
+        lastSlash >= 0 ? staticPath.substring(lastSlash + 1) : staticPath;
+
+    final dot = fileName.lastIndexOf('.');
+    if (dot <= 0 || dot == fileName.length - 1) {
+      return '$dir${_appendHashToBasename(fileName, info.etag)}';
+    }
+
+    final base = fileName.substring(0, dot);
+    final ext = fileName.substring(dot); // includes dot
+    return '$dir${_appendHashToBasename(base, info.etag)}$ext';
   }
-
-  final base = fileName.substring(0, dot);
-  final ext = fileName.substring(dot); // includes dot
-  return '$dir${_appendHashToBasename(base, info.etag)}$ext';
 }
 
 String _appendHashToBasename(final String base, final String etag) =>

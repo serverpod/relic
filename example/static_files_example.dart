@@ -9,22 +9,18 @@ import 'package:relic/relic.dart';
 /// - Try opening: http://localhost:8080/static/hello.txt
 /// - Or:          http://localhost:8080/static/logo.svg
 Future<void> main() async {
-  final staticDir = File('static_files').absolute.path;
+  final staticDir = Directory('static_files');
+  final cacheCfg = CacheBustingConfig(
+    mountPrefix: '/static',
+    fileSystemRoot: staticDir,
+  );
 
   // Router mounts the static handler under /static/** and shows an index that
   // demonstrates cache-busted URLs.
   final router = Router<Handler>()
     ..get('/', respondWith((final _) async {
-      final helloUrl = await withCacheBusting(
-        mountPrefix: '/static',
-        fileSystemRoot: staticDir,
-        staticPath: '/static/hello.txt',
-      );
-      final logoUrl = await withCacheBusting(
-        mountPrefix: '/static',
-        fileSystemRoot: staticDir,
-        staticPath: '/static/logo.svg',
-      );
+      final helloUrl = await cacheCfg.asset('/static/hello.txt');
+      final logoUrl = await cacheCfg.asset('/static/logo.svg');
       final html = '<html><body>'
           '<h1>Static files with cache busting</h1>'
           '<ul>'
@@ -37,13 +33,13 @@ Future<void> main() async {
     ..get(
         '/static/**',
         createStaticHandler(
-          staticDir,
+          staticDir.path,
           cacheControl: (final _, final __) => null,
         ));
 
   final handler = const Pipeline()
       .addMiddleware(logRequests())
-      .addMiddleware(stripCacheBusting('/static'))
+      .addMiddleware(cacheBusting(cacheCfg))
       .addMiddleware(routeWith(router))
       .addHandler(respondWith((final _) => Response.notFound()));
 
