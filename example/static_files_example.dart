@@ -19,8 +19,8 @@ Future<void> main() async {
   // demonstrates cache-busted URLs.
   final router = Router<Handler>()
     ..get('/', respondWith((final _) async {
-      final helloUrl = await cacheCfg.asset('/static/hello.txt');
-      final logoUrl = await cacheCfg.asset('/static/logo.svg');
+      final helloUrl = await cacheCfg.bust('/static/hello.txt');
+      final logoUrl = await cacheCfg.bust('/static/logo.svg');
       final html = '<html><body>'
           '<h1>Static files with cache busting</h1>'
           '<ul>'

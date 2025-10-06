@@ -1,7 +1,7 @@
 import 'dart:io';
 
-import '../../relic.dart';
-import '../adapter/context.dart';
+import '../../../relic.dart';
+import '../../adapter/context.dart';
 
 /// Middleware and helpers for cache-busted asset URLs in the form
 /// "/path/name@`hash`.ext".
@@ -75,7 +75,7 @@ class CacheBustingConfig {
   /// Returns the cache-busted URL for the given [staticPath].
   ///
   /// Example: '/static/logo.svg' -> '/static/logo@etag.svg'
-  Future<String> asset(final String staticPath) async {
+  Future<String> bust(final String staticPath) async {
     final normalizedMount = _normalizeMount(mountPrefix);
     if (!staticPath.startsWith(normalizedMount)) return staticPath;
 

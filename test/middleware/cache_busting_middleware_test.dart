@@ -34,7 +34,7 @@ void main() {
         mountPrefix: '/static',
         fileSystemRoot: staticRoot,
       );
-      final busted = await cfg.asset(original);
+      final busted = await cfg.bust(original);
       expect(busted, isNot(original));
       expect(busted, startsWith('/static/logo@'));
       expect(busted, endsWith('.png'));
@@ -71,7 +71,7 @@ void main() {
         mountPrefix: '/assets',
         fileSystemRoot: staticRoot,
       );
-      final busted = await cfg.asset(original);
+      final busted = await cfg.bust(original);
 
       final response = await makeRequest(handler, busted);
       expect(response.statusCode, HttpStatus.ok);
@@ -95,7 +95,7 @@ void main() {
         mountPrefix: '/static',
         fileSystemRoot: staticRoot,
       );
-      final busted = await cfg.asset(original);
+      final busted = await cfg.bust(original);
 
       final response = await makeRequest(
         handler,
