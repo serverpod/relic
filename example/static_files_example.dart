@@ -3,11 +3,10 @@ import 'dart:io';
 import 'package:relic/io_adapter.dart';
 import 'package:relic/relic.dart';
 
-/// Minimal example serving files from the local example/static_files directory.
+/// A minimal server that serves static files with cache busting.
 ///
-/// - Serves static files under the URL prefix "/static".
-/// - Try opening: http://localhost:8080/static/hello.txt
-/// - Or:          http://localhost:8080/static/logo.svg
+/// - Serves files under the URL prefix "/static" from `example/static_files`.
+/// - Try: http://localhost:8080/
 Future<void> main() async {
   final staticDir = Directory('static_files');
   final cacheCfg = CacheBustingConfig(
@@ -15,8 +14,7 @@ Future<void> main() async {
     fileSystemRoot: staticDir,
   );
 
-  // Router mounts the static handler under /static/** and shows an index that
-  // demonstrates cache-busted URLs.
+  // Setup router and a small index page showing cache-busted URLs.
   final router = Router<Handler>()
     ..get('/', respondWith((final _) async {
       final helloUrl = await cacheCfg.bust('/static/hello.txt');
@@ -37,12 +35,13 @@ Future<void> main() async {
           cacheControl: (final _, final __) => null,
         ));
 
+  // Setup a handler pipeline with logging, cache busting, and routing.
   final handler = const Pipeline()
       .addMiddleware(logRequests())
       .addMiddleware(cacheBusting(cacheCfg))
       .addMiddleware(routeWith(router))
       .addHandler(respondWith((final _) => Response.notFound()));
 
+  // Start the server
   await serve(handler, InternetAddress.loopbackIPv4, 8080);
-  // Now open your browser at: http://localhost:8080/
 }
