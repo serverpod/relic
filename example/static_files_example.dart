@@ -15,7 +15,7 @@ Future<void> main() async {
     print('Please run this example from example directory (cd example).');
     return;
   }
-  final cacheCfg = CacheBustingConfig(
+  final buster = CacheBustingConfig(
     mountPrefix: '/static',
     fileSystemRoot: staticDir,
   );
@@ -24,8 +24,8 @@ Future<void> main() async {
   // setting the cache control header to immutable for a year.
   final router = Router<Handler>()
     ..get('/', respondWith((final _) async {
-      final helloUrl = await cacheCfg.bust('/static/hello.txt');
-      final logoUrl = await cacheCfg.bust('/static/logo.svg');
+      final helloUrl = await buster.assetPath('/static/hello.txt');
+      final logoUrl = await buster.assetPath('/static/logo.svg');
       final html = '<html><body>'
           '<h1>Static files with cache busting</h1>'
           '<ul>'
@@ -49,7 +49,7 @@ Future<void> main() async {
   // Setup a handler pipeline with logging, cache busting, and routing.
   final handler = const Pipeline()
       .addMiddleware(logRequests())
-      .addMiddleware(cacheBusting(cacheCfg))
+      .addMiddleware(cacheBusting(buster))
       .addMiddleware(routeWith(router))
       .addHandler(respondWith((final _) => Response.notFound()));
 

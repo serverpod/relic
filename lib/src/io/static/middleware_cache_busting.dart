@@ -7,7 +7,7 @@ import '../../adapter/context.dart';
 /// Cache-busting for asset URLs that embed a content hash.
 ///
 /// Typical flow:
-/// - Outgoing URLs: call [CacheBustingConfig.bust] (or
+/// - Outgoing URLs: call [CacheBustingConfig.assetPath] (or
 ///   [CacheBustingConfig.tryBust]) with a known mount prefix (e.g. "/static")
 ///   to get "/static/name@hash.ext".
 /// - Incoming requests: add this [cacheBusting] middleware so downstream
@@ -84,7 +84,7 @@ class CacheBustingConfig {
   /// Returns the cache-busted URL for the given [staticPath].
   ///
   /// Example: '/static/logo.svg' → '/static/logo@hash.svg'.
-  Future<String> bust(final String staticPath) async {
+  Future<String> assetPath(final String staticPath) async {
     if (!staticPath.startsWith(mountPrefix)) return staticPath;
 
     final relative = staticPath.substring(mountPrefix.length);
@@ -139,7 +139,7 @@ class CacheBustingConfig {
   /// read, returns [staticPath] unchanged.
   Future<String> tryBust(final String staticPath) async {
     try {
-      return await bust(staticPath);
+      return await assetPath(staticPath);
     } catch (_) {
       return staticPath;
     }

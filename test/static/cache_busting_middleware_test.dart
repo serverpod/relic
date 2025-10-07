@@ -35,7 +35,7 @@ void main() {
         mountPrefix: '/static',
         fileSystemRoot: staticRoot,
       );
-      final busted = await cfg.bust(original);
+      final busted = await cfg.assetPath(original);
       expect(busted, isNot(original));
       expect(busted, startsWith('/static/logo@'));
       expect(busted, endsWith('.png'));
@@ -74,7 +74,7 @@ void main() {
         mountPrefix: '/assets',
         fileSystemRoot: staticRoot,
       );
-      final busted = await cfg.bust(original);
+      final busted = await cfg.assetPath(original);
 
       final response = await makeRequest(handler, busted);
       expect(response.statusCode, HttpStatus.ok);
@@ -100,7 +100,7 @@ void main() {
         mountPrefix: '/static',
         fileSystemRoot: staticRoot,
       );
-      final busted = await cfg.bust(original);
+      final busted = await cfg.assetPath(original);
 
       final response = await makeRequest(
         handler,
@@ -121,7 +121,7 @@ void main() {
       );
 
       expect(
-        cfg.bust('/static/does-not-exist.txt'),
+        cfg.assetPath('/static/does-not-exist.txt'),
         throwsA(isA<PathNotFoundException>()),
       );
     });
@@ -136,13 +136,13 @@ void main() {
       );
 
       expect(
-        cfg.bust('/static/../secret.txt'),
+        cfg.assetPath('/static/../secret.txt'),
         throwsA(isA<ArgumentError>()),
       );
 
       // Also reject absolute after mount
       expect(
-        cfg.bust('/static//etc/passwd'),
+        cfg.assetPath('/static//etc/passwd'),
         throwsA(isA<ArgumentError>()),
       );
     });
@@ -172,7 +172,7 @@ void main() {
       );
 
       expect(
-        cfg.bust('/static/escape.txt'),
+        cfg.assetPath('/static/escape.txt'),
         throwsA(isA<ArgumentError>()),
       );
     });
@@ -202,7 +202,7 @@ void main() {
 
       const outside = '/other/logo.png';
       expect(await cfg.tryBust(outside), outside);
-      expect(await cfg.bust(outside), outside);
+      expect(await cfg.assetPath(outside), outside);
     });
 
     test(
@@ -339,7 +339,7 @@ void main() {
           ));
 
       const original = '/static/logo';
-      final busted = await cfg.bust(original);
+      final busted = await cfg.assetPath(original);
       expect(busted, startsWith('/static/logo@'));
       expect(busted, isNot(endsWith('.')));
 
@@ -370,7 +370,7 @@ void main() {
           ));
 
       const original = '/static/img@foo/logo.png';
-      final busted = await cfg.bust(original);
+      final busted = await cfg.assetPath(original);
       expect(busted, startsWith('/static/img@foo/logo@'));
       expect(busted, endsWith('.png'));
 
@@ -398,7 +398,7 @@ void main() {
           ));
 
       const original = '/static/@logo.png';
-      final busted = await cfg.bust(original);
+      final busted = await cfg.assetPath(original);
       expect(busted, startsWith('/static/@logo@'));
       expect(busted, endsWith('.png'));
 
