@@ -138,6 +138,34 @@ void main() {
       );
     });
 
+    test('bust prevents symlink traversal outside static root', () async {
+      // Create a file outside the static root
+      final outsidePath = p.join(d.sandbox, 'outside.txt');
+      await File(outsidePath).writeAsString('outside');
+
+      // Create a symlink inside static pointing to the outside file
+      final linkPath = p.join(d.sandbox, 'static', 'escape.txt');
+      final link = Link(linkPath);
+      try {
+        // Use absolute target to be explicit
+        await link.create(outsidePath);
+      } on FileSystemException {
+        // If the platform forbids symlinks, skip this test gracefully
+        return;
+      }
+
+      final staticRoot = Directory(p.join(d.sandbox, 'static'));
+      final cfg = CacheBustingConfig(
+        mountPrefix: '/static',
+        fileSystemRoot: staticRoot,
+      );
+
+      expect(
+        cfg.bust('/static/escape.txt'),
+        throwsA(isA<ArgumentError>()),
+      );
+    });
+
     test('tryBust returns original path when file does not exist', () async {
       final staticRoot = Directory(p.join(d.sandbox, 'static'));
       final cfg = CacheBustingConfig(
