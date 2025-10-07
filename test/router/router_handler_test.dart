@@ -215,4 +215,102 @@ void main() {
 
     expect(result.response.headers['X-Custom'], ['applied']);
   });
+
+  test(
+      'Given a router with fallback set, '
+      'when calling router with unmatched path, '
+      'then fallback handler is called', () async {
+    final router = Router<Handler>();
+    router.get('/users', (final ctx) => ctx.respond(Response.ok()));
+
+    var fallbackCalled = false;
+    router.fallback = (final ctx) {
+      fallbackCalled = true;
+      return ctx
+          .respond(Response.ok(body: Body.fromString('fallback response')));
+    };
+
+    final request = _FakeRequest('/nonexistent');
+    final ctx = request.toContext(Object());
+    final result = await router.asHandler(ctx) as ResponseContext;
+
+    expect(fallbackCalled, isTrue);
+    expect(result.response.statusCode, 200);
+    expect(await result.response.readAsString(), 'fallback response');
+  });
+
+  test(
+      'Given a router without fallback set, '
+      'when calling router with unmatched path, '
+      'then returns 404', () async {
+    final router = Router<Handler>();
+    router.get('/users', (final ctx) => ctx.respond(Response.ok()));
+    // No fallback set
+
+    final request = _FakeRequest('/nonexistent');
+    final ctx = request.toContext(Object());
+    final result = await router.asHandler(ctx) as ResponseContext;
+
+    expect(result.response.statusCode, 404);
+  });
+
+  test(
+      'Given a router with fallback set, '
+      'when calling router with method miss, '
+      'then returns 405 (not fallback)', () async {
+    final router = Router<Handler>();
+    router.get('/users', (final ctx) => ctx.respond(Response.ok()));
+
+    var fallbackCalled = false;
+    router.fallback = (final ctx) {
+      fallbackCalled = true;
+      return ctx.respond(Response.ok());
+    };
+
+    final request = _FakeRequest('/users', method: Method.post);
+    final ctx = request.toContext(Object());
+    final result = await router.asHandler(ctx) as ResponseContext;
+
+    expect(fallbackCalled, isFalse);
+    expect(result.response.statusCode, 405);
+    expect(result.response.headers.allow, contains(Method.get));
+  });
+
+  test(
+      'Given a router with fallback, '
+      'when fallback is overwritten, '
+      'then new fallback is used', () async {
+    final router = Router<Handler>();
+    router.get('/users', (final ctx) => ctx.respond(Response.ok()));
+
+    router.fallback = (final ctx) =>
+        ctx.respond(Response.ok(body: Body.fromString('first fallback')));
+
+    router.fallback = (final ctx) =>
+        ctx.respond(Response.ok(body: Body.fromString('second fallback')));
+
+    final request = _FakeRequest('/nonexistent');
+    final ctx = request.toContext(Object());
+    final result = await router.asHandler(ctx) as ResponseContext;
+
+    expect(await result.response.readAsString(), 'second fallback');
+  });
+
+  test(
+      'Given a router with fallback set to null, '
+      'when calling router with unmatched path, '
+      'then returns 404', () async {
+    final router = Router<Handler>();
+    router.get('/users', (final ctx) => ctx.respond(Response.ok()));
+
+    router.fallback = (final ctx) =>
+        ctx.respond(Response.ok(body: Body.fromString('fallback')));
+    router.fallback = null; // Clear fallback
+
+    final request = _FakeRequest('/nonexistent');
+    final ctx = request.toContext(Object());
+    final result = await router.asHandler(ctx) as ResponseContext;
+
+    expect(result.response.statusCode, 404);
+  });
 }
