@@ -8,7 +8,7 @@ import 'package:test_descriptor/test_descriptor.dart' as d;
 import 'test_util.dart';
 
 void main() {
-  group('Cache busting middleware', () {
+  group('Given cache busting middleware and a static directory', () {
     setUp(() async {
       await d.dir('static', [
         d.file('logo.png', 'png-bytes'),
@@ -16,7 +16,8 @@ void main() {
       ]).create();
     });
 
-    test('generates cache-busted URL and serves via root-mounted handler',
+    test(
+        'when the static handler is mounted at root then requesting a busted URL serves the file',
         () async {
       final staticRoot = Directory(p.join(d.sandbox, 'static'));
       final handler = const Pipeline()
@@ -48,7 +49,9 @@ void main() {
       expect(await response.readAsString(), 'png-bytes');
     });
 
-    test('works when static handler is mounted under router', () async {
+    test(
+        'and the static handler is router-mounted when requesting a busted URL then it serves the file',
+        () async {
       final staticRoot = Directory(p.join(d.sandbox, 'static'));
       final router = Router<Handler>()
         ..get(
@@ -78,7 +81,9 @@ void main() {
       expect(await response.readAsString(), 'nested-bytes');
     });
 
-    test('works with custom handlerPath mounted under root', () async {
+    test(
+        'and handlerPath is used under root when requesting a busted URL then it serves the file',
+        () async {
       final staticRoot = Directory(p.join(d.sandbox, 'static'));
       final handler = const Pipeline()
           .addMiddleware(cacheBusting(CacheBustingConfig(
@@ -106,7 +111,9 @@ void main() {
       expect(await response.readAsString(), 'nested-bytes');
     });
 
-    test('bust throws when file does not exist', () async {
+    test(
+        'when bust is called for a missing file then it throws PathNotFoundException',
+        () async {
       final staticRoot = Directory(p.join(d.sandbox, 'static'));
       final cfg = CacheBustingConfig(
         mountPrefix: '/static',
@@ -119,7 +126,9 @@ void main() {
       );
     });
 
-    test('bust prevents path traversal outside static root', () async {
+    test(
+        'when traversal attempts are made then bust rejects paths outside root',
+        () async {
       final staticRoot = Directory(p.join(d.sandbox, 'static'));
       final cfg = CacheBustingConfig(
         mountPrefix: '/static',
@@ -138,7 +147,9 @@ void main() {
       );
     });
 
-    test('bust prevents symlink traversal outside static root', () async {
+    test(
+        'and a symlink escapes the root when calling bust then it rejects paths outside root',
+        () async {
       // Create a file outside the static root
       final outsidePath = p.join(d.sandbox, 'outside.txt');
       await File(outsidePath).writeAsString('outside');
@@ -166,7 +177,9 @@ void main() {
       );
     });
 
-    test('tryBust returns original path when file does not exist', () async {
+    test(
+        'when tryBust is called for a missing file then it returns the original path',
+        () async {
       final staticRoot = Directory(p.join(d.sandbox, 'static'));
       final cfg = CacheBustingConfig(
         mountPrefix: '/static',
@@ -178,7 +191,9 @@ void main() {
       expect(result, original);
     });
 
-    test('bust/tryBust leave paths outside mountPrefix unchanged', () async {
+    test(
+        'when the path is outside mountPrefix then bust/tryBust return it unchanged',
+        () async {
       final staticRoot = Directory(p.join(d.sandbox, 'static'));
       final cfg = CacheBustingConfig(
         mountPrefix: '/static',
@@ -190,7 +205,9 @@ void main() {
       expect(await cfg.bust(outside), outside);
     });
 
-    test('middleware does not rewrite when not under mount prefix', () async {
+    test(
+        'when a request is outside mountPrefix then middleware does not rewrite',
+        () async {
       final staticRoot = Directory(p.join(d.sandbox, 'static'));
       final handler = const Pipeline()
           .addMiddleware(cacheBusting(CacheBustingConfig(
@@ -206,7 +223,8 @@ void main() {
       expect(response.statusCode, HttpStatus.notFound);
     });
 
-    test('middleware does not rewrite trailing-slash requests (empty basename)',
+    test(
+        'and the request is the mount root (trailing slash) then it is not rewritten',
         () async {
       final staticRoot = Directory(p.join(d.sandbox, 'static'));
       final handler = const Pipeline()
@@ -226,7 +244,9 @@ void main() {
       expect(response.statusCode, HttpStatus.notFound);
     });
 
-    test('middleware early-returns for mount root (relative empty)', () async {
+    test(
+        'and the request is the mount root then middleware early-returns unchanged',
+        () async {
       final staticRoot = Directory(p.join(d.sandbox, 'static'));
       final cfg = CacheBustingConfig(
         mountPrefix: '/static',
@@ -244,7 +264,8 @@ void main() {
       expect(await response.readAsString(), '/static/');
     });
 
-    test('middleware passes through non-busted filenames (no @)', () async {
+    test('and the filename is not busted then middleware serves the file',
+        () async {
       final staticRoot = Directory(p.join(d.sandbox, 'static'));
       final cfg = CacheBustingConfig(
         mountPrefix: '/static',
@@ -263,7 +284,9 @@ void main() {
       expect(await response.readAsString(), 'png-bytes');
     });
 
-    test('middleware does not strip leading @ when no hash present', () async {
+    test(
+        'and the filename starts with @ and has no hash then it is not stripped',
+        () async {
       await d.file(p.join('static', '@plain.txt'), 'plain-at').create();
 
       final staticRoot = Directory(p.join(d.sandbox, 'static'));
@@ -284,7 +307,9 @@ void main() {
       expect(await response.readAsString(), 'plain-at');
     });
 
-    test('invalid mountPrefix throws (must start with /)', () async {
+    test(
+        'when creating config with invalid mountPrefix then it throws ArgumentError',
+        () async {
       final staticRoot = Directory(p.join(d.sandbox, 'static'));
       expect(
         () => CacheBustingConfig(
@@ -295,7 +320,9 @@ void main() {
       );
     });
 
-    test('bust/no-ext works and serves via middleware', () async {
+    test(
+        'and the file has no extension when calling bust then it serves via middleware',
+        () async {
       // Add a no-extension file
       await d.file(p.join('static', 'logo'), 'content-noext').create();
 
@@ -322,7 +349,9 @@ void main() {
       expect(await response.readAsString(), 'content-noext');
     });
 
-    test('directory name containing @ is not affected', () async {
+    test(
+        'and a directory name contains @ when calling bust then only the filename is affected',
+        () async {
       // Add nested directory with @ in its name
       await d.dir(p.join('static', 'img@foo'), [
         d.file('logo.png', 'dir-at-bytes'),
@@ -351,7 +380,9 @@ void main() {
       expect(await response.readAsString(), 'dir-at-bytes');
     });
 
-    test('filename starting with @ busts and strips correctly', () async {
+    test(
+        'Given a filename starting with @ when calling bust then it busts and strips correctly',
+        () async {
       await d.file(p.join('static', '@logo.png'), 'at-logo').create();
 
       final staticRoot = Directory(p.join(d.sandbox, 'static'));
