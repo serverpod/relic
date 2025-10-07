@@ -19,26 +19,28 @@ final _routingContext = ContextProperty<
 /// method doesn't (method miss), a 405 response is returned with the Allow
 /// header listing supported methods.
 ///
-/// For [Router<Handler>], the [toHandler] parameter is optional as the values
-/// are already handlers. For other types like [Router<String>] or custom
-/// types, you must provide a [toHandler] function to convert the router's
-/// values into handlers.
-///
 /// Path parameters, matched path, and remaining path from the routing lookup
 /// are accessible via [RequestContextEx] extensions on the context passed to
 /// handlers.
 ///
-/// Example with [Router<Handler>]:
+/// **Note:** For [Router<Handler>], prefer using [Router.use] for middleware
+/// composition, [Router.fallback] for 404 handling, and [RouterHandler.call]
+/// to use the router directly as a handler. This avoids the need for
+/// [Pipeline] and provides better composability.
+///
+/// Preferred approach:
 /// ```dart
 /// final router = Router<Handler>()
-///   ..get('/users/:id', userHandler);
+///   ..get('/users/:id', userHandler)
+///   ..use('/', logRequests())
+///   ..fallback = notFoundHandler;
 ///
-/// final handler = const Pipeline()
-///     .addMiddleware(routeWith(router))
-///     .addHandler(notFoundHandler);
+/// await serve(router.call, ...);
 /// ```
 ///
-/// Example with custom type:
+/// This function is primarily useful for [Router<T>] where `T` is not
+/// [Handler], requiring conversion via [toHandler]:
+///
 /// ```dart
 /// final router = Router<String>()
 ///   ..get('/hello', 'Hello World');
@@ -52,10 +54,6 @@ final _routingContext = ContextProperty<
 ///     ))
 ///     .addHandler(notFoundHandler);
 /// ```
-///
-/// Note: For [Router<Handler>], consider using the simpler [RouterHandler.call]
-/// extension method instead, which allows using the router directly as a handler
-/// without creating middleware.
 Middleware routeWith<T extends Object>(
   final Router<T> router, {
   final Handler Function(T)? toHandler,
@@ -157,17 +155,18 @@ extension RequestContextEx on RequestContext {
 
 /// Extension to make [Router<Handler>] directly usable as a [Handler].
 ///
-/// This allows a router to be used directly in a pipeline without wrapping it
-/// with [routeWith].
+/// This extension allows [Router<Handler>] to be used as a handler without
+/// wrapping it with [routeWith]. Compose middleware using [Router.use] and
+/// handle 404s using [Router.fallback] instead of Pipeline and Cascade.
 ///
 /// Example:
 /// ```dart
 /// final router = Router<Handler>()
-///   ..get('/users', usersHandler);
+///   ..get('/users/:id', usersHandler)
+///   ..use('/', logRequests())
+///   ..fallback = notFoundHandler;
 ///
-/// final handler = const Pipeline()
-///     .addMiddleware(logRequests())
-///     .addHandler(router.asHandler);
+/// await serve(router.asHandler, InternetAddress.anyIPv4, 8080);
 /// ```
 extension RouterHandler on Router<Handler> {
   /// Makes [Router<Handler>] callable as a [Handler].

@@ -11,7 +11,7 @@ Future<void> main() async {
     ..fallback = respondWith((final _) => Response.notFound(
         body: Body.fromString("Sorry, that doesn't compute")));
 
-  // Start the server with the handler
+  // Router<Handler> can be used directly as a Handler via the asHandler extension.
   await serve(router.asHandler, InternetAddress.anyIPv4, 8080);
 
   // Check the _example_ directory for other examples.
