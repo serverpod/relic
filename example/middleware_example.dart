@@ -31,7 +31,7 @@ Future<void> main() async {
 
   print(response.body);
 
-  server.kill(); // stop server again
+  server.kill(); // stop server again (a bit blunt)
 }
 
 typedef User = int; // just an example
