@@ -88,17 +88,41 @@ class CacheBustingConfig {
     if (!staticPath.startsWith(mountPrefix)) return staticPath;
 
     final relative = staticPath.substring(mountPrefix.length);
-    final filePath = File(p.join(fileSystemRoot.path, relative));
+    final resolvedRootPath = fileSystemRoot.resolveSymbolicLinksSync();
+    final joinedPath = p.join(resolvedRootPath, relative);
+    final normalizedPath = p.normalize(joinedPath);
 
-    // Fail fast with a consistent exception type for non-existent files
-    if (!filePath.existsSync()) {
+    // Reject traversal before hitting the filesystem
+    if (!p.isWithin(resolvedRootPath, normalizedPath) &&
+        normalizedPath != resolvedRootPath) {
+      throw ArgumentError.value(
+        staticPath,
+        'staticPath',
+        'must stay within $mountPrefix',
+      );
+    }
+
+    // Ensure target exists (files only) before resolving symlinks
+    final entityType =
+        FileSystemEntity.typeSync(normalizedPath, followLinks: false);
+    if (entityType == FileSystemEntityType.notFound ||
+        entityType == FileSystemEntityType.directory) {
       throw PathNotFoundException(
-        filePath.path,
+        normalizedPath,
         const OSError('No such file or directory', 2),
       );
     }
 
-    final info = await getStaticFileInfo(filePath);
+    final resolvedFilePath = File(normalizedPath).resolveSymbolicLinksSync();
+    if (!p.isWithin(resolvedRootPath, resolvedFilePath)) {
+      throw ArgumentError.value(
+        staticPath,
+        'staticPath',
+        'must stay within $mountPrefix',
+      );
+    }
+
+    final info = await getStaticFileInfo(File(resolvedFilePath));
 
     // Build the busted URL using URL path helpers for readability/portability
     final directory = p.url.dirname(staticPath);

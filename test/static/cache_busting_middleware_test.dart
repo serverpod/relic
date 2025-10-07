@@ -119,6 +119,25 @@ void main() {
       );
     });
 
+    test('bust prevents path traversal outside static root', () async {
+      final staticRoot = Directory(p.join(d.sandbox, 'static'));
+      final cfg = CacheBustingConfig(
+        mountPrefix: '/static',
+        fileSystemRoot: staticRoot,
+      );
+
+      expect(
+        cfg.bust('/static/../secret.txt'),
+        throwsA(isA<ArgumentError>()),
+      );
+
+      // Also reject absolute after mount
+      expect(
+        cfg.bust('/static//etc/passwd'),
+        throwsA(isA<ArgumentError>()),
+      );
+    });
+
     test('tryBust returns original path when file does not exist', () async {
       final staticRoot = Directory(p.join(d.sandbox, 'static'));
       final cfg = CacheBustingConfig(
