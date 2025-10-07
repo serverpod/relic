@@ -58,7 +58,7 @@ Middleware routeWith<T extends Object>(
   final Router<T> router, {
   final Handler Function(T)? toHandler,
 }) =>
-    _RoutingMiddlewareBuilder(router, toHandler: toHandler).build();
+    _RoutingMiddlewareBuilder(router, toHandler: toHandler).asMiddleware;
 
 bool _isSubtype<S, T>() => <S>[] is List<T>;
 
@@ -78,9 +78,9 @@ class _RoutingMiddlewareBuilder<T extends Object> {
     ArgumentError.checkNotNull(_toHandler, 'toHandler');
   }
 
-  Middleware build() => _meddle;
+  Middleware get asMiddleware => call;
 
-  Handler _meddle(final Handler next) {
+  Handler call(final Handler next) {
     return (final ctx) async {
       final req = ctx.request;
       final path = Uri.decodeFull(req.url.path);
