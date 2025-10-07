@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_print
+
 import 'dart:io';
 
 import 'package:relic/io_adapter.dart';
@@ -9,6 +11,10 @@ import 'package:relic/relic.dart';
 /// - Try: http://localhost:8080/
 Future<void> main() async {
   final staticDir = Directory('static_files');
+  if (!staticDir.existsSync()) {
+    print('Please run this example from example directory (cd example).');
+    return;
+  }
   final cacheCfg = CacheBustingConfig(
     mountPrefix: '/static',
     fileSystemRoot: staticDir,
