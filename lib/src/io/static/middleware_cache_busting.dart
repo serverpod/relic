@@ -34,7 +34,7 @@ Middleware cacheBusting(final CacheBustingConfig config) {
       }
       final last = p.url.basename(relative);
 
-      final strippedLast = _stripHashFromFilename(last);
+      final strippedLast = _stripHashFromFilename(last, config.separator);
       if (strippedLast == last) {
         return await inner(ctx);
       }
@@ -54,14 +54,17 @@ Middleware cacheBusting(final CacheBustingConfig config) {
   };
 }
 
-/// Removes a trailing "@hash" segment from a file name, preserving any
-/// extension. Matches both "name@hash.ext" and "name@hash".
-String _stripHashFromFilename(final String fileName) {
+/// Removes a trailing "`<sep>`hash" segment from a file name, preserving any
+/// extension. Matches both "`name<sep>hash`.ext" and "`name<sep>hash`".
+String _stripHashFromFilename(
+  final String fileName,
+  final String separator,
+) {
   final ext = p.url.extension(fileName);
   final base = p.url.basenameWithoutExtension(fileName);
 
-  final at = base.lastIndexOf('@');
-  if (at <= 0) return fileName; // no hash or starts with '@'
+  final at = base.lastIndexOf(separator);
+  if (at <= 0) return fileName; // no hash or starts with separator
 
   final cleanBase = base.substring(0, at);
   return p.url.setExtension(cleanBase, ext);
@@ -75,9 +78,13 @@ class CacheBustingConfig {
   /// Filesystem root corresponding to [mountPrefix].
   final Directory fileSystemRoot;
 
+  /// Separator between base filename and hash (e.g., "@").
+  final String separator;
+
   CacheBustingConfig({
     required final String mountPrefix,
     required final Directory fileSystemRoot,
+    this.separator = '@',
   })  : mountPrefix = _normalizeMount(mountPrefix),
         fileSystemRoot = fileSystemRoot.absolute;
 
@@ -129,7 +136,7 @@ class CacheBustingConfig {
     final baseName = p.url.basenameWithoutExtension(staticPath);
     final ext = p.url.extension(staticPath); // includes leading dot or ''
 
-    final bustedName = '$baseName@${info.etag}$ext';
+    final bustedName = '$baseName$separator${info.etag}$ext';
     return directory == '.'
         ? '/$bustedName'
         : p.url.join(directory, bustedName);

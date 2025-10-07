@@ -350,6 +350,59 @@ void main() {
     });
 
     test(
+        'and a custom separator is configured when requesting a busted URL then it serves the file',
+        () async {
+      final staticRoot = Directory(p.join(d.sandbox, 'static'));
+      final cfg = CacheBustingConfig(
+        mountPrefix: '/static',
+        fileSystemRoot: staticRoot,
+        separator: '--',
+      );
+      final handler = const Pipeline()
+          .addMiddleware(cacheBusting(cfg))
+          .addHandler(createStaticHandler(
+            staticRoot.path,
+            cacheControl: (final _, final __) => null,
+          ));
+
+      const original = '/static/logo.png';
+      final busted = await cfg.assetPath(original);
+      expect(busted, isNot(original));
+      expect(busted, startsWith('/static/logo--'));
+      expect(busted, endsWith('.png'));
+
+      final response =
+          await makeRequest(handler, busted, handlerPath: 'static');
+      expect(response.statusCode, HttpStatus.ok);
+      expect(await response.readAsString(), 'png-bytes');
+    });
+
+    test(
+        'and the filename starts with the separator and has no hash then it is not stripped',
+        () async {
+      // Create a file that starts with the separator characters
+      await d.file(p.join('static', '--plain.txt'), 'dashdash').create();
+
+      final staticRoot = Directory(p.join(d.sandbox, 'static'));
+      final cfg = CacheBustingConfig(
+        mountPrefix: '/static',
+        fileSystemRoot: staticRoot,
+        separator: '--',
+      );
+      final handler = const Pipeline()
+          .addMiddleware(cacheBusting(cfg))
+          .addHandler(createStaticHandler(
+            staticRoot.path,
+            cacheControl: (final _, final __) => null,
+          ));
+
+      final response = await makeRequest(handler, '/static/--plain.txt',
+          handlerPath: 'static');
+      expect(response.statusCode, HttpStatus.ok);
+      expect(await response.readAsString(), 'dashdash');
+    });
+
+    test(
         'and a directory name contains @ when calling bust then only the filename is affected',
         () async {
       // Add nested directory with @ in its name
