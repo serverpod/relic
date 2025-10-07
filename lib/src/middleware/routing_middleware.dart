@@ -89,12 +89,13 @@ extension RouterHandler on Router<Handler> {
   ///
   /// Performs routing lookup and:
   /// - Returns 405 if path matches but method doesn't (with Allow header)
-  /// - Returns 404 if no route matches
+  /// - Calls fallback handler if set and no route matches
+  /// - Returns 404 if no fallback is set and no route matches
   /// - Calls the matched handler if route is found
   ///
   /// Path parameters, matched path, and remaining path are accessible via
   /// [RequestContextEx] extensions on the context passed to handlers.
   Handler get asHandler => const Pipeline()
       .addMiddleware(routeWith(this))
-      .addHandler(respondWith((final _) => Response.notFound()));
+      .addHandler(fallback ?? respondWith((final _) => Response.notFound()));
 }
