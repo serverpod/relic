@@ -22,7 +22,6 @@ class MimeType {
   static const xml = MimeType('application', 'xml');
 
   /// Binary mime type.
-
   static const octetStream = MimeType('application', 'octet-stream');
 
   /// PDF mime type.
@@ -46,6 +45,7 @@ class MimeType {
   /// The sub type of the mime type.
   final String subType;
 
+  /// Creates a new mime type.
   const MimeType(this.primaryType, this.subType);
 
   /// Parses a mime type from a string.
@@ -58,8 +58,8 @@ class MimeType {
       throw FormatException('Invalid mime type $type');
     }
 
-    final primaryType = parts[0];
-    final subType = parts[1];
+    final primaryType = parts[0].trim();
+    final subType = parts[1].trim();
 
     if (primaryType.isEmpty || subType.isEmpty) {
       throw FormatException('Invalid mime type $type');
@@ -68,6 +68,7 @@ class MimeType {
     return MimeType(primaryType, subType);
   }
 
+  /// Returns `true` if the mime type is text.
   bool get isText {
     if (primaryType == 'text') return true;
     if (primaryType == 'application') {

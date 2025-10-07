@@ -1,6 +1,9 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math';
 import 'dart:typed_data';
+
+import 'package:mime/mime.dart';
 
 import 'types/body_type.dart';
 import 'types/mime_type.dart';
@@ -51,18 +54,66 @@ class Body {
   factory Body.empty() => Body._(const Stream.empty(), 0);
 
   /// Creates a body from a string.
+  ///
+  /// If [mimeType] is not provided, it will be inferred from the string.
+  /// It is more performant to set it explicitly.
   factory Body.fromString(
     final String body, {
     final Encoding encoding = utf8,
-    final MimeType mimeType = MimeType.plainText,
+    MimeType? mimeType,
   }) {
     final Uint8List encoded = Uint8List.fromList(encoding.encode(body));
+
+    // Try to infer mime type from content, if not provided
+    mimeType ??= _tryInferTextMimeTypeFrom(body) ?? MimeType.plainText;
+
     return Body._(
       Stream.value(encoded),
       encoded.length,
       encoding: encoding,
       mimeType: mimeType,
     );
+  }
+
+  /// Try to infer MIME type from string content by analyzing the content prefix
+  ///
+  /// Can infer text/json, text/xml, text/html, text/css.
+  static MimeType? _tryInferTextMimeTypeFrom(final String content) {
+    // Find first non-whitespace character to avoid allocating a trimmed string
+    var begin = 0;
+    final end = content.length;
+    while (begin < end && _isWhitespace(content[begin])) {
+      begin++;
+    }
+
+    // Extract small marker prefix
+    final prefix =
+        content.substring(begin, min(end, begin + 14)); // 14 max length needed
+
+    // Check for JSON (this is super crude)
+    if (prefix.startsWith('{') || prefix.startsWith('[')) {
+      return MimeType.json;
+    }
+
+    // Check for XML (including variants like <?xml)
+    if (prefix.startsWith('<?xml')) {
+      return MimeType.xml;
+    }
+
+    // Check for HTML (including DOCTYPE and common HTML tags)
+    if (prefix.startsWith('<!DOCTYPE html') ||
+        prefix.startsWith('<!doctype html') ||
+        prefix.startsWith('<html')) {
+      return MimeType.html;
+    }
+
+    return null; // give up
+  }
+
+  /// Checks if a character is whitespace.
+  static bool _isWhitespace(final String char) {
+    // Common whitespace characters
+    return char == ' ' || char == '\t' || char == '\n' || char == '\r';
   }
 
   /// Creates a body from a [Stream] of [Uint8List].
@@ -80,17 +131,28 @@ class Body {
     );
   }
 
+  static final _resolver = MimeTypeResolver();
+
   /// Creates a body from a [Uint8List].
+  ///
+  /// Will try to infer the [mimeType] if it is not provided,
+  /// This will only work for some binary formats, and falls
+  /// back to [MimeType.octetStream].
   factory Body.fromData(
     final Uint8List body, {
     final Encoding? encoding,
-    final MimeType mimeType = MimeType.octetStream,
+    MimeType? mimeType,
   }) {
+    // Attempt to infer mimeType, if not set
+    if (mimeType == null) {
+      final mimeString = _resolver.lookup('', headerBytes: body);
+      mimeType = mimeString == null ? null : MimeType.parse(mimeString);
+    }
     return Body._(
       Stream.value(body),
       body.length,
-      encoding: encoding ?? (mimeType.isText == true ? utf8 : null),
-      mimeType: mimeType,
+      encoding: encoding ?? (mimeType?.isText == true ? utf8 : null),
+      mimeType: mimeType ?? MimeType.octetStream,
     );
   }
 
