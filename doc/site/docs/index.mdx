@@ -1,0 +1,41 @@
+---
+sidebar_position: -1
+---
+
+# Introduction 🎯
+Relic is a modern, high-performance web server framework inspired by Shelf and built by the Serverpod team to meet the demanding requirements of modern web applications. Relic provides a robust, type-safe, and efficient foundation for building scalable web services.
+
+#### Why Relic?
+
+While Shelf has been a solid foundation for Dart web applications, we identified several areas for improvement when building Serverpod. Rather than work around these limitations, we decided to create a next-generation framework that maintains Shelf's familiar structure while delivering significant enhancements.
+
+## Features
+Relic aims to be the most comprehensive web server framework for Dart. It provides a wide range of features out of the box and allows you to extend it with middleware. Here are some of the key features:
+
+import DocFeatureCards from '@site/src/components/DocFeatureCards';
+
+<DocFeatureCards
+  features={[
+    { icon: '🔒', title: 'Type Safe', description: 'Strongly typed APIs with validated headers.' },
+    { icon: '⚡', title: 'Fast', description: 'High performance through trie-based routing and LRU caching.' },
+    { icon: '🔌', title: 'WebSockets', description: 'Built-in WebSocket support with type-safe messaging.' },
+    { icon: '🔧', title: 'Middleware', description: 'Composable middleware pipeline with router integration.' },
+    { icon: '👨‍💻', title: 'Dev Ready', description: 'Great IDE support with clear errors and full documentation.' },
+    { icon: '🚀', title: 'Production', description: 'Production-ready with static files, security, and testing.' },
+  ]}
+/>
+
+
+## Comparison with Shelf
+
+While Relic was inspired by Shelf, it is not built on top of Shelf and is not backward compatible. Here’s how they compare:
+
+| Feature | Shelf | Relic |
+|---------|-------|-------|
+| Type Safety | ❌ Partial (`dynamic` in places) | ✅ Strongly typed APIs|
+| Routing | ❌ External packages | ✅ Built-in trie-based router |
+| Headers | ❌ String-based | ✅ Strongly typed with validation |
+| WebSockets | ❌ External packages | ✅ Built-in support |
+| Performance | ✅ Good | ✅ Optimized (trie routing, LRU cache) |
+| Path Parameters | ❌ String-based | ✅ Symbol-based (type-safe) |
+| Body Handling | ❌ Mixed types | ✅ Consistent `Uint8List` |
