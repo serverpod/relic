@@ -7,17 +7,19 @@ sidebar_position: 2
 Create `bin/server.dart` and start a basic Relic server:
 
 ```dart
+import 'dart:io';
+import 'package:relic/io_adapter.dart';
 import 'package:relic/relic.dart';
 
 Future<void> main() async {
-  final app = Relic()
-    ..use(routeWith(
-      Router<Handler>()
-        ..add(Method.get, '/', (ctx) async => ctx.respondText('Hello, Relic!')),
-    ));
+  final handler = respondWith((request) {
+    return Response.ok(body: Body.fromString('Hello, Relic!'));
+  });
 
-  await serve(app, address: '127.0.0.1', port: 8080);
+  await serve(handler, InternetAddress.anyIPv4, 8080);
+  print('Server running on http://localhost:8080');
 }
+
 ```
 
 Run it:
