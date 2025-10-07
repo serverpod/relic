@@ -10,15 +10,16 @@ Future<void> main() async {
 
   // Setup a handler.
   //
-  // A [Handler] is function consuming [NewContext]s and producing [HandledContext]s,
-  // but if you are mostly concerned with converting [Request]s to [Response]s
-  // (known as a [Responder] in relic parlor) you can use [respondWith] to
-  // wrap a [Responder] into a [Handler]
-  final handler = const Pipeline()
-      .addMiddleware(logRequests())
-      .addMiddleware(routeWith(router))
-      .addHandler(respondWith((final _) => Response.notFound(
-          body: Body.fromString("Sorry, that doesn't compute"))));
+  // Router<Handler> can be used directly as a Handler via the asHandler extension.
+  // When a route doesn't match, it returns 404. You can compose with Cascade
+  // to provide custom fallback behavior.
+  final handler = const Pipeline().addMiddleware(logRequests()).addHandler(
+        Cascade()
+            .add(router.asHandler) // Use router.call to pass it as a Handler
+            .add(respondWith((final _) => Response.notFound(
+                body: Body.fromString("Sorry, that doesn't compute"))))
+            .handler,
+      );
 
   // Start the server with the handler
   await serve(handler, InternetAddress.anyIPv4, 8080);
