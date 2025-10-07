@@ -126,8 +126,7 @@ void main() {
       );
     });
 
-    test(
-        'when traversal attempts are made then bust rejects paths outside root',
+    test('when path contains .. segments then bust rejects paths outside root',
         () async {
       final staticRoot = Directory(p.join(d.sandbox, 'static'));
       final cfg = CacheBustingConfig(
@@ -139,8 +138,17 @@ void main() {
         cfg.assetPath('/static/../secret.txt'),
         throwsA(isA<ArgumentError>()),
       );
+    });
 
-      // Also reject absolute after mount
+    test(
+        'when absolute path segment appears after mount then bust rejects paths outside root',
+        () async {
+      final staticRoot = Directory(p.join(d.sandbox, 'static'));
+      final cfg = CacheBustingConfig(
+        mountPrefix: '/static',
+        fileSystemRoot: staticRoot,
+      );
+
       expect(
         cfg.assetPath('/static//etc/passwd'),
         throwsA(isA<ArgumentError>()),
