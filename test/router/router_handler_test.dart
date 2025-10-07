@@ -103,19 +103,19 @@ void main() {
   });
 
   test(
-      'Given a router composed with Cascade and fallback handler, '
+      'Given a router with fallback handler, '
       'when path misses in router, '
       'then fallback handler is called', () async {
     final router = Router<Handler>();
     router.get('/api/users', (final ctx) => ctx.respond(Response.ok()));
 
     var fallbackCalled = false;
-    ResponseContext fallback(final NewContext ctx) {
+    router.fallback = (final ctx) {
       fallbackCalled = true;
       return ctx.respond(Response.ok(body: Body.fromString('fallback')));
-    }
+    };
 
-    final handler = Cascade().add(router.asHandler).add(fallback).handler;
+    final handler = router.asHandler;
 
     final request = _FakeRequest('/other');
     final ctx = request.toContext(Object());
