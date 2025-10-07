@@ -20,7 +20,8 @@ Future<void> main() async {
     fileSystemRoot: staticDir,
   );
 
-  // Setup router and a small index page showing cache-busted URLs.
+  // Setup router and a small index page showing cache-busted URLs. We're
+  // setting the cache control header to immutable for a year.
   final router = Router<Handler>()
     ..get('/', respondWith((final _) async {
       final helloUrl = await cacheCfg.bust('/static/hello.txt');
@@ -38,7 +39,11 @@ Future<void> main() async {
         '/static/**',
         createStaticHandler(
           staticDir.path,
-          cacheControl: (final _, final __) => null,
+          cacheControl: (final _, final __) => CacheControlHeader(
+            maxAge: 31536000,
+            publicCache: true,
+            immutable: true,
+          ),
         ));
 
   // Setup a handler pipeline with logging, cache busting, and routing.
