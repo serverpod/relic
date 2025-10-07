@@ -6,7 +6,9 @@ import 'package:relic/relic.dart';
 /// A simple 'Hello World' server
 Future<void> main() async {
   // Setup router
-  final router = Router<Handler>()..get('/user/:name/age/:age', hello);
+  final router = Router<Handler>()
+    ..get('/user/:name/age/:age', hello)
+    ..use('/', logRequests());
 
   // Setup a handler.
   //
@@ -15,7 +17,7 @@ Future<void> main() async {
   // to provide custom fallback behavior.
   final handler = const Pipeline().addMiddleware(logRequests()).addHandler(
         Cascade()
-            .add(router.asHandler) // Use router.call to pass it as a Handler
+            .add(router.asHandler) // pass router as a Handler
             .add(respondWith((final _) => Response.notFound(
                 body: Body.fromString("Sorry, that doesn't compute"))))
             .handler,
