@@ -6,30 +6,152 @@ import 'package:test/test.dart';
 import 'package:test_descriptor/test_descriptor.dart' as d;
 
 void main() {
-  group('Given CacheBustingConfig and a static directory', () {
-    setUp(() async {
-      await d.dir('static', [
-        d.file('logo.png', 'png-bytes'),
-        d.dir('images', [d.file('logo.png', 'nested-bytes')]),
-      ]).create();
-    });
+  test(
+      'Given mountPrefix not starting with "/" when creating CacheBustingConfig then it throws ArgumentError',
+      () async {
+    final staticRoot = Directory(p.join(d.sandbox, 'static'));
+    expect(
+      () => CacheBustingConfig(
+        mountPrefix: 'static',
+        fileSystemRoot: staticRoot,
+      ),
+      throwsA(isA<ArgumentError>()),
+    );
+  });
 
-    test(
-        'when bust is called for a missing file then it throws PathNotFoundException',
-        () async {
+  test(
+      'Given empty separator when creating CacheBustingConfig then it throws ArgumentError',
+      () async {
+    final staticRoot = Directory(p.join(d.sandbox, 'static'));
+    expect(
+      () => CacheBustingConfig(
+        mountPrefix: '/static',
+        fileSystemRoot: staticRoot,
+        separator: '',
+      ),
+      throwsA(isA<ArgumentError>()),
+    );
+  });
+
+  test(
+      'Given no directory at staticRoot when creating CacheBustingConfig then it throws ArgumentError',
+      () {
+    final staticRoot = Directory(p.join(d.sandbox, 'static'));
+    expect(
+      () => CacheBustingConfig(
+        mountPrefix: '/static',
+        fileSystemRoot: staticRoot,
+        separator: '',
+      ),
+      throwsA(isA<ArgumentError>()),
+    );
+  });
+
+  test(
+      'Given file at staticRoot when creating CacheBustingConfig then it throws ArgumentError',
+      () async {
+    await d.file('static', 'content').create();
+    final staticRoot = Directory(p.join(d.sandbox, 'static'));
+    expect(
+      () => CacheBustingConfig(
+        mountPrefix: '/static',
+        fileSystemRoot: staticRoot,
+        separator: '',
+      ),
+      throwsA(isA<ArgumentError>()),
+    );
+  });
+
+  group('Given CacheBustingConfig configured for a directory without files',
+      () {
+    late CacheBustingConfig cfg;
+    setUp(() async {
+      await d.dir('static', []).create();
       final staticRoot = Directory(p.join(d.sandbox, 'static'));
-      final cfg = CacheBustingConfig(
+      cfg = CacheBustingConfig(
         mountPrefix: '/static',
         fileSystemRoot: staticRoot,
       );
+    });
 
+    test(
+        'when assetPath is called for a missing file then it throws PathNotFoundException',
+        () async {
       expect(
         cfg.assetPath('/static/does-not-exist.txt'),
         throwsA(isA<PathNotFoundException>()),
       );
     });
 
-    test('when path contains .. segments then bust rejects paths outside root',
+    test(
+        'when tryAssetPath is called for a missing file then it returns the original path',
+        () async {
+      const original = '/static/does-not-exist.txt';
+      final result = await cfg.tryAssetPath(original);
+      expect(result, original);
+    });
+  });
+  group(
+      'Given CacheBustingConfig without explicit separator configured for a directory with files',
+      () {
+    late CacheBustingConfig cfg;
+    setUp(() async {
+      await d.dir('static', [d.file('logo.png', 'png-bytes')]).create();
+      final staticRoot = Directory(p.join(d.sandbox, 'static'));
+      cfg = CacheBustingConfig(
+        mountPrefix: '/static',
+        fileSystemRoot: staticRoot,
+      );
+    });
+
+    test(
+        'when assetPath is called for existing file then default cache busting separator is "@"',
+        () async {
+      const original = '/static/logo.png';
+      final busted = await cfg.assetPath(original);
+      expect(busted, contains('@'));
+    });
+  });
+
+  group('Given CacheBustingConfig configured for a directory with files', () {
+    late CacheBustingConfig cfg;
+    setUp(() async {
+      await d.dir('static', [d.file('logo.png', 'png-bytes')]).create();
+      final staticRoot = Directory(p.join(d.sandbox, 'static'));
+      cfg = CacheBustingConfig(
+        mountPrefix: '/static',
+        fileSystemRoot: staticRoot,
+        separator: '@',
+      );
+    });
+
+    test(
+        'when assetPath is called for an existing file then it returns a cache busted path',
+        () async {
+      const original = '/static/logo.png';
+      final busted = await cfg.assetPath(original);
+      expect(busted, startsWith('/static/logo@'));
+    });
+
+    test(
+        'when tryAssetPath is called for an existing file then it returns a cache busted path',
+        () async {
+      const original = '/static/logo.png';
+      final busted = await cfg.tryAssetPath(original);
+      expect(busted, startsWith('/static/logo@'));
+    });
+
+    test(
+        'when assetPath is called with an absolute path segment after mount then argument error is thrown',
+        () async {
+      expect(
+        cfg.assetPath('/static//logo.png'),
+        throwsA(isA<ArgumentError>()),
+      );
+    });
+
+    test(
+        'when tryAssetPath is called with an absolute path segment after mount then it returns the original path',
         () async {
       final staticRoot = Directory(p.join(d.sandbox, 'static'));
       final cfg = CacheBustingConfig(
@@ -37,6 +159,26 @@ void main() {
         fileSystemRoot: staticRoot,
       );
 
+      const original = '/static//logo.png';
+      expect(await cfg.tryAssetPath(original), original);
+    });
+  });
+
+  group('Given files outside of CacheBustingConfig fileSystemRoot', () {
+    late CacheBustingConfig cfg;
+    setUp(() async {
+      await d.dir('static', [d.file('logo.png', 'png-bytes')]).create();
+      await d.file('secret.txt', 'top-secret').create();
+      final staticRoot = Directory(p.join(d.sandbox, 'static'));
+      cfg = CacheBustingConfig(
+        mountPrefix: '/static',
+        fileSystemRoot: staticRoot,
+      );
+    });
+
+    test(
+        'when assetPath is called for a path that traverses outside of the mount prefix then it throws ArgumentError',
+        () async {
       expect(
         cfg.assetPath('/static/../secret.txt'),
         throwsA(isA<ArgumentError>()),
@@ -44,161 +186,113 @@ void main() {
     });
 
     test(
-        'when absolute path segment appears after mount then bust rejects paths outside root',
+        'when assetPath is called for a path outside of the mount prefix then it returns it unchanged',
         () async {
-      final staticRoot = Directory(p.join(d.sandbox, 'static'));
-      final cfg = CacheBustingConfig(
-        mountPrefix: '/static',
-        fileSystemRoot: staticRoot,
-      );
-
-      expect(
-        cfg.assetPath('/static//etc/passwd'),
-        throwsA(isA<ArgumentError>()),
-      );
+      const outside = '/secret.txt';
+      expect(await cfg.assetPath(outside), outside);
     });
 
     test(
-        'and a symlink escapes the root when calling bust then it rejects paths outside root',
+        'when tryAssetPath is called for a path outside of mount prefix then returns it unchanged',
         () async {
-      final outsidePath = p.join(d.sandbox, 'outside.txt');
-      await File(outsidePath).writeAsString('outside');
+      const outside = '/secret.txt';
+      expect(await cfg.tryAssetPath(outside), outside);
+    });
+  });
 
+  test(
+      'Given file without extension in CacheBustingConfig directory when calling assetPath then it returns a cache busting path',
+      () async {
+    await d.dir('static', [d.file('logo', 'content-noext')]).create();
+    final staticRoot = Directory(p.join(d.sandbox, 'static'));
+    final cfg = CacheBustingConfig(
+      mountPrefix: '/static',
+      fileSystemRoot: staticRoot,
+      separator: '@',
+    );
+
+    const original = '/static/logo';
+    final busted = await cfg.assetPath(original);
+    expect(busted, startsWith('/static/logo@'));
+  });
+
+  test(
+      'Given a CacheBustingConfig with custom separator when calling assetPath then it uses that separator',
+      () async {
+    await d.dir('static', [d.file('logo.png', 'png-bytes')]).create();
+    final staticRoot = Directory(p.join(d.sandbox, 'static'));
+    final cfg = CacheBustingConfig(
+      mountPrefix: '/static',
+      fileSystemRoot: staticRoot,
+      separator: '--',
+    );
+    const original = '/static/logo.png';
+    final busted = await cfg.assetPath(original);
+    expect(busted, startsWith('/static/logo--'));
+  });
+
+  test(
+      'Given a CacheBustingConfig serving a directory where the directory name contains the separator when calling assetPath then only the filename is affected',
+      () async {
+    await d.dir(p.join('static', 'img@foo'), [
+      d.file('logo.png', 'dir-at-bytes'),
+    ]).create();
+
+    final staticRoot = Directory(p.join(d.sandbox, 'static'));
+    final cfg = CacheBustingConfig(
+      mountPrefix: '/static',
+      fileSystemRoot: staticRoot,
+      separator: '@',
+    );
+
+    const original = '/static/img@foo/logo.png';
+    final busted = await cfg.assetPath(original);
+    expect(busted, startsWith('/static/img@foo/logo@'));
+  });
+
+  test(
+      'Given a CacheBustingConfig serving a file starting wht the separator when calling assetPath then cache busting path is created correctly',
+      () async {
+    await d.dir('static', [d.file('@logo.png', 'at-logo')]).create();
+    final staticRoot = Directory(p.join(d.sandbox, 'static'));
+    final cfg = CacheBustingConfig(
+      mountPrefix: '/static',
+      fileSystemRoot: staticRoot,
+      separator: '@',
+    );
+
+    const original = '/static/@logo.png';
+    final busted = await cfg.assetPath(original);
+    expect(busted, startsWith('/static/@logo@'));
+  });
+
+  group('Given a CacheBustingConfig serving a symlink that escapes the root',
+      () {
+    late CacheBustingConfig cfg;
+    setUp(() async {
+      await d.file('outside.txt', 'outside').create();
+      await d.dir('static').create();
+      final outsidePath = p.join(d.sandbox, 'outside.txt');
       final linkPath = p.join(d.sandbox, 'static', 'escape.txt');
-      final link = Link(linkPath);
-      try {
-        await link.create(outsidePath);
-      } on FileSystemException {
-        return; // platform forbids symlinks
-      }
+      Link(linkPath).createSync(outsidePath);
 
       final staticRoot = Directory(p.join(d.sandbox, 'static'));
-      final cfg = CacheBustingConfig(
+      cfg = CacheBustingConfig(
         mountPrefix: '/static',
         fileSystemRoot: staticRoot,
       );
-
+    });
+    test('when calling assetPath then it throws ArgumentError', () async {
       expect(
         cfg.assetPath('/static/escape.txt'),
         throwsA(isA<ArgumentError>()),
       );
     });
 
-    test(
-        'when tryAssetPath is called for a missing file then it returns the original path',
+    test('when calling tryAssetPath then asset path is returned unchanged',
         () async {
-      final staticRoot = Directory(p.join(d.sandbox, 'static'));
-      final cfg = CacheBustingConfig(
-        mountPrefix: '/static',
-        fileSystemRoot: staticRoot,
-      );
-
-      const original = '/static/does-not-exist.txt';
-      final result = await cfg.tryAssetPath(original);
-      expect(result, original);
-    });
-
-    test(
-        'when the path is outside mountPrefix then tryAssetPath returns it unchanged',
-        () async {
-      final staticRoot = Directory(p.join(d.sandbox, 'static'));
-      final cfg = CacheBustingConfig(
-        mountPrefix: '/static',
-        fileSystemRoot: staticRoot,
-      );
-
-      const outside = '/other/logo.png';
-      expect(await cfg.tryAssetPath(outside), outside);
-    });
-
-    test(
-        'when the path is outside mountPrefix then assetPath returns it unchanged',
-        () async {
-      final staticRoot = Directory(p.join(d.sandbox, 'static'));
-      final cfg = CacheBustingConfig(
-        mountPrefix: '/static',
-        fileSystemRoot: staticRoot,
-      );
-
-      const outside = '/other/logo.png';
-      expect(await cfg.assetPath(outside), outside);
-    });
-
-    test(
-        'when creating config with invalid mountPrefix then it throws ArgumentError',
-        () async {
-      final staticRoot = Directory(p.join(d.sandbox, 'static'));
       expect(
-        () => CacheBustingConfig(
-          mountPrefix: 'static',
-          fileSystemRoot: staticRoot,
-        ),
-        throwsA(isA<ArgumentError>()),
-      );
-    });
-
-    test('when busting a file without extension then it returns a busted path',
-        () async {
-      await d.file(p.join('static', 'logo'), 'content-noext').create();
-
-      final staticRoot = Directory(p.join(d.sandbox, 'static'));
-      final cfg = CacheBustingConfig(
-        mountPrefix: '/static',
-        fileSystemRoot: staticRoot,
-      );
-
-      const original = '/static/logo';
-      final busted = await cfg.assetPath(original);
-      expect(busted, startsWith('/static/logo@'));
-    });
-
-    test(
-        'and a custom separator is configured when busting then it uses that separator',
-        () async {
-      final staticRoot = Directory(p.join(d.sandbox, 'static'));
-      final cfg = CacheBustingConfig(
-        mountPrefix: '/static',
-        fileSystemRoot: staticRoot,
-        separator: '--',
-      );
-
-      const original = '/static/logo.png';
-      final busted = await cfg.assetPath(original);
-      expect(busted, startsWith('/static/logo--'));
-    });
-
-    test(
-        'and a directory name contains @ when calling bust then only the filename is affected',
-        () async {
-      await d.dir(p.join('static', 'img@foo'), [
-        d.file('logo.png', 'dir-at-bytes'),
-      ]).create();
-
-      final staticRoot = Directory(p.join(d.sandbox, 'static'));
-      final cfg = CacheBustingConfig(
-        mountPrefix: '/static',
-        fileSystemRoot: staticRoot,
-      );
-
-      const original = '/static/img@foo/logo.png';
-      final busted = await cfg.assetPath(original);
-      expect(busted, startsWith('/static/img@foo/logo@'));
-    });
-
-    test(
-        'Given a filename starting with @ when calling bust then it busts correctly',
-        () async {
-      await d.file(p.join('static', '@logo.png'), 'at-logo').create();
-
-      final staticRoot = Directory(p.join(d.sandbox, 'static'));
-      final cfg = CacheBustingConfig(
-        mountPrefix: '/static',
-        fileSystemRoot: staticRoot,
-      );
-
-      const original = '/static/@logo.png';
-      final busted = await cfg.assetPath(original);
-      expect(busted, startsWith('/static/@logo@'));
+          await cfg.tryAssetPath('/static/escape.txt'), '/static/escape.txt');
     });
   });
 }

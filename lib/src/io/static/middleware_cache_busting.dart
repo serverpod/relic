@@ -84,9 +84,10 @@ class CacheBustingConfig {
   CacheBustingConfig({
     required final String mountPrefix,
     required final Directory fileSystemRoot,
-    this.separator = '@',
+    final String separator = '@',
   })  : mountPrefix = _normalizeMount(mountPrefix),
-        fileSystemRoot = fileSystemRoot.absolute;
+        fileSystemRoot = _validateFileSystemRoot(fileSystemRoot.absolute),
+        separator = _validateSeparator(separator);
 
   /// Returns the cache-busted URL for the given [staticPath].
   ///
@@ -159,4 +160,29 @@ String _normalizeMount(final String mountPrefix) {
     throw ArgumentError('mountPrefix must start with "/"');
   }
   return mountPrefix.endsWith('/') ? mountPrefix : '$mountPrefix/';
+}
+
+Directory _validateFileSystemRoot(final Directory dir) {
+  if (!dir.existsSync()) {
+    throw ArgumentError.value(dir.path, 'fileSystemRoot', 'does not exist');
+  }
+
+  final resolved = dir.absolute.resolveSymbolicLinksSync();
+  final entityType = FileSystemEntity.typeSync(resolved);
+  if (entityType != FileSystemEntityType.directory) {
+    throw ArgumentError.value(
+      dir.path,
+      'fileSystemRoot',
+      'is not a directory',
+    );
+  }
+
+  return dir;
+}
+
+String _validateSeparator(final String separator) {
+  if (separator.isEmpty) {
+    throw ArgumentError('separator cannot be empty');
+  }
+  return separator;
 }
