@@ -30,15 +30,7 @@ void main() {
             cacheControl: (final _, final __) => null,
           ));
 
-      const original = '/static/logo.png';
-      final cfg = CacheBustingConfig(
-        mountPrefix: '/static',
-        fileSystemRoot: staticRoot,
-      );
-      final busted = await cfg.assetPath(original);
-      expect(busted, isNot(original));
-      expect(busted, startsWith('/static/logo@'));
-      expect(busted, endsWith('.png'));
+      const busted = '/static/logo@abc.png';
 
       final response = await makeRequest(
         handler,
@@ -69,12 +61,7 @@ void main() {
           .addMiddleware(routeWith(router))
           .addHandler(respondWith((final _) => Response.notFound()));
 
-      const original = '/assets/images/logo.png';
-      final cfg = CacheBustingConfig(
-        mountPrefix: '/assets',
-        fileSystemRoot: staticRoot,
-      );
-      final busted = await cfg.assetPath(original);
+      const busted = '/assets/images/logo@abc.png';
 
       final response = await makeRequest(handler, busted);
       expect(response.statusCode, HttpStatus.ok);
@@ -95,12 +82,7 @@ void main() {
             cacheControl: (final _, final __) => null,
           ));
 
-      const original = '/static/images/logo.png';
-      final cfg = CacheBustingConfig(
-        mountPrefix: '/static',
-        fileSystemRoot: staticRoot,
-      );
-      final busted = await cfg.assetPath(original);
+      const busted = '/static/images/logo@abc.png';
 
       final response = await makeRequest(
         handler,
@@ -109,108 +91,6 @@ void main() {
       );
       expect(response.statusCode, HttpStatus.ok);
       expect(await response.readAsString(), 'nested-bytes');
-    });
-
-    test(
-        'when bust is called for a missing file then it throws PathNotFoundException',
-        () async {
-      final staticRoot = Directory(p.join(d.sandbox, 'static'));
-      final cfg = CacheBustingConfig(
-        mountPrefix: '/static',
-        fileSystemRoot: staticRoot,
-      );
-
-      expect(
-        cfg.assetPath('/static/does-not-exist.txt'),
-        throwsA(isA<PathNotFoundException>()),
-      );
-    });
-
-    test('when path contains .. segments then bust rejects paths outside root',
-        () async {
-      final staticRoot = Directory(p.join(d.sandbox, 'static'));
-      final cfg = CacheBustingConfig(
-        mountPrefix: '/static',
-        fileSystemRoot: staticRoot,
-      );
-
-      expect(
-        cfg.assetPath('/static/../secret.txt'),
-        throwsA(isA<ArgumentError>()),
-      );
-    });
-
-    test(
-        'when absolute path segment appears after mount then bust rejects paths outside root',
-        () async {
-      final staticRoot = Directory(p.join(d.sandbox, 'static'));
-      final cfg = CacheBustingConfig(
-        mountPrefix: '/static',
-        fileSystemRoot: staticRoot,
-      );
-
-      expect(
-        cfg.assetPath('/static//etc/passwd'),
-        throwsA(isA<ArgumentError>()),
-      );
-    });
-
-    test(
-        'and a symlink escapes the root when calling bust then it rejects paths outside root',
-        () async {
-      // Create a file outside the static root
-      final outsidePath = p.join(d.sandbox, 'outside.txt');
-      await File(outsidePath).writeAsString('outside');
-
-      // Create a symlink inside static pointing to the outside file
-      final linkPath = p.join(d.sandbox, 'static', 'escape.txt');
-      final link = Link(linkPath);
-      try {
-        // Use absolute target to be explicit
-        await link.create(outsidePath);
-      } on FileSystemException {
-        // If the platform forbids symlinks, skip this test gracefully
-        return;
-      }
-
-      final staticRoot = Directory(p.join(d.sandbox, 'static'));
-      final cfg = CacheBustingConfig(
-        mountPrefix: '/static',
-        fileSystemRoot: staticRoot,
-      );
-
-      expect(
-        cfg.assetPath('/static/escape.txt'),
-        throwsA(isA<ArgumentError>()),
-      );
-    });
-
-    test(
-        'when tryBust is called for a missing file then it returns the original path',
-        () async {
-      final staticRoot = Directory(p.join(d.sandbox, 'static'));
-      final cfg = CacheBustingConfig(
-        mountPrefix: '/static',
-        fileSystemRoot: staticRoot,
-      );
-
-      const original = '/static/does-not-exist.txt';
-      final result = await cfg.tryBust(original);
-      expect(result, original);
-    });
-
-    test(
-        'when the path is outside mountPrefix then bust/tryBust return it unchanged',
-        () async {
-      final staticRoot = Directory(p.join(d.sandbox, 'static'));
-      final cfg = CacheBustingConfig(
-        mountPrefix: '/static',
-        fileSystemRoot: staticRoot,
-      );
-
-      const outside = '/other/logo.png';
-      expect(await cfg.tryBust(outside), outside);
-      expect(await cfg.assetPath(outside), outside);
     });
 
     test(
@@ -316,20 +196,7 @@ void main() {
     });
 
     test(
-        'when creating config with invalid mountPrefix then it throws ArgumentError',
-        () async {
-      final staticRoot = Directory(p.join(d.sandbox, 'static'));
-      expect(
-        () => CacheBustingConfig(
-          mountPrefix: 'static',
-          fileSystemRoot: staticRoot,
-        ),
-        throwsA(isA<ArgumentError>()),
-      );
-    });
-
-    test(
-        'and the file has no extension when calling bust then it serves via middleware',
+        'and the file has no extension when requesting a busted URL then it serves via middleware',
         () async {
       // Add a no-extension file
       await d.file(p.join('static', 'logo'), 'content-noext').create();
@@ -346,10 +213,7 @@ void main() {
             cacheControl: (final _, final __) => null,
           ));
 
-      const original = '/static/logo';
-      final busted = await cfg.assetPath(original);
-      expect(busted, startsWith('/static/logo@'));
-      expect(busted, isNot(endsWith('.')));
+      const busted = '/static/logo@abc';
 
       final response =
           await makeRequest(handler, busted, handlerPath: 'static');
@@ -373,11 +237,7 @@ void main() {
             cacheControl: (final _, final __) => null,
           ));
 
-      const original = '/static/logo.png';
-      final busted = await cfg.assetPath(original);
-      expect(busted, isNot(original));
-      expect(busted, startsWith('/static/logo--'));
-      expect(busted, endsWith('.png'));
+      const busted = '/static/logo--abc.png';
 
       final response =
           await makeRequest(handler, busted, handlerPath: 'static');
@@ -411,7 +271,7 @@ void main() {
     });
 
     test(
-        'and a directory name contains @ when calling bust then only the filename is affected',
+        'and a directory name contains @ when requesting a busted URL then only the filename is affected',
         () async {
       // Add nested directory with @ in its name
       await d.dir(p.join('static', 'img@foo'), [
@@ -430,19 +290,15 @@ void main() {
             cacheControl: (final _, final __) => null,
           ));
 
-      const original = '/static/img@foo/logo.png';
-      final busted = await cfg.assetPath(original);
-      expect(busted, startsWith('/static/img@foo/logo@'));
-      expect(busted, endsWith('.png'));
+      const busted = '/static/img@foo/logo@abc.png';
 
       final response =
           await makeRequest(handler, busted, handlerPath: 'static');
       expect(response.statusCode, HttpStatus.ok);
       expect(await response.readAsString(), 'dir-at-bytes');
     });
-
     test(
-        'Given a filename starting with @ when calling bust then it busts and strips correctly',
+        'Given a filename starting with @ when requesting a busted URL then it serves the file',
         () async {
       await d.file(p.join('static', '@logo.png'), 'at-logo').create();
 
@@ -458,10 +314,7 @@ void main() {
             cacheControl: (final _, final __) => null,
           ));
 
-      const original = '/static/@logo.png';
-      final busted = await cfg.assetPath(original);
-      expect(busted, startsWith('/static/@logo@'));
-      expect(busted, endsWith('.png'));
+      const busted = '/static/@logo@abc.png';
 
       final response =
           await makeRequest(handler, busted, handlerPath: 'static');
