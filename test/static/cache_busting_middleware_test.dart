@@ -302,4 +302,46 @@ void main() {
       expect(await response.readAsString(), 'nested-bytes');
     });
   });
+
+  group(
+      'Given a static asset served through a router-mounted static handler and cache busting middleware',
+      () {
+    late Handler handler;
+    setUp(() async {
+      await d.dir('static', [d.file('logo.png', 'png-bytes')]).create();
+      final staticRoot = Directory(p.join(d.sandbox, 'static'));
+      final router = Router<Handler>()
+        ..get(
+            '/static/**',
+            createStaticHandler(
+              staticRoot.path,
+              cacheControl: (final _, final __) => null,
+            ))
+        ..use(
+            '/static/**',
+            cacheBusting(CacheBustingConfig(
+              mountPrefix: '/static',
+              fileSystemRoot: staticRoot,
+            )));
+
+      handler = const Pipeline()
+          .addMiddleware(routeWith(router))
+          .addHandler(respondWith((final _) => Response.notFound()));
+    });
+
+    test('when requesting asset with a non-busted URL then it serves the asset',
+        () async {
+      final response = await makeRequest(handler, '/static/logo.png');
+      expect(response.statusCode, HttpStatus.ok);
+      expect(await response.readAsString(), 'png-bytes');
+    });
+
+    test(
+        'when requesting asset with a cache busted URL then it serves the asset',
+        () async {
+      final response = await makeRequest(handler, '/static/logo@abc.png');
+      expect(response.statusCode, HttpStatus.ok);
+      expect(await response.readAsString(), 'png-bytes');
+    });
+  });
 }
