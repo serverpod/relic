@@ -19,6 +19,7 @@ void main() {
           .addMiddleware(cacheBusting(CacheBustingConfig(
             mountPrefix: '/static',
             fileSystemRoot: staticRoot,
+            separator: '@',
           )))
           .addHandler(createStaticHandler(
             staticRoot.path,
@@ -63,6 +64,7 @@ void main() {
           .addMiddleware(cacheBusting(CacheBustingConfig(
             mountPrefix: '/static',
             fileSystemRoot: staticRoot,
+            separator: '@',
           )))
           .addMiddleware(routeWith(router))
           .addHandler(respondWith((final _) => Response.notFound()));
@@ -92,6 +94,7 @@ void main() {
     final cfg = CacheBustingConfig(
       mountPrefix: '/static',
       fileSystemRoot: staticRoot,
+      separator: '@',
     );
 
     // Echo handler to observe the requestedUri.path after middleware.
@@ -114,6 +117,7 @@ void main() {
       final cfg = CacheBustingConfig(
         mountPrefix: '/static',
         fileSystemRoot: staticRoot,
+        separator: '@',
       );
 
       handler = const Pipeline()
@@ -322,6 +326,7 @@ void main() {
             cacheBusting(CacheBustingConfig(
               mountPrefix: '/static',
               fileSystemRoot: staticRoot,
+              separator: '@',
             )));
 
       handler = const Pipeline()
