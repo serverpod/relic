@@ -99,18 +99,21 @@ The CI runs on multiple Dart versions (3.5.0, stable, beta) and OS (Ubuntu, Wind
   - `chore: Update dependencies to latest versions`
 
 ### Testing Guidelines
-- **Follow Given-When-Then pattern**: Test descriptions and structure must follow the Given-When-Then (GWT) pattern
-  - **Group structure**: Include both Given and When in the group description (e.g., `group('Given a NewContext, when withRequest is called with a new Request,', () { ... })`)
-  - **Shared setup**: When tests in a group share the same action (the "When"), execute that action in a `setUp` block within the group
-  - **Test descriptions**: Each test should describe the "Then" part (e.g., `test('then it returns a NewContext instance', () { ... })`)
-  - **Single responsibility**: Each test should validate a single requirement or assertion, not multiple unrelated checks
-  - **Separate tests for different requirements**: If validating multiple properties (type, content, token preservation), create separate tests with clear titles
+- **Follow Given-When-Then pattern**: Test descriptions should generally follow the Given-When-Then (GWT) pattern for clarity
+  - **Flexible structure**: Depending on context, you can structure tests in different ways:
+    - Combine Given and When in group descriptions when they share setup (e.g., `group('Given a NewContext, when withRequest is called with a new Request,', () { ... })`)
+    - Split Given and When into separate nested groups when it improves organization
+    - Include all three parts (Given-When-Then) in a single test description for simple cases
+    - Combine When and Then when the action and assertion are closely related
+  - **Shared setup**: When tests in a group share the same action, consider executing that action in a `setUp` block to reduce duplication
+  - **Single responsibility**: Each test should validate a single requirement or assertion when it improves clarity, but multiple related assertions in one test are acceptable
+  - **Clear test titles**: Use descriptive test names that make the intent and validation clear
 - Use Arrange-Act-Assert pattern in test bodies
 - Tests are in `test/` directory mirroring `lib/` structure
 - Run specific test files: `dart test test/router/router_test.dart`
 - All tests should pass; errors in test output are expected test scenarios
 
-**Example of proper test structure:**
+**Example test structure (one approach):**
 ```dart
 group('Given a NewContext, when withRequest is called with a new Request,', () {
   late NewContext context;
