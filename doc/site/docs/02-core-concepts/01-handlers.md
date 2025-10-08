@@ -20,6 +20,7 @@ typedef Handler = FutureOr<HandledContext> Function(NewContext ctx);
 - `FutureOr<HandledContext>` is a response context, hijacked connection, or WebSocket connection.
 
 **Example:**
+
 ```dart
 import 'package:relic/relic.dart';
 
@@ -42,6 +43,7 @@ typedef ResponseHandler = FutureOr<ResponseContext> Function(RespondableContext 
 - `FutureOr<ResponseContext>` is a response context containing the HTTP response.
 
 **Example:**
+
 ```dart
 import 'package:relic/relic.dart';
 
@@ -69,6 +71,7 @@ typedef HijackHandler = FutureOr<HijackContext> Function(HijackableContext ctx);
 - `FutureOr<HijackContext>` is a hijacked connection context.
 
 **Example:**
+
 ```dart
 import 'dart:async';
 import 'dart:convert';
@@ -104,6 +107,7 @@ typedef Responder = FutureOr<Response> Function(Request request);
 - `FutureOr<Response>` is the HTTP response to send.
 
 **Example:**
+
 ```dart
 import 'package:relic/relic.dart';
 

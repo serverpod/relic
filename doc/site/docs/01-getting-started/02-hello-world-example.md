@@ -34,6 +34,7 @@ Future<void> main() async {
 The result is a server that responds to every HTTP request with the same "Hello, Relic!" message, regardless of the URL path or HTTP method used.
 
 ### Running Locally
+
 First ensure you have Relic installed as per the [installation guide](/getting-started/installation).
 
 Run the app with the following command:
