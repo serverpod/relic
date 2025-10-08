@@ -75,24 +75,6 @@ final class NewContext extends RequestContext
   @override
   ResponseContext respond(final Response r) =>
       ResponseContext._(request, token, r);
-
-  /// Creates a new [NewContext] with a different [Request] while preserving
-  /// the same [token].
-  ///
-  /// This is a convenience method for middleware that needs to rewrite a
-  /// request before passing it to the inner handler. Instead of the low-level
-  /// pattern:
-  /// ```dart
-  /// final rewrittenRequest = req.copyWith(requestedUri: newRequested);
-  /// return await inner(rewrittenRequest.toContext(ctx.token));
-  /// ```
-  ///
-  /// You can use the more readable pattern:
-  /// ```dart
-  /// final rewrittenRequest = req.copyWith(requestedUri: newRequested);
-  /// return await inner(ctx.withRequest(rewrittenRequest));
-  /// ```
-  NewContext withRequest(final Request req) => NewContext._(req, token);
 }
 
 /// A sealed base class for contexts that represent a handled request.
