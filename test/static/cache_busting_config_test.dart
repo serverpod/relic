@@ -85,7 +85,7 @@ void main() {
     });
 
     test(
-        'when tryBust is called for a missing file then it returns the original path',
+        'when tryAssetPath is called for a missing file then it returns the original path',
         () async {
       final staticRoot = Directory(p.join(d.sandbox, 'static'));
       final cfg = CacheBustingConfig(
@@ -94,12 +94,12 @@ void main() {
       );
 
       const original = '/static/does-not-exist.txt';
-      final result = await cfg.tryBust(original);
+      final result = await cfg.tryAssetPath(original);
       expect(result, original);
     });
 
     test(
-        'when the path is outside mountPrefix then tryBust returns it unchanged',
+        'when the path is outside mountPrefix then tryAssetPath returns it unchanged',
         () async {
       final staticRoot = Directory(p.join(d.sandbox, 'static'));
       final cfg = CacheBustingConfig(
@@ -108,7 +108,7 @@ void main() {
       );
 
       const outside = '/other/logo.png';
-      expect(await cfg.tryBust(outside), outside);
+      expect(await cfg.tryAssetPath(outside), outside);
     });
 
     test(

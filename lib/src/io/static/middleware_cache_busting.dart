@@ -8,7 +8,7 @@ import '../../adapter/context.dart';
 ///
 /// Typical flow:
 /// - Outgoing URLs: call [CacheBustingConfig.assetPath] (or
-///   [CacheBustingConfig.tryBust]) with a known mount prefix (e.g. "/static")
+///   [CacheBustingConfig.tryAssetPath]) with a known mount prefix (e.g. "/static")
 ///   to get "/static/name@hash.ext".
 /// - Incoming requests: add this [cacheBusting] middleware so downstream
 ///   handlers (e.g., the static file handler) receive "/path/name.ext" without
@@ -144,7 +144,7 @@ class CacheBustingConfig {
 
   /// Attempts to generate a cache-busted URL. If the file cannot be found or
   /// read, returns [staticPath] unchanged.
-  Future<String> tryBust(final String staticPath) async {
+  Future<String> tryAssetPath(final String staticPath) async {
     try {
       return await assetPath(staticPath);
     } catch (_) {
