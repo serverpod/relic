@@ -295,4 +295,37 @@ void main() {
           await cfg.tryAssetPath('/static/escape.txt'), '/static/escape.txt');
     });
   });
+
+  group(
+      'Given a CacheBustingConfig with a mountPrefix that does not match fileSystemRoot',
+      () {
+    late CacheBustingConfig cfg;
+    setUp(() async {
+      await d.dir('static', [
+        d.file('logo.png', 'png-bytes'),
+      ]).create();
+      final staticRoot = Directory(p.join(d.sandbox, 'static'));
+      cfg = CacheBustingConfig(
+        mountPrefix: '/web',
+        fileSystemRoot: staticRoot,
+        separator: '@',
+      );
+    });
+
+    test(
+        'when assetPath is called for an existing file then it returns a cache busted path',
+        () async {
+      const original = '/web/logo.png';
+      final busted = await cfg.assetPath(original);
+      expect(busted, startsWith('/web/logo@'));
+    });
+
+    test(
+        'when assetPath is called for file using fileSystemRoot instead of mountPrefix  as base then it returns path unchanged',
+        () async {
+      const original = '/static/logo.png';
+      final busted = await cfg.assetPath(original);
+      expect(busted, equals('/static/logo.png'));
+    });
+  });
 }
