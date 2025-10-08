@@ -62,6 +62,15 @@ typedef Responder = FutureOr<Response> Function(Request);
 /// [RespondableContext] (i.e., capable of producing a response) for the
 /// `respond` call to succeed. The handler ensures the resulting context is
 /// a [ResponseContext].
+///
+/// Example:
+/// ```dart
+/// final handler = respondWith(
+///   (final request) => Response.ok(
+///     body: Body.fromString('Hello, Relic!'),
+///   ),
+/// );
+/// ```
 Handler respondWith(final Responder responder) {
   return (final ctx) async {
     return ctx.respond(await responder(ctx.request));
