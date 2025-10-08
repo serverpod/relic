@@ -99,11 +99,46 @@ The CI runs on multiple Dart versions (3.5.0, stable, beta) and OS (Ubuntu, Wind
   - `chore: Update dependencies to latest versions`
 
 ### Testing Guidelines
-- Follow Given-When-Then test descriptions
+- **Follow Given-When-Then pattern**: Test descriptions should generally follow the Given-When-Then (GWT) pattern for clarity
+  - **Flexible structure**: Depending on context, you can structure tests in different ways:
+    - Combine Given and When in group descriptions when they share setup (e.g., `group('Given a NewContext, when withRequest is called with a new Request,', () { ... })`)
+    - Split Given and When into separate nested groups when it improves organization
+    - Include all three parts (Given-When-Then) in a single test description for simple cases
+    - Combine When and Then when the action and assertion are closely related
+  - **Shared setup**: When tests in a group share the same action, consider executing that action in a `setUp` block to reduce duplication
+  - **Single responsibility**: Each test should validate a single requirement or assertion when it improves clarity, but multiple related assertions in one test are acceptable
+  - **Clear test titles**: Use descriptive test names that make the intent and validation clear
 - Use Arrange-Act-Assert pattern in test bodies
 - Tests are in `test/` directory mirroring `lib/` structure
 - Run specific test files: `dart test test/router/router_test.dart`
 - All tests should pass; errors in test output are expected test scenarios
+
+**Example test structure (one approach):**
+```dart
+group('Given a NewContext, when withRequest is called with a new Request,', () {
+  late NewContext context;
+  late Request newRequest;
+  late NewContext newContext;
+  
+  setUp(() {
+    // Arrange
+    context = Request(Method.get, Uri.parse('http://test.com')).toContext(Object());
+    newRequest = Request(Method.post, Uri.parse('http://test.com/new'));
+    // Act (shared action for all tests in this group)
+    newContext = context.withRequest(newRequest);
+  });
+  
+  test('then it returns a NewContext instance', () {
+    // Assert
+    expect(newContext, isA<NewContext>());
+  });
+  
+  test('then the new context contains the new request', () {
+    // Assert
+    expect(newContext.request, same(newRequest));
+  });
+});
+```
 
 ### Common Development Patterns
 - **Handlers**: Functions that process RequestContext and return ResponseContext
