@@ -1,3 +1,4 @@
+import 'dart:developer';
 import 'dart:io';
 import 'package:relic/io_adapter.dart';
 import 'package:relic/relic.dart';
@@ -12,5 +13,5 @@ Future<void> main() async {
 
   // Start the server on all network interfaces, port 8080
   await serve(handler, InternetAddress.anyIPv4, 8080);
-  print('Server running on http://localhost:8080');
+  log('Server running on http://localhost:8080');
 }
