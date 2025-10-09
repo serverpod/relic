@@ -4,7 +4,15 @@ sidebar_position: 1
 
 # Handlers
 
-Handlers are the fundamental building blocks of Relic applications. A handler is a function that processes an incoming request and returns a response.
+Handlers are functions that process incoming requests in Relic applications. Think of them as the core logic that decides what to do when someone visits your web server.
+
+What makes Relic handlers special is their flexibility. Unlike traditional web frameworks where handlers only return HTTP responses, Relic handlers can:
+
+- Send regular HTTP responses (like web pages or API data)
+- Upgrade connections to WebSockets for real-time communication
+- Take direct control of the network connection for custom protocols
+
+This is why Relic handlers work with "context" objects instead of just taking a request and returning a response. The context gives you multiple ways to handle the connection based on what your application needs.
 
 In Relic, there are four main handler types for different scenarios:
 
