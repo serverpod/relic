@@ -64,7 +64,6 @@ class Body {
   }) {
     final Uint8List encoded = Uint8List.fromList(encoding.encode(body));
 
-    // Try to infer mime type from content, if not provided
     mimeType ??= _tryInferTextMimeTypeFrom(body) ?? MimeType.plainText;
 
     return Body._(
@@ -75,32 +74,25 @@ class Body {
     );
   }
 
-  /// Try to infer MIME type from string content by analyzing the content prefix
-  ///
-  /// Can infer text/json, text/xml, text/html, text/css.
   static MimeType? _tryInferTextMimeTypeFrom(final String content) {
-    // Find first non-whitespace character to avoid allocating a trimmed string
-    var begin = 0;
+    var firstNonWhiteSpace = 0;
     final end = content.length;
-    while (begin < end && _isWhitespace(content[begin])) {
-      begin++;
+    while (firstNonWhiteSpace < end &&
+        _isWhitespace(content[firstNonWhiteSpace])) {
+      firstNonWhiteSpace++;
     }
 
-    // Extract small marker prefix
-    final prefix =
-        content.substring(begin, min(end, begin + 14)); // 14 max length needed
+    final prefix = content.substring(firstNonWhiteSpace,
+        min(end, firstNonWhiteSpace + 14)); // 14 max length needed
 
-    // Check for JSON (this is super crude)
     if (prefix.startsWith('{') || prefix.startsWith('[')) {
       return MimeType.json;
     }
 
-    // Check for XML (including variants like <?xml)
     if (prefix.startsWith('<?xml')) {
       return MimeType.xml;
     }
 
-    // Check for HTML (including DOCTYPE and common HTML tags)
     if (prefix.startsWith('<!DOCTYPE html') ||
         prefix.startsWith('<!doctype html') ||
         prefix.startsWith('<html')) {
@@ -112,7 +104,6 @@ class Body {
 
   /// Checks if a character is whitespace.
   static bool _isWhitespace(final String char) {
-    // Common whitespace characters
     return char == ' ' || char == '\t' || char == '\n' || char == '\r';
   }
 
@@ -143,7 +134,6 @@ class Body {
     final Encoding? encoding,
     MimeType? mimeType,
   }) {
-    // Attempt to infer mimeType, if not set
     if (mimeType == null) {
       final mimeString = _resolver.lookup('', headerBytes: body);
       mimeType = mimeString == null ? null : MimeType.parse(mimeString);
