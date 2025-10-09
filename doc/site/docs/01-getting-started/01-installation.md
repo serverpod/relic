@@ -8,7 +8,7 @@ To use Relic, you must have the Dart SDK installed on your machine.
 
 ::::note
 
-Relic requires Dart SDK 3.x or later
+Relic requires Dart SDK 3.5 or later
 
 ::::
 
