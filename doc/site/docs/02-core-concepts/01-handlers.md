@@ -39,7 +39,34 @@ Handler helloHandler = (NewContext ctx) {
 };
 ```
 
-### 2. ResponseHandler
+
+### 2. Responder
+
+A `Responder` is a simplified function type that provides a more straightforward approach to request handling by directly transforming an HTTP request into an HTTP response. It abstracts away the context handling, making it perfect for simple request-response scenarios and can easily be converted into a full Handler using the `respondWith` helper function.
+
+```dart
+typedef Responder = FutureOr<Response> Function(Request request);
+```
+
+- `Request request` is the incoming HTTP request.
+- `FutureOr<Response>` is the HTTP response to send.
+
+**Example:**
+
+```dart
+import 'package:relic/relic.dart';
+
+Responder simpleResponder = (Request request) {
+  return Response.ok(
+    body: Body.fromString('Hello, ${request.url.path}!'),
+  );
+};
+
+// Convert to a handler
+Handler simpleHandler = respondWith(simpleResponder);
+```
+
+### 3. ResponseHandler
 
 A `ResponseHandler` is a specialized handler designed specifically for scenarios where you need to generate standard HTTP responses. It ensures type safety by guaranteeing that the context can produce a response and that you'll always return a response context, making it ideal for typical web API endpoints and page serving.
 
@@ -67,7 +94,7 @@ ResponseHandler apiHandler = (final RespondableContext context) {
 };
 ```
 
-### 3. HijackHandler
+### 4. HijackHandler
 
 A `HijackHandler` is a powerful handler type that enables you to take complete control of the underlying connection for advanced use cases like WebSocket upgrades or Server-Sent Events. It bypasses the normal HTTP request-response cycle, allowing for bidirectional communication and real-time data streaming directly over the raw connection.
 
@@ -101,32 +128,6 @@ HijackHandler sseHandler = (HijackableContext ctx) {
     timer.cancel();
   });
 };
-```
-
-### 4. Responder
-
-A `Responder` is a simplified function type that provides a more straightforward approach to request handling by directly transforming an HTTP request into an HTTP response. It abstracts away the context handling, making it perfect for simple request-response scenarios and can easily be converted into a full Handler using the `respondWith` helper function.
-
-```dart
-typedef Responder = FutureOr<Response> Function(Request request);
-```
-
-- `Request request` is the incoming HTTP request.
-- `FutureOr<Response>` is the HTTP response to send.
-
-**Example:**
-
-```dart
-import 'package:relic/relic.dart';
-
-Responder simpleResponder = (Request request) {
-  return Response.ok(
-    body: Body.fromString('Hello, ${request.url.path}!'),
-  );
-};
-
-// Convert to a handler
-Handler simpleHandler = respondWith(simpleResponder);
 ```
 
 ## How to Define Handlers
