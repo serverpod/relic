@@ -1,8 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
-import '../../handler/handler.dart';
-import '../../relic_server.dart';
+import '../../../relic.dart';
 import 'bind_http_server.dart';
 import 'io_adapter.dart';
 
@@ -16,22 +15,21 @@ import 'io_adapter.dart';
 /// If this header is present in the `Response`, it will not be
 /// overwritten.
 /// {@endtemplate}
-Future<RelicServer> serve(
-  final Handler handler,
-  final InternetAddress address,
-  final int port, {
-  final SecurityContext? securityContext,
-  final int? backlog,
-  final bool shared = false,
-}) async {
-  final adapter = IOAdapter(await bindHttpServer(
-    address,
-    port: port,
-    context: securityContext,
-    backlog: backlog ?? 0,
-    shared: shared,
-  ));
-  final server = RelicServer(adapter);
-  await server.mountAndStart(handler);
-  return server;
+extension RelicAppIOServeEx on RelicApp {
+  Future<RelicServer> serve({
+    final InternetAddress? address,
+    final int port = 8080,
+    final SecurityContext? securityContext,
+    final int? backlog,
+    final bool shared = false,
+  }) async {
+    final adapter = IOAdapter(await bindHttpServer(
+      address ?? InternetAddress.loopbackIPv4, // expose on localhost by default
+      port: port,
+      context: securityContext,
+      backlog: backlog ?? 0,
+      shared: shared,
+    ));
+    return run(adapter);
+  }
 }

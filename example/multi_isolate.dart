@@ -29,12 +29,13 @@ void main() async {
 /// [_serve] is called in each spawned isolate.
 Future<void> _serve() async {
   // A router with no routes but a fallback
-  final router = Router<Handler>()
+  final app = RelicApp()
     ..use('/', logRequests())
     ..put('/echo', respondWith(_echoRequest));
 
   // start the server
-  await serve(router.asHandler, InternetAddress.anyIPv4, 8080, shared: true);
+  await app.serve(shared: true);
+
   print('serving on ${Isolate.current.debugName}');
 }
 
