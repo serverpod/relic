@@ -24,7 +24,7 @@ final _routingContext = ContextProperty<
 /// handlers.
 ///
 /// **Note:** For [Router<Handler>], prefer using [Router.use] for middleware
-/// composition, [Router.fallback] for 404 handling, and [RouterHandler.call]
+/// composition, [Router.fallback] for 404 handling, and [RouterHandlerEx.asHandler]
 /// to use the router directly as a handler. This avoids the need for
 /// [Pipeline] and provides better composability.
 ///
@@ -35,7 +35,7 @@ final _routingContext = ContextProperty<
 ///   ..use('/', logRequests())
 ///   ..fallback = notFoundHandler;
 ///
-/// await serve(router.call, ...);
+/// await serve(router.asHandler, ...);
 /// ```
 ///
 /// This function is primarily useful for [Router<T>] where `T` is not
@@ -107,7 +107,7 @@ class _RoutingMiddlewareBuilder<T extends Object> {
 /// Extension on [RequestContext] providing access to routing information.
 ///
 /// These properties are populated when a request is routed using [routeWith]
-/// or [RouterHandler.call], and are available to all handlers in the processing
+/// or [RouterHandlerEx.asHandler], and are available to all handlers in the processing
 /// chain.
 extension RequestContextEx on RequestContext {
   /// The portion of the request path that was matched by the route.
@@ -151,35 +151,4 @@ extension RequestContextEx on RequestContext {
   NormalizedPath get remainingPath =>
       _routingContext.getOrNull(this)?.remaining ??
       NormalizedPath(Uri.decodeFull(request.url.path));
-}
-
-/// Extension to make [Router<Handler>] directly usable as a [Handler].
-///
-/// This extension allows [Router<Handler>] to be used as a handler without
-/// wrapping it with [routeWith]. Compose middleware using [Router.use] and
-/// handle 404s using [Router.fallback] instead of Pipeline and Cascade.
-///
-/// Example:
-/// ```dart
-/// final router = Router<Handler>()
-///   ..get('/users/:id', usersHandler)
-///   ..use('/', logRequests())
-///   ..fallback = notFoundHandler;
-///
-/// await serve(router.asHandler, InternetAddress.anyIPv4, 8080);
-/// ```
-extension RouterHandler on Router<Handler> {
-  /// Makes [Router<Handler>] callable as a [Handler].
-  ///
-  /// Performs routing lookup and:
-  /// - Returns 405 if path matches but method doesn't (with Allow header)
-  /// - Calls fallback handler if set and no route matches
-  /// - Returns 404 if no fallback is set and no route matches
-  /// - Calls the matched handler if route is found
-  ///
-  /// Path parameters, matched path, and remaining path are accessible via
-  /// [RequestContextEx] extensions on the context passed to handlers.
-  Handler get asHandler => const Pipeline()
-      .addMiddleware(routeWith(this))
-      .addHandler(fallback ?? respondWith((final _) => Response.notFound()));
 }

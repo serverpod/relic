@@ -28,3 +28,4 @@ export 'src/relic_server.dart';
 export 'src/router/lookup_result.dart';
 export 'src/router/method.dart';
 export 'src/router/router.dart';
+export 'src/router/router_handler_extension.dart';
