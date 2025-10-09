@@ -1,9 +1,6 @@
 import 'dart:async';
 
-import '../adapter/context.dart';
-import '../handler/handler.dart';
-import '../message/request.dart';
-import '../message/response.dart';
+import '../../relic.dart';
 
 /// A function which creates a new [Handler] by wrapping a [Handler].
 ///
@@ -69,4 +66,28 @@ Middleware createMiddleware({
       return responseCtx.respond(response);
     };
   };
+}
+
+/// An abstract base class for classes that behave like [Middleware].
+///
+/// Instances of [MiddlewareObject] are callable as [Middleware], and
+/// can be passed as middleware via a [call] tear-off.
+///
+/// Overriding [call] is mandatory.
+///
+/// If the middleware requires special path parameters, then you should
+/// override [injectIn].
+abstract class MiddlewareObject implements RouterInjectable {
+  /// Use this middleware on [router] on path `/`.
+  /// Override to use on a different path.
+  @override
+  void injectIn(final Router<Handler> router) => router.use('/', call);
+
+  /// The implementation of this [MiddlewareObject]
+  Handler call(final Handler next);
+
+  /// Returns this [MiddlewareObject] as a [Middleware] function.
+  Middleware get asMiddleware => call;
+
+  const MiddlewareObject();
 }
