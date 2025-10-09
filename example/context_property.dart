@@ -34,16 +34,11 @@ Future<ResponseContext> handler(NewContext ctx) async {
 
 void main() async {
   // Set up the router with routes
-  final router = Router<Handler>()
-    ..use('/', requestIdMiddleware)
-    ..get('/', handler);
+  final app = RelicApp()
+    ..use('/', requestIdMiddleware) // Sets the request ID
+    ..get('/', handler); // Uses the request ID
 
-  final pipeline = const Pipeline()
-      .addMiddleware(routeWith(router))
-      .addHandler(respondWith((final _) => Response.notFound()));
-
-  // Uses the request ID
-  await serve(pipeline, InternetAddress.anyIPv4, 8080);
+  await serve(app.asHandler, InternetAddress.loopbackIPv4, 8080);
   log('Server running on http://localhost:8080');
 
   log('ContextProperty example - stores request-specific data');
