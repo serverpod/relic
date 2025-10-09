@@ -119,7 +119,7 @@ typedef Responder = FutureOr<Response> Function(Request request);
 ```dart
 import 'package:relic/relic.dart';
 
-Responder simpleResponder = (Request request) {
+Response simpleResponder(Request request) {
   return Response.ok(
     body: Body.fromString('Hello, ${request.url.path}!'),
   );
