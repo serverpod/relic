@@ -1,3 +1,4 @@
+import '../handler/handler.dart';
 import 'lookup_result.dart';
 import 'method.dart';
 import 'normalized_path.dart';
@@ -195,4 +196,11 @@ extension RouteEx<T extends Object> on Router<T> {
     attach(path, subRouter);
     return subRouter;
   }
+}
+
+/// Just a typedef for better auto-complete
+typedef RelicRouter = Router<Handler>;
+
+abstract interface class RouterInjectable {
+  void injectIn(final Router<Handler> router);
 }
