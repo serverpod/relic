@@ -1,6 +1,4 @@
-import '../handler/handler.dart';
-import 'lookup_result.dart';
-import 'method.dart';
+import '../../relic.dart';
 import 'normalized_path.dart';
 import 'path_trie.dart';
 
@@ -203,4 +201,12 @@ typedef RelicRouter = Router<Handler>;
 
 abstract interface class RouterInjectable {
   void injectIn(final Router<Handler> router);
+}
+
+final class RelicApp extends RelicRouter {
+  Future<RelicServer> run(final Adapter adapter) async {
+    final server = RelicServer(adapter);
+    await server.mountAndStart(call);
+    return server;
+  }
 }
