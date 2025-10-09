@@ -39,7 +39,6 @@ Handler helloHandler = (NewContext ctx) {
 };
 ```
 
-
 ### 2. Responder
 
 A `Responder` is a simplified function type that provides a more straightforward approach to request handling by directly transforming an HTTP request into an HTTP response. It abstracts away the context handling, making it perfect for simple request-response scenarios and can easily be converted into a full Handler using the `respondWith` helper function.
