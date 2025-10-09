@@ -1,8 +1,9 @@
 ---
 sidebar_position: 2
+title: 🌟 Hello, World! Example
 ---
 
-# Hello, World! Example 🌟
+# Hello, World! Example
 
 Create `bin/hello_world.dart` and start a basic Relic server:
 

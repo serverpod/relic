@@ -1,8 +1,9 @@
 ---
 sidebar_position: 1
+title: 📦 Installation
 ---
 
-# Installation 📦
+# Installation
 
 To use Relic, you must have the Dart SDK installed on your machine.
 
