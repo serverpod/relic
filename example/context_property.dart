@@ -1,7 +1,6 @@
 // ignore_for_file: prefer_final_parameters
 
 import 'dart:developer';
-import 'dart:io';
 
 import 'package:relic/io_adapter.dart';
 import 'package:relic/relic.dart';
@@ -38,7 +37,7 @@ void main() async {
     ..use('/', requestIdMiddleware) // Sets the request ID
     ..get('/', handler); // Uses the request ID
 
-  await serve(app.asHandler, InternetAddress.loopbackIPv4, 8080);
+  await app.serve();
   log('Server running on http://localhost:8080');
 
   log('ContextProperty example - stores request-specific data');

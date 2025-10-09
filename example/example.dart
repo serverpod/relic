@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:relic/io_adapter.dart';
 import 'package:relic/relic.dart';
 
@@ -14,7 +12,7 @@ Future<void> main() async {
         body: Body.fromString("Sorry, that doesn't compute")));
 
   // run app on an IOAdaptor (dart:io HttpServer)
-  await app.run(() => IOAdapter.bind(InternetAddress.anyIPv4, port: 8080));
+  await app.serve(); // port 8080
 }
 
 ResponseContext hello(final NewContext ctx) {

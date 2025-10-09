@@ -2,7 +2,6 @@
 
 import 'dart:convert';
 import 'dart:developer';
-import 'dart:io';
 
 import 'package:relic/io_adapter.dart';
 import 'package:relic/relic.dart';
@@ -179,7 +178,7 @@ void main() async {
         ));
 
   // Start the server
-  await serve(app.asHandler, InternetAddress.loopbackIPv4, 8080);
+  await app.serve();
   log('Context example server running on http://localhost:8080');
   log('Try:');
   log('  - http://localhost:8080/ (HTML page)');
