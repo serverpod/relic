@@ -1,6 +1,6 @@
 ---
 sidebar_position: 2
-title: 🌟 Hello, World! Example
+sidebar_label: 🌟 Hello, World! Example
 ---
 
 # Hello, World! Example
