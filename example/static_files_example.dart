@@ -35,7 +35,11 @@ Future<void> main() async {
           '</body></html>';
       return Response.ok(body: Body.fromString(html, mimeType: MimeType.html));
     }))
-    ..get(
+    ..anyOf(
+        {
+          Method.get,
+          Method.head,
+        },
         '/static/**',
         createStaticHandler(
           staticDir.path,
