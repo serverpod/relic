@@ -32,7 +32,7 @@ typedef Handler = FutureOr<HandledContext> Function(NewContext ctx);
 ```dart
 import 'package:relic/relic.dart';
 
-Handler helloHandler = (NewContext ctx) {
+Handler helloHandler(NewContext ctx) {
   return ctx.respond(Response.ok(
     body: Body.fromString('Hello from Relic!'),
   ));
