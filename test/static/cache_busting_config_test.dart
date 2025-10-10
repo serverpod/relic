@@ -91,6 +91,7 @@ void main() {
       expect(result, original);
     });
   });
+
   group(
       'Given CacheBustingConfig without explicit separator configured for a directory with files',
       () {
@@ -216,19 +217,29 @@ void main() {
     expect(busted, startsWith('/static/logo@'));
   });
 
-  test(
-      'Given a CacheBustingConfig with custom separator when calling assetPath then it uses that separator',
-      () async {
-    await d.dir('static', [d.file('logo.png', 'png-bytes')]).create();
-    final staticRoot = Directory(p.join(d.sandbox, 'static'));
-    final cfg = CacheBustingConfig(
-      mountPrefix: '/static',
-      fileSystemRoot: staticRoot,
-      separator: '--',
-    );
-    const original = '/static/logo.png';
-    final busted = await cfg.assetPath(original);
-    expect(busted, startsWith('/static/logo--'));
+  group('Given a CacheBustingConfig with custom separator', () {
+    late CacheBustingConfig cfg;
+    setUp(() async {
+      await d.dir('static', [d.file('logo.png', 'png-bytes')]).create();
+      final staticRoot = Directory(p.join(d.sandbox, 'static'));
+      cfg = CacheBustingConfig(
+        mountPrefix: '/static',
+        fileSystemRoot: staticRoot,
+        separator: '--',
+      );
+    });
+
+    test('when assetPath is called then it uses that separator', () async {
+      const original = '/static/logo.png';
+      final busted = await cfg.assetPath(original);
+      expect(busted, startsWith('/static/logo--'));
+    });
+
+    test(
+        'when tryStripHashFromFilename is called with busted path then hash is stripped from filename',
+        () async {
+      expect(cfg.tryStripHashFromFilename('logo--abc123.png'), 'logo.png');
+    });
   });
 
   test(
@@ -251,7 +262,7 @@ void main() {
   });
 
   test(
-      'Given a CacheBustingConfig serving a file starting wht the separator when calling assetPath then cache busting path is created correctly',
+      'Given a CacheBustingConfig serving a file starting with the separator when calling assetPath then cache busting path is created correctly',
       () async {
     await d.dir('static', [d.file('@logo.png', 'at-logo')]).create();
     final staticRoot = Directory(p.join(d.sandbox, 'static'));
@@ -321,11 +332,54 @@ void main() {
     });
 
     test(
-        'when assetPath is called for file using fileSystemRoot instead of mountPrefix  as base then it returns path unchanged',
+        'when assetPath is called for file using fileSystemRoot instead of mountPrefix as base then it returns path unchanged',
         () async {
       const original = '/static/logo.png';
       final busted = await cfg.assetPath(original);
       expect(busted, equals('/static/logo.png'));
+    });
+  });
+
+  group('Given cache busting config', () {
+    late CacheBustingConfig cfg;
+    setUp(() async {
+      await d.dir('static', []).create();
+      final staticRoot = Directory(p.join(d.sandbox, 'static'));
+      cfg = CacheBustingConfig(
+        mountPrefix: '/static',
+        fileSystemRoot: staticRoot,
+        separator: '@',
+      );
+    });
+
+    test(
+        'when tryStripHashFromFilename is filename equals to the separator then same path is returned',
+        () async {
+      expect(cfg.tryStripHashFromFilename('@'), '@');
+    });
+
+    test(
+        'when tryStripHashFromFilename is called with non busted filename then same filename is returned',
+        () async {
+      expect(cfg.tryStripHashFromFilename('logo.png'), 'logo.png');
+    });
+
+    test(
+        'when tryStripHashFromFilename is called with busted filename then hash is stripped from filename',
+        () async {
+      expect(cfg.tryStripHashFromFilename('logo@abc123.png'), 'logo.png');
+    });
+
+    test(
+        'when tryStripHashFromFilename is called with busted filename that has no extension then it strips the hash and keeps no extension',
+        () async {
+      expect(cfg.tryStripHashFromFilename('logo@abc123'), 'logo');
+    });
+
+    test(
+        'when tryStripHashFromFilename is called with busted filename starting with separator then only trailing hash is stripped',
+        () async {
+      expect(cfg.tryStripHashFromFilename('@logo@abc123.png'), '@logo.png');
     });
   });
 }

@@ -34,7 +34,7 @@ Middleware cacheBusting(final CacheBustingConfig config) {
       }
       final last = p.url.basename(relative);
 
-      final strippedLast = _stripHashFromFilename(last, config.separator);
+      final strippedLast = config.tryStripHashFromFilename(last);
       if (strippedLast == last) {
         return await inner(ctx);
       }
@@ -52,22 +52,6 @@ Middleware cacheBusting(final CacheBustingConfig config) {
       return await inner(rewrittenRequest.toContext(ctx.token));
     };
   };
-}
-
-/// Removes a trailing "`<sep>`hash" segment from a file name, preserving any
-/// extension. Matches both "`name<sep>hash`.ext" and "`name<sep>hash`".
-String _stripHashFromFilename(
-  final String fileName,
-  final String separator,
-) {
-  final ext = p.url.extension(fileName);
-  final base = p.url.basenameWithoutExtension(fileName);
-
-  final at = base.lastIndexOf(separator);
-  if (at <= 0) return fileName; // no hash or starts with separator
-
-  final cleanBase = base.substring(0, at);
-  return p.url.setExtension(cleanBase, ext);
 }
 
 /// Configuration and helpers for generating cache-busted asset URLs.
@@ -151,6 +135,28 @@ class CacheBustingConfig {
     } catch (_) {
       return staticPath;
     }
+  }
+
+  /// Removes a trailing "`<sep>`hash" segment from a [fileName], preserving any
+  /// extension. Matches both "`name<sep>hash`.ext" and "`name<sep>hash`".
+  ///
+  /// If no hash is found, returns [fileName] unchanged.
+  ///
+  /// Examples:
+  /// `logo@abc.png` -> `logo.png`
+  /// `logo@abc` -> `logo`
+  /// `logo.png` -> `logo.png` (no change)
+  String tryStripHashFromFilename(
+    final String fileName,
+  ) {
+    final ext = p.url.extension(fileName);
+    final base = p.url.basenameWithoutExtension(fileName);
+
+    final at = base.lastIndexOf(separator);
+    if (at <= 0) return fileName; // no hash or starts with separator
+
+    final cleanBase = base.substring(0, at);
+    return p.url.setExtension(cleanBase, ext);
   }
 }
 
