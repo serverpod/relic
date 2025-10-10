@@ -55,14 +55,13 @@ typedef Responder = FutureOr<Response> Function(Request request);
 ```dart
 import 'package:relic/relic.dart';
 
-Responder simpleResponder = (Request request) {
-  return Response.ok(
-    body: Body.fromString('Hello, ${request.url.path}!'),
-  );
-};
-
-// Convert to a handler
-Handler simpleHandler = respondWith(simpleResponder);
+final simpleResponderHandler = respondWith(
+  (Request request) {
+    return Response.ok(
+      body: Body.fromString('Hello, ${request.url.path}!'),
+    );
+  },
+);
 ```
 
 ### 3. ResponseHandler
@@ -81,7 +80,7 @@ typedef ResponseHandler = FutureOr<ResponseContext> Function(RespondableContext 
 ```dart
 import 'package:relic/relic.dart';
 
-ResponseHandler apiHandler = (final RespondableContext context) {
+ResponseContext apiHandler(RespondableContext context) {
   return context.respond(
     Response.ok(
       headers: Headers.build(
@@ -90,7 +89,7 @@ ResponseHandler apiHandler = (final RespondableContext context) {
       body: Body.fromString('{"status": "success"}'),
     ),
   );
-};
+}
 ```
 
 ### 4. HijackHandler
@@ -112,7 +111,7 @@ import 'dart:convert';
 import 'package:relic/relic.dart';
 import 'package:stream_channel/stream_channel.dart';
 
-HijackHandler sseHandler = (HijackableContext ctx) {
+HijackContext sseHandler(HijackableContext ctx) {
   return ctx.hijack((StreamChannel<List<int>> channel) async {
     // Send Server-Sent Events
     channel.sink.add(utf8.encode('data: Connected\n\n'));
@@ -126,7 +125,7 @@ HijackHandler sseHandler = (HijackableContext ctx) {
     await channel.sink.done;
     timer.cancel();
   });
-};
+}
 ```
 
 ## How to Define Handlers
@@ -136,7 +135,7 @@ HijackHandler sseHandler = (HijackableContext ctx) {
 For simple, fast operations:
 
 ```dart
-ResponseContext syncHandler(RespondableContext ctx) {
+ResponseContext syncHandler(NewContext ctx) {
   return ctx.respond(Response.ok(
     body: Body.fromString('Fast response'),
   ));
@@ -148,7 +147,7 @@ ResponseContext syncHandler(RespondableContext ctx) {
 For operations that need to wait (database calls, file I/O, etc.):
 
 ```dart
-Future<ResponseContext> asyncHandler(final RespondableContext ctx) async {
+Future<ResponseContext> asyncHandler(NewContext ctx) async {
   final data = await Future.delayed(
     const Duration(seconds: 1),
     () => 'Hello from Relic!',
@@ -178,9 +177,41 @@ ResponseContext contextHandler(NewContext ctx) {
   // Headers
   final userAgent = request.headers.userAgent;
 
-  return ctx.respond(Response.ok(
-    body: Body.fromString('Method: $method, Path: ${url.path}'),
-  ));
+  return ctx.respond(
+    Response.ok(
+      body: Body.fromString(
+        'Method: $method, Path: ${url.path} User-Agent: $userAgent',
+      ),
+    ),
+  );
+}
+```
+
+### Handling WebSockets
+
+For real-time bidirectional communication, you can upgrade connections to WebSockets using `ctx.connect()`:
+
+```dart
+import 'dart:async';
+import 'dart:developer';
+import 'package:relic/relic.dart';
+
+ConnectContext webSocketHandler(NewContext ctx) {
+  return ctx.connect((RelicWebSocket channel) async {
+    // Send initial connection message
+    channel.sendText('data: Connected\n\n');
+
+    // Send periodic updates
+    final timer = Timer.periodic(Duration(seconds: 1), (_) {
+      channel.sendText('data: ${DateTime.now()}\n\n');
+    });
+
+    // Listen to incoming events and cleanup on disconnect
+    channel.events.listen(
+      (event) => log('event: $event'),
+      onDone: () => timer.cancel(),
+    );
+  });
 }
 ```
 
@@ -189,8 +220,8 @@ ResponseContext contextHandler(NewContext ctx) {
 Handlers are functions that process requests and return responses. Relic provides four main handler types:
 
 - **`Handler`**: The basic type for any request processing
-- **`ResponseHandler`**: For HTTP responses only
-- **`HijackHandler`**: For raw connection control (WebSockets, SSE)
 - **`Responder`**: For simple request-to-response transformations
+- **`ResponseHandler`**: For HTTP responses only
+- **`HijackHandler`**: For raw connection control (custom protocols, SSE)
 
-Choose the handler type that best fits your use case, and use the appropriate context type to ensure type safety.
+Choose the handler type that best fits your use case, and use the appropriate context type to ensure type safety. For WebSocket connections, use the `ctx.connect()` method available on the context object.
