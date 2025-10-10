@@ -12,11 +12,17 @@ const config = {
   url: 'https://docs.dartrelic.dev',
   baseUrl: '/',
   onBrokenLinks: 'throw',
-  onBrokenMarkdownLinks: 'warn',
   favicon: 'img/favicon.png',
   organizationName: 'serverpod', // Usually your GitHub org/user name.
   projectName: 'relic', // Usually your repo name.
   trailingSlash: false,
+  markdown: {
+    mermaid: true,
+    hooks: {
+      onBrokenMarkdownLinks: 'warn',
+    },
+  },
+  themes: ['@docusaurus/theme-mermaid'],
   presets: [
     [
       'classic',
