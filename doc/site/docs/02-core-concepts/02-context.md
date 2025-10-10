@@ -17,9 +17,6 @@ Before we dive in, let's define a few terms you'll see throughout:
 - **Middleware**: A function that wraps a handler to add behavior (like logging, auth, etc.)
 - **Symbol**: In Dart, symbols are unique identifiers written with `#` like `#user` - they're safer than strings for keys because they can't accidentally collide
 
-
-
-
 ## The Context Lifecycle
 
 Every HTTP request follows this journey through Relic's context system:
@@ -28,7 +25,6 @@ Every HTTP request follows this journey through Relic's context system:
 graph LR
     A[NewContext<br/>Fresh Request] --> B[ResponseContext<br/>HTTP Response]
     A --> C[ConnectContext <br/>WebSocket]
-    
 ```
 :::info One-Way Transitions
 Every context starts as `NewContext` and **transitions exactly once** to a final state based on your handler's decision.
@@ -57,18 +53,18 @@ void main() async {
 ```
 
 **What's happening:**
+
 1. Your handler receives a `NewContext` - this represents a fresh, unhandled HTTP request
 2. You call `ctx.respond()` to send back an HTTP response
 3. This returns a `ResponseContext` - representing that the request is now complete
 
 That's it! Every request in Relic follows this pattern: receive a context, do something with it, return a context.
 
-
 ## Context Types
 
 Relic provides four context types, each representing a different stage of request processing. They form a type hierarchy:
 
-```
+```text
 RequestContext (base - provides access to request data)
     ├── NewContext (starting point - can transition to any final state)
     ├── ResponseContext (final - HTTP response sent)
@@ -78,6 +74,7 @@ RequestContext (base - provides access to request data)
 All contexts share a common base: `RequestContext`, which gives you access to `ctx.request` (the HTTP request data).
 
 Some contexts also implement special interfaces:
+
 - **`RespondableContext`** - Can send responses (includes `NewContext`, also used as a parameter type to allow multiple context types)
 
 ### NewContext - The Starting Point
@@ -132,6 +129,7 @@ String _htmlHomePage() {
 
 :::tip When to use async/await
 Use `Future<ResponseContext>` and `async` when your handler needs to wait for asynchronous operations (like database queries or reading request bodies). If your handler is purely synchronous, you can omit both:
+
 ```dart
 ResponseContext simpleHandler(NewContext ctx) {
   return ctx.respond(Response.ok(body: Body.fromString('Sync response')));
@@ -199,6 +197,7 @@ Future<ResponseContext> userHandler(NewContext ctx) async {
 
 :::tip Adding Custom Headers
 Use `Headers.build()` to add custom response headers:
+
 ```dart
 return ctx.respond(Response.ok(
   headers: Headers.build((mh) => mh
@@ -321,6 +320,7 @@ Future<ResponseContext> dataHandler(NewContext ctx) async {
 ```
 
 :::warning Reading Request Bodies
+
 - The body can only be read **once** - it's a stream that gets consumed
 - Always validate the `Content-Type` header before parsing
 - Wrap parsing in try-catch to handle malformed data
@@ -334,6 +334,7 @@ Relic's context system uses a **state machine** to prevent invalid operations. E
 ### State Transitions
 
 The key insight: **You can only transition a context once**. This makes sense because an HTTP request can only have one outcome:
+
 - Either you send a response
 - Or you upgrade to WebSocket
 - Or you take raw control
@@ -381,6 +382,7 @@ This is **better than runtime errors**. In other frameworks, this code might com
 Context properties let you **attach custom data** to a request as it flows through your application. Think of it like adding sticky notes to the request that any handler can read.
 
 **Common use cases:**
+
 - Store request IDs for logging and tracing
 - Cache computed values within a request
 - Pass data between middleware and handlers
@@ -421,6 +423,7 @@ Future<ResponseContext> handler(NewContext ctx) async {
 ```
 
 **How it works:**
+
 1. **Create a property** - `ContextProperty<String>('requestId')` creates a property that can store strings
 2. **Store data** - Middleware sets the value: `_requestIdProperty[ctx] = 'req_123'`
 3. **Retrieve data** - Any handler can read it: `_requestIdProperty[ctx]`
@@ -444,6 +447,7 @@ Future<ResponseContext> brokenHandler(NewContext ctx) async {
 ```
 
 **Fix:** Read the body once and store it in a variable:
+
 ```dart
 Future<ResponseContext> fixedHandler(NewContext ctx) async {
   final bodyString = await ctx.request.readAsString();
@@ -461,6 +465,7 @@ ResponseContext brokenHandler(NewContext ctx) {  // ❌ Missing async!
 ```
 
 **Fix:** Use `async` and `Future<ResponseContext>`:
+
 ```dart
 Future<ResponseContext> fixedHandler(NewContext ctx) async {  // ✅ async added
   final bodyString = await ctx.request.body.readAsString();  // ✅ Now it works
@@ -478,6 +483,7 @@ Future<ResponseContext> brokenHandler(NewContext ctx) async {
 ```
 
 **Fix:** Always return a context:
+
 ```dart
 Future<ResponseContext> fixedHandler(NewContext ctx) async {
   print('Hello');
@@ -498,6 +504,7 @@ Future<ResponseContext> brokenHandler(NewContext ctx) async {
 ```
 
 **Fix:** Check for null values:
+
 ```dart
 Future<ResponseContext> fixedHandler(NewContext ctx) async {
   final userId = ctx.pathParameters[#id];
@@ -523,21 +530,25 @@ Future<ResponseContext> fixedHandler(NewContext ctx) async {
 ## Best Practices
 
 **Use the type system to your advantage:**
+
 - Let the compiler catch errors by using specific context types in your handler signatures
 - Use `NewContext` when you need full flexibility
 - Use `RespondableContext` when you accept multiple context types that can respond
 
 **Handle errors gracefully:**
+
 - Always wrap body parsing in try-catch blocks
 - Return appropriate HTTP status codes (400 for bad requests, 404 for not found, etc.)
 - Validate input before processing
 
 **Keep handlers focused:**
+
 - Each handler should do one thing well
 - Use middleware for cross-cutting concerns (logging, auth, etc.)
 - Use context properties to share data between middleware and handlers
 
 **Performance tips:**
+
 - Context properties use efficient `Expando` objects internally - no memory overhead for unused properties
 - Reading request bodies consumes memory - consider limits for large uploads
 - Cache expensive computations in context properties within a single request
@@ -552,9 +563,7 @@ You've learned the heart of Relic's request handling system! Here's what we cove
 ✅ **Context Properties** - Attach custom data to requests  
 ✅ **Common Mistakes** - How to avoid typical newbie errors
 
-
 The context system might feel complex at first, but it prevents entire categories of bugs. Stick with it - the type safety will save you hours of debugging later!
-
 
 ### Complete Examples
 
