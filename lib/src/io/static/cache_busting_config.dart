@@ -113,13 +113,14 @@ class CacheBustingConfig {
   /// `logo@abc.png` -> `logo.png`
   /// `logo@abc` -> `logo`
   /// `logo.png` -> `logo.png` (no change)
-  String tryStripHashFromFilename(
+  static String tryStripHashFromFilename(
     final String fileName,
+    final CacheBustingConfig config,
   ) {
     final ext = p.url.extension(fileName);
     final base = p.url.basenameWithoutExtension(fileName);
 
-    final at = base.lastIndexOf(separator);
+    final at = base.lastIndexOf(config.separator);
     if (at <= 0) return fileName; // no hash or starts with separator
 
     final cleanBase = base.substring(0, at);

@@ -98,7 +98,10 @@ Handler createStaticHandler(
           return resolvedRootPath;
         }
 
-        final fileName = cfg.tryStripHashFromFilename(requestSegments.last);
+        final fileName = CacheBustingConfig.tryStripHashFromFilename(
+          requestSegments.last,
+          cfg,
+        );
         return p.joinAll([
           resolvedRootPath,
           ...requestSegments.sublist(0, requestSegments.length - 1),
