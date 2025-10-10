@@ -67,11 +67,14 @@ Future<FileInfo> getStaticFileInfo(
 ///
 /// The [mimeResolver] can be provided to customize MIME type detection.
 /// The [cacheControl] header can be customized using [cacheControl] callback.
+/// If [cacheBustingConfig] is provided, the handler will strip cache-busting
+/// hashes from the last path segment before looking up the file.
 Handler createStaticHandler(
   final String fileSystemPath, {
   final Handler? defaultHandler,
   final MimeTypeResolver? mimeResolver,
   required final CacheControlFactory cacheControl,
+  final CacheBustingConfig? cacheBustingConfig,
 }) {
   final rootDir = Directory(fileSystemPath);
   if (!rootDir.existsSync()) {
@@ -83,9 +86,28 @@ Handler createStaticHandler(
   final fallbackHandler =
       defaultHandler ?? respondWith((final _) => Response.notFound());
 
+  final resolveFilePath = switch (cacheBustingConfig) {
+    null =>
+      (final String resolvedRootPath, final List<String> requestSegments) =>
+          p.joinAll([resolvedRootPath, ...requestSegments]),
+    final cfg =>
+      (final String resolvedRootPath, final List<String> requestSegments) {
+        if (requestSegments.isEmpty) {
+          return resolvedRootPath;
+        }
+
+        final fileName = cfg.tryStripHashFromFilename(requestSegments.last);
+        return p.joinAll([
+          resolvedRootPath,
+          ...requestSegments.sublist(0, requestSegments.length - 1),
+          fileName,
+        ]);
+      }
+  };
+
   return (final NewContext ctx) async {
     final filePath =
-        p.joinAll([resolvedRootPath, ...ctx.remainingPath.segments]);
+        resolveFilePath(resolvedRootPath, ctx.remainingPath.segments);
 
     // Ensure file exists and is not a directory
     final entityType = FileSystemEntity.typeSync(filePath, followLinks: false);
