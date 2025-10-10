@@ -84,8 +84,8 @@ Handler createStaticHandler(
       defaultHandler ?? respondWith((final _) => Response.notFound());
 
   return (final NewContext ctx) async {
-    final requestPath = ctx.remainingPath.path;
-    final filePath = p.join(resolvedRootPath, requestPath.substring(1));
+    final filePath =
+        p.joinAll([resolvedRootPath, ...ctx.remainingPath.segments]);
 
     // Ensure file exists and is not a directory
     final entityType = FileSystemEntity.typeSync(filePath, followLinks: false);
