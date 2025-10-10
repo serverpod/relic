@@ -2,7 +2,6 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 
 import '../../../relic.dart';
-import '../../adapter/context.dart';
 
 /// Cache-busting for asset URLs that embed a content hash.
 ///
@@ -10,51 +9,17 @@ import '../../adapter/context.dart';
 /// - Outgoing URLs: call [CacheBustingConfig.assetPath] (or
 ///   [CacheBustingConfig.tryAssetPath]) with a known mount prefix (e.g. "/static")
 ///   to get "/static/name@hash.ext".
-/// - Incoming requests: add this [cacheBusting] middleware so downstream
-///   handlers (e.g., the static file handler) receive "/path/name.ext" without
-///   the hash.
+/// - Incoming requests: add this [CacheBustingConfig] to the static file handler
+///   (see [createStaticHandler]). The handler will strip the hash so that static
+///   asset requests can be served without the hash.
 ///
-/// This middleware strips an inline cache-busting hash from the last path segment
-/// for requests under [CacheBustingConfig.mountPrefix]. Example:
+/// Once added to the `createStaticHandler`, the handler will strip the hash
+/// from the last path segment before looking up the file. If no hash is found,
+/// the path is used as-is.
+///
+// Example:
 /// "/static/images/logo@abc123.png" → "/static/images/logo.png".
-Middleware cacheBusting(final CacheBustingConfig config) {
-  return (final inner) {
-    return (final ctx) async {
-      final req = ctx.request;
-      final fullPath = req.requestedUri.path;
-
-      if (!fullPath.startsWith(config.mountPrefix)) {
-        return await inner(ctx);
-      }
-
-      // Extract the portion after mount prefix
-      final relative = fullPath.substring(config.mountPrefix.length);
-      if (relative.isEmpty) {
-        return await inner(ctx);
-      }
-      final last = p.url.basename(relative);
-
-      final strippedLast = config.tryStripHashFromFilename(last);
-      if (strippedLast == last) {
-        return await inner(ctx);
-      }
-
-      final directory = p.url.dirname(relative);
-      final rewrittenRelative =
-          directory == '.' ? strippedLast : p.url.join(directory, strippedLast);
-
-      // Rebuild a new Request only by updating requestedUri path; do not touch
-      // handlerPath so that routers and mounts continue to work as configured.
-      final newRequested = req.requestedUri.replace(
-        path: '${config.mountPrefix}$rewrittenRelative',
-      );
-      final rewrittenRequest = req.copyWith(requestedUri: newRequested);
-      return await inner(rewrittenRequest.toContext(ctx.token));
-    };
-  };
-}
-
-/// Configuration and helpers for generating cache-busted asset URLs.
+/// "/static/images/logo.png" → "/static/images/logo.png".
 class CacheBustingConfig {
   /// The URL prefix under which static assets are served (e.g., "/static").
   final String mountPrefix;

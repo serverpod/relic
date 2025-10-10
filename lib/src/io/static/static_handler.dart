@@ -67,8 +67,10 @@ Future<FileInfo> getStaticFileInfo(
 ///
 /// The [mimeResolver] can be provided to customize MIME type detection.
 /// The [cacheControl] header can be customized using [cacheControl] callback.
+///
 /// If [cacheBustingConfig] is provided, the handler will strip cache-busting
-/// hashes from the last path segment before looking up the file.
+/// hashes from the last path segment before looking up any file.
+/// See [CacheBustingConfig] for details.
 Handler createStaticHandler(
   final String fileSystemPath, {
   final Handler? defaultHandler,

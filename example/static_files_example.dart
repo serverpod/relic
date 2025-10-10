@@ -44,12 +44,12 @@ Future<void> main() async {
             publicCache: true,
             immutable: true,
           ),
+          cacheBustingConfig: buster,
         ));
 
   // Setup a handler pipeline with logging, cache busting, and routing.
   final handler = const Pipeline()
       .addMiddleware(logRequests())
-      .addMiddleware(cacheBusting(buster))
       .addMiddleware(routeWith(router))
       .addHandler(respondWith((final _) => Response.notFound()));
 
