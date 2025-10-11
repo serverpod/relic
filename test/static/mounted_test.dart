@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:relic/relic.dart';
+
 import 'package:test/test.dart';
 import 'package:test_descriptor/test_descriptor.dart' as d;
 
@@ -22,9 +23,8 @@ void main() {
             cacheControl: (final _, final __) => null,
             d.sandbox,
           ));
-    final handler = const Pipeline()
-        .addMiddleware(routeWith(router))
-        .addHandler(respondWith((final _) => Response.notFound()));
+
+    final handler = router.asHandler;
 
     // Repeat retrieveal. This test was added to expose issue:
     // [#173](https://github.com/serverpod/relic/issues/173)

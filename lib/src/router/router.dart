@@ -1,3 +1,4 @@
+import '../handler/handler.dart';
 import 'lookup_result.dart';
 import 'method.dart';
 import 'normalized_path.dart';
@@ -43,6 +44,23 @@ final class Router<T extends Object> {
   /// Stores all routes (with or without parameters) in a [PathTrie] for efficient
   /// matching and parameter extraction.
   final _allRoutes = PathTrie<_RouterEntry<T>>();
+
+  /// The fallback value returned when no route matches the request path.
+  ///
+  /// When set, this value is returned on path miss instead of returning
+  /// [PathMiss]. This does not apply to method misses (405), which still
+  /// return [MethodMiss].
+  ///
+  /// When composing routers with [attach] or [group] only the top-most
+  /// [fallback] will be used.
+  ///
+  /// Example:
+  /// ```dart
+  /// final router = Router<Handler>()
+  ///   ..get('/users', usersHandler)
+  ///   ..fallback = notFoundHandler;
+  /// ```
+  T? fallback;
 
   /// Adds a route definition to the router.
   ///
@@ -178,4 +196,11 @@ extension RouteEx<T extends Object> on Router<T> {
     attach(path, subRouter);
     return subRouter;
   }
+}
+
+/// Just a typedef for better auto-complete
+typedef RelicRouter = Router<Handler>;
+
+abstract interface class RouterInjectable {
+  void injectIn(final Router<Handler> router);
 }
