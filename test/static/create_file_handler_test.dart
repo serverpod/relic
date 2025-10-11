@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:path/path.dart' as p;
 import 'package:relic/relic.dart';
+
 import 'package:test/test.dart';
 import 'package:test_descriptor/test_descriptor.dart' as d;
 
@@ -24,14 +25,14 @@ void main() {
   });
 
   test('Given a non-matching URL when served then it returns a 404', () async {
-    final handler = const Pipeline()
-        .addMiddleware(routeWith(Router<Handler>()
-          ..get(
-              '/foo/bar',
-              createFileHandler(
-                  cacheControl: (final _, final __) => null,
-                  p.join(d.sandbox, 'file.txt')))))
-        .addHandler(respondWith((final _) => Response.notFound()));
+    final router = Router<Handler>()
+      ..get(
+          '/foo/bar',
+          createFileHandler(
+              cacheControl: (final _, final __) => null,
+              p.join(d.sandbox, 'file.txt')));
+
+    final handler = router.asHandler;
     final response = await makeRequest(handler, '/foo/file.txt');
     expect(response.statusCode, HttpStatus.notFound);
   });
@@ -39,14 +40,14 @@ void main() {
   test(
       'Given a file under a custom URL when served then it returns the file contents',
       () async {
-    final handler = const Pipeline()
-        .addMiddleware(routeWith(Router<Handler>()
-          ..get(
-              '/foo/bar',
-              createFileHandler(
-                  cacheControl: (final _, final __) => null,
-                  p.join(d.sandbox, 'file.txt')))))
-        .addHandler(respondWith((final _) => Response.notFound()));
+    final router = Router<Handler>()
+      ..get(
+          '/foo/bar',
+          createFileHandler(
+              cacheControl: (final _, final __) => null,
+              p.join(d.sandbox, 'file.txt')));
+
+    final handler = router.asHandler;
     final response = await makeRequest(handler, '/foo/bar');
     expect(response.statusCode, HttpStatus.ok);
     expect(response.body.contentLength, 8);
@@ -56,14 +57,14 @@ void main() {
   test(
       "Given a custom URL that isn't matched when served then it returns a 404",
       () async {
-    final handler = const Pipeline()
-        .addMiddleware(routeWith(Router<Handler>()
-          ..get(
-              '/foo/bar',
-              createFileHandler(
-                  cacheControl: (final _, final __) => null,
-                  p.join(d.sandbox, 'file.txt')))))
-        .addHandler(respondWith((final _) => Response.notFound()));
+    final router = Router<Handler>()
+      ..get(
+          '/foo/bar',
+          createFileHandler(
+              cacheControl: (final _, final __) => null,
+              p.join(d.sandbox, 'file.txt')));
+
+    final handler = router.asHandler;
     final response = await makeRequest(handler, '/file.txt');
     expect(response.statusCode, HttpStatus.notFound);
   });

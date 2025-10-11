@@ -228,10 +228,9 @@ void main() {
 
         // Attach nestedRouter to mainRouter under /resource/:resourceId
         mainRouter.attach('/resource/:resourceId', nestedRouter);
+        mainRouter.fallback = respondWith((final _) => Response(404));
 
-        final pipelineHandler = const Pipeline()
-            .addMiddleware(routeWith(mainRouter))
-            .addHandler(respondWith((final _) => Response(404)));
+        final pipelineHandler = mainRouter.asHandler;
 
         final initialCtx =
             _FakeRequest('/resource/abc/details/xyz').toContext(Object());
@@ -272,10 +271,9 @@ void main() {
 
         // Attach intermediateRouter to mainRouter under a parameterized path
         mainRouter.attach('/base/:baseId', intermediateRouter);
+        mainRouter.fallback = respondWith((final _) => Response(404));
 
-        final pipelineHandler = const Pipeline()
-            .addMiddleware(routeWith(mainRouter))
-            .addHandler(respondWith((final _) => Response(404)));
+        final pipelineHandler = mainRouter.asHandler;
 
         final initialCtx = _FakeRequest('/base/b123/i456/action/doSomething')
             .toContext(Object());
@@ -310,10 +308,9 @@ void main() {
         });
 
         mainRouter.attach('/:id/sub', subRouter); // main router uses :id
+        mainRouter.fallback = respondWith((final _) => Response(404));
 
-        final pipeline = const Pipeline()
-            .addMiddleware(routeWith(mainRouter))
-            .addHandler(respondWith((final _) => Response(404)));
+        final pipeline = mainRouter.asHandler;
 
         final initialCtx = _FakeRequest('/123/sub/456/end').toContext(Object());
         final resultingCtx = await pipeline(initialCtx);
