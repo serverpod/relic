@@ -6,7 +6,7 @@ part of 'router.dart';
 /// configure, and run a Relic HTTP server.
 final class RelicApp extends _DelegatingRelicRouter {
   FutureOr<Adapter> Function()? _adapterFactory;
-  final _server = _DelegatingRelicServer();
+  final _server = DelegatingRelicServer();
   final _setup = <RouterInjectable>[];
 
   RelicApp() : super(RelicRouter());
@@ -112,21 +112,6 @@ final class _UseSetup extends _Setup {
 
   @override
   void injectIn(final RelicRouter router) => router.use(path, middleware);
-}
-
-class _DelegatingRelicServer implements RelicServer {
-  late RelicServer delegate;
-  _DelegatingRelicServer();
-
-  @override
-  Adapter get adapter => delegate.adapter;
-
-  @override
-  Future<void> close() => delegate.close();
-
-  @override
-  Future<void> mountAndStart(final Handler handler) =>
-      delegate.mountAndStart(handler);
 }
 
 final class _DelegatingRelicRouter extends RelicRouter {
