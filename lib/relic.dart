@@ -15,7 +15,7 @@ export 'src/headers/header_accessor.dart';
 export 'src/headers/headers.dart';
 export 'src/headers/standard_headers_extensions.dart';
 export 'src/headers/typed/typed_headers.dart';
-export 'src/io/static/cache_busting_config.dart';
+export 'src/io/static/cache_busting_config.dart' show CacheBustingConfig;
 export 'src/io/static/static_handler.dart';
 export 'src/message/request.dart' show Request;
 export 'src/message/response.dart' show Response;

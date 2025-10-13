@@ -103,29 +103,6 @@ class CacheBustingConfig {
       return staticPath;
     }
   }
-
-  /// Removes a trailing "`<sep>`hash" segment from a [fileName], preserving any
-  /// extension. Matches both "`name<sep>hash`.ext" and "`name<sep>hash`".
-  ///
-  /// If no hash is found, returns [fileName] unchanged.
-  ///
-  /// Examples:
-  /// `logo@abc.png` -> `logo.png`
-  /// `logo@abc` -> `logo`
-  /// `logo.png` -> `logo.png` (no change)
-  static String tryStripHashFromFilename(
-    final String fileName,
-    final CacheBustingConfig config,
-  ) {
-    final ext = p.url.extension(fileName);
-    final base = p.url.basenameWithoutExtension(fileName);
-
-    final at = base.lastIndexOf(config.separator);
-    if (at <= 0) return fileName; // no hash or starts with separator
-
-    final cleanBase = base.substring(0, at);
-    return p.url.setExtension(cleanBase, ext);
-  }
 }
 
 /// Ensures [mountPrefix] starts with '/' and ends with '/'.
@@ -159,5 +136,29 @@ void _validateSeparator(final String separator) {
 
   if (separator.contains('/')) {
     throw ArgumentError('separator cannot contain "/"');
+  }
+}
+
+extension CacheBustingFilenameExtension on CacheBustingConfig {
+  /// Removes a trailing "`<sep>`hash" segment from a [fileName], preserving any
+  /// extension. Matches both "`name<sep>hash`.ext" and "`name<sep>hash`".
+  ///
+  /// If no hash is found, returns [fileName] unchanged.
+  ///
+  /// Examples:
+  /// `logo@abc.png` -> `logo.png`
+  /// `logo@abc` -> `logo`
+  /// `logo.png` -> `logo.png` (no change)
+  String tryStripHashFromFilename(
+    final String fileName,
+  ) {
+    final ext = p.url.extension(fileName);
+    final base = p.url.basenameWithoutExtension(fileName);
+
+    final at = base.lastIndexOf(separator);
+    if (at <= 0) return fileName; // no hash or starts with separator
+
+    final cleanBase = base.substring(0, at);
+    return p.url.setExtension(cleanBase, ext);
   }
 }

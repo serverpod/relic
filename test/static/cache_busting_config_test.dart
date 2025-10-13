@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
-import 'package:relic/relic.dart';
+import 'package:relic/src/io/static/cache_busting_config.dart';
 import 'package:test/test.dart';
 import 'package:test_descriptor/test_descriptor.dart' as d;
 
@@ -252,9 +252,7 @@ void main() {
     test(
         'when tryStripHashFromFilename is called with busted path then hash is stripped from filename',
         () async {
-      expect(
-          CacheBustingConfig.tryStripHashFromFilename('logo--abc123.png', cfg),
-          'logo.png');
+      expect(cfg.tryStripHashFromFilename('logo--abc123.png'), 'logo.png');
     });
   });
 
@@ -371,37 +369,31 @@ void main() {
     test(
         'when tryStripHashFromFilename is filename equals to the separator then same path is returned',
         () async {
-      expect(CacheBustingConfig.tryStripHashFromFilename('@', cfg), '@');
+      expect(cfg.tryStripHashFromFilename('@'), '@');
     });
 
     test(
         'when tryStripHashFromFilename is called with non busted filename then same filename is returned',
         () async {
-      expect(CacheBustingConfig.tryStripHashFromFilename('logo.png', cfg),
-          'logo.png');
+      expect(cfg.tryStripHashFromFilename('logo.png'), 'logo.png');
     });
 
     test(
         'when tryStripHashFromFilename is called with busted filename then hash is stripped from filename',
         () async {
-      expect(
-          CacheBustingConfig.tryStripHashFromFilename('logo@abc123.png', cfg),
-          'logo.png');
+      expect(cfg.tryStripHashFromFilename('logo@abc123.png'), 'logo.png');
     });
 
     test(
         'when tryStripHashFromFilename is called with busted filename that has no extension then it strips the hash and keeps no extension',
         () async {
-      expect(CacheBustingConfig.tryStripHashFromFilename('logo@abc123', cfg),
-          'logo');
+      expect(cfg.tryStripHashFromFilename('logo@abc123'), 'logo');
     });
 
     test(
         'when tryStripHashFromFilename is called with busted filename starting with separator then only trailing hash is stripped',
         () async {
-      expect(
-          CacheBustingConfig.tryStripHashFromFilename('@logo@abc123.png', cfg),
-          '@logo.png');
+      expect(cfg.tryStripHashFromFilename('@logo@abc123.png'), '@logo.png');
     });
   });
 }

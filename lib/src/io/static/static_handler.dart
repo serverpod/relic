@@ -11,6 +11,7 @@ import 'package:path/path.dart' as p;
 
 import '../../../relic.dart';
 import '../../router/lru_cache.dart';
+import 'cache_busting_config.dart';
 
 /// The default resolver for MIME types based on file extensions.
 final _defaultMimeTypeResolver = MimeTypeResolver();
@@ -98,9 +99,8 @@ Handler createStaticHandler(
           return resolvedRootPath;
         }
 
-        final fileName = CacheBustingConfig.tryStripHashFromFilename(
+        final fileName = cfg.tryStripHashFromFilename(
           requestSegments.last,
-          cfg,
         );
         return p.joinAll([
           resolvedRootPath,
