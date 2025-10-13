@@ -34,6 +34,20 @@ void main() {
   });
 
   test(
+      'Given "/" separator when creating CacheBustingConfig then it throws ArgumentError',
+      () async {
+    final staticRoot = Directory(p.join(d.sandbox, 'static'));
+    expect(
+      () => CacheBustingConfig(
+        mountPrefix: '/static',
+        fileSystemRoot: staticRoot,
+        separator: '/',
+      ),
+      throwsA(isA<ArgumentError>()),
+    );
+  });
+
+  test(
       'Given no directory at staticRoot when creating CacheBustingConfig then it throws ArgumentError',
       () {
     final staticRoot = Directory(p.join(d.sandbox, 'static'));

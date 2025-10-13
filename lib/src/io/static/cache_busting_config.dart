@@ -156,4 +156,8 @@ void _validateSeparator(final String separator) {
   if (separator.isEmpty) {
     throw ArgumentError('separator cannot be empty');
   }
+
+  if (separator.contains('/')) {
+    throw ArgumentError('separator cannot contain "/"');
+  }
 }
