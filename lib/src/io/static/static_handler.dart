@@ -11,6 +11,7 @@ import 'package:path/path.dart' as p;
 
 import '../../../relic.dart';
 import '../../router/lru_cache.dart';
+import 'cache_busting_config.dart';
 
 /// The default resolver for MIME types based on file extensions.
 final _defaultMimeTypeResolver = MimeTypeResolver();
@@ -39,6 +40,16 @@ typedef CacheControlFactory = CacheControlHeader? Function(
 /// LRU cache for file information to avoid repeated file system operations.
 final _fileInfoCache = LruCache<String, FileInfo>(10000);
 
+/// Public accessor for retrieving [FileInfo] for a given [file].
+///
+/// Uses the same logic as the internal cache/population used by the static
+/// file handler and respects MIME type detection.
+Future<FileInfo> getStaticFileInfo(
+  final File file, {
+  final MimeTypeResolver? mimeResolver,
+}) async =>
+    _getFileInfo(file, mimeResolver ?? _defaultMimeTypeResolver);
+
 /// Creates a Relic [Handler] that serves files from the provided [fileSystemPath].
 ///
 /// When a file is requested, it is served with appropriate headers including
@@ -57,11 +68,16 @@ final _fileInfoCache = LruCache<String, FileInfo>(10000);
 ///
 /// The [mimeResolver] can be provided to customize MIME type detection.
 /// The [cacheControl] header can be customized using [cacheControl] callback.
+///
+/// If [cacheBustingConfig] is provided, the handler will strip cache-busting
+/// hashes from the last path segment before looking up any file.
+/// See [CacheBustingConfig] for details.
 Handler createStaticHandler(
   final String fileSystemPath, {
   final Handler? defaultHandler,
   final MimeTypeResolver? mimeResolver,
   required final CacheControlFactory cacheControl,
+  final CacheBustingConfig? cacheBustingConfig,
 }) {
   final rootDir = Directory(fileSystemPath);
   if (!rootDir.existsSync()) {
@@ -73,9 +89,30 @@ Handler createStaticHandler(
   final fallbackHandler =
       defaultHandler ?? respondWith((final _) => Response.notFound());
 
+  final resolveFilePath = switch (cacheBustingConfig) {
+    null =>
+      (final String resolvedRootPath, final List<String> requestSegments) =>
+          p.joinAll([resolvedRootPath, ...requestSegments]),
+    final cfg =>
+      (final String resolvedRootPath, final List<String> requestSegments) {
+        if (requestSegments.isEmpty) {
+          return resolvedRootPath;
+        }
+
+        final fileName = cfg.tryStripHashFromFilename(
+          requestSegments.last,
+        );
+        return p.joinAll([
+          resolvedRootPath,
+          ...requestSegments.sublist(0, requestSegments.length - 1),
+          fileName,
+        ]);
+      }
+  };
+
   return (final NewContext ctx) async {
     final filePath =
-        p.joinAll([resolvedRootPath, ...ctx.remainingPath.segments]);
+        resolveFilePath(resolvedRootPath, ctx.remainingPath.segments);
 
     // Ensure file exists and is not a directory
     final entityType = FileSystemEntity.typeSync(filePath, followLinks: false);
