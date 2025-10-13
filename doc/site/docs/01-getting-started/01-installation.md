@@ -37,7 +37,7 @@ Alternatively, add it manually to your `pubspec.yaml` file:
 
 ```yaml
 dependencies:
-  relic: ^0.7.0
+  relic: <latest_version>
 ```
 
 Then run:
