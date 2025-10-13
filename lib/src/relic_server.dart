@@ -6,14 +6,25 @@ import 'body/body.dart';
 import 'handler/handler.dart';
 import 'headers/exception/header_exception.dart';
 import 'headers/standard_headers_extensions.dart';
+import 'isolated_object.dart';
 import 'logger/logger.dart';
 import 'message/request.dart';
 import 'message/response.dart';
 import 'util/util.dart';
 
+sealed class RelicServer {
+  Adapter get adapter;
+
+  Future<void> mountAndStart(final Handler handler);
+  Future<void> close();
+
+  factory RelicServer(final Adapter adapter) = _RelicServer;
+}
+
 /// A server that uses a [Adapter] to handle HTTP requests.
-class RelicServer {
+final class _RelicServer implements RelicServer {
   /// The underlying adapter.
+  @override
   final Adapter adapter;
 
   /// Whether [mountAndStart] has been called.
@@ -22,17 +33,19 @@ class RelicServer {
   StreamSubscription<AdapterRequest>? _subscription;
 
   /// Creates a server with the given parameters.
-  RelicServer(this.adapter);
+  _RelicServer(this.adapter);
 
   /// Mounts a handler to the server and starts listening for requests.
   ///
   /// Only one handler can be mounted at a time.
+  @override
   Future<void> mountAndStart(final Handler handler) async {
     _handler = _wrapHandlerWithMiddleware(handler);
     if (_subscription == null) await _startListening();
   }
 
   /// Close the server
+  @override
   Future<void> close() async {
     await _stopListening();
     await adapter.close();
@@ -142,4 +155,45 @@ void _logError(
     stackTrace: stackTrace,
     type: LoggerType.error,
   );
+}
+
+final class IsolatedRelicServer extends IsolatedObject<RelicServer>
+    implements RelicServer {
+  IsolatedRelicServer(final Factory<Adapter> adaptorFactory)
+      : super(() async => RelicServer(await adaptorFactory()));
+
+  @override
+  Adapter get adapter => throw UnimplementedError();
+
+  @override
+  Future<void> close() async {
+    await evaluateVoid((final r) => r.close());
+    await super.close();
+  }
+
+  @override
+  Future<void> mountAndStart(final Handler handler) =>
+      evaluateVoid((final r) => r.mountAndStart(handler));
+}
+
+final class MultiIsolateRelicServer implements RelicServer {
+  @override
+  Adapter get adapter => throw UnimplementedError();
+
+  final List<RelicServer> _children;
+
+  MultiIsolateRelicServer(final Factory<Adapter> adapterFactory,
+      [final int noOfIsolates = 1])
+      : _children = List.generate(
+            noOfIsolates, (final _) => IsolatedRelicServer(adapterFactory));
+
+  @override
+  Future<void> close() async {
+    await _children.map((final c) => c.close()).wait;
+  }
+
+  @override
+  Future<void> mountAndStart(final Handler handler) async {
+    await _children.map((final c) => c.mountAndStart(handler)).wait;
+  }
 }

@@ -42,7 +42,7 @@ final class RelicApp implements RelicRouter {
     final FutureOr<Adapter> Function() adapterFactory,
   ) async {
     if (_server != null) throw StateError('Cannot call run twice');
-    _server = RelicServer(await adapterFactory());
+    _server = MultiIsolateRelicServer(adapterFactory);
     await _init();
     _reloadSubscription = await _hotReloader.register(this);
     return _server!;
