@@ -55,7 +55,7 @@ void main() {
       () => CacheBustingConfig(
         mountPrefix: '/static',
         fileSystemRoot: staticRoot,
-        separator: '',
+        separator: '@',
       ),
       throwsA(isA<ArgumentError>()),
     );
@@ -70,7 +70,7 @@ void main() {
       () => CacheBustingConfig(
         mountPrefix: '/static',
         fileSystemRoot: staticRoot,
-        separator: '',
+        separator: '@',
       ),
       throwsA(isA<ArgumentError>()),
     );
