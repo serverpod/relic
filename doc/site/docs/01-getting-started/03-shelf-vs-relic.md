@@ -7,11 +7,11 @@ sidebar_label: 🤔 Shelf vs Relic
 
 Relic was inspired by [Shelf](https://github.com/dart-lang/shelf), while the core concepts remain similar (handlers, middleware, requests, and responses), Relic introduces significant improvements in type safety, performance, and developer experience.
 
-## Why a New Framework?
+#### Why a New Framework?
 
 Relic was born out of the needs of [Serverpod](https://serverpod.dev) for a more modern and performant web server foundation. Shelf has been an excellent foundation for Dart web servers, but certain architectural decisions made years ago limit its ability to take advantage of modern Dart features and optimizations.
 
-## Key Differences at a Glance
+### Key Differences at a Glance
 
 | Feature | Shelf | Relic |
 |---------|-------|-------|
@@ -371,6 +371,5 @@ void main() async {
 ## Learn More
 
 - [Shelf Documentation](https://pub.dev/packages/shelf)
-- [Shelf Router](https://pub.dev/packages/shelf_router)
 - [Relic on GitHub](https://github.com/serverpod/relic)
 - [Serverpod](https://serverpod.dev)
