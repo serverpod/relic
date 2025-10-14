@@ -112,8 +112,6 @@ router.delete('/user', (ctx) {
 });
 ```
 
-For more details about routing, including dynamic parameters and advanced patterns, see the [routing guide](../guides/routing).
-
 ## Summary
 
 Routing is the foundation of any web application. With Relic, you can:
