@@ -12,7 +12,8 @@ Future<void> main() async {
   // start server
   final server = await Isolate.spawn((final _) async {
     final router = Router<Handler>()
-      ..use('/api', AuthMiddleware().call) // <-- add auth middleware on /api
+      ..use('/api',
+          AuthMiddleware().asMiddleware) // <-- add auth middleware on /api
       ..get(
           '/api/user/info',
           (final ctx) =>
@@ -57,4 +58,6 @@ class AuthMiddleware {
       }
     };
   }
+
+  Middleware get asMiddleware => call;
 }

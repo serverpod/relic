@@ -51,7 +51,7 @@ Future<void> main() async {
         body: Body.fromString("Sorry, that doesn't compute")));
 
   // Router<Handler> can be used directly as a handler via the call() extension
-  await serve(router.call, InternetAddress.anyIPv4, 8080);
+  await serve(router.asHandler, InternetAddress.anyIPv4, 8080);
 
   print('Serving at http://localhost:8080');
   // Check the _example_ directory for other examples.
