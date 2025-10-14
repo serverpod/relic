@@ -15,7 +15,7 @@ A `Request` is just raw HTTP data (headers, body, URL). A `Context` wraps this d
 Before we dive in, let's define a few terms you'll see throughout:
 
 - **Middleware**: A function that wraps a handler to add behavior (like logging, auth, etc.)
-- **Symbol**: In Dart, symbols are unique identifiers written with `#` like `#user` - they're safer than strings for keys because they can't accidentally collide
+- **Symbol**: A Symbol object represents an operator or identifier declared in a Dart program. Symbol literals are written with `#` followed by the identifier (like `#user`). They're compile-time constants and invaluable for APIs that refer to identifiers by name, because minification changes identifier names but not identifier symbols. Learn more about [Symbols in Dart](https://dart.dev/language/built-in-types#symbols).
 
 ## The Context Lifecycle
 
@@ -26,8 +26,9 @@ graph LR
     A[NewContext<br/>Fresh Request] --> B[ResponseContext<br/>HTTP Response]
     A --> C[ConnectContext <br/>WebSocket]
 ```
-:::info One-Way Transitions
-Every context starts as `NewContext` and **transitions exactly once** to a final state based on your handler's decision.
+
+:::info Context Transitions
+Every context starts as `NewContext` and **transitions exactly once** to a final state**. However, `ResponseContext` can transition to another `ResponseContext` (useful for middleware chains), while `ConnectContext` is terminal and cannot transition further.
 :::
 
 Let's start with the simplest possible Relic server to understand how contexts work:
@@ -64,11 +65,11 @@ That's it! Every request in Relic follows this pattern: receive a context, do so
 
 Relic provides four context types, each representing a different stage of request processing. They form a type hierarchy:
 
-```text
-RequestContext (base - provides access to request data)
-    ├── NewContext (starting point - can transition to any final state)
-    ├── ResponseContext (final - HTTP response sent)
-    └── ConnectContext (final - WebSocket established)
+```mermaid
+graph TD
+    A[<h3>RequestContext</h3><br/>foundation - grants access to incoming request information] --> B[<h3>NewContext</h3><br/>initial state - capable of moving to any terminal state]
+    A --> C[<h3>ResponseContext</h3><br/>HTTP response delivered]
+    A --> D[<h3>ConnectContext</h3><br/>WebSocket connection created]
 ```
 
 All contexts share a common base: `RequestContext`, which gives you access to `ctx.request` (the HTTP request data).
@@ -135,6 +136,7 @@ ResponseContext simpleHandler(NewContext ctx) {
   return ctx.respond(Response.ok(body: Body.fromString('Sync response')));
 }
 ```
+
 :::
 
 ### ResponseContext - HTTP Response Sent
@@ -174,11 +176,19 @@ Future<ResponseContext> apiHandler(NewContext ctx) async {
 **Example - API with Route Parameters:**
 
 ```dart
-/// Gets user ID from URL path
-/// To use this, you need routing setup (see Routing guide)
+import 'dart:convert';
+import 'package:relic/relic.dart';
+
+/// First, define the route with a path parameter
+  final router = Router();
+  
+// Define route with :id parameter - the colon makes it a dynamic segment
+  router.get('/users/:id', userHandler);
+
+/// Handler that extracts the user ID from the URL path
 Future<ResponseContext> userHandler(NewContext ctx) async {
-  // pathParameters come from the router when you define routes like '/users/:id'
-  final userId = ctx.pathParameters[#id];  // Symbol #id matches the route parameter
+  // pathParameters come from the router - #id matches ':id' in the route
+  final userId = ctx.pathParameters[#id];  
   
   final data = {
     'userId': userId,
@@ -193,6 +203,8 @@ Future<ResponseContext> userHandler(NewContext ctx) async {
     ),
   ));
 }
+
+// Usage: GET /users/123 will extract '123' as the #id parameter
 ```
 
 :::tip Adding Custom Headers
@@ -206,6 +218,7 @@ return ctx.respond(Response.ok(
   body: Body.fromString(jsonEncode(data)),
 ));
 ```
+
 :::
 
 ### ConnectContext - WebSocket Connections
@@ -331,9 +344,9 @@ Future<ResponseContext> dataHandler(NewContext ctx) async {
 
 Relic's context system uses a **state machine** to prevent invalid operations. Each context type exposes only the methods that make sense for its current state, catching errors at compile time rather than runtime.
 
-### State Transitions
+Once you've chosen a path, you cannot backtrack. For example, after calling `respond()` to create a `ResponseContext`, you cannot change your mind and call `connect()` to create a `ConnectContext` instead. The transition is **irreversible**.
 
-The key insight: **You can only transition a context once**. This makes sense because an HTTP request can only have one outcome:
+This makes sense because an HTTP request can only have one outcome:
 
 - Either you send a response
 - Or you upgrade to WebSocket
