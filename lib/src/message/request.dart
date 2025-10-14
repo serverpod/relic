@@ -5,6 +5,58 @@ import '../router/method.dart';
 import 'message.dart';
 
 /// An HTTP request to be processed by a Relic Server application.
+///
+/// The [Request] object provides access to all information about an incoming
+/// HTTP request, including the method, URL, headers, query parameters, and body.
+///
+/// ## Usage Examples
+///
+/// ```dart
+/// // Basic request handling
+/// router.get('/users/:id', (ctx) {
+///   final request = ctx.request;
+/// 
+///   // Access path parameters
+///   final id = ctx.pathParameters[#id];
+///
+///   // Access HTTP method
+///   print(request.method); // Method.get
+///
+///   // Access query parameters
+///   final sort = request.url.queryParameters['sort'];
+///   final filter = request.url.queryParameters['filter'];
+///
+///   // Multiple values for same parameter
+///   // URL: /tags?tag=dart&tag=server
+///   final tags = request.url.queryParametersAll['tag'];
+///   // tags = ['dart', 'server']
+///
+///   // Access headers
+///   final userAgent = request.headers.userAgent;
+///
+///   return ctx.respond(Response.ok(
+///     body: Body.fromString('User request'),
+///   ));
+/// });
+///
+/// // Reading request body
+/// router.post('/api/data', (ctx) async {
+///   final request = ctx.request;
+///
+///   // Check if body exists
+///   if (request.isEmpty) {
+///     return ctx.respond(Response.badRequest());
+///   }
+///
+///   // Read as string
+///   final bodyText = await request.readAsString();
+///
+///   // Parse JSON
+///   final data = jsonDecode(bodyText);
+///   return ctx.respond(Response.ok());
+/// });
+/// ```
+/// ```
 class Request extends Message {
   /// The URL path from the current handler to the requested resource, relative
   /// to [handlerPath], plus any query parameters.

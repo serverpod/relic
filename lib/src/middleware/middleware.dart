@@ -8,7 +8,7 @@ import '../message/response.dart';
 /// A function which creates a new [Handler] by wrapping a [Handler].
 ///
 /// You can extend the functions of a [Handler] by wrapping it in
-/// [Middleware] that can intercept and process a request before it it sent
+/// [Middleware] that can intercept and process a request before it is sent
 /// to a handler, a response after it is sent by a handler, or both.
 ///
 /// Because [Middleware] consumes a [Handler] and returns a new
@@ -21,6 +21,65 @@ import '../message/response.dart';
 /// [HijackException]s on without modification.
 ///
 /// A simple [Middleware] can be created using [createMiddleware].
+///
+/// ## Basic Middleware
+///
+/// ```dart
+/// Middleware loggingMiddleware = (Handler innerHandler) {
+///   return (NewContext ctx) async {
+///     print('Request: ${ctx.request.method} ${ctx.request.url}');
+///     final result = await innerHandler(ctx);
+///     print('Completed request');
+///     return result;
+///   };
+/// };
+/// ```
+///
+/// ## Using createMiddleware
+///
+/// ```dart
+/// // Request processing
+/// final middleware = createMiddleware(
+///   onRequest: (request) {
+///     print('Processing: ${request.url}');
+///     return null; // Continue to handler
+///   },
+/// );
+///
+/// // Response processing
+/// final middleware = createMiddleware(
+///   onResponse: (response) {
+///     print('Status: ${response.statusCode}');
+///     return response;
+///   },
+/// );
+///
+/// // Error handling
+/// final middleware = createMiddleware(
+///   onError: (error, stackTrace) {
+///     print('Error: $error');
+///     return Response.internalServerError(
+///       body: Body.fromString('An error occurred'),
+///     );
+///   },
+/// );
+/// ```
+///
+/// ## Authentication Middleware
+///
+/// ```dart
+/// final authMiddleware = createMiddleware(
+///   onRequest: (request) {
+///     final auth = request.headers.authorization;
+///     if (auth == null) {
+///       return Response.unauthorized(
+///         body: Body.fromString('Authentication required'),
+///       );
+///     }
+///     return null; // Continue to handler
+///   },
+/// );
+/// ```
 typedef Middleware = Handler Function(Handler innerHandler);
 
 /// Creates a [Middleware] using the provided functions.
@@ -42,6 +101,43 @@ typedef Middleware = Handler Function(Handler innerHandler);
 /// does not receive errors thrown by [onRequest] or [onResponse], nor
 /// does it receive [HijackException]s. It can either return a new response or
 /// throw an error.
+///
+/// ## Examples
+///
+/// ```dart
+/// // Logging middleware
+/// final logger = createMiddleware(
+///   onRequest: (request) {
+///     print('${request.method} ${request.url}');
+///     return null;
+///   },
+///   onResponse: (response) {
+///     print('Response: ${response.statusCode}');
+///     return response;
+///   },
+/// );
+///
+/// // CORS middleware
+/// final cors = createMiddleware(
+///   onResponse: (response) {
+///     return response.copyWith(
+///       headers: response.headers.transform((h) {
+///         h['Access-Control-Allow-Origin'] = ['*'];
+///       }),
+///     );
+///   },
+/// );
+///
+/// // Error handling middleware
+/// final errorHandler = createMiddleware(
+///   onError: (error, stackTrace) {
+///     print('Error: $error');
+///     return Response.internalServerError(
+///       body: Body.fromString('Server error'),
+///     );
+///   },
+/// );
+/// ```
 Middleware createMiddleware({
   FutureOr<Response?> Function(Request)? onRequest,
   FutureOr<Response> Function(Response)? onResponse,

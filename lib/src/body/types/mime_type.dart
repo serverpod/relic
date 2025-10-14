@@ -1,4 +1,41 @@
-/// A mime type.
+/// A MIME type representation for content type handling.
+///
+/// Provides constants for common MIME types and utilities for parsing and
+/// working with MIME types.
+///
+/// ## Common Usage
+///
+/// ```dart
+/// // Using predefined constants
+/// Body.fromString('Hello', mimeType: MimeType.plainText)
+/// Body.fromString('<h1>Title</h1>', mimeType: MimeType.html)
+/// Body.fromString('{"key": "value"}', mimeType: MimeType.json)
+/// ```
+///
+/// ## Parsing MIME Types
+///
+/// ```dart
+/// // Parse from string
+/// final mimeType = MimeType.parse('application/json');
+/// print(mimeType.primaryType); // application
+/// print(mimeType.subType);     // json
+/// ```
+///
+/// ## Custom MIME Types
+///
+/// ```dart
+/// // Create custom MIME type
+/// final customType = MimeType('application', 'vnd.myapp.v1+json');
+/// Body.fromString(data, mimeType: customType)
+/// ```
+///
+/// ## Checking MIME Type Properties
+///
+/// ```dart
+/// final type = MimeType.json;
+/// print(type.isText);    // true (JSON is text-based)
+/// print(type.toString()); // application/json
+/// ```
 class MimeType {
   /// Text mime types.
   static const plainText = MimeType('text', 'plain');

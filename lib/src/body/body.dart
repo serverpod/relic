@@ -13,6 +13,69 @@ import 'types/mime_type.dart';
 /// This tracks whether the body has been read. It's separate from [Message]
 /// because the message may be changed with [Message.copyWith], but each instance
 /// should share a notion of whether the body was read.
+///
+/// ## Creating Response Bodies
+///
+/// ### Text Body
+/// ```dart
+/// Body.fromString('Hello, World!')
+/// ```
+///
+/// ### JSON Body
+/// ```dart
+/// final data = {'name': 'Alice', 'age': 30};
+/// Body.fromString(
+///   jsonEncode(data),
+///   mimeType: MimeType.json,
+/// )
+/// ```
+///
+/// ### HTML Body
+/// ```dart
+/// Body.fromString(
+///   '<html><body><h1>Welcome!</h1></body></html>',
+///   mimeType: MimeType.html,
+/// )
+/// ```
+///
+/// ### Binary Data
+/// ```dart
+/// final bytes = Uint8List.fromList([1, 2, 3, 4]);
+/// Body.fromData(bytes)
+/// ```
+///
+/// ### Streaming Data
+/// ```dart
+/// Stream<Uint8List> dataStream = getFileStream();
+/// Body.fromDataStream(
+///   dataStream,
+///   contentLength: fileSize,
+///   mimeType: MimeType.octetStream,
+/// )
+/// ```
+///
+/// ### Empty Body
+/// ```dart
+/// Body.empty()
+/// ```
+///
+/// ## Reading Request Bodies
+///
+/// **Important**: The body can only be read once!
+///
+/// ```dart
+/// // Read as string
+/// final text = await request.readAsString();
+///
+/// // Parse JSON
+/// final data = jsonDecode(await request.readAsString());
+///
+/// // Read as stream
+/// final stream = request.read();
+/// await for (final chunk in stream) {
+///   // Process chunk
+/// }
+/// ```
 class Body {
   /// The contents of the message body.
   ///
@@ -57,6 +120,31 @@ class Body {
   ///
   /// If [mimeType] is not provided, it will be inferred from the string.
   /// It is more performant to set it explicitly.
+  ///
+  /// ## Examples
+  ///
+  /// ```dart
+  /// // Plain text (inferred)
+  /// Body.fromString('Hello, World!')
+  ///
+  /// // JSON
+  /// Body.fromString(
+  ///   '{"name": "Alice"}',
+  ///   mimeType: MimeType.json,
+  /// )
+  ///
+  /// // HTML
+  /// Body.fromString(
+  ///   '<h1>Welcome</h1>',
+  ///   mimeType: MimeType.html,
+  /// )
+  ///
+  /// // Custom encoding
+  /// Body.fromString(
+  ///   'こんにちは',
+  ///   encoding: utf8,
+  /// )
+  /// ```
   factory Body.fromString(
     final String body, {
     final Encoding encoding = utf8,
@@ -108,6 +196,20 @@ class Body {
   }
 
   /// Creates a body from a [Stream] of [Uint8List].
+  ///
+  /// Use this for large files or generated content to avoid loading
+  /// everything into memory at once.
+  ///
+  /// ## Example
+  ///
+  /// ```dart
+  /// Stream<Uint8List> fileStream = getFileStream();
+  /// Body.fromDataStream(
+  ///   fileStream,
+  ///   contentLength: fileSize,
+  ///   mimeType: MimeType.octetStream,
+  /// )
+  /// ```
   factory Body.fromDataStream(
     final Stream<Uint8List> body, {
     final Encoding? encoding,
@@ -126,9 +228,24 @@ class Body {
 
   /// Creates a body from a [Uint8List].
   ///
-  /// Will try to infer the [mimeType] if it is not provided,
+  /// Will try to infer the [mimeType] if it is not provided.
   /// This will only work for some binary formats, and falls
   /// back to [MimeType.octetStream].
+  ///
+  /// ## Example
+  ///
+  /// ```dart
+  /// // Image bytes
+  /// final imageBytes = Uint8List.fromList(loadImage());
+  /// Body.fromData(imageBytes) // MIME type auto-detected
+  ///
+  /// // Explicit MIME type
+  /// final pdfBytes = Uint8List.fromList(loadPDF());
+  /// Body.fromData(
+  ///   pdfBytes,
+  ///   mimeType: MimeType.parse('application/pdf'),
+  /// )
+  /// ```
   factory Body.fromData(
     final Uint8List body, {
     final Encoding? encoding,

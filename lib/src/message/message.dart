@@ -27,6 +27,16 @@ abstract class Message {
 
   /// Reads the body as a string, decoding it using the specified or detected encoding.
   /// Defaults to utf8 if no encoding is provided or detected.
+  ///
+  /// ## Example
+  ///
+  /// ```dart
+  /// router.post('/api/data', (ctx) async {
+  ///   final body = await ctx.request.readAsString();
+  ///   final data = jsonDecode(body);
+  ///   // Use data...
+  /// });
+  /// ```
   Future<String> readAsString([Encoding? encoding]) {
     encoding ??= body.bodyType?.encoding ?? utf8;
     return encoding.decodeStream(read());
