@@ -5,25 +5,24 @@ sidebar_label: 🤔 Shelf vs Relic
 
 # Shelf vs Relic
 
-Relic was inspired by [Shelf](https://github.com/dart-lang/shelf), while the core concepts remain similar (handlers, middleware, requests, and responses), Relic introduces significant improvements in type safety, performance, and developer experience.
+Relic was inspired by [Shelf](https://github.com/dart-lang/shelf), while the core concepts remain similar (handlers, middleware, requests, and responses), Relic introduces improvements in type safety and developer experience.
 
 #### Why a New Framework?
 
-Relic was born out of the needs of [Serverpod](https://serverpod.dev) for a more modern and performant web server foundation. Shelf has been an excellent foundation for Dart web servers, but certain architectural decisions made years ago limit its ability to take advantage of modern Dart features and optimizations.
+Relic was born out of the needs of [Serverpod](https://serverpod.dev) for a more modern web server foundation with stronger type safety. Shelf has been an excellent foundation for Dart web servers, but certain architectural decisions made years ago limit its ability to take advantage of modern Dart features.
 
 ### Key Differences at a Glance
 
 | Feature | Shelf | Relic |
 |---------|-------|-------|
-| **Type Safety** | Uses `dynamic` in several places | Fully type-safe, no `dynamic` |
-| **Byte Handling** | `List<int>` | `Uint8List` (more efficient) |
+| **Type Safety** | Uses `dynamic` in several places | Stronger type safety throughout |
 | **Routing** | Requires `shelf_router` package | Built-in trie-based router |
 | **Headers** | String-based, manual parsing | Type-safe with validation |
 | **WebSockets** | Requires `shelf_web_socket` package | Built-in support |
 | **Context Pattern** | `Request` object only | State machine with typed contexts |
 | **Body Encoding** | Headers and stream are separate | Unified `Body` type |
 | **Path Parameters** | String keys `params['id']` | Symbol-based `ctx.pathParameters[#id]` |
-| **Performance** | O(routes) matching | O(segments) with trie structure |
+| **Route Matching** | O(routes) linear iteration | O(segments) trie-based |
 
 ## Architecture & Philosophy
 
@@ -57,7 +56,7 @@ ResponseContext handler(NewContext ctx) {
 }
 ```
 
-Relic introduces a **context state machine** that explicitly represents the different states a request can be in (new, responded, hijacked, connected), eliminating ambiguity and providing compile-time guarantees.
+Relic introduces a **context state machine** that explicitly represents the different states a request can be in (new, responded, hijacked, connected), making state transitions explicit and providing compile-time guarantees.
 
 ## Type Safety
 
@@ -88,7 +87,7 @@ Both frameworks have similar methods for **reading** request bodies:
 ```dart
 // Both Shelf and Relic
 final body = await request.readAsString();
-final stream = request.read();  // Stream<Uint8List> in Relic, Stream<List<int>> in Shelf
+final stream = request.read();
 ```
 
 The key difference is in **creating responses**:
@@ -151,9 +150,9 @@ final router = Router<Handler>()
   });
 ```
 
-### Performance
+### Routing Performance
 
-Shelf's router (from `shelf_router`) iterates through routes linearly—O(routes) complexity. Relic uses a [trie data structure](https://en.wikipedia.org/wiki/Trie) for O(segments) matching, which is significantly faster for applications with many routes.
+Shelf's router (from `shelf_router`) iterates through routes linearly—O(routes) complexity. Relic uses a [trie data structure](https://en.wikipedia.org/wiki/Trie) for O(segments) matching, which should be faster for applications with many routes.
 
 ### Middleware on Routes
 
@@ -223,7 +222,7 @@ ConnectContext handler(NewContext ctx) {
 }
 ```
 
-Relic's WebSocket API integrates seamlessly with the context state machine and provides both throwing and non-throwing send methods for better error handling.
+Relic's WebSocket API integrates with the context state machine and provides both throwing and non-throwing send methods for better error handling.
 
 ## State Management
 
@@ -280,15 +279,17 @@ ResponseContext handler(NewContext ctx) {
 
 This eliminates entire classes of errors at compile time.
 
-## Performance Optimizations
+## Design Choices
 
-Relic includes several performance improvements:
+Relic includes several design decisions aimed at performance and type safety:
 
-1. **`Uint8List` instead of `List<int>`**: More efficient byte handling
-2. **Trie-based routing**: O(segments) vs O(routes) complexity
-3. **Path normalization caching**: LRU cache for common paths
-4. **Type specialization**: Eliminates runtime type checks
-5. **Unified body representation**: Fewer conversions between types
+1. **Trie-based routing**: O(segments) vs O(routes) complexity for route matching
+2. **Type specialization**: Eliminates runtime type checks in many cases
+3. **Unified body representation**: Keeps content, encoding, and headers in sync
+
+:::note
+We haven't yet conducted comprehensive benchmarks comparing Relic to Shelf overall. While our CI runs confirm the router is fast, routing is only one part of total request handling performance.
+:::
 
 ## Migration Considerations
 
@@ -311,7 +312,7 @@ While Relic is not backward compatible with Shelf, migration is straightforward 
 **Use Relic if:**
 
 - You want maximum type safety and compile-time guarantees
-- You need high-performance routing with many routes
+- You have many routes and want trie-based routing
 - You want built-in WebSocket support
 - You prefer explicit state management with the context pattern
 - You're building a new application or can afford migration
