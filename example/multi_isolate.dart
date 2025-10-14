@@ -28,13 +28,13 @@ void main() async {
 
 /// [_serve] is called in each spawned isolate.
 Future<void> _serve() async {
-  ///
-  final handler = const Pipeline()
-      .addMiddleware(logRequests()) // setup logging
-      .addHandler(respondWith(_echoRequest)); // add our handler
+  // A router with no routes but a fallback
+  final router = Router<Handler>()
+    ..use('/', logRequests())
+    ..put('/echo', respondWith(_echoRequest));
 
   // start the server
-  await serve(handler, InternetAddress.anyIPv4, 8080, shared: true);
+  await serve(router.asHandler, InternetAddress.anyIPv4, 8080, shared: true);
   print('serving on ${Isolate.current.debugName}');
 }
 

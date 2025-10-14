@@ -69,3 +69,32 @@ extension RequestContextEx on RequestContext {
       _routingContext.getOrNull(this)?.remaining ??
       NormalizedPath(Uri.decodeFull(request.url.path));
 }
+
+/// Extension to make [Router<Handler>] directly usable as a [Handler].
+///
+/// This allows a router to be used directly in a pipeline without wrapping it
+/// with [routeWith].
+///
+/// Example:
+/// ```dart
+/// final router = Router<Handler>()
+///   ..get('/users', usersHandler);
+///
+/// final handler = const Pipeline()
+///     .addMiddleware(logRequests())
+///     .addHandler(router.asHandler);
+/// ```
+extension RouterHandler on Router<Handler> {
+  /// Makes [Router<Handler>] callable as a [Handler].
+  ///
+  /// Performs routing lookup and:
+  /// - Returns 405 if path matches but method doesn't (with Allow header)
+  /// - Returns 404 if no route matches
+  /// - Calls the matched handler if route is found
+  ///
+  /// Path parameters, matched path, and remaining path are accessible via
+  /// [RequestContextEx] extensions on the context passed to handlers.
+  Handler get asHandler => const Pipeline()
+      .addMiddleware(routeWith(this))
+      .addHandler(respondWith((final _) => Response.notFound()));
+}
