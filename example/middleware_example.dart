@@ -11,19 +11,15 @@ import 'package:relic/relic.dart';
 Future<void> main() async {
   // start server
   final server = await Isolate.spawn((final _) async {
-    final router = Router<Handler>();
-    router
-      ..use('/api', AuthMiddleware().call) // <-- add middleware on
+    final router = Router<Handler>()
+      ..use('/api',
+          AuthMiddleware().asMiddleware) // <-- add auth middleware on /api
       ..get(
           '/api/user/info',
           (final ctx) =>
               ctx.respond(Response.ok(body: Body.fromString('${ctx.user}'))));
 
-    final handler = const Pipeline()
-        .addMiddleware(routeWith(router))
-        .addHandler(respondWith((final _) => Response.notFound()));
-
-    await serve(handler, InternetAddress.loopbackIPv4, 8080);
+    await serve(router.asHandler, InternetAddress.loopbackIPv4, 8080);
   }, null);
 
   // call with client
@@ -36,7 +32,7 @@ Future<void> main() async {
 
   print(response.body);
 
-  server.kill(); // stop server again
+  server.kill(); // stop server again (a bit blunt)
 }
 
 typedef User = int; // just an example
@@ -62,4 +58,6 @@ class AuthMiddleware {
       }
     };
   }
+
+  Middleware get asMiddleware => call;
 }

@@ -103,6 +103,23 @@ final class Router<T extends Object> {
   /// matching and parameter extraction.
   final _allRoutes = PathTrie<_RouterEntry<T>>();
 
+  /// The fallback value returned when no route matches the request path.
+  ///
+  /// When set, this value is returned on path miss instead of returning
+  /// [PathMiss]. This does not apply to method misses (405), which still
+  /// return [MethodMiss].
+  ///
+  /// When composing routers with [attach] or [group] only the top-most
+  /// [fallback] will be used.
+  ///
+  /// Example:
+  /// ```dart
+  /// final router = Router<Handler>()
+  ///   ..get('/users', usersHandler)
+  ///   ..fallback = notFoundHandler;
+  /// ```
+  T? fallback;
+
   /// Adds a route definition to the router.
   ///
   /// The [path] string defines the route pattern. Segments starting with `:` (e.g.,
