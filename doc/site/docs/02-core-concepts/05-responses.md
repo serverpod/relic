@@ -246,7 +246,11 @@ router.get('/data', (ctx) {
 });
 ```
 
-**Important**: Never expose internal error details to clients in production. Log errors server-side and return generic error messages.
+:::warning Security Notice
+
+Never expose internal error details to clients in production. Log errors server-side and return generic error messages.
+
+:::
 
 #### 501 Not Implemented
 
@@ -498,8 +502,20 @@ try {
 }
 ```
 
-## See Also
+## Examples
 
-- **[Requests](./requests)** - Working with incoming requests
-- **[Basic Routing](./basic-routing)** - Routing requests to handlers
-- **[Headers Guide](../guides/headers)** - Advanced header manipulation
+- **[`requets_response_example.dart`](https://github.com/serverpod/relic/blob/main/example/requets_response_example.dart)** - Comprehensive example covering requests, responses, and advanced routing patterns
+
+## Summary
+
+Creating effective HTTP responses is crucial for building reliable web applications. Key takeaways:
+
+- **Choose appropriate status codes** - 2xx for success, 3xx for redirects, 4xx for client errors, 5xx for server errors
+- **Use Relic's response constructors** - `Response.ok()`, `Response.badRequest()`, `Response.notFound()`, etc.
+- **Set proper content types** - specify `mimeType` for JSON, HTML, and other structured data
+- **Include helpful error messages** - make them actionable and user-friendly
+- **Handle exceptions gracefully** - catch errors and return appropriate 5xx responses
+- **Use type-safe headers** - leverage `Headers.build()` for cache control, custom headers, etc.
+- **Stream large content** - use `Body.fromDataStream()` for files and generated content
+
+Remember: every handler must return a response. Make them meaningful, consistent, and helpful for your API consumers.

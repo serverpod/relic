@@ -61,8 +61,8 @@ router.get('/users/:id', (ctx) {
 
 For a request to `http://localhost:8080/users/123?details=true`:
 
-- `url.path` would be relative to the handler
-- `requestedUri` would be the complete `http://localhost:8080/users/123?details=true`
+- `url.path` would be relative to the handler.
+- `requestedUri` would be the complete url, including the query parameters.
 
 ## Working with Query Parameters
 
@@ -74,12 +74,12 @@ Use `queryParameters` to access individual parameter values:
 
 ```dart
 router.get('/search', (ctx) {
-  final query = ctx.request.url.queryParameters['q'];
+  final query = ctx.request.url.queryParameters['query'];
   final page = ctx.request.url.queryParameters['page'];
   
   if (query == null) {
     return ctx.respond(Response.badRequest(
-      body: Body.fromString('Query parameter "q" is required'),
+      body: Body.fromString('Query parameter "query" is required'),
     ));
   }
   
@@ -89,7 +89,7 @@ router.get('/search', (ctx) {
 });
 ```
 
-For the URL `/search?q=relic&page=2`:
+For the URL `/search?query=relic&page=2`:
 
 - `query` = `"relic"`
 - `page` = `"2"`
@@ -175,9 +175,11 @@ router.get('/protected', (ctx) {
 
 The request body contains data sent by the client, typically in POST, PUT, or PATCH requests. Relic provides multiple ways to read body content depending on your needs.
 
-### Important: Single Read Limitation
+:::warning Single Read Limitation
 
 **The request body can only be read once.** This is because the body is a stream that gets consumed as it's read. Attempting to read the body multiple times will result in a `StateError`.
+
+:::
 
 ```dart
 // ❌ WRONG - This will throw an error
@@ -338,8 +340,21 @@ router.post('/api/data', (ctx) async {
 });
 ```
 
-## See Also
+## Summary
 
-- **[Responses](./responses)** - Learn how to create HTTP responses
-- **[Basic Routing](./basic-routing)** - Understanding route handling
-- **[Headers Guide](../guides/headers)** - Deep dive into type-safe headers
+The `Request` object is your gateway to understanding what clients are asking for. Key takeaways:
+
+- **Access request data** through `ctx.request` in your handlers
+- **Use type-safe properties** like `method`, `url`, `headers`, and `body`
+- **Read query parameters** with `url.queryParameters` (single values) or `url.queryParametersAll` (multiple values)
+- **Handle headers safely** - they're optional and type-safe (e.g., `headers.userAgent`, `headers.authorization`)
+- **Read body content once** - use `readAsString()` for text/JSON or `read()` for streaming
+- **Always validate input** - query parameters, headers, and body content come from untrusted sources
+- **Handle errors gracefully** - wrap JSON parsing and validation in try-catch blocks
+
+With these fundamentals, you can build robust request handlers that safely process any client input.
+
+## Examples
+
+- **[`requets_response_example.dart`](https://github.com/serverpod/relic/blob/main/example/requets_response_example.dart)** - Comprehensive example covering requests, responses, and advanced routing patterns
+  

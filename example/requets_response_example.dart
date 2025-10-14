@@ -1,548 +1,408 @@
-// ignore_for_file: avoid_print, prefer_final_parameters
+// ignore_for_file: avoid_log, prefer_final_parameters
 
 import 'dart:convert';
+import 'dart:developer';
 import 'dart:io';
 import 'package:relic/io_adapter.dart';
 import 'package:relic/relic.dart';
 
-/// A comprehensive example demonstrating key Relic concepts:
-/// - Request handling and properties
-/// - Response creation with various status codes
+/// Demonstrates key examples from the Relic documentation:
+/// - Request handling (method, URL, headers, body)
+/// - Response creation (status codes, headers, body types)
+/// - Query parameters and path parameters
+/// - JSON parsing and error handling
 /// - Type-safe headers
-/// - Body handling (text, JSON, HTML, binary)
-/// - Routing with path parameters
-/// - Middleware composition
-/// - Pipeline usage
-/// - Error handling
-/// - WebSocket connections
 ///
-/// This example validates all the inline documentation examples we've added
-/// to the Relic source code.
+/// This file contains all the examples shown in:
+/// - 04-requests.md
+/// - 05-responses.md
+///
+/// Note: Basic routing examples from 03-basic-routing.md are in basic_routing.dart
 Future<void> main() async {
   final router = Router<Handler>();
 
   // ============================================================================
-  // BASIC REQUEST & RESPONSE EXAMPLES
+  // EXAMPLES FROM 04-REQUESTS.MD
   // ============================================================================
 
-  // Simple text response
-  router.get('/', (ctx) {
-    return ctx.respond(
-      Response.ok(
-        body: Body.fromString('Welcome to Relic Comprehensive Example!'),
-      ),
-    );
+  // HTTP Method access
+  router.get('/info', (ctx) {
+    final method = ctx.request.method; // Method.get
+
+    return ctx.respond(Response.ok(
+      body: Body.fromString('Received a ${method.name} request'),
+    ));
   });
 
-  // ============================================================================
-  // REQUEST PROPERTIES
-  // ============================================================================
-
-  router.get('/request-info', (ctx) {
-    final request = ctx.request;
-
-    // Access request properties
-    final method = request.method;
-    final path = request.url.path;
-    final queryParams = request.url.queryParameters;
-    final protocol = request.protocolVersion;
-
-    final info = '''
-Request Information:
-- Method: $method
-- Path: $path
-- Query Parameters: $queryParams
-- Protocol: HTTP/$protocol
-- Is Empty: ${request.isEmpty}
-''';
-
-    return ctx.respond(
-      Response.ok(body: Body.fromString(info)),
-    );
-  });
-
-  // ============================================================================
-  // QUERY PARAMETERS
-  // ============================================================================
-
+  // Query parameters - single values
   router.get('/search', (ctx) {
-    // Single query parameter
-    final query = ctx.request.url.queryParameters['q'] ?? 'default';
+    final query = ctx.request.url.queryParameters['query'];
+    final page = ctx.request.url.queryParameters['page'];
 
-    // Multiple values for same parameter (?tag=dart&tag=server)
+    if (query == null) {
+      return ctx.respond(Response.badRequest(
+        body: Body.fromString('Query parameter "query" is required'),
+      ));
+    }
+
+    return ctx.respond(Response.ok(
+      body: Body.fromString('Searching for: $query (page: ${page ?? "1"})'),
+    ));
+  });
+
+  // Query parameters - multiple values
+  router.get('/filter', (ctx) {
     final tags = ctx.request.url.queryParametersAll['tag'] ?? [];
 
-    final response = '''
-Search Query: $query
-Tags: ${tags.join(', ')}
-''';
+    return ctx.respond(Response.ok(
+      body: Body.fromString('Filtering by tags: ${tags.join(", ")}'),
+    ));
+  });
 
-    return ctx.respond(
-      Response.ok(body: Body.fromString(response)),
-    );
+  // Type-safe headers
+  router.get('/headers-info', (ctx) {
+    final request = ctx.request;
+
+    // Get typed values
+    final mimeType = request.mimeType; // MimeType? (from Content-Type)
+    final userAgent = request.headers.userAgent; // String?
+    final contentLength = request.headers.contentLength; // int?
+
+    return ctx.respond(Response.ok(
+      body: Body.fromString(
+        'Browser: ${userAgent ?? "Unknown"}, '
+        'Content-Type: ${mimeType?.toString() ?? "None"}, '
+        'Content-Length: ${contentLength ?? "Unknown"}',
+      ),
+    ));
+  });
+
+  // Authorization headers
+  router.get('/protected', (ctx) {
+    final auth = ctx.request.headers.authorization;
+
+    if (auth is BearerAuthorizationHeader) {
+      final token = auth.token;
+      // Validate token...
+      return ctx.respond(Response.ok(
+        body: Body.fromString('Bearer token: $token'),
+      ));
+    } else if (auth is BasicAuthorizationHeader) {
+      final username = auth.username;
+      final password = auth.password;
+      // Validate credentials...
+      return ctx.respond(Response.ok(
+        body: Body.fromString(
+            'Basic auth: $username (password length: ${password.length})'),
+      ));
+    } else {
+      return ctx.respond(Response.unauthorized());
+    }
+  });
+
+  // Reading request body as string
+  router.post('/submit', (ctx) async {
+    final bodyText = await ctx.request.readAsString();
+    return ctx.respond(Response.ok(
+      body: Body.fromString('Received: $bodyText'),
+    ));
+  });
+
+  // JSON parsing example
+  router.post('/api/users', (ctx) async {
+    try {
+      final bodyText = await ctx.request.readAsString();
+      final data = jsonDecode(bodyText) as Map<String, dynamic>;
+
+      final name = data['name'] as String?;
+      final email = data['email'] as String?;
+
+      if (name == null || email == null) {
+        return ctx.respond(Response.badRequest(
+          body: Body.fromString('Name and email are required'),
+        ));
+      }
+
+      // Process user creation...
+
+      return ctx.respond(Response.ok(
+        body: Body.fromString('User created: $name'),
+      ));
+    } catch (e) {
+      return ctx.respond(Response.badRequest(
+        body: Body.fromString('Invalid JSON: $e'),
+      ));
+    }
+  });
+
+  // Check if body is empty
+  router.post('/data', (ctx) {
+    if (ctx.request.isEmpty) {
+      return ctx.respond(Response.badRequest(
+        body: Body.fromString('Request body is required'),
+      ));
+    }
+
+    // Body exists, safe to read...
+    return ctx.respond(Response.ok());
   });
 
   // ============================================================================
-  // TYPE-SAFE HEADERS
+  // EXAMPLES FROM 05-RESPONSES.MD
   // ============================================================================
 
-  router.get('/headers-demo', (ctx) {
-    final headers = ctx.request.headers;
+  // Path parameters example
+  router.get('/users/:id', (ctx) {
+    final user = findUser(ctx.pathParameters[#id]);
 
-    // Type-safe header access
-    final userAgent = headers.userAgent ?? 'Unknown';
-    final contentType = ctx.request.body.bodyType;
-    final accept = headers.accept;
-    final host = headers.host;
-
-    final info = '''
-Headers:
-- User-Agent: $userAgent
-- Content-Type: $contentType
-- Accept: $accept
-- Host: $host
-''';
-
-    return ctx.respond(
-      Response.ok(body: Body.fromString(info)),
-    );
+    return ctx.respond(Response.ok(
+      body: Body.fromString('User: ${user.name}'),
+    ));
   });
 
-  // Setting response headers
-  router.get('/headers-response', (ctx) {
+  // 204 No Content example
+  router.delete('/users/:id', (ctx) {
+    deleteUser(ctx.pathParameters[#id]);
+
+    // Success, but nothing to send back
+    return ctx.respond(Response.noContent());
+  });
+
+  // Redirect examples
+  router.get('/old-url', (ctx) {
+    return ctx.respond(Response.movedPermanently(
+      Uri.parse('/new-url'),
+    ));
+  });
+
+  router.get('/temporary', (ctx) {
+    return ctx.respond(Response.found(
+      Uri.parse('/current-location'),
+    ));
+  });
+
+  router.post('/submit-form', (ctx) async {
+    // Process form submission...
+
+    // Redirect to a success page
+    return ctx.respond(Response.seeOther(
+      Uri.parse('/success'),
+    ));
+  });
+
+  // Error responses
+  router.get('/dashboard', (ctx) {
+    final auth = ctx.request.headers.authorization;
+
+    if (auth == null) {
+      return ctx.respond(Response.unauthorized(
+        body: Body.fromString('Please log in to continue'),
+      ));
+    }
+
+    // Validate credentials...
+    return ctx.respond(Response.ok());
+  });
+
+  router.delete('/admin/users/:id', (ctx) {
+    final user = getCurrentUser(ctx);
+
+    if (!user.isAdmin) {
+      return ctx.respond(Response.forbidden(
+        body: Body.fromString('Admin privileges required'),
+      ));
+    }
+
+    // Proceed with deletion...
+    return ctx.respond(Response.ok());
+  });
+
+  // 500 Internal Server Error
+  router.get('/data-fetch', (ctx) {
+    try {
+      final data = fetchData();
+      return ctx.respond(Response.ok(
+        body: Body.fromString(data),
+      ));
+    } catch (e) {
+      // Log the error for debugging
+      log('Error fetching data: $e');
+
+      return ctx.respond(Response.internalServerError(
+        body: Body.fromString('An error occurred. Please try again later.'),
+      ));
+    }
+  });
+
+  // Custom status code
+  router.get('/teapot', (ctx) {
+    return ctx.respond(Response(
+      418, // I'm a teapot
+      body: Body.fromString('I refuse to brew coffee'),
+    ));
+  });
+
+  // HTML response
+  router.get('/page/html', (ctx) {
+    const html = '''
+<!DOCTYPE html>
+<html>
+<head><title>My Page</title></head>
+<body><h1>Welcome!</h1></body>
+</html>
+''';
+
+    return ctx.respond(Response.ok(
+      body: Body.fromString(html, mimeType: MimeType.html),
+    ));
+  });
+
+  // JSON response
+  router.get('/api/users/:id', (ctx) {
+    final user = {
+      'id': 123,
+      'name': 'Alice',
+      'email': 'alice@example.com',
+    };
+
+    return ctx.respond(Response.ok(
+      body: Body.fromString(
+        jsonEncode(user),
+        mimeType: MimeType.json,
+      ),
+    ));
+  });
+
+  // Response headers
+  router.get('/api/data', (ctx) {
     final headers = Headers.build((h) {
-      // Type-safe header setting
+      // Set cache control
       h.cacheControl = CacheControlHeader(
         maxAge: 3600,
         publicCache: true,
       );
 
-      // Custom headers
-      h['X-Powered-By'] = ['Relic'];
-      h['X-API-Version'] = ['1.0'];
+      // Set custom header
+      h['X-Custom-Header'] = ['value'];
     });
 
-    return ctx.respond(
-      Response.ok(
-        headers: headers,
-        body: Body.fromString('Response with custom headers'),
-      ),
-    );
+    return ctx.respond(Response.ok(
+      headers: headers,
+      body: Body.fromString('{"status": "ok"}', mimeType: MimeType.json),
+    ));
   });
 
   // ============================================================================
-  // REQUEST BODY HANDLING
+  // BEST PRACTICES EXAMPLES
   // ============================================================================
 
-  router.post('/echo', (ctx) async {
-    final request = ctx.request;
+  // Query parameter validation
+  router.get('/page', (ctx) {
+    final pageStr = ctx.request.url.queryParameters['page'];
 
-    // Check if body exists
-    if (request.isEmpty) {
-      return ctx.respond(
-        Response.badRequest(
-          body: Body.fromString('Request body is required'),
-        ),
-      );
+    if (pageStr == null) {
+      return ctx.respond(Response.badRequest(
+        body: Body.fromString('Page parameter is required'),
+      ));
     }
 
-    // Read body as string
-    final bodyText = await request.readAsString();
-
-    return ctx.respond(
-      Response.ok(
-        body: Body.fromString('Echo: $bodyText'),
-      ),
-    );
-  });
-
-  router.post('/api/json', (ctx) async {
-    final request = ctx.request;
-
-    if (request.isEmpty) {
-      return ctx.respond(
-        Response.badRequest(
-          body: Body.fromString('JSON body required'),
-        ),
-      );
+    final page = int.tryParse(pageStr);
+    if (page == null || page < 1) {
+      return ctx.respond(Response.badRequest(
+        body: Body.fromString('Invalid page number'),
+      ));
     }
 
-    try {
-      // Parse JSON
-      final bodyText = await request.readAsString();
-      final data = jsonDecode(bodyText) as Map<String, dynamic>;
+    // Use validated page number...
+    return ctx.respond(Response.ok(
+      body: Body.fromString('Page $page content'),
+    ));
+  });
 
-      // Create JSON response
-      final response = {
-        'received': data,
-        'timestamp': DateTime.now().toIso8601String(),
-      };
+  // Handle missing headers gracefully
+  router.get('/browser-info', (ctx) {
+    final userAgent = ctx.request.headers.userAgent;
 
-      return ctx.respond(
-        Response.ok(
-          body: Body.fromString(
-            jsonEncode(response),
-            mimeType: MimeType.json,
-          ),
-        ),
-      );
-    } catch (e) {
-      return ctx.respond(
-        Response.badRequest(
-          body: Body.fromString('Invalid JSON: $e'),
-        ),
-      );
+    final message = userAgent != null
+        ? 'Your browser: $userAgent'
+        : 'Browser information not available';
+
+    return ctx.respond(Response.ok(
+      body: Body.fromString(message),
+    ));
+  });
+
+  // Byte stream reading example
+  router.post('/upload', (ctx) async {
+    final stream = ctx.request.read(); // Stream<Uint8List>
+
+    int totalBytes = 0;
+    await for (final chunk in stream) {
+      totalBytes += chunk.length;
+      // Process chunk...
     }
+
+    return ctx.respond(Response.ok(
+      body: Body.fromString('Uploaded $totalBytes bytes'),
+    ));
   });
 
   // ============================================================================
-  // RESPONSE TYPES & STATUS CODES
-  // ============================================================================
-
-  // 2xx Success responses
-  router.get('/success/ok', (ctx) {
-    return ctx.respond(
-      Response.ok(body: Body.fromString('200 OK')),
-    );
-  });
-
-  router.get('/success/no-content', (ctx) {
-    return ctx.respond(Response.noContent());
-  });
-
-  // 3xx Redirect responses
-  router.get('/redirect/permanent', (ctx) {
-    return ctx.respond(
-      Response.movedPermanently(Uri.parse('/new-location')),
-    );
-  });
-
-  router.get('/redirect/temporary', (ctx) {
-    return ctx.respond(
-      Response.found(Uri.parse('/temporary-location')),
-    );
-  });
-
-  router.get('/redirect/see-other', (ctx) {
-    return ctx.respond(
-      Response.seeOther(Uri.parse('/success')),
-    );
-  });
-
-  // 4xx Client error responses
-  router.get('/error/bad-request', (ctx) {
-    return ctx.respond(
-      Response.badRequest(
-        body: Body.fromString('Bad request example'),
-      ),
-    );
-  });
-
-  router.get('/error/unauthorized', (ctx) {
-    return ctx.respond(
-      Response.unauthorized(
-        body: Body.fromString('Authentication required'),
-      ),
-    );
-  });
-
-  router.get('/error/forbidden', (ctx) {
-    return ctx.respond(
-      Response.forbidden(
-        body: Body.fromString('Access denied'),
-      ),
-    );
-  });
-
-  router.get('/error/not-found', (ctx) {
-    return ctx.respond(
-      Response.notFound(
-        body: Body.fromString('Resource not found'),
-      ),
-    );
-  });
-
-  // 5xx Server error responses
-  router.get('/error/server-error', (ctx) {
-    return ctx.respond(
-      Response.internalServerError(
-        body: Body.fromString('Internal server error'),
-      ),
-    );
-  });
-
-  router.get('/error/not-implemented', (ctx) {
-    return ctx.respond(
-      Response.notImplemented(
-        body: Body.fromString('Feature not implemented yet'),
-      ),
-    );
-  });
-
-  // ============================================================================
-  // BODY TYPES
-  // ============================================================================
-
-  router.get('/body/text', (ctx) {
-    return ctx.respond(
-      Response.ok(
-        body: Body.fromString(
-          'Plain text response',
-          mimeType: MimeType.plainText,
-        ),
-      ),
-    );
-  });
-
-  router.get('/body/html', (ctx) {
-    const html = '''
-<!DOCTYPE html>
-<html>
-<head><title>Relic Example</title></head>
-<body>
-  <h1>HTML Response</h1>
-  <p>This is an HTML response from Relic!</p>
-</body>
-</html>
-''';
-
-    return ctx.respond(
-      Response.ok(
-        body: Body.fromString(html, mimeType: MimeType.html),
-      ),
-    );
-  });
-
-  router.get('/body/json', (ctx) {
-    final data = {
-      'status': 'success',
-      'message': 'JSON response',
-      'timestamp': DateTime.now().toIso8601String(),
-    };
-
-    return ctx.respond(
-      Response.ok(
-        body: Body.fromString(
-          jsonEncode(data),
-          mimeType: MimeType.json,
-        ),
-      ),
-    );
-  });
-
-  // ============================================================================
-  // PATH PARAMETERS
-  // ============================================================================
-
-  router.get('/users/:id', (ctx) {
-    final id = ctx.pathParameters[#id];
-
-    return ctx.respond(
-      Response.ok(
-        body: Body.fromString('User ID: $id'),
-      ),
-    );
-  });
-
-  router.get('/posts/:year/:month/:slug', (ctx) {
-    final year = ctx.pathParameters[#year];
-    final month = ctx.pathParameters[#month];
-    final slug = ctx.pathParameters[#slug];
-
-    return ctx.respond(
-      Response.ok(
-        body: Body.fromString('Post: $year/$month/$slug'),
-      ),
-    );
-  });
-
-  // ============================================================================
-  // HTTP METHODS
-  // ============================================================================
-
-  router.post('/api/create', (ctx) {
-    return ctx.respond(
-      Response.ok(body: Body.fromString('POST request handled')),
-    );
-  });
-
-  router.put('/api/update/:id', (ctx) {
-    final id = ctx.pathParameters[#id];
-    return ctx.respond(
-      Response.ok(body: Body.fromString('PUT request for ID: $id')),
-    );
-  });
-
-  router.patch('/api/partial/:id', (ctx) {
-    final id = ctx.pathParameters[#id];
-    return ctx.respond(
-      Response.ok(body: Body.fromString('PATCH request for ID: $id')),
-    );
-  });
-
-  router.delete('/api/delete/:id', (ctx) {
-    final id = ctx.pathParameters[#id];
-    return ctx.respond(
-      Response.ok(body: Body.fromString('DELETE request for ID: $id')),
-    );
-  });
-
-  // ============================================================================
-  // MIDDLEWARE EXAMPLES
-  // ============================================================================
-
-  // Logging middleware using createMiddleware
-  final loggingMiddleware = createMiddleware(
-    onRequest: (request) {
-      print('→ ${request.method} ${request.url}');
-      return null; // Continue to handler
-    },
-    onResponse: (response) {
-      print('← ${response.statusCode}');
-      return response;
-    },
-  );
-
-  // Error handling middleware
-  final errorHandlerMiddleware = createMiddleware(
-    onError: (error, stackTrace) {
-      print('Error: $error');
-      return Response.internalServerError(
-        body: Body.fromString('An error occurred'),
-      );
-    },
-  );
-
-  // Custom middleware - adds headers to all responses
-  Handler addHeadersMiddleware(Handler inner) {
-    return (NewContext ctx) async {
-      final result = await inner(ctx);
-
-      // Only modify if it's a response
-      if (result is ResponseContext) {
-        final newResponse = result.response.copyWith(
-          headers: result.response.headers.transform((h) {
-            h['X-Server'] = ['Relic'];
-            h['X-Response-Time'] = [DateTime.now().toIso8601String()];
-          }),
-        );
-        return result.respond(newResponse);
-      }
-
-      return result;
-    };
-  }
-
-  // ============================================================================
-  // WEBSOCKET EXAMPLE
-  // ============================================================================
-
-  router.get('/ws', (ctx) {
-    // WebSocket echo server
-    return ctx.connect((RelicWebSocket ws) {
-      print('WebSocket connected');
-
-      ws.events.listen(
-        (message) {
-          print('Received: $message');
-          ws.trySendText('Echo: $message');
-        },
-        onDone: () => print('WebSocket disconnected'),
-        onError: (Object error) => print('WebSocket error: $error'),
-      );
-
-      // Send welcome message
-      ws.trySendText('Welcome to Relic WebSocket!');
-    });
-  });
-
-  // ============================================================================
-  // PIPELINE COMPOSITION
+  // PIPELINE & FALLBACK
   // ============================================================================
 
   final handler = const Pipeline()
-      .addMiddleware(loggingMiddleware)
-      .addMiddleware(errorHandlerMiddleware)
-      .addMiddleware(addHeadersMiddleware)
       .addMiddleware(routeWith(router))
-      .addHandler(
-        respondWith(
-          (_) => Response.notFound(
+      .addHandler(respondWith((_) => Response.notFound(
             body: Body.fromString('404 - Page not found'),
-          ),
-        ),
-      );
+          )));
 
-  // ============================================================================
-  // START SERVER
-  // ============================================================================
+  await serve(handler, InternetAddress.anyIPv4, 8080);
+  log('🚀 Relic Documentation Examples running on http://localhost:8080');
+  log('');
+  log('📖 Try these examples from the docs:');
+  log('');
+  log('Request examples:');
+  log('  curl http://localhost:8080/info');
+  log('  curl "http://localhost:8080/search?query=relic&page=2"');
+  log('  curl "http://localhost:8080/filter?tag=dart&tag=server&tag=web"');
+  log('  curl http://localhost:8080/headers-info');
+  log('  curl -H "Authorization: Bearer abc123" http://localhost:8080/protected');
+  log('  curl -X POST -d "Hello Relic" http://localhost:8080/submit');
+  log('  curl -X POST -H "Content-Type: application/json" \\');
+  log('       -d \'{"name":"Alice","email":"alice@example.com"}\' \\');
+  log('       http://localhost:8080/api/users');
+  log('  curl -X POST http://localhost:8080/data');
+  log('');
+  log('Response examples:');
+  log('  curl http://localhost:8080/users/123');
+  log('  curl -X DELETE http://localhost:8080/users/123');
+  log('  curl http://localhost:8080/old-url');
+  log('  curl -X POST http://localhost:8080/submit-form');
+  log('  curl http://localhost:8080/dashboard');
+  log('  curl -X DELETE http://localhost:8080/admin/users/123');
+  log('  curl http://localhost:8080/data-fetch');
+  log('  curl http://localhost:8080/teapot');
+  log('  curl http://localhost:8080/page');
+  log('  curl http://localhost:8080/page/html');
+  log('  curl http://localhost:8080/api/users/123');
+  log('  curl http://localhost:8080/api/data');
+  log('');
+  log('Best practices examples:');
+  log('  curl "http://localhost:8080/page?page=5"');
+  log('  curl http://localhost:8080/browser-info');
+  log('  curl -X POST -d "file content" http://localhost:8080/upload');
+}
 
-  const port = 8080;
-  await serve(handler, InternetAddress.anyIPv4, port);
+// Mock functions for examples
+User findUser(String? id) => User(name: 'User $id', isAdmin: false);
+void deleteUser(String? id) => log('Deleted user $id');
+User getCurrentUser(NewContext ctx) =>
+    User(name: 'Current User', isAdmin: true);
+String fetchData() => 'Sample data';
 
-  print('''
-🚀 Relic Comprehensive Example Server running on http://localhost:$port
-
-📚 Available Endpoints:
-
-Basic:
-  GET  /                          - Welcome message
-  GET  /request-info              - Request properties demo
-  
-Query Parameters:
-  GET  /search?q=term&tag=a&tag=b - Query parameters demo
-  
-Headers:
-  GET  /headers-demo              - Request headers demo
-  GET  /headers-response          - Response headers demo
-  
-Request Body:
-  POST /echo                      - Echo back request body
-  POST /api/json                  - JSON request/response demo
-  
-Response Types:
-  GET  /success/ok                - 200 OK
-  GET  /success/no-content        - 204 No Content
-  GET  /redirect/permanent        - 301 Moved Permanently
-  GET  /redirect/temporary        - 302 Found
-  GET  /redirect/see-other        - 303 See Other
-  GET  /error/bad-request         - 400 Bad Request
-  GET  /error/unauthorized        - 401 Unauthorized
-  GET  /error/forbidden           - 403 Forbidden
-  GET  /error/not-found           - 404 Not Found
-  GET  /error/server-error        - 500 Internal Server Error
-  GET  /error/not-implemented     - 501 Not Implemented
-  
-Body Types:
-  GET  /body/text                 - Plain text response
-  GET  /body/html                 - HTML response
-  GET  /body/json                 - JSON response
-  
-Path Parameters:
-  GET  /users/:id                 - Single parameter
-  GET  /posts/:year/:month/:slug  - Multiple parameters
-  
-HTTP Methods:
-  POST   /api/create              - Create resource
-  PUT    /api/update/:id          - Update resource
-  PATCH  /api/partial/:id         - Partial update
-  DELETE /api/delete/:id          - Delete resource
-  
-WebSocket:
-  GET  /ws                        - WebSocket echo server
-
-🧪 Try these curl commands:
-
-curl http://localhost:$port/
-curl http://localhost:$port/request-info
-curl http://localhost:$port/search?q=relic&tag=dart&tag=server
-curl http://localhost:$port/headers-demo
-curl -X POST http://localhost:$port/echo -d "Hello Relic"
-curl -X POST http://localhost:$port/api/json -H "Content-Type: application/json" -d '{"name":"Alice","age":30}'
-curl http://localhost:$port/body/json
-curl http://localhost:$port/users/123
-curl http://localhost:$port/posts/2024/10/my-post
-curl -X PUT http://localhost:$port/api/update/456
-curl -X DELETE http://localhost:$port/api/delete/789
-''');
+class User {
+  final String name;
+  final bool isAdmin;
+  User({required this.name, required this.isAdmin});
 }

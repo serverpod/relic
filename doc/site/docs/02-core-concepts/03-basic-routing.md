@@ -113,3 +113,20 @@ router.delete('/user', (ctx) {
 ```
 
 For more details about routing, including dynamic parameters and advanced patterns, see the [routing guide](../guides/routing).
+
+## Summary
+
+Routing is the foundation of any web application. With Relic, you can:
+
+- **Define routes** using `router.METHOD(PATH, HANDLER)` syntax
+- **Handle different HTTP methods** - GET, POST, PUT, DELETE, PATCH, etc.
+- **Create handlers** that receive context and return responses
+- **Combine with middleware** using Pipeline for logging, authentication, etc.
+- **Add fallback handlers** for unmatched routes (like 404 pages)
+
+The basic pattern is simple: define your routes, create a pipeline with middleware, and start your server. From here, you can explore advanced features like path parameters, middleware composition, and type-safe request/response handling.
+
+## Examples
+
+- **[`basic_routing.dart`](https://github.com/serverpod/relic/blob/main/example/basic_routing.dart)** - The complete working example from this guide
+- **[`requets_response_example.dart`](https://github.com/serverpod/relic/blob/main/example/requets_response_example.dart)** - Comprehensive example covering requests, responses, and advanced routing patterns
