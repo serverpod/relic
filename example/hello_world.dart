@@ -4,7 +4,7 @@ import 'package:relic/io_adapter.dart';
 import 'package:relic/relic.dart';
 
 Future<void> main() async {
-  // Create a simple handler that responds to every request
+  // Create a simple app that responds to every request
   final app = RelicApp()
     ..any(
         '/**',
