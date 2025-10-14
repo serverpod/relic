@@ -15,7 +15,7 @@ import 'message.dart';
 /// // Basic request handling
 /// router.get('/users/:id', (ctx) {
 ///   final request = ctx.request;
-/// 
+///
 ///   // Access path parameters
 ///   final id = ctx.pathParameters[#id];
 ///
