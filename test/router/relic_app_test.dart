@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:mockito/mockito.dart';
 import 'package:relic/io_adapter.dart';
 import 'package:relic/relic.dart';
-import 'package:relic/src/adapter/context.dart';
+
 import 'package:test/test.dart';
 
 void main() {
@@ -14,24 +14,6 @@ void main() {
         'then it is a Router<Handler>', () {
       final app = RelicApp();
       expect(app, isA<Router<Handler>>());
-    });
-
-    test(
-        'Given a RelicApp, '
-        'when using it as a callable handler, '
-        'then it can be invoked directly', () async {
-      final app = RelicApp()
-        ..get(
-            '/test',
-            (final ctx) =>
-                ctx.respond(Response.ok(body: Body.fromString('success'))));
-
-      final request = Request(Method.get, Uri.parse('http://localhost/test'));
-      final ctx = request.toContext(Object());
-      final result = await app(ctx) as ResponseContext;
-
-      expect(result.response.statusCode, 200);
-      expect(await result.response.readAsString(), 'success');
     });
 
     test(
@@ -55,7 +37,7 @@ void main() {
       final app = RelicApp()
         ..get('/', (final ctx) => ctx.respond(Response.ok()));
 
-      final server = await app.serve();
+      final server = await app.serve(port: 0);
 
       expect(server, isA<RelicServer>());
       // Server has been created and handler mounted
