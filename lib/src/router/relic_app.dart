@@ -7,7 +7,9 @@ part of 'router.dart';
 final class RelicApp extends _DelegatingRelicRouter {
   FutureOr<Adapter> Function()? _adapterFactory;
   final _server = _DelegatingRelicServer();
-  final _setup = <_Setup>[];
+  final _setup = <RouterInjectable>[];
+
+  RelicApp() : super(RelicRouter());
 
   /// Creates and starts a [RelicServer] with the configured routes.
   ///
@@ -39,12 +41,6 @@ final class RelicApp extends _DelegatingRelicRouter {
   }
 
   Future<void> _init() async {
-    final router = RelicRouter();
-    for (final s in _setup) {
-      router.inject(s);
-    }
-    delegate = router;
-
     final server = RelicServer(await _adapterFactory!());
     await server.mountAndStart(call);
     _server.delegate = server;
@@ -52,23 +48,37 @@ final class RelicApp extends _DelegatingRelicRouter {
 
   Future<void> _reload() async {
     await _server.close();
+    await _rebuild();
     await _init();
   }
 
-  @override
-  void add(final Method method, final String path, final Handler route) {
-    _setup.add(_HandlerSetup(method, path, route));
+  Future<void> _rebuild() async {
+    final router = RelicRouter();
+    for (final s in _setup) {
+      router.inject(s);
+    }
+    delegate = router;
+  }
+
+  void _injectAndTrack(final RouterInjectable injectable) {
+    delegate.inject(injectable);
+    _setup.add(injectable);
   }
 
   @override
-  void attach(final String path, final Router<Handler> subRouter) {
-    _setup.add(_AttachSetup(path, subRouter));
-  }
+  void add(final Method method, final String path, final Handler route) =>
+      _injectAndTrack(_HandlerSetup(method, path, route));
 
   @override
-  void use(final String path, final Handler Function(Handler p1) map) {
-    _setup.add(_UseSetup(path, map));
-  }
+  void attach(final String path, final RelicRouter subRouter) =>
+      _injectAndTrack(_AttachSetup(path, subRouter));
+
+  @override
+  void use(final String path, final Middleware map) =>
+      _injectAndTrack(_UseSetup(path, map));
+
+  @override
+  void inject(final RouterInjectable injectable) => _injectAndTrack(injectable);
 }
 
 sealed class _Setup implements RouterInjectable {}
@@ -96,12 +106,12 @@ final class _AttachSetup extends _Setup {
 
 final class _UseSetup extends _Setup {
   final String path;
-  final Handler Function(Handler p1) map;
+  final Middleware middleware;
 
-  _UseSetup(this.path, this.map);
+  _UseSetup(this.path, this.middleware);
 
   @override
-  void injectIn(final RelicRouter router) => router.use(path, map);
+  void injectIn(final RelicRouter router) => router.use(path, middleware);
 }
 
 class _DelegatingRelicServer implements RelicServer {
@@ -120,7 +130,9 @@ class _DelegatingRelicServer implements RelicServer {
 }
 
 final class _DelegatingRelicRouter extends RelicRouter {
-  late RelicRouter delegate;
+  RelicRouter delegate;
+
+  _DelegatingRelicRouter(this.delegate);
 
   @override
   Handler? get fallback => delegate.fallback;

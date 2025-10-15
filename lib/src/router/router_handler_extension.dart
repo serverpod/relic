@@ -27,8 +27,4 @@ extension RouterHandlerEx on RelicRouter {
   FutureOr<HandledContext> call(final NewContext ctx) =>
       const Pipeline().addMiddleware(routeWith(this)).addHandler(
           fallback ?? respondWith((final _) => Response.notFound()))(ctx);
-
-  /// Injects a handler object into the router. Unlike [add] it allows
-  /// the [handler] object to determine how to be mounted on the router.
-  void inject(final RouterInjectable handler) => handler.injectIn(this);
 }
