@@ -51,7 +51,7 @@ void main() {
     setUp(() async {
       await d.dir('static', [d.file('logo.png', 'png-bytes')]).create();
       final staticRoot = Directory(p.join(d.sandbox, 'static'));
-      final router = Router<Handler>()
+      final router = RelicRouter()
         ..get(
             '/static/**',
             createStaticHandler(

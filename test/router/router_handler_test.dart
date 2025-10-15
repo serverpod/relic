@@ -20,7 +20,7 @@ void main() {
       'Given a router with a GET route, '
       'when calling router with matching GET request, '
       'then the handler is invoked and returns response', () async {
-    final router = Router<Handler>();
+    final router = RelicRouter();
     var handlerCalled = false;
     router.get('/test', (final ctx) {
       handlerCalled = true;
@@ -39,7 +39,7 @@ void main() {
       'Given a router with a parameterized route, '
       'when calling router with matching request, '
       'then path parameters are accessible via context', () async {
-    final router = Router<Handler>();
+    final router = RelicRouter();
     String? capturedName;
     String? capturedAge;
     router.get('/user/:name/age/:age', (final ctx) {
@@ -60,7 +60,7 @@ void main() {
       'Given a router with a GET route, '
       'when calling router with POST to same path, '
       'then returns 405 with Allow header', () async {
-    final router = Router<Handler>();
+    final router = RelicRouter();
     router.get('/test', (final ctx) => ctx.respond(Response.ok()));
 
     final request = _FakeRequest('/test', method: Method.post);
@@ -75,7 +75,7 @@ void main() {
       'Given a router with multiple methods on same path, '
       'when calling router with unregistered method, '
       'then returns 405 with all allowed methods in Allow header', () async {
-    final router = Router<Handler>();
+    final router = RelicRouter();
     router.get('/test', (final ctx) => ctx.respond(Response.ok()));
     router.post('/test', (final ctx) => ctx.respond(Response.ok()));
 
@@ -92,7 +92,7 @@ void main() {
       'Given a router with routes, '
       'when calling router with unmatched path, '
       'then returns 404', () async {
-    final router = Router<Handler>();
+    final router = RelicRouter();
     router.get('/test', (final ctx) => ctx.respond(Response.ok()));
 
     final request = _FakeRequest('/nonexistent');
@@ -106,7 +106,7 @@ void main() {
       'Given a router with fallback handler, '
       'when path misses in router, '
       'then fallback handler is called', () async {
-    final router = Router<Handler>();
+    final router = RelicRouter();
     router.get('/api/users', (final ctx) => ctx.respond(Response.ok()));
 
     var fallbackCalled = false;
@@ -129,7 +129,7 @@ void main() {
       'Given a router with tail segment route, '
       'when calling router with path matching tail, '
       'then remaining path is accessible via context', () async {
-    final router = Router<Handler>();
+    final router = RelicRouter();
     String? capturedRemaining;
     router.get('/static/**', (final ctx) {
       capturedRemaining = ctx.remainingPath.toString();
@@ -147,7 +147,7 @@ void main() {
       'Given a router with nested routes, '
       'when calling router with matching request, '
       'then matched path is accessible via context', () async {
-    final router = Router<Handler>();
+    final router = RelicRouter();
     String? capturedMatched;
     router.get('/api/v1/users', (final ctx) {
       capturedMatched = ctx.matchedPath.toString();
@@ -165,7 +165,7 @@ void main() {
       'Given a router with wildcard segment, '
       'when calling router with matching path, '
       'then handler is invoked', () async {
-    final router = Router<Handler>();
+    final router = RelicRouter();
     var handlerCalled = false;
     router.get('/files/*/download', (final ctx) {
       handlerCalled = true;
@@ -183,7 +183,7 @@ void main() {
       'Given an empty router, '
       'when calling router with any request, '
       'then returns 404', () async {
-    final router = Router<Handler>();
+    final router = RelicRouter();
 
     final request = _FakeRequest('/anything');
     final ctx = request.toContext(Object());
@@ -196,7 +196,7 @@ void main() {
       'Given a router with use applied, '
       'when calling router with matching request, '
       'then middleware transformation is applied', () async {
-    final router = Router<Handler>();
+    final router = RelicRouter();
     router.get('/test', (final ctx) => ctx.respond(Response.ok()));
     router.use('/', (final handler) {
       return (final ctx) async {
@@ -220,7 +220,7 @@ void main() {
       'Given a router with fallback set, '
       'when calling router with unmatched path, '
       'then fallback handler is called', () async {
-    final router = Router<Handler>();
+    final router = RelicRouter();
     router.get('/users', (final ctx) => ctx.respond(Response.ok()));
 
     var fallbackCalled = false;
@@ -243,7 +243,7 @@ void main() {
       'Given a router without fallback set, '
       'when calling router with unmatched path, '
       'then returns 404', () async {
-    final router = Router<Handler>();
+    final router = RelicRouter();
     router.get('/users', (final ctx) => ctx.respond(Response.ok()));
     // No fallback set
 
@@ -258,7 +258,7 @@ void main() {
       'Given a router with fallback set, '
       'when calling router with method miss, '
       'then returns 405 (not fallback)', () async {
-    final router = Router<Handler>();
+    final router = RelicRouter();
     router.get('/users', (final ctx) => ctx.respond(Response.ok()));
 
     var fallbackCalled = false;
@@ -280,7 +280,7 @@ void main() {
       'Given a router with fallback, '
       'when fallback is overwritten, '
       'then new fallback is used', () async {
-    final router = Router<Handler>();
+    final router = RelicRouter();
     router.get('/users', (final ctx) => ctx.respond(Response.ok()));
 
     router.fallback = (final ctx) =>
@@ -300,7 +300,7 @@ void main() {
       'Given a router with fallback set to null, '
       'when calling router with unmatched path, '
       'then returns 404', () async {
-    final router = Router<Handler>();
+    final router = RelicRouter();
     router.get('/users', (final ctx) => ctx.respond(Response.ok()));
 
     router.fallback = (final ctx) =>
