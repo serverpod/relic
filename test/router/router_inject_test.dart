@@ -11,14 +11,15 @@ void main() {
         'when injected into router, '
         'then it is registered with default injectIn behavior', () async {
       final router = Router<Handler>();
-      router.inject(_TestHandlerObject());
+      router.inject(const _EchoHandlerObject());
 
-      final request = Request(Method.get, Uri.parse('http://localhost/'));
+      final request = Request(Method.post, Uri.parse('http://localhost/'),
+          body: Body.fromString('Hello from the other side'));
       final ctx = request.toContext(Object());
       final result = await router.asHandler(ctx) as ResponseContext;
 
       expect(result.response.statusCode, 200);
-      expect(await result.response.readAsString(), 'handler object response');
+      expect(await result.response.readAsString(), 'Hello from the other side');
     });
 
     test(
@@ -26,10 +27,11 @@ void main() {
         'when injected into router, '
         'then custom path and method are used', () async {
       final router = Router<Handler>();
-      router.inject(_CustomHandlerObject());
+      router.inject(const _EchoHandlerObject(mountAt: '/custom/path'));
 
-      final request =
-          Request(Method.post, Uri.parse('http://localhost/custom/path'));
+      final request = Request(
+          Method.post, Uri.parse('http://localhost/custom/path'),
+          body: Body.fromString('custom handler'));
       final ctx = request.toContext(Object());
       final result = await router.asHandler(ctx) as ResponseContext;
 
@@ -40,25 +42,19 @@ void main() {
 }
 
 // Test implementations - HandlerObject
-class _TestHandlerObject extends HandlerObject {
-  @override
-  FutureOr<HandledContext> call(final NewContext ctx) {
-    return ctx.respond(
-      Response.ok(body: Body.fromString('handler object response')),
-    );
-  }
-}
+class _EchoHandlerObject extends HandlerObject {
+  final String mountAt;
 
-class _CustomHandlerObject extends HandlerObject {
+  const _EchoHandlerObject({this.mountAt = '/'});
+
   @override
-  void injectIn(final Router<Handler> router) {
-    router.post('/custom/path', call);
-  }
+  void injectIn(final Router<Handler> router) => router.post(mountAt, call);
 
   @override
   FutureOr<HandledContext> call(final NewContext ctx) {
+    final data = ctx.request.body.read();
     return ctx.respond(
-      Response.ok(body: Body.fromString('custom handler')),
+      Response.ok(body: Body.fromDataStream(data)),
     );
   }
 }
