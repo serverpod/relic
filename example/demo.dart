@@ -14,7 +14,7 @@ class _RouterSetup implements RouterInjectable {
       ..use('/', squashErrors)
       ..use('/', logRequests())
       ..put('/echo', echo)
-      ..group('').inject(const Greet());
+      ..group('foobar').inject(const Greet());
   }
 }
 

@@ -42,6 +42,11 @@ extension<T extends Object> on _RouterEntry<T>? {
   _RouterEntry<T> get orNew => this ?? _RouterEntry<T>();
 }
 
+///
+abstract class InjectableIn<T> {
+  void injectIn(final T owner);
+}
+
 /// A URL router that maps path patterns to values of type [T].
 ///
 /// Supports static paths (e.g., `/users/profile`) and paths with named parameters
@@ -102,6 +107,11 @@ final class Router<T extends Object> {
   void attach(final String path, final Router<T> subRouter) {
     _allRoutes.attach(NormalizedPath(path), subRouter._allRoutes);
   }
+
+  /// Injects an [injectable] into the router. Unlike [add] it allows
+  /// the [injectable] object to determine how to be mounted on the router.
+  void inject(final InjectableIn<Router<T>> injectable) =>
+      injectable.injectIn(this);
 
   /// Looks up a route matching the provided [path].
   ///
@@ -234,6 +244,4 @@ typedef RelicRouter = Router<Handler>;
 ///   ResponseContext delete(final NewContext ctx) { }
 /// }
 /// ```
-abstract interface class RouterInjectable {
-  void injectIn(final RelicRouter router);
-}
+typedef RouterInjectable = InjectableIn<RelicRouter>;
