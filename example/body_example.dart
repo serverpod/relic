@@ -57,14 +57,9 @@ Future<void> main() async {
 
     // Body copying example (middleware)
     ..post(
-        '/logged-echo',
-        const Pipeline()
-            .addMiddleware(loggingMiddleware)
-            .addHandler(echoHandler))
-
-    // Fallback for unknown routes
-    ..fallback = respondWith((final _) => Response.notFound(
-        body: Body.fromString("Sorry, that doesn't compute")));
+      '/logged-echo',
+      echoHandler,
+    );
 
   // Start the server
   await serve(router.asHandler, InternetAddress.loopbackIPv4, 8080);
@@ -330,21 +325,23 @@ Future<ResponseContext> streamProcessingHandler(NewContext ctx) async {
 }
 
 /// Middleware demonstrating body copying for multiple reads.
-Middleware loggingMiddleware = (Handler next) {
-  return (ctx) async {
-    // Read body content for logging
-    final content = await ctx.request.readAsString();
-    log('Request body: $content');
+Middleware loggingMiddleware() {
+  return (Handler next) {
+    return (NewContext ctx) async {
+      // Read body content for logging
+      final content = await ctx.request.readAsString();
+      log('Request body: $content');
 
-    // Create new request with fresh body
-    final newRequest = ctx.request.copyWith(
-      body: Body.fromString(content),
-    );
+      // Create new request with fresh body
+      final newRequest = ctx.request.copyWith(
+        body: Body.fromString(content),
+      );
 
-    // Continue with new request
-    return next(ctx.withRequest(newRequest));
+      // Continue with new request
+      return next(ctx.withRequest(newRequest));
+    };
   };
-};
+}
 
 /// Simple echo handler that returns the request body.
 Future<ResponseContext> echoHandler(NewContext ctx) async {

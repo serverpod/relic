@@ -8,8 +8,13 @@ Future<void> main() async {
   // Setup router with fallback
   final router = RelicRouter()
     ..use('/', logRequests())
-    ..fallback = respondWith((final _) => Response.notFound(
-        body: Body.fromString("Sorry, that doesn't compute")));
+    ..fallback = respondWith(
+      (final _) => Response.notFound(
+        body: Body.fromString(
+          "Sorry, that doesn't compute",
+        ),
+      ),
+    );
 
   // RelicRouter can be used directly as a Handler via the asHandler extension.
   await serve(router.asHandler, InternetAddress.anyIPv4, 8080);
@@ -21,6 +26,9 @@ ResponseContext hello(final NewContext ctx) {
   final name = ctx.pathParameters[#name];
   final age = int.parse(ctx.pathParameters[#age]!);
 
-  return ctx.respond(Response.ok(
-      body: Body.fromString('Hello $name! To think you are $age years old.')));
+  return ctx.respond(
+    Response.ok(
+      body: Body.fromString('Hello $name! To think you are $age years old.'),
+    ),
+  );
 }

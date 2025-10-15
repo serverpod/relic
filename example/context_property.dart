@@ -38,12 +38,8 @@ void main() async {
     ..use('/', requestIdMiddleware)
     ..get('/', handler);
 
-  final pipeline = const Pipeline()
-      .addMiddleware(routeWith(router))
-      .addHandler(respondWith((final _) => Response.notFound()));
-
   // Uses the request ID
-  await serve(pipeline, InternetAddress.anyIPv4, 8080);
+  await serve(router.asHandler, InternetAddress.anyIPv4, 8080);
   log('Server running on http://localhost:8080');
 
   log('ContextProperty example - stores request-specific data');
