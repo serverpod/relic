@@ -44,13 +44,13 @@ import 'package:relic/relic.dart';
 /// A simple 'Hello World' server
 Future<void> main() async {
   // Setup router with middleware and fallback
-  final router = Router<Handler>()
+  final router = RelicRouter()
     ..get('/user/:name/age/:age', hello)
     ..use('/', logRequests())
     ..fallback = respondWith((final _) => Response.notFound(
         body: Body.fromString("Sorry, that doesn't compute")));
 
-  // Router<Handler> can be used directly as a handler via the call() extension
+  // RelicRouter can be used directly as a handler via the call() extension
   await serve(router.asHandler, InternetAddress.anyIPv4, 8080);
 
   print('Serving at http://localhost:8080');

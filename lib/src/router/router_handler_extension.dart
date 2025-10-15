@@ -1,9 +1,9 @@
 import 'dart:async';
 import '../../relic.dart';
 
-/// Extension on [Router<Handler>] that cater specifically to [Handler]s.
-extension RouterHandlerEx on Router<Handler> {
-  /// Makes [Router<Handler>] callable as a [Handler].
+/// Extension on [RelicRouter] that cater specifically to [Handler]s.
+extension RouterHandlerEx on RelicRouter {
+  /// Makes [RelicRouter] callable as a [Handler].
   ///
   /// Performs routing lookup and:
   /// - Returns 405 if path matches but method doesn't (with Allow header)
@@ -13,7 +13,7 @@ extension RouterHandlerEx on Router<Handler> {
   ///
   /// Example:
   /// ```dart
-  /// final router = Router<Handler>()
+  /// final router = RelicRouter()
   ///   ..get('/users/:id', usersHandler)
   ///   ..use('/', logRequests())
   ///   ..fallback = notFoundHandler; // optional, defaults to 404

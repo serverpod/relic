@@ -6,12 +6,12 @@ import 'package:relic/relic.dart';
 /// A simple 'Hello World' server
 Future<void> main() async {
   // Setup router with fallback
-  final router = Router<Handler>()
+  final router = RelicRouter()
     ..use('/', logRequests())
     ..fallback = respondWith((final _) => Response.notFound(
         body: Body.fromString("Sorry, that doesn't compute")));
 
-  // Router<Handler> can be used directly as a Handler via the asHandler extension.
+  // RelicRouter can be used directly as a Handler via the asHandler extension.
   await serve(router.asHandler, InternetAddress.anyIPv4, 8080);
 
   // Check the _example_ directory for other examples.

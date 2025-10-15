@@ -95,7 +95,7 @@ abstract class HandlerObject implements RouterInjectable {
   /// Adds this handler to the given [router] with [Method.get] and path '/'
   /// Override to add differently.
   @override
-  void injectIn(final Router<Handler> router) => router.get('/', call);
+  void injectIn(final RelicRouter router) => router.get('/', call);
 
   /// The implementation of this [HandlerObject]
   FutureOr<HandledContext> call(final NewContext ctx);

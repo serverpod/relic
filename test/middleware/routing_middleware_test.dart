@@ -19,11 +19,11 @@ class _FakeRequest extends Fake implements Request {
 
 void main() {
   group('RoutingMiddleware', () {
-    late Router<Handler> router;
+    late RelicRouter router;
     late Middleware middleware;
 
     setUp(() {
-      router = Router<Handler>();
+      router = RelicRouter();
       middleware = routeWith(router);
     });
 
@@ -97,13 +97,13 @@ void main() {
     });
 
     group('Multiple RoutingMiddleware in Pipeline', () {
-      late Router<Handler> router1;
-      late Router<Handler> router2;
+      late RelicRouter router1;
+      late RelicRouter router2;
       late Pipeline pipeline;
 
       setUp(() {
-        router1 = Router<Handler>();
-        router2 = Router<Handler>();
+        router1 = RelicRouter();
+        router2 = RelicRouter();
         pipeline = const Pipeline()
             .addMiddleware(routeWith(router1))
             .addMiddleware(routeWith(router2));
@@ -216,8 +216,8 @@ void main() {
         Map<Symbol, String>? capturedParams;
         bool nestedHandlerCalled = false;
 
-        final mainRouter = Router<Handler>();
-        final nestedRouter = Router<Handler>();
+        final mainRouter = RelicRouter();
+        final nestedRouter = RelicRouter();
 
         nestedRouter.add(Method.get, '/details/:detailId',
             (final NewContext ctx) async {
@@ -252,11 +252,11 @@ void main() {
         Map<Symbol, String>? capturedParams;
         bool deeplyNestedHandlerCalled = false;
 
-        final mainRouter = Router<Handler>();
+        final mainRouter = RelicRouter();
         final intermediateRouter =
-            Router<Handler>(); // Will be attached to mainRouter
+            RelicRouter(); // Will be attached to mainRouter
         final leafRouter =
-            Router<Handler>(); // Will be attached to intermediateRouter
+            RelicRouter(); // Will be attached to intermediateRouter
 
         // Define handler for the leaf router
         leafRouter.add(Method.get, '/action/:actionName',
@@ -298,8 +298,8 @@ void main() {
           'Then last extracted parameter wins (consistent with PathTrie behavior)',
           () async {
         Map<Symbol, String>? capturedParams;
-        final mainRouter = Router<Handler>();
-        final subRouter = Router<Handler>();
+        final mainRouter = RelicRouter();
+        final subRouter = RelicRouter();
 
         subRouter.add(Method.get, '/:id/end', (final NewContext ctx) async {
           // sub-router uses :id
@@ -357,7 +357,7 @@ void main() {
         'then the request.method is "$v"',
     (final v) async {
       late Method method;
-      final middleware = routeWith(Router<Handler>()
+      final middleware = routeWith(RelicRouter()
         ..add(v, '/', respondWith((final req) {
           method = req.method;
           return Response.ok();
@@ -374,11 +374,11 @@ void main() {
   );
 
   group('Method Not Allowed (405) responses', () {
-    late Router<Handler> router;
+    late RelicRouter router;
     late Middleware middleware;
 
     setUp(() {
-      router = Router<Handler>();
+      router = RelicRouter();
       middleware = routeWith(router);
     });
 

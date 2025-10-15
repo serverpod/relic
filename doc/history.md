@@ -191,16 +191,16 @@ Routers compose easily with `attach()` and `group()`:
 
 ```dart
 // Create sub-routers
-final apiRouter = Router<Handler>();
+final apiRouter = RelicRouter();
 apiRouter.get('/users', listUsers);
 apiRouter.post('/users', createUser);
 
 // Attach to main router
-final mainRouter = Router<Handler>();
+final mainRouter = RelicRouter();
 mainRouter.attach('/api', apiRouter);
 
 // Or use group() for inline composition
-final router = Router<Handler>();
+final router = RelicRouter();
 final api = router.group('/api');
 api.get('/users', listUsers);
 

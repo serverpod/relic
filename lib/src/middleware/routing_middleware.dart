@@ -23,14 +23,14 @@ final _routingContext = ContextProperty<
 /// are accessible via [RequestContextEx] extensions on the context passed to
 /// handlers.
 ///
-/// **Note:** For [Router<Handler>], prefer using [Router.use] for middleware
+/// **Note:** For [RelicRouter], prefer using [Router.use] for middleware
 /// composition, [Router.fallback] for 404 handling, and [RouterHandlerEx.asHandler]
 /// to use the router directly as a handler. This avoids the need for
 /// [Pipeline] and provides better composability.
 ///
 /// Preferred approach:
 /// ```dart
-/// final router = Router<Handler>()
+/// final router = RelicRouter()
 ///   ..get('/users/:id', userHandler)
 ///   ..use('/', logRequests())
 ///   ..fallback = notFoundHandler;

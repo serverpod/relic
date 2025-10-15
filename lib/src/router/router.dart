@@ -56,7 +56,7 @@ final class Router<T extends Object> {
   ///
   /// Example:
   /// ```dart
-  /// final router = Router<Handler>()
+  /// final router = RelicRouter()
   ///   ..get('/users', usersHandler)
   ///   ..fallback = notFoundHandler;
   /// ```
@@ -202,5 +202,5 @@ extension RouteEx<T extends Object> on Router<T> {
 typedef RelicRouter = Router<Handler>;
 
 abstract interface class RouterInjectable {
-  void injectIn(final Router<Handler> router);
+  void injectIn(final RelicRouter router);
 }

@@ -15,7 +15,7 @@ void main() {
       'Given a static handler mounted on a router under "/**" '
       'when retrieving the same file twice '
       'then it should return 200 Ok both times', () async {
-    final router = Router<Handler>()
+    final router = RelicRouter()
       ..get(
           '/**',
           createStaticHandler(
