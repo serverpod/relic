@@ -4,6 +4,8 @@ import '../adapter/adapter.dart';
 import '../adapter/context.dart';
 import '../message/request.dart';
 import '../message/response.dart';
+import '../router/method.dart';
+import '../router/router.dart';
 
 /// A function that processes a [NewContext] to produce a [HandledContext].
 ///
@@ -87,4 +89,28 @@ HijackHandler hijack(final HijackCallback callback) {
   return (final ctx) {
     return ctx.hijack(callback);
   };
+}
+
+/// An abstract base class for classes that behave like [Handler]s.
+///
+/// Instances of [HandlerObject] are callable as [Handlers], and
+/// can be passed as handlers via a [call] tear-off.
+///
+/// Overriding [call] is mandatory.
+///
+/// If the handler requires special path parameters, or supports other
+/// methods than [Method.get], then you should override [injectIn].
+abstract class HandlerObject implements RouterInjectable {
+  /// Adds this handler to the given [router] with [Method.get] and path '/'
+  /// Override to add differently.
+  @override
+  void injectIn(final RelicRouter router) => router.get('/', call);
+
+  /// The implementation of this [HandlerObject]
+  FutureOr<HandledContext> call(final NewContext ctx);
+
+  /// Returns this [HandlerObject] as a [Handler].
+  Handler get asHandler => call;
+
+  const HandlerObject();
 }

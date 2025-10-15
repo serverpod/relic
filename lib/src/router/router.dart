@@ -1,5 +1,4 @@
-import 'lookup_result.dart';
-import 'method.dart';
+import '../../relic.dart';
 import 'normalized_path.dart';
 import 'path_trie.dart';
 
@@ -55,7 +54,7 @@ final class Router<T extends Object> {
   ///
   /// Example:
   /// ```dart
-  /// final router = Router<Handler>()
+  /// final router = RelicRouter()
   ///   ..get('/users', usersHandler)
   ///   ..fallback = notFoundHandler;
   /// ```
@@ -195,4 +194,38 @@ extension RouteEx<T extends Object> on Router<T> {
     attach(path, subRouter);
     return subRouter;
   }
+}
+
+/// Just a typedef for better auto-complete
+typedef RelicRouter = Router<Handler>;
+
+/// A contract for modular route registration in Relic applications.
+///
+/// Classes that know how to setup [Handler]s or [Middleware] on a
+/// [RelicRouter] should implement this.
+///
+/// This is typically used by modules that setup multiple different but
+/// related routes.
+///
+/// Example:
+/// ```dart
+/// class CrudModule<T> implements RouterInjectable {
+///   @override
+///   void injectIn(final RelicRouter router) {
+///     final group = router.group('/:id/');
+///     group
+///       ..post('/', create)
+///       ..get('/', read)
+///       ..anyOf({Method.put, Method.patch}, '/', update)
+///       ..delete('/', delete);
+///   }
+///
+///   ResponseContext create(final NewContext ctx) { }
+///   ResponseContext read(final NewContext ctx) { }
+///   ResponseContext update(final NewContext ctx) { }
+///   ResponseContext delete(final NewContext ctx) { }
+/// }
+/// ```
+abstract interface class RouterInjectable {
+  void injectIn(final RelicRouter router);
 }

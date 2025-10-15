@@ -11,7 +11,7 @@ import 'package:relic/relic.dart';
 Future<void> main() async {
   // start server
   final server = await Isolate.spawn((final _) async {
-    final router = Router<Handler>()
+    final router = RelicRouter()
       ..use('/api',
           AuthMiddleware().asMiddleware) // <-- add auth middleware on /api
       ..get(

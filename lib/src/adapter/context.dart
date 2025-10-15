@@ -55,6 +55,27 @@ abstract interface class HijackableContext implements _RequestContextInterface {
 ///
 /// This context can transition to either a [ResponseContext] via [respond],
 /// a [HijackContext] via [hijack], or a [ConnectContext] via [connect].
+///
+/// Every handler receives a [NewContext] as its starting point:
+///
+/// ```dart
+/// // Simple HTTP handler
+/// Future<ResponseContext> apiHandler(NewContext ctx) async {
+///   return ctx.respond(Response.ok(
+///     body: Body.fromString('Hello from Relic!'),
+///   ));
+/// }
+///
+/// // WebSocket handler
+/// ConnectContext wsHandler(NewContext ctx) {
+///   return ctx.connect((webSocket) async {
+///     webSocket.sendText('Welcome!');
+///     await for (final event in webSocket.events) {
+///       // Handle WebSocket events
+///     }
+///   });
+/// }
+/// ```
 final class NewContext extends RequestContext
     implements RespondableContext, HijackableContext {
   NewContext._(super.request, super.token) : super._();
@@ -118,6 +139,29 @@ final class ResponseContext extends HandledContext
 
 /// A [RequestContext] state indicating that the underlying connection has been
 /// hijacked.
+///
+/// When a connection is hijacked, the handler takes full control of the
+/// underlying socket connection, bypassing the normal HTTP response cycle.
+/// This is useful for implementing custom protocols or handling raw socket
+/// communication.
+///
+/// ```dart
+/// HijackContext customProtocolHandler(NewContext ctx) {
+///   return ctx.hijack((channel) {
+///     log('Connection hijacked for custom protocol');
+///
+///     // Send a custom HTTP response manually
+///     const response = 'HTTP/1.1 200 OK\r\n'
+///         'Content-Type: text/plain\r\n'
+///         'Connection: close\r\n'
+///         '\r\n'
+///         'Custom protocol response from Relic!';
+///
+///     channel.sink.add(utf8.encode(response));
+///     channel.sink.close();
+///   });
+/// }
+/// ```
 final class HijackContext extends HandledContext {
   /// The callback function provided to handle the hijacked connection.
   final HijackCallback callback;
@@ -126,6 +170,22 @@ final class HijackContext extends HandledContext {
 
 /// A [RequestContext] state indicating that a duplex stream connection
 /// (e.g., WebSocket) has been established.
+///
+/// ```dart
+/// ConnectContext chatHandler(NewContext ctx) {
+///   return ctx.connect((webSocket) async {
+///     // The WebSocket is now active
+///     webSocket.sendText('Welcome to chat!');
+///
+///     await for (final event in webSocket.events) {
+///       if (event is TextDataReceived) {
+///         // Broadcast message to all connected clients
+///         broadcastMessage(event.text);
+///       }
+///     }
+///   });
+/// }
+/// ```
 final class ConnectContext extends HandledContext {
   /// The callback function provided to handle the duplex stream connection.
   final WebSocketCallback callback;

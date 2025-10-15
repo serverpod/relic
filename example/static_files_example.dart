@@ -22,7 +22,7 @@ Future<void> main() async {
 
   // Setup router and a small index page showing cache-busted URLs. We're
   // setting the cache control header to immutable for a year.
-  final router = Router<Handler>()
+  final router = RelicRouter()
     ..get('/', respondWith((final _) async {
       final helloUrl = await buster.assetPath('/static/hello.txt');
       final logoUrl = await buster.assetPath('/static/logo.svg');

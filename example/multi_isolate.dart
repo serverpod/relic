@@ -29,7 +29,7 @@ void main() async {
 /// [_serve] is called in each spawned isolate.
 Future<void> _serve() async {
   // A router with no routes but a fallback
-  final router = Router<Handler>()
+  final router = RelicRouter()
     ..use('/', logRequests())
     ..put('/echo', respondWith(_echoRequest));
 
