@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import '../../relic.dart';
 import 'normalized_path.dart';
 import 'path_trie.dart';
@@ -228,4 +230,37 @@ typedef RelicRouter = Router<Handler>;
 /// ```
 abstract interface class RouterInjectable {
   void injectIn(final RelicRouter router);
+}
+
+/// The main application class for a Relic web server.
+///
+/// [RelicApp] extends [RelicRouter] and provides a convenient way to create,
+/// configure, and run a Relic HTTP server.
+final class RelicApp extends RelicRouter {
+  /// Creates and starts a [RelicServer] with the configured routes.
+  ///
+  /// The [adapterFactory] is a function that returns an [Adapter] for handling
+  /// HTTP requests. This can be a synchronous function or an async function.
+  /// The adapter factory pattern allows for deferred initialization of server
+  /// resources.
+  ///
+  /// Returns a [Future] that completes with the running [RelicServer] instance.
+  ///
+  /// Example:
+  /// ```dart
+  /// final app = RelicApp()
+  ///   ..get('/', (ctx) => ctx.ok('Hello!'));
+  ///
+  /// final server = await app.run(adapterFactory);
+  /// ```
+  ///
+  /// Check out [RelicAppIOServeEx.serve] if you are using `dart:io` to avoid
+  /// specifying [adapterFactory] explicitly.
+  Future<RelicServer> run(
+    final FutureOr<Adapter> Function() adapterFactory,
+  ) async {
+    final server = RelicServer(await adapterFactory());
+    await server.mountAndStart(call);
+    return server;
+  }
 }

@@ -22,7 +22,7 @@ Future<void> main() async {
 
   // Setup router and a small index page showing cache-busted URLs. We're
   // setting the cache control header to immutable for a year.
-  final router = RelicRouter()
+  final app = RelicApp()
     ..get('/', respondWith((final _) async {
       final helloUrl = await buster.assetPath('/static/hello.txt');
       final logoUrl = await buster.assetPath('/static/logo.svg');
@@ -51,12 +51,6 @@ Future<void> main() async {
           cacheBustingConfig: buster,
         ));
 
-  // Setup a handler pipeline with logging, cache busting, and routing.
-  final handler = const Pipeline()
-      .addMiddleware(logRequests())
-      .addMiddleware(routeWith(router))
-      .addHandler(respondWith((final _) => Response.notFound()));
-
   // Start the server
-  await serve(handler, InternetAddress.loopbackIPv4, 8080);
+  await app.serve();
 }
