@@ -2,7 +2,6 @@
 
 import 'dart:convert';
 import 'dart:developer';
-import 'dart:io';
 
 import 'package:relic/io_adapter.dart';
 import 'package:relic/relic.dart';
@@ -167,27 +166,19 @@ String _htmlHomePage() {
 
 void main() async {
   // Set up the router with proper routes
-  final router = Router<Handler>()
+  final app = RelicApp()
     ..get('/', homeHandler) // Home page
     ..get('/api', apiHandler) // Simple API
     ..get('/api/users/:id', userHandler) // API with parameters
     ..get('/ws', webSocketHandler) // WebSocket
     ..get('/custom', customProtocolHandler) // Custom protocol
-    ..post('/data', dataHandler); // Data handler
-
-  // Create the handler pipeline with routing middleware
-  final handler = const Pipeline()
-      .addMiddleware(logRequests()) // Log all requests
-      .addMiddleware(routeWith(router)) // Route requests
-      .addHandler(respondWith(
-        // Fallback for unmatched routes
-        (request) => Response.notFound(
+    ..post('/data', dataHandler) // Data handler
+    ..fallback = respondWith((request) => Response.notFound(
           body: Body.fromString('Page not found'),
-        ),
-      ));
+        ));
 
   // Start the server
-  await serve(handler, InternetAddress.anyIPv4, 8080);
+  await app.serve();
   log('Context example server running on http://localhost:8080');
   log('Try:');
   log('  - http://localhost:8080/ (HTML page)');
