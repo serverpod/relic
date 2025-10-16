@@ -6,6 +6,7 @@ import 'package:relic/relic.dart';
 Future<void> main() async {
   // Create a simple app that responds to every request
   final app = RelicApp()
+    ..use('/', logRequests()) // log all request from / and down
     ..any(
         '/**',
         respondWith(
