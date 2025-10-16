@@ -15,9 +15,13 @@ Future<void> main() async {
       ..use('/api',
           AuthMiddleware().asMiddleware) // <-- add auth middleware on /api
       ..get(
-          '/api/user/info',
-          (final ctx) =>
-              ctx.respond(Response.ok(body: Body.fromString('${ctx.user}'))));
+        '/api/user/info',
+        (final ctx) => ctx.respond(
+          Response.ok(
+            body: Body.fromString('${ctx.user}'),
+          ),
+        ),
+      );
 
     await serve(router.asHandler, InternetAddress.loopbackIPv4, 8080);
   }, null);
