@@ -14,7 +14,68 @@ class HeadersBase extends UnmodifiableMapView<String, Iterable<String>> {
   HeadersBase._(this._backing) : super(_backing);
 }
 
-/// [Headers] is a case-insensitive, unmodifiable map that stores headers
+/// [Headers] is a case-insensitive, unmodifiable map that stores headers.
+///
+/// Headers provide both raw access via map operations and type-safe accessors
+/// for standard HTTP headers.
+///
+/// ## Accessing Headers
+///
+/// ```dart
+/// router.get('/info', (ctx) {
+///   final headers = ctx.request.headers;
+///
+///   // Type-safe accessors
+///   final userAgent = headers.userAgent;
+///   final contentType = headers.contentType;
+///   final contentLength = headers.contentLength;
+///
+///   // Raw access
+///   final custom = headers['X-Custom-Header'];
+///
+///   return ctx.respond(Response.ok());
+/// });
+/// ```
+///
+/// ## Setting Headers
+///
+/// ```dart
+/// final headers = Headers.build((h) {
+///   // Set standard headers
+///   h.contentType = ContentTypeHeader(
+///     mimeType: MimeType.json,
+///     charset: 'utf-8',
+///   );
+///
+///   h.cacheControl = CacheControlHeader(
+///     maxAge: 3600,
+///     publicCache: true,
+///   );
+///
+///   // Set custom headers
+///   h['X-API-Version'] = ['2.0'];
+///   h['X-Request-ID'] = ['abc123'];
+/// });
+///
+/// Response.ok(headers: headers, body: Body.fromString('data'));
+/// ```
+///
+/// ## Common Type-Safe Headers
+///
+/// ```dart
+/// // Request headers
+/// headers.authorization; // AuthorizationHeader?
+/// headers.cookie;        // List<Cookie>
+/// headers.accept;        // List<MediaType>
+/// headers.userAgent;     // String?
+/// headers.host;          // HostHeader?
+///
+/// // Response headers
+/// headers.cacheControl;  // CacheControlHeader?
+/// headers.setCookie;     // SetCookieHeader?
+/// headers.location;      // Uri?
+/// headers.contentType;   // ContentTypeHeader?
+/// ```
 class Headers extends HeadersBase {
   factory Headers.fromMap(final Map<String, Iterable<String>>? values) {
     if (values == null || values.isEmpty) {
