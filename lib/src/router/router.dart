@@ -78,6 +78,22 @@ final class Router<T extends Object> {
   /// The [path] defines the route pattern. Segments starting with `:` (e.g.,
   /// `:id`) are treated as parameters. The [map] function transforms matched route
   /// values during lookup, without modifying the stored routes.
+  ///
+  /// Example (apply logging middleware to all routes under `/api`):
+  /// ```dart
+  /// final router = RelicRouter()
+  ///   ..get('/api/users', listUsers)
+  ///   ..get('/api/users/:id', getUser)
+  ///   // `use` accepts a mapping function. For handlers, this matches `Middleware`.
+  ///   ..use('/api', logRequests());
+  /// ```
+  ///
+  /// Example (apply auth middleware only to `/admin/*`):
+  /// ```dart
+  /// final router = RelicRouter()
+  ///   ..get('/admin/dashboard', adminDashboard)
+  ///   ..use('/admin', authMiddleware());
+  /// ```
   void use(final String path, final T Function(T) map) {
     _allRoutes.use(
         NormalizedPath(path),
