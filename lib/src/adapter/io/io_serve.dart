@@ -23,7 +23,7 @@ extension RelicAppIOServeEx on RelicApp {
     final bool shared = false,
   }) {
     return run(() => IOAdapter.bind(
-          // expose on loopback interface by default
+          // Expose on loopback interface by default
           address ?? InternetAddress.loopbackIPv4,
           port: port,
           context: securityContext,
