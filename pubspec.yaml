@@ -32,7 +32,7 @@ dev_dependencies:
   routingkit: ^5.1.2
   serverpod_lints: ^2.8.0
   spanner: ^1.0.5
-  test: ^1.25.5
+  test: ^1.25.10
   test_descriptor: ^2.0.1
   # The following are not used directly, but are included transitively.
   # Due to bad semver hygiene we need to bound the versions higher than
