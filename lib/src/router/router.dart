@@ -1,6 +1,14 @@
+import 'dart:async';
+import 'dart:developer';
+
+import 'package:vm_service/vm_service.dart' as vm;
+import 'package:vm_service/vm_service_io.dart' as vmi;
+
 import '../../relic.dart';
 import 'normalized_path.dart';
 import 'path_trie.dart';
+
+part 'relic_app.dart';
 
 /// A wrapper around a fixed-length list used for mapping between method and value
 /// for each registered path.
@@ -32,6 +40,11 @@ extension type _RouterEntry<T extends Object>._(List<T?> _routeByVerb)
 
 extension<T extends Object> on _RouterEntry<T>? {
   _RouterEntry<T> get orNew => this ?? _RouterEntry<T>();
+}
+
+///
+abstract class InjectableIn<T> {
+  void injectIn(final T owner);
 }
 
 /// A URL router that maps path patterns to values of type [T].
@@ -94,6 +107,11 @@ final class Router<T extends Object> {
   void attach(final String path, final Router<T> subRouter) {
     _allRoutes.attach(NormalizedPath(path), subRouter._allRoutes);
   }
+
+  /// Injects an [injectable] into the router. Unlike [add] it allows
+  /// the [injectable] object to determine how to be mounted on the router.
+  void inject(final InjectableIn<Router<T>> injectable) =>
+      injectable.injectIn(this);
 
   /// Looks up a route matching the provided [path].
   ///
@@ -226,6 +244,4 @@ typedef RelicRouter = Router<Handler>;
 ///   ResponseContext delete(final NewContext ctx) { }
 /// }
 /// ```
-abstract interface class RouterInjectable {
-  void injectIn(final RelicRouter router);
-}
+typedef RouterInjectable = InjectableIn<RelicRouter>;

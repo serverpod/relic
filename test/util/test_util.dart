@@ -59,13 +59,15 @@ final isOhNoStateError =
 Future<RelicServer> testServe(
   final Handler handler, {
   final SecurityContext? context,
-}) =>
-    serve(
-      handler,
-      InternetAddress.loopbackIPv4,
-      0,
-      securityContext: context,
-    );
+}) async {
+  final server = RelicServer(await IOAdapter.bind(
+    InternetAddress.loopbackIPv4,
+    port: 0,
+    context: context,
+  ));
+  await server.mountAndStart(handler);
+  return server;
+}
 
 /// Like [group], but takes a [variants] argument and creates a group for each
 /// variant.
