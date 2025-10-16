@@ -136,7 +136,7 @@ final router = RelicRouter()
   ..get('/api/foo', fooHandler);
 ```
 
-Since middlewareC was added with use('/api', middlewareC) it won't impact requests towards other paths .. but will be used specifically for /api/foo. Whereas middlewareA and middlewareB are both applicable for all paths below /
+Since `middlewareC` was added with `use('/api', middlewareC)` it won't impact requests towards other paths .. but will be used specifically for `/api/foo`. Whereas `middlewareA` and `middlewareB` are both applicable for all paths below `/`.
 
 Lets look at an example of how middlewares will work in same path scope:
 
