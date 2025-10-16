@@ -5,7 +5,7 @@ sidebar_label: Pipeline (Legacy)
 
 # Pipeline (Legacy Pattern)
 
-Pipeline is a legacy pattern for composing middleware, see [Middleware](./middleware.md) for the modern approach.
+Pipeline is a legacy pattern for composing middleware, see [Middleware](./middleware) for the modern approach.
 
 ## Overview
 
