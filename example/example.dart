@@ -11,8 +11,8 @@ Future<void> main() async {
     ..fallback = respondWith((final _) => Response.notFound(
         body: Body.fromString("Sorry, that doesn't compute")));
 
-  // run app on an IOAdaptor (dart:io HttpServer)
-  await app.serve(); // port 8080
+  // Start the server. Defaults to using port 8080 on loopback interface
+  await app.serve();
 }
 
 ResponseContext hello(final NewContext ctx) {

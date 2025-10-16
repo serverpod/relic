@@ -5,16 +5,15 @@ import '../../../relic.dart';
 import 'io_adapter.dart';
 
 extension RelicAppIOServeEx on RelicApp {
-  /// Starts a server that listens on the specified [address] and
+  /// Starts a [HttpServer] that listens on the specified [address] and
   /// [port] and sends requests to [handler].
   ///
-  /// If [securityContext] is provided, a secure server will be started.
+  /// If [securityContext] is provided, a secure HTTPS server will be started
+  /// using [HttpServer.bindSecure]. Otherwise, an HTTP server will be started
+  /// using [HttpServer.bind].
   ///
-  /// {@template relic_server_header_defaults}
-  /// Every response will get a "date" header.
-  /// If this header is present in the `Response`, it will not be
-  /// overwritten.
-  /// {@endtemplate}
+  /// If not specified [address] will default to [InternetAddress.loopbackIPv4],
+  /// and [port] to 8080.
   Future<RelicServer> serve({
     final InternetAddress? address,
     final int port = 8080,
@@ -23,7 +22,6 @@ extension RelicAppIOServeEx on RelicApp {
     final bool shared = false,
   }) {
     return run(() => IOAdapter.bind(
-          // Expose on loopback interface by default
           address ?? InternetAddress.loopbackIPv4,
           port: port,
           context: securityContext,
