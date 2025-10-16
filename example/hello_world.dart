@@ -14,7 +14,7 @@ Future<void> main() async {
           ),
         ));
 
-  // Start the server on all network interfaces, port 8080
+  // Start the server. Defaults to using port 8080 on loopback interface
   await app.serve();
   log('Server running on http://localhost:8080');
 }
