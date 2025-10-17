@@ -28,13 +28,8 @@ class RelicServer {
   ///
   /// Only one handler can be mounted at a time.
   Future<void> mountAndStart(final Handler handler) async {
-    if (_handler != null) {
-      throw StateError(
-        'Relic server already has a handler mounted.',
-      );
-    }
     _handler = _wrapHandlerWithMiddleware(handler);
-    await _startListening();
+    if (_subscription == null) await _startListening();
   }
 
   /// Close the server

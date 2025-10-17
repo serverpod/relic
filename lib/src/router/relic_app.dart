@@ -5,8 +5,7 @@ part of 'router.dart';
 /// [RelicApp] extends [RelicRouter] and provides a convenient way to create,
 /// configure, and run a Relic HTTP server.
 final class RelicApp extends _DelegatingRelicRouter {
-  FutureOr<Adapter> Function()? _adapterFactory;
-  final _server = _DelegatingRelicServer();
+  RelicServer? _server;
   final _setup = <RouterInjectable>[];
 
   RelicApp() : super(RelicRouter());
@@ -33,31 +32,27 @@ final class RelicApp extends _DelegatingRelicRouter {
   Future<RelicServer> run(
     final FutureOr<Adapter> Function() adapterFactory,
   ) async {
-    if (_adapterFactory != null) throw StateError('Cannot call run twice');
-    _adapterFactory = adapterFactory;
+    if (_server != null) throw StateError('Cannot call run twice');
+    _server = RelicServer(await adapterFactory());
     await _init();
     await _hotReloader.register(this);
-    return _server;
+    return _server!;
   }
 
   Future<void> _init() async {
-    final server = RelicServer(await _adapterFactory!());
-    await server.mountAndStart(call);
-    _server.delegate = server;
+    await _server!.mountAndStart(delegate.asHandler);
   }
 
   Future<void> _reload() async {
-    await _server.close();
     await _rebuild();
     await _init();
   }
 
   Future<void> _rebuild() async {
-    final router = RelicRouter();
-    for (final s in _setup) {
-      router.inject(s);
+    delegate = RelicRouter();
+    for (final injectable in _setup) {
+      delegate.inject(injectable);
     }
-    delegate = router;
   }
 
   void _injectAndTrack(final RouterInjectable injectable) {
@@ -112,21 +107,6 @@ final class _UseSetup extends _Setup {
 
   @override
   void injectIn(final RelicRouter router) => router.use(path, middleware);
-}
-
-class _DelegatingRelicServer implements RelicServer {
-  late RelicServer delegate;
-  _DelegatingRelicServer();
-
-  @override
-  Adapter get adapter => delegate.adapter;
-
-  @override
-  Future<void> close() => delegate.close();
-
-  @override
-  Future<void> mountAndStart(final Handler handler) =>
-      delegate.mountAndStart(handler);
 }
 
 final class _DelegatingRelicRouter extends RelicRouter {
