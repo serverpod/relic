@@ -84,7 +84,7 @@ Every handler receives a `NewContext` first. This represents a **fresh, unhandle
 
 1. **Send an HTTP response** → Becomes `ResponseContext`
 2. **Establish a WebSocket** → Becomes `ConnectContext`  
-3. **Create a modified request** → Becomes `NewContext` 
+3. **Create a modified request** → Becomes `NewContext`
 
 | Method                       | Returns           | Description                              |
 |------------------------------|-------------------|------------------------------------------|
