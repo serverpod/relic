@@ -21,7 +21,7 @@ Future<void> main() async {
   log('Starting Body example server...');
 
   // Setup router with various body handling examples
-  final router = Router<Handler>()
+  final app = RelicApp()
     ..use('/', logRequests())
     ..get(
         '/',
@@ -62,7 +62,7 @@ Future<void> main() async {
     );
 
   // Start the server
-  await serve(router.asHandler, InternetAddress.loopbackIPv4, 8080);
+  await app.serve(port: 8080);
   log('Server running on http://localhost:8080');
   log('Try these endpoints:');
   log('  GET  /hello - Simple text response');
