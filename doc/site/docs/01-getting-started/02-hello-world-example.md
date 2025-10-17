@@ -4,9 +4,11 @@ sidebar_label: 👋 Hello world
 ---
 
 # Hello world
+
 Once you have Dart installed, it only takes a few lines of code to set up your Relic server. These are the steps you need to take to get a simple "Hello world" server up and running.
 
 ## Create a Dart package
+
 First, you need to create a new Dart package for your Relic server.
 
 ```bash
@@ -14,6 +16,7 @@ dart create -t console-full hello_world
 ```
 
 ## Add the Relic dependency
+
 Next, add the `relic` package as a dependency to your `pubspec.yaml` file.
 
 ```bash
