@@ -24,7 +24,7 @@ void main() {
   });
 
   test('Given a non-matching URL when served then it returns a 404', () async {
-    final router = Router<Handler>()
+    final router = RelicRouter()
       ..get(
           '/foo/bar',
           createFileHandler(
@@ -39,7 +39,7 @@ void main() {
   test(
       'Given a file under a custom URL when served then it returns the file contents',
       () async {
-    final router = Router<Handler>()
+    final router = RelicRouter()
       ..get(
           '/foo/bar',
           createFileHandler(
@@ -56,7 +56,7 @@ void main() {
   test(
       "Given a custom URL that isn't matched when served then it returns a 404",
       () async {
-    final router = Router<Handler>()
+    final router = RelicRouter()
       ..get(
           '/foo/bar',
           createFileHandler(
