@@ -18,7 +18,7 @@ Relic was born out of the needs of [Serverpod](https://serverpod.dev) for a more
 | **Type Safety** | Uses `dynamic` in several places | Stronger type safety throughout |
 | **Routing** | Requires `shelf_router` package | Built-in trie-based router |
 | **Headers** | String-based, manual parsing | Type-safe with validation |
-| **WebSockets** | Requires `shelf_web_socket` package | Built-in support |
+| **WebSockets** | Requires `shelf_web_socket` package (which uses `web_socket_channel`) | Built-in support using `web_socket` |
 | **Context Pattern** | `Request` object only | State machine with typed contexts |
 | **Body Encoding** | Headers and stream are separate | Unified `Body` type |
 | **Path Parameters** | String keys `params['id']` | Symbol-based `ctx.pathParameters[#id]` |
@@ -74,10 +74,9 @@ final date = request.headers['date']; // Returns String?
 **Relic** provides type-safe headers with automatic validation:
 
 ```dart
-// Relic - type-safe with validation
-final contentType = request.headers.contentType;  // MediaType?
-final cookies = request.headers.cookie;            // List<Cookie>
-final date = request.headers.date;                 // DateTime?
+final contentType = response.body.bodyType?.mimeType;
+final cookies = request.headers.cookie;
+final date = request.headers.date;
 ```
 
 ### Body Handling
@@ -85,7 +84,6 @@ final date = request.headers.date;                 // DateTime?
 Both frameworks have similar methods for **reading** request bodies:
 
 ```dart
-// Both Shelf and Relic
 final body = await request.readAsString();
 final stream = request.read();
 ```
@@ -122,6 +120,8 @@ final response = Response.ok(
 
 This unified approach in Relic ensures the body content, encoding, content-type header, and content-length header stay in sync, reducing errors.
 
+Relic will attempt to infer the MIME type if not set explicitly, but it's best practice to set it explicitly when known to avoid running the detection code. The detection works best for binary content, though it can handle some textual content such as HTML, XML, and JSON. The inference is optimized for speed over precision.
+
 ## Routing
 
 ### Basic Routing
@@ -143,11 +143,12 @@ final router = Router()
 ```dart
 import 'package:relic/relic.dart';
 
-final router = Router<Handler>()
-  ..get('/users/:id', (RequestContext ctx) {
-    final id = ctx.pathParameters[#id];  // Symbol-based access
+final router = RelicApp()
+  ..get('/users/:id',(NewContext ctx) {
+    final id = ctx.pathParameters[#id];
     return ctx.respond(Response.ok(body: Body.fromString('User $id')));
-  });
+  },
+);
 ```
 
 ### Routing Performance
@@ -168,21 +169,15 @@ final handler = Pipeline()
 **Relic** allows middleware at the route level with `router.use()`:
 
 ```dart
-final router = Router<Handler>();
+  final router = RelicApp();
 
-// Apply middleware to specific paths
-router.use('/api', (handler) {
-  return (ctx) async {
-    // Auth check
-    if (!isAuthorized(ctx)) {
-      return ctx.respond(Response.forbidden());
-    }
-    return handler(ctx);
-  };
-});
+  // Apply middleware to specific paths
+  router.use('/api', (handler) {
+    ...
+  });
 
-// Routes under /api automatically get the middleware
-router.get('/api/users', getUsersHandler);
+  // Routes under /api automatically get the middleware
+  router.get('/api/users', getUsersHandler);
 ```
 
 ## WebSocket Support
@@ -222,7 +217,7 @@ ConnectContext handler(NewContext ctx) {
 }
 ```
 
-Relic's WebSocket API integrates with the context state machine and provides both throwing and non-throwing send methods for better error handling.
+Relic's WebSocket API integrates with the context state machine and provides both throwing and non-throwing send methods for better error handling. Unlike Shelf's `shelf_web_socket` package (which uses the older (`web_socket_channel`)[https://pub.dev/packages/web_socket_channel]), Relic uses the modern (`web_socket`)[https://pub.dev/packages/web_socket] package for better performance and a more idiomatic Dart API.
 
 ## State Management
 
@@ -255,18 +250,12 @@ sessionProperty.set(ctx, sessionData);
 // Get values - type-safe!
 final user = userProperty.get(ctx);  // User?
 final session = sessionProperty.get(ctx);  // Session?
+
 ```
 
-## Error Handling
+Since `ContextProperty` objects are separate instances, there's no risk of key conflicts between different properties, unlike string-based context maps.
 
-**Shelf** may return `null` from handlers, requiring adapters to handle this case:
-
-```dart
-Response? handler(Request request) {
-  // Could return null
-  return null;
-}
-```
+## State Machine
 
 **Relic** uses a state machine where handlers **must** return a handled context:
 
@@ -351,21 +340,19 @@ import 'package:relic/io_adapter.dart';
 import 'package:relic/relic.dart';
 
 void main() async {
-  final router = Router<Handler>()
-    ..get('/users/:id', (RequestContext ctx) {
-      final id = ctx.pathParameters[#id]!;
-      final name = ctx.request.url.queryParameters['name'] ?? 'Unknown';
-      return ctx.respond(
-        Response.ok(body: Body.fromString('User $id: $name')),
-      );
-    });
+  final router = RelicApp()
+    ..get(
+      '/users/:id',
+      (NewContext ctx) {
+        final id = ctx.pathParameters[#id]!;
+        final name = ctx.request.url.queryParameters['name'] ?? 'Unknown';
+        return ctx.respond(
+          Response.ok(body: Body.fromString('User $id: $name')),
+        );
+      },
+    );
 
-  final handler = Pipeline()
-      .addMiddleware(logRequests())
-      .addMiddleware(routeWith(router))
-      .addHandler(respondWith((_) => Response.notFound()));
-
-  await serve(handler, InternetAddress.anyIPv4, 8080);
+  await router.serve(port: 8080);
 }
 ```
 
