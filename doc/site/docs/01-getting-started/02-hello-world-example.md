@@ -1,11 +1,29 @@
 ---
 sidebar_position: 2
-sidebar_label: 🌟 Hello, World! Example
+sidebar_label: 👋 Hello world
 ---
 
-# Hello, World! Example
+# Hello world
+Once you have Dart installed, it only takes a few lines of code to set up your Relic server. These are the steps you need to take to get a simple "Hello world" server up and running.
 
-Create `bin/hello_world.dart` and start a basic Relic server:
+## Create a Dart package
+First, you need to create a new Dart package for your Relic server.
+
+```bash
+dart create -t console-full hello_world
+```
+
+## Add the Relic dependency
+Next, add the `relic` package as a dependency to your `pubspec.yaml` file.
+
+```bash
+cd hello_world
+dart pub add relic
+```
+
+## Edit the main file
+
+Edit the `bin/hello_world.dart`:
 
 ```dart
 import 'dart:io';
@@ -16,7 +34,7 @@ Future<void> main() async {
   // Create a simple handler that responds to every request
   final handler = respondWith(
     (final request) => Response.ok(
-      body: Body.fromString('Hello, Relic!'),
+      body: Body.fromString('Hello world!'),
     ),
   );
 
@@ -29,14 +47,12 @@ Future<void> main() async {
 **What this code does:**
 
 1. **Handler** `respondWith()` wraps a simple function that takes any `Request` and returns a `Response`
-2. **Response** `Response.ok()` creates an HTTP 200 response with the body "Hello, Relic!"
+2. **Response** `Response.ok()` creates an HTTP 200 response with the body "Hello world!"
 3. **Server** `serve()` binds the handler to port 8080 on all network interfaces
 
-The result is a server that responds to every HTTP request with the same "Hello, Relic!" message, regardless of the URL path or HTTP method used.
+The result is a server that responds to every HTTP request with the same "Hello world!" message, regardless of the URL path or HTTP method used.
 
-### Running Locally
-
-First ensure you have Relic installed as per the [installation guide](/getting-started/installation).
+## Running locally
 
 Run the app with the following command:
 

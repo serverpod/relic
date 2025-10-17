@@ -2,33 +2,33 @@
 sidebar_position: 2
 ---
 
-# Request Context
+# Request context
 
 **Context** is the heart of Relic's handler system. Think of it as a smart wrapper around an HTTP request that knows what operations are valid at each stage of processing.
 
 :::info Context vs Request
-A `Request` is just raw HTTP data (headers, body, URL). A `Context` wraps this data and adds **action methods** (`respond()`, `connect()`, `hijack()`) plus **state management**. The context system prevents you from doing invalid things - like trying to send a response AND establish a WebSocket on the same request.
+A `Request` is just raw HTTP data (headers, body, URL). A `Context` wraps this data and adds _action methods_ (`respond()`, `connect()`, `hijack()`) plus _state management_. The context system prevents you from doing invalid things - like trying to send a response _and_ establish a WebSocket on the same request.
 :::
 
-## Quick Terminology
+## Quick terminology
 
 Before we dive in, let's define a few terms you'll see throughout:
 
 - **Middleware**: A function that wraps a handler to add behavior (like logging, auth, etc.)
 - **Symbol**: A Symbol object represents an operator or identifier declared in a Dart program. Symbol literals are written with `#` followed by the identifier (like `#user`). They're compile-time constants and invaluable for APIs that refer to identifiers by name, because minification changes identifier names but not identifier symbols. Learn more about [Symbols in Dart](https://dart.dev/language/built-in-types#symbols).
 
-## The Context Lifecycle
+## The context lifecycle
 
 Every HTTP request follows this journey through Relic's context system:
 
 ```mermaid
 graph LR
-    A[NewContext<br/>Fresh Request] --> B[ResponseContext<br/>HTTP Response]
-    A --> C[ConnectContext <br/>WebSocket]
+    A[NewContext<br/><em>Fresh Request</em>] --> B[ResponseContext<br/><em>HTTP Response</em>]
+    A --> C[ConnectContext <br/><em>WebSocket</em>]
 ```
 
 :::info Context Transitions
-Every context starts as `NewContext` and **transitions exactly once** to a final state**. However, `ResponseContext` can transition to another `ResponseContext` (useful for middleware chains), while `ConnectContext` is terminal and cannot transition further.
+Every context starts as `NewContext` and transitions _exactly once_ to a final state. However, `ResponseContext` can transition to another `ResponseContext` (useful for middleware chains), while `ConnectContext` is terminal and cannot transition further.
 :::
 
 Let's start with the simplest possible Relic server to understand how contexts work:
@@ -61,7 +61,7 @@ void main() async {
 
 That's it! Every request in Relic follows this pattern: receive a context, do something with it, return a context.
 
-## Context Types
+## Context types
 
 Relic provides four context types, each representing a different stage of request processing. They form a type hierarchy:
 
@@ -78,12 +78,13 @@ Some contexts also implement special interfaces:
 
 - **`RespondableContext`** - Can send responses (includes `NewContext`, also used as a parameter type to allow multiple context types)
 
-### NewContext - The Starting Point
+### NewContext - The starting point
 
 Every handler receives a `NewContext` first. This represents a **fresh, unhandled request** and gives you three choices:
 
 1. **Send an HTTP response** → Becomes `ResponseContext`
 2. **Establish a WebSocket** → Becomes `ConnectContext`  
+3. **Create a modified request** → Becomes `NewContext` 
 
 | Method                       | Returns           | Description                              |
 |------------------------------|-------------------|------------------------------------------|
@@ -139,17 +140,17 @@ ResponseContext simpleHandler(NewContext ctx) {
 
 :::
 
-### ResponseContext - HTTP Response Sent
+### ResponseContext - HTTP response sent
 
-Once you call `respond()`, the request is considered **complete**. The `ResponseContext` returned is primarily used internally by Relic's middleware system.
+Once you call `respond()`, the request is considered _complete_. The `ResponseContext` returned is primarily used internally by Relic's middleware system.
 
-When you call `ctx.respond()`, you transition to a `ResponseContext`. This represents a **completed HTTP request** with a response ready to be sent to the client.
+When you call `ctx.respond()`, you transition to a `ResponseContext`. This represents a _completed HTTP request_ with a response ready to be sent to the client.
 
 | Property   | Type       | Description              |
 |------------|------------|--------------------------|
 | `response` | `Response` | The HTTP response object |
 
-**Example - JSON API Response:**
+**Example - JSON API response:**
 
 ```dart
 import 'dart:convert';  // For jsonEncode
@@ -173,7 +174,7 @@ Future<ResponseContext> apiHandler(NewContext ctx) async {
 }
 ```
 
-**Example - API with Route Parameters:**
+**Example - API with route parameters:**
 
 ```dart
 import 'dart:convert';
@@ -211,17 +212,25 @@ Future<ResponseContext> userHandler(NewContext ctx) async {
 Use `Headers.build()` to add custom response headers:
 
 ```dart
-return ctx.respond(Response.ok(
-  headers: Headers.build((mh) => mh
-   ..accept = AcceptHeader.parse(['application/json'])
-   ..cookie = CookieHeader.parse('name=value')),
-  body: Body.fromString(jsonEncode(data)),
-));
+return ctx.respond(
+  Response.ok(
+    body: Body.fromString(jsonEncode(data), mimeType: MimeType.json),
+    headers: Headers.build(
+      (mh) => mh
+        ..accept = AcceptHeader(
+          mediaRanges: [MediaRange('application', 'json')],
+        )
+        ..cookie = CookieHeader(
+          cookies: [Cookie(name: 'name', value: 'value')],
+        ),
+    ),
+  ),
+);
 ```
 
 :::
 
-### ConnectContext - WebSocket Connections
+### ConnectContext - WebSocket connections
 
 Use `connect()` for WebSocket handshakes. WebSockets are a specific type of connection upgrade that Relic handles automatically.
 
@@ -231,7 +240,7 @@ For full-duplex WebSocket connections where both client and server can send mess
 |------------|---------------------|---------------------------------|
 | `callback` | `WebSocketCallback` | Function handling the WebSocket |
 
-**Example - WebSocket Connection:**
+**Example - WebSocket connection:**
 
 ```dart
 import 'dart:developer';  // For log()
@@ -267,15 +276,15 @@ ConnectContext webSocketHandler(NewContext ctx) {
 }
 ```
 
-:::info WebSocket vs HTTP Response
+:::info WebSocket vs HTTP response
 Unlike `respond()` which sends a response and closes the connection, `connect()` keeps the connection alive for bidirectional communication. The context transitions to `ConnectContext` immediately, but the callback runs asynchronously to handle messages.
 :::
 
-## Accessing Request Data
+## Accessing request data
 
 All context types inherit from `RequestContext` and provide access to the original HTTP request through `ctx.request`. This gives you access to all HTTP data:
 
-### Request Properties Reference
+### Request properties reference
 
 | Property          | Type      | Description          | Example                                          |
 |-------------------|-----------|----------------------|--------------------------------------------------|
@@ -284,9 +293,9 @@ All context types inherit from `RequestContext` and provide access to the origin
 | `request.headers` | `Headers` | HTTP headers map     | `request.headers.authorization`                  |
 | `request.body`    | `Body`    | Request body stream  | `await request.body.readAsString()`              |
 
-### Reading Request Data
+### Reading request data
 
-The request body is a `Stream<List<int>>`. Use `readAsString()` for text data or `readAsBytes()` for binary data.
+The request body is a `Stream<Uint8List>`. Use `readAsString()` for text data or `readAsBytes()` for binary data.
 
 ```dart
 import 'dart:convert';
@@ -332,19 +341,19 @@ Future<ResponseContext> dataHandler(NewContext ctx) async {
 }
 ```
 
-:::warning Reading Request Bodies
+:::warning reading request bodies
 
-- The body can only be read **once** - it's a stream that gets consumed
+- The body can only be read _once_ - it's a stream that gets consumed
 - Always validate the `Content-Type` header before parsing
 - Wrap parsing in try-catch to handle malformed data
 - Be careful with large bodies - consider adding size limits
 :::
 
-## Context State Machine
+## Context state machine
 
-Relic's context system uses a **state machine** to prevent invalid operations. Each context type exposes only the methods that make sense for its current state, catching errors at compile time rather than runtime.
+Relic's context system uses a _state machine_ to prevent invalid operations. Each context type exposes only the methods that make sense for its current state, catching errors at compile time rather than runtime.
 
-Once you've chosen a path, you cannot backtrack. For example, after calling `respond()` to create a `ResponseContext`, you cannot change your mind and call `connect()` to create a `ConnectContext` instead. The transition is **irreversible**.
+Once you've chosen a path, you cannot backtrack. For example, after calling `respond()` to create a `ResponseContext`, you cannot change your mind and call `connect()` to create a `ConnectContext` instead. The transition is irreversible.
 
 This makes sense because an HTTP request can only have one outcome:
 
@@ -374,23 +383,7 @@ ConnectContext wsHandler(NewContext ctx) {
 }
 ```
 
-**Why this matters:**
-
-The type system prevents bugs like this:
-
-```dart
-Future<ResponseContext> brokenHandler(NewContext ctx) async {
-  final responseCtx = ctx.respond(Response.ok(body: Body.fromString('Hi')));
-  
-  // ❌ Compile error! responseCtx doesn't have a connect() method
-  // You already sent a response - can't also upgrade to WebSocket!
-  return responseCtx.connect(webSocketHandler);
-}
-```
-
-This is **better than runtime errors**. In other frameworks, this code might compile but fail at runtime. Relic catches it at compile time.
-
-## Custom Context Properties
+## Custom context properties
 
 Context properties let you **attach custom data** to a request as it flows through your application. Think of it like adding sticky notes to the request that any handler can read.
 
@@ -401,7 +394,7 @@ Context properties let you **attach custom data** to a request as it flows throu
 - Pass data between middleware and handlers
 - Track request-specific state
 
-### Basic Usage - Request ID
+### Example usage - request ID
 
 Here's a simple example that assigns a unique ID to each request:
 
@@ -441,11 +434,11 @@ Future<ResponseContext> handler(NewContext ctx) async {
 2. **Store data** - Middleware sets the value: `_requestIdProperty[ctx] = 'req_123'`
 3. **Retrieve data** - Any handler can read it: `_requestIdProperty[ctx]`
 
-:::info Property Lifetime
-Context properties exist **only for the duration of the request**. Once the response is sent, they're automatically cleaned up. Perfect for request-specific data!
+:::info Property lifetime
+Context properties exist **only for the duration of the request**. Once the response is sent, they're automatically cleaned up.
 :::
 
-## Common Mistakes
+## Common mistakes
 
 Here are mistakes that newbies often make (so you can avoid them):
 
@@ -540,7 +533,7 @@ Future<ResponseContext> fixedHandler(NewContext ctx) async {
 }
 ```
 
-## Best Practices
+## Best practices
 
 **Use the type system to your advantage:**
 
@@ -570,15 +563,15 @@ Future<ResponseContext> fixedHandler(NewContext ctx) async {
 
 You've learned the heart of Relic's request handling system! Here's what we covered:
 
-✅ **Context Types** - `NewContext` starts every request, then transitions to a final state  
-✅ **Type Safety** - The compiler prevents invalid operations (like responding twice)  
-✅ **Request Data** - Access HTTP data through `ctx.request`  
-✅ **Context Properties** - Attach custom data to requests  
-✅ **Common Mistakes** - How to avoid typical newbie errors
+✅ **Context types** - `NewContext` starts every request, then transitions to a final state  
+✅ **Type safety** - The compiler prevents invalid operations (like responding twice)  
+✅ **Request data** - Access HTTP data through `ctx.request`  
+✅ **Context properties** - Attach custom data to requests  
+✅ **Common mistakes** - How to avoid typical newbie errors
 
 The context system might feel complex at first, but it prevents entire categories of bugs. Stick with it - the type safety will save you hours of debugging later!
 
-### Complete Examples
+### Complete examples
 
 Still confused? Check out the complete examples on GitHub to see everything working together.
 
