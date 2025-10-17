@@ -14,11 +14,13 @@ What makes Relic handlers special is their flexibility. Unlike traditional web f
 
 This is why Relic handlers work with "context" objects instead of just taking a request and returning a response. The context gives you multiple ways to handle the connection based on what your application needs.
 
+## Handler types
+
 In Relic, there are four main handler types for different scenarios:
 
-### 1. Handler (Basic)
+### 1. Handler (foundational)
 
-The Basic `Handler` is the foundational handler type that serves as the core building block for all Relic applications. It provides the most flexibility by accepting any incoming request context and allowing you to return various types of handled contexts, making it suitable for any kind of request processing logic.
+The `Handler` is the foundational handler type that serves as the core building block for all Relic applications. It provides the most flexibility by accepting any incoming request context and allowing you to return various types of handled contexts, making it suitable for any kind of request processing logic.
 
 ```dart
 typedef Handler = FutureOr<HandledContext> Function(NewContext ctx);
@@ -41,7 +43,7 @@ Handler helloHandler(NewContext ctx) {
 
 ### 2. Responder
 
-A `Responder` is a simplified function type that provides a more straightforward approach to request handling by directly transforming an HTTP request into an HTTP response. It abstracts away the context handling, making it perfect for simple request-response scenarios and can easily be converted into a full Handler using the `respondWith` helper function.
+A `Responder` is a simplified function type that provides a more straightforward approach to request handling by directly transforming an HTTP request into an HTTP response. It abstracts away the context handling, making it perfect for simple request-response scenarios and can easily be converted into a full `Handler` using the `respondWith` helper function.
 
 ```dart
 typedef Responder = FutureOr<Response> Function(Request request);
@@ -94,7 +96,7 @@ ResponseContext apiHandler(RespondableContext context) {
 
 ### 4. HijackHandler
 
-A `HijackHandler` is a powerful handler type that enables you to take complete control of the underlying connection for advanced use cases like WebSocket upgrades or Server-Sent Events. It bypasses the normal HTTP request-response cycle, allowing for bidirectional communication and real-time data streaming directly over the raw connection.
+A `HijackHandler` is a powerful handler type that enables you to take complete control of the underlying connection for advanced use cases like WebSocket upgrades or Server-Sent Events (SSE). It bypasses the normal HTTP request-response cycle, allowing for bidirectional communication and real-time data streaming directly over the raw connection.
 
 ```dart
 typedef HijackHandler = FutureOr<HijackContext> Function(HijackableContext ctx);
@@ -128,9 +130,9 @@ HijackContext sseHandler(HijackableContext ctx) {
 }
 ```
 
-## How to Define Handlers
+## How to define handlers
 
-### Synchronous Handlers
+### Synchronous handlers
 
 For simple, fast operations:
 
@@ -142,7 +144,7 @@ ResponseContext syncHandler(NewContext ctx) {
 }
 ```
 
-### Asynchronous Handlers
+### Asynchronous handlers
 
 For operations that need to wait (database calls, file I/O, etc.):
 
@@ -159,7 +161,7 @@ Future<ResponseContext> asyncHandler(NewContext ctx) async {
 }
 ```
 
-### Using Context Data
+### Using context data
 
 Handlers receive context information about the request:
 
