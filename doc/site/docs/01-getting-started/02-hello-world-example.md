@@ -18,32 +18,30 @@ This example will show you how to:
 Create a file at `bin/hello_world.dart` with the following content:
 
 ```dart file="hello_world.dart"
-import 'dart:developer';
-import 'dart:io';
 import 'package:relic/io_adapter.dart';
 import 'package:relic/relic.dart';
 
 Future<void> main() async {
   // Create a simple handler that responds to every request
-  final router = RelicRouter()
-    ..get('/', (final ctx) => ctx.respond(
+  final app = RelicApp()
+    ..get(
+      '/**', (final ctx) => ctx.respond(
         Response.ok(
           body: Body.fromString('Hello, Relic!'),
         ),
       ),
     );
 
-  // Start the server on all network interfaces, port 8080
-  await serve(router.asHandler, InternetAddress.anyIPv4, 8080);
-  log('Server running on http://localhost:8080');
+  // Start the server on port 8080
+  await app.serve(port: 8080);
 }
 ```
 
 **What this code does:**
 
-1. **Router**: `RelicRouter()` is used to configure routing for the server.
+1. **Router**: `RelicApp()` is used to configure routing for the server.
 2. **Route**: `.get('/', ...)` handles GET requests to `/` and responds with "Hello, Relic!".
-3. **Server**: `serve()` binds the router (as a handler) to port 8080 on all network interfaces.
+3. **Server**: `app.serve()` binds the router (as a handler) to port 8080 on all network interfaces.
 4. **Logging**: The server logs to the console when started.
 
 The result is a server that responds with "Hello, Relic!" when you send a GET request to `http://localhost:8080/`.

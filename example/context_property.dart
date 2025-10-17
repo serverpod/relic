@@ -1,7 +1,6 @@
 // ignore_for_file: prefer_final_parameters
 
 import 'dart:developer';
-import 'dart:io';
 
 import 'package:relic/io_adapter.dart';
 import 'package:relic/relic.dart';
@@ -34,12 +33,11 @@ Future<ResponseContext> handler(NewContext ctx) async {
 
 void main() async {
   // Set up the router with routes
-  final router = Router<Handler>()
-    ..use('/', requestIdMiddleware)
-    ..get('/', handler);
+  final app = RelicApp()
+    ..use('/', requestIdMiddleware) // Sets the request ID
+    ..get('/', handler); // Uses the request ID
 
-  // Uses the request ID
-  await serve(router.asHandler, InternetAddress.anyIPv4, 8080);
+  await app.serve();
   log('Server running on http://localhost:8080');
 
   log('ContextProperty example - stores request-specific data');
