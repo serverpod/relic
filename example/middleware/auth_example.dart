@@ -39,7 +39,6 @@ Future<ResponseContext> protectedHandler(NewContext ctx) async {
 }
 
 void main() async {
-
   final router = RelicApp()
     // Public routes
     ..get('/public', publicHandler)
