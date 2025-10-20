@@ -130,13 +130,12 @@ class StaticHandler extends HandlerObject {
 
   @override
   FutureOr<HandledContext> call(final NewContext ctx) {
-    if (entity is Directory) {
-      return _handleDirectory(ctx, entity as Directory);
-    } else if (entity is File) {
-      return _handleFile(ctx, entity as File);
-    } else {
-      throw StateError('Unsupported entity type: ${entity.runtimeType}');
-    }
+    return switch (entity) {
+      Directory() => _handleDirectory(ctx, entity as Directory),
+      File() => _handleFile(ctx, entity as File),
+      // coverage: ignore-line
+      _ => throw StateError('Unsupported entity type: ${entity.runtimeType}')
+    };
   }
 
   Future<HandledContext> _handleDirectory(
