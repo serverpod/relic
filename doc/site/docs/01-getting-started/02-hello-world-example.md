@@ -1,9 +1,9 @@
 ---
 sidebar_position: 2
-sidebar_label: 🌟 Hello, World! Example
+sidebar_label: 👋 Hello world
 ---
 
-# Hello, World! Example
+# Hello world
 
 Let's get your first Relic server up and running! This guide walks you through creating a minimal "Hello, World!" API to demonstrate just how easy it is to get started with Relic.
 
