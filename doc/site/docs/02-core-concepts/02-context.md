@@ -341,7 +341,7 @@ Future<ResponseContext> dataHandler(NewContext ctx) async {
 }
 ```
 
-:::warning reading request bodies
+:::warning Reading request bodies
 
 - The body can only be read _once_ - it's a stream that gets consumed
 - Always validate the `Content-Type` header before parsing
