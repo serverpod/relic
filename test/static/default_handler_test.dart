@@ -16,10 +16,10 @@ void main() {
       ]).create();
 
       // Return 403 Forbidden instead of 404 Not Found, as default
-      handler = createStaticHandler(
-          cacheControl: (final _, final __) => null,
-          d.sandbox,
-          defaultHandler: respondWith((final _) => Response.forbidden()));
+      handler = StaticHandler.directory(Directory(d.sandbox),
+              cacheControl: (final _, final __) => null,
+              defaultHandler: respondWith((final _) => Response.forbidden()))
+          .asHandler;
     });
 
     test(

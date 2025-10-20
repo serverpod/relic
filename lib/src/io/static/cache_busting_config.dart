@@ -10,7 +10,7 @@ import '../../../relic.dart';
 ///   [CacheBustingConfig.tryAssetPath]) with a known mount prefix (e.g. "/static")
 ///   to get "/static/name@hash.ext".
 /// - Incoming requests: add this [CacheBustingConfig] to the static file handler
-///   (see [createStaticHandler]). The handler will strip the hash so that static
+///   (see [StaticHandler.directory]). The handler will strip the hash so that static
 ///   asset requests can be served without the hash.
 ///
 /// Once added to the `createStaticHandler`, the handler will strip the hash
