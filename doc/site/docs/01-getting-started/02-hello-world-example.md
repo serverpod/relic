@@ -5,62 +5,67 @@ sidebar_label: 👋 Hello world
 
 # Hello world
 
-Once you have Dart installed, it only takes a few lines of code to set up your Relic server. These are the steps you need to take to get a simple "Hello world" server up and running.
+Let's get your first Relic server up and running! This guide walks you through creating a minimal "Hello, World!" API to demonstrate just how easy it is to get started with Relic.
 
-## Create a Dart package
+This example will show you how to:
 
-First, you need to create a new Dart package for your Relic server.
+- Initialize a simple Relic server
+- Define your first route
+- Start the server and handle web requests
 
-```bash
-dart create -t console-full hello_world
-```
+### Create the App File
 
-## Add the Relic dependency
+Create a file at `bin/hello_world.dart` with the following content:
 
-Next, add the `relic` package as a dependency to your `pubspec.yaml` file.
-
-```bash
-cd hello_world
-dart pub add relic
-```
-
-## Edit the main file
-
-Edit the `bin/hello_world.dart`:
-
-```dart
-import 'dart:io';
+```dart file="hello_world.dart"
 import 'package:relic/io_adapter.dart';
 import 'package:relic/relic.dart';
 
 Future<void> main() async {
   // Create a simple handler that responds to every request
-  final handler = respondWith(
-    (final request) => Response.ok(
-      body: Body.fromString('Hello world!'),
-    ),
-  );
+  final app = RelicApp()
+    ..get(
+      '/**', (final ctx) => ctx.respond(
+        Response.ok(
+          body: Body.fromString('Hello, Relic!'),
+        ),
+      ),
+    );
 
-  // Start the server on all network interfaces, port 8080
-  await serve(handler, InternetAddress.anyIPv4, 8080);
-  print('Server running on http://localhost:8080');
+  // Start the server on port 8080
+  await app.serve(port: 8080);
 }
 ```
 
 **What this code does:**
 
-1. **Handler** `respondWith()` wraps a simple function that takes any `Request` and returns a `Response`
-2. **Response** `Response.ok()` creates an HTTP 200 response with the body "Hello world!"
-3. **Server** `serve()` binds the handler to port 8080 on all network interfaces
+1. **Router**: `RelicApp()` is used to configure routing for the server.
+2. **Route**: `.get('/', ...)` handles GET requests to `/` and responds with "Hello, Relic!".
+3. **Server**: `app.serve()` binds the router (as a handler) to port 8080 on all network interfaces.
+4. **Logging**: The server logs to the console when started.
 
-The result is a server that responds to every HTTP request with the same "Hello world!" message, regardless of the URL path or HTTP method used.
+The result is a server that responds with "Hello, Relic!" when you send a GET request to `http://localhost:8080/`.
 
-## Running locally
+### Running Locally
 
-Run the app with the following command:
+First, make sure you have Relic installed by following the [installation guide](/getting-started/installation).
+
+Start your server with:
 
 ```bash
 dart run bin/hello_world.dart
 ```
 
-Then, load `http://localhost:8080/` in a browser to see the output.
+Then, open your browser and visit `http://localhost:8080/`, or use curl:
+
+```bash
+curl http://localhost:8080/
+```
+
+You should see:
+
+``` bash
+Hello, Relic!
+```
+
+Congratulations! You just ran your first Relic server.

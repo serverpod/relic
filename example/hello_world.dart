@@ -1,21 +1,21 @@
 import 'dart:developer';
-
 import 'package:relic/io_adapter.dart';
 import 'package:relic/relic.dart';
 
 Future<void> main() async {
-  // Create a simple app that responds to every request
+  // Create a simple handler that responds to every request
   final app = RelicApp()
-    ..use('/', logRequests()) // log all request from / and down
-    ..any(
-        '/**',
-        respondWith(
-          (final request) => Response.ok(
-            body: Body.fromString('Hello, Relic!'),
-          ),
-        ));
+    ..get(
+      '/**',
+      (final ctx) => ctx.respond(
+        Response.ok(
+          body: Body.fromString('Hello, Relic!'),
+        ),
+      ),
+    );
 
-  // Start the server. Defaults to using port 8080 on loopback interface
-  await app.serve();
+  // Start the server on port 8080
+  await app.serve(port: 8080);
+
   log('Server running on http://localhost:8080');
 }
