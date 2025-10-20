@@ -2,7 +2,6 @@
 
 import 'dart:convert';
 import 'dart:developer';
-import 'dart:io';
 
 import 'package:relic/io_adapter.dart';
 import 'package:relic/relic.dart';
@@ -50,14 +49,14 @@ Future<ResponseContext> apiHandler(NewContext ctx) async {
 }
 
 void main() async {
-  final router = RelicRouter()
+  final app = RelicApp()
     // Apply CORS to all routes
     ..use('/', corsMiddleware())
 
     // API route
     ..get('/api', apiHandler);
 
-  await serve(router.asHandler, InternetAddress.anyIPv4, 8080);
+  await app.serve();
   log('Simple CORS example running on http://localhost:8080');
   log('Test with: curl -H "Origin: https://example.com" http://localhost:8080/api');
 }

@@ -2,7 +2,6 @@
 
 import 'dart:convert';
 import 'dart:developer';
-import 'dart:io';
 
 import 'package:relic/io_adapter.dart';
 import 'package:relic/relic.dart';
@@ -74,7 +73,7 @@ Future<ResponseContext> apiHandler(NewContext ctx) async {
 }
 
 void main() async {
-  final router = RelicRouter()
+  final app = RelicApp()
     // Apply middleware to all routes
     ..use('/', logRequests())
     ..use('/', timingMiddleware())
@@ -85,6 +84,6 @@ void main() async {
     ..use('/api', errorHandlingMiddleware())
     ..get('/api', apiHandler);
 
-  await serve(router.asHandler, InternetAddress.anyIPv4, 8080);
+  await app.serve();
   log('Middleware example running on http://localhost:8080');
 }

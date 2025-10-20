@@ -1,8 +1,6 @@
 // ignore_for_file: prefer_final_parameters
 
 import 'dart:developer';
-import 'dart:io';
-
 import 'package:relic/io_adapter.dart';
 import 'package:relic/relic.dart';
 
@@ -41,7 +39,7 @@ void main() async {
       .addHandler(simpleHandler);
 
   // Using Router (preferred)
-  final router = RelicRouter()
+  final router = RelicApp()
     ..use('/', logRequests())
     ..use('/', addServerHeader())
     ..get('/router', (NewContext ctx) async {
@@ -51,11 +49,11 @@ void main() async {
     });
 
   // Main router that shows both approaches
-  final mainRouter = RelicRouter()
+  final app = RelicApp()
     ..get('/pipeline', pipelineHandler)
     ..get('/router', router.asHandler);
 
-  await serve(mainRouter.asHandler, InternetAddress.anyIPv4, 8080);
+  await app.serve();
   log('Pipeline example running on http://localhost:8080');
   log('Try: /pipeline (Pipeline) vs /router (Router.use)');
 }

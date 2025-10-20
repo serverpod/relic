@@ -58,12 +58,12 @@ Middleware addHeaderMiddleware() {
 
 ### `router.use()` for Applying Middleware
 
-Relic's `RelicRouter` provides a convenient `use()` method for applying middleware to specific path patterns. This is the preferred way to add middleware in modern Relic applications.
+Relic's `RelicApp` provides a convenient `use()` method for applying middleware to specific path patterns. This is the preferred way to add middleware in modern Relic applications.
 
 ```dart
 import 'package:relic/relic.dart';
 
-final router = RelicRouter()
+final router = RelicApp()
   // Apply logging to all routes
   ..use('/', logRequests())
   
@@ -82,7 +82,7 @@ There are two types of categories of middlewares: global and route-specific. Glo
 **Global Middleware:** applies to all routes in your application:
 
 ```dart
-final router = RelicRouter()
+final app = RelicApp()
   // Global middleware - applies to ALL routes
   ..use('/', logRequests())
   ..use('/', corsMiddleware())
@@ -95,7 +95,7 @@ final router = RelicRouter()
 **Route-Specific Middleware:** applies only to routes under a specific path:
 
 ```dart
-final router = RelicRouter()
+final app = RelicApp()
   // Global logging
   ..use('/', logRequests())
   
@@ -111,7 +111,7 @@ final router = RelicRouter()
 Relic provides a built-in middleware function for logging request details including method, path, status code, and response time:
 
 ```dart
-final router = RelicRouter()..use('/', logRequests());
+final router = RelicApp()..use('/', logRequests());
 ```
 
 :::
@@ -129,7 +129,7 @@ One important thing to note is that path hierarchy takes precedence over registr
 This means that within the same path scope, middlewares are applied in the order they are registered, creating nested layers.
 
 ```dart
-final router = RelicRouter()
+final app = RelicApp()
   ..use('/api', middlewareC)    // Registered first, but specific to /api
   ..use('/', middlewareA)       // Registered second and applicable to all paths below /
   ..use('/', middlewareB)       // Registered last and applicable to all paths below /
@@ -141,7 +141,7 @@ Since `middlewareC` was added with `use('/api', middlewareC)` it won't impact re
 Lets look at an example of how middlewares will work in same path scope:
 
 ```dart
-final router = RelicRouter()
+final app = RelicApp()
   ..use('/api', middleware1)  // MW1 - outermost (registered first)
   ..use('/api', middleware2)  // MW2 - middle
   ..use('/api', middleware3)  // MW3 - innermost (registered last)
