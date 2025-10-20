@@ -41,15 +41,15 @@ Future<void> main() async {
           Method.head,
         },
         '/static/**',
-        createStaticHandler(
-          staticDir.path,
+        StaticHandler.directory(
+          staticDir,
           cacheControl: (final _, final __) => CacheControlHeader(
             maxAge: 31536000,
             publicCache: true,
             immutable: true,
           ),
           cacheBustingConfig: buster,
-        ));
+        ).asHandler);
 
   // Start the server
   await app.serve();

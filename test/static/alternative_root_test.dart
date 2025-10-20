@@ -18,8 +18,8 @@ void main() {
 
   test('Given a root file when accessed then it returns the file content',
       () async {
-    final handler = createStaticHandler(
-        cacheControl: (final _, final __) => null, d.sandbox);
+    final handler = StaticHandler.directory(Directory(d.sandbox),
+        cacheControl: (final _, final __) => null).asHandler;
 
     final response = await makeRequest(
       handler,
@@ -34,8 +34,8 @@ void main() {
   test(
       'Given a root file with space when accessed then it returns the file content',
       () async {
-    final handler = createStaticHandler(
-        cacheControl: (final _, final __) => null, d.sandbox);
+    final handler = StaticHandler.directory(Directory(d.sandbox),
+        cacheControl: (final _, final __) => null).asHandler;
 
     final response = await makeRequest(
         handler, '/static/files/with%20space.txt',
@@ -48,8 +48,8 @@ void main() {
   test(
       'Given a root file with unencoded space when accessed then it returns the file content',
       () async {
-    final handler = createStaticHandler(
-        cacheControl: (final _, final __) => null, d.sandbox);
+    final handler = StaticHandler.directory(Directory(d.sandbox),
+        cacheControl: (final _, final __) => null).asHandler;
 
     final response = await makeRequest(
         handler, '/static/files/with%20space.txt',
@@ -62,8 +62,8 @@ void main() {
   test(
       'Given a file under directory when accessed then it returns the file content',
       () async {
-    final handler = createStaticHandler(
-        cacheControl: (final _, final __) => null, d.sandbox);
+    final handler = StaticHandler.directory(Directory(d.sandbox),
+        cacheControl: (final _, final __) => null).asHandler;
 
     final response = await makeRequest(handler, '/static/files/test.txt',
         handlerPath: 'static');
@@ -74,8 +74,8 @@ void main() {
 
   test('Given a non-existent file when accessed then it returns a 404 status',
       () async {
-    final handler = createStaticHandler(
-        cacheControl: (final _, final __) => null, d.sandbox);
+    final handler = StaticHandler.directory(Directory(d.sandbox),
+        cacheControl: (final _, final __) => null).asHandler;
 
     final response = await makeRequest(handler, '/static/not_here.txt',
         handlerPath: 'static');
