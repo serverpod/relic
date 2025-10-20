@@ -325,17 +325,19 @@ Future<FileInfo> _getFileInfo(
   final File file,
   final MimeTypeResolver mimeResolver,
 ) async {
-  final stat = file.statSync();
   final cachedInfo = _fileInfoCache[file.path];
 
   // Check if cache is valid
   if (cachedInfo != null && !cachedInfo.isStale) return cachedInfo;
 
   // Generate new file info
-  final etag = Isolate.run(() => _generateETag(file));
-  final mimeType = await _detectMimeType(file, mimeResolver);
+  final (stat, etag, mimeType) = await Isolate.run(() => (
+        file.stat(),
+        _generateETag(file),
+        _detectMimeType(file, mimeResolver)
+      ).wait);
 
-  final fileInfo = FileInfo(file, mimeType, stat, await etag);
+  final fileInfo = FileInfo(file, mimeType, stat, etag);
   _fileInfoCache[file.path] = fileInfo;
   return fileInfo;
 }
