@@ -157,11 +157,11 @@ class _HotReloader {
   Future<void> register(final RelicApp app) async {
     final vms = await vmService;
     if (vms != null) {
-      vms.onIsolateEvent.listen((final e) async {
+      vms.onIsolateEvent.asyncMap((final e) async {
         if (e.kind == 'IsolateReload') {
           await app._reload();
         }
-      });
+      }).listen((final _) {});
     }
   }
 }
