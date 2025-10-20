@@ -34,7 +34,7 @@ import '../message/response.dart';
 /// ## Async Handler
 ///
 /// ```dart
-/// Handler asyncHandler(NewContext ctx) async {
+/// Future<ResponseContext> asyncHandler(NewContext ctx) async {
 ///   final data = await fetchDataFromDatabase();
 ///   return ctx.respond(
 ///     Response.ok(
