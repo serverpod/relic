@@ -1,26 +1,27 @@
-import 'dart:io';
-
 import 'package:relic/io_adapter.dart';
 import 'package:relic/relic.dart';
 
 /// A simple 'Hello World' server
 Future<void> main() async {
-  // Setup router with fallback
-  final router = RelicRouter()
-    ..use('/', logRequests())
+  // Setup app
+  final app = RelicApp()
+    ..get('/user/:name/age/:age', hello) // route with parameters (:name & :age)
+    ..use('/', logRequests()) // middleware on all paths below '/'
+    // custom fallback - optional (default is 404 Not Found)
     ..fallback = respondWith((final _) => Response.notFound(
         body: Body.fromString("Sorry, that doesn't compute")));
 
-  // RelicRouter can be used directly as a Handler via the asHandler extension.
-  await serve(router.asHandler, InternetAddress.anyIPv4, 8080);
-
-  // Check the _example_ directory for other examples.
+  // Start the server. Defaults to using port 8080 on loopback interface
+  await app.serve();
 }
 
 ResponseContext hello(final NewContext ctx) {
   final name = ctx.pathParameters[#name];
   final age = int.parse(ctx.pathParameters[#age]!);
 
-  return ctx.respond(Response.ok(
-      body: Body.fromString('Hello $name! To think you are $age years old.')));
+  return ctx.respond(
+    Response.ok(
+      body: Body.fromString('Hello $name! To think you are $age years old.'),
+    ),
+  );
 }

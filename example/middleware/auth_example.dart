@@ -1,7 +1,10 @@
 // ignore_for_file: prefer_final_parameters
 
 import 'dart:developer';
+<<<<<<< HEAD
 import 'dart:io';
+=======
+>>>>>>> origin
 
 import 'package:relic/io_adapter.dart';
 import 'package:relic/relic.dart';
@@ -40,7 +43,7 @@ Future<ResponseContext> protectedHandler(NewContext ctx) async {
 }
 
 void main() async {
-  final router = RelicRouter()
+  final router = RelicApp()
     // Public routes
     ..get('/public', publicHandler)
 
@@ -48,7 +51,7 @@ void main() async {
     ..use('/protected', authMiddleware())
     ..get('/protected', protectedHandler);
 
-  await serve(router.asHandler, InternetAddress.anyIPv4, 8080);
+  await router.serve(port: 8080);
   log('Auth example running on http://localhost:8080');
   log('Try: curl -H "X-API-Key: secret123" http://localhost:8080/protected');
 }

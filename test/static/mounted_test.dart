@@ -18,10 +18,10 @@ void main() {
     final router = RelicRouter()
       ..get(
           '/**',
-          createStaticHandler(
+          StaticHandler.directory(
+            Directory(d.sandbox),
             cacheControl: (final _, final __) => null,
-            d.sandbox,
-          ));
+          ).asHandler);
 
     final handler = router.asHandler;
 
