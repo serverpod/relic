@@ -23,8 +23,7 @@ class FileInfo {
   final FileStat stat;
   final String etag;
 
-  bool get isStale {
-    final freshStat = file.statSync();
+  bool isStale(final FileStat freshStat) {
     return stat.size != freshStat.size ||
         stat.changed.isBefore(freshStat.changed);
   }
@@ -327,14 +326,15 @@ Future<FileInfo> _getFileInfo(
 ) async {
   final cachedInfo = _fileInfoCache[file.path];
 
+  final stat = await file.stat();
+
   // Check if cache is valid
-  if (cachedInfo != null && !cachedInfo.isStale) return cachedInfo;
+  if (cachedInfo != null && !cachedInfo.isStale(stat)) return cachedInfo;
 
   // Generate new file info
-  final (stat, etag, mimeType) = await Isolate.run(() => (
-        file.stat(),
+  final (etag, mimeType) = await Isolate.run(() => (
         _generateETag(file),
-        _detectMimeType(file, mimeResolver)
+        _detectMimeType(file, mimeResolver),
       ).wait);
 
   final fileInfo = FileInfo(file, mimeType, stat, etag);
