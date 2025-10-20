@@ -22,7 +22,7 @@ import '../message/response.dart';
 /// ## Basic Handler
 ///
 /// ```dart
-/// Handler myHandler(NewContext ctx) {
+/// ResponseContext myHandler(NewContext ctx) {
 ///   return ctx.respond(
 ///     Response.ok(
 ///       body: Body.fromString('Hello, World!'),
