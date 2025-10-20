@@ -19,6 +19,9 @@ ResponseContext hello(final NewContext ctx) {
   final name = ctx.pathParameters[#name];
   final age = int.parse(ctx.pathParameters[#age]!);
 
-  return ctx.respond(Response.ok(
-      body: Body.fromString('Hello $name! To think you are $age years old.')));
+  return ctx.respond(
+    Response.ok(
+      body: Body.fromString('Hello $name! To think you are $age years old.'),
+    ),
+  );
 }
