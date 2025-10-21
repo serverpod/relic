@@ -381,3 +381,32 @@ class User {
   final bool isAdmin;
   User({required this.name, required this.isAdmin});
 }
+
+
+
+/// A custom header for API versioning
+final class ApiVersionHeader {
+  static const codec = HeaderCodec(ApiVersionHeader.parse, _encode);
+
+  static List<String> _encode(ApiVersionHeader value) => [value.version];
+
+  final String version;
+
+  const ApiVersionHeader(this.version);
+
+  /// Parses the header value into an ApiVersionHeader instance
+  factory ApiVersionHeader.parse(Iterable<String> values) {
+    final value = values.firstOrNull?.trim();
+    if (value == null || value.isEmpty) {
+      throw const FormatException('API version cannot be empty');
+    }
+
+    // Validate version format (e.g., semantic versioning)
+    final versionRegex = RegExp(r'^\d+\.\d+\.\d+$');
+    if (!versionRegex.hasMatch(value)) {
+      throw const FormatException('Invalid version format. Expected: major.minor.patch');
+    }
+
+    return ApiVersionHeader(value);
+  }
+}

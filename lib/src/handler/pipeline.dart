@@ -16,19 +16,6 @@ import 'handler.dart';
 ///     .addHandler(application);
 /// ```
 ///
-/// ## With Router
-///
-/// ```dart
-/// final router = Router<Handler>();
-/// router.get('/', homeHandler);
-/// router.get('/api/users', usersHandler);
-///
-/// final handler = const Pipeline()
-///     .addMiddleware(loggingMiddleware)
-///     .addMiddleware(routeWith(router))
-///     .addHandler(respondWith((_) => Response.notFound()));
-/// ```
-///
 /// ## Execution Order
 ///
 /// ```dart
