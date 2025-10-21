@@ -92,6 +92,10 @@ final app = RelicApp()
   ..get('/posts', postsHandler);
 ```
 
+:::tip Middleware Path Matching
+When you use `router.use('/', middleware)`, the middleware applies to all matched routes at or below `/`. However, it won't run for requests that don't match any route in your router. If you need middleware to run for all requests (including 404s), you need to use a pipeline to make it truly global, or if it only needs to run on fallback, compose the fallback handler directly.
+:::
+
 **Route-Specific Middleware:** applies only to routes under a specific path:
 
 ```dart
