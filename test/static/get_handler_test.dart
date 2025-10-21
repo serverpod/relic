@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:path/path.dart' as p;
 import 'package:relic/relic.dart';
 import 'package:test/test.dart';
@@ -16,8 +18,8 @@ void main() {
       'Given a non-existent relative path when creating a static handler then it throws an ArgumentError',
       () async {
     expect(
-        () => createStaticHandler(
-            cacheControl: (final _, final __) => null, 'random/relative'),
+        () => StaticHandler.directory(Directory('random/relative'),
+            cacheControl: (final _, final __) => null).asHandler,
         throwsArgumentError);
   });
 
@@ -26,8 +28,8 @@ void main() {
       () async {
     final existingRelative = p.relative(d.sandbox);
     expect(
-        () => createStaticHandler(
-            cacheControl: (final _, final __) => null, existingRelative),
+        () => StaticHandler.directory(Directory(existingRelative),
+            cacheControl: (final _, final __) => null).asHandler,
         returnsNormally);
   });
 
@@ -36,8 +38,8 @@ void main() {
       () {
     final nonExistingAbsolute = p.join(d.sandbox, 'not_here');
     expect(
-        () => createStaticHandler(
-            cacheControl: (final _, final __) => null, nonExistingAbsolute),
+        () => StaticHandler.directory(Directory(nonExistingAbsolute),
+            cacheControl: (final _, final __) => null).asHandler,
         throwsArgumentError);
   });
 
@@ -45,8 +47,8 @@ void main() {
       'Given an existing absolute path when creating a static handler then it returns normally',
       () {
     expect(
-        () => createStaticHandler(
-            cacheControl: (final _, final __) => null, d.sandbox),
+        () => StaticHandler.directory(Directory(d.sandbox),
+            cacheControl: (final _, final __) => null).asHandler,
         returnsNormally);
   });
 }

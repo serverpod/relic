@@ -23,8 +23,7 @@ class FileInfo {
   final FileStat stat;
   final String etag;
 
-  bool get isStale {
-    final freshStat = file.statSync();
+  bool isStale(final FileStat freshStat) {
     return stat.size != freshStat.size ||
         stat.changed.isBefore(freshStat.changed);
   }
@@ -50,17 +49,18 @@ Future<FileInfo> getStaticFileInfo(
 }) async =>
     _getFileInfo(file, mimeResolver ?? _defaultMimeTypeResolver);
 
-/// Creates a Relic [Handler] that serves files from the provided [fileSystemPath].
+/// A [HandlerObject] that serves static files from a directory or a single file.
 ///
-/// When a file is requested, it is served with appropriate headers including
+/// When serving from a directory, files are served with appropriate headers including
 /// ETag, Last-Modified, and Cache-Control. The handler supports:
 /// - Conditional requests (If-None-Match, If-Modified-Since, If-Range (for range request))
 /// - Range requests for partial content (multi-range is supported, but ranges are not coalesced)
 /// - Proper MIME type detection (from magic-bytes prefixes, or file extension)
 ///
-/// If the requested path doesn't correspond to a file, the [defaultHandler] is called.
-/// If no [defaultHandler] is provided, a 404 Not Found response is returned.
-/// Directory listings are not supported for security reasons.
+/// When serving a directory:
+/// - If the requested path doesn't correspond to a file, the [defaultHandler] is called.
+/// - If no [defaultHandler] is provided, a 404 Not Found response is returned.
+/// - Directory listings are not supported for security reasons.
 ///
 /// The handler requires the request method to be either GET, or HEAD.
 /// Otherwise, a 405 Method Not Allowed response is returned with an
@@ -70,47 +70,103 @@ Future<FileInfo> getStaticFileInfo(
 /// The [cacheControl] header can be customized using [cacheControl] callback.
 ///
 /// If [cacheBustingConfig] is provided, the handler will strip cache-busting
-/// hashes from the last path segment before looking up any file.
+/// hashes from the URL path before looking up the file.
 /// See [CacheBustingConfig] for details.
-Handler createStaticHandler(
-  final String fileSystemPath, {
-  final Handler? defaultHandler,
-  final MimeTypeResolver? mimeResolver,
-  required final CacheControlFactory cacheControl,
-  final CacheBustingConfig? cacheBustingConfig,
-}) {
-  final rootDir = Directory(fileSystemPath);
-  if (!rootDir.existsSync()) {
-    throw ArgumentError('A directory corresponding to fileSystemPath '
-        '"$fileSystemPath" could not be found');
+class StaticHandler extends HandlerObject {
+  final FileSystemEntity entity;
+  final Handler? defaultHandler;
+  final MimeTypeResolver? mimeResolver;
+  final CacheControlFactory cacheControl;
+  final CacheBustingConfig? cacheBustingConfig;
+
+  const StaticHandler._(
+    this.entity, {
+    this.defaultHandler,
+    this.mimeResolver,
+    required this.cacheControl,
+    this.cacheBustingConfig,
+  });
+
+  /// Creates a [StaticHandler] for serving files from a [Directory].
+  factory StaticHandler.directory(
+    final Directory directory, {
+    final Handler? defaultHandler,
+    final MimeTypeResolver? mimeResolver,
+    required final CacheControlFactory cacheControl,
+    final CacheBustingConfig? cacheBustingConfig,
+  }) {
+    if (!directory.existsSync()) {
+      throw ArgumentError('Directory "${directory.path}" does not exist');
+    }
+    return StaticHandler._(
+      directory,
+      defaultHandler: defaultHandler,
+      mimeResolver: mimeResolver,
+      cacheControl: cacheControl,
+      cacheBustingConfig: cacheBustingConfig,
+    );
   }
 
-  final resolvedRootPath = rootDir.resolveSymbolicLinksSync();
-  final fallbackHandler =
-      defaultHandler ?? respondWith((final _) => Response.notFound());
+  /// Creates a [StaticHandler] for serving a single [File].
+  ///
+  /// Note: Cache busting is not supported for single file handlers as the file
+  /// is directly specified and URL-to-file mapping is handled by the router.
+  /// For cache-busted URLs with single files, use query parameters or router
+  /// path parameters instead.
+  factory StaticHandler.file(
+    final File file, {
+    final MimeTypeResolver? mimeResolver,
+    required final CacheControlFactory cacheControl,
+  }) {
+    if (!file.existsSync()) {
+      throw ArgumentError('File "${file.path}" does not exist');
+    }
+    return StaticHandler._(
+      file,
+      mimeResolver: mimeResolver,
+      cacheControl: cacheControl,
+    );
+  }
 
-  final resolveFilePath = switch (cacheBustingConfig) {
-    null =>
-      (final String resolvedRootPath, final List<String> requestSegments) =>
-          p.joinAll([resolvedRootPath, ...requestSegments]),
-    final cfg =>
-      (final String resolvedRootPath, final List<String> requestSegments) {
-        if (requestSegments.isEmpty) {
-          return resolvedRootPath;
+  @override
+  FutureOr<HandledContext> call(final NewContext ctx) {
+    return switch (entity) {
+      Directory() => _handleDirectory(ctx, entity as Directory),
+      File() => _handleFile(ctx, entity as File),
+      // coverage: ignore-line
+      _ => throw StateError('Unsupported entity type: ${entity.runtimeType}')
+    };
+  }
+
+  Future<HandledContext> _handleDirectory(
+    final NewContext ctx,
+    final Directory directory,
+  ) async {
+    final resolvedRootPath = directory.resolveSymbolicLinksSync();
+    final fallbackHandler =
+        defaultHandler ?? respondWith((final _) => Response.notFound());
+
+    final resolveFilePath = switch (cacheBustingConfig) {
+      null =>
+        (final String resolvedRootPath, final List<String> requestSegments) =>
+            p.joinAll([resolvedRootPath, ...requestSegments]),
+      final cfg =>
+        (final String resolvedRootPath, final List<String> requestSegments) {
+          if (requestSegments.isEmpty) {
+            return resolvedRootPath;
+          }
+
+          final fileName = cfg.tryStripHashFromFilename(
+            requestSegments.last,
+          );
+          return p.joinAll([
+            resolvedRootPath,
+            ...requestSegments.sublist(0, requestSegments.length - 1),
+            fileName,
+          ]);
         }
+    };
 
-        final fileName = cfg.tryStripHashFromFilename(
-          requestSegments.last,
-        );
-        return p.joinAll([
-          resolvedRootPath,
-          ...requestSegments.sublist(0, requestSegments.length - 1),
-          fileName,
-        ]);
-      }
-  };
-
-  return (final NewContext ctx) async {
     final filePath =
         resolveFilePath(resolvedRootPath, ctx.remainingPath.segments);
 
@@ -135,39 +191,19 @@ Handler createStaticHandler(
       cacheControl,
       ctx,
     );
-  };
-}
-
-/// Creates a Relic [Handler] that serves a single file at [filePath].
-///
-/// The file must exist at the specified path or an [ArgumentError] is thrown.
-/// Supports the same features as [createStaticHandler] but for a single file.
-///
-/// The handler requires the request method to be either GET or HEAD.
-/// Otherwise, a 405 Method Not Allowed response is returned with an
-/// appropriate Allow header.
-///
-/// The [mimeResolver] can be provided to customize MIME type detection.
-/// The [cacheControl] header can be customized using [cacheControl] callback.
-Handler createFileHandler(
-  final String filePath, {
-  final MimeTypeResolver? mimeResolver,
-  required final CacheControlFactory cacheControl,
-}) {
-  final file = File(filePath);
-  if (!file.existsSync()) {
-    throw ArgumentError(
-        'A file corresponding to filePath "$filePath" could not be found');
   }
 
-  return (final NewContext ctx) async {
+  Future<HandledContext> _handleFile(
+    final NewContext ctx,
+    final File file,
+  ) async {
     return await _serveFile(
       file,
       mimeResolver ?? _defaultMimeTypeResolver,
       cacheControl,
       ctx,
     );
-  };
+  }
 }
 
 /// Serves a file with full HTTP semantics including conditional requests and ranges.
@@ -220,17 +256,20 @@ Future<FileInfo> _getFileInfo(
   final File file,
   final MimeTypeResolver mimeResolver,
 ) async {
-  final stat = file.statSync();
   final cachedInfo = _fileInfoCache[file.path];
 
+  final stat = await file.stat();
+
   // Check if cache is valid
-  if (cachedInfo != null && !cachedInfo.isStale) return cachedInfo;
+  if (cachedInfo != null && !cachedInfo.isStale(stat)) return cachedInfo;
 
   // Generate new file info
-  final etag = Isolate.run(() => _generateETag(file));
-  final mimeType = await _detectMimeType(file, mimeResolver);
+  final (etag, mimeType) = await Isolate.run(() => (
+        _generateETag(file),
+        _detectMimeType(file, mimeResolver),
+      ).wait);
 
-  final fileInfo = FileInfo(file, mimeType, stat, await etag);
+  final fileInfo = FileInfo(file, mimeType, stat, etag);
   _fileInfoCache[file.path] = fileInfo;
   return fileInfo;
 }

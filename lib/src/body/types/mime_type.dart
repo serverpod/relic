@@ -1,40 +1,26 @@
-/// A MIME type representation for content type handling.
+/// A MIME type representing the format of content.
 ///
-/// Provides constants for common MIME types and utilities for parsing and
-/// working with MIME types.
+/// MIME types consist of a primary type and a subtype, separated by a slash.
+/// They're used to identify the format of content in HTTP headers.
 ///
-/// ## Common Usage
-///
+/// Examples:
 /// ```dart
 /// // Using predefined constants
-/// Body.fromString('Hello', mimeType: MimeType.plainText)
-/// Body.fromString('<h1>Title</h1>', mimeType: MimeType.html)
-/// Body.fromString('{"key": "value"}', mimeType: MimeType.json)
-/// ```
+/// final jsonType = MimeType.json; // application/json
+/// final htmlType = MimeType.html; // text/html
+/// final pngType = MimeType('image', 'png'); // image/png
 ///
-/// ## Parsing MIME Types
+/// // Parsing from string
+/// final customType = MimeType.parse('application/vnd.api+json');
+/// print(customType.primaryType); // "application"
+/// print(customType.subType); // "vnd.api+json"
 ///
-/// ```dart
-/// // Parse from string
-/// final mimeType = MimeType.parse('application/json');
-/// print(mimeType.primaryType); // application
-/// print(mimeType.subType);     // json
-/// ```
+/// // Checking if type is text-based
+/// print(MimeType.json.isText); // true
+/// print(MimeType.octetStream.isText); // false
 ///
-/// ## Custom MIME Types
-///
-/// ```dart
-/// // Create custom MIME type
-/// final customType = MimeType('application', 'vnd.myapp.v1+json');
-/// Body.fromString(data, mimeType: customType)
-/// ```
-///
-/// ## Checking MIME Type Properties
-///
-/// ```dart
-/// final type = MimeType.json;
-/// print(type.isText);    // true (JSON is text-based)
-/// print(type.toString()); // application/json
+/// // Converting to header value
+/// print(MimeType.plainText.toHeaderValue()); // "text/plain"
 /// ```
 class MimeType {
   /// Text mime types.
@@ -86,9 +72,27 @@ class MimeType {
   const MimeType(this.primaryType, this.subType);
 
   /// Parses a mime type from a string.
+  ///
   /// It splits the string on the '/' character and expects exactly two parts.
   /// First part is the primary type, second is the sub type.
   /// If the string is not a valid mime type then a [FormatException] is thrown.
+  ///
+  /// Examples:
+  /// ```dart
+  /// final jsonType = MimeType.parse('application/json');
+  /// print(jsonType.primaryType); // "application"
+  /// print(jsonType.subType); // "json"
+  ///
+  /// final customType = MimeType.parse('application/vnd.api+json');
+  /// print(customType.isText); // true (because it ends with +json)
+  ///
+  /// // Invalid formats throw FormatException
+  /// try {
+  ///   MimeType.parse('invalid-format');
+  /// } catch (e) {
+  ///   print(e); // FormatException: Invalid mime type invalid-format
+  /// }
+  /// ```
   factory MimeType.parse(final String type) {
     final parts = type.split('/');
     if (parts.length != 2) {
@@ -105,7 +109,29 @@ class MimeType {
     return MimeType(primaryType, subType);
   }
 
-  /// Returns `true` if the mime type is text.
+  /// Returns `true` if the mime type represents text-based content.
+  ///
+  /// This includes all `text/*` types and common text-like application types
+  /// such as JSON, XML, and JavaScript. Also recognizes structured syntax
+  /// suffixes like `+json` and `+xml`.
+  ///
+  /// Examples:
+  /// ```dart
+  /// print(MimeType.plainText.isText); // true
+  /// print(MimeType.html.isText); // true
+  /// print(MimeType.json.isText); // true
+  /// print(MimeType.xml.isText); // true
+  /// print(MimeType.javascript.isText); // true
+  /// print(MimeType.urlEncoded.isText); // true
+  ///
+  /// // Custom types with structured suffixes
+  /// print(MimeType.parse('application/vnd.api+json').isText); // true
+  /// print(MimeType.parse('application/rss+xml').isText); // true
+  ///
+  /// // Binary types
+  /// print(MimeType.octetStream.isText); // false
+  /// print(MimeType.pdf.isText); // false
+  /// ```
   bool get isText {
     if (primaryType == 'text') return true;
     if (primaryType == 'application') {

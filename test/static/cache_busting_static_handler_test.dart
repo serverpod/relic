@@ -15,15 +15,15 @@ void main() {
     setUp(() async {
       await d.dir('static', [d.file('logo.png', 'png-bytes')]).create();
       final staticRoot = Directory(p.join(d.sandbox, 'static'));
-      handler = const Pipeline().addHandler(createStaticHandler(
-        staticRoot.path,
+      handler = const Pipeline().addHandler(StaticHandler.directory(
+        staticRoot,
         cacheControl: (final _, final __) => null,
         cacheBustingConfig: CacheBustingConfig(
           mountPrefix: '/static',
           fileSystemRoot: staticRoot,
           separator: '@',
         ),
-      ));
+      ).asHandler);
     });
 
     test('when requesting asset with a non-busted URL then it serves the asset',
@@ -51,18 +51,18 @@ void main() {
     setUp(() async {
       await d.dir('static', [d.file('logo.png', 'png-bytes')]).create();
       final staticRoot = Directory(p.join(d.sandbox, 'static'));
-      final router = Router<Handler>()
+      final router = RelicRouter()
         ..get(
             '/static/**',
-            createStaticHandler(
-              staticRoot.path,
+            StaticHandler.directory(
+              staticRoot,
               cacheControl: (final _, final __) => null,
               cacheBustingConfig: CacheBustingConfig(
                 mountPrefix: '/static',
                 fileSystemRoot: staticRoot,
                 separator: '@',
               ),
-            ));
+            ).asHandler);
 
       handler = const Pipeline()
           .addMiddleware(routeWith(router))
@@ -91,15 +91,15 @@ void main() {
     setUp(() async {
       await d.dir('other', [d.file('logo.png', 'png-bytes')]).create();
       final staticRoot = Directory(p.join(d.sandbox, 'other'));
-      handler = const Pipeline().addHandler(createStaticHandler(
-        staticRoot.path,
+      handler = const Pipeline().addHandler(StaticHandler.directory(
+        staticRoot,
         cacheControl: (final _, final __) => null,
         cacheBustingConfig: CacheBustingConfig(
           mountPrefix: '/static',
           fileSystemRoot: staticRoot,
           separator: '@',
         ),
-      ));
+      ).asHandler);
     });
 
     test('when requesting asset with a non-busted URL then it serves the asset',
@@ -127,15 +127,15 @@ void main() {
     setUp(() async {
       await d.dir('static', [d.file('@logo.png', 'png-bytes')]).create();
       final staticRoot = Directory(p.join(d.sandbox, 'static'));
-      handler = const Pipeline().addHandler(createStaticHandler(
-        staticRoot.path,
+      handler = const Pipeline().addHandler(StaticHandler.directory(
+        staticRoot,
         cacheControl: (final _, final __) => null,
         cacheBustingConfig: CacheBustingConfig(
           mountPrefix: '/static',
           fileSystemRoot: staticRoot,
           separator: '@',
         ),
-      ));
+      ).asHandler);
     });
 
     test('when requesting asset with a non-busted URL then it serves the asset',
@@ -163,15 +163,15 @@ void main() {
     setUp(() async {
       await d.dir('static', [d.file('logo', 'file-contents')]).create();
       final staticRoot = Directory(p.join(d.sandbox, 'static'));
-      handler = const Pipeline().addHandler(createStaticHandler(
-        staticRoot.path,
+      handler = const Pipeline().addHandler(StaticHandler.directory(
+        staticRoot,
         cacheControl: (final _, final __) => null,
         cacheBustingConfig: CacheBustingConfig(
           mountPrefix: '/static',
           fileSystemRoot: staticRoot,
           separator: '@',
         ),
-      ));
+      ).asHandler);
     });
 
     test('when requesting asset with a non-busted URL then it serves the asset',
@@ -199,15 +199,15 @@ void main() {
     setUp(() async {
       await d.dir('static', [d.file('logo.png', 'png-bytes')]).create();
       final staticRoot = Directory(p.join(d.sandbox, 'static'));
-      handler = const Pipeline().addHandler(createStaticHandler(
-        staticRoot.path,
+      handler = const Pipeline().addHandler(StaticHandler.directory(
+        staticRoot,
         cacheControl: (final _, final __) => null,
         cacheBustingConfig: CacheBustingConfig(
           mountPrefix: '/static',
           fileSystemRoot: staticRoot,
           separator: '--',
         ),
-      ));
+      ).asHandler);
     });
 
     test('when requesting asset with a non-busted URL then it serves the asset',
@@ -245,15 +245,15 @@ void main() {
         d.dir('@images', [d.file('logo.png', 'nested-bytes')])
       ]).create();
       final staticRoot = Directory(p.join(d.sandbox, 'static'));
-      handler = const Pipeline().addHandler(createStaticHandler(
-        staticRoot.path,
+      handler = const Pipeline().addHandler(StaticHandler.directory(
+        staticRoot,
         cacheControl: (final _, final __) => null,
         cacheBustingConfig: CacheBustingConfig(
           mountPrefix: '/static',
           fileSystemRoot: staticRoot,
           separator: '@',
         ),
-      ));
+      ).asHandler);
     });
 
     test('when requesting asset with a non-busted URL then it serves the asset',
@@ -286,15 +286,15 @@ void main() {
       await d.dir('cache', []).create();
       final staticRoot = Directory(p.join(d.sandbox, 'static'));
       final cacheRoot = Directory(p.join(d.sandbox, 'cache'));
-      handler = const Pipeline().addHandler(createStaticHandler(
-        staticRoot.path,
+      handler = const Pipeline().addHandler(StaticHandler.directory(
+        staticRoot,
         cacheControl: (final _, final __) => null,
         cacheBustingConfig: CacheBustingConfig(
           mountPrefix: '/cache',
           fileSystemRoot: cacheRoot,
           separator: '@',
         ),
-      ));
+      ).asHandler);
     });
 
     test('when requesting asset with a non-busted URL then it serves the asset',

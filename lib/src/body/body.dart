@@ -114,6 +114,12 @@ class Body {
             : BodyType(mimeType: mimeType, encoding: encoding);
 
   /// Creates an empty body.
+  ///
+  /// Example:
+  /// ```dart
+  /// final emptyBody = Body.empty();
+  /// print(emptyBody.contentLength); // 0
+  /// ```
   factory Body.empty() => Body._(const Stream.empty(), 0);
 
   /// Creates a body from a string.
@@ -121,29 +127,25 @@ class Body {
   /// If [mimeType] is not provided, it will be inferred from the string.
   /// It is more performant to set it explicitly.
   ///
-  /// ## Examples
-  ///
+  /// Examples:
   /// ```dart
-  /// // Plain text (inferred)
-  /// Body.fromString('Hello, World!')
+  /// // Simple text
+  /// final body = Body.fromString('Hello, World!');
   ///
-  /// // JSON
-  /// Body.fromString(
-  ///   '{"name": "Alice"}',
-  ///   mimeType: MimeType.json,
-  /// )
+  /// // JSON with automatic detection
+  /// final jsonBody = Body.fromString('{"message": "Hello"}');
+  /// // Automatically detects application/json MIME type
   ///
-  /// // HTML
-  /// Body.fromString(
-  ///   '<h1>Welcome</h1>',
-  ///   mimeType: MimeType.html,
-  /// )
+  /// // HTML with automatic detection
+  /// final htmlBody = Body.fromString('<!DOCTYPE html><html>...</html>');
+  /// // Automatically detects text/html MIME type
   ///
-  /// // Custom encoding
-  /// Body.fromString(
-  ///   'こんにちは',
-  ///   encoding: utf8,
-  /// )
+  /// // With explicit MIME type and encoding
+  /// final customBody = Body.fromString(
+  ///   'Custom content',
+  ///   mimeType: MimeType.plainText,
+  ///   encoding: latin1,
+  /// );
   /// ```
   factory Body.fromString(
     final String body, {
@@ -197,18 +199,24 @@ class Body {
 
   /// Creates a body from a [Stream] of [Uint8List].
   ///
-  /// Use this for large files or generated content to avoid loading
-  /// everything into memory at once.
+  /// This is useful for large files or streaming data where you don't want
+  /// to load everything into memory at once.
   ///
-  /// ## Example
-  ///
+  /// Examples:
   /// ```dart
-  /// Stream<Uint8List> fileStream = getFileStream();
-  /// Body.fromDataStream(
+  /// // Stream with known length (recommended for better HTTP performance)
+  /// final streamBody = Body.fromDataStream(
   ///   fileStream,
+  ///   mimeType: MimeType.pdf,
   ///   contentLength: fileSize,
-  ///   mimeType: MimeType.octetStream,
-  /// )
+  /// );
+  ///
+  /// // Stream with unknown length (uses chunked encoding)
+  /// final dynamicBody = Body.fromDataStream(
+  ///   dynamicStream,
+  ///   mimeType: MimeType.json,
+  ///   // contentLength omitted for chunked encoding
+  /// );
   /// ```
   factory Body.fromDataStream(
     final Stream<Uint8List> body, {
@@ -232,19 +240,23 @@ class Body {
   /// This will only work for some binary formats, and falls
   /// back to [MimeType.octetStream].
   ///
-  /// ## Example
-  ///
+  /// Examples:
   /// ```dart
-  /// // Image bytes
-  /// final imageBytes = Uint8List.fromList(loadImage());
-  /// Body.fromData(imageBytes) // MIME type auto-detected
+  /// // Binary data with automatic format detection
+  /// final imageData = Uint8List.fromList([0x89, 0x50, 0x4E, 0x47, ...]);
+  /// final imageBody = Body.fromData(imageData);
+  /// // Automatically detects image/png from magic bytes
   ///
-  /// // Explicit MIME type
-  /// final pdfBytes = Uint8List.fromList(loadPDF());
-  /// Body.fromData(
-  ///   pdfBytes,
-  ///   mimeType: MimeType.parse('application/pdf'),
-  /// )
+  /// // Binary data with explicit MIME type
+  /// final binaryBody = Body.fromData(
+  ///   data,
+  ///   mimeType: MimeType.octetStream,
+  /// );
+  ///
+  /// // PDF document detection
+  /// final pdfBytes = utf8.encode('%PDF-1.4...');
+  /// final pdfBody = Body.fromData(pdfBytes);
+  /// // Automatically detects application/pdf
   /// ```
   factory Body.fromData(
     final Uint8List body, {
@@ -265,7 +277,30 @@ class Body {
 
   /// Returns a [Stream] representing the body.
   ///
-  /// Can only be called once.
+  /// Can only be called once to prevent accidental double-consumption
+  /// and ensure predictable behavior.
+  ///
+  /// Examples:
+  /// ```dart
+  /// final body = Body.fromString('test');
+  ///
+  /// // First read - OK
+  /// final stream1 = body.read();
+  ///
+  /// // Second read - throws StateError
+  /// try {
+  ///   final stream2 = body.read(); // ❌ Error!
+  /// } catch (e) {
+  ///   print(e); // "The 'read' method can only be called once"
+  /// }
+  ///
+  /// // For processing large uploads chunk by chunk:
+  /// final uploadStream = request.body.read();
+  /// await for (final chunk in uploadStream) {
+  ///   // Process chunk by chunk
+  ///   await processChunk(chunk);
+  /// }
+  /// ```
   Stream<Uint8List> read() {
     final stream = _stream;
     if (stream == null) {

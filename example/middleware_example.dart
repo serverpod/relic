@@ -1,7 +1,6 @@
 // ignore_for_file: avoid_print
 
 import 'dart:async';
-import 'dart:io';
 import 'dart:isolate';
 
 import 'package:http/http.dart' as http;
@@ -11,7 +10,7 @@ import 'package:relic/relic.dart';
 Future<void> main() async {
   // start server
   final server = await Isolate.spawn((final _) async {
-    final router = Router<Handler>()
+    final app = RelicApp()
       ..use('/api',
           AuthMiddleware().asMiddleware) // <-- add auth middleware on /api
       ..get(
@@ -19,7 +18,7 @@ Future<void> main() async {
           (final ctx) =>
               ctx.respond(Response.ok(body: Body.fromString('${ctx.user}'))));
 
-    await serve(router.asHandler, InternetAddress.loopbackIPv4, 8080);
+    await app.serve();
   }, null);
 
   // call with client

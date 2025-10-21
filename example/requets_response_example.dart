@@ -19,14 +19,14 @@ import 'package:relic/relic.dart';
 ///
 /// Note: Basic routing examples from 03-basic-routing.md are in basic_routing.dart
 Future<void> main() async {
-  final router = Router<Handler>();
+  final app = RelicApp();
 
   // ============================================================================
   // EXAMPLES FROM 04-REQUESTS.MD
   // ============================================================================
 
   // HTTP Method access
-  router.get('/info', (ctx) {
+  app.get('/info', (ctx) {
     final method = ctx.request.method; // Method.get
 
     return ctx.respond(Response.ok(
@@ -35,7 +35,7 @@ Future<void> main() async {
   });
 
   // Query parameters - single values
-  router.get('/search', (ctx) {
+  app.get('/search', (ctx) {
     final query = ctx.request.url.queryParameters['query'];
     final page = ctx.request.url.queryParameters['page'];
 
@@ -51,7 +51,7 @@ Future<void> main() async {
   });
 
   // Query parameters - multiple values
-  router.get('/filter', (ctx) {
+  app.get('/filter', (ctx) {
     final tags = ctx.request.url.queryParametersAll['tag'] ?? [];
 
     return ctx.respond(Response.ok(
@@ -60,7 +60,7 @@ Future<void> main() async {
   });
 
   // Type-safe headers
-  router.get('/headers-info', (ctx) {
+  app.get('/headers-info', (ctx) {
     final request = ctx.request;
 
     // Get typed values
@@ -78,7 +78,7 @@ Future<void> main() async {
   });
 
   // Authorization headers
-  router.get('/protected', (ctx) {
+  app.get('/protected', (ctx) {
     final auth = ctx.request.headers.authorization;
 
     if (auth is BearerAuthorizationHeader) {
@@ -101,7 +101,7 @@ Future<void> main() async {
   });
 
   // Reading request body as string
-  router.post('/submit', (ctx) async {
+  app.post('/submit', (ctx) async {
     final bodyText = await ctx.request.readAsString();
     return ctx.respond(Response.ok(
       body: Body.fromString('Received: $bodyText'),
@@ -109,7 +109,7 @@ Future<void> main() async {
   });
 
   // JSON parsing example
-  router.post('/api/users', (ctx) async {
+  app.post('/api/users', (ctx) async {
     try {
       final bodyText = await ctx.request.readAsString();
       final data = jsonDecode(bodyText) as Map<String, dynamic>;
@@ -136,7 +136,7 @@ Future<void> main() async {
   });
 
   // Check if body is empty
-  router.post('/data', (ctx) {
+  app.post('/data', (ctx) {
     if (ctx.request.isEmpty) {
       return ctx.respond(Response.badRequest(
         body: Body.fromString('Request body is required'),
@@ -152,7 +152,7 @@ Future<void> main() async {
   // ============================================================================
 
   // Path parameters example
-  router.get('/users/:id', (ctx) {
+  app.get('/users/:id', (ctx) {
     final user = findUser(ctx.pathParameters[#id]);
 
     return ctx.respond(Response.ok(
@@ -161,7 +161,7 @@ Future<void> main() async {
   });
 
   // 204 No Content example
-  router.delete('/users/:id', (ctx) {
+  app.delete('/users/:id', (ctx) {
     deleteUser(ctx.pathParameters[#id]);
 
     // Success, but nothing to send back
@@ -169,19 +169,19 @@ Future<void> main() async {
   });
 
   // Redirect examples
-  router.get('/old-url', (ctx) {
+  app.get('/old-url', (ctx) {
     return ctx.respond(Response.movedPermanently(
       Uri.parse('/new-url'),
     ));
   });
 
-  router.get('/temporary', (ctx) {
+  app.get('/temporary', (ctx) {
     return ctx.respond(Response.found(
       Uri.parse('/current-location'),
     ));
   });
 
-  router.post('/submit-form', (ctx) async {
+  app.post('/submit-form', (ctx) async {
     // Process form submission...
 
     // Redirect to a success page
@@ -191,7 +191,7 @@ Future<void> main() async {
   });
 
   // Error responses
-  router.get('/dashboard', (ctx) {
+  app.get('/dashboard', (ctx) {
     final auth = ctx.request.headers.authorization;
 
     if (auth == null) {
@@ -204,7 +204,7 @@ Future<void> main() async {
     return ctx.respond(Response.ok());
   });
 
-  router.delete('/admin/users/:id', (ctx) {
+  app.delete('/admin/users/:id', (ctx) {
     final user = getCurrentUser(ctx);
 
     if (!user.isAdmin) {
@@ -218,7 +218,7 @@ Future<void> main() async {
   });
 
   // 500 Internal Server Error
-  router.get('/data-fetch', (ctx) {
+  app.get('/data-fetch', (ctx) {
     try {
       final data = fetchData();
       return ctx.respond(Response.ok(
@@ -235,7 +235,7 @@ Future<void> main() async {
   });
 
   // Custom status code
-  router.get('/teapot', (ctx) {
+  app.get('/teapot', (ctx) {
     return ctx.respond(Response(
       418, // I'm a teapot
       body: Body.fromString('I refuse to brew coffee'),
@@ -243,7 +243,7 @@ Future<void> main() async {
   });
 
   // HTML response
-  router.get('/page/html', (ctx) {
+  app.get('/page/html', (ctx) {
     const html = '''
 <!DOCTYPE html>
 <html>
@@ -258,7 +258,7 @@ Future<void> main() async {
   });
 
   // JSON response
-  router.get('/api/users/:id', (ctx) {
+  app.get('/api/users/:id', (ctx) {
     final user = {
       'id': 123,
       'name': 'Alice',
@@ -274,7 +274,7 @@ Future<void> main() async {
   });
 
   // Response headers
-  router.get('/api/data', (ctx) {
+  app.get('/api/data', (ctx) {
     final headers = Headers.build((h) {
       // Set cache control
       h.cacheControl = CacheControlHeader(
@@ -297,7 +297,7 @@ Future<void> main() async {
   // ============================================================================
 
   // Query parameter validation
-  router.get('/page', (ctx) {
+  app.get('/page', (ctx) {
     final pageStr = ctx.request.url.queryParameters['page'];
 
     if (pageStr == null) {
@@ -320,7 +320,7 @@ Future<void> main() async {
   });
 
   // Handle missing headers gracefully
-  router.get('/browser-info', (ctx) {
+  app.get('/browser-info', (ctx) {
     final userAgent = ctx.request.headers.userAgent;
 
     final message = userAgent != null
@@ -333,7 +333,7 @@ Future<void> main() async {
   });
 
   // Byte stream reading example
-  router.post('/upload', (ctx) async {
+  app.post('/upload', (ctx) async {
     final stream = ctx.request.read(); // Stream<Uint8List>
 
     int totalBytes = 0;
@@ -348,16 +348,16 @@ Future<void> main() async {
   });
 
   // ============================================================================
-  // PIPELINE & FALLBACK
+  //  FALLBACK
   // ============================================================================
 
-  final handler = const Pipeline()
-      .addMiddleware(routeWith(router))
-      .addHandler(respondWith((_) => Response.notFound(
-            body: Body.fromString('404 - Page not found'),
-          )));
-
-  await serve(handler, InternetAddress.anyIPv4, 8080);
+  app.fallback = respondWith(
+    (final _) => Response.notFound(
+      body: Body.fromString('404 - Page not found'),
+    ),
+  );
+  
+  await app.serve();
   log('🚀 Relic Documentation Examples running on http://localhost:8080');
   log('');
   log('📖 Try these examples from the docs:');
