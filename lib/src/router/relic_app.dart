@@ -6,6 +6,7 @@ part of 'router.dart';
 /// configure, and run a Relic HTTP server.
 final class RelicApp extends _DelegatingRelicRouter {
   RelicServer? _server;
+  StreamSubscription? _reloadSubscription;
   final _setup = <RouterInjectable>[];
 
   RelicApp() : super(RelicRouter());
@@ -35,8 +36,13 @@ final class RelicApp extends _DelegatingRelicRouter {
     if (_server != null) throw StateError('Cannot call run twice');
     _server = RelicServer(await adapterFactory());
     await _init();
-    await _hotReloader.register(this);
+    _reloadSubscription = await _hotReloader.register(this);
     return _server!;
+  }
+
+  Future<void> close() async {
+    await _reloadSubscription?.cancel();
+    await _server?.close();
   }
 
   Future<void> _init() async {
@@ -140,29 +146,30 @@ final class _DelegatingRelicRouter extends RelicRouter {
 }
 
 class _HotReloader {
-  final Future<vm.VmService?> vmService;
+  static final Future<Stream<void>?> _reloadStream = _init();
 
-  _HotReloader() : vmService = _init();
-
-  static Future<vm.VmService?> _init() async {
+  static Future<Stream<void>?> _init() async {
     final wsUri = (await Service.getInfo()).serverWebSocketUri;
     if (wsUri != null) {
       final vmService = await vmi.vmServiceConnectUri(wsUri.toString());
-      await vmService.streamListen(vm.EventStreams.kIsolate);
-      return vmService;
+      const streamId = vm.EventStreams.kIsolate;
+      return vmService.onIsolateEvent
+          .asBroadcastStream(
+              onListen: (final _) => vmService.streamListen(streamId),
+              onCancel: (final _) => vmService.streamCancel(streamId))
+          .where((final e) => e.kind == 'IsolateReload');
     }
     return null; // no vm service available
   }
 
-  Future<void> register(final RelicApp app) async {
-    final vms = await vmService;
-    if (vms != null) {
-      vms.onIsolateEvent.asyncMap((final e) async {
-        if (e.kind == 'IsolateReload') {
-          await app._reload();
-        }
-      }).listen((final _) {});
+  Future<StreamSubscription?> register(final RelicApp app) async {
+    final reloadStream = await _reloadStream;
+    if (reloadStream != null) {
+      return reloadStream
+          .asyncMap((final _) => app._reload())
+          .listen((final _) {});
     }
+    return null;
   }
 }
 

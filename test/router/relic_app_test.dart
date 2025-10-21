@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:developer';
+import 'dart:io';
 import 'dart:isolate';
 
 import 'package:mockito/mockito.dart';
@@ -30,7 +31,7 @@ void main() {
 
       expect(server, isA<RelicServer>());
       // Server has been created and handler mounted
-      await server.close();
+      await app.close();
     });
 
     test(
@@ -44,36 +45,46 @@ void main() {
 
       expect(server, isA<RelicServer>());
       // Server has been created and handler mounted
-      await server.close();
+      await app.close();
     });
 
     test(
         'Given a RelicApp, '
         'when hot-reloading isolate, '
         'then it is rebuild', () async {
-      int called = 0;
-      final app = RelicApp()..inject(_Injectable(() => ++called));
-      expect(called, 1);
-
       final wsUri = (await Service.getInfo()).serverWebSocketUri;
       if (wsUri == null) {
         markTestSkipped(
             'VM service not available - run with --enable-vm-service');
         return;
       }
+      if (Platform.script.path.endsWith('.dill')) {
+        markTestSkipped(
+          'Cannot reload! Use dart test --enable-wm-service --compiler source',
+        );
+        return;
+      }
+
+      int count = 0;
+      final called = StreamController<int>();
+      final app = RelicApp()..inject(_Injectable(() => called.add(++count)));
+
+      final server = await app.serve();
 
       final vmService = await vmi.vmServiceConnectUri(wsUri.toString());
+
       final isolateId = Service.getIsolateId(Isolate.current)!;
 
-      await vmService.reloadSources(isolateId, force: true);
-
-      expect(
-        called,
-        2,
-        reason: 'Injectable should be called again after hot-reload',
+      await vmService.reloadSources(
+        isolateId,
+        force: true,
+        packagesUri: (await Isolate.packageConfig)?.toString(),
       );
 
-      await (await app.serve()).close();
+      await expectLater(called.stream, emitsInOrder([1, 2]));
+
+      await vmService.dispose();
+      await app.close();
     });
   });
 }
