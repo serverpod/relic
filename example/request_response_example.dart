@@ -382,8 +382,6 @@ class User {
   User({required this.name, required this.isAdmin});
 }
 
-
-
 /// A custom header for API versioning
 final class ApiVersionHeader {
   static const codec = HeaderCodec(ApiVersionHeader.parse, _encode);
@@ -404,7 +402,8 @@ final class ApiVersionHeader {
     // Validate version format (e.g., semantic versioning)
     final versionRegex = RegExp(r'^\d+\.\d+\.\d+$');
     if (!versionRegex.hasMatch(value)) {
-      throw const FormatException('Invalid version format. Expected: major.minor.patch');
+      throw const FormatException(
+          'Invalid version format. Expected: major.minor.patch');
     }
 
     return ApiVersionHeader(value);
