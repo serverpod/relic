@@ -38,7 +38,7 @@ Future<void> main() async {
     ..get(
       '/**', (final ctx) => ctx.respond(
         Response.ok(
-          body: Body.fromString('Hello, Relic!'),
+          body: Body.fromString('Hello world!'),
         ),
       ),
     );

@@ -9,7 +9,7 @@ Future<void> main() async {
       '/**',
       (final ctx) => ctx.respond(
         Response.ok(
-          body: Body.fromString('Hello, Relic!'),
+          body: Body.fromString('Hello world!'),
         ),
       ),
     );
