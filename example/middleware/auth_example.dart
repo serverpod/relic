@@ -1,7 +1,6 @@
 // ignore_for_file: prefer_final_parameters
 
 import 'dart:developer';
-
 import 'package:relic/io_adapter.dart';
 import 'package:relic/relic.dart';
 
