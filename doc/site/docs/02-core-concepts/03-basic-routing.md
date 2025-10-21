@@ -21,110 +21,107 @@ Where:
 - `PATH` is a path on the server.
 - `HANDLER` is the function executed when the route is matched.
 
-## Example
+## The `add` method and syntactic sugar
 
-Here's a complete working server with routing (see [`basic_routing.dart`](https://github.com/serverpod/relic/blob/main/example/basic_routing.dart)):
+At the core of routing is the `add` method:
 
 ```dart
-import 'dart:io';
-import 'package:relic/io_adapter.dart';
-import 'package:relic/relic.dart';
-
-Future<void> main() async {
-  final router = Router<Handler>();
-
-  // Define routes
-  router.get('/', (ctx) {
-    return ctx.respond(
-      Response.ok(
-        body: Body.fromString('Hello World!'),
-      ),
-    );
-  });
-
-  router.post('/', (ctx) {
-    return ctx.respond(
-      Response.ok(
-        body: Body.fromString('Got a POST request'),
-      ),
-    );
-  });
-
-  router.put('/user', (ctx) {
-    return ctx.respond(
-      Response.ok(
-        body: Body.fromString('Got a PUT request at /user'),
-      ),
-    );
-  });
-
-  router.delete('/user', (ctx) {
-    return ctx.respond(
-      Response.ok(
-        body: Body.fromString('Got a DELETE request at /user'),
-      ),
-    );
-  });
-
-  // Combine router with fallback
-  final handler = const Pipeline()
-      .addMiddleware(routeWith(router))
-      .addHandler(respondWith((_) => Response.notFound()));
-
-  await serve(handler, InternetAddress.anyIPv4, 8080);
-  print('Server running on http://localhost:8080');
-}
+router.add(Method.get, '/', handler);
 ```
+
+The convenience methods like `.get()`, `.post()`, `.anyOf()`, and `.any()` are all syntactic sugar that call this underlying `add` method:
+
+- `.get(path, handler)` → `.add(Method.get, path, handler)`
+- `.post(path, handler)` → `.add(Method.post, path, handler)`
+- `.anyOf({Method.get, Method.post}, path, handler)` → calls `.add()` for each method in the set
+- `.any(path, handler)` → calls `.anyOf()` with all HTTP methods
 
 ## Breaking Down the Routes
 
 The following examples break down each route from the complete example above.
 
-Respond with `Hello World!` on the homepage:
+### Convenience methods (syntactic sugar)
+
+These methods are syntactic sugar for the core `.add()` method:
+
+**Respond with `Hello World!` on the homepage:**
 
 ```dart
-router.get('/', (ctx) {
-  return ctx.respond(Response.ok(body: Body.fromString('Hello World!')));
+app.get('/', (ctx) {
+  return ctx.respond(
+    Response.ok(
+      body: Body.fromString('Hello World!'),
+    ),
+  );
 });
 ```
 
-Respond to a POST request on the root route (`/`), the application's home page:
+**Respond to a POST request on the root route:**
 
 ```dart
-router.post('/', (ctx) {
-  return ctx.respond(Response.ok(body: Body.fromString('Got a POST request')));
+app.post('/', (ctx) {
+  return ctx.respond(
+    Response.ok(
+      body: Body.fromString('Got a POST request'),
+    ),
+  );
 });
 ```
 
-Respond to a PUT request to the `/user` route:
+**Respond to a PUT request to the `/user` route:**
 
 ```dart
-router.put('/user', (ctx) {
-  return ctx.respond(Response.ok(body: Body.fromString('Got a PUT request at /user')));
+app.put('/user', (ctx) {
+  return ctx.respond(
+    Response.ok(
+      body: Body.fromString('Got a PUT request at /user'),
+    ),
+  );
 });
 ```
 
-Respond to a DELETE request to the `/user` route:
+**Respond to a DELETE request to the `/user` route:**
 
 ```dart
-router.delete('/user', (ctx) {
-  return ctx.respond(Response.ok(body: Body.fromString('Got a DELETE request at /user')));
+app.delete('/user', (ctx) {
+  return ctx.respond(
+    Response.ok(
+      body: Body.fromString('Got a DELETE request at /user'),
+    ),
+  );
 });
 ```
 
-## Summary
+### Using the `add` method
 
-Routing is the foundation of any web application. With Relic, you can:
+This is what the convenience methods call internally:
 
-- **Define routes** using `router.METHOD(PATH, HANDLER)` syntax
-- **Handle different HTTP methods** - GET, POST, PUT, DELETE, PATCH, etc.
-- **Create handlers** that receive context and return responses
-- **Combine with middleware** using Pipeline for logging, authentication, etc.
-- **Add fallback handlers** for unmatched routes (like 404 pages)
+**Respond to a PATCH request using the core `.add()` method:**
 
-The basic pattern is simple: define your routes, create a pipeline with middleware, and start your server. From here, you can explore advanced features like path parameters, middleware composition, and type-safe request/response handling.
+```dart
+app.add(Method.patch, '/api', (ctx) {
+  return ctx.respond(
+    Response.ok(
+      body: Body.fromString('Got a PATCH request at /api'),
+    ),
+  );
+});
+```
+
+### Using `anyOf` for Multiple Methods
+
+Handle multiple HTTP methods with the same handler:
+
+**Handle both GET and POST requests to `/admin`:**
+
+```dart
+app.anyOf({Method.get, Method.post}, '/admin', (ctx) {
+  final method = ctx.request.method.name.toUpperCase();
+  return ctx.respond(Response.ok(body: Body.fromString('Admin page - $method request')));
+});
+```
 
 ## Examples
 
 - **[`basic_routing.dart`](https://github.com/serverpod/relic/blob/main/example/basic_routing.dart)** - The complete working example from this guide
-- **[`requets_response_example.dart`](https://github.com/serverpod/relic/blob/main/example/requets_response_example.dart)** - Comprehensive example covering requests, responses, and advanced routing patterns
+- **[`request_response_example.dart`](https://github.com/serverpod/relic/blob/main/example/request_response_example.dart)** - Comprehensive example covering requests, responses, and advanced routing patterns

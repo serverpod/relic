@@ -8,7 +8,7 @@ A `Response` object represents the HTTP response your server sends back to the c
 
 In Relic, every handler must return a response (wrapped in a context). The response tells the client whether the request succeeded, failed, or requires further action, and provides any requested data or error information.
 
-## Understanding HTTP Responses
+## Understanding HTTP responses
 
 An HTTP response consists of three main parts:
 
@@ -18,9 +18,9 @@ An HTTP response consists of three main parts:
 
 Relic provides convenient constructors for common status codes, making it easy to create appropriate responses without memorizing HTTP status codes.
 
-## Creating Responses
+## Creating responses
 
-### Success Responses
+### Success responses
 
 Success responses (2xx status codes) indicate that the request was received, understood, and processed successfully.
 
@@ -44,7 +44,7 @@ Use `Response.ok()` when:
 - You've successfully processed data (POST/PUT requests)
 - The operation completed without errors
 
-#### 204 No Content - Success Without Body
+#### 204 No Content - Success without body
 
 When an operation succeeds but there's no content to return:
 
@@ -91,7 +91,7 @@ router.get('/temporary', (ctx) {
 });
 ```
 
-#### 303 See Other
+#### 303 See other
 
 Commonly used after POST requests to redirect to a GET endpoint:
 
@@ -220,7 +220,7 @@ Use `Response.notFound()` when:
 - A URL path doesn't match any route
 - Data has been deleted or moved
 
-### Server Error Responses
+### Server error responses
 
 Server error responses (5xx status codes) indicate that the server encountered an error while processing a valid request.
 
@@ -264,7 +264,7 @@ router.get('/beta-feature', (ctx) {
 });
 ```
 
-### Custom Status Codes
+### Custom status codes
 
 For status codes without a dedicated constructor, use the general `Response` constructor:
 
@@ -293,7 +293,7 @@ Response.ok(
 
 By default, Relic infers the MIME type from the content. For plain text, it sets `text/plain`.
 
-### HTML Responses
+### HTML responses
 
 To serve HTML content, specify the MIME type explicitly:
 
@@ -313,7 +313,7 @@ router.get('/page', (ctx) {
 });
 ```
 
-### JSON Responses
+### JSON responses
 
 For JSON APIs, encode your data and specify the JSON MIME type:
 
@@ -354,7 +354,7 @@ router.get('/image.png', (ctx) {
 
 Relic automatically infers the MIME type from the binary data when possible.
 
-### Streaming Responses
+### Streaming responses
 
 For large files or generated content, stream the data instead of loading it all into memory:
 
@@ -508,14 +508,10 @@ try {
 
 ## Summary
 
-Creating effective HTTP responses is crucial for building reliable web applications. Key takeaways:
+Effective HTTP responses are the foundation of reliable web applications. Beyond just sending data back to clients, responses communicate the outcome of operations, guide client behavior, and provide crucial feedback for debugging and user experience.
 
-- **Choose appropriate status codes** - 2xx for success, 3xx for redirects, 4xx for client errors, 5xx for server errors
-- **Use Relic's response constructors** - `Response.ok()`, `Response.badRequest()`, `Response.notFound()`, etc.
-- **Set proper content types** - specify `mimeType` for JSON, HTML, and other structured data
-- **Include helpful error messages** - make them actionable and user-friendly
-- **Handle exceptions gracefully** - catch errors and return appropriate 5xx responses
-- **Use type-safe headers** - leverage `Headers.build()` for cache control, custom headers, etc.
-- **Stream large content** - use `Body.fromDataStream()` for files and generated content
+Choose status codes that accurately reflect what happened - success codes for completed operations, client error codes for invalid requests, and server error codes for unexpected failures. Use Relic's convenient response constructors like `Response.ok()`, `Response.badRequest()`, and `Response.notFound()` to ensure consistency and avoid memorizing numeric codes.
 
-Remember: every handler must return a response. Make them meaningful, consistent, and helpful for your API consumers.
+Always set appropriate content types for structured data and include meaningful error messages that help clients understand what went wrong and how to fix it. Handle exceptions gracefully by catching errors and returning appropriate server error responses while logging details for debugging. For performance, stream large content instead of loading it into memory.
+
+The key principle is that every handler must return a response. Make those responses meaningful, consistent, and helpful - they represent your API's contract with the world.

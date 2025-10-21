@@ -8,13 +8,13 @@ The `Request` object represents an incoming HTTP request to your Relic server. I
 
 Every handler in Relic receives a request through the context object (`ctx.request`), allowing you to inspect and process the incoming data before generating a response.
 
-## Understanding the Request Object
+## Understanding the request object
 
 When a client makes a request to your server, Relic creates a `Request` object that encapsulates all the details of that request. This object is immutable and provides type-safe access to request data.
 
 The request flows through your middleware pipeline and reaches your handler, where you can extract the information you need to process the request and generate an appropriate response.
 
-### Key Request Properties
+### Key request properties
 
 The `Request` object exposes several important properties:
 
@@ -27,7 +27,7 @@ The `Request` object exposes several important properties:
 
 ## Accessing Request Data
 
-### HTTP Method
+### HTTP method
 
 The request method indicates what action the client wants to perform. Relic uses a type-safe `Method` enum rather than strings.
 
@@ -43,12 +43,13 @@ router.get('/info', (ctx) {
 
 Common methods include `Method.get`, `Method.post`, `Method.put`, `Method.delete`, `Method.patch`, and `Method.options`.
 
-### Request URL and Path
+### Request URL and path
 
 The `url` property provides the relative path and query parameters from the current handler's perspective. This is useful when your handler is mounted at a specific path prefix.
 
 ```dart
 router.get('/users/:id', (ctx) {
+  final id = ctx.pathParameters[#id]!;
   final url = ctx.request.url;
   final fullUri = ctx.request.requestedUri;
   
@@ -64,7 +65,7 @@ For a request to `http://localhost:8080/users/123?details=true`:
 - `url.path` would be relative to the handler.
 - `requestedUri` would be the complete url, including the query parameters.
 
-## Working with Query Parameters
+## Working with query parameters
 
 Query parameters are key-value pairs appended to the URL after a question mark (`?`). They're commonly used to pass optional data or filters to your endpoints.
 
@@ -116,7 +117,7 @@ For the URL `/filter?tag=dart&tag=server&tag=web`:
 
 HTTP headers carry metadata about the request. Relic provides type-safe access to common headers, automatically parsing them into appropriate Dart types.
 
-### Type-Safe Header Access
+### Type-safe header access
 
 Instead of working with raw string values, Relic's type-safe headers give you properly typed objects:
 
@@ -171,7 +172,7 @@ router.get('/protected', (ctx) {
 });
 ```
 
-## Reading the Request Body
+## Reading the request body
 
 The request body contains data sent by the client, typically in POST, PUT, or PATCH requests. Relic provides multiple ways to read body content depending on your needs.
 
@@ -191,7 +192,7 @@ final body = await request.readAsString();
 // Use 'body' as many times as needed
 ```
 
-### Reading as String
+### Reading as string
 
 The most common way to read the body is as a string, which is perfect for JSON, XML, or plain text data:
 
@@ -259,7 +260,7 @@ router.post('/upload', (ctx) async {
 });
 ```
 
-### Checking if Body is Empty
+### Checking if body is empty
 
 Before attempting to read the body, you can check if it's empty:
 
@@ -278,7 +279,7 @@ router.post('/data', (ctx) {
 
 ## Best Practices
 
-### Validate Query Parameters
+### Validate query parameters
 
 Always validate query parameters before using them, as they come from untrusted user input:
 
@@ -304,7 +305,7 @@ router.get('/page', (ctx) {
 });
 ```
 
-### Handle Missing Headers Gracefully
+### Handle missing headers gracefully
 
 Headers are optional, so always check for null:
 
@@ -322,7 +323,7 @@ router.get('/info', (ctx) {
 });
 ```
 
-### Use Try-Catch for Body Parsing
+### Use try-catch for body parsing
 
 Always wrap body parsing in try-catch blocks to handle malformed data:
 
@@ -342,17 +343,11 @@ router.post('/api/data', (ctx) async {
 
 ## Summary
 
-The `Request` object is your gateway to understanding what clients are asking for. Key takeaways:
+The `Request` object is your gateway to understanding what clients are asking for. By leveraging Relic's type-safe API, you can build secure, reliable handlers that properly validate and process client input.
 
-- **Access request data** through `ctx.request` in your handlers
-- **Use type-safe properties** like `method`, `url`, `headers`, and `body`
-- **Read query parameters** with `url.queryParameters` (single values) or `url.queryParametersAll` (multiple values)
-- **Handle headers safely** - they're optional and type-safe (e.g., `headers.userAgent`, `headers.authorization`)
-- **Read body content once** - use `readAsString()` for text/JSON or `read()` for streaming
-- **Always validate input** - query parameters, headers, and body content come from untrusted sources
-- **Handle errors gracefully** - wrap JSON parsing and validation in try-catch blocks
+Key principles for working with requests include accessing data through `ctx.request`, using type-safe properties for methods and headers, reading query parameters safely, and handling request bodies appropriately. Remember that request bodies can only be read once, so design your handlers to consume the body early in the processing pipeline.
 
-With these fundamentals, you can build robust request handlers that safely process any client input.
+Always validate all incoming data - query parameters, headers, and body content - since they come from untrusted sources. Use try-catch blocks for JSON parsing and validation to provide meaningful error responses. By following these patterns, you'll create handlers that are both secure and user-friendly.
 
 ## Examples
 

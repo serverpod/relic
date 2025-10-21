@@ -1,13 +1,13 @@
 // ignore_for_file: avoid_print, prefer_final_parameters
 
-import 'dart:io';
 import 'package:relic/io_adapter.dart';
 import 'package:relic/relic.dart';
 
 /// A simple example demonstrating basic routing in Relic.
 ///
 /// This example shows how to:
-/// - Define routes for different HTTP methods (GET, POST, PUT, DELETE)
+/// - Define routes using convenience methods (.get, .post, .put, .delete)
+/// - Define routes using the core .add method
 /// - Handle requests to different paths
 /// - Return appropriate responses
 ///
@@ -16,11 +16,14 @@ import 'package:relic/relic.dart';
 /// - POST http://localhost:8080/          -> "Got a POST request"
 /// - PUT  http://localhost:8080/user      -> "Got a PUT request at /user"
 /// - DELETE http://localhost:8080/user    -> "Got a DELETE request at /user"
+/// - PATCH http://localhost:8080/api      -> "Got a PATCH request at /api"
+/// - GET  http://localhost:8080/admin     -> "Admin page"
 Future<void> main() async {
-  final router = Router<Handler>();
+  final app = RelicApp();
 
+  // Convenience methods - syntactic sugar for .add()
   // Respond with "Hello World!" on the homepage
-  router.get('/', (ctx) {
+  app.get('/', (ctx) {
     return ctx.respond(
       Response.ok(
         body: Body.fromString('Hello World!'),
@@ -29,7 +32,7 @@ Future<void> main() async {
   });
 
   // Respond to a POST request on the root route
-  router.post('/', (ctx) {
+  app.post('/', (ctx) {
     return ctx.respond(
       Response.ok(
         body: Body.fromString('Got a POST request'),
@@ -38,7 +41,7 @@ Future<void> main() async {
   });
 
   // Respond to a PUT request to the /user route
-  router.put('/user', (ctx) {
+  app.put('/user', (ctx) {
     return ctx.respond(
       Response.ok(
         body: Body.fromString('Got a PUT request at /user'),
@@ -47,7 +50,7 @@ Future<void> main() async {
   });
 
   // Respond to a DELETE request to the /user route
-  router.delete('/user', (ctx) {
+  app.delete('/user', (ctx) {
     return ctx.respond(
       Response.ok(
         body: Body.fromString('Got a DELETE request at /user'),
@@ -55,16 +58,37 @@ Future<void> main() async {
     );
   });
 
-  // Combine router with fallback for unmatched routes
-  final handler = const Pipeline()
-      .addMiddleware(routeWith(router))
-      .addHandler(respondWith((_) => Response.notFound()));
+  // Using the core .add method directly
+  // This is what the convenience methods (.get, .post, etc.) call internally
+  app.add(Method.patch, '/api', (ctx) {
+    return ctx.respond(
+      Response.ok(
+        body: Body.fromString('Got a PATCH request at /api'),
+      ),
+    );
+  });
 
-  await serve(handler, InternetAddress.anyIPv4, 8080);
+  // Using .anyOf to handle multiple methods with the same handler
+  app.anyOf({Method.get, Method.post}, '/admin', (ctx) {
+    final method = ctx.request.method.name.toUpperCase();
+    return ctx.respond(
+      Response.ok(
+        body: Body.fromString('Admin page - $method request'),
+      ),
+    );
+  });
+
+  // Combine router with fallback for unmatched routes
+  app.fallback = respondWith((_) => Response.notFound());
+
+  await app.serve();
   print('Server running on http://localhost:8080');
   print('Try:');
   print('  curl http://localhost:8080/');
   print('  curl -X POST http://localhost:8080/');
   print('  curl -X PUT http://localhost:8080/user');
   print('  curl -X DELETE http://localhost:8080/user');
+  print('  curl -X PATCH http://localhost:8080/api');
+  print('  curl http://localhost:8080/admin');
+  print('  curl -X POST http://localhost:8080/admin');
 }

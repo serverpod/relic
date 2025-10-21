@@ -2,28 +2,12 @@
 
 import 'dart:convert';
 import 'dart:developer';
-import 'dart:io';
 import 'package:relic/io_adapter.dart';
 import 'package:relic/relic.dart';
 
-/// Demonstrates key examples from the Relic documentation:
-/// - Request handling (method, URL, headers, body)
-/// - Response creation (status codes, headers, body types)
-/// - Query parameters and path parameters
-/// - JSON parsing and error handling
-/// - Type-safe headers
-///
-/// This file contains all the examples shown in:
-/// - 04-requests.md
-/// - 05-responses.md
-///
-/// Note: Basic routing examples from 03-basic-routing.md are in basic_routing.dart
+// Examples from requests.md and responses.md
 Future<void> main() async {
   final app = RelicApp();
-
-  // ============================================================================
-  // EXAMPLES FROM 04-REQUESTS.MD
-  // ============================================================================
 
   // HTTP Method access
   app.get('/info', (ctx) {
@@ -147,10 +131,6 @@ Future<void> main() async {
     return ctx.respond(Response.ok());
   });
 
-  // ============================================================================
-  // EXAMPLES FROM 05-RESPONSES.MD
-  // ============================================================================
-
   // Path parameters example
   app.get('/users/:id', (ctx) {
     final user = findUser(ctx.pathParameters[#id]);
@@ -225,7 +205,6 @@ Future<void> main() async {
         body: Body.fromString(data),
       ));
     } catch (e) {
-      // Log the error for debugging
       log('Error fetching data: $e');
 
       return ctx.respond(Response.internalServerError(
@@ -292,9 +271,7 @@ Future<void> main() async {
     ));
   });
 
-  // ============================================================================
-  // BEST PRACTICES EXAMPLES
-  // ============================================================================
+  // BEST PRACTICES
 
   // Query parameter validation
   app.get('/page', (ctx) {
@@ -347,16 +324,14 @@ Future<void> main() async {
     ));
   });
 
-  // ============================================================================
-  //  FALLBACK
-  // ============================================================================
+  // FALLBACK
 
   app.fallback = respondWith(
     (final _) => Response.notFound(
       body: Body.fromString('404 - Page not found'),
     ),
   );
-  
+
   await app.serve();
   log('🚀 Relic Documentation Examples running on http://localhost:8080');
   log('');
