@@ -4,12 +4,13 @@ part of 'router.dart';
 ///
 /// [RelicApp] extends [RelicRouter] and provides a convenient way to create,
 /// configure, and run a Relic HTTP server.
-final class RelicApp extends _DelegatingRelicRouter {
+final class RelicApp implements RelicRouter {
   RelicServer? _server;
   StreamSubscription? _reloadSubscription;
+  var delegate = RelicRouter();
   final _setup = <RouterInjectable>[];
 
-  RelicApp() : super(RelicRouter());
+  RelicApp();
 
   /// Creates and starts a [RelicServer] with the configured routes.
   ///
@@ -80,6 +81,22 @@ final class RelicApp extends _DelegatingRelicRouter {
 
   @override
   void inject(final RouterInjectable injectable) => _injectAndTrack(injectable);
+
+  @override
+  Handler? get fallback => delegate.fallback;
+
+  @override
+  set fallback(final Handler? value) => _injectAndTrack(_FallbackSetup(value));
+
+  @override
+  PathTrie<_RouterEntry<Handler>> get _allRoutes => delegate._allRoutes;
+
+  @override
+  bool get isEmpty => delegate.isEmpty;
+
+  @override
+  LookupResult<Handler> lookup(final Method method, final String path) =>
+      delegate.lookup(method, path);
 }
 
 sealed class _Setup implements RouterInjectable {}
@@ -115,34 +132,13 @@ final class _UseSetup extends _Setup {
   void injectIn(final RelicRouter router) => router.use(path, middleware);
 }
 
-final class _DelegatingRelicRouter extends RelicRouter {
-  RelicRouter delegate;
+final class _FallbackSetup extends _Setup {
+  final Handler? fallback;
 
-  _DelegatingRelicRouter(this.delegate);
-
-  @override
-  Handler? get fallback => delegate.fallback;
+  _FallbackSetup(this.fallback);
 
   @override
-  set fallback(final Handler? value) => delegate.fallback = value;
-
-  @override
-  void add(final Method method, final String path, final Handler route) =>
-      delegate.add(method, path, route);
-
-  @override
-  void attach(final String path, final Router<Handler> subRouter) =>
-      delegate.attach(path, subRouter);
-
-  @override
-  bool get isEmpty => delegate.isEmpty;
-
-  @override
-  LookupResult<Handler> lookup(final Method method, final String path) =>
-      delegate.lookup(method, path);
-
-  @override
-  void use(final String path, final Middleware map) => delegate.use(path, map);
+  void injectIn(final RelicRouter router) => router.fallback = fallback;
 }
 
 class _HotReloader {

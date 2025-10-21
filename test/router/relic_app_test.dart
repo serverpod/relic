@@ -69,7 +69,7 @@ void main() {
       final called = StreamController<int>();
       final app = RelicApp()..inject(_Injectable(() => called.add(++count)));
 
-      final server = await app.serve();
+      await app.serve();
 
       final vmService = await vmi.vmServiceConnectUri(wsUri.toString());
 
