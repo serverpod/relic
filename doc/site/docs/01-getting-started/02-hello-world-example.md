@@ -5,17 +5,28 @@ sidebar_label: 👋 Hello world
 
 # Hello world
 
-Let's get your first Relic server up and running! This guide walks you through creating a minimal "Hello, World!" API to demonstrate just how easy it is to get started with Relic.
+Once you have Dart installed, it only takes a few lines of code to set up your Relic server. These are the steps you need to take to get a simple "Hello world" server up and running.
 
-This example will show you how to:
+## Create a Dart package
 
-- Initialize a simple Relic server
-- Define your first route
-- Start the server and handle web requests
+First, you need to create a new Dart package for your Relic server.
 
-### Create the App File
+```bash
+dart create -t console-full hello_world
+```
 
-Create a file at `bin/hello_world.dart` with the following content:
+## Add the Relic dependency
+
+Next, add the `relic` package as a dependency to your `pubspec.yaml` file.
+
+```bash
+cd hello_world
+dart pub add relic
+```
+
+## Edit the main file
+
+Edit the `bin/hello_world.dart`:
 
 ```dart file="hello_world.dart"
 import 'package:relic/io_adapter.dart';
@@ -27,13 +38,13 @@ Future<void> main() async {
     ..get(
       '/**', (final ctx) => ctx.respond(
         Response.ok(
-          body: Body.fromString('Hello, Relic!'),
+          body: Body.fromString('Hello world!'),
         ),
       ),
     );
 
   // Start the server on port 8080
-  await app.serve(port: 8080);
+  await app.serve();
 }
 ```
 
