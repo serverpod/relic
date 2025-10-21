@@ -24,7 +24,7 @@ import '../router/router.dart';
 /// ## Basic Handler
 ///
 /// ```dart
-/// Handler myHandler(NewContext ctx) {
+/// ResponseContext myHandler(NewContext ctx) {
 ///   return ctx.respond(
 ///     Response.ok(
 ///       body: Body.fromString('Hello, World!'),
@@ -36,7 +36,7 @@ import '../router/router.dart';
 /// ## Async Handler
 ///
 /// ```dart
-/// Handler asyncHandler(NewContext ctx) async {
+/// Future<ResponseContext> asyncHandler(NewContext ctx) async {
 ///   final data = await fetchDataFromDatabase();
 ///   return ctx.respond(
 ///     Response.ok(
