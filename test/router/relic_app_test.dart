@@ -55,12 +55,12 @@ void main() {
       final wsUri = (await Service.getInfo()).serverWebSocketUri;
       if (wsUri == null) {
         markTestSkipped(
-            'VM service not available - run with --enable-vm-service');
+            'VM service not available! Use: dart run --enable-vm-service');
         return;
       }
       if (Platform.script.path.endsWith('.dill')) {
         markTestSkipped(
-          'Cannot reload! Use dart test --enable-wm-service --compiler source',
+          'Cannot reload! Use: dart test --enable-vm-service --compiler source',
         );
         return;
       }
