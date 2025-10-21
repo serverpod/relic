@@ -89,7 +89,7 @@ void main() {
   });
 }
 
-class _Injectable extends RouterInjectable {
+class _Injectable implements RouterInjectable {
   final void Function() _action;
 
   _Injectable(this._action);

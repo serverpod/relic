@@ -42,8 +42,12 @@ extension<T extends Object> on _RouterEntry<T>? {
   _RouterEntry<T> get orNew => this ?? _RouterEntry<T>();
 }
 
+/// Interface for objects that can be injected in others. This allows
+/// an object to delegate setup to another object.
 ///
-abstract class InjectableIn<T> {
+/// Used by [Router.inject] which takes an [InjectableIn<Router<T>>].
+abstract interface class InjectableIn<T> {
+  /// Overwrite this to define how to inject this object in [owner].
   void injectIn(final T owner);
 }
 

@@ -21,12 +21,21 @@ final class RelicApp implements RelicRouter {
   ///
   /// Returns a [Future] that completes with the running [RelicServer] instance.
   ///
+  /// [RelicApp] instances supports hot-reload. They will re-configure the internal
+  /// router on hot-reload. This allows adding and removing routes despite `main`
+  /// not being re-run.
+  ///
   /// Example:
   /// ```dart
   /// final app = RelicApp()
   ///   ..get('/', (ctx) => ctx.ok('Hello!'));
   ///
+  /// final adaptorFactory = () => IOAdapter.bind(InternetAddress.loopbackIPv4, port: 8080);
   /// final server = await app.run(adapterFactory);
+  ///
+  /// // later .. when done
+  ///
+  /// await app.close();
   /// ```
   ///
   /// Check out [RelicAppIOServeEx.serve] if you are using `dart:io` to avoid
