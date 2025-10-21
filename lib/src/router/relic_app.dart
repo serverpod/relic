@@ -10,8 +10,6 @@ final class RelicApp implements RelicRouter {
   var delegate = RelicRouter();
   final _setup = <RouterInjectable>[];
 
-  RelicApp();
-
   /// Creates and starts a [RelicServer] with the configured routes.
   ///
   /// The [adapterFactory] is a function that returns an [Adapter] for handling
@@ -78,15 +76,15 @@ final class RelicApp implements RelicRouter {
 
   @override
   void add(final Method method, final String path, final Handler route) =>
-      _injectAndTrack(_HandlerSetup(method, path, route));
+      inject(_Injectable((final r) => r.add(method, path, route)));
 
   @override
   void attach(final String path, final RelicRouter subRouter) =>
-      _injectAndTrack(_AttachSetup(path, subRouter));
+      inject(_Injectable((final r) => r.attach(path, subRouter)));
 
   @override
   void use(final String path, final Middleware map) =>
-      _injectAndTrack(_UseSetup(path, map));
+      inject(_Injectable((final r) => r.use(path, map)));
 
   @override
   void inject(final RouterInjectable injectable) => _injectAndTrack(injectable);
@@ -95,7 +93,8 @@ final class RelicApp implements RelicRouter {
   Handler? get fallback => delegate.fallback;
 
   @override
-  set fallback(final Handler? value) => _injectAndTrack(_FallbackSetup(value));
+  set fallback(final Handler? value) =>
+      inject(_Injectable((final r) => r.fallback = value));
 
   @override
   PathTrie<_RouterEntry<Handler>> get _allRoutes => delegate._allRoutes;
@@ -108,46 +107,13 @@ final class RelicApp implements RelicRouter {
       delegate.lookup(method, path);
 }
 
-sealed class _Setup implements RouterInjectable {}
+final class _Injectable implements RouterInjectable {
+  final void Function(RelicRouter) setup;
 
-final class _HandlerSetup extends _Setup {
-  final Method method;
-  final String path;
-  final Handler route;
-
-  _HandlerSetup(this.method, this.path, this.route);
+  _Injectable(this.setup);
 
   @override
-  void injectIn(final RelicRouter router) => router.add(method, path, route);
-}
-
-final class _AttachSetup extends _Setup {
-  final String path;
-  final Router<Handler> subRouter;
-
-  _AttachSetup(this.path, this.subRouter);
-
-  @override
-  void injectIn(final RelicRouter router) => router.attach(path, subRouter);
-}
-
-final class _UseSetup extends _Setup {
-  final String path;
-  final Middleware middleware;
-
-  _UseSetup(this.path, this.middleware);
-
-  @override
-  void injectIn(final RelicRouter router) => router.use(path, middleware);
-}
-
-final class _FallbackSetup extends _Setup {
-  final Handler? fallback;
-
-  _FallbackSetup(this.fallback);
-
-  @override
-  void injectIn(final RelicRouter router) => router.fallback = fallback;
+  void injectIn(final RelicRouter owner) => setup(owner);
 }
 
 class _HotReloader {
