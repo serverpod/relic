@@ -1,10 +1,14 @@
 import 'dart:async';
+import 'dart:developer';
+import 'dart:io';
+import 'dart:isolate';
 
 import 'package:mockito/mockito.dart';
 import 'package:relic/io_adapter.dart';
 import 'package:relic/relic.dart';
-import 'package:relic/src/adapter/context.dart';
+
 import 'package:test/test.dart';
+import 'package:vm_service/vm_service_io.dart' as vmi;
 
 void main() {
   group('RelicApp', () {
@@ -18,34 +22,16 @@ void main() {
 
     test(
         'Given a RelicApp, '
-        'when using it as a callable handler, '
-        'then it can be invoked directly', () async {
-      final app = RelicApp()
-        ..get(
-            '/test',
-            (final ctx) =>
-                ctx.respond(Response.ok(body: Body.fromString('success'))));
-
-      final request = Request(Method.get, Uri.parse('http://localhost/test'));
-      final ctx = request.toContext(Object());
-      final result = await app(ctx) as ResponseContext;
-
-      expect(result.response.statusCode, 200);
-      expect(await result.response.readAsString(), 'success');
-    });
-
-    test(
-        'Given a RelicApp, '
         'when calling run with adapter factory, '
         'then it creates a RelicServer and mounts the handler', () async {
       final app = RelicApp()
-        ..get('/', (final ctx) => ctx.respond(Response.ok()));
+        ..any('/', (final ctx) => ctx.respond(Response.ok()));
 
       final server = await app.run(() => _FakeAdapter());
 
       expect(server, isA<RelicServer>());
       // Server has been created and handler mounted
-      await server.close();
+      await app.close();
     });
 
     test(
@@ -53,15 +39,63 @@ void main() {
         'when calling serve, '
         'then it creates a RelicServer and mounts the handler', () async {
       final app = RelicApp()
-        ..get('/', (final ctx) => ctx.respond(Response.ok()));
+        ..any('/', (final ctx) => ctx.respond(Response.ok()));
 
-      final server = await app.serve();
+      final server = await app.serve(port: 0);
 
       expect(server, isA<RelicServer>());
       // Server has been created and handler mounted
-      await server.close();
+      await app.close();
+    });
+
+    test(
+        'Given a RelicApp, '
+        'when hot-reloading isolate, '
+        'then it is rebuild', () async {
+      final wsUri = (await Service.getInfo()).serverWebSocketUri;
+      if (wsUri == null) {
+        markTestSkipped(
+            'VM service not available! Use: dart run --enable-vm-service');
+        return;
+      }
+      if (Platform.script.path.endsWith('.dill')) {
+        markTestSkipped(
+          'Cannot reload! Use: dart test --enable-vm-service --compiler source',
+        );
+        return;
+      }
+
+      int count = 0;
+      final called = StreamController<int>();
+      final app = RelicApp()..inject(_Injectable(() => called.add(++count)));
+
+      await app.serve();
+
+      final vmService = await vmi.vmServiceConnectUri(wsUri.toString());
+
+      final isolateId = Service.getIsolateId(Isolate.current)!;
+
+      await vmService.reloadSources(
+        isolateId,
+        force: true,
+        packagesUri: (await Isolate.packageConfig)?.toString(),
+      );
+
+      await expectLater(called.stream, emitsInOrder([1, 2]));
+
+      await vmService.dispose();
+      await app.close();
     });
   });
+}
+
+class _Injectable implements RouterInjectable {
+  final void Function() _action;
+
+  _Injectable(this._action);
+
+  @override
+  void injectIn(final RelicRouter owner) => _action();
 }
 
 // Minimal fake adapter for testing

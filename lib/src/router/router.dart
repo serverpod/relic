@@ -1,8 +1,14 @@
 import 'dart:async';
+import 'dart:developer';
+
+import 'package:vm_service/vm_service.dart' as vm;
+import 'package:vm_service/vm_service_io.dart' as vmi;
 
 import '../../relic.dart';
 import 'normalized_path.dart';
 import 'path_trie.dart';
+
+part 'relic_app.dart';
 
 /// A wrapper around a fixed-length list used for mapping between method and value
 /// for each registered path.
@@ -34,6 +40,15 @@ extension type _RouterEntry<T extends Object>._(List<T?> _routeByVerb)
 
 extension<T extends Object> on _RouterEntry<T>? {
   _RouterEntry<T> get orNew => this ?? _RouterEntry<T>();
+}
+
+/// Interface for objects that can be injected in others. This allows
+/// an object to delegate setup to another object.
+///
+/// Used by [Router.inject] which takes an [InjectableIn<Router<T>>].
+abstract interface class InjectableIn<T> {
+  /// Overwrite this to define how to inject this object in [owner].
+  void injectIn(final T owner);
 }
 
 /// A URL router that maps path patterns to values of type [T].
@@ -112,6 +127,11 @@ final class Router<T extends Object> {
   void attach(final String path, final Router<T> subRouter) {
     _allRoutes.attach(NormalizedPath(path), subRouter._allRoutes);
   }
+
+  /// Injects an [injectable] into the router. Unlike [add] it allows
+  /// the [injectable] object to determine how to be mounted on the router.
+  void inject(final InjectableIn<Router<T>> injectable) =>
+      injectable.injectIn(this);
 
   /// Looks up a route matching the provided [path].
   ///
@@ -244,39 +264,4 @@ typedef RelicRouter = Router<Handler>;
 ///   ResponseContext delete(final NewContext ctx) { }
 /// }
 /// ```
-abstract interface class RouterInjectable {
-  void injectIn(final RelicRouter router);
-}
-
-/// The main application class for a Relic web server.
-///
-/// [RelicApp] extends [RelicRouter] and provides a convenient way to create,
-/// configure, and run a Relic HTTP server.
-final class RelicApp extends RelicRouter {
-  /// Creates and starts a [RelicServer] with the configured routes.
-  ///
-  /// The [adapterFactory] is a function that returns an [Adapter] for handling
-  /// HTTP requests. This can be a synchronous function or an async function.
-  /// The adapter factory pattern allows for deferred initialization of server
-  /// resources.
-  ///
-  /// Returns a [Future] that completes with the running [RelicServer] instance.
-  ///
-  /// Example:
-  /// ```dart
-  /// final app = RelicApp()
-  ///   ..get('/', (ctx) => ctx.ok('Hello!'));
-  ///
-  /// final server = await app.run(adapterFactory);
-  /// ```
-  ///
-  /// Check out [RelicAppIOServeEx.serve] if you are using `dart:io` to avoid
-  /// specifying [adapterFactory] explicitly.
-  Future<RelicServer> run(
-    final FutureOr<Adapter> Function() adapterFactory,
-  ) async {
-    final server = RelicServer(await adapterFactory());
-    await server.mountAndStart(call);
-    return server;
-  }
-}
+typedef RouterInjectable = InjectableIn<RelicRouter>;
