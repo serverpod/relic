@@ -128,7 +128,7 @@ class _HotReloader {
           .asBroadcastStream(
               onListen: (final _) => vmService.streamListen(streamId),
               onCancel: (final _) => vmService.streamCancel(streamId))
-          .where((final e) => e.kind == 'IsolateReload');
+          .where((final e) => e.kind == vm.EventKind.kIsolateReload);
     }
     return null; // no vm service available
   }
