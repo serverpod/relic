@@ -39,10 +39,11 @@ final class RelicApp implements RelicRouter {
   /// Check out [RelicAppIOServeEx.serve] if you are using `dart:io` to avoid
   /// specifying [adapterFactory] explicitly.
   Future<RelicServer> run(
-    final FutureOr<Adapter> Function() adapterFactory,
-  ) async {
+    final FutureOr<Adapter> Function() adapterFactory, {
+    final int noOfIsolates = 1,
+  }) async {
     if (_server != null) throw StateError('Cannot call run twice');
-    _server = MultiIsolateRelicServer(adapterFactory);
+    _server = RelicServer(adapterFactory, noOfIsolates: noOfIsolates);
     await _init();
     _reloadSubscription = await _hotReloader.register(this);
     return _server!;

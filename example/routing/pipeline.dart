@@ -9,14 +9,16 @@ Future<void> main() async {
   final handler = const Pipeline()
       // Pipelines allows middleware to run before routing
       .addMiddleware(logRequests())
-      .addHandler(respondWith(
-        (final request) => Response.ok(
-          body: Body.fromString('Hello, Relic!'),
+      .addHandler(
+        respondWith(
+          (final request) =>
+              Response.ok(body: Body.fromString('Hello, Relic!')),
         ),
-      )); // handles any verb, and any path
+      ); // handles any verb, and any path
 
   // Start a server that forward request to the handler
-  final adapter = await IOAdapter.bind(InternetAddress.anyIPv4, port: 8080);
-  final server = RelicServer(adapter);
+  final server = RelicServer(
+    () => IOAdapter.bind(InternetAddress.anyIPv4, port: 8080),
+  );
   await server.mountAndStart(handler);
 }

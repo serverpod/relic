@@ -3,7 +3,6 @@ import 'dart:io';
 
 import 'package:http/http.dart' as http;
 import 'package:relic/relic.dart';
-import 'package:relic/src/adapter/io/bind_http_server.dart';
 import 'package:relic/src/adapter/io/io_adapter.dart';
 import 'package:test/test.dart';
 
@@ -55,8 +54,7 @@ extension RelicServerTestEx on RelicServer {
 
 /// Creates a [RelicServer] that listens on the loopback IPv4 address.
 Future<RelicServer> createServer() async {
-  final adapter = IOAdapter(await bindHttpServer(InternetAddress.loopbackIPv4));
-  return RelicServer(adapter);
+  return RelicServer(() => IOAdapter.bind(InternetAddress.loopbackIPv4));
 }
 
 /// Returns the headers from the server request if the server returns a 200

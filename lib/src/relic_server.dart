@@ -13,27 +13,28 @@ import 'message/response.dart';
 import 'util/util.dart';
 
 sealed class RelicServer {
-  Adapter get adapter;
-
   Future<void> mountAndStart(final Handler handler);
   Future<void> close();
 
-  factory RelicServer(final Adapter adapter) = _RelicServer;
+  factory RelicServer(
+    final Factory<Adapter> adapterFactory, {
+    final int noOfIsolates = 1,
+  }) {
+    RangeError.checkNotNegative(noOfIsolates);
+    if (noOfIsolates == 1) return _RelicServer(adapterFactory);
+    return _MultiIsolateRelicServer(adapterFactory, noOfIsolates);
+  }
 }
 
 /// A server that uses a [Adapter] to handle HTTP requests.
 final class _RelicServer implements RelicServer {
-  /// The underlying adapter.
-  @override
-  final Adapter adapter;
-
-  /// Whether [mountAndStart] has been called.
+  final FutureOr<Adapter> _adapter;
   Handler? _handler;
-
   StreamSubscription<AdapterRequest>? _subscription;
 
   /// Creates a server with the given parameters.
-  _RelicServer(this.adapter);
+  _RelicServer(final Factory<Adapter> adapterFactory)
+      : _adapter = adapterFactory();
 
   /// Mounts a handler to the server and starts listening for requests.
   ///
@@ -48,7 +49,7 @@ final class _RelicServer implements RelicServer {
   @override
   Future<void> close() async {
     await _stopListening();
-    await adapter.close();
+    await (await _adapter).close();
   }
 
   Future<void> _stopListening() async {
@@ -58,6 +59,7 @@ final class _RelicServer implements RelicServer {
 
   /// Starts listening for requests.
   Future<void> _startListening() async {
+    final adapter = await _adapter;
     catchTopLevelErrors(() {
       _subscription = adapter.requests.listen(_handleRequest);
     }, (final error, final stackTrace) {
@@ -72,6 +74,8 @@ final class _RelicServer implements RelicServer {
   Future<void> _handleRequest(final AdapterRequest adapterRequest) async {
     final handler = _handler;
     if (handler == null) return; // if close has been called
+
+    final adapter = await _adapter;
 
     // Wrap the handler with our middleware
     late Request request;
@@ -157,13 +161,10 @@ void _logError(
   );
 }
 
-final class IsolatedRelicServer extends IsolatedObject<RelicServer>
+final class _IsolatedRelicServer extends IsolatedObject<RelicServer>
     implements RelicServer {
-  IsolatedRelicServer(final Factory<Adapter> adaptorFactory)
-      : super(() async => RelicServer(await adaptorFactory()));
-
-  @override
-  Adapter get adapter => throw UnimplementedError();
+  _IsolatedRelicServer(final Factory<Adapter> adaptorFactory)
+      : super(() => RelicServer(adaptorFactory));
 
   @override
   Future<void> close() async {
@@ -176,16 +177,14 @@ final class IsolatedRelicServer extends IsolatedObject<RelicServer>
       evaluateVoid((final r) => r.mountAndStart(handler));
 }
 
-final class MultiIsolateRelicServer implements RelicServer {
-  @override
-  Adapter get adapter => throw UnimplementedError();
-
+final class _MultiIsolateRelicServer implements RelicServer {
   final List<RelicServer> _children;
 
-  MultiIsolateRelicServer(final Factory<Adapter> adapterFactory,
-      [final int noOfIsolates = 1])
-      : _children = List.generate(
-            noOfIsolates, (final _) => IsolatedRelicServer(adapterFactory));
+  _MultiIsolateRelicServer(
+    final Factory<Adapter> adapterFactory,
+    final int noOfIsolates,
+  ) : _children = List.generate(
+            noOfIsolates, (final _) => _IsolatedRelicServer(adapterFactory));
 
   @override
   Future<void> close() async {
