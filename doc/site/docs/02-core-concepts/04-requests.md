@@ -4,7 +4,7 @@ The `Request` object represents an incoming HTTP request to your Relic server. I
 
 Every handler in Relic receives a request through the context object (`ctx.request`), allowing you to inspect and process the incoming data before generating a response.
 
-## Understanding the request object
+## Understanding the Request object
 
 When a client makes a request to your server, Relic creates a `Request` object that encapsulates all the details of that request. This object is immutable and provides type-safe access to request data.
 
@@ -44,13 +44,13 @@ Common methods include `Method.get`, `Method.post`, `Method.put`, `Method.delete
 The `url` property provides the relative path and query parameters from the current handler's perspective. This is particularly useful when your handler is mounted at a specific path prefix.
 
 ```dart
-router.get('/users/:id', (ctx) {
+app.get('/users/:id', (ctx) {
   final id = ctx.pathParameters[#id]!;
   final url = ctx.request.url;
   final fullUri = ctx.request.requestedUri;
 
-  print('Relative URL: $url');
-  print('Full URI: $fullUri');
+  log('Relative URL: $url, id: $id');
+  log('Full URI: $fullUri');
 
   return ctx.respond(Response.ok());
 });
@@ -90,7 +90,7 @@ When a client requests `/search?query=relic&page=2`, the query variable will con
 Some query parameters can appear multiple times in a URL to represent lists or arrays. The `queryParametersAll` map provides access to all values for each parameter name.
 
 ```dart
-router.get('/filter', (ctx) {
+app.get('/filter', (ctx) {
   final tags = ctx.request.url.queryParametersAll['tag'] ?? [];
 
   return ctx.respond(Response.ok(
@@ -135,7 +135,7 @@ In this example, the `mimeType` is automatically parsed into a `MimeType` object
 The `authorization` header receives special handling in Relic to distinguish between different authentication schemes like Bearer tokens and Basic authentication.
 
 ```dart
-router.get('/protected', (ctx) {
+app.get('/protected', (ctx) {
   final auth = ctx.request.headers.authorization;
 
   if (auth is BearerAuthorizationHeader) {
@@ -155,7 +155,7 @@ router.get('/protected', (ctx) {
 
 Relic automatically parses the authorization header and creates the appropriate header object type, making it easy to handle different authentication schemes in a type-safe manner.
 
-## Reading the request body
+## Reading the Request body
 
 The request body contains data sent by the client, typically in POST, PUT, or PATCH requests. Relic provides multiple ways to read body content depending on your needs.
 
@@ -180,7 +180,7 @@ final body = await request.readAsString();
 The most common way to read the body is as a string, which works well for JSON, XML, or plain text data. The `readAsString` method automatically handles character encoding based on the Content-Type header.
 
 ```dart
-router.post('/submit', (ctx) async {
+app.post('/submit', (ctx) async {
   final bodyText = await ctx.request.readAsString();
 
   return ctx.respond(Response.ok(
@@ -196,7 +196,7 @@ The method defaults to UTF-8 encoding if no encoding is specified in the request
 For JSON APIs, you'll typically read the body as a string and then decode it using Dart's `jsonDecode` function. This two-step process gives you control over error handling.
 
 ```dart
-router.post('/api/users', (ctx) async {
+app.post('/api/users', (ctx) async {
   try {
     final bodyText = await ctx.request.readAsString();
     final data = jsonDecode(bodyText) as Map<String, dynamic>;
@@ -230,7 +230,7 @@ This example shows proper validation of both the JSON structure and the required
 For large files or binary data, you can read the body as a stream of bytes to avoid loading everything into memory at once. This is essential for handling file uploads or large payloads efficiently.
 
 ```dart
-router.post('/upload', (ctx) async {
+app.post('/upload', (ctx) async {
   final stream = ctx.request.read();  // Stream<Uint8List>
 
   int totalBytes = 0;
@@ -252,7 +252,7 @@ By processing the data in chunks, your server can handle large uploads without r
 Before attempting to read the body, you can check if it's empty using the `isEmpty` property. This is useful when you want to require a body for certain requests.
 
 ```dart
-router.post('/data', (ctx) {
+app.post('/data', (ctx) {
   if (ctx.request.isEmpty) {
     return ctx.respond(Response.badRequest(
       body: Body.fromString('Request body is required'),
@@ -273,7 +273,7 @@ This check doesn't consume the body stream, so you can still read the body after
 Always validate query parameters before using them, as they come from untrusted user input. Check for null values, parse strings to numbers safely, and validate ranges or formats.
 
 ```dart
-router.get('/page', (ctx) {
+app.get('/page', (ctx) {
   final pageStr = ctx.request.url.queryParameters['page'];
 
   if (pageStr == null) {
@@ -299,7 +299,7 @@ router.get('/page', (ctx) {
 Headers are optional in HTTP, so always check for null values before using them. Provide sensible defaults or error messages when required headers are missing.
 
 ```dart
-router.get('/info', (ctx) {
+app.get('/info', (ctx) {
   final userAgent = ctx.request.headers.userAgent;
 
   final message = userAgent != null
@@ -317,7 +317,7 @@ router.get('/info', (ctx) {
 Always wrap body parsing in try-catch blocks to handle malformed data gracefully. This prevents your server from crashing when clients send invalid requests.
 
 ```dart
-router.post('/api/data', (ctx) async {
+app.post('/api/data', (ctx) async {
   try {
     final body = await ctx.request.readAsString();
     final data = jsonDecode(body);
@@ -340,4 +340,4 @@ Always validate all incoming data since query parameters, headers, and body cont
 
 ## Examples
 
-- **[`requets_response_example.dart`](https://github.com/serverpod/relic/blob/main/example/requets_response_example.dart)** - Comprehensive example covering requests, responses, and advanced routing patterns
+- **[`request_example.dart`](https://github.com/serverpod/relic/blob/main/example/request_example.dart)** - Example covering requests
