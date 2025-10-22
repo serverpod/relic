@@ -140,9 +140,9 @@ class Body {
   /// final htmlBody = Body.fromString('<!DOCTYPE html><html>...</html>');
   /// // Automatically detects text/html MIME type
   ///
-  /// // With explicit MIME type and encoding
+  /// // With explicit MIME type and custom encoding
   /// final customBody = Body.fromString(
-  ///   'Custom content',
+  ///   'Héllo world',
   ///   mimeType: MimeType.plainText,
   ///   encoding: latin1,
   /// );
