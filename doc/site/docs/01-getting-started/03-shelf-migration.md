@@ -1,20 +1,20 @@
 ---
 sidebar_position: 3
-sidebar_label: 🤔 Shelf vs Relic
+sidebar_label: 🚀 Migration from Shelf
 ---
 
-# Shelf vs Relic
+# Migration from Shelf
 
-Relic was inspired by [Shelf](https://github.com/dart-lang/shelf), while the core concepts remain similar (handlers, middleware, requests, and responses), Relic introduces improvements in type safety and developer experience.
+This guide helps you migrate from [Shelf](https://github.com/dart-lang/shelf) to Relic. While the core concepts remain similar (handlers, middleware, requests, and responses), Relic introduces improvements in type safety and developer experience that require some changes to your code.
 
-#### Why a New Framework?
+#### Why migrate?
 
 Relic was born out of the needs of [Serverpod](https://serverpod.dev) for a more modern web server foundation with stronger type safety. Shelf has been an excellent foundation for Dart web servers, but certain architectural decisions made years ago limit its ability to take advantage of modern Dart features.
 
-### Key Differences at a Glance
+### Migration overview
 
-| Feature | Shelf | Relic |
-|---------|-------|-------|
+| Feature | Shelf Approach | Relic Migration |
+|---------|----------------|------------------|
 | **Type Safety** | Uses `dynamic` in several places | Stronger type safety throughout |
 | **Routing** | Requires `shelf_router` package | Built-in trie-based router |
 | **Headers** | String-based, manual parsing | Type-safe with validation |
@@ -24,11 +24,11 @@ Relic was born out of the needs of [Serverpod](https://serverpod.dev) for a more
 | **Path Parameters** | String keys `params['id']` | Symbol-based `ctx.pathParameters[#id]` |
 | **Route Matching** | O(routes) linear iteration | O(segments) trie-based |
 
-## Architecture & Philosophy
+## Migration steps
 
-### Handler Signatures
+### 1. Update handler signatures
 
-**Shelf:**
+**Before (Shelf):**
 
 ```dart
 import 'package:shelf/shelf.dart';
@@ -38,7 +38,7 @@ Response handler(Request request) {
 }
 ```
 
-**Relic:**
+**After (Relic):**
 
 ```dart
 import 'package:relic/relic.dart';
@@ -56,9 +56,9 @@ ResponseContext handler(NewContext ctx) {
 }
 ```
 
-Relic introduces a **context state machine** that explicitly represents the different states a request can be in (new, responded, hijacked, connected), making state transitions explicit and providing compile-time guarantees.
+**Migration Note:** Relic introduces a **context state machine** that explicitly represents the different states a request can be in (new, responded, hijacked, connected), making state transitions explicit and providing compile-time guarantees.
 
-## Type Safety
+## Type safety
 
 ### Headers
 
@@ -79,7 +79,7 @@ final cookies = request.headers.cookie;
 final date = request.headers.date;
 ```
 
-### Body Handling
+### Body handling
 
 Both frameworks have similar methods for **reading** request bodies:
 
@@ -122,11 +122,9 @@ This unified approach in Relic ensures the body content, encoding, content-type 
 
 Relic will attempt to infer the MIME type if not set explicitly, but it's best practice to set it explicitly when known to avoid running the detection code. The detection works best for binary content, though it can handle some textual content such as HTML, XML, and JSON. The inference is optimized for speed over precision.
 
-## Routing
+### 4. Update routing
 
-### Basic Routing
-
-**Shelf** requires the separate `shelf_router` package:
+**Before (Shelf) - requires separate package:**
 
 ```dart
 import 'package:shelf/shelf.dart';
@@ -138,7 +136,7 @@ final router = Router()
   });
 ```
 
-**Relic** has routing built-in:
+**After (Relic) - routing built-in:**
 
 ```dart
 import 'package:relic/relic.dart';
@@ -151,13 +149,11 @@ final router = RelicApp()
 );
 ```
 
-### Routing Performance
+**Migration Note:** Relic uses a [trie data structure](https://en.wikipedia.org/wiki/Trie) for O(segments) matching, which should be faster than Shelf's O(routes) linear iteration.
 
-Shelf's router (from `shelf_router`) iterates through routes linearly—O(routes) complexity. Relic uses a [trie data structure](https://en.wikipedia.org/wiki/Trie) for O(segments) matching, which should be faster for applications with many routes.
+### 5. Update middleware
 
-### Middleware on Routes
-
-**Shelf** applies middleware globally via `Pipeline`:
+**Before (Shelf) - global middleware via Pipeline:**
 
 ```dart
 final handler = Pipeline()
@@ -166,23 +162,23 @@ final handler = Pipeline()
   .addHandler(router);
 ```
 
-**Relic** allows middleware at the route level with `router.use()`:
+**After (Relic) - route-level middleware:**
 
 ```dart
-  final router = RelicApp();
+final router = RelicApp();
 
-  // Apply middleware to specific paths
-  router.use('/api', (handler) {
-    ...
-  });
+// Apply middleware to specific paths
+router.use('/api', (handler) {
+  ...
+});
 
-  // Routes under /api automatically get the middleware
-  router.get('/api/users', getUsersHandler);
+// Routes under /api automatically get the middleware
+router.get('/api/users', getUsersHandler);
 ```
 
-## WebSocket Support
+## WebSocket support
 
-### WebSocket Integration
+### WebSocket integration
 
 **Shelf** requires a separate package:
 
@@ -217,13 +213,11 @@ ConnectContext handler(NewContext ctx) {
 }
 ```
 
-Relic's WebSocket API integrates with the context state machine and provides both throwing and non-throwing send methods for better error handling. Unlike Shelf's `shelf_web_socket` package (which uses the older (`web_socket_channel`)[https://pub.dev/packages/web_socket_channel]), Relic uses the modern (`web_socket`)[https://pub.dev/packages/web_socket] package for better performance and a more idiomatic Dart API.
+Relic's WebSocket API integrates with the context state machine and provides both throwing and non-throwing send methods for better error handling. Unlike Shelf's [`shelf_web_socket`](https://pub.dev/packages/shelf_web_socket) package (which uses the older [`web_socket_channel`](https://pub.dev/packages/web_socket_channel)), Relic uses the modern [`web_socket`](https://pub.dev/packages/web_socket) package for better performance and a more idiomatic Dart API.
 
-## State Management
+### 7. Update State Management
 
-### Request-Scoped State
-
-**Shelf** uses a context map with string keys:
+**Before (Shelf) - context map with string keys:**
 
 ```dart
 // Shelf - type-unsafe
@@ -236,7 +230,7 @@ final modifiedRequest = request.change(context: {
 final user = request.context['user'] as User?;  // Manual casting
 ```
 
-**Relic** uses type-safe `ContextProperty`:
+**After (Relic) - type-safe ContextProperty:**
 
 ```dart
 // Relic - type-safe
@@ -250,10 +244,9 @@ sessionProperty.set(ctx, sessionData);
 // Get values - type-safe!
 final user = userProperty.get(ctx);  // User?
 final session = sessionProperty.get(ctx);  // Session?
-
 ```
 
-Since `ContextProperty` objects are separate instances, there's no risk of key conflicts between different properties, unlike string-based context maps.
+**Migration Note:** ContextProperty eliminates key conflicts and manual casting, providing compile-time type safety.
 
 ## State Machine
 
@@ -268,7 +261,7 @@ ResponseContext handler(NewContext ctx) {
 
 This eliminates entire classes of errors at compile time.
 
-## Design Choices
+## Design Benefits
 
 Relic includes several design decisions aimed at performance and type safety:
 
@@ -280,31 +273,15 @@ Relic includes several design decisions aimed at performance and type safety:
 We haven't yet conducted comprehensive benchmarks comparing Relic to Shelf overall. While our CI runs confirm the router is fast, routing is only one part of total request handling performance.
 :::
 
-## Migration Considerations
+## Migration Checklist
 
 While Relic is not backward compatible with Shelf, migration is straightforward for most applications:
 
-- Handler signatures change to use contexts
-- String-based headers become type-safe accessors
-- `shelf_router` routes map directly to Relic's built-in router
-- `shelf_web_socket` becomes built-in WebSocket support
-- `request.change(context: {...})` becomes `ContextProperty`
-
-## When to Use Each
-
-**Use Shelf if:**
-
-- You need maximum ecosystem compatibility
-- You're maintaining an existing Shelf application
-- You prefer the simpler mental model of `Request → Response`
-
-**Use Relic if:**
-
-- You want maximum type safety and compile-time guarantees
-- You have many routes and want trie-based routing
-- You want built-in WebSocket support
-- You prefer explicit state management with the context pattern
-- You're building a new application or can afford migration
+- ✅ Handler signatures change to use contexts
+- ✅ String-based headers become type-safe accessors
+- ✅ `shelf_router` routes map directly to Relic's built-in router
+- ✅ `shelf_web_socket` becomes built-in WebSocket support
+- ✅ `request.change(context: {...})` becomes `ContextProperty`
 
 ## Example Comparison
 
@@ -356,8 +333,12 @@ void main() async {
 }
 ```
 
-## Learn More
+## Additional Resources
 
 - [Shelf Documentation](https://pub.dev/packages/shelf)
 - [Relic on GitHub](https://github.com/serverpod/relic)
 - [Serverpod](https://serverpod.dev)
+
+## Need Help?
+
+If you encounter issues during migration, check the [Reference](/docs/03-reference) section or open an issue on [GitHub](https://github.com/serverpod/relic/issues).

@@ -27,7 +27,7 @@ graph LR
     A --> C[ConnectContext <br/><em>WebSocket</em>]
 ```
 
-:::info Context Transitions
+:::info Context transitions
 Every context starts as `NewContext` and transitions _exactly once_ to a final state. However, `ResponseContext` can transition to another `ResponseContext` (useful for middleware chains), while `ConnectContext` is terminal and cannot transition further.
 :::
 
@@ -208,7 +208,7 @@ Future<ResponseContext> userHandler(NewContext ctx) async {
 // Usage: GET /users/123 will extract '123' as the #id parameter
 ```
 
-:::tip Adding Custom Headers
+:::tip Adding custom headers
 Use `Headers.build()` to add custom response headers:
 
 ```dart

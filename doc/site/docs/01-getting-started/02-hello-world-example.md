@@ -57,7 +57,7 @@ Future<void> main() async {
 
 The result is a server that responds with "Hello, Relic!" when you send a GET request to `http://localhost:8080/`.
 
-### Running Locally
+### Running locally
 
 First, make sure you have Relic installed by following the [installation guide](/getting-started/installation).
 

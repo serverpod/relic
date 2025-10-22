@@ -2,7 +2,7 @@
 sidebar_position: 3
 ---
 
-# Basic Routing
+# Basic routing
 
 _Routing_ refers to determining how an application responds to a client request to a particular endpoint, which is a URI (or path) and a specific HTTP request method (GET, POST, and so on).
 
@@ -36,7 +36,7 @@ The convenience methods like `.get()`, `.post()`, `.anyOf()`, and `.any()` are a
 - `.anyOf({Method.get, Method.post}, path, handler)` → calls `.add()` for each method in the set
 - `.any(path, handler)` → calls `.anyOf()` with all HTTP methods
 
-## Breaking Down the Routes
+## Breaking own the routes
 
 The following examples break down each route from the complete example above.
 
@@ -108,7 +108,7 @@ app.add(Method.patch, '/api', (ctx) {
 });
 ```
 
-### Using `anyOf` for Multiple Methods
+### Using `anyOf` for multiple methods
 
 Handle multiple HTTP methods with the same handler:
 

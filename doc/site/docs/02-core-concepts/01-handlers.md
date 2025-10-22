@@ -189,7 +189,7 @@ ResponseContext contextHandler(NewContext ctx) {
 }
 ```
 
-### Handling WebSockets
+### Handling WebSocket connections
 
 For real-time bidirectional communication, you can upgrade connections to WebSockets using `ctx.connect()`:
 
