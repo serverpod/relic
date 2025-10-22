@@ -37,8 +37,13 @@ class IsolatedObject<T> {
 
     fromChild.listen((final message) {
       if (message case final _Response response) {
-        final completer = inflight.remove(response.id);
-        completer!.complete(response.result);
+        final completer = inflight.remove(response.id)!;
+        switch (response.result) {
+          case final RemoteError e:
+            completer.completeError(e);
+          default:
+            completer.complete(response.result);
+        }
       }
     });
 
@@ -57,7 +62,11 @@ class IsolatedObject<T> {
 
       // process inbound actions
       await for (final message in childPort) {
-        if (message case final _Action<T> action) {
+        if (message == null) {
+          // shutdown signal recieved
+          childPort.close();
+          break;
+        } else if (message case final _Action<T> action) {
           try {
             final result = await action.function(isolatedObject);
             toParent.send((id: action.id, result: result)); // return result
@@ -87,7 +96,8 @@ class IsolatedObject<T> {
   }
 
   Future<void> close() async {
-    final (_, fromChild, _) = await _connected;
+    final (toChild, fromChild, _) = await _connected;
+    toChild.send(null); // shutdown signal
     fromChild.close();
   }
 }
