@@ -54,6 +54,14 @@ class IsolatedObject<T> {
             completer.complete(await response.result);
         }
       }
+    }, onDone: () {
+      // ReceivePort closed. Fail any pending requests to avoid hangs.
+      for (final c in inflight.values) {
+        if (!c.isCompleted) {
+          c.completeError(StateError('IsolatedObject<$T> channel closed'));
+        }
+      }
+      inflight.clear();
     });
 
     return result;

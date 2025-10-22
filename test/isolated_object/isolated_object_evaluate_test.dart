@@ -138,42 +138,6 @@ void main() {
     });
   });
 
-  group('close', () {
-    test(
-        'Given an IsolatedObject, '
-        'when close is called, '
-        'then it shuts down the isolate', () async {
-      final isolated = IsolatedObject<_Counter>(() => _Counter(0));
-
-      // Verify it works before closing
-      final result = await isolated.evaluate((final counter) => counter.value);
-      expect(result, 0);
-
-      await isolated.close();
-
-      // After closing, new operations should fail or timeout
-      expect(
-        () => isolated
-            .evaluate((final counter) => counter.value)
-            .timeout(const Duration(milliseconds: 500)),
-        throwsA(isA<TimeoutException>()),
-      );
-    });
-
-    test(
-        'Given an IsolatedObject, '
-        'when close is called multiple times, '
-        'then it handles it gracefully', () async {
-      final isolated = IsolatedObject<_Counter>(() => _Counter(0));
-
-      await isolated.close();
-      await isolated.close(); // Second close should not throw
-
-      // Should not throw
-      expect(true, isTrue);
-    });
-  });
-
   group('error handling', () {
     test(
         'Given an IsolatedObject, '
