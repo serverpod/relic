@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:isolate';
 
 import 'package:http/http.dart' as http;
 import 'package:relic/relic.dart';
@@ -27,7 +28,10 @@ extension RelicServerTestEx on RelicServer {
 
 /// Creates a [RelicServer] that listens on the loopback IPv4 address.
 Future<RelicServer> createServer() async {
-  return RelicServer(() => IOAdapter.bind(InternetAddress.loopbackIPv4));
+  return RelicServer(
+    () => IOAdapter.bind(InternetAddress.loopbackIPv4, shared: true),
+    noOfIsolates: 2,
+  );
 }
 
 /// Returns the headers from the server request if the server returns a 200
@@ -37,18 +41,18 @@ Future<Headers> getServerRequestHeaders({
   required final Map<String, String> headers,
   required final void Function(Headers) touchHeaders,
 }) async {
-  var requestHeaders = Headers.empty();
+  final recv = ReceivePort();
+  final sendPort = recv.sendPort;
 
   await server.mountAndStart(
     respondWith((final Request request) {
-      requestHeaders = request.headers;
-      touchHeaders(requestHeaders);
+      sendPort.send(request.headers);
+      touchHeaders(request.headers);
       return Response.ok();
     }),
   );
 
   final response = await http.get(server.url, headers: headers);
-
   final statusCode = response.statusCode;
 
   if (statusCode == 400) {
@@ -63,6 +67,7 @@ Future<Headers> getServerRequestHeaders({
     );
   }
 
+  final requestHeaders = await recv.first as Headers;
   return requestHeaders;
 }
 
