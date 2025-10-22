@@ -13,8 +13,19 @@ import 'message/response.dart';
 import 'util/util.dart';
 
 sealed class RelicServer {
+  /// Mounts a [handler] to the server and starts listening for requests.
+  ///
+  /// Only one [handler] can be mounted at a time, but it will be replaced
+  /// on each call.
   Future<void> mountAndStart(final Handler handler);
+
+  /// Close the server
   Future<void> close();
+
+  /// The port this server is bound to.
+  ///
+  /// This will throw a [LateInitializationError], if called before [mountAndStart].
+  int get port;
 
   factory RelicServer(
     final Factory<Adapter> adapterFactory, {
@@ -41,16 +52,19 @@ final class _RelicServer implements RelicServer {
   /// Only one handler can be mounted at a time.
   @override
   Future<void> mountAndStart(final Handler handler) async {
+    port = (await _adapter).port;
     _handler = _wrapHandlerWithMiddleware(handler);
     if (_subscription == null) await _startListening();
   }
 
-  /// Close the server
   @override
   Future<void> close() async {
     await _stopListening();
     await (await _adapter).close();
   }
+
+  @override
+  late final int port;
 
   Future<void> _stopListening() async {
     await _subscription?.cancel();
@@ -173,8 +187,13 @@ final class _IsolatedRelicServer extends IsolatedObject<RelicServer>
   }
 
   @override
-  Future<void> mountAndStart(final Handler handler) =>
-      evaluateVoid((final r) => r.mountAndStart(handler));
+  Future<void> mountAndStart(final Handler handler) async {
+    await evaluateVoid((final r) => r.mountAndStart(handler));
+    port = await evaluate((final r) => r.port);
+  }
+
+  @override
+  late final int port;
 }
 
 final class _MultiIsolateRelicServer implements RelicServer {
@@ -195,4 +214,7 @@ final class _MultiIsolateRelicServer implements RelicServer {
   Future<void> mountAndStart(final Handler handler) async {
     await _children.map((final c) => c.mountAndStart(handler)).wait;
   }
+
+  @override
+  int get port => _children.first.port;
 }

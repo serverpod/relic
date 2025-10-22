@@ -60,7 +60,7 @@ class IOAdapter extends Adapter {
   /// The [io.InternetAddress] the underlying server is listening on.
   io.InternetAddress get address => _server.address;
 
-  /// The port number the underlying server is listening on.
+  @override
   int get port => _server.port;
 
   @override

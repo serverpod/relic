@@ -38,6 +38,9 @@ abstract class AdapterRequest {
 /// [AdapterRequest] format, and then handing them off to the Relic core.
 /// They also handle sending back responses or managing hijacked connections.
 abstract class Adapter {
+  /// The port this adapter is bound to.
+  int get port;
+
   /// A stream of incoming requests from the underlying source.
   ///
   /// Each event in the stream is an [AdapterRequest] representing a new

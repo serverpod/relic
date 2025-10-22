@@ -17,39 +17,12 @@ class BadRequestException implements Exception {
 
 /// Extension methods for RelicServer
 extension RelicServerTestEx on RelicServer {
-  static final Expando<Uri> _serverUrls = Expando();
-
   /// Fake [url] property for the [RelicServer] for testing purposes.
-  Uri get url => _serverUrls[this] ??= _inferUrl();
-  set url(final Uri value) => _serverUrls[this] = value;
-
-  /// Infer a probable URL for the server.
   ///
   /// In general a server cannot know what URL it is being accessed by before an
-  /// actual request arrives, but for testing purposes we can infer a URL based
-  /// on the server's address.
-  Uri _inferUrl() {
-    final adapter = this.adapter;
-    if (adapter is! IOAdapter) throw ArgumentError();
-
-    if (adapter.address.isLoopback) {
-      return Uri(scheme: 'http', host: 'localhost', port: adapter.port);
-    }
-
-    if (adapter.address.type == InternetAddressType.IPv6) {
-      return Uri(
-        scheme: 'http',
-        host: '[${adapter.address.address}]',
-        port: adapter.port,
-      );
-    }
-
-    return Uri(
-      scheme: 'http',
-      host: adapter.address.address,
-      port: adapter.port,
-    );
-  }
+  /// actual request arrives, but for testing purposes we can infer a local URL
+  /// based on the server's port.
+  Uri get url => Uri.http('localhost:$port');
 }
 
 /// Creates a [RelicServer] that listens on the loopback IPv4 address.
