@@ -183,8 +183,8 @@ void _logError(
 
 final class _IsolatedRelicServer extends IsolatedObject<RelicServer>
     implements RelicServer {
-  _IsolatedRelicServer(final Factory<Adapter> adaptorFactory)
-      : super(() => RelicServer(adaptorFactory));
+  _IsolatedRelicServer(final Factory<Adapter> adapterFactory)
+      : super(() => RelicServer(adapterFactory));
 
   @override
   Future<void> close() async {

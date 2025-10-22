@@ -33,7 +33,7 @@ final class RelicApp implements RelicRouter {
   /// final app = RelicApp()
   ///   ..get('/', (ctx) => ctx.ok('Hello!'));
   ///
-  /// final adaptorFactory = () => IOAdapter.bind(InternetAddress.loopbackIPv4, port: 8080);
+  /// final adapterFactory = () => IOAdapter.bind(InternetAddress.loopbackIPv4, port: 8080);
   /// final server = await app.run(adapterFactory);
   ///
   /// // later .. when done
