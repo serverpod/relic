@@ -155,7 +155,7 @@ app.get('/protected', (ctx) {
 
 Relic automatically parses the authorization header and creates the appropriate header object type, making it easy to handle different authentication schemes in a type-safe manner.
 
-## Reading the Request body
+## Reading the request body
 
 The request body contains data sent by the client, typically in POST, PUT, or PATCH requests. Relic provides multiple ways to read body content depending on your needs.
 

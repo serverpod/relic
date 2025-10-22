@@ -1,5 +1,3 @@
-// ignore_for_file: avoid_log, prefer_final_parameters, inference_failure_on_instance_creation
-
 import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
@@ -47,6 +45,24 @@ Future<void> main() async {
   // Streaming response with chunked transfer encoding
   app.get('/stream', streamHandler);
 
+  // Static file serving with directory handler
+  app.anyOf(
+    {Method.get, Method.head},
+    '/static/**',
+    StaticHandler.directory(
+      Directory('example/static_files'),
+      cacheControl: (final _, final __) => CacheControlHeader(maxAge: 3600),
+    ).asHandler,
+  );
+
+  // Single static file serving
+  app.get(
+      '/logo',
+      StaticHandler.file(
+        File('example/static_files/logo.svg'),
+        cacheControl: (final _, final __) => CacheControlHeader(maxAge: 86400),
+      ).asHandler);
+
   await app.serve();
   log('Server running on http://localhost:8080');
   log('Try these endpoints:');
@@ -59,17 +75,19 @@ Future<void> main() async {
   log('  POST /upload - File upload with validation');
   log('  GET  /image - Serve SVG image');
   log('  GET  /stream - Streaming response');
+  log('  GET  /static/** - Static files in a directory');
+  log('  GET  /logo - Single static file');
 }
 
 /// Basic text response handler
-ResponseContext helloHandler(NewContext ctx) {
+ResponseContext helloHandler(final NewContext ctx) {
   return ctx.respond(Response.ok(
     body: Body.fromString('Hello, World!'),
   ));
 }
 
 /// JSON with automatic MIME detection handler
-ResponseContext dataHandler(NewContext ctx) {
+ResponseContext dataHandler(final NewContext ctx) {
   return ctx.respond(Response.ok(
     body: Body.fromString('{"message": "Hello"}'),
     // Automatically detects application/json
@@ -77,7 +95,7 @@ ResponseContext dataHandler(NewContext ctx) {
 }
 
 /// Small file handler - read entire file into memory
-Future<ResponseContext> smallFileHandler(NewContext ctx) async {
+Future<ResponseContext> smallFileHandler(final NewContext ctx) async {
   final file = File('example.txt');
 
   if (!await file.exists()) {
@@ -92,7 +110,7 @@ Future<ResponseContext> smallFileHandler(NewContext ctx) async {
 }
 
 /// Large file handler - stream for memory efficiency
-Future<ResponseContext> largeFileHandler(NewContext ctx) async {
+Future<ResponseContext> largeFileHandler(final NewContext ctx) async {
   final file = File('large-file.dat');
 
   if (!await file.exists()) {
@@ -103,7 +121,7 @@ Future<ResponseContext> largeFileHandler(NewContext ctx) async {
     await sink.close();
   }
 
-  final fileStream = file.openRead().map((e) => Uint8List.fromList(e));
+  final fileStream = file.openRead().map((final e) => Uint8List.fromList(e));
   final fileSize = await file.length();
 
   return ctx.respond(Response.ok(
@@ -115,7 +133,7 @@ Future<ResponseContext> largeFileHandler(NewContext ctx) async {
 }
 
 /// Reading request body as string handler
-Future<ResponseContext> echoHandler(NewContext ctx) async {
+Future<ResponseContext> echoHandler(final NewContext ctx) async {
   final content = await ctx.request.readAsString();
 
   return ctx.respond(Response.ok(
@@ -124,7 +142,7 @@ Future<ResponseContext> echoHandler(NewContext ctx) async {
 }
 
 /// JSON API handler
-Future<ResponseContext> apiDataHandler(NewContext ctx) async {
+Future<ResponseContext> apiDataHandler(final NewContext ctx) async {
   final jsonData = await ctx.request.readAsString();
   final data = jsonDecode(jsonData);
 
@@ -139,7 +157,7 @@ Future<ResponseContext> apiDataHandler(NewContext ctx) async {
 }
 
 /// File upload handler with size validation
-Future<ResponseContext> uploadHandler(NewContext ctx) async {
+Future<ResponseContext> uploadHandler(final NewContext ctx) async {
   const maxFileSize = 10 * 1024 * 1024; // 10MB
   final contentLength = ctx.request.body.contentLength;
 
@@ -152,7 +170,7 @@ Future<ResponseContext> uploadHandler(NewContext ctx) async {
   final stream = ctx.request.read();
   final file = File('uploads/file.bin');
   await file.parent.create(recursive: true);
-  await stream.forEach((chunk) => file.openWrite().write(chunk));
+  await stream.forEach((final chunk) => file.openWrite().write(chunk));
 
   return ctx.respond(Response.ok(
     body: Body.fromString('Upload successful'),
@@ -160,7 +178,7 @@ Future<ResponseContext> uploadHandler(NewContext ctx) async {
 }
 
 /// Image response handler with automatic format detection
-Future<ResponseContext> imageHandler(NewContext ctx) async {
+Future<ResponseContext> imageHandler(final NewContext ctx) async {
   final file = File('example/static_files/logo.svg');
   final imageBytes = await file.readAsBytes();
 
@@ -173,10 +191,10 @@ Future<ResponseContext> imageHandler(NewContext ctx) async {
 }
 
 /// Streaming response handler with chunked transfer encoding
-Future<ResponseContext> streamHandler(NewContext ctx) async {
+Future<ResponseContext> streamHandler(final NewContext ctx) async {
   Stream<Uint8List> generateLargeDataset() async* {
     for (var i = 0; i < 100; i++) {
-      await Future.delayed(const Duration(milliseconds: 50));
+      await Future<void>.delayed(const Duration(milliseconds: 50));
       yield utf8.encode('{"item": $i}\n'); // Changed from yield* to yield
     }
   }

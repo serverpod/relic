@@ -11,10 +11,10 @@ The `Body` class represents the content of HTTP messages, designed to handle bot
 
 ## Key features
 
-- Stream-based architecture: All body content is handled as `Stream<Uint8List>` for memory efficiency, allowing you to process large files without loading them entirely into memory
+- Stream-based architecture: All body content is handled as `Stream<Uint8List>` for memory.efficiency, allowing you to process large files without loading them entirely into memory.
 - One-time read constraint: Bodies can only be read once to prevent accidental double-consumption
-- Automatic type detection: Intelligent MIME type inference for JSON, HTML, XML, and binary file types
-- Encoding support: Handles text encoding (UTF-8, Latin-1, etc.) automatically with manual override options
+- Automatic type detection: Intelligent MIME type inference for JSON, HTML, XML, and binary file types.
+- Encoding support: Handles text encoding (UTF-8, Latin-1, etc.) automatically with manual override options.
 
 ## Creating bodies
 
@@ -86,9 +86,43 @@ final streamBody = Body.fromDataStream(
 );
 ```
 
+### Static file serving
+
+To serve static files like images, CSS, or documents, use `StaticHandler.directory()`:
+
+```dart
+final app = RelicApp()
+  ..anyOf(
+    {Method.get, Method.head},
+    '/static/**',
+    StaticHandler.directory(
+      Directory('public'),
+      cacheControl: (ctx, fileInfo) => CacheControlHeader(maxAge: 86400),
+    ).asHandler);
+```
+
+This serves all files from the `public` directory under `/static/` URLs with 1-day caching.
+
+For individual files:
+
+```dart
+StaticHandler.file(
+  File('logo.png'),
+  cacheControl: (ctx, fileInfo) => CacheControlHeader(maxAge: 3600),
+);
+```
+
+`StaticHandler` automatically handles MIME types, caching headers, and security.
+
+:::tip Directory paths
+When serving static files from a directory, always use a tail matching path pattern (`/**`) to capture all files and subdirectories. The tail portion (`/**`) is used to determine the file path within the directory. Without it, the handler won't know which file to serve.
+
+For single file serving with `StaticHandler.file()`, you don't need the tail pattern, but it can be useful for SPAs or other routing scenarios.
+:::
+
 ### Empty bodies
 
-Some responses should not include content, such as those with status 204. In these cases, create an empty body to make your intent explicit and allow Relic to set the appropriate headers:
+Some responses should not include content, such as those with status 204. In these cases, create an empty body to make your intent explicit and allow Relic to set the appropriate headers.
 
 ```dart
 final emptyBody = Body.empty();
@@ -98,13 +132,13 @@ final emptyBody = Body.empty();
 
 Bodies can only be read once, so choose the most appropriate method for your scenario and avoid multiple reads of the same stream. This constraint prevents subtle bugs and ensures handlers operate in a predictable way.
 
-If you need direct access to the bytes, read the underlying stream and process chunks as they arrive. This is useful for custom parsers or streaming transformations:
+If you need direct access to the bytes, read the underlying stream and process chunks as they arrive. This is useful for custom parsers or streaming transformations.
 
 ```dart
 final Stream<Uint8List> stream = body.read();
 ```
 
-When working with request or response bodies that contain text, read the content as a string to get a decoded value. This method handles common cases where payloads are JSON or plain text:
+When working with request or response bodies that contain text, read the content as a string to get a decoded value. This method handles common cases where payloads are JSON or plain text.
 
 ```dart
 final String content = await ctx.request.readAsString();
@@ -135,60 +169,29 @@ class BodyType {
 }
 ```
 
-### MIME type detection
+## MIME type detection
 
-Relic analyzes content to determine the appropriate content type for both text and binary formats. This detection reduces boilerplate in handlers and helps ensure clients interpret responses correctly.
+Relic automatically detects MIME types for common formats, reducing boilerplate in handlers and ensuring clients interpret responses correctly.
 
 #### Text content detection
 
-JSON is detected by typical structural markers like braces and brackets, so you can return JSON strings and let Relic set the proper MIME type. This keeps your code focused on business logic instead of metadata:
+JSON, HTML, XML, and plain text are automatically detected:
 
 ```dart
 Body.fromString('{"key": "value"}') // → application/json
-Body.fromString('[1, 2, 3]')        // → application/json
-```
-
-HTML is recognized by standard declarations and tags, which means simple templated content or static pages can be returned with minimal setup. Detection ensures browsers render the content as expected:
-
-```dart
 Body.fromString('<!DOCTYPE html>...') // → text/html
-Body.fromString('<html>...')          // → text/html
-```
-
-XML is identified by the processing instruction at the start of the document, allowing you to return XML without hand-writing headers. This is particularly helpful for integrations that still rely on XML:
-
-```dart
 Body.fromString('<?xml version="1.0"?>...') // → application/xml
-```
-
-Other text defaults to plain text, which provides a safe and predictable fallback. You can always override the type if you need a more specific value:
-
-```dart
 Body.fromString('Plain text') // → text/plain
 ```
 
 #### Binary content detection
 
-Relic uses magic byte detection for common binary formats, which means files like images and PDFs often get the correct type automatically. This improves client compatibility and reduces manual configuration:
+Common image formats, documents, and other binary files are automatically detected:
 
 ```dart
-final pngBytes = [0x89, 0x50, 0x4E, 0x47, ...];
 Body.fromData(pngBytes) // → image/png
-
-final jpegBytes = [0xFF, 0xD8, 0xFF, 0xE0, ...];
 Body.fromData(jpegBytes) // → image/jpeg
-```
-
-Document formats, such as PDF, are also recognized by their signatures. This allows you to serve documents confidently without hard-coding content types in most cases:
-
-```dart
-final pdfBytes = utf8.encode('%PDF-1.4...');
 Body.fromData(pdfBytes) // → application/pdf
-```
-
-If a format is not recognized, Relic falls back to a generic binary type. This conservative default ensures downloads still work even when the type is unknown:
-
-```dart
 Body.fromData(unknownBytes) // → application/octet-stream
 ```
 
@@ -269,7 +272,7 @@ final body = Body.fromDataStream(
 
 ### Length in HTTP context
 
-You can quickly determine whether a request includes a body, which helps you make early decisions in handlers and return helpful errors for missing input. This check avoids unnecessary reads when there is nothing to read:
+You can quickly determine whether a request includes a body, which helps you make early decisions in handlers and return helpful errors for missing input. This check avoids unnecessary reads when there is nothing to read.
 
 ```dart
 if (request.isEmpty) {
@@ -277,7 +280,7 @@ if (request.isEmpty) {
 }
 ```
 
-It is also useful to inspect the content length directly when validating uploads or applying limits. If a length is present, you can enforce thresholds before reading any data, and if not, you can switch to streaming-safe logic:
+It is also useful to inspect the content length directly when validating uploads or applying limits. If a length is present, you can enforce thresholds before reading any data, and if not, you can switch to streaming-safe logic.
 
 ```dart
 final length = request.body.contentLength;
@@ -290,7 +293,7 @@ if (length != null) {
 
 ## Stream-based bodies
 
-Relic’s stream-based approach makes it practical to handle large payloads without exhausting memory, since data is processed incrementally. This pattern is especially helpful for uploads and transformations that work chunk by chunk:
+Relic’s stream-based approach makes it practical to handle large payloads without exhausting memory, since data is processed incrementally. This pattern is especially helpful for uploads and transformations that work chunk by chunk.
 
 ```dart title="body_example.dart"
 /// File upload handler with size validation
@@ -317,7 +320,7 @@ Future<ResponseContext> uploadHandler(NewContext ctx) async {
 
 ### One-time read constraint
 
-To keep processing predictable and avoid subtle bugs, bodies enforce a one-time read rule. Once a body’s stream has been consumed, subsequent reads throw an error, which makes improper use immediately visible during development:
+To keep processing predictable and avoid subtle bugs, bodies enforce a one-time read rule. Once a body’s stream has been consumed, subsequent reads throw an error, which makes improper use immediately visible during development.
 
 ```dart title="body_example.dart"
 final body = Body.fromString('test');
@@ -431,7 +434,7 @@ This endpoint produces a stream of JSON lines to demonstrate chunked transfer en
 Future<ResponseContext> streamHandler(NewContext ctx) async {
   Stream<Uint8List> generateLargeDataset() async* {
     for (var i = 0; i < 100; i++) {
-      await Future.delayed(Duration(milliseconds: 50));
+      await Future<void>.delayed(Duration(milliseconds: 50));
       yield utf8.encode('{"item": $i}\n');
     }
   }
