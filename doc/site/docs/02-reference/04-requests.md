@@ -1,3 +1,7 @@
+---
+sidebar_position: 4
+---
+
 # Requests
 
 The `Request` object represents an incoming HTTP request to your Relic server. It provides access to all information about the client's request, including the HTTP method, URL, headers, query parameters, and body content.
