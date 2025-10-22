@@ -1,6 +1,6 @@
 ---
 sidebar_position: 3
-sidebar_label: 🚀 Migration from Shelf
+sidebar_label: ✈️ Migration from Shelf
 ---
 
 # Migration from Shelf
