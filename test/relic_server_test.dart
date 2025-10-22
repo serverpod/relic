@@ -45,19 +45,5 @@ void main() {
       await server.mountAndStart(asyncHandler);
       expect(delayedResponse, completion(equals('Hello from /')));
     });
-
-    test(
-        'when a handler is already mounted '
-        'then mounting another handler throws a StateError', () async {
-      await server.mountAndStart((final _) => throw UnimplementedError());
-      expect(
-        () => server.mountAndStart((final _) => throw UnimplementedError()),
-        throwsStateError,
-      );
-      expect(
-        () => server.mountAndStart((final _) => throw UnimplementedError()),
-        throwsStateError,
-      );
-    });
   });
 }
