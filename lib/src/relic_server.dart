@@ -31,9 +31,15 @@ sealed class RelicServer {
     final Factory<Adapter> adapterFactory, {
     final int noOfIsolates = 1,
   }) {
-    RangeError.checkNotNegative(noOfIsolates);
-    if (noOfIsolates == 1) return _RelicServer(adapterFactory);
-    return _MultiIsolateRelicServer(adapterFactory, noOfIsolates);
+    return switch (noOfIsolates) {
+      < 1 => throw RangeError.value(
+          noOfIsolates,
+          'noOfIsolates',
+          'Must be larger than 0',
+        ),
+      == 1 => _RelicServer(adapterFactory),
+      _ => _MultiIsolateRelicServer(adapterFactory, noOfIsolates),
+    };
   }
 }
 
