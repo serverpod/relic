@@ -57,10 +57,10 @@ class IsolatedObject<T> {
     final SendPort toParent,
   ) {
     return Isolate.spawn((final toParent) async {
-      final isolatedObject = await create();
-
       final childPort = ReceivePort();
       toParent.send(childPort.sendPort); // complete handshake
+
+      final isolatedObject = await create();
 
       // process inbound actions
       await for (final message in childPort) {
