@@ -142,9 +142,7 @@ class _HotReloader {
   Future<StreamSubscription?> register(final RelicApp app) async {
     final reloadStream = await _reloadStream;
     if (reloadStream != null) {
-      return reloadStream
-          .asyncMap((final _) => app._reload())
-          .listen((final _) {});
+      return reloadStream.asyncListen((final _) => app._reload());
     }
     return null;
   }

@@ -37,3 +37,18 @@ extension EventSinkEx<T> on EventSink<T> {
     return controller.sink;
   }
 }
+
+extension StreamEx<T> on Stream<T> {
+  /// Adds a possible async subscription to this stream.
+  ///
+  /// The [onData] callbacks are guaranteed to be serialized even when async.
+  /// Otherwise behaves as [Stream.listen]
+  StreamSubscription<void> asyncListen(
+    final FutureOr<void> Function(T event) onData, {
+    final Function? onError,
+    final void Function()? onDone,
+    final bool? cancelOnError,
+  }) =>
+      asyncMap(onData).listen((final _) {},
+          onError: onError, onDone: onDone, cancelOnError: cancelOnError);
+}

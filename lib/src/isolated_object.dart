@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:isolate';
 
+import 'util/util.dart';
+
 typedef Factory<T> = FutureOr<T> Function();
 
 typedef _Action<T> = ({int id, dynamic Function(T) function});
@@ -20,31 +22,36 @@ class IsolatedObject<T> {
     final setupDone = Completer<_Setup>();
 
     parentPort.handler = (final dynamic message) async {
-      final toChild = message as SendPort;
-      final fromChild = ReceivePort.fromRawReceivePort(parentPort);
-      final inflight = _Inflight();
-      setupDone.complete((toChild, fromChild, inflight));
+      if (message case final Error e) {
+        setupDone.completeError(e);
+      } else {
+        final toChild = message as SendPort;
+        final fromChild = ReceivePort.fromRawReceivePort(parentPort);
+        final inflight = _Inflight();
+        setupDone.complete((toChild, fromChild, inflight));
+      }
     };
 
     try {
       await _spawn(create, parentPort.sendPort);
     } catch (_) {
       parentPort.close();
+      rethrow;
     }
 
     final result = await setupDone.future;
-    final (_, fromChild, inflight) = result;
+    final (toChild, fromChild, inflight) = result;
 
-    fromChild.listen((final message) {
+    fromChild.asyncListen((final message) async {
       if (message case final _Response response) {
         final completer = inflight.remove(response.id);
         assert(completer != null, 'PROTOCOL BUG. No such ID ${response.id}');
-        if (completer == null) return; // late/duplicate message, ignore
+        if (completer == null) return; // coverage: ignore-line
         switch (response.result) {
           case final RemoteError e:
             completer.completeError(e);
           default:
-            completer.complete(response.result);
+            completer.complete(await response.result);
         }
       }
     });
@@ -56,32 +63,40 @@ class IsolatedObject<T> {
     final Factory<T> create,
     final SendPort toParent,
   ) {
-    return Isolate.spawn((final toParent) async {
-      final childPort = ReceivePort();
-      toParent.send(childPort.sendPort); // complete handshake
+    return Isolate.spawn(
+      (final toParent) async {
+        final childPort = ReceivePort();
+        final T isolatedObject;
+        try {
+          isolatedObject = await create();
+          toParent.send(childPort.sendPort); // complete handshake
+        } catch (e, st) {
+          toParent.send(RemoteError('$e', '$st'));
+          return;
+        }
 
-      final isolatedObject = await create();
-
-      // process inbound actions
-      await for (final message in childPort) {
-        if (message == null) {
-          // shutdown signal recieved
-          childPort.close();
-          break;
-        } else if (message case final _Action<T> action) {
-          try {
-            final result = await action.function(isolatedObject);
-            toParent.send((id: action.id, result: result)); // return result
-          } catch (e, st) {
-            toParent.send((id: action.id, result: RemoteError('$e', '$st')));
+        // process inbound actions
+        await for (final message in childPort) {
+          if (message == null) {
+            // shutdown signal recieved
+            childPort.close();
+            break;
+          } else if (message case final _Action<T> action) {
+            try {
+              final result = await action.function(isolatedObject);
+              toParent.send((id: action.id, result: result)); // return result
+            } catch (e, st) {
+              toParent.send((id: action.id, result: RemoteError('$e', '$st')));
+            }
           }
         }
-      }
-    }, toParent);
+      },
+      toParent,
+    );
   }
 
   int _nextId = 0;
-  Future<U> evaluate<U>(final U Function(T) function) async {
+  Future<U> evaluate<U>(final FutureOr<U> Function(T) function) async {
     final (toChild, _, inflight) = await _connected;
 
     final id = _nextId++;
@@ -90,11 +105,6 @@ class IsolatedObject<T> {
 
     toChild.send((id: id, function: function));
     return await completer.future;
-  }
-
-  @pragma('vm:prefer-inline')
-  Future<void> evaluateVoid(final void Function(T) function) async {
-    await evaluate<dynamic>(function);
   }
 
   Future<void> close() async {

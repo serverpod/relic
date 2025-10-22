@@ -188,13 +188,13 @@ final class _IsolatedRelicServer extends IsolatedObject<RelicServer>
 
   @override
   Future<void> close() async {
-    await evaluateVoid((final r) => r.close());
+    await evaluate((final r) => r.close());
     await super.close();
   }
 
   @override
   Future<void> mountAndStart(final Handler handler) async {
-    await evaluateVoid((final r) => r.mountAndStart(handler));
+    await evaluate((final r) => r.mountAndStart(handler));
     port = await evaluate((final r) => r.port);
   }
 
