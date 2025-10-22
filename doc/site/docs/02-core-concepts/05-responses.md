@@ -182,7 +182,6 @@ Response.ok(body: Body.empty())
 Response.noContent()
 ```
 
-
 ## Setting response headers
 
 Headers provide metadata about your response. Use the `Headers` class to build type-safe headers:
