@@ -55,6 +55,7 @@ abstract interface class InjectableIn<T> {
 ///
 /// Supports static paths (e.g., `/users/profile`) and paths with named parameters
 /// (e.g., `/users/:id`). Normalizes paths before matching.
+
 final class Router<T extends Object> {
   /// Stores all routes (with or without parameters) in a [PathTrie] for efficient
   /// matching and parameter extraction.
@@ -235,6 +236,65 @@ extension RouteEx<T extends Object> on Router<T> {
 }
 
 /// Just a typedef for better auto-complete
+/// ///
+/// ## Basic Routing
+///
+/// ```dart
+/// final router = Router<Handler>();
+///
+/// // Static routes
+/// router.get('/', (ctx) {
+///   return ctx.respond(Response.ok(
+///     body: Body.fromString('Home'),
+///   ));
+/// });
+///
+/// // Route with parameters
+/// router.get('/users/:id', (ctx) {
+///   final id = ctx.pathParameters['id'];
+///   return ctx.respond(Response.ok(
+///     body: Body.fromString('User $id'),
+///   ));
+/// });
+///
+/// // Multiple parameters
+/// router.get('/posts/:year/:month/:slug', (ctx) {
+///   final year = ctx.pathParameters['year'];
+///   final month = ctx.pathParameters['month'];
+///   final slug = ctx.pathParameters['slug'];
+///   return ctx.respond(Response.ok());
+/// });
+/// ```
+///
+/// ## HTTP Methods
+///
+/// ```dart
+/// router.get('/users', (ctx) => /* list users */);
+/// router.post('/users', (ctx) => /* create user */);
+/// router.put('/users/:id', (ctx) => /* update user */);
+/// router.patch('/users/:id', (ctx) => /* partial update */);
+/// router.delete('/users/:id', (ctx) => /* delete user */);
+/// ```
+///
+/// ## Sub-routers
+///
+/// ```dart
+/// final apiRouter = Router<Handler>();
+/// apiRouter.get('/users', (ctx) => /* users */);
+/// apiRouter.get('/posts', (ctx) => /* posts */);
+///
+/// final mainRouter = Router<Handler>();
+/// mainRouter.attach('/api', apiRouter);
+/// // Results in: /api/users, /api/posts
+/// ```
+///
+/// ## Using with Pipeline
+///
+/// ```dart
+/// final handler = const Pipeline()
+///     .addMiddleware(routeWith(router))
+///     .addHandler(respondWith((_) => Response.notFound()));
+/// ```
 typedef RelicRouter = Router<Handler>;
 
 /// A contract for modular route registration in Relic applications.

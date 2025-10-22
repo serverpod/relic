@@ -13,6 +13,69 @@ import 'types/mime_type.dart';
 /// This tracks whether the body has been read. It's separate from [Message]
 /// because the message may be changed with [Message.copyWith], but each instance
 /// should share a notion of whether the body was read.
+///
+/// ## Creating Response Bodies
+///
+/// ### Text Body
+/// ```dart
+/// Body.fromString('Hello, World!')
+/// ```
+///
+/// ### JSON Body
+/// ```dart
+/// final data = {'name': 'Alice', 'age': 30};
+/// Body.fromString(
+///   jsonEncode(data),
+///   mimeType: MimeType.json,
+/// )
+/// ```
+///
+/// ### HTML Body
+/// ```dart
+/// Body.fromString(
+///   '<html><body><h1>Welcome!</h1></body></html>',
+///   mimeType: MimeType.html,
+/// )
+/// ```
+///
+/// ### Binary Data
+/// ```dart
+/// final bytes = Uint8List.fromList([1, 2, 3, 4]);
+/// Body.fromData(bytes)
+/// ```
+///
+/// ### Streaming Data
+/// ```dart
+/// Stream<Uint8List> dataStream = getFileStream();
+/// Body.fromDataStream(
+///   dataStream,
+///   contentLength: fileSize,
+///   mimeType: MimeType.octetStream,
+/// )
+/// ```
+///
+/// ### Empty Body
+/// ```dart
+/// Body.empty()
+/// ```
+///
+/// ## Reading Request Bodies
+///
+/// **Important**: The body can only be read once!
+///
+/// ```dart
+/// // Read as string
+/// final text = await request.readAsString();
+///
+/// // Parse JSON
+/// final data = jsonDecode(await request.readAsString());
+///
+/// // Read as stream
+/// final stream = request.read();
+/// await for (final chunk in stream) {
+///   // Process chunk
+/// }
+/// ```
 class Body {
   /// The contents of the message body.
   ///
@@ -173,7 +236,7 @@ class Body {
 
   /// Creates a body from a [Uint8List].
   ///
-  /// Will try to infer the [mimeType] if it is not provided,
+  /// Will try to infer the [mimeType] if it is not provided.
   /// This will only work for some binary formats, and falls
   /// back to [MimeType.octetStream].
   ///

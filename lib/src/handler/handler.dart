@@ -14,12 +14,51 @@ import '../router/router.dart';
 /// (a type of [HandledContext]) containing the file data as its body.
 ///
 /// A function which produces a [Handler], either by wrapping one or more other handlers,
-//  or using function composition is known as a "middleware".
+/// or using function composition is known as a "middleware".
 ///
 /// A [Handler] may receive a [NewContext] directly from an HTTP server adapter or it
 /// may have been processed by other middleware. Similarly, the resulting [HandledContext]
 /// may be directly returned to an HTTP server adapter or have further processing
 /// done by other middleware.
+///
+/// ## Basic Handler
+///
+/// ```dart
+/// ResponseContext myHandler(NewContext ctx) {
+///   return ctx.respond(
+///     Response.ok(
+///       body: Body.fromString('Hello, World!'),
+///     ),
+///   );
+/// };
+/// ```
+///
+/// ## Async Handler
+///
+/// ```dart
+/// Future<ResponseContext> asyncHandler(NewContext ctx) async {
+///   final data = await fetchDataFromDatabase();
+///   return ctx.respond(
+///     Response.ok(
+///       body: Body.fromString(jsonEncode(data), mimeType: MimeType.json),
+///     ),
+///   );
+/// };
+/// ```
+///
+/// ## Handler with Path Parameters
+///
+/// ```dart
+/// // Route: /users/:id
+/// Handler userHandler(NewContext ctx) {
+///   final id = ctx.pathParameters[#id];
+///   return ctx.respond(
+///     Response.ok(
+///       body: Body.fromString('User ID: $id'),
+///     ),
+///   );
+/// };
+/// ```
 typedef Handler = FutureOr<HandledContext> Function(NewContext ctx);
 
 /// A handler specifically designed to produce a [ResponseContext].
