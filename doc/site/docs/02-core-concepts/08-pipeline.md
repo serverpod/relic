@@ -63,10 +63,6 @@ final handler = router.asHandler;
 
 The new approach is more concise, provides better path-specific middleware control, and integrates more naturally with Relic's routing system.
 
-## Summary
-
-Pipeline is a legacy pattern for composing middleware, see [Middleware](./middleware) for the modern approach.
-
 ## Examples
 
 Check out these examples to see pipeline in action:

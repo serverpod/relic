@@ -339,6 +339,15 @@ void main() async {
 - [Relic on GitHub](https://github.com/serverpod/relic)
 - [Serverpod](https://serverpod.dev)
 
-## Need Help?
+## Summary
 
-If you encounter issues during migration, check the [Reference](/docs/03-reference) section or open an issue on [GitHub](https://github.com/serverpod/relic/issues).
+Migrating from Shelf to Relic brings significant improvements in type safety, performance, and developer experience. While the core concepts remain similar, Relic's modern architecture eliminates many of Shelf's limitations through features like trie-based routing, unified body handling, and compile-time guarantees.
+
+The migration involves updating handler signatures to use contexts, adopting type-safe headers, leveraging built-in routing and WebSocket support, and replacing string-based context maps with `ContextProperty`. Most applications can migrate incrementally, starting with core handlers and gradually adopting Relic's advanced features.
+
+For complex applications, consider migrating middleware first, then routes, and finally specialized handlers. The comprehensive examples and clear error messages make the transition smoother than it might appear.
+
+## Examples
+
+- **[Migration Examples](https://github.com/serverpod/relic/blob/main/example/)** - Compare Shelf and Relic implementations
+- [GitHub Issues](https://github.com/serverpod/relic/issues) - Get help with migration challenges

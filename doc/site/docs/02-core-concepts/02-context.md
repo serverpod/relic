@@ -561,19 +561,13 @@ Future<ResponseContext> fixedHandler(NewContext ctx) async {
 
 ## Summary
 
-You've learned the heart of Relic's request handling system! Here's what we covered:
+The `RequestContext` system is the foundation of Relic's request handling architecture, providing type-safe state management that prevents entire categories of bugs at compile time. Every HTTP request flows through a carefully designed state machine that ensures proper request/response handling.
 
-✅ **Context types** - `NewContext` starts every request, then transitions to a final state  
-✅ **Type safety** - The compiler prevents invalid operations (like responding twice)  
-✅ **Request data** - Access HTTP data through `ctx.request`  
-✅ **Context properties** - Attach custom data to requests  
-✅ **Common mistakes** - How to avoid typical newbie errors
+Key principles include using specific context types (`NewContext`, `ResponseContext`, `ConnectContext`) to enforce valid operations, leveraging type-safe request data access, and utilizing context properties for request-scoped data sharing. The system eliminates common pitfalls like double responses or incorrect state transitions.
 
-The context system might feel complex at first, but it prevents entire categories of bugs. Stick with it - the type safety will save you hours of debugging later!
+This approach delivers both developer experience improvements through better IDE support and runtime safety through compile-time guarantees, making complex web applications more maintainable and reliable.
 
-### Complete examples
-
-Still confused? Check out the complete examples on GitHub to see everything working together.
+## Examples
 
 - **[Context Types Example](https://github.com/serverpod/relic/blob/main/example/context.dart)** - Demonstrates HTTP responses, WebSocket connections, routing, and middleware
 - **[Context Property Example](https://github.com/serverpod/relic/blob/main/example/context_property.dart)** - Shows how to use context properties for request IDs
