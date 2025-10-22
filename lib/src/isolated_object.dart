@@ -37,7 +37,9 @@ class IsolatedObject<T> {
 
     fromChild.listen((final message) {
       if (message case final _Response response) {
-        final completer = inflight.remove(response.id)!;
+        final completer = inflight.remove(response.id);
+        assert(completer != null, 'PROTOCOL BUG. No such ID ${response.id}');
+        if (completer == null) return; // late/duplicate message, ignore
         switch (response.result) {
           case final RemoteError e:
             completer.completeError(e);
