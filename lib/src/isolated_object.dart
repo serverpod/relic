@@ -22,8 +22,8 @@ class IsolatedObject<T> {
     final setupDone = Completer<_Setup>();
 
     parentPort.handler = (final dynamic message) async {
-      if (message case final Error e) {
-        setupDone.completeError(e);
+      if (message case final RemoteError e) {
+        setupDone.completeError(e, e.stackTrace);
       } else {
         final toChild = message as SendPort;
         final fromChild = ReceivePort.fromRawReceivePort(parentPort);
@@ -49,7 +49,7 @@ class IsolatedObject<T> {
         if (completer == null) return; // coverage: ignore-line
         switch (response.result) {
           case final RemoteError e:
-            completer.completeError(e);
+            completer.completeError(e, e.stackTrace);
           default:
             completer.complete(await response.result);
         }
@@ -78,7 +78,7 @@ class IsolatedObject<T> {
         // process inbound actions
         await for (final message in childPort) {
           if (message == null) {
-            // shutdown signal recieved
+            // shutdown signal received
             childPort.close();
             break;
           } else if (message case final _Action<T> action) {

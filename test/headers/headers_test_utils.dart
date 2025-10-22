@@ -68,6 +68,7 @@ Future<Headers> getServerRequestHeaders({
   }
 
   final requestHeaders = await recv.first as Headers;
+  recv.close();
   return requestHeaders;
 }
 

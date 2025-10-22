@@ -17,10 +17,10 @@ final class RelicApp implements RelicRouter {
   /// The adapter factory pattern allows for deferred initialization of server
   /// resources.
   ///
-  /// if [noOfIsolates] is equal to one, the server is started on the current isolate.
+  /// If [noOfIsolates] equals 1, the server is started on the current isolate.
   /// Otherwise [noOfIsolates] isolates are spun up. When using multiple isolates make
   /// sure that any handler and middleware configured are sendable.
-  /// (see https://api.flutter.dev/flutter/dart-isolate/SendPort/send.html).
+  /// (see https://api.dart.dev/stable/dart-isolate/SendPort/send.html).
   ///
   /// Returns a [Future] that completes with the running [RelicServer] instance.
   ///
