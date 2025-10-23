@@ -115,10 +115,10 @@ final class BearerAuthorizationHeader extends AuthorizationHeader {
   /// Masks a token value for secure logging.
   ///
   /// Shows the first 4 and last 4 characters of the token, with the middle
-  /// replaced by asterisks. For tokens shorter than 8 characters, only
+  /// replaced by asterisks. For tokens shorter than 16 characters, only
   /// asterisks are shown.
   static String _maskToken(final String token) {
-    if (token.length <= 8) {
+    if (token.length < 16) {
       return '****';
     }
     final prefix = token.substring(0, 4);

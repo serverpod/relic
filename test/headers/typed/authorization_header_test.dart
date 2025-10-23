@@ -561,23 +561,23 @@ void main() {
     );
 
     test(
-      'when BearerAuthorizationHeader.toString() is called with a token of exactly 8 characters '
+      'when BearerAuthorizationHeader.toString() is called with a token of exactly 15 characters '
       'then it should mask the entire token',
       () {
-        final bearer = BearerAuthorizationHeader(token: '12345678');
+        final bearer = BearerAuthorizationHeader(token: '123456789012345');
         final result = bearer.toString();
         expect(result, 'BearerAuthorizationHeader(token: ****)');
-        expect(result, isNot(contains('12345678')));
+        expect(result, isNot(contains('123456789012345')));
       },
     );
 
     test(
-      'when BearerAuthorizationHeader.toString() is called with a token of 9 characters '
+      'when BearerAuthorizationHeader.toString() is called with a token of 16 characters '
       'then it should show first and last 4 characters',
       () {
-        final bearer = BearerAuthorizationHeader(token: '123456789');
+        final bearer = BearerAuthorizationHeader(token: '1234567890123456');
         final result = bearer.toString();
-        expect(result, 'BearerAuthorizationHeader(token: 1234****6789)');
+        expect(result, 'BearerAuthorizationHeader(token: 1234****3456)');
       },
     );
 
