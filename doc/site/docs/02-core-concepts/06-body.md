@@ -11,8 +11,8 @@ The `Body` class represents the content of HTTP messages, designed to handle bot
 
 ## Key features
 
-- Stream-based architecture: All body content is handled as `Stream<Uint8List>` for memory.efficiency, allowing you to process large files without loading them entirely into memory.
-- One-time read constraint: Bodies can only be read once to prevent accidental double-consumption
+- Stream-based architecture: All body content is handled as `Stream<Uint8List>` for memory efficiency, allowing you to process large files without loading them entirely into memory.
+- One-time read constraint: Bodies can only be read once to prevent accidental double-consumption.
 - Automatic type detection: Intelligent MIME type inference for JSON, HTML, XML, and binary file types.
 - Encoding support: Handles text encoding (UTF-8, Latin-1, etc.) automatically with manual override options.
 

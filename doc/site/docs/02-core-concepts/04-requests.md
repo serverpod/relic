@@ -14,12 +14,12 @@ The request flows through your middleware pipeline and reaches your handler, whe
 
 The `Request` object exposes several important properties:
 
-- **`method`** - The HTTP method (GET, POST, PUT, DELETE, etc.) as a `Method` enum value
-- **`url`** - The relative URL from the current handler's perspective, including query parameters
-- **`requestedUri`** - The complete original URI that was requested
-- **`headers`** - Type-safe access to HTTP headers
-- **`body`** - The request body as a readable stream
-- **`protocolVersion`** - The HTTP protocol version (typically "1.1")
+- **`method`** - The HTTP method (GET, POST, PUT, DELETE, etc.) as a `Method` enum value.
+- **`url`** - The relative URL from the current handler's perspective, including query parameters.
+- **`requestedUri`** - The complete original URI that was requested.
+- **`headers`** - Type-safe access to HTTP headers.
+- **`body`** - The request body as a readable stream.
+- **`protocolVersion`** - The HTTP protocol version (typically "1.1").
 
 ## Accessing request data
 
