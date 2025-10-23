@@ -34,8 +34,8 @@ Every context starts as `NewContext` and transitions _exactly once_ to a final s
 Let's start with the simplest possible Relic server to understand how contexts work:
 
 ```dart
+// Common imports for Relic handlers
 import 'dart:io';
-
 import 'package:relic/io_adapter.dart';
 import 'package:relic/relic.dart';
 
@@ -72,12 +72,6 @@ graph TD
     A --> D[<h3>ConnectContext</h3><br/>WebSocket connection created]
 ```
 
-All contexts share a common base: `RequestContext`, which gives you access to `ctx.request` (the HTTP request data).
-
-Some contexts also implement special interfaces:
-
-- **`RespondableContext`** - Can send responses (includes `NewContext`, also used as a parameter type to allow multiple context types)
-
 ### NewContext - The starting point
 
 Every handler receives a `NewContext` first. This represents a **fresh, unhandled request** and gives you three choices:
@@ -95,6 +89,7 @@ Every handler receives a `NewContext` first. This represents a **fresh, unhandle
 **Example - Serving HTML:**
 
 ```dart
+// Note: dart:convert and package:relic/relic.dart are commonly used
 import 'dart:convert';
 import 'dart:io';
 import 'package:relic/io_adapter.dart';
@@ -142,9 +137,7 @@ ResponseContext simpleHandler(NewContext ctx) {
 
 ### ResponseContext - HTTP response sent
 
-Once you call `respond()`, the request is considered _complete_. The `ResponseContext` returned is primarily used internally by Relic's middleware system.
-
-When you call `ctx.respond()`, you transition to a `ResponseContext`. This represents a _completed HTTP request_ with a response ready to be sent to the client.
+When you call `ctx.respond()`, you transition to a `ResponseContext`. This represents a _completed HTTP request_ with a response ready to be sent to the client. The `ResponseContext` returned is primarily used internally by Relic's middleware system.
 
 | Property   | Type       | Description              |
 |------------|------------|--------------------------|
@@ -153,6 +146,7 @@ When you call `ctx.respond()`, you transition to a `ResponseContext`. This repre
 **Example - JSON API response:**
 
 ```dart
+// Note: dart:convert and package:relic/relic.dart are commonly used
 import 'dart:convert';  // For jsonEncode
 import 'package:relic/relic.dart';
 
@@ -177,6 +171,7 @@ Future<ResponseContext> apiHandler(NewContext ctx) async {
 **Example - API with route parameters:**
 
 ```dart
+// Note: dart:convert and package:relic/relic.dart are commonly used
 import 'dart:convert';
 import 'package:relic/relic.dart';
 
@@ -232,9 +227,7 @@ return ctx.respond(
 
 ### ConnectContext - WebSocket connections
 
-Use `connect()` for WebSocket handshakes. WebSockets are a specific type of connection upgrade that Relic handles automatically.
-
-For full-duplex WebSocket connections where both client and server can send messages independently.
+Use `connect()` for WebSocket handshakes - full-duplex connections where both client and server can send messages independently. WebSockets are a specific type of connection upgrade that Relic handles automatically.
 
 | Property   | Type                | Description                     |
 |------------|---------------------|---------------------------------|
@@ -282,7 +275,7 @@ Unlike `respond()` which sends a response and closes the connection, `connect()`
 
 ## Accessing request data
 
-All context types inherit from `RequestContext` and provide access to the original HTTP request through `ctx.request`. This gives you access to all HTTP data:
+All context types provide access to the original HTTP request through `ctx.request`. This gives you access to all HTTP data:
 
 ### Request properties reference
 
@@ -298,6 +291,7 @@ All context types inherit from `RequestContext` and provide access to the origin
 The request body is a `Stream<Uint8List>`. Use `readAsString()` for text data or `readAsBytes()` for binary data.
 
 ```dart
+// Note: dart:convert and package:relic/relic.dart are commonly used
 import 'dart:convert';
 import 'package:relic/relic.dart';
 
@@ -343,17 +337,15 @@ Future<ResponseContext> dataHandler(NewContext ctx) async {
 
 :::warning Reading request bodies
 
-- The body can only be read _once_ - it's a stream that gets consumed
-- Always validate the `Content-Type` header before parsing
-- Wrap parsing in try-catch to handle malformed data
-- Be careful with large bodies - consider adding size limits
+- The body can only be read _once_ - it's a stream that gets consumed.
+- Always validate the `Content-Type` header before parsing.
+- Wrap parsing in try-catch to handle malformed data.
+- Be careful with large bodies - consider adding size limits.
 :::
 
 ## Context state machine
 
 Relic's context system uses a _state machine_ to prevent invalid operations. Each context type exposes only the methods that make sense for its current state, catching errors at compile time rather than runtime.
-
-Once you've chosen a path, you cannot backtrack. For example, after calling `respond()` to create a `ResponseContext`, you cannot change your mind and call `connect()` to create a `ConnectContext` instead. The transition is irreversible.
 
 This makes sense because an HTTP request can only have one outcome:
 
@@ -399,6 +391,7 @@ Context properties let you **attach custom data** to a request as it flows throu
 Here's a simple example that assigns a unique ID to each request:
 
 ```dart
+// Note: package:relic/relic.dart is commonly used
 import 'package:relic/relic.dart';
 
 // 1. Create a ContextProperty to store request-specific data
