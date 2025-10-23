@@ -10,7 +10,7 @@ final class AccessControlAllowMethodsHeader extends WildcardListHeader<Method> {
 
   /// Constructs an instance allowing specific methods to be allowed.
   AccessControlAllowMethodsHeader.methods({required final List<Method> methods})
-      : super(methods);
+    : super(methods);
 
   /// Constructs an instance allowing all methods to be allowed (`*`).
   const AccessControlAllowMethodsHeader.wildcard() : super.wildcard();
@@ -35,7 +35,8 @@ final class AccessControlAllowMethodsHeader extends WildcardListHeader<Method> {
   }
 
   static List<String> encodeHeader(
-      final AccessControlAllowMethodsHeader header) {
+    final AccessControlAllowMethodsHeader header,
+  ) {
     return header.encode((final Method m) => m.value).toList();
   }
 

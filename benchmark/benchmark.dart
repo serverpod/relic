@@ -22,20 +22,22 @@ late final List<String> dynamicRoutesToLookup;
 void setupBenchmarkData(final int routeCount) {
   logger.info('Setting up benchmark data with $routeCount routes...');
   indexes = List.generate(routeCount, (final i) => i);
-  final permutedIndexes = indexes.toList()
-    ..shuffle(Random(123)); // Use fixed seed for reproducibility
+  final permutedIndexes =
+      indexes.toList()
+        ..shuffle(Random(123)); // Use fixed seed for reproducibility
 
   // Pre-generate lookup paths
   staticRoutesToLookup = permutedIndexes.map((final i) => '/path$i').toList();
-  dynamicRoutesToLookup = permutedIndexes
-      .map(
-        (final i) =>
-            // Fixed seed for reproducibility
-            '/users/user_${Random(i).nextInt(1000)}'
-            '/items/item_${Random(i + 1).nextInt(5000)}'
-            '/profile$i',
-      )
-      .toList();
+  dynamicRoutesToLookup =
+      permutedIndexes
+          .map(
+            (final i) =>
+                // Fixed seed for reproducibility
+                '/users/user_${Random(i).nextInt(1000)}'
+                '/items/item_${Random(i + 1).nextInt(5000)}'
+                '/profile$i',
+          )
+          .toList();
   logger.info('Setup complete.');
 }
 
@@ -65,7 +67,7 @@ class Emitter extends ScoreEmitterV2 {
 
 abstract class RouterBenchmark extends PerfBenchmarkBase {
   RouterBenchmark(final Iterable<String> grouping, final Emitter emitter)
-      : super(grouping.join(';'), emitter: emitter);
+    : super(grouping.join(';'), emitter: emitter);
 
   @override
   void exercise() => run();
@@ -74,7 +76,7 @@ abstract class RouterBenchmark extends PerfBenchmarkBase {
 // Benchmark for adding static routes
 class StaticAddBenchmark extends RouterBenchmark {
   StaticAddBenchmark(final Emitter emitter)
-      : super(['Add', 'Static', 'x$routeCount', 'Router'], emitter);
+    : super(['Add', 'Static', 'x$routeCount', 'Router'], emitter);
 
   @override
   void run() {
@@ -88,7 +90,7 @@ class StaticAddBenchmark extends RouterBenchmark {
 // Benchmark for looking up static routes
 class StaticLookupBenchmark extends RouterBenchmark {
   StaticLookupBenchmark(final Emitter emitter)
-      : super(['Lookup', 'Static', 'x$routeCount', 'Router'], emitter);
+    : super(['Lookup', 'Static', 'x$routeCount', 'Router'], emitter);
 
   late final Router<int> router;
 
@@ -112,7 +114,7 @@ class StaticLookupBenchmark extends RouterBenchmark {
 // Benchmark for adding dynamic routes
 class DynamicAddBenchmark extends RouterBenchmark {
   DynamicAddBenchmark(final Emitter emitter)
-      : super(['Add', 'Dynamic', 'x$routeCount', 'Router'], emitter);
+    : super(['Add', 'Dynamic', 'x$routeCount', 'Router'], emitter);
 
   @override
   void run() {
@@ -126,7 +128,7 @@ class DynamicAddBenchmark extends RouterBenchmark {
 // Benchmark for looking up dynamic routes
 class DynamicLookupBenchmark extends RouterBenchmark {
   DynamicLookupBenchmark(final Emitter emitter)
-      : super(['Lookup', 'Dynamic', 'x$routeCount', 'Router'], emitter);
+    : super(['Lookup', 'Dynamic', 'x$routeCount', 'Router'], emitter);
 
   late final Router<int> router;
 
@@ -150,7 +152,7 @@ class DynamicLookupBenchmark extends RouterBenchmark {
 
 class StaticAddRoutingkitBenchmark extends RouterBenchmark {
   StaticAddRoutingkitBenchmark(final Emitter emitter)
-      : super(['Add', 'Static', 'x$routeCount', 'Routingkit'], emitter);
+    : super(['Add', 'Static', 'x$routeCount', 'Routingkit'], emitter);
 
   @override
   void run() {
@@ -163,7 +165,7 @@ class StaticAddRoutingkitBenchmark extends RouterBenchmark {
 
 class StaticLookupRoutingkitBenchmark extends RouterBenchmark {
   StaticLookupRoutingkitBenchmark(final Emitter emitter)
-      : super(['Lookup', 'Static', 'x$routeCount', 'Routingkit'], emitter);
+    : super(['Lookup', 'Static', 'x$routeCount', 'Routingkit'], emitter);
 
   late final routingkit.Router<int> router;
 
@@ -186,7 +188,7 @@ class StaticLookupRoutingkitBenchmark extends RouterBenchmark {
 
 class DynamicAddRoutingkitBenchmark extends RouterBenchmark {
   DynamicAddRoutingkitBenchmark(final Emitter emitter)
-      : super(['Add', 'Dynamic', 'x$routeCount', 'Routingkit'], emitter);
+    : super(['Add', 'Dynamic', 'x$routeCount', 'Routingkit'], emitter);
 
   @override
   void run() {
@@ -199,7 +201,7 @@ class DynamicAddRoutingkitBenchmark extends RouterBenchmark {
 
 class DynamicLookupRoutingkitBenchmark extends RouterBenchmark {
   DynamicLookupRoutingkitBenchmark(final Emitter emitter)
-      : super(['Lookup', 'Dynamic', 'x$routeCount', 'Routingkit'], emitter);
+    : super(['Lookup', 'Dynamic', 'x$routeCount', 'Routingkit'], emitter);
 
   late final routingkit.Router<int> router;
 
@@ -223,7 +225,7 @@ class DynamicLookupRoutingkitBenchmark extends RouterBenchmark {
 
 class StaticAddSpannerBenchmark extends RouterBenchmark {
   StaticAddSpannerBenchmark(final Emitter emitter)
-      : super(['Add', 'Static', 'x$routeCount', 'Spanner'], emitter);
+    : super(['Add', 'Static', 'x$routeCount', 'Spanner'], emitter);
 
   @override
   void run() {
@@ -236,7 +238,7 @@ class StaticAddSpannerBenchmark extends RouterBenchmark {
 
 class StaticLookupSpannerBenchmark extends RouterBenchmark {
   StaticLookupSpannerBenchmark(final Emitter emitter)
-      : super(['Lookup', 'Static', 'x$routeCount', 'Spanner'], emitter);
+    : super(['Lookup', 'Static', 'x$routeCount', 'Spanner'], emitter);
 
   late final spanner.Spanner router;
 
@@ -259,21 +261,24 @@ class StaticLookupSpannerBenchmark extends RouterBenchmark {
 
 class DynamicAddSpannerBenchmark extends RouterBenchmark {
   DynamicAddSpannerBenchmark(final Emitter emitter)
-      : super(['Add', 'Dynamic', 'x$routeCount', 'Spanner'], emitter);
+    : super(['Add', 'Dynamic', 'x$routeCount', 'Spanner'], emitter);
 
   @override
   void run() {
     final router = spanner.Spanner();
     for (final i in indexes) {
       router.addRoute(
-          spanner.HTTPMethod.GET, '/users/<id>/items/<itemId>/profile$i', i);
+        spanner.HTTPMethod.GET,
+        '/users/<id>/items/<itemId>/profile$i',
+        i,
+      );
     }
   }
 }
 
 class DynamicLookupSpannerBenchmark extends RouterBenchmark {
   DynamicLookupSpannerBenchmark(final Emitter emitter)
-      : super(['Lookup', 'Dynamic', 'x$routeCount', 'Spanner'], emitter);
+    : super(['Lookup', 'Dynamic', 'x$routeCount', 'Spanner'], emitter);
 
   late final spanner.Spanner router;
 
@@ -283,7 +288,10 @@ class DynamicLookupSpannerBenchmark extends RouterBenchmark {
     router = spanner.Spanner();
     for (final i in indexes) {
       router.addRoute(
-          spanner.HTTPMethod.GET, '/users/<id>/items/<itemId>/profile$i', i);
+        spanner.HTTPMethod.GET,
+        '/users/<id>/items/<itemId>/profile$i',
+        i,
+      );
     }
   }
 
@@ -297,36 +305,44 @@ class DynamicLookupSpannerBenchmark extends RouterBenchmark {
 }
 
 enum RunOption<V> implements OptionDefinition<V> {
-  file(FileOption(
-    argName: 'output',
-    argAbbrev: 'o',
-    helpText: 'The file to write benchmark results to',
-    fromDefault: _defaultFile,
-    mode: PathExistMode.mustNotExist,
-  )),
+  file(
+    FileOption(
+      argName: 'output',
+      argAbbrev: 'o',
+      helpText: 'The file to write benchmark results to',
+      fromDefault: _defaultFile,
+      mode: PathExistMode.mustNotExist,
+    ),
+  ),
 
-  iterations(IntOption(
-    argName: 'iterations',
-    argAbbrev: 'i',
-    helpText: 'Something to do with scale',
-    defaultsTo: 1000,
-    min: 1,
-  )),
+  iterations(
+    IntOption(
+      argName: 'iterations',
+      argAbbrev: 'i',
+      helpText: 'Something to do with scale',
+      defaultsTo: 1000,
+      min: 1,
+    ),
+  ),
 
-  storeInNotes(FlagOption(
-    argName: 'store-in-git-notes',
-    argAbbrev: 's',
-    helpText: 'Store benchmark result with git notes',
-    defaultsTo: false,
-  )),
+  storeInNotes(
+    FlagOption(
+      argName: 'store-in-git-notes',
+      argAbbrev: 's',
+      helpText: 'Store benchmark result with git notes',
+      defaultsTo: false,
+    ),
+  ),
 
-  pause(FlagOption(
-    argName: 'pause-on-startup',
-    argAbbrev: 'p',
-    helpText: 'Pause on startup to allow devtools to attach',
-    defaultsTo: false,
-    hideNegatedUsage: true,
-  ));
+  pause(
+    FlagOption(
+      argName: 'pause-on-startup',
+      argAbbrev: 'p',
+      helpText: 'Pause on startup to allow devtools to attach',
+      defaultsTo: false,
+      hideNegatedUsage: true,
+    ),
+  );
 
   const RunOption(this.option);
 
@@ -384,10 +400,14 @@ class RunCommand extends BetterCommand<RunOption<dynamic>, void> {
     if (storeInNotes) {
       final head = await git.commitFromRevision('HEAD');
       logger.info('Appending benchmark results to: ${head.treeSha} (tree)');
-      await git.runCommand(
-        ['notes', '--ref=benchmarks', 'append', '-F', file.path, head.treeSha],
-        echoOutput: logger.shouldLog(LogLevel.debug),
-      );
+      await git.runCommand([
+        'notes',
+        '--ref=benchmarks',
+        'append',
+        '-F',
+        file.path,
+        head.treeSha,
+      ], echoOutput: logger.shouldLog(LogLevel.debug));
     }
   }
 }
@@ -419,9 +439,11 @@ class ExtractCommand extends BetterCommand<ExtractOption<dynamic>, void> {
     final to = commandConfig.value(ExtractOption.to);
 
     final git = await GitDir.fromExisting(p.current, allowSubdirectory: true);
-    final result = await git.runCommand(
-      ['log', '--format=%aI %H %T', '$from..$to'],
-    );
+    final result = await git.runCommand([
+      'log',
+      '--format=%aI %H %T',
+      '$from..$to',
+    ]);
 
     final sb = StringBuffer();
     for (final line in (result.stdout as String).split('\n')) {
@@ -433,10 +455,12 @@ class ExtractCommand extends BetterCommand<ExtractOption<dynamic>, void> {
       final treeSha = hashes[2];
       logger.debug('$commitSha $treeSha $authorTime');
 
-      final result = await git.runCommand(
-        ['notes', '--ref=benchmarks', 'show', treeSha],
-        throwOnError: false,
-      );
+      final result = await git.runCommand([
+        'notes',
+        '--ref=benchmarks',
+        'show',
+        treeSha,
+      ], throwOnError: false);
       if (result.exitCode == 0) sb.writeln(result.stdout);
     }
     logger.info(sb.toString());
@@ -463,13 +487,8 @@ Future<int> main(final List<String> args) async {
     'Relic Benchmark Tool',
     setLogLevel: setLogLevel,
     enableCompletionCommand: true,
-    embeddedCompletions: [
-      completionScriptCarapace,
-    ],
-  )..addCommands([
-      RunCommand(),
-      ExtractCommand(),
-    ]);
+    embeddedCompletions: [completionScriptCarapace],
+  )..addCommands([RunCommand(), ExtractCommand()]);
   try {
     await runner.run(args);
   } on UsageException catch (ex) {

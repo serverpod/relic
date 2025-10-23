@@ -84,11 +84,12 @@ final class PathTrie<T extends Object> {
     // Mark the end node and handle potential overwrites
     if (currentNode.value != null) {
       throw ArgumentError.value(
-          normalizedPath,
-          'normalizedPath',
-          'Value already registered: '
-              'Existing: "${currentNode.value}" '
-              'New: "$value"');
+        normalizedPath,
+        'normalizedPath',
+        'Value already registered: '
+            'Existing: "${currentNode.value}" '
+            'New: "$value"',
+      );
     }
     currentNode.value = value;
   }
@@ -151,7 +152,10 @@ final class PathTrie<T extends Object> {
     final currentNode = _find(normalizedPath);
     if (currentNode == null || currentNode.value == null) {
       throw ArgumentError.value(
-          normalizedPath, 'normalizedPath', 'No value registered');
+        normalizedPath,
+        'normalizedPath',
+        'No value registered',
+      );
     }
     currentNode.value = value;
   }
@@ -194,7 +198,8 @@ final class PathTrie<T extends Object> {
     // Helper function
     @pragma('vm:prefer-inline')
     _TrieNode<T>? nextIf<U extends _DynamicSegment<T>>(
-        final _DynamicSegment<T>? dynamicSegment) {
+      final _DynamicSegment<T>? dynamicSegment,
+    ) {
       if (dynamicSegment != null && dynamicSegment is U) {
         return dynamicSegment.node;
       }
@@ -233,13 +238,16 @@ final class PathTrie<T extends Object> {
     // Helper function
     @pragma('vm:prefer-inline')
     void isA<U extends _DynamicSegment<T>>(
-        final _DynamicSegment<T>? dynamicSegment, final int segmentNo) {
+      final _DynamicSegment<T>? dynamicSegment,
+      final int segmentNo,
+    ) {
       if (dynamicSegment != null && dynamicSegment is! U) {
         normalizedPath.raiseInvalidSegment(
-            segmentNo,
-            'Conflicting segment type at the same level: '
-            'Existing: ${dynamicSegment.runtimeType}, '
-            'New: $U');
+          segmentNo,
+          'Conflicting segment type at the same level: '
+          'Existing: ${dynamicSegment.runtimeType}, '
+          'New: $U',
+        );
       }
     }
 
@@ -253,8 +261,10 @@ final class PathTrie<T extends Object> {
           normalizedPath.raiseInvalidSegment(i, 'Starts with "**"');
         }
         if (i < segments.length - 1) {
-          normalizedPath.raiseInvalidSegment(i,
-              'Tail segment (**) must be the last segment in the path definition.');
+          normalizedPath.raiseInvalidSegment(
+            i,
+            'Tail segment (**) must be the last segment in the path definition.',
+          );
         }
         isA<_Tail<T>>(dynamicSegment, i);
         currentNode = (currentNode.dynamicSegment ??= _Tail()).node;
@@ -271,7 +281,9 @@ final class PathTrie<T extends Object> {
         final paramName = segment.substring(1).trim();
         if (paramName.isEmpty) {
           normalizedPath.raiseInvalidSegment(
-              i, 'Parameter name cannot be empty');
+            i,
+            'Parameter name cannot be empty',
+          );
         }
         // Ensure parameter child exists and handle name conflicts
         var parameter = dynamicSegment as _Parameter<T>?;
@@ -361,9 +373,12 @@ final class PathTrie<T extends Object> {
     void updateMap() {
       final cm = currentMap;
       final m = currentNode.map;
-      currentMap = cm == null
-          ? m // may also be null
-          : (m == null ? cm : (final v) => cm(m(v))); // compose map function
+      currentMap =
+          cm == null
+              ? m // may also be null
+              : (m == null
+                  ? cm
+                  : (final v) => cm(m(v))); // compose map function
     }
 
     int i = 0;
@@ -411,9 +426,15 @@ final class PathTrie<T extends Object> {
 }
 
 extension on NormalizedPath {
-  Never raiseInvalidSegment(final int segmentNo, final String message,
-      {final String name = 'normalizedPath'}) {
-    throw ArgumentError.value(this, name,
-        'Segment no $segmentNo: "${segments[segmentNo]}" is invalid. $message');
+  Never raiseInvalidSegment(
+    final int segmentNo,
+    final String message, {
+    final String name = 'normalizedPath',
+  }) {
+    throw ArgumentError.value(
+      this,
+      name,
+      'Segment no $segmentNo: "${segments[segmentNo]}" is invalid. $message',
+    );
   }
 }

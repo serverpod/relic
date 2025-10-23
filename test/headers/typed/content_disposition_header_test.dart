@@ -26,38 +26,37 @@ void main() {
             touchHeaders: (final h) => h.contentDisposition,
             headers: {'content-disposition': ''},
           ),
-          throwsA(isA<BadRequestException>().having(
-            (final e) => e.message,
-            'message',
-            contains('Value cannot be empty'),
-          )),
+          throwsA(
+            isA<BadRequestException>().having(
+              (final e) => e.message,
+              'message',
+              contains('Value cannot be empty'),
+            ),
+          ),
         );
       },
     );
 
-    test(
-      'when a Content-Disposition header with an empty value is passed '
-      'then the server does not respond with a bad request if the headers '
-      'is not actually used',
-      () async {
-        final headers = await getServerRequestHeaders(
-          server: server,
-          touchHeaders: (final _) {},
-          headers: {'content-disposition': ''},
-        );
+    test('when a Content-Disposition header with an empty value is passed '
+        'then the server does not respond with a bad request if the headers '
+        'is not actually used', () async {
+      final headers = await getServerRequestHeaders(
+        server: server,
+        touchHeaders: (_) {},
+        headers: {'content-disposition': ''},
+      );
 
-        expect(headers, isNotNull);
-      },
-    );
+      expect(headers, isNotNull);
+    });
 
     test(
       'when a Content-Disposition header is passed then it should parse correctly',
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final _) {},
+          touchHeaders: (_) {},
           headers: {
-            'content-disposition': 'attachment; filename="example.txt"'
+            'content-disposition': 'attachment; filename="example.txt"',
           },
         );
 
@@ -92,10 +91,10 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final _) {},
+          touchHeaders: (_) {},
           headers: {
             'content-disposition':
-                'attachment; filename="example.txt"; size=12345'
+                'attachment; filename="example.txt"; size=12345',
           },
         );
 
@@ -143,20 +142,19 @@ void main() {
     tearDown(() => server.close());
 
     group('when an empty Content-Disposition header is passed', () {
-      test(
-        'then it should return null',
-        () async {
-          final headers = await getServerRequestHeaders(
-            server: server,
-            touchHeaders: (final _) {},
-            headers: {'content-disposition': ''},
-          );
+      test('then it should return null', () async {
+        final headers = await getServerRequestHeaders(
+          server: server,
+          touchHeaders: (_) {},
+          headers: {'content-disposition': ''},
+        );
 
-          expect(
-              Headers.contentDisposition[headers].valueOrNullIfInvalid, isNull);
-          expect(() => headers.contentDisposition, throwsInvalidHeader);
-        },
-      );
+        expect(
+          Headers.contentDisposition[headers].valueOrNullIfInvalid,
+          isNull,
+        );
+        expect(() => headers.contentDisposition, throwsInvalidHeader);
+      });
     });
   });
 }

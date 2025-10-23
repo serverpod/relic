@@ -27,12 +27,7 @@ Request _fromPath(
   final String path,
   final Headers? headers, {
   required final Method method,
-}) =>
-    Request(
-      method,
-      Uri.parse('http://localhost$path'),
-      headers: headers,
-    );
+}) => Request(method, Uri.parse('http://localhost$path'), headers: headers);
 
 Handler _rootHandler(final String? path, final Handler handler) {
   if (path == null || path.isEmpty) {
@@ -43,11 +38,7 @@ Handler _rootHandler(final String? path, final Handler handler) {
     final ctx = requestCtx as RespondableContext;
     final request = ctx.request;
     if (!_ctx.isWithin('/$path', request.requestedUri.path)) {
-      return ctx.respond(Response.notFound(
-        body: Body.fromString(
-          'not found',
-        ),
-      ));
+      return ctx.respond(Response.notFound(body: Body.fromString('not found')));
     }
     assert(request.handlerPath == '/');
 
@@ -64,7 +55,7 @@ class _SecondResolutionDateTimeMatcher extends Matcher {
   final DateTime _target;
 
   _SecondResolutionDateTimeMatcher(final DateTime target)
-      : _target = target.toSecondResolution;
+    : _target = target.toSecondResolution;
 
   @override
   bool matches(final dynamic item, final Map<dynamic, dynamic> matchState) {
@@ -74,9 +65,10 @@ class _SecondResolutionDateTimeMatcher extends Matcher {
   }
 
   @override
-  Description describe(final Description description) =>
-      description.add('Must be at the same moment as $_target with resolution '
-          'to the second.');
+  Description describe(final Description description) => description.add(
+    'Must be at the same moment as $_target with resolution '
+    'to the second.',
+  );
 }
 
 bool _datesEqualToSecond(final DateTime d1, final DateTime d2) =>

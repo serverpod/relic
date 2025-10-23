@@ -16,27 +16,24 @@ void main() {
 
     tearDown(() => server.close());
 
-    test(
-      'when a Range header with an empty value is passed then the server '
-      'responds with a bad request including a message that states the '
-      'header value cannot be empty',
-      () async {
-        expect(
-          getServerRequestHeaders(
-            server: server,
-            touchHeaders: (final h) => h.range,
-            headers: {'range': ''},
+    test('when a Range header with an empty value is passed then the server '
+        'responds with a bad request including a message that states the '
+        'header value cannot be empty', () async {
+      expect(
+        getServerRequestHeaders(
+          server: server,
+          touchHeaders: (final h) => h.range,
+          headers: {'range': ''},
+        ),
+        throwsA(
+          isA<BadRequestException>().having(
+            (final e) => e.message,
+            'message',
+            contains('Value cannot be empty'),
           ),
-          throwsA(
-            isA<BadRequestException>().having(
-              (final e) => e.message,
-              'message',
-              contains('Value cannot be empty'),
-            ),
-          ),
-        );
-      },
-    );
+        ),
+      );
+    });
 
     test(
       'when a range with invalid format is passed then the server responds with a '
@@ -80,37 +77,31 @@ void main() {
       },
     );
 
-    test(
-      'when a Range header with an invalid value is passed '
-      'then the server does not respond with a bad request if the headers '
-      'is not actually used',
-      () async {
-        final headers = await getServerRequestHeaders(
-          server: server,
-          touchHeaders: (final _) {},
-          headers: {'range': 'invalid-value'},
-        );
+    test('when a Range header with an invalid value is passed '
+        'then the server does not respond with a bad request if the headers '
+        'is not actually used', () async {
+      final headers = await getServerRequestHeaders(
+        server: server,
+        touchHeaders: (_) {},
+        headers: {'range': 'invalid-value'},
+      );
 
-        expect(headers, isNotNull);
-      },
-    );
+      expect(headers, isNotNull);
+    });
 
-    test(
-      'when a Range header with a single valid range is passed then it '
-      'should parse correctly',
-      () async {
-        final headers = await getServerRequestHeaders(
-          server: server,
-          touchHeaders: (final h) => h.range,
-          headers: {'range': 'bytes=0-499'},
-        );
+    test('when a Range header with a single valid range is passed then it '
+        'should parse correctly', () async {
+      final headers = await getServerRequestHeaders(
+        server: server,
+        touchHeaders: (final h) => h.range,
+        headers: {'range': 'bytes=0-499'},
+      );
 
-        expect(headers.range?.unit, equals('bytes'));
-        expect(headers.range?.ranges.length, equals(1));
-        expect(headers.range?.ranges.first.start, equals(0));
-        expect(headers.range?.ranges.first.end, equals(499));
-      },
-    );
+      expect(headers.range?.unit, equals('bytes'));
+      expect(headers.range?.ranges.length, equals(1));
+      expect(headers.range?.ranges.first.start, equals(0));
+      expect(headers.range?.ranges.first.end, equals(499));
+    });
 
     test(
       'when a Range header with a range that only has a start is passed then it '
@@ -146,41 +137,35 @@ void main() {
       },
     );
 
-    test(
-      'when no Range header is passed then it should return null',
-      () async {
+    test('when no Range header is passed then it should return null', () async {
+      final headers = await getServerRequestHeaders(
+        server: server,
+        touchHeaders: (final h) => h.range,
+        headers: {},
+      );
+
+      expect(headers.range, isNull);
+    });
+
+    group('when multiple Range headers are passed', () {
+      test('then they should parse correctly', () async {
         final headers = await getServerRequestHeaders(
           server: server,
           touchHeaders: (final h) => h.range,
-          headers: {},
+          headers: {'range': 'bytes=0-499, 500-999, 1000-'},
         );
 
-        expect(headers.range, isNull);
-      },
-    );
+        expect(headers.range?.unit, equals('bytes'));
+        expect(headers.range?.ranges.length, equals(3));
 
-    group('when multiple Range headers are passed', () {
-      test(
-        'then they should parse correctly',
-        () async {
-          final headers = await getServerRequestHeaders(
-            server: server,
-            touchHeaders: (final h) => h.range,
-            headers: {'range': 'bytes=0-499, 500-999, 1000-'},
-          );
-
-          expect(headers.range?.unit, equals('bytes'));
-          expect(headers.range?.ranges.length, equals(3));
-
-          final ranges = headers.range!.ranges;
-          expect(ranges[0].start, equals(0));
-          expect(ranges[0].end, equals(499));
-          expect(ranges[1].start, equals(500));
-          expect(ranges[1].end, equals(999));
-          expect(ranges[2].start, equals(1000));
-          expect(ranges[2].end, isNull);
-        },
-      );
+        final ranges = headers.range!.ranges;
+        expect(ranges[0].start, equals(0));
+        expect(ranges[0].end, equals(499));
+        expect(ranges[1].start, equals(500));
+        expect(ranges[1].end, equals(999));
+        expect(ranges[2].start, equals(1000));
+        expect(ranges[2].end, isNull);
+      });
 
       test(
         'with extra whitespace are passed then they should parse correctly',
@@ -208,19 +193,16 @@ void main() {
     tearDown(() => server.close());
 
     group('when an invalid Range header is passed', () {
-      test(
-        'then it should return null',
-        () async {
-          final headers = await getServerRequestHeaders(
-            server: server,
-            touchHeaders: (final _) {},
-            headers: {'range': 'invalid-range'},
-          );
+      test('then it should return null', () async {
+        final headers = await getServerRequestHeaders(
+          server: server,
+          touchHeaders: (_) {},
+          headers: {'range': 'invalid-range'},
+        );
 
-          expect(Headers.range[headers].valueOrNullIfInvalid, isNull);
-          expect(() => headers.range, throwsInvalidHeader);
-        },
-      );
+        expect(Headers.range[headers].valueOrNullIfInvalid, isNull);
+        expect(() => headers.range, throwsInvalidHeader);
+      });
     });
   });
 }

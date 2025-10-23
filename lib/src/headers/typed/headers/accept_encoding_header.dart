@@ -8,9 +8,9 @@ final class AcceptEncodingHeader extends WildcardListHeader<EncodingQuality> {
   static const codec = HeaderCodec(_parse, _encode);
 
   /// Constructs an instance with the given encodings
-  AcceptEncodingHeader.encodings(
-      {required final List<EncodingQuality> encodings})
-      : super(encodings);
+  AcceptEncodingHeader.encodings({
+    required final List<EncodingQuality> encodings,
+  }) : super(encodings);
 
   /// Constructs an instance with a wildcard encoding
   const AcceptEncodingHeader.wildcard() : super.wildcard();
@@ -52,7 +52,7 @@ class EncodingQuality {
 
   /// Constructs an instance of [EncodingQuality].
   EncodingQuality(this.encoding, [final double? quality])
-      : quality = quality ?? 1.0;
+    : quality = quality ?? 1.0;
 
   /// Parses a string value and returns an [EncodingQuality] instance.
   factory EncodingQuality.parse(final String value) {

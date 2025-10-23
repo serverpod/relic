@@ -10,8 +10,9 @@ import 'util/cookie_util.dart';
 /// This class manages the parsing and representation of set cookie.
 final class SetCookieHeader {
   static const codec = HeaderCodec.single(SetCookieHeader.parse, __encode);
-  static List<String> __encode(final SetCookieHeader value) =>
-      [value._encode()];
+  static List<String> __encode(final SetCookieHeader value) => [
+    value._encode(),
+  ];
 
   /// The keys used for the Set-Cookie header.
   static const String _expires = 'Expires=';
@@ -66,8 +67,8 @@ final class SetCookieHeader {
     this.secure = false,
     this.httpOnly = false,
     this.sameSite,
-  })  : name = validateCookieName(name),
-        value = validateCookieValue(value);
+  }) : name = validateCookieName(name),
+       value = validateCookieValue(value);
 
   factory SetCookieHeader.parse(final String value) {
     final splitValue = value.splitTrimAndFilterUnique(separator: ';');
@@ -95,8 +96,8 @@ final class SetCookieHeader {
         sameSite = SameSite.values.firstWhere(
           (final sameSite) =>
               sameSite.name.toLowerCase() == samesiteValue.toLowerCase(),
-          orElse: () =>
-              throw const FormatException('Invalid SameSite attribute'),
+          orElse:
+              () => throw const FormatException('Invalid SameSite attribute'),
         );
         continue;
       }
@@ -158,7 +159,8 @@ final class SetCookieHeader {
       if (cookie.contains('=')) {
         if (cookieName.isNotEmpty || cookieValue.isNotEmpty) {
           throw const FormatException(
-              'Supplied multiple Name and Value attributes');
+            'Supplied multiple Name and Value attributes',
+          );
         }
         final parts = cookie.split('=');
         cookieName = parts.first.trim();
@@ -218,16 +220,16 @@ final class SetCookieHeader {
 
   @override
   int get hashCode => Object.hashAll([
-        name,
-        value,
-        expires,
-        maxAge,
-        domain,
-        path,
-        secure,
-        httpOnly,
-        sameSite,
-      ]);
+    name,
+    value,
+    expires,
+    maxAge,
+    domain,
+    path,
+    secure,
+    httpOnly,
+    sameSite,
+  ]);
 
   @override
   String toString() {

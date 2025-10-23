@@ -60,20 +60,17 @@ void main() {
       },
     );
 
-    test(
-      'when a Content-Encoding header with an invalid value is passed '
-      'then the server does not respond with a bad request if the headers '
-      'is not actually used',
-      () async {
-        final headers = await getServerRequestHeaders(
-          server: server,
-          touchHeaders: (final _) {},
-          headers: {'content-encoding': 'custom-encoding'},
-        );
+    test('when a Content-Encoding header with an invalid value is passed '
+        'then the server does not respond with a bad request if the headers '
+        'is not actually used', () async {
+      final headers = await getServerRequestHeaders(
+        server: server,
+        touchHeaders: (_) {},
+        headers: {'content-encoding': 'custom-encoding'},
+      );
 
-        expect(headers, isNotNull);
-      },
-    );
+      expect(headers, isNotNull);
+    });
 
     test(
       'when a single valid encoding is passed then it should parse correctly',
@@ -105,41 +102,31 @@ void main() {
     );
 
     group('when multiple Content-Encoding encodings are passed', () {
-      test(
-        'then they should parse correctly',
-        () async {
-          final headers = await getServerRequestHeaders(
-            server: server,
-            touchHeaders: (final h) => h.contentEncoding,
-            headers: {'content-encoding': 'gzip, deflate'},
-          );
+      test('then they should parse correctly', () async {
+        final headers = await getServerRequestHeaders(
+          server: server,
+          touchHeaders: (final h) => h.contentEncoding,
+          headers: {'content-encoding': 'gzip, deflate'},
+        );
 
-          expect(
-            headers.contentEncoding?.encodings
-                .map((final e) => e.name)
-                .toList(),
-            equals(['gzip', 'deflate']),
-          );
-        },
-      );
+        expect(
+          headers.contentEncoding?.encodings.map((final e) => e.name).toList(),
+          equals(['gzip', 'deflate']),
+        );
+      });
 
-      test(
-        'with extra whitespace should parse correctly',
-        () async {
-          final headers = await getServerRequestHeaders(
-            server: server,
-            touchHeaders: (final h) => h.contentEncoding,
-            headers: {'content-encoding': ' gzip , deflate '},
-          );
+      test('with extra whitespace should parse correctly', () async {
+        final headers = await getServerRequestHeaders(
+          server: server,
+          touchHeaders: (final h) => h.contentEncoding,
+          headers: {'content-encoding': ' gzip , deflate '},
+        );
 
-          expect(
-            headers.contentEncoding?.encodings
-                .map((final e) => e.name)
-                .toList(),
-            equals(['gzip', 'deflate']),
-          );
-        },
-      );
+        expect(
+          headers.contentEncoding?.encodings.map((final e) => e.name).toList(),
+          equals(['gzip', 'deflate']),
+        );
+      });
 
       test(
         'with duplicate encodings should parse correctly and remove duplicates',
@@ -171,19 +158,16 @@ void main() {
     tearDown(() => server.close());
 
     group('when an invalid Content-Encoding header is passed', () {
-      test(
-        'then it should return null',
-        () async {
-          final headers = await getServerRequestHeaders(
-            server: server,
-            touchHeaders: (final _) {},
-            headers: {'content-encoding': ''},
-          );
+      test('then it should return null', () async {
+        final headers = await getServerRequestHeaders(
+          server: server,
+          touchHeaders: (_) {},
+          headers: {'content-encoding': ''},
+        );
 
-          expect(Headers.contentEncoding[headers].valueOrNullIfInvalid, isNull);
-          expect(() => headers.contentEncoding, throwsInvalidHeader);
-        },
-      );
+        expect(Headers.contentEncoding[headers].valueOrNullIfInvalid, isNull);
+        expect(() => headers.contentEncoding, throwsInvalidHeader);
+      });
     });
   });
 }

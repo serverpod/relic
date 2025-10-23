@@ -22,24 +22,16 @@ void main() {
   });
 
   group('Given a server', () {
-    test(
-      'when request context is hijacked '
-      'then an HijackContext is returned and the request times out because '
-      'server does not write the response to the HTTP response',
-      () async {
-        await _scheduleServer(
-          (final ctx) {
-            final newCtx = ctx.hijack((final _) {});
-            expect(newCtx, isA<HijackContext>());
-            return newCtx;
-          },
-        );
-        expect(
-          _get(),
-          throwsA(isA<TimeoutException>()),
-        );
-      },
-    );
+    test('when request context is hijacked '
+        'then an HijackContext is returned and the request times out because '
+        'server does not write the response to the HTTP response', () async {
+      await _scheduleServer((final ctx) {
+        final newCtx = ctx.hijack((_) {});
+        expect(newCtx, isA<HijackContext>());
+        return newCtx;
+      });
+      expect(_get(), throwsA(isA<TimeoutException>()));
+    });
   });
 }
 
@@ -62,6 +54,7 @@ Future<http.Response> _get({
   if (headers != null) request.headers.addAll(headers);
 
   final response = await request.send().timeout(const Duration(seconds: 1));
-  return await http.Response.fromStream(response)
-      .timeout(const Duration(seconds: 1));
+  return await http.Response.fromStream(
+    response,
+  ).timeout(const Duration(seconds: 1));
 }

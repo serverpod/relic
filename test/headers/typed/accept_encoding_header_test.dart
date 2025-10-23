@@ -37,27 +37,24 @@ void main() {
       },
     );
 
-    test(
-      'when an Accept-Encoding header with invalid quality values is passed '
-      'then the server responds with a bad request including a message that '
-      'states the quality value is invalid',
-      () async {
-        expect(
-          getServerRequestHeaders(
-            server: server,
-            headers: {'accept-encoding': 'gzip;q=abc'},
-            touchHeaders: (final h) => h.acceptEncoding,
+    test('when an Accept-Encoding header with invalid quality values is passed '
+        'then the server responds with a bad request including a message that '
+        'states the quality value is invalid', () async {
+      expect(
+        getServerRequestHeaders(
+          server: server,
+          headers: {'accept-encoding': 'gzip;q=abc'},
+          touchHeaders: (final h) => h.acceptEncoding,
+        ),
+        throwsA(
+          isA<BadRequestException>().having(
+            (final e) => e.message,
+            'message',
+            contains('Invalid quality value'),
           ),
-          throwsA(
-            isA<BadRequestException>().having(
-              (final e) => e.message,
-              'message',
-              contains('Invalid quality value'),
-            ),
-          ),
-        );
-      },
-    );
+        ),
+      );
+    });
 
     test(
       'when an Accept-Encoding header with wildcard (*) and other encodings is '
@@ -81,42 +78,36 @@ void main() {
       },
     );
 
-    test(
-      'when an Accept-Encoding header with empty encoding is passed then '
-      'the server responds with a bad request including a message that '
-      'states the encoding is invalid',
-      () async {
-        expect(
-          getServerRequestHeaders(
-            server: server,
-            headers: {'accept-encoding': ';q=0.5'},
-            touchHeaders: (final h) => h.acceptEncoding,
-          ),
-          throwsA(
-            isA<BadRequestException>().having(
-              (final e) => e.message,
-              'message',
-              contains('Invalid encoding'),
-            ),
-          ),
-        );
-      },
-    );
-
-    test(
-      'when an Accept-Encoding header with an invalid value is passed '
-      'then the server does not respond with a bad request if the headers '
-      'is not actually used',
-      () async {
-        final headers = await getServerRequestHeaders(
+    test('when an Accept-Encoding header with empty encoding is passed then '
+        'the server responds with a bad request including a message that '
+        'states the encoding is invalid', () async {
+      expect(
+        getServerRequestHeaders(
           server: server,
-          touchHeaders: (final _) {},
           headers: {'accept-encoding': ';q=0.5'},
-        );
+          touchHeaders: (final h) => h.acceptEncoding,
+        ),
+        throwsA(
+          isA<BadRequestException>().having(
+            (final e) => e.message,
+            'message',
+            contains('Invalid encoding'),
+          ),
+        ),
+      );
+    });
 
-        expect(headers, isNotNull);
-      },
-    );
+    test('when an Accept-Encoding header with an invalid value is passed '
+        'then the server does not respond with a bad request if the headers '
+        'is not actually used', () async {
+      final headers = await getServerRequestHeaders(
+        server: server,
+        touchHeaders: (_) {},
+        headers: {'accept-encoding': ';q=0.5'},
+      );
+
+      expect(headers, isNotNull);
+    });
 
     test(
       'when an Accept-Encoding header is passed then it should parse the encoding correctly',
@@ -136,43 +127,33 @@ void main() {
       },
     );
 
-    test(
-      'when an Accept-Encoding header is passed without quality then the '
-      'default quality value should be set',
-      () async {
-        final headers = await getServerRequestHeaders(
-          server: server,
-          headers: {'accept-encoding': 'gzip'},
-          touchHeaders: (final h) => h.acceptEncoding,
-        );
+    test('when an Accept-Encoding header is passed without quality then the '
+        'default quality value should be set', () async {
+      final headers = await getServerRequestHeaders(
+        server: server,
+        headers: {'accept-encoding': 'gzip'},
+        touchHeaders: (final h) => h.acceptEncoding,
+      );
 
-        expect(
-          headers.acceptEncoding?.encodings
-              .map((final e) => e.quality)
-              .toList(),
-          equals([1.0]),
-        );
-      },
-    );
+      expect(
+        headers.acceptEncoding?.encodings.map((final e) => e.quality).toList(),
+        equals([1.0]),
+      );
+    });
 
-    test(
-      'when an Accept-Encoding header is passed with quality then the '
-      'quality value should be set',
-      () async {
-        final headers = await getServerRequestHeaders(
-          server: server,
-          headers: {'accept-encoding': 'gzip;q=0.5'},
-          touchHeaders: (final h) => h.acceptEncoding,
-        );
+    test('when an Accept-Encoding header is passed with quality then the '
+        'quality value should be set', () async {
+      final headers = await getServerRequestHeaders(
+        server: server,
+        headers: {'accept-encoding': 'gzip;q=0.5'},
+        touchHeaders: (final h) => h.acceptEncoding,
+      );
 
-        expect(
-          headers.acceptEncoding?.encodings
-              .map((final e) => e.quality)
-              .toList(),
-          equals([0.5]),
-        );
-      },
-    );
+      expect(
+        headers.acceptEncoding?.encodings.map((final e) => e.quality).toList(),
+        equals([0.5]),
+      );
+    });
 
     test(
       'when a mixed case Accept-Encoding header is passed then it should parse '
@@ -258,23 +239,20 @@ void main() {
     );
 
     group('when multiple Accept-Encoding headers are passed', () {
-      test(
-        'then they should parse the encodings correctly',
-        () async {
-          final headers = await getServerRequestHeaders(
-            server: server,
-            headers: {'accept-encoding': 'gzip, deflate, br'},
-            touchHeaders: (final h) => h.acceptEncoding,
-          );
+      test('then they should parse the encodings correctly', () async {
+        final headers = await getServerRequestHeaders(
+          server: server,
+          headers: {'accept-encoding': 'gzip, deflate, br'},
+          touchHeaders: (final h) => h.acceptEncoding,
+        );
 
-          expect(
-            headers.acceptEncoding?.encodings
-                .map((final e) => e.encoding)
-                .toList(),
-            equals(['gzip', 'deflate', 'br']),
-          );
-        },
-      );
+        expect(
+          headers.acceptEncoding?.encodings
+              .map((final e) => e.encoding)
+              .toList(),
+          equals(['gzip', 'deflate', 'br']),
+        );
+      });
 
       test(
         'with quality values then they should parse the encodings correctly',
@@ -312,24 +290,21 @@ void main() {
         },
       );
 
-      test(
-        'with duplicated values then it should remove duplicates and parse '
-        'the encodings correctly',
-        () async {
-          final headers = await getServerRequestHeaders(
-            server: server,
-            headers: {'accept-encoding': 'gzip, gzip, deflate, br'},
-            touchHeaders: (final h) => h.acceptEncoding,
-          );
+      test('with duplicated values then it should remove duplicates and parse '
+          'the encodings correctly', () async {
+        final headers = await getServerRequestHeaders(
+          server: server,
+          headers: {'accept-encoding': 'gzip, gzip, deflate, br'},
+          touchHeaders: (final h) => h.acceptEncoding,
+        );
 
-          expect(
-            headers.acceptEncoding?.encodings
-                .map((final e) => e.encoding)
-                .toList(),
-            equals(['gzip', 'deflate', 'br']),
-          );
-        },
-      );
+        expect(
+          headers.acceptEncoding?.encodings
+              .map((final e) => e.encoding)
+              .toList(),
+          equals(['gzip', 'deflate', 'br']),
+        );
+      });
 
       test(
         'with extra whitespace then it should parse the encodings correctly',
@@ -361,36 +336,32 @@ void main() {
     tearDown(() => server.close());
 
     group('when an invalid Accept-Encoding header is passed', () {
-      test(
-        'then it should return null',
-        () async {
-          final headers = await getServerRequestHeaders(
-            server: server,
-            touchHeaders: (final _) {},
-            headers: {'accept-encoding': ''},
-          );
+      test('then it should return null', () async {
+        final headers = await getServerRequestHeaders(
+          server: server,
+          touchHeaders: (_) {},
+          headers: {'accept-encoding': ''},
+        );
 
-          expect(Headers.acceptEncoding[headers].valueOrNullIfInvalid, isNull);
-          expect(() => headers.acceptEncoding, throwsInvalidHeader);
-        },
-      );
+        expect(Headers.acceptEncoding[headers].valueOrNullIfInvalid, isNull);
+        expect(() => headers.acceptEncoding, throwsInvalidHeader);
+      });
     });
 
-    group('when Accept-Encoding headers with invalid quality values are passed',
-        () {
-      test(
-        'then it should return null',
-        () async {
+    group(
+      'when Accept-Encoding headers with invalid quality values are passed',
+      () {
+        test('then it should return null', () async {
           final headers = await getServerRequestHeaders(
             server: server,
-            touchHeaders: (final _) {},
+            touchHeaders: (_) {},
             headers: {'accept-encoding': 'gzip;q=abc, deflate, br'},
           );
 
           expect(Headers.acceptEncoding[headers].valueOrNullIfInvalid, isNull);
           expect(() => headers.acceptEncoding, throwsInvalidHeader);
-        },
-      );
-    });
+        });
+      },
+    );
   });
 }

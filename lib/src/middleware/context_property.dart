@@ -45,8 +45,9 @@ class ContextProperty<T extends Object> {
   T operator [](final RequestContext requestContext) {
     return _storage[requestContext.token] ??
         (throw StateError(
-            'ContextProperty value not found. Property: ${_debugName ?? T.toString()}. '
-            'Ensure middleware has set this value for the request token.'));
+          'ContextProperty value not found. Property: ${_debugName ?? T.toString()}. '
+          'Ensure middleware has set this value for the request token.',
+        ));
   }
 
   /// Retrieves the value associated with the given [requestContext], or `null` if no value is set.

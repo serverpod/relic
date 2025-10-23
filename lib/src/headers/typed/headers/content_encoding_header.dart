@@ -10,8 +10,9 @@ import '../../extension/string_list_extensions.dart';
 /// content encoding header values.
 final class ContentEncodingHeader {
   static const codec = HeaderCodec(ContentEncodingHeader.parse, __encode);
-  static List<String> __encode(final ContentEncodingHeader value) =>
-      [value._encode()];
+  static List<String> __encode(final ContentEncodingHeader value) => [
+    value._encode(),
+  ];
 
   /// A list of content encodings.
   final List<ContentEncoding> encodings;
@@ -19,8 +20,8 @@ final class ContentEncodingHeader {
   /// Constructs a [ContentEncodingHeader] instance with the specified content
   /// encodings.
   ContentEncodingHeader({required final List<ContentEncoding> encodings})
-      : assert(encodings.isNotEmpty),
-        encodings = List.unmodifiable(encodings);
+    : assert(encodings.isNotEmpty),
+      encodings = List.unmodifiable(encodings);
 
   /// Parses the Content-Encoding header value and returns a
   /// [ContentEncodingHeader] instance.
@@ -51,8 +52,10 @@ final class ContentEncodingHeader {
   bool operator ==(final Object other) =>
       identical(this, other) ||
       other is ContentEncodingHeader &&
-          const ListEquality<ContentEncoding>()
-              .equals(encodings, other.encodings);
+          const ListEquality<ContentEncoding>().equals(
+            encodings,
+            other.encodings,
+          );
 
   @override
   int get hashCode => const ListEquality<ContentEncoding>().hash(encodings);

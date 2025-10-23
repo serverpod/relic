@@ -109,9 +109,10 @@ class Body {
     this.contentLength, {
     final Encoding? encoding,
     final MimeType? mimeType,
-  }) : bodyType = mimeType == null
-            ? null
-            : BodyType(mimeType: mimeType, encoding: encoding);
+  }) : bodyType =
+           mimeType == null
+               ? null
+               : BodyType(mimeType: mimeType, encoding: encoding);
 
   /// Creates an empty body.
   ///
@@ -172,8 +173,10 @@ class Body {
       firstNonWhiteSpace++;
     }
 
-    final prefix = content.substring(firstNonWhiteSpace,
-        min(end, firstNonWhiteSpace + 14)); // 14 max length needed
+    final prefix = content.substring(
+      firstNonWhiteSpace,
+      min(end, firstNonWhiteSpace + 14),
+    ); // 14 max length needed
 
     if (prefix.startsWith('{') || prefix.startsWith('[')) {
       return MimeType.json;

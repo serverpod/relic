@@ -47,7 +47,7 @@ Future<void> main() async {
   final router = RelicRouter()
     ..get('/user/:name/age/:age', hello)
     ..use('/', logRequests())
-    ..fallback = respondWith((final _) => Response.notFound(
+    ..fallback = respondWith((_) => Response.notFound(
         body: Body.fromString("Sorry, that doesn't compute")));
 
   // RelicRouter can be used directly as a handler via the call() extension

@@ -15,8 +15,8 @@ Future<void> main() async {
     '/basic/**',
     StaticHandler.directory(
       staticDir,
-      cacheControl: (final ctx, final fileInfo) =>
-          CacheControlHeader(maxAge: 86400),
+      cacheControl:
+          (final ctx, final fileInfo) => CacheControlHeader(maxAge: 86400),
     ).asHandler,
   );
 
@@ -26,8 +26,8 @@ Future<void> main() async {
     '/logo.svg',
     StaticHandler.file(
       File('example/static_files/logo.svg'),
-      cacheControl: (final ctx, final fileInfo) =>
-          CacheControlHeader(maxAge: 3600),
+      cacheControl:
+          (final ctx, final fileInfo) => CacheControlHeader(maxAge: 3600),
     ).asHandler,
   );
 
@@ -38,10 +38,11 @@ Future<void> main() async {
     '/short-cache/**',
     StaticHandler.directory(
       staticDir,
-      cacheControl: (final ctx, final fileInfo) => CacheControlHeader(
-        maxAge: 3600, // 1 hour
-        publicCache: true, // Allow CDN caching
-      ),
+      cacheControl:
+          (final ctx, final fileInfo) => CacheControlHeader(
+            maxAge: 3600, // 1 hour
+            publicCache: true, // Allow CDN caching
+          ),
     ).asHandler,
   );
 
@@ -52,11 +53,12 @@ Future<void> main() async {
     '/long-cache/**',
     StaticHandler.directory(
       staticDir,
-      cacheControl: (final ctx, final fileInfo) => CacheControlHeader(
-        maxAge: 31536000, // 1 year
-        publicCache: true,
-        immutable: true, // Browser won't revalidate
-      ),
+      cacheControl:
+          (final ctx, final fileInfo) => CacheControlHeader(
+            maxAge: 31536000, // 1 year
+            publicCache: true,
+            immutable: true, // Browser won't revalidate
+          ),
     ).asHandler,
   );
 
@@ -68,18 +70,22 @@ Future<void> main() async {
   );
 
   // Index page showing cache-busted URLs
-  app.get('/', respondWith((final _) async {
-    final helloUrl = await buster.assetPath('/static/hello.txt');
-    final logoUrl = await buster.assetPath('/static/logo.svg');
-    final html = '<html><body>'
-        '<h1>Static files with cache busting</h1>'
-        '<ul>'
-        '<li><a href="$helloUrl">hello.txt</a></li>'
-        '<li><img src="$logoUrl" alt="logo" height="64" /></li>'
-        '</ul>'
-        '</body></html>';
-    return Response.ok(body: Body.fromString(html, mimeType: MimeType.html));
-  }));
+  app.get(
+    '/',
+    respondWith((final _) async {
+      final helloUrl = await buster.assetPath('/static/hello.txt');
+      final logoUrl = await buster.assetPath('/static/logo.svg');
+      final html =
+          '<html><body>'
+          '<h1>Static files with cache busting</h1>'
+          '<ul>'
+          '<li><a href="$helloUrl">hello.txt</a></li>'
+          '<li><img src="$logoUrl" alt="logo" height="64" /></li>'
+          '</ul>'
+          '</body></html>';
+      return Response.ok(body: Body.fromString(html, mimeType: MimeType.html));
+    }),
+  );
 
   // Serve static files with cache busting
   app.anyOf(
@@ -87,11 +93,12 @@ Future<void> main() async {
     '/static/**',
     StaticHandler.directory(
       staticDir,
-      cacheControl: (final ctx, final fileInfo) => CacheControlHeader(
-        maxAge: 31536000, // 1 year - safe with cache busting
-        publicCache: true,
-        immutable: true,
-      ),
+      cacheControl:
+          (final ctx, final fileInfo) => CacheControlHeader(
+            maxAge: 31536000, // 1 year - safe with cache busting
+            publicCache: true,
+            immutable: true,
+          ),
       cacheBustingConfig: buster,
     ).asHandler,
   );

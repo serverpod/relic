@@ -2,8 +2,7 @@ import 'package:relic/relic.dart';
 import 'package:test/test.dart';
 
 void main() {
-  test(
-      'Given a route at root, '
+  test('Given a route at root, '
       'when use is applied to root, '
       'then the value is transformed', () {
     final router = Router<int>();
@@ -13,8 +12,7 @@ void main() {
     expect(result.value, 2, reason: 'Should double');
   });
 
-  test(
-      'Given a route at path, '
+  test('Given a route at path, '
       'when use is applied twice to path, '
       'then the mappings compose', () {
     final router = Router<int>();
@@ -25,8 +23,7 @@ void main() {
     expect(result.value, 8, reason: 'Should add 3 and then double');
   });
 
-  test(
-      'Given an empty router, '
+  test('Given an empty router, '
       'when use is applied before add, '
       'then the value is transformed', () {
     final router = Router<int>();
@@ -36,8 +33,7 @@ void main() {
     expect(result.value, 2, reason: 'Should double');
   });
 
-  test(
-      'Given routes at multiple paths, '
+  test('Given routes at multiple paths, '
       'when use is applied to root, '
       'then all descendant routes are transformed', () {
     final router = Router<int>();
@@ -45,16 +41,24 @@ void main() {
     router.get('/a', 10);
     router.get('/b', 100);
     router.use('/', (final i) => i * 2);
-    expect((router.lookup(Method.get, '/') as RouterMatch<int>).value, 2,
-        reason: 'Should double');
-    expect((router.lookup(Method.get, '/a') as RouterMatch<int>).value, 20,
-        reason: 'Should double');
-    expect((router.lookup(Method.get, '/b') as RouterMatch<int>).value, 200,
-        reason: 'Should double');
+    expect(
+      (router.lookup(Method.get, '/') as RouterMatch<int>).value,
+      2,
+      reason: 'Should double',
+    );
+    expect(
+      (router.lookup(Method.get, '/a') as RouterMatch<int>).value,
+      20,
+      reason: 'Should double',
+    );
+    expect(
+      (router.lookup(Method.get, '/b') as RouterMatch<int>).value,
+      200,
+      reason: 'Should double',
+    );
   });
 
-  test(
-      'Given routes at multiple paths, '
+  test('Given routes at multiple paths, '
       'when use is applied to a specific path, '
       'then only descendants of that path are transformed', () {
     final router = Router<int>();
@@ -62,16 +66,24 @@ void main() {
     router.get('/a', 10);
     router.get('/b', 100);
     router.use('/a', (final i) => i * 2);
-    expect((router.lookup(Method.get, '/') as RouterMatch<int>).value, 1,
-        reason: 'Should not change');
-    expect((router.lookup(Method.get, '/a') as RouterMatch<int>).value, 20,
-        reason: 'Should double');
-    expect((router.lookup(Method.get, '/b') as RouterMatch<int>).value, 100,
-        reason: 'Should not change');
+    expect(
+      (router.lookup(Method.get, '/') as RouterMatch<int>).value,
+      1,
+      reason: 'Should not change',
+    );
+    expect(
+      (router.lookup(Method.get, '/a') as RouterMatch<int>).value,
+      20,
+      reason: 'Should double',
+    );
+    expect(
+      (router.lookup(Method.get, '/b') as RouterMatch<int>).value,
+      100,
+      reason: 'Should not change',
+    );
   });
 
-  test(
-      'Given routes with different HTTP methods, '
+  test('Given routes with different HTTP methods, '
       'when use is applied, '
       'then all methods at that path are transformed', () {
     final router = Router<int>();
@@ -84,8 +96,7 @@ void main() {
     expect((router.lookup(Method.put, '/api') as RouterMatch<int>).value, 30);
   });
 
-  test(
-      'Given two routers where one is attached to the other, '
+  test('Given two routers where one is attached to the other, '
       'when use is applied to the prefix on the parent, '
       'then only attached router routes are transformed', () {
     final routerA = Router<int>();
@@ -94,8 +105,11 @@ void main() {
     routerB.get('/b', 100);
     routerA.attach('/prefix', routerB);
     routerA.use('/prefix', (final i) => i * 2);
-    expect((routerA.lookup(Method.get, '/a') as RouterMatch<int>).value, 10,
-        reason: 'Should not change');
+    expect(
+      (routerA.lookup(Method.get, '/a') as RouterMatch<int>).value,
+      10,
+      reason: 'Should not change',
+    );
     expect(
       (routerA.lookup(Method.get, '/prefix/b') as RouterMatch<int>).value,
       200,
@@ -103,8 +117,7 @@ void main() {
     );
   });
 
-  test(
-      'Given two routers with use applied, '
+  test('Given two routers with use applied, '
       'when attaching one to the other such that use collide, '
       'then map functions are composed', () {
     final routerA = Router<int>();
@@ -120,8 +133,7 @@ void main() {
     );
   });
 
-  test(
-      'Given hierarchical use mappings, '
+  test('Given hierarchical use mappings, '
       'when looking up a route, '
       'then transformations are applied from leaf to root', () {
     final router = Router<int>();
@@ -135,8 +147,7 @@ void main() {
     );
   });
 
-  test(
-      'Given a router of middleware functions with hierarchical use, '
+  test('Given a router of middleware functions with hierarchical use, '
       'when looking up and applying the route function, '
       'then the call order is root to leaf', () {
     final router = Router<String Function(String)>();
@@ -144,11 +155,9 @@ void main() {
     router.use('/a/b', (final next) => (final s) => '<b>${next(s)}</b>');
     router.use('/a/b/c', (final next) => (final s) => '<c>${next(s)}</c>');
     router.get('/a/b/c/d', (final s) => s);
-    final result = router.lookup(Method.get, '/a/b/c/d')
-        as RouterMatch<String Function(String)>;
-    expect(
-      result.value('request'),
-      '<a><b><c>request</c></b></a>',
-    );
+    final result =
+        router.lookup(Method.get, '/a/b/c/d')
+            as RouterMatch<String Function(String)>;
+    expect(result.value('request'), '<a><b><c>request</c></b></a>');
   });
 }

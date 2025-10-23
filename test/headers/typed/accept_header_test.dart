@@ -26,11 +26,13 @@ void main() {
             touchHeaders: (final h) => h.accept,
             headers: {'accept': ''},
           ),
-          throwsA(isA<BadRequestException>().having(
-            (final e) => e.message,
-            'message',
-            contains('Value cannot be empty'),
-          )),
+          throwsA(
+            isA<BadRequestException>().having(
+              (final e) => e.message,
+              'message',
+              contains('Value cannot be empty'),
+            ),
+          ),
         );
       },
     );
@@ -46,29 +48,28 @@ void main() {
             touchHeaders: (final h) => h.accept,
             headers: {'accept': 'text/html;q=abc'},
           ),
-          throwsA(isA<BadRequestException>().having(
-            (final e) => e.message,
-            'message',
-            contains('Invalid quality value'),
-          )),
+          throwsA(
+            isA<BadRequestException>().having(
+              (final e) => e.message,
+              'message',
+              contains('Invalid quality value'),
+            ),
+          ),
         );
       },
     );
 
-    test(
-      'when an Accept header with an invalid value is passed '
-      'then the server does not respond with a bad request if the headers '
-      'is not actually used',
-      () async {
-        final headers = await getServerRequestHeaders(
-          server: server,
-          touchHeaders: (final _) {},
-          headers: {'accept': 'text/html;q=abc'},
-        );
+    test('when an Accept header with an invalid value is passed '
+        'then the server does not respond with a bad request if the headers '
+        'is not actually used', () async {
+      final headers = await getServerRequestHeaders(
+        server: server,
+        touchHeaders: (_) {},
+        headers: {'accept': 'text/html;q=abc'},
+      );
 
-        expect(headers, isNotNull);
-      },
-    );
+      expect(headers, isNotNull);
+    });
 
     test(
       'when a valid Accept header is passed then it should parse the media types correctly',
@@ -86,21 +87,18 @@ void main() {
       },
     );
 
-    test(
-      'when a valid Accept header with no quality value is passed then the '
-      'quality value should set to default of 1.0',
-      () async {
-        final headers = await getServerRequestHeaders(
-          server: server,
-          touchHeaders: (final h) => h.accept,
-          headers: {'accept': 'text/html'},
-        );
+    test('when a valid Accept header with no quality value is passed then the '
+        'quality value should set to default of 1.0', () async {
+      final headers = await getServerRequestHeaders(
+        server: server,
+        touchHeaders: (final h) => h.accept,
+        headers: {'accept': 'text/html'},
+      );
 
-        final mediaRanges = headers.accept?.mediaRanges;
-        expect(mediaRanges?.length, equals(1));
-        expect(mediaRanges?[0].quality, equals(1.0));
-      },
-    );
+      final mediaRanges = headers.accept?.mediaRanges;
+      expect(mediaRanges?.length, equals(1));
+      expect(mediaRanges?[0].quality, equals(1.0));
+    });
 
     test(
       'when a valid Accept header with quality value is passed then it should parse the quality value correctly',
@@ -156,14 +154,16 @@ void main() {
               server: server,
               touchHeaders: (final h) => h.accept,
               headers: {
-                'accept': 'text/html;q=test, application/json;q=abc, */*;q=0.5'
+                'accept': 'text/html;q=test, application/json;q=abc, */*;q=0.5',
               },
             ),
-            throwsA(isA<BadRequestException>().having(
-              (final e) => e.message,
-              'message',
-              contains('Invalid quality value'),
-            )),
+            throwsA(
+              isA<BadRequestException>().having(
+                (final e) => e.message,
+                'message',
+                contains('Invalid quality value'),
+              ),
+            ),
           );
         },
       );
@@ -174,7 +174,7 @@ void main() {
             server: server,
             touchHeaders: (final h) => h.accept,
             headers: {
-              'accept': 'text/html;q=0.8, application/json;q=0.9, */*;q=0.5'
+              'accept': 'text/html;q=0.8, application/json;q=0.9, */*;q=0.5',
             },
           );
 
@@ -196,7 +196,7 @@ void main() {
             server: server,
             touchHeaders: (final h) => h.accept,
             headers: {
-              'accept': 'text/html;q=0.8, application/json;q=0.9, */*;q=0.5'
+              'accept': 'text/html;q=0.8, application/json;q=0.9, */*;q=0.5',
             },
           );
 
@@ -220,19 +220,16 @@ void main() {
     tearDown(() => server.close());
 
     group('when an Accept header with invalid quality value is passed', () {
-      test(
-        'then it should return null',
-        () async {
-          final headers = await getServerRequestHeaders(
-            server: server,
-            touchHeaders: (final _) {},
-            headers: {'accept': 'text/html;q=abc'},
-          );
+      test('then it should return null', () async {
+        final headers = await getServerRequestHeaders(
+          server: server,
+          touchHeaders: (_) {},
+          headers: {'accept': 'text/html;q=abc'},
+        );
 
-          expect(Headers.accept[headers].valueOrNullIfInvalid, isNull);
-          expect(() => headers.accept, throwsInvalidHeader);
-        },
-      );
+        expect(Headers.accept[headers].valueOrNullIfInvalid, isNull);
+        expect(() => headers.accept, throwsInvalidHeader);
+      });
     });
   });
 }

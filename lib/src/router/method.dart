@@ -11,7 +11,7 @@ enum Method {
   connect;
 
   static final _reverseMap = <String, Method>{
-    for (final r in values) r.name: r
+    for (final r in values) r.name: r,
   };
 
   /// Parses a [method] string and returns the corresponding [Method] instance.

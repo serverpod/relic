@@ -98,20 +98,17 @@ void main() {
       },
     );
 
-    test(
-      'when a Cookie header with an invalid value is passed '
-      'then the server does not respond with a bad request if the headers '
-      'is not actually used',
-      () async {
-        final headers = await getServerRequestHeaders(
-          server: server,
-          touchHeaders: (final _) {},
-          headers: {'cookie': 'sessionId=abc123; userId=42\x7F'},
-        );
+    test('when a Cookie header with an invalid value is passed '
+        'then the server does not respond with a bad request if the headers '
+        'is not actually used', () async {
+      final headers = await getServerRequestHeaders(
+        server: server,
+        touchHeaders: (_) {},
+        headers: {'cookie': 'sessionId=abc123; userId=42\x7F'},
+      );
 
-        expect(headers, isNotNull);
-      },
-    );
+      expect(headers, isNotNull);
+    });
 
     test(
       'when a valid Cookie header is passed with an empty name then it should parse the cookies correctly',
@@ -230,7 +227,7 @@ void main() {
         () async {
           final headers = await getServerRequestHeaders(
             server: server,
-            touchHeaders: (final _) {},
+            touchHeaders: (_) {},
             headers: {'cookie': 'sessionId=abc123; invalidCookie'},
           );
 

@@ -8,122 +8,107 @@ import '../headers_test_utils.dart';
 /// Reference: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Date
 /// For more details on header validation behavior, see the [HeaderValidationDocs] class.
 void main() {
-  group(
-    'Given a Date header with validation',
-    () {
-      late RelicServer server;
+  group('Given a Date header with validation', () {
+    late RelicServer server;
 
-      setUp(() async {
-        server = await createServer();
-      });
+    setUp(() async {
+      server = await createServer();
+    });
 
-      tearDown(() => server.close());
+    tearDown(() => server.close());
 
-      test(
-        'when an empty Date header is passed then the server responds '
+    test('when an empty Date header is passed then the server responds '
         'with a bad request including a message that states the header value '
-        'cannot be empty',
-        () async {
-          expect(
-            getServerRequestHeaders(
-              server: server,
-              headers: {'date': ''},
-              touchHeaders: (final h) => h.date,
-            ),
-            throwsA(
-              isA<BadRequestException>().having(
-                (final e) => e.message,
-                'message',
-                contains('Value cannot be empty'),
-              ),
-            ),
-          );
-        },
+        'cannot be empty', () async {
+      expect(
+        getServerRequestHeaders(
+          server: server,
+          headers: {'date': ''},
+          touchHeaders: (final h) => h.date,
+        ),
+        throwsA(
+          isA<BadRequestException>().having(
+            (final e) => e.message,
+            'message',
+            contains('Value cannot be empty'),
+          ),
+        ),
       );
+    });
 
-      test(
-        'when a Date header with an invalid date format is passed '
+    test('when a Date header with an invalid date format is passed '
         'then the server responds with a bad request including a message that '
-        'states the date format is invalid',
-        () async {
-          expect(
-            getServerRequestHeaders(
-              server: server,
-              headers: {'date': 'invalid-date-format'},
-              touchHeaders: (final h) => h.date,
-            ),
-            throwsA(
-              isA<BadRequestException>().having(
-                (final e) => e.message,
-                'message',
-                contains('Invalid date format'),
-              ),
-            ),
-          );
-        },
+        'states the date format is invalid', () async {
+      expect(
+        getServerRequestHeaders(
+          server: server,
+          headers: {'date': 'invalid-date-format'},
+          touchHeaders: (final h) => h.date,
+        ),
+        throwsA(
+          isA<BadRequestException>().having(
+            (final e) => e.message,
+            'message',
+            contains('Invalid date format'),
+          ),
+        ),
       );
+    });
 
-      test(
-        'when a Date header with an invalid date format is passed '
+    test('when a Date header with an invalid date format is passed '
         'then the server does not respond with a bad request if the headers '
-        'is not actually used',
-        () async {
-          final headers = await getServerRequestHeaders(
-            server: server,
-            touchHeaders: (final _) {},
-            headers: {'date': 'invalid-date-format'},
-          );
-
-          expect(headers, isNotNull);
-        },
+        'is not actually used', () async {
+      final headers = await getServerRequestHeaders(
+        server: server,
+        touchHeaders: (_) {},
+        headers: {'date': 'invalid-date-format'},
       );
 
-      test(
-        'when a valid Date header is passed then it should parse the date correctly',
-        () async {
-          final headers = await getServerRequestHeaders(
-            server: server,
-            headers: {'date': 'Wed, 21 Oct 2015 07:28:00 GMT'},
-            touchHeaders: (final h) => h.date,
-          );
+      expect(headers, isNotNull);
+    });
 
-          expect(
-            headers.date,
-            equals(parseHttpDate('Wed, 21 Oct 2015 07:28:00 GMT')),
-          );
-        },
+    test(
+      'when a valid Date header is passed then it should parse the date correctly',
+      () async {
+        final headers = await getServerRequestHeaders(
+          server: server,
+          headers: {'date': 'Wed, 21 Oct 2015 07:28:00 GMT'},
+          touchHeaders: (final h) => h.date,
+        );
+
+        expect(
+          headers.date,
+          equals(parseHttpDate('Wed, 21 Oct 2015 07:28:00 GMT')),
+        );
+      },
+    );
+
+    test(
+      'when a Date header with extra whitespace is passed then it should parse the date correctly',
+      () async {
+        final headers = await getServerRequestHeaders(
+          server: server,
+          headers: {'date': ' Wed, 21 Oct 2015 07:28:00 GMT '},
+          touchHeaders: (final h) => h.date,
+        );
+
+        expect(
+          headers.date,
+          equals(parseHttpDate('Wed, 21 Oct 2015 07:28:00 GMT')),
+        );
+      },
+    );
+
+    test('when no Date header is passed then it should return null', () async {
+      final headers = await getServerRequestHeaders(
+        server: server,
+        headers: {},
+        touchHeaders: (final h) => h.date,
       );
 
-      test(
-        'when a Date header with extra whitespace is passed then it should parse the date correctly',
-        () async {
-          final headers = await getServerRequestHeaders(
-            server: server,
-            headers: {'date': ' Wed, 21 Oct 2015 07:28:00 GMT '},
-            touchHeaders: (final h) => h.date,
-          );
-
-          expect(
-            headers.date,
-            equals(parseHttpDate('Wed, 21 Oct 2015 07:28:00 GMT')),
-          );
-        },
-      );
-
-      test(
-        'when no Date header is passed then it should return null',
-        () async {
-          final headers = await getServerRequestHeaders(
-            server: server,
-            headers: {},
-            touchHeaders: (final h) => h.date,
-          );
-
-          expect(headers.date, isNull);
-        },
-      );
-    },
-  );
+      expect(headers.date, isNull);
+    });
+  });
 
   group('Given a Date header without validation', () {
     late RelicServer server;
@@ -135,35 +120,29 @@ void main() {
     tearDown(() => server.close());
 
     group('when an empty Date header is passed', () {
-      test(
-        'then it should return null',
-        () async {
-          final headers = await getServerRequestHeaders(
-            server: server,
-            touchHeaders: (final _) {},
-            headers: {'date': ''},
-          );
+      test('then it should return null', () async {
+        final headers = await getServerRequestHeaders(
+          server: server,
+          touchHeaders: (_) {},
+          headers: {'date': ''},
+        );
 
-          expect(Headers.date[headers].valueOrNullIfInvalid, isNull);
-          expect(() => headers.date, throwsInvalidHeader);
-        },
-      );
+        expect(Headers.date[headers].valueOrNullIfInvalid, isNull);
+        expect(() => headers.date, throwsInvalidHeader);
+      });
     });
 
     group('when an invalid Date header is passed', () {
-      test(
-        'then it should return null',
-        () async {
-          final headers = await getServerRequestHeaders(
-            server: server,
-            touchHeaders: (final _) {},
-            headers: {'date': 'invalid-date-format'},
-          );
+      test('then it should return null', () async {
+        final headers = await getServerRequestHeaders(
+          server: server,
+          touchHeaders: (_) {},
+          headers: {'date': 'invalid-date-format'},
+        );
 
-          expect(Headers.date[headers].valueOrNullIfInvalid, isNull);
-          expect(() => headers.date, throwsInvalidHeader);
-        },
-      );
+        expect(Headers.date[headers].valueOrNullIfInvalid, isNull);
+        expect(() => headers.date, throwsInvalidHeader);
+      });
     });
   });
 }

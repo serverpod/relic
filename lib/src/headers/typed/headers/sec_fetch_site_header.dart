@@ -6,8 +6,9 @@ import '../../../../relic.dart';
 /// initiator and the origin of the requested resource.
 final class SecFetchSiteHeader {
   static const codec = HeaderCodec.single(SecFetchSiteHeader.parse, __encode);
-  static List<String> __encode(final SecFetchSiteHeader value) =>
-      [value._encode()];
+  static List<String> __encode(final SecFetchSiteHeader value) => [
+    value._encode(),
+  ];
 
   /// The site value of the request.
   final String site;

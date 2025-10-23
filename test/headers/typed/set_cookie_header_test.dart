@@ -45,14 +45,16 @@ void main() {
             server: server,
             touchHeaders: (final h) => h.setCookie,
             headers: {
-              'set-cookie': 'sessionId=abc123; Max-Age=3600; Max-Age=7200'
+              'set-cookie': 'sessionId=abc123; Max-Age=3600; Max-Age=7200',
             },
           ),
-          throwsA(isA<BadRequestException>().having(
-            (final e) => e.message,
-            'message',
-            contains('Supplied multiple Max-Age attributes'),
-          )),
+          throwsA(
+            isA<BadRequestException>().having(
+              (final e) => e.message,
+              'message',
+              contains('Supplied multiple Max-Age attributes'),
+            ),
+          ),
         );
       },
     );
@@ -68,11 +70,13 @@ void main() {
             touchHeaders: (final h) => h.setCookie,
             headers: {'set-cookie': 'sessionId=abc123; SameSite=Invalid'},
           ),
-          throwsA(isA<BadRequestException>().having(
-            (final e) => e.message,
-            'message',
-            contains('Invalid SameSite attribute'),
-          )),
+          throwsA(
+            isA<BadRequestException>().having(
+              (final e) => e.message,
+              'message',
+              contains('Invalid SameSite attribute'),
+            ),
+          ),
         );
       },
     );
@@ -162,20 +166,17 @@ void main() {
       },
     );
 
-    test(
-      'when a Set-Cookie header with an invalid value is passed '
-      'then the server does not respond with a bad request if the headers '
-      'is not actually used',
-      () async {
-        final headers = await getServerRequestHeaders(
-          server: server,
-          touchHeaders: (final _) {},
-          headers: {'set-cookie': 'userId=42\x7F'},
-        );
+    test('when a Set-Cookie header with an invalid value is passed '
+        'then the server does not respond with a bad request if the headers '
+        'is not actually used', () async {
+      final headers = await getServerRequestHeaders(
+        server: server,
+        touchHeaders: (_) {},
+        headers: {'set-cookie': 'userId=42\x7F'},
+      );
 
-        expect(headers, isNotNull);
-      },
-    );
+      expect(headers, isNotNull);
+    });
 
     test(
       'when a Set-Cookie header with an empty name is passed then it should parse the cookie correctly',
@@ -196,10 +197,10 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final _) {},
+          touchHeaders: (_) {},
           headers: {
             'set-cookie':
-                'sessionId=abc123; Expires=Wed, 21 Oct 2025 07:28:00 GMT; Max-Age=3600; Domain=example.com; Path=/; Secure; HttpOnly; SameSite=Strict'
+                'sessionId=abc123; Expires=Wed, 21 Oct 2025 07:28:00 GMT; Max-Age=3600; Domain=example.com; Path=/; Secure; HttpOnly; SameSite=Strict',
           },
         );
 
@@ -246,7 +247,7 @@ void main() {
         () async {
           final headers = await getServerRequestHeaders(
             server: server,
-            touchHeaders: (final _) {},
+            touchHeaders: (_) {},
             headers: {'set-cookie': 'sessionId=abc123; invalidCookie'},
           );
 

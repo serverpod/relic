@@ -8,18 +8,18 @@ import 'package:relic/relic.dart';
 
 Future<void> main() async {
   // start server
-  final server = await Isolate.spawn((final _) async {
-    final app = RelicApp()
-      ..use('/api',
-          AuthMiddleware().asMiddleware) // <-- add auth middleware on /api
-      ..get(
-        '/api/user/info',
-        (final ctx) => ctx.respond(
-          Response.ok(
-            body: Body.fromString('${ctx.user}'),
-          ),
-        ),
-      );
+  final server = await Isolate.spawn((_) async {
+    final app =
+        RelicApp()
+          ..use(
+            '/api',
+            AuthMiddleware().asMiddleware,
+          ) // <-- add auth middleware on /api
+          ..get(
+            '/api/user/info',
+            (final ctx) =>
+                ctx.respond(Response.ok(body: Body.fromString('${ctx.user}'))),
+          );
 
     await app.serve();
   }, null);

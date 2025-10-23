@@ -7,7 +7,7 @@ class MutableHeaders extends HeadersBase
   MutableHeaders() : this._(_BackingStore());
 
   MutableHeaders._from(final Headers headers)
-      : this._(_BackingStore.from(headers._backing));
+    : this._(_BackingStore.from(headers._backing));
 
   Headers _freeze() {
     // TODO:

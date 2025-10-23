@@ -11,17 +11,17 @@ void main() {
     await d.file('root.txt', 'root txt').create();
   });
 
-  test(
-      'Given a static handler mounted on a router under "/**" '
+  test('Given a static handler mounted on a router under "/**" '
       'when retrieving the same file twice '
       'then it should return 200 Ok both times', () async {
-    final router = RelicRouter()
-      ..get(
+    final router =
+        RelicRouter()..get(
           '/**',
           StaticHandler.directory(
             Directory(d.sandbox),
-            cacheControl: (final _, final __) => null,
-          ).asHandler);
+            cacheControl: (_, _) => null,
+          ).asHandler,
+        );
 
     final handler = router.asHandler;
 

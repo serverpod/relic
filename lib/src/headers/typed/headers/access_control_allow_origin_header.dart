@@ -5,10 +5,13 @@ import '../../../../relic.dart';
 /// This header specifies which origins are allowed to access the resource.
 /// It can be a specific origin or a wildcard (`*`) to allow any origin.
 final class AccessControlAllowOriginHeader {
-  static const codec =
-      HeaderCodec.single(AccessControlAllowOriginHeader.parse, __encode);
-  static List<String> __encode(final AccessControlAllowOriginHeader value) =>
-      [value._encode()];
+  static const codec = HeaderCodec.single(
+    AccessControlAllowOriginHeader.parse,
+    __encode,
+  );
+  static List<String> __encode(final AccessControlAllowOriginHeader value) => [
+    value._encode(),
+  ];
 
   /// The allowed origin URI, if specified.
   final Uri? origin;
@@ -18,12 +21,12 @@ final class AccessControlAllowOriginHeader {
 
   /// Constructs an instance allowing a specific origin.
   const AccessControlAllowOriginHeader.origin({required this.origin})
-      : isWildcard = false;
+    : isWildcard = false;
 
   /// Constructs an instance allowing any origin (`*`).
   const AccessControlAllowOriginHeader.wildcard()
-      : origin = null,
-        isWildcard = true;
+    : origin = null,
+      isWildcard = true;
 
   /// Parses the Access-Control-Allow-Origin header value and
   /// returns an [AccessControlAllowOriginHeader] instance.
@@ -40,9 +43,7 @@ final class AccessControlAllowOriginHeader {
     }
 
     try {
-      return AccessControlAllowOriginHeader.origin(
-        origin: Uri.parse(trimmed),
-      );
+      return AccessControlAllowOriginHeader.origin(origin: Uri.parse(trimmed));
     } catch (_) {
       throw const FormatException('Invalid URI format');
     }

@@ -3,12 +3,14 @@ import '../../relic.dart';
 import '../router/normalized_path.dart';
 import '../router/path_trie.dart';
 
-final _routingContext = ContextProperty<
-    ({
-      Parameters parameters,
-      NormalizedPath matched,
-      NormalizedPath remaining
-    })>();
+final _routingContext =
+    ContextProperty<
+      ({
+        Parameters parameters,
+        NormalizedPath matched,
+        NormalizedPath remaining,
+      })
+    >();
 
 /// Creates middleware that routes requests using the provided [router].
 ///
@@ -57,8 +59,7 @@ final _routingContext = ContextProperty<
 Middleware routeWith<T extends Object>(
   final Router<T> router, {
   final Handler Function(T)? toHandler,
-}) =>
-    _RoutingMiddlewareBuilder(router, toHandler: toHandler).asMiddleware;
+}) => _RoutingMiddlewareBuilder(router, toHandler: toHandler).asMiddleware;
 
 bool _isSubtype<S, T>() => <S>[] is List<T>;
 
@@ -87,8 +88,12 @@ class _RoutingMiddlewareBuilder<T extends Object> {
       final result = _router.lookup(req.method, path);
       switch (result) {
         case MethodMiss():
-          return ctx.respond(Response(405,
-              headers: Headers.build((final mh) => mh.allow = result.allowed)));
+          return ctx.respond(
+            Response(
+              405,
+              headers: Headers.build((final mh) => mh.allow = result.allowed),
+            ),
+          );
         case PathMiss():
           return await next(ctx);
         case final RouterMatch<T> match:

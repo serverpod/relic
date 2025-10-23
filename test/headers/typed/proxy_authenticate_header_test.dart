@@ -25,29 +25,28 @@ void main() {
             touchHeaders: (final h) => h.proxyAuthenticate,
             headers: {'proxy-authenticate': ''},
           ),
-          throwsA(isA<BadRequestException>().having(
-            (final e) => e.message,
-            'message',
-            contains('Value cannot be empty'),
-          )),
+          throwsA(
+            isA<BadRequestException>().having(
+              (final e) => e.message,
+              'message',
+              contains('Value cannot be empty'),
+            ),
+          ),
         );
       },
     );
 
-    test(
-      'when a Proxy-Authenticate header with an invalid value is passed '
-      'then the server does not respond with a bad request if the headers '
-      'is not actually used',
-      () async {
-        final headers = await getServerRequestHeaders(
-          server: server,
-          touchHeaders: (final _) {},
-          headers: {'proxy-authenticate': 'Test'},
-        );
+    test('when a Proxy-Authenticate header with an invalid value is passed '
+        'then the server does not respond with a bad request if the headers '
+        'is not actually used', () async {
+      final headers = await getServerRequestHeaders(
+        server: server,
+        touchHeaders: (_) {},
+        headers: {'proxy-authenticate': 'Test'},
+      );
 
-        expect(headers, isNotNull);
-      },
-    );
+      expect(headers, isNotNull);
+    });
 
     group('when Basic authentication', () {
       test('with realm parameter should parse scheme correctly', () async {
@@ -80,7 +79,7 @@ void main() {
       test('should parse scheme correctly', () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final _) {},
+          touchHeaders: (_) {},
           headers: {
             'proxy-authenticate':
                 'Digest realm="Proxy Authentication Required"',
@@ -93,7 +92,7 @@ void main() {
       test('should parse realm parameter correctly', () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final _) {},
+          touchHeaders: (_) {},
           headers: {
             'proxy-authenticate':
                 'Digest realm="Proxy Authentication Required"',
@@ -111,10 +110,10 @@ void main() {
       test('should parse qop parameter correctly', () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final _) {},
+          touchHeaders: (_) {},
           headers: {
             'proxy-authenticate':
-                'Digest realm="Proxy Authentication Required", qop="auth", nonce="dcd98b7102dd2f0e8b11d0f600bfb0c093", opaque="5ccc069c403ebaf9f0171e9517f40e41"'
+                'Digest realm="Proxy Authentication Required", qop="auth", nonce="dcd98b7102dd2f0e8b11d0f600bfb0c093", opaque="5ccc069c403ebaf9f0171e9517f40e41"',
           },
         );
 
@@ -129,10 +128,10 @@ void main() {
       test('should parse nonce parameter correctly', () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final _) {},
+          touchHeaders: (_) {},
           headers: {
             'proxy-authenticate':
-                'Digest realm="Proxy Authentication Required", qop="auth", nonce="dcd98b7102dd2f0e8b11d0f600bfb0c093", opaque="5ccc069c403ebaf9f0171e9517f40e41"'
+                'Digest realm="Proxy Authentication Required", qop="auth", nonce="dcd98b7102dd2f0e8b11d0f600bfb0c093", opaque="5ccc069c403ebaf9f0171e9517f40e41"',
           },
         );
 
@@ -147,10 +146,10 @@ void main() {
       test('should parse opaque parameter correctly', () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final _) {},
+          touchHeaders: (_) {},
           headers: {
             'proxy-authenticate':
-                'Digest realm="Proxy Authentication Required", qop="auth", nonce="dcd98b7102dd2f0e8b11d0f600bfb0c093", opaque="5ccc069c403ebaf9f0171e9517f40e41"'
+                'Digest realm="Proxy Authentication Required", qop="auth", nonce="dcd98b7102dd2f0e8b11d0f600bfb0c093", opaque="5ccc069c403ebaf9f0171e9517f40e41"',
           },
         );
 
@@ -191,7 +190,7 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final _) {},
+          touchHeaders: (_) {},
           headers: {'proxy-authenticate': 'InvalidHeader'},
         );
 

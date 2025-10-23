@@ -34,13 +34,15 @@ String _htmlHomePage() {
 }
 
 Future<ResponseContext> homeHandler(final NewContext ctx) async {
-  return ctx.respond(Response.ok(
-    body: Body.fromString(
-      _htmlHomePage(),
-      encoding: utf8,
-      mimeType: MimeType.html,
+  return ctx.respond(
+    Response.ok(
+      body: Body.fromString(
+        _htmlHomePage(),
+        encoding: utf8,
+        mimeType: MimeType.html,
+      ),
     ),
-  ));
+  );
 }
 
 Future<ResponseContext> apiHandler(final NewContext ctx) async {
@@ -50,12 +52,11 @@ Future<ResponseContext> apiHandler(final NewContext ctx) async {
     'path': ctx.request.url.path,
   };
 
-  return ctx.respond(Response.ok(
-    body: Body.fromString(
-      jsonEncode(data),
-      mimeType: MimeType.json,
+  return ctx.respond(
+    Response.ok(
+      body: Body.fromString(jsonEncode(data), mimeType: MimeType.json),
     ),
-  ));
+  );
 }
 
 Future<ResponseContext> userHandler(final NewContext ctx) async {
@@ -66,12 +67,11 @@ Future<ResponseContext> userHandler(final NewContext ctx) async {
     'timestamp': DateTime.now().toIso8601String(),
   };
 
-  return ctx.respond(Response.ok(
-    body: Body.fromString(
-      jsonEncode(data),
-      mimeType: MimeType.json,
+  return ctx.respond(
+    Response.ok(
+      body: Body.fromString(jsonEncode(data), mimeType: MimeType.json),
     ),
-  ));
+  );
 }
 
 ConnectContext webSocketHandler(final NewContext ctx) {
@@ -103,7 +103,8 @@ HijackContext customProtocolHandler(final NewContext ctx) {
     log('Connection hijacked for custom protocol');
 
     // Send a custom HTTP response manually
-    const response = 'HTTP/1.1 200 OK\r\n'
+    const response =
+        'HTTP/1.1 200 OK\r\n'
         'Content-Type: text/plain\r\n'
         'Connection: close\r\n'
         '\r\n'
@@ -126,8 +127,11 @@ Future<ResponseContext> dataHandler(final NewContext ctx) async {
 
   // Access headers (these are typed accessors from the Headers class)
   final authHeader = request.headers.authorization; // 'Bearer token123' or null
-  final contentType = request.body.bodyType
-      ?.mimeType; // appljson, octet-stream, plainText, etc. or null
+  final contentType =
+      request
+          .body
+          .bodyType
+          ?.mimeType; // appljson, octet-stream, plainText, etc. or null
 
   log('authHeader: $authHeader, contentType: $contentType');
 
@@ -137,38 +141,36 @@ Future<ResponseContext> dataHandler(final NewContext ctx) async {
       final bodyString = await request.readAsString();
       final jsonData = json.decode(bodyString) as Map<String, dynamic>;
 
-      return ctx.respond(Response.ok(
-        body: Body.fromString('Received: ${jsonData['name']}'),
-      ));
+      return ctx.respond(
+        Response.ok(body: Body.fromString('Received: ${jsonData['name']}')),
+      );
     } catch (e) {
       return ctx.respond(
-        Response.badRequest(
-          body: Body.fromString('Invalid JSON'),
-        ),
+        Response.badRequest(body: Body.fromString('Invalid JSON')),
       );
     }
   }
 
   // Return bad request if the content type is not JSON
   return ctx.respond(
-    Response.badRequest(
-      body: Body.fromString('Invalid Request'),
-    ),
+    Response.badRequest(body: Body.fromString('Invalid Request')),
   );
 }
 
 void main() async {
   // Set up the router with proper routes
-  final app = RelicApp()
-    ..get('/', homeHandler) // Home page
-    ..get('/api', apiHandler) // Simple API
-    ..get('/api/users/:id', userHandler) // API with parameters
-    ..get('/ws', webSocketHandler) // WebSocket
-    ..get('/custom', customProtocolHandler) // Custom protocol
-    ..post('/data', dataHandler) // Data handler
-    ..fallback = respondWith((final request) => Response.notFound(
-          body: Body.fromString('Page not found'),
-        ));
+  final app =
+      RelicApp()
+        ..get('/', homeHandler) // Home page
+        ..get('/api', apiHandler) // Simple API
+        ..get('/api/users/:id', userHandler) // API with parameters
+        ..get('/ws', webSocketHandler) // WebSocket
+        ..get('/custom', customProtocolHandler) // Custom protocol
+        ..post('/data', dataHandler) // Data handler
+        ..fallback = respondWith(
+          (final request) =>
+              Response.notFound(body: Body.fromString('Page not found')),
+        );
 
   // Start the server
   await app.serve();

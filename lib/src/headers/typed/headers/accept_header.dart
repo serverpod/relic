@@ -15,8 +15,8 @@ final class AcceptHeader {
 
   /// Constructs an [AcceptHeader] instance with the specified media ranges.
   AcceptHeader({required final List<MediaRange> mediaRanges})
-      : assert(mediaRanges.isNotEmpty),
-        mediaRanges = List.unmodifiable(mediaRanges);
+    : assert(mediaRanges.isNotEmpty),
+      mediaRanges = List.unmodifiable(mediaRanges);
 
   /// Parses the Accept header value and returns an [AcceptHeader] instance.
   ///
@@ -40,8 +40,10 @@ final class AcceptHeader {
   bool operator ==(final Object other) =>
       identical(this, other) ||
       other is AcceptHeader &&
-          const ListEquality<MediaRange>()
-              .equals(mediaRanges, other.mediaRanges);
+          const ListEquality<MediaRange>().equals(
+            mediaRanges,
+            other.mediaRanges,
+          );
 
   @override
   int get hashCode => const ListEquality<MediaRange>().hash(mediaRanges);
@@ -64,7 +66,7 @@ class MediaRange {
   /// Constructs a [MediaRange] instance with the specified type, subtype,
   /// quality, and parameters.
   MediaRange(this.type, this.subtype, {final double? quality})
-      : quality = quality ?? 1.0;
+    : quality = quality ?? 1.0;
 
   /// Parses a media range string and returns a [MediaRange] instance.
   ///
@@ -93,11 +95,7 @@ class MediaRange {
       }
     }
 
-    return MediaRange(
-      type,
-      subtype,
-      quality: quality,
-    );
+    return MediaRange(type, subtype, quality: quality);
   }
 
   /// Converts the [MediaRange] instance into a string representation suitable for HTTP headers.

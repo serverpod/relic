@@ -13,20 +13,18 @@ import 'package:vm_service/vm_service_io.dart' as vmi;
 
 void main() {
   group('RelicApp', () {
-    test(
-        'Given RelicApp, '
+    test('Given RelicApp, '
         'when it is instantiated, '
         'then it is a Router<Handler>', () {
       final app = RelicApp();
       expect(app, isA<Router<Handler>>());
     });
 
-    test(
-        'Given a RelicApp, '
+    test('Given a RelicApp, '
         'when calling run with adapter factory, '
         'then it creates a RelicServer and mounts the handler', () async {
-      final app = RelicApp()
-        ..any('/', (final ctx) => ctx.respond(Response.ok()));
+      final app =
+          RelicApp()..any('/', (final ctx) => ctx.respond(Response.ok()));
 
       final server = await app.run(() => _FakeAdapter());
 
@@ -35,12 +33,11 @@ void main() {
       await app.close();
     });
 
-    test(
-        'Given a RelicApp, '
+    test('Given a RelicApp, '
         'when calling serve, '
         'then it creates a RelicServer and mounts the handler', () async {
-      final app = RelicApp()
-        ..any('/', (final ctx) => ctx.respond(Response.ok()));
+      final app =
+          RelicApp()..any('/', (final ctx) => ctx.respond(Response.ok()));
 
       final server = await app.serve(port: 0);
 
@@ -49,14 +46,14 @@ void main() {
       await app.close();
     });
 
-    test(
-        'Given a RelicApp, '
+    test('Given a RelicApp, '
         'when hot-reloading isolate, '
         'then it is rebuild', () async {
       final wsUri = (await Service.getInfo()).serverWebSocketUri;
       if (wsUri == null) {
         markTestSkipped(
-            'VM service not available! Use: dart run --enable-vm-service');
+          'VM service not available! Use: dart run --enable-vm-service',
+        );
         return;
       }
       if (Platform.script.path.endsWith('.dill')) {

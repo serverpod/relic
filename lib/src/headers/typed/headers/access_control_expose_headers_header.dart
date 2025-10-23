@@ -10,9 +10,9 @@ final class AccessControlExposeHeadersHeader
   static const codec = HeaderCodec(_parse, _encode);
 
   /// Constructs an instance allowing specific headers to be exposed.
-  AccessControlExposeHeadersHeader.headers(
-      {required final Iterable<String> headers})
-      : super(List.from(headers));
+  AccessControlExposeHeadersHeader.headers({
+    required final Iterable<String> headers,
+  }) : super(List.from(headers));
 
   /// Constructs an instance allowing all headers to be exposed (`*`).
   const AccessControlExposeHeadersHeader.wildcard() : super.wildcard();
@@ -20,7 +20,8 @@ final class AccessControlExposeHeadersHeader
   /// Parses the Access-Control-Expose-Headers header value and returns an
   /// [AccessControlExposeHeadersHeader] instance.
   factory AccessControlExposeHeadersHeader.parse(
-      final Iterable<String> values) {
+    final Iterable<String> values,
+  ) {
     return _parse(values);
   }
 
@@ -28,9 +29,12 @@ final class AccessControlExposeHeadersHeader
   List<String> get headers => values;
 
   static AccessControlExposeHeadersHeader _parse(
-      final Iterable<String> values) {
-    final parsed =
-        WildcardListHeader.parse(values, (final String value) => value);
+    final Iterable<String> values,
+  ) {
+    final parsed = WildcardListHeader.parse(
+      values,
+      (final String value) => value,
+    );
 
     if (parsed.isWildcard) {
       return const AccessControlExposeHeadersHeader.wildcard();
@@ -40,7 +44,8 @@ final class AccessControlExposeHeadersHeader
   }
 
   static List<String> encodeHeader(
-      final AccessControlExposeHeadersHeader header) {
+    final AccessControlExposeHeadersHeader header,
+  ) {
     return header.encode((final String str) => str).toList();
   }
 

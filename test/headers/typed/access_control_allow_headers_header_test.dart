@@ -16,25 +16,24 @@ void main() {
 
     tearDown(() => server.close());
 
-    test(
-      'when an empty Access-Control-Allow-Headers header is passed then '
-      'the server should respond with a bad request including a message '
-      'that states the value cannot be empty',
-      () async {
-        expect(
-          getServerRequestHeaders(
-            server: server,
-            touchHeaders: (final h) => h.accessControlAllowHeaders,
-            headers: {'access-control-allow-headers': ''},
-          ),
-          throwsA(isA<BadRequestException>().having(
+    test('when an empty Access-Control-Allow-Headers header is passed then '
+        'the server should respond with a bad request including a message '
+        'that states the value cannot be empty', () async {
+      expect(
+        getServerRequestHeaders(
+          server: server,
+          touchHeaders: (final h) => h.accessControlAllowHeaders,
+          headers: {'access-control-allow-headers': ''},
+        ),
+        throwsA(
+          isA<BadRequestException>().having(
             (final e) => e.message,
             'message',
             contains('Value cannot be empty'),
-          )),
-        );
-      },
-    );
+          ),
+        ),
+      );
+    });
 
     test(
       'when an Access-Control-Allow-Headers header with a wildcard (*) '
@@ -47,11 +46,13 @@ void main() {
             touchHeaders: (final h) => h.accessControlAllowHeaders,
             headers: {'access-control-allow-headers': '*, Content-Type'},
           ),
-          throwsA(isA<BadRequestException>().having(
-            (final e) => e.message,
-            'message',
-            contains('Wildcard (*) cannot be used with other values'),
-          )),
+          throwsA(
+            isA<BadRequestException>().having(
+              (final e) => e.message,
+              'message',
+              contains('Wildcard (*) cannot be used with other values'),
+            ),
+          ),
         );
       },
     );
@@ -63,7 +64,7 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final _) {},
+          touchHeaders: (_) {},
           headers: {'access-control-allow-headers': '*, Content-Type'},
         );
 
@@ -76,9 +77,9 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final _) {},
+          touchHeaders: (_) {},
           headers: {
-            'access-control-allow-headers': 'Content-Type, X-Custom-Header'
+            'access-control-allow-headers': 'Content-Type, X-Custom-Header',
           },
         );
 
@@ -131,7 +132,7 @@ void main() {
       test('then it should return null', () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final _) {},
+          touchHeaders: (_) {},
           headers: {},
         );
         expect(headers.accessControlAllowHeaders, isNull);

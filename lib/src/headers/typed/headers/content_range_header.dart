@@ -6,8 +6,9 @@ import '../../../../relic.dart';
 /// including cases for unsatisfiable range requests.
 final class ContentRangeHeader {
   static const codec = HeaderCodec.single(ContentRangeHeader.parse, __encode);
-  static List<String> __encode(final ContentRangeHeader value) =>
-      [value._encode()];
+  static List<String> __encode(final ContentRangeHeader value) => [
+    value._encode(),
+  ];
 
   /// The unit of the range, e.g. "bytes".
   final String unit;
@@ -22,12 +23,7 @@ final class ContentRangeHeader {
   final int? size;
 
   /// Constructs a [ContentRangeHeader] with the specified range and optional total size.
-  ContentRangeHeader({
-    this.unit = 'bytes',
-    this.start,
-    this.end,
-    this.size,
-  }) {
+  ContentRangeHeader({this.unit = 'bytes', this.start, this.end, this.size}) {
     if (start != null && end != null && start! > end!) {
       throw const FormatException('Invalid range');
     }
@@ -58,12 +54,7 @@ final class ContentRangeHeader {
     // If totalSize is '*', it means the total size is unknown
     final size = sizeGroup == '*' ? null : int.parse(sizeGroup);
 
-    return ContentRangeHeader(
-      unit: unit,
-      start: start,
-      end: end,
-      size: size,
-    );
+    return ContentRangeHeader(unit: unit, start: start, end: end, size: size);
   }
 
   /// Returns the full content range string in the format "bytes start-end/totalSize".

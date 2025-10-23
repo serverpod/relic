@@ -32,7 +32,8 @@ sealed class RelicServer {
     final int noOfIsolates = 1,
   }) {
     return switch (noOfIsolates) {
-      < 1 => throw RangeError.value(
+      < 1 =>
+        throw RangeError.value(
           noOfIsolates,
           'noOfIsolates',
           'Must be larger than 0',
@@ -51,7 +52,7 @@ final class _RelicServer implements RelicServer {
 
   /// Creates a server with the given parameters.
   _RelicServer(final Factory<Adapter> adapterFactory)
-      : _adapter = adapterFactory();
+    : _adapter = adapterFactory();
 
   /// Mounts a handler to the server and starts listening for requests.
   ///
@@ -80,15 +81,18 @@ final class _RelicServer implements RelicServer {
   /// Starts listening for requests.
   Future<void> _startListening() async {
     final adapter = await _adapter;
-    catchTopLevelErrors(() {
-      _subscription = adapter.requests.listen(_handleRequest);
-    }, (final error, final stackTrace) {
-      logMessage(
-        'Asynchronous error\n$error',
-        stackTrace: stackTrace,
-        type: LoggerType.error,
-      );
-    });
+    catchTopLevelErrors(
+      () {
+        _subscription = adapter.requests.listen(_handleRequest);
+      },
+      (final error, final stackTrace) {
+        logMessage(
+          'Asynchronous error\n$error',
+          stackTrace: stackTrace,
+          type: LoggerType.error,
+        );
+      },
+    );
   }
 
   Future<void> _handleRequest(final AdapterRequest adapterRequest) async {
@@ -112,12 +116,15 @@ final class _RelicServer implements RelicServer {
     }
 
     try {
-      final ctx = request
-          .toContext(adapterRequest); // adapter request will be the token
+      final ctx = request.toContext(
+        adapterRequest,
+      ); // adapter request will be the token
       final newCtx = await handler(ctx);
       return switch (newCtx) {
-        final ResponseContext rc =>
-          adapter.respond(adapterRequest, rc.response),
+        final ResponseContext rc => adapter.respond(
+          adapterRequest,
+          rc.response,
+        ),
         final HijackContext hc => adapter.hijack(adapterRequest, hc.callback),
         final ConnectContext cc => adapter.connect(adapterRequest, cc.callback),
       };
@@ -139,14 +146,14 @@ final class _RelicServer implements RelicServer {
         final handledCtx = await handler(ctx);
         return switch (handledCtx) {
           final ResponseContext rc =>
-            // If the response doesn't have a date header, add the default one
-            rc.respond(
-              rc.response.copyWith(headers: rc.response.headers.transform(
-                (final mh) {
-                  mh.date ??= DateTime.now();
-                },
-              )),
+          // If the response doesn't have a date header, add the default one
+          rc.respond(
+            rc.response.copyWith(
+              headers: rc.response.headers.transform((final mh) {
+                mh.date ??= DateTime.now();
+              }),
             ),
+          ),
           _ => handledCtx,
         };
       } on HeaderException catch (error, stackTrace) {
@@ -156,16 +163,19 @@ final class _RelicServer implements RelicServer {
           'Error parsing request headers.\n$error',
           stackTrace,
         );
-        return ctx.respond(Response.badRequest(
-          body: Body.fromString(error.httpResponseBody),
-        ));
+        return ctx.respond(
+          Response.badRequest(body: Body.fromString(error.httpResponseBody)),
+        );
       }
     };
   }
 }
 
 void _logError(
-    final Request request, final String message, final StackTrace stackTrace) {
+  final Request request,
+  final String message,
+  final StackTrace stackTrace,
+) {
   final buffer = StringBuffer();
   buffer.write('${request.method} ${request.requestedUri.path}');
   if (request.requestedUri.query.isNotEmpty) {
@@ -174,17 +184,13 @@ void _logError(
   buffer.writeln();
   buffer.write(message);
 
-  logMessage(
-    buffer.toString(),
-    stackTrace: stackTrace,
-    type: LoggerType.error,
-  );
+  logMessage(buffer.toString(), stackTrace: stackTrace, type: LoggerType.error);
 }
 
 final class _IsolatedRelicServer extends IsolatedObject<RelicServer>
     implements RelicServer {
   _IsolatedRelicServer(final Factory<Adapter> adapterFactory)
-      : super(() => RelicServer(adapterFactory));
+    : super(() => RelicServer(adapterFactory));
 
   @override
   Future<void> close() async {
@@ -209,7 +215,9 @@ final class _MultiIsolateRelicServer implements RelicServer {
     final Factory<Adapter> adapterFactory,
     final int noOfIsolates,
   ) : _children = List.generate(
-            noOfIsolates, (final _) => _IsolatedRelicServer(adapterFactory));
+        noOfIsolates,
+        (_) => _IsolatedRelicServer(adapterFactory),
+      );
 
   @override
   Future<void> close() async {

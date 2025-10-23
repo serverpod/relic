@@ -81,20 +81,17 @@ void main() {
       },
     );
 
-    test(
-      'when an If-None-Match header with an invalid value is passed '
-      'then the server does not respond with a bad request if the headers '
-      'is not actually used',
-      () async {
-        final headers = await getServerRequestHeaders(
-          server: server,
-          touchHeaders: (final _) {},
-          headers: {'if-none-match': 'invalid-etag'},
-        );
+    test('when an If-None-Match header with an invalid value is passed '
+        'then the server does not respond with a bad request if the headers '
+        'is not actually used', () async {
+      final headers = await getServerRequestHeaders(
+        server: server,
+        touchHeaders: (_) {},
+        headers: {'if-none-match': 'invalid-etag'},
+      );
 
-        expect(headers, isNotNull);
-      },
-    );
+      expect(headers, isNotNull);
+    });
 
     test(
       'when an If-None-Match header with a single valid ETag is passed then it '
@@ -112,20 +109,17 @@ void main() {
       },
     );
 
-    test(
-      'when an If-None-Match header with a wildcard (*) is passed then it '
-      'should parse correctly',
-      () async {
-        final headers = await getServerRequestHeaders(
-          server: server,
-          touchHeaders: (final h) => h.ifNoneMatch,
-          headers: {'if-none-match': '*'},
-        );
+    test('when an If-None-Match header with a wildcard (*) is passed then it '
+        'should parse correctly', () async {
+      final headers = await getServerRequestHeaders(
+        server: server,
+        touchHeaders: (final h) => h.ifNoneMatch,
+        headers: {'if-none-match': '*'},
+      );
 
-        expect(headers.ifNoneMatch?.isWildcard, isTrue);
-        expect(headers.ifNoneMatch?.etags, isEmpty);
-      },
-    );
+      expect(headers.ifNoneMatch?.isWildcard, isTrue);
+      expect(headers.ifNoneMatch?.etags, isEmpty);
+    });
 
     test(
       'when no If-None-Match header is passed then it should default to null',
@@ -141,39 +135,30 @@ void main() {
     );
 
     group('when multiple ETags are passed', () {
-      test(
-        'then they should parse correctly',
-        () async {
-          final headers = await getServerRequestHeaders(
-            server: server,
-            touchHeaders: (final h) => h.ifNoneMatch,
-            headers: {'if-none-match': '"123", "456", "789"'},
-          );
+      test('then they should parse correctly', () async {
+        final headers = await getServerRequestHeaders(
+          server: server,
+          touchHeaders: (final h) => h.ifNoneMatch,
+          headers: {'if-none-match': '"123", "456", "789"'},
+        );
 
-          expect(headers.ifNoneMatch?.etags.length, equals(3));
-          expect(
-            headers.ifNoneMatch?.etags.map((final e) => e.value).toList(),
-            equals(['123', '456', '789']),
-          );
-        },
-      );
+        expect(headers.ifNoneMatch?.etags.length, equals(3));
+        expect(
+          headers.ifNoneMatch?.etags.map((final e) => e.value).toList(),
+          equals(['123', '456', '789']),
+        );
+      });
 
-      test(
-        'with W/ weak validator prefix should be accepted',
-        () async {
-          final headers = await getServerRequestHeaders(
-            server: server,
-            touchHeaders: (final h) => h.ifNoneMatch,
-            headers: {'if-none-match': 'W/"123", W/"456"'},
-          );
+      test('with W/ weak validator prefix should be accepted', () async {
+        final headers = await getServerRequestHeaders(
+          server: server,
+          touchHeaders: (final h) => h.ifNoneMatch,
+          headers: {'if-none-match': 'W/"123", W/"456"'},
+        );
 
-          expect(headers.ifNoneMatch?.etags.length, equals(2));
-          expect(
-            headers.ifNoneMatch?.etags.every((final e) => e.isWeak),
-            isTrue,
-          );
-        },
-      );
+        expect(headers.ifNoneMatch?.etags.length, equals(2));
+        expect(headers.ifNoneMatch?.etags.every((final e) => e.isWeak), isTrue);
+      });
 
       test(
         'with extra whitespace are passed then they should parse correctly',
@@ -192,23 +177,20 @@ void main() {
         },
       );
 
-      test(
-        'with duplicate values are passed then they should parse correctly '
-        'and remove duplicates',
-        () async {
-          final headers = await getServerRequestHeaders(
-            server: server,
-            touchHeaders: (final h) => h.ifNoneMatch,
-            headers: {'if-none-match': '"123", "456", "789", "123"'},
-          );
+      test('with duplicate values are passed then they should parse correctly '
+          'and remove duplicates', () async {
+        final headers = await getServerRequestHeaders(
+          server: server,
+          touchHeaders: (final h) => h.ifNoneMatch,
+          headers: {'if-none-match': '"123", "456", "789", "123"'},
+        );
 
-          expect(headers.ifNoneMatch?.etags.length, equals(3));
-          expect(
-            headers.ifNoneMatch?.etags.map((final e) => e.value).toList(),
-            equals(['123', '456', '789']),
-          );
-        },
-      );
+        expect(headers.ifNoneMatch?.etags.length, equals(3));
+        expect(
+          headers.ifNoneMatch?.etags.map((final e) => e.value).toList(),
+          equals(['123', '456', '789']),
+        );
+      });
     });
   });
 
@@ -222,19 +204,16 @@ void main() {
     tearDown(() => server.close());
 
     group('when an invalid If-None-Match header is passed', () {
-      test(
-        'then it should return null',
-        () async {
-          final headers = await getServerRequestHeaders(
-            server: server,
-            touchHeaders: (final _) {},
-            headers: {'if-none-match': 'invalid-etag'},
-          );
+      test('then it should return null', () async {
+        final headers = await getServerRequestHeaders(
+          server: server,
+          touchHeaders: (_) {},
+          headers: {'if-none-match': 'invalid-etag'},
+        );
 
-          expect(Headers.ifNoneMatch[headers].valueOrNullIfInvalid, isNull);
-          expect(() => headers.ifNoneMatch, throwsInvalidHeader);
-        },
-      );
+        expect(Headers.ifNoneMatch[headers].valueOrNullIfInvalid, isNull);
+        expect(() => headers.ifNoneMatch, throwsInvalidHeader);
+      });
     });
   });
 }

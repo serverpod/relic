@@ -9,8 +9,9 @@ import '../../../../relic.dart';
 /// The concrete subclasses handle specific header formats.
 abstract class AuthorizationHeader {
   static const codec = HeaderCodec.single(AuthorizationHeader.parse, __encode);
-  static List<String> __encode(final AuthorizationHeader value) =>
-      [value._encode()];
+  static List<String> __encode(final AuthorizationHeader value) => [
+    value._encode(),
+  ];
 
   /// Returns the value of the Authorization header as a string.
   String get headerValue;
@@ -58,9 +59,7 @@ final class BearerAuthorizationHeader extends AuthorizationHeader {
   /// Constructs a [BearerAuthorizationHeader] with the specified token.
   ///
   /// The token must not be empty.
-  BearerAuthorizationHeader({
-    required this.token,
-  }) {
+  BearerAuthorizationHeader({required this.token}) {
     if (token.isEmpty) {
       throw const FormatException('Bearer token cannot be empty.');
     }
@@ -84,9 +83,7 @@ final class BearerAuthorizationHeader extends AuthorizationHeader {
       throw const FormatException('Bearer token cannot be empty.');
     }
 
-    return BearerAuthorizationHeader(
-      token: token,
-    );
+    return BearerAuthorizationHeader(token: token);
   }
 
   /// Returns the full authorization string, including the "Bearer " prefix.
@@ -144,10 +141,7 @@ final class BasicAuthorizationHeader extends AuthorizationHeader {
   ///
   /// The credentials are encoded as "username:password" in Base64 and prefixed
   /// with "Basic ".
-  BasicAuthorizationHeader({
-    required this.username,
-    required this.password,
-  }) {
+  BasicAuthorizationHeader({required this.username, required this.password}) {
     if (username.isEmpty) {
       throw const FormatException('Username cannot be empty');
     }
@@ -368,7 +362,7 @@ final class DigestAuthorizationHeader extends AuthorizationHeader {
       if (qop != null) '$_qop="$qop"',
       if (nc != null) '$_nc="$nc"',
       if (cnonce != null) '$_cnonce="$cnonce"',
-      if (opaque != null) '$_opaque="$opaque"'
+      if (opaque != null) '$_opaque="$opaque"',
     ].join(', ');
   }
 
@@ -389,17 +383,17 @@ final class DigestAuthorizationHeader extends AuthorizationHeader {
 
   @override
   int get hashCode => Object.hashAll([
-        username,
-        realm,
-        nonce,
-        uri,
-        response,
-        algorithm,
-        qop,
-        nc,
-        cnonce,
-        opaque,
-      ]);
+    username,
+    realm,
+    nonce,
+    uri,
+    response,
+    algorithm,
+    qop,
+    nc,
+    cnonce,
+    opaque,
+  ]);
 
   @override
   String toString() {

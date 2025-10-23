@@ -8,16 +8,16 @@ import '../../extension/string_list_extensions.dart';
 /// It provides functionality to parse and generate transfer encoding header values.
 final class TransferEncodingHeader {
   static const codec = HeaderCodec(TransferEncodingHeader.parse, __encode);
-  static List<String> __encode(final TransferEncodingHeader value) =>
-      [value._encode()];
+  static List<String> __encode(final TransferEncodingHeader value) => [
+    value._encode(),
+  ];
 
   /// A list of transfer encodings.
   final List<TransferEncoding> encodings;
 
   /// Constructs a [TransferEncodingHeader] instance with the specified transfer encodings.
-  TransferEncodingHeader({
-    required final List<TransferEncoding> encodings,
-  }) : encodings = List.unmodifiable(_reorderEncodings(encodings)) {
+  TransferEncodingHeader({required final List<TransferEncoding> encodings})
+    : encodings = List.unmodifiable(_reorderEncodings(encodings)) {
     if (encodings.isEmpty) {
       throw ArgumentError.value(encodings, 'encodings', 'cannot be empty');
     }
@@ -45,8 +45,10 @@ final class TransferEncodingHeader {
   bool operator ==(final Object other) {
     if (identical(this, other)) return true;
     if (other is! TransferEncodingHeader) return false;
-    return const ListEquality<TransferEncoding>()
-        .equals(encodings, other.encodings);
+    return const ListEquality<TransferEncoding>().equals(
+      encodings,
+      other.encodings,
+    );
   }
 
   @override

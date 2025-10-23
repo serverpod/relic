@@ -8,20 +8,23 @@ import '../../extension/string_list_extensions.dart';
 /// This class manages CSP directives, providing functionality to parse, add,
 /// remove, and generate CSP header values.
 final class ContentSecurityPolicyHeader {
-  static const codec =
-      HeaderCodec.single(ContentSecurityPolicyHeader.parse, __encode);
-  static List<String> __encode(final ContentSecurityPolicyHeader value) =>
-      [value._encode()];
+  static const codec = HeaderCodec.single(
+    ContentSecurityPolicyHeader.parse,
+    __encode,
+  );
+  static List<String> __encode(final ContentSecurityPolicyHeader value) => [
+    value._encode(),
+  ];
 
   /// A list of CSP directives.
   final List<ContentSecurityPolicyDirective> directives;
 
   /// Constructs a [ContentSecurityPolicyHeader] instance with the specified
   /// directives.
-  ContentSecurityPolicyHeader(
-      {required final List<ContentSecurityPolicyDirective> directives})
-      : assert(directives.isNotEmpty),
-        directives = List.unmodifiable(directives);
+  ContentSecurityPolicyHeader({
+    required final List<ContentSecurityPolicyDirective> directives,
+  }) : assert(directives.isNotEmpty),
+       directives = List.unmodifiable(directives);
 
   /// Parses a CSP header value and returns a [ContentSecurityPolicyHeader]
   /// instance.
@@ -37,14 +40,11 @@ final class ContentSecurityPolicyHeader {
     final directiveSeparator = RegExp(r'\s+');
     final directives =
         splitValues.map<ContentSecurityPolicyDirective>((final part) {
-      final directiveParts = part.split(directiveSeparator);
-      final name = directiveParts.first;
-      final values = directiveParts.skip(1).toList();
-      return ContentSecurityPolicyDirective(
-        name: name,
-        values: values,
-      );
-    }).toList();
+          final directiveParts = part.split(directiveSeparator);
+          final name = directiveParts.first;
+          final values = directiveParts.skip(1).toList();
+          return ContentSecurityPolicyDirective(name: name, values: values);
+        }).toList();
 
     return ContentSecurityPolicyHeader(directives: directives);
   }
@@ -60,8 +60,10 @@ final class ContentSecurityPolicyHeader {
   bool operator ==(final Object other) =>
       identical(this, other) ||
       other is ContentSecurityPolicyHeader &&
-          const ListEquality<ContentSecurityPolicyDirective>()
-              .equals(directives, other.directives);
+          const ListEquality<ContentSecurityPolicyDirective>().equals(
+            directives,
+            other.directives,
+          );
 
   @override
   int get hashCode =>
@@ -84,10 +86,7 @@ class ContentSecurityPolicyDirective {
 
   /// Constructs a [ContentSecurityPolicyDirective] instance with the specified
   /// name and values.
-  ContentSecurityPolicyDirective({
-    required this.name,
-    required this.values,
-  });
+  ContentSecurityPolicyDirective({required this.name, required this.values});
 
   /// Converts the [ContentSecurityPolicyDirective] instance into a string
   /// representation.

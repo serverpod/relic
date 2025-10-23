@@ -61,14 +61,14 @@ extension HttpResponseExtension on io.HttpResponse {
   /// - Handling multipart/byteranges responses according to their specific requirements.
   bool _shouldEnableChunkedEncoding(final Body body) {
     return
-        // Exclude 1xx status codes (no body allowed).
-        statusCode >= 200 &&
-            // Exclude 204 (No Content) status code (no body allowed).
-            statusCode != 204 &&
-            // Exclude 304 (Not Modified) status code (no body allowed).
-            statusCode != 304 &&
-            // Exclude multipart/byteranges responses (handled via Content-Range).
-            !body.isMultipartByteranges;
+    // Exclude 1xx status codes (no body allowed).
+    statusCode >= 200 &&
+        // Exclude 204 (No Content) status code (no body allowed).
+        statusCode != 204 &&
+        // Exclude 304 (Not Modified) status code (no body allowed).
+        statusCode != 304 &&
+        // Exclude multipart/byteranges responses (handled via Content-Range).
+        !body.isMultipartByteranges;
   }
 }
 

@@ -26,29 +26,28 @@ void main() {
             touchHeaders: (final h) => h.acceptRanges,
             headers: {'accept-ranges': ''},
           ),
-          throwsA(isA<BadRequestException>().having(
-            (final e) => e.message,
-            'message',
-            contains('Value cannot be empty'),
-          )),
+          throwsA(
+            isA<BadRequestException>().having(
+              (final e) => e.message,
+              'message',
+              contains('Value cannot be empty'),
+            ),
+          ),
         );
       },
     );
 
-    test(
-      'when an Accept-Ranges header with an empty value is passed '
-      'then the server does not respond with a bad request if the headers '
-      'is not actually used',
-      () async {
-        final headers = await getServerRequestHeaders(
-          server: server,
-          touchHeaders: (final _) {},
-          headers: {'accept-ranges': ''},
-        );
+    test('when an Accept-Ranges header with an empty value is passed '
+        'then the server does not respond with a bad request if the headers '
+        'is not actually used', () async {
+      final headers = await getServerRequestHeaders(
+        server: server,
+        touchHeaders: (_) {},
+        headers: {'accept-ranges': ''},
+      );
 
-        expect(headers, isNotNull);
-      },
-    );
+      expect(headers, isNotNull);
+    });
 
     test(
       'when a valid Accept-Ranges header is passed then it should parse the range unit correctly',
@@ -102,19 +101,16 @@ void main() {
     tearDown(() => server.close());
 
     group('when an empty Accept-Ranges header is passed', () {
-      test(
-        'then it should return null',
-        () async {
-          final headers = await getServerRequestHeaders(
-            server: server,
-            touchHeaders: (final _) {},
-            headers: {'accept-ranges': ''},
-          );
+      test('then it should return null', () async {
+        final headers = await getServerRequestHeaders(
+          server: server,
+          touchHeaders: (_) {},
+          headers: {'accept-ranges': ''},
+        );
 
-          expect(Headers.acceptRanges[headers].valueOrNullIfInvalid, isNull);
-          expect(() => headers.acceptRanges, throwsInvalidHeader);
-        },
-      );
+        expect(Headers.acceptRanges[headers].valueOrNullIfInvalid, isNull);
+        expect(() => headers.acceptRanges, throwsInvalidHeader);
+      });
     });
   });
 }

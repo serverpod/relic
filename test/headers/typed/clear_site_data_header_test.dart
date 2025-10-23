@@ -27,11 +27,13 @@ void main() {
             touchHeaders: (final h) => h.clearSiteData,
             headers: {'clear-site-data': ''},
           ),
-          throwsA(isA<BadRequestException>().having(
-            (final e) => e.message,
-            'message',
-            contains('Value cannot be empty'),
-          )),
+          throwsA(
+            isA<BadRequestException>().having(
+              (final e) => e.message,
+              'message',
+              contains('Value cannot be empty'),
+            ),
+          ),
         );
       },
     );
@@ -47,11 +49,13 @@ void main() {
             touchHeaders: (final h) => h.clearSiteData,
             headers: {'clear-site-data': 'invalidValue'},
           ),
-          throwsA(isA<BadRequestException>().having(
-            (final e) => e.message,
-            'message',
-            contains('Invalid value'),
-          )),
+          throwsA(
+            isA<BadRequestException>().having(
+              (final e) => e.message,
+              'message',
+              contains('Invalid value'),
+            ),
+          ),
         );
       },
     );
@@ -67,28 +71,27 @@ void main() {
             touchHeaders: (final h) => h.clearSiteData,
             headers: {'clear-site-data': '"cache", "*", "cookies"'},
           ),
-          throwsA(isA<BadRequestException>().having(
-            (final e) => e.message,
-            'message',
-            contains('Wildcard (*) cannot be used with other values'),
-          )),
+          throwsA(
+            isA<BadRequestException>().having(
+              (final e) => e.message,
+              'message',
+              contains('Wildcard (*) cannot be used with other values'),
+            ),
+          ),
         );
       },
     );
 
-    test(
-      'when a Clear-Site-Data header with an invalid value is passed '
-      'then the server does not respond with a bad request if the headers '
-      'is not actually used',
-      () async {
-        final headers = await getServerRequestHeaders(
-          server: server,
-          touchHeaders: (final _) {},
-          headers: {'clear-site-data': '"cache", "*", "cookies"'},
-        );
-        expect(headers, isNotNull);
-      },
-    );
+    test('when a Clear-Site-Data header with an invalid value is passed '
+        'then the server does not respond with a bad request if the headers '
+        'is not actually used', () async {
+      final headers = await getServerRequestHeaders(
+        server: server,
+        touchHeaders: (_) {},
+        headers: {'clear-site-data': '"cache", "*", "cookies"'},
+      );
+      expect(headers, isNotNull);
+    });
 
     test(
       'when a valid Clear-Site-Data header is passed then it should parse the data types correctly',
@@ -145,19 +148,16 @@ void main() {
     tearDown(() => server.close());
 
     group('When an empty Clear-Site-Data header is passed', () {
-      test(
-        'then it should return null',
-        () async {
-          final headers = await getServerRequestHeaders(
-            server: server,
-            touchHeaders: (final _) {},
-            headers: {'clear-site-data': ''},
-          );
+      test('then it should return null', () async {
+        final headers = await getServerRequestHeaders(
+          server: server,
+          touchHeaders: (_) {},
+          headers: {'clear-site-data': ''},
+        );
 
-          expect(Headers.clearSiteData[headers].valueOrNullIfInvalid, isNull);
-          expect(() => headers.clearSiteData, throwsInvalidHeader);
-        },
-      );
+        expect(Headers.clearSiteData[headers].valueOrNullIfInvalid, isNull);
+        expect(() => headers.clearSiteData, throwsInvalidHeader);
+      });
     });
   });
 }

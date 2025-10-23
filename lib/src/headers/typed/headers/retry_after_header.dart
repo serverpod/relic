@@ -8,8 +8,9 @@ import '../../../../relic.dart';
 /// indicating when the client should retry the request.
 final class RetryAfterHeader {
   static const codec = HeaderCodec.single(RetryAfterHeader.parse, __encode);
-  static List<String> __encode(final RetryAfterHeader value) =>
-      [value._encode()];
+  static List<String> __encode(final RetryAfterHeader value) => [
+    value._encode(),
+  ];
 
   /// The retry delay in seconds, if present.
   final int? delay;
@@ -18,14 +19,9 @@ final class RetryAfterHeader {
   final DateTime? date;
 
   /// Constructs a [RetryAfterHeader] instance with either a delay in seconds or a date.
-  RetryAfterHeader({
-    this.delay,
-    this.date,
-  }) {
+  RetryAfterHeader({this.delay, this.date}) {
     if (delay == null && date == null) {
-      throw const FormatException(
-        'Either delay or date must be specified',
-      );
+      throw const FormatException('Either delay or date must be specified');
     }
     if (delay != null && date != null) {
       throw const FormatException(

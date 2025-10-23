@@ -20,7 +20,7 @@ final class XForwardedForHeader {
 
   /// Creates an [XForwardedForHeader] with the given list of addresses.
   XForwardedForHeader(final Iterable<String> addresses)
-      : addresses = List.unmodifiable(addresses) {
+    : addresses = List.unmodifiable(addresses) {
     if (addresses.isEmpty) {
       throw ArgumentError.value(addresses, 'addresses', 'cannot be empty');
     }
@@ -41,8 +41,9 @@ final class XForwardedForHeader {
     __encode,
   );
 
-  static List<String> __encode(final XForwardedForHeader value) =>
-      [value._encode()];
+  static List<String> __encode(final XForwardedForHeader value) => [
+    value._encode(),
+  ];
   String _encode() => addresses.join(', ');
 
   @override

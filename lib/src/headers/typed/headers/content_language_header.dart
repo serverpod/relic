@@ -8,16 +8,17 @@ import '../../extension/string_list_extensions.dart';
 /// This class manages the language codes specified in the Content-Language header.
 final class ContentLanguageHeader {
   static const codec = HeaderCodec(ContentLanguageHeader.parse, __encode);
-  static List<String> __encode(final ContentLanguageHeader value) =>
-      [value._encode()];
+  static List<String> __encode(final ContentLanguageHeader value) => [
+    value._encode(),
+  ];
 
   /// The list of language codes specified in the header.
   final List<String> languages;
 
   /// Constructs a [ContentLanguageHeader] instance with the specified language codes.
   ContentLanguageHeader({required final Iterable<String> languages})
-      : assert(languages.isNotEmpty),
-        languages = List.unmodifiable(languages);
+    : assert(languages.isNotEmpty),
+      languages = List.unmodifiable(languages);
 
   /// Parses the Content-Language header value and returns a [ContentLanguageHeader] instance.
   ///
@@ -28,12 +29,13 @@ final class ContentLanguageHeader {
       throw const FormatException('Value cannot be empty');
     }
 
-    final languages = splitValues.map((final language) {
-      if (!language.isValidLanguageCode()) {
-        throw const FormatException('Invalid language code');
-      }
-      return language;
-    }).toList();
+    final languages =
+        splitValues.map((final language) {
+          if (!language.isValidLanguageCode()) {
+            throw const FormatException('Invalid language code');
+          }
+          return language;
+        }).toList();
 
     return ContentLanguageHeader(languages: languages);
   }
