@@ -68,7 +68,7 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final _) {},
+          touchHeaders: (_) {},
           headers: {'if-modified-since': 'invalid-date-format'},
         );
 
@@ -133,35 +133,29 @@ void main() {
     tearDown(() => server.close());
 
     group('when an empty If-Modified-Since header is passed', () {
-      test(
-        'then it should return null',
-        () async {
-          final headers = await getServerRequestHeaders(
-            server: server,
-            touchHeaders: (final _) {},
-            headers: {'if-modified-since': ''},
-          );
+      test('then it should return null', () async {
+        final headers = await getServerRequestHeaders(
+          server: server,
+          touchHeaders: (_) {},
+          headers: {'if-modified-since': ''},
+        );
 
-          expect(Headers.ifModifiedSince[headers].valueOrNullIfInvalid, isNull);
-          expect(() => headers.ifModifiedSince, throwsInvalidHeader);
-        },
-      );
+        expect(Headers.ifModifiedSince[headers].valueOrNullIfInvalid, isNull);
+        expect(() => headers.ifModifiedSince, throwsInvalidHeader);
+      });
     });
 
     group('when an invalid If-Modified-Since header is passed', () {
-      test(
-        'then it should return null',
-        () async {
-          final headers = await getServerRequestHeaders(
-            server: server,
-            touchHeaders: (final _) {},
-            headers: {'if-modified-since': 'invalid-date-format'},
-          );
+      test('then it should return null', () async {
+        final headers = await getServerRequestHeaders(
+          server: server,
+          touchHeaders: (_) {},
+          headers: {'if-modified-since': 'invalid-date-format'},
+        );
 
-          expect(Headers.ifModifiedSince[headers].valueOrNullIfInvalid, isNull);
-          expect(() => headers.ifModifiedSince, throwsInvalidHeader);
-        },
-      );
+        expect(Headers.ifModifiedSince[headers].valueOrNullIfInvalid, isNull);
+        expect(() => headers.ifModifiedSince, throwsInvalidHeader);
+      });
     });
   });
 }

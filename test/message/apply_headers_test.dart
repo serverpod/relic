@@ -41,9 +41,7 @@ class HttpResponseMock extends Mock implements HttpResponse {
   final HttpHeadersMock _headers = HttpHeadersMock();
   final int _statusCode;
 
-  HttpResponseMock({
-    final int statusCode = 200,
-  }) : _statusCode = statusCode;
+  HttpResponseMock({final int statusCode = 200}) : _statusCode = statusCode;
 
   @override
   HttpHeaders get headers => _headers;
@@ -54,8 +52,7 @@ class HttpResponseMock extends Mock implements HttpResponse {
 
 void main() {
   group('Given a framework response object', () {
-    test(
-        'with some headers '
+    test('with some headers '
         'when applying headers to http response '
         'then the headers are applied correctly', () async {
       final HttpResponseMock response = HttpResponseMock();
@@ -77,25 +74,22 @@ void main() {
 
       expect(response.headers['date'], equals([formatHttpDate(now)]));
       expect(response.headers['expires'], equals([formatHttpDate(expires)]));
-      expect(response.headers['last-modified'],
-          equals([formatHttpDate(lastModified)]));
+      expect(
+        response.headers['last-modified'],
+        equals([formatHttpDate(lastModified)]),
+      );
       expect(response.headers['origin'], equals(['https://example.com']));
       expect(response.headers['server'], equals(['Relic']));
       expect(response.headers['foo'], equals(['bar']));
     });
 
-    test(
-        'with mime type and encoding '
+    test('with mime type and encoding '
         'when applying headers to http response '
         'then the content type is applied correctly', () async {
       final HttpResponseMock response = HttpResponseMock();
       response.applyHeaders(
         Headers.empty(),
-        Body.fromString(
-          'Relic',
-          mimeType: MimeType.plainText,
-          encoding: utf8,
-        ),
+        Body.fromString('Relic', mimeType: MimeType.plainText, encoding: utf8),
       );
 
       expect(
@@ -104,17 +98,14 @@ void main() {
       );
     });
 
-    test(
-        'with a known content length '
+    test('with a known content length '
         'when applying headers to http response '
         'then the content length is applied correctly', () async {
       final HttpResponseMock response = HttpResponseMock();
       response.applyHeaders(
         Headers.empty(),
         Body.fromDataStream(
-          Stream.fromIterable([
-            Uint8List.fromList('Relic'.codeUnits),
-          ]),
+          Stream.fromIterable([Uint8List.fromList('Relic'.codeUnits)]),
           contentLength: 5,
         ),
       );
@@ -122,16 +113,13 @@ void main() {
       expect(response.headers.contentLength, equals(5));
     });
 
-    test(
-        'with an unknown content length '
+    test('with an unknown content length '
         'when applying headers to http response '
         'then chunked transfer encoding is added', () async {
       final HttpResponseMock response = HttpResponseMock(statusCode: 200);
       response.applyHeaders(
         Headers.empty(),
-        Body.fromDataStream(
-          const Stream.empty(),
-        ),
+        Body.fromDataStream(const Stream.empty()),
       );
 
       expect(
@@ -140,20 +128,18 @@ void main() {
       );
     });
 
-    test(
-        'with "identity" transfer encoding and unknown content length '
+    test('with "identity" transfer encoding and unknown content length '
         'when applying headers to http response '
         'then no "chunked" transfer encoding is added', () async {
       final HttpResponseMock response = HttpResponseMock();
       response.applyHeaders(
         Headers.build(
-          (final mh) => mh.transferEncoding = TransferEncodingHeader(
-            encodings: [TransferEncoding.identity],
-          ),
+          (final mh) =>
+              mh.transferEncoding = TransferEncodingHeader(
+                encodings: [TransferEncoding.identity],
+              ),
         ),
-        Body.fromDataStream(
-          const Stream.empty(),
-        ),
+        Body.fromDataStream(const Stream.empty()),
       );
 
       expect(
@@ -162,16 +148,16 @@ void main() {
       );
     });
 
-    test(
-        'with "chunked" transfer encoding already applied '
+    test('with "chunked" transfer encoding already applied '
         'when applying headers to http response '
         'then "chunked" is retained', () async {
       final HttpResponseMock response = HttpResponseMock();
       response.applyHeaders(
         Headers.build(
-          (final mh) => mh.transferEncoding = TransferEncodingHeader(
-            encodings: [TransferEncoding.chunked],
-          ),
+          (final mh) =>
+              mh.transferEncoding = TransferEncodingHeader(
+                encodings: [TransferEncoding.chunked],
+              ),
         ),
         Body.fromDataStream(
           Stream.fromIterable([
@@ -187,16 +173,13 @@ void main() {
     });
 
     group('with status code', () {
-      test(
-          '100 (continue) '
+      test('100 (continue) '
           'when applying headers to http response '
           'then no chunked transfer encoding is added', () async {
         final HttpResponseMock response = HttpResponseMock(statusCode: 100);
         response.applyHeaders(
           Headers.empty(),
-          Body.fromDataStream(
-            const Stream.empty(),
-          ),
+          Body.fromDataStream(const Stream.empty()),
         );
 
         expect(
@@ -205,16 +188,13 @@ void main() {
         );
       });
 
-      test(
-          '101 (switching protocols) '
+      test('101 (switching protocols) '
           'when applying headers to http response '
           'then no chunked transfer encoding is added', () async {
         final HttpResponseMock response = HttpResponseMock(statusCode: 101);
         response.applyHeaders(
           Headers.empty(),
-          Body.fromDataStream(
-            const Stream.empty(),
-          ),
+          Body.fromDataStream(const Stream.empty()),
         );
 
         expect(
@@ -223,16 +203,13 @@ void main() {
         );
       });
 
-      test(
-          '102 (processing) '
+      test('102 (processing) '
           'when applying headers to http response '
           'then no chunked transfer encoding is added', () async {
         final HttpResponseMock response = HttpResponseMock(statusCode: 102);
         response.applyHeaders(
           Headers.empty(),
-          Body.fromDataStream(
-            const Stream.empty(),
-          ),
+          Body.fromDataStream(const Stream.empty()),
         );
 
         expect(
@@ -241,16 +218,13 @@ void main() {
         );
       });
 
-      test(
-          '103 (early hints) '
+      test('103 (early hints) '
           'when applying headers to http response '
           'then no chunked transfer encoding is added', () async {
         final HttpResponseMock response = HttpResponseMock(statusCode: 103);
         response.applyHeaders(
           Headers.empty(),
-          Body.fromDataStream(
-            const Stream.empty(),
-          ),
+          Body.fromDataStream(const Stream.empty()),
         );
 
         expect(
@@ -259,16 +233,13 @@ void main() {
         );
       });
 
-      test(
-          '204 (no content) '
+      test('204 (no content) '
           'when applying headers to http response '
           'then no chunked transfer encoding is added', () async {
         final HttpResponseMock response = HttpResponseMock(statusCode: 204);
         response.applyHeaders(
           Headers.empty(),
-          Body.fromDataStream(
-            const Stream.empty(),
-          ),
+          Body.fromDataStream(const Stream.empty()),
         );
 
         expect(
@@ -277,16 +248,13 @@ void main() {
         );
       });
 
-      test(
-          '304 (not modified) '
+      test('304 (not modified) '
           'when applying headers to http response '
           'then no chunked transfer encoding is added', () async {
         final HttpResponseMock response = HttpResponseMock(statusCode: 304);
         response.applyHeaders(
           Headers.empty(),
-          Body.fromDataStream(
-            const Stream.empty(),
-          ),
+          Body.fromDataStream(const Stream.empty()),
         );
 
         expect(
@@ -296,8 +264,7 @@ void main() {
       });
     });
 
-    test(
-        'with mime type multipart/byteranges '
+    test('with mime type multipart/byteranges '
         'when applying headers to http response '
         'then no chunked transfer encoding is added', () async {
       final HttpResponseMock response = HttpResponseMock();

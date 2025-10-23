@@ -4,10 +4,13 @@ import '../../../../relic.dart';
 ///
 /// This header specifies the policy for embedding cross-origin resources.
 final class CrossOriginEmbedderPolicyHeader {
-  static const codec =
-      HeaderCodec.single(CrossOriginEmbedderPolicyHeader.parse, __encode);
-  static List<String> __encode(final CrossOriginEmbedderPolicyHeader value) =>
-      [value._encode()];
+  static const codec = HeaderCodec.single(
+    CrossOriginEmbedderPolicyHeader.parse,
+    __encode,
+  );
+  static List<String> __encode(final CrossOriginEmbedderPolicyHeader value) => [
+    value._encode(),
+  ];
 
   /// The policy value of the header.
   final String policy;
@@ -22,8 +25,9 @@ final class CrossOriginEmbedderPolicyHeader {
 
   static const unsafeNone = CrossOriginEmbedderPolicyHeader._(_unsafeNone);
   static const requireCorp = CrossOriginEmbedderPolicyHeader._(_requireCorp);
-  static const credentialless =
-      CrossOriginEmbedderPolicyHeader._(_credentialless);
+  static const credentialless = CrossOriginEmbedderPolicyHeader._(
+    _credentialless,
+  );
 
   /// Parses a [value] and returns the corresponding [CrossOriginEmbedderPolicyHeader] instance.
   /// If the value does not match any predefined types, it returns a custom instance.

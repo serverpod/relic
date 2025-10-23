@@ -19,10 +19,7 @@ final class IfRangeHeader {
   /// Constructs an [IfRangeHeader] instance with either a date or an ETag.
   ///
   /// Either [lastModified] or [etag] must be non-null.
-  IfRangeHeader({
-    this.lastModified,
-    this.etag,
-  }) {
+  IfRangeHeader({this.lastModified, this.etag}) {
     if (lastModified == null && etag == null) {
       throw const FormatException('Either date or etag must be provided');
     }

@@ -26,11 +26,13 @@ void main() {
             touchHeaders: (final h) => h.secFetchSite,
             headers: {'sec-fetch-site': ''},
           ),
-          throwsA(isA<BadRequestException>().having(
-            (final e) => e.message,
-            'message',
-            contains('Value cannot be empty'),
-          )),
+          throwsA(
+            isA<BadRequestException>().having(
+              (final e) => e.message,
+              'message',
+              contains('Value cannot be empty'),
+            ),
+          ),
         );
       },
     );
@@ -45,28 +47,27 @@ void main() {
             touchHeaders: (final h) => h.secFetchSite,
             headers: {'sec-fetch-site': 'custom-site'},
           ),
-          throwsA(isA<BadRequestException>().having(
-            (final e) => e.message,
-            'message',
-            contains('Invalid value'),
-          )),
+          throwsA(
+            isA<BadRequestException>().having(
+              (final e) => e.message,
+              'message',
+              contains('Invalid value'),
+            ),
+          ),
         );
       },
     );
 
-    test(
-      'when a Sec-Fetch-Site header with an invalid value is passed '
-      'then the server does not respond with a bad request if the headers '
-      'is not actually used',
-      () async {
-        final headers = await getServerRequestHeaders(
-          server: server,
-          touchHeaders: (final _) {},
-          headers: {'sec-fetch-site': 'custom-site'},
-        );
-        expect(headers, isNotNull);
-      },
-    );
+    test('when a Sec-Fetch-Site header with an invalid value is passed '
+        'then the server does not respond with a bad request if the headers '
+        'is not actually used', () async {
+      final headers = await getServerRequestHeaders(
+        server: server,
+        touchHeaders: (_) {},
+        headers: {'sec-fetch-site': 'custom-site'},
+      );
+      expect(headers, isNotNull);
+    });
 
     test(
       'when a valid Sec-Fetch-Site header is passed then it should parse the site correctly',
@@ -105,18 +106,15 @@ void main() {
     tearDown(() => server.close());
 
     group('When an empty Sec-Fetch-Site header is passed', () {
-      test(
-        'then it should return null',
-        () async {
-          final headers = await getServerRequestHeaders(
-            server: server,
-            touchHeaders: (final _) {},
-            headers: {},
-          );
+      test('then it should return null', () async {
+        final headers = await getServerRequestHeaders(
+          server: server,
+          touchHeaders: (_) {},
+          headers: {},
+        );
 
-          expect(headers.secFetchSite, isNull);
-        },
-      );
+        expect(headers.secFetchSite, isNull);
+      });
     });
   });
 }

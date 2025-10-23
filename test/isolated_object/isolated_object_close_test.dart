@@ -4,8 +4,7 @@ import 'package:relic/src/isolated_object.dart';
 import 'package:test/test.dart';
 
 void main() {
-  test(
-      'Given an IsolatedObject, '
+  test('Given an IsolatedObject, '
       'when close is called multiple times, '
       'then it handles it gracefully', () async {
     final isolated = IsolatedObject<_Counter>(() => _Counter(0));
@@ -17,8 +16,7 @@ void main() {
     expect(true, isTrue);
   });
 
-  test(
-      'Given an IsolatedObject with pending operations, '
+  test('Given an IsolatedObject with pending operations, '
       'when the channel is closed, '
       'then pending operations fail with channel closed error', () async {
     final isolated = IsolatedObject<_Counter>(() => _Counter(0));

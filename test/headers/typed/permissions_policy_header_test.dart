@@ -26,29 +26,28 @@ void main() {
             touchHeaders: (final h) => h.permissionsPolicy,
             headers: {'permissions-policy': ''},
           ),
-          throwsA(isA<BadRequestException>().having(
-            (final e) => e.message,
-            'message',
-            contains('Value cannot be empty'),
-          )),
+          throwsA(
+            isA<BadRequestException>().having(
+              (final e) => e.message,
+              'message',
+              contains('Value cannot be empty'),
+            ),
+          ),
         );
       },
     );
 
-    test(
-      'when a Permissions-Policy header with an empty value is passed '
-      'then the server does not respond with a bad request if the headers '
-      'is not actually used',
-      () async {
-        final headers = await getServerRequestHeaders(
-          server: server,
-          touchHeaders: (final _) {},
-          headers: {'permissions-policy': ''},
-        );
+    test('when a Permissions-Policy header with an empty value is passed '
+        'then the server does not respond with a bad request if the headers '
+        'is not actually used', () async {
+      final headers = await getServerRequestHeaders(
+        server: server,
+        touchHeaders: (_) {},
+        headers: {'permissions-policy': ''},
+      );
 
-        expect(headers, isNotNull);
-      },
-    );
+      expect(headers, isNotNull);
+    });
 
     test(
       'when a valid Permissions-Policy header is passed then it should parse the policies correctly',
@@ -75,7 +74,7 @@ void main() {
           server: server,
           headers: {
             'permissions-policy':
-                'geolocation=(self), camera=(self "https://example.com")'
+                'geolocation=(self), camera=(self "https://example.com")',
           },
           touchHeaders: (final h) => h.permissionsPolicy,
         );
@@ -113,20 +112,16 @@ void main() {
     tearDown(() => server.close());
 
     group('when an empty Permissions-Policy header is passed', () {
-      test(
-        'then it should return null',
-        () async {
-          final headers = await getServerRequestHeaders(
-            server: server,
-            touchHeaders: (final _) {},
-            headers: {'permissions-policy': ''},
-          );
+      test('then it should return null', () async {
+        final headers = await getServerRequestHeaders(
+          server: server,
+          touchHeaders: (_) {},
+          headers: {'permissions-policy': ''},
+        );
 
-          expect(
-              Headers.permissionsPolicy[headers].valueOrNullIfInvalid, isNull);
-          expect(() => headers.permissionsPolicy, throwsInvalidHeader);
-        },
-      );
+        expect(Headers.permissionsPolicy[headers].valueOrNullIfInvalid, isNull);
+        expect(() => headers.permissionsPolicy, throwsInvalidHeader);
+      });
     });
   });
 }

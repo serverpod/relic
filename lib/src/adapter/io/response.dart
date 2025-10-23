@@ -9,9 +9,7 @@ extension ResponseExIo on Response {
   ///
   /// This method sets the status code, headers, and body on the [httpResponse]
   /// and returns a [Future] that completes when the body has been written.
-  Future<void> writeHttpResponse(
-    final HttpResponse httpResponse,
-  ) async {
+  Future<void> writeHttpResponse(final HttpResponse httpResponse) async {
     // Set the status code.
     httpResponse.statusCode = statusCode;
 
@@ -20,6 +18,6 @@ extension ResponseExIo on Response {
 
     return httpResponse
         .addStream(body.read())
-        .then((final _) => httpResponse.close());
+        .then((_) => httpResponse.close());
   }
 }

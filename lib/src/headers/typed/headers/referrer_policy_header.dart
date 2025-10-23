@@ -6,8 +6,9 @@ import '../../../../relic.dart';
 /// and generate referrer policy header values.
 final class ReferrerPolicyHeader {
   static const codec = HeaderCodec.single(ReferrerPolicyHeader.parse, __encode);
-  static List<String> __encode(final ReferrerPolicyHeader value) =>
-      [value._encode()];
+  static List<String> __encode(final ReferrerPolicyHeader value) => [
+    value._encode(),
+  ];
 
   /// The string representation of the referrer policy directive.
   final String directive;
@@ -26,15 +27,18 @@ final class ReferrerPolicyHeader {
   static const _unsafeUrl = 'unsafe-url';
 
   static const noReferrer = ReferrerPolicyHeader._(_noReferrer);
-  static const noReferrerWhenDowngrade =
-      ReferrerPolicyHeader._(_noReferrerWhenDowngrade);
+  static const noReferrerWhenDowngrade = ReferrerPolicyHeader._(
+    _noReferrerWhenDowngrade,
+  );
   static const origin = ReferrerPolicyHeader._(_origin);
-  static const originWhenCrossOrigin =
-      ReferrerPolicyHeader._(_originWhenCrossOrigin);
+  static const originWhenCrossOrigin = ReferrerPolicyHeader._(
+    _originWhenCrossOrigin,
+  );
   static const sameOrigin = ReferrerPolicyHeader._(_sameOrigin);
   static const strictOrigin = ReferrerPolicyHeader._(_strictOrigin);
-  static const strictOriginWhenCrossOrigin =
-      ReferrerPolicyHeader._(_strictOriginWhenCrossOrigin);
+  static const strictOriginWhenCrossOrigin = ReferrerPolicyHeader._(
+    _strictOriginWhenCrossOrigin,
+  );
   static const unsafeUrl = ReferrerPolicyHeader._(_unsafeUrl);
 
   /// Parses a [directive] and returns the corresponding [ReferrerPolicyHeader] instance.

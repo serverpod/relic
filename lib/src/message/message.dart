@@ -11,10 +11,7 @@ abstract class Message {
   /// The streaming body of the message.
   Body body;
 
-  Message({
-    required this.body,
-    required this.headers,
-  });
+  Message({required this.body, required this.headers});
 
   /// Returns the MIME type from the Body-Type (Content-Type header), if available.
   MimeType? get mimeType => body.bodyType?.mimeType;
@@ -46,8 +43,5 @@ abstract class Message {
   bool get isEmpty => body.contentLength == 0;
 
   /// Creates a new message by copying existing values and applying specified changes.
-  Message copyWith({
-    final Headers headers,
-    final Body? body,
-  });
+  Message copyWith({final Headers headers, final Body? body});
 }

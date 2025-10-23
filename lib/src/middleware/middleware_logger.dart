@@ -11,37 +11,33 @@ import '../logger/logger.dart';
 /// The `isError` parameter indicates whether the message is caused by an error.
 ///
 /// If [logger] is not passed, the message is just passed to [print].
-Middleware logRequests({
-  final Logger? logger,
-}) =>
-    (final innerHandler) {
-      final localLogger = logger ?? logMessage;
+Middleware logRequests({final Logger? logger}) => (final innerHandler) {
+  final localLogger = logger ?? logMessage;
 
-      return (final ctx) async {
-        final startTime = DateTime.now();
-        final watch = Stopwatch()..start();
+  return (final ctx) async {
+    final startTime = DateTime.now();
+    final watch = Stopwatch()..start();
 
-        try {
-          final handledCtx = await innerHandler(ctx);
-          final msg = switch (handledCtx) {
-            final ResponseContext rc => '${rc.response.statusCode}',
-            final HijackContext _ => 'hijacked',
-            final ConnectContext _ => 'connected',
-          };
-          localLogger(
-              _message(startTime, handledCtx.request, watch.elapsed, msg));
-          return handledCtx;
-        } catch (error, stackTrace) {
-          localLogger(
-            _errorMessage(startTime, ctx.request, watch.elapsed, error),
-            type: LoggerType.error,
-            stackTrace: stackTrace,
-          );
-
-          rethrow;
-        }
+    try {
+      final handledCtx = await innerHandler(ctx);
+      final msg = switch (handledCtx) {
+        final ResponseContext rc => '${rc.response.statusCode}',
+        final HijackContext _ => 'hijacked',
+        final ConnectContext _ => 'connected',
       };
-    };
+      localLogger(_message(startTime, handledCtx.request, watch.elapsed, msg));
+      return handledCtx;
+    } catch (error, stackTrace) {
+      localLogger(
+        _errorMessage(startTime, ctx.request, watch.elapsed, error),
+        type: LoggerType.error,
+        stackTrace: stackTrace,
+      );
+
+      rethrow;
+    }
+  };
+};
 
 String _formatQuery(final String query) {
   return query == '' ? '' : '?$query';

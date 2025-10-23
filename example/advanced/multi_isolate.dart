@@ -12,10 +12,13 @@ void main() async {
 
   // Wait for all the isolates to spawn
   log('Starting $isolateCount isolates');
-  final isolates = await Future.wait(List.generate(
+  final isolates = await Future.wait(
+    List.generate(
       isolateCount,
       (final index) =>
-          Isolate.spawn((final _) => _serve(), null, debugName: '$index')));
+          Isolate.spawn((final _) => _serve(), null, debugName: '$index'),
+    ),
+  );
 
   // Wait for Ctrl-C before proceeding
   await ProcessSignal.sigint.watch().first;
@@ -29,9 +32,10 @@ void main() async {
 /// [_serve] is called in each spawned isolate.
 Future<void> _serve() async {
   // A router with no routes but a fallback
-  final app = RelicApp()
-    ..use('/', logRequests())
-    ..put('/echo', respondWith(_echoRequest));
+  final app =
+      RelicApp()
+        ..use('/', logRequests())
+        ..put('/echo', respondWith(_echoRequest));
 
   // start the server
   await app.serve(shared: true);

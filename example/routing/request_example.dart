@@ -11,12 +11,12 @@ Future<void> main() async {
   app.get('/info', (final ctx) {
     final method = ctx.request.method; // Method.get
 
-    return ctx.respond(Response.ok(
-      body: Body.fromString('Received a ${method.name} request'),
-    ));
+    return ctx.respond(
+      Response.ok(body: Body.fromString('Received a ${method.name} request')),
+    );
   });
 
-// Path parameters example
+  // Path parameters example
   app.get('/users/:id', (final ctx) {
     final id = ctx.pathParameters[#id]!;
     final url = ctx.request.url;
@@ -34,23 +34,29 @@ Future<void> main() async {
     final page = ctx.request.url.queryParameters['page'];
 
     if (query == null) {
-      return ctx.respond(Response.badRequest(
-        body: Body.fromString('Query parameter "query" is required'),
-      ));
+      return ctx.respond(
+        Response.badRequest(
+          body: Body.fromString('Query parameter "query" is required'),
+        ),
+      );
     }
 
-    return ctx.respond(Response.ok(
-      body: Body.fromString('Searching for: $query (page: ${page ?? "1"})'),
-    ));
+    return ctx.respond(
+      Response.ok(
+        body: Body.fromString('Searching for: $query (page: ${page ?? "1"})'),
+      ),
+    );
   });
 
   // Query parameters - multiple values
   app.get('/filter', (final ctx) {
     final tags = ctx.request.url.queryParametersAll['tag'] ?? [];
 
-    return ctx.respond(Response.ok(
-      body: Body.fromString('Filtering by tags: ${tags.join(", ")}'),
-    ));
+    return ctx.respond(
+      Response.ok(
+        body: Body.fromString('Filtering by tags: ${tags.join(", ")}'),
+      ),
+    );
   });
 
   // Type-safe headers
@@ -62,13 +68,15 @@ Future<void> main() async {
     final userAgent = request.headers.userAgent; // String?
     final contentLength = request.headers.contentLength; // int?
 
-    return ctx.respond(Response.ok(
-      body: Body.fromString(
-        'Browser: ${userAgent ?? "Unknown"}, '
-        'Content-Type: ${mimeType?.toString() ?? "None"}, '
-        'Content-Length: ${contentLength ?? "Unknown"}',
+    return ctx.respond(
+      Response.ok(
+        body: Body.fromString(
+          'Browser: ${userAgent ?? "Unknown"}, '
+          'Content-Type: ${mimeType?.toString() ?? "None"}, '
+          'Content-Length: ${contentLength ?? "Unknown"}',
+        ),
       ),
-    ));
+    );
   });
 
   // Authorization headers
@@ -78,17 +86,20 @@ Future<void> main() async {
     if (auth is BearerAuthorizationHeader) {
       final token = auth.token;
       // Validate token...
-      return ctx.respond(Response.ok(
-        body: Body.fromString('Bearer token: $token'),
-      ));
+      return ctx.respond(
+        Response.ok(body: Body.fromString('Bearer token: $token')),
+      );
     } else if (auth is BasicAuthorizationHeader) {
       final username = auth.username;
       final password = auth.password;
       // Validate credentials...
-      return ctx.respond(Response.ok(
-        body: Body.fromString(
-            'Basic auth: $username (password length: ${password.length})'),
-      ));
+      return ctx.respond(
+        Response.ok(
+          body: Body.fromString(
+            'Basic auth: $username (password length: ${password.length})',
+          ),
+        ),
+      );
     } else {
       return ctx.respond(Response.unauthorized());
     }
@@ -97,9 +108,9 @@ Future<void> main() async {
   // Reading request body as string
   app.post('/submit', (final ctx) async {
     final bodyText = await ctx.request.readAsString();
-    return ctx.respond(Response.ok(
-      body: Body.fromString('Received: $bodyText'),
-    ));
+    return ctx.respond(
+      Response.ok(body: Body.fromString('Received: $bodyText')),
+    );
   });
 
   // JSON parsing example
@@ -112,20 +123,22 @@ Future<void> main() async {
       final email = data['email'] as String?;
 
       if (name == null || email == null) {
-        return ctx.respond(Response.badRequest(
-          body: Body.fromString('Name and email are required'),
-        ));
+        return ctx.respond(
+          Response.badRequest(
+            body: Body.fromString('Name and email are required'),
+          ),
+        );
       }
 
       // Process user creation...
 
-      return ctx.respond(Response.ok(
-        body: Body.fromString('User created: $name'),
-      ));
+      return ctx.respond(
+        Response.ok(body: Body.fromString('User created: $name')),
+      );
     } catch (e) {
-      return ctx.respond(Response.badRequest(
-        body: Body.fromString('Invalid JSON: $e'),
-      ));
+      return ctx.respond(
+        Response.badRequest(body: Body.fromString('Invalid JSON: $e')),
+      );
     }
   });
 
@@ -139,17 +152,17 @@ Future<void> main() async {
       // Process chunk...
     }
 
-    return ctx.respond(Response.ok(
-      body: Body.fromString('Uploaded $totalBytes bytes'),
-    ));
+    return ctx.respond(
+      Response.ok(body: Body.fromString('Uploaded $totalBytes bytes')),
+    );
   });
 
   // Check if body is empty
   app.post('/data', (final ctx) {
     if (ctx.request.isEmpty) {
-      return ctx.respond(Response.badRequest(
-        body: Body.fromString('Request body is required'),
-      ));
+      return ctx.respond(
+        Response.badRequest(body: Body.fromString('Request body is required')),
+      );
     }
 
     // Body exists, safe to read...
@@ -161,16 +174,18 @@ Future<void> main() async {
     final pageStr = ctx.request.url.queryParameters['page'];
 
     if (pageStr == null) {
-      return ctx.respond(Response.badRequest(
-        body: Body.fromString('Page parameter is required'),
-      ));
+      return ctx.respond(
+        Response.badRequest(
+          body: Body.fromString('Page parameter is required'),
+        ),
+      );
     }
 
     final page = int.tryParse(pageStr);
     if (page == null || page < 1) {
-      return ctx.respond(Response.badRequest(
-        body: Body.fromString('Invalid page number'),
-      ));
+      return ctx.respond(
+        Response.badRequest(body: Body.fromString('Invalid page number')),
+      );
     }
 
     // Use validated page number...
@@ -181,13 +196,12 @@ Future<void> main() async {
   app.get('/info', (final ctx) {
     final userAgent = ctx.request.headers.userAgent;
 
-    final message = userAgent != null
-        ? 'Your browser: $userAgent'
-        : 'Browser information not available';
+    final message =
+        userAgent != null
+            ? 'Your browser: $userAgent'
+            : 'Browser information not available';
 
-    return ctx.respond(Response.ok(
-      body: Body.fromString(message),
-    ));
+    return ctx.respond(Response.ok(body: Body.fromString(message)));
   });
 
   await app.serve();

@@ -27,29 +27,28 @@ void main() {
             touchHeaders: (final h) => h.retryAfter,
             headers: {'retry-after': ''},
           ),
-          throwsA(isA<BadRequestException>().having(
-            (final e) => e.message,
-            'message',
-            contains('Value cannot be empty'),
-          )),
+          throwsA(
+            isA<BadRequestException>().having(
+              (final e) => e.message,
+              'message',
+              contains('Value cannot be empty'),
+            ),
+          ),
         );
       },
     );
 
-    test(
-      'when a Retry-After header with an invalid value is passed '
-      'then the server does not respond with a bad request if the headers '
-      'is not actually used',
-      () async {
-        final headers = await getServerRequestHeaders(
-          server: server,
-          touchHeaders: (final _) {},
-          headers: {'retry-after': 'invalid'},
-        );
+    test('when a Retry-After header with an invalid value is passed '
+        'then the server does not respond with a bad request if the headers '
+        'is not actually used', () async {
+      final headers = await getServerRequestHeaders(
+        server: server,
+        touchHeaders: (_) {},
+        headers: {'retry-after': 'invalid'},
+      );
 
-        expect(headers, isNotNull);
-      },
-    );
+      expect(headers, isNotNull);
+    });
 
     group('when the header contains a delay in seconds', () {
       test('then it should parse a valid positive integer correctly', () async {
@@ -79,11 +78,13 @@ void main() {
             touchHeaders: (final h) => h.retryAfter,
             headers: {'retry-after': '-120'},
           ),
-          throwsA(isA<BadRequestException>().having(
-            (final e) => e.message,
-            'message',
-            contains('Delay cannot be negative'),
-          )),
+          throwsA(
+            isA<BadRequestException>().having(
+              (final e) => e.message,
+              'message',
+              contains('Delay cannot be negative'),
+            ),
+          ),
         );
       });
 
@@ -94,11 +95,13 @@ void main() {
             touchHeaders: (final h) => h.retryAfter,
             headers: {'retry-after': '120.5'},
           ),
-          throwsA(isA<BadRequestException>().having(
-            (final e) => e.message,
-            'message',
-            contains('Invalid date format'),
-          )),
+          throwsA(
+            isA<BadRequestException>().having(
+              (final e) => e.message,
+              'message',
+              contains('Invalid date format'),
+            ),
+          ),
         );
       });
     });
@@ -137,11 +140,13 @@ void main() {
             touchHeaders: (final h) => h.retryAfter,
             headers: {'retry-after': '2015-10-21'},
           ),
-          throwsA(isA<BadRequestException>().having(
-            (final e) => e.message,
-            'message',
-            contains('Invalid date format'),
-          )),
+          throwsA(
+            isA<BadRequestException>().having(
+              (final e) => e.message,
+              'message',
+              contains('Invalid date format'),
+            ),
+          ),
         );
       });
     });
@@ -174,7 +179,7 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final _) {},
+          touchHeaders: (_) {},
           headers: {'retry-after': 'invalid'},
         );
 

@@ -68,7 +68,7 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final _) {},
+          touchHeaders: (_) {},
           headers: {'access-control-expose-headers': '*, X-Custom-Header'},
         );
 
@@ -121,43 +121,37 @@ void main() {
     );
 
     group('when multiple Access-Control-Expose-Headers headers are passed', () {
-      test(
-        'then they should parse correctly',
-        () async {
-          final headers = await getServerRequestHeaders(
-            server: server,
-            touchHeaders: (final _) {},
-            headers: {
-              'access-control-expose-headers':
-                  'X-Custom-Header, X-Another-Header'
-            },
-          );
+      test('then they should parse correctly', () async {
+        final headers = await getServerRequestHeaders(
+          server: server,
+          touchHeaders: (_) {},
+          headers: {
+            'access-control-expose-headers':
+                'X-Custom-Header, X-Another-Header',
+          },
+        );
 
-          expect(
-            headers.accessControlExposeHeaders?.headers,
-            equals(['X-Custom-Header', 'X-Another-Header']),
-          );
-        },
-      );
+        expect(
+          headers.accessControlExposeHeaders?.headers,
+          equals(['X-Custom-Header', 'X-Another-Header']),
+        );
+      });
 
-      test(
-        'with extra whitespace then they should parse correctly',
-        () async {
-          final headers = await getServerRequestHeaders(
-            server: server,
-            touchHeaders: (final _) {},
-            headers: {
-              'access-control-expose-headers':
-                  ' X-Custom-Header , X-Another-Header '
-            },
-          );
+      test('with extra whitespace then they should parse correctly', () async {
+        final headers = await getServerRequestHeaders(
+          server: server,
+          touchHeaders: (_) {},
+          headers: {
+            'access-control-expose-headers':
+                ' X-Custom-Header , X-Another-Header ',
+          },
+        );
 
-          expect(
-            headers.accessControlExposeHeaders?.headers,
-            equals(['X-Custom-Header', 'X-Another-Header']),
-          );
-        },
-      );
+        expect(
+          headers.accessControlExposeHeaders?.headers,
+          equals(['X-Custom-Header', 'X-Another-Header']),
+        );
+      });
     });
   });
 
@@ -171,21 +165,19 @@ void main() {
     tearDown(() => server.close());
 
     group('when an invalid Access-Control-Expose-Headers header is passed', () {
-      test(
-        'then it should return null',
-        () async {
-          final headers = await getServerRequestHeaders(
-            server: server,
-            touchHeaders: (final _) {},
-            headers: {'access-control-expose-headers': ''},
-          );
+      test('then it should return null', () async {
+        final headers = await getServerRequestHeaders(
+          server: server,
+          touchHeaders: (_) {},
+          headers: {'access-control-expose-headers': ''},
+        );
 
-          expect(
-              Headers.accessControlExposeHeaders[headers].valueOrNullIfInvalid,
-              isNull);
-          expect(() => headers.accessControlExposeHeaders, throwsInvalidHeader);
-        },
-      );
+        expect(
+          Headers.accessControlExposeHeaders[headers].valueOrNullIfInvalid,
+          isNull,
+        );
+        expect(() => headers.accessControlExposeHeaders, throwsInvalidHeader);
+      });
     });
   });
 }

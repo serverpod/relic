@@ -86,8 +86,10 @@ int parsePositiveInt(final String value) {
 Iterable<String> encodePositiveInt(final int i) =>
     i < 0 ? throw ArgumentError() : [i.toString()];
 
-const positiveIntHeaderCodec =
-    HeaderCodec.single(parsePositiveInt, encodePositiveInt);
+const positiveIntHeaderCodec = HeaderCodec.single(
+  parsePositiveInt,
+  encodePositiveInt,
+);
 
 /// Parses a boolean from the given [value] and returns it as a `bool`.
 ///
@@ -117,8 +119,10 @@ bool parsePositiveBool(final String value) {
 /// Encode a boolean to a iterable of string, if true.
 Iterable<String> encodePositiveBool(final bool b) => [if (b) b.toString()];
 
-const positiveBoolHeaderCodec =
-    HeaderCodec.single(parsePositiveBool, encodePositiveBool);
+const positiveBoolHeaderCodec = HeaderCodec.single(
+  parsePositiveBool,
+  encodePositiveBool,
+);
 
 /// Parses a string from the given [value] and returns it as a `String`.
 ///

@@ -24,9 +24,9 @@ Middleware addServerHeader() {
 
 /// Simple handler
 Future<ResponseContext> simpleHandler(final NewContext ctx) async {
-  return ctx.respond(Response.ok(
-    body: Body.fromString('Hello from Pipeline!'),
-  ));
+  return ctx.respond(
+    Response.ok(body: Body.fromString('Hello from Pipeline!')),
+  );
 }
 
 void main() async {
@@ -37,19 +37,21 @@ void main() async {
       .addHandler(simpleHandler);
 
   // Using Router (preferred)
-  final router = RelicApp()
-    ..use('/', logRequests())
-    ..use('/', addServerHeader())
-    ..get('/router', (final NewContext ctx) async {
-      return ctx.respond(Response.ok(
-        body: Body.fromString('Hello from Router!'),
-      ));
-    });
+  final router =
+      RelicApp()
+        ..use('/', logRequests())
+        ..use('/', addServerHeader())
+        ..get('/router', (final NewContext ctx) async {
+          return ctx.respond(
+            Response.ok(body: Body.fromString('Hello from Router!')),
+          );
+        });
 
   // Main router that shows both approaches
-  final app = RelicApp()
-    ..get('/pipeline', pipelineHandler)
-    ..get('/router', router.asHandler);
+  final app =
+      RelicApp()
+        ..get('/pipeline', pipelineHandler)
+        ..get('/router', router.asHandler);
 
   await app.serve();
   log('Pipeline example running on http://localhost:8080');

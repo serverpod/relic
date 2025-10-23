@@ -116,10 +116,12 @@ void main() {
   });
 
   test('custom status code is received by the client', () async {
-    await _scheduleServer((createSyncHandler(
-      statusCode: 299,
-      body: Body.fromString('Hello from /'),
-    )));
+    await _scheduleServer(
+      (createSyncHandler(
+        statusCode: 299,
+        body: Body.fromString('Hello from /'),
+      )),
+    );
 
     final response = await _get();
     expect(response.statusCode, 299);
@@ -133,29 +135,20 @@ void main() {
     );
     await _scheduleServer((final ctx) {
       final request = ctx.request;
-      expect(
-        request.headers,
-        containsPair('custom-header', ['client value']),
-      );
+      expect(request.headers, containsPair('custom-header', ['client value']));
 
       // dart:io HttpServer splits multi-value headers into an array
       // validate that they are combined correctly
-      expect(
-        request.headers,
-        containsPair('multi-header', ['foo,bar,baz']),
-      );
+      expect(request.headers, containsPair('multi-header', ['foo,bar,baz']));
 
-      expect(
-        multi[request.headers].value,
-        ['foo', 'bar', 'baz'],
-      );
+      expect(multi[request.headers].value, ['foo', 'bar', 'baz']);
 
       return syncHandler(ctx);
     });
 
     final headers = {
       'custom-header': 'client value',
-      'multi-header': 'foo,bar,baz'
+      'multi-header': 'foo,bar,baz',
     };
 
     final response = await _get(headers: headers);
@@ -208,69 +201,77 @@ void main() {
 
       expect(request.method, Method.post);
 
-      return ctx.hijack(expectAsync1((final channel) {
-        expect(channel.stream.first, completion(equals('Hello'.codeUnits)));
+      return ctx.hijack(
+        expectAsync1((final channel) {
+          expect(channel.stream.first, completion(equals('Hello'.codeUnits)));
 
-        channel.sink.add('HTTP/1.1 404 Not Found\r\n'
-                'date: Mon, 23 May 2005 22:38:34 GMT\r\n'
-                'Content-Length: 13\r\n'
-                '\r\n'
-                'Hello, world!'
-            .codeUnits);
-        channel.sink.close();
-      }));
+          channel.sink.add(
+            'HTTP/1.1 404 Not Found\r\n'
+                    'date: Mon, 23 May 2005 22:38:34 GMT\r\n'
+                    'Content-Length: 13\r\n'
+                    '\r\n'
+                    'Hello, world!'
+                .codeUnits,
+          );
+          channel.sink.close();
+        }),
+      );
     });
 
     final response = await _post(body: 'Hello');
     expect(response.statusCode, HttpStatus.notFound);
     expect(response.headers['date'], 'Mon, 23 May 2005 22:38:34 GMT');
     expect(
-        response.stream.bytesToString(), completion(equals('Hello, world!')));
+      response.stream.bytesToString(),
+      completion(equals('Hello, world!')),
+    );
   });
 
   test('supports web socket connetions', () async {
     await _scheduleServer((final ctx) {
-      return ctx.connect(expectAsync1((final serverSocket) async {
-        await for (final e in serverSocket.events) {
-          expect(e, TextDataReceived('Hello'));
-          serverSocket.sendText('Hello, world!');
-          await serverSocket.close();
-        }
-      }));
+      return ctx.connect(
+        expectAsync1((final serverSocket) async {
+          await for (final e in serverSocket.events) {
+            expect(e, TextDataReceived('Hello'));
+            serverSocket.sendText('Hello, world!');
+            await serverSocket.close();
+          }
+        }),
+      );
     });
 
-    final ws =
-        await WebSocket.connect(Uri.parse('ws://localhost:$_serverPort'));
+    final ws = await WebSocket.connect(
+      Uri.parse('ws://localhost:$_serverPort'),
+    );
     ws.sendText('Hello');
     expect(ws.events.first, completion(TextDataReceived('Hello, world!')));
   });
 
   test('passes asynchronous exceptions to the parent error zone', () async {
-    await runZonedGuarded(() async {
-      final server = await testServe(
-        (final ctx) {
+    await runZonedGuarded(
+      () async {
+        final server = await testServe((final ctx) {
           Future(() => throw StateError('oh no'));
           return syncHandler(ctx);
-        },
-      );
+        });
 
-      final response = await http.get(server.url);
-      expect(response.statusCode, HttpStatus.ok);
-      expect(response.body, 'Hello from /');
-      await server.close();
-    }, expectAsync2((final error, final stack) {
-      expect(error, isOhNoStateError);
-    }));
+        final response = await http.get(server.url);
+        expect(response.statusCode, HttpStatus.ok);
+        expect(response.body, 'Hello from /');
+        await server.close();
+      },
+      expectAsync2((final error, final stack) {
+        expect(error, isOhNoStateError);
+      }),
+    );
   });
 
   test("doesn't pass asynchronous exceptions to the root error zone", () async {
     final response = await Zone.root.run(() async {
-      final server = await testServe(
-        (final request) {
-          Future(() => throw StateError('oh no'));
-          return syncHandler(request);
-        },
-      );
+      final server = await testServe((final request) {
+        Future(() => throw StateError('oh no'));
+        return syncHandler(request);
+      });
 
       try {
         return await http.get(server.url);
@@ -333,10 +334,12 @@ void main() {
 
     test('defers to header in response', () async {
       final date = DateTime.utc(1981, 6, 5);
-      await _scheduleServer(createSyncHandler(
-        body: Body.fromString('test'),
-        headers: Headers.build((final mh) => mh.date = date),
-      ));
+      await _scheduleServer(
+        createSyncHandler(
+          body: Body.fromString('test'),
+          headers: Headers.build((final mh) => mh.date = date),
+        ),
+      );
 
       final response = await _get();
       expect(response.headers, contains('date'));
@@ -351,39 +354,34 @@ void main() {
       await _scheduleServer(syncHandler);
 
       final response = await _get();
-      expect(
-        response.headers[poweredBy],
-        isNull,
-      );
+      expect(response.headers[poweredBy], isNull);
     });
 
     test('can be set manually in response headers', () async {
-      await _scheduleServer(respondWith((final request) {
-        return Response.ok(
-          body: Body.fromString('test'),
-          headers: Headers.build((final mh) => mh.xPoweredBy = 'myServer'),
-        );
-      }));
+      await _scheduleServer(
+        respondWith((final request) {
+          return Response.ok(
+            body: Body.fromString('test'),
+            headers: Headers.build((final mh) => mh.xPoweredBy = 'myServer'),
+          );
+        }),
+      );
 
       final response = await _get();
       expect(response.headers, containsPair(poweredBy, 'myServer'));
     });
 
     test('is not set by default at server level', () async {
-      _server = await testServe(
-        syncHandler,
-      );
+      _server = await testServe(syncHandler);
       final response = await _get();
-      expect(
-        response.headers[poweredBy],
-        isNull,
-      );
+      expect(response.headers[poweredBy], isNull);
     });
 
     test('preserves manually set header in response', () async {
       _server = await testServe(
         createSyncHandler(
-            headers: Headers.build((final mh) => mh.xPoweredBy = 'myServer')),
+          headers: Headers.build((final mh) => mh.xPoweredBy = 'myServer'),
+        ),
       );
 
       final response = await _get();
@@ -392,59 +390,73 @@ void main() {
   });
 
   test(
-      'Given a response with a chunked transfer encoding header and an empty body '
-      'when applying headers '
-      'then the chunked transfer encoding header is removed from the response',
-      () async {
-    await _scheduleServer(
-      createSyncHandler(
-        body: Body.empty(),
-        headers: Headers.build((final mh) => mh.transferEncoding =
-            TransferEncodingHeader(encodings: [TransferEncoding.chunked])),
-      ),
-    );
-
-    final response = await _get();
-    expect(response.body, isEmpty);
-    expect(response.headers['transfer-encoding'], isNull);
-  });
-
-  test('respects the "buffer_output" context parameter', () async {
-    final controller = StreamController<String>();
-    await _scheduleServer(respondWith((final request) {
-      controller.add('Hello, ');
-
-      return Response.ok(
-        body: Body.fromDataStream(
-          utf8.encoder
-              .bind(controller.stream)
-              .map((final list) => Uint8List.fromList(list)),
+    'Given a response with a chunked transfer encoding header and an empty body '
+    'when applying headers '
+    'then the chunked transfer encoding header is removed from the response',
+    () async {
+      await _scheduleServer(
+        createSyncHandler(
+          body: Body.empty(),
+          headers: Headers.build(
+            (final mh) =>
+                mh.transferEncoding = TransferEncodingHeader(
+                  encodings: [TransferEncoding.chunked],
+                ),
+          ),
         ),
-        context: {'buffer_output': false},
       );
-    }));
 
-    final request =
-        http.Request(Method.get.value, Uri.http('localhost:$_serverPort', ''));
+      final response = await _get();
+      expect(response.body, isEmpty);
+      expect(response.headers['transfer-encoding'], isNull);
+    },
+  );
 
-    final response = await request.send();
-    final stream = StreamQueue(utf8.decoder.bind(response.stream));
+  test(
+    'respects the "buffer_output" context parameter',
+    () async {
+      final controller = StreamController<String>();
+      await _scheduleServer(
+        respondWith((final request) {
+          controller.add('Hello, ');
 
-    var data = await stream.next;
-    expect(data, equals('Hello, '));
-    controller.add('world!');
+          return Response.ok(
+            body: Body.fromDataStream(
+              utf8.encoder
+                  .bind(controller.stream)
+                  .map((final list) => Uint8List.fromList(list)),
+            ),
+            context: {'buffer_output': false},
+          );
+        }),
+      );
 
-    data = await stream.next;
-    expect(data, equals('world!'));
-    await controller.close();
-    expect(stream.hasNext, completion(isFalse));
-  }, skip: 'TODO: Find another way to probagate buffer_output');
+      final request = http.Request(
+        Method.get.value,
+        Uri.http('localhost:$_serverPort', ''),
+      );
+
+      final response = await request.send();
+      final stream = StreamQueue(utf8.decoder.bind(response.stream));
+
+      var data = await stream.next;
+      expect(data, equals('Hello, '));
+      controller.add('world!');
+
+      data = await stream.next;
+      expect(data, equals('world!'));
+      await controller.close();
+      expect(stream.hasNext, completion(isFalse));
+    },
+    skip: 'TODO: Find another way to probagate buffer_output',
+  );
 
   group('ssl tests', () {
-    final securityContext = SecurityContext()
-      ..setTrustedCertificatesBytes(certChainBytes)
-      ..useCertificateChainBytes(certChainBytes)
-      ..usePrivateKeyBytes(certKeyBytes, password: 'dartdart');
+    final securityContext =
+        SecurityContext()
+          ..setTrustedCertificatesBytes(certChainBytes)
+          ..useCertificateChainBytes(certChainBytes)
+          ..usePrivateKeyBytes(certKeyBytes, password: 'dartdart');
 
     final sslClient = HttpClient(context: securityContext);
 
@@ -458,8 +470,10 @@ void main() {
 
       final response = await req.close();
       expect(response.statusCode, HttpStatus.ok);
-      expect(await response.cast<List<int>>().transform(utf8.decoder).single,
-          'Hello from /');
+      expect(
+        await response.cast<List<int>>().transform(utf8.decoder).single,
+        'Hello from /',
+      );
     });
 
     test('secure async handler returns a value to the client', () async {
@@ -485,10 +499,7 @@ Future<void> _scheduleServer(
   final SecurityContext? securityContext,
 }) async {
   assert(_server == null);
-  _server = await testServe(
-    handler,
-    context: securityContext,
-  );
+  _server = await testServe(handler, context: securityContext);
 }
 
 Future<http.Response> _get({
@@ -503,8 +514,9 @@ Future<http.Response> _get({
   if (headers != null) request.headers.addAll(headers);
 
   final response = await request.send();
-  return await http.Response.fromStream(response)
-      .timeout(const Duration(seconds: 1));
+  return await http.Response.fromStream(
+    response,
+  ).timeout(const Duration(seconds: 1));
 }
 
 Future<http.StreamedResponse> _post({

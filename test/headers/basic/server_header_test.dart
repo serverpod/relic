@@ -7,94 +7,85 @@ import '../headers_test_utils.dart';
 /// Reference: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Server
 /// For more details on header validation behavior, see the [HeaderValidationDocs] class.
 void main() {
-  group(
-    'Given a Server header with validation',
-    () {
-      late RelicServer server;
+  group('Given a Server header with validation', () {
+    late RelicServer server;
 
-      setUp(() async {
-        server = await createServer();
-      });
+    setUp(() async {
+      server = await createServer();
+    });
 
-      tearDown(() => server.close());
+    tearDown(() => server.close());
 
-      test(
-        'when an empty Server header is passed then the server responds '
+    test('when an empty Server header is passed then the server responds '
         'with a bad request including a message that states the header value '
-        'cannot be empty',
-        () async {
-          expect(
-            getServerRequestHeaders(
-              server: server,
-              headers: {'server': ''},
-              touchHeaders: (final h) => h.server,
-            ),
-            throwsA(
-              isA<BadRequestException>().having(
-                (final e) => e.message,
-                'message',
-                contains('Value cannot be empty'),
-              ),
-            ),
-          );
-        },
+        'cannot be empty', () async {
+      expect(
+        getServerRequestHeaders(
+          server: server,
+          headers: {'server': ''},
+          touchHeaders: (final h) => h.server,
+        ),
+        throwsA(
+          isA<BadRequestException>().having(
+            (final e) => e.message,
+            'message',
+            contains('Value cannot be empty'),
+          ),
+        ),
       );
+    });
 
-      test(
-        'when a Server header with an empty value is passed '
+    test('when a Server header with an empty value is passed '
         'then the server does not respond with a bad request if the headers '
-        'is not actually used',
-        () async {
-          final headers = await getServerRequestHeaders(
-            server: server,
-            touchHeaders: (final _) {},
-            headers: {'server': ''},
-          );
-
-          expect(headers, isNotNull);
-        },
+        'is not actually used', () async {
+      final headers = await getServerRequestHeaders(
+        server: server,
+        touchHeaders: (_) {},
+        headers: {'server': ''},
       );
 
-      test(
-        'when a valid Server header is passed then it should parse the server correctly',
-        () async {
-          final headers = await getServerRequestHeaders(
-            server: server,
-            touchHeaders: (final _) {},
-            headers: {'server': 'MyServer/1.0'},
-          );
+      expect(headers, isNotNull);
+    });
 
-          expect(headers.server, equals('MyServer/1.0'));
-        },
-      );
+    test(
+      'when a valid Server header is passed then it should parse the server correctly',
+      () async {
+        final headers = await getServerRequestHeaders(
+          server: server,
+          touchHeaders: (_) {},
+          headers: {'server': 'MyServer/1.0'},
+        );
 
-      test(
-        'when a Server header with extra whitespace is passed then it should parse the server correctly',
-        () async {
-          final headers = await getServerRequestHeaders(
-            server: server,
-            headers: {'server': ' MyServer/1.0 '},
-            touchHeaders: (final h) => h.server,
-          );
+        expect(headers.server, equals('MyServer/1.0'));
+      },
+    );
 
-          expect(headers.server, equals('MyServer/1.0'));
-        },
-      );
+    test(
+      'when a Server header with extra whitespace is passed then it should parse the server correctly',
+      () async {
+        final headers = await getServerRequestHeaders(
+          server: server,
+          headers: {'server': ' MyServer/1.0 '},
+          touchHeaders: (final h) => h.server,
+        );
 
-      test(
-        'when no Server header is passed then it should return null',
-        () async {
-          final headers = await getServerRequestHeaders(
-            server: server,
-            headers: {},
-            touchHeaders: (final h) => h.server,
-          );
+        expect(headers.server, equals('MyServer/1.0'));
+      },
+    );
 
-          expect(headers.server, isNull);
-        },
-      );
-    },
-  );
+    test(
+      'when no Server header is passed then it should return null',
+      () async {
+        final headers = await getServerRequestHeaders(
+          server: server,
+          headers: {},
+          touchHeaders: (final h) => h.server,
+        );
+
+        expect(headers.server, isNull);
+      },
+    );
+  });
 
   group('Given a Server header without validation', () {
     late RelicServer server;
@@ -106,19 +97,16 @@ void main() {
     tearDown(() => server.close());
 
     group('when an empty Server header is passed', () {
-      test(
-        'then it should return null',
-        () async {
-          final headers = await getServerRequestHeaders(
-            server: server,
-            touchHeaders: (final _) {},
-            headers: {'server': ''},
-          );
+      test('then it should return null', () async {
+        final headers = await getServerRequestHeaders(
+          server: server,
+          touchHeaders: (_) {},
+          headers: {'server': ''},
+        );
 
-          expect(Headers.server[headers].valueOrNullIfInvalid, isNull);
-          expect(() => headers.server, throwsInvalidHeader);
-        },
-      );
+        expect(Headers.server[headers].valueOrNullIfInvalid, isNull);
+        expect(() => headers.server, throwsInvalidHeader);
+      });
     });
   });
 }

@@ -110,7 +110,7 @@ void main() {
             server: server,
             touchHeaders: (final h) => h.cacheControl,
             headers: {
-              'cache-control': 'max-age=3600, stale-while-revalidate=300'
+              'cache-control': 'max-age=3600, stale-while-revalidate=300',
             },
           ),
           throwsA(
@@ -126,20 +126,17 @@ void main() {
       },
     );
 
-    test(
-      'when a Cache-Control header with an invalid value is passed '
-      'then the server does not respond with a bad request if the headers '
-      'is not actually used',
-      () async {
-        final headers = await getServerRequestHeaders(
-          server: server,
-          touchHeaders: (final _) {},
-          headers: {},
-        );
+    test('when a Cache-Control header with an invalid value is passed '
+        'then the server does not respond with a bad request if the headers '
+        'is not actually used', () async {
+      final headers = await getServerRequestHeaders(
+        server: server,
+        touchHeaders: (_) {},
+        headers: {},
+      );
 
-        expect(headers, isNotNull);
-      },
-    );
+      expect(headers, isNotNull);
+    });
 
     test(
       'when a valid Cache-Control header is passed then it should parse the directives correctly',
@@ -336,19 +333,16 @@ void main() {
     tearDown(() => server.close());
 
     group('when an invalid Cache-Control header is passed', () {
-      test(
-        'then it should return null',
-        () async {
-          final headers = await getServerRequestHeaders(
-            server: server,
-            touchHeaders: (final _) {},
-            headers: {'cache-control': 'invalid-directive'},
-          );
+      test('then it should return null', () async {
+        final headers = await getServerRequestHeaders(
+          server: server,
+          touchHeaders: (_) {},
+          headers: {'cache-control': 'invalid-directive'},
+        );
 
-          expect(Headers.cacheControl[headers].valueOrNullIfInvalid, isNull);
-          expect(() => headers.cacheControl, throwsInvalidHeader);
-        },
-      );
+        expect(Headers.cacheControl[headers].valueOrNullIfInvalid, isNull);
+        expect(() => headers.cacheControl, throwsInvalidHeader);
+      });
     });
   });
 }

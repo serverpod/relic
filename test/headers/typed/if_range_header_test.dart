@@ -17,27 +17,24 @@ void main() {
 
     tearDown(() => server.close());
 
-    test(
-      'when an empty If-Range header is passed then the server responds '
-      'with a bad request including a message that states the header value '
-      'cannot be empty',
-      () async {
-        expect(
-          getServerRequestHeaders(
-            server: server,
-            touchHeaders: (final h) => h.ifRange,
-            headers: {'if-range': ''},
+    test('when an empty If-Range header is passed then the server responds '
+        'with a bad request including a message that states the header value '
+        'cannot be empty', () async {
+      expect(
+        getServerRequestHeaders(
+          server: server,
+          touchHeaders: (final h) => h.ifRange,
+          headers: {'if-range': ''},
+        ),
+        throwsA(
+          isA<BadRequestException>().having(
+            (final e) => e.message,
+            'message',
+            contains('Value cannot be empty'),
           ),
-          throwsA(
-            isA<BadRequestException>().having(
-              (final e) => e.message,
-              'message',
-              contains('Value cannot be empty'),
-            ),
-          ),
-        );
-      },
-    );
+        ),
+      );
+    });
 
     test(
       'when an invalid ETag format is passed then the server responds with a '
@@ -60,20 +57,17 @@ void main() {
       },
     );
 
-    test(
-      'when an If-Range header with an invalid value is passed '
-      'then the server does not respond with a bad request if the headers '
-      'is not actually used',
-      () async {
-        final headers = await getServerRequestHeaders(
-          server: server,
-          touchHeaders: (final _) {},
-          headers: {'if-range': 'invalid-value'},
-        );
+    test('when an If-Range header with an invalid value is passed '
+        'then the server does not respond with a bad request if the headers '
+        'is not actually used', () async {
+      final headers = await getServerRequestHeaders(
+        server: server,
+        touchHeaders: (_) {},
+        headers: {'if-range': 'invalid-value'},
+      );
 
-        expect(headers, isNotNull);
-      },
-    );
+      expect(headers, isNotNull);
+    });
 
     test(
       'when an If-Range header with a valid ETag is passed then it should parse correctly',
@@ -146,19 +140,16 @@ void main() {
     tearDown(() => server.close());
 
     group('when an invalid If-Range header is passed', () {
-      test(
-        'then it should return null',
-        () async {
-          final headers = await getServerRequestHeaders(
-            server: server,
-            touchHeaders: (final _) {},
-            headers: {'if-range': 'invalid-value'},
-          );
+      test('then it should return null', () async {
+        final headers = await getServerRequestHeaders(
+          server: server,
+          touchHeaders: (_) {},
+          headers: {'if-range': 'invalid-value'},
+        );
 
-          expect(Headers.ifRange[headers].valueOrNullIfInvalid, isNull);
-          expect(() => headers.ifRange, throwsInvalidHeader);
-        },
-      );
+        expect(Headers.ifRange[headers].valueOrNullIfInvalid, isNull);
+        expect(() => headers.ifRange, throwsInvalidHeader);
+      });
     });
   });
 }

@@ -7,8 +7,7 @@ import 'package:test/test.dart';
 void main() {
   group('BodyType', () {
     group('toHeaderValue', () {
-      test(
-          'Given a BodyType with only a mimeType, '
+      test('Given a BodyType with only a mimeType, '
           'when toHeaderValue is called, '
           'then it returns the mimeType string', () {
         // Arrange
@@ -21,8 +20,7 @@ void main() {
         expect(headerValue, 'application/json');
       });
 
-      test(
-          'Given a BodyType with a mimeType and an encoding, '
+      test('Given a BodyType with a mimeType and an encoding, '
           'when toHeaderValue is called, '
           'then it returns the mimeType and charset string', () {
         // Arrange

@@ -24,12 +24,15 @@ SyncHandler createSyncHandler({
   final Body? body,
 }) {
   return (final NewContext ctx) {
-    return ctx.respond(Response(
-      statusCode,
-      headers: headers ?? Headers.empty(),
-      body: body ??
-          Body.fromString('Hello from ${ctx.request.requestedUri.path}'),
-    ));
+    return ctx.respond(
+      Response(
+        statusCode,
+        headers: headers ?? Headers.empty(),
+        body:
+            body ??
+            Body.fromString('Hello from ${ctx.request.requestedUri.path}'),
+      ),
+    );
   };
 }
 
@@ -41,10 +44,13 @@ Future<HandledContext> asyncHandler(final NewContext ctx) async {
 }
 
 /// Makes a simple GET request to [handler] and returns the result.
-Future<Response> makeSimpleRequest(final Handler handler,
-    [final Request? request]) async {
-  final newCtx =
-      await handler((request ?? _defaultRequest).toContext(Object()));
+Future<Response> makeSimpleRequest(
+  final Handler handler, [
+  final Request? request,
+]) async {
+  final newCtx = await handler(
+    (request ?? _defaultRequest).toContext(Object()),
+  );
   if (newCtx is! ResponseContext) throw ArgumentError(newCtx);
   return newCtx.response;
 }
@@ -53,18 +59,20 @@ final _defaultRequest = Request(Method.get, localhostUri);
 
 final localhostUri = Uri.parse('http://localhost/');
 
-final isOhNoStateError =
-    isA<StateError>().having((final e) => e.message, 'message', 'oh no');
+final isOhNoStateError = isA<StateError>().having(
+  (final e) => e.message,
+  'message',
+  'oh no',
+);
 
 Future<RelicServer> testServe(
   final Handler handler, {
   final SecurityContext? context,
 }) async {
-  final server = RelicServer(() => IOAdapter.bind(
-        InternetAddress.loopbackIPv4,
-        port: 0,
-        context: context,
-      ));
+  final server = RelicServer(
+    () =>
+        IOAdapter.bind(InternetAddress.loopbackIPv4, port: 0, context: context),
+  );
   await server.mountAndStart(handler);
   return server;
 }

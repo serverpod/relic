@@ -2,15 +2,13 @@ import 'package:relic/src/router/lru_cache.dart';
 import 'package:test/test.dart';
 
 void main() {
-  test(
-      'Given a negative capacity'
+  test('Given a negative capacity'
       'when cache is created '
       'then it fails', () {
     expect(() => LruCache<String, int>(-1), throwsArgumentError);
   });
 
-  test(
-      'Given a positive capacity, '
+  test('Given a positive capacity, '
       'when cache is created '
       'then length is 0', () {
     const capacity = 5;
@@ -25,8 +23,7 @@ void main() {
       cache = LruCache<String, int>(100);
     });
 
-    test(
-        'when items are put '
+    test('when items are put '
         'then they can be retrieved', () {
       cache['a'] = 1;
       cache['b'] = 2;
@@ -36,8 +33,7 @@ void main() {
       expect(cache.length, equals(2));
     });
 
-    test(
-        'when putting the same key with a new value '
+    test('when putting the same key with a new value '
         'then the value is updated', () {
       cache['a'] = 1;
       cache['a'] = 10;
@@ -45,8 +41,7 @@ void main() {
       expect(cache.length, equals(1));
     });
 
-    test(
-        'when the same key is put multiple times consecutively '
+    test('when the same key is put multiple times consecutively '
         'then the last value is stored', () {
       cache['a'] = 1;
       cache['a'] = 10;
@@ -107,8 +102,7 @@ void main() {
       cache['b'] = 2; // MRU
     });
 
-    test(
-        'when a new item is put '
+    test('when a new item is put '
         'then the least recently used item is evicted', () {
       cache['c'] = 3; // Add 'c', evict 'a'
 
@@ -126,8 +120,7 @@ void main() {
       cache = LruCache<String, int>(1);
     });
 
-    test(
-        'when multiple items are put '
+    test('when multiple items are put '
         'then only the last item remains', () {
       cache['a'] = 1;
       cache['b'] = 2; // Evicts 'a'
@@ -137,8 +130,7 @@ void main() {
       expect(cache.length, equals(1));
     });
 
-    test(
-        'when an item is accessed and then a new item is put '
+    test('when an item is accessed and then a new item is put '
         'then the accessed item is evicted', () {
       cache['b'] = 2; // Start with 'b'
       final _ = cache['b']; // Access 'b' (doesn't change much with capacity 1)

@@ -132,8 +132,9 @@ class _HotReloader {
       const streamId = vm.EventStreams.kIsolate;
       return vmService.onIsolateEvent
           .asBroadcastStream(
-              onListen: (final _) => vmService.streamListen(streamId),
-              onCancel: (final _) => vmService.streamCancel(streamId))
+            onListen: (_) => vmService.streamListen(streamId),
+            onCancel: (_) => vmService.streamCancel(streamId),
+          )
           .where((final e) => e.kind == vm.EventKind.kIsolateReload);
     }
     return null; // no vm service available
@@ -142,7 +143,7 @@ class _HotReloader {
   Future<StreamSubscription?> register(final RelicApp app) async {
     final reloadStream = await _reloadStream;
     if (reloadStream != null) {
-      return reloadStream.asyncListen((final _) => app._reload());
+      return reloadStream.asyncListen((_) => app._reload());
     }
     return null;
   }

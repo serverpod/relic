@@ -4,8 +4,7 @@ import 'package:test/test.dart';
 
 void main() {
   group('MiddlewareObject', () {
-    test(
-        'Given a MiddlewareObject, '
+    test('Given a MiddlewareObject, '
         'when used as middleware via call, '
         'then it wraps the handler correctly', () async {
       final middlewareObject = _TestMiddlewareObject();
@@ -21,8 +20,7 @@ void main() {
       expect(result.response.headers['X-Middleware'], ['applied']);
     });
 
-    test(
-        'Given a MiddlewareObject, '
+    test('Given a MiddlewareObject, '
         'when asMiddleware getter is used, '
         'then it returns a valid Middleware function', () async {
       final middlewareObject = _TestMiddlewareObject();
@@ -43,8 +41,7 @@ void main() {
       expect(result.response.headers['X-Middleware'], ['applied']);
     });
 
-    test(
-        'Given a MiddlewareObject that modifies requests, '
+    test('Given a MiddlewareObject that modifies requests, '
         'when it wraps a handler, '
         'then the handler receives the modified context', () async {
       final middlewareObject = _RequestModifyingMiddleware();
@@ -64,8 +61,7 @@ void main() {
       expect(capturedHeader, 'by-middleware');
     });
 
-    test(
-        'Given a MiddlewareObject that can short-circuit, '
+    test('Given a MiddlewareObject that can short-circuit, '
         'when it returns early, '
         'then the inner handler is not called', () async {
       final middlewareObject = _ShortCircuitMiddleware();

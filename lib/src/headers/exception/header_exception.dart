@@ -42,8 +42,11 @@ class InvalidHeaderException extends HeaderException {
 
   /// Creates an [InvalidHeaderException] with a [description] describing the error
   /// and the [headerType] indicating the problematic header.
-  const InvalidHeaderException(super.description,
-      {required super.headerType, this.raw = const []});
+  const InvalidHeaderException(
+    super.description, {
+    required super.headerType,
+    this.raw = const [],
+  });
 
   @override
   String get httpResponseBody => "Invalid '$headerType' header: $description";

@@ -10,10 +10,13 @@ import '../../extension/string_list_extensions.dart';
 /// `filename*`. It provides functionality to parse the header value and
 /// construct the appropriate header string.
 final class ContentDispositionHeader {
-  static const codec =
-      HeaderCodec.single(ContentDispositionHeader.parse, __encode);
-  static List<String> __encode(final ContentDispositionHeader value) =>
-      [value._encode()];
+  static const codec = HeaderCodec.single(
+    ContentDispositionHeader.parse,
+    __encode,
+  );
+  static List<String> __encode(final ContentDispositionHeader value) => [
+    value._encode(),
+  ];
 
   /// The disposition type, usually "inline", "attachment", or "form-data".
   final String type;
@@ -48,10 +51,7 @@ final class ContentDispositionHeader {
     final parameters =
         splitValues.skip(1).map(ContentDispositionParameter.parse).toList();
 
-    return ContentDispositionHeader(
-      type: type,
-      parameters: parameters,
-    );
+    return ContentDispositionHeader(type: type, parameters: parameters);
   }
 
   /// Converts the [ContentDispositionHeader] instance into a string
@@ -67,12 +67,16 @@ final class ContentDispositionHeader {
       identical(this, other) ||
       other is ContentDispositionHeader &&
           type == other.type &&
-          const ListEquality<ContentDispositionParameter>()
-              .equals(parameters, other.parameters);
+          const ListEquality<ContentDispositionParameter>().equals(
+            parameters,
+            other.parameters,
+          );
 
   @override
   int get hashCode => Object.hash(
-      type, const ListEquality<ContentDispositionParameter>().hash(parameters));
+    type,
+    const ListEquality<ContentDispositionParameter>().hash(parameters),
+  );
 
   @override
   String toString() {

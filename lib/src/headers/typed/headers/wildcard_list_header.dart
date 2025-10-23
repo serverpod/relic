@@ -19,7 +19,7 @@ class WildcardListHeader<T> {
   ///
   /// Passing an empty list will raise an ArgumentError
   WildcardListHeader(final List<T> values)
-      : values = List.unmodifiable(values) {
+    : values = List.unmodifiable(values) {
     if (values.isEmpty) {
       throw ArgumentError.value(values, 'values', 'Cannot be empty');
     }
@@ -45,7 +45,8 @@ class WildcardListHeader<T> {
 
     if (splitValues.length > 1 && splitValues.contains('*')) {
       throw const FormatException(
-          'Wildcard (*) cannot be used with other values');
+        'Wildcard (*) cannot be used with other values',
+      );
     }
 
     final parsedValues = splitValues.map(parseElement).toList();

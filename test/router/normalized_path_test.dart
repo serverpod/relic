@@ -4,8 +4,7 @@ import 'package:test/test.dart';
 
 void main() {
   group('Normalization Logic', () {
-    test(
-        'Given a simple path, '
+    test('Given a simple path, '
         'when normalized, '
         'then segments are correct', () {
       final path = NormalizedPath('a/b/c');
@@ -13,8 +12,7 @@ void main() {
       expect(path.toString(), equals('/a/b/c'));
     });
 
-    test(
-        'Given path with leading slash, '
+    test('Given path with leading slash, '
         'when normalized, '
         'then segments are correct', () {
       final path = NormalizedPath('/a/b/c');
@@ -22,8 +20,7 @@ void main() {
       expect(path.toString(), equals('/a/b/c'));
     });
 
-    test(
-        'Given path with trailing slash, '
+    test('Given path with trailing slash, '
         'when normalized, '
         'then trailing slash is ignored', () {
       final path = NormalizedPath('a/b/c/');
@@ -31,8 +28,7 @@ void main() {
       expect(path.toString(), equals('/a/b/c'));
     });
 
-    test(
-        'Given path with "." segments, '
+    test('Given path with "." segments, '
         'when normalized, '
         'then "." segments are removed', () {
       final path = NormalizedPath('/a/./b/./c');
@@ -40,8 +36,7 @@ void main() {
       expect(path.toString(), equals('/a/b/c'));
     });
 
-    test(
-        'Given path with ".." segments, '
+    test('Given path with ".." segments, '
         'when normalized, '
         'then ".." navigates up', () {
       final path = NormalizedPath('/a/b/../c');
@@ -49,8 +44,7 @@ void main() {
       expect(path.toString(), equals('/a/c'));
     });
 
-    test(
-        'Given path with ".." segments at start, '
+    test('Given path with ".." segments at start, '
         'when normalized, '
         'then ".." is ignored', () {
       final path = NormalizedPath('../a/b');
@@ -58,8 +52,7 @@ void main() {
       expect(path.toString(), equals('/a/b'));
     });
 
-    test(
-        'Given path with excessive ".." segments, '
+    test('Given path with excessive ".." segments, '
         'when normalized, '
         'then it stops at root', () {
       final path = NormalizedPath('/a/../../b');
@@ -67,8 +60,7 @@ void main() {
       expect(path.toString(), equals('/b'));
     });
 
-    test(
-        'Given path with multiple consecutive slashes, '
+    test('Given path with multiple consecutive slashes, '
         'when normalized, '
         'then they are treated as one', () {
       final path = NormalizedPath('a///b//c');
@@ -76,8 +68,7 @@ void main() {
       expect(path.toString(), equals('/a/b/c'));
     });
 
-    test(
-        'Given an empty path string, '
+    test('Given an empty path string, '
         'when normalized, '
         'then results in root', () {
       final path = NormalizedPath('');
@@ -85,8 +76,7 @@ void main() {
       expect(path.toString(), equals('/'));
     });
 
-    test(
-        'Given a path string with only slashes, '
+    test('Given a path string with only slashes, '
         'when normalized, '
         'then results in root', () {
       final path = NormalizedPath('///');
@@ -94,8 +84,7 @@ void main() {
       expect(path.path, equals('/'));
     });
 
-    test(
-        'Given a path string with only dots and slashes, '
+    test('Given a path string with only dots and slashes, '
         'when normalized, '
         'then results in root', () {
       final path = NormalizedPath('././');
@@ -105,8 +94,7 @@ void main() {
   });
 
   group('Interning', () {
-    test(
-        'Given identical path strings, '
+    test('Given identical path strings, '
         'when creating NormalizedPath, '
         'then returns identical instances', () {
       final path1 = NormalizedPath('/a/b');
@@ -114,8 +102,7 @@ void main() {
       expect(identical(path1, path2), isTrue);
     });
 
-    test(
-        'Given logically equivalent path strings, '
+    test('Given logically equivalent path strings, '
         'when creating NormalizedPath, '
         'then returns identical instances', () {
       final path1 = NormalizedPath('a/b'); // No leading slash
@@ -125,8 +112,7 @@ void main() {
       expect(identical(path1, path3), isTrue);
     });
 
-    test(
-        'Given different logical paths, '
+    test('Given different logical paths, '
         'when creating NormalizedPath, '
         'then returns different instances', () {
       final path1 = NormalizedPath('/a/b');
@@ -142,8 +128,7 @@ void main() {
   });
 
   group('Equality and HashCode', () {
-    test(
-        'Given identical path strings, '
+    test('Given identical path strings, '
         'when creating NormalizedPath, '
         'then instances are equal and hash codes match', () {
       final path1 = NormalizedPath('/a/b');
@@ -152,8 +137,7 @@ void main() {
       expect(path1.hashCode, equals(path2.hashCode));
     });
 
-    test(
-        'Given logically equivalent path strings, '
+    test('Given logically equivalent path strings, '
         'when creating NormalizedPath, '
         'then instances are equal and hash codes match', () {
       final path1 = NormalizedPath('a/b');
@@ -165,8 +149,7 @@ void main() {
       expect(path1.hashCode, equals(path3.hashCode));
     });
 
-    test(
-        'Given different logical paths, '
+    test('Given different logical paths, '
         'when creating NormalizedPath, '
         'then instances are not equal', () {
       final path1 = NormalizedPath('/a/b');
@@ -178,8 +161,7 @@ void main() {
       expect(path1, isNot(equals(path4)));
     });
 
-    test(
-        'Given different types, '
+    test('Given different types, '
         'when comparing, '
         'then == returns false', () {
       final path = NormalizedPath('/a/b');
@@ -190,49 +172,37 @@ void main() {
 
     group('Given different instances, but same hashCode (collision), ', () {
       late final real = NormalizedPath('/a/b');
-      test(
-        'when segment count differs, '
-        'then == returns false via length check',
-        () {
-          // Force same hashCode but only one segment
-          final fake = _FakeNormalizedPath(NormalizedPath('/a'), real.hashCode);
+      test('when segment count differs, '
+          'then == returns false via length check', () {
+        // Force same hashCode but only one segment
+        final fake = _FakeNormalizedPath(NormalizedPath('/a'), real.hashCode);
 
-          // hashCode check passes, then length check kicks in and returns false
-          expect(real == fake, isFalse); // use == to avoid matcher smartness
-        },
-      );
+        // hashCode check passes, then length check kicks in and returns false
+        expect(real == fake, isFalse); // use == to avoid matcher smartness
+      });
 
-      test(
-        'when segments differs, '
-        'then == returns false via length check',
-        () {
-          // Force same hashCode but only one segment
-          final fake =
-              _FakeNormalizedPath(NormalizedPath('/a/x'), real.hashCode);
+      test('when segments differs, '
+          'then == returns false via length check', () {
+        // Force same hashCode but only one segment
+        final fake = _FakeNormalizedPath(NormalizedPath('/a/x'), real.hashCode);
 
-          // hashCode and length check passes, then segment check kicks in and returns false
-          expect(real == fake, isFalse); // use == to avoid matcher smartness
-        },
-      );
+        // hashCode and length check passes, then segment check kicks in and returns false
+        expect(real == fake, isFalse); // use == to avoid matcher smartness
+      });
 
-      test(
-        'when segment are equal, '
-        'then == returns true',
-        () {
-          // Force same hashCode but only one segment
-          final fake =
-              _FakeNormalizedPath(NormalizedPath('/a/b'), real.hashCode);
+      test('when segment are equal, '
+          'then == returns true', () {
+        // Force same hashCode but only one segment
+        final fake = _FakeNormalizedPath(NormalizedPath('/a/b'), real.hashCode);
 
-          // These are equal despite not being same instance
-          expect(real == fake, isTrue); // use == to avoid matcher smartness
-        },
-      );
+        // These are equal despite not being same instance
+        expect(real == fake, isTrue); // use == to avoid matcher smartness
+      });
     });
   });
 
   group('toString()', () {
-    test(
-        'Given various path initializations, '
+    test('Given various path initializations, '
         'when calling toString(), '
         'then returns canonical path starting with /', () {
       expect(NormalizedPath('a/b').toString(), equals('/a/b'));

@@ -17,12 +17,16 @@ class IORelicWebSocket implements RelicWebSocket {
   /// If provided, the [protocols] argument indicates that subprotocols that
   /// the peer is able to select. See
   /// [RFC-6455 1.9](https://datatracker.ietf.org/doc/html/rfc6455#section-1.9).
-  static Future<IORelicWebSocket> connect(final Uri url,
-      {final Iterable<String>? protocols}) async {
+  static Future<IORelicWebSocket> connect(
+    final Uri url, {
+    final Iterable<String>? protocols,
+  }) async {
     final io.WebSocket webSocket;
     try {
-      webSocket =
-          await io.WebSocket.connect(url.toString(), protocols: protocols);
+      webSocket = await io.WebSocket.connect(
+        url.toString(),
+        protocols: protocols,
+      );
     } on io.WebSocketException catch (e) {
       throw WebSocketException(e.message);
     }
@@ -33,15 +37,15 @@ class IORelicWebSocket implements RelicWebSocket {
       // See https://github.com/dart-lang/sdk/issues/55106
       await webSocket.close(1002); // protocol error
       throw WebSocketException(
-          'unexpected protocol selected by peer: ${webSocket.protocol}');
+        'unexpected protocol selected by peer: ${webSocket.protocol}',
+      );
     }
     return IORelicWebSocket._(webSocket);
   }
 
   static Future<IORelicWebSocket> fromHttpRequest(
     final io.HttpRequest request,
-  ) async =>
-      IORelicWebSocket._(await io.WebSocketTransformer.upgrade(request));
+  ) async => IORelicWebSocket._(await io.WebSocketTransformer.upgrade(request));
 
   // Create an `IORelicWebSocket` from an existing `dart:io` `WebSocket`
   // that has been correctly established using either io.WebSocket.connect, or
@@ -62,8 +66,9 @@ class IORelicWebSocket implements RelicWebSocket {
       onError: (final Object e, final StackTrace st) {
         if (_events.isClosed) return;
         final wse = switch (e) {
-          io.WebSocketException(message: final message) =>
-            WebSocketException(message),
+          io.WebSocketException(message: final message) => WebSocketException(
+            message,
+          ),
           _ => WebSocketException(e.toString()),
         };
         _events.addError(wse, st);
@@ -72,7 +77,8 @@ class IORelicWebSocket implements RelicWebSocket {
         if (_events.isClosed) return;
         _events
           ..add(
-              CloseReceived(_webSocket.closeCode, _webSocket.closeReason ?? ''))
+            CloseReceived(_webSocket.closeCode, _webSocket.closeReason ?? ''),
+          )
           ..close();
       },
     );
@@ -146,15 +152,20 @@ class IORelicWebSocket implements RelicWebSocket {
 /// Throw if the given close code is not valid.
 void _checkCloseCode(final int? code) {
   if (code != null && code != 1000 && !(code >= 3000 && code <= 4999)) {
-    throw ArgumentError('Invalid argument: $code, close code must be 1000 or '
-        'in the range 3000-4999');
+    throw ArgumentError(
+      'Invalid argument: $code, close code must be 1000 or '
+      'in the range 3000-4999',
+    );
   }
 }
 
 /// Throw if the given close reason is not valid.
 void _checkCloseReason(final String? reason) {
   if (reason != null && utf8.encode(reason).length > 123) {
-    throw ArgumentError.value(reason, 'reason',
-        'reason must be <= 123 bytes long when encoded as UTF-8');
+    throw ArgumentError.value(
+      reason,
+      'reason',
+      'reason must be <= 123 bytes long when encoded as UTF-8',
+    );
   }
 }

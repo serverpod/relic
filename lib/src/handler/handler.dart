@@ -65,8 +65,8 @@ typedef Handler = FutureOr<HandledContext> Function(NewContext ctx);
 ///
 /// It takes a [RespondableContext] and must return a [FutureOr<ResponseContext>].
 /// This is useful for handlers that are guaranteed to generate a response.
-typedef ResponseHandler = FutureOr<ResponseContext> Function(
-    RespondableContext ctx);
+typedef ResponseHandler =
+    FutureOr<ResponseContext> Function(RespondableContext ctx);
 
 /// A handler specifically designed to produce a [HijackContext].
 ///
@@ -80,10 +80,8 @@ typedef HijackHandler = FutureOr<HijackContext> Function(HijackableContext ctx);
 /// This typedef is used to define how exceptions should be handled in the
 /// context of processing requests. It takes in the [error] and [stackTrace]
 /// and returns a [Response] after processing the exception.
-typedef ExceptionHandler = FutureOr<Response> Function(
-  Object error,
-  StackTrace stackTrace,
-);
+typedef ExceptionHandler =
+    FutureOr<Response> Function(Object error, StackTrace stackTrace);
 
 /// A simplified handler function that takes a [Request] and returns a [Response].
 ///

@@ -22,45 +22,40 @@ void main() {
   });
 
   group('Given a server', () {
-    test(
-        'when a handler throws an InvalidHeaderException '
+    test('when a handler throws an InvalidHeaderException '
         'then it returns a 400 Bad Request response with exception message '
         'included in the response body', () async {
       await _scheduleServer(
-        (final _) => throw const InvalidHeaderException(
-          'Value cannot be empty',
-          headerType: 'test',
-        ),
+        (_) =>
+            throw const InvalidHeaderException(
+              'Value cannot be empty',
+              headerType: 'test',
+            ),
       );
       final response = await _get();
       expect(response.statusCode, 400);
       expect(response.body, "Invalid 'test' header: Value cannot be empty");
     });
 
-    test(
-        'when a handler throws an UnimplementedError '
+    test('when a handler throws an UnimplementedError '
         'then it returns a 500 Internal Server Error response', () async {
-      await _scheduleServer(
-        (final _) => throw UnimplementedError(),
-      );
+      await _scheduleServer((_) => throw UnimplementedError());
       final response = await _get();
       expect(response.statusCode, 500);
       expect(response.body, 'Internal Server Error');
     });
 
-    test(
-        'when a handler throws an Exception '
+    test('when a handler throws an Exception '
         'then it returns a 500 Internal Server Error response', () async {
-      await _scheduleServer((final _) => throw Exception());
+      await _scheduleServer((_) => throw Exception());
       final response = await _get();
       expect(response.statusCode, 500);
       expect(response.body, 'Internal Server Error');
     });
 
-    test(
-        'when a handler throws an Error '
+    test('when a handler throws an Error '
         'then it returns a 500 Internal Server Error response', () async {
-      await _scheduleServer((final _) => throw Error());
+      await _scheduleServer((_) => throw Error());
       final response = await _get();
       expect(response.statusCode, 500);
       expect(response.body, 'Internal Server Error');
@@ -87,6 +82,7 @@ Future<http.Response> _get({
   if (headers != null) request.headers.addAll(headers);
 
   final response = await request.send();
-  return await http.Response.fromStream(response)
-      .timeout(const Duration(seconds: 1));
+  return await http.Response.fromStream(
+    response,
+  ).timeout(const Duration(seconds: 1));
 }

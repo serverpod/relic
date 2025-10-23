@@ -34,10 +34,7 @@ class BodyType {
   /// The encoding of the body.
   final Encoding? encoding;
 
-  const BodyType({
-    required this.mimeType,
-    this.encoding,
-  });
+  const BodyType({required this.mimeType, this.encoding});
 
   /// Returns the value to use for the Content-Type header.
   ///

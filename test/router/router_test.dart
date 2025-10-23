@@ -26,52 +26,45 @@ void main() {
       expect(router.isEmpty, isTrue);
     });
 
-    test(
-        'when looking up an empty string, '
+    test('when looking up an empty string, '
         'then it should return PathMiss', () {
       final result = router.lookup(Method.get, '');
       expect(result, isA<PathMiss>());
     });
 
-    test(
-        'when looking up a non-empty string, '
+    test('when looking up a non-empty string, '
         'then it should return PathMiss', () {
       final result = router.lookup(Method.get, '/hello');
       expect(result, isA<PathMiss>());
     });
 
-    test(
-        'when looking up the root path "/", '
+    test('when looking up the root path "/", '
         'then it should return PathMiss', () {
       final result = router.lookup(Method.get, '/');
       expect(result, isA<PathMiss>());
     });
 
-    test(
-        'when adding the root path "/", '
+    test('when adding the root path "/", '
         'then lookup for "/" should return the correct value', () {
       router.get('/', 'root_handler');
       final result = router.lookup(Method.get, '/');
       expectLookupResult(result, 'root_handler');
     });
 
-    test(
-        'when adding a route, '
+    test('when adding a route, '
         'then isEmpty should be false', () {
       router.get('/test', 'test_handler');
       expect(router.isEmpty, isFalse);
     });
 
-    test(
-        'when adding an empty string path, '
+    test('when adding an empty string path, '
         'then lookup for "/" should return the correct value', () {
       router.get('', 'empty_string_handler');
       final result = router.lookup(Method.get, '/');
       expectLookupResult(result, 'empty_string_handler');
     });
 
-    test(
-        'when adding an empty string path, '
+    test('when adding an empty string path, '
         'then lookup for "" should return the correct value', () {
       router.get('', 'empty_string_handler');
       final result = router.lookup(Method.get, '');
@@ -89,22 +82,19 @@ void main() {
       router.get(path, value);
     });
 
-    test(
-        'when looking up the exact path, '
+    test('when looking up the exact path, '
         'then it should return the correct value', () {
       final result = router.lookup(Method.get, path);
       expectLookupResult(result, value);
     });
 
-    test(
-        'when looking up the path with a trailing slash, '
+    test('when looking up the path with a trailing slash, '
         'then it should return the correct value', () {
       final result = router.lookup(Method.get, '$path/');
       expectLookupResult(result, value);
     });
 
-    test(
-        'when looking up a different path, '
+    test('when looking up a different path, '
         'then it should return PathMiss', () {
       final result = router.lookup(Method.get, '/world');
       expect(result, isA<PathMiss>());
@@ -121,15 +111,13 @@ void main() {
       router.get(path, value);
     });
 
-    test(
-        'when looking up the exact path, '
+    test('when looking up the exact path, '
         'then it should return the correct value', () {
       final result = router.lookup(Method.get, path);
       expectLookupResult(result, value);
     });
 
-    test(
-        'when looking up a prefix of the path, '
+    test('when looking up a prefix of the path, '
         'then it should return PathMiss', () {
       final result = router.lookup(Method.get, '/admin/users');
       expect(result, isA<PathMiss>());
@@ -147,15 +135,13 @@ void main() {
       router.get(pathWithSlash, value);
     });
 
-    test(
-        'when looking up the path without the slash, '
+    test('when looking up the path without the slash, '
         'then it should return the correct value', () {
       final result = router.lookup(Method.get, pathWithoutSlash);
       expectLookupResult(result, value);
     });
 
-    test(
-        'when looking up the path with the slash, '
+    test('when looking up the path with the slash, '
         'then it should return the correct value', () {
       final result = router.lookup(Method.get, pathWithSlash);
       expectLookupResult(result, value);
@@ -175,15 +161,13 @@ void main() {
         router.get(pathWithoutSlash, value);
       });
 
-      test(
-          'when looking up the path without the slash, '
+      test('when looking up the path without the slash, '
           'then it should return the correct value', () {
         final result = router.lookup(Method.get, pathWithoutSlash);
         expectLookupResult(result, value);
       });
 
-      test(
-          'when looking up the path with the slash '
+      test('when looking up the path with the slash '
           'then it should return the correct value', () {
         final result = router.lookup(Method.get, pathWithSlash);
         expectLookupResult(result, value);
@@ -202,8 +186,7 @@ void main() {
       router.get(path, firstValue);
     });
 
-    test(
-        'when adding the same path again, '
+    test('when adding the same path again, '
         'then it should throw ArgumentError and retain the original value', () {
       // Check that the first value is present
       var result = router.lookup(Method.get, path);
@@ -217,8 +200,7 @@ void main() {
       expectLookupResult(result, firstValue);
     });
 
-    test(
-        'when adding a path that normalizes to the same path '
+    test('when adding a path that normalizes to the same path '
         'then it should throw ArgumentError', () {
       const equivalentPath = '$path/'; // Normalizes to the same as path
       expect(
@@ -237,22 +219,19 @@ void main() {
       router.get(pattern, value);
     });
 
-    test(
-        'when looking up a matching path, '
+    test('when looking up a matching path, '
         'then it should return the value and parameter', () {
       final result = router.lookup(Method.get, '/users/123');
       expectLookupResult(result, value, {#id: '123'});
     });
 
-    test(
-        'when looking up a non-matching path structure, '
+    test('when looking up a non-matching path structure, '
         'then it should return PathMiss', () {
       final result = router.lookup(Method.get, '/posts/123');
       expect(result, isA<PathMiss>());
     });
 
-    test(
-        'when looking up a path matching only the prefix, '
+    test('when looking up a path matching only the prefix, '
         'then it should return PathMiss', () {
       final result = router.lookup(Method.get, '/users');
       expect(result, isA<PathMiss>());
@@ -268,15 +247,13 @@ void main() {
       router.get(pattern, value);
     });
 
-    test(
-        'when looking up a matching path, '
+    test('when looking up a matching path, '
         'then it should return the value and parameter', () {
       final result = router.lookup(Method.get, '/report.pdf');
       expectLookupResult(result, value, {#filename: 'report.pdf'});
     });
 
-    test(
-        'when looking up the root path "/", '
+    test('when looking up the root path "/", '
         'then it should return PathMiss', () {
       final result = router.lookup(Method.get, '/');
       expect(result, isA<PathMiss>());
@@ -292,15 +269,13 @@ void main() {
       router.get(pattern, value);
     });
 
-    test(
-        'when looking up a matching path, '
+    test('when looking up a matching path, '
         'then it should return the value and parameters', () {
       final result = router.lookup(Method.get, '/users/abc/items/xyz');
       expectLookupResult(result, value, {#userId: 'abc', #itemId: 'xyz'});
     });
 
-    test(
-        'when looking up a path matching only the first parameter section, '
+    test('when looking up a path matching only the first parameter section, '
         'then it should return PathMiss', () {
       final result = router.lookup(Method.get, '/users/abc');
       expect(result, isA<PathMiss>());
@@ -326,15 +301,13 @@ void main() {
         router.get('/products/:productId/reviews/:reviewId', 'product_review');
       });
 
-      test(
-          'when looking up the details route, '
+      test('when looking up the details route, '
           'then it should match correctly', () {
         final result = router.lookup(Method.get, '/products/p100/details');
         expectLookupResult(result, 'product_details', {#productId: 'p100'});
       });
 
-      test(
-          'when looking up the reviews route, '
+      test('when looking up the reviews route, '
           'then it should match correctly', () {
         final result = router.lookup(Method.get, '/products/p200/reviews/r50');
         expectLookupResult(result, 'product_review', {
@@ -361,22 +334,19 @@ void main() {
         router.get(postPattern, postValue);
       });
 
-      test(
-          'when looking up the first pattern, '
+      test('when looking up the first pattern, '
           'then it should match correctly', () {
         final result = router.lookup(Method.get, '/users/1');
         expectLookupResult(result, userValue, {#id: '1'});
       });
 
-      test(
-          'when looking up the second pattern '
+      test('when looking up the second pattern '
           'then it should match correctly', () {
         final result = router.lookup(Method.get, '/posts/abc');
         expectLookupResult(result, postValue, {#postId: 'abc'});
       });
 
-      test(
-          'when looking up a different initial segment '
+      test('when looking up a different initial segment '
           'then it should return PathMiss', () {
         final result = router.lookup(Method.get, '/articles/xyz');
         expect(result, isA<PathMiss>());
@@ -396,15 +366,13 @@ void main() {
       router.get(patternWithSlash, value);
     });
 
-    test(
-        'when looking up without trailing slash '
+    test('when looking up without trailing slash '
         'then it should match', () {
       final result = router.lookup(Method.get, pathWithoutSlash);
       expectLookupResult(result, value, {#param: 'value1'});
     });
 
-    test(
-        'when looking up with trailing slash '
+    test('when looking up with trailing slash '
         'then it should match', () {
       final result = router.lookup(Method.get, pathWithSlash);
       expectLookupResult(result, value, {#param: 'value1'});
@@ -425,15 +393,13 @@ void main() {
         router.get(patternWithoutSlash, value);
       });
 
-      test(
-          'when looking up without trailing slash '
+      test('when looking up without trailing slash '
           'then it should match', () {
         final result = router.lookup(Method.get, pathWithoutSlash);
         expectLookupResult(result, value, {#param: 'value2'});
       });
 
-      test(
-          'when looking up with trailing slash '
+      test('when looking up with trailing slash '
           'then it should match', () {
         final result = router.lookup(Method.get, pathWithSlash);
         expectLookupResult(result, value, {#param: 'value2'});
@@ -452,8 +418,7 @@ void main() {
       router.get(path, value1);
     });
 
-    test(
-        'when adding the same dynamic path again '
+    test('when adding the same dynamic path again '
         'then it should throw ArgumentError and retain original', () {
       // Check original is present
       var result = router.lookup(Method.get, '/items/111');
@@ -482,8 +447,7 @@ void main() {
         router.get(pathId, valueId);
       });
 
-      test(
-          'when adding a conflicting dynamic route '
+      test('when adding a conflicting dynamic route '
           'then it should throw ArgumentError and retain original', () {
         // Check original is present
         var result = router.lookup(Method.get, '/content/123');
@@ -507,15 +471,13 @@ void main() {
       router.get('/users/:id', 'dynamic_user'); // Dynamic
     });
 
-    test(
-        'when looking up the exact static path '
+    test('when looking up the exact static path '
         'then the static route should be prioritized', () {
       final result = router.lookup(Method.get, '/users/profile');
       expectLookupResult(result, 'static_profile');
     });
 
-    test(
-        'when looking up a path matching the dynamic pattern '
+    test('when looking up a path matching the dynamic pattern '
         'then the dynamic route should be used', () {
       final result = router.lookup(Method.get, '/users/other');
       expectLookupResult(result, 'dynamic_user', {#id: 'other'});
@@ -530,15 +492,13 @@ void main() {
       router.get('/data/:version', 'dynamic_version'); // Dynamic
     });
 
-    test(
-        'when looking up the static path '
+    test('when looking up the static path '
         'then it should match the static route', () {
       final result = router.lookup(Method.get, '/data/latest');
       expectLookupResult(result, 'static_latest');
     });
 
-    test(
-        'when looking up a path matching the dynamic pattern '
+    test('when looking up a path matching the dynamic pattern '
         'then it should match the dynamic route', () {
       final result = router.lookup(Method.get, '/data/v1.2');
       expectLookupResult(result, 'dynamic_version', {#version: 'v1.2'});
@@ -553,8 +513,7 @@ void main() {
       router.get('/static2/path', 's2');
     });
 
-    test(
-        'when looking up a path that looks dynamic '
+    test('when looking up a path that looks dynamic '
         'then it should return PathMiss', () {
       final result = router.lookup(Method.get, '/static1/123');
       expect(result, isA<PathMiss>());
@@ -569,8 +528,7 @@ void main() {
       router.get('/another/:key/value', 'd2');
     });
 
-    test(
-        'when looking up a static path, '
+    test('when looking up a static path, '
         'then it should return PathMiss', () {
       final result = router.lookup(Method.get, '/static/path');
       expect(result, isA<PathMiss>());
@@ -590,17 +548,17 @@ void main() {
       router.get('/posts/:postId/', 'handler6'); // Dynamic with trailing
     });
 
-    test(
-        'when looking up paths with various slash combinations '
+    test('when looking up paths with various slash combinations '
         'then normalization should ensure correct matches', () {
       expectLookupResult(router.lookup(Method.get, '/path1'), 'handler1');
       expectLookupResult(router.lookup(Method.get, '/path2'), 'handler2');
       expectLookupResult(router.lookup(Method.get, '/path3'), 'handler3');
       expectLookupResult(router.lookup(Method.get, '/path4'), 'handler4');
       expectLookupResult(
-          router.lookup(Method.get, '/users/abc/items'), 'handler5', {
-        #id: 'abc',
-      });
+        router.lookup(Method.get, '/users/abc/items'),
+        'handler5',
+        {#id: 'abc'},
+      );
       expectLookupResult(router.lookup(Method.get, '/posts/xyz'), 'handler6', {
         #postId: 'xyz',
       });
@@ -610,9 +568,10 @@ void main() {
       expectLookupResult(router.lookup(Method.get, '/path3/'), 'handler3');
       expectLookupResult(router.lookup(Method.get, 'path4'), 'handler4');
       expectLookupResult(
-          router.lookup(Method.get, '/users/abc/items/'), 'handler5', {
-        #id: 'abc',
-      });
+        router.lookup(Method.get, '/users/abc/items/'),
+        'handler5',
+        {#id: 'abc'},
+      );
       expectLookupResult(router.lookup(Method.get, '/posts/xyz/'), 'handler6', {
         #postId: 'xyz',
       });
@@ -632,45 +591,58 @@ void main() {
       setUp(() {
         subRouter.get('/child', 'child_handler');
         subRouter.get(
-            '', 'sub_root_handler'); // Handler at the root of subRouter
+          '',
+          'sub_root_handler',
+        ); // Handler at the root of subRouter
         mainRouter.attach('/parent', subRouter);
       });
 
       test('then its /child route is accessible via /parent/child', () {
         expectLookupResult(
-            mainRouter.lookup(Method.get, '/parent/child'), 'child_handler');
+          mainRouter.lookup(Method.get, '/parent/child'),
+          'child_handler',
+        );
       });
 
       test(
-          'then its /child route (trailing slash) is accessible via /parent/child/',
-          () {
-        expectLookupResult(
-            mainRouter.lookup(Method.get, '/parent/child/'), 'child_handler');
-      });
+        'then its /child route (trailing slash) is accessible via /parent/child/',
+        () {
+          expectLookupResult(
+            mainRouter.lookup(Method.get, '/parent/child/'),
+            'child_handler',
+          );
+        },
+      );
 
       test('then its root route is accessible via /parent', () {
         expectLookupResult(
-            mainRouter.lookup(Method.get, '/parent'), 'sub_root_handler');
-      });
-
-      test('then its root route (trailing slash) is accessible via /parent/',
-          () {
-        expectLookupResult(
-            mainRouter.lookup(Method.get, '/parent/'), 'sub_root_handler');
+          mainRouter.lookup(Method.get, '/parent'),
+          'sub_root_handler',
+        );
       });
 
       test(
-          'then a non-existent sub-route (/parent/nonexistent) returns PathMiss',
-          () {
-        expect(
-          mainRouter.lookup(Method.get, '/parent/nonexistent'),
-          isA<PathMiss>(),
-        );
-      });
+        'then its root route (trailing slash) is accessible via /parent/',
+        () {
+          expectLookupResult(
+            mainRouter.lookup(Method.get, '/parent/'),
+            'sub_root_handler',
+          );
+        },
+      );
+
+      test(
+        'then a non-existent sub-route (/parent/nonexistent) returns PathMiss',
+        () {
+          expect(
+            mainRouter.lookup(Method.get, '/parent/nonexistent'),
+            isA<PathMiss>(),
+          );
+        },
+      );
     });
 
-    test(
-        'when a sub-route conflicts with an existing direct route, '
+    test('when a sub-route conflicts with an existing direct route, '
         'then it throws and original route remains', () {
       mainRouter.get('/parent/existing_child', 'direct_child_handler_on_main');
       subRouter.get('/existing_child', 'sub_router_child_handler');
@@ -683,8 +655,9 @@ void main() {
 
       // Ensure the original direct route on mainRouter is preserved
       expectLookupResult(
-          mainRouter.lookup(Method.get, '/parent/existing_child'),
-          'direct_child_handler_on_main');
+        mainRouter.lookup(Method.get, '/parent/existing_child'),
+        'direct_child_handler_on_main',
+      );
     });
   });
 }

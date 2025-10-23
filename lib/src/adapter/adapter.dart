@@ -74,7 +74,9 @@ abstract class Adapter {
   ///
   /// For web-sockets see [connect]
   Future<void> hijack(
-      final AdapterRequest request, final HijackCallback callback);
+    final AdapterRequest request,
+    final HijackCallback callback,
+  );
 
   /// Establishes a web-socket connection for the given [AdapterRequest].
   ///
@@ -85,7 +87,9 @@ abstract class Adapter {
   /// - [callback]: The [WebSocketCallback] that will be invoked on inbound
   ///   connection requests.
   Future<void> connect(
-      final AdapterRequest request, final WebSocketCallback callback);
+    final AdapterRequest request,
+    final WebSocketCallback callback,
+  );
 
   /// Gracefully shuts down the adapter.
   ///

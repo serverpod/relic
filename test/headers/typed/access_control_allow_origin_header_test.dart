@@ -70,7 +70,7 @@ void main() {
             server: server,
             touchHeaders: (final h) => h.accessControlAllowOrigin,
             headers: {
-              'access-control-allow-origin': 'https://example.com:test'
+              'access-control-allow-origin': 'https://example.com:test',
             },
           ),
           throwsA(
@@ -91,7 +91,7 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final _) {},
+          touchHeaders: (_) {},
           headers: {'access-control-allow-origin': 'https://example.com:test'},
         );
 
@@ -126,10 +126,7 @@ void main() {
           headers: {'access-control-allow-origin': 'https://example.com:8080'},
         );
 
-        expect(
-          headers.accessControlAllowOrigin?.origin?.port,
-          equals(8080),
-        );
+        expect(headers.accessControlAllowOrigin?.origin?.port, equals(8080));
       },
     );
 
@@ -189,20 +186,19 @@ void main() {
     tearDown(() => server.close());
 
     group('When an invalid Access-Control-Allow-Origin header is passed', () {
-      test(
-        'then it should return null',
-        () async {
-          final headers = await getServerRequestHeaders(
-            server: server,
-            touchHeaders: (final _) {},
-            headers: {'access-control-allow-origin': 'ht!tp://invalid-url'},
-          );
+      test('then it should return null', () async {
+        final headers = await getServerRequestHeaders(
+          server: server,
+          touchHeaders: (_) {},
+          headers: {'access-control-allow-origin': 'ht!tp://invalid-url'},
+        );
 
-          expect(Headers.accessControlAllowOrigin[headers].valueOrNullIfInvalid,
-              isNull);
-          expect(() => headers.accessControlAllowOrigin, throwsInvalidHeader);
-        },
-      );
+        expect(
+          Headers.accessControlAllowOrigin[headers].valueOrNullIfInvalid,
+          isNull,
+        );
+        expect(() => headers.accessControlAllowOrigin, throwsInvalidHeader);
+      });
     });
   });
 }

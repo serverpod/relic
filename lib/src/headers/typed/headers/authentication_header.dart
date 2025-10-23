@@ -5,8 +5,9 @@ import '../../../../relic.dart';
 /// A class representing the HTTP Authentication header.
 final class AuthenticationHeader {
   static const codec = HeaderCodec.single(AuthenticationHeader.parse, __encode);
-  static List<String> __encode(final AuthenticationHeader value) =>
-      [value._encode()];
+  static List<String> __encode(final AuthenticationHeader value) => [
+    value._encode(),
+  ];
 
   /// The authentication scheme (e.g., "Basic", "Bearer", "Digest").
   final String scheme;
@@ -66,10 +67,12 @@ final class AuthenticationHeader {
   /// Converts the [AuthenticationHeader] instance into a string representation
   /// suitable for HTTP headers.
   String _encode() {
-    final paramsString = parameters.map((final param) {
-      if (param.key.isEmpty) return param.value;
-      return '${param.key}="${param.value}"';
-    }).join(', ');
+    final paramsString = parameters
+        .map((final param) {
+          if (param.key.isEmpty) return param.value;
+          return '${param.key}="${param.value}"';
+        })
+        .join(', ');
     return '$scheme $paramsString';
   }
 
@@ -78,12 +81,16 @@ final class AuthenticationHeader {
       identical(this, other) ||
       other is AuthenticationHeader &&
           scheme == other.scheme &&
-          const ListEquality<AuthenticationParameter>()
-              .equals(parameters, other.parameters);
+          const ListEquality<AuthenticationParameter>().equals(
+            parameters,
+            other.parameters,
+          );
 
   @override
   int get hashCode => Object.hash(
-      scheme, const ListEquality<AuthenticationParameter>().hash(parameters));
+    scheme,
+    const ListEquality<AuthenticationParameter>().hash(parameters),
+  );
 
   @override
   String toString() {

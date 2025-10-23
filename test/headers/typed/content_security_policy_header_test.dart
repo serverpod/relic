@@ -26,38 +26,37 @@ void main() {
             touchHeaders: (final h) => h.contentSecurityPolicy,
             headers: {'content-security-policy': ''},
           ),
-          throwsA(isA<BadRequestException>().having(
-            (final e) => e.message,
-            'message',
-            contains('Value cannot be empty'),
-          )),
+          throwsA(
+            isA<BadRequestException>().having(
+              (final e) => e.message,
+              'message',
+              contains('Value cannot be empty'),
+            ),
+          ),
         );
       },
     );
 
-    test(
-      'when a Content-Security-Policy header with an empty value is passed '
-      'then the server does not respond with a bad request if the headers '
-      'is not actually used',
-      () async {
-        final headers = await getServerRequestHeaders(
-          server: server,
-          touchHeaders: (final _) {},
-          headers: {'content-security-policy': ''},
-        );
+    test('when a Content-Security-Policy header with an empty value is passed '
+        'then the server does not respond with a bad request if the headers '
+        'is not actually used', () async {
+      final headers = await getServerRequestHeaders(
+        server: server,
+        touchHeaders: (_) {},
+        headers: {'content-security-policy': ''},
+      );
 
-        expect(headers, isNotNull);
-      },
-    );
+      expect(headers, isNotNull);
+    });
 
     test(
       'when a valid Content-Security-Policy header is passed then it should parse the directives correctly',
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final _) {},
+          touchHeaders: (_) {},
           headers: {
-            'content-security-policy': "default-src 'self'; script-src 'none'"
+            'content-security-policy': "default-src 'self'; script-src 'none'",
           },
         );
 
@@ -75,10 +74,10 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final _) {},
+          touchHeaders: (_) {},
           headers: {
             'content-security-policy':
-                "default-src 'self'; img-src *; media-src media1.com media2.com"
+                "default-src 'self'; img-src *; media-src media1.com media2.com",
           },
         );
 
@@ -117,20 +116,19 @@ void main() {
     tearDown(() => server.close());
 
     group('when an empty Content-Security-Policy header is passed', () {
-      test(
-        'then it should return null',
-        () async {
-          final headers = await getServerRequestHeaders(
-            server: server,
-            touchHeaders: (final _) {},
-            headers: {'content-security-policy': ''},
-          );
+      test('then it should return null', () async {
+        final headers = await getServerRequestHeaders(
+          server: server,
+          touchHeaders: (_) {},
+          headers: {'content-security-policy': ''},
+        );
 
-          expect(Headers.contentSecurityPolicy[headers].valueOrNullIfInvalid,
-              isNull);
-          expect(() => headers.contentSecurityPolicy, throwsInvalidHeader);
-        },
-      );
+        expect(
+          Headers.contentSecurityPolicy[headers].valueOrNullIfInvalid,
+          isNull,
+        );
+        expect(() => headers.contentSecurityPolicy, throwsInvalidHeader);
+      });
     });
   });
 }

@@ -16,10 +16,7 @@ final class ETagHeader {
   final bool isWeak;
 
   /// Constructs an [ETagHeader] instance with the specified value and whether it is weak.
-  const ETagHeader({
-    required this.value,
-    this.isWeak = false,
-  });
+  const ETagHeader({required this.value, this.isWeak = false});
 
   /// Predefined ETag prefixes.
   static const _weakPrefix = 'W/';

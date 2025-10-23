@@ -38,27 +38,24 @@ void main() {
       },
     );
 
-    test(
-      'when an invalid method is passed then the server responds '
-      'with a bad request including a message that states the header value '
-      'is invalid',
-      () async {
-        expect(
-          getServerRequestHeaders(
-            server: server,
-            touchHeaders: (final h) => h.accessControlRequestMethod,
-            headers: {'access-control-request-method': 'CUSTOM'},
+    test('when an invalid method is passed then the server responds '
+        'with a bad request including a message that states the header value '
+        'is invalid', () async {
+      expect(
+        getServerRequestHeaders(
+          server: server,
+          touchHeaders: (final h) => h.accessControlRequestMethod,
+          headers: {'access-control-request-method': 'CUSTOM'},
+        ),
+        throwsA(
+          isA<BadRequestException>().having(
+            (final e) => e.message,
+            'message',
+            contains('Invalid value'),
           ),
-          throwsA(
-            isA<BadRequestException>().having(
-              (final e) => e.message,
-              'message',
-              contains('Invalid value'),
-            ),
-          ),
-        );
-      },
-    );
+        ),
+      );
+    });
 
     test(
       'when an Access-Control-Request-Method header with an invalid value is '
@@ -67,7 +64,7 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final _) {},
+          touchHeaders: (_) {},
           headers: {'access-control-request-method': 'TEST'},
         );
 
@@ -75,22 +72,16 @@ void main() {
       },
     );
 
-    test(
-      'when a valid Access-Control-Request-Method header is passed then it '
-      'should parse the method correctly',
-      () async {
-        final headers = await getServerRequestHeaders(
-          server: server,
-          touchHeaders: (final h) => h.accessControlRequestMethod,
-          headers: {'access-control-request-method': 'POST'},
-        );
+    test('when a valid Access-Control-Request-Method header is passed then it '
+        'should parse the method correctly', () async {
+      final headers = await getServerRequestHeaders(
+        server: server,
+        touchHeaders: (final h) => h.accessControlRequestMethod,
+        headers: {'access-control-request-method': 'POST'},
+      );
 
-        expect(
-          headers.accessControlRequestMethod,
-          equals(Method.post),
-        );
-      },
-    );
+      expect(headers.accessControlRequestMethod, equals(Method.post));
+    });
 
     test(
       'when an Access-Control-Request-Method header with extra whitespace is '
@@ -131,21 +122,19 @@ void main() {
     tearDown(() => server.close());
 
     group('when an empty Access-Control-Request-Method header is passed', () {
-      test(
-        'then it should return null',
-        () async {
-          final headers = await getServerRequestHeaders(
-            server: server,
-            touchHeaders: (final _) {},
-            headers: {'access-control-request-method': ''},
-          );
+      test('then it should return null', () async {
+        final headers = await getServerRequestHeaders(
+          server: server,
+          touchHeaders: (_) {},
+          headers: {'access-control-request-method': ''},
+        );
 
-          expect(
-              Headers.accessControlRequestMethod[headers].valueOrNullIfInvalid,
-              isNull);
-          expect(() => headers.accessControlRequestMethod, throwsInvalidHeader);
-        },
-      );
+        expect(
+          Headers.accessControlRequestMethod[headers].valueOrNullIfInvalid,
+          isNull,
+        );
+        expect(() => headers.accessControlRequestMethod, throwsInvalidHeader);
+      });
     });
   });
 }
