@@ -75,7 +75,7 @@ curl http://localhost:8080/
 
 You should see:
 
-``` bash
+```bash
 Hello, Relic!
 ```
 

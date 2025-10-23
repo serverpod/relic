@@ -93,7 +93,7 @@ final app = RelicApp()
 ```
 
 :::tip Middleware path matching
-Any middleware setup with router.use will only run on a match. Never on 404 or 405
+Any middleware setup with `router.use()` will only run on a match. Never on 404 or 405.
 
 This means that when you use `router.use('/', middleware)`, the middleware applies to all matched routes at or below `/`. However, it won't run for requests that don't match any route in your router. If you need middleware to run for all requests (including 404s), you need to use a pipeline to make it truly global, or if it only needs to run on fallback, compose the fallback handler directly.
 :::
@@ -142,9 +142,9 @@ final app = RelicApp()
   ..get('/api/foo', fooHandler);
 ```
 
-Since `middlewareC` was added with `use('/api', middlewareC)` it won't impact requests towards other paths .. but will be used specifically for `/api/foo`. Whereas `middlewareA` and `middlewareB` are both applicable for all paths below `/`.
+Since `middlewareC` was added with `use('/api', middlewareC)` it won't impact requests towards other paths, but will be used specifically for `/api/foo`. Whereas `middlewareA` and `middlewareB` are both applicable for all paths below `/`.
 
-Lets look at an example of how middlewares will work in same path scope:
+Let's look at an example of how middlewares will work in same path scope:
 
 ```dart
 final app = RelicApp()
@@ -222,7 +222,7 @@ Middleware myMiddleware() {
 }
 ```
 
-With middleware, you can perform actions both before and after the inner handler executes: For example, you can log the request and response, add headers to a response, or even catch and handle errors from inner handlers:
+With middleware, you can perform actions both before and after the inner handler executes. For example, you can log the request and response, add headers to a response, or even catch and handle errors from inner handlers:
 
 ### CORS (Cross-Origin Resource Sharing)
 

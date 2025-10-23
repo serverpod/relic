@@ -25,8 +25,8 @@ final handler = const Pipeline()
 
 The Pipeline class uses a recursive composition pattern where each middleware wraps the next one in the chain:
 
-1. **Request Flow**: Middleware processes requests from outermost to innermost
-2. **Response Flow**: Middleware processes responses from innermost to outermost
+1. **Request Flow**: Middleware processes requests from outermost to innermost.
+2. **Response Flow**: Middleware processes responses from innermost to outermost.
 
 When you call `addMiddleware()`, it creates a new `Pipeline` instance that stores the current middleware and a reference to the parent composition. When `addHandler()` is finally called, it recursively builds the middleware chain by wrapping each handler with its middleware.
 

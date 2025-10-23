@@ -33,8 +33,8 @@ The convenience methods like `.get()`, `.post()`, `.anyOf()`, and `.any()` are a
 
 - `.get(path, handler)` → `.add(Method.get, path, handler)`
 - `.post(path, handler)` → `.add(Method.post, path, handler)`
-- `.anyOf({Method.get, Method.post}, path, handler)` → calls `.add()` for each method in the set
-- `.any(path, handler)` → calls `.anyOf()` with all HTTP methods
+- `.anyOf({Method.get, Method.post}, path, handler)` → calls `.add()` for each method in the set.
+- `.any(path, handler)` → calls `.anyOf()` with all HTTP methods.
 
 ## Breaking own the routes
 
@@ -123,4 +123,4 @@ app.anyOf({Method.get, Method.post}, '/admin', (ctx) {
 
 ## Examples
 
-- **[`basic_routing.dart`](https://github.com/serverpod/relic/blob/main/example/basic_routing.dart)** - The complete working example from this guide
+- **[`basic_routing.dart`](https://github.com/serverpod/relic/blob/main/example/basic_routing.dart)** - The complete working example from this guide.
