@@ -102,7 +102,29 @@ final class BearerAuthorizationHeader extends AuthorizationHeader {
   int get hashCode => token.hashCode;
 
   @override
-  String toString() => 'BearerAuthorizationHeader(token: $token)';
+  String toString() => 'BearerAuthorizationHeader(token: ${_maskToken(token)})';
+
+  /// Returns a string representation of this [BearerAuthorizationHeader] with
+  /// the full token value exposed.
+  ///
+  /// **Warning**: This method should only be used for debugging purposes in
+  /// secure environments. The token value is sensitive and should not be logged
+  /// or exposed in production environments.
+  String toStringInsecure() => 'BearerAuthorizationHeader(token: $token)';
+
+  /// Masks a token value for secure logging.
+  ///
+  /// Shows the first 4 and last 4 characters of the token, with the middle
+  /// replaced by asterisks. For tokens shorter than 8 characters, only
+  /// asterisks are shown.
+  static String _maskToken(final String token) {
+    if (token.length <= 8) {
+      return '****';
+    }
+    final prefix = token.substring(0, 4);
+    final suffix = token.substring(token.length - 4);
+    return '$prefix****$suffix';
+  }
 }
 
 /// Represents Basic authentication using a username and password.
@@ -184,6 +206,15 @@ final class BasicAuthorizationHeader extends AuthorizationHeader {
 
   @override
   String toString() =>
+      'BasicAuthorizationHeader(username: $username, password: ****)';
+
+  /// Returns a string representation of this [BasicAuthorizationHeader] with
+  /// the full password value exposed.
+  ///
+  /// **Warning**: This method should only be used for debugging purposes in
+  /// secure environments. The password value is sensitive and should not be
+  /// logged or exposed in production environments.
+  String toStringInsecure() =>
       'BasicAuthorizationHeader(username: $username, password: $password)';
 }
 
@@ -372,6 +403,27 @@ final class DigestAuthorizationHeader extends AuthorizationHeader {
 
   @override
   String toString() {
+    return 'DigestAuthorizationHeader('
+        '$_username: $username, '
+        '$_realm: $realm, '
+        '$_nonce: ****, '
+        '$_uri: $uri, '
+        '$_response: ****, '
+        '$_algorithm: $algorithm, '
+        '$_qop: $qop, '
+        '$_nc: $nc, '
+        '$_cnonce: ****, '
+        '$_opaque: ****'
+        ')';
+  }
+
+  /// Returns a string representation of this [DigestAuthorizationHeader] with
+  /// all field values exposed, including sensitive ones.
+  ///
+  /// **Warning**: This method should only be used for debugging purposes in
+  /// secure environments. The nonce, response, cnonce, and opaque values are
+  /// sensitive and should not be logged or exposed in production environments.
+  String toStringInsecure() {
     return 'DigestAuthorizationHeader('
         '$_username: $username, '
         '$_realm: $realm, '
