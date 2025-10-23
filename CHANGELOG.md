@@ -1,6 +1,6 @@
 ## 0.8.0
 
-feat: RelicApp now supports hot-reload ([#226](https://github.com/serverpod/relic/pull/226))
+feat!: RelicApp now supports hot-reload ([#226](https://github.com/serverpod/relic/pull/226))
 feat: Introduce RelicApp ([#212](https://github.com/serverpod/relic/pull/212))
 (https://github.com/serverpod/relic/pull/213))
 feat: Introduce MiddlewareObject ([#211](https://github.com/serverpod/relic/pull/211))
@@ -8,9 +8,9 @@ feat: Introduce HandlerObject ([#210](https://github.com/serverpod/relic/pull/21
 feat(router): Add fallback property for unmatched routes ([#196](https://github.com/serverpod/relic/pull/196))
 feat(router): Add asHandler extension to use Router<Handler> as Handler ([#209](https://github.com/serverpod/relic/pull/209))
 feat: Adds support for cache busting ([#192](https://github.com/serverpod/relic/pull/192))
-fix: Build platform correct path when serving files. ([#207](https://github.com/serverpod/relic/pull/207))
-feat(body): Support mime-type inference ([#206](https://github.com/serverpod/relic/pull/206))
+feat: Support mime-type inference ([#206](https://github.com/serverpod/relic/pull/206))
 feat: Add NewContext.withRequest convenience method ([#198](https://github.com/serverpod/relic/pull/198))
+fix: Build platform correct path when serving files. ([#207](https://github.com/serverpod/relic/pull/207))
 
 ## 0.7.0
 
