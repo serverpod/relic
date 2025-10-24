@@ -165,62 +165,6 @@ Future<ResponseContext> apiHandler(NewContext ctx) async {
 }
 ```
 
-**Example - API with route parameters:**
-
-```dart
-import 'dart:convert';
-import 'package:relic/relic.dart';
-
-/// First, define the route with a path parameter
-  final router = Router();
-  
-// Define route with :id parameter - the colon makes it a dynamic segment
-  router.get('/users/:id', userHandler);
-
-/// Handler that extracts the user ID from the URL path
-Future<ResponseContext> userHandler(NewContext ctx) async {
-  // pathParameters come from the router - #id matches ':id' in the route
-  final userId = ctx.pathParameters[#id];  
-  
-  final data = {
-    'userId': userId,
-    'message': 'User details for ID: $userId',
-    'timestamp': DateTime.now().toIso8601String(),
-  };
-
-  return ctx.respond(Response.ok(
-    body: Body.fromString(
-      jsonEncode(data),
-      mimeType: MimeType.json,
-    ),
-  ));
-}
-
-// Usage: GET /users/123 will extract '123' as the #id parameter
-```
-
-:::tip Adding custom headers
-Use `Headers.build()` to add custom response headers:
-
-```dart
-return ctx.respond(
-  Response.ok(
-    body: Body.fromString(jsonEncode(data), mimeType: MimeType.json),
-    headers: Headers.build(
-      (mh) => mh
-        ..accept = AcceptHeader(
-          mediaRanges: [MediaRange('application', 'json')],
-        )
-        ..cookie = CookieHeader(
-          cookies: [Cookie(name: 'name', value: 'value')],
-        ),
-    ),
-  ),
-);
-```
-
-:::
-
 ### ConnectContext - WebSocket connections
 
 Use `connect()` for WebSocket handshakes - full-duplex connections where both client and server can send messages independently. WebSockets are a specific type of connection upgrade that Relic handles automatically.
