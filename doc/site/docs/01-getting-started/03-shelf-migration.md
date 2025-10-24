@@ -250,13 +250,15 @@ After (Relic), type-safe ContextProperty:
 final userProperty = ContextProperty<User>();
 final sessionProperty = ContextProperty<Session>();
 
-// Set values
-userProperty[ctx] = currentUser;
-sessionProperty[ctx] = sessionData;
+// Add an extension method for convenient access
+extension AuthContext on RequestContext {
+  User get currentUser => userProperty[this];
+  Session get session => sessionProperty[this];
+}
 
 // Get values - type-safe
-final user = userProperty[ctx];  // User?
-final session = sessionProperty[ctx];  // Session?
+final user = ctx.currentUser;
+final session = ctx.session;
 ```
 
 ### 9. Update WebSockets
@@ -351,3 +353,7 @@ void main() async {
   await app.serve();
 }
 ```
+
+:::info Difference from Shelf's pipeline
+Unlike Shelf's `Pipeline().addMiddleware()`, which runs for _all_ requests (including 404s), Relic's `.use('/', ...)` only executes middleware for requests that match a route. Unmatched requests (404s) bypass middleware and go directly to the fallback handler.
+:::
