@@ -14,12 +14,12 @@ The request flows through your middleware pipeline and reaches your handler, whe
 
 The `Request` object exposes several important properties:
 
-- **`method`** - The HTTP method (GET, POST, PUT, DELETE, etc.) as a `Method` enum value
-- **`url`** - The relative URL from the current handler's perspective, including query parameters
-- **`requestedUri`** - The complete original URI that was requested
-- **`headers`** - Type-safe access to HTTP headers
-- **`body`** - The request body as a readable stream
-- **`protocolVersion`** - The HTTP protocol version (typically "1.1")
+- **`method`** - The HTTP method (GET, POST, PUT, DELETE, etc.) as a `Method` enum value.
+- **`url`** - The relative URL from the current handler's perspective, including query parameters.
+- **`requestedUri`** - The complete original URI that was requested.
+- **`headers`** - Type-safe access to HTTP headers.
+- **`body`** - The request body as a readable stream.
+- **`protocolVersion`** - The HTTP protocol version (typically "1.1").
 
 ## Accessing request data
 
@@ -155,7 +155,7 @@ app.get('/protected', (ctx) {
 
 Relic automatically parses the authorization header and creates the appropriate header object type, making it easy to handle different authentication schemes in a type-safe manner.
 
-## Reading the Request body
+## Reading the request body
 
 The request body contains data sent by the client, typically in POST, PUT, or PATCH requests. Relic provides multiple ways to read body content depending on your needs.
 
