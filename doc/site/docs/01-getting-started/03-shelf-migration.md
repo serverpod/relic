@@ -302,7 +302,6 @@ Relic uses a state machine where handlers must return a handled context:
 
 ```dart
 ResponseContext handler(NewContext ctx) {
-  // Must return ResponseContext, HijackContext, or ConnectContext
   return ctx.respond(Response.ok());
 }
 ```
