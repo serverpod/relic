@@ -89,14 +89,12 @@ Every handler receives a `NewContext` first. This represents a **fresh, unhandle
 **Example - Serving HTML:**
 
 ```dart
-// Note: dart:convert and package:relic/relic.dart are commonly used
 import 'dart:convert';
 import 'dart:io';
 import 'package:relic/io_adapter.dart';
 import 'package:relic/relic.dart';
 
 /// Serves an HTML home page
-/// Note: The signature is Future<ResponseContext> because we use 'async'
 Future<ResponseContext> homeHandler(NewContext ctx) async {
   // Create an HTML response
   return ctx.respond(Response.ok(
@@ -146,7 +144,6 @@ When you call `ctx.respond()`, you transition to a `ResponseContext`. This repre
 **Example - JSON API response:**
 
 ```dart
-// Note: dart:convert and package:relic/relic.dart are commonly used
 import 'dart:convert';  // For jsonEncode
 import 'package:relic/relic.dart';
 
@@ -171,7 +168,6 @@ Future<ResponseContext> apiHandler(NewContext ctx) async {
 **Example - API with route parameters:**
 
 ```dart
-// Note: dart:convert and package:relic/relic.dart are commonly used
 import 'dart:convert';
 import 'package:relic/relic.dart';
 
@@ -240,9 +236,6 @@ import 'dart:developer';  // For log()
 import 'package:relic/relic.dart';
 import 'package:web_socket/web_socket.dart';  // Dart's official WebSocket package
 
-/// Establishes a WebSocket connection and echoes messages
-/// Note: No Future or async on the outer function - ctx.connect() returns ConnectContext immediately
-/// The async is on the callback function inside connect()
 ConnectContext webSocketHandler(NewContext ctx) {
   return ctx.connect((webSocket) async {
     log('WebSocket connection established');
@@ -291,7 +284,6 @@ All context types provide access to the original HTTP request through `ctx.reque
 The request body is a `Stream<Uint8List>`. Use `readAsString()` for text data or `readAsBytes()` for binary data.
 
 ```dart
-// Note: dart:convert and package:relic/relic.dart are commonly used
 import 'dart:convert';
 import 'package:relic/relic.dart';
 
@@ -391,7 +383,6 @@ Context properties let you **attach custom data** to a request as it flows throu
 Here's a simple example that assigns a unique ID to each request:
 
 ```dart
-// Note: package:relic/relic.dart is commonly used
 import 'package:relic/relic.dart';
 
 // 1. Create a ContextProperty to store request-specific data
