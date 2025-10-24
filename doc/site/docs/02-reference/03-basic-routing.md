@@ -36,7 +36,7 @@ The convenience methods like `.get()`, `.post()`, `.anyOf()`, and `.any()` are a
 - `.anyOf({Method.get, Method.post}, path, handler)` → calls `.add()` for each method in the set.
 - `.any(path, handler)` → calls `.anyOf()` with all HTTP methods.
 
-## Breaking own the routes
+## Breaking down the routes
 
 The following examples break down each route from the complete example above.
 
