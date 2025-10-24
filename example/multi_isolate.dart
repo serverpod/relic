@@ -12,7 +12,7 @@ void main() async {
 
   // Wait for all the isolates to spawn
   log('Starting $isolateCount isolates');
-  
+
   final isolates = await Future.wait(List.generate(
       isolateCount,
       (final index) =>

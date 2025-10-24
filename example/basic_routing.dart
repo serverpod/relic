@@ -1,4 +1,3 @@
-
 import 'dart:developer';
 
 import 'package:relic/io_adapter.dart';
@@ -75,7 +74,7 @@ Future<void> main() async {
   app.fallback = respondWith((final _) => Response.notFound());
 
   await app.serve();
-  
+
   log('Server running on http://localhost:8080');
   log('Try:');
   log('  curl http://localhost:8080/');
