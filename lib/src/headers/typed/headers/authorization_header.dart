@@ -412,8 +412,8 @@ final class DigestAuthorizationHeader extends AuthorizationHeader {
         '$_algorithm: $algorithm, '
         '$_qop: $qop, '
         '$_nc: $nc, '
-        '$_cnonce: ****, '
-        '$_opaque: ****'
+        '$_cnonce: ${cnonce != null ? '****' : null}, '
+        '$_opaque: ${opaque != null ? '****' : null}'
         ')';
   }
 
