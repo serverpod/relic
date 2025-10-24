@@ -536,4 +536,137 @@ void main() {
           matcher);
     },
   );
+
+  group('Given authorization header toString() methods', () {
+    test(
+      'when BearerAuthorizationHeader.toString() is called with a long token '
+      'then it should mask the middle portion of the token',
+      () {
+        final bearer = BearerAuthorizationHeader(token: 'abc123def456ghi789');
+        final result = bearer.toString();
+        expect(result, 'BearerAuthorizationHeader(token: abc1****i789)');
+        expect(result, isNot(contains('abc123def456ghi789')));
+      },
+    );
+
+    test(
+      'when BearerAuthorizationHeader.toString() is called with a short token '
+      'then it should mask the entire token',
+      () {
+        final bearer = BearerAuthorizationHeader(token: 'short');
+        final result = bearer.toString();
+        expect(result, 'BearerAuthorizationHeader(token: ****)');
+        expect(result, isNot(contains('short')));
+      },
+    );
+
+    test(
+      'when BearerAuthorizationHeader.toString() is called with a token of exactly 15 characters '
+      'then it should mask the entire token',
+      () {
+        final bearer = BearerAuthorizationHeader(token: '123456789012345');
+        final result = bearer.toString();
+        expect(result, 'BearerAuthorizationHeader(token: ****)');
+        expect(result, isNot(contains('123456789012345')));
+      },
+    );
+
+    test(
+      'when BearerAuthorizationHeader.toString() is called with a token of 16 characters '
+      'then it should show first and last 4 characters',
+      () {
+        final bearer = BearerAuthorizationHeader(token: '1234567890123456');
+        final result = bearer.toString();
+        expect(result, 'BearerAuthorizationHeader(token: 1234****3456)');
+      },
+    );
+
+    test(
+      'when BearerAuthorizationHeader.toStringInsecure() is called '
+      'then it should expose the full token',
+      () {
+        final bearer = BearerAuthorizationHeader(token: 'secretToken123');
+        final result = bearer.toStringInsecure();
+        expect(result, 'BearerAuthorizationHeader(token: secretToken123)');
+      },
+    );
+
+    test(
+      'when BasicAuthorizationHeader.toString() is called '
+      'then it should mask the password',
+      () {
+        final basic = BasicAuthorizationHeader(
+          username: 'user',
+          password: 'secretPassword',
+        );
+        final result = basic.toString();
+        expect(
+            result, 'BasicAuthorizationHeader(username: user, password: ****)');
+        expect(result, isNot(contains('secretPassword')));
+      },
+    );
+
+    test(
+      'when BasicAuthorizationHeader.toStringInsecure() is called '
+      'then it should expose the full password',
+      () {
+        final basic = BasicAuthorizationHeader(
+          username: 'user',
+          password: 'secretPassword',
+        );
+        final result = basic.toStringInsecure();
+        expect(result,
+            'BasicAuthorizationHeader(username: user, password: secretPassword)');
+      },
+    );
+
+    test(
+      'when DigestAuthorizationHeader.toString() is called '
+      'then it should mask sensitive fields',
+      () {
+        final digest = DigestAuthorizationHeader(
+          username: 'user',
+          realm: 'realm',
+          nonce: 'secretNonce',
+          uri: '/path',
+          response: 'secretResponse',
+          cnonce: 'secretCnonce',
+          opaque: 'secretOpaque',
+        );
+        final result = digest.toString();
+        expect(result, contains('username: user'));
+        expect(result, contains('realm: realm'));
+        expect(result, contains('uri: /path'));
+        expect(result, contains('nonce: ****'));
+        expect(result, contains('response: ****'));
+        expect(result, contains('cnonce: ****'));
+        expect(result, contains('opaque: ****'));
+        expect(result, isNot(contains('secretNonce')));
+        expect(result, isNot(contains('secretResponse')));
+        expect(result, isNot(contains('secretCnonce')));
+        expect(result, isNot(contains('secretOpaque')));
+      },
+    );
+
+    test(
+      'when DigestAuthorizationHeader.toStringInsecure() is called '
+      'then it should expose all sensitive fields',
+      () {
+        final digest = DigestAuthorizationHeader(
+          username: 'user',
+          realm: 'realm',
+          nonce: 'secretNonce',
+          uri: '/path',
+          response: 'secretResponse',
+          cnonce: 'secretCnonce',
+          opaque: 'secretOpaque',
+        );
+        final result = digest.toStringInsecure();
+        expect(result, contains('nonce: secretNonce'));
+        expect(result, contains('response: secretResponse'));
+        expect(result, contains('cnonce: secretCnonce'));
+        expect(result, contains('opaque: secretOpaque'));
+      },
+    );
+  });
 }
