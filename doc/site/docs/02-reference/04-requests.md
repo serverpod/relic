@@ -1,10 +1,14 @@
+---
+sidebar_position: 4
+---
+
 # Requests
 
 The `Request` object represents an incoming HTTP request to your Relic server. It provides access to all information about the client's request, including the HTTP method, URL, headers, query parameters, and body content.
 
 Every handler in Relic receives a request through the context object (`ctx.request`), allowing you to inspect and process the incoming data before generating a response.
 
-## Understanding the Request object
+## Understanding the request object
 
 When a client makes a request to your server, Relic creates a `Request` object that encapsulates all the details of that request. This object is immutable and provides type-safe access to request data.
 
@@ -155,11 +159,11 @@ app.get('/protected', (ctx) {
 
 Relic automatically parses the authorization header and creates the appropriate header object type, making it easy to handle different authentication schemes in a type-safe manner.
 
-## Reading the Request body
+## Reading the request body
 
 The request body contains data sent by the client, typically in POST, PUT, or PATCH requests. Relic provides multiple ways to read body content depending on your needs.
 
-:::warning Single Read Limitation
+:::warning Single read limitation
 
 **The request body can only be read once.** This is because the body is a stream that gets consumed as it's read. Attempting to read the body multiple times will result in a `StateError`.
 

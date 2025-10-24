@@ -1,4 +1,3 @@
-// ignore_for_file: prefer_final_parameters
 
 import 'dart:convert';
 import 'dart:developer';
@@ -36,7 +35,7 @@ String _htmlHomePage() {
 }
 
 /// Example 1: HTTP Response (NewContext -> ResponseContext)
-Future<ResponseContext> homeHandler(NewContext ctx) async {
+Future<ResponseContext> homeHandler(final NewContext ctx) async {
   return ctx.respond(Response.ok(
     body: Body.fromString(
       _htmlHomePage(),
@@ -47,7 +46,7 @@ Future<ResponseContext> homeHandler(NewContext ctx) async {
 }
 
 /// Example 2: JSON API Response (NewContext -> ResponseContext)
-Future<ResponseContext> apiHandler(NewContext ctx) async {
+Future<ResponseContext> apiHandler(final NewContext ctx) async {
   final data = {
     'message': 'Hello from Relic API!',
     'timestamp': DateTime.now().toIso8601String(),
@@ -62,26 +61,9 @@ Future<ResponseContext> apiHandler(NewContext ctx) async {
   ));
 }
 
-/// Example 3: API with route parameters (NewContext -> ResponseContext)
-Future<ResponseContext> userHandler(NewContext ctx) async {
-  final userId = ctx.pathParameters[#id];
-  final data = {
-    'userId': userId,
-    'message': 'User details for ID: $userId',
-    'timestamp': DateTime.now().toIso8601String(),
-  };
-
-  return ctx.respond(Response.ok(
-    body: Body.fromString(
-      jsonEncode(data),
-      mimeType: MimeType.json,
-    ),
-  ));
-}
-
-/// Example 4: WebSocket Connection (NewContext -> ConnectContext)
-ConnectContext webSocketHandler(NewContext ctx) {
-  return ctx.connect((webSocket) async {
+/// Example 3: WebSocket Connection (NewContext -> ConnectContext)
+ConnectContext webSocketHandler(final NewContext ctx) {
+  return ctx.connect((final webSocket) async {
     log('WebSocket connection established');
 
     // Send welcome message
@@ -104,9 +86,9 @@ ConnectContext webSocketHandler(NewContext ctx) {
   });
 }
 
-/// Example 5: Raw Connection Hijack (NewContext -> HijackContext)
-HijackContext customProtocolHandler(NewContext ctx) {
-  return ctx.hijack((channel) {
+/// Example 4: Raw Connection Hijack (NewContext -> HijackContext)
+HijackContext customProtocolHandler(final NewContext ctx) {
+  return ctx.hijack((final channel) {
     log('Connection hijacked for custom protocol');
 
     // Send a custom HTTP response manually
@@ -121,61 +103,18 @@ HijackContext customProtocolHandler(NewContext ctx) {
   });
 }
 
-Future<ResponseContext> dataHandler(NewContext ctx) async {
-  final request = ctx.request;
-
-  // Access basic HTTP information
-  final method = request.method; // 'GET', 'POST', etc.
-  final path = request.url.path; // '/api/users'
-  final query = request.url.query; // 'limit=10&offset=0'
-
-  log('method: $method, path: $path, query: $query');
-
-  // Access headers (these are typed accessors from the Headers class)
-  final authHeader = request.headers.authorization; // 'Bearer token123' or null
-  final contentType = request.body.bodyType
-      ?.mimeType; // appljson, octet-stream, plainText, etc. or null
-
-  log('authHeader: $authHeader, contentType: $contentType');
-
-  // Read request body for POST with JSON
-  if (method == Method.post && contentType == MimeType.json) {
-    try {
-      final bodyString = await request.readAsString();
-      final jsonData = json.decode(bodyString) as Map<String, dynamic>;
-
-      return ctx.respond(Response.ok(
-        body: Body.fromString('Received: ${jsonData['name']}'),
-      ));
-    } catch (e) {
-      return ctx.respond(
-        Response.badRequest(
-          body: Body.fromString('Invalid JSON'),
-        ),
-      );
-    }
-  }
-
-  // Return bad request if the content type is not JSON
-  return ctx.respond(
-    Response.badRequest(
-      body: Body.fromString('Invalid Request'),
-    ),
-  );
-}
-
 void main() async {
   // Set up the router with proper routes
   final app = RelicApp()
     ..get('/', homeHandler) // Home page
     ..get('/api', apiHandler) // Simple API
-    ..get('/api/users/:id', userHandler) // API with parameters
     ..get('/ws', webSocketHandler) // WebSocket
     ..get('/custom', customProtocolHandler) // Custom protocol
-    ..post('/data', dataHandler) // Data handler
-    ..fallback = respondWith((request) => Response.notFound(
-          body: Body.fromString('Page not found'),
-        ));
+    ..fallback = respondWith(
+      (final request) => Response.notFound(
+        body: Body.fromString('Page not found'),
+      ),
+    );
 
   // Start the server
   await app.serve();
@@ -183,7 +122,6 @@ void main() async {
   log('Try:');
   log('  - http://localhost:8080/ (HTML page)');
   log('  - http://localhost:8080/api (JSON API)');
-  log('  - http://localhost:8080/api/users/123 (API with parameters)');
   log('  - ws://localhost:8080/ws (WebSocket)');
   log('  - http://localhost:8080/custom (Custom protocol)');
 }

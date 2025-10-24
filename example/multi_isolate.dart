@@ -1,4 +1,4 @@
-// ignore_for_file: avoid_print
+import 'dart:developer';
 import 'dart:io';
 import 'dart:isolate';
 
@@ -11,7 +11,8 @@ void main() async {
   final isolateCount = Platform.numberOfProcessors * 2;
 
   // Wait for all the isolates to spawn
-  print('Starting $isolateCount isolates');
+  log('Starting $isolateCount isolates');
+  
   final isolates = await Future.wait(List.generate(
       isolateCount,
       (final index) =>
@@ -36,7 +37,7 @@ Future<void> _serve() async {
   // start the server
   await app.serve(shared: true);
 
-  print('serving on ${Isolate.current.debugName}');
+  log('serving on ${Isolate.current.debugName}');
 }
 
 /// [_echoRequest] just echoes the path of the request

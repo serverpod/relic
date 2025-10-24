@@ -1,5 +1,3 @@
-// ignore_for_file: prefer_final_parameters
-
 import 'dart:convert';
 import 'dart:developer';
 
@@ -8,12 +6,12 @@ import 'package:relic/relic.dart';
 
 /// Simple CORS middleware
 Middleware corsMiddleware() {
-  return (Handler innerHandler) {
-    return (NewContext ctx) async {
+  return (final Handler innerHandler) {
+    return (final NewContext ctx) async {
       // Handle preflight requests
       if (ctx.request.method == Method.options) {
         return ctx.respond(Response.ok(
-          headers: Headers.build((mh) {
+          headers: Headers.build((final mh) {
             mh['Access-Control-Allow-Origin'] = ['*'];
             mh['Access-Control-Allow-Methods'] = ['GET, POST, OPTIONS'];
             mh['Access-Control-Allow-Headers'] = ['Content-Type'];
@@ -28,7 +26,7 @@ Middleware corsMiddleware() {
       if (result is ResponseContext) {
         final newResponse = result.response.copyWith(
           headers: result.response.headers.transform(
-            (mh) => mh['Access-Control-Allow-Origin'] = ['*'],
+            (final mh) => mh['Access-Control-Allow-Origin'] = ['*'],
           ),
         );
         return result.respond(newResponse);
@@ -40,7 +38,7 @@ Middleware corsMiddleware() {
 }
 
 /// API handler
-Future<ResponseContext> apiHandler(NewContext ctx) async {
+Future<ResponseContext> apiHandler(final NewContext ctx) async {
   final data = {'message': 'Hello from CORS API!'};
 
   return ctx.respond(Response.ok(

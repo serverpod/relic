@@ -1,4 +1,3 @@
-// ignore_for_file: prefer_final_parameters
 
 import 'dart:developer';
 import 'package:relic/io_adapter.dart';
@@ -6,8 +5,8 @@ import 'package:relic/relic.dart';
 
 /// Simple authentication middleware
 Middleware authMiddleware() {
-  return (Handler innerHandler) {
-    return (NewContext ctx) async {
+  return (final Handler innerHandler) {
+    return (final NewContext ctx) async {
       // Check for API key in header
       final apiKey = ctx.request.headers['X-API-Key']?.first;
 
@@ -24,14 +23,14 @@ Middleware authMiddleware() {
 }
 
 /// Public handler (no auth needed)
-Future<ResponseContext> publicHandler(NewContext ctx) async {
+Future<ResponseContext> publicHandler(final NewContext ctx) async {
   return ctx.respond(Response.ok(
     body: Body.fromString('This is public!'),
   ));
 }
 
 /// Protected handler (needs auth)
-Future<ResponseContext> protectedHandler(NewContext ctx) async {
+Future<ResponseContext> protectedHandler(final NewContext ctx) async {
   return ctx.respond(Response.ok(
     body: Body.fromString('This is protected!'),
   ));

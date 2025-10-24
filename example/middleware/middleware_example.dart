@@ -1,5 +1,3 @@
-// ignore_for_file: prefer_final_parameters
-
 import 'dart:convert';
 import 'dart:developer';
 
@@ -8,14 +6,14 @@ import 'package:relic/relic.dart';
 
 /// Middleware that adds a custom header
 Middleware addHeaderMiddleware() {
-  return (Handler innerHandler) {
-    return (NewContext ctx) async {
+  return (final Handler innerHandler) {
+    return (final NewContext ctx) async {
       final result = await innerHandler(ctx);
 
       if (result is ResponseContext) {
         final newResponse = result.response.copyWith(
           headers: result.response.headers.transform(
-            (mh) => mh['X-Custom-Header'] = ['Hello from middleware!'],
+            (final mh) => mh['X-Custom-Header'] = ['Hello from middleware!'],
           ),
         );
         return result.respond(newResponse);
@@ -28,8 +26,8 @@ Middleware addHeaderMiddleware() {
 
 /// Timing middleware
 Middleware timingMiddleware() {
-  return (Handler innerHandler) {
-    return (NewContext ctx) async {
+  return (final Handler innerHandler) {
+    return (final NewContext ctx) async {
       final stopwatch = Stopwatch()..start();
 
       final result = await innerHandler(ctx);
@@ -44,8 +42,8 @@ Middleware timingMiddleware() {
 
 /// Simple error handling middleware
 Middleware errorHandlingMiddleware() {
-  return (Handler innerHandler) {
-    return (NewContext ctx) async {
+  return (final Handler innerHandler) {
+    return (final NewContext ctx) async {
       try {
         return await innerHandler(ctx);
       } catch (error) {
@@ -58,13 +56,13 @@ Middleware errorHandlingMiddleware() {
 }
 
 /// Simple handlers
-Future<ResponseContext> homeHandler(NewContext ctx) async {
+Future<ResponseContext> homeHandler(final NewContext ctx) async {
   return ctx.respond(Response.ok(
     body: Body.fromString('Hello from home page!'),
   ));
 }
 
-Future<ResponseContext> apiHandler(NewContext ctx) async {
+Future<ResponseContext> apiHandler(final NewContext ctx) async {
   final data = {'message': 'Hello from API!'};
 
   return ctx.respond(Response.ok(

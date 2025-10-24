@@ -189,7 +189,7 @@ ResponseContext contextHandler(NewContext ctx) {
 }
 ```
 
-### Handling WebSockets
+### Handling WebSocket connections
 
 For real-time bidirectional communication, you can upgrade connections to WebSockets using `ctx.connect()`:
 
@@ -216,14 +216,3 @@ ConnectContext webSocketHandler(NewContext ctx) {
   });
 }
 ```
-
-## Summary
-
-Handlers are functions that process requests and return responses. Relic provides four main handler types:
-
-- **`Handler`**: The basic type for any request processing
-- **`Responder`**: For simple request-to-response transformations
-- **`ResponseHandler`**: For HTTP responses only
-- **`HijackHandler`**: For raw connection control (custom protocols, SSE)
-
-Choose the handler type that best fits your use case, and use the appropriate context type to ensure type safety. For WebSocket connections, use the `ctx.connect()` method available on the context object.

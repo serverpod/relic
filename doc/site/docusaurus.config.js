@@ -69,6 +69,11 @@ const config = {
             position: 'left',
           },
           {
+            href: 'https://pub.dev/documentation/relic/latest/relic/',
+            label: 'API Reference',
+            position: 'right',
+          },
+          {
             href: 'https://careers.serverpod.dev/',
             label: 'Career',
             position: 'right',

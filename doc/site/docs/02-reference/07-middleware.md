@@ -8,7 +8,7 @@ Middlewares are the backbone of Relic's request processing pipeline. It provides
 
 They work by wrapping handlers with additional functionality. Think of it as a series of layers around your core handler, each layer can inspect and modify requests before they reach your handler, and responses after they leave your handler.
 
-## What is Middleware?
+## What is middleware?
 
 A `Middleware` is a function that takes a handler and returns a new handler with enhanced functionality. This pattern allows you to compose multiple pieces of functionality together, creating a processing pipeline where each middleware layer adds its own behavior.
 
@@ -16,7 +16,7 @@ A `Middleware` is a function that takes a handler and returns a new handler with
 typedef Middleware = Handler Function(Handler innerHandler);
 ```
 
-### Handler Wrapping
+### Handler wrapping
 
 Every middleware function receives an inner handler and returns a new handler that wraps the original. This wrapper can:
 
@@ -54,9 +54,9 @@ Middleware addHeaderMiddleware() {
 }
 ```
 
-## Using Middlewares with Router
+## Using middlewares with a router
 
-### `router.use()` for Applying Middleware
+### Using `router.use()` to apply a middleware
 
 Relic's `RelicApp` provides a convenient `use()` method for applying middleware to specific path patterns. This is the preferred way to add middleware in modern Relic applications.
 
@@ -75,7 +75,7 @@ final router = RelicApp()
   ..post('/api/users', createUserHandler);
 ```
 
-### Global vs Route-Specific Middlewares
+### Global vs Route-specific middlewares
 
 There are two types of categories of middlewares: global and route-specific. Global middlewares apply to all routes in your application, while route-specific middlewares apply only to routes under a specific path.
 
@@ -93,12 +93,12 @@ final app = RelicApp()
 ```
 
 :::tip Middleware path matching
-Any middleware setup with router.use will only run on a match. Never on 404 or 405
+Any middleware setup with `router.use()` will only run on a match. Never on 404 or 405.
 
 This means that when you use `router.use('/', middleware)`, the middleware applies to all matched routes at or below `/`. However, it won't run for requests that don't match any route in your router. If you need middleware to run for all requests (including 404s), you need to use a pipeline to make it truly global, or if it only needs to run on fallback, compose the fallback handler directly.
 :::
 
-**Route-Specific Middleware:** applies only to routes under a specific path:
+**Route-specific middleware:** applies only to routes under a specific path:
 
 ```dart
 final app = RelicApp()
@@ -113,7 +113,7 @@ final app = RelicApp()
   ..get('/api/users', usersHandler) // Logging + auth
 ```
 
-:::info Built-in Logging
+:::info Built-in logging
 Relic provides a built-in middleware function for logging request details including method, path, status code, and response time:
 
 ```dart
@@ -142,9 +142,9 @@ final app = RelicApp()
   ..get('/api/foo', fooHandler);
 ```
 
-Since `middlewareC` was added with `use('/api', middlewareC)` it won't impact requests towards other paths .. but will be used specifically for `/api/foo`. Whereas `middlewareA` and `middlewareB` are both applicable for all paths below `/`.
+Since `middlewareC` was added with `use('/api', middlewareC)` it won't impact requests towards other paths, but will be used specifically for `/api/foo`. Whereas `middlewareA` and `middlewareB` are both applicable for all paths below `/`.
 
-Lets look at an example of how middlewares will work in same path scope:
+Let's look at an example of how middlewares will work in same path scope:
 
 ```dart
 final app = RelicApp()
@@ -222,7 +222,7 @@ Middleware myMiddleware() {
 }
 ```
 
-With middleware, you can perform actions both before and after the inner handler executes: For example, you can log the request and response, add headers to a response, or even catch and handle errors from inner handlers:
+With middleware, you can perform actions both before and after the inner handler executes. For example, you can log the request and response, add headers to a response, or even catch and handle errors from inner handlers:
 
 ### CORS (Cross-Origin Resource Sharing)
 

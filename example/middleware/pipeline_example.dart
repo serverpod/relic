@@ -1,4 +1,3 @@
-// ignore_for_file: prefer_final_parameters
 
 import 'dart:developer';
 import 'package:relic/io_adapter.dart';
@@ -6,14 +5,14 @@ import 'package:relic/relic.dart';
 
 /// Simple middleware that adds a header
 Middleware addServerHeader() {
-  return (Handler innerHandler) {
-    return (NewContext ctx) async {
+  return (final Handler innerHandler) {
+    return (final NewContext ctx) async {
       final result = await innerHandler(ctx);
 
       if (result is ResponseContext) {
         final newResponse = result.response.copyWith(
           headers: result.response.headers.transform(
-            (mh) => mh['Server'] = ['Relic'],
+            (final mh) => mh['Server'] = ['Relic'],
           ),
         );
         return result.respond(newResponse);
@@ -25,7 +24,7 @@ Middleware addServerHeader() {
 }
 
 /// Simple handler
-Future<ResponseContext> simpleHandler(NewContext ctx) async {
+Future<ResponseContext> simpleHandler(final NewContext ctx) async {
   return ctx.respond(Response.ok(
     body: Body.fromString('Hello from Pipeline!'),
   ));
@@ -42,7 +41,7 @@ void main() async {
   final router = RelicApp()
     ..use('/', logRequests())
     ..use('/', addServerHeader())
-    ..get('/router', (NewContext ctx) async {
+    ..get('/router', (final NewContext ctx) async {
       return ctx.respond(Response.ok(
         body: Body.fromString('Hello from Router!'),
       ));

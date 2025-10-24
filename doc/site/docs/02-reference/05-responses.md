@@ -75,7 +75,7 @@ For a comprehensive list of HTTP status codes, check out [Mozilla's HTTP Status 
 To ensure consistency and avoid memorizing numeric codes, use Relic's convenient response constructors like `Response.ok()`, `Response.badRequest()`, and `Response.notFound()` etc.
 :::
 
-## Working with Response bodies
+## Working with response bodies
 
 The response body contains the actual data you're sending to the client. Relic's `Body` class provides a unified way to handle different content types.
 
@@ -186,24 +186,8 @@ Response.noContent()
 
 Headers provide metadata about your response. Use the `Headers` class to build type-safe headers:
 
-```dart
-app.get('/api/data', (ctx) {
-  final headers = Headers.build((h) {
-    // Set cache control
-    h.cacheControl = CacheControlHeader(
-      maxAge: 3600,
-      publicCache: true,
-    );
-    
-    // Set custom header
-    h['X-Custom-Header'] = ['value'];
-  });
-  
-  return ctx.respond(Response.ok(
-    headers: headers,
-    body: Body.fromString('{"status": "ok"}', mimeType: MimeType.json),
-  ));
-});
+```dart reference
+https://github.com/serverpod/relic/blob/main/example/response_example.dart#L30-L49
 ```
 
 :::tip

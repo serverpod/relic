@@ -1,4 +1,5 @@
-// ignore_for_file: avoid_print, prefer_final_parameters
+
+import 'dart:developer';
 
 import 'package:relic/io_adapter.dart';
 import 'package:relic/relic.dart';
@@ -10,20 +11,12 @@ import 'package:relic/relic.dart';
 /// - Define routes using the core .add method
 /// - Handle requests to different paths
 /// - Return appropriate responses
-///
-/// Try it:
-/// - GET  http://localhost:8080/          -> "Hello World!"
-/// - POST http://localhost:8080/          -> "Got a POST request"
-/// - PUT  http://localhost:8080/user      -> "Got a PUT request at /user"
-/// - DELETE http://localhost:8080/user    -> "Got a DELETE request at /user"
-/// - PATCH http://localhost:8080/api      -> "Got a PATCH request at /api"
-/// - GET  http://localhost:8080/admin     -> "Admin page"
 Future<void> main() async {
   final app = RelicApp();
 
   // Convenience methods - syntactic sugar for .add()
   // Respond with "Hello World!" on the homepage
-  app.get('/', (ctx) {
+  app.get('/', (final ctx) {
     return ctx.respond(
       Response.ok(
         body: Body.fromString('Hello World!'),
@@ -32,7 +25,7 @@ Future<void> main() async {
   });
 
   // Respond to a POST request on the root route
-  app.post('/', (ctx) {
+  app.post('/', (final ctx) {
     return ctx.respond(
       Response.ok(
         body: Body.fromString('Got a POST request'),
@@ -41,7 +34,7 @@ Future<void> main() async {
   });
 
   // Respond to a PUT request to the /user route
-  app.put('/user', (ctx) {
+  app.put('/user', (final ctx) {
     return ctx.respond(
       Response.ok(
         body: Body.fromString('Got a PUT request at /user'),
@@ -50,7 +43,7 @@ Future<void> main() async {
   });
 
   // Respond to a DELETE request to the /user route
-  app.delete('/user', (ctx) {
+  app.delete('/user', (final ctx) {
     return ctx.respond(
       Response.ok(
         body: Body.fromString('Got a DELETE request at /user'),
@@ -60,7 +53,7 @@ Future<void> main() async {
 
   // Using the core .add method directly
   // This is what the convenience methods (.get, .post, etc.) call internally
-  app.add(Method.patch, '/api', (ctx) {
+  app.add(Method.patch, '/api', (final ctx) {
     return ctx.respond(
       Response.ok(
         body: Body.fromString('Got a PATCH request at /api'),
@@ -69,7 +62,7 @@ Future<void> main() async {
   });
 
   // Using .anyOf to handle multiple methods with the same handler
-  app.anyOf({Method.get, Method.post}, '/admin', (ctx) {
+  app.anyOf({Method.get, Method.post}, '/admin', (final ctx) {
     final method = ctx.request.method.name.toUpperCase();
     return ctx.respond(
       Response.ok(
@@ -79,16 +72,17 @@ Future<void> main() async {
   });
 
   // Combine router with fallback for unmatched routes
-  app.fallback = respondWith((_) => Response.notFound());
+  app.fallback = respondWith((final _) => Response.notFound());
 
   await app.serve();
-  print('Server running on http://localhost:8080');
-  print('Try:');
-  print('  curl http://localhost:8080/');
-  print('  curl -X POST http://localhost:8080/');
-  print('  curl -X PUT http://localhost:8080/user');
-  print('  curl -X DELETE http://localhost:8080/user');
-  print('  curl -X PATCH http://localhost:8080/api');
-  print('  curl http://localhost:8080/admin');
-  print('  curl -X POST http://localhost:8080/admin');
+  
+  log('Server running on http://localhost:8080');
+  log('Try:');
+  log('  curl http://localhost:8080/');
+  log('  curl -X POST http://localhost:8080/');
+  log('  curl -X PUT http://localhost:8080/user');
+  log('  curl -X DELETE http://localhost:8080/user');
+  log('  curl -X PATCH http://localhost:8080/api');
+  log('  curl http://localhost:8080/admin');
+  log('  curl -X POST http://localhost:8080/admin');
 }
