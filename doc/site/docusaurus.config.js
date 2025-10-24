@@ -22,7 +22,7 @@ const config = {
       onBrokenMarkdownLinks: 'warn',
     },
   },
-  themes: ['@docusaurus/theme-mermaid'],
+  themes: ['@docusaurus/theme-mermaid', 'docusaurus-theme-github-codeblock'],
   presets: [
     [
       'classic',

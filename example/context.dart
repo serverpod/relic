@@ -13,6 +13,28 @@ import 'package:web_socket/web_socket.dart';
 /// - ConnectContext: WebSocket connections
 /// - HijackContext: Raw connection control
 
+/// Simple HTML page for demonstration
+String _htmlHomePage() {
+  return '''
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Relic Context Example</title>
+</head>
+<body>
+    <h1>Relic Context Types Demo</h1>
+    <ul>
+        <li><a href="/api">API Example (ResponseContext)</a></li>
+        <li><a href="/api/users/123">User API with Parameters (ResponseContext)</a></li>
+        <li><a href="/ws">WebSocket Example (ConnectContext)</a></li>
+        <li><a href="/custom">Custom Protocol (HijackContext)</a></li>
+    </ul>
+    <p>This demonstrates the different context types in Relic using proper routing.</p>
+</body>
+</html>
+''';
+}
+
 /// Example 1: HTTP Response (NewContext -> ResponseContext)
 Future<ResponseContext> homeHandler(NewContext ctx) async {
   return ctx.respond(Response.ok(
@@ -140,28 +162,6 @@ Future<ResponseContext> dataHandler(NewContext ctx) async {
       body: Body.fromString('Invalid Request'),
     ),
   );
-}
-
-/// Simple HTML page for demonstration
-String _htmlHomePage() {
-  return '''
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Relic Context Example</title>
-</head>
-<body>
-    <h1>Relic Context Types Demo</h1>
-    <ul>
-        <li><a href="/api">API Example (ResponseContext)</a></li>
-        <li><a href="/api/users/123">User API with Parameters (ResponseContext)</a></li>
-        <li><a href="/ws">WebSocket Example (ConnectContext)</a></li>
-        <li><a href="/custom">Custom Protocol (HijackContext)</a></li>
-    </ul>
-    <p>This demonstrates the different context types in Relic using proper routing.</p>
-</body>
-</html>
-''';
 }
 
 void main() async {

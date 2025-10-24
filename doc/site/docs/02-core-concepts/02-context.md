@@ -94,39 +94,8 @@ Every handler receives a `NewContext` first. This represents a **fresh, unhandle
 
 **Example - Serving HTML:**
 
-```dart
-import 'dart:convert';
-import 'dart:io';
-import 'package:relic/io_adapter.dart';
-import 'package:relic/relic.dart';
-
-/// Serves an HTML home page
-/// Note: The signature is Future<ResponseContext> because we use 'async'
-Future<ResponseContext> homeHandler(NewContext ctx) async {
-  // Create an HTML response
-  return ctx.respond(Response.ok(
-    body: Body.fromString(
-      _htmlHomePage(),
-      encoding: utf8,  // Text encoding (UTF-8 is standard)
-      mimeType: MimeType.html,  // Tells browser this is HTML
-    ),
-  ));
-}
-
-String _htmlHomePage() {
-  return '''
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Relic Context Example</title>
-</head>
-<body>
-    <h1>Welcome to Relic!</h1>
-    <p>This is an HTML response created from a NewContext.</p>
-</body>
-</html>
-''';
-}
+```dart reference
+https://github.com/serverpod/relic/blob/main/example/context.dart#L17-L47
 ```
 
 :::tip When to use async/await
@@ -152,26 +121,8 @@ When you call `ctx.respond()`, you transition to a `ResponseContext`. This repre
 
 **Example - JSON API response:**
 
-```dart
-import 'dart:convert';  // For jsonEncode
-import 'package:relic/relic.dart';
-
-/// Returns JSON data
-Future<ResponseContext> apiHandler(NewContext ctx) async {
-  // Create a Dart Map that will be converted to JSON
-  final data = {
-    'message': 'Hello from Relic API!',
-    'timestamp': DateTime.now().toIso8601String(),
-    'path': ctx.request.url.path,
-  };
-
-  return ctx.respond(Response.ok(
-    body: Body.fromString(
-      jsonEncode(data),  // Convert Map to JSON string
-      mimeType: MimeType.json,  // Set Content-Type: application/json
-    ),
-  ));
-}
+```dart reference
+https://github.com/serverpod/relic/blob/main/example/context.dart#L50-L63
 ```
 
 **Example - API with route parameters:**

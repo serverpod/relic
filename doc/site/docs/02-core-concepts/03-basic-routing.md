@@ -46,50 +46,26 @@ These methods are syntactic sugar for the core `.add()` method:
 
 **Respond with `Hello World!` on the homepage:**
 
-```dart
-app.get('/', (ctx) {
-  return ctx.respond(
-    Response.ok(
-      body: Body.fromString('Hello World!'),
-    ),
-  );
-});
+```dart reference
+https://github.com/serverpod/relic/blob/main/example/basic_routing.dart#L26-L32
 ```
 
 **Respond to a POST request on the root route:**
 
-```dart
-app.post('/', (ctx) {
-  return ctx.respond(
-    Response.ok(
-      body: Body.fromString('Got a POST request'),
-    ),
-  );
-});
+```dart reference
+https://github.com/serverpod/relic/blob/main/example/basic_routing.dart#L35-L41
 ```
 
 **Respond to a PUT request to the `/user` route:**
 
-```dart
-app.put('/user', (ctx) {
-  return ctx.respond(
-    Response.ok(
-      body: Body.fromString('Got a PUT request at /user'),
-    ),
-  );
-});
+```dart reference
+https://github.com/serverpod/relic/blob/main/example/basic_routing.dart#L44-L50
 ```
 
 **Respond to a DELETE request to the `/user` route:**
 
-```dart
-app.delete('/user', (ctx) {
-  return ctx.respond(
-    Response.ok(
-      body: Body.fromString('Got a DELETE request at /user'),
-    ),
-  );
-});
+```dart reference
+https://github.com/serverpod/relic/blob/main/example/basic_routing.dart#L53-L59
 ```
 
 ### Using the `add` method
@@ -98,14 +74,8 @@ This is what the convenience methods call internally:
 
 **Respond to a PATCH request using the core `.add()` method:**
 
-```dart
-app.add(Method.patch, '/api', (ctx) {
-  return ctx.respond(
-    Response.ok(
-      body: Body.fromString('Got a PATCH request at /api'),
-    ),
-  );
-});
+```dart reference
+https://github.com/serverpod/relic/blob/main/example/basic_routing.dart#L61-L69
 ```
 
 ### Using `anyOf` for Multiple Methods
@@ -114,11 +84,8 @@ Handle multiple HTTP methods with the same handler:
 
 **Handle both GET and POST requests to `/admin`:**
 
-```dart
-app.anyOf({Method.get, Method.post}, '/admin', (ctx) {
-  final method = ctx.request.method.name.toUpperCase();
-  return ctx.respond(Response.ok(body: Body.fromString('Admin page - $method request')));
-});
+```dart reference
+https://github.com/serverpod/relic/blob/main/example/basic_routing.dart#L71-L79
 ```
 
 ## Examples
