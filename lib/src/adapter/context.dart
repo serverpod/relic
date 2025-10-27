@@ -1,14 +1,5 @@
 import '../../relic.dart';
 
-/// An internal interface defining the base contract for request contexts.
-///
-/// It ensures that any request context provides access to the original
-/// [Request].
-abstract interface class _RequestContextInterface {
-  /// The original incoming request associated with this context.
-  Request get request;
-}
-
 /// A sealed base class for representing the state of a request as it's
 /// processed.
 ///
@@ -37,9 +28,8 @@ abstract interface class _RequestContextInterface {
 /// - [ResponseContext]: A response has been generated (can be updated via `respond()`)
 /// - [HijackContext]: Connection hijacked for low-level I/O (WebSockets, etc.)
 /// - [ConnectContext]: Duplex stream connection established
-sealed class Context implements _RequestContextInterface {
+sealed class Context {
   /// The request associated with this context.
-  @override
   final Request request;
 
   /// A unique token representing the request throughout its lifetime.
@@ -54,8 +44,7 @@ sealed class Context implements _RequestContextInterface {
 
 /// An interface for request contexts that can be transitioned to a state
 /// where a response has been provided.
-abstract interface class RespondableContext
-    implements _RequestContextInterface {
+abstract interface class RespondableContext implements Context {
   /// Transitions the context to a state where a response has been associated.
   ///
   /// Takes a [response] and returns a [ResponseContext].
@@ -63,7 +52,7 @@ abstract interface class RespondableContext
 }
 
 /// An interface for request contexts that allow hijacking the underlying connection.
-abstract interface class HijackableContext implements _RequestContextInterface {
+abstract interface class HijackableContext implements Context {
   /// Takes control of the underlying communication channel (e.g., socket).
   ///
   /// The provided [callback] will be invoked with a [StreamChannel]
