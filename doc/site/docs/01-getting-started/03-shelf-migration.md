@@ -57,8 +57,6 @@ dependencies:
   relic: <latest_version>
 ```
 
-If you serve over `dart:io`, you'll use the `relic/io_adapter.dart` import to start the server.
-
 ### 2. Bootstrap the server
 
 Before (Shelf):
