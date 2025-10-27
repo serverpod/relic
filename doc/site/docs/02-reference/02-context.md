@@ -376,5 +376,5 @@ This approach delivers both developer experience improvements through better IDE
 
 ## Examples
 
-- **[Context Types Example](https://github.com/serverpod/relic/blob/main/example/context.dart)** - Demonstrates HTTP responses, WebSocket connections, routing, and middleware
-- **[Context Property Example](https://github.com/serverpod/relic/blob/main/example/context_property.dart)** - Shows how to use context properties for request IDs
+- **[Context Types Example](https://github.com/serverpod/relic/blob/main/example/context/context_example.dart)** - Demonstrates HTTP responses, WebSocket connections, routing, and middleware
+- **[Context Property Example](https://github.com/serverpod/relic/blob/main/example/context/context_property_example.dart)** - Shows how to use context properties for request IDs

@@ -123,4 +123,4 @@ app.anyOf({Method.get, Method.post}, '/admin', (ctx) {
 
 ## Examples
 
-- **[`basic_routing.dart`](https://github.com/serverpod/relic/blob/main/example/basic_routing.dart)** - The complete working example from this guide.
+- **[`basic_routing.dart`](https://github.com/serverpod/relic/blob/main/example/routing/basic_routing.dart)** - The complete working example from this guide.

@@ -1,5 +1,3 @@
-// ignore_for_file: avoid_log, prefer_final_parameters
-
 import 'dart:convert';
 import 'dart:developer';
 import 'package:relic/io_adapter.dart';
@@ -10,7 +8,7 @@ Future<void> main() async {
   final app = RelicApp();
 
   // HTTP Method access
-  app.get('/info', (ctx) {
+  app.get('/info', (final ctx) {
     final method = ctx.request.method; // Method.get
 
     return ctx.respond(Response.ok(
@@ -19,7 +17,7 @@ Future<void> main() async {
   });
 
 // Path parameters example
-  app.get('/users/:id', (ctx) {
+  app.get('/users/:id', (final ctx) {
     final id = ctx.pathParameters[#id]!;
     final url = ctx.request.url;
     final fullUri = ctx.request.requestedUri;
@@ -31,7 +29,7 @@ Future<void> main() async {
   });
 
   // Query parameters - single values
-  app.get('/search', (ctx) {
+  app.get('/search', (final ctx) {
     final query = ctx.request.url.queryParameters['query'];
     final page = ctx.request.url.queryParameters['page'];
 
@@ -47,7 +45,7 @@ Future<void> main() async {
   });
 
   // Query parameters - multiple values
-  app.get('/filter', (ctx) {
+  app.get('/filter', (final ctx) {
     final tags = ctx.request.url.queryParametersAll['tag'] ?? [];
 
     return ctx.respond(Response.ok(
@@ -56,7 +54,7 @@ Future<void> main() async {
   });
 
   // Type-safe headers
-  app.get('/headers-info', (ctx) {
+  app.get('/headers-info', (final ctx) {
     final request = ctx.request;
 
     // Get typed values
@@ -74,7 +72,7 @@ Future<void> main() async {
   });
 
   // Authorization headers
-  app.get('/protected', (ctx) {
+  app.get('/protected', (final ctx) {
     final auth = ctx.request.headers.authorization;
 
     if (auth is BearerAuthorizationHeader) {
@@ -97,7 +95,7 @@ Future<void> main() async {
   });
 
   // Reading request body as string
-  app.post('/submit', (ctx) async {
+  app.post('/submit', (final ctx) async {
     final bodyText = await ctx.request.readAsString();
     return ctx.respond(Response.ok(
       body: Body.fromString('Received: $bodyText'),
@@ -105,7 +103,7 @@ Future<void> main() async {
   });
 
   // JSON parsing example
-  app.post('/api/users', (ctx) async {
+  app.post('/api/users', (final ctx) async {
     try {
       final bodyText = await ctx.request.readAsString();
       final data = jsonDecode(bodyText) as Map<String, dynamic>;
@@ -132,7 +130,7 @@ Future<void> main() async {
   });
 
   // Reading as a byte stream
-  app.post('/upload', (ctx) async {
+  app.post('/upload', (final ctx) async {
     final stream = ctx.request.read(); // Stream<Uint8List>
 
     int totalBytes = 0;
@@ -147,7 +145,7 @@ Future<void> main() async {
   });
 
   // Check if body is empty
-  app.post('/data', (ctx) {
+  app.post('/data', (final ctx) {
     if (ctx.request.isEmpty) {
       return ctx.respond(Response.badRequest(
         body: Body.fromString('Request body is required'),
@@ -159,7 +157,7 @@ Future<void> main() async {
   });
 
   // Validate query parameters
-  app.get('/page', (ctx) {
+  app.get('/page', (final ctx) {
     final pageStr = ctx.request.url.queryParameters['page'];
 
     if (pageStr == null) {
@@ -180,7 +178,7 @@ Future<void> main() async {
   });
 
   // Handle missing headers gracefully
-  app.get('/info', (ctx) {
+  app.get('/info', (final ctx) {
     final userAgent = ctx.request.headers.userAgent;
 
     final message = userAgent != null

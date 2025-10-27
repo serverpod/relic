@@ -1,5 +1,3 @@
-// ignore_for_file: prefer_final_parameters
-
 import 'dart:convert';
 import 'dart:developer';
 
@@ -13,8 +11,29 @@ import 'package:web_socket/web_socket.dart';
 /// - ConnectContext: WebSocket connections
 /// - HijackContext: Raw connection control
 
-/// Example 1: HTTP Response (NewContext -> ResponseContext)
-Future<ResponseContext> homeHandler(NewContext ctx) async {
+/// Simple HTML page for demonstration
+String _htmlHomePage() {
+  return '''
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Relic Context Example</title>
+</head>
+<body>
+    <h1>Relic Context Types Demo</h1>
+    <ul>
+        <li><a href="/api">API Example (ResponseContext)</a></li>
+        <li><a href="/api/users/123">User API with Parameters (ResponseContext)</a></li>
+        <li><a href="/ws">WebSocket Example (ConnectContext)</a></li>
+        <li><a href="/custom">Custom Protocol (HijackContext)</a></li>
+    </ul>
+    <p>This demonstrates the different context types in Relic using proper routing.</p>
+</body>
+</html>
+''';
+}
+
+Future<ResponseContext> homeHandler(final NewContext ctx) async {
   return ctx.respond(Response.ok(
     body: Body.fromString(
       _htmlHomePage(),
@@ -24,8 +43,7 @@ Future<ResponseContext> homeHandler(NewContext ctx) async {
   ));
 }
 
-/// Example 2: JSON API Response (NewContext -> ResponseContext)
-Future<ResponseContext> apiHandler(NewContext ctx) async {
+Future<ResponseContext> apiHandler(final NewContext ctx) async {
   final data = {
     'message': 'Hello from Relic API!',
     'timestamp': DateTime.now().toIso8601String(),
@@ -40,8 +58,7 @@ Future<ResponseContext> apiHandler(NewContext ctx) async {
   ));
 }
 
-/// Example 3: API with route parameters (NewContext -> ResponseContext)
-Future<ResponseContext> userHandler(NewContext ctx) async {
+Future<ResponseContext> userHandler(final NewContext ctx) async {
   final userId = ctx.pathParameters[#id];
   final data = {
     'userId': userId,
@@ -57,9 +74,8 @@ Future<ResponseContext> userHandler(NewContext ctx) async {
   ));
 }
 
-/// Example 4: WebSocket Connection (NewContext -> ConnectContext)
-ConnectContext webSocketHandler(NewContext ctx) {
-  return ctx.connect((webSocket) async {
+ConnectContext webSocketHandler(final NewContext ctx) {
+  return ctx.connect((final webSocket) async {
     log('WebSocket connection established');
 
     // Send welcome message
@@ -82,9 +98,8 @@ ConnectContext webSocketHandler(NewContext ctx) {
   });
 }
 
-/// Example 5: Raw Connection Hijack (NewContext -> HijackContext)
-HijackContext customProtocolHandler(NewContext ctx) {
-  return ctx.hijack((channel) {
+HijackContext customProtocolHandler(final NewContext ctx) {
+  return ctx.hijack((final channel) {
     log('Connection hijacked for custom protocol');
 
     // Send a custom HTTP response manually
@@ -99,7 +114,7 @@ HijackContext customProtocolHandler(NewContext ctx) {
   });
 }
 
-Future<ResponseContext> dataHandler(NewContext ctx) async {
+Future<ResponseContext> dataHandler(final NewContext ctx) async {
   final request = ctx.request;
 
   // Access basic HTTP information
@@ -142,28 +157,6 @@ Future<ResponseContext> dataHandler(NewContext ctx) async {
   );
 }
 
-/// Simple HTML page for demonstration
-String _htmlHomePage() {
-  return '''
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Relic Context Example</title>
-</head>
-<body>
-    <h1>Relic Context Types Demo</h1>
-    <ul>
-        <li><a href="/api">API Example (ResponseContext)</a></li>
-        <li><a href="/api/users/123">User API with Parameters (ResponseContext)</a></li>
-        <li><a href="/ws">WebSocket Example (ConnectContext)</a></li>
-        <li><a href="/custom">Custom Protocol (HijackContext)</a></li>
-    </ul>
-    <p>This demonstrates the different context types in Relic using proper routing.</p>
-</body>
-</html>
-''';
-}
-
 void main() async {
   // Set up the router with proper routes
   final app = RelicApp()
@@ -173,7 +166,7 @@ void main() async {
     ..get('/ws', webSocketHandler) // WebSocket
     ..get('/custom', customProtocolHandler) // Custom protocol
     ..post('/data', dataHandler) // Data handler
-    ..fallback = respondWith((request) => Response.notFound(
+    ..fallback = respondWith((final request) => Response.notFound(
           body: Body.fromString('Page not found'),
         ));
 

@@ -344,4 +344,4 @@ Always validate all incoming data since query parameters, headers, and body cont
 
 ## Examples
 
-- **[`request_example.dart`](https://github.com/serverpod/relic/blob/main/example/request_example.dart)** - Example covering requests
+- **[`request_example.dart`](https://github.com/serverpod/relic/blob/main/example/routing/request_example.dart)** - Example covering requests
