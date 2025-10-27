@@ -15,7 +15,7 @@ Relic was born out of the needs of [Serverpod](https://serverpod.dev) for a more
 
 Use this quick plan to get your app running on Relic. The detailed sections below show code for each step.
 
-1) ✅ Update dependencies: Remove  `shelf`, `shelf_router`, `shelf_web_socket`. Add `relic`. If you serve over `dart:io`, use `relic/io_adapter` to start the server.
+1) ✅ Update dependencies: Remove `shelf`, `shelf_router`, `shelf_web_socket`. Add `relic` to the dependencies.
 
 2) ✅ Bootstrap the server: Replace `shelf_io.serve()` with `RelicApp().serve()` if using the io adapter, or integrate RelicApp into your hosting environment as needed.
 
@@ -193,7 +193,7 @@ Relic provides type-safe headers with automatic validation:
 // Relic - type-safe accessors
 final contentType = response.body.bodyType?.mimeType;
 final cookies = request.headers.cookie;
-final date = request.headers.date;
+final date = request.headers.date; // Returns DateTime?
 ```
 
 ### 7. Replace middleware and scoping
