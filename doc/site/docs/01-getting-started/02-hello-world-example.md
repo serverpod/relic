@@ -28,24 +28,8 @@ dart pub add relic
 
 Edit the `bin/hello_world.dart`:
 
-```dart file="hello_world.dart"
-import 'package:relic/io_adapter.dart';
-import 'package:relic/relic.dart';
-
-Future<void> main() async {
-  // Create a simple handler that responds to every request
-  final app = RelicApp()
-    ..get(
-      '/**', (final ctx) => ctx.respond(
-        Response.ok(
-          body: Body.fromString('Hello world!'),
-        ),
-      ),
-    );
-
-  // Start the server on port 8080
-  await app.serve();
-}
+```dart reference title="hello_world.dart"
+https://github.com/serverpod/relic/blob/main/example/example.dart
 ```
 
 **What this code does:**
