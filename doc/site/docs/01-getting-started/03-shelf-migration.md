@@ -181,19 +181,17 @@ final response = Response.ok(
 Shelf uses string-based headers with manual parsing:
 
 ```dart
-// Shelf - string-based, error-prone
-final contentType = request.headers['content-type'];
-final cookies = request.headers['cookie']?.split('; ') ?? [];
-final date = request.headers['date']; // Returns String?
+final contentType = request.headers['content-type']; // String?
+final cookies = request.headers['cookie']; // String?
+final date = request.headers['date']; // String?
 ```
 
 Relic provides type-safe headers with automatic validation:
 
 ```dart
-// Relic - type-safe accessors
-final contentType = response.body.bodyType?.mimeType;
-final cookies = request.headers.cookie;
-final date = request.headers.date; // Returns DateTime?
+final contentType = ctx.request.body.bodyType?.mimeType; // MimeType?
+final cookies = ctx.request.headers.cookie; // CookieHeader?
+final date = ctx.request.headers.date; // DateTime?
 ```
 
 ### 7. Replace middleware and scoping
