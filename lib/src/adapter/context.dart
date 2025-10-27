@@ -1,3 +1,5 @@
+import 'package:meta/meta.dart';
+
 import '../../relic.dart';
 
 /// A sealed base class for representing the state of a request as it's
@@ -188,6 +190,7 @@ final class ConnectContext extends HandledContext {
 }
 
 /// Internal extension methods for [Request].
+@visibleForTesting
 extension RequestInternal on Request {
   /// Creates a new [RequestContext] from this [Request].
   ///
