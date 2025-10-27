@@ -75,7 +75,7 @@ For a comprehensive list of HTTP status codes, check out [Mozilla's HTTP Status 
 To ensure consistency and avoid memorizing numeric codes, use Relic's convenient response constructors like `Response.ok()`, `Response.badRequest()`, and `Response.notFound()` etc.
 :::
 
-## Working with Response bodies
+## Working with response bodies
 
 The response body contains the actual data you're sending to the client. Relic's `Body` class provides a unified way to handle different content types.
 

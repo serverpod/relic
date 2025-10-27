@@ -1,5 +1,5 @@
 ---
-sidebar_position: 7
+sidebar_position: 8
 sidebar_label: Pipeline (Legacy)
 ---
 
@@ -25,8 +25,8 @@ final handler = const Pipeline()
 
 The Pipeline class uses a recursive composition pattern where each middleware wraps the next one in the chain:
 
-1. **Request Flow**: Middleware processes requests from outermost to innermost
-2. **Response Flow**: Middleware processes responses from innermost to outermost
+1. **Request Flow**: Middleware processes requests from outermost to innermost.
+2. **Response Flow**: Middleware processes responses from innermost to outermost.
 
 When you call `addMiddleware()`, it creates a new `Pipeline` instance that stores the current middleware and a reference to the parent composition. When `addHandler()` is finally called, it recursively builds the middleware chain by wrapping each handler with its middleware.
 
@@ -62,10 +62,6 @@ final handler = router.asHandler;
 ```
 
 The new approach is more concise, provides better path-specific middleware control, and integrates more naturally with Relic's routing system.
-
-## Summary
-
-Pipeline is a legacy pattern for composing middleware, see [Middleware](./middleware) for the modern approach.
 
 ## Examples
 

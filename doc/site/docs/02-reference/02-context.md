@@ -27,15 +27,15 @@ graph LR
     A --> C[ConnectContext <br/><em>WebSocket</em>]
 ```
 
-:::info Context Transitions
+:::info Context transitions
 Every context starts as `NewContext` and transitions _exactly once_ to a final state. However, `ResponseContext` can transition to another `ResponseContext` (useful for middleware chains), while `ConnectContext` is terminal and cannot transition further.
 :::
 
 Let's start with the simplest possible Relic server to understand how contexts work:
 
 ```dart
+// Common imports for Relic handlers
 import 'dart:io';
-
 import 'package:relic/io_adapter.dart';
 import 'package:relic/relic.dart';
 
@@ -72,12 +72,6 @@ graph TD
     A --> D[<h3>ConnectContext</h3><br/>WebSocket connection created]
 ```
 
-All contexts share a common base: `RequestContext`, which gives you access to `ctx.request` (the HTTP request data).
-
-Some contexts also implement special interfaces:
-
-- **`RespondableContext`** - Can send responses (includes `NewContext`, also used as a parameter type to allow multiple context types)
-
 ### NewContext - The starting point
 
 Every handler receives a `NewContext` first. This represents a **fresh, unhandled request** and gives you three choices:
@@ -101,7 +95,6 @@ import 'package:relic/io_adapter.dart';
 import 'package:relic/relic.dart';
 
 /// Serves an HTML home page
-/// Note: The signature is Future<ResponseContext> because we use 'async'
 Future<ResponseContext> homeHandler(NewContext ctx) async {
   // Create an HTML response
   return ctx.respond(Response.ok(
@@ -142,9 +135,7 @@ ResponseContext simpleHandler(NewContext ctx) {
 
 ### ResponseContext - HTTP response sent
 
-Once you call `respond()`, the request is considered _complete_. The `ResponseContext` returned is primarily used internally by Relic's middleware system.
-
-When you call `ctx.respond()`, you transition to a `ResponseContext`. This represents a _completed HTTP request_ with a response ready to be sent to the client.
+When you call `ctx.respond()`, you transition to a `ResponseContext`. This represents a _completed HTTP request_ with a response ready to be sent to the client. The `ResponseContext` returned is primarily used internally by Relic's middleware system.
 
 | Property   | Type       | Description              |
 |------------|------------|--------------------------|
@@ -174,67 +165,9 @@ Future<ResponseContext> apiHandler(NewContext ctx) async {
 }
 ```
 
-**Example - API with route parameters:**
-
-```dart
-import 'dart:convert';
-import 'package:relic/relic.dart';
-
-/// First, define the route with a path parameter
-  final router = Router();
-  
-// Define route with :id parameter - the colon makes it a dynamic segment
-  router.get('/users/:id', userHandler);
-
-/// Handler that extracts the user ID from the URL path
-Future<ResponseContext> userHandler(NewContext ctx) async {
-  // pathParameters come from the router - #id matches ':id' in the route
-  final userId = ctx.pathParameters[#id];  
-  
-  final data = {
-    'userId': userId,
-    'message': 'User details for ID: $userId',
-    'timestamp': DateTime.now().toIso8601String(),
-  };
-
-  return ctx.respond(Response.ok(
-    body: Body.fromString(
-      jsonEncode(data),
-      mimeType: MimeType.json,
-    ),
-  ));
-}
-
-// Usage: GET /users/123 will extract '123' as the #id parameter
-```
-
-:::tip Adding Custom Headers
-Use `Headers.build()` to add custom response headers:
-
-```dart
-return ctx.respond(
-  Response.ok(
-    body: Body.fromString(jsonEncode(data), mimeType: MimeType.json),
-    headers: Headers.build(
-      (mh) => mh
-        ..accept = AcceptHeader(
-          mediaRanges: [MediaRange('application', 'json')],
-        )
-        ..cookie = CookieHeader(
-          cookies: [Cookie(name: 'name', value: 'value')],
-        ),
-    ),
-  ),
-);
-```
-
-:::
-
 ### ConnectContext - WebSocket connections
 
-Use `connect()` for WebSocket handshakes. WebSockets are a specific type of connection upgrade that Relic handles automatically.
-
-For full-duplex WebSocket connections where both client and server can send messages independently.
+Use `connect()` for WebSocket handshakes - full-duplex connections where both client and server can send messages independently. WebSockets are a specific type of connection upgrade that Relic handles automatically.
 
 | Property   | Type                | Description                     |
 |------------|---------------------|---------------------------------|
@@ -247,9 +180,6 @@ import 'dart:developer';  // For log()
 import 'package:relic/relic.dart';
 import 'package:web_socket/web_socket.dart';  // Dart's official WebSocket package
 
-/// Establishes a WebSocket connection and echoes messages
-/// Note: No Future or async on the outer function - ctx.connect() returns ConnectContext immediately
-/// The async is on the callback function inside connect()
 ConnectContext webSocketHandler(NewContext ctx) {
   return ctx.connect((webSocket) async {
     log('WebSocket connection established');
@@ -282,7 +212,7 @@ Unlike `respond()` which sends a response and closes the connection, `connect()`
 
 ## Accessing request data
 
-All context types inherit from `RequestContext` and provide access to the original HTTP request through `ctx.request`. This gives you access to all HTTP data:
+All context types provide access to the original HTTP request through `ctx.request`. This gives you access to all HTTP data:
 
 ### Request properties reference
 
@@ -343,17 +273,15 @@ Future<ResponseContext> dataHandler(NewContext ctx) async {
 
 :::warning Reading request bodies
 
-- The body can only be read _once_ - it's a stream that gets consumed
-- Always validate the `Content-Type` header before parsing
-- Wrap parsing in try-catch to handle malformed data
-- Be careful with large bodies - consider adding size limits
+- The body can only be read _once_ - it's a stream that gets consumed.
+- Always validate the `Content-Type` header before parsing.
+- Wrap parsing in try-catch to handle malformed data.
+- Be careful with large bodies - consider adding size limits.
 :::
 
 ## Context state machine
 
 Relic's context system uses a _state machine_ to prevent invalid operations. Each context type exposes only the methods that make sense for its current state, catching errors at compile time rather than runtime.
-
-Once you've chosen a path, you cannot backtrack. For example, after calling `respond()` to create a `ResponseContext`, you cannot change your mind and call `connect()` to create a `ConnectContext` instead. The transition is irreversible.
 
 This makes sense because an HTTP request can only have one outcome:
 
@@ -438,142 +366,15 @@ Future<ResponseContext> handler(NewContext ctx) async {
 Context properties exist **only for the duration of the request**. Once the response is sent, they're automatically cleaned up.
 :::
 
-## Common mistakes
-
-Here are mistakes that newbies often make (so you can avoid them):
-
-### ❌ Trying to read the body twice
-
-```dart
-Future<ResponseContext> brokenHandler(NewContext ctx) async {
-  final body1 = await ctx.request.readAsString();
-  final body2 = await ctx.request.readAsString();  // ❌ Error! Stream already consumed
-  // ...
-}
-```
-
-**Fix:** Read the body once and store it in a variable:
-
-```dart
-Future<ResponseContext> fixedHandler(NewContext ctx) async {
-  final bodyString = await ctx.request.readAsString();
-  // Use bodyString multiple times if needed
-}
-```
-
-### ❌ Not using async/await when reading bodies
-
-```dart
-ResponseContext brokenHandler(NewContext ctx) {  // ❌ Missing async!
-  final bodyString = await ctx.request.body.readAsString();  // ❌ Can't await without async
-  // ...
-}
-```
-
-**Fix:** Use `async` and `Future<ResponseContext>`:
-
-```dart
-Future<ResponseContext> fixedHandler(NewContext ctx) async {  // ✅ async added
-  final bodyString = await ctx.request.body.readAsString();  // ✅ Now it works
-  // ...
-}
-```
-
-### ❌ Forgetting to return a context
-
-```dart
-Future<ResponseContext> brokenHandler(NewContext ctx) async {
-  print('Hello');
-  // ❌ Forgot to return anything!
-}
-```
-
-**Fix:** Always return a context:
-
-```dart
-Future<ResponseContext> fixedHandler(NewContext ctx) async {
-  print('Hello');
-  return ctx.respond(Response.ok(body: Body.fromString('Done')));  // ✅
-}
-```
-
-### ❌ Not handling null values
-
-```dart
-Future<ResponseContext> brokenHandler(NewContext ctx) async {
-  final userId = ctx.pathParameters[#id];
-  final user = await database.getUser(userId);  // ❌ What if userId is null?
-  return ctx.respond(Response.ok(
-    body: Body.fromString('User: ${user.name}'),  // ❌ What if user is null?
-  ));
-}
-```
-
-**Fix:** Check for null values:
-
-```dart
-Future<ResponseContext> fixedHandler(NewContext ctx) async {
-  final userId = ctx.pathParameters[#id];
-  if (userId == null) {
-    return ctx.respond(Response.badRequest(
-      body: Body.fromString('Missing user ID'),
-    ));
-  }
-
-  final user = await database.getUser(userId);
-  if (user == null) {
-    return ctx.respond(Response.notFound(
-      body: Body.fromString('User not found'),
-    ));
-  }
-
-  return ctx.respond(Response.ok(
-    body: Body.fromString('User: ${user.name}'),
-  ));
-}
-```
-
-## Best practices
-
-**Use the type system to your advantage:**
-
-- Let the compiler catch errors by using specific context types in your handler signatures
-- Use `NewContext` when you need full flexibility
-- Use `RespondableContext` when you accept multiple context types that can respond
-
-**Handle errors gracefully:**
-
-- Always wrap body parsing in try-catch blocks
-- Return appropriate HTTP status codes (400 for bad requests, 404 for not found, etc.)
-- Validate input before processing
-
-**Keep handlers focused:**
-
-- Each handler should do one thing well
-- Use middleware for cross-cutting concerns (logging, auth, etc.)
-- Use context properties to share data between middleware and handlers
-
-**Performance tips:**
-
-- Context properties use efficient `Expando` objects internally - no memory overhead for unused properties
-- Reading request bodies consumes memory - consider limits for large uploads
-- Cache expensive computations in context properties within a single request
-
 ## Summary
 
-You've learned the heart of Relic's request handling system! Here's what we covered:
+The `RequestContext` system is the foundation of Relic's request handling architecture, providing type-safe state management that prevents entire categories of bugs at compile time. Every HTTP request flows through a carefully designed state machine that ensures proper request/response handling.
 
-✅ **Context types** - `NewContext` starts every request, then transitions to a final state  
-✅ **Type safety** - The compiler prevents invalid operations (like responding twice)  
-✅ **Request data** - Access HTTP data through `ctx.request`  
-✅ **Context properties** - Attach custom data to requests  
-✅ **Common mistakes** - How to avoid typical newbie errors
+Key principles include using specific context types (`NewContext`, `ResponseContext`, `ConnectContext`) to enforce valid operations, leveraging type-safe request data access, and utilizing context properties for request-scoped data sharing. The system eliminates common pitfalls like double responses or incorrect state transitions.
 
-The context system might feel complex at first, but it prevents entire categories of bugs. Stick with it - the type safety will save you hours of debugging later!
+This approach delivers both developer experience improvements through better IDE support and runtime safety through compile-time guarantees, making complex web applications more maintainable and reliable.
 
-### Complete examples
-
-Still confused? Check out the complete examples on GitHub to see everything working together.
+## Examples
 
 - **[Context Types Example](https://github.com/serverpod/relic/blob/main/example/context.dart)** - Demonstrates HTTP responses, WebSocket connections, routing, and middleware
 - **[Context Property Example](https://github.com/serverpod/relic/blob/main/example/context_property.dart)** - Shows how to use context properties for request IDs
