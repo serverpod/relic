@@ -50,7 +50,7 @@ Future<void> main() async {
     '/static/**',
     StaticHandler.directory(
       Directory('example/static_files'),
-      cacheControl: (final _, final __) => CacheControlHeader(maxAge: 3600),
+      cacheControl: (_, _) => CacheControlHeader(maxAge: 3600),
     ).asHandler,
   );
 
@@ -59,7 +59,7 @@ Future<void> main() async {
     '/logo',
     StaticHandler.file(
       File('example/static_files/logo.svg'),
-      cacheControl: (final _, final __) => CacheControlHeader(maxAge: 86400),
+      cacheControl: (_, _) => CacheControlHeader(maxAge: 86400),
     ).asHandler,
   );
 
