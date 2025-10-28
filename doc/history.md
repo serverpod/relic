@@ -32,7 +32,7 @@ typedef Handler = FutureOr<HandledContext> Function(NewContext ctx);
 ```
 This seems more complex, why the added complexity? The problem is that not everything follows the request response model. Today we have web-sockets, server-side events, etc. that hijacks the underlying socket of a request, and hands lifetime handling to the developer.
 
-Shelf does support hijacking, but it does so by using exceptions for control flow. It will throw an exception `HijackException` that is only supposed to be caught and handled by a Shelf adaptor.
+Shelf does support hijacking, but it does so by using exceptions for control flow. It will throw an exception `HijackException` that is only supposed to be caught and handled by a Shelf adapter.
 
 As we consider using exceptions for control flow an anti-pattern, we have opted for introducing a `RequestContext` and an associated state machine instead.
 

@@ -17,6 +17,11 @@ final class RelicApp implements RelicRouter {
   /// The adapter factory pattern allows for deferred initialization of server
   /// resources.
   ///
+  /// If [noOfIsolates] equals 1, the server is started on the current isolate.
+  /// Otherwise [noOfIsolates] isolates are spun up. When using multiple isolates make
+  /// sure that any handler and middleware configured are sendable.
+  /// (see https://api.dart.dev/stable/dart-isolate/SendPort/send.html).
+  ///
   /// Returns a [Future] that completes with the running [RelicServer] instance.
   ///
   /// [RelicApp] instances supports hot-reload. They will re-configure the internal
@@ -28,7 +33,7 @@ final class RelicApp implements RelicRouter {
   /// final app = RelicApp()
   ///   ..get('/', (ctx) => ctx.ok('Hello!'));
   ///
-  /// final adaptorFactory = () => IOAdapter.bind(InternetAddress.loopbackIPv4, port: 8080);
+  /// final adapterFactory = () => IOAdapter.bind(InternetAddress.loopbackIPv4, port: 8080);
   /// final server = await app.run(adapterFactory);
   ///
   /// // later .. when done
@@ -39,10 +44,11 @@ final class RelicApp implements RelicRouter {
   /// Check out [RelicAppIOServeEx.serve] if you are using `dart:io` to avoid
   /// specifying [adapterFactory] explicitly.
   Future<RelicServer> run(
-    final FutureOr<Adapter> Function() adapterFactory,
-  ) async {
+    final FutureOr<Adapter> Function() adapterFactory, {
+    final int noOfIsolates = 1,
+  }) async {
     if (_server != null) throw StateError('Cannot call run twice');
-    _server = RelicServer(await adapterFactory());
+    _server = RelicServer(adapterFactory, noOfIsolates: noOfIsolates);
     await _init();
     _reloadSubscription = await _hotReloader.register(this);
     return _server!;
@@ -136,9 +142,7 @@ class _HotReloader {
   Future<StreamSubscription?> register(final RelicApp app) async {
     final reloadStream = await _reloadStream;
     if (reloadStream != null) {
-      return reloadStream
-          .asyncMap((final _) => app._reload())
-          .listen((final _) {});
+      return reloadStream.asyncListen((final _) => app._reload());
     }
     return null;
   }

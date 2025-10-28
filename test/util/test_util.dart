@@ -60,11 +60,11 @@ Future<RelicServer> testServe(
   final Handler handler, {
   final SecurityContext? context,
 }) async {
-  final server = RelicServer(await IOAdapter.bind(
-    InternetAddress.loopbackIPv4,
-    port: 0,
-    context: context,
-  ));
+  final server = RelicServer(() => IOAdapter.bind(
+        InternetAddress.loopbackIPv4,
+        port: 0,
+        context: context,
+      ));
   await server.mountAndStart(handler);
   return server;
 }

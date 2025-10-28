@@ -1,6 +1,7 @@
-import 'dart:async';
+import 'dart:io';
 
 import 'package:http/http.dart' as http;
+import 'package:relic/io_adapter.dart';
 import 'package:relic/relic.dart';
 import 'package:test/test.dart';
 
@@ -40,10 +41,13 @@ void main() {
     test(
         'when no handler is mounted initially '
         'then it delays requests until a handler is mounted', () async {
-      final delayedResponse = http.read(server.url);
-      await Future<void>.delayed(Duration.zero);
+      final adapter = await IOAdapter.bind(InternetAddress.loopbackIPv4);
+      final port = adapter.port;
+      final delayedResponse = http.read(Uri.http('localhost:$port'));
+      final server = RelicServer(() => adapter);
       await server.mountAndStart(asyncHandler);
-      expect(delayedResponse, completion(equals('Hello from /')));
+      await expectLater(delayedResponse, completion(equals('Hello from /')));
+      await server.close();
     });
   });
 }

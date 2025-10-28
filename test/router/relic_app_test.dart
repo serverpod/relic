@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:developer';
 import 'dart:io';
 import 'dart:isolate';
+import 'dart:math';
 
 import 'package:mockito/mockito.dart';
 import 'package:relic/io_adapter.dart';
@@ -102,6 +103,9 @@ class _Injectable implements RouterInjectable {
 class _FakeAdapter extends Fake implements Adapter {
   @override
   Stream<AdapterRequest> get requests => const Stream.empty();
+
+  @override
+  late int port = Random().nextInt(65536);
 
   @override
   Future<void> close() async {}

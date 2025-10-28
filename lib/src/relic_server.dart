@@ -6,37 +6,71 @@ import 'body/body.dart';
 import 'handler/handler.dart';
 import 'headers/exception/header_exception.dart';
 import 'headers/standard_headers_extensions.dart';
+import 'isolated_object.dart';
 import 'logger/logger.dart';
 import 'message/request.dart';
 import 'message/response.dart';
 import 'util/util.dart';
 
+sealed class RelicServer {
+  /// Mounts a [handler] to the server and starts listening for requests.
+  ///
+  /// Only one [handler] can be mounted at a time, but it will be replaced
+  /// on each call.
+  Future<void> mountAndStart(final Handler handler);
+
+  /// Close the server
+  Future<void> close();
+
+  /// The port this server is bound to.
+  ///
+  /// This will throw a [LateInitializationError], if called before [mountAndStart].
+  int get port;
+
+  factory RelicServer(
+    final Factory<Adapter> adapterFactory, {
+    final int noOfIsolates = 1,
+  }) {
+    return switch (noOfIsolates) {
+      < 1 => throw RangeError.value(
+          noOfIsolates,
+          'noOfIsolates',
+          'Must be larger than 0',
+        ),
+      == 1 => _RelicServer(adapterFactory),
+      _ => _MultiIsolateRelicServer(adapterFactory, noOfIsolates),
+    };
+  }
+}
+
 /// A server that uses a [Adapter] to handle HTTP requests.
-class RelicServer {
-  /// The underlying adapter.
-  final Adapter adapter;
-
-  /// Whether [mountAndStart] has been called.
+final class _RelicServer implements RelicServer {
+  final FutureOr<Adapter> _adapter;
   Handler? _handler;
-
   StreamSubscription<AdapterRequest>? _subscription;
 
   /// Creates a server with the given parameters.
-  RelicServer(this.adapter);
+  _RelicServer(final Factory<Adapter> adapterFactory)
+      : _adapter = adapterFactory();
 
   /// Mounts a handler to the server and starts listening for requests.
   ///
   /// Only one handler can be mounted at a time.
+  @override
   Future<void> mountAndStart(final Handler handler) async {
+    port = (await _adapter).port;
     _handler = _wrapHandlerWithMiddleware(handler);
     if (_subscription == null) await _startListening();
   }
 
-  /// Close the server
+  @override
   Future<void> close() async {
     await _stopListening();
-    await adapter.close();
+    await (await _adapter).close();
   }
+
+  @override
+  late final int port;
 
   Future<void> _stopListening() async {
     await _subscription?.cancel();
@@ -45,6 +79,7 @@ class RelicServer {
 
   /// Starts listening for requests.
   Future<void> _startListening() async {
+    final adapter = await _adapter;
     catchTopLevelErrors(() {
       _subscription = adapter.requests.listen(_handleRequest);
     }, (final error, final stackTrace) {
@@ -59,6 +94,8 @@ class RelicServer {
   Future<void> _handleRequest(final AdapterRequest adapterRequest) async {
     final handler = _handler;
     if (handler == null) return; // if close has been called
+
+    final adapter = await _adapter;
 
     // Wrap the handler with our middleware
     late Request request;
@@ -142,4 +179,48 @@ void _logError(
     stackTrace: stackTrace,
     type: LoggerType.error,
   );
+}
+
+final class _IsolatedRelicServer extends IsolatedObject<RelicServer>
+    implements RelicServer {
+  _IsolatedRelicServer(final Factory<Adapter> adapterFactory)
+      : super(() => RelicServer(adapterFactory));
+
+  @override
+  Future<void> close() async {
+    await evaluate((final r) => r.close());
+    await super.close();
+  }
+
+  @override
+  Future<void> mountAndStart(final Handler handler) async {
+    await evaluate((final r) => r.mountAndStart(handler));
+    port = await evaluate((final r) => r.port);
+  }
+
+  @override
+  late final int port;
+}
+
+final class _MultiIsolateRelicServer implements RelicServer {
+  final List<RelicServer> _children;
+
+  _MultiIsolateRelicServer(
+    final Factory<Adapter> adapterFactory,
+    final int noOfIsolates,
+  ) : _children = List.generate(
+            noOfIsolates, (final _) => _IsolatedRelicServer(adapterFactory));
+
+  @override
+  Future<void> close() async {
+    await _children.map((final c) => c.close()).wait;
+  }
+
+  @override
+  Future<void> mountAndStart(final Handler handler) async {
+    await _children.map((final c) => c.mountAndStart(handler)).wait;
+  }
+
+  @override
+  int get port => _children.first.port;
 }

@@ -1,10 +1,10 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:isolate';
 
 import 'package:http/http.dart' as http;
+import 'package:relic/io_adapter.dart';
 import 'package:relic/relic.dart';
-import 'package:relic/src/adapter/io/bind_http_server.dart';
-import 'package:relic/src/adapter/io/io_adapter.dart';
 import 'package:test/test.dart';
 
 /// Thrown when the server returns a 400 status code.
@@ -18,45 +18,20 @@ class BadRequestException implements Exception {
 
 /// Extension methods for RelicServer
 extension RelicServerTestEx on RelicServer {
-  static final Expando<Uri> _serverUrls = Expando();
-
   /// Fake [url] property for the [RelicServer] for testing purposes.
-  Uri get url => _serverUrls[this] ??= _inferUrl();
-  set url(final Uri value) => _serverUrls[this] = value;
-
-  /// Infer a probable URL for the server.
   ///
   /// In general a server cannot know what URL it is being accessed by before an
-  /// actual request arrives, but for testing purposes we can infer a URL based
-  /// on the server's address.
-  Uri _inferUrl() {
-    final adapter = this.adapter;
-    if (adapter is! IOAdapter) throw ArgumentError();
-
-    if (adapter.address.isLoopback) {
-      return Uri(scheme: 'http', host: 'localhost', port: adapter.port);
-    }
-
-    if (adapter.address.type == InternetAddressType.IPv6) {
-      return Uri(
-        scheme: 'http',
-        host: '[${adapter.address.address}]',
-        port: adapter.port,
-      );
-    }
-
-    return Uri(
-      scheme: 'http',
-      host: adapter.address.address,
-      port: adapter.port,
-    );
-  }
+  /// actual request arrives, but for testing purposes we can infer a local URL
+  /// based on the server's port.
+  Uri get url => Uri.http('localhost:$port');
 }
 
 /// Creates a [RelicServer] that listens on the loopback IPv4 address.
 Future<RelicServer> createServer() async {
-  final adapter = IOAdapter(await bindHttpServer(InternetAddress.loopbackIPv4));
-  return RelicServer(adapter);
+  return RelicServer(
+    () => IOAdapter.bind(InternetAddress.loopbackIPv4, shared: true),
+    noOfIsolates: 2,
+  );
 }
 
 /// Returns the headers from the server request if the server returns a 200
@@ -66,18 +41,18 @@ Future<Headers> getServerRequestHeaders({
   required final Map<String, String> headers,
   required final void Function(Headers) touchHeaders,
 }) async {
-  var requestHeaders = Headers.empty();
+  final recv = ReceivePort();
+  final sendPort = recv.sendPort;
 
   await server.mountAndStart(
     respondWith((final Request request) {
-      requestHeaders = request.headers;
-      touchHeaders(requestHeaders);
+      sendPort.send(request.headers);
+      touchHeaders(request.headers);
       return Response.ok();
     }),
   );
 
   final response = await http.get(server.url, headers: headers);
-
   final statusCode = response.statusCode;
 
   if (statusCode == 400) {
@@ -92,6 +67,8 @@ Future<Headers> getServerRequestHeaders({
     );
   }
 
+  final requestHeaders = await recv.first as Headers;
+  recv.close();
   return requestHeaders;
 }
 

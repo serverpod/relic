@@ -5,6 +5,7 @@ import 'package:vm_service/vm_service.dart' as vm;
 import 'package:vm_service/vm_service_io.dart' as vmi;
 
 import '../../relic.dart';
+import '../util/util.dart';
 import 'normalized_path.dart';
 import 'path_trie.dart';
 
