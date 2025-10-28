@@ -33,7 +33,7 @@ abstract interface class _RequestContextInterface {
 ///  └────────────┘
 ///   .respond() // update response
 ///
-/// - [NewContext]: Initial state, can transition to any handled state
+/// - [RequestContext]: Initial state, can transition to any handled state
 /// - [ResponseContext]: A response has been generated (can be updated via `respond()`)
 /// - [HijackContext]: Connection hijacked for low-level I/O (WebSockets, etc.)
 /// - [ConnectContext]: Duplex stream connection established
@@ -44,7 +44,7 @@ sealed class Context implements _RequestContextInterface {
 
   /// A unique token representing the request throughout its lifetime.
   ///
-  /// While the [Context] might change (e.g., from [NewContext] to
+  /// While the [Context] might change (e.g., from [RequestContext] to
   /// [ResponseContext]), this [token] remains constant. This is useful for
   /// associating request-specific state, for example, with [Expando] objects
   /// in middleware.
@@ -77,11 +77,11 @@ abstract interface class HijackableContext implements _RequestContextInterface {
 /// This context can transition to either a [ResponseContext] via [respond],
 /// a [HijackContext] via [hijack], or a [ConnectContext] via [connect].
 ///
-/// Every handler receives a [NewContext] as its starting point:
+/// Every handler receives a [RequestContext] as its starting point:
 ///
 /// ```dart
 /// // Simple HTTP handler
-/// Future<ResponseContext> apiHandler(NewContext ctx) async {
+/// Future<ResponseContext> apiHandler(RequestContext ctx) async {
 ///   return ctx.respond(Response.ok(
 ///     body: Body.fromString('Hello from Relic!'),
 ///   ));
@@ -97,9 +97,9 @@ abstract interface class HijackableContext implements _RequestContextInterface {
 ///   });
 /// }
 /// ```
-final class NewContext extends Context
+final class RequestContext extends Context
     implements RespondableContext, HijackableContext {
-  NewContext._(super.request, super.token) : super._();
+  RequestContext._(super.request, super.token) : super._();
 
   @override
   HijackContext hijack(final HijackCallback callback) =>
@@ -115,7 +115,7 @@ final class NewContext extends Context
       ConnectContext._(request, token, callback);
 
   /// Creates a new [Context] with a different [Request].
-  NewContext withRequest(final Request req) => NewContext._(req, token);
+  RequestContext withRequest(final Request req) => RequestContext._(req, token);
 
   @override
   ResponseContext respond(final Response response) =>
@@ -152,7 +152,7 @@ final class ResponseContext extends HandledContext
 /// communication.
 ///
 /// ```dart
-/// HijackContext customProtocolHandler(NewContext ctx) {
+/// HijackContext customProtocolHandler(RequestContext ctx) {
 ///   return ctx.hijack((channel) {
 ///     log('Connection hijacked for custom protocol');
 ///
@@ -178,7 +178,7 @@ final class HijackContext extends HandledContext {
 /// (e.g., WebSocket) has been established.
 ///
 /// ```dart
-/// ConnectContext chatHandler(NewContext ctx) {
+/// ConnectContext chatHandler(RequestContext ctx) {
 ///   return ctx.connect((webSocket) async {
 ///     // The WebSocket is now active
 ///     webSocket.sendText('Welcome to chat!');
@@ -200,9 +200,9 @@ final class ConnectContext extends HandledContext {
 
 /// Internal extension methods for [Request].
 extension RequestInternal on Request {
-  /// Creates a new [NewContext] from this [Request].
+  /// Creates a new [RequestContext] from this [Request].
   ///
   /// This is the initial context state for an incoming request, using the
   /// provided [token] to uniquely identify the request throughout its lifecycle.
-  NewContext toContext(final Object token) => NewContext._(this, token);
+  RequestContext toContext(final Object token) => RequestContext._(this, token);
 }

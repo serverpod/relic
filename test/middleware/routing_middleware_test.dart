@@ -34,7 +34,7 @@ void main() {
           'When a request matches the parameterized route, '
           'Then the handler receives correct path parameters', () async {
         Map<Symbol, String>? capturedParams;
-        Future<HandledContext> testHandler(final NewContext ctx) async {
+        Future<HandledContext> testHandler(final RequestContext ctx) async {
           capturedParams = ctx.pathParameters;
           return ctx.respond(Response(200));
         }
@@ -59,7 +59,7 @@ void main() {
         'Then the handler receives empty path parameters',
         () async {
           Map<Symbol, String>? capturedParams;
-          Future<ResponseContext> testHandler(final NewContext ctx) async {
+          Future<ResponseContext> testHandler(final RequestContext ctx) async {
             capturedParams = ctx.pathParameters;
             return ctx.respond(Response(200));
           }
@@ -85,7 +85,7 @@ void main() {
         'Then the next handler is called and pathParameters is empty',
         () async {
           bool nextCalled = false;
-          Future<ResponseContext> nextHandler(final NewContext ctx) async {
+          Future<ResponseContext> nextHandler(final RequestContext ctx) async {
             nextCalled = true;
             expect(ctx.pathParameters, isEmpty);
             return ctx.respond(Response(404));
@@ -126,7 +126,7 @@ void main() {
           bool handler2Called = false;
 
           router1.add(Method.get, '/router1/:item', (
-            final NewContext ctx,
+            final RequestContext ctx,
           ) async {
             handler1Called = true;
             params1 = ctx.pathParameters;
@@ -174,7 +174,7 @@ void main() {
             }),
           );
           router2.add(Method.get, '/router2/:data', (
-            final NewContext ctx,
+            final RequestContext ctx,
           ) async {
             handler2Called = true;
             params2 = ctx.pathParameters;
@@ -253,7 +253,7 @@ void main() {
           final nestedRouter = RelicRouter();
 
           nestedRouter.add(Method.get, '/details/:detailId', (
-            final NewContext ctx,
+            final RequestContext ctx,
           ) async {
             nestedHandlerCalled = true;
             capturedParams = ctx.pathParameters;
@@ -300,7 +300,7 @@ void main() {
 
           // Define handler for the leaf router
           leafRouter.add(Method.get, '/action/:actionName', (
-            final NewContext ctx,
+            final RequestContext ctx,
           ) async {
             deeplyNestedHandlerCalled = true;
             capturedParams = ctx.pathParameters;
@@ -345,7 +345,9 @@ void main() {
           final mainRouter = RelicRouter();
           final subRouter = RelicRouter();
 
-          subRouter.add(Method.get, '/:id/end', (final NewContext ctx) async {
+          subRouter.add(Method.get, '/:id/end', (
+            final RequestContext ctx,
+          ) async {
             // sub-router uses :id
             capturedParams = ctx.pathParameters;
             return ctx.respond(Response(200));

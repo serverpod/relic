@@ -23,7 +23,7 @@ import '../../relic.dart';
 ///
 /// ```dart
 /// Middleware loggingMiddleware = (Handler innerHandler) {
-///   return (NewContext ctx) async {
+///   return (RequestContext ctx) async {
 ///     print('Request: ${ctx.request.method} ${ctx.request.url}');
 ///     final result = await innerHandler(ctx);
 ///     print('Completed request');

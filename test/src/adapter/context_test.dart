@@ -4,12 +4,12 @@ import 'package:test/test.dart';
 
 void main() {
   group(
-    'Given a NewContext, when withRequest is called with a new Request,',
+    'Given a RequestContext, when withRequest is called with a new Request,',
     () {
-      late NewContext context;
+      late RequestContext context;
       late Request originalRequest;
       late Request newRequest;
-      late NewContext newContext;
+      late RequestContext newContext;
       late Object token;
 
       setUp(() {
@@ -23,8 +23,8 @@ void main() {
         newContext = context.withRequest(newRequest);
       });
 
-      test('then it returns a NewContext instance', () {
-        expect(newContext, isA<NewContext>());
+      test('then it returns a RequestContext instance', () {
+        expect(newContext, isA<RequestContext>());
       });
 
       test('then the new context contains the new request', () {
@@ -73,9 +73,9 @@ void main() {
   );
 
   group(
-    'Given a NewContext, when withRequest is called with a request created using copyWith,',
+    'Given a RequestContext, when withRequest is called with a request created using copyWith,',
     () {
-      late NewContext context;
+      late RequestContext context;
       late Request originalRequest;
       late Object token;
 
@@ -94,7 +94,7 @@ void main() {
         );
         final newContext = context.withRequest(rewrittenRequest);
 
-        expect(newContext, isA<NewContext>());
+        expect(newContext, isA<RequestContext>());
         expect(
           newContext.request.requestedUri,
           Uri.parse('http://test.com/rewritten'),
