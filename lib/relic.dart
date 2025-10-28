@@ -29,3 +29,4 @@ export 'src/router/lookup_result.dart';
 export 'src/router/method.dart';
 export 'src/router/router.dart';
 export 'src/router/router_handler_extension.dart';
+export 'src/util/functional.dart';
