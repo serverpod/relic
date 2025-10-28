@@ -69,6 +69,100 @@ Future<FileInfo> getStaticFileInfo(
 /// If [cacheBustingConfig] is provided, the handler will strip cache-busting
 /// hashes from the URL path before looking up the file.
 /// See [CacheBustingConfig] for details.
+///
+/// ## Serving from a Directory
+///
+/// ### Basic directory serving
+/// ```dart
+/// app.anyOf(
+///   {Method.get, Method.head},
+///   '/static/**',
+///   StaticHandler.directory(
+///     Directory('static_files'),
+///     cacheControl: (ctx, fileInfo) => CacheControlHeader(maxAge: 86400),
+///   ).asHandler,
+/// );
+/// ```
+///
+/// ### Short-term caching
+/// ```dart
+/// app.anyOf(
+///   {Method.get, Method.head},
+///   '/assets/**',
+///   StaticHandler.directory(
+///     Directory('assets'),
+///     cacheControl: (ctx, fileInfo) => CacheControlHeader(
+///       maxAge: 3600,        // 1 hour
+///       publicCache: true,   // Allow CDN caching
+///     ),
+///   ).asHandler,
+/// );
+/// ```
+///
+/// ### Long-term caching with immutable assets
+/// ```dart
+/// app.anyOf(
+///   {Method.get, Method.head},
+///   '/dist/**',
+///   StaticHandler.directory(
+///     Directory('dist'),
+///     cacheControl: (ctx, fileInfo) => CacheControlHeader(
+///       maxAge: 31536000,    // 1 year
+///       publicCache: true,
+///       immutable: true,     // Browser won't revalidate
+///     ),
+///   ).asHandler,
+/// );
+/// ```
+///
+/// ### Cache busting
+/// ```dart
+/// final staticDir = Directory('static_files');
+/// final buster = CacheBustingConfig(
+///   mountPrefix: '/static',
+///   fileSystemRoot: staticDir,
+/// );
+///
+/// // Generate cache-busted URLs in your handlers
+/// final assetUrl = await buster.assetPath('/static/logo.svg');
+/// // Returns: /static/logo.svg?v=abc123
+///
+/// // Serve files with cache busting
+/// app.anyOf(
+///   {Method.get, Method.head},
+///   '/static/**',
+///   StaticHandler.directory(
+///     staticDir,
+///     cacheControl: (ctx, fileInfo) => CacheControlHeader(
+///       maxAge: 31536000,  // 1 year - safe with cache busting
+///       publicCache: true,
+///       immutable: true,
+///     ),
+///     cacheBustingConfig: buster,
+///   ).asHandler,
+/// );
+/// ```
+///
+/// ## Serving a Single File
+///
+/// ```dart
+/// app.get(
+///   '/favicon.ico',
+///   StaticHandler.file(
+///     File('assets/favicon.ico'),
+///     cacheControl: (ctx, fileInfo) => CacheControlHeader(maxAge: 86400),
+///   ).asHandler,
+/// );
+/// ```
+///
+/// ## Security Features
+///
+/// The handler includes built-in security protections:
+/// - **Path traversal protection**: Prevents access to files outside the directory
+/// - **Hidden file protection**: Blocks access to files starting with `.`
+/// - **Symbolic link handling**: Safely resolves symlinks within the allowed directory
+///
+/// These protections are automatically applied and cannot be disabled.
 class StaticHandler extends HandlerObject {
   final FileSystemEntity entity;
   final Handler? defaultHandler;

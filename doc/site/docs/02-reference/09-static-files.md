@@ -10,35 +10,28 @@ Static file serving is essential for web applications that need to deliver asset
 
 To serve static files from a directory, use `StaticHandler.directory()`:
 
-```dart
-import 'dart:io';
-import 'package:relic/relic.dart';
-
-final app = RelicApp()
-  ..anyOf(
-    {Method.get, Method.head},
-    '/static/**',
-    StaticHandler.directory(
-      Directory('static_files'),
-      cacheControl: (ctx, fileInfo) => CacheControlHeader(maxAge: 86400),
-    ).asHandler);
+```dart reference
+https://github.com/serverpod/relic/blob/main/example/advanced/static_files_example.dart#L13-L21
 ```
 
-This serves all files from the `static_files` directory under `/static/` URLs with 1-day caching. For example:
+**What this code does:**
 
-- `static_files/hello.txt` → `http://localhost:8080/static/hello.txt`
-- `static_files/logo.svg` → `http://localhost:8080/static/logo.svg`
+1. **HTTP Methods**: `anyOf({Method.get, Method.head}, ...)` handles both GET and HEAD requests, which is standard for static file serving.
+2. **Path Pattern**: `/basic/**` uses a tail matching pattern where `**` captures the remaining path segments to determine which file to serve.
+3. **Static Handler**: `StaticHandler.directory()` creates a handler that serves files from the specified directory with automatic MIME type detection.
+4. **Cache Control**: Sets a cache duration of 86400 seconds (1 day), instructing browsers and CDNs to cache the files.
+
+This serves all files from the `static_files` directory under `/basic/` URLs with 1-day caching. For example:
+
+- `static_files/hello.txt` → `http://localhost:8080/basic/hello.txt`
+- `static_files/logo.svg` → `http://localhost:8080/basic/logo.svg`
 
 ## Single file serving
 
 For serving individual files, use `StaticHandler.file()`:
 
-```dart
-final app = RelicApp()
-  ..get('/logo.svg', StaticHandler.file(
-    File('static_files/logo.svg'),
-    cacheControl: (ctx, fileInfo) => CacheControlHeader(maxAge: 3600),
-  ).asHandler);
+```dart reference
+https://github.com/serverpod/relic/blob/main/example/advanced/static_files_example.dart#L25-L32
 ```
 
 This is useful for specific files like logos, favicons, robots.txt, or other well-known resources.
@@ -51,67 +44,32 @@ Effective caching is crucial for static file performance. Relic provides flexibl
 
 For files that might change frequently:
 
-```dart
-StaticHandler.directory(
-  Directory('static_files'),
-  cacheControl: (ctx, fileInfo) => CacheControlHeader(
-    maxAge: 3600,        // 1 hour
-    publicCache: true,   // Allow CDN caching
-  ),
-)
+```dart reference
+https://github.com/serverpod/relic/blob/main/example/advanced/static_files_example.dart#L36-L47
 ```
 
 ### Long-term caching with immutable assets
 
 For assets that never change (like versioned files):
 
-```dart
-StaticHandler.directory(
-  Directory('static_files'),
-  cacheControl: (ctx, fileInfo) => CacheControlHeader(
-    maxAge: 31536000,    // 1 year
-    publicCache: true,
-    immutable: true,     // Browser won't revalidate
-  ),
-)
+```dart reference
+https://github.com/serverpod/relic/blob/main/example/advanced/static_files_example.dart#L51-L63
 ```
 
 ## Cache busting
 
 Cache busting ensures browsers fetch updated files when your assets change. Relic provides built-in cache busting support:
 
-```dart
-final staticDir = Directory('static_files');
-
-// Configure cache busting
-final buster = CacheBustingConfig(
-  mountPrefix: '/static',
-  fileSystemRoot: staticDir,
-);
-
-final app = RelicApp()
-  // Serve static files with cache busting
-  ..anyOf(
-    {Method.get, Method.head},
-    '/static/**',
-    StaticHandler.directory(
-      staticDir,
-      cacheControl: (ctx, fileInfo) => CacheControlHeader(
-        maxAge: 31536000,  // 1 year - safe with cache busting
-        publicCache: true,
-        immutable: true,
-      ),
-      cacheBustingConfig: buster,
-    ).asHandler,
-  );
+```dart reference
+https://github.com/serverpod/relic/blob/main/example/advanced/static_files_example.dart#L67-L104
 ```
 
 **How cache busting works:**
 
-1. `CacheBustingConfig` generates unique URLs based on file content hashes
-2. `buster.assetPath('/static/hello.txt')` returns something like `/static/hello.txt?v=abc123`
-3. When the file changes, the hash changes, forcing browsers to fetch the new version
-4. You can use aggressive caching (1 year) because the URL changes when content changes
+1. **Configure cache busting** (see the `CacheBustingConfig` instantiation): `CacheBustingConfig` generates unique URLs based on file content hashes.
+2. **Generate cache-busted URLs** (see usage of `buster.assetPath(...)`): `buster.assetPath('/static/hello.txt')` returns something like `/static/hello.txt?v=abc123`.
+3. **Serve with aggressive caching** (see cache control settings for cache busted serving): Use long cache durations (1 year) with `immutable: true` because the URL changes when content changes.
+4. When the file changes, the hash changes, forcing browsers to fetch the new version.
 
 ## Security considerations
 
@@ -121,28 +79,7 @@ final app = RelicApp()
 - **Hidden file protection**: Blocks access to files starting with `.` (like `.env`, `.git`)
 - **Symbolic link handling**: Safely resolves symbolic links within the allowed directory
 
-### Custom security rules
-
-You can add additional security checks:
-
-```dart
-StaticHandler.directory(
-  Directory('static_files'),
-  // Custom file filter for additional security
-  fileFilter: (file) {
-    final name = file.path.split('/').last;
-    
-    // Block backup files and sensitive extensions
-    if (name.endsWith('.bak') || 
-        name.endsWith('.tmp') || 
-        name.endsWith('.env')) {
-      return false;
-    }
-    
-    return true;
-  },
-)
-```
+These protections are automatically applied and ensure that your static file handler only serves files from the intended directory.
 
 :::tip Directory paths
 When serving static files from a directory, always use a tail matching path pattern (`/**`) to capture all files and subdirectories. The tail portion (`/**`) is used to determine the file path within the directory. Without it, the handler won't know which file to serve.
@@ -152,4 +89,4 @@ For single file serving with `StaticHandler.file()`, you don't need the tail pat
 
 ## Examples
 
-- **[Static Files Example](https://github.com/serverpod/relic/blob/main/example/static_files_example.dart)** - Complete example with cache busting
+- **[`static_files_example.dart`](https://github.com/serverpod/relic/blob/main/example/advanced/static_files_example.dart)** - Complete example with cache busting
