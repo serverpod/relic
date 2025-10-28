@@ -88,38 +88,8 @@ Every handler receives a `NewContext` first. This represents a **fresh, unhandle
 
 **Example - Serving HTML:**
 
-```dart
-import 'dart:convert';
-import 'dart:io';
-import 'package:relic/io_adapter.dart';
-import 'package:relic/relic.dart';
-
-/// Serves an HTML home page
-Future<ResponseContext> homeHandler(NewContext ctx) async {
-  // Create an HTML response
-  return ctx.respond(Response.ok(
-    body: Body.fromString(
-      _htmlHomePage(),
-      encoding: utf8,  // Text encoding (UTF-8 is standard)
-      mimeType: MimeType.html,  // Tells browser this is HTML
-    ),
-  ));
-}
-
-String _htmlHomePage() {
-  return '''
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Relic Context Example</title>
-</head>
-<body>
-    <h1>Welcome to Relic!</h1>
-    <p>This is an HTML response created from a NewContext.</p>
-</body>
-</html>
-''';
-}
+```dart reference
+https://github.com/serverpod/relic/blob/main/example/context/context_example.dart#L36-L46
 ```
 
 :::tip When to use async/await
@@ -175,35 +145,8 @@ Use `connect()` for WebSocket handshakes - full-duplex connections where both cl
 
 **Example - WebSocket connection:**
 
-```dart
-import 'dart:developer';  // For log()
-import 'package:relic/relic.dart';
-import 'package:web_socket/web_socket.dart';  // Dart's official WebSocket package
-
-ConnectContext webSocketHandler(NewContext ctx) {
-  return ctx.connect((webSocket) async {
-    log('WebSocket connection established');
-
-    // Send welcome message to client
-    webSocket.sendText('Welcome to Relic WebSocket!');
-
-    // Listen for incoming messages
-    // The 'await for' loop processes events as they arrive
-    await for (final event in webSocket.events) {
-      switch (event) {
-        case TextDataReceived(text: final message):
-          log('Received: $message');
-          webSocket.sendText('Echo: $message');  // Send it back
-        case CloseReceived():
-          log('WebSocket connection closed');
-          break;  // Exit the loop when client disconnects
-        default:
-          // Ignore other event types (BinaryDataReceived, etc.)
-          break;
-      }
-    }
-  });
-}
+```dart reference
+https://github.com/serverpod/relic/blob/main/example/context/context_example.dart#L77-L99
 ```
 
 :::info WebSocket vs HTTP response
@@ -326,34 +269,8 @@ Context properties let you **attach custom data** to a request as it flows throu
 
 Here's a simple example that assigns a unique ID to each request:
 
-```dart
-import 'package:relic/relic.dart';
-
-// 1. Create a ContextProperty to store request-specific data
-final _requestIdProperty = ContextProperty<String>('requestId');
-
-// 2. Middleware that sets a unique ID for each request
-Handler requestIdMiddleware(Handler next) {
-  return (ctx) async {
-    // Set a unique request ID
-    _requestIdProperty[ctx] = 'req_${DateTime.now().millisecondsSinceEpoch}';
-    
-    // Continue to the next handler
-    return await next(ctx);
-  };
-}
-
-// 3. Handler that uses the stored request ID
-Future<ResponseContext> handler(NewContext ctx) async {
-  // Retrieve the request ID that was set by middleware
-  final requestId = _requestIdProperty[ctx];
-  
-  print('Processing request: $requestId');
-  
-  return ctx.respond(Response.ok(
-    body: Body.fromString('Your request ID is: $requestId'),
-  ));
-}
+```dart reference
+https://github.com/serverpod/relic/blob/main/example/context/context_property_example.dart#L6-L30
 ```
 
 **How it works:**

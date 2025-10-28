@@ -28,30 +28,8 @@ Every middleware function receives an inner handler and returns a new handler th
 
 Here's a simple example:
 
-```dart title="middleware_example.dart"
-import 'package:relic/relic.dart';
-
-// A middleware that adds a custom header
-Middleware addHeaderMiddleware() {
-  return (Handler innerHandler) {
-    return (NewContext ctx) async {
-      // Call the inner handler
-      final result = await innerHandler(ctx);
-      
-      // Add custom header to response
-      if (result is ResponseContext) {
-        final newResponse = result.response.copyWith(
-          headers: result.response.headers.transform(
-            (mh) => mh['X-Custom-Header'] = ['Hello from middleware!'],
-          ),
-        );
-        return result.respond(newResponse);
-      }
-      
-      return result;
-    };
-  };
-}
+```dart reference
+https://github.com/serverpod/relic/blob/main/example/middleware/middleware_example.dart#L8-L25
 ```
 
 ## Using middlewares with a router
@@ -230,36 +208,8 @@ CORS is a security feature that allows web applications to make requests to reso
 
 In Relic you can create a CORS middleware that handles preflight requests and adds CORS headers to the response:
 
-```dart title="cors_example.dart"
-Middleware corsMiddleware() {
-  return (Handler innerHandler) {
-    return (NewContext ctx) async {
-      // Handle preflight requests
-      if (ctx.request.method == Method.options) {
-        return ctx.respond(Response.ok(
-          headers: Headers.build((mh) {
-            mh['Access-Control-Allow-Origin'] = ['*'];
-            mh['Access-Control-Allow-Methods'] = ['GET, POST, OPTIONS'];
-          }),
-        ));
-      }
-      
-      // Process normal request and add CORS headers
-      final result = await innerHandler(ctx);
-      
-      if (result is ResponseContext) {
-        final newResponse = result.response.copyWith(
-          headers: result.response.headers.transform(
-            (mh) => mh['Access-Control-Allow-Origin'] = ['*'],
-          ),
-        );
-        return result.respond(newResponse);
-      }
-      
-      return result;
-    };
-  };
-}
+```dart reference
+https://github.com/serverpod/relic/blob/main/example/middleware/cors_example.dart#L8-L40
 ```
 
 ## Pipeline (Legacy Pattern)

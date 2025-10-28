@@ -294,27 +294,8 @@ if (length != null) {
 
 Relic’s stream-based approach makes it practical to handle large payloads without exhausting memory, since data is processed incrementally. This pattern is especially helpful for uploads and transformations that work chunk by chunk.
 
-```dart title="body_example.dart"
-/// File upload handler with size validation
-Future<ResponseContext> uploadHandler(NewContext ctx) async {
-  const maxFileSize = 10 * 1024 * 1024; // 10MB
-  final contentLength = ctx.request.body.contentLength;
-
-  if (contentLength != null && contentLength > maxFileSize) {
-    return ctx.respond(Response.badRequest(
-      body: Body.fromString('File too large'),
-    ));
-  }
-
-  final stream = ctx.request.read();
-  final file = File('uploads/file.bin');
-  await file.parent.create(recursive: true);
-  await stream.forEach((chunk) => file.openWrite().write(chunk));
-
-  return ctx.respond(Response.ok(
-    body: Body.fromString('Upload successful'),
-  ));
-}
+```dart reference
+https://github.com/serverpod/relic/blob/main/example/basic/body_example.dart#L155-L171
 ```
 
 ### One-time read constraint
@@ -362,90 +343,30 @@ Middleware loggingMiddleware(Handler next) {
 
 This example reads JSON input from the request, logs it for observability, and returns a JSON response. The body helper detects JSON automatically, and the explicit MIME type makes the intent clear to both clients and maintainers:
 
-```dart title="body_example.dart"
-/// JSON API handler
-Future<ResponseContext> apiDataHandler(NewContext ctx) async {
-  final jsonData = await ctx.request.readAsString();
-  final data = jsonDecode(jsonData);
-
-  log('Received: $data');
-
-  return ctx.respond(Response.ok(
-    body: Body.fromString(
-      jsonEncode({'result': 'success'}),
-      mimeType: MimeType.json,
-    ),
-  ));
-}
+```dart reference
+https://github.com/serverpod/relic/blob/main/example/basic/body_example.dart#L138-L152
 ```
 
 ### File upload handler
 
 This handler validates the upload size before reading the stream, then writes the content directly to disk. Streaming avoids buffering the entire file in memory and keeps the server responsive under heavy load:
 
-```dart title="body_example.dart"
-/// File upload handler with size validation
-Future<ResponseContext> uploadHandler(NewContext ctx) async {
-  const maxFileSize = 10 * 1024 * 1024; // 10MB
-  final contentLength = ctx.request.body.contentLength;
-
-  if (contentLength != null && contentLength > maxFileSize) {
-    return ctx.respond(Response.badRequest(
-      body: Body.fromString('File too large'),
-    ));
-  }
-
-  final stream = ctx.request.read();
-  final file = File('uploads/file.bin');
-  await file.parent.create(recursive: true);
-  await stream.forEach((chunk) => file.openWrite().write(chunk));
-
-  return ctx.respond(Response.ok(
-    body: Body.fromString('Upload successful'),
-  ));
-}
+```dart reference
+https://github.com/serverpod/relic/blob/main/example/basic/body_example.dart#L155-L171
 ```
 
 ### Image response
 
 Here the server reads an SVG file from disk and returns it as binary data. The SVG type must be set explicitly with `MimeType.parse('image/svg+xml')` so clients receive the correct Content-Type.
 
-```dart title="body_example.dart"
-Future<ResponseContext> imageHandler(NewContext ctx) async {
-  final file = File('example/static_files/logo.svg');
-  final imageBytes = await file.readAsBytes();
-
-  return ctx.respond(Response.ok(
-    body: Body.fromData(
-      imageBytes,
-      mimeType: MimeType.parse('image/svg+xml'),
-    ),
-  ));
-}
+```dart reference
+https://github.com/serverpod/relic/blob/main/example/basic/body_example.dart#L174-L186
 ```
 
 ### Streaming response
 
 This endpoint produces a stream of JSON lines to demonstrate chunked transfer encoding. Clients can start processing data as soon as it becomes available, which is useful for progress updates and long-running computations:
 
-```dart title="body_example.dart"
-/// Streaming response handler with chunked transfer encoding
-Future<ResponseContext> streamHandler(NewContext ctx) async {
-  Stream<Uint8List> generateLargeDataset() async* {
-    for (var i = 0; i < 100; i++) {
-      await Future<void>.delayed(Duration(milliseconds: 50));
-      yield utf8.encode('{"item": $i}\n');
-    }
-  }
-
-  final dataStream = generateLargeDataset();
-
-  return ctx.respond(Response.ok(
-    body: Body.fromDataStream(
-      dataStream,
-      mimeType: MimeType.json,
-      // contentLength omitted for chunked encoding
-    ),
-  ));
-}
+```dart reference
+https://github.com/serverpod/relic/blob/main/example/basic/body_example.dart#L189-L208
 ```
