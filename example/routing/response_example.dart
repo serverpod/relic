@@ -1,5 +1,3 @@
-// ignore_for_file: avoid_log, prefer_final_parameters
-
 import 'dart:developer';
 import 'package:relic/io_adapter.dart';
 import 'package:relic/relic.dart';
@@ -9,14 +7,14 @@ Future<void> main() async {
   final app = RelicApp();
 
   // Success response example
-  app.get('/status', (ctx) {
+  app.get('/status', (final ctx) {
     return ctx.respond(Response.ok(
       body: Body.fromString('Status is Ok'),
     ));
   });
 
   // Bad request example
-  app.post('/api/users', (ctx) async {
+  app.post('/api/users', (final ctx) async {
     try {
       throw 'Invalid JSON';
     } catch (e) {

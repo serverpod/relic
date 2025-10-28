@@ -212,7 +212,7 @@ For a comprehensive list of HTTP headers, check out [Mozilla's HTTP Headers docu
 
 ## Examples
 
-- **[`response_example.dart`](https://github.com/serverpod/relic/blob/main/example/response_example.dart)** - Example covering responses
+- **[`response_example.dart`](https://github.com/serverpod/relic/blob/main/example/routing/response_example.dart)** - Example covering responses
 
 ## Summary
 

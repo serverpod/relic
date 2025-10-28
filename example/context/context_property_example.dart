@@ -1,5 +1,3 @@
-// ignore_for_file: prefer_final_parameters
-
 import 'dart:developer';
 
 import 'package:relic/io_adapter.dart';
@@ -9,8 +7,8 @@ import 'package:relic/relic.dart';
 final _requestIdProperty = ContextProperty<String>('requestId');
 
 // Middleware that sets a unique ID for each request
-Handler requestIdMiddleware(Handler next) {
-  return (ctx) async {
+Handler requestIdMiddleware(final Handler next) {
+  return (final ctx) async {
     // Set a unique request ID
     _requestIdProperty[ctx] = 'req_${DateTime.now().millisecondsSinceEpoch}';
 
@@ -20,7 +18,7 @@ Handler requestIdMiddleware(Handler next) {
 }
 
 // Handler that uses the stored request ID
-Future<ResponseContext> handler(NewContext ctx) async {
+Future<ResponseContext> handler(final NewContext ctx) async {
   // Retrieve the request ID that was set by middleware
   final requestId = _requestIdProperty[ctx];
 

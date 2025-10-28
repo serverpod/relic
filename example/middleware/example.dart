@@ -1,6 +1,5 @@
-// ignore_for_file: avoid_print
-
 import 'dart:async';
+import 'dart:developer';
 import 'dart:isolate';
 
 import 'package:http/http.dart' as http;
@@ -33,7 +32,7 @@ Future<void> main() async {
     },
   );
 
-  print(response.body);
+  log(response.body);
 
   server.kill(); // stop server again (a bit blunt)
 }
