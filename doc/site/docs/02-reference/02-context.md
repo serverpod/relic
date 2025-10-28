@@ -113,26 +113,8 @@ When you call `ctx.respond()`, you transition to a `ResponseContext`. This repre
 
 **Example - JSON API response:**
 
-```dart
-import 'dart:convert';  // For jsonEncode
-import 'package:relic/relic.dart';
-
-/// Returns JSON data
-Future<ResponseContext> apiHandler(NewContext ctx) async {
-  // Create a Dart Map that will be converted to JSON
-  final data = {
-    'message': 'Hello from Relic API!',
-    'timestamp': DateTime.now().toIso8601String(),
-    'path': ctx.request.url.path,
-  };
-
-  return ctx.respond(Response.ok(
-    body: Body.fromString(
-      jsonEncode(data),  // Convert Map to JSON string
-      mimeType: MimeType.json,  // Set Content-Type: application/json
-    ),
-  ));
-}
+```dart reference
+https://github.com/serverpod/relic/blob/main/example/context/context_example.dart#L48-L60
 ```
 
 ### ConnectContext - WebSocket connections
@@ -170,48 +152,8 @@ All context types provide access to the original HTTP request through `ctx.reque
 
 The request body is a `Stream<Uint8List>`. Use `readAsString()` for text data or `readAsBytes()` for binary data.
 
-```dart
-import 'dart:convert';
-import 'package:relic/relic.dart';
-
-Future<ResponseContext> dataHandler(NewContext ctx) async {
-  final request = ctx.request;
-
-  // Access basic HTTP information
-  final method = request.method; // 'GET', 'POST', etc.
-  final path = request.url.path; // '/api/users'
-  final query = request.url.query; // 'limit=10&offset=0'
-
-  // Access headers (these are typed accessors from the Headers class)
-  final authHeader = request.headers.authorization; // 'Bearer token123' or null
-  final contentType = request.body.bodyType
-      ?.mimeType; // appljson, octet-stream, plainText, etc. or null
-
-  // Read request body for POST with JSON
-  if (method == Method.post && contentType == MimeType.json) {
-    try {
-      final bodyString = await request.readAsString();
-      final jsonData = json.decode(bodyString) as Map<String, dynamic>;
-
-      return ctx.respond(Response.ok(
-        body: Body.fromString('Received: ${jsonData['name']}'),
-      ));
-    } catch (e) {
-      return ctx.respond(
-        Response.badRequest(
-          body: Body.fromString('Invalid JSON'),
-        ),
-      );
-    }
-  }
-
-  // Return bad request if the content type is not JSON
-  return ctx.respond(
-    Response.badRequest(
-      body: Body.fromString('Invalid Request'),
-    ),
-  );
-}
+```dart reference
+https://github.com/serverpod/relic/blob/main/example/context/context_example.dart#L118-L158
 ```
 
 :::warning Reading request bodies

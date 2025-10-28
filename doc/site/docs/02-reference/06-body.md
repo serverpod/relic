@@ -300,9 +300,9 @@ https://github.com/serverpod/relic/blob/main/example/basic/body_example.dart#L15
 
 ### One-time read constraint
 
-To keep processing predictable and avoid subtle bugs, bodies enforce a one-time read rule. Once a body’s stream has been consumed, subsequent reads throw an error, which makes improper use immediately visible during development.
+To keep processing predictable and avoid subtle bugs, bodies enforce a one-time read rule. Once a body's stream has been consumed, subsequent reads throw an error, which makes improper use immediately visible during development.
 
-```dart title="body_example.dart"
+```dart
 final body = Body.fromString('test');
 
 // First read - OK
@@ -320,7 +320,7 @@ try {
 
 If you need to inspect content in middleware and still pass it along to downstream handlers, create a new message with a fresh body. This pattern preserves the one-time read rule while allowing logging or validation before the main handler runs:
 
-```dart title="body_example.dart"
+```dart
 Middleware loggingMiddleware(Handler next) {
   return (ctx) async {
     // Read body content

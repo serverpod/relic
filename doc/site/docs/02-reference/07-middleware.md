@@ -159,21 +159,8 @@ Middleware layers wrap each other like an onion. Each layer may:
 - Rewrite parts of the request before calling `next()` using `ctx.withRequest(newRequest)`.
 - Prefer attaching derived/computed data to the context via `ContextProperty` rather than rewriting the request.
 
-```dart
-// Early return (short-circuit)
-Middleware authMiddleware() {
-  return (Handler next) {
-    return (NewContext ctx) async {
-      final apiKey = ctx.request.headers['X-API-Key']?.first;
-      if (apiKey != 'secret123') {
-        return ctx.respond(Response.unauthorized(
-          body: Body.fromString('Invalid API key'),
-        )); // short-circuit: no next()
-      }
-      return await next(ctx);
-    };
-  };
-}
+```dart reference
+https://github.com/serverpod/relic/blob/main/example/middleware/auth_example.dart#L6-L22
 ```
 
 :::warning Avoid rewriting request.path in router.use middleware
@@ -184,16 +171,16 @@ When middleware is attached with `router.use(...)`, the request has already been
 
 This is the signature that all middleware functions follow:
 
-```dart title="middleware.dart"
+```dart
 Middleware myMiddleware() {
   return (Handler innerHandler) {
     return (NewContext ctx) async {
       // Before request processing
-      
+
       final result = await innerHandler(ctx);
-      
+
       // After request processing
-      
+
       return result;
     };
   };
