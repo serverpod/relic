@@ -1,7 +1,7 @@
 /// This file is auto-generated.
 library;
 
-import 'package:cli_tools/better_command_runner.dart' show CompletionTarget;
+import 'package:cli_tools/better_command_runner.dart' show CompletionTool;
 
 const String _completionScript = r'''
 # yaml-language-server: $schema=https://carapace.sh/schemas/command.json
@@ -47,6 +47,6 @@ commands:
 
 /// Embedded script for command line completion for `carapace`.
 const completionScriptCarapace = (
-  target: CompletionTarget.carapace,
+  tool: CompletionTool.carapace,
   script: _completionScript,
 );
