@@ -8,9 +8,9 @@ final class ClearSiteDataHeader extends WildcardListHeader<ClearSiteDataType> {
   static const codec = HeaderCodec(_parse, _encode);
 
   /// Constructs an instance allowing specific data types to be cleared.
-  ClearSiteDataHeader.dataTypes(
-      {required final List<ClearSiteDataType> dataTypes})
-      : super(dataTypes);
+  ClearSiteDataHeader.dataTypes({
+    required final List<ClearSiteDataType> dataTypes,
+  }) : super(dataTypes);
 
   /// Constructs an instance allowing all data types to be cleared (`*`).
   const ClearSiteDataHeader.wildcard() : super.wildcard();
@@ -25,12 +25,13 @@ final class ClearSiteDataHeader extends WildcardListHeader<ClearSiteDataType> {
 
   static ClearSiteDataHeader _parse(final Iterable<String> values) {
     // Custom parsing logic for ClearSiteData with quote removal
-    final splitValues = values
-        .expand((final value) => value.split(','))
-        .map((final s) => s.trim().replaceAll('"', ''))
-        .where((final s) => s.isNotEmpty)
-        .toSet()
-        .toList();
+    final splitValues =
+        values
+            .expand((final value) => value.split(','))
+            .map((final s) => s.trim().replaceAll('"', ''))
+            .where((final s) => s.isNotEmpty)
+            .toSet()
+            .toList();
 
     if (splitValues.isEmpty) {
       throw const FormatException('Value cannot be empty');
@@ -42,7 +43,8 @@ final class ClearSiteDataHeader extends WildcardListHeader<ClearSiteDataType> {
 
     if (splitValues.length > 1 && splitValues.contains('*')) {
       throw const FormatException(
-          'Wildcard (*) cannot be used with other values');
+        'Wildcard (*) cannot be used with other values',
+      );
     }
 
     final dataTypes = splitValues.map(ClearSiteDataType.parse).toList();
@@ -56,7 +58,7 @@ final class ClearSiteDataHeader extends WildcardListHeader<ClearSiteDataType> {
       return [
         header.dataTypes
             .map((final dataType) => '"${dataType.value}"')
-            .join(', ')
+            .join(', '),
       ];
     }
   }

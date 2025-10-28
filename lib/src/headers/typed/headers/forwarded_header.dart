@@ -133,9 +133,10 @@ final class ForwardedElement {
     this.proto,
     this.host,
     final Map<String, String>? extensions,
-  }) : extensions = extensions != null && extensions.isNotEmpty
-            ? CaseInsensitiveMap<String>.from(extensions)
-            : null;
+  }) : extensions =
+           extensions != null && extensions.isNotEmpty
+               ? CaseInsensitiveMap<String>.from(extensions)
+               : null;
 
   @override
   bool operator ==(final Object other) =>
@@ -145,21 +146,23 @@ final class ForwardedElement {
           by == other.by &&
           proto == other.proto &&
           host == other.host &&
-          const MapEquality<String, String>()
-              .equals(extensions, other.extensions);
+          const MapEquality<String, String>().equals(
+            extensions,
+            other.extensions,
+          );
 
   @override
   int get hashCode => Object.hashAll([
-        forwardedFor,
-        by,
-        proto,
-        host,
-        ...[
-          extensions != null
-              ? const MapEquality<String, String>().hash(extensions)
-              : 0
-        ]
-      ]);
+    forwardedFor,
+    by,
+    proto,
+    host,
+    ...[
+      extensions != null
+          ? const MapEquality<String, String>().hash(extensions)
+          : 0,
+    ],
+  ]);
 
   @override
   String toString() =>
@@ -182,8 +185,8 @@ final class ForwardedHeader {
   final List<ForwardedElement> elements;
 
   ForwardedHeader(final List<ForwardedElement> elements)
-      : assert(elements.isNotEmpty),
-        elements = List.unmodifiable(elements);
+    : assert(elements.isNotEmpty),
+      elements = List.unmodifiable(elements);
 
   factory ForwardedHeader.parse(final Iterable<String> values) {
     final splitValues = values.splitTrimAndFilterUnique();
@@ -212,9 +215,10 @@ final class ForwardedHeader {
         if (parts[0].isEmpty) continue;
         if (parts[1].isEmpty) continue;
 
-        final key = parts[0]
-            .trim()
-            .toLowerCase(); // Parameter names are case-insensitive
+        final key =
+            parts[0]
+                .trim()
+                .toLowerCase(); // Parameter names are case-insensitive
         String value = parts[1].trim();
         value = _unquote(value); // Unquote if it's a quoted-string
 
@@ -242,12 +246,15 @@ final class ForwardedHeader {
           protoStr != null ||
           hostStr != null ||
           extensionsMap.isNotEmpty) {
-        allElements.add(ForwardedElement(
+        allElements.add(
+          ForwardedElement(
             forwardedFor: forNode,
             by: byNode,
             proto: protoStr,
             host: hostStr,
-            extensions: extensionsMap));
+            extensions: extensionsMap,
+          ),
+        );
       }
     }
 
@@ -295,8 +302,10 @@ final class ForwardedHeader {
   bool operator ==(final Object other) =>
       identical(this, other) ||
       other is ForwardedHeader &&
-          const ListEquality<ForwardedElement>()
-              .equals(elements, other.elements);
+          const ListEquality<ForwardedElement>().equals(
+            elements,
+            other.elements,
+          );
 
   @override
   int get hashCode => Object.hashAll(elements);

@@ -12,30 +12,35 @@ void main() {
 
   setUp(() async {
     await d.file('test_file.txt', fileContent).create();
-    handler = StaticHandler.directory(Directory(d.sandbox),
-        cacheControl: (final _, final __) => null).asHandler;
+    handler =
+        StaticHandler.directory(
+          Directory(d.sandbox),
+          cacheControl: (_, _) => null,
+        ).asHandler;
   });
 
-  test(
-      'Given an If-Modified-Since header with a matching date, '
+  test('Given an If-Modified-Since header with a matching date, '
       'when a request is made for the file, '
       'then a 304 Not Modified status is returned with no body', () async {
     final initialResponse = await makeRequest(handler, '/test_file.txt');
     final lastModified = initialResponse.headers.lastModified!;
 
-    final headers =
-        Headers.build((final mh) => mh.ifModifiedSince = lastModified);
+    final headers = Headers.build(
+      (final mh) => mh.ifModifiedSince = lastModified,
+    );
 
-    final response =
-        await makeRequest(handler, '/test_file.txt', headers: headers);
+    final response = await makeRequest(
+      handler,
+      '/test_file.txt',
+      headers: headers,
+    );
 
     expect(response.statusCode, HttpStatus.notModified);
     expect(response.body.contentLength, 0);
     expect(await response.readAsString(), isEmpty);
   });
 
-  test(
-      'Given an If-Modified-Since header with an earlier date, '
+  test('Given an If-Modified-Since header with an earlier date, '
       'when a request is made for the file, '
       'then a 200 OK status is returned with the full body', () async {
     final initialResponse = await makeRequest(handler, '/test_file.txt');
@@ -44,19 +49,22 @@ void main() {
     // Create an earlier date, simulating the client's cached date
     final earlierDate = lastModified.subtract(const Duration(days: 1));
 
-    final headers =
-        Headers.build((final mh) => mh.ifModifiedSince = earlierDate);
+    final headers = Headers.build(
+      (final mh) => mh.ifModifiedSince = earlierDate,
+    );
 
-    final response =
-        await makeRequest(handler, '/test_file.txt', headers: headers);
+    final response = await makeRequest(
+      handler,
+      '/test_file.txt',
+      headers: headers,
+    );
 
     expect(response.statusCode, HttpStatus.ok);
     expect(response.body.contentLength, fileContent.length);
     expect(response.readAsString(), completion(fileContent));
   });
 
-  test(
-      'Given an If-Modified-Since header with a future date, '
+  test('Given an If-Modified-Since header with a future date, '
       'when a request is made for the file, '
       'then a 304 Not Modified status is returned with no body', () async {
     final initialResponse = await makeRequest(handler, '/test_file.txt');
@@ -65,11 +73,15 @@ void main() {
     // Create a future date, simulating a client with a somehow "newer" cached date
     final futureDate = lastModified.add(const Duration(days: 1));
 
-    final headers =
-        Headers.build((final mh) => mh.ifModifiedSince = futureDate);
+    final headers = Headers.build(
+      (final mh) => mh.ifModifiedSince = futureDate,
+    );
 
-    final response =
-        await makeRequest(handler, '/test_file.txt', headers: headers);
+    final response = await makeRequest(
+      handler,
+      '/test_file.txt',
+      headers: headers,
+    );
 
     expect(response.statusCode, HttpStatus.notModified);
     expect(response.body.contentLength, 0);

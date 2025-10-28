@@ -15,8 +15,8 @@ final class CookieHeader {
 
   /// Constructs a [CookieHeader] instance with the specified cookies.
   CookieHeader({required final List<Cookie> cookies})
-      : assert(cookies.isNotEmpty),
-        cookies = List.unmodifiable(cookies);
+    : assert(cookies.isNotEmpty),
+      cookies = List.unmodifiable(cookies);
 
   /// Parses the Cookie header value and returns a [CookieHeader] instance.
   ///
@@ -35,7 +35,8 @@ final class CookieHeader {
 
     if (names.length != uniqueNames.length) {
       throw const FormatException(
-          'Supplied multiple Name and Value attributes');
+        'Supplied multiple Name and Value attributes',
+      );
     }
 
     return CookieHeader(cookies: cookies);
@@ -75,11 +76,9 @@ class Cookie {
   /// The value of the cookie.
   final String value;
 
-  Cookie({
-    required final String name,
-    required final String value,
-  })  : name = validateCookieName(name),
-        value = validateCookieValue(value);
+  Cookie({required final String name, required final String value})
+    : name = validateCookieName(name),
+      value = validateCookieValue(value);
 
   factory Cookie.parse(final String value) {
     final splitValue = value.split('=');
@@ -87,10 +86,7 @@ class Cookie {
       throw const FormatException('Invalid cookie format');
     }
 
-    return Cookie(
-      name: splitValue.first.trim(),
-      value: splitValue.last.trim(),
-    );
+    return Cookie(name: splitValue.first.trim(), value: splitValue.last.trim());
   }
 
   /// Converts the [Cookie] instance into a string representation suitable for HTTP headers.

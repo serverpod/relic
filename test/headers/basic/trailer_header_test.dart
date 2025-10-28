@@ -26,29 +26,28 @@ void main() {
             headers: {'trailer': ''},
             touchHeaders: (final h) => h.trailer,
           ),
-          throwsA(isA<BadRequestException>().having(
-            (final e) => e.message,
-            'message',
-            contains('Value cannot be empty'),
-          )),
+          throwsA(
+            isA<BadRequestException>().having(
+              (final e) => e.message,
+              'message',
+              contains('Value cannot be empty'),
+            ),
+          ),
         );
       },
     );
 
-    test(
-      'when a Trailer header with an empty value is passed '
-      'then the server does not respond with a bad request if the headers '
-      'is not actually used',
-      () async {
-        final headers = await getServerRequestHeaders(
-          server: server,
-          touchHeaders: (final _) {},
-          headers: {'trailer': ''},
-        );
+    test('when a Trailer header with an empty value is passed '
+        'then the server does not respond with a bad request if the headers '
+        'is not actually used', () async {
+      final headers = await getServerRequestHeaders(
+        server: server,
+        touchHeaders: (_) {},
+        headers: {'trailer': ''},
+      );
 
-        expect(headers, isNotNull);
-      },
-    );
+      expect(headers, isNotNull);
+    });
 
     test(
       'when a valid Trailer header is passed then it should parse correctly',
@@ -91,10 +90,7 @@ void main() {
           touchHeaders: (final h) => h.trailer,
         );
 
-        expect(
-          headers.trailer,
-          equals(['custom-header', 'AnotherHeader']),
-        );
+        expect(headers.trailer, equals(['custom-header', 'AnotherHeader']));
       },
     );
 
@@ -126,7 +122,7 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final _) {},
+          touchHeaders: (_) {},
           headers: {'trailer': 'custom-header'},
         );
 

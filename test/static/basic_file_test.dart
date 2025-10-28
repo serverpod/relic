@@ -30,122 +30,166 @@ void main() {
       d.file('test.txt', 'test txt content'),
       d.file('with space.txt', 'with space content'),
       d.file('header_bytes_test_image', base64Decode(pngBytesContent)),
-      d.file('header_bytes_test_webp', base64Decode(webpBytesContent))
+      d.file('header_bytes_test_webp', base64Decode(webpBytesContent)),
     ]).create();
   });
 
-  test('Given a root file when accessed then it returns the file content',
-      () async {
-    final handler = StaticHandler.directory(Directory(d.sandbox),
-        cacheControl: (final _, final __) => null).asHandler;
+  test(
+    'Given a root file when accessed then it returns the file content',
+    () async {
+      final handler =
+          StaticHandler.directory(
+            Directory(d.sandbox),
+            cacheControl: (_, _) => null,
+          ).asHandler;
 
-    final response = await makeRequest(handler, '/root.txt');
-    expect(response.statusCode, HttpStatus.ok);
-    expect(response.body.contentLength, 8);
-    expect(response.readAsString(), completion('root txt'));
-  });
+      final response = await makeRequest(handler, '/root.txt');
+      expect(response.statusCode, HttpStatus.ok);
+      expect(response.body.contentLength, 8);
+      expect(response.readAsString(), completion('root txt'));
+    },
+  );
 
   test(
-      'Given a HEAD request when made then it returns the correct headers without body',
-      () async {
-    final handler = StaticHandler.directory(Directory(d.sandbox),
-        cacheControl: (final _, final __) => null).asHandler;
+    'Given a HEAD request when made then it returns the correct headers without body',
+    () async {
+      final handler =
+          StaticHandler.directory(
+            Directory(d.sandbox),
+            cacheControl: (_, _) => null,
+          ).asHandler;
 
-    final response =
-        await makeRequest(handler, '/root.txt', method: Method.head);
-    expect(response.statusCode, HttpStatus.ok);
-    expect(response.body.contentLength, 8);
-    expect(await response.readAsString(), isEmpty);
-  });
-
-  test(
-      'Given a root file with space when accessed then it returns the file content',
-      () async {
-    final handler = StaticHandler.directory(Directory(d.sandbox),
-        cacheControl: (final _, final __) => null).asHandler;
-
-    final response = await makeRequest(handler, '/files/with%20space.txt');
-    expect(response.statusCode, HttpStatus.ok);
-    expect(response.body.contentLength, 18);
-    expect(response.readAsString(), completion('with space content'));
-  });
+      final response = await makeRequest(
+        handler,
+        '/root.txt',
+        method: Method.head,
+      );
+      expect(response.statusCode, HttpStatus.ok);
+      expect(response.body.contentLength, 8);
+      expect(await response.readAsString(), isEmpty);
+    },
+  );
 
   test(
-      'Given a root file with unencoded space when accessed then it returns the file content',
-      () async {
-    final handler = StaticHandler.directory(Directory(d.sandbox),
-        cacheControl: (final _, final __) => null).asHandler;
+    'Given a root file with space when accessed then it returns the file content',
+    () async {
+      final handler =
+          StaticHandler.directory(
+            Directory(d.sandbox),
+            cacheControl: (_, _) => null,
+          ).asHandler;
 
-    final response = await makeRequest(handler, '/files/with space.txt');
-    expect(response.statusCode, HttpStatus.ok);
-    expect(response.body.contentLength, 18);
-    expect(response.readAsString(), completion('with space content'));
-  });
-
-  test(
-      'Given a file under directory when accessed then it returns the file content',
-      () async {
-    final handler = StaticHandler.directory(Directory(d.sandbox),
-        cacheControl: (final _, final __) => null).asHandler;
-
-    final response = await makeRequest(handler, '/files/test.txt');
-    expect(response.statusCode, HttpStatus.ok);
-    expect(response.body.contentLength, 16);
-    expect(response.readAsString(), completion('test txt content'));
-  });
-
-  test('Given a non-existent file when accessed then it returns a 404 status',
-      () async {
-    final handler = StaticHandler.directory(Directory(d.sandbox),
-        cacheControl: (final _, final __) => null).asHandler;
-
-    final response = await makeRequest(handler, '/not_here.txt');
-    expect(response.statusCode, HttpStatus.notFound);
-  });
+      final response = await makeRequest(handler, '/files/with%20space.txt');
+      expect(response.statusCode, HttpStatus.ok);
+      expect(response.body.contentLength, 18);
+      expect(response.readAsString(), completion('with space content'));
+    },
+  );
 
   test(
-      'Given a file when accessed then it returns the correct last modified date',
-      () async {
-    final handler = StaticHandler.directory(Directory(d.sandbox),
-        cacheControl: (final _, final __) => null).asHandler;
+    'Given a root file with unencoded space when accessed then it returns the file content',
+    () async {
+      final handler =
+          StaticHandler.directory(
+            Directory(d.sandbox),
+            cacheControl: (_, _) => null,
+          ).asHandler;
 
-    final rootPath = p.join(d.sandbox, 'root.txt');
-    final modified = File(rootPath).statSync().modified.toUtc();
+      final response = await makeRequest(handler, '/files/with space.txt');
+      expect(response.statusCode, HttpStatus.ok);
+      expect(response.body.contentLength, 18);
+      expect(response.readAsString(), completion('with space content'));
+    },
+  );
 
-    final response = await makeRequest(handler, '/root.txt');
-    expect(
-      response.headers.lastModified,
-      atSameTimeToSecond(modified),
-    );
-  });
+  test(
+    'Given a file under directory when accessed then it returns the file content',
+    () async {
+      final handler =
+          StaticHandler.directory(
+            Directory(d.sandbox),
+            cacheControl: (_, _) => null,
+          ).asHandler;
+
+      final response = await makeRequest(handler, '/files/test.txt');
+      expect(response.statusCode, HttpStatus.ok);
+      expect(response.body.contentLength, 16);
+      expect(response.readAsString(), completion('test txt content'));
+    },
+  );
+
+  test(
+    'Given a non-existent file when accessed then it returns a 404 status',
+    () async {
+      final handler =
+          StaticHandler.directory(
+            Directory(d.sandbox),
+            cacheControl: (_, _) => null,
+          ).asHandler;
+
+      final response = await makeRequest(handler, '/not_here.txt');
+      expect(response.statusCode, HttpStatus.notFound);
+    },
+  );
+
+  test(
+    'Given a file when accessed then it returns the correct last modified date',
+    () async {
+      final handler =
+          StaticHandler.directory(
+            Directory(d.sandbox),
+            cacheControl: (_, _) => null,
+          ).asHandler;
+
+      final rootPath = p.join(d.sandbox, 'root.txt');
+      final modified = File(rootPath).statSync().modified.toUtc();
+
+      final response = await makeRequest(handler, '/root.txt');
+      expect(response.headers.lastModified, atSameTimeToSecond(modified));
+    },
+  );
 
   group('Given if modified since', () {
-    test('when it is the same as last modified then it returns not modified',
-        () async {
-      final handler = StaticHandler.directory(Directory(d.sandbox),
-          cacheControl: (final _, final __) => null).asHandler;
+    test(
+      'when it is the same as last modified then it returns not modified',
+      () async {
+        final handler =
+            StaticHandler.directory(
+              Directory(d.sandbox),
+              cacheControl: (_, _) => null,
+            ).asHandler;
 
-      final rootPath = p.join(d.sandbox, 'root.txt');
-      final modified = File(rootPath).statSync().modified.toUtc();
+        final rootPath = p.join(d.sandbox, 'root.txt');
+        final modified = File(rootPath).statSync().modified.toUtc();
 
-      final headers =
-          Headers.build((final mh) => mh.ifModifiedSince = modified);
+        final headers = Headers.build(
+          (final mh) => mh.ifModifiedSince = modified,
+        );
 
-      final response =
-          await makeRequest(handler, '/root.txt', headers: headers);
-      expect(response.statusCode, HttpStatus.notModified);
-      expect(response.body.contentLength, 0);
-    });
+        final response = await makeRequest(
+          handler,
+          '/root.txt',
+          headers: headers,
+        );
+        expect(response.statusCode, HttpStatus.notModified);
+        expect(response.body.contentLength, 0);
+      },
+    );
 
     test('when it is before last modified then it returns the file', () async {
-      final handler = StaticHandler.directory(Directory(d.sandbox),
-          cacheControl: (final _, final __) => null).asHandler;
+      final handler =
+          StaticHandler.directory(
+            Directory(d.sandbox),
+            cacheControl: (_, _) => null,
+          ).asHandler;
 
       final rootPath = p.join(d.sandbox, 'root.txt');
       final modified = File(rootPath).statSync().modified.toUtc();
 
-      final headers = Headers.build((final mh) =>
-          mh.ifModifiedSince = modified.subtract(const Duration(seconds: 1)));
+      final headers = Headers.build(
+        (final mh) =>
+            mh.ifModifiedSince = modified.subtract(const Duration(seconds: 1)),
+      );
 
       final response = await makeRequest(
         handler,
@@ -153,66 +197,77 @@ void main() {
         headers: headers,
       );
       expect(response.statusCode, HttpStatus.ok);
-      expect(
-        response.headers.lastModified,
-        atSameTimeToSecond(modified),
-      );
-    });
-
-    test('when it is after last modified then it returns not modified',
-        () async {
-      final handler = StaticHandler.directory(Directory(d.sandbox),
-          cacheControl: (final _, final __) => null).asHandler;
-
-      final rootPath = p.join(d.sandbox, 'root.txt');
-      final modified = File(rootPath).statSync().modified.toUtc();
-
-      final headers =
-          Headers.build((final mh) => mh.ifModifiedSince = modified);
-
-      final response = await makeRequest(
-        handler,
-        '/root.txt',
-        headers: headers,
-      );
-
-      expect(response.statusCode, HttpStatus.notModified);
-      expect(response.body.contentLength, 0);
+      expect(response.headers.lastModified, atSameTimeToSecond(modified));
     });
 
     test(
-        'when file is modified after the request then it returns the updated file',
-        () async {
-      final handler = StaticHandler.directory(Directory(d.sandbox),
-          cacheControl: (final _, final __) => null).asHandler;
-      final rootPath = p.join(d.sandbox, 'root.txt');
+      'when it is after last modified then it returns not modified',
+      () async {
+        final handler =
+            StaticHandler.directory(
+              Directory(d.sandbox),
+              cacheControl: (_, _) => null,
+            ).asHandler;
 
-      final response1 = await makeRequest(handler, '/root.txt');
-      final originalModificationDate = response1.headers.lastModified!;
+        final rootPath = p.join(d.sandbox, 'root.txt');
+        final modified = File(rootPath).statSync().modified.toUtc();
 
-      await Future<void>.delayed(const Duration(seconds: 2));
-      File(rootPath).writeAsStringSync('updated root txt');
+        final headers = Headers.build(
+          (final mh) => mh.ifModifiedSince = modified,
+        );
 
-      final headers = Headers.build(
-          (final mh) => mh.ifModifiedSince = originalModificationDate);
+        final response = await makeRequest(
+          handler,
+          '/root.txt',
+          headers: headers,
+        );
 
-      final response2 = await makeRequest(
-        handler,
-        '/root.txt',
-        headers: headers,
-      );
-      expect(response2.statusCode, HttpStatus.ok);
-      expect(
-        response2.headers.lastModified!.millisecondsSinceEpoch,
-        greaterThan(originalModificationDate.millisecondsSinceEpoch),
-      );
-    });
+        expect(response.statusCode, HttpStatus.notModified);
+        expect(response.body.contentLength, 0);
+      },
+    );
+
+    test(
+      'when file is modified after the request then it returns the updated file',
+      () async {
+        final handler =
+            StaticHandler.directory(
+              Directory(d.sandbox),
+              cacheControl: (_, _) => null,
+            ).asHandler;
+        final rootPath = p.join(d.sandbox, 'root.txt');
+
+        final response1 = await makeRequest(handler, '/root.txt');
+        final originalModificationDate = response1.headers.lastModified!;
+
+        await Future<void>.delayed(const Duration(seconds: 2));
+        File(rootPath).writeAsStringSync('updated root txt');
+
+        final headers = Headers.build(
+          (final mh) => mh.ifModifiedSince = originalModificationDate,
+        );
+
+        final response2 = await makeRequest(
+          handler,
+          '/root.txt',
+          headers: headers,
+        );
+        expect(response2.statusCode, HttpStatus.ok);
+        expect(
+          response2.headers.lastModified!.millisecondsSinceEpoch,
+          greaterThan(originalModificationDate.millisecondsSinceEpoch),
+        );
+      },
+    );
   });
 
   group('Given content type', () {
     test('when accessing root.txt then it should be text/plain', () async {
-      final handler = StaticHandler.directory(Directory(d.sandbox),
-          cacheControl: (final _, final __) => null).asHandler;
+      final handler =
+          StaticHandler.directory(
+            Directory(d.sandbox),
+            cacheControl: (_, _) => null,
+          ).asHandler;
 
       final response = await makeRequest(handler, '/root.txt');
       expect(response.mimeType?.primaryType, 'text');
@@ -220,58 +275,76 @@ void main() {
     });
 
     test('when accessing index.html then it should be text/html', () async {
-      final handler = StaticHandler.directory(Directory(d.sandbox),
-          cacheControl: (final _, final __) => null).asHandler;
+      final handler =
+          StaticHandler.directory(
+            Directory(d.sandbox),
+            cacheControl: (_, _) => null,
+          ).asHandler;
 
       final response = await makeRequest(handler, '/index.html');
       expect(response.mimeType?.primaryType, 'text');
       expect(response.mimeType?.subType, 'html');
     });
 
-    test(
-        'when accessing random.unknown, '
+    test('when accessing random.unknown, '
         'then it should be application/octet-stream', () async {
-      final handler = StaticHandler.directory(Directory(d.sandbox),
-          cacheControl: (final _, final __) => null).asHandler;
+      final handler =
+          StaticHandler.directory(
+            Directory(d.sandbox),
+            cacheControl: (_, _) => null,
+          ).asHandler;
 
       final response = await makeRequest(handler, '/random.unknown');
       expect(response.mimeType, MimeType.octetStream);
     });
 
-    test('when accessing header_bytes_test_image then it should be image/png',
-        () async {
-      final handler = StaticHandler.directory(Directory(d.sandbox),
-          cacheControl: (final _, final __) => null).asHandler;
+    test(
+      'when accessing header_bytes_test_image then it should be image/png',
+      () async {
+        final handler =
+            StaticHandler.directory(
+              Directory(d.sandbox),
+              cacheControl: (_, _) => null,
+            ).asHandler;
 
-      final response =
-          await makeRequest(handler, '/files/header_bytes_test_image');
-      expect(response.mimeType?.primaryType, 'image');
-      expect(response.mimeType?.subType, 'png');
-    });
-
-    test('when accessing header_bytes_test_webp then it should be image/webp',
-        () async {
-      final resolver = mime.MimeTypeResolver()
-        ..addMagicNumber(
-          <int>[
-            0x52, 0x49, 0x46, 0x46, 0x00, 0x00, //
-            0x00, 0x00, 0x57, 0x45, 0x42, 0x50
-          ],
-          'image/webp',
-          mask: <int>[
-            0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x00, //
-            0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF
-          ],
+        final response = await makeRequest(
+          handler,
+          '/files/header_bytes_test_image',
         );
-      final handler = StaticHandler.directory(Directory(d.sandbox),
-              cacheControl: (final _, final __) => null,
-              /* useHeaderBytesForContentType: true, */ mimeResolver: resolver)
-          .asHandler;
+        expect(response.mimeType?.primaryType, 'image');
+        expect(response.mimeType?.subType, 'png');
+      },
+    );
 
-      final response =
-          await makeRequest(handler, '/files/header_bytes_test_webp');
-      expect(response.mimeType?.primaryType, 'image');
-      expect(response.mimeType?.subType, 'webp');
-    });
+    test(
+      'when accessing header_bytes_test_webp then it should be image/webp',
+      () async {
+        final resolver =
+            mime.MimeTypeResolver()..addMagicNumber(
+              <int>[
+                0x52, 0x49, 0x46, 0x46, 0x00, 0x00, //
+                0x00, 0x00, 0x57, 0x45, 0x42, 0x50,
+              ],
+              'image/webp',
+              mask: <int>[
+                0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x00, //
+                0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF,
+              ],
+            );
+        final handler =
+            StaticHandler.directory(
+              Directory(d.sandbox),
+              cacheControl: (_, _) => null,
+              /* useHeaderBytesForContentType: true, */ mimeResolver: resolver,
+            ).asHandler;
+
+        final response = await makeRequest(
+          handler,
+          '/files/header_bytes_test_webp',
+        );
+        expect(response.mimeType?.primaryType, 'image');
+        expect(response.mimeType?.subType, 'webp');
+      },
+    );
   });
 }

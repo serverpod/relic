@@ -1,17 +1,10 @@
 import 'dart:io';
 import 'package:stack_trace/stack_trace.dart';
 
-typedef Logger = void Function(
-  String message, {
-  StackTrace? stackTrace,
-  LoggerType type,
-});
+typedef Logger =
+    void Function(String message, {StackTrace? stackTrace, LoggerType type});
 
-enum LoggerType {
-  error,
-  warn,
-  info,
-}
+enum LoggerType { error, warn, info }
 
 /// Logs a message to the standard output or error stream.
 ///
@@ -27,9 +20,12 @@ void logMessage(
   var chain = Chain.current();
 
   if (stackTrace != null) {
-    chain = Chain.forTrace(stackTrace)
-        .foldFrames((final frame) => frame.isCore || frame.package == 'relic')
-        .terse;
+    chain =
+        Chain.forTrace(stackTrace)
+            .foldFrames(
+              (final frame) => frame.isCore || frame.package == 'relic',
+            )
+            .terse;
   }
 
   switch (type) {

@@ -11,9 +11,7 @@ import 'package:test/test.dart';
 class BadRequestException implements Exception {
   final String message;
 
-  BadRequestException(
-    this.message,
-  );
+  BadRequestException(this.message);
 }
 
 /// Extension methods for RelicServer
@@ -56,9 +54,7 @@ Future<Headers> getServerRequestHeaders({
   final statusCode = response.statusCode;
 
   if (statusCode == 400) {
-    throw BadRequestException(
-      response.body,
-    );
+    throw BadRequestException(response.body);
   }
 
   if (statusCode != 200) {

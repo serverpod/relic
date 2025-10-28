@@ -26,11 +26,13 @@ void main() {
             touchHeaders: (final h) => h.crossOriginOpenerPolicy,
             headers: {'cross-origin-opener-policy': ''},
           ),
-          throwsA(isA<BadRequestException>().having(
-            (final e) => e.message,
-            'message',
-            contains('Value cannot be empty'),
-          )),
+          throwsA(
+            isA<BadRequestException>().having(
+              (final e) => e.message,
+              'message',
+              contains('Value cannot be empty'),
+            ),
+          ),
         );
       },
     );
@@ -45,11 +47,13 @@ void main() {
             touchHeaders: (final h) => h.crossOriginOpenerPolicy,
             headers: {'cross-origin-opener-policy': 'custom-policy'},
           ),
-          throwsA(isA<BadRequestException>().having(
-            (final e) => e.message,
-            'message',
-            contains('Invalid value'),
-          )),
+          throwsA(
+            isA<BadRequestException>().having(
+              (final e) => e.message,
+              'message',
+              contains('Invalid value'),
+            ),
+          ),
         );
       },
     );
@@ -61,7 +65,7 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final _) {},
+          touchHeaders: (_) {},
           headers: {'cross-origin-opener-policy': 'custom-policy'},
         );
         expect(headers, isNotNull);
@@ -105,17 +109,14 @@ void main() {
     tearDown(() => server.close());
 
     group('When an empty Cross-Origin-Opener-Policy header is passed', () {
-      test(
-        'then it should return null',
-        () async {
-          final headers = await getServerRequestHeaders(
-            server: server,
-            touchHeaders: (final _) {},
-            headers: {},
-          );
-          expect(headers.crossOriginOpenerPolicy, isNull);
-        },
-      );
+      test('then it should return null', () async {
+        final headers = await getServerRequestHeaders(
+          server: server,
+          touchHeaders: (_) {},
+          headers: {},
+        );
+        expect(headers.crossOriginOpenerPolicy, isNull);
+      });
     });
   });
 }

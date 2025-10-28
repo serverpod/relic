@@ -10,16 +10,15 @@ import '../../extension/string_list_extensions.dart';
 /// connection header values.
 final class ConnectionHeader {
   static const codec = HeaderCodec(ConnectionHeader.parse, __encode);
-  static List<String> __encode(final ConnectionHeader value) =>
-      [value._encode()];
+  static List<String> __encode(final ConnectionHeader value) => [
+    value._encode(),
+  ];
 
   /// A list of connection directives (e.g., `keep-alive`, `close`, `upgrade`).
   final List<ConnectionHeaderType> directives;
 
   /// Constructs a [ConnectionHeader] instance with the specified connection directives.
-  const ConnectionHeader({
-    required this.directives,
-  });
+  const ConnectionHeader({required this.directives});
 
   /// Parses the Connection header value and returns a [ConnectionHeader] instance.
   ///
@@ -59,8 +58,10 @@ final class ConnectionHeader {
   bool operator ==(final Object other) =>
       identical(this, other) ||
       other is ConnectionHeader &&
-          const ListEquality<ConnectionHeaderType>()
-              .equals(directives, other.directives);
+          const ListEquality<ConnectionHeaderType>().equals(
+            directives,
+            other.directives,
+          );
 
   @override
   int get hashCode =>

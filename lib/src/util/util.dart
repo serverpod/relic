@@ -5,8 +5,10 @@ import 'dart:async';
 /// If `this` is called in a non-root error zone, it will just run [callback]
 /// and return the result. Otherwise, it will capture any errors using
 /// [runZoned] and pass them to [onError].
-void catchTopLevelErrors(final void Function() callback,
-    final void Function(dynamic error, StackTrace) onError) {
+void catchTopLevelErrors(
+  final void Function() callback,
+  final void Function(dynamic error, StackTrace) onError,
+) {
   if (Zone.current.inSameErrorZone(Zone.root)) {
     return runZonedGuarded(callback, onError);
   } else {
@@ -29,11 +31,7 @@ extension EventSinkEx<T> on EventSink<T> {
   /// to this sink.
   StreamSink<R> mapFrom<R>(final T Function(R) mapper) {
     final controller = StreamController<R>();
-    controller.stream.map(mapper).listen(
-          add,
-          onError: addError,
-          onDone: close,
-        );
+    controller.stream.map(mapper).listen(add, onError: addError, onDone: close);
     return controller.sink;
   }
 }
@@ -48,7 +46,10 @@ extension StreamEx<T> on Stream<T> {
     final Function? onError,
     final void Function()? onDone,
     final bool? cancelOnError,
-  }) =>
-      asyncMap(onData).listen((final _) {},
-          onError: onError, onDone: onDone, cancelOnError: cancelOnError);
+  }) => asyncMap(onData).listen(
+    (_) {},
+    onError: onError,
+    onDone: onDone,
+    cancelOnError: cancelOnError,
+  );
 }

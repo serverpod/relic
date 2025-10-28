@@ -9,14 +9,13 @@ import 'package:relic/relic.dart';
 /// Example demonstrating Body class features.
 /// Shows creating bodies from strings, files, and streams.
 Future<void> main() async {
-  final app = RelicApp()
-    ..fallback = (final ctx) {
-      return ctx.respond(
-        Response.ok(
-          body: Body.fromString('Body Example'),
-        ),
-      );
-    };
+  final app =
+      RelicApp()
+        ..fallback = (final ctx) {
+          return ctx.respond(
+            Response.ok(body: Body.fromString('Body Example')),
+          );
+        };
 
   // Basic text response
   app.get('/hello', helloHandler);
@@ -57,11 +56,12 @@ Future<void> main() async {
 
   // Single static file serving
   app.get(
-      '/logo',
-      StaticHandler.file(
-        File('example/static_files/logo.svg'),
-        cacheControl: (final _, final __) => CacheControlHeader(maxAge: 86400),
-      ).asHandler);
+    '/logo',
+    StaticHandler.file(
+      File('example/static_files/logo.svg'),
+      cacheControl: (final _, final __) => CacheControlHeader(maxAge: 86400),
+    ).asHandler,
+  );
 
   await app.serve();
   log('Server running on http://localhost:8080');
@@ -81,17 +81,17 @@ Future<void> main() async {
 
 /// Basic text response handler
 ResponseContext helloHandler(final NewContext ctx) {
-  return ctx.respond(Response.ok(
-    body: Body.fromString('Hello, World!'),
-  ));
+  return ctx.respond(Response.ok(body: Body.fromString('Hello, World!')));
 }
 
 /// JSON with automatic MIME detection handler
 ResponseContext dataHandler(final NewContext ctx) {
-  return ctx.respond(Response.ok(
-    body: Body.fromString('{"message": "Hello"}'),
-    // Automatically detects application/json
-  ));
+  return ctx.respond(
+    Response.ok(
+      body: Body.fromString('{"message": "Hello"}'),
+      // Automatically detects application/json
+    ),
+  );
 }
 
 /// Small file handler - read entire file into memory
@@ -104,9 +104,7 @@ Future<ResponseContext> smallFileHandler(final NewContext ctx) async {
 
   final bytes = await file.readAsBytes();
 
-  return ctx.respond(Response.ok(
-    body: Body.fromData(bytes),
-  ));
+  return ctx.respond(Response.ok(body: Body.fromData(bytes)));
 }
 
 /// Large file handler - stream for memory efficiency
@@ -124,21 +122,16 @@ Future<ResponseContext> largeFileHandler(final NewContext ctx) async {
   final fileStream = file.openRead().map((final e) => Uint8List.fromList(e));
   final fileSize = await file.length();
 
-  return ctx.respond(Response.ok(
-    body: Body.fromDataStream(
-      fileStream,
-      contentLength: fileSize,
-    ),
-  ));
+  return ctx.respond(
+    Response.ok(body: Body.fromDataStream(fileStream, contentLength: fileSize)),
+  );
 }
 
 /// Reading request body as string handler
 Future<ResponseContext> echoHandler(final NewContext ctx) async {
   final content = await ctx.request.readAsString();
 
-  return ctx.respond(Response.ok(
-    body: Body.fromString('You sent: $content'),
-  ));
+  return ctx.respond(Response.ok(body: Body.fromString('You sent: $content')));
 }
 
 /// JSON API handler
@@ -148,12 +141,14 @@ Future<ResponseContext> apiDataHandler(final NewContext ctx) async {
 
   log('Received: $data');
 
-  return ctx.respond(Response.ok(
-    body: Body.fromString(
-      jsonEncode({'result': 'success'}),
-      mimeType: MimeType.json,
+  return ctx.respond(
+    Response.ok(
+      body: Body.fromString(
+        jsonEncode({'result': 'success'}),
+        mimeType: MimeType.json,
+      ),
     ),
-  ));
+  );
 }
 
 /// File upload handler with size validation
@@ -162,9 +157,9 @@ Future<ResponseContext> uploadHandler(final NewContext ctx) async {
   final contentLength = ctx.request.body.contentLength;
 
   if (contentLength != null && contentLength > maxFileSize) {
-    return ctx.respond(Response.badRequest(
-      body: Body.fromString('File too large'),
-    ));
+    return ctx.respond(
+      Response.badRequest(body: Body.fromString('File too large')),
+    );
   }
 
   final stream = ctx.request.read();
@@ -172,9 +167,7 @@ Future<ResponseContext> uploadHandler(final NewContext ctx) async {
   await file.parent.create(recursive: true);
   await stream.forEach((final chunk) => file.openWrite().write(chunk));
 
-  return ctx.respond(Response.ok(
-    body: Body.fromString('Upload successful'),
-  ));
+  return ctx.respond(Response.ok(body: Body.fromString('Upload successful')));
 }
 
 /// Image response handler with automatic format detection
@@ -182,12 +175,14 @@ Future<ResponseContext> imageHandler(final NewContext ctx) async {
   final file = File('example/static_files/logo.svg');
   final imageBytes = await file.readAsBytes();
 
-  return ctx.respond(Response.ok(
-    body: Body.fromData(
-      imageBytes,
-      mimeType: MimeType.parse('image/svg+xml'),
+  return ctx.respond(
+    Response.ok(
+      body: Body.fromData(
+        imageBytes,
+        mimeType: MimeType.parse('image/svg+xml'),
+      ),
     ),
-  ));
+  );
 }
 
 /// Streaming response handler with chunked transfer encoding
@@ -201,11 +196,13 @@ Future<ResponseContext> streamHandler(final NewContext ctx) async {
 
   final dataStream = generateLargeDataset();
 
-  return ctx.respond(Response.ok(
-    body: Body.fromDataStream(
-      dataStream,
-      mimeType: MimeType.json,
-      // contentLength omitted for chunked encoding
+  return ctx.respond(
+    Response.ok(
+      body: Body.fromDataStream(
+        dataStream,
+        mimeType: MimeType.json,
+        // contentLength omitted for chunked encoding
+      ),
     ),
-  ));
+  );
 }

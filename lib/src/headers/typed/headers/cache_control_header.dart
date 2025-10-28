@@ -8,8 +8,9 @@ import '../../extension/string_list_extensions.dart';
 /// the appropriate header string.
 final class CacheControlHeader {
   static const codec = HeaderCodec(CacheControlHeader.parse, __encode);
-  static List<String> __encode(final CacheControlHeader value) =>
-      [value._encode()];
+  static List<String> __encode(final CacheControlHeader value) => [
+    value._encode(),
+  ];
   // Cache-Control directive constants
   static const String _noCacheDirective = 'no-cache';
   static const String _noStoreDirective = 'no-store';
@@ -144,9 +145,10 @@ final class CacheControlHeader {
 
     // Check for invalid directives
     final invalidDirectives = directives.where(
-      (final directive) => !_validDirectives.any(
-        (final validDirective) => directive.startsWith(validDirective),
-      ),
+      (final directive) =>
+          !_validDirectives.any(
+            (final validDirective) => directive.startsWith(validDirective),
+          ),
     );
 
     if (!foundOneDirective || invalidDirectives.isNotEmpty) {
@@ -175,19 +177,24 @@ final class CacheControlHeader {
         maxAge = int.tryParse(directive.substring(_maxAgeDirective.length + 1));
       } else if (directive.startsWith('$_staleWhileRevalidateDirective=')) {
         staleWhileRevalidate = int.tryParse(
-            directive.substring(_staleWhileRevalidateDirective.length + 1));
+          directive.substring(_staleWhileRevalidateDirective.length + 1),
+        );
       } else if (directive.startsWith('$_sMaxAgeDirective=')) {
-        sMaxAge =
-            int.tryParse(directive.substring(_sMaxAgeDirective.length + 1));
+        sMaxAge = int.tryParse(
+          directive.substring(_sMaxAgeDirective.length + 1),
+        );
       } else if (directive.startsWith('$_staleIfErrorDirective=')) {
         staleIfError = int.tryParse(
-            directive.substring(_staleIfErrorDirective.length + 1));
+          directive.substring(_staleIfErrorDirective.length + 1),
+        );
       } else if (directive.startsWith('$_maxStaleDirective=')) {
-        maxStale =
-            int.tryParse(directive.substring(_maxStaleDirective.length + 1));
+        maxStale = int.tryParse(
+          directive.substring(_maxStaleDirective.length + 1),
+        );
       } else if (directive.startsWith('$_minFreshDirective=')) {
-        minFresh =
-            int.tryParse(directive.substring(_minFreshDirective.length + 1));
+        minFresh = int.tryParse(
+          directive.substring(_minFreshDirective.length + 1),
+        );
       }
     }
 
@@ -273,23 +280,23 @@ final class CacheControlHeader {
 
   @override
   int get hashCode => Object.hashAll([
-        noCache,
-        noStore,
-        maxAge,
-        staleWhileRevalidate,
-        publicCache,
-        privateCache,
-        mustRevalidate,
-        proxyRevalidate,
-        sMaxAge,
-        noTransform,
-        onlyIfCached,
-        staleIfError,
-        maxStale,
-        minFresh,
-        immutable,
-        mustUnderstand,
-      ]);
+    noCache,
+    noStore,
+    maxAge,
+    staleWhileRevalidate,
+    publicCache,
+    privateCache,
+    mustRevalidate,
+    proxyRevalidate,
+    sMaxAge,
+    noTransform,
+    onlyIfCached,
+    staleIfError,
+    maxStale,
+    minFresh,
+    immutable,
+    mustUnderstand,
+  ]);
 
   @override
   String toString() {

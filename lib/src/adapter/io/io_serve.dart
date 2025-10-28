@@ -21,12 +21,14 @@ extension RelicAppIOServeEx on RelicApp {
     final int backlog = 0,
     final bool shared = false,
   }) {
-    return run(() => IOAdapter.bind(
-          address ?? InternetAddress.loopbackIPv4,
-          port: port,
-          context: securityContext,
-          backlog: backlog,
-          shared: shared,
-        ));
+    return run(
+      () => IOAdapter.bind(
+        address ?? InternetAddress.loopbackIPv4,
+        port: port,
+        context: securityContext,
+        backlog: backlog,
+        shared: shared,
+      ),
+    );
   }
 }

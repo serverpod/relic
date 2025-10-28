@@ -4,10 +4,13 @@ import '../../../../relic.dart';
 ///
 /// This header specifies the policy for sharing resources across origins.
 final class CrossOriginResourcePolicyHeader {
-  static const codec =
-      HeaderCodec.single(CrossOriginResourcePolicyHeader.parse, __encode);
-  static List<String> __encode(final CrossOriginResourcePolicyHeader value) =>
-      [value._encode()];
+  static const codec = HeaderCodec.single(
+    CrossOriginResourcePolicyHeader.parse,
+    __encode,
+  );
+  static List<String> __encode(final CrossOriginResourcePolicyHeader value) => [
+    value._encode(),
+  ];
 
   /// The policy value of the header.
   final String policy;

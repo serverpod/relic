@@ -34,8 +34,8 @@ class CacheBustingConfig {
     required final String mountPrefix,
     required final Directory fileSystemRoot,
     this.separator = '@',
-  })  : mountPrefix = _normalizeMount(mountPrefix),
-        fileSystemRoot = fileSystemRoot.absolute {
+  }) : mountPrefix = _normalizeMount(mountPrefix),
+       fileSystemRoot = fileSystemRoot.absolute {
     _validateFileSystemRoot(fileSystemRoot.absolute);
     _validateSeparator(separator);
   }
@@ -62,8 +62,10 @@ class CacheBustingConfig {
     }
 
     // Ensure target exists (files only) before resolving symlinks
-    final entityType =
-        FileSystemEntity.typeSync(normalizedPath, followLinks: false);
+    final entityType = FileSystemEntity.typeSync(
+      normalizedPath,
+      followLinks: false,
+    );
     if (entityType == FileSystemEntityType.notFound ||
         entityType == FileSystemEntityType.directory) {
       throw PathNotFoundException(
@@ -121,11 +123,7 @@ void _validateFileSystemRoot(final Directory dir) {
   final resolved = dir.absolute.resolveSymbolicLinksSync();
   final entityType = FileSystemEntity.typeSync(resolved);
   if (entityType != FileSystemEntityType.directory) {
-    throw ArgumentError.value(
-      dir.path,
-      'fileSystemRoot',
-      'is not a directory',
-    );
+    throw ArgumentError.value(dir.path, 'fileSystemRoot', 'is not a directory');
   }
 }
 
@@ -149,9 +147,7 @@ extension CacheBustingFilenameExtension on CacheBustingConfig {
   /// `logo@abc.png` -> `logo.png`
   /// `logo@abc` -> `logo`
   /// `logo.png` -> `logo.png` (no change)
-  String tryStripHashFromFilename(
-    final String fileName,
-  ) {
+  String tryStripHashFromFilename(final String fileName) {
     final ext = p.url.extension(fileName);
     final base = p.url.basenameWithoutExtension(fileName);
 

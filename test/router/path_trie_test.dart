@@ -11,8 +11,7 @@ void main() {
     });
 
     group('Adding and Looking Up Basic Routes', () {
-      test(
-          'Given a simple literal path, '
+      test('Given a simple literal path, '
           'when added and looked up, '
           'then returns correct value and empty parameters', () {
         trie.add(NormalizedPath('/users'), 1);
@@ -22,24 +21,21 @@ void main() {
         expect(result.parameters, isEmpty);
       });
 
-      test(
-          'Given a path not added to the trie, '
+      test('Given a path not added to the trie, '
           'when looked up, '
           'then returns null', () {
         trie.add(NormalizedPath('/users'), 1);
         expect(trie.lookup(NormalizedPath('/posts')), isNull);
       });
 
-      test(
-          'Given a path that is only a prefix of an added route, '
+      test('Given a path that is only a prefix of an added route, '
           'when looked up, '
           'then returns null', () {
         trie.add(NormalizedPath('/users/profile'), 1);
         expect(trie.lookup(NormalizedPath('/users')), isNull);
       });
 
-      test(
-          'Given a path added to the trie, '
+      test('Given a path added to the trie, '
           'when a non-matching path segment is looked up, '
           'then returns null', () {
         trie.add(NormalizedPath('/users/profile/settings'), 1);
@@ -48,8 +44,7 @@ void main() {
     });
 
     group('Parameter Handling', () {
-      test(
-          'Given a path with one parameter, '
+      test('Given a path with one parameter, '
           'when added and looked up with a matching path, '
           'then returns correct value and extracted parameter', () {
         trie.add(NormalizedPath('/users/:id'), 2);
@@ -59,8 +54,7 @@ void main() {
         expect(result.parameters, equals({#id: '123'}));
       });
 
-      test(
-          'Given a path with multiple parameters, '
+      test('Given a path with multiple parameters, '
           'when added and looked up with a matching path, '
           'then returns correct value and all extracted parameters', () {
         trie.add(NormalizedPath('/users/:userId/posts/:postId'), 3);
@@ -70,8 +64,7 @@ void main() {
         expect(result.parameters, equals({#userId: 'abc', #postId: 'xyz'}));
       });
 
-      test(
-          'Given paths with parameters at different levels, '
+      test('Given paths with parameters at different levels, '
           'when looked up, '
           'then matches correctly and extracts parameters', () {
         trie.add(NormalizedPath('/:entity/:id'), 1);
@@ -88,8 +81,7 @@ void main() {
         expect(result.parameters, equals({#id: '789'}));
       });
 
-      test(
-          'Given a path with repeated parameters at different levels, '
+      test('Given a path with repeated parameters at different levels, '
           'when looked up, '
           'then last extracted parameter wins', () {
         trie.add(NormalizedPath('/:id/:id'), 1);
@@ -102,8 +94,7 @@ void main() {
     });
 
     group('Route Precedence', () {
-      test(
-          'Given both a literal and parameterized route at the same level, '
+      test('Given both a literal and parameterized route at the same level, '
           'when looking up paths, '
           'then literal segments are prioritized over parameters', () {
         trie.add(NormalizedPath('/users/:id'), 1); // Parameter
@@ -131,17 +122,19 @@ void main() {
           trie.add(NormalizedPath('/users/:id/profile'), 2);
 
           final result = trie.lookup(NormalizedPath('/users/789'));
-          expect(result, isNull,
-              reason:
-                  'Should not match the first route, as literal match has priority at each level. '
-                  'Should not match the second route, as /profile segment is missing.');
+          expect(
+            result,
+            isNull,
+            reason:
+                'Should not match the first route, as literal match has priority at each level. '
+                'Should not match the second route, as /profile segment is missing.',
+          );
         },
       );
     });
 
     group('Error Handling', () {
-      test(
-          'Given a literal route already exists, '
+      test('Given a literal route already exists, '
           'when adding the same literal route again, '
           'then throws ArgumentError', () {
         const path = '/path';
@@ -167,8 +160,7 @@ void main() {
         );
       });
 
-      test(
-          'Given a parameterized route already exists, '
+      test('Given a parameterized route already exists, '
           'when adding the same parameterized route again, '
           'then throws ArgumentError', () {
         const path = '/path/:id';
@@ -196,8 +188,7 @@ void main() {
         );
       });
 
-      test(
-          'Given a parameterized route exists, '
+      test('Given a parameterized route exists, '
           'when adding another route with a conflicting parameter name at the same level, '
           'then throws ArgumentError', () {
         // Add initial route
@@ -222,8 +213,7 @@ void main() {
         );
       });
 
-      test(
-          'Given a normalizedPath with an unnamed parameter, '
+      test('Given a normalizedPath with an unnamed parameter, '
           'when trying to add to a trie, '
           'then it fails ', () {
         expect(() => trie.add(NormalizedPath('/:'), 1), throwsArgumentError);
@@ -231,8 +221,7 @@ void main() {
     });
 
     group('Edge Cases', () {
-      test(
-          'Given the root path, '
+      test('Given the root path, '
           'when added and looked up, '
           'then returns correct value and empty parameters', () {
         trie.add(NormalizedPath('/'), 1);
@@ -242,8 +231,7 @@ void main() {
         expect(result.parameters, isEmpty);
       });
 
-      test(
-          'Given the root path and another path, '
+      test('Given the root path and another path, '
           'when looked up, '
           'then correctly distinguishes between them', () {
         trie.add(NormalizedPath('/'), 1);
@@ -256,8 +244,7 @@ void main() {
         expect(result!.value, equals(2));
       });
 
-      test(
-          'Given paths with trailing slashes, '
+      test('Given paths with trailing slashes, '
           'when added and looked up (using NormalizedPath), '
           'then behaves consistently as if slashes were removed', () {
         // NormalizedPath removes trailing slashes (except for '/')
@@ -275,13 +262,14 @@ void main() {
     });
 
     group('Complex Scenarios', () {
-      test(
-          'Given a mix of literal and parameterized routes at various depths, '
+      test('Given a mix of literal and parameterized routes at various depths, '
           'when looking up different matching and non-matching paths, '
           'then returns correct values/parameters or null appropriately', () {
         trie.add(NormalizedPath('/api/v1/users/:userId/data'), 1);
         trie.add(
-            NormalizedPath('/api/v1/users/:userId/settings/:settingId'), 2);
+          NormalizedPath('/api/v1/users/:userId/settings/:settingId'),
+          2,
+        );
         trie.add(NormalizedPath('/api/v1/posts/:postId'), 3);
         trie.add(
           NormalizedPath('/api/v1/posts/latest'),
@@ -340,8 +328,7 @@ void main() {
         trieB = PathTrie<int>();
       });
 
-      test(
-          'Given two tries, one with a route, '
+      test('Given two tries, one with a route, '
           'when the second trie is attached to the first, '
           'then routes from the second trie are accessible via the first', () {
         // Setup trieB
@@ -357,18 +344,13 @@ void main() {
         expect(result.parameters, isEmpty);
       });
 
-      test(
-          'Given an empty trie, '
+      test('Given an empty trie, '
           'when attempting to attach another trie at the root path ("/"), '
           'then it succeeds', () {
-        expect(
-          () => trieA.attach(NormalizedPath('/'), trieB),
-          returnsNormally,
-        );
+        expect(() => trieA.attach(NormalizedPath('/'), trieB), returnsNormally);
       });
 
-      test(
-          'Given a trie with an existing path, '
+      test('Given a trie with an existing path, '
           'when attempting to attach another trie on a sub-path, '
           'then it succeeds and both tries are updated', () {
         trieA.add(NormalizedPath('/pathA/existing/A'), 1);
@@ -390,47 +372,58 @@ void main() {
         expect(result!.value, equals(1));
       });
 
-      test(
-          'Given a trie with an existing path, '
+      test('Given a trie with an existing path, '
           'when attempting to attach another trie at that same path that, '
           'then it fails', () {
         trieA.add(NormalizedPath('/existing'), 1);
         trieB.add(NormalizedPath('/'), 2);
         expect(
           () => trieA.attach(NormalizedPath('/existing'), trieB),
-          throwsA(isA<ArgumentError>().having(
-              (final e) => e.message, 'message', equals('Conflicting values'))),
+          throwsA(
+            isA<ArgumentError>().having(
+              (final e) => e.message,
+              'message',
+              equals('Conflicting values'),
+            ),
+          ),
         );
       });
 
-      test(
-          'Given a trie with an existing parameterized path, '
+      test('Given a trie with an existing parameterized path, '
           'when attempting to attach another trie with a parameterized root path at that level'
           'then it fails due to conflicting parameters', () {
         trieA.add(NormalizedPath('/existing/:a'), 1);
         trieB.add(NormalizedPath('/:b'), 2);
         expect(
           () => trieA.attach(NormalizedPath('/existing'), trieB),
-          throwsA(isA<ArgumentError>().having((final e) => e.message, 'message',
-              equals('Conflicting parameters'))),
+          throwsA(
+            isA<ArgumentError>().having(
+              (final e) => e.message,
+              'message',
+              equals('Conflicting parameters'),
+            ),
+          ),
         );
       });
 
-      test(
-          'Given a trie with an existing path, '
+      test('Given a trie with an existing path, '
           'when attempting to attach another trie such that children names would overlap, '
           'then it fails due to conflicting children', () {
         trieA.add(NormalizedPath('/existing/foo'), 1);
         trieB.add(NormalizedPath('/foo'), 2);
         expect(
           () => trieA.attach(NormalizedPath('/existing'), trieB),
-          throwsA(isA<ArgumentError>().having((final e) => e.message, 'message',
-              equals('Conflicting children'))),
+          throwsA(
+            isA<ArgumentError>().having(
+              (final e) => e.message,
+              'message',
+              equals('Conflicting children'),
+            ),
+          ),
         );
       });
 
-      test(
-          'Given trie B attached to trie A, '
+      test('Given trie B attached to trie A, '
           'when trie B is updated with a new route after attachment, '
           'then the new route is accessible via trie A', () {
         // Initial setup and attachment
@@ -446,8 +439,7 @@ void main() {
         expect(result!.value, equals(20));
       });
 
-      test(
-          'Given trie B with parameterized routes attached to trie A, '
+      test('Given trie B with parameterized routes attached to trie A, '
           'when looking up paths in trie A that extend into trie B, '
           'then parameters from trieB are correctly resolved', () {
         // Setup trieB with a parameterized route
@@ -462,45 +454,47 @@ void main() {
       });
 
       test(
-          'Given trie B with parameterized routes attached to trie A under a parameterized route, '
-          'when looking up paths in trie A that extend into trie B, '
-          'then parameters from both tries are correctly resolved', () {
-        // More complex scenario: trieA has parameters, trieB is attached under that
-        trieB.add(NormalizedPath('/:paramB/endpoint'), 300);
-        trieA.add(NormalizedPath('/users/:userId'), 200); // A route in trieA
-        trieA.attach(NormalizedPath('/users/:userId/data'), trieB);
+        'Given trie B with parameterized routes attached to trie A under a parameterized route, '
+        'when looking up paths in trie A that extend into trie B, '
+        'then parameters from both tries are correctly resolved',
+        () {
+          // More complex scenario: trieA has parameters, trieB is attached under that
+          trieB.add(NormalizedPath('/:paramB/endpoint'), 300);
+          trieA.add(NormalizedPath('/users/:userId'), 200); // A route in trieA
+          trieA.attach(NormalizedPath('/users/:userId/data'), trieB);
 
-        // Lookup path spanning trieA (with param) and trieB (with param)
-        final result =
-            trieA.lookup(NormalizedPath('/users/user123/data/val456/endpoint'));
-        expect(
-          result,
-          isNotNull,
-          reason: 'Should find path through attached trieB',
-        );
-        expect(result!.value, equals(300));
-        expect(
-          result.parameters,
-          equals({
-            #userId: 'user123',
-            #paramB: 'val456',
-          }),
-        );
-      });
+          // Lookup path spanning trieA (with param) and trieB (with param)
+          final result = trieA.lookup(
+            NormalizedPath('/users/user123/data/val456/endpoint'),
+          );
+          expect(
+            result,
+            isNotNull,
+            reason: 'Should find path through attached trieB',
+          );
+          expect(result!.value, equals(300));
+          expect(
+            result.parameters,
+            equals({#userId: 'user123', #paramB: 'val456'}),
+          );
+        },
+      );
 
       test(
-          'Given a path with repeated parameters at different levels introduced by attach, '
-          'when looked up, '
-          'then last extracted parameter wins', () {
-        trieA.add(NormalizedPath('/:id/'), 1);
-        trieB.add(NormalizedPath('/:id/'), 2);
-        trieA.attach(NormalizedPath('/:id/'), trieB);
+        'Given a path with repeated parameters at different levels introduced by attach, '
+        'when looked up, '
+        'then last extracted parameter wins',
+        () {
+          trieA.add(NormalizedPath('/:id/'), 1);
+          trieB.add(NormalizedPath('/:id/'), 2);
+          trieA.attach(NormalizedPath('/:id/'), trieB);
 
-        final result = trieA.lookup(NormalizedPath('/123/456'));
-        expect(result, isNotNull);
-        expect(result!.value, equals(2));
-        expect(result.parameters, equals({#id: '456'}));
-      });
+          final result = trieA.lookup(NormalizedPath('/123/456'));
+          expect(result, isNotNull);
+          expect(result!.value, equals(2));
+          expect(result.parameters, equals({#id: '456'}));
+        },
+      );
     });
   });
 }

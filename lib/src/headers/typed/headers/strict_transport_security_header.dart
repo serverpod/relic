@@ -4,10 +4,13 @@ import '../../extension/string_list_extensions.dart';
 /// Represents the HTTP Strict-Transport-Security (HSTS) header for managing
 /// HSTS settings.
 final class StrictTransportSecurityHeader {
-  static const codec =
-      HeaderCodec.single(StrictTransportSecurityHeader.parse, __encode);
-  static List<String> __encode(final StrictTransportSecurityHeader value) =>
-      [value._encode()];
+  static const codec = HeaderCodec.single(
+    StrictTransportSecurityHeader.parse,
+    __encode,
+  );
+  static List<String> __encode(final StrictTransportSecurityHeader value) => [
+    value._encode(),
+  ];
 
   /// The max-age directive specifies the time, in seconds, that the browser
   /// should remember that a site is only to be accessed using HTTPS.

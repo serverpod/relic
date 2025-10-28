@@ -8,19 +8,22 @@ import '../../extension/string_list_extensions.dart';
 /// This class manages Permissions-Policy directives, providing functionality to parse,
 /// add, remove, and generate Permissions-Policy header values.
 final class PermissionsPolicyHeader {
-  static const codec =
-      HeaderCodec.single(PermissionsPolicyHeader.parse, __encode);
-  static List<String> __encode(final PermissionsPolicyHeader value) =>
-      [value._encode()];
+  static const codec = HeaderCodec.single(
+    PermissionsPolicyHeader.parse,
+    __encode,
+  );
+  static List<String> __encode(final PermissionsPolicyHeader value) => [
+    value._encode(),
+  ];
 
   /// A list of Permissions-Policy directives.
   final List<PermissionsPolicyDirective> directives;
 
   /// Constructs a [PermissionsPolicyHeader] instance with the specified directives.
-  PermissionsPolicyHeader(
-      {required final List<PermissionsPolicyDirective> directives})
-      : assert(directives.isNotEmpty),
-        directives = List.unmodifiable(directives);
+  PermissionsPolicyHeader({
+    required final List<PermissionsPolicyDirective> directives,
+  }) : assert(directives.isNotEmpty),
+       directives = List.unmodifiable(directives);
 
   /// Parses the Permissions-Policy header value and returns a [PermissionsPolicyHeader] instance.
   ///
@@ -36,22 +39,18 @@ final class PermissionsPolicyHeader {
     for (final part in splitValues) {
       final directiveParts = part.split('=');
       final name = directiveParts.first.trim();
-      final values = directiveParts.length > 1
-          ? directiveParts[1]
-              .replaceAll('(', '')
-              .replaceAll(')', '')
-              .split(' ')
-              .map((final s) => s.trim())
-              .where((final s) => s.isNotEmpty)
-              .toList()
-          : <String>[];
+      final values =
+          directiveParts.length > 1
+              ? directiveParts[1]
+                  .replaceAll('(', '')
+                  .replaceAll(')', '')
+                  .split(' ')
+                  .map((final s) => s.trim())
+                  .where((final s) => s.isNotEmpty)
+                  .toList()
+              : <String>[];
 
-      directives.add(
-        PermissionsPolicyDirective(
-          name: name,
-          values: values,
-        ),
-      );
+      directives.add(PermissionsPolicyDirective(name: name, values: values));
     }
 
     return PermissionsPolicyHeader(directives: directives);
@@ -68,8 +67,10 @@ final class PermissionsPolicyHeader {
   bool operator ==(final Object other) =>
       identical(this, other) ||
       other is PermissionsPolicyHeader &&
-          const ListEquality<PermissionsPolicyDirective>()
-              .equals(directives, other.directives);
+          const ListEquality<PermissionsPolicyDirective>().equals(
+            directives,
+            other.directives,
+          );
 
   @override
   int get hashCode =>
@@ -90,10 +91,7 @@ class PermissionsPolicyDirective {
   final Iterable<String> values;
 
   /// Constructs a [PermissionsPolicyDirective] instance with the specified name and values.
-  const PermissionsPolicyDirective({
-    required this.name,
-    required this.values,
-  });
+  const PermissionsPolicyDirective({required this.name, required this.values});
 
   /// Converts the [PermissionsPolicyDirective] instance into a string representation.
   String _encode() {

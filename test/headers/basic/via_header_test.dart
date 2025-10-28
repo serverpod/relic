@@ -16,42 +16,36 @@ void main() {
 
     tearDown(() => server.close());
 
-    test(
-      'when an empty Via header is passed then the server responds '
-      'with a bad request including a message that states the header value '
-      'cannot be empty',
-      () async {
-        expect(
-          getServerRequestHeaders(
-            server: server,
-            headers: {'via': ''},
-            touchHeaders: (final h) => h.via,
-          ),
-          throwsA(
-            isA<BadRequestException>().having(
-              (final e) => e.message,
-              'message',
-              contains('Value cannot be empty'),
-            ),
-          ),
-        );
-      },
-    );
-
-    test(
-      'when a Via header with an empty value is passed '
-      'then the server does not respond with a bad request if the headers '
-      'is not actually used',
-      () async {
-        final headers = await getServerRequestHeaders(
+    test('when an empty Via header is passed then the server responds '
+        'with a bad request including a message that states the header value '
+        'cannot be empty', () async {
+      expect(
+        getServerRequestHeaders(
           server: server,
-          touchHeaders: (final _) {},
           headers: {'via': ''},
-        );
+          touchHeaders: (final h) => h.via,
+        ),
+        throwsA(
+          isA<BadRequestException>().having(
+            (final e) => e.message,
+            'message',
+            contains('Value cannot be empty'),
+          ),
+        ),
+      );
+    });
 
-        expect(headers, isNotNull);
-      },
-    );
+    test('when a Via header with an empty value is passed '
+        'then the server does not respond with a bad request if the headers '
+        'is not actually used', () async {
+      final headers = await getServerRequestHeaders(
+        server: server,
+        touchHeaders: (_) {},
+        headers: {'via': ''},
+      );
+
+      expect(headers, isNotNull);
+    });
 
     test(
       'when a valid Via header is passed then it should parse the values correctly',
@@ -93,18 +87,15 @@ void main() {
       },
     );
 
-    test(
-      'when no Via header is passed then it should return null',
-      () async {
-        final headers = await getServerRequestHeaders(
-          server: server,
-          headers: {},
-          touchHeaders: (final h) => h.via,
-        );
+    test('when no Via header is passed then it should return null', () async {
+      final headers = await getServerRequestHeaders(
+        server: server,
+        headers: {},
+        touchHeaders: (final h) => h.via,
+      );
 
-        expect(headers.via, isNull);
-      },
-    );
+      expect(headers.via, isNull);
+    });
   });
 
   group('Given a Via header without validation', () {
@@ -117,19 +108,16 @@ void main() {
     tearDown(() => server.close());
 
     group('when an empty Via header is passed', () {
-      test(
-        'then it should return null',
-        () async {
-          final headers = await getServerRequestHeaders(
-            server: server,
-            touchHeaders: (final _) {},
-            headers: {'via': ''},
-          );
+      test('then it should return null', () async {
+        final headers = await getServerRequestHeaders(
+          server: server,
+          touchHeaders: (_) {},
+          headers: {'via': ''},
+        );
 
-          expect(Headers.via[headers].valueOrNullIfInvalid, isNull);
-          expect(() => headers.via, throwsInvalidHeader);
-        },
-      );
+        expect(Headers.via[headers].valueOrNullIfInvalid, isNull);
+        expect(() => headers.via, throwsInvalidHeader);
+      });
     });
   });
 }

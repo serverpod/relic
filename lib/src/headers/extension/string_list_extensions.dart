@@ -17,17 +17,16 @@ extension StringListExtensions on Iterable<String> {
   Iterable<String> splitTrimAndFilterUnique({
     final String separator = ',',
     final bool emptyCheck = true,
-  }) =>
-      LinkedHashSet<String>.from(
-          splitAndTrim(separator: separator, emptyCheck: emptyCheck));
+  }) => LinkedHashSet<String>.from(
+    splitAndTrim(separator: separator, emptyCheck: emptyCheck),
+  );
 
   Iterable<String> splitAndTrim({
     final String separator = ',',
     final bool emptyCheck = true,
-  }) =>
-      expand((final element) => element.split(separator))
-          .map((final el) => el.trim())
-          .where((final e) => !emptyCheck || e.isNotEmpty);
+  }) => expand((final element) => element.split(separator))
+      .map((final el) => el.trim())
+      .where((final e) => !emptyCheck || e.isNotEmpty);
 }
 
 extension StringExtensions on String {
@@ -58,8 +57,9 @@ extension StringExtensions on String {
   /// Checks if the string is a valid email address.
 
   bool isValidEmail() {
-    return RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
-        .hasMatch(this);
+    return RegExp(
+      r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+    ).hasMatch(this);
   }
 
   bool isValidLanguageCode() {

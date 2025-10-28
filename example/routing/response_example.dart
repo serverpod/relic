@@ -8,9 +8,7 @@ Future<void> main() async {
 
   // Success response example
   app.get('/status', (final ctx) {
-    return ctx.respond(Response.ok(
-      body: Body.fromString('Status is Ok'),
-    ));
+    return ctx.respond(Response.ok(body: Body.fromString('Status is Ok')));
   });
 
   // Bad request example
@@ -18,9 +16,9 @@ Future<void> main() async {
     try {
       throw 'Invalid JSON';
     } catch (e) {
-      return ctx.respond(Response.badRequest(
-        body: Body.fromString('Invalid JSON'),
-      ));
+      return ctx.respond(
+        Response.badRequest(body: Body.fromString('Invalid JSON')),
+      );
     }
   });
 

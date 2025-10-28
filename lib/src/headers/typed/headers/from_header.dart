@@ -17,8 +17,8 @@ final class FromHeader {
 
   /// Private constructor for initializing the [emails] list.
   FromHeader({required final Iterable<String> emails})
-      : assert(emails.isNotEmpty),
-        emails = List.unmodifiable(emails);
+    : assert(emails.isNotEmpty),
+      emails = List.unmodifiable(emails);
 
   /// Parses a `From` header value and returns a [FromHeader] instance.
   factory FromHeader.parse(final Iterable<String> values) {

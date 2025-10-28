@@ -114,12 +114,12 @@ class Response extends Message {
     final Encoding? encoding,
     final Map<String, Object>? context,
   }) : this(
-          200,
-          body: body ?? Body.empty(),
-          headers: headers ?? Headers.empty(),
-          encoding: encoding,
-          context: context,
-        );
+         200,
+         body: body ?? Body.empty(),
+         headers: headers ?? Headers.empty(),
+         encoding: encoding,
+         context: context,
+       );
 
   /// Constructs a 301 Moved Permanently response.
   ///
@@ -134,14 +134,7 @@ class Response extends Message {
     final Headers? headers,
     final Encoding? encoding,
     final Map<String, Object>? context,
-  }) : this._redirect(
-          301,
-          location,
-          body,
-          headers,
-          encoding,
-          context: context,
-        );
+  }) : this._redirect(301, location, body, headers, encoding, context: context);
 
   /// Constructs a 302 Found response.
   ///
@@ -156,14 +149,7 @@ class Response extends Message {
     final Headers? headers,
     final Encoding? encoding,
     final Map<String, Object>? context,
-  }) : this._redirect(
-          302,
-          location,
-          body,
-          headers,
-          encoding,
-          context: context,
-        );
+  }) : this._redirect(302, location, body, headers, encoding, context: context);
 
   /// Constructs a 303 See Other response.
   ///
@@ -190,13 +176,14 @@ class Response extends Message {
     final Encoding? encoding, {
     final Map<String, Object>? context,
   }) : this(
-          statusCode,
-          body: body ?? Body.empty(),
-          encoding: encoding,
-          headers: (headers ?? Headers.empty())
-              .transform((final mh) => mh.location = location),
-          context: context,
-        );
+         statusCode,
+         body: body ?? Body.empty(),
+         encoding: encoding,
+         headers: (headers ?? Headers.empty()).transform(
+           (final mh) => mh.location = location,
+         ),
+         context: context,
+       );
 
   /// Constructs a 204 No Content response.
   ///
@@ -208,11 +195,11 @@ class Response extends Message {
     final Headers? headers,
     final Map<String, Object>? context,
   }) : this(
-          204,
-          body: Body.empty(),
-          headers: headers ?? Headers.empty(),
-          context: context,
-        );
+         204,
+         body: Body.empty(),
+         headers: headers ?? Headers.empty(),
+         context: context,
+       );
 
   /// Constructs a 304 Not Modified response.
   ///
@@ -229,11 +216,11 @@ class Response extends Message {
     final Headers? headers,
     final Map<String, Object>? context,
   }) : this(
-          304,
-          body: Body.empty(),
-          context: context,
-          headers: headers ?? Headers.empty(),
-        );
+         304,
+         body: Body.empty(),
+         context: context,
+         headers: headers ?? Headers.empty(),
+       );
 
   /// Constructs a 400 Bad Request response.
   ///
@@ -246,12 +233,12 @@ class Response extends Message {
     final Encoding? encoding,
     final Map<String, Object>? context,
   }) : this(
-          400,
-          headers: headers ?? Headers.empty(),
-          body: body ?? Body.fromString('Bad Request'),
-          context: context,
-          encoding: encoding,
-        );
+         400,
+         headers: headers ?? Headers.empty(),
+         body: body ?? Body.fromString('Bad Request'),
+         context: context,
+         encoding: encoding,
+       );
 
   /// Constructs a 401 Unauthorized response.
   ///
@@ -265,12 +252,12 @@ class Response extends Message {
     final Encoding? encoding,
     final Map<String, Object>? context,
   }) : this(
-          401,
-          headers: headers ?? Headers.empty(),
-          body: body ?? Body.fromString('Unauthorized'),
-          context: context,
-          encoding: encoding,
-        );
+         401,
+         headers: headers ?? Headers.empty(),
+         body: body ?? Body.fromString('Unauthorized'),
+         context: context,
+         encoding: encoding,
+       );
 
   /// Constructs a 403 Forbidden response.
   ///
@@ -283,12 +270,12 @@ class Response extends Message {
     final Encoding? encoding,
     final Map<String, Object>? context,
   }) : this(
-          403,
-          headers: headers ?? Headers.empty(),
-          body: body ?? Body.fromString('Forbidden'),
-          context: context,
-          encoding: encoding,
-        );
+         403,
+         headers: headers ?? Headers.empty(),
+         body: body ?? Body.fromString('Forbidden'),
+         context: context,
+         encoding: encoding,
+       );
 
   /// Constructs a 404 Not Found response.
   ///
@@ -302,12 +289,12 @@ class Response extends Message {
     final Encoding? encoding,
     final Map<String, Object>? context,
   }) : this(
-          404,
-          headers: headers ?? Headers.empty(),
-          body: body ?? Body.fromString('Not Found'),
-          context: context,
-          encoding: encoding,
-        );
+         404,
+         headers: headers ?? Headers.empty(),
+         body: body ?? Body.fromString('Not Found'),
+         context: context,
+         encoding: encoding,
+       );
 
   /// Constructs a 500 Internal Server Error response.
   ///
@@ -321,12 +308,12 @@ class Response extends Message {
     final Encoding? encoding,
     final Map<String, Object>? context,
   }) : this(
-          500,
-          headers: headers ?? Headers.empty(),
-          body: body ?? Body.fromString('Internal Server Error'),
-          context: context,
-          encoding: encoding,
-        );
+         500,
+         headers: headers ?? Headers.empty(),
+         body: body ?? Body.fromString('Internal Server Error'),
+         context: context,
+         encoding: encoding,
+       );
 
   /// Constructs a 501 Not Implemented response.
   ///
@@ -340,12 +327,12 @@ class Response extends Message {
     final Encoding? encoding,
     final Map<String, Object>? context,
   }) : this(
-          501,
-          headers: headers ?? Headers.empty(),
-          body: body ?? Body.fromString('Not Implemented'),
-          context: context,
-          encoding: encoding,
-        );
+         501,
+         headers: headers ?? Headers.empty(),
+         body: body ?? Body.fromString('Not Implemented'),
+         context: context,
+         encoding: encoding,
+       );
 
   /// Constructs an HTTP response with the given [statusCode].
   ///
@@ -358,10 +345,7 @@ class Response extends Message {
     final Headers? headers,
     final Encoding? encoding,
     final Map<String, Object>? context,
-  }) : super(
-          body: body ?? Body.empty(),
-          headers: headers ?? Headers.empty(),
-        ) {
+  }) : super(body: body ?? Body.empty(), headers: headers ?? Headers.empty()) {
     if (statusCode < 100) {
       throw ArgumentError('Invalid status code: $statusCode.');
     }

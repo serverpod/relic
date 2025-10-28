@@ -22,7 +22,9 @@ class Custom {
 }
 
 const _customClass = HeaderAccessor<Custom>(
-    'custom', HeaderCodec.single(Custom.parse, Custom.encode));
+  'custom',
+  HeaderCodec.single(Custom.parse, Custom.encode),
+);
 
 extension on Headers {
   int? get anInt => _anInt[this]();
@@ -37,16 +39,14 @@ extension on MutableHeaders {
 void main() {
   test('Given a correct header then single values are parsed correctly', () {
     final headers = Headers.fromMap({
-      'anInt': ['42']
+      'anInt': ['42'],
     });
     expect(headers.anInt, isA<int>());
     expect(headers.anInt, 42);
   });
 
   test('Given a correct header then multi values are parsed correctly', () {
-    final headers = Headers.fromMap({
-      'someStrings': 'foo bar'.split(' '),
-    });
+    final headers = Headers.fromMap({'someStrings': 'foo bar'.split(' ')});
     expect(headers.someStrings, isA<List<String>>());
     expect(headers.someStrings, ['foo', 'bar']);
   });
@@ -77,7 +77,7 @@ void main() {
 
   group('Given a Headers collection with an invalid entry', () {
     late final headers = Headers.fromMap({
-      'anInt': ['error']
+      'anInt': ['error'],
     });
     late final header = _anInt[headers];
 
@@ -101,8 +101,7 @@ void main() {
     });
   });
 
-  test(
-      'When setting a header on a mutable headers collection '
+  test('When setting a header on a mutable headers collection '
       'then it succeeds', () {
     final headers = Headers.build((final mh) {
       expect(() => mh.anInt = 42, returnsNormally);
@@ -110,8 +109,7 @@ void main() {
     expect(headers.anInt, 42);
   });
 
-  test(
-      'Given a mutable headers collection '
+  test('Given a mutable headers collection '
       'When removing a header by setting to null '
       'then it succeeds', () {
     final headers = Headers.build((final mh) {
@@ -126,8 +124,7 @@ void main() {
     expect(headers2, isNot(contains('anInt')));
   });
 
-  test(
-      'Given a mutable headers collection '
+  test('Given a mutable headers collection '
       'When removing a header using removeFrom '
       'then it succeeds', () {
     final headers = Headers.build((final mh) {
@@ -142,8 +139,7 @@ void main() {
   });
 
   // TODO: Should we try to prevent this scenario compile time?
-  test(
-      'Given a immutable headers collection '
+  test('Given a immutable headers collection '
       'When trying to set a header '
       'then it fails', () {
     final headers = Headers.build((final mh) {
@@ -156,8 +152,7 @@ void main() {
     expect(() => header.set(null), throwsA(isA<TypeError>()));
   });
 
-  test(
-      'Given a header accessor '
+  test('Given a header accessor '
       'when updating a value on a mutable headers collection '
       'then you can read the value immediately', () {
     Headers.build((final mh) {
@@ -180,18 +175,18 @@ void main() {
       // a non-const decoder that increment local the local variable count
       // whenever called. This is not good practice, but useful in the test!
       accessor = HeaderAccessor(
-          'tmp',
-          HeaderCodec.single((final s) {
-            ++count;
-            return int.parse(s);
-          }, encodeInt));
+        'tmp',
+        HeaderCodec.single((final s) {
+          ++count;
+          return int.parse(s);
+        }, encodeInt),
+      );
     });
 
-    test(
-        'when reading the value from a headers collection twice '
+    test('when reading the value from a headers collection twice '
         'then decode is only called once', () {
       final headers = Headers.fromMap({
-        accessor.key: ['1202']
+        accessor.key: ['1202'],
       });
 
       expect(accessor[headers].value, 1202);
@@ -201,15 +196,15 @@ void main() {
       expect(count, 1);
     });
 
-    test(
-        'when reading the value from a headers collection '
+    test('when reading the value from a headers collection '
         'where the raw value is updated directly '
         'then decode is only called once per update', () {
       final headers = Headers.fromMap({
-        accessor.key: ['1202']
+        accessor.key: ['1202'],
       });
-      final headers2 =
-          headers.transform((final mh) => mh[accessor.key] = ['42']);
+      final headers2 = headers.transform(
+        (final mh) => mh[accessor.key] = ['42'],
+      );
 
       expect(accessor[headers].value, 1202);
       expect(count, 1);
@@ -222,8 +217,7 @@ void main() {
       expect(count, 2);
     });
 
-    test(
-        'when reading the value from a headers collection '
+    test('when reading the value from a headers collection '
         'where the encoded value is set via the accessor '
         'then decode is not needed at all', () {
       final headers = Headers.build((final mh) => accessor[mh].set(51));
@@ -233,13 +227,14 @@ void main() {
   });
 
   test(
-      'Given a custom class '
-      'then it is possible to setup header accessor for it with a custom encode',
-      () {
-    final c = Custom();
-    final headers = Headers.build((final mh) => _customClass[mh].set(c));
-    expect(headers[_customClass.key], ['foo']);
-    expect(_customClass[headers].raw, ['foo']);
-    expect(_customClass[headers].value, same(c));
-  });
+    'Given a custom class '
+    'then it is possible to setup header accessor for it with a custom encode',
+    () {
+      final c = Custom();
+      final headers = Headers.build((final mh) => _customClass[mh].set(c));
+      expect(headers[_customClass.key], ['foo']);
+      expect(_customClass[headers].raw, ['foo']);
+      expect(_customClass[headers].value, same(c));
+    },
+  );
 }

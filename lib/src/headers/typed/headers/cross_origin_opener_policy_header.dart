@@ -4,10 +4,13 @@ import '../../../../relic.dart';
 ///
 /// This header specifies the policy for opening cross-origin resources.
 final class CrossOriginOpenerPolicyHeader {
-  static const codec =
-      HeaderCodec.single(CrossOriginOpenerPolicyHeader.parse, __encode);
-  static List<String> __encode(final CrossOriginOpenerPolicyHeader value) =>
-      [value._encode()];
+  static const codec = HeaderCodec.single(
+    CrossOriginOpenerPolicyHeader.parse,
+    __encode,
+  );
+  static List<String> __encode(final CrossOriginOpenerPolicyHeader value) => [
+    value._encode(),
+  ];
 
   /// The policy value of the header.
   final String policy;
@@ -21,8 +24,9 @@ final class CrossOriginOpenerPolicyHeader {
   static const _unsafeNone = 'unsafe-none';
 
   static const sameOrigin = CrossOriginOpenerPolicyHeader._(_sameOrigin);
-  static const sameOriginAllowPopups =
-      CrossOriginOpenerPolicyHeader._(_sameOriginAllowPopups);
+  static const sameOriginAllowPopups = CrossOriginOpenerPolicyHeader._(
+    _sameOriginAllowPopups,
+  );
   static const unsafeNone = CrossOriginOpenerPolicyHeader._(_unsafeNone);
 
   /// Parses a [value] and returns the corresponding [CrossOriginOpenerPolicyHeader] instance.

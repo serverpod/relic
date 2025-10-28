@@ -16,42 +16,36 @@ void main() {
 
     tearDown(() => server.close());
 
-    test(
-      'when an empty User-Agent header is passed then the server responds '
-      'with a bad request including a message that states the header value '
-      'cannot be empty',
-      () async {
-        expect(
-          getServerRequestHeaders(
-            server: server,
-            headers: {'user-agent': ''},
-            touchHeaders: (final h) => h.userAgent,
-          ),
-          throwsA(
-            isA<BadRequestException>().having(
-              (final e) => e.message,
-              'message',
-              contains('Value cannot be empty'),
-            ),
-          ),
-        );
-      },
-    );
-
-    test(
-      'when a User-Agent header with an empty value is passed '
-      'then the server does not respond with a bad request if the headers '
-      'is not actually used',
-      () async {
-        final headers = await getServerRequestHeaders(
+    test('when an empty User-Agent header is passed then the server responds '
+        'with a bad request including a message that states the header value '
+        'cannot be empty', () async {
+      expect(
+        getServerRequestHeaders(
           server: server,
-          touchHeaders: (final _) {},
           headers: {'user-agent': ''},
-        );
+          touchHeaders: (final h) => h.userAgent,
+        ),
+        throwsA(
+          isA<BadRequestException>().having(
+            (final e) => e.message,
+            'message',
+            contains('Value cannot be empty'),
+          ),
+        ),
+      );
+    });
 
-        expect(headers, isNotNull);
-      },
-    );
+    test('when a User-Agent header with an empty value is passed '
+        'then the server does not respond with a bad request if the headers '
+        'is not actually used', () async {
+      final headers = await getServerRequestHeaders(
+        server: server,
+        touchHeaders: (_) {},
+        headers: {'user-agent': ''},
+      );
+
+      expect(headers, isNotNull);
+    });
 
     test(
       'when a User-Agent string is passed then it should parse correctly',
@@ -93,19 +87,16 @@ void main() {
     tearDown(() => server.close());
 
     group('when an invalid User-Agent header is passed', () {
-      test(
-        'then it should return null',
-        () async {
-          final headers = await getServerRequestHeaders(
-            server: server,
-            touchHeaders: (final _) {},
-            headers: {'user-agent': ''},
-          );
+      test('then it should return null', () async {
+        final headers = await getServerRequestHeaders(
+          server: server,
+          touchHeaders: (_) {},
+          headers: {'user-agent': ''},
+        );
 
-          expect(Headers.userAgent[headers].valueOrNullIfInvalid, isNull);
-          expect(() => headers.userAgent, throwsInvalidHeader);
-        },
-      );
+        expect(Headers.userAgent[headers].valueOrNullIfInvalid, isNull);
+        expect(() => headers.userAgent, throwsInvalidHeader);
+      });
     });
   });
 }

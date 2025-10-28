@@ -31,10 +31,8 @@ class FileInfo {
   const FileInfo(this.file, this.mimeType, this.stat, this.etag);
 }
 
-typedef CacheControlFactory = CacheControlHeader? Function(
-  NewContext ctx,
-  FileInfo fileInfo,
-);
+typedef CacheControlFactory =
+    CacheControlHeader? Function(NewContext ctx, FileInfo fileInfo);
 
 /// LRU cache for file information to avoid repeated file system operations.
 final _fileInfoCache = LruCache<String, FileInfo>(10000);
@@ -46,8 +44,7 @@ final _fileInfoCache = LruCache<String, FileInfo>(10000);
 Future<FileInfo> getStaticFileInfo(
   final File file, {
   final MimeTypeResolver? mimeResolver,
-}) async =>
-    _getFileInfo(file, mimeResolver ?? _defaultMimeTypeResolver);
+}) async => _getFileInfo(file, mimeResolver ?? _defaultMimeTypeResolver);
 
 /// A [HandlerObject] that serves static files from a directory or a single file.
 ///
@@ -134,7 +131,7 @@ class StaticHandler extends HandlerObject {
       Directory() => _handleDirectory(ctx, entity as Directory),
       File() => _handleFile(ctx, entity as File),
       // coverage: ignore-line
-      _ => throw StateError('Unsupported entity type: ${entity.runtimeType}')
+      _ => throw StateError('Unsupported entity type: ${entity.runtimeType}'),
     };
   }
 
@@ -144,31 +141,33 @@ class StaticHandler extends HandlerObject {
   ) async {
     final resolvedRootPath = directory.resolveSymbolicLinksSync();
     final fallbackHandler =
-        defaultHandler ?? respondWith((final _) => Response.notFound());
+        defaultHandler ?? respondWith((_) => Response.notFound());
 
     final resolveFilePath = switch (cacheBustingConfig) {
       null =>
         (final String resolvedRootPath, final List<String> requestSegments) =>
             p.joinAll([resolvedRootPath, ...requestSegments]),
-      final cfg =>
-        (final String resolvedRootPath, final List<String> requestSegments) {
-          if (requestSegments.isEmpty) {
-            return resolvedRootPath;
-          }
-
-          final fileName = cfg.tryStripHashFromFilename(
-            requestSegments.last,
-          );
-          return p.joinAll([
-            resolvedRootPath,
-            ...requestSegments.sublist(0, requestSegments.length - 1),
-            fileName,
-          ]);
+      final cfg => (
+        final String resolvedRootPath,
+        final List<String> requestSegments,
+      ) {
+        if (requestSegments.isEmpty) {
+          return resolvedRootPath;
         }
+
+        final fileName = cfg.tryStripHashFromFilename(requestSegments.last);
+        return p.joinAll([
+          resolvedRootPath,
+          ...requestSegments.sublist(0, requestSegments.length - 1),
+          fileName,
+        ]);
+      },
     };
 
-    final filePath =
-        resolveFilePath(resolvedRootPath, ctx.remainingPath.segments);
+    final filePath = resolveFilePath(
+      resolvedRootPath,
+      ctx.remainingPath.segments,
+    );
 
     // Ensure file exists and is not a directory
     final entityType = FileSystemEntity.typeSync(filePath, followLinks: false);
@@ -242,13 +241,14 @@ bool _isMethodAllowed(final Method method) {
 
 /// Returns a 405 Method Not Allowed response.
 ResponseContext _methodNotAllowedResponse(final NewContext ctx) {
-  return ctx.respond(Response(
-    HttpStatus.methodNotAllowed,
-    headers: Headers.build((final mh) => mh.allow = {
-          Method.get,
-          Method.head,
-        }),
-  ));
+  return ctx.respond(
+    Response(
+      HttpStatus.methodNotAllowed,
+      headers: Headers.build(
+        (final mh) => mh.allow = {Method.get, Method.head},
+      ),
+    ),
+  );
 }
 
 /// Gets file information from cache or creates new cache entry.
@@ -264,10 +264,9 @@ Future<FileInfo> _getFileInfo(
   if (cachedInfo != null && !cachedInfo.isStale(stat)) return cachedInfo;
 
   // Generate new file info
-  final (etag, mimeType) = await Isolate.run(() => (
-        _generateETag(file),
-        _detectMimeType(file, mimeResolver),
-      ).wait);
+  final (etag, mimeType) = await Isolate.run(
+    () => (_generateETag(file), _detectMimeType(file, mimeResolver)).wait,
+  );
 
   final fileInfo = FileInfo(file, mimeType, stat, etag);
   _fileInfoCache[file.path] = fileInfo;
@@ -282,11 +281,14 @@ Future<String> _generateETag(final File file) async {
 
 /// Detects MIME type using file path and content magic numbers.
 Future<MimeType?> _detectMimeType(
-    final File file, final MimeTypeResolver mimeResolver) async {
-  final headerBytes = await file
-      .openRead(0, mimeResolver.magicNumbersMaxLength)
-      .cast<Uint8List>()
-      .firstOrNull;
+  final File file,
+  final MimeTypeResolver mimeResolver,
+) async {
+  final headerBytes =
+      await file
+          .openRead(0, mimeResolver.magicNumbersMaxLength)
+          .cast<Uint8List>()
+          .firstOrNull;
 
   final mimeString = mimeResolver.lookup(file.path, headerBytes: headerBytes);
   return mimeString != null ? MimeType.parse(mimeString) : null;
@@ -294,12 +296,17 @@ Future<MimeType?> _detectMimeType(
 
 /// Builds base response headers common to all responses.
 Headers _buildBaseHeaders(
-    final FileInfo fileInfo, final CacheControlHeader? cacheControl) {
-  return Headers.build((final mh) => mh
-    ..acceptRanges = AcceptRangesHeader.bytes()
-    ..etag = ETagHeader(value: fileInfo.etag)
-    ..lastModified = fileInfo.stat.modified
-    ..cacheControl = cacheControl);
+  final FileInfo fileInfo,
+  final CacheControlHeader? cacheControl,
+) {
+  return Headers.build(
+    (final mh) =>
+        mh
+          ..acceptRanges = AcceptRangesHeader.bytes()
+          ..etag = ETagHeader(value: fileInfo.etag)
+          ..lastModified = fileInfo.stat.modified
+          ..cacheControl = cacheControl,
+  );
 }
 
 /// Checks conditional request headers and returns 304 response if appropriate.
@@ -377,10 +384,12 @@ ResponseContext _serveFullFile(
   final Headers headers,
   final Method method,
 ) {
-  return ctx.respond(Response.ok(
-    headers: headers,
-    body: _createFileBody(fileInfo, isHeadRequest: method == Method.head),
-  ));
+  return ctx.respond(
+    Response.ok(
+      headers: headers,
+      body: _createFileBody(fileInfo, isHeadRequest: method == Method.head),
+    ),
+  );
 }
 
 /// Serves a single range of the file.
@@ -397,16 +406,21 @@ ResponseContext _serveSingleRange(
     return ctx.respond(Response(416, headers: headers));
   }
 
-  return ctx.respond(Response(
-    HttpStatus.partialContent,
-    headers: headers.transform((final mh) => mh
-      ..contentRange = ContentRangeHeader(
-        start: start,
-        end: end - 1,
-        size: fileInfo.stat.size,
-      )),
-    body: _createRangeBody(fileInfo, start, end),
-  ));
+  return ctx.respond(
+    Response(
+      HttpStatus.partialContent,
+      headers: headers.transform(
+        (final mh) =>
+            mh
+              ..contentRange = ContentRangeHeader(
+                start: start,
+                end: end - 1,
+                size: fileInfo.stat.size,
+              ),
+      ),
+      body: _createRangeBody(fileInfo, start, end),
+    ),
+  );
 }
 
 /// Serves multiple ranges as multipart response.
@@ -438,19 +452,24 @@ Future<ResponseContext> _serveMultipleRanges(
 
   unawaited(controller.close());
 
-  return ctx.respond(Response(
-    HttpStatus.partialContent,
-    headers: headers.transform((final mh) => mh
-      ..[Headers.contentTypeHeader] = [
-        '${MimeType.multipartByteranges.toHeaderValue()}; boundary=$boundary'
-      ]),
-    body: Body.fromDataStream(
-      controller.stream,
-      contentLength: totalLength,
-      mimeType: MimeType.multipartByteranges,
-      encoding: fileInfo.mimeType?.isText == true ? utf8 : null,
+  return ctx.respond(
+    Response(
+      HttpStatus.partialContent,
+      headers: headers.transform(
+        (final mh) =>
+            mh
+              ..[Headers.contentTypeHeader] = [
+                '${MimeType.multipartByteranges.toHeaderValue()}; boundary=$boundary',
+              ],
+      ),
+      body: Body.fromDataStream(
+        controller.stream,
+        contentLength: totalLength,
+        mimeType: MimeType.multipartByteranges,
+        encoding: fileInfo.mimeType?.isText == true ? utf8 : null,
+      ),
     ),
-  ));
+  );
 }
 
 /// Calculates actual start and end positions for a range.
@@ -487,7 +506,8 @@ Future<int> _writeMultipartSection(
 
   // Write part header
   final mimeType = fileInfo.mimeType ?? MimeType.octetStream;
-  final partHeader = '\r\n--$boundary\r\n'
+  final partHeader =
+      '\r\n--$boundary\r\n'
       'Content-Type: ${mimeType.toHeaderValue()}\r\n'
       'Content-Range: bytes $start-${end - 1}/${fileInfo.stat.size}\r\n\r\n';
 

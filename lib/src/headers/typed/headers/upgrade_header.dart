@@ -16,8 +16,8 @@ final class UpgradeHeader {
 
   /// Constructs an [UpgradeHeader] instance with the specified protocols.
   UpgradeHeader({required final List<UpgradeProtocol> protocols})
-      : assert(protocols.isNotEmpty),
-        protocols = List.unmodifiable(protocols);
+    : assert(protocols.isNotEmpty),
+      protocols = List.unmodifiable(protocols);
 
   /// Parses the Upgrade header value and returns an [UpgradeHeader] instance.
   ///
@@ -28,9 +28,10 @@ final class UpgradeHeader {
       throw const FormatException('Value cannot be empty');
     }
 
-    final protocols = splitValues
-        .map((final protocol) => UpgradeProtocol.parse(protocol))
-        .toList();
+    final protocols =
+        splitValues
+            .map((final protocol) => UpgradeProtocol.parse(protocol))
+            .toList();
 
     return UpgradeHeader(protocols: protocols);
   }
@@ -46,8 +47,10 @@ final class UpgradeHeader {
   bool operator ==(final Object other) =>
       identical(this, other) ||
       other is UpgradeHeader &&
-          const ListEquality<UpgradeProtocol>()
-              .equals(protocols, other.protocols);
+          const ListEquality<UpgradeProtocol>().equals(
+            protocols,
+            other.protocols,
+          );
 
   @override
   int get hashCode => const ListEquality<UpgradeProtocol>().hash(protocols);
@@ -67,10 +70,7 @@ class UpgradeProtocol {
   final double? version;
 
   /// Constructs an [UpgradeProtocol] instance with the specified name and version.
-  UpgradeProtocol({
-    required this.protocol,
-    this.version,
-  });
+  UpgradeProtocol({required this.protocol, this.version});
 
   /// Parses a protocol string and returns an [UpgradeProtocol] instance.
   factory UpgradeProtocol.parse(final String value) {
@@ -99,10 +99,7 @@ class UpgradeProtocol {
       throw const FormatException('Invalid version');
     }
 
-    return UpgradeProtocol(
-      protocol: protocol,
-      version: parsedVersion,
-    );
+    return UpgradeProtocol(protocol: protocol, version: parsedVersion);
   }
 
   /// Converts the [UpgradeProtocol] instance into a string representation.

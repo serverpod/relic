@@ -63,8 +63,7 @@ void main() {
     });
   });
 
-  test(
-      'Given a router with a parameterized group and registered path, '
+  test('Given a router with a parameterized group and registered path, '
       'when looking up a route with parameter values, '
       'then it returns the correct value with extracted parameters', () {
     final router = Router<String>();
@@ -99,8 +98,7 @@ void main() {
     });
   });
 
-  test(
-      'Given nested parameterized groups with a registered path, '
+  test('Given nested parameterized groups with a registered path, '
       'when looking up the deeply nested route with parameter values, '
       'then it returns the correct value with all parameters extracted', () {
     final router = Router<String>();
@@ -112,8 +110,7 @@ void main() {
     expectLookupResult(result, 'some-data', {#tenantId: 'abc', #userId: '123'});
   });
 
-  test(
-      'Given a router with a group on a dynamic path "/:p", '
+  test('Given a router with a group on a dynamic path "/:p", '
       'when attempting to add a groups with an incompatible path "*", '
       'then an ArgumentError is thrown', () {
     final router = Router<String>();
@@ -121,8 +118,7 @@ void main() {
     expect(() => router.group('*'), throwsArgumentError);
   });
 
-  test(
-      'Given a router with a group on a path "a", '
+  test('Given a router with a group on a path "a", '
       'when adding a group with a semantically equivalent path "///a//", '
       'then it succeeds', () {
     final router = Router<String>();
@@ -130,8 +126,7 @@ void main() {
     expect(() => router.group('///a//'), returnsNormally);
   });
 
-  test(
-      'Given two group instances with the same path, '
+  test('Given two group instances with the same path, '
       'when comparing them and accessing routes, '
       'then they are not equal but share the same underlying routes', () {
     final router = Router<int>();
@@ -142,8 +137,7 @@ void main() {
     expectLookupResult(result, 1);
   });
 
-  test(
-      'Given a router with an empty group, '
+  test('Given a router with an empty group, '
       'when looking up the group path directly, '
       'then no route is found', () {
     final router = Router<int>()..group('a');

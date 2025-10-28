@@ -21,10 +21,8 @@ final class RangeHeader {
 
   /// Constructs a [RangeHeader] instance with the specified unit and list
   /// of ranges.
-  RangeHeader({
-    this.unit = 'bytes',
-    required this.ranges,
-  }) : assert(ranges.isNotEmpty);
+  RangeHeader({this.unit = 'bytes', required this.ranges})
+    : assert(ranges.isNotEmpty);
 
   /// Parses the Range header value and returns a [RangeHeader] instance.
   ///
@@ -51,22 +49,23 @@ final class RangeHeader {
     }
 
     final rangeStrings = rangesPart.split(',');
-    final ranges = rangeStrings.map((final rangeStr) {
-      final trimmedRange = rangeStr.trim();
-      final rangeMatch = RegExp(r'^(\d*)-(\d*)$').firstMatch(trimmedRange);
-      if (rangeMatch == null) {
-        throw const FormatException('Invalid range');
-      }
+    final ranges =
+        rangeStrings.map((final rangeStr) {
+          final trimmedRange = rangeStr.trim();
+          final rangeMatch = RegExp(r'^(\d*)-(\d*)$').firstMatch(trimmedRange);
+          if (rangeMatch == null) {
+            throw const FormatException('Invalid range');
+          }
 
-      final start = int.tryParse(rangeMatch.group(1) ?? '');
-      final end = int.tryParse(rangeMatch.group(2) ?? '');
+          final start = int.tryParse(rangeMatch.group(1) ?? '');
+          final end = int.tryParse(rangeMatch.group(2) ?? '');
 
-      if (start == null && end == null) {
-        throw const FormatException('Both start and end cannot be empty');
-      }
+          if (start == null && end == null) {
+            throw const FormatException('Both start and end cannot be empty');
+          }
 
-      return Range(start: start, end: end);
-    }).toList();
+          return Range(start: start, end: end);
+        }).toList();
 
     return RangeHeader(unit: unit, ranges: ranges);
   }
@@ -105,13 +104,11 @@ class Range {
 
   /// Constructs a [Range] instance with the specified start and end of
   /// the range.
-  Range({
-    this.start,
-    this.end,
-  }) {
+  Range({this.start, this.end}) {
     if (start == null && end == null) {
       throw const FormatException(
-          'At least one of start or end must be specified');
+        'At least one of start or end must be specified',
+      );
     }
   }
 

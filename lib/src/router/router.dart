@@ -16,8 +16,11 @@ part 'relic_app.dart';
 extension type _RouterEntry<T extends Object>._(List<T?> _routeByVerb)
     implements Iterable<T?> {
   _RouterEntry()
-      : _routeByVerb =
-            List<T?>.filled(Method.values.length, null, growable: false);
+    : _routeByVerb = List<T?>.filled(
+        Method.values.length,
+        null,
+        growable: false,
+      );
 
   @pragma('vm:prefer-inline')
   void add(
@@ -115,11 +118,11 @@ final class Router<T extends Object> {
   /// ```
   void use(final String path, final T Function(T) map) {
     _allRoutes.use(
-        NormalizedPath(path),
-        (final r) => _RouterEntry._(List.of(
-              r.map((final v) => v == null ? null : map(v)),
-              growable: false,
-            )));
+      NormalizedPath(path),
+      (final r) => _RouterEntry._(
+        List.of(r.map((final v) => v == null ? null : map(v)), growable: false),
+      ),
+    );
   }
 
   /// Attaches a sub-router to this router at the specified [path].
@@ -151,12 +154,7 @@ final class Router<T extends Object> {
     final route = entry.value.find(method);
     if (route == null) return MethodMiss(entry.value.allowed);
 
-    return RouterMatch(
-      route,
-      entry.parameters,
-      entry.matched,
-      entry.remaining,
-    );
+    return RouterMatch(route, entry.parameters, entry.matched, entry.remaining);
   }
 
   /// Returns true if the router has no routes.

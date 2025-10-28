@@ -138,12 +138,13 @@ extension MutableHeadersEx on MutableHeaders {
   set accessControlAllowOrigin(final AccessControlAllowOriginHeader? value) =>
       Headers.accessControlAllowOrigin[this].set(value);
   set accessControlExposeHeaders(
-          final AccessControlExposeHeadersHeader? value) =>
-      Headers.accessControlExposeHeaders[this].set(value);
+    final AccessControlExposeHeadersHeader? value,
+  ) => Headers.accessControlExposeHeaders[this].set(value);
   set accessControlMaxAge(final int? value) =>
       Headers.accessControlMaxAge[this].set(value);
-  set allow(final Set<Method>? value) => Headers.allow[this]
-      .set(value != null ? SplayTreeSet.of(value, Enum.compareByIndex) : null);
+  set allow(final Set<Method>? value) => Headers.allow[this].set(
+    value != null ? SplayTreeSet.of(value, Enum.compareByIndex) : null,
+  );
   set cacheControl(final CacheControlHeader? value) =>
       Headers.cacheControl[this].set(value);
   set contentEncoding(final ContentEncodingHeader? value) =>

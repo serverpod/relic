@@ -13,10 +13,7 @@ class _TestMessage extends Message {
     final Headers? headers,
     final Map<String, Object>? context, {
     final Body? body,
-  }) : super(
-          headers: headers ?? Headers.empty(),
-          body: body ?? Body.empty(),
-        );
+  }) : super(headers: headers ?? Headers.empty(), body: body ?? Body.empty());
 
   @override
   Message copyWith({
@@ -52,18 +49,9 @@ void main() {
       final message = _createMessage(
         headers: Headers.build((final mh) => mh['foo'] = ['bar']),
       );
-      expect(
-        () => message.headers['h1'] = ['value1'],
-        throwsUnsupportedError,
-      );
-      expect(
-        () => message.headers['h1'] = ['value2'],
-        throwsUnsupportedError,
-      );
-      expect(
-        () => message.headers['h2'] = ['value2'],
-        throwsUnsupportedError,
-      );
+      expect(() => message.headers['h1'] = ['value1'], throwsUnsupportedError);
+      expect(() => message.headers['h1'] = ['value2'], throwsUnsupportedError);
+      expect(() => message.headers['h2'] = ['value2'], throwsUnsupportedError);
     });
 
     test('when containing multiple values then they are handled correctly', () {
@@ -89,8 +77,9 @@ void main() {
 
     test('when the body is a Stream<Uint8List> then it reads correctly', () {
       final controller = StreamController<Uint8List>();
-      final request =
-          _createMessage(body: Body.fromDataStream(controller.stream));
+      final request = _createMessage(
+        body: Body.fromDataStream(controller.stream),
+      );
       expect(request.readAsString(), completion(equals('hello, world')));
 
       controller.add(helloBytes);
@@ -120,8 +109,10 @@ void main() {
       final request = _createMessage(
         body: Body.fromDataStream(controller.stream),
       );
-      expect(request.read().toList(),
-          completion(equals([helloBytes, worldBytes])));
+      expect(
+        request.read().toList(),
+        completion(equals([helloBytes, worldBytes])),
+      );
 
       controller.add(helloBytes);
       return Future(() {
@@ -137,35 +128,37 @@ void main() {
     });
 
     test(
-        'when read()/readAsString() is called multiple times then it throws a StateError',
-        () {
-      Message request;
+      'when read()/readAsString() is called multiple times then it throws a StateError',
+      () {
+        Message request;
 
-      request = _createMessage();
-      expect(request.read().toList(), completion(isEmpty));
-      expect(() => request.read(), throwsStateError);
+        request = _createMessage();
+        expect(request.read().toList(), completion(isEmpty));
+        expect(() => request.read(), throwsStateError);
 
-      request = _createMessage();
-      expect(request.readAsString(), completion(isEmpty));
-      expect(() => request.readAsString(), throwsStateError);
+        request = _createMessage();
+        expect(request.readAsString(), completion(isEmpty));
+        expect(() => request.readAsString(), throwsStateError);
 
-      request = _createMessage();
-      expect(request.readAsString(), completion(isEmpty));
-      expect(() => request.read(), throwsStateError);
+        request = _createMessage();
+        expect(request.readAsString(), completion(isEmpty));
+        expect(() => request.read(), throwsStateError);
 
-      request = _createMessage();
-      expect(request.read().toList(), completion(isEmpty));
-      expect(() => request.readAsString(), throwsStateError);
-    });
+        request = _createMessage();
+        expect(request.read().toList(), completion(isEmpty));
+        expect(() => request.readAsString(), throwsStateError);
+      },
+    );
   });
 
   group('Given content-length', () {
     test(
-        'when the body is default and no content-length header is present then it is 0',
-        () {
-      final request = _createMessage();
-      expect(request.body.contentLength, 0);
-    });
+      'when the body is default and no content-length header is present then it is 0',
+      () {
+        final request = _createMessage();
+        expect(request.body.contentLength, 0);
+      },
+    );
 
     test('when the body is a byte body then it is set correctly', () {
       final request = _createMessage(
@@ -200,9 +193,10 @@ void main() {
       final request = _createMessage(
         body: Body.fromString('1\r\na0\r\n\r\n'),
         headers: Headers.build(
-          (final mh) => mh.transferEncoding = TransferEncodingHeader(
-            encodings: [TransferEncoding.identity],
-          ),
+          (final mh) =>
+              mh.transferEncoding = TransferEncodingHeader(
+                encodings: [TransferEncoding.identity],
+              ),
         ),
       );
       expect(request.body.contentLength, equals(9));
@@ -211,21 +205,17 @@ void main() {
 
   group('Given encoding', () {
     test('when no content-type header is present then it defaults to utf8', () {
-      expect(
-          _createMessage(
-            body: Body.fromString(''),
-          ).encoding,
-          utf8);
+      expect(_createMessage(body: Body.fromString('')).encoding, utf8);
     });
 
     test('when encoding a String then it defaults to UTF-8', () {
       expect(
-        _createMessage(
-          body: Body.fromString('è'),
-        ).read().toList(),
-        completion(equals([
-          [195, 168]
-        ])),
+        _createMessage(body: Body.fromString('è')).read().toList(),
+        completion(
+          equals([
+            [195, 168],
+          ]),
+        ),
       );
     });
 
@@ -234,9 +224,11 @@ void main() {
         _createMessage(
           body: Body.fromString('è', encoding: latin1),
         ).read().toList(),
-        completion(equals([
-          [232]
-        ])),
+        completion(
+          equals([
+            [232],
+          ]),
+        ),
       );
     });
   });

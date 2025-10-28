@@ -26,11 +26,13 @@ void main() {
             touchHeaders: (final h) => h.secFetchMode,
             headers: {'sec-fetch-mode': ''},
           ),
-          throwsA(isA<BadRequestException>().having(
-            (final e) => e.message,
-            'message',
-            contains('Value cannot be empty'),
-          )),
+          throwsA(
+            isA<BadRequestException>().having(
+              (final e) => e.message,
+              'message',
+              contains('Value cannot be empty'),
+            ),
+          ),
         );
       },
     );
@@ -45,28 +47,27 @@ void main() {
             touchHeaders: (final h) => h.secFetchMode,
             headers: {'sec-fetch-mode': 'custom-mode'},
           ),
-          throwsA(isA<BadRequestException>().having(
-            (final e) => e.message,
-            'message',
-            contains('Invalid value'),
-          )),
+          throwsA(
+            isA<BadRequestException>().having(
+              (final e) => e.message,
+              'message',
+              contains('Invalid value'),
+            ),
+          ),
         );
       },
     );
 
-    test(
-      'when a Sec-Fetch-Mode header with an invalid value is passed '
-      'then the server does not respond with a bad request if the headers '
-      'is not actually used',
-      () async {
-        final headers = await getServerRequestHeaders(
-          server: server,
-          touchHeaders: (final _) {},
-          headers: {'sec-fetch-mode': 'custom-mode'},
-        );
-        expect(headers, isNotNull);
-      },
-    );
+    test('when a Sec-Fetch-Mode header with an invalid value is passed '
+        'then the server does not respond with a bad request if the headers '
+        'is not actually used', () async {
+      final headers = await getServerRequestHeaders(
+        server: server,
+        touchHeaders: (_) {},
+        headers: {'sec-fetch-mode': 'custom-mode'},
+      );
+      expect(headers, isNotNull);
+    });
 
     test(
       'when a valid Sec-Fetch-Mode header is passed then it should parse the mode correctly',
@@ -105,18 +106,15 @@ void main() {
     tearDown(() => server.close());
 
     group('When an empty Sec-Fetch-Mode header is passed', () {
-      test(
-        'then it should return null',
-        () async {
-          final headers = await getServerRequestHeaders(
-            server: server,
-            touchHeaders: (final _) {},
-            headers: {},
-          );
+      test('then it should return null', () async {
+        final headers = await getServerRequestHeaders(
+          server: server,
+          touchHeaders: (_) {},
+          headers: {},
+        );
 
-          expect(headers.secFetchMode, isNull);
-        },
-      );
+        expect(headers.secFetchMode, isNull);
+      });
     });
   });
 }

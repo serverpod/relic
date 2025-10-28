@@ -26,11 +26,13 @@ void main() {
             touchHeaders: (final h) => h.vary,
             headers: {'vary': ''},
           ),
-          throwsA(isA<BadRequestException>().having(
-            (final e) => e.message,
-            'message',
-            contains('Value cannot be empty'),
-          )),
+          throwsA(
+            isA<BadRequestException>().having(
+              (final e) => e.message,
+              'message',
+              contains('Value cannot be empty'),
+            ),
+          ),
         );
       },
     );
@@ -57,20 +59,17 @@ void main() {
       },
     );
 
-    test(
-      'when a Vary header with an invalid value is passed '
-      'then the server does not respond with a bad request if the headers '
-      'is not actually used',
-      () async {
-        final headers = await getServerRequestHeaders(
-          server: server,
-          touchHeaders: (final _) {},
-          headers: {'vary': '* , User-Agent'},
-        );
+    test('when a Vary header with an invalid value is passed '
+        'then the server does not respond with a bad request if the headers '
+        'is not actually used', () async {
+      final headers = await getServerRequestHeaders(
+        server: server,
+        touchHeaders: (_) {},
+        headers: {'vary': '* , User-Agent'},
+      );
 
-        expect(headers, isNotNull);
-      },
-    );
+      expect(headers, isNotNull);
+    });
 
     test(
       'when a Vary header is passed then it should parse correctly',
@@ -81,10 +80,7 @@ void main() {
           headers: {'vary': 'Accept-Encoding, User-Agent'},
         );
 
-        expect(
-          headers.vary?.fields,
-          equals(['Accept-Encoding', 'User-Agent']),
-        );
+        expect(headers.vary?.fields, equals(['Accept-Encoding', 'User-Agent']));
       },
     );
 
@@ -97,10 +93,7 @@ void main() {
           headers: {'vary': ' Accept-Encoding , User-Agent '},
         );
 
-        expect(
-          headers.vary?.fields,
-          equals(['Accept-Encoding', 'User-Agent']),
-        );
+        expect(headers.vary?.fields, equals(['Accept-Encoding', 'User-Agent']));
       },
     );
 
@@ -118,18 +111,15 @@ void main() {
       },
     );
 
-    test(
-      'when no Vary header is passed then it should return null',
-      () async {
-        final headers = await getServerRequestHeaders(
-          server: server,
-          touchHeaders: (final h) => h.vary,
-          headers: {},
-        );
+    test('when no Vary header is passed then it should return null', () async {
+      final headers = await getServerRequestHeaders(
+        server: server,
+        touchHeaders: (final h) => h.vary,
+        headers: {},
+      );
 
-        expect(headers.vary, isNull);
-      },
-    );
+      expect(headers.vary, isNull);
+    });
   });
 
   group('Given a Vary header without validation', () {
@@ -142,19 +132,16 @@ void main() {
     tearDown(() => server.close());
 
     group('when an empty Vary header is passed', () {
-      test(
-        'then it should return null',
-        () async {
-          final headers = await getServerRequestHeaders(
-            server: server,
-            touchHeaders: (final _) {},
-            headers: {'vary': ''},
-          );
+      test('then it should return null', () async {
+        final headers = await getServerRequestHeaders(
+          server: server,
+          touchHeaders: (_) {},
+          headers: {'vary': ''},
+        );
 
-          expect(Headers.vary[headers].valueOrNullIfInvalid, isNull);
-          expect(() => headers.vary, throwsInvalidHeader);
-        },
-      );
+        expect(Headers.vary[headers].valueOrNullIfInvalid, isNull);
+        expect(() => headers.vary, throwsInvalidHeader);
+      });
     });
   });
 }

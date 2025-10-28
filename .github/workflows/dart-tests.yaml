@@ -11,7 +11,7 @@ on:
 
 env:
   PUB_CACHE_PATH: ~/.pub-cache
-  LOWEST_DART_SDK: "3.5.0"
+  LOWEST_DART_SDK: "3.7.0"
 
 jobs:
   build:
@@ -23,14 +23,14 @@ jobs:
         dart_sdk:
           # ${{ env.LOWEST_DART_SDK }} won't work at job level as env context not available for strategy ¯\_(ツ)_/¯
           # (see https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/accessing-contextual-information-about-workflow-runs#context-availability)
-          - "3.5.0"
+          - "3.7.0"
           - stable
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
       - name: Setup Dart
-        uses: dart-lang/setup-dart@v1.3
+        uses: dart-lang/setup-dart@v1
         with:
           sdk: ${{ matrix.dart_sdk }}
 
@@ -82,12 +82,12 @@ jobs:
   unit_tests:
     name: Run Unit Tests
     runs-on: ${{ matrix.os }}
-    continue-on-error: ${{ matrix.dart_sdk != '3.3.0' }} # env context not available for continue-on-error
+    continue-on-error: ${{ matrix.dart_sdk != '3.7.0' }} # env context not available for continue-on-error
     strategy:
       fail-fast: false
       matrix:
         os: [windows-latest, ubuntu-latest, macos-latest]
-        dart_sdk: ["3.5.0", stable, beta] # env context not available for strategy
+        dart_sdk: ["3.7.0", stable, beta] # env context not available for strategy
         deps: [downgrade, upgrade]
     steps:
       - name: Checkout Code

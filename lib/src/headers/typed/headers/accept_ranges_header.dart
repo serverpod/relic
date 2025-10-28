@@ -5,8 +5,9 @@ import '../../../../relic.dart';
 /// This class manages the range units that the server supports.
 final class AcceptRangesHeader {
   static const codec = HeaderCodec.single(AcceptRangesHeader.parse, __encode);
-  static List<String> __encode(final AcceptRangesHeader value) =>
-      [value._encode()];
+  static List<String> __encode(final AcceptRangesHeader value) => [
+    value._encode(),
+  ];
 
   /// The range unit supported by the server, or `none` if not supported.
   final String rangeUnit;

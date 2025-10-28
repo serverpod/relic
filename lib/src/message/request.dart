@@ -126,14 +126,14 @@ class Request extends Message {
     final Uri? url,
     final Body? body,
   }) : this._(
-          method,
-          requestedUri,
-          headers ?? Headers.empty(),
-          protocolVersion: protocolVersion,
-          url: url,
-          handlerPath: handlerPath,
-          body: body,
-        );
+         method,
+         requestedUri,
+         headers ?? Headers.empty(),
+         protocolVersion: protocolVersion,
+         url: url,
+         handlerPath: handlerPath,
+         body: body,
+       );
 
   /// This constructor has the same signature as [Request.new] except that
   /// accepts [onHijack] as [_OnHijack].
@@ -149,10 +149,10 @@ class Request extends Message {
     final String? handlerPath,
     final Uri? url,
     final Body? body,
-  })  : protocolVersion = protocolVersion ?? '1.1',
-        url = _computeUrl(requestedUri, handlerPath, url),
-        handlerPath = _computeHandlerPath(requestedUri, handlerPath, url),
-        super(body: body ?? Body.empty(), headers: headers) {
+  }) : protocolVersion = protocolVersion ?? '1.1',
+       url = _computeUrl(requestedUri, handlerPath, url),
+       handlerPath = _computeHandlerPath(requestedUri, handlerPath, url),
+       super(body: body ?? Body.empty(), headers: headers) {
     try {
       // Trigger URI parsing methods that may throw format exception (in Request
       // constructor or in handlers / routing).
@@ -160,17 +160,26 @@ class Request extends Message {
       requestedUri.queryParametersAll;
     } on FormatException catch (e) {
       throw ArgumentError.value(
-          requestedUri, 'requestedUri', 'URI parsing failed: $e');
+        requestedUri,
+        'requestedUri',
+        'URI parsing failed: $e',
+      );
     }
 
     if (!requestedUri.isAbsolute) {
       throw ArgumentError.value(
-          requestedUri, 'requestedUri', 'must be an absolute URL.');
+        requestedUri,
+        'requestedUri',
+        'must be an absolute URL.',
+      );
     }
 
     if (requestedUri.fragment.isNotEmpty) {
       throw ArgumentError.value(
-          requestedUri, 'requestedUri', 'may not have a fragment.');
+        requestedUri,
+        'requestedUri',
+        'may not have a fragment.',
+      );
     }
 
     // Notice that because relative paths must encode colon (':') as %3A we
@@ -183,10 +192,11 @@ class Request extends Message {
     final pathSegments = '$handlerPart$join$rest';
     if (pathSegments != requestedUri.pathSegments.join('/')) {
       throw ArgumentError.value(
-          requestedUri,
-          'requestedUri',
-          'handlerPath "${this.handlerPath}" and url "${this.url}" must '
-              'combine to equal requestedUri path "${requestedUri.path}".');
+        requestedUri,
+        'requestedUri',
+        'handlerPath "${this.handlerPath}" and url "${this.url}" must '
+            'combine to equal requestedUri path "${requestedUri.path}".',
+      );
     }
   }
 
@@ -245,18 +255,24 @@ Uri _computeUrl(final Uri requestedUri, String? handlerPath, final Uri? url) {
 
   if (url != null) {
     if (url.scheme.isNotEmpty || url.hasAuthority || url.fragment.isNotEmpty) {
-      throw ArgumentError('url "$url" may contain only a path and query '
-          'parameters.');
+      throw ArgumentError(
+        'url "$url" may contain only a path and query '
+        'parameters.',
+      );
     }
 
     if (!requestedUri.path.endsWith(url.path)) {
-      throw ArgumentError('url "$url" must be a suffix of requestedUri '
-          '"$requestedUri".');
+      throw ArgumentError(
+        'url "$url" must be a suffix of requestedUri '
+        '"$requestedUri".',
+      );
     }
 
     if (requestedUri.query != url.query) {
-      throw ArgumentError('url "$url" must have the same query parameters '
-          'as requestedUri "$requestedUri".');
+      throw ArgumentError(
+        'url "$url" must have the same query parameters '
+        'as requestedUri "$requestedUri".',
+      );
     }
 
     if (url.path.startsWith('/')) {
@@ -266,15 +282,18 @@ Uri _computeUrl(final Uri requestedUri, String? handlerPath, final Uri? url) {
     final startOfUrl = requestedUri.path.length - url.path.length;
     if (url.path.isNotEmpty &&
         requestedUri.path.substring(startOfUrl - 1, startOfUrl) != '/') {
-      throw ArgumentError('url "$url" must be on a path boundary in '
-          'requestedUri "$requestedUri".');
+      throw ArgumentError(
+        'url "$url" must be on a path boundary in '
+        'requestedUri "$requestedUri".',
+      );
     }
 
     return url;
   } else if (handlerPath != null) {
     return Uri(
-        path: requestedUri.path.substring(handlerPath.length),
-        query: requestedUri.query);
+      path: requestedUri.path.substring(handlerPath.length),
+      query: requestedUri.query,
+    );
   } else {
     // Skip the initial "/".
     final path = requestedUri.path.substring(1);
@@ -287,7 +306,10 @@ Uri _computeUrl(final Uri requestedUri, String? handlerPath, final Uri? url) {
 /// If [handlerPath] is `null`, the value is inferred from [requestedUri] and
 /// [url] if available. Otherwise [handlerPath] is returned.
 String _computeHandlerPath(
-    final Uri requestedUri, String? handlerPath, final Uri? url) {
+  final Uri requestedUri,
+  String? handlerPath,
+  final Uri? url,
+) {
   if (handlerPath != null &&
       handlerPath != requestedUri.path &&
       !handlerPath.endsWith('/')) {
@@ -296,8 +318,10 @@ String _computeHandlerPath(
 
   if (handlerPath != null) {
     if (!requestedUri.path.startsWith(handlerPath)) {
-      throw ArgumentError('handlerPath "$handlerPath" must be a prefix of '
-          'requestedUri path "${requestedUri.path}"');
+      throw ArgumentError(
+        'handlerPath "$handlerPath" must be a prefix of '
+        'requestedUri path "${requestedUri.path}"',
+      );
     }
 
     if (!handlerPath.startsWith('/')) {

@@ -41,16 +41,15 @@ final class VaryHeader {
 
     if (splitValues.length > 1 && splitValues.contains('*')) {
       throw const FormatException(
-          'Wildcard (*) cannot be used with other values');
+        'Wildcard (*) cannot be used with other values',
+      );
     }
 
     return VaryHeader.headers(fields: splitValues);
   }
 
   /// Constructs an instance allowing all headers to vary (`*`).
-  VaryHeader.wildcard()
-      : fields = const [],
-        isWildcard = true;
+  VaryHeader.wildcard() : fields = const [], isWildcard = true;
 
   @override
   bool operator ==(final Object other) {

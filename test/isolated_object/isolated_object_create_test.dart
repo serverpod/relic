@@ -4,8 +4,7 @@ import 'package:relic/src/isolated_object.dart';
 import 'package:test/test.dart';
 
 void main() {
-  test(
-      'Given a synchronous factory, '
+  test('Given a synchronous factory, '
       'when IsolatedObject is created, '
       'then it successfully initializes', () async {
     final isolated = IsolatedObject<_Counter>(() => _Counter(0));
@@ -17,8 +16,7 @@ void main() {
     await isolated.close();
   });
 
-  test(
-      'Given an async factory, '
+  test('Given an async factory, '
       'when IsolatedObject is created, '
       'then it successfully initializes', () async {
     final isolated = IsolatedObject<_Counter>(() async {
@@ -32,8 +30,7 @@ void main() {
     await isolated.close();
   });
 
-  test(
-      'Given a factory that throws, '
+  test('Given a factory that throws, '
       'when IsolatedObject is created, '
       'then subsequent operations fail gracefully', () async {
     final isolated = IsolatedObject<_Counter>(() {

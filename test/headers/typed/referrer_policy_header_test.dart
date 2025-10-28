@@ -26,11 +26,13 @@ void main() {
             touchHeaders: (final h) => h.referrerPolicy,
             headers: {'referrer-policy': ''},
           ),
-          throwsA(isA<BadRequestException>().having(
-            (final e) => e.message,
-            'message',
-            contains('Value cannot be empty'),
-          )),
+          throwsA(
+            isA<BadRequestException>().having(
+              (final e) => e.message,
+              'message',
+              contains('Value cannot be empty'),
+            ),
+          ),
         );
       },
     );
@@ -45,29 +47,28 @@ void main() {
             touchHeaders: (final h) => h.referrerPolicy,
             headers: {'referrer-policy': 'invalid-value'},
           ),
-          throwsA(isA<BadRequestException>().having(
-            (final e) => e.message,
-            'message',
-            contains('Invalid value'),
-          )),
+          throwsA(
+            isA<BadRequestException>().having(
+              (final e) => e.message,
+              'message',
+              contains('Invalid value'),
+            ),
+          ),
         );
       },
     );
 
-    test(
-      'when a Referrer-Policy header with an invalid value is passed '
-      'then the server does not respond with a bad request if the headers '
-      'is not actually used',
-      () async {
-        final headers = await getServerRequestHeaders(
-          server: server,
-          touchHeaders: (final _) {},
-          headers: {'referrer-policy': 'invalid-value'},
-        );
+    test('when a Referrer-Policy header with an invalid value is passed '
+        'then the server does not respond with a bad request if the headers '
+        'is not actually used', () async {
+      final headers = await getServerRequestHeaders(
+        server: server,
+        touchHeaders: (_) {},
+        headers: {'referrer-policy': 'invalid-value'},
+      );
 
-        expect(headers, isNotNull);
-      },
-    );
+      expect(headers, isNotNull);
+    });
 
     test(
       'when a valid Referrer-Policy header is passed then it should parse the policy correctly',
@@ -106,19 +107,16 @@ void main() {
     tearDown(() => server.close());
 
     group('when an empty Referrer-Policy header is passed', () {
-      test(
-        'then it should return null',
-        () async {
-          final headers = await getServerRequestHeaders(
-            server: server,
-            touchHeaders: (final _) {},
-            headers: {'referrer-policy': ''},
-          );
+      test('then it should return null', () async {
+        final headers = await getServerRequestHeaders(
+          server: server,
+          touchHeaders: (_) {},
+          headers: {'referrer-policy': ''},
+        );
 
-          expect(Headers.referrerPolicy[headers].valueOrNullIfInvalid, isNull);
-          expect(() => headers.referrerPolicy, throwsInvalidHeader);
-        },
-      );
+        expect(Headers.referrerPolicy[headers].valueOrNullIfInvalid, isNull);
+        expect(() => headers.referrerPolicy, throwsInvalidHeader);
+      });
     });
   });
 }

@@ -49,12 +49,16 @@ class IOAdapter extends Adapter {
     final bool v6Only = false,
     final bool shared = false,
   }) async {
-    return IOAdapter(await bindHttpServer(address,
+    return IOAdapter(
+      await bindHttpServer(
+        address,
         port: port,
         context: context,
         backlog: backlog,
         v6Only: v6Only,
-        shared: shared));
+        shared: shared,
+      ),
+    );
   }
 
   /// The [io.InternetAddress] the underlying server is listening on.
@@ -80,8 +84,9 @@ class IOAdapter extends Adapter {
     covariant final IOAdapterRequest request,
     final HijackCallback callback,
   ) async {
-    final socket =
-        await request._httpRequest.response.detachSocket(writeHeaders: false);
+    final socket = await request._httpRequest.response.detachSocket(
+      writeHeaders: false,
+    );
     callback(StreamChannel(socket, socket));
   }
 
