@@ -12,7 +12,7 @@ abstract interface class _RequestContextInterface {
 /// A sealed base class for representing the state of a request as it's
 /// processed.
 ///
-/// [RequestContext] holds the original [Request] and a unique [token]
+/// [Context] holds the original [Request] and a unique [token]
 /// that remains constant throughout the request's lifecycle, even as the
 /// context itself might transition between different states.
 ///
@@ -37,19 +37,19 @@ abstract interface class _RequestContextInterface {
 /// - [ResponseContext]: A response has been generated (can be updated via `respond()`)
 /// - [HijackContext]: Connection hijacked for low-level I/O (WebSockets, etc.)
 /// - [ConnectContext]: Duplex stream connection established
-sealed class RequestContext implements _RequestContextInterface {
+sealed class Context implements _RequestContextInterface {
   /// The request associated with this context.
   @override
   final Request request;
 
   /// A unique token representing the request throughout its lifetime.
   ///
-  /// While the [RequestContext] might change (e.g., from [NewContext] to
+  /// While the [Context] might change (e.g., from [NewContext] to
   /// [ResponseContext]), this [token] remains constant. This is useful for
   /// associating request-specific state, for example, with [Expando] objects
   /// in middleware.
   final Object token;
-  RequestContext._(this.request, this.token);
+  Context._(this.request, this.token);
 }
 
 /// An interface for request contexts that can be transitioned to a state
@@ -97,7 +97,7 @@ abstract interface class HijackableContext implements _RequestContextInterface {
 ///   });
 /// }
 /// ```
-final class NewContext extends RequestContext
+final class NewContext extends Context
     implements RespondableContext, HijackableContext {
   NewContext._(super.request, super.token) : super._();
 
@@ -114,7 +114,7 @@ final class NewContext extends RequestContext
   ConnectContext connect(final WebSocketCallback callback) =>
       ConnectContext._(request, token, callback);
 
-  /// Creates a new [RequestContext] with a different [Request].
+  /// Creates a new [Context] with a different [Request].
   NewContext withRequest(final Request req) => NewContext._(req, token);
 
   @override
@@ -127,11 +127,11 @@ final class NewContext extends RequestContext
 /// A request is considered handled if a response has been formulated
 /// ([ResponseContext]), the connection has been hijacked ([HijackContext]),
 /// or a duplex stream connection has been established ([ConnectContext]).
-sealed class HandledContext extends RequestContext {
+sealed class HandledContext extends Context {
   HandledContext._(super.request, super.token) : super._();
 }
 
-/// A [RequestContext] state indicating that a [Response] has been generated.
+/// A [Context] state indicating that a [Response] has been generated.
 final class ResponseContext extends HandledContext
     implements RespondableContext {
   /// The response associated with this context.
@@ -143,7 +143,7 @@ final class ResponseContext extends HandledContext
       ResponseContext._(request, token, response);
 }
 
-/// A [RequestContext] state indicating that the underlying connection has been
+/// A [Context] state indicating that the underlying connection has been
 /// hijacked.
 ///
 /// When a connection is hijacked, the handler takes full control of the
@@ -174,7 +174,7 @@ final class HijackContext extends HandledContext {
   HijackContext._(super.request, super.token, this.callback) : super._();
 }
 
-/// A [RequestContext] state indicating that a duplex stream connection
+/// A [Context] state indicating that a duplex stream connection
 /// (e.g., WebSocket) has been established.
 ///
 /// ```dart
