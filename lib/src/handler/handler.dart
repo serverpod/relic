@@ -68,12 +68,13 @@ typedef Handler = FutureOr<HandledContext> Function(RequestContext ctx);
 typedef ResponseHandler =
     FutureOr<ResponseContext> Function(RespondableContext ctx);
 
-/// A handler specifically designed to produce a [HijackContext].
+/// A handler specifically designed to produce a [HijackedContext].
 ///
-/// It takes a [HijackableContext] and must return a [FutureOr<HijackContext>].
+/// It takes a [HijackableContext] and must return a [FutureOr<HijackedContext>].
 /// This is useful for handlers that are guaranteed to hijack the connection
 /// (e.g., for WebSocket upgrades).
-typedef HijackHandler = FutureOr<HijackContext> Function(HijackableContext ctx);
+typedef HijackHandler =
+    FutureOr<HijackedContext> Function(HijackableContext ctx);
 
 /// A function which handles exceptions.
 ///
@@ -121,7 +122,7 @@ Handler respondWith(final Responder responder) {
 ///
 /// This adapts a [HijackCallback] into the [HijackHandler] format.
 /// The returned handler takes a [HijackableContext], invokes the [callback]
-/// to take control of the connection, and produces a [HijackContext].
+/// to take control of the connection, and produces a [HijackedContext].
 HijackHandler hijack(final HijackCallback callback) {
   return (final ctx) {
     return ctx.hijack(callback);

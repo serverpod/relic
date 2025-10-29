@@ -54,12 +54,12 @@ void main() {
         expect(responseContext.token, same(token));
       });
 
-      test('then the new context can transition to HijackContext', () {
-        final hijackContext = newContext.hijack((final channel) {});
+      test('then the new context can transition to HijackedContext', () {
+        final hijackedContext = newContext.hijack((final channel) {});
 
-        expect(hijackContext, isA<HijackContext>());
-        expect(hijackContext.request, same(newRequest));
-        expect(hijackContext.token, same(token));
+        expect(hijackedContext, isA<HijackedContext>());
+        expect(hijackedContext.request, same(newRequest));
+        expect(hijackedContext.token, same(token));
       });
 
       test('then the new context can transition to ConnectionContext', () {
