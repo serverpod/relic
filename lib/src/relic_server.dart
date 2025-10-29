@@ -125,8 +125,11 @@ final class _RelicServer implements RelicServer {
           adapterRequest,
           rc.response,
         ),
-        final HijackContext hc => adapter.hijack(adapterRequest, hc.callback),
-        final ConnectContext cc => adapter.connect(adapterRequest, cc.callback),
+        final HijackedContext hc => adapter.hijack(adapterRequest, hc.callback),
+        final ConnectionContext cc => adapter.connect(
+          adapterRequest,
+          cc.callback,
+        ),
       };
     } catch (error, stackTrace) {
       _logError(

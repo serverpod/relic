@@ -6,10 +6,10 @@ import 'package:relic/relic.dart';
 import 'package:web_socket/web_socket.dart';
 
 /// Demonstrates the four main context types in Relic using proper routing:
-/// - NewContext: Starting point for all requests
+/// - RequestContext: Starting point for all requests
 /// - ResponseContext: HTTP response handling
-/// - ConnectContext: WebSocket connections
-/// - HijackContext: Raw connection control
+/// - ConnectionContext: WebSocket connections
+/// - HijackedContext: Raw connection control
 
 /// Simple HTML page for demonstration
 String _htmlHomePage() {
@@ -24,8 +24,8 @@ String _htmlHomePage() {
     <ul>
         <li><a href="/api">API Example (ResponseContext)</a></li>
         <li><a href="/api/users/123">User API with Parameters (ResponseContext)</a></li>
-        <li><a href="/ws">WebSocket Example (ConnectContext)</a></li>
-        <li><a href="/custom">Custom Protocol (HijackContext)</a></li>
+        <li><a href="/ws">WebSocket Example (ConnectionContext)</a></li>
+        <li><a href="/custom">Custom Protocol (HijackedContext)</a></li>
     </ul>
     <p>This demonstrates the different context types in Relic using proper routing.</p>
 </body>
@@ -33,7 +33,7 @@ String _htmlHomePage() {
 ''';
 }
 
-Future<ResponseContext> homeHandler(final NewContext ctx) async {
+Future<ResponseContext> homeHandler(final RequestContext ctx) async {
   return ctx.respond(
     Response.ok(
       body: Body.fromString(
@@ -45,7 +45,7 @@ Future<ResponseContext> homeHandler(final NewContext ctx) async {
   );
 }
 
-Future<ResponseContext> apiHandler(final NewContext ctx) async {
+Future<ResponseContext> apiHandler(final RequestContext ctx) async {
   final data = {
     'message': 'Hello from Relic API!',
     'timestamp': DateTime.now().toIso8601String(),
@@ -59,7 +59,7 @@ Future<ResponseContext> apiHandler(final NewContext ctx) async {
   );
 }
 
-Future<ResponseContext> userHandler(final NewContext ctx) async {
+Future<ResponseContext> userHandler(final RequestContext ctx) async {
   final userId = ctx.pathParameters[#id];
   final data = {
     'userId': userId,
@@ -74,7 +74,7 @@ Future<ResponseContext> userHandler(final NewContext ctx) async {
   );
 }
 
-ConnectContext webSocketHandler(final NewContext ctx) {
+ConnectionContext webSocketHandler(final RequestContext ctx) {
   return ctx.connect((final webSocket) async {
     log('WebSocket connection established');
 
@@ -98,7 +98,7 @@ ConnectContext webSocketHandler(final NewContext ctx) {
   });
 }
 
-HijackContext customProtocolHandler(final NewContext ctx) {
+HijackedContext customProtocolHandler(final RequestContext ctx) {
   return ctx.hijack((final channel) {
     log('Connection hijacked for custom protocol');
 
@@ -115,7 +115,7 @@ HijackContext customProtocolHandler(final NewContext ctx) {
   });
 }
 
-Future<ResponseContext> dataHandler(final NewContext ctx) async {
+Future<ResponseContext> dataHandler(final RequestContext ctx) async {
   final request = ctx.request;
 
   // Access basic HTTP information

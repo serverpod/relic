@@ -4,12 +4,12 @@ import 'package:test/test.dart';
 
 void main() {
   group(
-    'Given a NewContext, when withRequest is called with a new Request,',
+    'Given a RequestContext, when withRequest is called with a new Request,',
     () {
-      late NewContext context;
+      late RequestContext context;
       late Request originalRequest;
       late Request newRequest;
-      late NewContext newContext;
+      late RequestContext newContext;
       late Object token;
 
       setUp(() {
@@ -23,8 +23,8 @@ void main() {
         newContext = context.withRequest(newRequest);
       });
 
-      test('then it returns a NewContext instance', () {
-        expect(newContext, isA<NewContext>());
+      test('then it returns a RequestContext instance', () {
+        expect(newContext, isA<RequestContext>());
       });
 
       test('then the new context contains the new request', () {
@@ -54,28 +54,28 @@ void main() {
         expect(responseContext.token, same(token));
       });
 
-      test('then the new context can transition to HijackContext', () {
-        final hijackContext = newContext.hijack((final channel) {});
+      test('then the new context can transition to HijackedContext', () {
+        final hijackedContext = newContext.hijack((final channel) {});
 
-        expect(hijackContext, isA<HijackContext>());
-        expect(hijackContext.request, same(newRequest));
-        expect(hijackContext.token, same(token));
+        expect(hijackedContext, isA<HijackedContext>());
+        expect(hijackedContext.request, same(newRequest));
+        expect(hijackedContext.token, same(token));
       });
 
-      test('then the new context can transition to ConnectContext', () {
-        final connectContext = newContext.connect((final webSocket) {});
+      test('then the new context can transition to ConnectionContext', () {
+        final connectionContext = newContext.connect((final webSocket) {});
 
-        expect(connectContext, isA<ConnectContext>());
-        expect(connectContext.request, same(newRequest));
-        expect(connectContext.token, same(token));
+        expect(connectionContext, isA<ConnectionContext>());
+        expect(connectionContext.request, same(newRequest));
+        expect(connectionContext.token, same(token));
       });
     },
   );
 
   group(
-    'Given a NewContext, when withRequest is called with a request created using copyWith,',
+    'Given a RequestContext, when withRequest is called with a request created using copyWith,',
     () {
-      late NewContext context;
+      late RequestContext context;
       late Request originalRequest;
       late Object token;
 
@@ -94,7 +94,7 @@ void main() {
         );
         final newContext = context.withRequest(rewrittenRequest);
 
-        expect(newContext, isA<NewContext>());
+        expect(newContext, isA<RequestContext>());
         expect(
           newContext.request.requestedUri,
           Uri.parse('http://test.com/rewritten'),

@@ -12,7 +12,7 @@ final helloBytes = utf8.encode('hello,');
 
 final worldBytes = utf8.encode(' world');
 
-typedef SyncHandler = HandledContext Function(NewContext);
+typedef SyncHandler = HandledContext Function(RequestContext);
 
 /// A simple, synchronous handler.
 ///
@@ -23,7 +23,7 @@ SyncHandler createSyncHandler({
   final Headers? headers,
   final Body? body,
 }) {
-  return (final NewContext ctx) {
+  return (final RequestContext ctx) {
     return ctx.respond(
       Response(
         statusCode,
@@ -39,7 +39,7 @@ SyncHandler createSyncHandler({
 final SyncHandler syncHandler = createSyncHandler();
 
 /// Calls [createSyncHandler] and wraps the response in a [Future].
-Future<HandledContext> asyncHandler(final NewContext ctx) async {
+Future<HandledContext> asyncHandler(final RequestContext ctx) async {
   return syncHandler(ctx);
 }
 
