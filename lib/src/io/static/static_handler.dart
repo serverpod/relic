@@ -69,7 +69,7 @@ Future<FileInfo> getStaticFileInfo(
 /// If [cacheBustingConfig] is provided, the handler will strip cache-busting
 /// hashes from the URL path before looking up the file.
 /// See [CacheBustingConfig] for details.
-/// 
+///
 /// ---
 ///
 /// ### Examples
