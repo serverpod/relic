@@ -23,7 +23,7 @@ Middleware logRequests({final Logger? logger}) => (final innerHandler) {
       final msg = switch (handledCtx) {
         final ResponseContext rc => '${rc.response.statusCode}',
         final HijackContext _ => 'hijacked',
-        final ConnectContext _ => 'connected',
+        final ConnectionContext _ => 'connected',
       };
       localLogger(_message(startTime, handledCtx.request, watch.elapsed, msg));
       return handledCtx;

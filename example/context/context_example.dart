@@ -8,7 +8,7 @@ import 'package:web_socket/web_socket.dart';
 /// Demonstrates the four main context types in Relic using proper routing:
 /// - RequestContext: Starting point for all requests
 /// - ResponseContext: HTTP response handling
-/// - ConnectContext: WebSocket connections
+/// - ConnectionContext: WebSocket connections
 /// - HijackContext: Raw connection control
 
 /// Simple HTML page for demonstration
@@ -24,7 +24,7 @@ String _htmlHomePage() {
     <ul>
         <li><a href="/api">API Example (ResponseContext)</a></li>
         <li><a href="/api/users/123">User API with Parameters (ResponseContext)</a></li>
-        <li><a href="/ws">WebSocket Example (ConnectContext)</a></li>
+        <li><a href="/ws">WebSocket Example (ConnectionContext)</a></li>
         <li><a href="/custom">Custom Protocol (HijackContext)</a></li>
     </ul>
     <p>This demonstrates the different context types in Relic using proper routing.</p>
@@ -74,7 +74,7 @@ Future<ResponseContext> userHandler(final RequestContext ctx) async {
   );
 }
 
-ConnectContext webSocketHandler(final RequestContext ctx) {
+ConnectionContext webSocketHandler(final RequestContext ctx) {
   return ctx.connect((final webSocket) async {
     log('WebSocket connection established');
 

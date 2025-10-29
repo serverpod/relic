@@ -62,12 +62,12 @@ void main() {
         expect(hijackContext.token, same(token));
       });
 
-      test('then the new context can transition to ConnectContext', () {
-        final connectContext = newContext.connect((final webSocket) {});
+      test('then the new context can transition to ConnectionContext', () {
+        final connectionContext = newContext.connect((final webSocket) {});
 
-        expect(connectContext, isA<ConnectContext>());
-        expect(connectContext.request, same(newRequest));
-        expect(connectContext.token, same(token));
+        expect(connectionContext, isA<ConnectionContext>());
+        expect(connectionContext.request, same(newRequest));
+        expect(connectionContext.token, same(token));
       });
     },
   );
