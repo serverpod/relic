@@ -1,3 +1,10 @@
+## 0.9.1
+- feat: Add async RelicServer.connectionsInfo() method ([#255](https://github.com/serverpod/relic/pull/255))
+  - Adds a `connectionsInfo()` method to `RelicServer` that returns the
+  current number of active, closing, and idle connections.
+  - A new `ConnectionsInfo` typedef is introduced as a record type with
+  `active`, `closing`, and `idle` fields.
+
 ## 0.9.0
 - refactor!: Context renaming ([#251](https://github.com/serverpod/relic/pull/251))
   Renames core context types for improved clarity and consistency:
