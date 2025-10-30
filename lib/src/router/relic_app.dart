@@ -56,7 +56,9 @@ final class RelicApp implements RelicRouter {
 
   Future<void> close() async {
     await _reloadSubscription?.cancel();
+    _reloadSubscription = null;
     await _server?.close();
+    _server = null;
   }
 
   Future<void> _init() async {
