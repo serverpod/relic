@@ -100,4 +100,8 @@ abstract class Adapter {
   /// For example, for an HTTP server adapter, this might close the underlying
   /// server socket.
   Future<void> close();
+
+  ConnectionsInfo get connectionsInfo;
 }
+
+typedef ConnectionsInfo = ({int active, int closing, int idle});

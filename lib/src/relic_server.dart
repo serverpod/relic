@@ -22,6 +22,9 @@ sealed class RelicServer {
   /// Close the server
   Future<void> close();
 
+  /// Returns information about the current connections.
+  Future<ConnectionsInfo> connectionsInfo();
+
   /// The port this server is bound to.
   ///
   /// This will throw a [LateInitializationError], if called before [mountAndStart].
@@ -68,6 +71,12 @@ final class _RelicServer implements RelicServer {
   Future<void> close() async {
     await _stopListening();
     await (await _adapter).close();
+  }
+
+  @override
+  Future<ConnectionsInfo> connectionsInfo() async {
+    final adapter = await _adapter;
+    return adapter.connectionsInfo;
   }
 
   @override
@@ -208,6 +217,10 @@ final class _IsolatedRelicServer extends IsolatedObject<RelicServer>
   }
 
   @override
+  Future<ConnectionsInfo> connectionsInfo() =>
+      evaluate((final r) => r.connectionsInfo());
+
+  @override
   late final int port;
 }
 
@@ -230,6 +243,21 @@ final class _MultiIsolateRelicServer implements RelicServer {
   @override
   Future<void> mountAndStart(final Handler handler) async {
     await _children.map((final c) => c.mountAndStart(handler)).wait;
+  }
+
+  @override
+  Future<ConnectionsInfo> connectionsInfo() async {
+    // fold sum over children
+    var acc = (active: 0, closing: 0, idle: 0);
+    for (final c in _children) {
+      final i = await c.connectionsInfo();
+      acc = (
+        active: acc.active + i.active,
+        closing: acc.closing + i.closing,
+        idle: acc.idle + i.idle,
+      );
+    }
+    return acc;
   }
 
   @override
