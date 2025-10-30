@@ -11,7 +11,7 @@ import 'util/test_util.dart';
 Handler _createDelayedHandler() {
   return (final ctx) async {
     // Block for a fixed duration.
-    await Future<void>.delayed(const Duration(milliseconds: 100));
+    await Future<void>.delayed(const Duration(milliseconds: 1000));
     return ctx.respond(Response.ok());
   };
 }
@@ -49,7 +49,7 @@ void main() {
           }
 
           // Give requests time to reach the server and start processing
-          await Future<void>.delayed(const Duration(milliseconds: 10));
+          await Future<void>.delayed(const Duration(milliseconds: 100));
 
           await expectLater(
             server.connectionsInfo(),
