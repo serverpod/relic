@@ -116,7 +116,7 @@ void main() {
       await expectLater(called.stream, emitsInOrder([1, 2, 3]));
 
       await vmService.dispose();
-    });
+    }, tags: {'hot-reload'});
   });
 }
 
