@@ -23,7 +23,7 @@ import '../../relic.dart';
 ///
 /// ```dart
 /// Middleware loggingMiddleware = (Handler innerHandler) {
-///   return (NewContext ctx) async {
+///   return (RequestContext ctx) async {
 ///     print('Request: ${ctx.request.method} ${ctx.request.url}');
 ///     final result = await innerHandler(ctx);
 ///     print('Completed request');
@@ -95,9 +95,7 @@ typedef Middleware = Handler Function(Handler innerHandler);
 /// create a new response object.
 ///
 /// If provided, [onError] receives errors thrown by the inner handler. It
-/// does not receive errors thrown by [onRequest] or [onResponse], nor
-/// does it receive [HijackException]s. It can either return a new response or
-/// throw an error.
+/// does not receive errors thrown by [onRequest] or [onResponse].
 ///
 /// ## Examples
 ///

@@ -7,7 +7,7 @@ import 'package:relic/relic.dart';
 /// Simple CORS middleware
 Middleware corsMiddleware() {
   return (final Handler innerHandler) {
-    return (final NewContext ctx) async {
+    return (final RequestContext ctx) async {
       // Handle preflight requests
       if (ctx.request.method == Method.options) {
         return ctx.respond(
@@ -40,7 +40,7 @@ Middleware corsMiddleware() {
 }
 
 /// API handler
-Future<ResponseContext> apiHandler(final NewContext ctx) async {
+Future<ResponseContext> apiHandler(final RequestContext ctx) async {
   final data = {'message': 'Hello from CORS API!'};
 
   return ctx.respond(Response.ok(body: Body.fromString(jsonEncode(data))));

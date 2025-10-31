@@ -32,7 +32,7 @@ class FileInfo {
 }
 
 typedef CacheControlFactory =
-    CacheControlHeader? Function(NewContext ctx, FileInfo fileInfo);
+    CacheControlHeader? Function(RequestContext ctx, FileInfo fileInfo);
 
 /// LRU cache for file information to avoid repeated file system operations.
 final _fileInfoCache = LruCache<String, FileInfo>(10000);
@@ -126,7 +126,7 @@ class StaticHandler extends HandlerObject {
   }
 
   @override
-  FutureOr<HandledContext> call(final NewContext ctx) {
+  FutureOr<HandledContext> call(final RequestContext ctx) {
     return switch (entity) {
       Directory() => _handleDirectory(ctx, entity as Directory),
       File() => _handleFile(ctx, entity as File),
@@ -136,7 +136,7 @@ class StaticHandler extends HandlerObject {
   }
 
   Future<HandledContext> _handleDirectory(
-    final NewContext ctx,
+    final RequestContext ctx,
     final Directory directory,
   ) async {
     final resolvedRootPath = directory.resolveSymbolicLinksSync();
@@ -193,7 +193,7 @@ class StaticHandler extends HandlerObject {
   }
 
   Future<HandledContext> _handleFile(
-    final NewContext ctx,
+    final RequestContext ctx,
     final File file,
   ) async {
     return await _serveFile(
@@ -210,7 +210,7 @@ Future<ResponseContext> _serveFile(
   final File file,
   final MimeTypeResolver mimeResolver,
   final CacheControlFactory cacheControl,
-  final NewContext ctx,
+  final RequestContext ctx,
 ) async {
   // Validate HTTP method
   final method = ctx.request.method;
@@ -240,7 +240,7 @@ bool _isMethodAllowed(final Method method) {
 }
 
 /// Returns a 405 Method Not Allowed response.
-ResponseContext _methodNotAllowedResponse(final NewContext ctx) {
+ResponseContext _methodNotAllowedResponse(final RequestContext ctx) {
   return ctx.respond(
     Response(
       HttpStatus.methodNotAllowed,
@@ -311,7 +311,7 @@ Headers _buildBaseHeaders(
 
 /// Checks conditional request headers and returns 304 response if appropriate.
 Response? _checkConditionalHeaders(
-  final NewContext ctx,
+  final RequestContext ctx,
   final FileInfo fileInfo,
   final Headers headers,
 ) {
@@ -339,7 +339,7 @@ Response? _checkConditionalHeaders(
 
 /// Handles HTTP range requests for partial content.
 Future<ResponseContext> _handleRangeRequest(
-  final NewContext ctx,
+  final RequestContext ctx,
   final FileInfo fileInfo,
   final Headers headers,
   final RangeHeader rangeHeader,
@@ -358,7 +358,7 @@ Future<ResponseContext> _handleRangeRequest(
 }
 
 /// Validates If-Range header for range requests.
-bool _isRangeRequestValid(final NewContext ctx, final FileInfo fileInfo) {
+bool _isRangeRequestValid(final RequestContext ctx, final FileInfo fileInfo) {
   final ifRange = ctx.request.headers.ifRange;
   if (ifRange == null) return true;
 
@@ -379,7 +379,7 @@ bool _isRangeRequestValid(final NewContext ctx, final FileInfo fileInfo) {
 
 /// Serves the complete file without ranges.
 ResponseContext _serveFullFile(
-  final NewContext ctx,
+  final RequestContext ctx,
   final FileInfo fileInfo,
   final Headers headers,
   final Method method,
@@ -394,7 +394,7 @@ ResponseContext _serveFullFile(
 
 /// Serves a single range of the file.
 ResponseContext _serveSingleRange(
-  final NewContext ctx,
+  final RequestContext ctx,
   final FileInfo fileInfo,
   final Headers headers,
   final Range range,
@@ -425,7 +425,7 @@ ResponseContext _serveSingleRange(
 
 /// Serves multiple ranges as multipart response.
 Future<ResponseContext> _serveMultipleRanges(
-  final NewContext ctx,
+  final RequestContext ctx,
   final FileInfo fileInfo,
   final Headers headers,
   final List<Range> ranges,

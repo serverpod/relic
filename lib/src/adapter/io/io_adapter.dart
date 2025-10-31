@@ -100,6 +100,12 @@ class IOAdapter extends Adapter {
 
   @override
   Future<void> close() => _server.close(force: true);
+
+  @override
+  ConnectionsInfo get connectionsInfo {
+    final info = _server.connectionsInfo();
+    return (active: info.active, closing: info.closing, idle: info.idle);
+  }
 }
 
 class IOAdapterRequest extends AdapterRequest {

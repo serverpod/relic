@@ -1,10 +1,10 @@
 import '../adapter/context.dart';
 
-/// Manages a piece of data associated with a specific [RequestContext].
+/// Manages a piece of data associated with a specific [Context].
 ///
 /// `ContextProperty` allows middleware or other parts of the request handling
 /// pipeline to store and retrieve data scoped to a single request. It uses an
-/// [Expando] internally, keyed by a token from the [RequestContext], to ensure
+/// [Expando] internally, keyed by a token from the [Context], to ensure
 /// that data does not leak between requests.
 ///
 /// This is useful for passing information like authenticated user objects,
@@ -42,7 +42,7 @@ class ContextProperty<T extends Object> {
   /// Throws a [StateError] if no value is found for the [requestContext]'s token
   /// and the property has not been set. This ensures that accidental access
   /// to an uninitialized property is caught early.
-  T operator [](final RequestContext requestContext) {
+  T operator [](final Context requestContext) {
     return _storage[requestContext.token] ??
         (throw StateError(
           'ContextProperty value not found. Property: ${_debugName ?? T.toString()}. '
@@ -54,7 +54,7 @@ class ContextProperty<T extends Object> {
   ///
   /// This method is a non-throwing alternative to the `operator []`.
   /// Use this when it's acceptable for the property to be absent.
-  T? getOrNull(final RequestContext requestContext) {
+  T? getOrNull(final Context requestContext) {
     return _storage[requestContext.token];
   }
 
@@ -62,7 +62,7 @@ class ContextProperty<T extends Object> {
   ///
   /// Associates the [value] with the [requestContext]'s token, allowing it
   /// to be retrieved later using `operator []` or `getOrNull`.
-  void operator []=(final RequestContext requestContext, final T value) {
+  void operator []=(final Context requestContext, final T value) {
     _storage[requestContext.token] = value;
   }
 
@@ -70,7 +70,7 @@ class ContextProperty<T extends Object> {
   ///
   /// Returns `true` if a non-null value has been set for the [requestContext]'s
   /// token, `false` otherwise.
-  bool exists(final RequestContext requestContext) {
+  bool exists(final Context requestContext) {
     return _storage[requestContext.token] != null;
   }
 
@@ -79,7 +79,7 @@ class ContextProperty<T extends Object> {
   /// This effectively removes the association in the underlying [Expando],
   /// causing subsequent gets for this [requestContext] (and this property)
   /// to return `null` (for `getOrNull`) or throw (for `operator []`).
-  void clear(final RequestContext requestContext) {
+  void clear(final Context requestContext) {
     _storage[requestContext.token] = null; // Clears the association in Expando
   }
 }

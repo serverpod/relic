@@ -23,11 +23,11 @@ void main() {
 
   group('Given a server', () {
     test('when request context is hijacked '
-        'then an HijackContext is returned and the request times out because '
+        'then a HijackedContext is returned and the request times out because '
         'server does not write the response to the HTTP response', () async {
       await _scheduleServer((final ctx) {
         final newCtx = ctx.hijack((_) {});
-        expect(newCtx, isA<HijackContext>());
+        expect(newCtx, isA<HijackedContext>());
         return newCtx;
       });
       expect(_get(), throwsA(isA<TimeoutException>()));

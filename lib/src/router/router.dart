@@ -317,10 +317,10 @@ typedef RelicRouter = Router<Handler>;
 ///       ..delete('/', delete);
 ///   }
 ///
-///   ResponseContext create(final NewContext ctx) { }
-///   ResponseContext read(final NewContext ctx) { }
-///   ResponseContext update(final NewContext ctx) { }
-///   ResponseContext delete(final NewContext ctx) { }
+///   ResponseContext create(final RequestContext ctx) { }
+///   ResponseContext read(final RequestContext ctx) { }
+///   ResponseContext update(final RequestContext ctx) { }
+///   ResponseContext delete(final RequestContext ctx) { }
 /// }
 /// ```
 typedef RouterInjectable = InjectableIn<RelicRouter>;

@@ -5,7 +5,7 @@ import 'package:relic/relic.dart';
 /// Simple middleware that adds a header
 Middleware addServerHeader() {
   return (final Handler innerHandler) {
-    return (final NewContext ctx) async {
+    return (final RequestContext ctx) async {
       final result = await innerHandler(ctx);
 
       if (result is ResponseContext) {
@@ -23,7 +23,7 @@ Middleware addServerHeader() {
 }
 
 /// Simple handler
-Future<ResponseContext> simpleHandler(final NewContext ctx) async {
+Future<ResponseContext> simpleHandler(final RequestContext ctx) async {
   return ctx.respond(
     Response.ok(body: Body.fromString('Hello from Pipeline!')),
   );
@@ -41,7 +41,7 @@ void main() async {
       RelicApp()
         ..use('/', logRequests())
         ..use('/', addServerHeader())
-        ..get('/router', (final NewContext ctx) async {
+        ..get('/router', (final RequestContext ctx) async {
           return ctx.respond(
             Response.ok(body: Body.fromString('Hello from Router!')),
           );

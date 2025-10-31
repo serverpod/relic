@@ -7,7 +7,7 @@ import 'package:relic/relic.dart';
 /// Middleware that adds a custom header
 Middleware addHeaderMiddleware() {
   return (final Handler innerHandler) {
-    return (final NewContext ctx) async {
+    return (final RequestContext ctx) async {
       final result = await innerHandler(ctx);
 
       if (result is ResponseContext) {
@@ -27,7 +27,7 @@ Middleware addHeaderMiddleware() {
 /// Timing middleware
 Middleware timingMiddleware() {
   return (final Handler innerHandler) {
-    return (final NewContext ctx) async {
+    return (final RequestContext ctx) async {
       final stopwatch = Stopwatch()..start();
 
       final result = await innerHandler(ctx);
@@ -43,7 +43,7 @@ Middleware timingMiddleware() {
 /// Simple error handling middleware
 Middleware errorHandlingMiddleware() {
   return (final Handler innerHandler) {
-    return (final NewContext ctx) async {
+    return (final RequestContext ctx) async {
       try {
         return await innerHandler(ctx);
       } catch (error) {
@@ -58,13 +58,13 @@ Middleware errorHandlingMiddleware() {
 }
 
 /// Simple handlers
-Future<ResponseContext> homeHandler(final NewContext ctx) async {
+Future<ResponseContext> homeHandler(final RequestContext ctx) async {
   return ctx.respond(
     Response.ok(body: Body.fromString('Hello from home page!')),
   );
 }
 
-Future<ResponseContext> apiHandler(final NewContext ctx) async {
+Future<ResponseContext> apiHandler(final RequestContext ctx) async {
   final data = {'message': 'Hello from API!'};
 
   return ctx.respond(Response.ok(body: Body.fromString(jsonEncode(data))));
