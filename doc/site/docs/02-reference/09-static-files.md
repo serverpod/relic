@@ -67,7 +67,7 @@ https://github.com/serverpod/relic/blob/main/example/advanced/static_files_examp
 **How cache busting works:**
 
 1. **Configure cache busting** (see the `CacheBustingConfig` instantiation): `CacheBustingConfig` generates unique URLs based on file content hashes.
-2. **Generate cache-busted URLs** (see usage of `buster.assetPath(...)`): `buster.assetPath('/static/hello.txt')` returns something like `/static/hello.txt?v=abc123`.
+2. **Generate cache-busted URLs** (see usage of `buster.assetPath(...)`): `buster.assetPath('/static/hello.txt')` returns something like `/static/hello@6cb65f8d93fd9c4afe283092b9c3f74cafc04e33.txt`.
 3. **Serve with aggressive caching** (see cache control settings for cache busted serving): Use long cache durations (1 year) with `immutable: true` because the URL changes when content changes.
 4. When the file changes, the hash changes, forcing browsers to fetch the new version.
 
