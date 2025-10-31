@@ -230,7 +230,8 @@ final class _MultiIsolateRelicServer implements RelicServer {
   _MultiIsolateRelicServer(
     final Factory<Adapter> adapterFactory,
     final int noOfIsolates,
-  ) : _children = List.generate(
+  ) : assert(noOfIsolates > 1),
+      _children = List.generate(
         noOfIsolates,
         (_) => _IsolatedRelicServer(adapterFactory),
       );
