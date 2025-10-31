@@ -47,6 +47,31 @@ void main() {
     });
 
     test('Given a RelicApp, '
+        'when calling serve twice, '
+        'then it fails the second time', () async {
+      final app =
+          RelicApp()..any('/', (final ctx) => ctx.respond(Response.ok()));
+
+      await app.serve(port: 0);
+      await expectLater(app.serve(port: 0), throwsStateError);
+
+      await app.close();
+    });
+
+    test('Given a RelicApp, '
+        'when calling serve, close, serve, '
+        'then it succeeds', () async {
+      final app =
+          RelicApp()..any('/', (final ctx) => ctx.respond(Response.ok()));
+
+      await app.serve(port: 0);
+      await app.close();
+      await expectLater(app.serve(port: 0), completes);
+
+      await app.close();
+    });
+
+    test('Given a RelicApp, '
         'when hot-reloading isolate, '
         'then it is rebuild', () async {
       final wsUri = (await Service.getInfo()).serverWebSocketUri;
