@@ -69,6 +69,49 @@ Future<FileInfo> getStaticFileInfo(
 /// If [cacheBustingConfig] is provided, the handler will strip cache-busting
 /// hashes from the URL path before looking up the file.
 /// See [CacheBustingConfig] for details.
+///
+/// ---
+///
+/// ### Examples
+///
+/// ```dart
+///   // Basic directory, 1 day cache
+///   StaticHandler.directory(
+///     Directory('static'),
+///     cacheControl: (_, __) => CacheControlHeader(maxAge: 86400),
+///   );
+///
+///   // Long term/immutable + cache busting
+///   final staticDir = Directory('static');
+///   final buster = CacheBustingConfig(
+///     mountPrefix: '/static',
+///     fileSystemRoot: staticDir,
+///   );
+///   StaticHandler.directory(
+///     staticDir,
+///     cacheControl: (_, __) => CacheControlHeader(
+///       maxAge: 31536000,
+///       publicCache: true,
+///       immutable: true,
+///     ),
+///     cacheBustingConfig: buster,
+///   );
+///
+///   // Single file, 1 day cache
+///   StaticHandler.file(
+///     File('assets/favicon.ico'),
+///     cacheControl: (_, __) => CacheControlHeader(maxAge: 86400),
+///   );
+/// ```
+///
+/// ## Security Features
+///
+/// The handler includes built-in security protections:
+/// - **Path traversal protection**: Prevents access to files outside the directory
+/// - **Hidden file protection**: Blocks access to files starting with `.`
+/// - **Symbolic link handling**: Safely resolves symlinks within the allowed directory
+///
+/// These protections are automatically applied and cannot be disabled.
 class StaticHandler extends HandlerObject {
   final FileSystemEntity entity;
   final Handler? defaultHandler;
