@@ -28,12 +28,8 @@ Success responses (2xx status codes) indicate that the request was received, und
 
 The most common response indicates the request succeeded and returns the requested data:
 
-```dart
-app.get('/status', (ctx) {
-  return ctx.respond(Response.ok(
-    body: Body.fromString('Status is Ok'),
-  ));
-});
+```dart reference
+https://github.com/serverpod/relic/blob/main/example/routing/response_example.dart#L10-L12
 ```
 
 ### Error responses
@@ -44,16 +40,8 @@ Error responses (4xx, 5xx status codes) indicate that the request was invalid or
 
 The request is malformed or contains invalid data:
 
-```dart
-app.post('/api/users', (ctx) async {
-  try {
-    throw
-  } catch (e) {
-    return ctx.respond(Response.badRequest(
-      body: Body.fromString('Invalid JSON'),
-    ));
-  }
-});
+```dart reference
+https://github.com/serverpod/relic/blob/main/example/routing/response_example.dart#L15-L23
 ```
 
 ### Custom status codes

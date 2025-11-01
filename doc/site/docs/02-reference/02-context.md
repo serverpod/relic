@@ -88,38 +88,8 @@ Every handler receives a `NewContext` first. This represents a **fresh, unhandle
 
 **Example - Serving HTML:**
 
-```dart
-import 'dart:convert';
-import 'dart:io';
-import 'package:relic/io_adapter.dart';
-import 'package:relic/relic.dart';
-
-/// Serves an HTML home page
-Future<ResponseContext> homeHandler(NewContext ctx) async {
-  // Create an HTML response
-  return ctx.respond(Response.ok(
-    body: Body.fromString(
-      _htmlHomePage(),
-      encoding: utf8,  // Text encoding (UTF-8 is standard)
-      mimeType: MimeType.html,  // Tells browser this is HTML
-    ),
-  ));
-}
-
-String _htmlHomePage() {
-  return '''
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Relic Context Example</title>
-</head>
-<body>
-    <h1>Welcome to Relic!</h1>
-    <p>This is an HTML response created from a NewContext.</p>
-</body>
-</html>
-''';
-}
+```dart reference
+https://github.com/serverpod/relic/blob/main/example/context/context_example.dart#L36-L46
 ```
 
 :::tip When to use async/await
@@ -143,26 +113,8 @@ When you call `ctx.respond()`, you transition to a `ResponseContext`. This repre
 
 **Example - JSON API response:**
 
-```dart
-import 'dart:convert';  // For jsonEncode
-import 'package:relic/relic.dart';
-
-/// Returns JSON data
-Future<ResponseContext> apiHandler(NewContext ctx) async {
-  // Create a Dart Map that will be converted to JSON
-  final data = {
-    'message': 'Hello from Relic API!',
-    'timestamp': DateTime.now().toIso8601String(),
-    'path': ctx.request.url.path,
-  };
-
-  return ctx.respond(Response.ok(
-    body: Body.fromString(
-      jsonEncode(data),  // Convert Map to JSON string
-      mimeType: MimeType.json,  // Set Content-Type: application/json
-    ),
-  ));
-}
+```dart reference
+https://github.com/serverpod/relic/blob/main/example/context/context_example.dart#L48-L60
 ```
 
 ### ConnectContext - WebSocket connections
@@ -175,35 +127,8 @@ Use `connect()` for WebSocket handshakes - full-duplex connections where both cl
 
 **Example - WebSocket connection:**
 
-```dart
-import 'dart:developer';  // For log()
-import 'package:relic/relic.dart';
-import 'package:web_socket/web_socket.dart';  // Dart's official WebSocket package
-
-ConnectContext webSocketHandler(NewContext ctx) {
-  return ctx.connect((webSocket) async {
-    log('WebSocket connection established');
-
-    // Send welcome message to client
-    webSocket.sendText('Welcome to Relic WebSocket!');
-
-    // Listen for incoming messages
-    // The 'await for' loop processes events as they arrive
-    await for (final event in webSocket.events) {
-      switch (event) {
-        case TextDataReceived(text: final message):
-          log('Received: $message');
-          webSocket.sendText('Echo: $message');  // Send it back
-        case CloseReceived():
-          log('WebSocket connection closed');
-          break;  // Exit the loop when client disconnects
-        default:
-          // Ignore other event types (BinaryDataReceived, etc.)
-          break;
-      }
-    }
-  });
-}
+```dart reference
+https://github.com/serverpod/relic/blob/main/example/context/context_example.dart#L77-L99
 ```
 
 :::info WebSocket vs HTTP response
@@ -227,48 +152,8 @@ All context types provide access to the original HTTP request through `ctx.reque
 
 The request body is a `Stream<Uint8List>`. Use `readAsString()` for text data or `readAsBytes()` for binary data.
 
-```dart
-import 'dart:convert';
-import 'package:relic/relic.dart';
-
-Future<ResponseContext> dataHandler(NewContext ctx) async {
-  final request = ctx.request;
-
-  // Access basic HTTP information
-  final method = request.method; // 'GET', 'POST', etc.
-  final path = request.url.path; // '/api/users'
-  final query = request.url.query; // 'limit=10&offset=0'
-
-  // Access headers (these are typed accessors from the Headers class)
-  final authHeader = request.headers.authorization; // 'Bearer token123' or null
-  final contentType = request.body.bodyType
-      ?.mimeType; // appljson, octet-stream, plainText, etc. or null
-
-  // Read request body for POST with JSON
-  if (method == Method.post && contentType == MimeType.json) {
-    try {
-      final bodyString = await request.readAsString();
-      final jsonData = json.decode(bodyString) as Map<String, dynamic>;
-
-      return ctx.respond(Response.ok(
-        body: Body.fromString('Received: ${jsonData['name']}'),
-      ));
-    } catch (e) {
-      return ctx.respond(
-        Response.badRequest(
-          body: Body.fromString('Invalid JSON'),
-        ),
-      );
-    }
-  }
-
-  // Return bad request if the content type is not JSON
-  return ctx.respond(
-    Response.badRequest(
-      body: Body.fromString('Invalid Request'),
-    ),
-  );
-}
+```dart reference
+https://github.com/serverpod/relic/blob/main/example/context/context_example.dart#L118-L158
 ```
 
 :::warning Reading request bodies
@@ -326,34 +211,8 @@ Context properties let you **attach custom data** to a request as it flows throu
 
 Here's a simple example that assigns a unique ID to each request:
 
-```dart
-import 'package:relic/relic.dart';
-
-// 1. Create a ContextProperty to store request-specific data
-final _requestIdProperty = ContextProperty<String>('requestId');
-
-// 2. Middleware that sets a unique ID for each request
-Handler requestIdMiddleware(Handler next) {
-  return (ctx) async {
-    // Set a unique request ID
-    _requestIdProperty[ctx] = 'req_${DateTime.now().millisecondsSinceEpoch}';
-    
-    // Continue to the next handler
-    return await next(ctx);
-  };
-}
-
-// 3. Handler that uses the stored request ID
-Future<ResponseContext> handler(NewContext ctx) async {
-  // Retrieve the request ID that was set by middleware
-  final requestId = _requestIdProperty[ctx];
-  
-  print('Processing request: $requestId');
-  
-  return ctx.respond(Response.ok(
-    body: Body.fromString('Your request ID is: $requestId'),
-  ));
-}
+```dart reference
+https://github.com/serverpod/relic/blob/main/example/context/context_property_example.dart#L6-L30
 ```
 
 **How it works:**

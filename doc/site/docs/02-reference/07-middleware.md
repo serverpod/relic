@@ -28,30 +28,8 @@ Every middleware function receives an inner handler and returns a new handler th
 
 Here's a simple example:
 
-```dart title="middleware_example.dart"
-import 'package:relic/relic.dart';
-
-// A middleware that adds a custom header
-Middleware addHeaderMiddleware() {
-  return (Handler innerHandler) {
-    return (NewContext ctx) async {
-      // Call the inner handler
-      final result = await innerHandler(ctx);
-      
-      // Add custom header to response
-      if (result is ResponseContext) {
-        final newResponse = result.response.copyWith(
-          headers: result.response.headers.transform(
-            (mh) => mh['X-Custom-Header'] = ['Hello from middleware!'],
-          ),
-        );
-        return result.respond(newResponse);
-      }
-      
-      return result;
-    };
-  };
-}
+```dart reference
+https://github.com/serverpod/relic/blob/main/example/middleware/middleware_example.dart#L8-L25
 ```
 
 ## Using middlewares with a router
@@ -181,21 +159,8 @@ Middleware layers wrap each other like an onion. Each layer may:
 - Rewrite parts of the request before calling `next()` using `ctx.withRequest(newRequest)`.
 - Prefer attaching derived/computed data to the context via `ContextProperty` rather than rewriting the request.
 
-```dart
-// Early return (short-circuit)
-Middleware authMiddleware() {
-  return (Handler next) {
-    return (NewContext ctx) async {
-      final apiKey = ctx.request.headers['X-API-Key']?.first;
-      if (apiKey != 'secret123') {
-        return ctx.respond(Response.unauthorized(
-          body: Body.fromString('Invalid API key'),
-        )); // short-circuit: no next()
-      }
-      return await next(ctx);
-    };
-  };
-}
+```dart reference
+https://github.com/serverpod/relic/blob/main/example/middleware/auth_example.dart#L6-L22
 ```
 
 :::warning Avoid rewriting request.path in router.use middleware
@@ -206,16 +171,16 @@ When middleware is attached with `router.use(...)`, the request has already been
 
 This is the signature that all middleware functions follow:
 
-```dart title="middleware.dart"
+```dart
 Middleware myMiddleware() {
   return (Handler innerHandler) {
     return (NewContext ctx) async {
       // Before request processing
-      
+
       final result = await innerHandler(ctx);
-      
+
       // After request processing
-      
+
       return result;
     };
   };
@@ -230,36 +195,8 @@ CORS is a security feature that allows web applications to make requests to reso
 
 In Relic you can create a CORS middleware that handles preflight requests and adds CORS headers to the response:
 
-```dart title="cors_example.dart"
-Middleware corsMiddleware() {
-  return (Handler innerHandler) {
-    return (NewContext ctx) async {
-      // Handle preflight requests
-      if (ctx.request.method == Method.options) {
-        return ctx.respond(Response.ok(
-          headers: Headers.build((mh) {
-            mh['Access-Control-Allow-Origin'] = ['*'];
-            mh['Access-Control-Allow-Methods'] = ['GET, POST, OPTIONS'];
-          }),
-        ));
-      }
-      
-      // Process normal request and add CORS headers
-      final result = await innerHandler(ctx);
-      
-      if (result is ResponseContext) {
-        final newResponse = result.response.copyWith(
-          headers: result.response.headers.transform(
-            (mh) => mh['Access-Control-Allow-Origin'] = ['*'],
-          ),
-        );
-        return result.respond(newResponse);
-      }
-      
-      return result;
-    };
-  };
-}
+```dart reference
+https://github.com/serverpod/relic/blob/main/example/middleware/cors_example.dart#L8-L40
 ```
 
 ## Pipeline (Legacy Pattern)

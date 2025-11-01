@@ -28,7 +28,7 @@ dart pub add relic
 
 Edit the `bin/hello_world.dart`:
 
-```dart reference title="hello_world.dart"
+```dart reference
 https://github.com/serverpod/relic/blob/main/example/example.dart
 ```
 
