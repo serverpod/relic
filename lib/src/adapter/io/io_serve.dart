@@ -19,7 +19,9 @@ extension RelicAppIOServeEx on RelicApp {
     final int port = 8080,
     final SecurityContext? securityContext,
     final int backlog = 0,
+    final bool v6Only = false,
     final bool shared = false,
+    final int noOfIsolates = 1,
   }) {
     return run(
       () => IOAdapter.bind(
@@ -27,8 +29,10 @@ extension RelicAppIOServeEx on RelicApp {
         port: port,
         context: securityContext,
         backlog: backlog,
-        shared: shared,
+        v6Only: v6Only,
+        shared: shared || noOfIsolates > 1,
       ),
+      noOfIsolates: noOfIsolates,
     );
   }
 }
