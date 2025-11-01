@@ -43,6 +43,26 @@ void main() {
     });
   });
 
+  group('Router.injectAt', () {
+    test('Given a HandlerObject, '
+        'when using injectAt, '
+        'then it is injected at the specified path', () async {
+      final router = Router<Handler>();
+      router.injectAt('/api', const _EchoHandlerObject(mountAt: '/echo'));
+
+      final request = Request(
+        Method.post,
+        Uri.parse('http://localhost/api/echo'),
+        body: Body.fromString('injected at path'),
+      );
+      final ctx = request.toContext(Object());
+      final result = await router.asHandler(ctx) as ResponseContext;
+
+      expect(result.response.statusCode, 200);
+      expect(await result.response.readAsString(), 'injected at path');
+    });
+  });
+
   group('Router.inject with MiddlewareObject', () {
     test(
       'Given a MiddlewareObject, '
