@@ -110,6 +110,10 @@ jobs:
           dart pub ${{ matrix.deps }} &&
           dart pub get
 
+      - name: Hot-reload Test
+        run: >-
+          dart --enable-vm-service test test/router/relic_app_test.dart -t hot-reload -c source
+
       - name: Run Tests With Coverage
         run: >-
           dart pub global activate coverage &&
