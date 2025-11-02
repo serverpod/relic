@@ -232,6 +232,10 @@ extension RouteEx<T extends Object> on Router<T> {
     attach(path, subRouter);
     return subRouter;
   }
+
+  /// Injects [injectable] at [path]
+  void injectAt(final String path, final InjectableIn<Router<T>> injectable) =>
+      group(path).inject(injectable);
 }
 
 /// Just a typedef for better auto-complete
