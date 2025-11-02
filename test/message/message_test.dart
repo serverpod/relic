@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:relic/relic.dart';
-import 'package:relic/src/message/message.dart';
+import 'package:relic/src/context/message.dart';
 import 'package:test/test.dart';
 
 import '../util/test_util.dart';

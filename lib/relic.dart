@@ -1,11 +1,13 @@
 library;
 
 export 'src/adapter/adapter.dart';
-export 'src/adapter/context.dart' hide RequestInternal;
 export 'src/adapter/relic_web_socket.dart';
 export 'src/body/body.dart' show Body;
 export 'src/body/types/body_type.dart' show BodyType;
 export 'src/body/types/mime_type.dart' show MimeType;
+export 'src/context/context.dart' hide RequestInternal;
+export 'src/context/request.dart' show Request;
+export 'src/context/response.dart' show Response;
 export 'src/handler/cascade.dart' show Cascade;
 export 'src/handler/handler.dart';
 export 'src/handler/pipeline.dart' show Pipeline;
@@ -17,8 +19,6 @@ export 'src/headers/standard_headers_extensions.dart';
 export 'src/headers/typed/typed_headers.dart';
 export 'src/io/static/cache_busting_config.dart' show CacheBustingConfig;
 export 'src/io/static/static_handler.dart';
-export 'src/message/request.dart' show Request;
-export 'src/message/response.dart' show Response;
 export 'src/middleware/context_property.dart';
 export 'src/middleware/middleware.dart';
 export 'src/middleware/middleware_extensions.dart' show MiddlewareExtensions;

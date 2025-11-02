@@ -1,15 +1,15 @@
 import 'dart:async';
 
 import 'adapter/adapter.dart';
-import 'adapter/context.dart';
 import 'body/body.dart';
+import 'context/context.dart';
+import 'context/request.dart';
+import 'context/response.dart';
 import 'handler/handler.dart';
 import 'headers/exception/header_exception.dart';
 import 'headers/standard_headers_extensions.dart';
 import 'isolated_object.dart';
 import 'logger/logger.dart';
-import 'message/request.dart';
-import 'message/response.dart';
 import 'util/util.dart';
 
 sealed class RelicServer {

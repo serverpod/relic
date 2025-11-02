@@ -1,9 +1,9 @@
 import 'dart:async';
 
 import '../adapter/adapter.dart';
-import '../adapter/context.dart';
-import '../message/request.dart';
-import '../message/response.dart';
+import '../context/context.dart';
+import '../context/request.dart';
+import '../context/response.dart';
 import '../router/method.dart';
 import '../router/router.dart';
 

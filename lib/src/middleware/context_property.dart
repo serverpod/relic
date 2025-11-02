@@ -1,4 +1,4 @@
-import '../adapter/context.dart';
+import '../context/context.dart';
 
 /// Manages a piece of data associated with a specific [Context].
 ///
