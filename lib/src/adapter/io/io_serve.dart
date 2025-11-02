@@ -12,6 +12,16 @@ extension RelicAppIOServeEx on RelicApp {
   /// using [HttpServer.bindSecure]. Otherwise, an HTTP server will be started
   /// using [HttpServer.bind].
   ///
+  /// The maximum length of the queue for incoming connections is specified by
+  /// [backlog]. Defaults to 0 (system-dependent)
+  ///
+  /// The [v6Only] parameter controls whether an IPv6 socket accepts only IPv6
+  /// connections (ignored for IPv4 addresses).
+  ///
+  /// The [noOfIsolates] parameter specifies the number of isolates to spawn
+  /// for handling requests. When greater than 1, [shared] is automatically
+  /// enabled to allow multiple isolates to bind to the same port.
+  ///
   /// If not specified [address] will default to [InternetAddress.loopbackIPv4],
   /// and [port] to 8080.
   Future<RelicServer> serve({
