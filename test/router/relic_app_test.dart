@@ -105,7 +105,7 @@ void main() {
           RelicApp()
             ..inject(_Injectable(() => called.add(++count))); // 1 original
 
-      await app.serve();
+      await app.serve(noOfIsolates: 2);
 
       await hotReload(); // 2
       await hotReload(); // 3
