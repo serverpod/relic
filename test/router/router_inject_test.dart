@@ -17,7 +17,7 @@ void main() {
         Uri.parse('http://localhost/'),
         body: Body.fromString('Hello from the other side'),
       );
-      final ctx = request.toContext(Object());
+      final ctx = request..setToken(Object());
       final result = await router.asHandler(ctx) as ResponseContext;
 
       expect(result.response.statusCode, 200);
@@ -35,7 +35,7 @@ void main() {
         Uri.parse('http://localhost/custom/path'),
         body: Body.fromString('custom handler'),
       );
-      final ctx = request.toContext(Object());
+      final ctx = request..setToken(Object());
       final result = await router.asHandler(ctx) as ResponseContext;
 
       expect(result.response.statusCode, 200);
@@ -55,7 +55,7 @@ void main() {
         Uri.parse('http://localhost/api/echo'),
         body: Body.fromString('injected at path'),
       );
-      final ctx = request.toContext(Object());
+      final ctx = request..setToken(Object());
       final result = await router.asHandler(ctx) as ResponseContext;
 
       expect(result.response.statusCode, 200);
@@ -78,7 +78,7 @@ void main() {
         router.get('/test', (final ctx) => ctx.respond(Response.ok()));
 
         final request = Request(Method.get, Uri.parse('http://localhost/test'));
-        final ctx = request.toContext(Object());
+        final ctx = request..setToken(Object());
         final result = await router.asHandler(ctx) as ResponseContext;
 
         expect(result.response.statusCode, 200);
@@ -104,7 +104,7 @@ void main() {
         Method.get,
         Uri.parse('http://localhost/api/users'),
       );
-      final apiCtx = apiRequest.toContext(Object());
+      final apiCtx = apiRequest..setToken(Object());
       final apiResult = await router.asHandler(apiCtx) as ResponseContext;
 
       expect(apiResult.response.statusCode, 200);
@@ -115,7 +115,7 @@ void main() {
         Method.get,
         Uri.parse('http://localhost/other'),
       );
-      final otherCtx = otherRequest.toContext(Object());
+      final otherCtx = otherRequest..setToken(Object());
       final otherResult = await router.asHandler(otherCtx) as ResponseContext;
 
       expect(otherResult.response.statusCode, 200);
@@ -139,7 +139,7 @@ void main() {
       router.get('/test', (final ctx) => ctx.respond(Response.ok()));
 
       final request = Request(Method.get, Uri.parse('http://localhost/test'));
-      final ctx = request.toContext(Object());
+      final ctx = request..setToken(Object());
       final result = await router.asHandler(ctx) as ResponseContext;
 
       expect(result.response.statusCode, 200);

@@ -114,7 +114,7 @@ class _RoutingMiddlewareBuilder<T extends Object> {
 /// These properties are populated when a request is routed using [routeWith]
 /// or [RouterHandlerEx.asHandler], and are available to all handlers in the processing
 /// chain.
-extension ContextEx on Context {
+extension ContextEx on RequestContext {
   /// The portion of the request path that was matched by the route.
   ///
   /// For example, if the route pattern is `/api/**` and the request is to

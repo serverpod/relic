@@ -125,9 +125,7 @@ final class _RelicServer implements RelicServer {
     }
 
     try {
-      final ctx = request.toContext(
-        adapterRequest,
-      ); // adapter request will be the token
+      final ctx = request..setToken(adapterRequest);
       final newCtx = await handler(ctx);
       return switch (newCtx) {
         final ResponseContext rc => adapter.respond(

@@ -1,8 +1,6 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
-import 'package:meta/meta.dart';
-
 import '../../relic.dart';
 
 part 'message.dart';
@@ -40,14 +38,6 @@ part 'response.dart';
 sealed class Context {
   /// The original request associated with this context.
   Request get request;
-
-  /// A unique token representing the request throughout its lifetime.
-  ///
-  /// While the [Context] might change (e.g., from [RequestContext] to
-  /// [ResponseContext]), this [token] remains constant. This is useful for
-  /// associating request-specific state, for example, with [Expando] objects
-  /// in middleware.
-  Object get token;
 }
 
 /// An interface for request contexts that can be transitioned to a state
@@ -107,6 +97,14 @@ abstract interface class HijackableContext implements Context {
 /// ```
 sealed class RequestContext
     implements RespondableContext, HijackableContext, ConnectableContext {
+  /// A unique token representing the request throughout its lifetime.
+  ///
+  /// While the [Context] might change (e.g., from [RequestContext] to
+  /// [ResponseContext]), this [token] remains constant. This is useful for
+  /// associating request-specific state, for example, with [Expando] objects
+  /// in middleware.
+  Object get token;
+
   /// Creates a new [Context] with a different [Request].
   RequestContext withRequest(final Request req);
 }
@@ -156,9 +154,6 @@ final class HijackedContext extends HandledContext {
   @override
   final Request request;
 
-  @override
-  Object get token => request;
-
   HijackedContext._(this.request, this.callback);
 }
 
@@ -187,18 +182,5 @@ final class ConnectionContext extends HandledContext {
   @override
   final Request request;
 
-  @override
-  Object get token => request;
-
   ConnectionContext._(this.request, this.callback);
-}
-
-/// Internal extension methods for [Request].
-@visibleForTesting
-extension RequestInternal on Request {
-  /// Creates a new [RequestContext] from this [Request].
-  ///
-  /// This is the initial context state for an incoming request, using the
-  /// provided [token] to uniquely identify the request throughout its lifecycle.
-  RequestContext toContext(final Object token) => this;
 }

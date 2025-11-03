@@ -387,9 +387,5 @@ class Response extends Message implements ResponseContext {
   }
 
   @override
-  // TODO: implement response
   Response get response => this;
-
-  @override
-  Object get token => request.token;
 }

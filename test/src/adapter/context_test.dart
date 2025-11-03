@@ -17,9 +17,11 @@ void main() {
           Method.get,
           Uri.parse('http://test.com/path'),
         );
-        token = Object();
-        context = originalRequest.toContext(token);
-        newRequest = Request(Method.post, Uri.parse('http://test.com/newpath'));
+        context = originalRequest;
+        token = context.token;
+        newRequest = originalRequest.copyWith(
+          requestedUri: Uri.parse('http://test.com/newpath'),
+        );
         newContext = context.withRequest(newRequest);
       });
 
@@ -51,7 +53,6 @@ void main() {
 
         expect(responseContext, isA<ResponseContext>());
         expect(responseContext.request, same(newRequest));
-        expect(responseContext.token, same(token));
       });
 
       test('then the new context can transition to HijackedContext', () {
@@ -59,7 +60,6 @@ void main() {
 
         expect(hijackedContext, isA<HijackedContext>());
         expect(hijackedContext.request, same(newRequest));
-        expect(hijackedContext.token, same(token));
       });
 
       test('then the new context can transition to ConnectionContext', () {
@@ -67,7 +67,6 @@ void main() {
 
         expect(connectionContext, isA<ConnectionContext>());
         expect(connectionContext.request, same(newRequest));
-        expect(connectionContext.token, same(token));
       });
     },
   );
@@ -85,7 +84,7 @@ void main() {
           Uri.parse('http://test.com/path'),
         );
         token = Object();
-        context = originalRequest.toContext(token);
+        context = originalRequest..setToken(token);
       });
 
       test('then it simplifies middleware request rewriting pattern', () {

@@ -124,6 +124,7 @@ class Request extends Message implements RequestContext {
   }) : this._(
          method,
          requestedUri,
+         Object(),
          headers ?? Headers.empty(),
          protocolVersion: protocolVersion,
          url: url,
@@ -140,6 +141,7 @@ class Request extends Message implements RequestContext {
   Request._(
     this.method,
     this.requestedUri,
+    this._token,
     final Headers headers, {
     final String? protocolVersion,
     final String? handlerPath,
@@ -230,6 +232,7 @@ class Request extends Message implements RequestContext {
     return Request._(
       method,
       requestedUri ?? this.requestedUri,
+      token,
       headers ?? this.headers,
       protocolVersion: protocolVersion,
       handlerPath: handlerPath,
@@ -255,8 +258,9 @@ class Request extends Message implements RequestContext {
     return response;
   }
 
+  Object _token;
   @override
-  Object get token => request;
+  Object get token => _token;
 
   @override
   RequestContext withRequest(final Request req) {
@@ -359,4 +363,9 @@ String _computeHandlerPath(
   } else {
     return '/';
   }
+}
+
+/// Internal extension methods for [Request].
+extension RequestInternal on Request {
+  void setToken(final Object value) => _token = value;
 }

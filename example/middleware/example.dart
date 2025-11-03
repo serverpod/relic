@@ -40,7 +40,7 @@ Future<void> main() async {
 typedef User = int; // just an example
 final _auth = ContextProperty<User>('auth');
 
-extension on Context {
+extension on RequestContext {
   User get user => _auth[this];
 }
 

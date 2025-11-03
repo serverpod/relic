@@ -20,7 +20,7 @@ void main() {
     });
 
     final request = _request('/test');
-    final ctx = request.toContext(Object());
+    final ctx = request..setToken(Object());
     final result = await router.asHandler(ctx) as ResponseContext;
 
     expect(handlerCalled, isTrue);
@@ -40,7 +40,7 @@ void main() {
     });
 
     final request = _request('/user/alice/age/30');
-    final ctx = request.toContext(Object());
+    final ctx = request..setToken(Object());
     await router.asHandler(ctx);
 
     expect(capturedName, 'alice');
@@ -54,7 +54,7 @@ void main() {
     router.get('/test', (final ctx) => ctx.respond(Response.ok()));
 
     final request = _request('/test', method: Method.post);
-    final ctx = request.toContext(Object());
+    final ctx = request..setToken(Object());
     final result = await router.asHandler(ctx) as ResponseContext;
 
     expect(result.response.statusCode, 405);
@@ -69,7 +69,7 @@ void main() {
     router.post('/test', (final ctx) => ctx.respond(Response.ok()));
 
     final request = _request('/test', method: Method.put);
-    final ctx = request.toContext(Object());
+    final ctx = request..setToken(Object());
     final result = await router.asHandler(ctx) as ResponseContext;
 
     expect(result.response.statusCode, 405);
@@ -86,7 +86,7 @@ void main() {
     router.get('/test', (final ctx) => ctx.respond(Response.ok()));
 
     final request = _request('/nonexistent');
-    final ctx = request.toContext(Object());
+    final ctx = request..setToken(Object());
     final result = await router.asHandler(ctx) as ResponseContext;
 
     expect(result.response.statusCode, 404);
@@ -107,7 +107,7 @@ void main() {
     final handler = router.asHandler;
 
     final request = _request('/other');
-    final ctx = request.toContext(Object());
+    final ctx = request..setToken(Object());
     final result = await handler(ctx) as ResponseContext;
 
     expect(fallbackCalled, isTrue);
@@ -125,7 +125,7 @@ void main() {
     });
 
     final request = _request('/static/css/main.css');
-    final ctx = request.toContext(Object());
+    final ctx = request..setToken(Object());
     await router.asHandler(ctx);
 
     expect(capturedRemaining, '/css/main.css');
@@ -142,7 +142,7 @@ void main() {
     });
 
     final request = _request('/api/v1/users');
-    final ctx = request.toContext(Object());
+    final ctx = request..setToken(Object());
     await router.asHandler(ctx);
 
     expect(capturedMatched, '/api/v1/users');
@@ -159,7 +159,7 @@ void main() {
     });
 
     final request = _request('/files/doc123/download');
-    final ctx = request.toContext(Object());
+    final ctx = request..setToken(Object());
     await router.asHandler(ctx);
 
     expect(handlerCalled, isTrue);
@@ -171,7 +171,7 @@ void main() {
     final router = RelicRouter();
 
     final request = _request('/anything');
-    final ctx = request.toContext(Object());
+    final ctx = request..setToken(Object());
     final result = await router.asHandler(ctx) as ResponseContext;
 
     expect(result.response.statusCode, 404);
@@ -194,7 +194,7 @@ void main() {
     });
 
     final request = _request('/test');
-    final ctx = request.toContext(Object());
+    final ctx = request..setToken(Object());
     final result = await router.asHandler(ctx) as ResponseContext;
 
     expect(result.response.headers['X-Custom'], ['applied']);
@@ -215,7 +215,7 @@ void main() {
     };
 
     final request = _request('/nonexistent');
-    final ctx = request.toContext(Object());
+    final ctx = request..setToken(Object());
     final result = await router.asHandler(ctx) as ResponseContext;
 
     expect(fallbackCalled, isTrue);
@@ -231,7 +231,7 @@ void main() {
     // No fallback set
 
     final request = _request('/nonexistent');
-    final ctx = request.toContext(Object());
+    final ctx = request..setToken(Object());
     final result = await router.asHandler(ctx) as ResponseContext;
 
     expect(result.response.statusCode, 404);
@@ -250,7 +250,7 @@ void main() {
     };
 
     final request = _request('/users', method: Method.post);
-    final ctx = request.toContext(Object());
+    final ctx = request..setToken(Object());
     final result = await router.asHandler(ctx) as ResponseContext;
 
     expect(fallbackCalled, isFalse);
@@ -273,7 +273,7 @@ void main() {
             ctx.respond(Response.ok(body: Body.fromString('second fallback')));
 
     final request = _request('/nonexistent');
-    final ctx = request.toContext(Object());
+    final ctx = request..setToken(Object());
     final result = await router.asHandler(ctx) as ResponseContext;
 
     expect(await result.response.readAsString(), 'second fallback');
@@ -291,7 +291,7 @@ void main() {
     router.fallback = null; // Clear fallback
 
     final request = _request('/nonexistent');
-    final ctx = request.toContext(Object());
+    final ctx = request..setToken(Object());
     final result = await router.asHandler(ctx) as ResponseContext;
 
     expect(result.response.statusCode, 404);

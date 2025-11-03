@@ -2,15 +2,15 @@ import 'package:relic/relic.dart';
 import 'package:relic/src/context/context.dart';
 import 'package:test/test.dart';
 
-Context _createContextInstance([final String uriSuffix = 'test']) {
+RequestContext _createContextInstance([final String uriSuffix = 'test']) {
   final request = Request(Method.get, Uri.parse('http://test.com/$uriSuffix'));
-  return request.toContext(Object());
+  return request..setToken(Object());
 }
 
 void main() {
   group('Given a ContextProperty<String> and a RequestContext,', () {
     late ContextProperty<String> stringProperty;
-    late Context context;
+    late RequestContext context;
 
     setUp(() {
       stringProperty = ContextProperty<String>('testStringProperty');
@@ -140,8 +140,8 @@ void main() {
 
   group('Given a ContextProperty<String> and two RequestContexts,', () {
     late ContextProperty<String> stringProperty;
-    late Context context1;
-    late Context context2;
+    late RequestContext context1;
+    late RequestContext context2;
 
     setUp(() {
       stringProperty = ContextProperty<String>('multiContextProp');

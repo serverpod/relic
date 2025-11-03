@@ -13,7 +13,7 @@ void main() {
       router.get('/test', (final ctx) => ctx.respond(Response.ok()));
 
       final request = Request(Method.get, Uri.parse('http://localhost/test'));
-      final ctx = request.toContext(Object());
+      final ctx = request..setToken(Object());
       final result = await router.asHandler(ctx) as ResponseContext;
 
       expect(result.response.statusCode, 200);
@@ -34,7 +34,7 @@ void main() {
       router.get('/test', (final ctx) => ctx.respond(Response.ok()));
 
       final request = Request(Method.get, Uri.parse('http://localhost/test'));
-      final ctx = request.toContext(Object());
+      final ctx = request..setToken(Object());
       final result = await router.asHandler(ctx) as ResponseContext;
 
       expect(result.response.statusCode, 200);
@@ -55,7 +55,7 @@ void main() {
       });
 
       final request = Request(Method.get, Uri.parse('http://localhost/test'));
-      final ctx = request.toContext(Object());
+      final ctx = request..setToken(Object());
       await router.asHandler(ctx);
 
       expect(capturedHeader, 'by-middleware');
@@ -75,7 +75,7 @@ void main() {
       });
 
       final request = Request(Method.get, Uri.parse('http://localhost/test'));
-      final ctx = request.toContext(Object());
+      final ctx = request..setToken(Object());
       final result = await router.asHandler(ctx) as ResponseContext;
 
       expect(innerHandlerCalled, isFalse);

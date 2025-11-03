@@ -49,7 +49,7 @@ Future<Response> makeSimpleRequest(
   final Request? request,
 ]) async {
   final newCtx = await handler(
-    (request ?? _defaultRequest).toContext(Object()),
+    (request ?? _defaultRequest)..setToken(Object()),
   );
   if (newCtx is! ResponseContext) throw ArgumentError(newCtx);
   return newCtx.response;
