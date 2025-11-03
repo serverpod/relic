@@ -1,8 +1,4 @@
-import '../body/body.dart';
-import '../headers/headers.dart';
-
-import '../router/method.dart';
-import 'message.dart';
+part of 'context.dart';
 
 /// An HTTP request to be processed by a Relic Server application.
 ///

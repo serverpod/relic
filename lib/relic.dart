@@ -6,8 +6,6 @@ export 'src/body/body.dart' show Body;
 export 'src/body/types/body_type.dart' show BodyType;
 export 'src/body/types/mime_type.dart' show MimeType;
 export 'src/context/context.dart' hide RequestInternal;
-export 'src/context/request.dart' show Request;
-export 'src/context/response.dart' show Response;
 export 'src/handler/cascade.dart' show Cascade;
 export 'src/handler/handler.dart';
 export 'src/handler/pipeline.dart' show Pipeline;

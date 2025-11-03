@@ -3,8 +3,6 @@ import 'dart:async';
 import 'adapter/adapter.dart';
 import 'body/body.dart';
 import 'context/context.dart';
-import 'context/request.dart';
-import 'context/response.dart';
 import 'handler/handler.dart';
 import 'headers/exception/header_exception.dart';
 import 'headers/standard_headers_extensions.dart';

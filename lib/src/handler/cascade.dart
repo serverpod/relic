@@ -1,5 +1,4 @@
 import '../context/context.dart';
-import '../context/response.dart';
 import 'handler.dart';
 
 /// A typedef for [Cascade._shouldCascade].

@@ -1,6 +1,13 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
 import 'package:meta/meta.dart';
 
 import '../../relic.dart';
+
+part 'message.dart';
+part 'request.dart';
+part 'response.dart';
 
 /// A sealed base class for representing the state of a request as it's
 /// processed.

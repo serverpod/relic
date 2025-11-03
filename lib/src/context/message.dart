@@ -1,8 +1,4 @@
-import 'dart:async';
-import 'dart:convert';
-import 'dart:typed_data';
-
-import '../../relic.dart';
+part of 'context.dart';
 
 abstract class Message {
   /// The HTTP headers associated with this message.
