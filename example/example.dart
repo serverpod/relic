@@ -35,4 +35,5 @@ ResponseContext hello(final RequestContext ctx) {
     ),
   );
 }
+
 // end:doctag<02-hello-world-example-31-handler>

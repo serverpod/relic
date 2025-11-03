@@ -23,4 +23,5 @@ Future<void> main() async {
   );
   await server.mountAndStart(handler);
 }
+
 // end:doctag<10-pipeline-6>
