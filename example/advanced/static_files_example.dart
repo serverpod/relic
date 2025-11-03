@@ -10,6 +10,7 @@ Future<void> main() async {
 
   // Basic directory serving
 
+  // doctag<08-static-files-13>
   app.anyOf(
     {Method.get, Method.head},
     '/basic/**',
@@ -19,9 +20,11 @@ Future<void> main() async {
           (final ctx, final fileInfo) => CacheControlHeader(maxAge: 86400),
     ).asHandler,
   );
+  // end:doctag<08-static-files-13>
 
   // Single file serving
 
+  // doctag<08-static-files-25>
   app.get(
     '/logo.svg',
     StaticHandler.file(
@@ -30,9 +33,11 @@ Future<void> main() async {
           (final ctx, final fileInfo) => CacheControlHeader(maxAge: 3600),
     ).asHandler,
   );
+  // end:doctag<08-static-files-25>
 
   // Short-term caching
 
+  // doctag<08-static-files-36>
   app.anyOf(
     {Method.get, Method.head},
     '/short-cache/**',
@@ -45,9 +50,11 @@ Future<void> main() async {
           ),
     ).asHandler,
   );
+  // end:doctag<08-static-files-36>
 
   // Long-term caching with immutable assets
 
+  // doctag<08-static-files-51>
   app.anyOf(
     {Method.get, Method.head},
     '/long-cache/**',
@@ -61,9 +68,11 @@ Future<void> main() async {
           ),
     ).asHandler,
   );
+  // end:doctag<08-static-files-51>
 
   // Cache busting setup
 
+  // doctag<08-static-files-67>
   final buster = CacheBustingConfig(
     mountPrefix: '/static',
     fileSystemRoot: staticDir,
@@ -102,6 +111,7 @@ Future<void> main() async {
       cacheBustingConfig: buster,
     ).asHandler,
   );
+  // end:doctag<08-static-files-67>
 
   // Start the server
   await app.serve();

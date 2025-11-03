@@ -5,6 +5,7 @@ import 'package:relic/io_adapter.dart';
 import 'package:relic/relic.dart';
 
 /// Middleware that adds a custom header
+// doctag<07-middleware-31>
 Middleware addHeaderMiddleware() {
   return (final Handler innerHandler) {
     return (final RequestContext ctx) async {
@@ -23,6 +24,7 @@ Middleware addHeaderMiddleware() {
     };
   };
 }
+// end:doctag<07-middleware-31>
 
 /// Timing middleware
 Middleware timingMiddleware() {

@@ -4,6 +4,7 @@ import 'package:relic/io_adapter.dart';
 import 'package:relic/relic.dart';
 
 /// A pipeline 'Hello World' server
+// doctag<10-pipeline-6>
 Future<void> main() async {
   // Create a pipeline that route all request to the same handler
   final handler = const Pipeline()
@@ -22,3 +23,4 @@ Future<void> main() async {
   );
   await server.mountAndStart(handler);
 }
+// end:doctag<10-pipeline-6>
