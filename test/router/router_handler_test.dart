@@ -1,21 +1,12 @@
-import 'package:mockito/mockito.dart';
 import 'package:relic/relic.dart';
 import 'package:relic/src/adapter/context.dart';
 import 'package:test/test.dart';
 
-// Simple fake implementations for testing
-class _FakeRequest extends Fake implements Request {
-  @override
-  final Uri url;
-  @override
-  final Method method;
-
-  _FakeRequest(
-    final String path, {
-    final String host = 'localhost',
-    this.method = Method.get,
-  }) : url = Uri.parse('http://$host$path');
-}
+Request _request(
+  final String path, {
+  final String host = 'localhost',
+  final Method method = Method.get,
+}) => Request(method, Uri.http(host, path));
 
 void main() {
   test('Given a router with a GET route, '
@@ -28,7 +19,7 @@ void main() {
       return ctx.respond(Response.ok(body: Body.fromString('success')));
     });
 
-    final request = _FakeRequest('/test');
+    final request = _request('/test');
     final ctx = request.toContext(Object());
     final result = await router.asHandler(ctx) as ResponseContext;
 
@@ -48,7 +39,7 @@ void main() {
       return ctx.respond(Response.ok());
     });
 
-    final request = _FakeRequest('/user/alice/age/30');
+    final request = _request('/user/alice/age/30');
     final ctx = request.toContext(Object());
     await router.asHandler(ctx);
 
@@ -62,7 +53,7 @@ void main() {
     final router = RelicRouter();
     router.get('/test', (final ctx) => ctx.respond(Response.ok()));
 
-    final request = _FakeRequest('/test', method: Method.post);
+    final request = _request('/test', method: Method.post);
     final ctx = request.toContext(Object());
     final result = await router.asHandler(ctx) as ResponseContext;
 
@@ -77,7 +68,7 @@ void main() {
     router.get('/test', (final ctx) => ctx.respond(Response.ok()));
     router.post('/test', (final ctx) => ctx.respond(Response.ok()));
 
-    final request = _FakeRequest('/test', method: Method.put);
+    final request = _request('/test', method: Method.put);
     final ctx = request.toContext(Object());
     final result = await router.asHandler(ctx) as ResponseContext;
 
@@ -94,7 +85,7 @@ void main() {
     final router = RelicRouter();
     router.get('/test', (final ctx) => ctx.respond(Response.ok()));
 
-    final request = _FakeRequest('/nonexistent');
+    final request = _request('/nonexistent');
     final ctx = request.toContext(Object());
     final result = await router.asHandler(ctx) as ResponseContext;
 
@@ -115,7 +106,7 @@ void main() {
 
     final handler = router.asHandler;
 
-    final request = _FakeRequest('/other');
+    final request = _request('/other');
     final ctx = request.toContext(Object());
     final result = await handler(ctx) as ResponseContext;
 
@@ -133,7 +124,7 @@ void main() {
       return ctx.respond(Response.ok());
     });
 
-    final request = _FakeRequest('/static/css/main.css');
+    final request = _request('/static/css/main.css');
     final ctx = request.toContext(Object());
     await router.asHandler(ctx);
 
@@ -150,7 +141,7 @@ void main() {
       return ctx.respond(Response.ok());
     });
 
-    final request = _FakeRequest('/api/v1/users');
+    final request = _request('/api/v1/users');
     final ctx = request.toContext(Object());
     await router.asHandler(ctx);
 
@@ -167,7 +158,7 @@ void main() {
       return ctx.respond(Response.ok());
     });
 
-    final request = _FakeRequest('/files/doc123/download');
+    final request = _request('/files/doc123/download');
     final ctx = request.toContext(Object());
     await router.asHandler(ctx);
 
@@ -179,7 +170,7 @@ void main() {
       'then returns 404', () async {
     final router = RelicRouter();
 
-    final request = _FakeRequest('/anything');
+    final request = _request('/anything');
     final ctx = request.toContext(Object());
     final result = await router.asHandler(ctx) as ResponseContext;
 
@@ -202,7 +193,7 @@ void main() {
       };
     });
 
-    final request = _FakeRequest('/test');
+    final request = _request('/test');
     final ctx = request.toContext(Object());
     final result = await router.asHandler(ctx) as ResponseContext;
 
@@ -223,7 +214,7 @@ void main() {
       );
     };
 
-    final request = _FakeRequest('/nonexistent');
+    final request = _request('/nonexistent');
     final ctx = request.toContext(Object());
     final result = await router.asHandler(ctx) as ResponseContext;
 
@@ -239,7 +230,7 @@ void main() {
     router.get('/users', (final ctx) => ctx.respond(Response.ok()));
     // No fallback set
 
-    final request = _FakeRequest('/nonexistent');
+    final request = _request('/nonexistent');
     final ctx = request.toContext(Object());
     final result = await router.asHandler(ctx) as ResponseContext;
 
@@ -258,7 +249,7 @@ void main() {
       return ctx.respond(Response.ok());
     };
 
-    final request = _FakeRequest('/users', method: Method.post);
+    final request = _request('/users', method: Method.post);
     final ctx = request.toContext(Object());
     final result = await router.asHandler(ctx) as ResponseContext;
 
@@ -281,7 +272,7 @@ void main() {
         (final ctx) =>
             ctx.respond(Response.ok(body: Body.fromString('second fallback')));
 
-    final request = _FakeRequest('/nonexistent');
+    final request = _request('/nonexistent');
     final ctx = request.toContext(Object());
     final result = await router.asHandler(ctx) as ResponseContext;
 
@@ -299,7 +290,7 @@ void main() {
             ctx.respond(Response.ok(body: Body.fromString('fallback')));
     router.fallback = null; // Clear fallback
 
-    final request = _FakeRequest('/nonexistent');
+    final request = _request('/nonexistent');
     final ctx = request.toContext(Object());
     final result = await router.asHandler(ctx) as ResponseContext;
 

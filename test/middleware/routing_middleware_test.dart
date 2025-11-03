@@ -1,23 +1,14 @@
-import 'package:mockito/mockito.dart';
 import 'package:relic/relic.dart';
 import 'package:relic/src/adapter/context.dart';
 import 'package:test/test.dart';
 
 import '../util/test_util.dart';
 
-// Simple fake implementations for testing
-class _FakeRequest extends Fake implements Request {
-  @override
-  final Uri url;
-  @override
-  final Method method;
-
-  _FakeRequest(
-    final String path, {
-    final String host = 'localhost',
-    this.method = Method.get,
-  }) : url = Uri.parse('http://$host/$path');
-}
+Request _request(
+  final String path, {
+  final String host = 'localhost',
+  final Method method = Method.get,
+}) => Request(method, Uri.http(host, path));
 
 void main() {
   group('RoutingMiddleware', () {
@@ -41,7 +32,7 @@ void main() {
 
         router.add(Method.get, '/users/:id', testHandler);
 
-        final initialCtx = _FakeRequest('/users/123').toContext(Object());
+        final initialCtx = _request('/users/123').toContext(Object());
         final resultingCtx = await middleware(
           respondWith((_) => Response(404)),
         )(initialCtx);
@@ -66,7 +57,7 @@ void main() {
 
           router.add(Method.get, '/users', testHandler);
 
-          final initialCtx = _FakeRequest('/users').toContext(Object());
+          final initialCtx = _request('/users').toContext(Object());
           final resultingCtx = await middleware(
             respondWith((_) => Response(404)),
           )(initialCtx);
@@ -91,7 +82,7 @@ void main() {
             return ctx.respond(Response(404));
           }
 
-          final initialCtx = _FakeRequest('/nonexistent').toContext(Object());
+          final initialCtx = _request('/nonexistent').toContext(Object());
           final resultingCtx = await middleware(nextHandler)(initialCtx);
 
           expect(nextCalled, isTrue);
@@ -145,7 +136,7 @@ void main() {
             respondWith((_) => Response(404)),
           );
 
-          final initialCtx = _FakeRequest('/router1/apple').toContext(Object());
+          final initialCtx = _request('/router1/apple').toContext(Object());
           final resultingCtx = await pipelineHandler(initialCtx);
           final response = (resultingCtx as ResponseContext).response;
 
@@ -185,9 +176,7 @@ void main() {
             respondWith((_) => Response(404)),
           );
 
-          final initialCtx = _FakeRequest(
-            '/router2/banana',
-          ).toContext(Object());
+          final initialCtx = _request('/router2/banana').toContext(Object());
           final resultingCtx = await pipelineHandler(initialCtx);
           final response = (resultingCtx as ResponseContext).response;
 
@@ -229,7 +218,7 @@ void main() {
           }),
         );
 
-        final initialCtx = _FakeRequest('/neither/nor').toContext(Object());
+        final initialCtx = _request('/neither/nor').toContext(Object());
         final resultingCtx = await pipelineHandler(initialCtx);
         final response = (resultingCtx as ResponseContext).response;
 
@@ -266,7 +255,7 @@ void main() {
 
           final pipelineHandler = mainRouter.asHandler;
 
-          final initialCtx = _FakeRequest(
+          final initialCtx = _request(
             '/resource/abc/details/xyz',
           ).toContext(Object());
           final resultingCtx = await pipelineHandler(initialCtx);
@@ -316,7 +305,7 @@ void main() {
 
           final pipelineHandler = mainRouter.asHandler;
 
-          final initialCtx = _FakeRequest(
+          final initialCtx = _request(
             '/base/b123/i456/action/doSomething',
           ).toContext(Object());
           final resultingCtx = await pipelineHandler(initialCtx);
@@ -358,9 +347,7 @@ void main() {
 
           final pipeline = mainRouter.asHandler;
 
-          final initialCtx = _FakeRequest(
-            '/123/sub/456/end',
-          ).toContext(Object());
+          final initialCtx = _request('/123/sub/456/end').toContext(Object());
           final resultingCtx = await pipeline(initialCtx);
           final response = (resultingCtx as ResponseContext).response;
 
@@ -386,7 +373,7 @@ void main() {
               respondWith((_) => Response.ok(body: Body.fromString(s))),
     );
 
-    final ctx = _FakeRequest('/').toContext(Object());
+    final ctx = _request('/').toContext(Object());
     final resCtx =
         await mw(respondWith((_) => Response.notFound()))(ctx)
             as ResponseContext;
@@ -415,7 +402,7 @@ void main() {
           }),
         ),
       );
-      final request = _FakeRequest('/', method: v);
+      final request = _request('/', method: v);
       final newCtx = await middleware(respondWith((_) => Response.notFound()))(
         request.toContext(Object()),
       );
@@ -440,7 +427,7 @@ void main() {
         'then a 405 response is returned', () async {
       router.add(Method.get, '/users', respondWith((_) => Response(200)));
 
-      final initialCtx = _FakeRequest(
+      final initialCtx = _request(
         '/users',
         method: Method.post,
       ).toContext(Object());
@@ -458,7 +445,7 @@ void main() {
         'then the Allow header contains GET', () async {
       router.add(Method.get, '/users', respondWith((_) => Response(200)));
 
-      final initialCtx = _FakeRequest(
+      final initialCtx = _request(
         '/users',
         method: Method.post,
       ).toContext(Object());
@@ -478,7 +465,7 @@ void main() {
       router.add(Method.get, '/users', respondWith((_) => Response(200)));
       router.add(Method.post, '/users', respondWith((_) => Response(201)));
 
-      final initialCtx = _FakeRequest(
+      final initialCtx = _request(
         '/users',
         method: Method.put,
       ).toContext(Object());
@@ -503,7 +490,7 @@ void main() {
         respondWith((_) => Response(204)),
       );
 
-      final initialCtx = _FakeRequest(
+      final initialCtx = _request(
         '/users/123',
         method: Method.patch,
       ).toContext(Object());
@@ -524,7 +511,7 @@ void main() {
       router.add(Method.get, '/users', respondWith((_) => Response(200)));
 
       bool nextCalled = false;
-      final initialCtx = _FakeRequest(
+      final initialCtx = _request(
         '/posts',
         method: Method.get,
       ).toContext(Object());
