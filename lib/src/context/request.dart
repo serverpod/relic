@@ -53,7 +53,7 @@ part of 'context.dart';
 /// });
 /// ```
 /// ```
-class Request extends Message {
+class Request extends Message implements RequestContext {
   /// The URL path from the current handler to the requested resource, relative
   /// to [handlerPath], plus any query parameters.
   ///
@@ -235,6 +235,32 @@ class Request extends Message {
       handlerPath: handlerPath,
       body: body,
     );
+  }
+
+  @override
+  ConnectionContext connect(final WebSocketCallback callback) {
+    return ConnectionContext._(request, callback);
+  }
+
+  @override
+  HijackedContext hijack(final HijackCallback callback) {
+    return HijackedContext._(request, callback);
+  }
+
+  @override
+  Request get request => this;
+
+  @override
+  ResponseContext respond(final Response response) {
+    return response;
+  }
+
+  @override
+  Object get token => request;
+
+  @override
+  RequestContext withRequest(final Request req) {
+    return req;
   }
 }
 

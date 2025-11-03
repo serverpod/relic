@@ -38,8 +38,8 @@ part 'response.dart';
 /// - [HijackedContext]: Connection hijacked for low-level I/O (WebSockets, etc.)
 /// - [ConnectionContext]: Duplex stream connection established
 sealed class Context {
-  /// The request associated with this context.
-  final Request request;
+  /// The original request associated with this context.
+  Request get request;
 
   /// A unique token representing the request throughout its lifetime.
   ///
@@ -47,8 +47,7 @@ sealed class Context {
   /// [ResponseContext]), this [token] remains constant. This is useful for
   /// associating request-specific state, for example, with [Expando] objects
   /// in middleware.
-  final Object token;
-  Context._(this.request, this.token);
+  Object get token;
 }
 
 /// An interface for request contexts that can be transitioned to a state
@@ -58,6 +57,17 @@ abstract interface class RespondableContext implements Context {
   ///
   /// Takes a [response] and returns a [ResponseContext].
   ResponseContext respond(final Response response);
+}
+
+abstract interface class ConnectableContext implements Context {
+  /// Transitions this context to a state where a duplex stream (e.g., WebSocket)
+  /// connection is established.
+  ///
+  /// The provided [WebSocketCallback] will be invoked with a
+  /// [RelicWebSocket] for managing the bi-directional communication.
+  /// Returns a [ConnectionContext].
+  ConnectionContext connect(final WebSocketCallback callback) =>
+      ConnectionContext._(request, callback);
 }
 
 /// An interface for request contexts that allow hijacking the underlying connection.
@@ -95,29 +105,10 @@ abstract interface class HijackableContext implements Context {
 ///   });
 /// }
 /// ```
-final class RequestContext extends Context
-    implements RespondableContext, HijackableContext {
-  RequestContext._(super.request, super.token) : super._();
-
-  @override
-  HijackedContext hijack(final HijackCallback callback) =>
-      HijackedContext._(request, token, callback);
-
-  /// Transitions this context to a state where a duplex stream (e.g., WebSocket)
-  /// connection is established.
-  ///
-  /// The provided [WebSocketCallback] will be invoked with a
-  /// [RelicWebSocket] for managing the bi-directional communication.
-  /// Returns a [ConnectionContext].
-  ConnectionContext connect(final WebSocketCallback callback) =>
-      ConnectionContext._(request, token, callback);
-
+sealed class RequestContext
+    implements RespondableContext, HijackableContext, ConnectableContext {
   /// Creates a new [Context] with a different [Request].
-  RequestContext withRequest(final Request req) => RequestContext._(req, token);
-
-  @override
-  ResponseContext respond(final Response response) =>
-      ResponseContext._(request, token, response);
+  RequestContext withRequest(final Request req);
 }
 
 /// A sealed base class for contexts that represent a handled request.
@@ -125,20 +116,12 @@ final class RequestContext extends Context
 /// A request is considered handled if a response has been formulated
 /// ([ResponseContext]), the connection has been hijacked ([HijackedContext]),
 /// or a duplex stream connection has been established ([ConnectionContext]).
-sealed class HandledContext extends Context {
-  HandledContext._(super.request, super.token) : super._();
-}
+sealed class HandledContext implements Context {}
 
 /// A [Context] state indicating that a [Response] has been generated.
-final class ResponseContext extends HandledContext
-    implements RespondableContext {
+sealed class ResponseContext implements HandledContext, RespondableContext {
   /// The response associated with this context.
-  final Response response;
-  ResponseContext._(super.request, super.token, this.response) : super._();
-
-  @override
-  ResponseContext respond(final Response response) =>
-      ResponseContext._(request, token, response);
+  Response get response;
 }
 
 /// A [Context] state indicating that the underlying connection has been
@@ -169,7 +152,14 @@ final class ResponseContext extends HandledContext
 final class HijackedContext extends HandledContext {
   /// The callback function provided to handle the hijacked connection.
   final HijackCallback callback;
-  HijackedContext._(super.request, super.token, this.callback) : super._();
+
+  @override
+  final Request request;
+
+  @override
+  Object get token => request;
+
+  HijackedContext._(this.request, this.callback);
 }
 
 /// A [Context] state indicating that a duplex stream connection
@@ -193,7 +183,14 @@ final class HijackedContext extends HandledContext {
 final class ConnectionContext extends HandledContext {
   /// The callback function provided to handle the duplex stream connection.
   final WebSocketCallback callback;
-  ConnectionContext._(super.request, super.token, this.callback) : super._();
+
+  @override
+  final Request request;
+
+  @override
+  Object get token => request;
+
+  ConnectionContext._(this.request, this.callback);
 }
 
 /// Internal extension methods for [Request].
@@ -203,5 +200,5 @@ extension RequestInternal on Request {
   ///
   /// This is the initial context state for an incoming request, using the
   /// provided [token] to uniquely identify the request throughout its lifecycle.
-  RequestContext toContext(final Object token) => RequestContext._(this, token);
+  RequestContext toContext(final Object token) => this;
 }
