@@ -10,13 +10,13 @@ Middleware addHeaderMiddleware() {
     return (final Request ctx) async {
       final result = await innerHandler(ctx);
 
-      if (result is ResponseContext) {
-        final newResponse = result.response.copyWith(
-          headers: result.response.headers.transform(
+      if (result is Response) {
+        final newResponse = result.copyWith(
+          headers: result.headers.transform(
             (final mh) => mh['X-Custom-Header'] = ['Hello from middleware!'],
           ),
         );
-        return result.respond(newResponse);
+        return newResponse;
       }
 
       return result;
@@ -56,11 +56,11 @@ Middleware errorHandlingMiddleware() {
 }
 
 /// Simple handlers
-Future<ResponseContext> homeHandler(final Request ctx) async {
+Future<Response> homeHandler(final Request ctx) async {
   return Response.ok(body: Body.fromString('Hello from home page!'));
 }
 
-Future<ResponseContext> apiHandler(final Request ctx) async {
+Future<Response> apiHandler(final Request ctx) async {
   final data = {'message': 'Hello from API!'};
 
   return Response.ok(body: Body.fromString(jsonEncode(data)));

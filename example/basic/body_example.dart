@@ -78,12 +78,12 @@ Future<void> main() async {
 }
 
 /// Basic text response handler
-ResponseContext helloHandler(final Request ctx) {
+Response helloHandler(final Request ctx) {
   return Response.ok(body: Body.fromString('Hello, World!'));
 }
 
 /// JSON with automatic MIME detection handler
-ResponseContext dataHandler(final Request ctx) {
+Response dataHandler(final Request ctx) {
   return Response.ok(
     body: Body.fromString('{"message": "Hello"}'),
     // Automatically detects application/json
@@ -91,7 +91,7 @@ ResponseContext dataHandler(final Request ctx) {
 }
 
 /// Small file handler - read entire file into memory
-Future<ResponseContext> smallFileHandler(final Request ctx) async {
+Future<Response> smallFileHandler(final Request ctx) async {
   final file = File('example.txt');
 
   if (!await file.exists()) {
@@ -104,7 +104,7 @@ Future<ResponseContext> smallFileHandler(final Request ctx) async {
 }
 
 /// Large file handler - stream for memory efficiency
-Future<ResponseContext> largeFileHandler(final Request ctx) async {
+Future<Response> largeFileHandler(final Request ctx) async {
   final file = File('large-file.dat');
 
   if (!await file.exists()) {
@@ -124,14 +124,14 @@ Future<ResponseContext> largeFileHandler(final Request ctx) async {
 }
 
 /// Reading request body as string handler
-Future<ResponseContext> echoHandler(final Request ctx) async {
+Future<Response> echoHandler(final Request ctx) async {
   final content = await ctx.readAsString();
 
   return Response.ok(body: Body.fromString('You sent: $content'));
 }
 
 /// JSON API handler
-Future<ResponseContext> apiDataHandler(final Request ctx) async {
+Future<Response> apiDataHandler(final Request ctx) async {
   final jsonData = await ctx.readAsString();
   final data = jsonDecode(jsonData);
 
@@ -146,7 +146,7 @@ Future<ResponseContext> apiDataHandler(final Request ctx) async {
 }
 
 /// File upload handler with size validation
-Future<ResponseContext> uploadHandler(final Request ctx) async {
+Future<Response> uploadHandler(final Request ctx) async {
   const maxFileSize = 10 * 1024 * 1024; // 10MB
   final contentLength = ctx.body.contentLength;
 
@@ -163,7 +163,7 @@ Future<ResponseContext> uploadHandler(final Request ctx) async {
 }
 
 /// Image response handler with automatic format detection
-Future<ResponseContext> imageHandler(final Request ctx) async {
+Future<Response> imageHandler(final Request ctx) async {
   final file = File('example/static_files/logo.svg');
   final imageBytes = await file.readAsBytes();
 
@@ -173,7 +173,7 @@ Future<ResponseContext> imageHandler(final Request ctx) async {
 }
 
 /// Streaming response handler with chunked transfer encoding
-Future<ResponseContext> streamHandler(final Request ctx) async {
+Future<Response> streamHandler(final Request ctx) async {
   Stream<Uint8List> generateLargeDataset() async* {
     for (var i = 0; i < 100; i++) {
       await Future<void>.delayed(const Duration(milliseconds: 50));

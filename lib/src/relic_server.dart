@@ -128,10 +128,7 @@ final class _RelicServer implements RelicServer {
       final ctx = request..setToken(adapterRequest);
       final newCtx = await handler(ctx);
       return switch (newCtx) {
-        final ResponseContext rc => adapter.respond(
-          adapterRequest,
-          rc.response,
-        ),
+        final Response rc => adapter.respond(adapterRequest, rc),
         final HijackedContext hc => adapter.hijack(adapterRequest, hc.callback),
         final ConnectionContext cc => adapter.connect(
           adapterRequest,
@@ -155,14 +152,12 @@ final class _RelicServer implements RelicServer {
       try {
         final handledCtx = await handler(ctx);
         return switch (handledCtx) {
-          final ResponseContext rc =>
+          final Response rc =>
           // If the response doesn't have a date header, add the default one
-          rc.respond(
-            rc.response.copyWith(
-              headers: rc.response.headers.transform((final mh) {
-                mh.date ??= DateTime.now();
-              }),
-            ),
+          rc.copyWith(
+            headers: rc.headers.transform((final mh) {
+              mh.date ??= DateTime.now();
+            }),
           ),
           _ => handledCtx,
         };

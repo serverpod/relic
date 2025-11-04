@@ -145,10 +145,10 @@ Middleware createMiddleware({
     return (final ctx) async {
       var response = await onRequest!(ctx);
       if (response != null) return response;
-      late ResponseContext responseCtx;
+      late Response responseCtx;
       try {
         final newCtx = await innerHandler(ctx);
-        if (newCtx is! ResponseContext) return newCtx;
+        if (newCtx is! Response) return newCtx;
         responseCtx = newCtx;
       } catch (e, s) {
         if (onError != null) {
@@ -156,8 +156,8 @@ Middleware createMiddleware({
         }
         rethrow;
       }
-      response = await onResponse!(responseCtx.response);
-      return responseCtx.respond(response);
+      response = await onResponse!(responseCtx);
+      return response;
     };
   };
 }

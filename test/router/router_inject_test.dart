@@ -18,10 +18,10 @@ void main() {
         body: Body.fromString('Hello from the other side'),
       );
       final ctx = request..setToken(Object());
-      final result = await router.asHandler(ctx) as ResponseContext;
+      final result = await router.asHandler(ctx) as Response;
 
-      expect(result.response.statusCode, 200);
-      expect(await result.response.readAsString(), 'Hello from the other side');
+      expect(result.statusCode, 200);
+      expect(await result.readAsString(), 'Hello from the other side');
     });
 
     test('Given a HandlerObject with custom injectIn, '
@@ -36,10 +36,10 @@ void main() {
         body: Body.fromString('custom handler'),
       );
       final ctx = request..setToken(Object());
-      final result = await router.asHandler(ctx) as ResponseContext;
+      final result = await router.asHandler(ctx) as Response;
 
-      expect(result.response.statusCode, 200);
-      expect(await result.response.readAsString(), 'custom handler');
+      expect(result.statusCode, 200);
+      expect(await result.readAsString(), 'custom handler');
     });
   });
 
@@ -56,10 +56,10 @@ void main() {
         body: Body.fromString('injected at path'),
       );
       final ctx = request..setToken(Object());
-      final result = await router.asHandler(ctx) as ResponseContext;
+      final result = await router.asHandler(ctx) as Response;
 
-      expect(result.response.statusCode, 200);
-      expect(await result.response.readAsString(), 'injected at path');
+      expect(result.statusCode, 200);
+      expect(await result.readAsString(), 'injected at path');
     });
   });
 
@@ -79,10 +79,10 @@ void main() {
 
         final request = Request(Method.get, Uri.parse('http://localhost/test'));
         final ctx = request..setToken(Object());
-        final result = await router.asHandler(ctx) as ResponseContext;
+        final result = await router.asHandler(ctx) as Response;
 
-        expect(result.response.statusCode, 200);
-        expect(result.response.headers['X-Middleware'], ['applied']);
+        expect(result.statusCode, 200);
+        expect(result.headers['X-Middleware'], ['applied']);
       },
     );
 
@@ -105,10 +105,10 @@ void main() {
         Uri.parse('http://localhost/api/users'),
       );
       final apiCtx = apiRequest..setToken(Object());
-      final apiResult = await router.asHandler(apiCtx) as ResponseContext;
+      final apiResult = await router.asHandler(apiCtx) as Response;
 
-      expect(apiResult.response.statusCode, 200);
-      expect(apiResult.response.headers['X-Custom-Middleware'], ['yes']);
+      expect(apiResult.statusCode, 200);
+      expect(apiResult.headers['X-Custom-Middleware'], ['yes']);
 
       // Should NOT apply to other paths
       final otherRequest = Request(
@@ -116,10 +116,10 @@ void main() {
         Uri.parse('http://localhost/other'),
       );
       final otherCtx = otherRequest..setToken(Object());
-      final otherResult = await router.asHandler(otherCtx) as ResponseContext;
+      final otherResult = await router.asHandler(otherCtx) as Response;
 
-      expect(otherResult.response.statusCode, 200);
-      expect(otherResult.response.headers['X-Custom-Middleware'], isNull);
+      expect(otherResult.statusCode, 200);
+      expect(otherResult.headers['X-Custom-Middleware'], isNull);
     });
 
     test('Given multiple MiddlewareObjects, '
@@ -140,11 +140,11 @@ void main() {
 
       final request = Request(Method.get, Uri.parse('http://localhost/test'));
       final ctx = request..setToken(Object());
-      final result = await router.asHandler(ctx) as ResponseContext;
+      final result = await router.asHandler(ctx) as Response;
 
-      expect(result.response.statusCode, 200);
-      expect(result.response.headers['X-Middleware'], ['applied']);
-      expect(result.response.headers['X-Second'], ['also-applied']);
+      expect(result.statusCode, 200);
+      expect(result.headers['X-Middleware'], ['applied']);
+      expect(result.headers['X-Second'], ['also-applied']);
     });
   });
 }
@@ -179,12 +179,8 @@ class _HeaderSetMiddlewareObject extends MiddlewareObject {
   Handler call(final Handler next) {
     return (final ctx) async {
       final result = await next(ctx);
-      if (result is! ResponseContext) return result;
-      return result.respond(
-        result.response.copyWith(
-          headers: result.response.headers.transform(update),
-        ),
-      );
+      if (result is! Response) return result;
+      return result.copyWith(headers: result.headers.transform(update));
     };
   }
 }

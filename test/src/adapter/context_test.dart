@@ -37,10 +37,10 @@ void main() {
         expect(newRequest, isNot(same(originalRequest)));
       });
 
-      test('then the new context can transition to ResponseContext', () {
+      test('then the new context can transition to Response', () {
         final responseContext = Response.ok(body: Body.fromString('test'));
 
-        expect(responseContext, isA<ResponseContext>());
+        expect(responseContext, isA<Response>());
       });
 
       test('then the new context can transition to HijackedContext', () {

@@ -18,7 +18,7 @@ Handler requestIdMiddleware(final Handler next) {
 }
 
 // Handler that uses the stored request ID
-Future<ResponseContext> handler(final Request ctx) async {
+Future<Response> handler(final Request ctx) async {
   // Retrieve the request ID that was set by middleware
   final requestId = _requestIdProperty[ctx];
 

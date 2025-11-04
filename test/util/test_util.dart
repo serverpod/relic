@@ -47,8 +47,8 @@ Future<Response> makeSimpleRequest(
   final newCtx = await handler(
     (request ?? _defaultRequest)..setToken(Object()),
   );
-  if (newCtx is! ResponseContext) throw ArgumentError(newCtx);
-  return newCtx.response;
+  if (newCtx is! Response) throw ArgumentError(newCtx);
+  return newCtx;
 }
 
 final _defaultRequest = Request(Method.get, localhostUri);

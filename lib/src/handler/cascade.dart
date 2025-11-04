@@ -78,7 +78,7 @@ class Cascade {
     return (final ctx) async {
       if (_parent!._handler == null) return handler(ctx);
       final newCtx = await _parent.handler(ctx);
-      if (newCtx is ResponseContext && _shouldCascade(newCtx.response)) {
+      if (newCtx is Response && _shouldCascade(newCtx)) {
         return handler(ctx);
       }
       return newCtx;

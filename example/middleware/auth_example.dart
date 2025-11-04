@@ -20,12 +20,12 @@ Middleware authMiddleware() {
 }
 
 /// Public handler (no auth needed)
-Future<ResponseContext> publicHandler(final Request ctx) async {
+Future<Response> publicHandler(final Request ctx) async {
   return Response.ok(body: Body.fromString('This is public!'));
 }
 
 /// Protected handler (needs auth)
-Future<ResponseContext> protectedHandler(final Request ctx) async {
+Future<Response> protectedHandler(final Request ctx) async {
   return Response.ok(body: Body.fromString('This is protected!'));
 }
 

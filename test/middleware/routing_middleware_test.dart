@@ -39,8 +39,8 @@ void main() {
 
         expect(capturedParams, isNotNull);
         expect(capturedParams, equals({#id: '123'}));
-        expect(resultingCtx, isA<ResponseContext>());
-        final response = (resultingCtx as ResponseContext).response;
+        expect(resultingCtx, isA<Response>());
+        final response = (resultingCtx as Response);
         expect(response.statusCode, equals(200));
       });
 
@@ -50,7 +50,7 @@ void main() {
         'Then the handler receives empty path parameters',
         () async {
           Map<Symbol, String>? capturedParams;
-          Future<ResponseContext> testHandler(final Request ctx) async {
+          Future<Response> testHandler(final Request ctx) async {
             capturedParams = ctx.pathParameters;
             return Response(200);
           }
@@ -64,8 +64,8 @@ void main() {
 
           expect(capturedParams, isNotNull);
           expect(capturedParams, isEmpty);
-          expect(resultingCtx, isA<ResponseContext>());
-          final response = (resultingCtx as ResponseContext).response;
+          expect(resultingCtx, isA<Response>());
+          final response = (resultingCtx as Response);
           expect(response.statusCode, equals(200));
         },
       );
@@ -76,7 +76,7 @@ void main() {
         'Then the next handler is called and pathParameters is empty',
         () async {
           bool nextCalled = false;
-          Future<ResponseContext> nextHandler(final Request ctx) async {
+          Future<Response> nextHandler(final Request ctx) async {
             nextCalled = true;
             expect(ctx.pathParameters, isEmpty);
             return Response(404);
@@ -86,8 +86,8 @@ void main() {
           final resultingCtx = await middleware(nextHandler)(initialCtx);
 
           expect(nextCalled, isTrue);
-          expect(resultingCtx, isA<ResponseContext>());
-          final response = (resultingCtx as ResponseContext).response;
+          expect(resultingCtx, isA<Response>());
+          final response = (resultingCtx as Response);
           expect(response.statusCode, equals(404));
         },
       );
@@ -136,7 +136,7 @@ void main() {
 
           final initialCtx = _request('/router1/apple')..setToken(Object());
           final resultingCtx = await pipelineHandler(initialCtx);
-          final response = (resultingCtx as ResponseContext).response;
+          final response = (resultingCtx as Response);
 
           expect(handler1Called, isTrue);
           expect(handler2Called, isFalse);
@@ -174,7 +174,7 @@ void main() {
 
           final initialCtx = _request('/router2/banana')..setToken(Object());
           final resultingCtx = await pipelineHandler(initialCtx);
-          final response = (resultingCtx as ResponseContext).response;
+          final response = (resultingCtx as Response);
 
           expect(handler1Called, isFalse);
           expect(handler2Called, isTrue);
@@ -216,7 +216,7 @@ void main() {
 
         final initialCtx = _request('/neither/nor')..setToken(Object());
         final resultingCtx = await pipelineHandler(initialCtx);
-        final response = (resultingCtx as ResponseContext).response;
+        final response = (resultingCtx as Response);
 
         expect(handler1Called, isFalse);
         expect(handler2Called, isFalse);
@@ -254,7 +254,7 @@ void main() {
           final initialCtx = _request('/resource/abc/details/xyz')
             ..setToken(Object());
           final resultingCtx = await pipelineHandler(initialCtx);
-          final response = (resultingCtx as ResponseContext).response;
+          final response = (resultingCtx as Response);
 
           expect(nestedHandlerCalled, isTrue);
           expect(response.statusCode, equals(200));
@@ -303,7 +303,7 @@ void main() {
           final initialCtx = _request('/base/b123/i456/action/doSomething')
             ..setToken(Object());
           final resultingCtx = await pipelineHandler(initialCtx);
-          final response = (resultingCtx as ResponseContext).response;
+          final response = (resultingCtx as Response);
 
           expect(deeplyNestedHandlerCalled, isTrue);
           expect(response.statusCode, equals(200));
@@ -341,7 +341,7 @@ void main() {
 
           final initialCtx = _request('/123/sub/456/end')..setToken(Object());
           final resultingCtx = await pipeline(initialCtx);
-          final response = (resultingCtx as ResponseContext).response;
+          final response = (resultingCtx as Response);
 
           expect(response.statusCode, 200);
           expect(capturedParams, isNotNull);
@@ -367,11 +367,10 @@ void main() {
 
     final ctx = _request('/')..setToken(Object());
     final resCtx =
-        await mw(respondWith((_) => Response.notFound()))(ctx)
-            as ResponseContext;
+        await mw(respondWith((_) => Response.notFound()))(ctx) as Response;
 
-    expect(resCtx.response.statusCode, 200);
-    expect(await resCtx.response.readAsString(), 'Hurrah!');
+    expect(resCtx.statusCode, 200);
+    expect(await resCtx.readAsString(), 'Hurrah!');
   });
 
   // Due to the decoupling of Router<T> a mapping has to happen
@@ -398,8 +397,8 @@ void main() {
       final newCtx = await middleware(respondWith((_) => Response.notFound()))(
         request..setToken(Object()),
       );
-      expect(newCtx, isA<ResponseContext>());
-      final response = (newCtx as ResponseContext).response;
+      expect(newCtx, isA<Response>());
+      final response = (newCtx as Response);
       expect(response.statusCode, 200);
       expect(method, equals(v));
     },
@@ -425,8 +424,8 @@ void main() {
         initialCtx,
       );
 
-      expect(resultingCtx, isA<ResponseContext>());
-      final response = (resultingCtx as ResponseContext).response;
+      expect(resultingCtx, isA<Response>());
+      final response = (resultingCtx as Response);
       expect(response.statusCode, 405);
     });
 
@@ -441,8 +440,8 @@ void main() {
         initialCtx,
       );
 
-      expect(resultingCtx, isA<ResponseContext>());
-      final response = (resultingCtx as ResponseContext).response;
+      expect(resultingCtx, isA<Response>());
+      final response = (resultingCtx as Response);
       expect(response.statusCode, 405);
       expect(response.headers.allow, contains(Method.get));
     });
@@ -459,8 +458,8 @@ void main() {
         initialCtx,
       );
 
-      expect(resultingCtx, isA<ResponseContext>());
-      final response = (resultingCtx as ResponseContext).response;
+      expect(resultingCtx, isA<Response>());
+      final response = (resultingCtx as Response);
       expect(response.statusCode, 405);
       final allowedMethods = response.headers.allow;
       expect(allowedMethods, unorderedEquals([Method.get, Method.post]));
@@ -482,8 +481,8 @@ void main() {
         initialCtx,
       );
 
-      expect(resultingCtx, isA<ResponseContext>());
-      final response = (resultingCtx as ResponseContext).response;
+      expect(resultingCtx, isA<Response>());
+      final response = (resultingCtx as Response);
       expect(response.statusCode, 405);
       final allowedMethods = response.headers.allow;
       expect(allowedMethods, unorderedEquals([Method.get, Method.delete]));
@@ -503,8 +502,8 @@ void main() {
       })(initialCtx);
 
       expect(nextCalled, isTrue);
-      expect(resultingCtx, isA<ResponseContext>());
-      final response = (resultingCtx as ResponseContext).response;
+      expect(resultingCtx, isA<Response>());
+      final response = (resultingCtx as Response);
       expect(response.statusCode, isNot(405));
     });
   });

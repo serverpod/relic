@@ -246,7 +246,7 @@ class StaticHandler extends HandlerObject {
 }
 
 /// Serves a file with full HTTP semantics including conditional requests and ranges.
-Future<ResponseContext> _serveFile(
+Future<Response> _serveFile(
   final File file,
   final MimeTypeResolver mimeResolver,
   final CacheControlFactory cacheControl,
@@ -280,7 +280,7 @@ bool _isMethodAllowed(final Method method) {
 }
 
 /// Returns a 405 Method Not Allowed response.
-ResponseContext _methodNotAllowedResponse(final Request ctx) {
+Response _methodNotAllowedResponse(final Request ctx) {
   return Response(
     HttpStatus.methodNotAllowed,
     headers: Headers.build((final mh) => mh.allow = {Method.get, Method.head}),
@@ -374,7 +374,7 @@ Response? _checkConditionalHeaders(
 }
 
 /// Handles HTTP range requests for partial content.
-Future<ResponseContext> _handleRangeRequest(
+Future<Response> _handleRangeRequest(
   final Request ctx,
   final FileInfo fileInfo,
   final Headers headers,
@@ -414,7 +414,7 @@ bool _isRangeRequestValid(final Request ctx, final FileInfo fileInfo) {
 }
 
 /// Serves the complete file without ranges.
-ResponseContext _serveFullFile(
+Response _serveFullFile(
   final Request ctx,
   final FileInfo fileInfo,
   final Headers headers,
@@ -427,7 +427,7 @@ ResponseContext _serveFullFile(
 }
 
 /// Serves a single range of the file.
-ResponseContext _serveSingleRange(
+Response _serveSingleRange(
   final Request ctx,
   final FileInfo fileInfo,
   final Headers headers,
@@ -456,7 +456,7 @@ ResponseContext _serveSingleRange(
 }
 
 /// Serves multiple ranges as multipart response.
-Future<ResponseContext> _serveMultipleRanges(
+Future<Response> _serveMultipleRanges(
   final Request ctx,
   final FileInfo fileInfo,
   final Headers headers,

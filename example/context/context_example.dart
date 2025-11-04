@@ -7,7 +7,7 @@ import 'package:web_socket/web_socket.dart';
 
 /// Demonstrates the four main context types in Relic using proper routing:
 /// - RequestContext: Starting point for all requests
-/// - ResponseContext: HTTP response handling
+/// - Response: HTTP response handling
 /// - ConnectionContext: WebSocket connections
 /// - HijackedContext: Raw connection control
 
@@ -22,8 +22,8 @@ String _htmlHomePage() {
 <body>
     <h1>Relic Context Types Demo</h1>
     <ul>
-        <li><a href="/api">API Example (ResponseContext)</a></li>
-        <li><a href="/api/users/123">User API with Parameters (ResponseContext)</a></li>
+        <li><a href="/api">API Example (Response)</a></li>
+        <li><a href="/api/users/123">User API with Parameters (Response)</a></li>
         <li><a href="/ws">WebSocket Example (ConnectionContext)</a></li>
         <li><a href="/custom">Custom Protocol (HijackedContext)</a></li>
     </ul>
@@ -33,7 +33,7 @@ String _htmlHomePage() {
 ''';
 }
 
-Future<ResponseContext> homeHandler(final Request ctx) async {
+Future<Response> homeHandler(final Request ctx) async {
   return Response.ok(
     body: Body.fromString(
       _htmlHomePage(),
@@ -43,7 +43,7 @@ Future<ResponseContext> homeHandler(final Request ctx) async {
   );
 }
 
-Future<ResponseContext> apiHandler(final Request ctx) async {
+Future<Response> apiHandler(final Request ctx) async {
   final data = {
     'message': 'Hello from Relic API!',
     'timestamp': DateTime.now().toIso8601String(),
@@ -55,7 +55,7 @@ Future<ResponseContext> apiHandler(final Request ctx) async {
   );
 }
 
-Future<ResponseContext> userHandler(final Request ctx) async {
+Future<Response> userHandler(final Request ctx) async {
   final userId = ctx.pathParameters[#id];
   final data = {
     'userId': userId,
@@ -109,7 +109,7 @@ HijackedContext customProtocolHandler(final Request ctx) {
   });
 }
 
-Future<ResponseContext> dataHandler(final Request ctx) async {
+Future<Response> dataHandler(final Request ctx) async {
   final request = ctx;
 
   // Access basic HTTP information

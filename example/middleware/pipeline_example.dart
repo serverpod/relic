@@ -8,13 +8,13 @@ Middleware addServerHeader() {
     return (final Request ctx) async {
       final result = await innerHandler(ctx);
 
-      if (result is ResponseContext) {
-        final newResponse = result.response.copyWith(
-          headers: result.response.headers.transform(
+      if (result is Response) {
+        final newResponse = result.copyWith(
+          headers: result.headers.transform(
             (final mh) => mh['Server'] = ['Relic'],
           ),
         );
-        return result.respond(newResponse);
+        return newResponse;
       }
 
       return result;
@@ -23,7 +23,7 @@ Middleware addServerHeader() {
 }
 
 /// Simple handler
-Future<ResponseContext> simpleHandler(final Request ctx) async {
+Future<Response> simpleHandler(final Request ctx) async {
   return Response.ok(body: Body.fromString('Hello from Pipeline!'));
 }
 

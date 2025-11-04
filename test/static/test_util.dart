@@ -19,8 +19,8 @@ Future<Response> makeRequest(
   final rootedHandler = _rootHandler(handlerPath, handler);
   final request = _fromPath(path, headers, method: method);
   final ctx = await rootedHandler(request..setToken(Object()));
-  if (ctx is! ResponseContext) throw ArgumentError(ctx);
-  return ctx.response;
+  if (ctx is! Response) throw ArgumentError(ctx);
+  return ctx;
 }
 
 Request _fromPath(

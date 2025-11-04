@@ -14,10 +14,10 @@ void main() {
 
       final request = Request(Method.get, Uri.parse('http://localhost/test'));
       final ctx = request..setToken(Object());
-      final result = await router.asHandler(ctx) as ResponseContext;
+      final result = await router.asHandler(ctx) as Response;
 
-      expect(result.response.statusCode, 200);
-      expect(result.response.headers['X-Middleware'], ['applied']);
+      expect(result.statusCode, 200);
+      expect(result.headers['X-Middleware'], ['applied']);
     });
 
     test('Given a MiddlewareObject, '
@@ -35,10 +35,10 @@ void main() {
 
       final request = Request(Method.get, Uri.parse('http://localhost/test'));
       final ctx = request..setToken(Object());
-      final result = await router.asHandler(ctx) as ResponseContext;
+      final result = await router.asHandler(ctx) as Response;
 
-      expect(result.response.statusCode, 200);
-      expect(result.response.headers['X-Middleware'], ['applied']);
+      expect(result.statusCode, 200);
+      expect(result.headers['X-Middleware'], ['applied']);
     });
 
     test('Given a MiddlewareObject that modifies requests, '
@@ -76,11 +76,11 @@ void main() {
 
       final request = Request(Method.get, Uri.parse('http://localhost/test'));
       final ctx = request..setToken(Object());
-      final result = await router.asHandler(ctx) as ResponseContext;
+      final result = await router.asHandler(ctx) as Response;
 
       expect(innerHandlerCalled, isFalse);
-      expect(result.response.statusCode, 403);
-      expect(await result.response.readAsString(), 'Forbidden');
+      expect(result.statusCode, 403);
+      expect(await result.readAsString(), 'Forbidden');
     });
   });
 }
@@ -91,12 +91,10 @@ class _TestMiddlewareObject extends MiddlewareObject {
   Handler call(final Handler next) {
     return (final ctx) async {
       final result = await next(ctx);
-      if (result is! ResponseContext) return result;
-      return result.respond(
-        result.response.copyWith(
-          headers: result.response.headers.transform(
-            (final h) => h['X-Middleware'] = ['applied'],
-          ),
+      if (result is! Response) return result;
+      return result.copyWith(
+        headers: result.headers.transform(
+          (final h) => h['X-Middleware'] = ['applied'],
         ),
       );
     };

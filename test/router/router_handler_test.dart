@@ -21,10 +21,10 @@ void main() {
 
     final request = _request('/test');
     final ctx = request..setToken(Object());
-    final result = await router.asHandler(ctx) as ResponseContext;
+    final result = await router.asHandler(ctx) as Response;
 
     expect(handlerCalled, isTrue);
-    expect(result.response.statusCode, 200);
+    expect(result.statusCode, 200);
   });
 
   test('Given a router with a parameterized route, '
@@ -55,10 +55,10 @@ void main() {
 
     final request = _request('/test', method: Method.post);
     final ctx = request..setToken(Object());
-    final result = await router.asHandler(ctx) as ResponseContext;
+    final result = await router.asHandler(ctx) as Response;
 
-    expect(result.response.statusCode, 405);
-    expect(result.response.headers.allow, contains(Method.get));
+    expect(result.statusCode, 405);
+    expect(result.headers.allow, contains(Method.get));
   });
 
   test('Given a router with multiple methods on same path, '
@@ -70,13 +70,10 @@ void main() {
 
     final request = _request('/test', method: Method.put);
     final ctx = request..setToken(Object());
-    final result = await router.asHandler(ctx) as ResponseContext;
+    final result = await router.asHandler(ctx) as Response;
 
-    expect(result.response.statusCode, 405);
-    expect(
-      result.response.headers.allow,
-      containsAll([Method.get, Method.post]),
-    );
+    expect(result.statusCode, 405);
+    expect(result.headers.allow, containsAll([Method.get, Method.post]));
   });
 
   test('Given a router with routes, '
@@ -87,9 +84,9 @@ void main() {
 
     final request = _request('/nonexistent');
     final ctx = request..setToken(Object());
-    final result = await router.asHandler(ctx) as ResponseContext;
+    final result = await router.asHandler(ctx) as Response;
 
-    expect(result.response.statusCode, 404);
+    expect(result.statusCode, 404);
   });
 
   test('Given a router with fallback handler, '
@@ -108,10 +105,10 @@ void main() {
 
     final request = _request('/other');
     final ctx = request..setToken(Object());
-    final result = await handler(ctx) as ResponseContext;
+    final result = await handler(ctx) as Response;
 
     expect(fallbackCalled, isTrue);
-    expect(result.response.statusCode, 200);
+    expect(result.statusCode, 200);
   });
 
   test('Given a router with tail segment route, '
@@ -172,9 +169,9 @@ void main() {
 
     final request = _request('/anything');
     final ctx = request..setToken(Object());
-    final result = await router.asHandler(ctx) as ResponseContext;
+    final result = await router.asHandler(ctx) as Response;
 
-    expect(result.response.statusCode, 404);
+    expect(result.statusCode, 404);
   });
 
   test('Given a router with use applied, '
@@ -184,20 +181,18 @@ void main() {
     router.get('/test', (final ctx) => Response.ok());
     router.use('/', (final handler) {
       return (final ctx) async {
-        final result = await handler(ctx) as ResponseContext;
-        return result.respond(
-          result.response.copyWith(
-            headers: Headers.build((final h) => h['X-Custom'] = ['applied']),
-          ),
+        final result = await handler(ctx) as Response;
+        return result.copyWith(
+          headers: Headers.build((final h) => h['X-Custom'] = ['applied']),
         );
       };
     });
 
     final request = _request('/test');
     final ctx = request..setToken(Object());
-    final result = await router.asHandler(ctx) as ResponseContext;
+    final result = await router.asHandler(ctx) as Response;
 
-    expect(result.response.headers['X-Custom'], ['applied']);
+    expect(result.headers['X-Custom'], ['applied']);
   });
 
   test('Given a router with fallback set, '
@@ -214,11 +209,11 @@ void main() {
 
     final request = _request('/nonexistent');
     final ctx = request..setToken(Object());
-    final result = await router.asHandler(ctx) as ResponseContext;
+    final result = await router.asHandler(ctx) as Response;
 
     expect(fallbackCalled, isTrue);
-    expect(result.response.statusCode, 200);
-    expect(await result.response.readAsString(), 'fallback response');
+    expect(result.statusCode, 200);
+    expect(await result.readAsString(), 'fallback response');
   });
 
   test('Given a router without fallback set, '
@@ -230,9 +225,9 @@ void main() {
 
     final request = _request('/nonexistent');
     final ctx = request..setToken(Object());
-    final result = await router.asHandler(ctx) as ResponseContext;
+    final result = await router.asHandler(ctx) as Response;
 
-    expect(result.response.statusCode, 404);
+    expect(result.statusCode, 404);
   });
 
   test('Given a router with fallback set, '
@@ -249,11 +244,11 @@ void main() {
 
     final request = _request('/users', method: Method.post);
     final ctx = request..setToken(Object());
-    final result = await router.asHandler(ctx) as ResponseContext;
+    final result = await router.asHandler(ctx) as Response;
 
     expect(fallbackCalled, isFalse);
-    expect(result.response.statusCode, 405);
-    expect(result.response.headers.allow, contains(Method.get));
+    expect(result.statusCode, 405);
+    expect(result.headers.allow, contains(Method.get));
   });
 
   test('Given a router with fallback, '
@@ -270,9 +265,9 @@ void main() {
 
     final request = _request('/nonexistent');
     final ctx = request..setToken(Object());
-    final result = await router.asHandler(ctx) as ResponseContext;
+    final result = await router.asHandler(ctx) as Response;
 
-    expect(await result.response.readAsString(), 'second fallback');
+    expect(await result.readAsString(), 'second fallback');
   });
 
   test('Given a router with fallback set to null, '
@@ -287,8 +282,8 @@ void main() {
 
     final request = _request('/nonexistent');
     final ctx = request..setToken(Object());
-    final result = await router.asHandler(ctx) as ResponseContext;
+    final result = await router.asHandler(ctx) as Response;
 
-    expect(result.response.statusCode, 404);
+    expect(result.statusCode, 404);
   });
 }

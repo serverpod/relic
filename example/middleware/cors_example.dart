@@ -23,13 +23,13 @@ Middleware corsMiddleware() {
       final result = await innerHandler(ctx);
 
       // Add CORS headers to response
-      if (result is ResponseContext) {
-        final newResponse = result.response.copyWith(
-          headers: result.response.headers.transform(
+      if (result is Response) {
+        final newResponse = result.copyWith(
+          headers: result.headers.transform(
             (final mh) => mh['Access-Control-Allow-Origin'] = ['*'],
           ),
         );
-        return result.respond(newResponse);
+        return newResponse;
       }
 
       return result;
@@ -38,7 +38,7 @@ Middleware corsMiddleware() {
 }
 
 /// API handler
-Future<ResponseContext> apiHandler(final Request ctx) async {
+Future<Response> apiHandler(final Request ctx) async {
   final data = {'message': 'Hello from CORS API!'};
 
   return Response.ok(body: Body.fromString(jsonEncode(data)));
