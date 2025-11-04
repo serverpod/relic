@@ -154,10 +154,14 @@ Future<Response> uploadHandler(final Request req) async {
     return Response.badRequest(body: Body.fromString('File too large'));
   }
 
-  final stream = req.read();
   final file = File('uploads/file.bin');
-  await file.parent.create(recursive: true);
-  await stream.forEach((final chunk) => file.openWrite().write(chunk));
+  await file.create(recursive: true);
+  final sink = file.openWrite();
+  try {
+    await sink.addStream(req.read());
+  } finally {
+    await sink.close();
+  }
 
   return Response.ok(body: Body.fromString('Upload successful'));
 }
