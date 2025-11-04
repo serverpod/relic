@@ -25,11 +25,11 @@ Middleware logRequests({final Logger? logger}) => (final innerHandler) {
         final HijackedContext _ => 'hijacked',
         final ConnectionContext _ => 'connected',
       };
-      localLogger(_message(startTime, handledCtx.request, watch.elapsed, msg));
+      localLogger(_message(startTime, ctx, watch.elapsed, msg));
       return handledCtx;
     } catch (error, stackTrace) {
       localLogger(
-        _errorMessage(startTime, ctx.request, watch.elapsed, error),
+        _errorMessage(startTime, ctx, watch.elapsed, error),
         type: LoggerType.error,
         stackTrace: stackTrace,
       );

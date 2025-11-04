@@ -40,7 +40,7 @@ Future<void> main() async {
 typedef User = int; // just an example
 final _auth = ContextProperty<User>('auth');
 
-extension on RequestContext {
+extension on Request {
   User get user => _auth[this];
 }
 
@@ -50,8 +50,7 @@ class AuthMiddleware {
 
   Handler call(final Handler next) {
     return (final ctx) {
-      final bearer =
-          ctx.request.headers.authorization as BearerAuthorizationHeader?;
+      final bearer = ctx.headers.authorization as BearerAuthorizationHeader?;
       if (bearer == null || !_validate(bearer.token)) {
         return ctx.respond(Response.unauthorized());
       } else {

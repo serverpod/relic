@@ -5,16 +5,16 @@ import '../context/context.dart';
 import '../router/method.dart';
 import '../router/router.dart';
 
-/// A function that processes a [RequestContext] to produce a [HandledContext].
+/// A function that processes a [Request] to produce a [HandledContext].
 ///
-/// For example, a static file handler may access the [Request] via the [RequestContext],
+/// For example, a static file handler may access the [Request] via the [Request],
 /// read the requested URI from the filesystem, and return a [ResponseContext]
 /// (a type of [HandledContext]) containing the file data as its body.
 ///
 /// A function which produces a [Handler], either by wrapping one or more other handlers,
 /// or using function composition is known as a "middleware".
 ///
-/// A [Handler] may receive a [RequestContext] directly from an HTTP server adapter or it
+/// A [Handler] may receive a [Request] directly from an HTTP server adapter or it
 /// may have been processed by other middleware. Similarly, the resulting [HandledContext]
 /// may be directly returned to an HTTP server adapter or have further processing
 /// done by other middleware.
@@ -57,7 +57,7 @@ import '../router/router.dart';
 ///   );
 /// };
 /// ```
-typedef Handler = FutureOr<HandledContext> Function(RequestContext ctx);
+typedef Handler = FutureOr<HandledContext> Function(Request req);
 
 /// A handler specifically designed to produce a [ResponseContext].
 ///
@@ -92,11 +92,11 @@ typedef Responder = FutureOr<Response> Function(Request);
 /// a response.
 ///
 /// This adapts a simpler `Request -> Response` function ([Responder]) into
-/// the standard [Handler] format. The returned [Handler] takes a [RequestContext],
+/// the standard [Handler] format. The returned [Handler] takes a [Request],
 /// retrieves its [Request] (which is passed to the [responder]), and then uses
 /// the [Response] from the [responder] to create a [ResponseContext].
 ///
-/// The input [RequestContext] to the generated [Handler] must be a
+/// The input [Request] to the generated [Handler] must be a
 /// [RespondableContext] (i.e., capable of producing a response) for the
 /// `respond` call to succeed. The handler ensures the resulting context is
 /// a [ResponseContext].
@@ -111,7 +111,7 @@ typedef Responder = FutureOr<Response> Function(Request);
 /// ```
 Handler respondWith(final Responder responder) {
   return (final ctx) async {
-    return ctx.respond(await responder(ctx.request));
+    return ctx.respond(await responder(ctx));
   };
 }
 
@@ -143,7 +143,7 @@ abstract class HandlerObject implements RouterInjectable {
   void injectIn(final RelicRouter router) => router.get('/', call);
 
   /// The implementation of this [HandlerObject]
-  FutureOr<HandledContext> call(final RequestContext ctx);
+  FutureOr<HandledContext> call(final Request req);
 
   /// Returns this [HandlerObject] as a [Handler].
   Handler get asHandler => call;

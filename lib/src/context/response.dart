@@ -378,10 +378,6 @@ class Response extends Message implements ResponseContext {
   }
 
   @override
-  // TODO: implement request
-  Request get request => throw UnimplementedError();
-
-  @override
   ResponseContext respond(final Response response) {
     return response;
   }

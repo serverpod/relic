@@ -33,7 +33,7 @@ String _htmlHomePage() {
 ''';
 }
 
-Future<ResponseContext> homeHandler(final RequestContext ctx) async {
+Future<ResponseContext> homeHandler(final Request ctx) async {
   return ctx.respond(
     Response.ok(
       body: Body.fromString(
@@ -45,11 +45,11 @@ Future<ResponseContext> homeHandler(final RequestContext ctx) async {
   );
 }
 
-Future<ResponseContext> apiHandler(final RequestContext ctx) async {
+Future<ResponseContext> apiHandler(final Request ctx) async {
   final data = {
     'message': 'Hello from Relic API!',
     'timestamp': DateTime.now().toIso8601String(),
-    'path': ctx.request.url.path,
+    'path': ctx.url.path,
   };
 
   return ctx.respond(
@@ -59,7 +59,7 @@ Future<ResponseContext> apiHandler(final RequestContext ctx) async {
   );
 }
 
-Future<ResponseContext> userHandler(final RequestContext ctx) async {
+Future<ResponseContext> userHandler(final Request ctx) async {
   final userId = ctx.pathParameters[#id];
   final data = {
     'userId': userId,
@@ -74,7 +74,7 @@ Future<ResponseContext> userHandler(final RequestContext ctx) async {
   );
 }
 
-ConnectionContext webSocketHandler(final RequestContext ctx) {
+ConnectionContext webSocketHandler(final Request ctx) {
   return ctx.connect((final webSocket) async {
     log('WebSocket connection established');
 
@@ -98,7 +98,7 @@ ConnectionContext webSocketHandler(final RequestContext ctx) {
   });
 }
 
-HijackedContext customProtocolHandler(final RequestContext ctx) {
+HijackedContext customProtocolHandler(final Request ctx) {
   return ctx.hijack((final channel) {
     log('Connection hijacked for custom protocol');
 
@@ -115,8 +115,8 @@ HijackedContext customProtocolHandler(final RequestContext ctx) {
   });
 }
 
-Future<ResponseContext> dataHandler(final RequestContext ctx) async {
-  final request = ctx.request;
+Future<ResponseContext> dataHandler(final Request ctx) async {
+  final request = ctx;
 
   // Access basic HTTP information
   final method = request.method; // 'GET', 'POST', etc.

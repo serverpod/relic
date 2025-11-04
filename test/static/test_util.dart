@@ -34,15 +34,13 @@ Handler _rootHandler(final String? path, final Handler handler) {
     return handler;
   }
 
-  return (final requestCtx) {
-    final ctx = requestCtx as RespondableContext;
-    final request = ctx.request;
-    if (!_ctx.isWithin('/$path', request.requestedUri.path)) {
-      return ctx.respond(Response.notFound(body: Body.fromString('not found')));
+  return (final req) {
+    if (!_ctx.isWithin('/$path', req.requestedUri.path)) {
+      return req.respond(Response.notFound(body: Body.fromString('not found')));
     }
-    assert(request.handlerPath == '/');
+    assert(req.handlerPath == '/');
 
-    final relativeRequest = request.copyWith(path: path);
+    final relativeRequest = req.copyWith(path: path);
 
     return handler(relativeRequest..setToken(Object()));
   };

@@ -58,7 +58,7 @@ Future<void> main() async {
 
   // Using .anyOf to handle multiple methods with the same handler
   app.anyOf({Method.get, Method.post}, '/admin', (final ctx) {
-    final method = ctx.request.method.name.toUpperCase();
+    final method = ctx.method.name.toUpperCase();
     return ctx.respond(
       Response.ok(body: Body.fromString('Admin page - $method request')),
     );

@@ -168,11 +168,7 @@ final class _RelicServer implements RelicServer {
         };
       } on HeaderException catch (error, stackTrace) {
         // If the request headers are invalid, respond with a 400 Bad Request status.
-        _logError(
-          ctx.request,
-          'Error parsing request headers.\n$error',
-          stackTrace,
-        );
+        _logError(ctx, 'Error parsing request headers.\n$error', stackTrace);
         return ctx.respond(
           Response.badRequest(body: Body.fromString(error.httpResponseBody)),
         );

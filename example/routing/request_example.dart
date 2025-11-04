@@ -9,7 +9,7 @@ Future<void> main() async {
 
   // HTTP Method access
   app.get('/info', (final ctx) {
-    final method = ctx.request.method; // Method.get
+    final method = ctx.method; // Method.get
 
     return ctx.respond(
       Response.ok(body: Body.fromString('Received a ${method.name} request')),
@@ -19,8 +19,8 @@ Future<void> main() async {
   // Path parameters example
   app.get('/users/:id', (final ctx) {
     final id = ctx.pathParameters[#id]!;
-    final url = ctx.request.url;
-    final fullUri = ctx.request.requestedUri;
+    final url = ctx.url;
+    final fullUri = ctx.requestedUri;
 
     log('Relative URL: $url, id: $id');
     log('Full URI: $fullUri');
@@ -30,8 +30,8 @@ Future<void> main() async {
 
   // Query parameters - single values
   app.get('/search', (final ctx) {
-    final query = ctx.request.url.queryParameters['query'];
-    final page = ctx.request.url.queryParameters['page'];
+    final query = ctx.url.queryParameters['query'];
+    final page = ctx.url.queryParameters['page'];
 
     if (query == null) {
       return ctx.respond(
@@ -50,7 +50,7 @@ Future<void> main() async {
 
   // Query parameters - multiple values
   app.get('/filter', (final ctx) {
-    final tags = ctx.request.url.queryParametersAll['tag'] ?? [];
+    final tags = ctx.url.queryParametersAll['tag'] ?? [];
 
     return ctx.respond(
       Response.ok(
@@ -61,7 +61,7 @@ Future<void> main() async {
 
   // Type-safe headers
   app.get('/headers-info', (final ctx) {
-    final request = ctx.request;
+    final request = ctx;
 
     // Get typed values
     final mimeType = request.mimeType; // MimeType? (from Content-Type)
@@ -81,7 +81,7 @@ Future<void> main() async {
 
   // Authorization headers
   app.get('/protected', (final ctx) {
-    final auth = ctx.request.headers.authorization;
+    final auth = ctx.headers.authorization;
 
     if (auth is BearerAuthorizationHeader) {
       final token = auth.token;
@@ -107,7 +107,7 @@ Future<void> main() async {
 
   // Reading request body as string
   app.post('/submit', (final ctx) async {
-    final bodyText = await ctx.request.readAsString();
+    final bodyText = await ctx.readAsString();
     return ctx.respond(
       Response.ok(body: Body.fromString('Received: $bodyText')),
     );
@@ -116,7 +116,7 @@ Future<void> main() async {
   // JSON parsing example
   app.post('/api/users', (final ctx) async {
     try {
-      final bodyText = await ctx.request.readAsString();
+      final bodyText = await ctx.readAsString();
       final data = jsonDecode(bodyText) as Map<String, dynamic>;
 
       final name = data['name'] as String?;
@@ -144,7 +144,7 @@ Future<void> main() async {
 
   // Reading as a byte stream
   app.post('/upload', (final ctx) async {
-    final stream = ctx.request.read(); // Stream<Uint8List>
+    final stream = ctx.read(); // Stream<Uint8List>
 
     int totalBytes = 0;
     await for (final chunk in stream) {
@@ -159,7 +159,7 @@ Future<void> main() async {
 
   // Check if body is empty
   app.post('/data', (final ctx) {
-    if (ctx.request.isEmpty) {
+    if (ctx.isEmpty) {
       return ctx.respond(
         Response.badRequest(body: Body.fromString('Request body is required')),
       );
@@ -171,7 +171,7 @@ Future<void> main() async {
 
   // Validate query parameters
   app.get('/page', (final ctx) {
-    final pageStr = ctx.request.url.queryParameters['page'];
+    final pageStr = ctx.url.queryParameters['page'];
 
     if (pageStr == null) {
       return ctx.respond(
@@ -194,7 +194,7 @@ Future<void> main() async {
 
   // Handle missing headers gracefully
   app.get('/info', (final ctx) {
-    final userAgent = ctx.request.headers.userAgent;
+    final userAgent = ctx.headers.userAgent;
 
     final message =
         userAgent != null

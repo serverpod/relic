@@ -10,7 +10,7 @@ part of 'context.dart';
 /// ```dart
 /// // Basic request handling
 /// router.get('/users/:id', (ctx) {
-///   final request = ctx.request;
+///   final request = ctx;
 ///
 ///   // Access path parameters
 ///   final id = ctx.pathParameters[#id];
@@ -37,7 +37,7 @@ part of 'context.dart';
 ///
 /// // Reading request body
 /// router.post('/api/data', (ctx) async {
-///   final request = ctx.request;
+///   final request = ctx;
 ///
 ///   // Check if body exists
 ///   if (request.isEmpty) {
@@ -53,7 +53,7 @@ part of 'context.dart';
 /// });
 /// ```
 /// ```
-class Request extends Message implements RequestContext {
+class Request extends Message {
   /// The URL path from the current handler to the requested resource, relative
   /// to [handlerPath], plus any query parameters.
   ///
@@ -240,32 +240,20 @@ class Request extends Message implements RequestContext {
     );
   }
 
-  @override
   ConnectionContext connect(final WebSocketCallback callback) {
-    return ConnectionContext._(request, callback);
+    return ConnectionContext._(callback);
   }
 
-  @override
   HijackedContext hijack(final HijackCallback callback) {
-    return HijackedContext._(request, callback);
+    return HijackedContext._(callback);
   }
 
-  @override
-  Request get request => this;
-
-  @override
   ResponseContext respond(final Response response) {
     return response;
   }
 
   Object _token;
-  @override
   Object get token => _token;
-
-  @override
-  RequestContext withRequest(final Request req) {
-    return req;
-  }
 }
 
 /// Computes `url` from the provided [Request] constructor arguments.

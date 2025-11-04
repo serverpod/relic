@@ -69,7 +69,7 @@ void main() {
     late Uri uri;
 
     await _scheduleServer((final ctx) {
-      final request = ctx.request;
+      final request = ctx;
       expect(request.method, Method.get);
 
       expect(request.requestedUri, uri);
@@ -134,7 +134,7 @@ void main() {
       HeaderCodec(parseStringList, encodeStringList),
     );
     await _scheduleServer((final ctx) {
-      final request = ctx.request;
+      final request = ctx;
       expect(request.headers, containsPair('custom-header', ['client value']));
 
       // dart:io HttpServer splits multi-value headers into an array
@@ -158,7 +158,7 @@ void main() {
 
   test('post with empty content', () async {
     await _scheduleServer((final ctx) async {
-      final request = ctx.request;
+      final request = ctx;
       expect(request.mimeType, isNull);
       expect(request.encoding, isNull);
       expect(request.method, Method.post);
@@ -176,7 +176,7 @@ void main() {
 
   test('post with request content', () async {
     await _scheduleServer((final ctx) async {
-      final request = ctx.request;
+      final request = ctx;
 
       expect(request.mimeType?.primaryType, 'text');
       expect(request.mimeType?.subType, 'plain');
@@ -197,7 +197,7 @@ void main() {
 
   test('supports request hijacking', () async {
     await _scheduleServer((final ctx) {
-      final request = ctx.request;
+      final request = ctx;
 
       expect(request.method, Method.post);
 

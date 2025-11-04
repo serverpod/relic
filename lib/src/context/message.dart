@@ -25,7 +25,7 @@ abstract class Message {
   ///
   /// ```dart
   /// router.post('/api/data', (ctx) async {
-  ///   final body = await ctx.request.readAsString();
+  ///   final body = await ctx.readAsString();
   ///   final data = jsonDecode(body);
   ///   // Use data...
   /// });

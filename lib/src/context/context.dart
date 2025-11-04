@@ -31,14 +31,11 @@ part 'response.dart';
 ///  └────────────┘
 ///   .respond() // update response
 ///
-/// - [RequestContext]: Initial state, can transition to any handled state
+/// - [Request]: Initial state, can transition to any handled state
 /// - [ResponseContext]: A response has been generated (can be updated via `respond()`)
 /// - [HijackedContext]: Connection hijacked for low-level I/O (WebSockets, etc.)
 /// - [ConnectionContext]: Duplex stream connection established
-sealed class Context {
-  /// The original request associated with this context.
-  Request get request;
-}
+sealed class Context {}
 
 /// An interface for request contexts that can be transitioned to a state
 /// where a response has been provided.
@@ -57,7 +54,7 @@ abstract interface class ConnectableContext implements Context {
   /// [RelicWebSocket] for managing the bi-directional communication.
   /// Returns a [ConnectionContext].
   ConnectionContext connect(final WebSocketCallback callback) =>
-      ConnectionContext._(request, callback);
+      ConnectionContext._(callback);
 }
 
 /// An interface for request contexts that allow hijacking the underlying connection.
@@ -75,7 +72,7 @@ abstract interface class HijackableContext implements Context {
 /// This context can transition to either a [ResponseContext] via [respond],
 /// a [HijackedContext] via [hijack], or a [ConnectionContext] via [connect].
 ///
-/// Every handler receives a [RequestContext] as its starting point:
+/// Every handler receives a [Request] as its starting point:
 ///
 /// ```dart
 /// // Simple HTTP handler
@@ -99,14 +96,11 @@ sealed class RequestContext
     implements RespondableContext, HijackableContext, ConnectableContext {
   /// A unique token representing the request throughout its lifetime.
   ///
-  /// While the [Context] might change (e.g., from [RequestContext] to
+  /// While the [Context] might change (e.g., from [Request] to
   /// [ResponseContext]), this [token] remains constant. This is useful for
   /// associating request-specific state, for example, with [Expando] objects
   /// in middleware.
   Object get token;
-
-  /// Creates a new [Context] with a different [Request].
-  RequestContext withRequest(final Request req);
 }
 
 /// A sealed base class for contexts that represent a handled request.
@@ -151,10 +145,7 @@ final class HijackedContext extends HandledContext {
   /// The callback function provided to handle the hijacked connection.
   final HijackCallback callback;
 
-  @override
-  final Request request;
-
-  HijackedContext._(this.request, this.callback);
+  HijackedContext._(this.callback);
 }
 
 /// A [Context] state indicating that a duplex stream connection
@@ -179,8 +170,5 @@ final class ConnectionContext extends HandledContext {
   /// The callback function provided to handle the duplex stream connection.
   final WebSocketCallback callback;
 
-  @override
-  final Request request;
-
-  ConnectionContext._(this.request, this.callback);
+  ConnectionContext._(this.callback);
 }

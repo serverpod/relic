@@ -50,7 +50,7 @@ void main() {
 
       String? capturedHeader;
       router.get('/test', (final ctx) {
-        capturedHeader = ctx.request.headers['X-Added']?.first;
+        capturedHeader = ctx.headers['X-Added']?.first;
         return ctx.respond(Response.ok());
       });
 
@@ -108,13 +108,12 @@ class _RequestModifyingMiddleware extends MiddlewareObject {
   Handler call(final Handler next) {
     return (final ctx) async {
       // Modify the request by adding a header
-      final modifiedRequest = ctx.request.copyWith(
-        headers: ctx.request.headers.transform(
+      final modifiedRequest = ctx.copyWith(
+        headers: ctx.headers.transform(
           (final h) => h['X-Added'] = ['by-middleware'],
         ),
       );
-      final modifiedCtx = ctx.withRequest(modifiedRequest);
-      return next(modifiedCtx);
+      return next(modifiedRequest);
     };
   }
 }

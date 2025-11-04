@@ -23,7 +23,7 @@ class HeadersBase extends UnmodifiableMapView<String, Iterable<String>> {
 ///
 /// ```dart
 /// router.get('/info', (ctx) {
-///   final headers = ctx.request.headers;
+///   final headers = ctx.headers;
 ///
 ///   // Type-safe accessors
 ///   final userAgent = headers.userAgent;

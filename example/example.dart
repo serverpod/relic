@@ -22,7 +22,7 @@ Future<void> main() async {
   await app.serve();
 }
 
-ResponseContext hello(final RequestContext ctx) {
+ResponseContext hello(final Request ctx) {
   final name = ctx.pathParameters[#name];
   final age = int.parse(ctx.pathParameters[#age]!);
 

@@ -83,7 +83,7 @@ class _RoutingMiddlewareBuilder<T extends Object> {
 
   Handler call(final Handler next) {
     return (final ctx) async {
-      final req = ctx.request;
+      final req = ctx;
       final path = Uri.decodeFull(req.url.path);
       final result = _router.lookup(req.method, path);
       switch (result) {
@@ -114,7 +114,7 @@ class _RoutingMiddlewareBuilder<T extends Object> {
 /// These properties are populated when a request is routed using [routeWith]
 /// or [RouterHandlerEx.asHandler], and are available to all handlers in the processing
 /// chain.
-extension ContextEx on RequestContext {
+extension ContextEx on Request {
   /// The portion of the request path that was matched by the route.
   ///
   /// For example, if the route pattern is `/api/**` and the request is to
@@ -155,5 +155,5 @@ extension ContextEx on RequestContext {
   /// was not routed through a router, this returns the full request path.
   NormalizedPath get remainingPath =>
       _routingContext.getOrNull(this)?.remaining ??
-      NormalizedPath(Uri.decodeFull(request.url.path));
+      NormalizedPath(Uri.decodeFull(url.path));
 }
