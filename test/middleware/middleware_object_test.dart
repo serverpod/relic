@@ -75,7 +75,7 @@ void main() {
 
     test('Given a MiddlewareObject that can short-circuit, '
         'when it returns early, '
-        'then the inner handler is not called', () async {
+        'then the next handler is not called', () async {
       final middlewareObject = _ShortCircuitMiddleware();
       final router = Router<Handler>();
       router.use('/', middlewareObject.call);

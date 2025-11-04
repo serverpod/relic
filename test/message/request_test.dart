@@ -397,7 +397,6 @@ void main() {
         expect(copy.requestedUri, request.requestedUri);
         expect(copy.protocolVersion, request.protocolVersion);
         expect(copy.headers, same(request.headers));
-        expect(copy.headers, same(request.headers));
         expect(copy.url, request.url);
         expect(copy.handlerPath, request.handlerPath);
         expect(copy.readAsString(), completion('hello, world'));

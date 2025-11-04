@@ -22,7 +22,7 @@ void main() {
   });
 
   group('Given a server', () {
-    test('when request context is hijacked '
+    test('when request is hijacked '
         'then a Hijack is returned and the request times out because '
         'server does not write the response to the HTTP response', () async {
       await _scheduleServer((final req) {
