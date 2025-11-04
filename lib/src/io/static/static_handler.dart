@@ -254,7 +254,7 @@ Future<Response> _serveFile(
 ) async {
   // Validate HTTP method
   final method = req.method;
-  if (!_isMethodAllowed(method)) return _methodNotAllowedResponse(req);
+  if (!_isMethodAllowed(method)) return _methodNotAllowedResponse();
 
   // Get or update cached file information
   final fileInfo = await _getFileInfo(file, mimeResolver);
@@ -271,7 +271,7 @@ Future<Response> _serveFile(
   }
 
   // Serve full file
-  return _serveFullFile(req, fileInfo, headers, method);
+  return _serveFullFile(fileInfo, headers, method);
 }
 
 /// Checks if the HTTP method is allowed for file serving.
@@ -280,7 +280,7 @@ bool _isMethodAllowed(final Method method) {
 }
 
 /// Returns a 405 Method Not Allowed response.
-Response _methodNotAllowedResponse(final Request req) {
+Response _methodNotAllowedResponse() {
   return Response(
     HttpStatus.methodNotAllowed,
     headers: Headers.build((final mh) => mh.allow = {Method.get, Method.head}),
@@ -382,14 +382,14 @@ Future<Response> _handleRangeRequest(
 ) async {
   // Check If-Range header
   if (!_isRangeRequestValid(req, fileInfo)) {
-    return _serveFullFile(req, fileInfo, headers, req.method);
+    return _serveFullFile(fileInfo, headers, req.method);
   }
 
   final ranges = rangeHeader.ranges;
   return switch (ranges.length) {
-    0 => _serveFullFile(req, fileInfo, headers, req.method),
-    1 => _serveSingleRange(req, fileInfo, headers, ranges.first),
-    _ => await _serveMultipleRanges(req, fileInfo, headers, ranges),
+    0 => _serveFullFile(fileInfo, headers, req.method),
+    1 => _serveSingleRange(fileInfo, headers, ranges.first),
+    _ => await _serveMultipleRanges(fileInfo, headers, ranges),
   };
 }
 
@@ -415,7 +415,6 @@ bool _isRangeRequestValid(final Request req, final FileInfo fileInfo) {
 
 /// Serves the complete file without ranges.
 Response _serveFullFile(
-  final Request req,
   final FileInfo fileInfo,
   final Headers headers,
   final Method method,
@@ -428,7 +427,6 @@ Response _serveFullFile(
 
 /// Serves a single range of the file.
 Response _serveSingleRange(
-  final Request req,
   final FileInfo fileInfo,
   final Headers headers,
   final Range range,
@@ -457,7 +455,6 @@ Response _serveSingleRange(
 
 /// Serves multiple ranges as multipart response.
 Future<Response> _serveMultipleRanges(
-  final Request req,
   final FileInfo fileInfo,
   final Headers headers,
   final List<Range> ranges,
