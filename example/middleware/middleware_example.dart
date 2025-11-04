@@ -47,10 +47,8 @@ Middleware errorHandlingMiddleware() {
       try {
         return await innerHandler(ctx);
       } catch (error) {
-        return ctx.respond(
-          Response.internalServerError(
-            body: Body.fromString('Something went wrong'),
-          ),
+        return Response.internalServerError(
+          body: Body.fromString('Something went wrong'),
         );
       }
     };
@@ -59,15 +57,13 @@ Middleware errorHandlingMiddleware() {
 
 /// Simple handlers
 Future<ResponseContext> homeHandler(final Request ctx) async {
-  return ctx.respond(
-    Response.ok(body: Body.fromString('Hello from home page!')),
-  );
+  return Response.ok(body: Body.fromString('Hello from home page!'));
 }
 
 Future<ResponseContext> apiHandler(final Request ctx) async {
   final data = {'message': 'Hello from API!'};
 
-  return ctx.respond(Response.ok(body: Body.fromString(jsonEncode(data))));
+  return Response.ok(body: Body.fromString(jsonEncode(data)));
 }
 
 void main() async {

@@ -24,12 +24,10 @@ SyncHandler createSyncHandler({
   final Body? body,
 }) {
   return (final Request ctx) {
-    return ctx.respond(
-      Response(
-        statusCode,
-        headers: headers ?? Headers.empty(),
-        body: body ?? Body.fromString('Hello from ${ctx.requestedUri.path}'),
-      ),
+    return Response(
+      statusCode,
+      headers: headers ?? Headers.empty(),
+      body: body ?? Body.fromString('Hello from ${ctx.requestedUri.path}'),
     );
   };
 }

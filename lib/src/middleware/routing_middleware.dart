@@ -88,11 +88,9 @@ class _RoutingMiddlewareBuilder<T extends Object> {
       final result = _router.lookup(req.method, path);
       switch (result) {
         case MethodMiss():
-          return ctx.respond(
-            Response(
-              405,
-              headers: Headers.build((final mh) => mh.allow = result.allowed),
-            ),
+          return Response(
+            405,
+            headers: Headers.build((final mh) => mh.allow = result.allowed),
           );
         case PathMiss():
           return await next(ctx);

@@ -10,9 +10,7 @@ Middleware authMiddleware() {
       final apiKey = ctx.headers['X-API-Key']?.first;
 
       if (apiKey != 'secret123') {
-        return ctx.respond(
-          Response.unauthorized(body: Body.fromString('Invalid API key')),
-        );
+        return Response.unauthorized(body: Body.fromString('Invalid API key'));
       }
 
       log('User authenticated with API key');
@@ -23,12 +21,12 @@ Middleware authMiddleware() {
 
 /// Public handler (no auth needed)
 Future<ResponseContext> publicHandler(final Request ctx) async {
-  return ctx.respond(Response.ok(body: Body.fromString('This is public!')));
+  return Response.ok(body: Body.fromString('This is public!'));
 }
 
 /// Protected handler (needs auth)
 Future<ResponseContext> protectedHandler(final Request ctx) async {
-  return ctx.respond(Response.ok(body: Body.fromString('This is protected!')));
+  return Response.ok(body: Body.fromString('This is protected!'));
 }
 
 void main() async {

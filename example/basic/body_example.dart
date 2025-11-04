@@ -12,9 +12,7 @@ Future<void> main() async {
   final app =
       RelicApp()
         ..fallback = (final ctx) {
-          return ctx.respond(
-            Response.ok(body: Body.fromString('Body Example')),
-          );
+          return Response.ok(body: Body.fromString('Body Example'));
         };
 
   // Basic text response
@@ -81,16 +79,14 @@ Future<void> main() async {
 
 /// Basic text response handler
 ResponseContext helloHandler(final Request ctx) {
-  return ctx.respond(Response.ok(body: Body.fromString('Hello, World!')));
+  return Response.ok(body: Body.fromString('Hello, World!'));
 }
 
 /// JSON with automatic MIME detection handler
 ResponseContext dataHandler(final Request ctx) {
-  return ctx.respond(
-    Response.ok(
-      body: Body.fromString('{"message": "Hello"}'),
-      // Automatically detects application/json
-    ),
+  return Response.ok(
+    body: Body.fromString('{"message": "Hello"}'),
+    // Automatically detects application/json
   );
 }
 
@@ -104,7 +100,7 @@ Future<ResponseContext> smallFileHandler(final Request ctx) async {
 
   final bytes = await file.readAsBytes();
 
-  return ctx.respond(Response.ok(body: Body.fromData(bytes)));
+  return Response.ok(body: Body.fromData(bytes));
 }
 
 /// Large file handler - stream for memory efficiency
@@ -122,8 +118,8 @@ Future<ResponseContext> largeFileHandler(final Request ctx) async {
   final fileStream = file.openRead().map((final e) => Uint8List.fromList(e));
   final fileSize = await file.length();
 
-  return ctx.respond(
-    Response.ok(body: Body.fromDataStream(fileStream, contentLength: fileSize)),
+  return Response.ok(
+    body: Body.fromDataStream(fileStream, contentLength: fileSize),
   );
 }
 
@@ -131,7 +127,7 @@ Future<ResponseContext> largeFileHandler(final Request ctx) async {
 Future<ResponseContext> echoHandler(final Request ctx) async {
   final content = await ctx.readAsString();
 
-  return ctx.respond(Response.ok(body: Body.fromString('You sent: $content')));
+  return Response.ok(body: Body.fromString('You sent: $content'));
 }
 
 /// JSON API handler
@@ -141,12 +137,10 @@ Future<ResponseContext> apiDataHandler(final Request ctx) async {
 
   log('Received: $data');
 
-  return ctx.respond(
-    Response.ok(
-      body: Body.fromString(
-        jsonEncode({'result': 'success'}),
-        mimeType: MimeType.json,
-      ),
+  return Response.ok(
+    body: Body.fromString(
+      jsonEncode({'result': 'success'}),
+      mimeType: MimeType.json,
     ),
   );
 }
@@ -157,9 +151,7 @@ Future<ResponseContext> uploadHandler(final Request ctx) async {
   final contentLength = ctx.body.contentLength;
 
   if (contentLength != null && contentLength > maxFileSize) {
-    return ctx.respond(
-      Response.badRequest(body: Body.fromString('File too large')),
-    );
+    return Response.badRequest(body: Body.fromString('File too large'));
   }
 
   final stream = ctx.read();
@@ -167,7 +159,7 @@ Future<ResponseContext> uploadHandler(final Request ctx) async {
   await file.parent.create(recursive: true);
   await stream.forEach((final chunk) => file.openWrite().write(chunk));
 
-  return ctx.respond(Response.ok(body: Body.fromString('Upload successful')));
+  return Response.ok(body: Body.fromString('Upload successful'));
 }
 
 /// Image response handler with automatic format detection
@@ -175,13 +167,8 @@ Future<ResponseContext> imageHandler(final Request ctx) async {
   final file = File('example/static_files/logo.svg');
   final imageBytes = await file.readAsBytes();
 
-  return ctx.respond(
-    Response.ok(
-      body: Body.fromData(
-        imageBytes,
-        mimeType: MimeType.parse('image/svg+xml'),
-      ),
-    ),
+  return Response.ok(
+    body: Body.fromData(imageBytes, mimeType: MimeType.parse('image/svg+xml')),
   );
 }
 
@@ -196,13 +183,11 @@ Future<ResponseContext> streamHandler(final Request ctx) async {
 
   final dataStream = generateLargeDataset();
 
-  return ctx.respond(
-    Response.ok(
-      body: Body.fromDataStream(
-        dataStream,
-        mimeType: MimeType.json,
-        // contentLength omitted for chunked encoding
-      ),
+  return Response.ok(
+    body: Body.fromDataStream(
+      dataStream,
+      mimeType: MimeType.json,
+      // contentLength omitted for chunked encoding
     ),
   );
 }

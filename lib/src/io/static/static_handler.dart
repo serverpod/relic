@@ -262,7 +262,7 @@ Future<ResponseContext> _serveFile(
 
   // Handle conditional requests
   final conditionalResponse = _checkConditionalHeaders(ctx, fileInfo, headers);
-  if (conditionalResponse != null) return ctx.respond(conditionalResponse);
+  if (conditionalResponse != null) return conditionalResponse;
 
   // Handle range requests
   final rangeHeader = ctx.headers.range;
@@ -281,13 +281,9 @@ bool _isMethodAllowed(final Method method) {
 
 /// Returns a 405 Method Not Allowed response.
 ResponseContext _methodNotAllowedResponse(final Request ctx) {
-  return ctx.respond(
-    Response(
-      HttpStatus.methodNotAllowed,
-      headers: Headers.build(
-        (final mh) => mh.allow = {Method.get, Method.head},
-      ),
-    ),
+  return Response(
+    HttpStatus.methodNotAllowed,
+    headers: Headers.build((final mh) => mh.allow = {Method.get, Method.head}),
   );
 }
 
@@ -424,11 +420,9 @@ ResponseContext _serveFullFile(
   final Headers headers,
   final Method method,
 ) {
-  return ctx.respond(
-    Response.ok(
-      headers: headers,
-      body: _createFileBody(fileInfo, isHeadRequest: method == Method.head),
-    ),
+  return Response.ok(
+    headers: headers,
+    body: _createFileBody(fileInfo, isHeadRequest: method == Method.head),
   );
 }
 
@@ -443,23 +437,21 @@ ResponseContext _serveSingleRange(
 
   // If range is invalid
   if (start == end) {
-    return ctx.respond(Response(416, headers: headers));
+    return Response(416, headers: headers);
   }
 
-  return ctx.respond(
-    Response(
-      HttpStatus.partialContent,
-      headers: headers.transform(
-        (final mh) =>
-            mh
-              ..contentRange = ContentRangeHeader(
-                start: start,
-                end: end - 1,
-                size: fileInfo.stat.size,
-              ),
-      ),
-      body: _createRangeBody(fileInfo, start, end),
+  return Response(
+    HttpStatus.partialContent,
+    headers: headers.transform(
+      (final mh) =>
+          mh
+            ..contentRange = ContentRangeHeader(
+              start: start,
+              end: end - 1,
+              size: fileInfo.stat.size,
+            ),
     ),
+    body: _createRangeBody(fileInfo, start, end),
   );
 }
 
@@ -492,22 +484,20 @@ Future<ResponseContext> _serveMultipleRanges(
 
   unawaited(controller.close());
 
-  return ctx.respond(
-    Response(
-      HttpStatus.partialContent,
-      headers: headers.transform(
-        (final mh) =>
-            mh
-              ..[Headers.contentTypeHeader] = [
-                '${MimeType.multipartByteranges.toHeaderValue()}; boundary=$boundary',
-              ],
-      ),
-      body: Body.fromDataStream(
-        controller.stream,
-        contentLength: totalLength,
-        mimeType: MimeType.multipartByteranges,
-        encoding: fileInfo.mimeType?.isText == true ? utf8 : null,
-      ),
+  return Response(
+    HttpStatus.partialContent,
+    headers: headers.transform(
+      (final mh) =>
+          mh
+            ..[Headers.contentTypeHeader] = [
+              '${MimeType.multipartByteranges.toHeaderValue()}; boundary=$boundary',
+            ],
+    ),
+    body: Body.fromDataStream(
+      controller.stream,
+      contentLength: totalLength,
+      mimeType: MimeType.multipartByteranges,
+      encoding: fileInfo.mimeType?.isText == true ? utf8 : null,
     ),
   );
 }

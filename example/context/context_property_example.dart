@@ -24,9 +24,7 @@ Future<ResponseContext> handler(final Request ctx) async {
 
   log('Request ID: $requestId');
 
-  return ctx.respond(
-    Response.ok(body: Body.fromString('Your request ID is: $requestId')),
-  );
+  return Response.ok(body: Body.fromString('Your request ID is: $requestId'));
 }
 
 void main() async {

@@ -24,9 +24,7 @@ Middleware addServerHeader() {
 
 /// Simple handler
 Future<ResponseContext> simpleHandler(final Request ctx) async {
-  return ctx.respond(
-    Response.ok(body: Body.fromString('Hello from Pipeline!')),
-  );
+  return Response.ok(body: Body.fromString('Hello from Pipeline!'));
 }
 
 void main() async {
@@ -42,9 +40,7 @@ void main() async {
         ..use('/', logRequests())
         ..use('/', addServerHeader())
         ..get('/router', (final Request ctx) async {
-          return ctx.respond(
-            Response.ok(body: Body.fromString('Hello from Router!')),
-          );
+          return Response.ok(body: Body.fromString('Hello from Router!'));
         });
 
   // Main router that shows both approaches

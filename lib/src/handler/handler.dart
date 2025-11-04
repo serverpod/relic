@@ -111,7 +111,7 @@ typedef Responder = FutureOr<Response> Function(Request);
 /// ```
 Handler respondWith(final Responder responder) {
   return (final ctx) async {
-    return ctx.respond(await responder(ctx));
+    return await responder(ctx);
   };
 }
 

@@ -12,7 +12,7 @@ Handler _createDelayedHandler() {
   return (final ctx) async {
     // Block for a fixed duration.
     await Future<void>.delayed(const Duration(milliseconds: 1000));
-    return ctx.respond(Response.ok());
+    return Response.ok();
   };
 }
 

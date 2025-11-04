@@ -38,9 +38,7 @@ void main() {
       });
 
       test('then the new context can transition to ResponseContext', () {
-        final responseContext = newRequest.respond(
-          Response.ok(body: Body.fromString('test')),
-        );
+        final responseContext = Response.ok(body: Body.fromString('test'));
 
         expect(responseContext, isA<ResponseContext>());
       });

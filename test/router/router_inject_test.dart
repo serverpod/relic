@@ -75,7 +75,7 @@ void main() {
             (final mh) => mh['X-Middleware'] = ['applied'],
           ),
         );
-        router.get('/test', (final ctx) => ctx.respond(Response.ok()));
+        router.get('/test', (final ctx) => Response.ok());
 
         final request = Request(Method.get, Uri.parse('http://localhost/test'));
         final ctx = request..setToken(Object());
@@ -96,8 +96,8 @@ void main() {
           mountAt: '/api',
         ),
       );
-      router.get('/api/users', (final ctx) => ctx.respond(Response.ok()));
-      router.get('/other', (final ctx) => ctx.respond(Response.ok()));
+      router.get('/api/users', (final ctx) => Response.ok());
+      router.get('/other', (final ctx) => Response.ok());
 
       // Should apply to /api/* paths
       final apiRequest = Request(
@@ -136,7 +136,7 @@ void main() {
           (final mh) => mh['X-Second'] = ['also-applied'],
         ),
       );
-      router.get('/test', (final ctx) => ctx.respond(Response.ok()));
+      router.get('/test', (final ctx) => Response.ok());
 
       final request = Request(Method.get, Uri.parse('http://localhost/test'));
       final ctx = request..setToken(Object());
@@ -161,7 +161,7 @@ class _EchoHandlerObject extends HandlerObject {
   @override
   FutureOr<HandledContext> call(final Request ctx) {
     final data = ctx.body.read();
-    return ctx.respond(Response.ok(body: Body.fromDataStream(data)));
+    return Response.ok(body: Body.fromDataStream(data));
   }
 }
 

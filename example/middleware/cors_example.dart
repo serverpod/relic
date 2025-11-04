@@ -10,14 +10,12 @@ Middleware corsMiddleware() {
     return (final Request ctx) async {
       // Handle preflight requests
       if (ctx.method == Method.options) {
-        return ctx.respond(
-          Response.ok(
-            headers: Headers.build((final mh) {
-              mh['Access-Control-Allow-Origin'] = ['*'];
-              mh['Access-Control-Allow-Methods'] = ['GET, POST, OPTIONS'];
-              mh['Access-Control-Allow-Headers'] = ['Content-Type'];
-            }),
-          ),
+        return Response.ok(
+          headers: Headers.build((final mh) {
+            mh['Access-Control-Allow-Origin'] = ['*'];
+            mh['Access-Control-Allow-Methods'] = ['GET, POST, OPTIONS'];
+            mh['Access-Control-Allow-Headers'] = ['Content-Type'];
+          }),
         );
       }
 
@@ -43,7 +41,7 @@ Middleware corsMiddleware() {
 Future<ResponseContext> apiHandler(final Request ctx) async {
   final data = {'message': 'Hello from CORS API!'};
 
-  return ctx.respond(Response.ok(body: Body.fromString(jsonEncode(data))));
+  return Response.ok(body: Body.fromString(jsonEncode(data)));
 }
 
 void main() async {

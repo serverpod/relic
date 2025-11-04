@@ -36,7 +36,7 @@ Handler _rootHandler(final String? path, final Handler handler) {
 
   return (final req) {
     if (!_ctx.isWithin('/$path', req.requestedUri.path)) {
-      return req.respond(Response.notFound(body: Body.fromString('not found')));
+      return Response.notFound(body: Body.fromString('not found'));
     }
     assert(req.handlerPath == '/');
 

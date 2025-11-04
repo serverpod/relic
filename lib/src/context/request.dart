@@ -241,15 +241,11 @@ class Request extends Message {
   }
 
   ConnectionContext connect(final WebSocketCallback callback) {
-    return ConnectionContext._(callback);
+    return ConnectionContext(callback);
   }
 
   HijackedContext hijack(final HijackCallback callback) {
-    return HijackedContext._(callback);
-  }
-
-  ResponseContext respond(final Response response) {
-    return response;
+    return HijackedContext(callback);
   }
 
   Object _token;

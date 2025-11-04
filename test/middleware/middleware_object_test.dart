@@ -10,7 +10,7 @@ void main() {
       final middlewareObject = _TestMiddlewareObject();
       final router = Router<Handler>();
       router.use('/', middlewareObject.call);
-      router.get('/test', (final ctx) => ctx.respond(Response.ok()));
+      router.get('/test', (final ctx) => Response.ok());
 
       final request = Request(Method.get, Uri.parse('http://localhost/test'));
       final ctx = request..setToken(Object());
@@ -31,7 +31,7 @@ void main() {
 
       final router = Router<Handler>();
       router.use('/', middleware);
-      router.get('/test', (final ctx) => ctx.respond(Response.ok()));
+      router.get('/test', (final ctx) => Response.ok());
 
       final request = Request(Method.get, Uri.parse('http://localhost/test'));
       final ctx = request..setToken(Object());
@@ -51,7 +51,7 @@ void main() {
       String? capturedHeader;
       router.get('/test', (final ctx) {
         capturedHeader = ctx.headers['X-Added']?.first;
-        return ctx.respond(Response.ok());
+        return Response.ok();
       });
 
       final request = Request(Method.get, Uri.parse('http://localhost/test'));
@@ -71,7 +71,7 @@ void main() {
       var innerHandlerCalled = false;
       router.get('/test', (final ctx) {
         innerHandlerCalled = true;
-        return ctx.respond(Response.ok());
+        return Response.ok();
       });
 
       final request = Request(Method.get, Uri.parse('http://localhost/test'));
@@ -123,9 +123,7 @@ class _ShortCircuitMiddleware extends MiddlewareObject {
   Handler call(final Handler next) {
     return (final ctx) async {
       // Short-circuit without calling next
-      return ctx.respond(
-        Response.forbidden(body: Body.fromString('Forbidden')),
-      );
+      return Response.forbidden(body: Body.fromString('Forbidden'));
     };
   }
 }

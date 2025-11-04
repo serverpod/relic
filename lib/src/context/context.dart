@@ -54,7 +54,7 @@ abstract interface class ConnectableContext implements Context {
   /// [RelicWebSocket] for managing the bi-directional communication.
   /// Returns a [ConnectionContext].
   ConnectionContext connect(final WebSocketCallback callback) =>
-      ConnectionContext._(callback);
+      ConnectionContext(callback);
 }
 
 /// An interface for request contexts that allow hijacking the underlying connection.
@@ -145,7 +145,7 @@ final class HijackedContext extends HandledContext {
   /// The callback function provided to handle the hijacked connection.
   final HijackCallback callback;
 
-  HijackedContext._(this.callback);
+  HijackedContext(this.callback);
 }
 
 /// A [Context] state indicating that a duplex stream connection
@@ -170,5 +170,5 @@ final class ConnectionContext extends HandledContext {
   /// The callback function provided to handle the duplex stream connection.
   final WebSocketCallback callback;
 
-  ConnectionContext._(this.callback);
+  ConnectionContext(this.callback);
 }

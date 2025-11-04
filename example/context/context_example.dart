@@ -34,13 +34,11 @@ String _htmlHomePage() {
 }
 
 Future<ResponseContext> homeHandler(final Request ctx) async {
-  return ctx.respond(
-    Response.ok(
-      body: Body.fromString(
-        _htmlHomePage(),
-        encoding: utf8,
-        mimeType: MimeType.html,
-      ),
+  return Response.ok(
+    body: Body.fromString(
+      _htmlHomePage(),
+      encoding: utf8,
+      mimeType: MimeType.html,
     ),
   );
 }
@@ -52,10 +50,8 @@ Future<ResponseContext> apiHandler(final Request ctx) async {
     'path': ctx.url.path,
   };
 
-  return ctx.respond(
-    Response.ok(
-      body: Body.fromString(jsonEncode(data), mimeType: MimeType.json),
-    ),
+  return Response.ok(
+    body: Body.fromString(jsonEncode(data), mimeType: MimeType.json),
   );
 }
 
@@ -67,10 +63,8 @@ Future<ResponseContext> userHandler(final Request ctx) async {
     'timestamp': DateTime.now().toIso8601String(),
   };
 
-  return ctx.respond(
-    Response.ok(
-      body: Body.fromString(jsonEncode(data), mimeType: MimeType.json),
-    ),
+  return Response.ok(
+    body: Body.fromString(jsonEncode(data), mimeType: MimeType.json),
   );
 }
 
@@ -141,20 +135,16 @@ Future<ResponseContext> dataHandler(final Request ctx) async {
       final bodyString = await request.readAsString();
       final jsonData = json.decode(bodyString) as Map<String, dynamic>;
 
-      return ctx.respond(
-        Response.ok(body: Body.fromString('Received: ${jsonData['name']}')),
+      return Response.ok(
+        body: Body.fromString('Received: ${jsonData['name']}'),
       );
     } catch (e) {
-      return ctx.respond(
-        Response.badRequest(body: Body.fromString('Invalid JSON')),
-      );
+      return Response.badRequest(body: Body.fromString('Invalid JSON'));
     }
   }
 
   // Return bad request if the content type is not JSON
-  return ctx.respond(
-    Response.badRequest(body: Body.fromString('Invalid Request')),
-  );
+  return Response.badRequest(body: Body.fromString('Invalid Request'));
 }
 
 void main() async {

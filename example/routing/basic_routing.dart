@@ -24,44 +24,34 @@ Future<void> main() async {
   // Convenience methods - syntactic sugar for .add()
   // Respond with "Hello World!" on the homepage
   app.get('/', (final ctx) {
-    return ctx.respond(Response.ok(body: Body.fromString('Hello World!')));
+    return Response.ok(body: Body.fromString('Hello World!'));
   });
 
   // Respond to a POST request on the root route
   app.post('/', (final ctx) {
-    return ctx.respond(
-      Response.ok(body: Body.fromString('Got a POST request')),
-    );
+    return Response.ok(body: Body.fromString('Got a POST request'));
   });
 
   // Respond to a PUT request to the /user route
   app.put('/user', (final ctx) {
-    return ctx.respond(
-      Response.ok(body: Body.fromString('Got a PUT request at /user')),
-    );
+    return Response.ok(body: Body.fromString('Got a PUT request at /user'));
   });
 
   // Respond to a DELETE request to the /user route
   app.delete('/user', (final ctx) {
-    return ctx.respond(
-      Response.ok(body: Body.fromString('Got a DELETE request at /user')),
-    );
+    return Response.ok(body: Body.fromString('Got a DELETE request at /user'));
   });
 
   // Using the core .add method directly
   // This is what the convenience methods (.get, .post, etc.) call internally
   app.add(Method.patch, '/api', (final ctx) {
-    return ctx.respond(
-      Response.ok(body: Body.fromString('Got a PATCH request at /api')),
-    );
+    return Response.ok(body: Body.fromString('Got a PATCH request at /api'));
   });
 
   // Using .anyOf to handle multiple methods with the same handler
   app.anyOf({Method.get, Method.post}, '/admin', (final ctx) {
     final method = ctx.method.name.toUpperCase();
-    return ctx.respond(
-      Response.ok(body: Body.fromString('Admin page - $method request')),
-    );
+    return Response.ok(body: Body.fromString('Admin page - $method request'));
   });
 
   // Combine router with fallback for unmatched routes
