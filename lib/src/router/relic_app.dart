@@ -31,7 +31,7 @@ final class RelicApp implements RelicRouter {
   /// Example:
   /// ```dart
   /// final app = RelicApp()
-  ///   ..get('/', (ctx) => ctx.ok('Hello!'));
+  ///   ..get('/', (req) => req.ok('Hello!'));
   ///
   /// final adapterFactory = () => IOAdapter.bind(InternetAddress.loopbackIPv4, port: 8080);
   /// final server = await app.run(adapterFactory);

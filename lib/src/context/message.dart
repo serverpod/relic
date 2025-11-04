@@ -1,8 +1,4 @@
-import 'dart:async';
-import 'dart:convert';
-import 'dart:typed_data';
-
-import '../../relic.dart';
+part of 'context.dart';
 
 abstract class Message {
   /// The HTTP headers associated with this message.
@@ -28,8 +24,8 @@ abstract class Message {
   /// ## Example
   ///
   /// ```dart
-  /// router.post('/api/data', (ctx) async {
-  ///   final body = await ctx.request.readAsString();
+  /// router.post('/api/data', (req) async {
+  ///   final body = await req.readAsString();
   ///   final data = jsonDecode(body);
   ///   // Use data...
   /// });

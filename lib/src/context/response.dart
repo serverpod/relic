@@ -1,10 +1,4 @@
-import 'dart:convert';
-
-import '../body/body.dart';
-import '../headers/headers.dart';
-import '../headers/standard_headers_extensions.dart';
-
-import 'message.dart';
+part of 'context.dart';
 
 /// The response returned by a [Handler].
 ///
@@ -82,7 +76,7 @@ import 'message.dart';
 ///   ),
 /// )
 /// ```
-class Response extends Message {
+class Response extends Message implements Result {
   /// The HTTP status code of the response.
   final int statusCode;
 

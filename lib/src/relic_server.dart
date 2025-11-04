@@ -1,15 +1,13 @@
 import 'dart:async';
 
 import 'adapter/adapter.dart';
-import 'adapter/context.dart';
 import 'body/body.dart';
+import 'context/context.dart';
 import 'handler/handler.dart';
 import 'headers/exception/header_exception.dart';
 import 'headers/standard_headers_extensions.dart';
 import 'isolated_object.dart';
 import 'logger/logger.dart';
-import 'message/request.dart';
-import 'message/response.dart';
 import 'util/util.dart';
 
 sealed class RelicServer {
@@ -127,17 +125,11 @@ final class _RelicServer implements RelicServer {
     }
 
     try {
-      final ctx = request.toContext(
-        adapterRequest,
-      ); // adapter request will be the token
-      final newCtx = await handler(ctx);
-      return switch (newCtx) {
-        final ResponseContext rc => adapter.respond(
-          adapterRequest,
-          rc.response,
-        ),
-        final HijackedContext hc => adapter.hijack(adapterRequest, hc.callback),
-        final ConnectionContext cc => adapter.connect(
+      final result = await handler(request);
+      return switch (result) {
+        final Response rc => adapter.respond(adapterRequest, rc),
+        final Hijack hc => adapter.hijack(adapterRequest, hc.callback),
+        final WebSocketUpgrade cc => adapter.connect(
           adapterRequest,
           cc.callback,
         ),
@@ -155,30 +147,24 @@ final class _RelicServer implements RelicServer {
 
   /// Wraps a handler with middleware for error handling, header normalization, etc.
   Handler _wrapHandlerWithMiddleware(final Handler handler) {
-    return (final ctx) async {
+    return (final req) async {
       try {
-        final handledCtx = await handler(ctx);
-        return switch (handledCtx) {
-          final ResponseContext rc =>
+        final result = await handler(req);
+        return switch (result) {
+          final Response rc =>
           // If the response doesn't have a date header, add the default one
-          rc.respond(
-            rc.response.copyWith(
-              headers: rc.response.headers.transform((final mh) {
-                mh.date ??= DateTime.now();
-              }),
-            ),
+          rc.copyWith(
+            headers: rc.headers.transform((final mh) {
+              mh.date ??= DateTime.now();
+            }),
           ),
-          _ => handledCtx,
+          _ => result,
         };
       } on HeaderException catch (error, stackTrace) {
         // If the request headers are invalid, respond with a 400 Bad Request status.
-        _logError(
-          ctx.request,
-          'Error parsing request headers.\n$error',
-          stackTrace,
-        );
-        return ctx.respond(
-          Response.badRequest(body: Body.fromString(error.httpResponseBody)),
+        _logError(req, 'Error parsing request headers.\n$error', stackTrace);
+        return Response.badRequest(
+          body: Body.fromString(error.httpResponseBody),
         );
       }
     };

@@ -36,8 +36,8 @@ void main() {
       'when a client connects and sends "tick", '
       'then the server responds with "tock" and the client receives it',
       () async {
-        await scheduleServer((final ctx) {
-          return ctx.connect(
+        await scheduleServer((final req) {
+          return WebSocketUpgrade(
             expectAsync1((final serverSocket) async {
               // Expect a message from the client
               await for (final e in serverSocket.events) {
@@ -75,8 +75,8 @@ void main() {
         'when a client sends multiple messages, '
         'then the server receives all messages in order', () async {
       final serverReceivedMessages = <String>[];
-      await scheduleServer((final ctx) {
-        return ctx.connect(
+      await scheduleServer((final req) {
+        return WebSocketUpgrade(
           expectAsync1((final serverSocket) {
             serverSocket.events.listen((final message) async {
               if (message is TextDataReceived) {
@@ -109,8 +109,8 @@ void main() {
       'when a client connects and sends an initial message, '
       'then the client receives all server messages in order',
       () async {
-        await scheduleServer((final ctx) {
-          return ctx.connect(
+        await scheduleServer((final req) {
+          return WebSocketUpgrade(
             expectAsync1((final serverSocket) async {
               serverSocket.sendText('tock1');
               serverSocket.sendText('tock2');
@@ -207,8 +207,8 @@ void main() {
           List<int>.generate(10, (final i) => i * 2),
         );
 
-        await scheduleServer((final ctx) {
-          return ctx.connect(
+        await scheduleServer((final req) {
+          return WebSocketUpgrade(
             expectAsync1((final serverSocket) async {
               final message = await serverSocket.events.first;
               expect(message, isA<BinaryDataReceived>());
@@ -242,8 +242,8 @@ void main() {
         'then the server-side events stream completes', () async {
       final serverSocketClosed = Completer<void>();
 
-      await scheduleServer((final ctx) {
-        return ctx.connect(
+      await scheduleServer((final req) {
+        return WebSocketUpgrade(
           expectAsync1((final serverSocket) async {
             // Wait for the client to close the connection by
             // consuming the stream until it's done
@@ -267,8 +267,8 @@ void main() {
     test('Given a WebSocket server that closes the connection immediately, '
         'when a client connects, '
         'then the client-side stream completes', () async {
-      await scheduleServer((final ctx) {
-        return ctx.connect(
+      await scheduleServer((final req) {
+        return WebSocketUpgrade(
           expectAsync1((final serverSocket) async {
             // Server immediately closes the connection
             await serverSocket.close();
@@ -295,8 +295,8 @@ void main() {
         const pingInterval = Duration(milliseconds: 5);
         final tooLong = pingInterval * 3; // Must be > pingInterval
 
-        await scheduleServer((final ctx) {
-          return ctx.connect((final serverSocket) async {
+        await scheduleServer((final req) {
+          return WebSocketUpgrade((final serverSocket) async {
             serverSocket.pingInterval = pingInterval;
             await for (final e in serverSocket.events) {
               if (e is CloseReceived) break;
@@ -338,8 +338,8 @@ void main() {
       });
 
       final isolate = await Isolate.spawn((final sendPort) async {
-          final server = await testServe((final ctx) {
-            return ctx.connect((final serverSocket) async {
+          final server = await testServe((final req) {
+            return WebSocketUpgrade((final serverSocket) async {
               serverSocket.sendText('running');
               sendPort.send(true); // signal ready
             });
@@ -376,8 +376,8 @@ void main() {
       const pingInterval = Duration(milliseconds: 5);
       final done = Completer<void>();
 
-      await scheduleServer((final ctx) {
-        return ctx.connect(
+      await scheduleServer((final req) {
+        return WebSocketUpgrade(
           expectAsync1((final serverSocket) async {
             serverSocket.pingInterval = pingInterval;
             expect(serverSocket.pingInterval, pingInterval);
@@ -413,8 +413,8 @@ void main() {
   test('Given a web socket connection that has been closed, '
       'when trying to use close, sendText, or sendBytes, '
       'then it throws WebSocketConnectionClosed', () async {
-    await scheduleServer((final ctx) {
-      return ctx.connect(
+    await scheduleServer((final req) {
+      return WebSocketUpgrade(
         expectAsync1((final serverSocket) async {
           await for (final _ in serverSocket.events) {
             expect(serverSocket.close(), _throwsWscClosed);
@@ -447,8 +447,8 @@ void main() {
   test('Given a web socket connection that has been closed, '
       'when trying to use tryClose, trySendText, or trySendBytes, '
       'then they return false', () async {
-    await scheduleServer((final ctx) {
-      return ctx.connect(
+    await scheduleServer((final req) {
+      return WebSocketUpgrade(
         expectAsync1((final serverSocket) async {
           await for (final _ in serverSocket.events) {
             expect(serverSocket.tryClose(), completion(isFalse));
@@ -475,8 +475,8 @@ void main() {
   test('Given a web socket connection, '
       'when calling close, '
       'then arguments are validated', () async {
-    await scheduleServer((final ctx) {
-      return ctx.connect(expectAsync1((final serverSocket) async {}));
+    await scheduleServer((final req) {
+      return WebSocketUpgrade(expectAsync1((final serverSocket) async {}));
     });
     final clientSocket = await IORelicWebSocket.connect(
       Uri.parse('ws://localhost:$_serverPort'),

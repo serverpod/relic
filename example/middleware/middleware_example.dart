@@ -7,17 +7,17 @@ import 'package:relic/relic.dart';
 /// Middleware that adds a custom header
 // doctag<middleware-add-custom-header>
 Middleware addHeaderMiddleware() {
-  return (final Handler innerHandler) {
-    return (final RequestContext ctx) async {
-      final result = await innerHandler(ctx);
+  return (final Handler next) {
+    return (final Request req) async {
+      final result = await next(req);
 
-      if (result is ResponseContext) {
-        final newResponse = result.response.copyWith(
-          headers: result.response.headers.transform(
+      if (result is Response) {
+        final newResponse = result.copyWith(
+          headers: result.headers.transform(
             (final mh) => mh['X-Custom-Header'] = ['Hello from middleware!'],
           ),
         );
-        return result.respond(newResponse);
+        return newResponse;
       }
 
       return result;
@@ -28,11 +28,11 @@ Middleware addHeaderMiddleware() {
 
 /// Timing middleware
 Middleware timingMiddleware() {
-  return (final Handler innerHandler) {
-    return (final RequestContext ctx) async {
+  return (final Handler next) {
+    return (final Request req) async {
       final stopwatch = Stopwatch()..start();
 
-      final result = await innerHandler(ctx);
+      final result = await next(req);
 
       stopwatch.stop();
       log('Request took ${stopwatch.elapsedMilliseconds}ms');
@@ -44,15 +44,13 @@ Middleware timingMiddleware() {
 
 /// Simple error handling middleware
 Middleware errorHandlingMiddleware() {
-  return (final Handler innerHandler) {
-    return (final RequestContext ctx) async {
+  return (final Handler next) {
+    return (final Request req) async {
       try {
-        return await innerHandler(ctx);
+        return await next(req);
       } catch (error) {
-        return ctx.respond(
-          Response.internalServerError(
-            body: Body.fromString('Something went wrong'),
-          ),
+        return Response.internalServerError(
+          body: Body.fromString('Something went wrong'),
         );
       }
     };
@@ -60,16 +58,14 @@ Middleware errorHandlingMiddleware() {
 }
 
 /// Simple handlers
-Future<ResponseContext> homeHandler(final RequestContext ctx) async {
-  return ctx.respond(
-    Response.ok(body: Body.fromString('Hello from home page!')),
-  );
+Future<Response> homeHandler(final Request req) async {
+  return Response.ok(body: Body.fromString('Hello from home page!'));
 }
 
-Future<ResponseContext> apiHandler(final RequestContext ctx) async {
+Future<Response> apiHandler(final Request req) async {
   final data = {'message': 'Hello from API!'};
 
-  return ctx.respond(Response.ok(body: Body.fromString(jsonEncode(data))));
+  return Response.ok(body: Body.fromString(jsonEncode(data)));
 }
 
 void main() async {

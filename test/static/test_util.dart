@@ -2,11 +2,11 @@ import 'dart:async';
 
 import 'package:path/path.dart' as p;
 import 'package:relic/relic.dart';
-import 'package:relic/src/adapter/context.dart';
+import 'package:relic/src/context/context.dart';
 import 'package:relic/src/io/static/extension/datetime_extension.dart';
 import 'package:test/test.dart';
 
-final p.Context _ctx = p.url;
+final p.Context _req = p.url;
 
 /// Makes a simple GET request to [handler] and returns the result.
 Future<Response> makeRequest(
@@ -18,33 +18,36 @@ Future<Response> makeRequest(
 }) async {
   final rootedHandler = _rootHandler(handlerPath, handler);
   final request = _fromPath(path, headers, method: method);
-  final ctx = await rootedHandler(request.toContext(Object()));
-  if (ctx is! ResponseContext) throw ArgumentError(ctx);
-  return ctx.response;
+  final req = await rootedHandler(request);
+  if (req is! Response) throw ArgumentError(req);
+  return req;
 }
 
 Request _fromPath(
   final String path,
   final Headers? headers, {
   required final Method method,
-}) => Request(method, Uri.parse('http://localhost$path'), headers: headers);
+}) => RequestInternal.create(
+  method,
+  Uri.parse('http://localhost$path'),
+  Object(),
+  headers: headers,
+);
 
 Handler _rootHandler(final String? path, final Handler handler) {
   if (path == null || path.isEmpty) {
     return handler;
   }
 
-  return (final requestCtx) {
-    final ctx = requestCtx as RespondableContext;
-    final request = ctx.request;
-    if (!_ctx.isWithin('/$path', request.requestedUri.path)) {
-      return ctx.respond(Response.notFound(body: Body.fromString('not found')));
+  return (final req) {
+    if (!_req.isWithin('/$path', req.requestedUri.path)) {
+      return Response.notFound(body: Body.fromString('not found'));
     }
-    assert(request.handlerPath == '/');
+    assert(req.handlerPath == '/');
 
-    final relativeRequest = request.copyWith(path: path);
+    final relativeRequest = req.copyWith(path: path);
 
-    return handler(relativeRequest.toContext(Object()));
+    return handler(relativeRequest);
   };
 }
 

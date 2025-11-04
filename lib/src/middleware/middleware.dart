@@ -22,10 +22,10 @@ import '../../relic.dart';
 /// ## Basic Middleware
 ///
 /// ```dart
-/// Middleware loggingMiddleware = (Handler innerHandler) {
-///   return (RequestContext ctx) async {
-///     print('Request: ${ctx.request.method} ${ctx.request.url}');
-///     final result = await innerHandler(ctx);
+/// Middleware loggingMiddleware = (Handler next) {
+///   return (Request req) async {
+///     print('Request: ${req.method} ${req.url}');
+///     final result = await next(req);
 ///     print('Completed request');
 ///     return result;
 ///   };
@@ -77,7 +77,7 @@ import '../../relic.dart';
 ///   },
 /// );
 /// ```
-typedef Middleware = Handler Function(Handler innerHandler);
+typedef Middleware = Handler Function(Handler next);
 
 /// Creates a [Middleware] using the provided functions.
 ///
@@ -141,23 +141,23 @@ Middleware createMiddleware({
   onRequest ??= (final request) => null;
   onResponse ??= (final response) => response;
 
-  return (final innerHandler) {
-    return (final ctx) async {
-      var response = await onRequest!(ctx.request);
-      if (response != null) return ctx.respond(response);
-      late ResponseContext responseCtx;
+  return (final next) {
+    return (final req) async {
+      var response = await onRequest!(req);
+      if (response != null) return response;
+      late Response handlerResponse;
       try {
-        final newCtx = await innerHandler(ctx);
-        if (newCtx is! ResponseContext) return newCtx;
-        responseCtx = newCtx;
+        final result = await next(req);
+        if (result is! Response) return result;
+        handlerResponse = result;
       } catch (e, s) {
         if (onError != null) {
-          return ctx.respond(await onError(e, s));
+          return await onError(e, s);
         }
         rethrow;
       }
-      response = await onResponse!(responseCtx.response);
-      return responseCtx.respond(response);
+      response = await onResponse!(handlerResponse);
+      return response;
     };
   };
 }

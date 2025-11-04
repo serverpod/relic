@@ -11,10 +11,8 @@ import 'package:relic/relic.dart';
 Future<void> main() async {
   final app =
       RelicApp()
-        ..fallback = (final ctx) {
-          return ctx.respond(
-            Response.ok(body: Body.fromString('Body Example')),
-          );
+        ..fallback = (final req) {
+          return Response.ok(body: Body.fromString('Body Example'));
         };
 
   // Basic text response
@@ -80,22 +78,20 @@ Future<void> main() async {
 }
 
 /// Basic text response handler
-ResponseContext helloHandler(final RequestContext ctx) {
-  return ctx.respond(Response.ok(body: Body.fromString('Hello, World!')));
+Response helloHandler(final Request req) {
+  return Response.ok(body: Body.fromString('Hello, World!'));
 }
 
 /// JSON with automatic MIME detection handler
-ResponseContext dataHandler(final RequestContext ctx) {
-  return ctx.respond(
-    Response.ok(
-      body: Body.fromString('{"message": "Hello"}'),
-      // Automatically detects application/json
-    ),
+Response dataHandler(final Request req) {
+  return Response.ok(
+    body: Body.fromString('{"message": "Hello"}'),
+    // Automatically detects application/json
   );
 }
 
 /// Small file handler - read entire file into memory
-Future<ResponseContext> smallFileHandler(final RequestContext ctx) async {
+Future<Response> smallFileHandler(final Request req) async {
   final file = File('example.txt');
 
   if (!await file.exists()) {
@@ -104,11 +100,11 @@ Future<ResponseContext> smallFileHandler(final RequestContext ctx) async {
 
   final bytes = await file.readAsBytes();
 
-  return ctx.respond(Response.ok(body: Body.fromData(bytes)));
+  return Response.ok(body: Body.fromData(bytes));
 }
 
 /// Large file handler - stream for memory efficiency
-Future<ResponseContext> largeFileHandler(final RequestContext ctx) async {
+Future<Response> largeFileHandler(final Request req) async {
   final file = File('large-file.dat');
 
   if (!await file.exists()) {
@@ -122,32 +118,30 @@ Future<ResponseContext> largeFileHandler(final RequestContext ctx) async {
   final fileStream = file.openRead().map((final e) => Uint8List.fromList(e));
   final fileSize = await file.length();
 
-  return ctx.respond(
-    Response.ok(body: Body.fromDataStream(fileStream, contentLength: fileSize)),
+  return Response.ok(
+    body: Body.fromDataStream(fileStream, contentLength: fileSize),
   );
 }
 
 /// Reading request body as string handler
-Future<ResponseContext> echoHandler(final RequestContext ctx) async {
-  final content = await ctx.request.readAsString();
+Future<Response> echoHandler(final Request req) async {
+  final content = await req.readAsString();
 
-  return ctx.respond(Response.ok(body: Body.fromString('You sent: $content')));
+  return Response.ok(body: Body.fromString('You sent: $content'));
 }
 
 /// JSON API handler
 // doctag<body-json-api-handler>
-Future<ResponseContext> apiDataHandler(final RequestContext ctx) async {
-  final jsonData = await ctx.request.readAsString();
+Future<Response> apiDataHandler(final Request req) async {
+  final jsonData = await req.readAsString();
   final data = jsonDecode(jsonData);
 
   log('Received: $data');
 
-  return ctx.respond(
-    Response.ok(
-      body: Body.fromString(
-        jsonEncode({'result': 'success'}),
-        mimeType: MimeType.json,
-      ),
+  return Response.ok(
+    body: Body.fromString(
+      jsonEncode({'result': 'success'}),
+      mimeType: MimeType.json,
     ),
   );
 }
@@ -155,45 +149,42 @@ Future<ResponseContext> apiDataHandler(final RequestContext ctx) async {
 
 /// File upload handler with size validation
 // doctag<body-upload-validate-size>
-Future<ResponseContext> uploadHandler(final RequestContext ctx) async {
+Future<Response> uploadHandler(final Request req) async {
   const maxFileSize = 10 * 1024 * 1024; // 10MB
-  final contentLength = ctx.request.body.contentLength;
+  final contentLength = req.body.contentLength;
 
   if (contentLength != null && contentLength > maxFileSize) {
-    return ctx.respond(
-      Response.badRequest(body: Body.fromString('File too large')),
-    );
+    return Response.badRequest(body: Body.fromString('File too large'));
   }
 
-  final stream = ctx.request.read();
   final file = File('uploads/file.bin');
-  await file.parent.create(recursive: true);
-  await stream.forEach((final chunk) => file.openWrite().write(chunk));
+  await file.create(recursive: true);
+  final sink = file.openWrite();
+  try {
+    await sink.addStream(req.read());
+  } finally {
+    await sink.close();
+  }
 
-  return ctx.respond(Response.ok(body: Body.fromString('Upload successful')));
+  return Response.ok(body: Body.fromString('Upload successful'));
 }
 // end:doctag<body-upload-validate-size>
 
 /// Image response handler with automatic format detection
 // doctag<body-image-auto-format>
-Future<ResponseContext> imageHandler(final RequestContext ctx) async {
+Future<Response> imageHandler(final Request req) async {
   final file = File('example/static_files/logo.svg');
   final imageBytes = await file.readAsBytes();
 
-  return ctx.respond(
-    Response.ok(
-      body: Body.fromData(
-        imageBytes,
-        mimeType: MimeType.parse('image/svg+xml'),
-      ),
-    ),
+  return Response.ok(
+    body: Body.fromData(imageBytes, mimeType: MimeType.parse('image/svg+xml')),
   );
 }
 // end:doctag<body-image-auto-format>
 
 /// Streaming response handler with chunked transfer encoding
 // doctag<body-streaming-chunked>
-Future<ResponseContext> streamHandler(final RequestContext ctx) async {
+Future<Response> streamHandler(final Request req) async {
   Stream<Uint8List> generateLargeDataset() async* {
     for (var i = 0; i < 100; i++) {
       await Future<void>.delayed(const Duration(milliseconds: 50));
@@ -203,13 +194,11 @@ Future<ResponseContext> streamHandler(final RequestContext ctx) async {
 
   final dataStream = generateLargeDataset();
 
-  return ctx.respond(
-    Response.ok(
-      body: Body.fromDataStream(
-        dataStream,
-        mimeType: MimeType.json,
-        // contentLength omitted for chunked encoding
-      ),
+  return Response.ok(
+    body: Body.fromDataStream(
+      dataStream,
+      mimeType: MimeType.json,
+      // contentLength omitted for chunked encoding
     ),
   );
 }

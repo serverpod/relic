@@ -25,14 +25,12 @@ Future<void> main() async {
 // end:doctag<hello-world-app>
 
 // doctag<hello-world-greeter-handler>
-ResponseContext hello(final RequestContext ctx) {
-  final name = ctx.pathParameters[#name];
-  final age = int.parse(ctx.pathParameters[#age]!);
+Response hello(final Request req) {
+  final name = req.pathParameters[#name];
+  final age = int.parse(req.pathParameters[#age]!);
 
-  return ctx.respond(
-    Response.ok(
-      body: Body.fromString('Hello $name! To think you are $age years old.'),
-    ),
+  return Response.ok(
+    body: Body.fromString('Hello $name! To think you are $age years old.'),
   );
 }
 

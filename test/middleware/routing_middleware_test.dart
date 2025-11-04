@@ -1,23 +1,14 @@
-import 'package:mockito/mockito.dart';
 import 'package:relic/relic.dart';
-import 'package:relic/src/adapter/context.dart';
+import 'package:relic/src/context/context.dart';
 import 'package:test/test.dart';
 
 import '../util/test_util.dart';
 
-// Simple fake implementations for testing
-class _FakeRequest extends Fake implements Request {
-  @override
-  final Uri url;
-  @override
-  final Method method;
-
-  _FakeRequest(
-    final String path, {
-    final String host = 'localhost',
-    this.method = Method.get,
-  }) : url = Uri.parse('http://$host/$path');
-}
+Request _request(
+  final String path, {
+  final String host = 'localhost',
+  final Method method = Method.get,
+}) => RequestInternal.create(method, Uri.http(host, path), Object());
 
 void main() {
   group('RoutingMiddleware', () {
@@ -34,22 +25,22 @@ void main() {
           'When a request matches the parameterized route, '
           'Then the handler receives correct path parameters', () async {
         Map<Symbol, String>? capturedParams;
-        Future<HandledContext> testHandler(final RequestContext ctx) async {
-          capturedParams = ctx.pathParameters;
-          return ctx.respond(Response(200));
+        Future<Result> testHandler(final Request req) async {
+          capturedParams = req.pathParameters;
+          return Response(200);
         }
 
         router.add(Method.get, '/users/:id', testHandler);
 
-        final initialCtx = _FakeRequest('/users/123').toContext(Object());
+        final initialCtx = _request('/users/123');
         final resultingCtx = await middleware(
           respondWith((_) => Response(404)),
         )(initialCtx);
 
         expect(capturedParams, isNotNull);
         expect(capturedParams, equals({#id: '123'}));
-        expect(resultingCtx, isA<ResponseContext>());
-        final response = (resultingCtx as ResponseContext).response;
+        expect(resultingCtx, isA<Response>());
+        final response = (resultingCtx as Response);
         expect(response.statusCode, equals(200));
       });
 
@@ -59,22 +50,22 @@ void main() {
         'Then the handler receives empty path parameters',
         () async {
           Map<Symbol, String>? capturedParams;
-          Future<ResponseContext> testHandler(final RequestContext ctx) async {
-            capturedParams = ctx.pathParameters;
-            return ctx.respond(Response(200));
+          Future<Response> testHandler(final Request req) async {
+            capturedParams = req.pathParameters;
+            return Response(200);
           }
 
           router.add(Method.get, '/users', testHandler);
 
-          final initialCtx = _FakeRequest('/users').toContext(Object());
+          final initialCtx = _request('/users');
           final resultingCtx = await middleware(
             respondWith((_) => Response(404)),
           )(initialCtx);
 
           expect(capturedParams, isNotNull);
           expect(capturedParams, isEmpty);
-          expect(resultingCtx, isA<ResponseContext>());
-          final response = (resultingCtx as ResponseContext).response;
+          expect(resultingCtx, isA<Response>());
+          final response = (resultingCtx as Response);
           expect(response.statusCode, equals(200));
         },
       );
@@ -85,18 +76,18 @@ void main() {
         'Then the next handler is called and pathParameters is empty',
         () async {
           bool nextCalled = false;
-          Future<ResponseContext> nextHandler(final RequestContext ctx) async {
+          Future<Response> nextHandler(final Request req) async {
             nextCalled = true;
-            expect(ctx.pathParameters, isEmpty);
-            return ctx.respond(Response(404));
+            expect(req.pathParameters, isEmpty);
+            return Response(404);
           }
 
-          final initialCtx = _FakeRequest('/nonexistent').toContext(Object());
+          final initialCtx = _request('/nonexistent');
           final resultingCtx = await middleware(nextHandler)(initialCtx);
 
           expect(nextCalled, isTrue);
-          expect(resultingCtx, isA<ResponseContext>());
-          final response = (resultingCtx as ResponseContext).response;
+          expect(resultingCtx, isA<Response>());
+          final response = (resultingCtx as Response);
           expect(response.statusCode, equals(404));
         },
       );
@@ -125,12 +116,10 @@ void main() {
           bool handler1Called = false;
           bool handler2Called = false;
 
-          router1.add(Method.get, '/router1/:item', (
-            final RequestContext ctx,
-          ) async {
+          router1.add(Method.get, '/router1/:item', (final Request req) async {
             handler1Called = true;
-            params1 = ctx.pathParameters;
-            return ctx.respond(Response(201));
+            params1 = req.pathParameters;
+            return Response(201);
           });
           router2.add(
             Method.get,
@@ -145,9 +134,9 @@ void main() {
             respondWith((_) => Response(404)),
           );
 
-          final initialCtx = _FakeRequest('/router1/apple').toContext(Object());
+          final initialCtx = _request('/router1/apple');
           final resultingCtx = await pipelineHandler(initialCtx);
-          final response = (resultingCtx as ResponseContext).response;
+          final response = (resultingCtx as Response);
 
           expect(handler1Called, isTrue);
           expect(handler2Called, isFalse);
@@ -173,23 +162,19 @@ void main() {
               return Response(201);
             }),
           );
-          router2.add(Method.get, '/router2/:data', (
-            final RequestContext ctx,
-          ) async {
+          router2.add(Method.get, '/router2/:data', (final Request req) async {
             handler2Called = true;
-            params2 = ctx.pathParameters;
-            return ctx.respond(Response(202));
+            params2 = req.pathParameters;
+            return Response(202);
           });
 
           final pipelineHandler = pipeline.addHandler(
             respondWith((_) => Response(404)),
           );
 
-          final initialCtx = _FakeRequest(
-            '/router2/banana',
-          ).toContext(Object());
+          final initialCtx = _request('/router2/banana');
           final resultingCtx = await pipelineHandler(initialCtx);
-          final response = (resultingCtx as ResponseContext).response;
+          final response = (resultingCtx as Response);
 
           expect(handler1Called, isFalse);
           expect(handler2Called, isTrue);
@@ -229,9 +214,9 @@ void main() {
           }),
         );
 
-        final initialCtx = _FakeRequest('/neither/nor').toContext(Object());
+        final initialCtx = _request('/neither/nor');
         final resultingCtx = await pipelineHandler(initialCtx);
-        final response = (resultingCtx as ResponseContext).response;
+        final response = (resultingCtx as Response);
 
         expect(handler1Called, isFalse);
         expect(handler2Called, isFalse);
@@ -253,11 +238,11 @@ void main() {
           final nestedRouter = RelicRouter();
 
           nestedRouter.add(Method.get, '/details/:detailId', (
-            final RequestContext ctx,
+            final Request req,
           ) async {
             nestedHandlerCalled = true;
-            capturedParams = ctx.pathParameters;
-            return ctx.respond(Response(200));
+            capturedParams = req.pathParameters;
+            return Response(200);
           });
 
           // Attach nestedRouter to mainRouter under /resource/:resourceId
@@ -266,11 +251,9 @@ void main() {
 
           final pipelineHandler = mainRouter.asHandler;
 
-          final initialCtx = _FakeRequest(
-            '/resource/abc/details/xyz',
-          ).toContext(Object());
+          final initialCtx = _request('/resource/abc/details/xyz');
           final resultingCtx = await pipelineHandler(initialCtx);
-          final response = (resultingCtx as ResponseContext).response;
+          final response = (resultingCtx as Response);
 
           expect(nestedHandlerCalled, isTrue);
           expect(response.statusCode, equals(200));
@@ -300,11 +283,11 @@ void main() {
 
           // Define handler for the leaf router
           leafRouter.add(Method.get, '/action/:actionName', (
-            final RequestContext ctx,
+            final Request req,
           ) async {
             deeplyNestedHandlerCalled = true;
-            capturedParams = ctx.pathParameters;
-            return ctx.respond(Response(200));
+            capturedParams = req.pathParameters;
+            return Response(200);
           });
 
           // Attach leafRouter to intermediateRouter under a parameterized path
@@ -316,11 +299,9 @@ void main() {
 
           final pipelineHandler = mainRouter.asHandler;
 
-          final initialCtx = _FakeRequest(
-            '/base/b123/i456/action/doSomething',
-          ).toContext(Object());
+          final initialCtx = _request('/base/b123/i456/action/doSomething');
           final resultingCtx = await pipelineHandler(initialCtx);
-          final response = (resultingCtx as ResponseContext).response;
+          final response = (resultingCtx as Response);
 
           expect(deeplyNestedHandlerCalled, isTrue);
           expect(response.statusCode, equals(200));
@@ -345,12 +326,10 @@ void main() {
           final mainRouter = RelicRouter();
           final subRouter = RelicRouter();
 
-          subRouter.add(Method.get, '/:id/end', (
-            final RequestContext ctx,
-          ) async {
+          subRouter.add(Method.get, '/:id/end', (final Request req) async {
             // sub-router uses :id
-            capturedParams = ctx.pathParameters;
-            return ctx.respond(Response(200));
+            capturedParams = req.pathParameters;
+            return Response(200);
           });
 
           mainRouter.attach('/:id/sub', subRouter); // main router uses :id
@@ -358,11 +337,9 @@ void main() {
 
           final pipeline = mainRouter.asHandler;
 
-          final initialCtx = _FakeRequest(
-            '/123/sub/456/end',
-          ).toContext(Object());
+          final initialCtx = _request('/123/sub/456/end');
           final resultingCtx = await pipeline(initialCtx);
-          final response = (resultingCtx as ResponseContext).response;
+          final response = (resultingCtx as Response);
 
           expect(response.statusCode, 200);
           expect(capturedParams, isNotNull);
@@ -386,13 +363,12 @@ void main() {
               respondWith((_) => Response.ok(body: Body.fromString(s))),
     );
 
-    final ctx = _FakeRequest('/').toContext(Object());
+    final req = _request('/');
     final resCtx =
-        await mw(respondWith((_) => Response.notFound()))(ctx)
-            as ResponseContext;
+        await mw(respondWith((_) => Response.notFound()))(req) as Response;
 
-    expect(resCtx.response.statusCode, 200);
-    expect(await resCtx.response.readAsString(), 'Hurrah!');
+    expect(resCtx.statusCode, 200);
+    expect(await resCtx.readAsString(), 'Hurrah!');
   });
 
   // Due to the decoupling of Router<T> a mapping has to happen
@@ -415,12 +391,12 @@ void main() {
           }),
         ),
       );
-      final request = _FakeRequest('/', method: v);
+      final request = _request('/', method: v);
       final newCtx = await middleware(respondWith((_) => Response.notFound()))(
-        request.toContext(Object()),
+        request,
       );
-      expect(newCtx, isA<ResponseContext>());
-      final response = (newCtx as ResponseContext).response;
+      expect(newCtx, isA<Response>());
+      final response = (newCtx as Response);
       expect(response.statusCode, 200);
       expect(method, equals(v));
     },
@@ -440,16 +416,13 @@ void main() {
         'then a 405 response is returned', () async {
       router.add(Method.get, '/users', respondWith((_) => Response(200)));
 
-      final initialCtx = _FakeRequest(
-        '/users',
-        method: Method.post,
-      ).toContext(Object());
+      final initialCtx = _request('/users', method: Method.post);
       final resultingCtx = await middleware(respondWith((_) => Response(404)))(
         initialCtx,
       );
 
-      expect(resultingCtx, isA<ResponseContext>());
-      final response = (resultingCtx as ResponseContext).response;
+      expect(resultingCtx, isA<Response>());
+      final response = (resultingCtx as Response);
       expect(response.statusCode, 405);
     });
 
@@ -458,16 +431,13 @@ void main() {
         'then the Allow header contains GET', () async {
       router.add(Method.get, '/users', respondWith((_) => Response(200)));
 
-      final initialCtx = _FakeRequest(
-        '/users',
-        method: Method.post,
-      ).toContext(Object());
+      final initialCtx = _request('/users', method: Method.post);
       final resultingCtx = await middleware(respondWith((_) => Response(404)))(
         initialCtx,
       );
 
-      expect(resultingCtx, isA<ResponseContext>());
-      final response = (resultingCtx as ResponseContext).response;
+      expect(resultingCtx, isA<Response>());
+      final response = (resultingCtx as Response);
       expect(response.statusCode, 405);
       expect(response.headers.allow, contains(Method.get));
     });
@@ -478,16 +448,13 @@ void main() {
       router.add(Method.get, '/users', respondWith((_) => Response(200)));
       router.add(Method.post, '/users', respondWith((_) => Response(201)));
 
-      final initialCtx = _FakeRequest(
-        '/users',
-        method: Method.put,
-      ).toContext(Object());
+      final initialCtx = _request('/users', method: Method.put);
       final resultingCtx = await middleware(respondWith((_) => Response(404)))(
         initialCtx,
       );
 
-      expect(resultingCtx, isA<ResponseContext>());
-      final response = (resultingCtx as ResponseContext).response;
+      expect(resultingCtx, isA<Response>());
+      final response = (resultingCtx as Response);
       expect(response.statusCode, 405);
       final allowedMethods = response.headers.allow;
       expect(allowedMethods, unorderedEquals([Method.get, Method.post]));
@@ -503,16 +470,13 @@ void main() {
         respondWith((_) => Response(204)),
       );
 
-      final initialCtx = _FakeRequest(
-        '/users/123',
-        method: Method.patch,
-      ).toContext(Object());
+      final initialCtx = _request('/users/123', method: Method.patch);
       final resultingCtx = await middleware(respondWith((_) => Response(404)))(
         initialCtx,
       );
 
-      expect(resultingCtx, isA<ResponseContext>());
-      final response = (resultingCtx as ResponseContext).response;
+      expect(resultingCtx, isA<Response>());
+      final response = (resultingCtx as Response);
       expect(response.statusCode, 405);
       final allowedMethods = response.headers.allow;
       expect(allowedMethods, unorderedEquals([Method.get, Method.delete]));
@@ -524,18 +488,15 @@ void main() {
       router.add(Method.get, '/users', respondWith((_) => Response(200)));
 
       bool nextCalled = false;
-      final initialCtx = _FakeRequest(
-        '/posts',
-        method: Method.get,
-      ).toContext(Object());
-      final resultingCtx = await middleware((final ctx) async {
+      final initialCtx = _request('/posts', method: Method.get);
+      final resultingCtx = await middleware((final req) async {
         nextCalled = true;
-        return ctx.respond(Response(404));
+        return Response(404);
       })(initialCtx);
 
       expect(nextCalled, isTrue);
-      expect(resultingCtx, isA<ResponseContext>());
-      final response = (resultingCtx as ResponseContext).response;
+      expect(resultingCtx, isA<Response>());
+      final response = (resultingCtx as Response);
       expect(response.statusCode, isNot(405));
     });
   });
