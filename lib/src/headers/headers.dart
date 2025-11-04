@@ -33,7 +33,7 @@ class HeadersBase extends UnmodifiableMapView<String, Iterable<String>> {
 ///   // Raw access
 ///   final custom = headers['X-Custom-Header'];
 ///
-///   return req.respond(Response.ok());
+///   return Response.ok();
 /// });
 /// ```
 ///

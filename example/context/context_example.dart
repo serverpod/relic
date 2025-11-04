@@ -6,7 +6,7 @@ import 'package:relic/relic.dart';
 import 'package:web_socket/web_socket.dart';
 
 /// Demonstrates the four main context types in Relic using proper routing:
-/// - RequestContext: Starting point for all requests
+/// - Request: Starting point for all requests
 /// - Response: HTTP response handling
 /// - ConnectionContext: WebSocket connections
 /// - HijackedContext: Raw connection control

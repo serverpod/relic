@@ -3,62 +3,56 @@ import 'package:relic/src/context/context.dart';
 import 'package:test/test.dart';
 
 void main() {
-  group(
-    'Given a RequestContext, when withRequest is called with a new Request,',
-    () {
-      late Request originalRequest;
-      late Request newRequest;
-      late Object token;
+  group('Given a Request, when withRequest is called with a new Request,', () {
+    late Request originalRequest;
+    late Request newRequest;
+    late Object token;
 
-      setUp(() {
-        originalRequest = Request(
-          Method.get,
-          Uri.parse('http://test.com/path'),
-        );
-        token = originalRequest.token;
-        newRequest = originalRequest.copyWith(
-          requestedUri: Uri.parse('http://test.com/newpath'),
-        );
-      });
+    setUp(() {
+      originalRequest = Request(Method.get, Uri.parse('http://test.com/path'));
+      token = originalRequest.token;
+      newRequest = originalRequest.copyWith(
+        requestedUri: Uri.parse('http://test.com/newpath'),
+      );
+    });
 
-      test('then it returns a Request instance', () {
-        expect(newRequest, isA<Request>());
-      });
+    test('then it returns a Request instance', () {
+      expect(newRequest, isA<Request>());
+    });
 
-      test('then the new context contains the new request', () {
-        expect(newRequest, same(newRequest));
-      });
+    test('then the new context contains the new request', () {
+      expect(newRequest, same(newRequest));
+    });
 
-      test('then the new context preserves the same token', () {
-        expect(newRequest.token, same(token));
-      });
+    test('then the new context preserves the same token', () {
+      expect(newRequest.token, same(token));
+    });
 
-      test('then the new context is not the same instance as the original', () {
-        expect(newRequest, isNot(same(originalRequest)));
-      });
+    test('then the new context is not the same instance as the original', () {
+      expect(newRequest, isNot(same(originalRequest)));
+    });
 
-      test('then the new context can transition to Response', () {
-        final responseContext = Response.ok(body: Body.fromString('test'));
+    test('then the new context can transition to Response', () {
+      final responseContext = Response.ok(body: Body.fromString('test'));
 
-        expect(responseContext, isA<Response>());
-      });
+      expect(responseContext, isA<Response>());
+    });
 
-      test('then the new context can transition to HijackedContext', () {
-        final hijackedContext = HijackedContext((final channel) {});
+    test('then the new context can transition to HijackedContext', () {
+      final hijackedContext = HijackedContext((final channel) {});
 
-        expect(hijackedContext, isA<HijackedContext>());
-      });
+      expect(hijackedContext, isA<HijackedContext>());
+    });
 
-      test('then the new context can transition to ConnectionContext', () {
-        final connectionContext = ConnectionContext((final webSocket) {});
+    test('then the new context can transition to ConnectionContext', () {
+      final connectionContext = ConnectionContext((final webSocket) {});
 
-        expect(connectionContext, isA<ConnectionContext>());
-      });
-    },
-  );
+      expect(connectionContext, isA<ConnectionContext>());
+    });
+  });
 
   group(
-    'Given a RequestContext, when withRequest is called with a request created using copyWith,',
+    'Given a Request, when withRequest is called with a request created using copyWith,',
     () {
       late Request originalRequest;
       late Object token;

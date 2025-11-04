@@ -247,17 +247,17 @@ extension RouteEx<T extends Object> on Router<T> {
 ///
 /// // Static routes
 /// router.get('/', (req) {
-///   return req.respond(Response.ok(
+///   return Response.ok(
 ///     body: Body.fromString('Home'),
-///   ));
+///   );
 /// });
 ///
 /// // Route with parameters
 /// router.get('/users/:id', (req) {
 ///   final id = req.pathParameters['id'];
-///   return req.respond(Response.ok(
+///   return Response.ok(
 ///     body: Body.fromString('User $id'),
-///   ));
+///   );
 /// });
 ///
 /// // Multiple parameters
@@ -265,7 +265,7 @@ extension RouteEx<T extends Object> on Router<T> {
 ///   final year = req.pathParameters['year'];
 ///   final month = req.pathParameters['month'];
 ///   final slug = req.pathParameters['slug'];
-///   return req.respond(Response.ok());
+///   return Response.ok();
 /// });
 /// ```
 ///
@@ -321,10 +321,10 @@ typedef RelicRouter = Router<Handler>;
 ///       ..delete('/', delete);
 ///   }
 ///
-///   Response create(final RequestContext req) { }
-///   Response read(final RequestContext req) { }
-///   Response update(final RequestContext req) { }
-///   Response delete(final RequestContext req) { }
+///   Response create(final Request req) { }
+///   Response read(final Request req) { }
+///   Response update(final Request req) { }
+///   Response delete(final Request req) { }
 /// }
 /// ```
 typedef RouterInjectable = InjectableIn<RelicRouter>;

@@ -30,9 +30,9 @@ part of 'context.dart';
 ///   // Access headers
 ///   final userAgent = request.headers.userAgent;
 ///
-///   return req.respond(Response.ok(
+///   return Response.ok(
 ///     body: Body.fromString('User request'),
-///   ));
+///   );
 /// });
 ///
 /// // Reading request body
@@ -41,7 +41,7 @@ part of 'context.dart';
 ///
 ///   // Check if body exists
 ///   if (request.isEmpty) {
-///     return req.respond(Response.badRequest());
+///     return Response.badRequest();
 ///   }
 ///
 ///   // Read as string
@@ -49,9 +49,8 @@ part of 'context.dart';
 ///
 ///   // Parse JSON
 ///   final data = jsonDecode(bodyText);
-///   return req.respond(Response.ok());
+///   return Response.ok();
 /// });
-/// ```
 /// ```
 class Request extends Message {
   /// The URL path from the current handler to the requested resource, relative

@@ -7,14 +7,13 @@ part 'message.dart';
 part 'request.dart';
 part 'response.dart';
 
-/// A sealed base class for contexts that represent a handled request.
+/// A sealed base class representing the result of handling a request.
 ///
-/// A request is considered handled if a response has been formulated
-/// ([Response]), the connection has been hijacked ([HijackedContext]),
-/// or a duplex stream connection has been established ([ConnectionContext]).
+/// A handler returns a [Result] which is either a [Response], a [HijackedContext],
+/// or a [ConnectionContext].
 sealed class Result {}
 
-/// A [Context] state indicating that the underlying connection has been
+/// A [Result] indicating that the underlying connection has been
 /// hijacked.
 ///
 /// When a connection is hijacked, the handler takes full control of the
@@ -23,8 +22,8 @@ sealed class Result {}
 /// communication.
 ///
 /// ```dart
-/// HijackedContext customProtocolHandler(RequestContext req) {
-///   return req.hijack((channel) {
+/// HijackedContext customProtocolHandler(Request req) {
+///   return HijackedContext((channel) {
 ///     log('Connection hijacked for custom protocol');
 ///
 ///     // Send a custom HTTP response manually
@@ -46,12 +45,12 @@ final class HijackedContext extends Result {
   HijackedContext(this.callback);
 }
 
-/// A [Context] state indicating that a duplex stream connection
+/// A [Result] indicating that a duplex stream connection
 /// (e.g., WebSocket) has been established.
 ///
 /// ```dart
-/// ConnectionContext chatHandler(RequestContext req) {
-///   return req.connect((webSocket) async {
+/// ConnectionContext chatHandler(Request req) {
+///   return ConnectionContext((webSocket) async {
 ///     // The WebSocket is now active
 ///     webSocket.sendText('Welcome to chat!');
 ///

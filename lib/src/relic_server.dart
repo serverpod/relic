@@ -126,8 +126,8 @@ final class _RelicServer implements RelicServer {
 
     try {
       final req = request..setToken(adapterRequest);
-      final newCtx = await handler(req);
-      return switch (newCtx) {
+      final result = await handler(req);
+      return switch (result) {
         final Response rc => adapter.respond(adapterRequest, rc),
         final HijackedContext hc => adapter.hijack(adapterRequest, hc.callback),
         final ConnectionContext cc => adapter.connect(
@@ -150,8 +150,8 @@ final class _RelicServer implements RelicServer {
   Handler _wrapHandlerWithMiddleware(final Handler handler) {
     return (final req) async {
       try {
-        final handledCtx = await handler(req);
-        return switch (handledCtx) {
+        final result = await handler(req);
+        return switch (result) {
           final Response rc =>
           // If the response doesn't have a date header, add the default one
           rc.copyWith(
@@ -159,7 +159,7 @@ final class _RelicServer implements RelicServer {
               mh.date ??= DateTime.now();
             }),
           ),
-          _ => handledCtx,
+          _ => result,
         };
       } on HeaderException catch (error, stackTrace) {
         // If the request headers are invalid, respond with a 400 Bad Request status.

@@ -23,7 +23,7 @@ import '../../relic.dart';
 ///
 /// ```dart
 /// Middleware loggingMiddleware = (Handler innerHandler) {
-///   return (RequestContext req) async {
+///   return (Request req) async {
 ///     print('Request: ${req.method} ${req.url}');
 ///     final result = await innerHandler(req);
 ///     print('Completed request');
@@ -145,18 +145,18 @@ Middleware createMiddleware({
     return (final req) async {
       var response = await onRequest!(req);
       if (response != null) return response;
-      late Response responseCtx;
+      late Response handlerResponse;
       try {
-        final newCtx = await innerHandler(req);
-        if (newCtx is! Response) return newCtx;
-        responseCtx = newCtx;
+        final result = await innerHandler(req);
+        if (result is! Response) return result;
+        handlerResponse = result;
       } catch (e, s) {
         if (onError != null) {
           return await onError(e, s);
         }
         rethrow;
       }
-      response = await onResponse!(responseCtx);
+      response = await onResponse!(handlerResponse);
       return response;
     };
   };

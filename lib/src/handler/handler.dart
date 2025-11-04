@@ -6,7 +6,7 @@ import '../router/router.dart';
 
 /// A function that processes a [Request] to produce a [Result].
 ///
-/// For example, a static file handler may access the [Request] via the [Request],
+/// For example, a static file handler may read the requested URI from the [Request],
 /// read the requested URI from the filesystem, and return a [Response]
 /// (a type of [Result]) containing the file data as its body.
 ///
@@ -21,40 +21,34 @@ import '../router/router.dart';
 /// ## Basic Handler
 ///
 /// ```dart
-/// Response myHandler(RequestContext req) {
-///   return req.respond(
-///     Response.ok(
-///       body: Body.fromString('Hello, World!'),
-///     ),
+/// Response myHandler(Request req) {
+///   return Response.ok(
+///     body: Body.fromString('Hello, World!'),
 ///   );
-/// };
+/// }
 /// ```
 ///
 /// ## Async Handler
 ///
 /// ```dart
-/// Future<Response> asyncHandler(RequestContext req) async {
+/// Future<Response> asyncHandler(Request req) async {
 ///   final data = await fetchDataFromDatabase();
-///   return req.respond(
-///     Response.ok(
-///       body: Body.fromString(jsonEncode(data), mimeType: MimeType.json),
-///     ),
+///   return Response.ok(
+///     body: Body.fromString(jsonEncode(data), mimeType: MimeType.json),
 ///   );
-/// };
+/// }
 /// ```
 ///
 /// ## Handler with Path Parameters
 ///
 /// ```dart
 /// // Route: /users/:id
-/// Handler userHandler(RequestContext req) {
+/// Handler userHandler(Request req) {
 ///   final id = req.pathParameters[#id];
-///   return req.respond(
-///     Response.ok(
-///       body: Body.fromString('User ID: $id'),
-///     ),
+///   return Response.ok(
+///     body: Body.fromString('User ID: $id'),
 ///   );
-/// };
+/// }
 /// ```
 typedef Handler = FutureOr<Result> Function(Request req);
 
@@ -69,13 +63,7 @@ typedef Responder = FutureOr<Response> Function(Request);
 ///
 /// This adapts a simpler `Request -> Response` function ([Responder]) into
 /// the standard [Handler] format. The returned [Handler] takes a [Request],
-/// retrieves its [Request] (which is passed to the [responder]), and then uses
-/// the [Response] from the [responder] to create a [Response].
-///
-/// The input [Request] to the generated [Handler] must be a
-/// [RespondableContext] (i.e., capable of producing a response) for the
-/// `respond` call to succeed. The handler ensures the resulting context is
-/// a [Response].
+/// passes it to the [responder], and returns the resulting [Response].
 ///
 /// Example:
 /// ```dart

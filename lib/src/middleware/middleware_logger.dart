@@ -19,14 +19,14 @@ Middleware logRequests({final Logger? logger}) => (final innerHandler) {
     final watch = Stopwatch()..start();
 
     try {
-      final handledCtx = await innerHandler(req);
-      final msg = switch (handledCtx) {
+      final result = await innerHandler(req);
+      final msg = switch (result) {
         final Response rc => '${rc.statusCode}',
         final HijackedContext _ => 'hijacked',
         final ConnectionContext _ => 'connected',
       };
       localLogger(_message(startTime, req, watch.elapsed, msg));
-      return handledCtx;
+      return result;
     } catch (error, stackTrace) {
       localLogger(
         _errorMessage(startTime, req, watch.elapsed, error),

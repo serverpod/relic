@@ -22,7 +22,7 @@ final _routingContext =
 /// header listing supported methods.
 ///
 /// Path parameters, matched path, and remaining path from the routing lookup
-/// are accessible via [RequestContextEx] extensions on the context passed to
+/// are accessible via [RequestEx] extensions on the context passed to
 /// handlers.
 ///
 /// **Note:** For [RelicRouter], prefer using [Router.use] for middleware
@@ -106,12 +106,12 @@ class _RoutingMiddlewareBuilder<T extends Object> {
   }
 }
 
-/// Extension on [Context] providing access to routing information.
+/// Extension on [Request] providing access to routing information.
 ///
 /// These properties are populated when a request is routed using [routeWith]
 /// or [RouterHandlerEx.asHandler], and are available to all handlers in the processing
 /// chain.
-extension ContextEx on Request {
+extension RoutingRequestEx on Request {
   /// The portion of the request path that was matched by the route.
   ///
   /// For example, if the route pattern is `/api/**` and the request is to
@@ -133,7 +133,7 @@ extension ContextEx on Request {
   /// ```dart
   /// router.get('/users/:id', (req) {
   ///   final id = req.pathParameters[#id]; // Extract 'id' parameter
-  ///   return req.respond(Response.ok());
+  ///   return Response.ok();
   /// });
   /// ```
   ///
