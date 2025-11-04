@@ -201,7 +201,7 @@ void main() {
 
       expect(request.method, Method.post);
 
-      return ctx.hijack(
+      return HijackedContext(
         expectAsync1((final channel) {
           expect(channel.stream.first, completion(equals('Hello'.codeUnits)));
 

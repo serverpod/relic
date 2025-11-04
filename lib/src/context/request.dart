@@ -240,10 +240,6 @@ class Request extends Message {
     );
   }
 
-  HijackedContext hijack(final HijackCallback callback) {
-    return HijackedContext(callback);
-  }
-
   Object _token;
   Object get token => _token;
 }

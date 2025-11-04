@@ -93,7 +93,7 @@ ConnectionContext webSocketHandler(final Request ctx) {
 }
 
 HijackedContext customProtocolHandler(final Request ctx) {
-  return ctx.hijack((final channel) {
+  return HijackedContext((final channel) {
     log('Connection hijacked for custom protocol');
 
     // Send a custom HTTP response manually

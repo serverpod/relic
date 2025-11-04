@@ -44,7 +44,7 @@ void main() {
       });
 
       test('then the new context can transition to HijackedContext', () {
-        final hijackedContext = newRequest.hijack((final channel) {});
+        final hijackedContext = HijackedContext((final channel) {});
 
         expect(hijackedContext, isA<HijackedContext>());
       });

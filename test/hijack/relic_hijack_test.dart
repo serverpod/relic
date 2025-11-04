@@ -26,7 +26,7 @@ void main() {
         'then a HijackedContext is returned and the request times out because '
         'server does not write the response to the HTTP response', () async {
       await _scheduleServer((final ctx) {
-        final newCtx = ctx.hijack((_) {});
+        final newCtx = HijackedContext((_) {});
         expect(newCtx, isA<HijackedContext>());
         return newCtx;
       });
