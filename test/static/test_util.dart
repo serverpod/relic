@@ -18,7 +18,7 @@ Future<Response> makeRequest(
 }) async {
   final rootedHandler = _rootHandler(handlerPath, handler);
   final request = _fromPath(path, headers, method: method);
-  final req = await rootedHandler(request..setToken(Object()));
+  final req = await rootedHandler(request);
   if (req is! Response) throw ArgumentError(req);
   return req;
 }
@@ -27,7 +27,12 @@ Request _fromPath(
   final String path,
   final Headers? headers, {
   required final Method method,
-}) => Request(method, Uri.parse('http://localhost$path'), headers: headers);
+}) => RequestInternal.create(
+  method,
+  Uri.parse('http://localhost$path'),
+  Object(),
+  headers: headers,
+);
 
 Handler _rootHandler(final String? path, final Handler handler) {
   if (path == null || path.isEmpty) {
@@ -42,7 +47,7 @@ Handler _rootHandler(final String? path, final Handler handler) {
 
     final relativeRequest = req.copyWith(path: path);
 
-    return handler(relativeRequest..setToken(Object()));
+    return handler(relativeRequest);
   };
 }
 

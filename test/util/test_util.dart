@@ -44,14 +44,16 @@ Future<Response> makeSimpleRequest(
   final Handler handler, [
   final Request? request,
 ]) async {
-  final newCtx = await handler(
-    (request ?? _defaultRequest)..setToken(Object()),
-  );
+  final newCtx = await handler((request ?? _defaultRequest));
   if (newCtx is! Response) throw ArgumentError(newCtx);
   return newCtx;
 }
 
-final _defaultRequest = Request(Method.get, localhostUri);
+final _defaultRequest = RequestInternal.create(
+  Method.get,
+  localhostUri,
+  Object(),
+);
 
 final localhostUri = Uri.parse('http://localhost/');
 

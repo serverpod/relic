@@ -9,7 +9,11 @@ void main() {
     late Object token;
 
     setUp(() {
-      originalRequest = Request(Method.get, Uri.parse('http://test.com/path'));
+      originalRequest = RequestInternal.create(
+        Method.get,
+        Uri.parse('http://test.com/path'),
+        Object(),
+      );
       token = originalRequest.token;
       newRequest = originalRequest.copyWith(
         requestedUri: Uri.parse('http://test.com/newpath'),
@@ -58,12 +62,12 @@ void main() {
       late Object token;
 
       setUp(() {
-        originalRequest = Request(
+        token = Object();
+        originalRequest = RequestInternal.create(
           Method.get,
           Uri.parse('http://test.com/path'),
+          token,
         );
-        token = Object();
-        originalRequest.setToken(token);
       });
 
       test('then it simplifies middleware request rewriting pattern', () {

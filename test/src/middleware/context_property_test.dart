@@ -3,8 +3,12 @@ import 'package:relic/src/context/context.dart';
 import 'package:test/test.dart';
 
 Request _createContextInstance([final String uriSuffix = 'test']) {
-  final request = Request(Method.get, Uri.parse('http://test.com/$uriSuffix'));
-  return request..setToken(Object());
+  final request = RequestInternal.create(
+    Method.get,
+    Uri.parse('http://test.com/$uriSuffix'),
+    Object(),
+  );
+  return request;
 }
 
 void main() {

@@ -6,7 +6,7 @@ Request _request(
   final String path, {
   final String host = 'localhost',
   final Method method = Method.get,
-}) => Request(method, Uri.http(host, path));
+}) => RequestInternal.create(method, Uri.http(host, path), Object());
 
 void main() {
   test('Given a router with a GET route, '
@@ -20,7 +20,7 @@ void main() {
     });
 
     final request = _request('/test');
-    final req = request..setToken(Object());
+    final req = request;
     final result = await router.asHandler(req) as Response;
 
     expect(handlerCalled, isTrue);
@@ -40,7 +40,7 @@ void main() {
     });
 
     final request = _request('/user/alice/age/30');
-    final req = request..setToken(Object());
+    final req = request;
     await router.asHandler(req);
 
     expect(capturedName, 'alice');
@@ -54,7 +54,7 @@ void main() {
     router.get('/test', (final req) => Response.ok());
 
     final request = _request('/test', method: Method.post);
-    final req = request..setToken(Object());
+    final req = request;
     final result = await router.asHandler(req) as Response;
 
     expect(result.statusCode, 405);
@@ -69,7 +69,7 @@ void main() {
     router.post('/test', (final req) => Response.ok());
 
     final request = _request('/test', method: Method.put);
-    final req = request..setToken(Object());
+    final req = request;
     final result = await router.asHandler(req) as Response;
 
     expect(result.statusCode, 405);
@@ -83,7 +83,7 @@ void main() {
     router.get('/test', (final req) => Response.ok());
 
     final request = _request('/nonexistent');
-    final req = request..setToken(Object());
+    final req = request;
     final result = await router.asHandler(req) as Response;
 
     expect(result.statusCode, 404);
@@ -104,7 +104,7 @@ void main() {
     final handler = router.asHandler;
 
     final request = _request('/other');
-    final req = request..setToken(Object());
+    final req = request;
     final result = await handler(req) as Response;
 
     expect(fallbackCalled, isTrue);
@@ -122,7 +122,7 @@ void main() {
     });
 
     final request = _request('/static/css/main.css');
-    final req = request..setToken(Object());
+    final req = request;
     await router.asHandler(req);
 
     expect(capturedRemaining, '/css/main.css');
@@ -139,7 +139,7 @@ void main() {
     });
 
     final request = _request('/api/v1/users');
-    final req = request..setToken(Object());
+    final req = request;
     await router.asHandler(req);
 
     expect(capturedMatched, '/api/v1/users');
@@ -156,7 +156,7 @@ void main() {
     });
 
     final request = _request('/files/doc123/download');
-    final req = request..setToken(Object());
+    final req = request;
     await router.asHandler(req);
 
     expect(handlerCalled, isTrue);
@@ -168,7 +168,7 @@ void main() {
     final router = RelicRouter();
 
     final request = _request('/anything');
-    final req = request..setToken(Object());
+    final req = request;
     final result = await router.asHandler(req) as Response;
 
     expect(result.statusCode, 404);
@@ -189,7 +189,7 @@ void main() {
     });
 
     final request = _request('/test');
-    final req = request..setToken(Object());
+    final req = request;
     final result = await router.asHandler(req) as Response;
 
     expect(result.headers['X-Custom'], ['applied']);
@@ -208,7 +208,7 @@ void main() {
     };
 
     final request = _request('/nonexistent');
-    final req = request..setToken(Object());
+    final req = request;
     final result = await router.asHandler(req) as Response;
 
     expect(fallbackCalled, isTrue);
@@ -224,7 +224,7 @@ void main() {
     // No fallback set
 
     final request = _request('/nonexistent');
-    final req = request..setToken(Object());
+    final req = request;
     final result = await router.asHandler(req) as Response;
 
     expect(result.statusCode, 404);
@@ -243,7 +243,7 @@ void main() {
     };
 
     final request = _request('/users', method: Method.post);
-    final req = request..setToken(Object());
+    final req = request;
     final result = await router.asHandler(req) as Response;
 
     expect(fallbackCalled, isFalse);
@@ -264,7 +264,7 @@ void main() {
         (final req) => Response.ok(body: Body.fromString('second fallback'));
 
     final request = _request('/nonexistent');
-    final req = request..setToken(Object());
+    final req = request;
     final result = await router.asHandler(req) as Response;
 
     expect(await result.readAsString(), 'second fallback');
@@ -281,7 +281,7 @@ void main() {
     router.fallback = null; // Clear fallback
 
     final request = _request('/nonexistent');
-    final req = request..setToken(Object());
+    final req = request;
     final result = await router.asHandler(req) as Response;
 
     expect(result.statusCode, 404);

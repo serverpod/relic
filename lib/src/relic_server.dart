@@ -125,8 +125,7 @@ final class _RelicServer implements RelicServer {
     }
 
     try {
-      final req = request..setToken(adapterRequest);
-      final result = await handler(req);
+      final result = await handler(request);
       return switch (result) {
         final Response rc => adapter.respond(adapterRequest, rc),
         final Hijack hc => adapter.hijack(adapterRequest, hc.callback),

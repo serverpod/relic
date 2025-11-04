@@ -8,7 +8,7 @@ Request _request(
   final String path, {
   final String host = 'localhost',
   final Method method = Method.get,
-}) => Request(method, Uri.http(host, path));
+}) => RequestInternal.create(method, Uri.http(host, path), Object());
 
 void main() {
   group('RoutingMiddleware', () {
@@ -32,7 +32,7 @@ void main() {
 
         router.add(Method.get, '/users/:id', testHandler);
 
-        final initialCtx = _request('/users/123')..setToken(Object());
+        final initialCtx = _request('/users/123');
         final resultingCtx = await middleware(
           respondWith((_) => Response(404)),
         )(initialCtx);
@@ -57,7 +57,7 @@ void main() {
 
           router.add(Method.get, '/users', testHandler);
 
-          final initialCtx = _request('/users')..setToken(Object());
+          final initialCtx = _request('/users');
           final resultingCtx = await middleware(
             respondWith((_) => Response(404)),
           )(initialCtx);
@@ -82,7 +82,7 @@ void main() {
             return Response(404);
           }
 
-          final initialCtx = _request('/nonexistent')..setToken(Object());
+          final initialCtx = _request('/nonexistent');
           final resultingCtx = await middleware(nextHandler)(initialCtx);
 
           expect(nextCalled, isTrue);
@@ -134,7 +134,7 @@ void main() {
             respondWith((_) => Response(404)),
           );
 
-          final initialCtx = _request('/router1/apple')..setToken(Object());
+          final initialCtx = _request('/router1/apple');
           final resultingCtx = await pipelineHandler(initialCtx);
           final response = (resultingCtx as Response);
 
@@ -172,7 +172,7 @@ void main() {
             respondWith((_) => Response(404)),
           );
 
-          final initialCtx = _request('/router2/banana')..setToken(Object());
+          final initialCtx = _request('/router2/banana');
           final resultingCtx = await pipelineHandler(initialCtx);
           final response = (resultingCtx as Response);
 
@@ -214,7 +214,7 @@ void main() {
           }),
         );
 
-        final initialCtx = _request('/neither/nor')..setToken(Object());
+        final initialCtx = _request('/neither/nor');
         final resultingCtx = await pipelineHandler(initialCtx);
         final response = (resultingCtx as Response);
 
@@ -251,8 +251,7 @@ void main() {
 
           final pipelineHandler = mainRouter.asHandler;
 
-          final initialCtx = _request('/resource/abc/details/xyz')
-            ..setToken(Object());
+          final initialCtx = _request('/resource/abc/details/xyz');
           final resultingCtx = await pipelineHandler(initialCtx);
           final response = (resultingCtx as Response);
 
@@ -300,8 +299,7 @@ void main() {
 
           final pipelineHandler = mainRouter.asHandler;
 
-          final initialCtx = _request('/base/b123/i456/action/doSomething')
-            ..setToken(Object());
+          final initialCtx = _request('/base/b123/i456/action/doSomething');
           final resultingCtx = await pipelineHandler(initialCtx);
           final response = (resultingCtx as Response);
 
@@ -339,7 +337,7 @@ void main() {
 
           final pipeline = mainRouter.asHandler;
 
-          final initialCtx = _request('/123/sub/456/end')..setToken(Object());
+          final initialCtx = _request('/123/sub/456/end');
           final resultingCtx = await pipeline(initialCtx);
           final response = (resultingCtx as Response);
 
@@ -365,7 +363,7 @@ void main() {
               respondWith((_) => Response.ok(body: Body.fromString(s))),
     );
 
-    final req = _request('/')..setToken(Object());
+    final req = _request('/');
     final resCtx =
         await mw(respondWith((_) => Response.notFound()))(req) as Response;
 
@@ -395,7 +393,7 @@ void main() {
       );
       final request = _request('/', method: v);
       final newCtx = await middleware(respondWith((_) => Response.notFound()))(
-        request..setToken(Object()),
+        request,
       );
       expect(newCtx, isA<Response>());
       final response = (newCtx as Response);
@@ -418,8 +416,7 @@ void main() {
         'then a 405 response is returned', () async {
       router.add(Method.get, '/users', respondWith((_) => Response(200)));
 
-      final initialCtx = _request('/users', method: Method.post)
-        ..setToken(Object());
+      final initialCtx = _request('/users', method: Method.post);
       final resultingCtx = await middleware(respondWith((_) => Response(404)))(
         initialCtx,
       );
@@ -434,8 +431,7 @@ void main() {
         'then the Allow header contains GET', () async {
       router.add(Method.get, '/users', respondWith((_) => Response(200)));
 
-      final initialCtx = _request('/users', method: Method.post)
-        ..setToken(Object());
+      final initialCtx = _request('/users', method: Method.post);
       final resultingCtx = await middleware(respondWith((_) => Response(404)))(
         initialCtx,
       );
@@ -452,8 +448,7 @@ void main() {
       router.add(Method.get, '/users', respondWith((_) => Response(200)));
       router.add(Method.post, '/users', respondWith((_) => Response(201)));
 
-      final initialCtx = _request('/users', method: Method.put)
-        ..setToken(Object());
+      final initialCtx = _request('/users', method: Method.put);
       final resultingCtx = await middleware(respondWith((_) => Response(404)))(
         initialCtx,
       );
@@ -475,8 +470,7 @@ void main() {
         respondWith((_) => Response(204)),
       );
 
-      final initialCtx = _request('/users/123', method: Method.patch)
-        ..setToken(Object());
+      final initialCtx = _request('/users/123', method: Method.patch);
       final resultingCtx = await middleware(respondWith((_) => Response(404)))(
         initialCtx,
       );
@@ -494,8 +488,7 @@ void main() {
       router.add(Method.get, '/users', respondWith((_) => Response(200)));
 
       bool nextCalled = false;
-      final initialCtx = _request('/posts', method: Method.get)
-        ..setToken(Object());
+      final initialCtx = _request('/posts', method: Method.get);
       final resultingCtx = await middleware((final req) async {
         nextCalled = true;
         return Response(404);

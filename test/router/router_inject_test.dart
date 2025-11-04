@@ -12,12 +12,13 @@ void main() {
       final router = Router<Handler>();
       router.inject(const _EchoHandlerObject());
 
-      final request = Request(
+      final request = RequestInternal.create(
         Method.post,
         Uri.parse('http://localhost/'),
+        Object(),
         body: Body.fromString('Hello from the other side'),
       );
-      final req = request..setToken(Object());
+      final req = request;
       final result = await router.asHandler(req) as Response;
 
       expect(result.statusCode, 200);
@@ -30,12 +31,13 @@ void main() {
       final router = Router<Handler>();
       router.inject(const _EchoHandlerObject(mountAt: '/custom/path'));
 
-      final request = Request(
+      final request = RequestInternal.create(
         Method.post,
         Uri.parse('http://localhost/custom/path'),
+        Object(),
         body: Body.fromString('custom handler'),
       );
-      final req = request..setToken(Object());
+      final req = request;
       final result = await router.asHandler(req) as Response;
 
       expect(result.statusCode, 200);
@@ -50,12 +52,13 @@ void main() {
       final router = Router<Handler>();
       router.injectAt('/api', const _EchoHandlerObject(mountAt: '/echo'));
 
-      final request = Request(
+      final request = RequestInternal.create(
         Method.post,
         Uri.parse('http://localhost/api/echo'),
+        Object(),
         body: Body.fromString('injected at path'),
       );
-      final req = request..setToken(Object());
+      final req = request;
       final result = await router.asHandler(req) as Response;
 
       expect(result.statusCode, 200);
@@ -77,8 +80,12 @@ void main() {
         );
         router.get('/test', (final req) => Response.ok());
 
-        final request = Request(Method.get, Uri.parse('http://localhost/test'));
-        final req = request..setToken(Object());
+        final request = RequestInternal.create(
+          Method.get,
+          Uri.parse('http://localhost/test'),
+          Object(),
+        );
+        final req = request;
         final result = await router.asHandler(req) as Response;
 
         expect(result.statusCode, 200);
@@ -100,22 +107,24 @@ void main() {
       router.get('/other', (final req) => Response.ok());
 
       // Should apply to /api/* paths
-      final apiRequest = Request(
+      final apiRequest = RequestInternal.create(
         Method.get,
         Uri.parse('http://localhost/api/users'),
+        Object(),
       );
-      final apiCtx = apiRequest..setToken(Object());
+      final apiCtx = apiRequest;
       final apiResult = await router.asHandler(apiCtx) as Response;
 
       expect(apiResult.statusCode, 200);
       expect(apiResult.headers['X-Custom-Middleware'], ['yes']);
 
       // Should NOT apply to other paths
-      final otherRequest = Request(
+      final otherRequest = RequestInternal.create(
         Method.get,
         Uri.parse('http://localhost/other'),
+        Object(),
       );
-      final otherCtx = otherRequest..setToken(Object());
+      final otherCtx = otherRequest;
       final otherResult = await router.asHandler(otherCtx) as Response;
 
       expect(otherResult.statusCode, 200);
@@ -138,8 +147,12 @@ void main() {
       );
       router.get('/test', (final req) => Response.ok());
 
-      final request = Request(Method.get, Uri.parse('http://localhost/test'));
-      final req = request..setToken(Object());
+      final request = RequestInternal.create(
+        Method.get,
+        Uri.parse('http://localhost/test'),
+        Object(),
+      );
+      final req = request;
       final result = await router.asHandler(req) as Response;
 
       expect(result.statusCode, 200);

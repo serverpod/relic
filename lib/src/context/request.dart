@@ -112,36 +112,11 @@ class Request extends Message {
   /// An empty list will cause the header to be omitted.
   ///
   /// The default value for [protocolVersion] is '1.1'.
-  Request(
-    final Method method,
-    final Uri requestedUri, {
-    final String? protocolVersion,
-    final Headers? headers,
-    final String? handlerPath,
-    final Uri? url,
-    final Body? body,
-  }) : this._(
-         method,
-         requestedUri,
-         Object(),
-         headers ?? Headers.empty(),
-         protocolVersion: protocolVersion,
-         url: url,
-         handlerPath: handlerPath,
-         body: body,
-       );
-
-  /// This constructor has the same signature as [Request.new] except that
-  /// accepts [onHijack] as [_OnHijack].
-  ///
-  /// Any [Request] created by calling [copyWith] will pass [_onHijack] from the
-  /// source [Request] to ensure that [hijack] can only be called once, even
-  /// from a changed [Request].
   Request._(
     this.method,
     this.requestedUri,
-    this._token,
-    final Headers headers, {
+    this._token, {
+    final Headers? headers,
     final String? protocolVersion,
     final String? handlerPath,
     final Uri? url,
@@ -149,7 +124,7 @@ class Request extends Message {
   }) : protocolVersion = protocolVersion ?? '1.1',
        url = _computeUrl(requestedUri, handlerPath, url),
        handlerPath = _computeHandlerPath(requestedUri, handlerPath, url),
-       super(body: body ?? Body.empty(), headers: headers) {
+       super(body: body ?? Body.empty(), headers: headers ?? Headers.empty()) {
     try {
       // Trigger URI parsing methods that may throw format exception (in Request
       // constructor or in handlers / routing).
@@ -232,15 +207,14 @@ class Request extends Message {
       method,
       requestedUri ?? this.requestedUri,
       token,
-      headers ?? this.headers,
+      headers: headers ?? this.headers,
       protocolVersion: protocolVersion,
       handlerPath: handlerPath,
       body: body,
     );
   }
 
-  Object _token;
-  Object get token => _token;
+  final Object _token;
 }
 
 /// Computes `url` from the provided [Request] constructor arguments.
@@ -341,6 +315,11 @@ String _computeHandlerPath(
 }
 
 /// Internal extension methods for [Request].
+/// This is hidden in barrel file (relic.dart)
 extension RequestInternal on Request {
-  void setToken(final Object value) => _token = value;
+  /// Expose private constructor internally
+  static const create = Request._;
+
+  /// Expose token internally
+  Object get token => _token;
 }

@@ -12,8 +12,12 @@ void main() {
       router.use('/', middlewareObject.call);
       router.get('/test', (final req) => Response.ok());
 
-      final request = Request(Method.get, Uri.parse('http://localhost/test'));
-      final req = request..setToken(Object());
+      final request = RequestInternal.create(
+        Method.get,
+        Uri.parse('http://localhost/test'),
+        Object(),
+      );
+      final req = request;
       final result = await router.asHandler(req) as Response;
 
       expect(result.statusCode, 200);
@@ -33,8 +37,12 @@ void main() {
       router.use('/', middleware);
       router.get('/test', (final req) => Response.ok());
 
-      final request = Request(Method.get, Uri.parse('http://localhost/test'));
-      final req = request..setToken(Object());
+      final request = RequestInternal.create(
+        Method.get,
+        Uri.parse('http://localhost/test'),
+        Object(),
+      );
+      final req = request;
       final result = await router.asHandler(req) as Response;
 
       expect(result.statusCode, 200);
@@ -54,8 +62,12 @@ void main() {
         return Response.ok();
       });
 
-      final request = Request(Method.get, Uri.parse('http://localhost/test'));
-      final req = request..setToken(Object());
+      final request = RequestInternal.create(
+        Method.get,
+        Uri.parse('http://localhost/test'),
+        Object(),
+      );
+      final req = request;
       await router.asHandler(req);
 
       expect(capturedHeader, 'by-middleware');
@@ -74,8 +86,12 @@ void main() {
         return Response.ok();
       });
 
-      final request = Request(Method.get, Uri.parse('http://localhost/test'));
-      final req = request..setToken(Object());
+      final request = RequestInternal.create(
+        Method.get,
+        Uri.parse('http://localhost/test'),
+        Object(),
+      );
+      final req = request;
       final result = await router.asHandler(req) as Response;
 
       expect(nextCalled, isFalse);
