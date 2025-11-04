@@ -159,7 +159,7 @@ class _EchoHandlerObject extends HandlerObject {
   void injectIn(final Router<Handler> router) => router.post(mountAt, call);
 
   @override
-  FutureOr<HandledContext> call(final Request ctx) {
+  FutureOr<Result> call(final Request ctx) {
     final data = ctx.body.read();
     return Response.ok(body: Body.fromDataStream(data));
   }

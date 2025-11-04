@@ -12,7 +12,7 @@ final helloBytes = utf8.encode('hello,');
 
 final worldBytes = utf8.encode(' world');
 
-typedef SyncHandler = HandledContext Function(Request);
+typedef SyncHandler = Result Function(Request);
 
 /// A simple, synchronous handler.
 ///
@@ -35,7 +35,7 @@ SyncHandler createSyncHandler({
 final SyncHandler syncHandler = createSyncHandler();
 
 /// Calls [createSyncHandler] and wraps the response in a [Future].
-Future<HandledContext> asyncHandler(final Request ctx) async {
+Future<Result> asyncHandler(final Request ctx) async {
   return syncHandler(ctx);
 }
 

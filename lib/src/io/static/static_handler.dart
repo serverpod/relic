@@ -169,7 +169,7 @@ class StaticHandler extends HandlerObject {
   }
 
   @override
-  FutureOr<HandledContext> call(final Request ctx) {
+  FutureOr<Result> call(final Request ctx) {
     return switch (entity) {
       Directory() => _handleDirectory(ctx, entity as Directory),
       File() => _handleFile(ctx, entity as File),
@@ -178,7 +178,7 @@ class StaticHandler extends HandlerObject {
     };
   }
 
-  Future<HandledContext> _handleDirectory(
+  Future<Result> _handleDirectory(
     final Request ctx,
     final Directory directory,
   ) async {
@@ -235,7 +235,7 @@ class StaticHandler extends HandlerObject {
     );
   }
 
-  Future<HandledContext> _handleFile(final Request ctx, final File file) async {
+  Future<Result> _handleFile(final Request ctx, final File file) async {
     return await _serveFile(
       file,
       mimeResolver ?? _defaultMimeTypeResolver,

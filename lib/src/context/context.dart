@@ -12,7 +12,7 @@ part 'response.dart';
 /// A request is considered handled if a response has been formulated
 /// ([Response]), the connection has been hijacked ([HijackedContext]),
 /// or a duplex stream connection has been established ([ConnectionContext]).
-sealed class HandledContext {}
+sealed class Result {}
 
 /// A [Context] state indicating that the underlying connection has been
 /// hijacked.
@@ -39,7 +39,7 @@ sealed class HandledContext {}
 ///   });
 /// }
 /// ```
-final class HijackedContext extends HandledContext {
+final class HijackedContext extends Result {
   /// The callback function provided to handle the hijacked connection.
   final HijackCallback callback;
 
@@ -64,7 +64,7 @@ final class HijackedContext extends HandledContext {
 ///   });
 /// }
 /// ```
-final class ConnectionContext extends HandledContext {
+final class ConnectionContext extends Result {
   /// The callback function provided to handle the duplex stream connection.
   final WebSocketCallback callback;
 

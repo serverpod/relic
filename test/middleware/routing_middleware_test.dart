@@ -25,7 +25,7 @@ void main() {
           'When a request matches the parameterized route, '
           'Then the handler receives correct path parameters', () async {
         Map<Symbol, String>? capturedParams;
-        Future<HandledContext> testHandler(final Request ctx) async {
+        Future<Result> testHandler(final Request ctx) async {
           capturedParams = ctx.pathParameters;
           return Response(200);
         }

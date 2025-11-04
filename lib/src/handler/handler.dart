@@ -4,17 +4,17 @@ import '../context/context.dart';
 import '../router/method.dart';
 import '../router/router.dart';
 
-/// A function that processes a [Request] to produce a [HandledContext].
+/// A function that processes a [Request] to produce a [Result].
 ///
 /// For example, a static file handler may access the [Request] via the [Request],
 /// read the requested URI from the filesystem, and return a [Response]
-/// (a type of [HandledContext]) containing the file data as its body.
+/// (a type of [Result]) containing the file data as its body.
 ///
 /// A function which produces a [Handler], either by wrapping one or more other handlers,
 /// or using function composition is known as a "middleware".
 ///
 /// A [Handler] may receive a [Request] directly from an HTTP server adapter or it
-/// may have been processed by other middleware. Similarly, the resulting [HandledContext]
+/// may have been processed by other middleware. Similarly, the resulting [Result]
 /// may be directly returned to an HTTP server adapter or have further processing
 /// done by other middleware.
 ///
@@ -56,7 +56,7 @@ import '../router/router.dart';
 ///   );
 /// };
 /// ```
-typedef Handler = FutureOr<HandledContext> Function(Request req);
+typedef Handler = FutureOr<Result> Function(Request req);
 
 /// A simplified handler function that takes a [Request] and returns a [Response].
 ///
@@ -107,7 +107,7 @@ abstract class HandlerObject implements RouterInjectable {
   void injectIn(final RelicRouter router) => router.get('/', call);
 
   /// The implementation of this [HandlerObject]
-  FutureOr<HandledContext> call(final Request req);
+  FutureOr<Result> call(final Request req);
 
   /// Returns this [HandlerObject] as a [Handler].
   Handler get asHandler => call;

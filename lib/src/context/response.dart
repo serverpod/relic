@@ -76,7 +76,7 @@ part of 'context.dart';
 ///   ),
 /// )
 /// ```
-class Response extends Message implements HandledContext {
+class Response extends Message implements Result {
   /// The HTTP status code of the response.
   final int statusCode;
 
