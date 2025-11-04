@@ -62,7 +62,7 @@ final class _RelicServer implements RelicServer {
   /// Only one handler can be mounted at a time.
   @override
   Future<void> mountAndStart(final Handler handler) async {
-    port = (await _adapter).port;
+    _port ??= (await _adapter).port;
     _handler = _wrapHandlerWithMiddleware(handler);
     if (_subscription == null) await _startListening();
   }
@@ -71,6 +71,7 @@ final class _RelicServer implements RelicServer {
   Future<void> close() async {
     await _stopListening();
     await (await _adapter).close();
+    _port = null;
   }
 
   @override
@@ -79,8 +80,9 @@ final class _RelicServer implements RelicServer {
     return adapter.connectionsInfo;
   }
 
+  int? _port;
   @override
-  late final int port;
+  int get port => _port ?? (throw StateError('Not bound'));
 
   Future<void> _stopListening() async {
     await _subscription?.cancel();
@@ -208,20 +210,22 @@ final class _IsolatedRelicServer extends IsolatedObject<RelicServer>
   Future<void> close() async {
     await evaluate((final r) => r.close());
     await super.close();
+    _port = null;
   }
 
   @override
   Future<void> mountAndStart(final Handler handler) async {
     await evaluate((final r) => r.mountAndStart(handler));
-    port = await evaluate((final r) => r.port);
+    _port ??= await evaluate((final r) => r.port);
   }
 
   @override
   Future<ConnectionsInfo> connectionsInfo() =>
       evaluate((final r) => r.connectionsInfo());
 
+  int? _port;
   @override
-  late final int port;
+  int get port => _port ?? (throw StateError('Not bound'));
 }
 
 final class _MultiIsolateRelicServer implements RelicServer {
@@ -230,7 +234,8 @@ final class _MultiIsolateRelicServer implements RelicServer {
   _MultiIsolateRelicServer(
     final Factory<Adapter> adapterFactory,
     final int noOfIsolates,
-  ) : _children = List.generate(
+  ) : assert(noOfIsolates > 1),
+      _children = List.generate(
         noOfIsolates,
         (_) => _IsolatedRelicServer(adapterFactory),
       );

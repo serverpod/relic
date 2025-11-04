@@ -12,6 +12,7 @@ import 'package:web_socket/web_socket.dart';
 /// - HijackedContext: Raw connection control
 
 /// Simple HTML page for demonstration
+// doctag<context-html-homepage>
 String _htmlHomePage() {
   return '''
 <!DOCTYPE html>
@@ -44,7 +45,9 @@ Future<ResponseContext> homeHandler(final RequestContext ctx) async {
     ),
   );
 }
+// end:doctag<context-html-homepage>
 
+// doctag<context-api-json>
 Future<ResponseContext> apiHandler(final RequestContext ctx) async {
   final data = {
     'message': 'Hello from Relic API!',
@@ -58,6 +61,7 @@ Future<ResponseContext> apiHandler(final RequestContext ctx) async {
     ),
   );
 }
+// end:doctag<context-api-json>
 
 Future<ResponseContext> userHandler(final RequestContext ctx) async {
   final userId = ctx.pathParameters[#id];
@@ -74,6 +78,7 @@ Future<ResponseContext> userHandler(final RequestContext ctx) async {
   );
 }
 
+// doctag<context-websocket-echo>
 ConnectionContext webSocketHandler(final RequestContext ctx) {
   return ctx.connect((final webSocket) async {
     log('WebSocket connection established');
@@ -97,6 +102,7 @@ ConnectionContext webSocketHandler(final RequestContext ctx) {
     }
   });
 }
+// end:doctag<context-websocket-echo>
 
 HijackedContext customProtocolHandler(final RequestContext ctx) {
   return ctx.hijack((final channel) {
@@ -115,6 +121,7 @@ HijackedContext customProtocolHandler(final RequestContext ctx) {
   });
 }
 
+// doctag<context-request-inspect>
 Future<ResponseContext> dataHandler(final RequestContext ctx) async {
   final request = ctx.request;
 
@@ -156,6 +163,7 @@ Future<ResponseContext> dataHandler(final RequestContext ctx) async {
     Response.badRequest(body: Body.fromString('Invalid Request')),
   );
 }
+// end:doctag<context-request-inspect>
 
 void main() async {
   // Set up the router with proper routes

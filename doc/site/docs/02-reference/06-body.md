@@ -85,40 +85,6 @@ final streamBody = Body.fromDataStream(
 );
 ```
 
-### Static file serving
-
-To serve static files like images, CSS, or documents, use `StaticHandler.directory()`:
-
-```dart
-final app = RelicApp()
-  ..anyOf(
-    {Method.get, Method.head},
-    '/static/**',
-    StaticHandler.directory(
-      Directory('public'),
-      cacheControl: (ctx, fileInfo) => CacheControlHeader(maxAge: 86400),
-    ).asHandler);
-```
-
-This serves all files from the `public` directory under `/static/` URLs with 1-day caching.
-
-For individual files:
-
-```dart
-StaticHandler.file(
-  File('logo.png'),
-  cacheControl: (ctx, fileInfo) => CacheControlHeader(maxAge: 3600),
-);
-```
-
-`StaticHandler` automatically handles MIME types, caching headers, and security.
-
-:::tip Directory paths
-When serving static files from a directory, always use a tail matching path pattern (`/**`) to capture all files and subdirectories. The tail portion (`/**`) is used to determine the file path within the directory. Without it, the handler won't know which file to serve.
-
-For single file serving with `StaticHandler.file()`, you don't need the tail pattern, but it can be useful for SPAs or other routing scenarios.
-:::
-
 ### Empty bodies
 
 Some responses should not include content, such as those with status 204. In these cases, create an empty body to make your intent explicit and allow Relic to set the appropriate headers.

@@ -27,17 +27,15 @@ dart pub add relic
 ## Edit the main file
 
 Edit the `bin/hello_world.dart`:
+**What this code does:**
 
-```dart reference
-https://github.com/serverpod/relic/blob/main/example/example.dart
-```
+GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/example.dart) title="hello_world.dart"
 
 **What this code does:**
 
 1. **Router**: `RelicApp()` is used to configure routing for the server.
-2. **Route**: `.get('/', ...)` handles GET requests to `/` and responds with "Hello, Relic!".
-3. **Server**: `app.serve()` binds the router (as a handler) to port 8080 on all network interfaces.
-4. **Logging**: The server logs to the console when started.
+2. **Server**: `app.serve()` binds the router (as a handler) to port 8080 on all network interfaces.
+3. **Logging**: The server logs to the console when started.
 
 The result is a server that responds with "Hello, Relic!" when you send a GET request to `http://localhost:8080/`.
 

@@ -1,3 +1,9 @@
+## 0.9.2
+
+- feat: Expose `noOfIsolates` parameter on serve extension on `RelicApp` ([#260](https://github.com/serverpod/relic/pull/260))
+- feat: Add `injectAt` extension method on `Router<T>` ([#261](https://github.com/serverpod/relic/pull/261))
+- feat: Allow re-run of `RelicApp.run` after `close` ([#257](https://github.com/serverpod/relic/pull/257))
+
 ## 0.9.1
 - feat: Add async RelicServer.connectionsInfo() method ([#255](https://github.com/serverpod/relic/pull/255))
   - Adds a `connectionsInfo()` method to `RelicServer` that returns the

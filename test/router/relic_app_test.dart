@@ -47,6 +47,31 @@ void main() {
     });
 
     test('Given a RelicApp, '
+        'when calling serve twice, '
+        'then it fails the second time', () async {
+      final app =
+          RelicApp()..any('/', (final ctx) => ctx.respond(Response.ok()));
+
+      await app.serve(port: 0);
+      await expectLater(app.serve(port: 0), throwsStateError);
+
+      await app.close();
+    });
+
+    test('Given a RelicApp, '
+        'when calling serve, close, serve, '
+        'then it succeeds', () async {
+      final app =
+          RelicApp()..any('/', (final ctx) => ctx.respond(Response.ok()));
+
+      await app.serve(port: 0);
+      await app.close();
+      await expectLater(app.serve(port: 0), completes);
+
+      await app.close();
+    });
+
+    test('Given a RelicApp, '
         'when hot-reloading isolate, '
         'then it is rebuild', () async {
       final wsUri = (await Service.getInfo()).serverWebSocketUri;
@@ -63,27 +88,35 @@ void main() {
         return;
       }
 
+      final vmService = await vmi.vmServiceConnectUri(wsUri.toString());
+      final isolateId = Service.getIsolateId(Isolate.current)!;
+      final packagesUri = (await Isolate.packageConfig)?.toString();
+      Future<void> hotReload() async {
+        await vmService.reloadSources(
+          isolateId,
+          force: true,
+          packagesUri: packagesUri,
+        );
+      }
+
       int count = 0;
       final called = StreamController<int>();
-      final app = RelicApp()..inject(_Injectable(() => called.add(++count)));
+      final app =
+          RelicApp()
+            ..inject(_Injectable(() => called.add(++count))); // 1 original
 
-      await app.serve();
+      await app.serve(noOfIsolates: 2);
 
-      final vmService = await vmi.vmServiceConnectUri(wsUri.toString());
+      await hotReload(); // 2
+      await hotReload(); // 3
+      await app.close();
+      await hotReload(); // won't emit
+      await hotReload(); // won't emit
 
-      final isolateId = Service.getIsolateId(Isolate.current)!;
-
-      await vmService.reloadSources(
-        isolateId,
-        force: true,
-        packagesUri: (await Isolate.packageConfig)?.toString(),
-      );
-
-      await expectLater(called.stream, emitsInOrder([1, 2]));
+      await expectLater(called.stream, emitsInOrder([1, 2, 3]));
 
       await vmService.dispose();
-      await app.close();
-    });
+    }, tags: {'hot-reload'});
   });
 }
 
