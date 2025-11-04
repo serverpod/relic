@@ -8,7 +8,7 @@ Future<void> main() async {
   final app = RelicApp();
 
   // HTTP Method access
-  // doctag<04-requests-34>
+  // doctag<requests-method-and-url>
   app.get('/info', (final ctx) {
     final method = ctx.request.method; // Method.get
 
@@ -16,10 +16,10 @@ Future<void> main() async {
       Response.ok(body: Body.fromString('Received a ${method.name} request')),
     );
   });
-  // end:doctag<04-requests-34>
+  // end:doctag<requests-method-and-url>
 
   // Path parameters example
-  // doctag<04-requests-44>
+  // doctag<requests-path-params-id>
   app.get('/users/:id', (final ctx) {
     final id = ctx.pathParameters[#id]!;
     final url = ctx.request.url;
@@ -30,10 +30,10 @@ Future<void> main() async {
 
     return ctx.respond(Response.ok());
   });
-  // end:doctag<04-requests-44>
+  // end:doctag<requests-path-params-id>
 
   // Query parameters - single values
-  // doctag<04-requests-58>
+  // doctag<requests-query-single>
   app.get('/search', (final ctx) {
     final query = ctx.request.url.queryParameters['query'];
     final page = ctx.request.url.queryParameters['page'];
@@ -52,10 +52,10 @@ Future<void> main() async {
       ),
     );
   });
-  // end:doctag<04-requests-58>
+  // end:doctag<requests-query-single>
 
   // Query parameters - multiple values
-  // doctag<04-requests-68>
+  // doctag<requests-query-multi>
   app.get('/filter', (final ctx) {
     final tags = ctx.request.url.queryParametersAll['tag'] ?? [];
 
@@ -65,10 +65,10 @@ Future<void> main() async {
       ),
     );
   });
-  // end:doctag<04-requests-68>
+  // end:doctag<requests-query-multi>
 
   // Type-safe headers
-  // doctag<04-requests-82>
+  // doctag<requests-headers-type-safe>
   app.get('/headers-info', (final ctx) {
     final request = ctx.request;
 
@@ -87,10 +87,10 @@ Future<void> main() async {
       ),
     );
   });
-  // end:doctag<04-requests-82>
+  // end:doctag<requests-headers-type-safe>
 
   // Authorization headers
-  // doctag<04-requests-92>
+  // doctag<requests-authorization-header>
   app.get('/protected', (final ctx) {
     final auth = ctx.request.headers.authorization;
 
@@ -115,20 +115,20 @@ Future<void> main() async {
       return ctx.respond(Response.unauthorized());
     }
   });
-  // end:doctag<04-requests-92>
+  // end:doctag<requests-authorization-header>
 
   // Reading request body as string
-  // doctag<04-requests-122>
+  // doctag<requests-body-as-string>
   app.post('/submit', (final ctx) async {
     final bodyText = await ctx.request.readAsString();
     return ctx.respond(
       Response.ok(body: Body.fromString('Received: $bodyText')),
     );
   });
-  // end:doctag<04-requests-122>
+  // end:doctag<requests-body-as-string>
 
   // JSON parsing example
-  // doctag<04-requests-132>
+  // doctag<requests-json-parse>
   app.post('/api/users', (final ctx) async {
     try {
       final bodyText = await ctx.request.readAsString();
@@ -156,10 +156,10 @@ Future<void> main() async {
       );
     }
   });
-  // end:doctag<04-requests-132>
+  // end:doctag<requests-json-parse>
 
   // Reading as a byte stream
-  // doctag<04-requests-142>
+  // doctag<requests-body-byte-stream>
   app.post('/upload', (final ctx) async {
     final stream = ctx.request.read(); // Stream<Uint8List>
 
@@ -173,10 +173,10 @@ Future<void> main() async {
       Response.ok(body: Body.fromString('Uploaded $totalBytes bytes')),
     );
   });
-  // end:doctag<04-requests-142>
+  // end:doctag<requests-body-byte-stream>
 
   // Check if body is empty
-  // doctag<04-requests-152>
+  // doctag<requests-body-empty-check>
   app.post('/data', (final ctx) {
     if (ctx.request.isEmpty) {
       return ctx.respond(
@@ -187,10 +187,10 @@ Future<void> main() async {
     // Body exists, safe to read...
     return ctx.respond(Response.ok());
   });
-  // end:doctag<04-requests-152>
+  // end:doctag<requests-body-empty-check>
 
   // Validate query parameters
-  // doctag<04-requests-164>
+  // doctag<requests-query-validate-page>
   app.get('/page', (final ctx) {
     final pageStr = ctx.request.url.queryParameters['page'];
 
@@ -212,10 +212,10 @@ Future<void> main() async {
     // Use validated page number...
     return ctx.respond(Response.ok());
   });
-  // end:doctag<04-requests-164>
+  // end:doctag<requests-query-validate-page>
 
   // Handle missing headers gracefully
-  // doctag<04-requests-172>
+  // doctag<requests-headers-user-agent>
   app.get('/info', (final ctx) {
     final userAgent = ctx.request.headers.userAgent;
 
@@ -226,7 +226,7 @@ Future<void> main() async {
 
     return ctx.respond(Response.ok(body: Body.fromString(message)));
   });
-  // end:doctag<04-requests-172>
+  // end:doctag<requests-headers-user-agent>
 
   await app.serve();
 }

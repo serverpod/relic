@@ -135,7 +135,7 @@ Future<ResponseContext> echoHandler(final RequestContext ctx) async {
 }
 
 /// JSON API handler
-// doctag<06-body-346>
+// doctag<body-json-api-handler>
 Future<ResponseContext> apiDataHandler(final RequestContext ctx) async {
   final jsonData = await ctx.request.readAsString();
   final data = jsonDecode(jsonData);
@@ -151,10 +151,10 @@ Future<ResponseContext> apiDataHandler(final RequestContext ctx) async {
     ),
   );
 }
-// end:doctag<06-body-346>
+// end:doctag<body-json-api-handler>
 
 /// File upload handler with size validation
-// doctag<06-body-297>
+// doctag<body-upload-validate-size>
 Future<ResponseContext> uploadHandler(final RequestContext ctx) async {
   const maxFileSize = 10 * 1024 * 1024; // 10MB
   final contentLength = ctx.request.body.contentLength;
@@ -172,10 +172,10 @@ Future<ResponseContext> uploadHandler(final RequestContext ctx) async {
 
   return ctx.respond(Response.ok(body: Body.fromString('Upload successful')));
 }
-// end:doctag<06-body-297>
+// end:doctag<body-upload-validate-size>
 
 /// Image response handler with automatic format detection
-// doctag<06-body-354>
+// doctag<body-image-auto-format>
 Future<ResponseContext> imageHandler(final RequestContext ctx) async {
   final file = File('example/static_files/logo.svg');
   final imageBytes = await file.readAsBytes();
@@ -189,10 +189,10 @@ Future<ResponseContext> imageHandler(final RequestContext ctx) async {
     ),
   );
 }
-// end:doctag<06-body-354>
+// end:doctag<body-image-auto-format>
 
 /// Streaming response handler with chunked transfer encoding
-// doctag<06-body-370>
+// doctag<body-streaming-chunked>
 Future<ResponseContext> streamHandler(final RequestContext ctx) async {
   Stream<Uint8List> generateLargeDataset() async* {
     for (var i = 0; i < 100; i++) {
@@ -214,4 +214,4 @@ Future<ResponseContext> streamHandler(final RequestContext ctx) async {
   );
 }
 
-// end:doctag<06-body-370>
+// end:doctag<body-streaming-chunked>

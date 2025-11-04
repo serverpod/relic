@@ -2,7 +2,7 @@ import 'package:relic/io_adapter.dart';
 import 'package:relic/relic.dart';
 
 /// A simple 'Hello World' server
-// doctag<02-hello-world-example-31>
+// doctag<hello-world-app>
 Future<void> main() async {
   // Setup app
   final app =
@@ -22,9 +22,9 @@ Future<void> main() async {
   // Start the server. Defaults to using port 8080 on loopback interface
   await app.serve();
 }
-// end:doctag<02-hello-world-example-31>
+// end:doctag<hello-world-app>
 
-// doctag<02-hello-world-example-31-handler>
+// doctag<hello-world-greeter-handler>
 ResponseContext hello(final RequestContext ctx) {
   final name = ctx.pathParameters[#name];
   final age = int.parse(ctx.pathParameters[#age]!);
@@ -36,4 +36,4 @@ ResponseContext hello(final RequestContext ctx) {
   );
 }
 
-// end:doctag<02-hello-world-example-31-handler>
+// end:doctag<hello-world-greeter-handler>
