@@ -198,13 +198,6 @@ GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/
 The `Pipeline` class provides a legacy approach to composing middleware. While `router.use()` is now preferred for most applications, `Pipeline` is still useful in certain scenarios.
 Read more about [Pipeline](./pipeline) for more details.
 
-### Best Practices
-
-- ✅ **Keep middleware focused:** Each middleware should have a single responsibility.
-- ✅ **Order matters:** Apply middleware in logical order: logging first, then authentication, then authorization, then business logic.
-- ✅ **Handle errors gracefully:** Always include error handling in your middleware to prevent unhandled exceptions.
-- ✅ **Test middleware independently:** Write unit tests for your middleware functions to ensure they work correctly in isolation.
-
 ## Summary
 
 Middleware is a powerful pattern that enables you to compose functionality around your handlers in a clean, reusable way. Relic provides excellent middleware support through both the modern `router.use()` approach and the legacy `Pipeline` class.
