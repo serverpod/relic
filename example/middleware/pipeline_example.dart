@@ -32,12 +32,15 @@ Future<ResponseContext> simpleHandler(final RequestContext ctx) async {
 }
 
 void main() async {
+  // doctag<pipeline-usage>
   // Using Pipeline (legacy composition)
   final pipelineHandler = const Pipeline()
       .addMiddleware(logRequests())
       .addMiddleware(addServerHeader())
       .addHandler(simpleHandler);
+  // end:doctag<pipeline-usage>
 
+  // doctag<router-usage>
   // Using Router (preferred)
   final router =
       RelicApp()
@@ -48,6 +51,7 @@ void main() async {
             Response.ok(body: Body.fromString('Hello from Router!')),
           );
         });
+  // end:doctag<router-usage>
 
   // Main router that shows both approaches
   final app =
