@@ -229,7 +229,7 @@ void main() {
 
   test('supports web socket connetions', () async {
     await _scheduleServer((final ctx) {
-      return ctx.connect(
+      return ConnectionContext(
         expectAsync1((final serverSocket) async {
           await for (final e in serverSocket.events) {
             expect(e, TextDataReceived('Hello'));

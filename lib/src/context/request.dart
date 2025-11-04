@@ -240,10 +240,6 @@ class Request extends Message {
     );
   }
 
-  ConnectionContext connect(final WebSocketCallback callback) {
-    return ConnectionContext(callback);
-  }
-
   HijackedContext hijack(final HijackCallback callback) {
     return HijackedContext(callback);
   }

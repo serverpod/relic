@@ -50,7 +50,7 @@ void main() {
       });
 
       test('then the new context can transition to ConnectionContext', () {
-        final connectionContext = newRequest.connect((final webSocket) {});
+        final connectionContext = ConnectionContext((final webSocket) {});
 
         expect(connectionContext, isA<ConnectionContext>());
       });

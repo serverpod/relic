@@ -69,7 +69,7 @@ Future<Response> userHandler(final Request ctx) async {
 }
 
 ConnectionContext webSocketHandler(final Request ctx) {
-  return ctx.connect((final webSocket) async {
+  return ConnectionContext((final webSocket) async {
     log('WebSocket connection established');
 
     // Send welcome message
