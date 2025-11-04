@@ -23,36 +23,48 @@ Future<void> main() async {
 
   // Convenience methods - syntactic sugar for .add()
   // Respond with "Hello World!" on the homepage
+  // doctag<routing-basic-get-root>
   app.get('/', (final req) {
     return Response.ok(body: Body.fromString('Hello World!'));
   });
+  // end:doctag<routing-basic-get-root>
 
   // Respond to a POST request on the root route
+  // doctag<routing-basic-post-root>
   app.post('/', (final req) {
     return Response.ok(body: Body.fromString('Got a POST request'));
   });
+  // end:doctag<routing-basic-post-root>
 
   // Respond to a PUT request to the /user route
+  // doctag<routing-basic-put-user>
   app.put('/user', (final req) {
     return Response.ok(body: Body.fromString('Got a PUT request at /user'));
   });
+  // end:doctag<routing-basic-put-user>
 
   // Respond to a DELETE request to the /user route
+  // doctag<routing-basic-delete-user>
   app.delete('/user', (final req) {
     return Response.ok(body: Body.fromString('Got a DELETE request at /user'));
   });
+  // end:doctag<routing-basic-delete-user>
 
   // Using the core .add method directly
   // This is what the convenience methods (.get, .post, etc.) call internally
+  // doctag<routing-basic-patch-api>
   app.add(Method.patch, '/api', (final req) {
     return Response.ok(body: Body.fromString('Got a PATCH request at /api'));
   });
+  // end:doctag<routing-basic-patch-api>
 
   // Using .anyOf to handle multiple methods with the same handler
+  // doctag<routing-basic-anyof-admin>
   app.anyOf({Method.get, Method.post}, '/admin', (final req) {
     final method = req.method.name.toUpperCase();
     return Response.ok(body: Body.fromString('Admin page - $method request'));
   });
+  // end:doctag<routing-basic-anyof-admin>
 
   // Combine router with fallback for unmatched routes
   app.fallback = respondWith((final _) => Response.notFound());

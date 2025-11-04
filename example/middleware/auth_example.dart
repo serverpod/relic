@@ -3,6 +3,7 @@ import 'package:relic/io_adapter.dart';
 import 'package:relic/relic.dart';
 
 /// Simple authentication middleware
+// doctag<middleware-auth-basic>
 Middleware authMiddleware() {
   return (final Handler next) {
     return (final Request req) async {
@@ -18,6 +19,7 @@ Middleware authMiddleware() {
     };
   };
 }
+// end:doctag<middleware-auth-basic>
 
 /// Public handler (no auth needed)
 Future<Response> publicHandler(final Request req) async {

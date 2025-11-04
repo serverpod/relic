@@ -8,6 +8,7 @@ Future<void> main() async {
   final app = RelicApp();
 
   // HTTP Method access
+  // doctag<requests-method-and-url>
   app.get('/info', (final req) {
     final method = req.method; // Method.get
 
@@ -15,8 +16,10 @@ Future<void> main() async {
       body: Body.fromString('Received a ${method.name} request'),
     );
   });
+  // end:doctag<requests-method-and-url>
 
   // Path parameters example
+  // doctag<requests-path-params-id>
   app.get('/users/:id', (final req) {
     final id = req.pathParameters[#id]!;
     final url = req.url;
@@ -27,8 +30,10 @@ Future<void> main() async {
 
     return Response.ok();
   });
+  // end:doctag<requests-path-params-id>
 
   // Query parameters - single values
+  // doctag<requests-query-single>
   app.get('/search', (final req) {
     final query = req.url.queryParameters['query'];
     final page = req.url.queryParameters['page'];
@@ -43,8 +48,10 @@ Future<void> main() async {
       body: Body.fromString('Searching for: $query (page: ${page ?? "1"})'),
     );
   });
+  // end:doctag<requests-query-single>
 
   // Query parameters - multiple values
+  // doctag<requests-query-multi>
   app.get('/filter', (final req) {
     final tags = req.url.queryParametersAll['tag'] ?? [];
 
@@ -52,15 +59,15 @@ Future<void> main() async {
       body: Body.fromString('Filtering by tags: ${tags.join(", ")}'),
     );
   });
+  // end:doctag<requests-query-multi>
 
   // Type-safe headers
+  // doctag<requests-headers-type-safe>
   app.get('/headers-info', (final req) {
-    final request = req;
-
     // Get typed values
-    final mimeType = request.mimeType; // MimeType? (from Content-Type)
-    final userAgent = request.headers.userAgent; // String?
-    final contentLength = request.headers.contentLength; // int?
+    final mimeType = req.mimeType; // MimeType? (from Content-Type)
+    final userAgent = req.headers.userAgent; // String?
+    final contentLength = req.headers.contentLength; // int?
 
     return Response.ok(
       body: Body.fromString(
@@ -70,8 +77,10 @@ Future<void> main() async {
       ),
     );
   });
+  // end:doctag<requests-headers-type-safe>
 
   // Authorization headers
+  // doctag<requests-authorization-header>
   app.get('/protected', (final req) {
     final auth = req.headers.authorization;
 
@@ -92,14 +101,18 @@ Future<void> main() async {
       return Response.unauthorized();
     }
   });
+  // end:doctag<requests-authorization-header>
 
   // Reading request body as string
+  // doctag<requests-body-as-string>
   app.post('/submit', (final req) async {
     final bodyText = await req.readAsString();
     return Response.ok(body: Body.fromString('Received: $bodyText'));
   });
+  // end:doctag<requests-body-as-string>
 
   // JSON parsing example
+  // doctag<requests-json-parse>
   app.post('/api/users', (final req) async {
     try {
       final bodyText = await req.readAsString();
@@ -121,8 +134,10 @@ Future<void> main() async {
       return Response.badRequest(body: Body.fromString('Invalid JSON: $e'));
     }
   });
+  // end:doctag<requests-json-parse>
 
   // Reading as a byte stream
+  // doctag<requests-body-byte-stream>
   app.post('/upload', (final req) async {
     final stream = req.read(); // Stream<Uint8List>
 
@@ -134,8 +149,10 @@ Future<void> main() async {
 
     return Response.ok(body: Body.fromString('Uploaded $totalBytes bytes'));
   });
+  // end:doctag<requests-body-byte-stream>
 
   // Check if body is empty
+  // doctag<requests-body-empty-check>
   app.post('/data', (final req) {
     if (req.isEmpty) {
       return Response.badRequest(
@@ -146,8 +163,10 @@ Future<void> main() async {
     // Body exists, safe to read...
     return Response.ok();
   });
+  // end:doctag<requests-body-empty-check>
 
   // Validate query parameters
+  // doctag<requests-query-validate-page>
   app.get('/page', (final req) {
     final pageStr = req.url.queryParameters['page'];
 
@@ -165,8 +184,10 @@ Future<void> main() async {
     // Use validated page number...
     return Response.ok();
   });
+  // end:doctag<requests-query-validate-page>
 
   // Handle missing headers gracefully
+  // doctag<requests-headers-user-agent>
   app.get('/info', (final req) {
     final userAgent = req.headers.userAgent;
 
@@ -177,6 +198,7 @@ Future<void> main() async {
 
     return Response.ok(body: Body.fromString(message));
   });
+  // end:doctag<requests-headers-user-agent>
 
   await app.serve();
 }

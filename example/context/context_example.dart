@@ -12,6 +12,7 @@ import 'package:web_socket/web_socket.dart';
 /// - Hijack: Raw connection control
 
 /// Simple HTML page for demonstration
+// doctag<context-html-homepage>
 String _htmlHomePage() {
   return '''
 <!DOCTYPE html>
@@ -42,7 +43,9 @@ Future<Response> homeHandler(final Request req) async {
     ),
   );
 }
+// end:doctag<context-html-homepage>
 
+// doctag<context-api-json>
 Future<Response> apiHandler(final Request req) async {
   final data = {
     'message': 'Hello from Relic API!',
@@ -54,6 +57,7 @@ Future<Response> apiHandler(final Request req) async {
     body: Body.fromString(jsonEncode(data), mimeType: MimeType.json),
   );
 }
+// end:doctag<context-api-json>
 
 Future<Response> userHandler(final Request req) async {
   final userId = req.pathParameters[#id];
@@ -68,6 +72,7 @@ Future<Response> userHandler(final Request req) async {
   );
 }
 
+// doctag<context-websocket-echo>
 WebSocketUpgrade webSocketHandler(final Request req) {
   return WebSocketUpgrade((final webSocket) async {
     log('WebSocket connection established');
@@ -91,6 +96,7 @@ WebSocketUpgrade webSocketHandler(final Request req) {
     }
   });
 }
+// end:doctag<context-websocket-echo>
 
 Hijack customProtocolHandler(final Request req) {
   return Hijack((final channel) {
@@ -109,20 +115,19 @@ Hijack customProtocolHandler(final Request req) {
   });
 }
 
+// doctag<context-request-inspect>
 Future<Response> dataHandler(final Request req) async {
-  final request = req;
-
   // Access basic HTTP information
-  final method = request.method; // 'GET', 'POST', etc.
-  final path = request.url.path; // '/api/users'
-  final query = request.url.query; // 'limit=10&offset=0'
+  final method = req.method; // 'GET', 'POST', etc.
+  final path = req.url.path; // '/api/users'
+  final query = req.url.query; // 'limit=10&offset=0'
 
   log('method: $method, path: $path, query: $query');
 
   // Access headers (these are typed accessors from the Headers class)
-  final authHeader = request.headers.authorization; // 'Bearer token123' or null
+  final authHeader = req.headers.authorization; // 'Bearer token123' or null
   final contentType =
-      request
+      req
           .body
           .bodyType
           ?.mimeType; // appljson, octet-stream, plainText, etc. or null
@@ -132,7 +137,7 @@ Future<Response> dataHandler(final Request req) async {
   // Read request body for POST with JSON
   if (method == Method.post && contentType == MimeType.json) {
     try {
-      final bodyString = await request.readAsString();
+      final bodyString = await req.readAsString();
       final jsonData = json.decode(bodyString) as Map<String, dynamic>;
 
       return Response.ok(
@@ -146,6 +151,7 @@ Future<Response> dataHandler(final Request req) async {
   // Return bad request if the content type is not JSON
   return Response.badRequest(body: Body.fromString('Invalid Request'));
 }
+// end:doctag<context-request-inspect>
 
 void main() async {
   // Set up the router with proper routes

@@ -131,6 +131,7 @@ Future<Response> echoHandler(final Request req) async {
 }
 
 /// JSON API handler
+// doctag<body-json-api-handler>
 Future<Response> apiDataHandler(final Request req) async {
   final jsonData = await req.readAsString();
   final data = jsonDecode(jsonData);
@@ -144,8 +145,10 @@ Future<Response> apiDataHandler(final Request req) async {
     ),
   );
 }
+// end:doctag<body-json-api-handler>
 
 /// File upload handler with size validation
+// doctag<body-upload-validate-size>
 Future<Response> uploadHandler(final Request req) async {
   const maxFileSize = 10 * 1024 * 1024; // 10MB
   final contentLength = req.body.contentLength;
@@ -165,8 +168,10 @@ Future<Response> uploadHandler(final Request req) async {
 
   return Response.ok(body: Body.fromString('Upload successful'));
 }
+// end:doctag<body-upload-validate-size>
 
 /// Image response handler with automatic format detection
+// doctag<body-image-auto-format>
 Future<Response> imageHandler(final Request req) async {
   final file = File('example/static_files/logo.svg');
   final imageBytes = await file.readAsBytes();
@@ -175,8 +180,10 @@ Future<Response> imageHandler(final Request req) async {
     body: Body.fromData(imageBytes, mimeType: MimeType.parse('image/svg+xml')),
   );
 }
+// end:doctag<body-image-auto-format>
 
 /// Streaming response handler with chunked transfer encoding
+// doctag<body-streaming-chunked>
 Future<Response> streamHandler(final Request req) async {
   Stream<Uint8List> generateLargeDataset() async* {
     for (var i = 0; i < 100; i++) {
@@ -195,3 +202,5 @@ Future<Response> streamHandler(final Request req) async {
     ),
   );
 }
+
+// end:doctag<body-streaming-chunked>

@@ -3,6 +3,7 @@ import 'package:relic/io_adapter.dart';
 import 'package:relic/relic.dart';
 
 /// Simple middleware that adds a header
+// doctag<middleware-add-server-header>
 Middleware addServerHeader() {
   return (final Handler next) {
     return (final Request req) async {
@@ -21,6 +22,7 @@ Middleware addServerHeader() {
     };
   };
 }
+// end:doctag<middleware-add-server-header>
 
 /// Simple handler
 Future<Response> simpleHandler(final Request req) async {
