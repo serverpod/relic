@@ -68,9 +68,9 @@ void main() {
       final router = Router<Handler>();
       router.use('/', middlewareObject.call);
 
-      var innerHandlerCalled = false;
+      var nextCalled = false;
       router.get('/test', (final req) {
-        innerHandlerCalled = true;
+        nextCalled = true;
         return Response.ok();
       });
 
@@ -78,7 +78,7 @@ void main() {
       final req = request..setToken(Object());
       final result = await router.asHandler(req) as Response;
 
-      expect(innerHandlerCalled, isFalse);
+      expect(nextCalled, isFalse);
       expect(result.statusCode, 403);
       expect(await result.readAsString(), 'Forbidden');
     });

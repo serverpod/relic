@@ -4,9 +4,9 @@ import 'package:relic/relic.dart';
 
 /// Simple middleware that adds a header
 Middleware addServerHeader() {
-  return (final Handler innerHandler) {
+  return (final Handler next) {
     return (final Request req) async {
-      final result = await innerHandler(req);
+      final result = await next(req);
 
       if (result is Response) {
         final newResponse = result.copyWith(

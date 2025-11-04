@@ -4,7 +4,7 @@ import 'package:relic/relic.dart';
 
 /// Simple authentication middleware
 Middleware authMiddleware() {
-  return (final Handler innerHandler) {
+  return (final Handler next) {
     return (final Request req) async {
       // Check for API key in header
       final apiKey = req.headers['X-API-Key']?.first;
@@ -14,7 +14,7 @@ Middleware authMiddleware() {
       }
 
       log('User authenticated with API key');
-      return await innerHandler(req);
+      return await next(req);
     };
   };
 }

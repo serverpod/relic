@@ -6,7 +6,7 @@ import 'package:relic/relic.dart';
 
 /// Simple CORS middleware
 Middleware corsMiddleware() {
-  return (final Handler innerHandler) {
+  return (final Handler next) {
     return (final Request req) async {
       // Handle preflight requests
       if (req.method == Method.options) {
@@ -20,7 +20,7 @@ Middleware corsMiddleware() {
       }
 
       // Process normal request
-      final result = await innerHandler(req);
+      final result = await next(req);
 
       // Add CORS headers to response
       if (result is Response) {

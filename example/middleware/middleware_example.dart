@@ -6,9 +6,9 @@ import 'package:relic/relic.dart';
 
 /// Middleware that adds a custom header
 Middleware addHeaderMiddleware() {
-  return (final Handler innerHandler) {
+  return (final Handler next) {
     return (final Request req) async {
-      final result = await innerHandler(req);
+      final result = await next(req);
 
       if (result is Response) {
         final newResponse = result.copyWith(
@@ -26,11 +26,11 @@ Middleware addHeaderMiddleware() {
 
 /// Timing middleware
 Middleware timingMiddleware() {
-  return (final Handler innerHandler) {
+  return (final Handler next) {
     return (final Request req) async {
       final stopwatch = Stopwatch()..start();
 
-      final result = await innerHandler(req);
+      final result = await next(req);
 
       stopwatch.stop();
       log('Request took ${stopwatch.elapsedMilliseconds}ms');
@@ -42,10 +42,10 @@ Middleware timingMiddleware() {
 
 /// Simple error handling middleware
 Middleware errorHandlingMiddleware() {
-  return (final Handler innerHandler) {
+  return (final Handler next) {
     return (final Request req) async {
       try {
-        return await innerHandler(req);
+        return await next(req);
       } catch (error) {
         return Response.internalServerError(
           body: Body.fromString('Something went wrong'),

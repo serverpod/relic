@@ -11,7 +11,7 @@ import '../logger/logger.dart';
 /// The `isError` parameter indicates whether the message is caused by an error.
 ///
 /// If [logger] is not passed, the message is just passed to [print].
-Middleware logRequests({final Logger? logger}) => (final innerHandler) {
+Middleware logRequests({final Logger? logger}) => (final next) {
   final localLogger = logger ?? logMessage;
 
   return (final req) async {
@@ -19,7 +19,7 @@ Middleware logRequests({final Logger? logger}) => (final innerHandler) {
     final watch = Stopwatch()..start();
 
     try {
-      final result = await innerHandler(req);
+      final result = await next(req);
       final msg = switch (result) {
         final Response rc => '${rc.statusCode}',
         final HijackedContext _ => 'hijacked',
