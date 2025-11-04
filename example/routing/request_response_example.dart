@@ -79,7 +79,8 @@ Future<void> main() async {
     final tags = ctx.request.url.queryParametersAll['tag'] ?? [];
     final results = {
       'tags': tags,
-      'filtered_items': tags.map((tag) => 'Item tagged with $tag').toList(),
+      'filtered_items':
+          tags.map((final tag) => 'Item tagged with $tag').toList(),
     };
 
     return ctx.respond(
@@ -270,7 +271,7 @@ Future<void> main() async {
       }
     }
 
-    const html = '''
+    final html = '''
 <!DOCTYPE html>
 <html>
 <head><title>My Page</title></head>
