@@ -82,8 +82,7 @@ class _RoutingMiddlewareBuilder<T extends Object> {
   Middleware get asMiddleware => call;
 
   Handler call(final Handler next) {
-    return (final ctx) async {
-      final req = ctx;
+    return (final req) async {
       final path = Uri.decodeFull(req.url.path);
       final result = _router.lookup(req.method, path);
       switch (result) {
@@ -93,15 +92,15 @@ class _RoutingMiddlewareBuilder<T extends Object> {
             headers: Headers.build((final mh) => mh.allow = result.allowed),
           );
         case PathMiss():
-          return await next(ctx);
+          return await next(req);
         case final RouterMatch<T> match:
-          _routingContext[ctx] = (
+          _routingContext[req] = (
             parameters: match.parameters,
             matched: match.matched,
             remaining: match.remaining,
           );
           final handler = _toHandler(match.value);
-          return await handler(ctx);
+          return await handler(req);
       }
     };
   }
@@ -132,9 +131,9 @@ extension ContextEx on Request {
   ///
   /// Example:
   /// ```dart
-  /// router.get('/users/:id', (ctx) {
-  ///   final id = ctx.pathParameters[#id]; // Extract 'id' parameter
-  ///   return ctx.respond(Response.ok());
+  /// router.get('/users/:id', (req) {
+  ///   final id = req.pathParameters[#id]; // Extract 'id' parameter
+  ///   return req.respond(Response.ok());
   /// });
   /// ```
   ///

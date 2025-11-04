@@ -9,7 +9,7 @@ import 'package:test/test.dart';
 import 'util/test_util.dart';
 
 Handler _createDelayedHandler() {
-  return (final ctx) async {
+  return (final req) async {
     // Block for a fixed duration.
     await Future<void>.delayed(const Duration(milliseconds: 1000));
     return Response.ok();

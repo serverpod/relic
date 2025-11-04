@@ -21,8 +21,8 @@ import '../router/router.dart';
 /// ## Basic Handler
 ///
 /// ```dart
-/// Response myHandler(RequestContext ctx) {
-///   return ctx.respond(
+/// Response myHandler(RequestContext req) {
+///   return req.respond(
 ///     Response.ok(
 ///       body: Body.fromString('Hello, World!'),
 ///     ),
@@ -33,9 +33,9 @@ import '../router/router.dart';
 /// ## Async Handler
 ///
 /// ```dart
-/// Future<Response> asyncHandler(RequestContext ctx) async {
+/// Future<Response> asyncHandler(RequestContext req) async {
 ///   final data = await fetchDataFromDatabase();
-///   return ctx.respond(
+///   return req.respond(
 ///     Response.ok(
 ///       body: Body.fromString(jsonEncode(data), mimeType: MimeType.json),
 ///     ),
@@ -47,9 +47,9 @@ import '../router/router.dart';
 ///
 /// ```dart
 /// // Route: /users/:id
-/// Handler userHandler(RequestContext ctx) {
-///   final id = ctx.pathParameters[#id];
-///   return ctx.respond(
+/// Handler userHandler(RequestContext req) {
+///   final id = req.pathParameters[#id];
+///   return req.respond(
 ///     Response.ok(
 ///       body: Body.fromString('User ID: $id'),
 ///     ),
@@ -86,8 +86,8 @@ typedef Responder = FutureOr<Response> Function(Request);
 /// );
 /// ```
 Handler respondWith(final Responder responder) {
-  return (final ctx) async {
-    return await responder(ctx);
+  return (final req) async {
+    return await responder(req);
   };
 }
 

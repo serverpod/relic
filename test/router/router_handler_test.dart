@@ -14,14 +14,14 @@ void main() {
       'then the handler is invoked and returns response', () async {
     final router = RelicRouter();
     var handlerCalled = false;
-    router.get('/test', (final ctx) {
+    router.get('/test', (final req) {
       handlerCalled = true;
       return Response.ok(body: Body.fromString('success'));
     });
 
     final request = _request('/test');
-    final ctx = request..setToken(Object());
-    final result = await router.asHandler(ctx) as Response;
+    final req = request..setToken(Object());
+    final result = await router.asHandler(req) as Response;
 
     expect(handlerCalled, isTrue);
     expect(result.statusCode, 200);
@@ -33,15 +33,15 @@ void main() {
     final router = RelicRouter();
     String? capturedName;
     String? capturedAge;
-    router.get('/user/:name/age/:age', (final ctx) {
-      capturedName = ctx.pathParameters[#name];
-      capturedAge = ctx.pathParameters[#age];
+    router.get('/user/:name/age/:age', (final req) {
+      capturedName = req.pathParameters[#name];
+      capturedAge = req.pathParameters[#age];
       return Response.ok();
     });
 
     final request = _request('/user/alice/age/30');
-    final ctx = request..setToken(Object());
-    await router.asHandler(ctx);
+    final req = request..setToken(Object());
+    await router.asHandler(req);
 
     expect(capturedName, 'alice');
     expect(capturedAge, '30');
@@ -51,11 +51,11 @@ void main() {
       'when calling router with POST to same path, '
       'then returns 405 with Allow header', () async {
     final router = RelicRouter();
-    router.get('/test', (final ctx) => Response.ok());
+    router.get('/test', (final req) => Response.ok());
 
     final request = _request('/test', method: Method.post);
-    final ctx = request..setToken(Object());
-    final result = await router.asHandler(ctx) as Response;
+    final req = request..setToken(Object());
+    final result = await router.asHandler(req) as Response;
 
     expect(result.statusCode, 405);
     expect(result.headers.allow, contains(Method.get));
@@ -65,12 +65,12 @@ void main() {
       'when calling router with unregistered method, '
       'then returns 405 with all allowed methods in Allow header', () async {
     final router = RelicRouter();
-    router.get('/test', (final ctx) => Response.ok());
-    router.post('/test', (final ctx) => Response.ok());
+    router.get('/test', (final req) => Response.ok());
+    router.post('/test', (final req) => Response.ok());
 
     final request = _request('/test', method: Method.put);
-    final ctx = request..setToken(Object());
-    final result = await router.asHandler(ctx) as Response;
+    final req = request..setToken(Object());
+    final result = await router.asHandler(req) as Response;
 
     expect(result.statusCode, 405);
     expect(result.headers.allow, containsAll([Method.get, Method.post]));
@@ -80,11 +80,11 @@ void main() {
       'when calling router with unmatched path, '
       'then returns 404', () async {
     final router = RelicRouter();
-    router.get('/test', (final ctx) => Response.ok());
+    router.get('/test', (final req) => Response.ok());
 
     final request = _request('/nonexistent');
-    final ctx = request..setToken(Object());
-    final result = await router.asHandler(ctx) as Response;
+    final req = request..setToken(Object());
+    final result = await router.asHandler(req) as Response;
 
     expect(result.statusCode, 404);
   });
@@ -93,10 +93,10 @@ void main() {
       'when path misses in router, '
       'then fallback handler is called', () async {
     final router = RelicRouter();
-    router.get('/api/users', (final ctx) => Response.ok());
+    router.get('/api/users', (final req) => Response.ok());
 
     var fallbackCalled = false;
-    router.fallback = (final ctx) {
+    router.fallback = (final req) {
       fallbackCalled = true;
       return Response.ok(body: Body.fromString('fallback'));
     };
@@ -104,8 +104,8 @@ void main() {
     final handler = router.asHandler;
 
     final request = _request('/other');
-    final ctx = request..setToken(Object());
-    final result = await handler(ctx) as Response;
+    final req = request..setToken(Object());
+    final result = await handler(req) as Response;
 
     expect(fallbackCalled, isTrue);
     expect(result.statusCode, 200);
@@ -116,14 +116,14 @@ void main() {
       'then remaining path is accessible via context', () async {
     final router = RelicRouter();
     String? capturedRemaining;
-    router.get('/static/**', (final ctx) {
-      capturedRemaining = ctx.remainingPath.toString();
+    router.get('/static/**', (final req) {
+      capturedRemaining = req.remainingPath.toString();
       return Response.ok();
     });
 
     final request = _request('/static/css/main.css');
-    final ctx = request..setToken(Object());
-    await router.asHandler(ctx);
+    final req = request..setToken(Object());
+    await router.asHandler(req);
 
     expect(capturedRemaining, '/css/main.css');
   });
@@ -133,14 +133,14 @@ void main() {
       'then matched path is accessible via context', () async {
     final router = RelicRouter();
     String? capturedMatched;
-    router.get('/api/v1/users', (final ctx) {
-      capturedMatched = ctx.matchedPath.toString();
+    router.get('/api/v1/users', (final req) {
+      capturedMatched = req.matchedPath.toString();
       return Response.ok();
     });
 
     final request = _request('/api/v1/users');
-    final ctx = request..setToken(Object());
-    await router.asHandler(ctx);
+    final req = request..setToken(Object());
+    await router.asHandler(req);
 
     expect(capturedMatched, '/api/v1/users');
   });
@@ -150,14 +150,14 @@ void main() {
       'then handler is invoked', () async {
     final router = RelicRouter();
     var handlerCalled = false;
-    router.get('/files/*/download', (final ctx) {
+    router.get('/files/*/download', (final req) {
       handlerCalled = true;
       return Response.ok();
     });
 
     final request = _request('/files/doc123/download');
-    final ctx = request..setToken(Object());
-    await router.asHandler(ctx);
+    final req = request..setToken(Object());
+    await router.asHandler(req);
 
     expect(handlerCalled, isTrue);
   });
@@ -168,8 +168,8 @@ void main() {
     final router = RelicRouter();
 
     final request = _request('/anything');
-    final ctx = request..setToken(Object());
-    final result = await router.asHandler(ctx) as Response;
+    final req = request..setToken(Object());
+    final result = await router.asHandler(req) as Response;
 
     expect(result.statusCode, 404);
   });
@@ -178,10 +178,10 @@ void main() {
       'when calling router with matching request, '
       'then middleware transformation is applied', () async {
     final router = RelicRouter();
-    router.get('/test', (final ctx) => Response.ok());
+    router.get('/test', (final req) => Response.ok());
     router.use('/', (final handler) {
-      return (final ctx) async {
-        final result = await handler(ctx) as Response;
+      return (final req) async {
+        final result = await handler(req) as Response;
         return result.copyWith(
           headers: Headers.build((final h) => h['X-Custom'] = ['applied']),
         );
@@ -189,8 +189,8 @@ void main() {
     });
 
     final request = _request('/test');
-    final ctx = request..setToken(Object());
-    final result = await router.asHandler(ctx) as Response;
+    final req = request..setToken(Object());
+    final result = await router.asHandler(req) as Response;
 
     expect(result.headers['X-Custom'], ['applied']);
   });
@@ -199,17 +199,17 @@ void main() {
       'when calling router with unmatched path, '
       'then fallback handler is called', () async {
     final router = RelicRouter();
-    router.get('/users', (final ctx) => Response.ok());
+    router.get('/users', (final req) => Response.ok());
 
     var fallbackCalled = false;
-    router.fallback = (final ctx) {
+    router.fallback = (final req) {
       fallbackCalled = true;
       return Response.ok(body: Body.fromString('fallback response'));
     };
 
     final request = _request('/nonexistent');
-    final ctx = request..setToken(Object());
-    final result = await router.asHandler(ctx) as Response;
+    final req = request..setToken(Object());
+    final result = await router.asHandler(req) as Response;
 
     expect(fallbackCalled, isTrue);
     expect(result.statusCode, 200);
@@ -220,12 +220,12 @@ void main() {
       'when calling router with unmatched path, '
       'then returns 404', () async {
     final router = RelicRouter();
-    router.get('/users', (final ctx) => Response.ok());
+    router.get('/users', (final req) => Response.ok());
     // No fallback set
 
     final request = _request('/nonexistent');
-    final ctx = request..setToken(Object());
-    final result = await router.asHandler(ctx) as Response;
+    final req = request..setToken(Object());
+    final result = await router.asHandler(req) as Response;
 
     expect(result.statusCode, 404);
   });
@@ -234,17 +234,17 @@ void main() {
       'when calling router with method miss, '
       'then returns 405 (not fallback)', () async {
     final router = RelicRouter();
-    router.get('/users', (final ctx) => Response.ok());
+    router.get('/users', (final req) => Response.ok());
 
     var fallbackCalled = false;
-    router.fallback = (final ctx) {
+    router.fallback = (final req) {
       fallbackCalled = true;
       return Response.ok();
     };
 
     final request = _request('/users', method: Method.post);
-    final ctx = request..setToken(Object());
-    final result = await router.asHandler(ctx) as Response;
+    final req = request..setToken(Object());
+    final result = await router.asHandler(req) as Response;
 
     expect(fallbackCalled, isFalse);
     expect(result.statusCode, 405);
@@ -255,17 +255,17 @@ void main() {
       'when fallback is overwritten, '
       'then new fallback is used', () async {
     final router = RelicRouter();
-    router.get('/users', (final ctx) => Response.ok());
+    router.get('/users', (final req) => Response.ok());
 
     router.fallback =
-        (final ctx) => Response.ok(body: Body.fromString('first fallback'));
+        (final req) => Response.ok(body: Body.fromString('first fallback'));
 
     router.fallback =
-        (final ctx) => Response.ok(body: Body.fromString('second fallback'));
+        (final req) => Response.ok(body: Body.fromString('second fallback'));
 
     final request = _request('/nonexistent');
-    final ctx = request..setToken(Object());
-    final result = await router.asHandler(ctx) as Response;
+    final req = request..setToken(Object());
+    final result = await router.asHandler(req) as Response;
 
     expect(await result.readAsString(), 'second fallback');
   });
@@ -274,15 +274,15 @@ void main() {
       'when calling router with unmatched path, '
       'then returns 404', () async {
     final router = RelicRouter();
-    router.get('/users', (final ctx) => Response.ok());
+    router.get('/users', (final req) => Response.ok());
 
     router.fallback =
-        (final ctx) => Response.ok(body: Body.fromString('fallback'));
+        (final req) => Response.ok(body: Body.fromString('fallback'));
     router.fallback = null; // Clear fallback
 
     final request = _request('/nonexistent');
-    final ctx = request..setToken(Object());
-    final result = await router.asHandler(ctx) as Response;
+    final req = request..setToken(Object());
+    final result = await router.asHandler(req) as Response;
 
     expect(result.statusCode, 404);
   });

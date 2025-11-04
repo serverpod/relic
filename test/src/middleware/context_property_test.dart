@@ -145,8 +145,8 @@ void main() {
 
     setUp(() {
       stringProperty = ContextProperty<String>('multiContextProp');
-      context1 = _createContextInstance('ctx1');
-      context2 = _createContextInstance('ctx2');
+      context1 = _createContextInstance('req1');
+      context2 = _createContextInstance('req2');
     });
 
     test(

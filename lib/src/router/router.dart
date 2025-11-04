@@ -246,45 +246,45 @@ extension RouteEx<T extends Object> on Router<T> {
 /// final router = Router<Handler>();
 ///
 /// // Static routes
-/// router.get('/', (ctx) {
-///   return ctx.respond(Response.ok(
+/// router.get('/', (req) {
+///   return req.respond(Response.ok(
 ///     body: Body.fromString('Home'),
 ///   ));
 /// });
 ///
 /// // Route with parameters
-/// router.get('/users/:id', (ctx) {
-///   final id = ctx.pathParameters['id'];
-///   return ctx.respond(Response.ok(
+/// router.get('/users/:id', (req) {
+///   final id = req.pathParameters['id'];
+///   return req.respond(Response.ok(
 ///     body: Body.fromString('User $id'),
 ///   ));
 /// });
 ///
 /// // Multiple parameters
-/// router.get('/posts/:year/:month/:slug', (ctx) {
-///   final year = ctx.pathParameters['year'];
-///   final month = ctx.pathParameters['month'];
-///   final slug = ctx.pathParameters['slug'];
-///   return ctx.respond(Response.ok());
+/// router.get('/posts/:year/:month/:slug', (req) {
+///   final year = req.pathParameters['year'];
+///   final month = req.pathParameters['month'];
+///   final slug = req.pathParameters['slug'];
+///   return req.respond(Response.ok());
 /// });
 /// ```
 ///
 /// ## HTTP Methods
 ///
 /// ```dart
-/// router.get('/users', (ctx) => /* list users */);
-/// router.post('/users', (ctx) => /* create user */);
-/// router.put('/users/:id', (ctx) => /* update user */);
-/// router.patch('/users/:id', (ctx) => /* partial update */);
-/// router.delete('/users/:id', (ctx) => /* delete user */);
+/// router.get('/users', (req) => /* list users */);
+/// router.post('/users', (req) => /* create user */);
+/// router.put('/users/:id', (req) => /* update user */);
+/// router.patch('/users/:id', (req) => /* partial update */);
+/// router.delete('/users/:id', (req) => /* delete user */);
 /// ```
 ///
 /// ## Sub-routers
 ///
 /// ```dart
 /// final apiRouter = Router<Handler>();
-/// apiRouter.get('/users', (ctx) => /* users */);
-/// apiRouter.get('/posts', (ctx) => /* posts */);
+/// apiRouter.get('/users', (req) => /* users */);
+/// apiRouter.get('/posts', (req) => /* posts */);
 ///
 /// final mainRouter = Router<Handler>();
 /// mainRouter.attach('/api', apiRouter);
@@ -321,10 +321,10 @@ typedef RelicRouter = Router<Handler>;
 ///       ..delete('/', delete);
 ///   }
 ///
-///   Response create(final RequestContext ctx) { }
-///   Response read(final RequestContext ctx) { }
-///   Response update(final RequestContext ctx) { }
-///   Response delete(final RequestContext ctx) { }
+///   Response create(final RequestContext req) { }
+///   Response read(final RequestContext req) { }
+///   Response update(final RequestContext req) { }
+///   Response delete(final RequestContext req) { }
 /// }
 /// ```
 typedef RouterInjectable = InjectableIn<RelicRouter>;

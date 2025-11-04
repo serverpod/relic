@@ -16,7 +16,7 @@ Future<void> main() async {
     StaticHandler.directory(
       staticDir,
       cacheControl:
-          (final ctx, final fileInfo) => CacheControlHeader(maxAge: 86400),
+          (final req, final fileInfo) => CacheControlHeader(maxAge: 86400),
     ).asHandler,
   );
 
@@ -27,7 +27,7 @@ Future<void> main() async {
     StaticHandler.file(
       File('example/static_files/logo.svg'),
       cacheControl:
-          (final ctx, final fileInfo) => CacheControlHeader(maxAge: 3600),
+          (final req, final fileInfo) => CacheControlHeader(maxAge: 3600),
     ).asHandler,
   );
 
@@ -39,7 +39,7 @@ Future<void> main() async {
     StaticHandler.directory(
       staticDir,
       cacheControl:
-          (final ctx, final fileInfo) => CacheControlHeader(
+          (final req, final fileInfo) => CacheControlHeader(
             maxAge: 3600, // 1 hour
             publicCache: true, // Allow CDN caching
           ),
@@ -54,7 +54,7 @@ Future<void> main() async {
     StaticHandler.directory(
       staticDir,
       cacheControl:
-          (final ctx, final fileInfo) => CacheControlHeader(
+          (final req, final fileInfo) => CacheControlHeader(
             maxAge: 31536000, // 1 year
             publicCache: true,
             immutable: true, // Browser won't revalidate
@@ -94,7 +94,7 @@ Future<void> main() async {
     StaticHandler.directory(
       staticDir,
       cacheControl:
-          (final ctx, final fileInfo) => CacheControlHeader(
+          (final req, final fileInfo) => CacheControlHeader(
             maxAge: 31536000, // 1 year - safe with cache busting
             publicCache: true,
             immutable: true,

@@ -7,12 +7,12 @@ Future<void> main() async {
   final app = RelicApp();
 
   // Success response example
-  app.get('/status', (final ctx) {
+  app.get('/status', (final req) {
     return Response.ok(body: Body.fromString('Status is Ok'));
   });
 
   // Bad request example
-  app.post('/api/users', (final ctx) async {
+  app.post('/api/users', (final req) async {
     try {
       throw 'Invalid JSON';
     } catch (e) {

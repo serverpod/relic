@@ -11,7 +11,7 @@ import 'package:relic/relic.dart';
 Future<void> main() async {
   final app =
       RelicApp()
-        ..fallback = (final ctx) {
+        ..fallback = (final req) {
           return Response.ok(body: Body.fromString('Body Example'));
         };
 
@@ -78,12 +78,12 @@ Future<void> main() async {
 }
 
 /// Basic text response handler
-Response helloHandler(final Request ctx) {
+Response helloHandler(final Request req) {
   return Response.ok(body: Body.fromString('Hello, World!'));
 }
 
 /// JSON with automatic MIME detection handler
-Response dataHandler(final Request ctx) {
+Response dataHandler(final Request req) {
   return Response.ok(
     body: Body.fromString('{"message": "Hello"}'),
     // Automatically detects application/json
@@ -91,7 +91,7 @@ Response dataHandler(final Request ctx) {
 }
 
 /// Small file handler - read entire file into memory
-Future<Response> smallFileHandler(final Request ctx) async {
+Future<Response> smallFileHandler(final Request req) async {
   final file = File('example.txt');
 
   if (!await file.exists()) {
@@ -104,7 +104,7 @@ Future<Response> smallFileHandler(final Request ctx) async {
 }
 
 /// Large file handler - stream for memory efficiency
-Future<Response> largeFileHandler(final Request ctx) async {
+Future<Response> largeFileHandler(final Request req) async {
   final file = File('large-file.dat');
 
   if (!await file.exists()) {
@@ -124,15 +124,15 @@ Future<Response> largeFileHandler(final Request ctx) async {
 }
 
 /// Reading request body as string handler
-Future<Response> echoHandler(final Request ctx) async {
-  final content = await ctx.readAsString();
+Future<Response> echoHandler(final Request req) async {
+  final content = await req.readAsString();
 
   return Response.ok(body: Body.fromString('You sent: $content'));
 }
 
 /// JSON API handler
-Future<Response> apiDataHandler(final Request ctx) async {
-  final jsonData = await ctx.readAsString();
+Future<Response> apiDataHandler(final Request req) async {
+  final jsonData = await req.readAsString();
   final data = jsonDecode(jsonData);
 
   log('Received: $data');
@@ -146,15 +146,15 @@ Future<Response> apiDataHandler(final Request ctx) async {
 }
 
 /// File upload handler with size validation
-Future<Response> uploadHandler(final Request ctx) async {
+Future<Response> uploadHandler(final Request req) async {
   const maxFileSize = 10 * 1024 * 1024; // 10MB
-  final contentLength = ctx.body.contentLength;
+  final contentLength = req.body.contentLength;
 
   if (contentLength != null && contentLength > maxFileSize) {
     return Response.badRequest(body: Body.fromString('File too large'));
   }
 
-  final stream = ctx.read();
+  final stream = req.read();
   final file = File('uploads/file.bin');
   await file.parent.create(recursive: true);
   await stream.forEach((final chunk) => file.openWrite().write(chunk));
@@ -163,7 +163,7 @@ Future<Response> uploadHandler(final Request ctx) async {
 }
 
 /// Image response handler with automatic format detection
-Future<Response> imageHandler(final Request ctx) async {
+Future<Response> imageHandler(final Request req) async {
   final file = File('example/static_files/logo.svg');
   final imageBytes = await file.readAsBytes();
 
@@ -173,7 +173,7 @@ Future<Response> imageHandler(final Request ctx) async {
 }
 
 /// Streaming response handler with chunked transfer encoding
-Future<Response> streamHandler(final Request ctx) async {
+Future<Response> streamHandler(final Request req) async {
   Stream<Uint8List> generateLargeDataset() async* {
     for (var i = 0; i < 100; i++) {
       await Future<void>.delayed(const Duration(milliseconds: 50));

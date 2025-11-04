@@ -7,8 +7,8 @@ import 'package:relic/relic.dart';
 /// Middleware that adds a custom header
 Middleware addHeaderMiddleware() {
   return (final Handler innerHandler) {
-    return (final Request ctx) async {
-      final result = await innerHandler(ctx);
+    return (final Request req) async {
+      final result = await innerHandler(req);
 
       if (result is Response) {
         final newResponse = result.copyWith(
@@ -27,10 +27,10 @@ Middleware addHeaderMiddleware() {
 /// Timing middleware
 Middleware timingMiddleware() {
   return (final Handler innerHandler) {
-    return (final Request ctx) async {
+    return (final Request req) async {
       final stopwatch = Stopwatch()..start();
 
-      final result = await innerHandler(ctx);
+      final result = await innerHandler(req);
 
       stopwatch.stop();
       log('Request took ${stopwatch.elapsedMilliseconds}ms');
@@ -43,9 +43,9 @@ Middleware timingMiddleware() {
 /// Simple error handling middleware
 Middleware errorHandlingMiddleware() {
   return (final Handler innerHandler) {
-    return (final Request ctx) async {
+    return (final Request req) async {
       try {
-        return await innerHandler(ctx);
+        return await innerHandler(req);
       } catch (error) {
         return Response.internalServerError(
           body: Body.fromString('Something went wrong'),
@@ -56,11 +56,11 @@ Middleware errorHandlingMiddleware() {
 }
 
 /// Simple handlers
-Future<Response> homeHandler(final Request ctx) async {
+Future<Response> homeHandler(final Request req) async {
   return Response.ok(body: Body.fromString('Hello from home page!'));
 }
 
-Future<Response> apiHandler(final Request ctx) async {
+Future<Response> apiHandler(final Request req) async {
   final data = {'message': 'Hello from API!'};
 
   return Response.ok(body: Body.fromString(jsonEncode(data)));

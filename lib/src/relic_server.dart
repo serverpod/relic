@@ -125,8 +125,8 @@ final class _RelicServer implements RelicServer {
     }
 
     try {
-      final ctx = request..setToken(adapterRequest);
-      final newCtx = await handler(ctx);
+      final req = request..setToken(adapterRequest);
+      final newCtx = await handler(req);
       return switch (newCtx) {
         final Response rc => adapter.respond(adapterRequest, rc),
         final HijackedContext hc => adapter.hijack(adapterRequest, hc.callback),
@@ -148,9 +148,9 @@ final class _RelicServer implements RelicServer {
 
   /// Wraps a handler with middleware for error handling, header normalization, etc.
   Handler _wrapHandlerWithMiddleware(final Handler handler) {
-    return (final ctx) async {
+    return (final req) async {
       try {
-        final handledCtx = await handler(ctx);
+        final handledCtx = await handler(req);
         return switch (handledCtx) {
           final Response rc =>
           // If the response doesn't have a date header, add the default one
@@ -163,7 +163,7 @@ final class _RelicServer implements RelicServer {
         };
       } on HeaderException catch (error, stackTrace) {
         // If the request headers are invalid, respond with a 400 Bad Request status.
-        _logError(ctx, 'Error parsing request headers.\n$error', stackTrace);
+        _logError(req, 'Error parsing request headers.\n$error', stackTrace);
         return Response.badRequest(
           body: Body.fromString(error.httpResponseBody),
         );

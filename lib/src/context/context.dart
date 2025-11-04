@@ -23,8 +23,8 @@ sealed class Result {}
 /// communication.
 ///
 /// ```dart
-/// HijackedContext customProtocolHandler(RequestContext ctx) {
-///   return ctx.hijack((channel) {
+/// HijackedContext customProtocolHandler(RequestContext req) {
+///   return req.hijack((channel) {
 ///     log('Connection hijacked for custom protocol');
 ///
 ///     // Send a custom HTTP response manually
@@ -50,8 +50,8 @@ final class HijackedContext extends Result {
 /// (e.g., WebSocket) has been established.
 ///
 /// ```dart
-/// ConnectionContext chatHandler(RequestContext ctx) {
-///   return ctx.connect((webSocket) async {
+/// ConnectionContext chatHandler(RequestContext req) {
+///   return req.connect((webSocket) async {
 ///     // The WebSocket is now active
 ///     webSocket.sendText('Welcome to chat!');
 ///

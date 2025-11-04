@@ -8,8 +8,8 @@ Future<void> main() async {
   final app = RelicApp();
 
   // HTTP Method access
-  app.get('/info', (final ctx) {
-    final method = ctx.method; // Method.get
+  app.get('/info', (final req) {
+    final method = req.method; // Method.get
 
     return Response.ok(
       body: Body.fromString('Received a ${method.name} request'),
@@ -17,10 +17,10 @@ Future<void> main() async {
   });
 
   // Path parameters example
-  app.get('/users/:id', (final ctx) {
-    final id = ctx.pathParameters[#id]!;
-    final url = ctx.url;
-    final fullUri = ctx.requestedUri;
+  app.get('/users/:id', (final req) {
+    final id = req.pathParameters[#id]!;
+    final url = req.url;
+    final fullUri = req.requestedUri;
 
     log('Relative URL: $url, id: $id');
     log('Full URI: $fullUri');
@@ -29,9 +29,9 @@ Future<void> main() async {
   });
 
   // Query parameters - single values
-  app.get('/search', (final ctx) {
-    final query = ctx.url.queryParameters['query'];
-    final page = ctx.url.queryParameters['page'];
+  app.get('/search', (final req) {
+    final query = req.url.queryParameters['query'];
+    final page = req.url.queryParameters['page'];
 
     if (query == null) {
       return Response.badRequest(
@@ -45,8 +45,8 @@ Future<void> main() async {
   });
 
   // Query parameters - multiple values
-  app.get('/filter', (final ctx) {
-    final tags = ctx.url.queryParametersAll['tag'] ?? [];
+  app.get('/filter', (final req) {
+    final tags = req.url.queryParametersAll['tag'] ?? [];
 
     return Response.ok(
       body: Body.fromString('Filtering by tags: ${tags.join(", ")}'),
@@ -54,8 +54,8 @@ Future<void> main() async {
   });
 
   // Type-safe headers
-  app.get('/headers-info', (final ctx) {
-    final request = ctx;
+  app.get('/headers-info', (final req) {
+    final request = req;
 
     // Get typed values
     final mimeType = request.mimeType; // MimeType? (from Content-Type)
@@ -72,8 +72,8 @@ Future<void> main() async {
   });
 
   // Authorization headers
-  app.get('/protected', (final ctx) {
-    final auth = ctx.headers.authorization;
+  app.get('/protected', (final req) {
+    final auth = req.headers.authorization;
 
     if (auth is BearerAuthorizationHeader) {
       final token = auth.token;
@@ -94,15 +94,15 @@ Future<void> main() async {
   });
 
   // Reading request body as string
-  app.post('/submit', (final ctx) async {
-    final bodyText = await ctx.readAsString();
+  app.post('/submit', (final req) async {
+    final bodyText = await req.readAsString();
     return Response.ok(body: Body.fromString('Received: $bodyText'));
   });
 
   // JSON parsing example
-  app.post('/api/users', (final ctx) async {
+  app.post('/api/users', (final req) async {
     try {
-      final bodyText = await ctx.readAsString();
+      final bodyText = await req.readAsString();
       final data = jsonDecode(bodyText) as Map<String, dynamic>;
 
       final name = data['name'] as String?;
@@ -123,8 +123,8 @@ Future<void> main() async {
   });
 
   // Reading as a byte stream
-  app.post('/upload', (final ctx) async {
-    final stream = ctx.read(); // Stream<Uint8List>
+  app.post('/upload', (final req) async {
+    final stream = req.read(); // Stream<Uint8List>
 
     int totalBytes = 0;
     await for (final chunk in stream) {
@@ -136,8 +136,8 @@ Future<void> main() async {
   });
 
   // Check if body is empty
-  app.post('/data', (final ctx) {
-    if (ctx.isEmpty) {
+  app.post('/data', (final req) {
+    if (req.isEmpty) {
       return Response.badRequest(
         body: Body.fromString('Request body is required'),
       );
@@ -148,8 +148,8 @@ Future<void> main() async {
   });
 
   // Validate query parameters
-  app.get('/page', (final ctx) {
-    final pageStr = ctx.url.queryParameters['page'];
+  app.get('/page', (final req) {
+    final pageStr = req.url.queryParameters['page'];
 
     if (pageStr == null) {
       return Response.badRequest(
@@ -167,8 +167,8 @@ Future<void> main() async {
   });
 
   // Handle missing headers gracefully
-  app.get('/info', (final ctx) {
-    final userAgent = ctx.headers.userAgent;
+  app.get('/info', (final req) {
+    final userAgent = req.headers.userAgent;
 
     final message =
         userAgent != null

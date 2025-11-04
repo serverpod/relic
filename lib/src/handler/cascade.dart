@@ -75,11 +75,11 @@ class Cascade {
       );
     }
 
-    return (final ctx) async {
-      if (_parent!._handler == null) return handler(ctx);
-      final newCtx = await _parent.handler(ctx);
+    return (final req) async {
+      if (_parent!._handler == null) return handler(req);
+      final newCtx = await _parent.handler(req);
       if (newCtx is Response && _shouldCascade(newCtx)) {
-        return handler(ctx);
+        return handler(req);
       }
       return newCtx;
     };

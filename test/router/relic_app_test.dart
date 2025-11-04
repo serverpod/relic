@@ -23,7 +23,7 @@ void main() {
     test('Given a RelicApp, '
         'when calling run with adapter factory, '
         'then it creates a RelicServer and mounts the handler', () async {
-      final app = RelicApp()..any('/', (final ctx) => Response.ok());
+      final app = RelicApp()..any('/', (final req) => Response.ok());
 
       final server = await app.run(() => _FakeAdapter());
 
@@ -35,7 +35,7 @@ void main() {
     test('Given a RelicApp, '
         'when calling serve, '
         'then it creates a RelicServer and mounts the handler', () async {
-      final app = RelicApp()..any('/', (final ctx) => Response.ok());
+      final app = RelicApp()..any('/', (final req) => Response.ok());
 
       final server = await app.serve(port: 0);
 
@@ -47,7 +47,7 @@ void main() {
     test('Given a RelicApp, '
         'when calling serve twice, '
         'then it fails the second time', () async {
-      final app = RelicApp()..any('/', (final ctx) => Response.ok());
+      final app = RelicApp()..any('/', (final req) => Response.ok());
 
       await app.serve(port: 0);
       await expectLater(app.serve(port: 0), throwsStateError);
@@ -58,7 +58,7 @@ void main() {
     test('Given a RelicApp, '
         'when calling serve, close, serve, '
         'then it succeeds', () async {
-      final app = RelicApp()..any('/', (final ctx) => Response.ok());
+      final app = RelicApp()..any('/', (final req) => Response.ok());
 
       await app.serve(port: 0);
       await app.close();

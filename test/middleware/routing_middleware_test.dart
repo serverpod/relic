@@ -25,8 +25,8 @@ void main() {
           'When a request matches the parameterized route, '
           'Then the handler receives correct path parameters', () async {
         Map<Symbol, String>? capturedParams;
-        Future<Result> testHandler(final Request ctx) async {
-          capturedParams = ctx.pathParameters;
+        Future<Result> testHandler(final Request req) async {
+          capturedParams = req.pathParameters;
           return Response(200);
         }
 
@@ -50,8 +50,8 @@ void main() {
         'Then the handler receives empty path parameters',
         () async {
           Map<Symbol, String>? capturedParams;
-          Future<Response> testHandler(final Request ctx) async {
-            capturedParams = ctx.pathParameters;
+          Future<Response> testHandler(final Request req) async {
+            capturedParams = req.pathParameters;
             return Response(200);
           }
 
@@ -76,9 +76,9 @@ void main() {
         'Then the next handler is called and pathParameters is empty',
         () async {
           bool nextCalled = false;
-          Future<Response> nextHandler(final Request ctx) async {
+          Future<Response> nextHandler(final Request req) async {
             nextCalled = true;
-            expect(ctx.pathParameters, isEmpty);
+            expect(req.pathParameters, isEmpty);
             return Response(404);
           }
 
@@ -116,9 +116,9 @@ void main() {
           bool handler1Called = false;
           bool handler2Called = false;
 
-          router1.add(Method.get, '/router1/:item', (final Request ctx) async {
+          router1.add(Method.get, '/router1/:item', (final Request req) async {
             handler1Called = true;
-            params1 = ctx.pathParameters;
+            params1 = req.pathParameters;
             return Response(201);
           });
           router2.add(
@@ -162,9 +162,9 @@ void main() {
               return Response(201);
             }),
           );
-          router2.add(Method.get, '/router2/:data', (final Request ctx) async {
+          router2.add(Method.get, '/router2/:data', (final Request req) async {
             handler2Called = true;
-            params2 = ctx.pathParameters;
+            params2 = req.pathParameters;
             return Response(202);
           });
 
@@ -238,10 +238,10 @@ void main() {
           final nestedRouter = RelicRouter();
 
           nestedRouter.add(Method.get, '/details/:detailId', (
-            final Request ctx,
+            final Request req,
           ) async {
             nestedHandlerCalled = true;
-            capturedParams = ctx.pathParameters;
+            capturedParams = req.pathParameters;
             return Response(200);
           });
 
@@ -284,10 +284,10 @@ void main() {
 
           // Define handler for the leaf router
           leafRouter.add(Method.get, '/action/:actionName', (
-            final Request ctx,
+            final Request req,
           ) async {
             deeplyNestedHandlerCalled = true;
-            capturedParams = ctx.pathParameters;
+            capturedParams = req.pathParameters;
             return Response(200);
           });
 
@@ -328,9 +328,9 @@ void main() {
           final mainRouter = RelicRouter();
           final subRouter = RelicRouter();
 
-          subRouter.add(Method.get, '/:id/end', (final Request ctx) async {
+          subRouter.add(Method.get, '/:id/end', (final Request req) async {
             // sub-router uses :id
-            capturedParams = ctx.pathParameters;
+            capturedParams = req.pathParameters;
             return Response(200);
           });
 
@@ -365,9 +365,9 @@ void main() {
               respondWith((_) => Response.ok(body: Body.fromString(s))),
     );
 
-    final ctx = _request('/')..setToken(Object());
+    final req = _request('/')..setToken(Object());
     final resCtx =
-        await mw(respondWith((_) => Response.notFound()))(ctx) as Response;
+        await mw(respondWith((_) => Response.notFound()))(req) as Response;
 
     expect(resCtx.statusCode, 200);
     expect(await resCtx.readAsString(), 'Hurrah!');
@@ -496,7 +496,7 @@ void main() {
       bool nextCalled = false;
       final initialCtx = _request('/posts', method: Method.get)
         ..setToken(Object());
-      final resultingCtx = await middleware((final ctx) async {
+      final resultingCtx = await middleware((final req) async {
         nextCalled = true;
         return Response(404);
       })(initialCtx);

@@ -17,7 +17,7 @@ Future<void> main() async {
           ) // <-- add auth middleware on /api
           ..get(
             '/api/user/info',
-            (final ctx) => Response.ok(body: Body.fromString('${ctx.user}')),
+            (final req) => Response.ok(body: Body.fromString('${req.user}')),
           );
 
     await app.serve();
@@ -48,13 +48,13 @@ class AuthMiddleware {
   User _extractUser(final String token) => int.parse(token);
 
   Handler call(final Handler next) {
-    return (final ctx) {
-      final bearer = ctx.headers.authorization as BearerAuthorizationHeader?;
+    return (final req) {
+      final bearer = req.headers.authorization as BearerAuthorizationHeader?;
       if (bearer == null || !_validate(bearer.token)) {
         return Response.unauthorized();
       } else {
-        _auth[ctx] = _extractUser(bearer.token);
-        return next(ctx);
+        _auth[req] = _extractUser(bearer.token);
+        return next(req);
       }
     };
   }

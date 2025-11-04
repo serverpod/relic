@@ -17,17 +17,17 @@ typedef SyncHandler = Result Function(Request);
 /// A simple, synchronous handler.
 ///
 /// By default, replies with a status code 200, empty headers, and
-/// `Hello from ${ctx.url.path}`.
+/// `Hello from ${req.url.path}`.
 SyncHandler createSyncHandler({
   final int statusCode = 200,
   final Headers? headers,
   final Body? body,
 }) {
-  return (final Request ctx) {
+  return (final Request req) {
     return Response(
       statusCode,
       headers: headers ?? Headers.empty(),
-      body: body ?? Body.fromString('Hello from ${ctx.requestedUri.path}'),
+      body: body ?? Body.fromString('Hello from ${req.requestedUri.path}'),
     );
   };
 }
@@ -35,8 +35,8 @@ SyncHandler createSyncHandler({
 final SyncHandler syncHandler = createSyncHandler();
 
 /// Calls [createSyncHandler] and wraps the response in a [Future].
-Future<Result> asyncHandler(final Request ctx) async {
-  return syncHandler(ctx);
+Future<Result> asyncHandler(final Request req) async {
+  return syncHandler(req);
 }
 
 /// Makes a simple GET request to [handler] and returns the result.

@@ -68,8 +68,8 @@ void main() {
   test('Request is populated correctly', () async {
     late Uri uri;
 
-    await _scheduleServer((final ctx) {
-      final request = ctx;
+    await _scheduleServer((final req) {
+      final request = req;
       expect(request.method, Method.get);
 
       expect(request.requestedUri, uri);
@@ -80,7 +80,7 @@ void main() {
       expect(request.url.query, 'qs=value');
       expect(request.handlerPath, '/');
 
-      return syncHandler(ctx);
+      return syncHandler(req);
     });
 
     uri = Uri.http('localhost:$_serverPort', '/foo/bar', {'qs': 'value'});
@@ -133,8 +133,8 @@ void main() {
       'multi-header',
       HeaderCodec(parseStringList, encodeStringList),
     );
-    await _scheduleServer((final ctx) {
-      final request = ctx;
+    await _scheduleServer((final req) {
+      final request = req;
       expect(request.headers, containsPair('custom-header', ['client value']));
 
       // dart:io HttpServer splits multi-value headers into an array
@@ -143,7 +143,7 @@ void main() {
 
       expect(multi[request.headers].value, ['foo', 'bar', 'baz']);
 
-      return syncHandler(ctx);
+      return syncHandler(req);
     });
 
     final headers = {
@@ -157,8 +157,8 @@ void main() {
   });
 
   test('post with empty content', () async {
-    await _scheduleServer((final ctx) async {
-      final request = ctx;
+    await _scheduleServer((final req) async {
+      final request = req;
       expect(request.mimeType, isNull);
       expect(request.encoding, isNull);
       expect(request.method, Method.post);
@@ -166,7 +166,7 @@ void main() {
 
       final body = await request.readAsString();
       expect(body, '');
-      return syncHandler(ctx);
+      return syncHandler(req);
     });
 
     final response = await _post();
@@ -175,8 +175,8 @@ void main() {
   });
 
   test('post with request content', () async {
-    await _scheduleServer((final ctx) async {
-      final request = ctx;
+    await _scheduleServer((final req) async {
+      final request = req;
 
       expect(request.mimeType?.primaryType, 'text');
       expect(request.mimeType?.subType, 'plain');
@@ -187,7 +187,7 @@ void main() {
       final body = await request.readAsString();
       expect(body, 'test body');
 
-      return syncHandler(ctx);
+      return syncHandler(req);
     });
 
     final response = await _post(body: 'test body');
@@ -196,8 +196,8 @@ void main() {
   });
 
   test('supports request hijacking', () async {
-    await _scheduleServer((final ctx) {
-      final request = ctx;
+    await _scheduleServer((final req) {
+      final request = req;
 
       expect(request.method, Method.post);
 
@@ -228,7 +228,7 @@ void main() {
   });
 
   test('supports web socket connetions', () async {
-    await _scheduleServer((final ctx) {
+    await _scheduleServer((final req) {
       return ConnectionContext(
         expectAsync1((final serverSocket) async {
           await for (final e in serverSocket.events) {
@@ -250,9 +250,9 @@ void main() {
   test('passes asynchronous exceptions to the parent error zone', () async {
     await runZonedGuarded(
       () async {
-        final server = await testServe((final ctx) {
+        final server = await testServe((final req) {
           Future(() => throw StateError('oh no'));
-          return syncHandler(ctx);
+          return syncHandler(req);
         });
 
         final response = await http.get(server.url);

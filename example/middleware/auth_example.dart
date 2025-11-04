@@ -5,27 +5,27 @@ import 'package:relic/relic.dart';
 /// Simple authentication middleware
 Middleware authMiddleware() {
   return (final Handler innerHandler) {
-    return (final Request ctx) async {
+    return (final Request req) async {
       // Check for API key in header
-      final apiKey = ctx.headers['X-API-Key']?.first;
+      final apiKey = req.headers['X-API-Key']?.first;
 
       if (apiKey != 'secret123') {
         return Response.unauthorized(body: Body.fromString('Invalid API key'));
       }
 
       log('User authenticated with API key');
-      return await innerHandler(ctx);
+      return await innerHandler(req);
     };
   };
 }
 
 /// Public handler (no auth needed)
-Future<Response> publicHandler(final Request ctx) async {
+Future<Response> publicHandler(final Request req) async {
   return Response.ok(body: Body.fromString('This is public!'));
 }
 
 /// Protected handler (needs auth)
-Future<Response> protectedHandler(final Request ctx) async {
+Future<Response> protectedHandler(final Request req) async {
   return Response.ok(body: Body.fromString('This is protected!'));
 }
 

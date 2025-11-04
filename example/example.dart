@@ -22,9 +22,9 @@ Future<void> main() async {
   await app.serve();
 }
 
-Response hello(final Request ctx) {
-  final name = ctx.pathParameters[#name];
-  final age = int.parse(ctx.pathParameters[#age]!);
+Response hello(final Request req) {
+  final name = req.pathParameters[#name];
+  final age = int.parse(req.pathParameters[#age]!);
 
   return Response.ok(
     body: Body.fromString('Hello $name! To think you are $age years old.'),

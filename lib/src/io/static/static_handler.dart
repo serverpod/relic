@@ -32,7 +32,7 @@ class FileInfo {
 }
 
 typedef CacheControlFactory =
-    CacheControlHeader? Function(Request ctx, FileInfo fileInfo);
+    CacheControlHeader? Function(Request req, FileInfo fileInfo);
 
 /// LRU cache for file information to avoid repeated file system operations.
 final _fileInfoCache = LruCache<String, FileInfo>(10000);
@@ -169,17 +169,17 @@ class StaticHandler extends HandlerObject {
   }
 
   @override
-  FutureOr<Result> call(final Request ctx) {
+  FutureOr<Result> call(final Request req) {
     return switch (entity) {
-      Directory() => _handleDirectory(ctx, entity as Directory),
-      File() => _handleFile(ctx, entity as File),
+      Directory() => _handleDirectory(req, entity as Directory),
+      File() => _handleFile(req, entity as File),
       // coverage: ignore-line
       _ => throw StateError('Unsupported entity type: ${entity.runtimeType}'),
     };
   }
 
   Future<Result> _handleDirectory(
-    final Request ctx,
+    final Request req,
     final Directory directory,
   ) async {
     final resolvedRootPath = directory.resolveSymbolicLinksSync();
@@ -209,21 +209,21 @@ class StaticHandler extends HandlerObject {
 
     final filePath = resolveFilePath(
       resolvedRootPath,
-      ctx.remainingPath.segments,
+      req.remainingPath.segments,
     );
 
     // Ensure file exists and is not a directory
     final entityType = FileSystemEntity.typeSync(filePath, followLinks: false);
     if (entityType == FileSystemEntityType.notFound ||
         entityType == FileSystemEntityType.directory) {
-      return fallbackHandler(ctx);
+      return fallbackHandler(req);
     }
 
     // Security check for symbolic links: ensure resolved path stays within root directory
     var file = File(filePath);
     final resolvedFilePath = file.resolveSymbolicLinksSync();
     if (!p.isWithin(resolvedRootPath, resolvedFilePath)) {
-      return fallbackHandler(ctx);
+      return fallbackHandler(req);
     }
     file = File(resolvedFilePath);
 
@@ -231,16 +231,16 @@ class StaticHandler extends HandlerObject {
       file,
       mimeResolver ?? _defaultMimeTypeResolver,
       cacheControl,
-      ctx,
+      req,
     );
   }
 
-  Future<Result> _handleFile(final Request ctx, final File file) async {
+  Future<Result> _handleFile(final Request req, final File file) async {
     return await _serveFile(
       file,
       mimeResolver ?? _defaultMimeTypeResolver,
       cacheControl,
-      ctx,
+      req,
     );
   }
 }
@@ -250,28 +250,28 @@ Future<Response> _serveFile(
   final File file,
   final MimeTypeResolver mimeResolver,
   final CacheControlFactory cacheControl,
-  final Request ctx,
+  final Request req,
 ) async {
   // Validate HTTP method
-  final method = ctx.method;
-  if (!_isMethodAllowed(method)) return _methodNotAllowedResponse(ctx);
+  final method = req.method;
+  if (!_isMethodAllowed(method)) return _methodNotAllowedResponse(req);
 
   // Get or update cached file information
   final fileInfo = await _getFileInfo(file, mimeResolver);
-  final headers = _buildBaseHeaders(fileInfo, cacheControl(ctx, fileInfo));
+  final headers = _buildBaseHeaders(fileInfo, cacheControl(req, fileInfo));
 
   // Handle conditional requests
-  final conditionalResponse = _checkConditionalHeaders(ctx, fileInfo, headers);
+  final conditionalResponse = _checkConditionalHeaders(req, fileInfo, headers);
   if (conditionalResponse != null) return conditionalResponse;
 
   // Handle range requests
-  final rangeHeader = ctx.headers.range;
+  final rangeHeader = req.headers.range;
   if (rangeHeader != null) {
-    return await _handleRangeRequest(ctx, fileInfo, headers, rangeHeader);
+    return await _handleRangeRequest(req, fileInfo, headers, rangeHeader);
   }
 
   // Serve full file
-  return _serveFullFile(ctx, fileInfo, headers, method);
+  return _serveFullFile(req, fileInfo, headers, method);
 }
 
 /// Checks if the HTTP method is allowed for file serving.
@@ -280,7 +280,7 @@ bool _isMethodAllowed(final Method method) {
 }
 
 /// Returns a 405 Method Not Allowed response.
-Response _methodNotAllowedResponse(final Request ctx) {
+Response _methodNotAllowedResponse(final Request req) {
   return Response(
     HttpStatus.methodNotAllowed,
     headers: Headers.build((final mh) => mh.allow = {Method.get, Method.head}),
@@ -347,12 +347,12 @@ Headers _buildBaseHeaders(
 
 /// Checks conditional request headers and returns 304 response if appropriate.
 Response? _checkConditionalHeaders(
-  final Request ctx,
+  final Request req,
   final FileInfo fileInfo,
   final Headers headers,
 ) {
   // Handle If-None-Match
-  final ifNoneMatch = ctx.headers.ifNoneMatch;
+  final ifNoneMatch = req.headers.ifNoneMatch;
   if (ifNoneMatch != null) {
     if (ifNoneMatch.isWildcard) return Response.notModified(headers: headers);
     for (final etag in ifNoneMatch.etags) {
@@ -364,7 +364,7 @@ Response? _checkConditionalHeaders(
   }
 
   // Handle If-Modified-Since
-  final ifModifiedSince = ctx.headers.ifModifiedSince;
+  final ifModifiedSince = req.headers.ifModifiedSince;
   if (ifModifiedSince != null &&
       !ifModifiedSince.isBefore(fileInfo.stat.modified)) {
     return Response.notModified(headers: headers);
@@ -375,27 +375,27 @@ Response? _checkConditionalHeaders(
 
 /// Handles HTTP range requests for partial content.
 Future<Response> _handleRangeRequest(
-  final Request ctx,
+  final Request req,
   final FileInfo fileInfo,
   final Headers headers,
   final RangeHeader rangeHeader,
 ) async {
   // Check If-Range header
-  if (!_isRangeRequestValid(ctx, fileInfo)) {
-    return _serveFullFile(ctx, fileInfo, headers, ctx.method);
+  if (!_isRangeRequestValid(req, fileInfo)) {
+    return _serveFullFile(req, fileInfo, headers, req.method);
   }
 
   final ranges = rangeHeader.ranges;
   return switch (ranges.length) {
-    0 => _serveFullFile(ctx, fileInfo, headers, ctx.method),
-    1 => _serveSingleRange(ctx, fileInfo, headers, ranges.first),
-    _ => await _serveMultipleRanges(ctx, fileInfo, headers, ranges),
+    0 => _serveFullFile(req, fileInfo, headers, req.method),
+    1 => _serveSingleRange(req, fileInfo, headers, ranges.first),
+    _ => await _serveMultipleRanges(req, fileInfo, headers, ranges),
   };
 }
 
 /// Validates If-Range header for range requests.
-bool _isRangeRequestValid(final Request ctx, final FileInfo fileInfo) {
-  final ifRange = ctx.headers.ifRange;
+bool _isRangeRequestValid(final Request req, final FileInfo fileInfo) {
+  final ifRange = req.headers.ifRange;
   if (ifRange == null) return true;
 
   // Check ETag match
@@ -415,7 +415,7 @@ bool _isRangeRequestValid(final Request ctx, final FileInfo fileInfo) {
 
 /// Serves the complete file without ranges.
 Response _serveFullFile(
-  final Request ctx,
+  final Request req,
   final FileInfo fileInfo,
   final Headers headers,
   final Method method,
@@ -428,7 +428,7 @@ Response _serveFullFile(
 
 /// Serves a single range of the file.
 Response _serveSingleRange(
-  final Request ctx,
+  final Request req,
   final FileInfo fileInfo,
   final Headers headers,
   final Range range,
@@ -457,7 +457,7 @@ Response _serveSingleRange(
 
 /// Serves multiple ranges as multipart response.
 Future<Response> _serveMultipleRanges(
-  final Request ctx,
+  final Request req,
   final FileInfo fileInfo,
   final Headers headers,
   final List<Range> ranges,

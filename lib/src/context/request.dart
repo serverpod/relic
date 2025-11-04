@@ -9,11 +9,11 @@ part of 'context.dart';
 ///
 /// ```dart
 /// // Basic request handling
-/// router.get('/users/:id', (ctx) {
-///   final request = ctx;
+/// router.get('/users/:id', (req) {
+///   final request = req;
 ///
 ///   // Access path parameters
-///   final id = ctx.pathParameters[#id];
+///   final id = req.pathParameters[#id];
 ///
 ///   // Access HTTP method
 ///   print(request.method); // Method.get
@@ -30,18 +30,18 @@ part of 'context.dart';
 ///   // Access headers
 ///   final userAgent = request.headers.userAgent;
 ///
-///   return ctx.respond(Response.ok(
+///   return req.respond(Response.ok(
 ///     body: Body.fromString('User request'),
 ///   ));
 /// });
 ///
 /// // Reading request body
-/// router.post('/api/data', (ctx) async {
-///   final request = ctx;
+/// router.post('/api/data', (req) async {
+///   final request = req;
 ///
 ///   // Check if body exists
 ///   if (request.isEmpty) {
-///     return ctx.respond(Response.badRequest());
+///     return req.respond(Response.badRequest());
 ///   }
 ///
 ///   // Read as string
@@ -49,7 +49,7 @@ part of 'context.dart';
 ///
 ///   // Parse JSON
 ///   final data = jsonDecode(bodyText);
-///   return ctx.respond(Response.ok());
+///   return req.respond(Response.ok());
 /// });
 /// ```
 /// ```

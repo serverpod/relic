@@ -181,14 +181,14 @@ void main() {
                 },
               ),
             )
-            .addHandler(((final ctx) {
+            .addHandler(((final req) {
               return Future(
                 () => createSyncHandler(
                   headers: Headers.build(
                     (final mh) =>
                         mh.from = FromHeader(emails: ['handler@serverpod.dev']),
                   ),
-                )(ctx),
+                )(req),
               );
             }));
 

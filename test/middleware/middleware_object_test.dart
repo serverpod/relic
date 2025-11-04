@@ -10,11 +10,11 @@ void main() {
       final middlewareObject = _TestMiddlewareObject();
       final router = Router<Handler>();
       router.use('/', middlewareObject.call);
-      router.get('/test', (final ctx) => Response.ok());
+      router.get('/test', (final req) => Response.ok());
 
       final request = Request(Method.get, Uri.parse('http://localhost/test'));
-      final ctx = request..setToken(Object());
-      final result = await router.asHandler(ctx) as Response;
+      final req = request..setToken(Object());
+      final result = await router.asHandler(req) as Response;
 
       expect(result.statusCode, 200);
       expect(result.headers['X-Middleware'], ['applied']);
@@ -31,11 +31,11 @@ void main() {
 
       final router = Router<Handler>();
       router.use('/', middleware);
-      router.get('/test', (final ctx) => Response.ok());
+      router.get('/test', (final req) => Response.ok());
 
       final request = Request(Method.get, Uri.parse('http://localhost/test'));
-      final ctx = request..setToken(Object());
-      final result = await router.asHandler(ctx) as Response;
+      final req = request..setToken(Object());
+      final result = await router.asHandler(req) as Response;
 
       expect(result.statusCode, 200);
       expect(result.headers['X-Middleware'], ['applied']);
@@ -49,14 +49,14 @@ void main() {
       router.use('/', middlewareObject.call);
 
       String? capturedHeader;
-      router.get('/test', (final ctx) {
-        capturedHeader = ctx.headers['X-Added']?.first;
+      router.get('/test', (final req) {
+        capturedHeader = req.headers['X-Added']?.first;
         return Response.ok();
       });
 
       final request = Request(Method.get, Uri.parse('http://localhost/test'));
-      final ctx = request..setToken(Object());
-      await router.asHandler(ctx);
+      final req = request..setToken(Object());
+      await router.asHandler(req);
 
       expect(capturedHeader, 'by-middleware');
     });
@@ -69,14 +69,14 @@ void main() {
       router.use('/', middlewareObject.call);
 
       var innerHandlerCalled = false;
-      router.get('/test', (final ctx) {
+      router.get('/test', (final req) {
         innerHandlerCalled = true;
         return Response.ok();
       });
 
       final request = Request(Method.get, Uri.parse('http://localhost/test'));
-      final ctx = request..setToken(Object());
-      final result = await router.asHandler(ctx) as Response;
+      final req = request..setToken(Object());
+      final result = await router.asHandler(req) as Response;
 
       expect(innerHandlerCalled, isFalse);
       expect(result.statusCode, 403);
@@ -89,8 +89,8 @@ void main() {
 class _TestMiddlewareObject extends MiddlewareObject {
   @override
   Handler call(final Handler next) {
-    return (final ctx) async {
-      final result = await next(ctx);
+    return (final req) async {
+      final result = await next(req);
       if (result is! Response) return result;
       return result.copyWith(
         headers: result.headers.transform(
@@ -104,10 +104,10 @@ class _TestMiddlewareObject extends MiddlewareObject {
 class _RequestModifyingMiddleware extends MiddlewareObject {
   @override
   Handler call(final Handler next) {
-    return (final ctx) async {
+    return (final req) async {
       // Modify the request by adding a header
-      final modifiedRequest = ctx.copyWith(
-        headers: ctx.headers.transform(
+      final modifiedRequest = req.copyWith(
+        headers: req.headers.transform(
           (final h) => h['X-Added'] = ['by-middleware'],
         ),
       );
@@ -119,7 +119,7 @@ class _RequestModifyingMiddleware extends MiddlewareObject {
 class _ShortCircuitMiddleware extends MiddlewareObject {
   @override
   Handler call(final Handler next) {
-    return (final ctx) async {
+    return (final req) async {
       // Short-circuit without calling next
       return Response.forbidden(body: Body.fromString('Forbidden'));
     };
