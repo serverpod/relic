@@ -1,3 +1,6 @@
+## 0.10.0
+- refactor!: The Great Simplification ([#264](https://github.com/serverpod/relic/pull/264))
+
 ## 0.9.2
 
 - feat: Expose `noOfIsolates` parameter on serve extension on `RelicApp` ([#260](https://github.com/serverpod/relic/pull/260))

@@ -6,9 +6,9 @@ import '../router/router.dart';
 
 /// A function that processes a [Request] to produce a [Result].
 ///
-/// For example, a static file handler may read the requested URI from the [Request],
-/// read the requested URI from the filesystem, and return a [Response]
-/// (a type of [Result]) containing the file data as its body.
+/// For example, a static file handler may extract the requested URI from the
+/// [Request], read the corresponding file from the filesystem, and return a
+/// [Response] containing the file data as its [Body].
 ///
 /// A function which produces a [Handler], either by wrapping one or more other handlers,
 /// or using function composition is known as a "middleware".
