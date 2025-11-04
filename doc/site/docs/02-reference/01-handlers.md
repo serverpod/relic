@@ -193,6 +193,4 @@ ResponseContext contextHandler(NewContext ctx) {
 
 For real-time bidirectional communication, you can upgrade connections to WebSockets using `ctx.connect()`:
 
-```dart reference
-https://github.com/serverpod/relic/blob/main/example/context/context_example.dart#L77-L99
-```
+GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/context/context_example.dart) doctag="context-websocket-echo" title="context_example.dart"

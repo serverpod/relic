@@ -88,9 +88,7 @@ Every handler receives a `NewContext` first. This represents a **fresh, unhandle
 
 **Example - Serving HTML:**
 
-```dart reference
-https://github.com/serverpod/relic/blob/main/example/context/context_example.dart#L36-L46
-```
+GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/context/context_example.dart) doctag="context-html-homepage" title="context_example.dart"
 
 :::tip When to use async/await
 Use `Future<ResponseContext>` and `async` when your handler needs to wait for asynchronous operations (like database queries or reading request bodies). If your handler is purely synchronous, you can omit both:
@@ -113,9 +111,7 @@ When you call `ctx.respond()`, you transition to a `ResponseContext`. This repre
 
 **Example - JSON API response:**
 
-```dart reference
-https://github.com/serverpod/relic/blob/main/example/context/context_example.dart#L48-L60
-```
+GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/context/context_example.dart) doctag="context-api-json" title="context_example.dart"
 
 ### ConnectContext - WebSocket connections
 
@@ -127,9 +123,7 @@ Use `connect()` for WebSocket handshakes - full-duplex connections where both cl
 
 **Example - WebSocket connection:**
 
-```dart reference
-https://github.com/serverpod/relic/blob/main/example/context/context_example.dart#L77-L99
-```
+GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/context/context_example.dart) doctag="context-websocket-echo" title="context_example.dart"
 
 :::info WebSocket vs HTTP response
 Unlike `respond()` which sends a response and closes the connection, `connect()` keeps the connection alive for bidirectional communication. The context transitions to `ConnectContext` immediately, but the callback runs asynchronously to handle messages.
@@ -152,9 +146,7 @@ All context types provide access to the original HTTP request through `ctx.reque
 
 The request body is a `Stream<Uint8List>`. Use `readAsString()` for text data or `readAsBytes()` for binary data.
 
-```dart reference
-https://github.com/serverpod/relic/blob/main/example/context/context_example.dart#L118-L158
-```
+GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/context/context_example.dart) doctag="context-request-inspect" title="context_example.dart"
 
 :::warning Reading request bodies
 
@@ -211,9 +203,7 @@ Context properties let you **attach custom data** to a request as it flows throu
 
 Here's a simple example that assigns a unique ID to each request:
 
-```dart reference
-https://github.com/serverpod/relic/blob/main/example/context/context_property_example.dart#L6-L30
-```
+GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/context/context_property_example.dart) doctag="context-prop-request-id" title="context_property_example.dart"
 
 **How it works:**
 

@@ -258,11 +258,9 @@ if (length != null) {
 
 ## Stream-based bodies
 
-Relic’s stream-based approach makes it practical to handle large payloads without exhausting memory, since data is processed incrementally. This pattern is especially helpful for uploads and transformations that work chunk by chunk.
+Relic's stream-based approach makes it practical to handle large payloads without exhausting memory, since data is processed incrementally. This pattern is especially helpful for uploads and transformations that work chunk by chunk.
 
-```dart reference
-https://github.com/serverpod/relic/blob/main/example/basic/body_example.dart#L155-L171
-```
+GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/basic/body_example.dart) doctag="body-upload-validate-size" title="body_example.dart"
 
 ### One-time read constraint
 
@@ -309,30 +307,22 @@ Middleware loggingMiddleware(Handler next) {
 
 This example reads JSON input from the request, logs it for observability, and returns a JSON response. The body helper detects JSON automatically, and the explicit MIME type makes the intent clear to both clients and maintainers:
 
-```dart reference
-https://github.com/serverpod/relic/blob/main/example/basic/body_example.dart#L138-L152
-```
+GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/basic/body_example.dart) doctag="body-json-api-handler" title="body_example.dart"
 
 ### File upload handler
 
 This handler validates the upload size before reading the stream, then writes the content directly to disk. Streaming avoids buffering the entire file in memory and keeps the server responsive under heavy load:
 
-```dart reference
-https://github.com/serverpod/relic/blob/main/example/basic/body_example.dart#L155-L171
-```
+GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/basic/body_example.dart) doctag="body-upload-validate-size" title="body_example.dart"
 
 ### Image response
 
 Here the server reads an SVG file from disk and returns it as binary data. The SVG type must be set explicitly with `MimeType.parse('image/svg+xml')` so clients receive the correct Content-Type.
 
-```dart reference
-https://github.com/serverpod/relic/blob/main/example/basic/body_example.dart#L174-L186
-```
+GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/basic/body_example.dart) doctag="body-image-auto-format" title="body_example.dart"
 
 ### Streaming response
 
 This endpoint produces a stream of JSON lines to demonstrate chunked transfer encoding. Clients can start processing data as soon as it becomes available, which is useful for progress updates and long-running computations:
 
-```dart reference
-https://github.com/serverpod/relic/blob/main/example/basic/body_example.dart#L189-L208
-```
+GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/basic/body_example.dart) doctag="body-streaming-chunked" title="body_example.dart"

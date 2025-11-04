@@ -28,9 +28,7 @@ Success responses (2xx status codes) indicate that the request was received, und
 
 The most common response indicates the request succeeded and returns the requested data:
 
-```dart reference
-https://github.com/serverpod/relic/blob/main/example/routing/response_example.dart#L10-L12
-```
+GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/routing/response_example.dart) doctag="responses-status-ok" title="response_example.dart"
 
 ### Error responses
 
@@ -40,9 +38,7 @@ Error responses (4xx, 5xx status codes) indicate that the request was invalid or
 
 The request is malformed or contains invalid data:
 
-```dart reference
-https://github.com/serverpod/relic/blob/main/example/routing/response_example.dart#L15-L23
-```
+GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/routing/response_example.dart) doctag="responses-bad-request" title="response_example.dart"
 
 ### Custom status codes
 

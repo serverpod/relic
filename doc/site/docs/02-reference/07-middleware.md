@@ -28,9 +28,7 @@ Every middleware function receives an inner handler and returns a new handler th
 
 Here's a simple example:
 
-```dart reference
-https://github.com/serverpod/relic/blob/main/example/middleware/middleware_example.dart#L8-L25
-```
+GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/middleware/middleware_example.dart) doctag="middleware-add-custom-header" title="middleware_example.dart"
 
 ## Using middlewares with a router
 
@@ -159,9 +157,7 @@ Middleware layers wrap each other like an onion. Each layer may:
 - Rewrite parts of the request before calling `next()` using `ctx.withRequest(newRequest)`.
 - Prefer attaching derived/computed data to the context via `ContextProperty` rather than rewriting the request.
 
-```dart reference
-https://github.com/serverpod/relic/blob/main/example/middleware/auth_example.dart#L6-L22
-```
+GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/middleware/auth_example.dart) doctag="middleware-auth-basic" title="auth_example.dart"
 
 :::warning Avoid rewriting request.path in router.use middleware
 When middleware is attached with `router.use(...)`, the request has already been routed. Changing `request.url.path` at this point will not re-route the request and will not update `ctx.pathParameters` or related routing metadata.
@@ -195,9 +191,7 @@ CORS is a security feature that allows web applications to make requests to reso
 
 In Relic you can create a CORS middleware that handles preflight requests and adds CORS headers to the response:
 
-```dart reference
-https://github.com/serverpod/relic/blob/main/example/middleware/cors_example.dart#L8-L40
-```
+GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/middleware/cors_example.dart) doctag="middleware-cors-basic" title="cors_example.dart"
 
 ## Pipeline (Legacy Pattern)
 
