@@ -1,8 +1,23 @@
 ## 0.10.0
 - refactor!: The Great Simplification ([#264](https://github.com/serverpod/relic/pull/264))
+  - Merged `RequestContext` into `Request` by moving the token property
+  - `HandledContext` renamed to `Result`
+  - Merge `ResponseContext` into `Response` (now implements `Result`)
+  - Removed `respond()`, `hijack()`, and `connect()` methods - handlers can construct and return `Result`s directly
+  - Updated handler signatures: `Handler = FutureOr<Result> Function(Request req)`
+  - Consolidated context classes into single file using part files
+  - Updated all examples and tests
+  - Significant simplification of the class hierarchy by eliminating the:
+  - `Context`,
+  - `RequestContext`,
+  - `RespondableContext`,
+  - `HijackableContext`,
+  - `ConnectableContext`, and
+  - `ResponseContext` interfaces
+  - Renamed `ConnectionContext` to `WebSocketUpgrade` (now extends `Result`)
+  - Renamed `HijackedContext` to `Hijack` (now extends `Result`)
 
 ## 0.9.2
-
 - feat: Expose `noOfIsolates` parameter on serve extension on `RelicApp` ([#260](https://github.com/serverpod/relic/pull/260))
 - feat: Add `injectAt` extension method on `Router<T>` ([#261](https://github.com/serverpod/relic/pull/261))
 - feat: Allow re-run of `RelicApp.run` after `close` ([#257](https://github.com/serverpod/relic/pull/257))
