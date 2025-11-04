@@ -129,8 +129,8 @@ final class _RelicServer implements RelicServer {
       final result = await handler(req);
       return switch (result) {
         final Response rc => adapter.respond(adapterRequest, rc),
-        final HijackedContext hc => adapter.hijack(adapterRequest, hc.callback),
-        final ConnectionContext cc => adapter.connect(
+        final Hijack hc => adapter.hijack(adapterRequest, hc.callback),
+        final WebSocketUpgrade cc => adapter.connect(
           adapterRequest,
           cc.callback,
         ),

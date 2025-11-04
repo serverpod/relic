@@ -22,8 +22,8 @@ Middleware logRequests({final Logger? logger}) => (final next) {
       final result = await next(req);
       final msg = switch (result) {
         final Response rc => '${rc.statusCode}',
-        final HijackedContext _ => 'hijacked',
-        final ConnectionContext _ => 'connected',
+        final Hijack _ => 'hijacked',
+        final WebSocketUpgrade _ => 'connected',
       };
       localLogger(_message(startTime, req, watch.elapsed, msg));
       return result;

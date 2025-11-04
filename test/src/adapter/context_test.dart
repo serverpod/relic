@@ -38,16 +38,16 @@ void main() {
       expect(responseContext, isA<Response>());
     });
 
-    test('then the new context can transition to HijackedContext', () {
-      final hijackedContext = HijackedContext((final channel) {});
+    test('then the new context can transition to Hijack', () {
+      final result = Hijack((final channel) {});
 
-      expect(hijackedContext, isA<HijackedContext>());
+      expect(result, isA<Hijack>());
     });
 
-    test('then the new context can transition to ConnectionContext', () {
-      final connectionContext = ConnectionContext((final webSocket) {});
+    test('then the new context can transition to WebSocketUpgrade', () {
+      final result = WebSocketUpgrade((final webSocket) {});
 
-      expect(connectionContext, isA<ConnectionContext>());
+      expect(result, isA<WebSocketUpgrade>());
     });
   });
 

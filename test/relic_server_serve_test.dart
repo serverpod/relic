@@ -201,7 +201,7 @@ void main() {
 
       expect(request.method, Method.post);
 
-      return HijackedContext(
+      return Hijack(
         expectAsync1((final channel) {
           expect(channel.stream.first, completion(equals('Hello'.codeUnits)));
 
@@ -229,7 +229,7 @@ void main() {
 
   test('supports web socket connetions', () async {
     await _scheduleServer((final req) {
-      return ConnectionContext(
+      return WebSocketUpgrade(
         expectAsync1((final serverSocket) async {
           await for (final e in serverSocket.events) {
             expect(e, TextDataReceived('Hello'));

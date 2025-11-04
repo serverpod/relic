@@ -8,8 +8,8 @@ import 'package:web_socket/web_socket.dart';
 /// Demonstrates the four main context types in Relic using proper routing:
 /// - Request: Starting point for all requests
 /// - Response: HTTP response handling
-/// - ConnectionContext: WebSocket connections
-/// - HijackedContext: Raw connection control
+/// - WebSocketUpgrade: WebSocket connections
+/// - Hijack: Raw connection control
 
 /// Simple HTML page for demonstration
 String _htmlHomePage() {
@@ -24,8 +24,8 @@ String _htmlHomePage() {
     <ul>
         <li><a href="/api">API Example (Response)</a></li>
         <li><a href="/api/users/123">User API with Parameters (Response)</a></li>
-        <li><a href="/ws">WebSocket Example (ConnectionContext)</a></li>
-        <li><a href="/custom">Custom Protocol (HijackedContext)</a></li>
+        <li><a href="/ws">WebSocket Example (WebSocketUpgrade)</a></li>
+        <li><a href="/custom">Custom Protocol (Hijack)</a></li>
     </ul>
     <p>This demonstrates the different context types in Relic using proper routing.</p>
 </body>
@@ -68,8 +68,8 @@ Future<Response> userHandler(final Request req) async {
   );
 }
 
-ConnectionContext webSocketHandler(final Request req) {
-  return ConnectionContext((final webSocket) async {
+WebSocketUpgrade webSocketHandler(final Request req) {
+  return WebSocketUpgrade((final webSocket) async {
     log('WebSocket connection established');
 
     // Send welcome message
@@ -92,8 +92,8 @@ ConnectionContext webSocketHandler(final Request req) {
   });
 }
 
-HijackedContext customProtocolHandler(final Request req) {
-  return HijackedContext((final channel) {
+Hijack customProtocolHandler(final Request req) {
+  return Hijack((final channel) {
     log('Connection hijacked for custom protocol');
 
     // Send a custom HTTP response manually

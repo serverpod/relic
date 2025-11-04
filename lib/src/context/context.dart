@@ -9,8 +9,8 @@ part 'response.dart';
 
 /// A sealed base class representing the result of handling a request.
 ///
-/// A handler returns a [Result] which is either a [Response], a [HijackedContext],
-/// or a [ConnectionContext].
+/// A handler returns a [Result] which is either a [Response], a [Hijack],
+/// or a [WebSocketUpgrade].
 sealed class Result {}
 
 /// A [Result] indicating that the underlying connection has been
@@ -22,8 +22,8 @@ sealed class Result {}
 /// communication.
 ///
 /// ```dart
-/// HijackedContext customProtocolHandler(Request req) {
-///   return HijackedContext((channel) {
+/// Hijack customProtocolHandler(Request req) {
+///   return Hijack((channel) {
 ///     log('Connection hijacked for custom protocol');
 ///
 ///     // Send a custom HTTP response manually
@@ -38,19 +38,19 @@ sealed class Result {}
 ///   });
 /// }
 /// ```
-final class HijackedContext extends Result {
+final class Hijack extends Result {
   /// The callback function provided to handle the hijacked connection.
   final HijackCallback callback;
 
-  HijackedContext(this.callback);
+  Hijack(this.callback);
 }
 
 /// A [Result] indicating that a duplex stream connection
 /// (e.g., WebSocket) has been established.
 ///
 /// ```dart
-/// ConnectionContext chatHandler(Request req) {
-///   return ConnectionContext((webSocket) async {
+/// WebSocketUpgrade chatHandler(Request req) {
+///   return WebSocketUpgrade((webSocket) async {
 ///     // The WebSocket is now active
 ///     webSocket.sendText('Welcome to chat!');
 ///
@@ -63,9 +63,9 @@ final class HijackedContext extends Result {
 ///   });
 /// }
 /// ```
-final class ConnectionContext extends Result {
+final class WebSocketUpgrade extends Result {
   /// The callback function provided to handle the duplex stream connection.
   final WebSocketCallback callback;
 
-  ConnectionContext(this.callback);
+  WebSocketUpgrade(this.callback);
 }
