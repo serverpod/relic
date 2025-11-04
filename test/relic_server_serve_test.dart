@@ -69,16 +69,15 @@ void main() {
     late Uri uri;
 
     await _scheduleServer((final req) {
-      final request = req;
-      expect(request.method, Method.get);
+      expect(req.method, Method.get);
 
-      expect(request.requestedUri, uri);
+      expect(req.requestedUri, uri);
 
-      expect(request.url.path, 'foo/bar');
-      expect(request.url.pathSegments, ['foo', 'bar']);
-      expect(request.protocolVersion, '1.1');
-      expect(request.url.query, 'qs=value');
-      expect(request.handlerPath, '/');
+      expect(req.url.path, 'foo/bar');
+      expect(req.url.pathSegments, ['foo', 'bar']);
+      expect(req.protocolVersion, '1.1');
+      expect(req.url.query, 'qs=value');
+      expect(req.handlerPath, '/');
 
       return syncHandler(req);
     });
@@ -134,14 +133,13 @@ void main() {
       HeaderCodec(parseStringList, encodeStringList),
     );
     await _scheduleServer((final req) {
-      final request = req;
-      expect(request.headers, containsPair('custom-header', ['client value']));
+      expect(req.headers, containsPair('custom-header', ['client value']));
 
       // dart:io HttpServer splits multi-value headers into an array
       // validate that they are combined correctly
-      expect(request.headers, containsPair('multi-header', ['foo,bar,baz']));
+      expect(req.headers, containsPair('multi-header', ['foo,bar,baz']));
 
-      expect(multi[request.headers].value, ['foo', 'bar', 'baz']);
+      expect(multi[req.headers].value, ['foo', 'bar', 'baz']);
 
       return syncHandler(req);
     });
@@ -158,13 +156,12 @@ void main() {
 
   test('post with empty content', () async {
     await _scheduleServer((final req) async {
-      final request = req;
-      expect(request.mimeType, isNull);
-      expect(request.encoding, isNull);
-      expect(request.method, Method.post);
-      expect(request.body.contentLength, isNull);
+      expect(req.mimeType, isNull);
+      expect(req.encoding, isNull);
+      expect(req.method, Method.post);
+      expect(req.body.contentLength, isNull);
 
-      final body = await request.readAsString();
+      final body = await req.readAsString();
       expect(body, '');
       return syncHandler(req);
     });
@@ -176,15 +173,13 @@ void main() {
 
   test('post with request content', () async {
     await _scheduleServer((final req) async {
-      final request = req;
+      expect(req.mimeType?.primaryType, 'text');
+      expect(req.mimeType?.subType, 'plain');
+      expect(req.encoding, utf8);
+      expect(req.method, Method.post);
+      expect(req.body.contentLength, 9);
 
-      expect(request.mimeType?.primaryType, 'text');
-      expect(request.mimeType?.subType, 'plain');
-      expect(request.encoding, utf8);
-      expect(request.method, Method.post);
-      expect(request.body.contentLength, 9);
-
-      final body = await request.readAsString();
+      final body = await req.readAsString();
       expect(body, 'test body');
 
       return syncHandler(req);
@@ -197,9 +192,7 @@ void main() {
 
   test('supports request hijacking', () async {
     await _scheduleServer((final req) {
-      final request = req;
-
-      expect(request.method, Method.post);
+      expect(req.method, Method.post);
 
       return Hijack(
         expectAsync1((final channel) {

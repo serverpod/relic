@@ -10,8 +10,6 @@ part of 'context.dart';
 /// ```dart
 /// // Basic request handling
 /// router.get('/users/:id', (req) {
-///   final request = req;
-///
 ///   // Access path parameters
 ///   final id = req.pathParameters[#id];
 ///
@@ -19,16 +17,16 @@ part of 'context.dart';
 ///   print(request.method); // Method.get
 ///
 ///   // Access query parameters
-///   final sort = request.url.queryParameters['sort'];
-///   final filter = request.url.queryParameters['filter'];
+///   final sort = req.url.queryParameters['sort'];
+///   final filter = req.url.queryParameters['filter'];
 ///
 ///   // Multiple values for same parameter
 ///   // URL: /tags?tag=dart&tag=server
-///   final tags = request.url.queryParametersAll['tag'];
+///   final tags = req.url.queryParametersAll['tag'];
 ///   // tags = ['dart', 'server']
 ///
 ///   // Access headers
-///   final userAgent = request.headers.userAgent;
+///   final userAgent = req.headers.userAgent;
 ///
 ///   return Response.ok(
 ///     body: Body.fromString('User request'),
@@ -37,15 +35,13 @@ part of 'context.dart';
 ///
 /// // Reading request body
 /// router.post('/api/data', (req) async {
-///   final request = req;
-///
 ///   // Check if body exists
-///   if (request.isEmpty) {
+///   if (req.isEmpty) {
 ///     return Response.badRequest();
 ///   }
 ///
 ///   // Read as string
-///   final bodyText = await request.readAsString();
+///   final bodyText = await req.readAsString();
 ///
 ///   // Parse JSON
 ///   final data = jsonDecode(bodyText);
