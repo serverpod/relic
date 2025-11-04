@@ -7,11 +7,14 @@ Future<void> main() async {
   final app = RelicApp();
 
   // Success response example
+  // doctag<responses-status-ok>
   app.get('/status', (final ctx) {
     return ctx.respond(Response.ok(body: Body.fromString('Status is Ok')));
   });
+  // end:doctag<responses-status-ok>
 
   // Bad request example
+  // doctag<responses-bad-request>
   app.post('/api/users', (final ctx) async {
     try {
       throw 'Invalid JSON';
@@ -21,6 +24,7 @@ Future<void> main() async {
       );
     }
   });
+  // end:doctag<responses-bad-request>
 
   await app.serve();
   log('Server is running on http://localhost:8080');

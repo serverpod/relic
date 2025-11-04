@@ -5,6 +5,7 @@ import 'package:relic/io_adapter.dart';
 import 'package:relic/relic.dart';
 
 /// Simple CORS middleware
+// doctag<middleware-cors-basic>
 Middleware corsMiddleware() {
   return (final Handler innerHandler) {
     return (final RequestContext ctx) async {
@@ -38,6 +39,7 @@ Middleware corsMiddleware() {
     };
   };
 }
+// end:doctag<middleware-cors-basic>
 
 /// API handler
 Future<ResponseContext> apiHandler(final RequestContext ctx) async {
