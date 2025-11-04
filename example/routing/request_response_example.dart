@@ -31,7 +31,7 @@ Future<void> main() async {
 
     // Return user data as JSON
     final user = {
-      'id': int.parse(id),
+      'id': int.tryParse(id),
       'name': 'User $id',
       'email': 'user$id@example.com',
     };
@@ -136,7 +136,6 @@ Future<void> main() async {
       );
     } else if (auth is BasicAuthorizationHeader) {
       final username = auth.username;
-      final password = auth.password;
       // In real app, validate credentials here
       return ctx.respond(
         Response.ok(
@@ -144,7 +143,6 @@ Future<void> main() async {
             jsonEncode({
               'message': 'Basic auth received',
               'username': username,
-              'password_length': password.length,
             }),
             mimeType: MimeType.json,
           ),
