@@ -78,19 +78,4 @@ GITHUB_CODE_BLOCK lang="dart" doctag="handler-hijack-sse" [src](https://raw.gith
 
 For real-time bidirectional communication, you can upgrade connections to WebSockets by returning a `WebSocketUpgrade`:
 
-```dart
-import 'package:relic/relic.dart';
-
-WebSocketUpgrade chatHandler(Request req) {
-  return WebSocketUpgrade((webSocket) async {
-    // The WebSocket is now active
-    webSocket.sendText('Welcome to chat!');
-
-    await for (final event in webSocket.events) {
-      if (event is TextDataReceived) {
-        // Echo the message back
-        webSocket.sendText('Echo: ${event.text}');
-      }
-    }
-  });
-}
+GITHUB_CODE_BLOCK lang="dart" doctag="context-websocket-echo" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/context/context_example.dart) title="WebSocket example"

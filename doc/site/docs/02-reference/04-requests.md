@@ -135,26 +135,6 @@ GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/
 
 This check doesn't consume the body stream, so you can still read the body afterward.
 
-## Best practices
-
-### Validate query parameters
-
-Always validate query parameters before using them, as they come from untrusted user input. Check for null values, parse strings to numbers safely, and validate ranges or formats.
-
-GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/routing/request_response_example.dart) doctag="html-response" title="request_response_example.dart"
-
-### Handle missing headers gracefully
-
-Headers are optional in HTTP, so always check for null values before using them. Provide sensible defaults or error messages when required headers are missing.
-
-GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/routing/request_response_example.dart) doctag="headers-complete" title="request_response_example.dart"
-
-### Use try-catch for body parsing
-
-Always wrap body parsing in try-catch blocks to handle malformed data gracefully. This prevents your server from crashing when clients send invalid requests.
-
-GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/routing/request_response_example.dart) doctag="json-api-complete" title="request_response_example.dart"
-
 ## Summary
 
 The `Request` object is your gateway to understanding what clients are asking for. By leveraging Relic's type-safe API, you can build secure, reliable handlers that properly validate and process client input.
