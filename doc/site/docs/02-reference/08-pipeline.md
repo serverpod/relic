@@ -11,15 +11,7 @@ Pipeline is a legacy pattern for composing middleware, see [Middleware](./middle
 
 The `Pipeline` class is a helper that makes it easy to compose a set of [Middleware] and a [Handler]. It provides a fluent API for building middleware chains that process requests and responses in a specific order.
 
-```dart
-import 'package:relic/relic.dart';
-
-final handler = const Pipeline()
-  .addMiddleware(logRequests())
-  .addMiddleware(corsMiddleware())
-  .addMiddleware(authMiddleware())
-  .addHandler(myHandler);
-```
+GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/middleware/pipeline_example.dart) doctag="pipeline-usage" title="pipeline_example.dart"
 
 ## How Pipeline Works
 
@@ -36,30 +28,11 @@ This creates a nested structure where each middleware wraps the next, forming a 
 
 **Old Pipeline approach:**
 
-```dart
-final router = Router<Handler>()
-  ..get('/users', usersHandler)
-  ..get('/posts', postsHandler);
-
-final handler = const Pipeline()
-  .addMiddleware(logRequests())
-  .addMiddleware(authMiddleware())
-  .addMiddleware(routeWith(router))
-  .addHandler(respondWith((_) => Response.notFound()));
-```
+GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/middleware/pipeline_example.dart) doctag="pipeline-usage" title="pipeline_example.dart"
 
 **New router.use() approach:**
 
-```dart
-final router = RelicRouter()
-  ..use('/', logRequests())
-  ..use('/', authMiddleware())
-  ..get('/users', usersHandler)
-  ..get('/posts', postsHandler)
-  ..fallback = respondWith((_) => Response.notFound());
-
-final handler = router.asHandler;
-```
+GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/middleware/pipeline_example.dart) doctag="router-usage" title="pipeline_example.dart"
 
 The new approach is more concise, provides better path-specific middleware control, and integrates more naturally with Relic's routing system.
 

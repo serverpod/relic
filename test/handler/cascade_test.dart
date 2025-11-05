@@ -1,4 +1,5 @@
 import 'package:relic/relic.dart';
+import 'package:relic/src/context/context.dart';
 import 'package:test/test.dart';
 
 import '../util/test_util.dart';
@@ -59,9 +60,10 @@ void main() {
       () async {
         final response = await makeSimpleRequest(
           handler,
-          Request(
+          RequestInternal.create(
             Method.get,
             localhostUri,
+            Object(),
             headers: Headers.build((final mh) => mh['one'] = ['false']),
           ),
         );
@@ -75,9 +77,10 @@ void main() {
       () async {
         final response = await makeSimpleRequest(
           handler,
-          Request(
+          RequestInternal.create(
             Method.get,
             localhostUri,
+            Object(),
             headers: Headers.build((final mh) {
               mh['one'] = ['false'];
               mh['two'] = ['false'];
@@ -95,9 +98,10 @@ void main() {
       () async {
         final response = await makeSimpleRequest(
           handler,
-          Request(
+          RequestInternal.create(
             Method.get,
             localhostUri,
+            Object(),
             headers: Headers.build((final mh) {
               mh['one'] = ['false'];
               mh['two'] = ['false'];
