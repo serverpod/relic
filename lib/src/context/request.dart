@@ -1,8 +1,4 @@
-import '../body/body.dart';
-import '../headers/headers.dart';
-
-import '../router/method.dart';
-import 'message.dart';
+part of 'context.dart';
 
 /// An HTTP request to be processed by a Relic Server application.
 ///
@@ -13,49 +9,44 @@ import 'message.dart';
 ///
 /// ```dart
 /// // Basic request handling
-/// router.get('/users/:id', (ctx) {
-///   final request = ctx.request;
-///
+/// router.get('/users/:id', (req) {
 ///   // Access path parameters
-///   final id = ctx.pathParameters[#id];
+///   final id = req.pathParameters[#id];
 ///
 ///   // Access HTTP method
 ///   print(request.method); // Method.get
 ///
 ///   // Access query parameters
-///   final sort = request.url.queryParameters['sort'];
-///   final filter = request.url.queryParameters['filter'];
+///   final sort = req.url.queryParameters['sort'];
+///   final filter = req.url.queryParameters['filter'];
 ///
 ///   // Multiple values for same parameter
 ///   // URL: /tags?tag=dart&tag=server
-///   final tags = request.url.queryParametersAll['tag'];
+///   final tags = req.url.queryParametersAll['tag'];
 ///   // tags = ['dart', 'server']
 ///
 ///   // Access headers
-///   final userAgent = request.headers.userAgent;
+///   final userAgent = req.headers.userAgent;
 ///
-///   return ctx.respond(Response.ok(
+///   return Response.ok(
 ///     body: Body.fromString('User request'),
-///   ));
+///   );
 /// });
 ///
 /// // Reading request body
-/// router.post('/api/data', (ctx) async {
-///   final request = ctx.request;
-///
+/// router.post('/api/data', (req) async {
 ///   // Check if body exists
-///   if (request.isEmpty) {
-///     return ctx.respond(Response.badRequest());
+///   if (req.isEmpty) {
+///     return Response.badRequest();
 ///   }
 ///
 ///   // Read as string
-///   final bodyText = await request.readAsString();
+///   final bodyText = await req.readAsString();
 ///
 ///   // Parse JSON
 ///   final data = jsonDecode(bodyText);
-///   return ctx.respond(Response.ok());
+///   return Response.ok();
 /// });
-/// ```
 /// ```
 class Request extends Message {
   /// The URL path from the current handler to the requested resource, relative
@@ -117,34 +108,11 @@ class Request extends Message {
   /// An empty list will cause the header to be omitted.
   ///
   /// The default value for [protocolVersion] is '1.1'.
-  Request(
-    final Method method,
-    final Uri requestedUri, {
-    final String? protocolVersion,
-    final Headers? headers,
-    final String? handlerPath,
-    final Uri? url,
-    final Body? body,
-  }) : this._(
-         method,
-         requestedUri,
-         headers ?? Headers.empty(),
-         protocolVersion: protocolVersion,
-         url: url,
-         handlerPath: handlerPath,
-         body: body,
-       );
-
-  /// This constructor has the same signature as [Request.new] except that
-  /// accepts [onHijack] as [_OnHijack].
-  ///
-  /// Any [Request] created by calling [copyWith] will pass [_onHijack] from the
-  /// source [Request] to ensure that [hijack] can only be called once, even
-  /// from a changed [Request].
   Request._(
     this.method,
     this.requestedUri,
-    final Headers headers, {
+    this._token, {
+    final Headers? headers,
     final String? protocolVersion,
     final String? handlerPath,
     final Uri? url,
@@ -152,7 +120,7 @@ class Request extends Message {
   }) : protocolVersion = protocolVersion ?? '1.1',
        url = _computeUrl(requestedUri, handlerPath, url),
        handlerPath = _computeHandlerPath(requestedUri, handlerPath, url),
-       super(body: body ?? Body.empty(), headers: headers) {
+       super(body: body ?? Body.empty(), headers: headers ?? Headers.empty()) {
     try {
       // Trigger URI parsing methods that may throw format exception (in Request
       // constructor or in handlers / routing).
@@ -234,12 +202,15 @@ class Request extends Message {
     return Request._(
       method,
       requestedUri ?? this.requestedUri,
-      headers ?? this.headers,
+      token,
+      headers: headers ?? this.headers,
       protocolVersion: protocolVersion,
       handlerPath: handlerPath,
       body: body,
     );
   }
+
+  final Object _token;
 }
 
 /// Computes `url` from the provided [Request] constructor arguments.
@@ -337,4 +308,14 @@ String _computeHandlerPath(
   } else {
     return '/';
   }
+}
+
+/// Internal extension methods for [Request].
+/// This is hidden in barrel file (relic.dart)
+extension RequestInternal on Request {
+  /// Expose private constructor internally
+  static const create = Request._;
+
+  /// Expose token internally
+  Object get token => _token;
 }

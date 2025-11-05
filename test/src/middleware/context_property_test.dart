@@ -1,16 +1,20 @@
 import 'package:relic/relic.dart';
-import 'package:relic/src/adapter/context.dart';
+import 'package:relic/src/context/context.dart';
 import 'package:test/test.dart';
 
-Context _createContextInstance([final String uriSuffix = 'test']) {
-  final request = Request(Method.get, Uri.parse('http://test.com/$uriSuffix'));
-  return request.toContext(Object());
+Request _createContextInstance([final String uriSuffix = 'test']) {
+  final request = RequestInternal.create(
+    Method.get,
+    Uri.parse('http://test.com/$uriSuffix'),
+    Object(),
+  );
+  return request;
 }
 
 void main() {
-  group('Given a ContextProperty<String> and a RequestContext,', () {
+  group('Given a ContextProperty<String> and a Request,', () {
     late ContextProperty<String> stringProperty;
-    late Context context;
+    late Request context;
 
     setUp(() {
       stringProperty = ContextProperty<String>('testStringProperty');
@@ -93,60 +97,57 @@ void main() {
     });
   });
 
-  group(
-    'Given a RequestContext and a ContextProperty for which no value is set,',
-    () {
-      test(
-        'when the property has a debug name and the value is accessed using [], '
-        'then a StateError is thrown with a message containing the debug name.',
-        () {
-          final property = ContextProperty<String>('debugNameProperty');
-          final context = _createContextInstance('errorCtxDebug');
-          expect(
-            () => property[context],
-            throwsA(
-              isA<StateError>().having(
-                (final e) => e.message,
-                'message',
-                contains(
-                  'ContextProperty value not found. Property: debugNameProperty.',
-                ),
+  group('Given a Request and a ContextProperty for which no value is set,', () {
+    test(
+      'when the property has a debug name and the value is accessed using [], '
+      'then a StateError is thrown with a message containing the debug name.',
+      () {
+        final property = ContextProperty<String>('debugNameProperty');
+        final context = _createContextInstance('errorCtxDebug');
+        expect(
+          () => property[context],
+          throwsA(
+            isA<StateError>().having(
+              (final e) => e.message,
+              'message',
+              contains(
+                'ContextProperty value not found. Property: debugNameProperty.',
               ),
             ),
-          );
-        },
-      );
+          ),
+        );
+      },
+    );
 
-      test(
-        'when the property (e.g., for int type) has no debug name and the value is accessed using [], '
-        'then a StateError is thrown with a message containing the type name.',
-        () {
-          final property = ContextProperty<int>(); // No debug name
-          final context = _createContextInstance('errorCtxType');
-          expect(
-            () => property[context],
-            throwsA(
-              isA<StateError>().having(
-                (final e) => e.message,
-                'message',
-                contains('ContextProperty value not found. Property: int.'),
-              ),
+    test(
+      'when the property (e.g., for int type) has no debug name and the value is accessed using [], '
+      'then a StateError is thrown with a message containing the type name.',
+      () {
+        final property = ContextProperty<int>(); // No debug name
+        final context = _createContextInstance('errorCtxType');
+        expect(
+          () => property[context],
+          throwsA(
+            isA<StateError>().having(
+              (final e) => e.message,
+              'message',
+              contains('ContextProperty value not found. Property: int.'),
             ),
-          );
-        },
-      );
-    },
-  );
+          ),
+        );
+      },
+    );
+  });
 
-  group('Given a ContextProperty<String> and two RequestContexts,', () {
+  group('Given a ContextProperty<String> and two Requests,', () {
     late ContextProperty<String> stringProperty;
-    late Context context1;
-    late Context context2;
+    late Request context1;
+    late Request context2;
 
     setUp(() {
       stringProperty = ContextProperty<String>('multiContextProp');
-      context1 = _createContextInstance('ctx1');
-      context2 = _createContextInstance('ctx2');
+      context1 = _createContextInstance('req1');
+      context2 = _createContextInstance('req2');
     });
 
     test(
@@ -183,7 +184,7 @@ void main() {
   });
 
   group(
-    'Given a single RequestContext and multiple different ContextProperty instances,',
+    'Given a single Request and multiple different ContextProperty instances,',
     () {
       test(
         'when different values are set for the same context using these different properties, '
@@ -212,7 +213,7 @@ void main() {
     },
   );
 
-  group('Given a RequestContext and a ContextProperty for a specific data type,', () {
+  group('Given a Request and a ContextProperty for a specific data type,', () {
     test(
       'when the type is int, an int value is set, retrieved, its existence checked, and then cleared, '
       'then all operations behave as expected.',

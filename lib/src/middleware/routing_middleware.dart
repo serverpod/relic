@@ -22,7 +22,7 @@ final _routingContext =
 /// header listing supported methods.
 ///
 /// Path parameters, matched path, and remaining path from the routing lookup
-/// are accessible via [RequestContextEx] extensions on the context passed to
+/// are accessible via [RequestEx] extensions on the context passed to
 /// handlers.
 ///
 /// **Note:** For [RelicRouter], prefer using [Router.use] for middleware
@@ -82,39 +82,36 @@ class _RoutingMiddlewareBuilder<T extends Object> {
   Middleware get asMiddleware => call;
 
   Handler call(final Handler next) {
-    return (final ctx) async {
-      final req = ctx.request;
+    return (final req) async {
       final path = Uri.decodeFull(req.url.path);
       final result = _router.lookup(req.method, path);
       switch (result) {
         case MethodMiss():
-          return ctx.respond(
-            Response(
-              405,
-              headers: Headers.build((final mh) => mh.allow = result.allowed),
-            ),
+          return Response(
+            405,
+            headers: Headers.build((final mh) => mh.allow = result.allowed),
           );
         case PathMiss():
-          return await next(ctx);
+          return await next(req);
         case final RouterMatch<T> match:
-          _routingContext[ctx] = (
+          _routingContext[req] = (
             parameters: match.parameters,
             matched: match.matched,
             remaining: match.remaining,
           );
           final handler = _toHandler(match.value);
-          return await handler(ctx);
+          return await handler(req);
       }
     };
   }
 }
 
-/// Extension on [Context] providing access to routing information.
+/// Extension on [Request] providing access to routing information.
 ///
 /// These properties are populated when a request is routed using [routeWith]
 /// or [RouterHandlerEx.asHandler], and are available to all handlers in the processing
 /// chain.
-extension ContextEx on Context {
+extension RoutingRequestEx on Request {
   /// The portion of the request path that was matched by the route.
   ///
   /// For example, if the route pattern is `/api/**` and the request is to
@@ -134,9 +131,9 @@ extension ContextEx on Context {
   ///
   /// Example:
   /// ```dart
-  /// router.get('/users/:id', (ctx) {
-  ///   final id = ctx.pathParameters[#id]; // Extract 'id' parameter
-  ///   return ctx.respond(Response.ok());
+  /// router.get('/users/:id', (req) {
+  ///   final id = req.pathParameters[#id]; // Extract 'id' parameter
+  ///   return Response.ok();
   /// });
   /// ```
   ///
@@ -155,5 +152,5 @@ extension ContextEx on Context {
   /// was not routed through a router, this returns the full request path.
   NormalizedPath get remainingPath =>
       _routingContext.getOrNull(this)?.remaining ??
-      NormalizedPath(Uri.decodeFull(request.url.path));
+      NormalizedPath(Uri.decodeFull(url.path));
 }

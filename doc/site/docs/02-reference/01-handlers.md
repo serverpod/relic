@@ -193,26 +193,4 @@ ResponseContext contextHandler(NewContext ctx) {
 
 For real-time bidirectional communication, you can upgrade connections to WebSockets using `ctx.connect()`:
 
-```dart
-import 'dart:async';
-import 'dart:developer';
-import 'package:relic/relic.dart';
-
-ConnectContext webSocketHandler(NewContext ctx) {
-  return ctx.connect((RelicWebSocket channel) async {
-    // Send initial connection message
-    channel.sendText('data: Connected\n\n');
-
-    // Send periodic updates
-    final timer = Timer.periodic(Duration(seconds: 1), (_) {
-      channel.sendText('data: ${DateTime.now()}\n\n');
-    });
-
-    // Listen to incoming events and cleanup on disconnect
-    channel.events.listen(
-      (event) => log('event: $event'),
-      onDone: () => timer.cancel(),
-    );
-  });
-}
-```
+GITHUB_CODE_BLOCK lang="dart" doctag="context-websocket-echo" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/context/context_example.dart) title="WebSocket example"

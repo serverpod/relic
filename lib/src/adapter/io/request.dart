@@ -1,13 +1,18 @@
 import 'dart:convert';
 import 'dart:io' as io;
 
-import '../../../relic.dart';
+import '../../body/body.dart';
+import '../../body/types/mime_type.dart';
+import '../../context/context.dart';
+import '../../headers/headers.dart';
+import '../../router/method.dart';
 
 /// Creates a new [Request] from an [io.HttpRequest].
 Request fromHttpRequest(final io.HttpRequest request) {
-  return Request(
+  return RequestInternal.create(
     Method.parse(request.method),
     request.requestedUri,
+    request,
     protocolVersion: request.protocolVersion,
     headers: headersFromHttpRequest(request),
     body: bodyFromHttpRequest(request),

@@ -5,33 +5,29 @@ import 'dart:io';
 import 'package:meta/meta.dart';
 import 'package:relic/io_adapter.dart';
 import 'package:relic/relic.dart';
-import 'package:relic/src/adapter/context.dart';
+import 'package:relic/src/context/context.dart';
 import 'package:test/test.dart';
 
 final helloBytes = utf8.encode('hello,');
 
 final worldBytes = utf8.encode(' world');
 
-typedef SyncHandler = HandledContext Function(RequestContext);
+typedef SyncHandler = Result Function(Request);
 
 /// A simple, synchronous handler.
 ///
 /// By default, replies with a status code 200, empty headers, and
-/// `Hello from ${ctx.request.url.path}`.
+/// `Hello from ${req.url.path}`.
 SyncHandler createSyncHandler({
   final int statusCode = 200,
   final Headers? headers,
   final Body? body,
 }) {
-  return (final RequestContext ctx) {
-    return ctx.respond(
-      Response(
-        statusCode,
-        headers: headers ?? Headers.empty(),
-        body:
-            body ??
-            Body.fromString('Hello from ${ctx.request.requestedUri.path}'),
-      ),
+  return (final Request req) {
+    return Response(
+      statusCode,
+      headers: headers ?? Headers.empty(),
+      body: body ?? Body.fromString('Hello from ${req.requestedUri.path}'),
     );
   };
 }
@@ -39,8 +35,8 @@ SyncHandler createSyncHandler({
 final SyncHandler syncHandler = createSyncHandler();
 
 /// Calls [createSyncHandler] and wraps the response in a [Future].
-Future<HandledContext> asyncHandler(final RequestContext ctx) async {
-  return syncHandler(ctx);
+Future<Result> asyncHandler(final Request req) async {
+  return syncHandler(req);
 }
 
 /// Makes a simple GET request to [handler] and returns the result.
@@ -48,14 +44,16 @@ Future<Response> makeSimpleRequest(
   final Handler handler, [
   final Request? request,
 ]) async {
-  final newCtx = await handler(
-    (request ?? _defaultRequest).toContext(Object()),
-  );
-  if (newCtx is! ResponseContext) throw ArgumentError(newCtx);
-  return newCtx.response;
+  final newCtx = await handler((request ?? _defaultRequest));
+  if (newCtx is! Response) throw ArgumentError(newCtx);
+  return newCtx;
 }
 
-final _defaultRequest = Request(Method.get, localhostUri);
+final _defaultRequest = RequestInternal.create(
+  Method.get,
+  localhostUri,
+  Object(),
+);
 
 final localhostUri = Uri.parse('http://localhost/');
 

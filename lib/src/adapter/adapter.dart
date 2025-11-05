@@ -2,8 +2,7 @@ import 'dart:async';
 
 import 'package:stream_channel/stream_channel.dart';
 
-import '../message/request.dart';
-import '../message/response.dart';
+import '../context/context.dart';
 import 'relic_web_socket.dart';
 
 /// A callback function that handles a hijacked connection.

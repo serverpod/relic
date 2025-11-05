@@ -11,20 +11,20 @@ Future<void> main() async {
 
   // Basic request method and response
   // doctag<basic-request-response>
-  app.get('/info', (final ctx) {
-    final method = ctx.request.method; // Method.get
-    return ctx.respond(
-      Response.ok(body: Body.fromString('Received a ${method.name} request')),
+  app.get('/info', (final req) {
+    final method = req.method; // Method.get
+    return Response.ok(
+      body: Body.fromString('Received a ${method.name} request'),
     );
   });
   // end:doctag<basic-request-response>
 
   // Path parameters with response
   // doctag<path-params-complete>
-  app.get('/users/:id', (final ctx) {
-    final id = ctx.pathParameters[#id]!;
-    final url = ctx.request.url;
-    final fullUri = ctx.request.requestedUri;
+  app.get('/users/:id', (final req) {
+    final id = req.pathParameters[#id]!;
+    final url = req.url;
+    final fullUri = req.requestedUri;
 
     log('Relative URL: $url, id: $id');
     log('Full URI: $fullUri');
@@ -36,25 +36,21 @@ Future<void> main() async {
       'email': 'user$id@example.com',
     };
 
-    return ctx.respond(
-      Response.ok(
-        body: Body.fromString(jsonEncode(user), mimeType: MimeType.json),
-      ),
+    return Response.ok(
+      body: Body.fromString(jsonEncode(user), mimeType: MimeType.json),
     );
   });
   // end:doctag<path-params-complete>
 
   // Query parameters with validation and response
   // doctag<query-params-complete>
-  app.get('/search', (final ctx) {
-    final query = ctx.request.url.queryParameters['query'];
-    final page = ctx.request.url.queryParameters['page'];
+  app.get('/search', (final req) {
+    final query = req.url.queryParameters['query'];
+    final page = req.url.queryParameters['page'];
 
     if (query == null) {
-      return ctx.respond(
-        Response.badRequest(
-          body: Body.fromString('Query parameter "query" is required'),
-        ),
+      return Response.badRequest(
+        body: Body.fromString('Query parameter "query" is required'),
       );
     }
 
@@ -65,36 +61,32 @@ Future<void> main() async {
       'results': ['Result 1', 'Result 2', 'Result 3'],
     };
 
-    return ctx.respond(
-      Response.ok(
-        body: Body.fromString(jsonEncode(results), mimeType: MimeType.json),
-      ),
+    return Response.ok(
+      body: Body.fromString(jsonEncode(results), mimeType: MimeType.json),
     );
   });
   // end:doctag<query-params-complete>
 
   // Multiple query parameters
   // doctag<query-multi-complete>
-  app.get('/filter', (final ctx) {
-    final tags = ctx.request.url.queryParametersAll['tag'] ?? [];
+  app.get('/filter', (final req) {
+    final tags = req.url.queryParametersAll['tag'] ?? [];
     final results = {
       'tags': tags,
       'filtered_items':
           tags.map((final tag) => 'Item tagged with $tag').toList(),
     };
 
-    return ctx.respond(
-      Response.ok(
-        body: Body.fromString(jsonEncode(results), mimeType: MimeType.json),
-      ),
+    return Response.ok(
+      body: Body.fromString(jsonEncode(results), mimeType: MimeType.json),
     );
   });
   // end:doctag<query-multi-complete>
 
   // Headers inspection with response
   // doctag<headers-complete>
-  app.get('/headers-info', (final ctx) {
-    final request = ctx.request;
+  app.get('/headers-info', (final req) {
+    final request = req;
 
     // Get typed values
     final mimeType = request.mimeType; // MimeType? (from Content-Type)
@@ -107,63 +99,52 @@ Future<void> main() async {
       'content_length': contentLength ?? 0,
     };
 
-    return ctx.respond(
-      Response.ok(
-        body: Body.fromString(jsonEncode(info), mimeType: MimeType.json),
-      ),
+    return Response.ok(
+      body: Body.fromString(jsonEncode(info), mimeType: MimeType.json),
     );
   });
   // end:doctag<headers-complete>
 
   // Authorization with proper response
   // doctag<auth-complete>
-  app.get('/protected', (final ctx) {
-    final auth = ctx.request.headers.authorization;
+  app.get('/protected', (final req) {
+    final auth = req.headers.authorization;
 
     if (auth is BearerAuthorizationHeader) {
       final token = auth.token;
       // In real app, validate token here
-      return ctx.respond(
-        Response.ok(
-          body: Body.fromString(
-            jsonEncode({
-              'message': 'Access granted',
-              'token_length': token.length,
-            }),
-            mimeType: MimeType.json,
-          ),
+      return Response.ok(
+        body: Body.fromString(
+          jsonEncode({
+            'message': 'Access granted',
+            'token_length': token.length,
+          }),
+          mimeType: MimeType.json,
         ),
       );
     } else if (auth is BasicAuthorizationHeader) {
       final username = auth.username;
       // In real app, validate credentials here
-      return ctx.respond(
-        Response.ok(
-          body: Body.fromString(
-            jsonEncode({
-              'message': 'Basic auth received',
-              'username': username,
-            }),
-            mimeType: MimeType.json,
-          ),
+      return Response.ok(
+        body: Body.fromString(
+          jsonEncode({'message': 'Basic auth received', 'username': username}),
+          mimeType: MimeType.json,
         ),
       );
     } else {
-      return ctx.respond(Response.unauthorized());
+      return Response.unauthorized();
     }
   });
   // end:doctag<auth-complete>
 
   // Request body handling with response
   // doctag<body-handling-complete>
-  app.post('/submit', (final ctx) async {
-    final bodyText = await ctx.request.readAsString();
-    return ctx.respond(
-      Response.ok(
-        body: Body.fromString(
-          jsonEncode({'received': bodyText, 'length': bodyText.length}),
-          mimeType: MimeType.json,
-        ),
+  app.post('/submit', (final req) async {
+    final bodyText = await req.readAsString();
+    return Response.ok(
+      body: Body.fromString(
+        jsonEncode({'received': bodyText, 'length': bodyText.length}),
+        mimeType: MimeType.json,
       ),
     );
   });
@@ -171,21 +152,19 @@ Future<void> main() async {
 
   // JSON API with full request/response cycle
   // doctag<json-api-complete>
-  app.post('/api/users', (final ctx) async {
+  app.post('/api/users', (final req) async {
     try {
-      final bodyText = await ctx.request.readAsString();
+      final bodyText = await req.readAsString();
       final data = jsonDecode(bodyText) as Map<String, dynamic>;
 
       final name = data['name'] as String?;
       final email = data['email'] as String?;
 
       if (name == null || email == null) {
-        return ctx.respond(
-          Response.badRequest(
-            body: Body.fromString(
-              jsonEncode({'error': 'Name and email are required'}),
-              mimeType: MimeType.json,
-            ),
+        return Response.badRequest(
+          body: Body.fromString(
+            jsonEncode({'error': 'Name and email are required'}),
+            mimeType: MimeType.json,
           ),
         );
       }
@@ -198,21 +177,17 @@ Future<void> main() async {
         'created_at': DateTime.now().toIso8601String(),
       };
 
-      return ctx.respond(
-        Response.ok(
-          body: Body.fromString(
-            jsonEncode({'message': 'User created', 'user': newUser}),
-            mimeType: MimeType.json,
-          ),
+      return Response.ok(
+        body: Body.fromString(
+          jsonEncode({'message': 'User created', 'user': newUser}),
+          mimeType: MimeType.json,
         ),
       );
     } catch (e) {
-      return ctx.respond(
-        Response.badRequest(
-          body: Body.fromString(
-            jsonEncode({'error': 'Invalid JSON: $e'}),
-            mimeType: MimeType.json,
-          ),
+      return Response.badRequest(
+        body: Body.fromString(
+          jsonEncode({'error': 'Invalid JSON: $e'}),
+          mimeType: MimeType.json,
         ),
       );
     }
@@ -221,19 +196,17 @@ Future<void> main() async {
 
   // File upload with streaming
   // doctag<upload-complete>
-  app.post('/upload', (final ctx) async {
-    if (ctx.request.isEmpty) {
-      return ctx.respond(
-        Response.badRequest(
-          body: Body.fromString(
-            jsonEncode({'error': 'Request body is required'}),
-            mimeType: MimeType.json,
-          ),
+  app.post('/upload', (final req) async {
+    if (req.isEmpty) {
+      return Response.badRequest(
+        body: Body.fromString(
+          jsonEncode({'error': 'Request body is required'}),
+          mimeType: MimeType.json,
         ),
       );
     }
 
-    final stream = ctx.request.read(); // Stream<Uint8List>
+    final stream = req.read(); // Stream<Uint8List>
     int totalBytes = 0;
 
     await for (final chunk in stream) {
@@ -241,15 +214,13 @@ Future<void> main() async {
       // Process chunk...
     }
 
-    return ctx.respond(
-      Response.ok(
-        body: Body.fromString(
-          jsonEncode({
-            'message': 'Upload successful',
-            'bytes_received': totalBytes,
-          }),
-          mimeType: MimeType.json,
-        ),
+    return Response.ok(
+      body: Body.fromString(
+        jsonEncode({
+          'message': 'Upload successful',
+          'bytes_received': totalBytes,
+        }),
+        mimeType: MimeType.json,
       ),
     );
   });
@@ -257,14 +228,14 @@ Future<void> main() async {
 
   // HTML page response
   // doctag<html-response>
-  app.get('/page', (final ctx) {
-    final pageNum = ctx.request.url.queryParameters['page'];
+  app.get('/page', (final req) {
+    final pageNum = req.url.queryParameters['page'];
 
     if (pageNum != null) {
       final page = int.tryParse(pageNum);
       if (page == null || page < 1) {
-        return ctx.respond(
-          Response.badRequest(body: Body.fromString('Invalid page number')),
+        return Response.badRequest(
+          body: Body.fromString('Invalid page number'),
         );
       }
     }
@@ -280,47 +251,41 @@ Future<void> main() async {
 </html>
 ''';
 
-    return ctx.respond(
-      Response.ok(body: Body.fromString(html, mimeType: MimeType.html)),
-    );
+    return Response.ok(body: Body.fromString(html, mimeType: MimeType.html));
   });
   // end:doctag<html-response>
 
   // Custom status codes
   // doctag<custom-status>
-  app.get('/teapot', (final ctx) {
-    return ctx.respond(
-      Response(
-        418, // I'm a teapot
-        body: Body.fromString('I refuse to brew coffee'),
-      ),
+  app.get('/teapot', (final req) {
+    return Response(
+      418, // I'm a teapot
+      body: Body.fromString('I refuse to brew coffee'),
     );
   });
   // end:doctag<custom-status>
 
   // Binary data response
   // doctag<binary-response>
-  app.get('/image.png', (final ctx) {
+  app.get('/image.png', (final req) {
     final imageBytes = Uint8List.fromList([1, 2, 3, 4]); // Mock image data
-    return ctx.respond(Response.ok(body: Body.fromData(imageBytes)));
+    return Response.ok(body: Body.fromData(imageBytes));
   });
   // end:doctag<binary-response>
 
   // Streaming response
   // doctag<streaming-response>
-  app.get('/large-file', (final ctx) {
+  app.get('/large-file', (final req) {
     final dataStream = Stream.fromIterable([
       Uint8List.fromList([1, 2, 3]),
       Uint8List.fromList([4, 5, 6]),
     ]);
 
-    return ctx.respond(
-      Response.ok(
-        body: Body.fromDataStream(
-          dataStream,
-          mimeType: MimeType.octetStream,
-          contentLength: 6, // Optional but recommended
-        ),
+    return Response.ok(
+      body: Body.fromDataStream(
+        dataStream,
+        mimeType: MimeType.octetStream,
+        contentLength: 6, // Optional but recommended
       ),
     );
   });
@@ -328,20 +293,20 @@ Future<void> main() async {
 
   // Empty responses
   // doctag<empty-responses>
-  app.get('/empty1', (final ctx) {
+  app.get('/empty1', (final req) {
     // Explicitly empty
-    return ctx.respond(Response.ok(body: Body.empty()));
+    return Response.ok(body: Body.empty());
   });
 
-  app.get('/empty2', (final ctx) {
+  app.get('/empty2', (final req) {
     // Or use noContent() which implies an empty body
-    return ctx.respond(Response.noContent());
+    return Response.noContent();
   });
   // end:doctag<empty-responses>
 
   // Response headers
   // doctag<response-headers>
-  app.get('/api/data', (final ctx) {
+  app.get('/api/data', (final req) {
     final headers = Headers.build((final h) {
       // Set cache control
       h.cacheControl = CacheControlHeader(maxAge: 3600, publicCache: true);
@@ -350,16 +315,14 @@ Future<void> main() async {
       h['X-Custom-Header'] = ['value'];
     });
 
-    return ctx.respond(
-      Response.ok(
-        headers: headers,
-        body: Body.fromString(
-          jsonEncode({
-            'status': 'ok',
-            'timestamp': DateTime.now().toIso8601String(),
-          }),
-          mimeType: MimeType.json,
-        ),
+    return Response.ok(
+      headers: headers,
+      body: Body.fromString(
+        jsonEncode({
+          'status': 'ok',
+          'timestamp': DateTime.now().toIso8601String(),
+        }),
+        mimeType: MimeType.json,
       ),
     );
   });
