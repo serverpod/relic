@@ -48,7 +48,6 @@ GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/
 
 GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/context/context_property_example.dart) doctag="context-prop-use-request-id" title="context_property_example.dart"
 
-
 :::info Property lifetime
 Context properties exist **only for the duration of the request**. Once the response is sent, they're automatically cleaned up. Properties are immutable - each `add()` call returns a new `Request` instance.
 :::
