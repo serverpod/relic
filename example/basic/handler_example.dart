@@ -11,13 +11,6 @@ Response helloHandler(final Request req) {
 }
 // end:doctag<handler-foundational>
 
-// Responder example adapted to a Handler using respondWith
-// doctag<handler-responder>
-final Handler simpleResponderHandler = respondWith((final Request request) {
-  return Response.ok(body: Body.fromString('Hello, ${request.url.path}!'));
-});
-// end:doctag<handler-responder>
-
 // Response-focused handler (standard API endpoint)
 // doctag<handler-response>
 Response apiResponseHandler(final Request req) {
@@ -88,7 +81,6 @@ Future<void> main() async {
   final app =
       RelicApp()
         ..get('/hello', helloHandler)
-        ..get('/responder', simpleResponderHandler)
         ..get('/api', apiResponseHandler)
         ..get('/sse', sseHandler)
         ..get('/sync', syncHandler)

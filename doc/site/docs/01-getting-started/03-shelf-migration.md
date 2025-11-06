@@ -33,8 +33,6 @@ Use this quick plan to get your app running on Relic. The detailed sections belo
 
 9) ✅ Update WebSockets: Replace `webSocketHandler` and use `RelicWebSocket` for events and sending.
 
-10) ✅ Satisfy the state machine: Handlers must return a handled context.
-
 ## Detailed migration steps
 
 ### 1. Update dependencies
@@ -101,18 +99,8 @@ Response handler(Request request) {
 After (Relic):
 
 ```dart
-import 'package:relic/relic.dart';
-
-// Using the Responder pattern
-Handler handler = respondWith((Request request) {
+Response handler(Request req) {
   return Response.ok(body: Body.fromString('Hello, Relic!'));
-});
-
-// Or using full context
-ResponseContext handler(NewContext ctx) {
-  return ctx.respond(
-    Response.ok(body: Body.fromString('Hello, Relic!')),
-  );
 }
 ```
 
@@ -140,9 +128,9 @@ After (Relic), routing built-in:
 import 'package:relic/relic.dart';
 
 final router = RelicApp()
-  ..get('/users/:id', (NewContext ctx) {
-    final id = ctx.pathParameters[#id];
-    return ctx.respond(Response.ok(body: Body.fromString('User $id')));
+  ..get('/users/:id', (Request req) {
+    final id = req.pathParameters[#id];
+    return Response.ok(body: Body.fromString('User $id'));
   });
 ```
 
@@ -189,9 +177,9 @@ final date = request.headers['date']; // String?
 Relic provides type-safe headers with automatic validation:
 
 ```dart
-final contentType = ctx.request.body.bodyType?.mimeType; // MimeType?
-final cookies = ctx.request.headers.cookie; // CookieHeader?
-final date = ctx.request.headers.date; // DateTime?
+final contentType = request.body.bodyType?.mimeType; // MimeType?
+final cookies = request.headers.cookie; // CookieHeader?
+final date = request.headers.date; // DateTime?
 ```
 
 ### 7. Replace middleware and scoping
@@ -217,10 +205,8 @@ After (Relic), route-level middleware:
 final app = RelicApp()
   ..use('/', logRequests())
   ..use('/api', authentication())
-  ..get('/api/users', (NewContext ctx) async {
-    return ctx.respond(Response.ok(
-      body: Body.fromString('User data'),
-    ));
+  ..get('/api/users', (Request req) async {
+    return Response.ok(body: Body.fromString('User data'));
   });
 ```
 
@@ -277,10 +263,10 @@ Relic has WebSockets built-in with state machine integration:
 ```dart
 import 'package:relic/relic.dart';
 
-ConnectContext handler(NewContext ctx) {
-  return ctx.connect((RelicWebSocket ws) {
-    ws.events.listen((event) {
-      print('Received: $event');
+WebSocketUpgrade websocketHandler(final Request req) {
+  return WebSocketUpgrade((final ws) async {
+    ws.events.listen((final event) {
+      log('Received: $event');
     });
 
     // Non-throwing variant - returns false if connection closed
@@ -289,16 +275,6 @@ ConnectContext handler(NewContext ctx) {
     // Or use the throwing variant if you want exceptions
     ws.sendText('Hello!');
   });
-}
-```
-
-### 10. Satisfy the state machine
-
-Relic uses a state machine where handlers must return a handled context:
-
-```dart
-ResponseContext handler(NewContext ctx) {
-  return ctx.respond(Response.ok());
 }
 ```
 
@@ -336,14 +312,12 @@ import 'package:relic/relic.dart';
 
 void main() async {
   final app = RelicApp()
-    ..use('/', logRequests()) // Apply logging to all routes
-    ..get('/users/:id', (NewContext ctx) {
-      final id = ctx.pathParameters[#id]!;
-      final name = ctx.request.url.queryParameters['name'] ?? 'Unknown';
-      return ctx.respond(
-        Response.ok(body: Body.fromString('User $id: $name')),
-      );
-    });
+        ..use('/', logRequests()) // Apply logging to all routes
+        ..get('/users/:id', (final Request req) {
+          final id = req.pathParameters[#id]!;
+          final name = req.url.queryParameters['name'] ?? 'Unknown';
+          return Response.ok(body: Body.fromString('User $id: $name'));
+        });
 
   await app.serve();
 }
