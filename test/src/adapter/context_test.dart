@@ -3,7 +3,7 @@ import 'package:relic/src/context/context.dart';
 import 'package:test/test.dart';
 
 void main() {
-  group('Given a Request, when withRequest is called with a new Request,', () {
+  group('Given a Request, when copyWith is called with a new url,', () {
     late Request originalRequest;
     late Request newRequest;
     late Object token;
@@ -52,7 +52,7 @@ void main() {
   });
 
   group(
-    'Given a Request, when withRequest is called with a request created using copyWith,',
+    'Given a Request, when copyWith is called to transform the request,',
     () {
       late Request originalRequest;
       late Object token;

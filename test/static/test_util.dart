@@ -6,21 +6,17 @@ import 'package:relic/src/context/context.dart';
 import 'package:relic/src/io/static/extension/datetime_extension.dart';
 import 'package:test/test.dart';
 
-final p.Context _req = p.url;
-
 /// Makes a simple GET request to [handler] and returns the result.
 Future<Response> makeRequest(
   final Handler handler,
   final String path, {
-  final String? handlerPath,
   final Headers? headers,
   final Method method = Method.get,
 }) async {
-  final rootedHandler = _rootHandler(handlerPath, handler);
   final request = _fromPath(path, headers, method: method);
-  final req = await rootedHandler(request);
-  if (req is! Response) throw ArgumentError(req);
-  return req;
+  final response = await handler(request);
+  if (response is! Response) throw ArgumentError(response);
+  return response;
 }
 
 Request _fromPath(
@@ -33,23 +29,6 @@ Request _fromPath(
   Object(),
   headers: headers,
 );
-
-Handler _rootHandler(final String? path, final Handler handler) {
-  if (path == null || path.isEmpty) {
-    return handler;
-  }
-
-  return (final req) {
-    if (!_req.isWithin('/$path', req.requestedUri.path)) {
-      return Response.notFound(body: Body.fromString('not found'));
-    }
-    assert(req.handlerPath == '/');
-
-    final relativeRequest = req.copyWith(path: path);
-
-    return handler(relativeRequest);
-  };
-}
 
 Matcher atSameTimeToSecond(final DateTime value) =>
     _SecondResolutionDateTimeMatcher(value);

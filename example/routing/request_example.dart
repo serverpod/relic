@@ -22,10 +22,10 @@ Future<void> main() async {
   // doctag<requests-path-params-id>
   app.get('/users/:id', (final req) {
     final id = req.pathParameters[#id]!;
-    final url = req.url;
+    final matchedPath = req.matchedPath;
     final fullUri = req.requestedUri;
 
-    log('Relative URL: $url, id: $id');
+    log('Matched path: $matchedPath, id: $id');
     log('Full URI: $fullUri');
 
     return Response.ok();
@@ -35,8 +35,8 @@ Future<void> main() async {
   // Query parameters - single values
   // doctag<requests-query-single>
   app.get('/search', (final req) {
-    final query = req.url.queryParameters['query'];
-    final page = req.url.queryParameters['page'];
+    final query = req.requestedUri.queryParameters['query'];
+    final page = req.requestedUri.queryParameters['page'];
 
     if (query == null) {
       return Response.badRequest(
@@ -53,7 +53,7 @@ Future<void> main() async {
   // Query parameters - multiple values
   // doctag<requests-query-multi>
   app.get('/filter', (final req) {
-    final tags = req.url.queryParametersAll['tag'] ?? [];
+    final tags = req.requestedUri.queryParametersAll['tag'] ?? [];
 
     return Response.ok(
       body: Body.fromString('Filtering by tags: ${tags.join(", ")}'),
@@ -168,7 +168,7 @@ Future<void> main() async {
   // Validate query parameters
   // doctag<requests-query-validate-page>
   app.get('/page', (final req) {
-    final pageStr = req.url.queryParameters['page'];
+    final pageStr = req.requestedUri.queryParameters['page'];
 
     if (pageStr == null) {
       return Response.badRequest(

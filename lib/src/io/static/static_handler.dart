@@ -119,6 +119,12 @@ class StaticHandler extends HandlerObject {
   final CacheControlFactory cacheControl;
   final CacheBustingConfig? cacheBustingConfig;
 
+  @override
+  void injectIn(final RelicRouter router) {
+    final path = entity is Directory ? '/**' : '/';
+    router.anyOf({Method.get, Method.head}, path, call);
+  }
+
   const StaticHandler._(
     this.entity, {
     this.defaultHandler,

@@ -11,33 +11,35 @@ import '../logger/logger.dart';
 /// The `isError` parameter indicates whether the message is caused by an error.
 ///
 /// If [logger] is not passed, the message is just passed to [print].
-Middleware logRequests({final Logger? logger}) => (final next) {
-  final localLogger = logger ?? logMessage;
+Middleware logRequests({final Logger? logger}) {
+  return (final next) {
+    final localLogger = logger ?? logMessage;
 
-  return (final req) async {
-    final startTime = DateTime.now();
-    final watch = Stopwatch()..start();
+    return (final req) async {
+      final startTime = DateTime.now();
+      final watch = Stopwatch()..start();
 
-    try {
-      final result = await next(req);
-      final msg = switch (result) {
-        final Response rc => '${rc.statusCode}',
-        final Hijack _ => 'hijacked',
-        final WebSocketUpgrade _ => 'connected',
-      };
-      localLogger(_message(startTime, req, watch.elapsed, msg));
-      return result;
-    } catch (error, stackTrace) {
-      localLogger(
-        _errorMessage(startTime, req, watch.elapsed, error),
-        type: LoggerType.error,
-        stackTrace: stackTrace,
-      );
+      try {
+        final result = await next(req);
+        final msg = switch (result) {
+          final Response rc => '${rc.statusCode}',
+          final Hijack _ => 'hijacked',
+          final WebSocketUpgrade _ => 'connected',
+        };
+        localLogger(_message(startTime, req, watch.elapsed, msg));
+        return result;
+      } catch (error, stackTrace) {
+        localLogger(
+          _errorMessage(startTime, req, watch.elapsed, error),
+          type: LoggerType.error,
+          stackTrace: stackTrace,
+        );
 
-      rethrow;
-    }
+        rethrow;
+      }
+    };
   };
-};
+}
 
 String _formatQuery(final String query) {
   return query == '' ? '' : '?$query';
@@ -50,7 +52,7 @@ String _message(
   final String message,
 ) {
   final method = request.method.value;
-  final requestedUri = request.url;
+  final requestedUri = request.requestedUri;
 
   return '${requestTime.toIso8601String()} '
       '${elapsedTime.toString().padLeft(15)} '

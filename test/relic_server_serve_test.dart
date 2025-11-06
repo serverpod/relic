@@ -73,11 +73,10 @@ void main() {
 
       expect(req.requestedUri, uri);
 
-      expect(req.url.path, 'foo/bar');
-      expect(req.url.pathSegments, ['foo', 'bar']);
+      expect(req.requestedUri.path, '/foo/bar');
+      expect(req.requestedUri.pathSegments, ['foo', 'bar']);
       expect(req.protocolVersion, '1.1');
-      expect(req.url.query, 'qs=value');
-      expect(req.handlerPath, '/');
+      expect(req.requestedUri.query, 'qs=value');
 
       return syncHandler(req);
     });
