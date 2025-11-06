@@ -172,12 +172,10 @@ void main() {
 
         final response = Response(
           345,
-          body: Body.fromString('hèllo, world'),
-          encoding: latin1,
+          body: Body.fromString('hèllo, world', encoding: latin1),
           headers: Headers.build(
             (final mh) => mh['header1'] = ['header value 1'],
           ),
-          context: {'context1': 'context value 1'},
         );
 
         final copy = response.copyWith();

@@ -419,7 +419,6 @@ void main() {
                   .bind(controller.stream)
                   .map((final list) => Uint8List.fromList(list)),
             ),
-            context: {'buffer_output': false},
           );
         }),
       );
