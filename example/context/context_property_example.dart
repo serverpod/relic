@@ -5,6 +5,11 @@ import 'package:relic/relic.dart';
 
 // Create a ContextProperty to store request-specific data
 // doctag<context-prop-request-id>
+
+extension on Request {
+  String get requestId => _requestIdProperty[this];
+}
+
 final _requestIdProperty = ContextProperty<String>('requestId');
 
 // Middleware that sets a unique ID for each request
@@ -23,7 +28,7 @@ Handler requestIdMiddleware(final Handler next) {
 // Handler that uses the stored request ID
 Future<Response> handler(final Request req) async {
   // Retrieve the request ID that was set by middleware
-  final requestId = _requestIdProperty[req];
+  final requestId = req.requestId;
 
   log('Request ID: $requestId');
 

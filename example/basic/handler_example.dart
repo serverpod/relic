@@ -11,13 +11,6 @@ Response helloHandler(final Request req) {
 }
 // end:doctag<handler-foundational>
 
-// Responder example adapted to a Handler using respondWith
-// doctag<handler-responder>
-final Handler simpleResponderHandler = respondWith((final Request request) {
-  return Response.ok(body: Body.fromString('Hello, ${request.url.path}!'));
-});
-// end:doctag<handler-responder>
-
 // Response-focused handler (standard API endpoint)
 // doctag<handler-response>
 Response apiResponseHandler(final Request req) {
@@ -34,30 +27,18 @@ Response apiResponseHandler(final Request req) {
 // doctag<handler-hijack-sse>
 Hijack sseHandler(final Request req) {
   return Hijack((final channel) async {
-    // Write SSE headers
-    const header =
-        'HTTP/1.1 200 OK'
-        'Content-Type: text/event-stream'
-        'Cache-Control: no-cache'
-        'Connection: keep-alive';
-    channel.sink.add(utf8.encode(header));
-
-    // Initial event
+    // Send Server-Sent Events
     channel.sink.add(utf8.encode('data: Connected'));
 
-    // Periodic updates
-    final timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      channel.sink.add(
-        utf8.encode('data: ${DateTime.now().toIso8601String()}'),
-      );
-    });
+    // Send periodic updates
+    final timer = Timer.periodic(
+      const Duration(seconds: 1),
+      (_) => channel.sink.add(utf8.encode('data: ${DateTime.now()}')),
+    );
 
-    // Keep open until the client disconnects
-    try {
-      await channel.sink.done;
-    } finally {
-      timer.cancel();
-    }
+    // Wait for client disconnect, then cleanup
+    await channel.sink.done;
+    timer.cancel();
   });
 }
 // end:doctag<handler-hijack-sse>
@@ -100,7 +81,6 @@ Future<void> main() async {
   final app =
       RelicApp()
         ..get('/hello', helloHandler)
-        ..get('/responder', simpleResponderHandler)
         ..get('/api', apiResponseHandler)
         ..get('/sse', sseHandler)
         ..get('/sync', syncHandler)

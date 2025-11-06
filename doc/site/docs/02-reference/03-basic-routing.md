@@ -46,51 +46,19 @@ These methods are syntactic sugar for the core `.add()` method:
 
 **Respond with `Hello World!` on the homepage:**
 
-```dart
-app.get('/', (ctx) {
-  return ctx.respond(
-    Response.ok(
-      body: Body.fromString('Hello World!'),
-    ),
-  );
-});
-```
+GITHUB_CODE_BLOCK lang="dart" title="basic_routing.dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/routing/basic_routing.dart) doctag="routing-basic-get-root"
 
 **Respond to a POST request on the root route:**
 
-```dart
-app.post('/', (ctx) {
-  return ctx.respond(
-    Response.ok(
-      body: Body.fromString('Got a POST request'),
-    ),
-  );
-});
-```
+GITHUB_CODE_BLOCK lang="dart" title="basic_routing.dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/routing/basic_routing.dart) doctag="routing-basic-post-root"
 
 **Respond to a PUT request to the `/user` route:**
 
-```dart
-app.put('/user', (ctx) {
-  return ctx.respond(
-    Response.ok(
-      body: Body.fromString('Got a PUT request at /user'),
-    ),
-  );
-});
-```
+GITHUB_CODE_BLOCK lang="dart" title="basic_routing.dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/routing/basic_routing.dart) doctag="routing-basic-put-user"
 
 **Respond to a DELETE request to the `/user` route:**
 
-```dart
-app.delete('/user', (ctx) {
-  return ctx.respond(
-    Response.ok(
-      body: Body.fromString('Got a DELETE request at /user'),
-    ),
-  );
-});
-```
+GITHUB_CODE_BLOCK lang="dart" title="basic_routing.dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/routing/basic_routing.dart) doctag="routing-basic-delete-user"
 
 ### Using the `add` method
 
@@ -98,15 +66,7 @@ This is what the convenience methods call internally:
 
 **Respond to a PATCH request using the core `.add()` method:**
 
-```dart
-app.add(Method.patch, '/api', (ctx) {
-  return ctx.respond(
-    Response.ok(
-      body: Body.fromString('Got a PATCH request at /api'),
-    ),
-  );
-});
-```
+GITHUB_CODE_BLOCK lang="dart" title="basic_routing.dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/routing/basic_routing.dart) doctag="routing-basic-patch-api"
 
 ### Using `anyOf` for multiple methods
 
@@ -114,12 +74,7 @@ Handle multiple HTTP methods with the same handler:
 
 **Handle both GET and POST requests to `/admin`:**
 
-```dart
-app.anyOf({Method.get, Method.post}, '/admin', (ctx) {
-  final method = ctx.request.method.name.toUpperCase();
-  return ctx.respond(Response.ok(body: Body.fromString('Admin page - $method request')));
-});
-```
+GITHUB_CODE_BLOCK lang="dart" title="basic_routing.dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/routing/basic_routing.dart) doctag="routing-basic-anyof-admin"
 
 ## Examples
 
