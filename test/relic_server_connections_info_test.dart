@@ -10,8 +10,9 @@ import 'util/test_util.dart';
 
 Handler _createDelayedHandler() {
   return (final req) async {
+    final delay = Platform.environment['CI'] != null ? 1000 : 100;
     // Block for a fixed duration.
-    await Future<void>.delayed(const Duration(milliseconds: 1000));
+    await Future<void>.delayed(Duration(milliseconds: delay));
     return Response.ok();
   };
 }
