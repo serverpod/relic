@@ -3,7 +3,7 @@ import 'dart:typed_data';
 
 import 'package:http_parser/http_parser.dart';
 import 'package:relic/relic.dart';
-import 'package:relic/src/context/context.dart';
+import 'package:relic/src/context/result.dart';
 import 'package:test/test.dart';
 
 import '../util/test_util.dart';

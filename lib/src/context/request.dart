@@ -1,4 +1,4 @@
-part of 'context.dart';
+part of 'result.dart';
 
 /// An HTTP request to be processed by a Relic Server application.
 ///

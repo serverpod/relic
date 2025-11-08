@@ -1,4 +1,4 @@
-part of 'context.dart';
+part of 'result.dart';
 
 /// The response returned by a [Handler].
 ///

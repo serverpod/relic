@@ -1,8 +1,7 @@
 import 'dart:async';
 
-import 'package:path/path.dart' as p;
 import 'package:relic/relic.dart';
-import 'package:relic/src/context/context.dart';
+import 'package:relic/src/context/result.dart';
 import 'package:relic/src/io/static/extension/datetime_extension.dart';
 import 'package:test/test.dart';
 
