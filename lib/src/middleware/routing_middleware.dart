@@ -123,7 +123,7 @@ extension RoutingRequestEx on Request {
   /// Returns [NormalizedPath.empty] if the request was not routed through
   /// a router.
   NormalizedPath get matchedPath =>
-      _routingContext.getOrNull(this)?.matched ?? NormalizedPath.empty;
+      _routingContext[this]?.matched ?? NormalizedPath.empty;
 
   /// Path parameters extracted from the matched route.
   ///
@@ -142,7 +142,7 @@ extension RoutingRequestEx on Request {
   /// Returns an empty map if no parameters were extracted or if the request
   /// was not routed through a router.
   Map<Symbol, String> get pathParameters =>
-      _routingContext.getOrNull(this)?.parameters ?? const <Symbol, String>{};
+      _routingContext[this]?.parameters ?? const <Symbol, String>{};
 
   /// The portion of the request path that was not consumed by the matched route.
   ///
@@ -153,6 +153,6 @@ extension RoutingRequestEx on Request {
   /// For routes without tail segments, this is typically empty. If the request
   /// was not routed through a router, this returns the full request path.
   NormalizedPath get remainingPath =>
-      _routingContext.getOrNull(this)?.remaining ??
+      _routingContext[this]?.remaining ??
       NormalizedPath(Uri.decodeFull(url.path));
 }
