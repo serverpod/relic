@@ -22,7 +22,7 @@ void main() {
     });
 
     test('when a value is set for the context using the property, '
-        'then the same value can be retrieved using [].', () {
+        'then the same value can be retrieved using get.', () {
       const value = 'hello world';
       stringProperty[request] = value;
       final retrievedValue = stringProperty.get(request);

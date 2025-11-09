@@ -1,5 +1,6 @@
 import 'dart:collection';
 
+import 'codec.dart';
 import 'exception/header_exception.dart';
 import 'headers.dart';
 
@@ -108,19 +109,6 @@ final class HeaderAccessor<T extends Object> {
 }
 
 Null _returnNull(final Exception ex) => null;
-
-/// An interface defining a bidirectional conversion between types [T] and [StorageT].
-///
-/// The [Codec] class provides two methods:
-/// - [decode]: Converts from the storage type [StorageT] to the target type [T]
-/// - [encode]: Converts from the target type [T] to the storage type [StorageT]
-///
-/// This interface is used as a foundation for the [HeaderCodec] which specializes
-/// in converting between header values and their string representations.
-abstract interface class Codec<T, StorageT> {
-  T decode(final StorageT encoded);
-  StorageT encode(final T decoded);
-}
 
 /// A specialized codec for HTTP headers that defines conversion between a typed
 /// value [T] and its string representation in headers.
