@@ -19,9 +19,9 @@ Use this quick plan to get your app running on Relic. The detailed sections belo
 
 2) ✅ Bootstrap the server: Replace `shelf_io.serve()` with `RelicApp().serve()` if using the io adapter, or integrate RelicApp into your hosting environment as needed.
 
-3) ✅ Update handler signatures: Change from `Response handler(Request request)` to use either `respondWith` or `ResponseContext handler(NewContext ctx)`.
+3) ✅ Keep handlers as `Response handler(Request request)`. Handlers in Relic receive a `Request` and return a `Result` (usually a `Response`).
 
-4) ✅ Switch to Relic routing: Replace Router from shelf_router with `RelicApp().get/post/put/delete`. Replace `<id>` path params with `:id` and read them via `ctx.pathParameters[#id]`.
+4) ✅ Switch to Relic routing: Replace Router from shelf_router with `RelicApp().get/post/put/delete`. Replace `<id>` path params with `:id` and read them via `request.pathParameters[#id]`.
 
 5) ✅ Create responses with Body: Replace `Response.ok('text')` with `Response.ok(body:...)`. Let Relic manage content-length and content-type through Body.
 
@@ -32,8 +32,6 @@ Use this quick plan to get your app running on Relic. The detailed sections belo
 8) ✅ Replace request.context usage: Replace `request.change(...)` and manual casts with `ContextProperty<T>().set/get` on the context.
 
 9) ✅ Update WebSockets: Replace `webSocketHandler` and use `RelicWebSocket` for events and sending.
-
-10) ✅ Satisfy the state machine: Handlers must return a handled context.
 
 ## Detailed migration steps
 
@@ -75,16 +73,7 @@ void main() async {
 
 After (Relic):
 
-```dart
-import 'package:relic/io_adapter.dart';
-import 'package:relic/relic.dart';
-
-void main() async {
-  final app = RelicApp();
-  // Add routes...
-  await app.serve(port: 8080);
-}
-```
+GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/basic/relic_shelf_example.dart) doctag="complete-relic" title="Complete Relic example"
 
 ### 3. Update handler signatures
 
@@ -101,24 +90,10 @@ Response handler(Request request) {
 After (Relic):
 
 ```dart
-import 'package:relic/relic.dart';
-
-// Using the Responder pattern
-Handler handler = respondWith((Request request) {
+Response handler(Request request) {
   return Response.ok(body: Body.fromString('Hello, Relic!'));
-});
-
-// Or using full context
-ResponseContext handler(NewContext ctx) {
-  return ctx.respond(
-    Response.ok(body: Body.fromString('Hello, Relic!')),
-  );
 }
 ```
-
-:::tip
-Relic introduces a context state machine that explicitly represents the different states a request can be in (new, responded or connected), making state transitions explicit and providing compile-time guarantees. Read more about the context state machine in the [context documentation](../reference/context).
-:::
 
 ### 4. Switch to Relic routing
 
@@ -140,9 +115,9 @@ After (Relic), routing built-in:
 import 'package:relic/relic.dart';
 
 final router = RelicApp()
-  ..get('/users/:id', (NewContext ctx) {
-    final id = ctx.pathParameters[#id];
-    return ctx.respond(Response.ok(body: Body.fromString('User $id')));
+  ..get('/users/:id', (Request request) {
+    final id = request.pathParameters[#id];
+    return Response.ok(body: Body.fromString('User $id'));
   });
 ```
 
@@ -189,9 +164,9 @@ final date = request.headers['date']; // String?
 Relic provides type-safe headers with automatic validation:
 
 ```dart
-final contentType = ctx.request.body.bodyType?.mimeType; // MimeType?
-final cookies = ctx.request.headers.cookie; // CookieHeader?
-final date = ctx.request.headers.date; // DateTime?
+final contentType = request.body.bodyType?.mimeType; // MimeType?
+final cookies = request.headers.cookie; // CookieHeader?
+final date = request.headers.date; // DateTime?
 ```
 
 ### 7. Replace middleware and scoping
@@ -217,10 +192,8 @@ After (Relic), route-level middleware:
 final app = RelicApp()
   ..use('/', logRequests())
   ..use('/api', authentication())
-  ..get('/api/users', (NewContext ctx) async {
-    return ctx.respond(Response.ok(
-      body: Body.fromString('User data'),
-    ));
+  ..get('/api/users', (Request request) async {
+    return Response.ok(body: Body.fromString('User data'));
   });
 ```
 
@@ -247,14 +220,14 @@ final userProperty = ContextProperty<User>();
 final sessionProperty = ContextProperty<Session>();
 
 // Add an extension method for convenient access
-extension AuthContext on RequestContext {
+extension AuthContext on Request {
   User get currentUser => userProperty[this];
   Session get session => sessionProperty[this];
 }
 
 // Get values - type-safe
-final user = ctx.currentUser;
-final session = ctx.session;
+final user = request.currentUser;
+final session = request.session;
 ```
 
 ### 9. Update WebSockets
@@ -272,35 +245,9 @@ var handler = webSocketHandler((webSocket) {
 });
 ```
 
-Relic has WebSockets built-in with state machine integration:
+Relic has WebSockets built-in without the need for a separate package:
 
-```dart
-import 'package:relic/relic.dart';
-
-ConnectContext handler(NewContext ctx) {
-  return ctx.connect((RelicWebSocket ws) {
-    ws.events.listen((event) {
-      print('Received: $event');
-    });
-
-    // Non-throwing variant - returns false if connection closed
-    ws.trySendText('Hello!');
-
-    // Or use the throwing variant if you want exceptions
-    ws.sendText('Hello!');
-  });
-}
-```
-
-### 10. Satisfy the state machine
-
-Relic uses a state machine where handlers must return a handled context:
-
-```dart
-ResponseContext handler(NewContext ctx) {
-  return ctx.respond(Response.ok());
-}
-```
+GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/basic/relic_shelf_example.dart) doctag="websocket-relic" title="WebSocket example"
 
 ## Example comparison
 
@@ -330,24 +277,7 @@ void main() async {
 
 ### Relic version
 
-```dart
-import 'package:relic/io_adapter.dart';
-import 'package:relic/relic.dart';
-
-void main() async {
-  final app = RelicApp()
-    ..use('/', logRequests()) // Apply logging to all routes
-    ..get('/users/:id', (NewContext ctx) {
-      final id = ctx.pathParameters[#id]!;
-      final name = ctx.request.url.queryParameters['name'] ?? 'Unknown';
-      return ctx.respond(
-        Response.ok(body: Body.fromString('User $id: $name')),
-      );
-    });
-
-  await app.serve();
-}
-```
+GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/basic/relic_shelf_example.dart) doctag="complete-relic" title="Complete Relic example"
 
 :::info Difference from Shelf's pipeline
 Unlike Shelf's `Pipeline().addMiddleware()`, which runs for _all_ requests (including 404s), Relic's `.use('/', ...)` only executes middleware for requests that match a route. Unmatched requests (404s) bypass middleware and go directly to the fallback handler.

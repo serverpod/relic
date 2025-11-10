@@ -5,17 +5,17 @@ import 'package:relic/relic.dart';
 /// Simple middleware that adds a header
 // doctag<middleware-add-server-header>
 Middleware addServerHeader() {
-  return (final Handler innerHandler) {
-    return (final RequestContext ctx) async {
-      final result = await innerHandler(ctx);
+  return (final Handler next) {
+    return (final Request req) async {
+      final result = await next(req);
 
-      if (result is ResponseContext) {
-        final newResponse = result.response.copyWith(
-          headers: result.response.headers.transform(
+      if (result is Response) {
+        final newResponse = result.copyWith(
+          headers: result.headers.transform(
             (final mh) => mh['Server'] = ['Relic'],
           ),
         );
-        return result.respond(newResponse);
+        return newResponse;
       }
 
       return result;
@@ -25,29 +25,29 @@ Middleware addServerHeader() {
 // end:doctag<middleware-add-server-header>
 
 /// Simple handler
-Future<ResponseContext> simpleHandler(final RequestContext ctx) async {
-  return ctx.respond(
-    Response.ok(body: Body.fromString('Hello from Pipeline!')),
-  );
+Future<Response> simpleHandler(final Request req) async {
+  return Response.ok(body: Body.fromString('Hello from Pipeline!'));
 }
 
 void main() async {
+  // doctag<pipeline-usage>
   // Using Pipeline (legacy composition)
   final pipelineHandler = const Pipeline()
       .addMiddleware(logRequests())
       .addMiddleware(addServerHeader())
       .addHandler(simpleHandler);
+  // end:doctag<pipeline-usage>
 
+  // doctag<router-usage>
   // Using Router (preferred)
   final router =
       RelicApp()
         ..use('/', logRequests())
         ..use('/', addServerHeader())
-        ..get('/router', (final RequestContext ctx) async {
-          return ctx.respond(
-            Response.ok(body: Body.fromString('Hello from Router!')),
-          );
+        ..get('/router', (final Request req) async {
+          return Response.ok(body: Body.fromString('Hello from Router!'));
         });
+  // end:doctag<router-usage>
 
   // Main router that shows both approaches
   final app =

@@ -1,5 +1,5 @@
 import 'package:relic/relic.dart';
-import 'package:relic/src/adapter/context.dart';
+import 'package:relic/src/context/context.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -10,14 +10,18 @@ void main() {
       final middlewareObject = _TestMiddlewareObject();
       final router = Router<Handler>();
       router.use('/', middlewareObject.call);
-      router.get('/test', (final ctx) => ctx.respond(Response.ok()));
+      router.get('/test', (final req) => Response.ok());
 
-      final request = Request(Method.get, Uri.parse('http://localhost/test'));
-      final ctx = request.toContext(Object());
-      final result = await router.asHandler(ctx) as ResponseContext;
+      final request = RequestInternal.create(
+        Method.get,
+        Uri.parse('http://localhost/test'),
+        Object(),
+      );
+      final req = request;
+      final result = await router.asHandler(req) as Response;
 
-      expect(result.response.statusCode, 200);
-      expect(result.response.headers['X-Middleware'], ['applied']);
+      expect(result.statusCode, 200);
+      expect(result.headers['X-Middleware'], ['applied']);
     });
 
     test('Given a MiddlewareObject, '
@@ -31,14 +35,18 @@ void main() {
 
       final router = Router<Handler>();
       router.use('/', middleware);
-      router.get('/test', (final ctx) => ctx.respond(Response.ok()));
+      router.get('/test', (final req) => Response.ok());
 
-      final request = Request(Method.get, Uri.parse('http://localhost/test'));
-      final ctx = request.toContext(Object());
-      final result = await router.asHandler(ctx) as ResponseContext;
+      final request = RequestInternal.create(
+        Method.get,
+        Uri.parse('http://localhost/test'),
+        Object(),
+      );
+      final req = request;
+      final result = await router.asHandler(req) as Response;
 
-      expect(result.response.statusCode, 200);
-      expect(result.response.headers['X-Middleware'], ['applied']);
+      expect(result.statusCode, 200);
+      expect(result.headers['X-Middleware'], ['applied']);
     });
 
     test('Given a MiddlewareObject that modifies requests, '
@@ -49,38 +57,46 @@ void main() {
       router.use('/', middlewareObject.call);
 
       String? capturedHeader;
-      router.get('/test', (final ctx) {
-        capturedHeader = ctx.request.headers['X-Added']?.first;
-        return ctx.respond(Response.ok());
+      router.get('/test', (final req) {
+        capturedHeader = req.headers['X-Added']?.first;
+        return Response.ok();
       });
 
-      final request = Request(Method.get, Uri.parse('http://localhost/test'));
-      final ctx = request.toContext(Object());
-      await router.asHandler(ctx);
+      final request = RequestInternal.create(
+        Method.get,
+        Uri.parse('http://localhost/test'),
+        Object(),
+      );
+      final req = request;
+      await router.asHandler(req);
 
       expect(capturedHeader, 'by-middleware');
     });
 
     test('Given a MiddlewareObject that can short-circuit, '
         'when it returns early, '
-        'then the inner handler is not called', () async {
+        'then the next handler is not called', () async {
       final middlewareObject = _ShortCircuitMiddleware();
       final router = Router<Handler>();
       router.use('/', middlewareObject.call);
 
-      var innerHandlerCalled = false;
-      router.get('/test', (final ctx) {
-        innerHandlerCalled = true;
-        return ctx.respond(Response.ok());
+      var nextCalled = false;
+      router.get('/test', (final req) {
+        nextCalled = true;
+        return Response.ok();
       });
 
-      final request = Request(Method.get, Uri.parse('http://localhost/test'));
-      final ctx = request.toContext(Object());
-      final result = await router.asHandler(ctx) as ResponseContext;
+      final request = RequestInternal.create(
+        Method.get,
+        Uri.parse('http://localhost/test'),
+        Object(),
+      );
+      final req = request;
+      final result = await router.asHandler(req) as Response;
 
-      expect(innerHandlerCalled, isFalse);
-      expect(result.response.statusCode, 403);
-      expect(await result.response.readAsString(), 'Forbidden');
+      expect(nextCalled, isFalse);
+      expect(result.statusCode, 403);
+      expect(await result.readAsString(), 'Forbidden');
     });
   });
 }
@@ -89,14 +105,12 @@ void main() {
 class _TestMiddlewareObject extends MiddlewareObject {
   @override
   Handler call(final Handler next) {
-    return (final ctx) async {
-      final result = await next(ctx);
-      if (result is! ResponseContext) return result;
-      return result.respond(
-        result.response.copyWith(
-          headers: result.response.headers.transform(
-            (final h) => h['X-Middleware'] = ['applied'],
-          ),
+    return (final req) async {
+      final result = await next(req);
+      if (result is! Response) return result;
+      return result.copyWith(
+        headers: result.headers.transform(
+          (final h) => h['X-Middleware'] = ['applied'],
         ),
       );
     };
@@ -106,15 +120,14 @@ class _TestMiddlewareObject extends MiddlewareObject {
 class _RequestModifyingMiddleware extends MiddlewareObject {
   @override
   Handler call(final Handler next) {
-    return (final ctx) async {
+    return (final req) async {
       // Modify the request by adding a header
-      final modifiedRequest = ctx.request.copyWith(
-        headers: ctx.request.headers.transform(
+      final modifiedRequest = req.copyWith(
+        headers: req.headers.transform(
           (final h) => h['X-Added'] = ['by-middleware'],
         ),
       );
-      final modifiedCtx = ctx.withRequest(modifiedRequest);
-      return next(modifiedCtx);
+      return next(modifiedRequest);
     };
   }
 }
@@ -122,11 +135,9 @@ class _RequestModifyingMiddleware extends MiddlewareObject {
 class _ShortCircuitMiddleware extends MiddlewareObject {
   @override
   Handler call(final Handler next) {
-    return (final ctx) async {
+    return (final req) async {
       // Short-circuit without calling next
-      return ctx.respond(
-        Response.forbidden(body: Body.fromString('Forbidden')),
-      );
+      return Response.forbidden(body: Body.fromString('Forbidden'));
     };
   }
 }

@@ -8,20 +8,18 @@ Future<void> main() async {
 
   // Success response example
   // doctag<responses-status-ok>
-  app.get('/status', (final ctx) {
-    return ctx.respond(Response.ok(body: Body.fromString('Status is Ok')));
+  app.get('/status', (final req) {
+    return Response.ok(body: Body.fromString('Status is Ok'));
   });
   // end:doctag<responses-status-ok>
 
   // Bad request example
   // doctag<responses-bad-request>
-  app.post('/api/users', (final ctx) async {
+  app.post('/api/users', (final req) async {
     try {
       throw 'Invalid JSON';
     } catch (e) {
-      return ctx.respond(
-        Response.badRequest(body: Body.fromString('Invalid JSON')),
-      );
+      return Response.badRequest(body: Body.fromString('Invalid JSON'));
     }
   });
   // end:doctag<responses-bad-request>

@@ -7,32 +7,30 @@ import 'package:relic/relic.dart';
 /// Simple CORS middleware
 // doctag<middleware-cors-basic>
 Middleware corsMiddleware() {
-  return (final Handler innerHandler) {
-    return (final RequestContext ctx) async {
+  return (final Handler next) {
+    return (final Request req) async {
       // Handle preflight requests
-      if (ctx.request.method == Method.options) {
-        return ctx.respond(
-          Response.ok(
-            headers: Headers.build((final mh) {
-              mh['Access-Control-Allow-Origin'] = ['*'];
-              mh['Access-Control-Allow-Methods'] = ['GET, POST, OPTIONS'];
-              mh['Access-Control-Allow-Headers'] = ['Content-Type'];
-            }),
-          ),
+      if (req.method == Method.options) {
+        return Response.ok(
+          headers: Headers.build((final mh) {
+            mh['Access-Control-Allow-Origin'] = ['*'];
+            mh['Access-Control-Allow-Methods'] = ['GET, POST, OPTIONS'];
+            mh['Access-Control-Allow-Headers'] = ['Content-Type'];
+          }),
         );
       }
 
       // Process normal request
-      final result = await innerHandler(ctx);
+      final result = await next(req);
 
       // Add CORS headers to response
-      if (result is ResponseContext) {
-        final newResponse = result.response.copyWith(
-          headers: result.response.headers.transform(
+      if (result is Response) {
+        final newResponse = result.copyWith(
+          headers: result.headers.transform(
             (final mh) => mh['Access-Control-Allow-Origin'] = ['*'],
           ),
         );
-        return result.respond(newResponse);
+        return newResponse;
       }
 
       return result;
@@ -42,10 +40,10 @@ Middleware corsMiddleware() {
 // end:doctag<middleware-cors-basic>
 
 /// API handler
-Future<ResponseContext> apiHandler(final RequestContext ctx) async {
+Future<Response> apiHandler(final Request req) async {
   final data = {'message': 'Hello from CORS API!'};
 
-  return ctx.respond(Response.ok(body: Body.fromString(jsonEncode(data))));
+  return Response.ok(body: Body.fromString(jsonEncode(data)));
 }
 
 void main() async {

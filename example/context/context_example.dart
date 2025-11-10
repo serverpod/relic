@@ -6,10 +6,10 @@ import 'package:relic/relic.dart';
 import 'package:web_socket/web_socket.dart';
 
 /// Demonstrates the four main context types in Relic using proper routing:
-/// - RequestContext: Starting point for all requests
-/// - ResponseContext: HTTP response handling
-/// - ConnectionContext: WebSocket connections
-/// - HijackedContext: Raw connection control
+/// - Request: Starting point for all requests
+/// - Response: HTTP response handling
+/// - WebSocketUpgrade: WebSocket connections
+/// - Hijack: Raw connection control
 
 /// Simple HTML page for demonstration
 // doctag<context-html-homepage>
@@ -23,10 +23,10 @@ String _htmlHomePage() {
 <body>
     <h1>Relic Context Types Demo</h1>
     <ul>
-        <li><a href="/api">API Example (ResponseContext)</a></li>
-        <li><a href="/api/users/123">User API with Parameters (ResponseContext)</a></li>
-        <li><a href="/ws">WebSocket Example (ConnectionContext)</a></li>
-        <li><a href="/custom">Custom Protocol (HijackedContext)</a></li>
+        <li><a href="/api">API Example (Response)</a></li>
+        <li><a href="/api/users/123">User API with Parameters (Response)</a></li>
+        <li><a href="/ws">WebSocket Example (WebSocketUpgrade)</a></li>
+        <li><a href="/custom">Custom Protocol (Hijack)</a></li>
     </ul>
     <p>This demonstrates the different context types in Relic using proper routing.</p>
 </body>
@@ -34,53 +34,47 @@ String _htmlHomePage() {
 ''';
 }
 
-Future<ResponseContext> homeHandler(final RequestContext ctx) async {
-  return ctx.respond(
-    Response.ok(
-      body: Body.fromString(
-        _htmlHomePage(),
-        encoding: utf8,
-        mimeType: MimeType.html,
-      ),
+Future<Response> homeHandler(final Request req) async {
+  return Response.ok(
+    body: Body.fromString(
+      _htmlHomePage(),
+      encoding: utf8,
+      mimeType: MimeType.html,
     ),
   );
 }
 // end:doctag<context-html-homepage>
 
 // doctag<context-api-json>
-Future<ResponseContext> apiHandler(final RequestContext ctx) async {
+Future<Response> apiHandler(final Request req) async {
   final data = {
     'message': 'Hello from Relic API!',
     'timestamp': DateTime.now().toIso8601String(),
-    'path': ctx.request.url.path,
+    'path': req.url.path,
   };
 
-  return ctx.respond(
-    Response.ok(
-      body: Body.fromString(jsonEncode(data), mimeType: MimeType.json),
-    ),
+  return Response.ok(
+    body: Body.fromString(jsonEncode(data), mimeType: MimeType.json),
   );
 }
 // end:doctag<context-api-json>
 
-Future<ResponseContext> userHandler(final RequestContext ctx) async {
-  final userId = ctx.pathParameters[#id];
+Future<Response> userHandler(final Request req) async {
+  final userId = req.pathParameters[#id];
   final data = {
     'userId': userId,
     'message': 'User details for ID: $userId',
     'timestamp': DateTime.now().toIso8601String(),
   };
 
-  return ctx.respond(
-    Response.ok(
-      body: Body.fromString(jsonEncode(data), mimeType: MimeType.json),
-    ),
+  return Response.ok(
+    body: Body.fromString(jsonEncode(data), mimeType: MimeType.json),
   );
 }
 
 // doctag<context-websocket-echo>
-ConnectionContext webSocketHandler(final RequestContext ctx) {
-  return ctx.connect((final webSocket) async {
+WebSocketUpgrade webSocketHandler(final Request req) {
+  return WebSocketUpgrade((final webSocket) async {
     log('WebSocket connection established');
 
     // Send welcome message
@@ -104,8 +98,8 @@ ConnectionContext webSocketHandler(final RequestContext ctx) {
 }
 // end:doctag<context-websocket-echo>
 
-HijackedContext customProtocolHandler(final RequestContext ctx) {
-  return ctx.hijack((final channel) {
+Hijack customProtocolHandler(final Request req) {
+  return Hijack((final channel) {
     log('Connection hijacked for custom protocol');
 
     // Send a custom HTTP response manually
@@ -122,20 +116,18 @@ HijackedContext customProtocolHandler(final RequestContext ctx) {
 }
 
 // doctag<context-request-inspect>
-Future<ResponseContext> dataHandler(final RequestContext ctx) async {
-  final request = ctx.request;
-
+Future<Response> dataHandler(final Request req) async {
   // Access basic HTTP information
-  final method = request.method; // 'GET', 'POST', etc.
-  final path = request.url.path; // '/api/users'
-  final query = request.url.query; // 'limit=10&offset=0'
+  final method = req.method; // 'GET', 'POST', etc.
+  final path = req.url.path; // '/api/users'
+  final query = req.url.query; // 'limit=10&offset=0'
 
   log('method: $method, path: $path, query: $query');
 
   // Access headers (these are typed accessors from the Headers class)
-  final authHeader = request.headers.authorization; // 'Bearer token123' or null
+  final authHeader = req.headers.authorization; // 'Bearer token123' or null
   final contentType =
-      request
+      req
           .body
           .bodyType
           ?.mimeType; // appljson, octet-stream, plainText, etc. or null
@@ -145,23 +137,19 @@ Future<ResponseContext> dataHandler(final RequestContext ctx) async {
   // Read request body for POST with JSON
   if (method == Method.post && contentType == MimeType.json) {
     try {
-      final bodyString = await request.readAsString();
+      final bodyString = await req.readAsString();
       final jsonData = json.decode(bodyString) as Map<String, dynamic>;
 
-      return ctx.respond(
-        Response.ok(body: Body.fromString('Received: ${jsonData['name']}')),
+      return Response.ok(
+        body: Body.fromString('Received: ${jsonData['name']}'),
       );
     } catch (e) {
-      return ctx.respond(
-        Response.badRequest(body: Body.fromString('Invalid JSON')),
-      );
+      return Response.badRequest(body: Body.fromString('Invalid JSON'));
     }
   }
 
   // Return bad request if the content type is not JSON
-  return ctx.respond(
-    Response.badRequest(body: Body.fromString('Invalid Request')),
-  );
+  return Response.badRequest(body: Body.fromString('Invalid Request'));
 }
 // end:doctag<context-request-inspect>
 

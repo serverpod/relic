@@ -106,13 +106,13 @@ final Stream<Uint8List> stream = body.read();
 When working with request or response bodies that contain text, read the content as a string to get a decoded value. This method handles common cases where payloads are JSON or plain text.
 
 ```dart
-final String content = await ctx.request.readAsString();
+final String content = await req.readAsString();
 ```
 
 If a specific character encoding is required, pass it explicitly to the read method. This gives you full control when interacting with systems that do not use UTF-8:
 
 ```dart
-final String content = await ctx.request.readAsString(latin1);
+final String content = await req.readAsString(latin1);
 ```
 
 ## Body types and encoding
@@ -258,36 +258,17 @@ if (length != null) {
 
 ## Stream-based bodies
 
-Relic’s stream-based approach makes it practical to handle large payloads without exhausting memory, since data is processed incrementally. This pattern is especially helpful for uploads and transformations that work chunk by chunk.
+Relic's stream-based approach makes it practical to handle large payloads without exhausting memory, since data is processed incrementally. This pattern is especially helpful for uploads and transformations that work chunk by chunk.
 
-```dart title="body_example.dart"
-/// File upload handler with size validation
-Future<ResponseContext> uploadHandler(NewContext ctx) async {
-  const maxFileSize = 10 * 1024 * 1024; // 10MB
-  final contentLength = ctx.request.body.contentLength;
-
-  if (contentLength != null && contentLength > maxFileSize) {
-    return ctx.respond(Response.badRequest(
-      body: Body.fromString('File too large'),
-    ));
-  }
-
-  final stream = ctx.request.read();
-  final file = File('uploads/file.bin');
-  await file.parent.create(recursive: true);
-  await stream.forEach((chunk) => file.openWrite().write(chunk));
-
-  return ctx.respond(Response.ok(
-    body: Body.fromString('Upload successful'),
-  ));
-}
-```
+GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/basic/body_example.dart) doctag="body-upload-validate-size" title="Validate upload size"
 
 ### One-time read constraint
 
-To keep processing predictable and avoid subtle bugs, bodies enforce a one-time read rule. Once a body’s stream has been consumed, subsequent reads throw an error, which makes improper use immediately visible during development.
+To keep processing predictable and avoid subtle bugs, bodies enforce a one-time read rule. Once a body's stream has been consumed, subsequent reads throw an error, which makes improper use immediately visible during development.
 
-```dart title="body_example.dart"
+Middleware that needs to inspect the body can replace `request.body` with a freshly constructed instance (typically `Body.fromString()`) before forwarding to the next handler. What you cannot do is rewind the original stream; once it's read, recreating an equivalent body is the only way to pass the data along.
+
+```dart
 final body = Body.fromString('test');
 
 // First read - OK
@@ -301,117 +282,28 @@ try {
 }
 ```
 
-### Copying bodies
-
-If you need to inspect content in middleware and still pass it along to downstream handlers, create a new message with a fresh body. This pattern preserves the one-time read rule while allowing logging or validation before the main handler runs:
-
-```dart title="body_example.dart"
-Middleware loggingMiddleware(Handler next) {
-  return (ctx) async {
-    // Read body content
-    final content = await ctx.request.readAsString();
-
-    // Create new request with fresh body
-    final newRequest = ctx.request.copyWith(
-      body: Body.fromString(content),
-    );
-
-    // Continue with new request
-    return next(ctx.withRequest(newRequest));
-  };
-}
-```
-
 ## Practical examples
 
 ### JSON API handler
 
 This example reads JSON input from the request, logs it for observability, and returns a JSON response. The body helper detects JSON automatically, and the explicit MIME type makes the intent clear to both clients and maintainers:
 
-```dart title="body_example.dart"
-/// JSON API handler
-Future<ResponseContext> apiDataHandler(NewContext ctx) async {
-  final jsonData = await ctx.request.readAsString();
-  final data = jsonDecode(jsonData);
-
-  log('Received: $data');
-
-  return ctx.respond(Response.ok(
-    body: Body.fromString(
-      jsonEncode({'result': 'success'}),
-      mimeType: MimeType.json,
-    ),
-  ));
-}
-```
+GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/basic/body_example.dart) doctag="body-json-api-handler" title="JSON API handler"
 
 ### File upload handler
 
 This handler validates the upload size before reading the stream, then writes the content directly to disk. Streaming avoids buffering the entire file in memory and keeps the server responsive under heavy load:
 
-```dart title="body_example.dart"
-/// File upload handler with size validation
-Future<ResponseContext> uploadHandler(NewContext ctx) async {
-  const maxFileSize = 10 * 1024 * 1024; // 10MB
-  final contentLength = ctx.request.body.contentLength;
-
-  if (contentLength != null && contentLength > maxFileSize) {
-    return ctx.respond(Response.badRequest(
-      body: Body.fromString('File too large'),
-    ));
-  }
-
-  final stream = ctx.request.read();
-  final file = File('uploads/file.bin');
-  await file.parent.create(recursive: true);
-  await stream.forEach((chunk) => file.openWrite().write(chunk));
-
-  return ctx.respond(Response.ok(
-    body: Body.fromString('Upload successful'),
-  ));
-}
-```
+GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/basic/body_example.dart) doctag="body-upload-validate-size" title="File upload handler"
 
 ### Image response
 
 Here the server reads an SVG file from disk and returns it as binary data. The SVG type must be set explicitly with `MimeType.parse('image/svg+xml')` so clients receive the correct Content-Type.
 
-```dart title="body_example.dart"
-Future<ResponseContext> imageHandler(NewContext ctx) async {
-  final file = File('example/static_files/logo.svg');
-  final imageBytes = await file.readAsBytes();
-
-  return ctx.respond(Response.ok(
-    body: Body.fromData(
-      imageBytes,
-      mimeType: MimeType.parse('image/svg+xml'),
-    ),
-  ));
-}
-```
+GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/basic/body_example.dart) doctag="body-image-auto-format" title="Serve image (SVG) response"
 
 ### Streaming response
 
 This endpoint produces a stream of JSON lines to demonstrate chunked transfer encoding. Clients can start processing data as soon as it becomes available, which is useful for progress updates and long-running computations:
 
-```dart title="body_example.dart"
-/// Streaming response handler with chunked transfer encoding
-Future<ResponseContext> streamHandler(NewContext ctx) async {
-  Stream<Uint8List> generateLargeDataset() async* {
-    for (var i = 0; i < 100; i++) {
-      await Future<void>.delayed(Duration(milliseconds: 50));
-      yield utf8.encode('{"item": $i}\n');
-    }
-  }
-
-  final dataStream = generateLargeDataset();
-
-  return ctx.respond(Response.ok(
-    body: Body.fromDataStream(
-      dataStream,
-      mimeType: MimeType.json,
-      // contentLength omitted for chunked encoding
-    ),
-  ));
-}
-```
+GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/basic/body_example.dart) doctag="body-streaming-chunked" title="Streaming response (chunked)"

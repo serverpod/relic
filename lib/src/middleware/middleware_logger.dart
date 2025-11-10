@@ -11,25 +11,25 @@ import '../logger/logger.dart';
 /// The `isError` parameter indicates whether the message is caused by an error.
 ///
 /// If [logger] is not passed, the message is just passed to [print].
-Middleware logRequests({final Logger? logger}) => (final innerHandler) {
+Middleware logRequests({final Logger? logger}) => (final next) {
   final localLogger = logger ?? logMessage;
 
-  return (final ctx) async {
+  return (final req) async {
     final startTime = DateTime.now();
     final watch = Stopwatch()..start();
 
     try {
-      final handledCtx = await innerHandler(ctx);
-      final msg = switch (handledCtx) {
-        final ResponseContext rc => '${rc.response.statusCode}',
-        final HijackedContext _ => 'hijacked',
-        final ConnectionContext _ => 'connected',
+      final result = await next(req);
+      final msg = switch (result) {
+        final Response rc => '${rc.statusCode}',
+        final Hijack _ => 'hijacked',
+        final WebSocketUpgrade _ => 'connected',
       };
-      localLogger(_message(startTime, handledCtx.request, watch.elapsed, msg));
-      return handledCtx;
+      localLogger(_message(startTime, req, watch.elapsed, msg));
+      return result;
     } catch (error, stackTrace) {
       localLogger(
-        _errorMessage(startTime, ctx.request, watch.elapsed, error),
+        _errorMessage(startTime, req, watch.elapsed, error),
         type: LoggerType.error,
         stackTrace: stackTrace,
       );

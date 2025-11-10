@@ -10,9 +10,7 @@ Static file serving is essential for web applications that need to deliver asset
 
 To serve static files from a directory, use `StaticHandler.directory()`:
 
-```dart reference
-https://github.com/serverpod/relic/blob/main/example/advanced/static_files_example.dart#L13-L21
-```
+GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/advanced/static_files_example.dart) doctag="static-files-dir-serve" title="Serve directory with cache"
 
 **What this code does:**
 
@@ -30,9 +28,7 @@ This serves all files from the `static_files` directory under `/basic/` URLs wit
 
 For serving individual files, use `StaticHandler.file()`:
 
-```dart reference
-https://github.com/serverpod/relic/blob/main/example/advanced/static_files_example.dart#L25-L32
-```
+GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/advanced/static_files_example.dart) doctag="static-files-single-file" title="Serve single file"
 
 This is useful for specific files like logos, favicons, robots.txt, or other well-known resources.
 
@@ -44,25 +40,19 @@ Effective caching is crucial for static file performance. Relic provides flexibl
 
 For files that might change frequently:
 
-```dart reference
-https://github.com/serverpod/relic/blob/main/example/advanced/static_files_example.dart#L36-L47
-```
+GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/advanced/static_files_example.dart) doctag="static-files-cache-short" title="Short-term cache control"
 
 ### Long-term caching with immutable assets
 
 For assets that never change (like versioned files):
 
-```dart reference
-https://github.com/serverpod/relic/blob/main/example/advanced/static_files_example.dart#L51-L63
-```
+GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/advanced/static_files_example.dart) doctag="static-files-cache-long-immutable" title="Long-term immutable caching"
 
 ## Cache busting
 
 Cache busting ensures browsers fetch updated files when your assets change. Relic provides built-in cache busting support:
 
-```dart reference
-https://github.com/serverpod/relic/blob/main/example/advanced/static_files_example.dart#L67-L104
-```
+GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/advanced/static_files_example.dart) doctag="static-files-cache-busting" title="Cache busting config and usage"
 
 **How cache busting works:**
 
@@ -89,4 +79,4 @@ For single file serving with `StaticHandler.file()`, you don't need the tail pat
 
 ## Examples
 
-- **[`static_files_example.dart`](https://github.com/serverpod/relic/blob/main/example/advanced/static_files_example.dart)** - Complete example with cache busting
+- **[Static files example](https://github.com/serverpod/relic/blob/main/example/advanced/static_files_example.dart)** - Complete example with cache busting

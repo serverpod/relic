@@ -17,18 +17,13 @@ void main() {
             createSyncHandler(
               headers: Headers.build(
                 (final mh) =>
-                    mh.from = FromHeader(
-                      emails: ['innerHandler@serverpod.dev'],
-                    ),
+                    mh.from = FromHeader(emails: ['next@serverpod.dev']),
               ),
             ),
           );
 
       final response = await makeSimpleRequest(handler);
-      expect(
-        response.headers.from?.emails,
-        contains('innerHandler@serverpod.dev'),
-      );
+      expect(response.headers.from?.emails, contains('next@serverpod.dev'));
     },
   );
 
@@ -135,7 +130,7 @@ void main() {
 
   group('Given a responseHandler', () {
     test(
-      'when innerHandler sync response is seen then replaced value continues',
+      'when next sync response is seen then replaced value continues',
       () async {
         final handler = const Pipeline()
             .addMiddleware(
@@ -167,7 +162,7 @@ void main() {
     );
 
     test(
-      'when innerHandler async response is seen then async value continues',
+      'when next async response is seen then async value continues',
       () async {
         final handler = const Pipeline()
             .addMiddleware(
@@ -181,14 +176,14 @@ void main() {
                 },
               ),
             )
-            .addHandler(((final ctx) {
+            .addHandler(((final req) {
               return Future(
                 () => createSyncHandler(
                   headers: Headers.build(
                     (final mh) =>
                         mh.from = FromHeader(emails: ['handler@serverpod.dev']),
                   ),
-                )(ctx),
+                )(req),
               );
             }));
 

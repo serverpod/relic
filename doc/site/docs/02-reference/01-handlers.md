@@ -12,123 +12,20 @@ What makes Relic handlers special is their flexibility. Unlike traditional web f
 - Upgrade connections to WebSockets for real-time communication
 - Take direct control of the network connection for custom protocols
 
-This is why Relic handlers work with "context" objects instead of just taking a request and returning a response. The context gives you multiple ways to handle the connection based on what your application needs.
+Relic handlers take a `Request` and return a `Result`, which can be a `Response`, `Hijack` (for connection hijacking), or `WebSocketUpgrade` (for WebSocket connections).
 
-## Handler types
-
-In Relic, there are four main handler types for different scenarios:
-
-### 1. Handler (foundational)
-
-The `Handler` is the foundational handler type that serves as the core building block for all Relic applications. It provides the most flexibility by accepting any incoming request context and allowing you to return various types of handled contexts, making it suitable for any kind of request processing logic.
+The `Handler` is the foundational handler type that serves as the core building block for all Relic applications. It provides the most flexibility by accepting any incoming request and allowing you to return various types of results, making it suitable for any kind of request processing logic.
 
 ```dart
-typedef Handler = FutureOr<HandledContext> Function(NewContext ctx);
+typedef Handler = FutureOr<Result> Function(Request req);
 ```
 
-- `NewContext ctx` is the incoming request context.
-- `FutureOr<HandledContext>` is a response context, hijacked connection, or WebSocket connection.
+- `Request req` is the incoming HTTP request.
+- `FutureOr<Result>` is a result that can be a `Response`, `Hijack`, or `WebSocketUpgrade`.
 
 **Example:**
 
-```dart
-import 'package:relic/relic.dart';
-
-Handler helloHandler(NewContext ctx) {
-  return ctx.respond(Response.ok(
-    body: Body.fromString('Hello from Relic!'),
-  ));
-};
-```
-
-### 2. Responder
-
-A `Responder` is a simplified function type that provides a more straightforward approach to request handling by directly transforming an HTTP request into an HTTP response. It abstracts away the context handling, making it perfect for simple request-response scenarios and can easily be converted into a full `Handler` using the `respondWith` helper function.
-
-```dart
-typedef Responder = FutureOr<Response> Function(Request request);
-```
-
-- `Request request` is the incoming HTTP request.
-- `FutureOr<Response>` is the HTTP response to send.
-
-**Example:**
-
-```dart
-import 'package:relic/relic.dart';
-
-final simpleResponderHandler = respondWith(
-  (Request request) {
-    return Response.ok(
-      body: Body.fromString('Hello, ${request.url.path}!'),
-    );
-  },
-);
-```
-
-### 3. ResponseHandler
-
-A `ResponseHandler` is a specialized handler designed specifically for scenarios where you need to generate standard HTTP responses. It ensures type safety by guaranteeing that the context can produce a response and that you'll always return a response context, making it ideal for typical web API endpoints and page serving.
-
-```dart
-typedef ResponseHandler = FutureOr<ResponseContext> Function(RespondableContext ctx);
-```
-
-- `RespondableContext ctx` is a context that guarantees you can call `respond()`.
-- `FutureOr<ResponseContext>` is a response context containing the HTTP response.
-
-**Example:**
-
-```dart
-import 'package:relic/relic.dart';
-
-ResponseContext apiHandler(RespondableContext context) {
-  return context.respond(
-    Response.ok(
-      headers: Headers.build(
-        (final MutableHeaders mh) => mh.xPoweredBy = 'Relic',
-      ),
-      body: Body.fromString('{"status": "success"}'),
-    ),
-  );
-}
-```
-
-### 4. HijackHandler
-
-A `HijackHandler` is a powerful handler type that enables you to take complete control of the underlying connection for advanced use cases like WebSocket upgrades or Server-Sent Events (SSE). It bypasses the normal HTTP request-response cycle, allowing for bidirectional communication and real-time data streaming directly over the raw connection.
-
-```dart
-typedef HijackHandler = FutureOr<HijackContext> Function(HijackableContext ctx);
-```
-
-- `HijackableContext ctx` is a context that allows hijacking the connection.
-- `FutureOr<HijackContext>` is a hijacked connection context.
-
-**Example:**
-
-```dart
-import 'dart:async';
-import 'dart:convert';
-import 'package:relic/relic.dart';
-import 'package:stream_channel/stream_channel.dart';
-
-HijackContext sseHandler(HijackableContext ctx) {
-  return ctx.hijack((StreamChannel<List<int>> channel) async {
-    // Send Server-Sent Events
-    channel.sink.add(utf8.encode('data: Connected\n\n'));
-
-    // Send periodic updates
-    final timer = Timer.periodic(Duration(seconds: 1), (_) {
-      channel.sink.add(utf8.encode('data: ${DateTime.now()}\n\n'));
-    });
-
-    // Wait for client disconnect, then cleanup
-    await channel.sink.done;
-    timer.cancel();
-  });
-}
-```
+GITHUB_CODE_BLOCK lang="dart" doctag="handler-foundational" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/basic/handler_example.dart) title="Foundational Handler example"
 
 ## How to define handlers
 
@@ -136,83 +33,32 @@ HijackContext sseHandler(HijackableContext ctx) {
 
 For simple, fast operations:
 
-```dart
-ResponseContext syncHandler(NewContext ctx) {
-  return ctx.respond(Response.ok(
-    body: Body.fromString('Fast response'),
-  ));
-}
-```
+GITHUB_CODE_BLOCK lang="dart" doctag="handler-sync" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/basic/handler_example.dart) title="Synchronous handler"
 
 ### Asynchronous handlers
 
 For operations that need to wait (database calls, file I/O, etc.):
 
-```dart
-Future<ResponseContext> asyncHandler(NewContext ctx) async {
-  final data = await Future.delayed(
-    const Duration(seconds: 1),
-    () => 'Hello from Relic!',
-  );
+GITHUB_CODE_BLOCK lang="dart" doctag="handler-async" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/basic/handler_example.dart) title="Asynchronous handler"
 
-  return ctx.respond(Response.ok(
-    body: Body.fromString(data),
-  ));
-}
-```
+### Using request data
 
-### Using context data
+Handlers receive request information including method, URL, headers, and query parameters:
 
-Handlers receive context information about the request:
-
-```dart
-ResponseContext contextHandler(NewContext ctx) {
-  // Access the request
-  final request = ctx.request;
-
-  // HTTP method
-  final method = request.method; // 'GET', 'POST', etc.
-
-  // Request URL
-  final url = request.url;
-
-  // Headers
-  final userAgent = request.headers.userAgent;
-
-  return ctx.respond(
-    Response.ok(
-      body: Body.fromString(
-        'Method: $method, Path: ${url.path} User-Agent: $userAgent',
-      ),
-    ),
-  );
-}
-```
+GITHUB_CODE_BLOCK lang="dart" doctag="handler-context" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/basic/handler_example.dart) title="Using request data"
 
 ### Handling WebSocket connections
 
-For real-time bidirectional communication, you can upgrade connections to WebSockets using `ctx.connect()`:
+For real-time bidirectional communication, you can upgrade connections to WebSockets by returning a `WebSocketUpgrade`:
 
-```dart
-import 'dart:async';
-import 'dart:developer';
-import 'package:relic/relic.dart';
+GITHUB_CODE_BLOCK lang="dart" doctag="context-websocket-echo" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/context/context_example.dart) title="WebSocket example"
 
-ConnectContext webSocketHandler(NewContext ctx) {
-  return ctx.connect((RelicWebSocket channel) async {
-    // Send initial connection message
-    channel.sendText('data: Connected\n\n');
+### Hijacking connections
 
-    // Send periodic updates
-    final timer = Timer.periodic(Duration(seconds: 1), (_) {
-      channel.sendText('data: ${DateTime.now()}\n\n');
-    });
+For advanced use cases like Server-Sent Events (SSE) or custom protocols, you can hijack the connection:
 
-    // Listen to incoming events and cleanup on disconnect
-    channel.events.listen(
-      (event) => log('event: $event'),
-      onDone: () => timer.cancel(),
-    );
-  });
-}
-```
+GITHUB_CODE_BLOCK lang="dart" doctag="handler-hijack-sse" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/basic/handler_example.dart) title="Connection hijacking example"
+
+## Example
+
+- **[Handler example](https://github.com/serverpod/relic/blob/main/example/basic/handler_example.dart)** - The complete working example from this guide.

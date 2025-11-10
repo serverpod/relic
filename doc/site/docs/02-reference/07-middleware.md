@@ -4,7 +4,7 @@ sidebar_position: 7
 
 # Middleware
 
-Middlewares are the backbone of Relic's request processing pipeline. It provides a powerful pattern for composing functionality around your handlers, enabling you to add cross-cutting concerns like logging, authentication, CORS, and more in a clean, reusable way.
+Middleware are the backbone of Relic's request processing pipeline. They provide a powerful pattern for composing functionality around your handlers, enabling you to add cross-cutting concerns like logging, authentication, CORS, and more in a clean, reusable way.
 
 They work by wrapping handlers with additional functionality. Think of it as a series of layers around your core handler, each layer can inspect and modify requests before they reach your handler, and responses after they leave your handler.
 
@@ -26,35 +26,29 @@ Every middleware function receives an inner handler and returns a new handler th
 - **Transform responses** after the inner handler completes
 - **Handle errors** that occur in the inner handler
 
-Here's a simple example:
+Here's a simple example of a middleware function, it outlines the signature and the basic pattern of how middleware work:
 
-```dart title="middleware_example.dart"
-import 'package:relic/relic.dart';
+```dart
+Middleware myMiddleware() {
+  return (final Handler innerHandler) {
+    return (final Request ctx) async {
+      // Before request processing
 
-// A middleware that adds a custom header
-Middleware addHeaderMiddleware() {
-  return (Handler innerHandler) {
-    return (NewContext ctx) async {
-      // Call the inner handler
       final result = await innerHandler(ctx);
-      
-      // Add custom header to response
-      if (result is ResponseContext) {
-        final newResponse = result.response.copyWith(
-          headers: result.response.headers.transform(
-            (mh) => mh['X-Custom-Header'] = ['Hello from middleware!'],
-          ),
-        );
-        return result.respond(newResponse);
-      }
-      
+
+      // After request processing
+
       return result;
     };
   };
 }
 ```
 
-## Using middlewares with a router
+:::tip
+With a middleware function, you can perform actions both before and after the inner handler executes. For example, you can log the request and response, add headers to a response, or even catch and handle errors from inner handlers.
+:::
+
+## Using middleware with a router
 
 ### Using `router.use()` to apply a middleware
 
@@ -75,9 +69,9 @@ final router = RelicApp()
   ..post('/api/users', createUserHandler);
 ```
 
-### Global vs Route-specific middlewares
+### Global vs route-specific middleware
 
-There are two types of categories of middlewares: global and route-specific. Global middlewares apply to all routes in your application, while route-specific middlewares apply only to routes under a specific path.
+There are two categories of middleware: global and route-specific. Global middleware applies to all routes in your application, while route-specific middleware applies only to routes under a specific path.
 
 **Global Middleware:** applies to all routes in your application:
 
@@ -122,17 +116,17 @@ final router = RelicApp()..use('/', logRequests());
 
 :::
 
-### Execution Order and PathHierarchy
+### Execution order and path hierarchy
 
 One of Relic's most powerful features is its hierarchical middleware application system. Middleware is applied based on path hierarchy first, with registration order only mattering within the same path scope. This allows you to create scoped middleware that only applies to certain sub-trees of your route structure.
 
-- Path Hierarchy is the order in which middlewares are applied to a request. This hierarchical scoping enables powerful patterns like applying authentication only to API routes while keeping logging global, or adding specialized middleware for admin sections.
+- Path Hierarchy is the order in which the different middleware are applied to a request. This hierarchical scoping enables powerful patterns like applying authentication only to API routes while keeping logging global, or adding specialized middleware for admin sections.
 
 :::tip Path Hierarchy
 One important thing to note is that path hierarchy takes precedence over registration order.
 :::
 
-This means that within the same path scope, middlewares are applied in the order they are registered, creating nested layers.
+This means that within the same path scope, different middleware are applied in the order they are registered, creating nested layers.
 
 ```dart
 final app = RelicApp()
@@ -144,7 +138,7 @@ final app = RelicApp()
 
 Since `middlewareC` was added with `use('/api', middlewareC)` it won't impact requests towards other paths, but will be used specifically for `/api/foo`. Whereas `middlewareA` and `middlewareB` are both applicable for all paths below `/`.
 
-Let's look at an example of how middlewares will work in same path scope:
+Let's look at an example of how middleware will work in same path scope:
 
 ```dart
 final app = RelicApp()
@@ -178,51 +172,14 @@ sequenceDiagram
 Middleware layers wrap each other like an onion. Each layer may:
 
 - Short-circuit and return a response early (e.g., auth returning 401) without calling `next()`.
-- Rewrite parts of the request before calling `next()` using `ctx.withRequest(newRequest)`.
+- Rewrite parts of the request before calling `next(newRequest)`.
 - Prefer attaching derived/computed data to the context via `ContextProperty` rather than rewriting the request.
 
-```dart
-// Early return (short-circuit)
-Middleware authMiddleware() {
-  return (Handler next) {
-    return (NewContext ctx) async {
-      final apiKey = ctx.request.headers['X-API-Key']?.first;
-      if (apiKey != 'secret123') {
-        return ctx.respond(Response.unauthorized(
-          body: Body.fromString('Invalid API key'),
-        )); // short-circuit: no next()
-      }
-      return await next(ctx);
-    };
-  };
-}
-```
+GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/middleware/auth_example.dart) doctag="middleware-auth-basic" title="Basic auth middleware"
 
 :::warning Avoid rewriting request.path in router.use middleware
-When middleware is attached with `router.use(...)`, the request has already been routed. Changing `request.url.path` at this point will not re-route the request and will not update `ctx.pathParameters` or related routing metadata.
+When middleware is attached with `router.use(...)`, the request has already been routed. Changing `request.url.path` at this point will not re-route the request and will not update `request.pathParameters` or related routing metadata.
 :::
-
-## Writing Custom Middleware
-
-This is the signature that all middleware functions follow:
-
-```dart title="middleware.dart"
-Middleware myMiddleware() {
-  return (Handler innerHandler) {
-    return (NewContext ctx) async {
-      // Before request processing
-      
-      final result = await innerHandler(ctx);
-      
-      // After request processing
-      
-      return result;
-    };
-  };
-}
-```
-
-With middleware, you can perform actions both before and after the inner handler executes. For example, you can log the request and response, add headers to a response, or even catch and handle errors from inner handlers:
 
 ### CORS (Cross-Origin Resource Sharing)
 
@@ -230,49 +187,12 @@ CORS is a security feature that allows web applications to make requests to reso
 
 In Relic you can create a CORS middleware that handles preflight requests and adds CORS headers to the response:
 
-```dart title="cors_example.dart"
-Middleware corsMiddleware() {
-  return (Handler innerHandler) {
-    return (NewContext ctx) async {
-      // Handle preflight requests
-      if (ctx.request.method == Method.options) {
-        return ctx.respond(Response.ok(
-          headers: Headers.build((mh) {
-            mh['Access-Control-Allow-Origin'] = ['*'];
-            mh['Access-Control-Allow-Methods'] = ['GET, POST, OPTIONS'];
-          }),
-        ));
-      }
-      
-      // Process normal request and add CORS headers
-      final result = await innerHandler(ctx);
-      
-      if (result is ResponseContext) {
-        final newResponse = result.response.copyWith(
-          headers: result.response.headers.transform(
-            (mh) => mh['Access-Control-Allow-Origin'] = ['*'],
-          ),
-        );
-        return result.respond(newResponse);
-      }
-      
-      return result;
-    };
-  };
-}
-```
+GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/middleware/cors_example.dart) doctag="middleware-cors-basic" title="CORS middleware"
 
-## Pipeline (Legacy Pattern)
+## Pipeline (legacy)
 
 The `Pipeline` class provides a legacy approach to composing middleware. While `router.use()` is now preferred for most applications, `Pipeline` is still useful in certain scenarios.
 Read more about [Pipeline](./pipeline) for more details.
-
-### Best Practices
-
-- ✅ **Keep middleware focused:** Each middleware should have a single responsibility.
-- ✅ **Order matters:** Apply middleware in logical order: logging first, then authentication, then authorization, then business logic.
-- ✅ **Handle errors gracefully:** Always include error handling in your middleware to prevent unhandled exceptions.
-- ✅ **Test middleware independently:** Write unit tests for your middleware functions to ensure they work correctly in isolation.
 
 ## Summary
 

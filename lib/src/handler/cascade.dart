@@ -1,5 +1,4 @@
-import '../adapter/context.dart';
-import '../message/response.dart';
+import '../context/context.dart';
 import 'handler.dart';
 
 /// A typedef for [Cascade._shouldCascade].
@@ -76,13 +75,13 @@ class Cascade {
       );
     }
 
-    return (final ctx) async {
-      if (_parent!._handler == null) return handler(ctx);
-      final newCtx = await _parent.handler(ctx);
-      if (newCtx is ResponseContext && _shouldCascade(newCtx.response)) {
-        return handler(ctx);
+    return (final req) async {
+      if (_parent!._handler == null) return handler(req);
+      final result = await _parent.handler(req);
+      if (result is Response && _shouldCascade(result)) {
+        return handler(req);
       }
-      return newCtx;
+      return result;
     };
   }
 }

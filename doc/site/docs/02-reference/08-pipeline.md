@@ -3,7 +3,7 @@ sidebar_position: 8
 sidebar_label: Pipeline (Legacy)
 ---
 
-# Pipeline (Legacy Pattern)
+# Pipeline (legacy)
 
 Pipeline is a legacy pattern for composing middleware, see [Middleware](./middleware) for the modern approach.
 
@@ -11,17 +11,9 @@ Pipeline is a legacy pattern for composing middleware, see [Middleware](./middle
 
 The `Pipeline` class is a helper that makes it easy to compose a set of [Middleware] and a [Handler]. It provides a fluent API for building middleware chains that process requests and responses in a specific order.
 
-```dart
-import 'package:relic/relic.dart';
+GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/middleware/pipeline_example.dart) doctag="pipeline-usage" title="Pipeline usage"
 
-final handler = const Pipeline()
-  .addMiddleware(logRequests())
-  .addMiddleware(corsMiddleware())
-  .addMiddleware(authMiddleware())
-  .addHandler(myHandler);
-```
-
-## How Pipeline Works
+## How Pipeline works
 
 The Pipeline class uses a recursive composition pattern where each middleware wraps the next one in the chain:
 
@@ -36,30 +28,11 @@ This creates a nested structure where each middleware wraps the next, forming a 
 
 **Old Pipeline approach:**
 
-```dart
-final router = Router<Handler>()
-  ..get('/users', usersHandler)
-  ..get('/posts', postsHandler);
-
-final handler = const Pipeline()
-  .addMiddleware(logRequests())
-  .addMiddleware(authMiddleware())
-  .addMiddleware(routeWith(router))
-  .addHandler(respondWith((_) => Response.notFound()));
-```
+GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/middleware/pipeline_example.dart) doctag="pipeline-usage" title="Pipeline usage"
 
 **New router.use() approach:**
 
-```dart
-final router = RelicRouter()
-  ..use('/', logRequests())
-  ..use('/', authMiddleware())
-  ..get('/users', usersHandler)
-  ..get('/posts', postsHandler)
-  ..fallback = respondWith((_) => Response.notFound());
-
-final handler = router.asHandler;
-```
+GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/middleware/pipeline_example.dart) doctag="router-usage" title="router.use() usage"
 
 The new approach is more concise, provides better path-specific middleware control, and integrates more naturally with Relic's routing system.
 

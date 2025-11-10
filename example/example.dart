@@ -1,8 +1,8 @@
+// doctag<hello-world-app>
 import 'package:relic/io_adapter.dart';
 import 'package:relic/relic.dart';
 
 /// A simple 'Hello World' server
-// doctag<hello-world-app>
 Future<void> main() async {
   // Setup app
   final app =
@@ -22,18 +22,14 @@ Future<void> main() async {
   // Start the server. Defaults to using port 8080 on loopback interface
   await app.serve();
 }
-// end:doctag<hello-world-app>
 
-// doctag<hello-world-greeter-handler>
-ResponseContext hello(final RequestContext ctx) {
-  final name = ctx.pathParameters[#name];
-  final age = int.parse(ctx.pathParameters[#age]!);
+Response hello(final Request req) {
+  final name = req.pathParameters[#name];
+  final age = int.parse(req.pathParameters[#age]!);
 
-  return ctx.respond(
-    Response.ok(
-      body: Body.fromString('Hello $name! To think you are $age years old.'),
-    ),
+  return Response.ok(
+    body: Body.fromString('Hello $name! To think you are $age years old.'),
   );
 }
 
-// end:doctag<hello-world-greeter-handler>
+// end:doctag<hello-world-app>

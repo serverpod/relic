@@ -6,7 +6,7 @@ sidebar_position: 5
 
 A `Response` object represents the HTTP response your server sends back to the client. It encapsulates the status code, headers, and body content that together form the complete answer to a client's request.
 
-In Relic, every handler must return a response (wrapped in a context). The response tells the client whether the request succeeded, failed, or requires further action, and provides any requested data or error information.
+In Relic, handlers return a `Response` as part of the `Result` type. The response tells the client whether the request succeeded, failed, or requires further action, and provides any requested data or error information.
 
 ## Understanding HTTP responses
 
@@ -28,13 +28,7 @@ Success responses (2xx status codes) indicate that the request was received, und
 
 The most common response indicates the request succeeded and returns the requested data:
 
-```dart
-app.get('/status', (ctx) {
-  return ctx.respond(Response.ok(
-    body: Body.fromString('Status is Ok'),
-  ));
-});
-```
+GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/routing/request_response_example.dart) doctag="basic-request-response" title="200 OK text response"
 
 ### Error responses
 
@@ -44,30 +38,13 @@ Error responses (4xx, 5xx status codes) indicate that the request was invalid or
 
 The request is malformed or contains invalid data:
 
-```dart
-app.post('/api/users', (ctx) async {
-  try {
-    throw
-  } catch (e) {
-    return ctx.respond(Response.badRequest(
-      body: Body.fromString('Invalid JSON'),
-    ));
-  }
-});
-```
+GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/routing/request_response_example.dart) doctag="json-api-complete" title="400 Bad Request JSON error"
 
 ### Custom status codes
 
 For status codes without a dedicated constructor, use the general `Response` constructor:
 
-```dart
-app.get('/teapot', (ctx) {
-  return ctx.respond(Response(
-    418,  // I'm a teapot
-    body: Body.fromString('I refuse to brew coffee'),
-  ));
-});
-```
+GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/routing/request_response_example.dart) doctag="custom-status" title="Custom status code"
 
 :::tip
 For a comprehensive list of HTTP status codes, check out [Mozilla's HTTP Status Codes documentation](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Status).
@@ -83,11 +60,7 @@ The response body contains the actual data you're sending to the client. Relic's
 
 For plain text responses, use `Body.fromString()`:
 
-```dart
-Response.ok(
-  body: Body.fromString('Hello, World!'),
-)
-```
+GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/routing/request_response_example.dart) doctag="basic-request-response" title="Text response"
 
 By default, Relic infers the MIME type from the content. For plain text, it sets `text/plain`.
 
@@ -95,60 +68,19 @@ By default, Relic infers the MIME type from the content. For plain text, it sets
 
 To serve HTML content, specify the MIME type explicitly:
 
-```dart
-app.get('/page', (ctx) {
-  final html = '''
-<!DOCTYPE html>
-<html>
-<head><title>My Page</title></head>
-<body><h1>Welcome!</h1></body>
-</html>
-''';
-  
-  return ctx.respond(Response.ok(
-    body: Body.fromString(html, mimeType: MimeType.html),
-  ));
-});
-```
+GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/routing/request_response_example.dart) doctag="html-response" title="HTML response"
 
 ### JSON responses
 
 For JSON APIs, encode your data and specify the JSON MIME type:
 
-```dart
-import 'dart:convert';
-
-app.get('/api/users/:id', (ctx) {
-  final user = {
-    'id': 123,
-    'name': 'Alice',
-    'email': 'alice@example.com',
-  };
-  
-  return ctx.respond(Response.ok(
-    body: Body.fromString(
-      jsonEncode(user),
-      mimeType: MimeType.json,
-    ),
-  ));
-});
-```
+GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/routing/request_response_example.dart) doctag="path-params-complete" title="JSON response"
 
 ### Binary data
 
 For images, PDFs, or other binary content, use `Body.fromData()`:
 
-```dart
-import 'dart:typed_data';
-
-app.get('/image.png', (ctx) {
-  final imageBytes = Uint8List.fromList(loadImageData());
-  
-  return ctx.respond(Response.ok(
-    body: Body.fromData(imageBytes),
-  ));
-});
-```
+GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/routing/request_response_example.dart) doctag="binary-response" title="Binary response"
 
 Relic automatically infers the MIME type from the binary data when possible.
 
@@ -156,63 +88,27 @@ Relic automatically infers the MIME type from the binary data when possible.
 
 For large files or generated content, stream the data instead of loading it all into memory:
 
-```dart
-app.get('/large-file', (ctx) {
-  Stream<Uint8List> dataStream = getLargeFileStream();
-  
-  return ctx.respond(Response.ok(
-    body: Body.fromDataStream(
-      dataStream,
-      mimeType: MimeType.octetStream,
-      contentLength: fileSize,  // Optional but recommended
-    ),
-  ));
-});
-```
+GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/routing/request_response_example.dart) doctag="streaming-response" title="Streaming response"
 
 ### Empty responses
 
 Some responses don't need a body. Use `Body.empty()` or simply omit the body parameter:
 
-```dart
-// Explicitly empty
-Response.ok(body: Body.empty())
-
-// Or use noContent() which implies an empty body
-Response.noContent()
-```
+GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/routing/request_response_example.dart) doctag="empty-responses" title="Empty responses"
 
 ## Setting response headers
 
 Headers provide metadata about your response. Use the `Headers` class to build type-safe headers:
 
-```dart
-app.get('/api/data', (ctx) {
-  final headers = Headers.build((h) {
-    // Set cache control
-    h.cacheControl = CacheControlHeader(
-      maxAge: 3600,
-      publicCache: true,
-    );
-    
-    // Set custom header
-    h['X-Custom-Header'] = ['value'];
-  });
-  
-  return ctx.respond(Response.ok(
-    headers: headers,
-    body: Body.fromString('{"status": "ok"}', mimeType: MimeType.json),
-  ));
-});
-```
+GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/routing/request_response_example.dart) doctag="response-headers" title="Set response headers"
 
 :::tip
 For a comprehensive list of HTTP headers, check out [Mozilla's HTTP Headers documentation](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers).
 :::
 
-## Examples
+## Example
 
-- **[`response_example.dart`](https://github.com/serverpod/relic/blob/main/example/routing/response_example.dart)** - Example covering responses
+- **[Responses example](https://github.com/serverpod/relic/blob/main/example/routing/request_response_example.dart)** - Comprehensive example covering complete request-response cycles
 
 ## Summary
 
