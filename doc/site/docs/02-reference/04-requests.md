@@ -134,7 +134,11 @@ By processing the data in chunks, your server can handle large uploads without r
 
 ### Checking if body is empty
 
-Before attempting to read the body, you can check if it's empty using the `isEmpty` property. This is useful when you want to require a body for certain requests. Note that `isEmpty` relies on the underlying content length when available—if the transfer uses chunked encoding with unknown length, `isEmpty` may be `false` even if no data arrives.
+Before attempting to read the body, you can check if it's empty using the `isEmpty` property. This is useful when you want to require a body for certain requests.
+
+:::warning
+`isEmpty` is based on the known content length when available. For requests using chunked transfer encoding (unknown length up front), `isEmpty` may return `false` even if no data is ultimately sent. Prefer defensive reads for streaming uploads.
+:::
 
 GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/routing/request_response_example.dart) doctag="upload-complete" title="Body empty check"
 

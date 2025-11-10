@@ -245,10 +245,6 @@ if (request.isEmpty) {
 }
 ```
 
-:::warning
-`request.isEmpty` is based on the known content length when available. For requests using chunked transfer encoding (unknown length up front), `isEmpty` may return `false` even if no data is ultimately sent. Prefer defensive reads for streaming uploads.
-:::
-
 It is also useful to inspect the content length directly when validating uploads or applying limits. If a length is present, you can enforce thresholds before reading any data, and if not, you can switch to streaming-safe logic.
 
 ```dart
