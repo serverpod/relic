@@ -58,3 +58,7 @@ GITHUB_CODE_BLOCK lang="dart" doctag="context-websocket-echo" [src](https://raw.
 For advanced use cases like Server-Sent Events (SSE) or custom protocols, you can hijack the connection:
 
 GITHUB_CODE_BLOCK lang="dart" doctag="handler-hijack-sse" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/basic/handler_example.dart) title="Connection hijacking example"
+
+## Example
+
+- **[Handler example](https://github.com/serverpod/relic/blob/main/example/basic/handler_example.dart)** - The complete working example from this guide.
