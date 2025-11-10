@@ -28,7 +28,7 @@ dart pub add relic
 
 Edit the `bin/hello_world.dart`:
 
-GITHUB_CODE_BLOCK lang="dart" doctag="hello-world-app" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/example.dart) title="Hello world server"
+GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/example.dart) title="hello_world.dart" doctag="hello-world-app"
 
 **What this code does:**
 
