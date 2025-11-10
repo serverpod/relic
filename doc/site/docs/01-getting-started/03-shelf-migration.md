@@ -73,16 +73,7 @@ void main() async {
 
 After (Relic):
 
-```dart
-import 'package:relic/io_adapter.dart';
-import 'package:relic/relic.dart';
-
-void main() async {
-  final app = RelicApp();
-  // Add routes...
-  await app.serve(port: 8080);
-}
-```
+GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/basic/relic_shelf_example.dart) doctag="complete-relic" title="relic_shelf_example.dart"
 
 ### 3. Update handler signatures
 
@@ -233,7 +224,7 @@ final userProperty = ContextProperty<User>();
 final sessionProperty = ContextProperty<Session>();
 
 // Add an extension method for convenient access
-extension AuthContext on RequestContext {
+extension AuthContext on Request {
   User get currentUser => userProperty[this];
   Session get session => sessionProperty[this];
 }
@@ -260,23 +251,7 @@ var handler = webSocketHandler((webSocket) {
 
 Relic has WebSockets built-in with state machine integration:
 
-```dart
-import 'package:relic/relic.dart';
-
-WebSocketUpgrade websocketHandler(final Request req) {
-  return WebSocketUpgrade((final ws) async {
-    ws.events.listen((final event) {
-      log('Received: $event');
-    });
-
-    // Non-throwing variant - returns false if connection closed
-    ws.trySendText('Hello!');
-
-    // Or use the throwing variant if you want exceptions
-    ws.sendText('Hello!');
-  });
-}
-```
+GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/basic/relic_shelf_example.dart) doctag="websocket-relic" title="relic_shelf_example.dart"
 
 ## Example comparison
 
@@ -306,22 +281,7 @@ void main() async {
 
 ### Relic version
 
-```dart
-import 'package:relic/io_adapter.dart';
-import 'package:relic/relic.dart';
-
-void main() async {
-  final app = RelicApp()
-        ..use('/', logRequests()) // Apply logging to all routes
-        ..get('/users/:id', (final Request req) {
-          final id = req.pathParameters[#id]!;
-          final name = req.url.queryParameters['name'] ?? 'Unknown';
-          return Response.ok(body: Body.fromString('User $id: $name'));
-        });
-
-  await app.serve();
-}
-```
+GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/basic/relic_shelf_example.dart) doctag="complete-relic" title="relic_shelf_example.dart"
 
 :::info Difference from Shelf's pipeline
 Unlike Shelf's `Pipeline().addMiddleware()`, which runs for _all_ requests (including 404s), Relic's `.use('/', ...)` only executes middleware for requests that match a route. Unmatched requests (404s) bypass middleware and go directly to the fallback handler.
