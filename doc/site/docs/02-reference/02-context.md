@@ -2,7 +2,7 @@
 sidebar_position: 2
 ---
 
-# Context Properties
+# Context properties
 
 Context properties provide **type-safe, request-scoped data storage** in Relic applications. They replace Shelf's `Map<String, Object>` context with a more robust system that attaches custom data directly to `Request` objects.
 
@@ -30,26 +30,30 @@ Use descriptive names for your properties. The string identifier is used interna
 
 ## Property API
 
-Context properties provide three main methods:
+Context properties provide the following methods:
 
 | Method | Description | Returns |
 |--------|-------------|----------|
-| `property.add(req, value)` | Add value to request | New `Request` with property |
-| `property.read(req)` | Read value from request | `T?` (nullable) |
-| `property.readOrThrow(req)` | Read value or throw | `T` (non-null) |
+| `property[req] = value` | Set value for request | `void` |
+| `property[req]` | Read value or throw if missing | `T` (non-null) |
+| `property.getOrNull(req)` | Read value from request | `T?` (nullable) |
+| `property.exists(req)` | Check if value is set | `bool` |
+| `property.clear(req)` | Remove value for request | `void` |
 
 ### Adding properties
 
-Properties are **immutable** - `add()` returns a new `Request` instance:
+Set values in middleware or handlers using the `[]` operator:
 
-GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/context/context_property_example.dart) doctag="context-prop-request-id" title="context_property_example.dart"
+GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/context/context_property_example.dart) doctag="context-prop-request-id" title="Add request ID to context"
 
 ### Reading properties
 
-GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/context/context_property_example.dart) doctag="context-prop-use-request-id" title="context_property_example.dart"
+Read values with `property[req]` (throws if missing) or `property.getOrNull(req)`:
+
+GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/context/context_property_example.dart) doctag="context-prop-use-request-id" title="Use request ID from context"
 
 :::info Property lifetime
-Context properties exist **only for the duration of the request**. Once the response is sent, they're automatically cleaned up. Properties are immutable - each `add()` call returns a new `Request` instance.
+Context properties exist **only for the duration of the request**. Once the response is sent, they're automatically cleaned up. Values are scoped to each request and do not leak between requests.
 :::
 
 ## Example

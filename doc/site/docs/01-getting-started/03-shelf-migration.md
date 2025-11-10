@@ -19,9 +19,9 @@ Use this quick plan to get your app running on Relic. The detailed sections belo
 
 2) ✅ Bootstrap the server: Replace `shelf_io.serve()` with `RelicApp().serve()` if using the io adapter, or integrate RelicApp into your hosting environment as needed.
 
-3) ✅ Update handler signatures: Change from `Response handler(Request request)` to use either `respondWith` or `ResponseContext handler(NewContext ctx)`.
+3) ✅ Keep handlers as `Response handler(Request request)`. Handlers in Relic receive a `Request` and return a `Result` (usually a `Response`).
 
-4) ✅ Switch to Relic routing: Replace Router from shelf_router with `RelicApp().get/post/put/delete`. Replace `<id>` path params with `:id` and read them via `ctx.pathParameters[#id]`.
+4) ✅ Switch to Relic routing: Replace Router from shelf_router with `RelicApp().get/post/put/delete`. Replace `<id>` path params with `:id` and read them via `request.pathParameters[#id]`.
 
 5) ✅ Create responses with Body: Replace `Response.ok('text')` with `Response.ok(body:...)`. Let Relic manage content-length and content-type through Body.
 
@@ -73,7 +73,7 @@ void main() async {
 
 After (Relic):
 
-GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/basic/relic_shelf_example.dart) doctag="complete-relic" title="relic_shelf_example.dart"
+GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/basic/relic_shelf_example.dart) doctag="complete-relic" title="Complete Relic example"
 
 ### 3. Update handler signatures
 
@@ -90,14 +90,10 @@ Response handler(Request request) {
 After (Relic):
 
 ```dart
-Response handler(Request req) {
+Response handler(Request request) {
   return Response.ok(body: Body.fromString('Hello, Relic!'));
 }
 ```
-
-:::tip
-Relic introduces a context state machine that explicitly represents the different states a request can be in (new, responded or connected), making state transitions explicit and providing compile-time guarantees. Read more about the context state machine in the [context documentation](../reference/context).
-:::
 
 ### 4. Switch to Relic routing
 
@@ -119,8 +115,8 @@ After (Relic), routing built-in:
 import 'package:relic/relic.dart';
 
 final router = RelicApp()
-  ..get('/users/:id', (Request req) {
-    final id = req.pathParameters[#id];
+  ..get('/users/:id', (Request request) {
+    final id = request.pathParameters[#id];
     return Response.ok(body: Body.fromString('User $id'));
   });
 ```
@@ -196,7 +192,7 @@ After (Relic), route-level middleware:
 final app = RelicApp()
   ..use('/', logRequests())
   ..use('/api', authentication())
-  ..get('/api/users', (Request req) async {
+  ..get('/api/users', (Request request) async {
     return Response.ok(body: Body.fromString('User data'));
   });
 ```
@@ -230,8 +226,8 @@ extension AuthContext on Request {
 }
 
 // Get values - type-safe
-final user = ctx.currentUser;
-final session = ctx.session;
+final user = request.currentUser;
+final session = request.session;
 ```
 
 ### 9. Update WebSockets
@@ -249,9 +245,9 @@ var handler = webSocketHandler((webSocket) {
 });
 ```
 
-Relic has WebSockets built-in with state machine integration:
+Relic has WebSockets built-in without the need for a separate package:
 
-GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/basic/relic_shelf_example.dart) doctag="websocket-relic" title="relic_shelf_example.dart"
+GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/basic/relic_shelf_example.dart) doctag="websocket-relic" title="WebSocket example"
 
 ## Example comparison
 
@@ -281,7 +277,7 @@ void main() async {
 
 ### Relic version
 
-GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/basic/relic_shelf_example.dart) doctag="complete-relic" title="relic_shelf_example.dart"
+GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/basic/relic_shelf_example.dart) doctag="complete-relic" title="Complete Relic example"
 
 :::info Difference from Shelf's pipeline
 Unlike Shelf's `Pipeline().addMiddleware()`, which runs for _all_ requests (including 404s), Relic's `.use('/', ...)` only executes middleware for requests that match a route. Unmatched requests (404s) bypass middleware and go directly to the fallback handler.

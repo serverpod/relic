@@ -1,8 +1,8 @@
+// doctag<hello-world-app>
 import 'package:relic/io_adapter.dart';
 import 'package:relic/relic.dart';
 
 /// A simple 'Hello World' server
-// doctag<hello-world-app>
 Future<void> main() async {
   // Setup app
   final app =
@@ -22,9 +22,7 @@ Future<void> main() async {
   // Start the server. Defaults to using port 8080 on loopback interface
   await app.serve();
 }
-// end:doctag<hello-world-app>
 
-// doctag<hello-world-greeter-handler>
 Response hello(final Request req) {
   final name = req.pathParameters[#name];
   final age = int.parse(req.pathParameters[#age]!);
@@ -34,4 +32,4 @@ Response hello(final Request req) {
   );
 }
 
-// end:doctag<hello-world-greeter-handler>
+// end:doctag<hello-world-app>
