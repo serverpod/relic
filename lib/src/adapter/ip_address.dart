@@ -5,24 +5,61 @@ import 'package:meta/meta.dart';
 @immutable
 sealed class IPAddress {
   final Uint8List bytes; // immutable, network order (big-endian)
+  final int prefixLength; // CIDR prefix length
 
-  IPAddress._(final Uint8List bytes)
-    : bytes = Uint8List.fromList(bytes).asUnmodifiableView();
+  IPAddress._(final Uint8List bytes, {final int? prefixLength})
+    : bytes = Uint8List.fromList(bytes).asUnmodifiableView(),
+      prefixLength = prefixLength ?? (bytes.length == 4 ? 32 : 128);
 
   /// Factory constructor for automatic type detection
+  /// Supports both plain IP addresses and CIDR notation
+  /// Examples: "192.168.1.1", "192.168.1.0/24", "2001:db8::1", "2001:db8::/32"
   factory IPAddress.parse(final String address) {
-    if (address.contains(':')) {
-      return IPv6Address._parse(address);
-    } else {
-      return IPv4Address._parse(address);
+    // Check if CIDR notation
+    final parts = address.split('/');
+
+    if (parts.length > 2) {
+      throw FormatException('Invalid IP address format: $address');
     }
+
+    final ipPart = parts[0];
+    final IPAddress parsed;
+
+    if (ipPart.contains(':')) {
+      parsed = IPv6Address._parse(ipPart);
+    } else {
+      parsed = IPv4Address._parse(ipPart);
+    }
+
+    // If no prefix length specified, return with default
+    if (parts.length == 1) {
+      return parsed;
+    }
+
+    // Parse and validate prefix length
+    final parsedPrefixLength = int.tryParse(parts[1]);
+
+    if (parsedPrefixLength == null || parsedPrefixLength < 0) {
+      throw FormatException('Invalid prefix length: ${parts[1]}');
+    }
+
+    if (parsedPrefixLength > parsed.maxPrefixLength) {
+      throw FormatException(
+        'Prefix length $parsedPrefixLength exceeds maximum ${parsed.maxPrefixLength}',
+      );
+    }
+
+    return IPAddress.fromBytes(parsed.bytes, prefixLength: parsedPrefixLength);
   }
 
   /// Create from raw bytes
-  factory IPAddress.fromBytes(final Uint8List bytes) {
+  factory IPAddress.fromBytes(
+    final Uint8List bytes, {
+    final int? prefixLength,
+  }) {
     return switch (bytes.length) {
-      4 => IPv4Address._(bytes),
-      16 => IPv6Address._(bytes),
+      4 => IPv4Address._(bytes, prefixLength: prefixLength),
+      16 => IPv6Address._(bytes, prefixLength: prefixLength),
       _ => throw ArgumentError('Invalid byte length: ${bytes.length}'),
     };
   }
@@ -31,7 +68,8 @@ sealed class IPAddress {
   bool operator ==(final Object other) {
     if (identical(this, other)) return true;
     if (other is! IPAddress) return false;
-    return _bytesEqual(bytes, other.bytes);
+    return _bytesEqual(bytes, other.bytes) &&
+        prefixLength == other.prefixLength;
   }
 
   static bool _bytesEqual(final Uint8List a, final Uint8List b) {
@@ -42,14 +80,122 @@ sealed class IPAddress {
     return true;
   }
 
-  late final int _hash = Object.hashAll(bytes);
+  late final int _hash = Object.hash(Object.hashAll(bytes), prefixLength);
   @override
   int get hashCode => _hash;
+
+  /// Get the maximum prefix length for this IP address type
+  int get maxPrefixLength => this is IPv4Address ? 32 : 128;
+
+  /// Validate prefix length for this IP address type
+  void _validatePrefixLength(final int pl) {
+    if (pl < 0 || pl > maxPrefixLength) {
+      throw ArgumentError(
+        'Prefix length must be between 0 and $maxPrefixLength, got $pl',
+      );
+    }
+  }
+
+  /// Check if this subnet contains the other IP address
+  ///
+  /// Example:
+  /// ```dart
+  /// final subnet = IPAddress.parse('192.168.1.0/24');
+  /// final ip = IPAddress.parse('192.168.1.100');
+  /// subnet.contains(ip); // true
+  ///
+  /// final otherIp = IPAddress.parse('192.168.2.100');
+  /// subnet.contains(otherIp); // false
+  /// ```
+  bool contains(final IPAddress other) {
+    if (runtimeType != other.runtimeType) {
+      return false;
+    }
+
+    // Compare the other IP's network address using this subnet's prefix length
+    final otherNetwork = other.withPrefixLength(prefixLength).network;
+    return _bytesEqual(otherNetwork.bytes, network.bytes);
+  }
+
+  /// Get the network address for this IP and its prefix length
+  late final IPAddress network = _computeNetwork();
+
+  IPAddress _computeNetwork() {
+    final mask = _createMask(prefixLength);
+    final networkBytes = Uint8List(bytes.length);
+
+    for (int i = 0; i < bytes.length; i++) {
+      networkBytes[i] = bytes[i] & mask[i];
+    }
+
+    return IPAddress.fromBytes(networkBytes, prefixLength: prefixLength);
+  }
+
+  /// Get the broadcast address for this IP and its prefix length
+  /// For IPv6, this returns the last address in the subnet
+  late final IPAddress broadcast = _computeBroadcast();
+
+  IPAddress _computeBroadcast() {
+    final mask = _createMask(prefixLength);
+    final broadcastBytes = Uint8List(bytes.length);
+
+    for (int i = 0; i < bytes.length; i++) {
+      broadcastBytes[i] = bytes[i] | (~mask[i] & 0xFF);
+    }
+
+    return IPAddress.fromBytes(broadcastBytes, prefixLength: prefixLength);
+  }
+
+  /// Check if this represents a single host (full prefix length)
+  bool get isHost => prefixLength == maxPrefixLength;
+
+  /// Check if this is the network address of its subnet
+  bool get isNetworkAddress => this == network;
+
+  /// Returns the IP address representation without prefix
+  String get _addressString;
+
+  @override
+  String toString() {
+    // Only include prefix if it's not the default (host address)
+    if (isHost) {
+      return _addressString;
+    } else {
+      return '$_addressString/$prefixLength';
+    }
+  }
+
+  /// Create a new IPAddress with a different prefix length
+  IPAddress withPrefixLength(final int newPrefixLength) {
+    _validatePrefixLength(newPrefixLength);
+    return IPAddress.fromBytes(bytes, prefixLength: newPrefixLength);
+  }
+
+  /// Create a subnet mask for the given prefix length
+  Uint8List _createMask(final int pl) {
+    final byteCount = this is IPv4Address ? 4 : 16;
+    final mask = Uint8List(byteCount);
+
+    int remainingBits = pl;
+    for (int i = 0; i < byteCount; i++) {
+      if (remainingBits >= 8) {
+        mask[i] = 0xFF;
+        remainingBits -= 8;
+      } else if (remainingBits > 0) {
+        mask[i] = (0xFF << (8 - remainingBits)) & 0xFF;
+        remainingBits = 0;
+      } else {
+        mask[i] = 0;
+      }
+    }
+
+    return mask;
+  }
 }
 
 /// IPv4 address implementation
 final class IPv4Address extends IPAddress {
-  IPv4Address._(super.bytes) : super._();
+  IPv4Address._(super.bytes, {super.prefixLength}) : super._();
 
   /// Create IPv4 from string
   factory IPv4Address._parse(final String address) {
@@ -75,19 +221,20 @@ final class IPv4Address extends IPAddress {
     final int a,
     final int b,
     final int c,
-    final int d,
-  ) {
+    final int d, {
+    final int? prefixLength,
+  }) {
     final bytes = <int>[a, b, c, d];
     for (final segment in bytes) {
       if (segment < 0 || segment > 0xFF) {
         throw ArgumentError('Invalid IPv4 segment: $segment');
       }
     }
-    return IPv4Address._(Uint8List.fromList(bytes));
+    return IPv4Address._(Uint8List.fromList(bytes), prefixLength: prefixLength);
   }
 
   /// Create IPv4 from 32-bit integer
-  factory IPv4Address.fromInt(final int value) {
+  factory IPv4Address.fromInt(final int value, {final int? prefixLength}) {
     if (value < 0 || value > 0xFFFFFFFF) {
       throw ArgumentError('IPv4 integer out of range: $value');
     }
@@ -96,22 +243,27 @@ final class IPv4Address extends IPAddress {
       (value >> 16) & 0xFF,
       (value >> 8) & 0xFF,
       value & 0xFF,
+      prefixLength: prefixLength,
     );
   }
 
-  late final String _string = bytes.join('.');
+  /// Convert to 32-bit integer representation
+  int toInt() {
+    return (bytes[0] << 24) | (bytes[1] << 16) | (bytes[2] << 8) | bytes[3];
+  }
+
   @override
-  String toString() => _string;
+  late final String _addressString = bytes.join('.');
 
   /// Common IPv4 addresses
   static final any = IPv4Address.fromOctets(0, 0, 0, 0);
   static final loopback = IPv4Address.fromOctets(127, 0, 0, 1);
-  static final broadcast = IPv4Address.fromOctets(255, 255, 255, 255);
+  static final broadcastAddr = IPv4Address.fromOctets(255, 255, 255, 255);
 }
 
 /// IPv6 address implementation
 final class IPv6Address extends IPAddress {
-  IPv6Address._(super.bytes) : super._();
+  IPv6Address._(super.bytes, {super.prefixLength}) : super._();
 
   /// Create IPv6 from string
   factory IPv6Address._parse(final String address) {
@@ -128,23 +280,33 @@ final class IPv6Address extends IPAddress {
     final int e,
     final int f,
     final int g,
-    final int h,
-  ) {
+    final int h, {
+    final int? prefixLength,
+  }) {
     final segments = <int>[a, b, c, d, e, f, g, h];
     for (final segment in segments) {
       if (segment < 0 || segment > 0xFFFF) {
         throw ArgumentError('Invalid IPv6 segment: $segment');
       }
     }
-    return IPv6Address.fromSegments(Uint16List.fromList(segments));
+    return IPv6Address.fromSegments(
+      Uint16List.fromList(segments),
+      prefixLength: prefixLength,
+    );
   }
 
   /// Create IPv6 from 8 16-bit segments
-  factory IPv6Address.fromSegments(final Uint16List segments) {
+  factory IPv6Address.fromSegments(
+    final Uint16List segments, {
+    final int? prefixLength,
+  }) {
     if (segments.length != 8) {
       throw ArgumentError('IPv6 requires exactly 8 segments');
     }
-    return IPv6Address._(segments.toBigEndianUint8List());
+    return IPv6Address._(
+      segments.toBigEndianUint8List(),
+      prefixLength: prefixLength,
+    );
   }
 
   static Uint8List _parseIPv6String(final String address) {
@@ -255,9 +417,8 @@ final class IPv6Address extends IPAddress {
     }
   }
 
-  late final String _string = _compressed; // cache
   @override
-  String toString() => _string;
+  late final String _addressString = _compressed; // cache
 
   /// Common IPv6 addresses
   static final any = IPv6Address.fromSegments(
