@@ -12,7 +12,7 @@ void main() async {
         ..use('/', logRequests()) // Apply logging to all routes
         ..get('/users/:id', (final Request req) {
           final id = req.pathParameters[#id]!;
-          final name = req.url.queryParameters['name'] ?? 'Unknown';
+          final name = req.requestedUri.queryParameters['name'] ?? 'Unknown';
           return Response.ok(body: Body.fromString('User $id: $name'));
         });
 

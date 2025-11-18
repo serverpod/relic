@@ -85,20 +85,11 @@ class Response extends Message implements Result {
   /// This indicates that the request has succeeded.
   ///
   /// {@template relic_response_body_and_encoding_param}
-  /// [body] is the response body. It may be either a [String], a [List<int>], a
-  /// [Stream<List<int>>], or `null` to indicate no body.
+  /// [body] is the response body. It may be a [Body] instance or `null` to
+  /// indicate no body. Use [Body.fromString], [Body.fromBytes], or
+  /// [Body.fromDataStream] to create the body with the appropriate content type
+  /// and encoding.
   ///
-  /// If the body is a [String], [encoding] is used to encode it to a
-  /// [Stream<List<int>>]. It defaults to UTF-8. If it's a [String], a
-  /// [List<int>], or `null`, the Content-Length header is set automatically
-  /// unless a Transfer-Encoding header is set. Otherwise, it's a
-  /// [Stream<List<int>>] and no Transfer-Encoding header is set, the adapter
-  /// will set the Transfer-Encoding header to "chunked" and apply the chunked
-  /// encoding to the body.
-  ///
-  /// If [encoding] is passed, the "encoding" field of the Content-Type header
-  /// in [headers] will be set appropriately. If there is no existing
-  /// Content-Type header, it will be set to "application/octet-stream".
   /// [headers] must contain values that are either `String` or `List<String>`.
   /// An empty list will cause the header to be omitted.
   /// {@endtemplate}

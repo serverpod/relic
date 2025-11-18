@@ -263,7 +263,7 @@ import 'package:shelf/shelf_io.dart' as shelf_io;
 void main() async {
   final router = Router()
     ..get('/users/<id>', (Request request, String id) {
-      final name = request.url.queryParameters['name'] ?? 'Unknown';
+      final name = request.requestedUri.queryParameters['name'] ?? 'Unknown';
       return Response.ok('User $id: $name');
     });
 

@@ -23,10 +23,10 @@ Future<void> main() async {
   // doctag<path-params-complete>
   app.get('/users/:id', (final req) {
     final id = req.pathParameters[#id]!;
-    final url = req.url;
+    final matchedPath = req.matchedPath;
     final fullUri = req.requestedUri;
 
-    log('Relative URL: $url, id: $id');
+    log('Matched path: $matchedPath, id: $id');
     log('Full URI: $fullUri');
 
     // Return user data as JSON
@@ -45,8 +45,8 @@ Future<void> main() async {
   // Query parameters with validation and response
   // doctag<query-params-complete>
   app.get('/search', (final req) {
-    final query = req.url.queryParameters['query'];
-    final page = req.url.queryParameters['page'];
+    final query = req.requestedUri.queryParameters['query'];
+    final page = req.requestedUri.queryParameters['page'];
 
     if (query == null) {
       return Response.badRequest(
@@ -70,7 +70,7 @@ Future<void> main() async {
   // Multiple query parameters
   // doctag<query-multi-complete>
   app.get('/filter', (final req) {
-    final tags = req.url.queryParametersAll['tag'] ?? [];
+    final tags = req.requestedUri.queryParametersAll['tag'] ?? [];
     final results = {
       'tags': tags,
       'filtered_items':
@@ -229,7 +229,7 @@ Future<void> main() async {
   // HTML page response
   // doctag<html-response>
   app.get('/page', (final req) {
-    final pageNum = req.url.queryParameters['page'];
+    final pageNum = req.requestedUri.queryParameters['page'];
 
     if (pageNum != null) {
       final page = int.tryParse(pageNum);

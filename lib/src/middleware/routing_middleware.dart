@@ -118,6 +118,8 @@ extension RoutingRequestEx on Request {
   /// `/api/users/123`, this returns `/api`. For exact matches, this is the
   /// entire path.
   ///
+  /// This replaces the deprecated `handlerPath` property from earlier versions.
+  ///
   /// Returns [NormalizedPath.empty] if the request was not routed through
   /// a router.
   NormalizedPath get matchedPath =>

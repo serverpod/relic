@@ -17,7 +17,7 @@ typedef SyncHandler = Result Function(Request);
 /// A simple, synchronous handler.
 ///
 /// By default, replies with a status code 200, empty headers, and
-/// `Hello from ${req.url.path}`.
+/// `Hello from ${req.requestedUri.path}`.
 SyncHandler createSyncHandler({
   final int statusCode = 200,
   final Headers? headers,

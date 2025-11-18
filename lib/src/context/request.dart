@@ -14,15 +14,15 @@ part of 'result.dart';
 ///   final id = req.pathParameters[#id];
 ///
 ///   // Access HTTP method
-///   print(request.method); // Method.get
+///   print(req.method); // Method.get
 ///
 ///   // Access query parameters
-///   final sort = req.url.queryParameters['sort'];
-///   final filter = req.url.queryParameters['filter'];
+///   final sort = req.requestedUri.queryParameters['sort'];
+///   final filter = req.requestedUri.queryParameters['filter'];
 ///
 ///   // Multiple values for same parameter
 ///   // URL: /tags?tag=dart&tag=server
-///   final tags = req.url.queryParametersAll['tag'];
+///   final tags = req.requestedUri.queryParametersAll['tag'];
 ///   // tags = ['dart', 'server']
 ///
 ///   // Access headers
@@ -101,22 +101,7 @@ class Request extends Message {
   /// Creates a new [Request] by copying existing values and applying specified
   /// changes.
   ///
-  /// [body] is the request body. It may be either a [String], a [List<int>], a
-  /// [Stream<List<int>>], or `null` to indicate no body.
-  ///
-  /// [path] is used to update both [handlerPath] and [url]. It's designed for
-  /// routing middleware, and represents the path from the current handler to
-  /// the next handler. It must be a prefix of [url]; [handlerPath] becomes
-  /// `handlerPath + "/" + path`, and [url] becomes relative to that. For
-  /// example:
-  /// ```dart
-  /// print(request.handlerPath); // => /static/
-  /// print(request.url);        // => dir/file.html
-
-  /// request = request.change(path: "dir");
-  /// print(request.handlerPath); // => /static/dir/
-  /// print(request.url);        // => file.html
-  /// ```
+  /// All parameters are optional. If not provided, the original values are used.
   @override
   Request copyWith({
     final Headers? headers,
