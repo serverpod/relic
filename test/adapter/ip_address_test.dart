@@ -904,6 +904,22 @@ void main() {
         expect(result.prefixLength, equals(24));
       });
 
+      test('Given an IPv4, '
+          'when withPrefixLength is called with value > 32, '
+          'then ArgumentError is thrown', () {
+        final ip = IPAddress.parse('192.168.1.100');
+
+        expect(() => ip.withPrefixLength(33), throwsArgumentError);
+      });
+
+      test('Given an IPv6, '
+          'when withPrefixLength is called with value > 128, '
+          'then ArgumentError is thrown', () {
+        final ip = IPAddress.parse('2001:db8::1');
+
+        expect(() => ip.withPrefixLength(129), throwsArgumentError);
+      });
+
       test('Given an IPv4Address, '
           'when toInt is called, '
           'then returns correct 32-bit integer', () {
@@ -1019,6 +1035,92 @@ void main() {
         final networkAddr = subnet.network;
 
         expect(networkAddr.isNetworkAddress, isTrue);
+      });
+
+      test('Given an IP address string with multiple slashes, '
+          'when parsed, '
+          'then FormatException is thrown', () {
+        const invalidCidr = '192.168.1.0/24/32';
+
+        expect(() => IPAddress.parse(invalidCidr), throwsFormatException);
+      });
+
+      test('Given two IP addresses with different byte lengths, '
+          'when compared for equality, '
+          'then they are not equal', () {
+        final ipv4 = IPAddress.parse('192.168.1.1');
+        final ipv6 = IPAddress.parse('::1');
+
+        expect(ipv4 == ipv6, isFalse);
+      });
+
+      test('Given a CIDR string with negative prefix length, '
+          'when parsed, '
+          'then FormatException is thrown', () {
+        const cidr = '192.168.1.0/-1';
+
+        expect(() => IPAddress.parse(cidr), throwsFormatException);
+      });
+    });
+  });
+
+  group('Endianness Conversion Extensions', () {
+    group('Uint16List.toBigEndianUint8List', () {
+      test('Given a Uint16List on big-endian system, '
+          'when converted to Uint8List, '
+          'then creates proper byte view', () {
+        final u16list = Uint16List.fromList([0x1234, 0xABCD]);
+
+        final u8list = u16list.toBigEndianUint8List();
+
+        // Should be [0x12, 0x34, 0xAB, 0xCD] in big-endian
+        expect(u8list.length, equals(4));
+        expect(u8list[0], equals(0x12));
+        expect(u8list[1], equals(0x34));
+        expect(u8list[2], equals(0xAB));
+        expect(u8list[3], equals(0xCD));
+      });
+
+      test('Given an empty Uint16List, '
+          'when converted to Uint8List, '
+          'then returns empty Uint8List', () {
+        final u16list = Uint16List(0);
+
+        final u8list = u16list.toBigEndianUint8List();
+
+        expect(u8list.length, equals(0));
+      });
+    });
+
+    group('Uint8List.toUint16ListFromBigEndian', () {
+      test('Given a Uint8List with big-endian data on big-endian system, '
+          'when converted to Uint16List, '
+          'then creates proper view', () {
+        final u8list = Uint8List.fromList([0x12, 0x34, 0xAB, 0xCD]);
+
+        final u16list = u8list.toUint16ListFromBigEndian();
+
+        expect(u16list.length, equals(2));
+        expect(u16list[0], equals(0x1234));
+        expect(u16list[1], equals(0xABCD));
+      });
+
+      test('Given an empty Uint8List, '
+          'when converted to Uint16List, '
+          'then returns empty Uint16List', () {
+        final u8list = Uint8List(0);
+
+        final u16list = u8list.toUint16ListFromBigEndian();
+
+        expect(u16list.length, equals(0));
+      });
+
+      test('Given a Uint8List with odd length, '
+          'when converted to Uint16List, '
+          'then ArgumentError is thrown', () {
+        final u8list = Uint8List.fromList([0x12, 0x34, 0xAB]);
+
+        expect(() => u8list.toUint16ListFromBigEndian(), throwsArgumentError);
       });
     });
   });
