@@ -2,9 +2,38 @@ import 'dart:typed_data';
 
 import 'package:meta/meta.dart';
 
+/// Represents an IPv4 or IPv6 address, optionally with a CIDR prefix length.
+///
+/// This sealed class is the base for [IPv4Address] and [IPv6Address], and provides
+/// type-safe handling of IP addresses in both raw byte and string formats.
+///
+/// Instances can be created via [IPAddress.parse] (from string, with or without CIDR),
+/// or [IPAddress.fromBytes] (from raw bytes).
+///
+/// The [bytes] property contains the address in network order (big-endian), and
+/// [prefixLength] specifies the CIDR prefix (defaults to 32 for IPv4, 128 for IPv6).
+///
+/// ## Examples
+/// ```dart
+/// final ip1 = IPAddress.parse('192.168.1.1');
+/// final ip2 = IPAddress.parse('192.168.1.0/24');
+/// final ip3 = IPAddress.parse('2001:db8::1');
+/// final ip4 = IPAddress.parse('2001:db8::/32');
+/// final ip5 = IPAddress.fromBytes(Uint8List.fromList([192, 168, 1, 1]));
+/// ```
+///
+/// Use [IPAddress] for type-safe IP address manipulation, comparison, and CIDR support.
 @immutable
 sealed class IPAddress {
-  final Uint8List bytes; // immutable, network order (big-endian)
+  /// The IP address bytes in network byte order (big-endian).
+  /// This is an unmodifiable view of the original bytes.
+  final Uint8List bytes;
+
+  /// The CIDR prefix length for this IP address.
+  ///
+  /// For IPv4 addresses, the default is 32 (single host).
+  /// For IPv6 addresses, the default is 128 (single host).
+  /// If a CIDR prefix is specified (e.g., "192.168.1.0/24"), this value reflects it.
   final int prefixLength; // CIDR prefix length
 
   IPAddress._(final Uint8List bytes, {final int? prefixLength})
@@ -52,7 +81,7 @@ sealed class IPAddress {
     return IPAddress.fromBytes(parsed.bytes, prefixLength: parsedPrefixLength);
   }
 
-  /// Create from raw bytes
+  /// Create from raw [bytes], and optionally [prefixLength].
   factory IPAddress.fromBytes(
     final Uint8List bytes, {
     final int? prefixLength,
@@ -193,7 +222,18 @@ sealed class IPAddress {
   }
 }
 
-/// IPv4 address implementation
+/// Represents an IPv4 address with optional CIDR prefix.
+///
+/// IPv4 addresses consist of 4 octets (bytes) ranging from 0-255.
+/// Can be created via [IPv4Address.fromOctets], [IPv4Address.fromInt],
+/// or [IPAddress.parse] for automatic type detection.
+///
+/// Example:
+/// ```dart
+/// final ip = IPv4Address.fromOctets(192, 168, 1, 1);
+/// final subnet = IPAddress.parse('10.0.0.0/8');
+/// print(ip.toInt()); // 3232235777
+/// ```
 final class IPv4Address extends IPAddress {
   IPv4Address._(super.bytes, {super.prefixLength}) : super._();
 
@@ -225,9 +265,9 @@ final class IPv4Address extends IPAddress {
     final int? prefixLength,
   }) {
     final bytes = <int>[a, b, c, d];
-    for (final segment in bytes) {
-      if (segment < 0 || segment > 0xFF) {
-        throw ArgumentError('Invalid IPv4 segment: $segment');
+    for (final octet in bytes) {
+      if (octet < 0 || octet > 0xFF) {
+        throw ArgumentError('Invalid IPv4 octet: $octet');
       }
     }
     return IPv4Address._(Uint8List.fromList(bytes), prefixLength: prefixLength);
@@ -261,7 +301,21 @@ final class IPv4Address extends IPAddress {
   static final broadcastAddr = IPv4Address.fromOctets(255, 255, 255, 255);
 }
 
-/// IPv6 address implementation
+/// Represents an IPv6 address with optional CIDR prefix.
+///
+/// IPv6 addresses consist of 8 hextets (16-bit segments) displayed in
+/// hexadecimal notation. The canonical form uses `::` compression for
+/// the longest run of consecutive zero hextets (RFC 5952).
+///
+/// Can be created via [IPv6Address.fromHextets], [IPv6Address.fromSegments],
+/// or [IPAddress.parse] for automatic type detection.
+///
+/// Example:
+/// ```dart
+/// final ip = IPv6Address.fromHextets(0x2001, 0xdb8, 0, 0, 0, 0, 0, 1);
+/// print(ip); // '2001:db8::1' (compressed form)
+/// final subnet = IPAddress.parse('fe80::/10');
+/// ```
 final class IPv6Address extends IPAddress {
   IPv6Address._(super.bytes, {super.prefixLength}) : super._();
 
@@ -295,7 +349,7 @@ final class IPv6Address extends IPAddress {
     );
   }
 
-  /// Create IPv6 from 8 16-bit segments
+  /// Create IPv6 from 8 16-bit [segments], and optional [prefixLength].
   factory IPv6Address.fromSegments(
     final Uint16List segments, {
     final int? prefixLength,
@@ -363,7 +417,10 @@ final class IPv6Address extends IPAddress {
     return bytes;
   }
 
-  /// Get segments as a list of 16-bit integers
+  /// Returns the IPv6 address as a list of 8 16-bit segments (hextets).
+  ///
+  /// Each segment represents 16 bits of the IPv6 address. For example,
+  /// the address `2001:db8::1` would return `[0x2001, 0x0db8, 0, 0, 0, 0, 0, 1]`.
   Uint16List get segments => bytes.toUint16ListFromBigEndian();
 
   /// Get compressed representation (with :: for zero runs)
