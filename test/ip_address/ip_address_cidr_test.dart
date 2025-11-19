@@ -1,4 +1,4 @@
-import 'package:relic/src/adapter/ip_address.dart';
+import 'package:relic/src/ip_address/ip_address.dart';
 import 'package:test/test.dart';
 
 void main() {
