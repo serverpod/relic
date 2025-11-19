@@ -33,7 +33,7 @@ Use descriptive names for your properties. The string identifier is used interna
 Context properties provide the following methods:
 
 | Method | Description | Returns |
-|--------|-------------|----------|
+| ------ | ----------- | ------- |
 | `property[req] = value` | Set value for request | `void` |
 | `property[req]` | Read value or throw if missing | `T` (non-null) |
 | `property.getOrNull(req)` | Read value from request | `T?` (nullable) |
