@@ -62,16 +62,16 @@ Future<Response> asyncHandler(final Request req) async {
 }
 // end:doctag<handler-async>
 
-// Using context data (method, requestedUri, headers)
+// Using context data (method, url, headers)
 // doctag<handler-context>
 Response contextInfoHandler(final Request req) {
   final method = req.method;
-  final requestedUri = req.requestedUri;
+  final url = req.url;
   final userAgent = req.headers.userAgent;
 
   return Response.ok(
     body: Body.fromString(
-      'Method: ${method.name}, Path: ${requestedUri.path} User-Agent: ${userAgent ?? 'unknown'}',
+      'Method: ${method.name}, Path: ${url.path} User-Agent: ${userAgent ?? 'unknown'}',
     ),
   );
 }

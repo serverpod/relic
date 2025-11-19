@@ -71,12 +71,12 @@ void main() {
     await _scheduleServer((final req) {
       expect(req.method, Method.get);
 
-      expect(req.requestedUri, uri);
+      expect(req.url, uri);
 
-      expect(req.requestedUri.path, '/foo/bar');
-      expect(req.requestedUri.pathSegments, ['foo', 'bar']);
+      expect(req.url.path, '/foo/bar');
+      expect(req.url.pathSegments, ['foo', 'bar']);
       expect(req.protocolVersion, '1.1');
-      expect(req.requestedUri.query, 'qs=value');
+      expect(req.url.query, 'qs=value');
 
       return syncHandler(req);
     });

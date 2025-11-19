@@ -50,7 +50,7 @@ Future<Response> apiHandler(final Request req) async {
   final data = {
     'message': 'Hello from Relic API!',
     'timestamp': DateTime.now().toIso8601String(),
-    'path': req.requestedUri.path,
+    'path': req.url.path,
   };
 
   return Response.ok(
@@ -120,7 +120,7 @@ Future<Response> dataHandler(final Request req) async {
   // Access basic HTTP information
   final method = req.method; // 'GET', 'POST', etc.
   final path = req.matchedPath; // '/api/users'
-  final query = req.requestedUri.query; // 'limit=10&offset=0'
+  final query = req.url.query; // 'limit=10&offset=0'
 
   log('method: $method, path: $path, query: $query');
 

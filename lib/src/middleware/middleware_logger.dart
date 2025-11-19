@@ -52,12 +52,12 @@ String _message(
   final String message,
 ) {
   final method = request.method.value;
-  final requestedUri = request.requestedUri;
+  final url = request.url;
 
   return '${requestTime.toIso8601String()} '
       '${elapsedTime.toString().padLeft(15)} '
       '${method.padRight(7)} [$message] ' // 7 - longest standard HTTP method
-      '${requestedUri.path}${_formatQuery(requestedUri.query)}';
+      '${url.path}${_formatQuery(url.query)}';
 }
 
 String _errorMessage(

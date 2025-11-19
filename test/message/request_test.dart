@@ -44,14 +44,14 @@ void main() {
 
     group('Given a request URL', () {
       test(
-        "when no url is provided then it defaults to the requestedUri's relativized path and query",
+        'when an absolute URL is provided then url.pathAndQuery exposes the relativized path and query',
         () {
           final request = RequestInternal.create(
             Method.get,
             Uri.parse('http://localhost/foo/bar?q=1'),
             Object(),
           );
-          expect(request.url, equals(Uri.parse('/foo/bar?q=1')));
+          expect(request.url.pathAndQuery, equals(Uri.parse('/foo/bar?q=1')));
         },
       );
 
@@ -61,7 +61,7 @@ void main() {
           Uri.parse('http://localhost/foo/bar:42'),
           Object(),
         );
-        expect(request.url, equals(Uri.parse('/foo/bar:42')));
+        expect(request.url.pathAndQuery, equals(Uri.parse('/foo/bar:42')));
       });
 
       test(
@@ -72,7 +72,7 @@ void main() {
             Uri.parse('http://localhost/foo:bar/42'),
             Object(),
           );
-          expect(request.url, equals(Uri.parse('/foo:bar/42')));
+          expect(request.url.pathAndQuery, equals(Uri.parse('/foo:bar/42')));
         },
       );
 
@@ -82,12 +82,12 @@ void main() {
           Uri.parse('http://localhost/foo/bar%2f42'),
           Object(),
         );
-        expect(request.url, equals(Uri.parse('/foo/bar%2f42')));
+        expect(request.url.pathAndQuery, equals(Uri.parse('/foo/bar%2f42')));
       });
     });
 
     group('Given request errors', () {
-      group('Given a requestedUri', () {
+      group('Given a url', () {
         test('when it is not absolute then it throws an ArgumentError', () {
           expect(
             () => RequestInternal.create(
@@ -153,10 +153,10 @@ void main() {
         final copy = request.copyWith();
 
         expect(copy.method, request.method);
-        expect(copy.requestedUri, request.requestedUri);
+        expect(copy.url, request.url);
         expect(copy.protocolVersion, request.protocolVersion);
         expect(copy.headers, same(request.headers));
-        expect(copy.url, request.url);
+        expect(copy.url.pathAndQuery, request.url.pathAndQuery);
         expect(copy.readAsString(), completion('hello, world'));
 
         controller.add(helloBytes);

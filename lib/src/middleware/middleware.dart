@@ -24,7 +24,7 @@ import '../../relic.dart';
 /// ```dart
 /// Middleware loggingMiddleware = (Handler next) {
 ///   return (Request req) async {
-///     print('Request: ${req.method} ${req.requestedUri}');
+///     print('Request: ${req.method} ${req.url}');
 ///     final result = await next(req);
 ///     print('Completed request');
 ///     return result;
@@ -38,7 +38,7 @@ import '../../relic.dart';
 /// // Request processing
 /// final middleware = createMiddleware(
 ///   onRequest: (request) {
-///     print('Processing: ${request.requestedUri}');
+///     print('Processing: ${request.url}');
 ///     return null; // Continue to handler
 ///   },
 /// );
@@ -103,7 +103,7 @@ typedef Middleware = Handler Function(Handler next);
 /// // Logging middleware
 /// final logger = createMiddleware(
 ///   onRequest: (request) {
-///     print('${request.method} ${request.requestedUri}');
+///     print('${request.method} ${request.url}');
 ///     return null;
 ///   },
 ///   onResponse: (response) {

@@ -48,7 +48,7 @@ Response _echoRequest(final Request req) {
   sleep(const Duration(seconds: 1)); // pretend to be really slow
   return Response.ok(
     body: Body.fromString(
-      'Request for "${req.requestedUri}" handled by isolate ${Isolate.current.debugName}',
+      'Request for "${req.url}" handled by isolate ${Isolate.current.debugName}',
     ),
   );
 }

@@ -17,12 +17,12 @@ part of 'result.dart';
 ///   print(req.method); // Method.get
 ///
 ///   // Access query parameters
-///   final sort = req.requestedUri.queryParameters['sort'];
-///   final filter = req.requestedUri.queryParameters['filter'];
+///   final sort = req.url.queryParameters['sort'];
+///   final filter = req.url.queryParameters['filter'];
 ///
 ///   // Multiple values for same parameter
 ///   // URL: /tags?tag=dart&tag=server
-///   final tags = req.requestedUri.queryParametersAll['tag'];
+///   final tags = req.url.queryParametersAll['tag'];
 ///   // tags = ['dart', 'server']
 ///
 ///   // Access headers
@@ -56,12 +56,12 @@ class Request extends Message {
   final String protocolVersion;
 
   /// The original [Uri] for the request.
-  final Uri requestedUri;
+  final Uri url;
 
   /// Creates a new [Request].
   Request._(
     this.method,
-    this.requestedUri,
+    this.url,
     this._token, {
     final Headers? headers,
     final String? protocolVersion,
@@ -71,30 +71,18 @@ class Request extends Message {
     try {
       // Trigger URI parsing methods that may throw format exception (in Request
       // constructor or in handlers / routing).
-      requestedUri.pathSegments;
-      requestedUri.queryParametersAll;
+      url.pathSegments;
+      url.queryParametersAll;
     } on FormatException catch (e) {
-      throw ArgumentError.value(
-        requestedUri,
-        'requestedUri',
-        'URI parsing failed: $e',
-      );
+      throw ArgumentError.value(url, 'url', 'URI parsing failed: $e');
     }
 
-    if (!requestedUri.isAbsolute) {
-      throw ArgumentError.value(
-        requestedUri,
-        'requestedUri',
-        'must be an absolute URL.',
-      );
+    if (!url.isAbsolute) {
+      throw ArgumentError.value(url, 'url', 'must be an absolute URL.');
     }
 
-    if (requestedUri.fragment.isNotEmpty) {
-      throw ArgumentError.value(
-        requestedUri,
-        'requestedUri',
-        'may not have a fragment.',
-      );
+    if (url.fragment.isNotEmpty) {
+      throw ArgumentError.value(url, 'url', 'may not have a fragment.');
     }
   }
 
@@ -103,14 +91,10 @@ class Request extends Message {
   ///
   /// All parameters are optional. If not provided, the original values are used.
   @override
-  Request copyWith({
-    final Headers? headers,
-    final Uri? requestedUri,
-    final Body? body,
-  }) {
+  Request copyWith({final Headers? headers, final Uri? url, final Body? body}) {
     return Request._(
       method,
-      requestedUri ?? this.requestedUri,
+      url ?? this.url,
       token,
       headers: headers ?? this.headers,
       protocolVersion: protocolVersion,
@@ -119,10 +103,6 @@ class Request extends Message {
   }
 
   final Object _token;
-
-  /// @nodoc
-  @Deprecated('Use requestedUri instead')
-  late Uri url = requestedUri.pathAndQuery;
 }
 
 /// Internal extension methods for [Request].

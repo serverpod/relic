@@ -177,9 +177,9 @@ void _logError(
   final StackTrace stackTrace,
 ) {
   final buffer = StringBuffer();
-  buffer.write('${request.method} ${request.requestedUri.path}');
-  if (request.requestedUri.query.isNotEmpty) {
-    buffer.write('?${request.requestedUri.query}');
+  buffer.write('${request.method} ${request.url.path}');
+  if (request.url.query.isNotEmpty) {
+    buffer.write('?${request.url.query}');
   }
   buffer.writeln();
   buffer.write(message);

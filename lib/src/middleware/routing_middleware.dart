@@ -83,7 +83,7 @@ class _RoutingMiddlewareBuilder<T extends Object> {
 
   Handler call(final Handler next) {
     return (final req) async {
-      final path = Uri.decodeFull(req.requestedUri.path);
+      final path = Uri.decodeFull(req.url.path);
       final result = _router.lookup(req.method, path);
       switch (result) {
         case MethodMiss():
@@ -154,5 +154,5 @@ extension RoutingRequestEx on Request {
   /// was not routed through a router, this returns the full request path.
   NormalizedPath get remainingPath =>
       _routingContext.getOrNull(this)?.remaining ??
-      NormalizedPath(Uri.decodeFull(requestedUri.path));
+      NormalizedPath(Uri.decodeFull(url.path));
 }

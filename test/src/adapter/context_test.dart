@@ -16,7 +16,7 @@ void main() {
       );
       token = originalRequest.token;
       newRequest = originalRequest.copyWith(
-        requestedUri: Uri.parse('http://test.com/newpath'),
+        url: Uri.parse('http://test.com/newpath'),
       );
     });
 
@@ -68,13 +68,10 @@ void main() {
 
       test('then it simplifies middleware request rewriting pattern', () {
         final rewrittenRequest = originalRequest.copyWith(
-          requestedUri: Uri.parse('http://test.com/rewritten'),
+          url: Uri.parse('http://test.com/rewritten'),
         );
         expect(rewrittenRequest, isA<Request>());
-        expect(
-          rewrittenRequest.requestedUri,
-          Uri.parse('http://test.com/rewritten'),
-        );
+        expect(rewrittenRequest.url, Uri.parse('http://test.com/rewritten'));
         expect(rewrittenRequest.token, same(token));
       });
 
@@ -82,17 +79,17 @@ void main() {
         'then it maintains the same token across multiple transformations',
         () {
           final request1 = originalRequest.copyWith(
-            requestedUri: Uri.parse('http://test.com/step1'),
+            url: Uri.parse('http://test.com/step1'),
           );
 
           final request2 = request1.copyWith(
-            requestedUri: Uri.parse('http://test.com/step2'),
+            url: Uri.parse('http://test.com/step2'),
           );
 
           expect(originalRequest.token, same(token));
           expect(request1.token, same(token));
           expect(request2.token, same(token));
-          expect(request2.requestedUri, Uri.parse('http://test.com/step2'));
+          expect(request2.url, Uri.parse('http://test.com/step2'));
         },
       );
     },
