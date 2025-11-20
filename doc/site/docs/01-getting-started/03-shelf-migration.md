@@ -15,23 +15,23 @@ Relic was developed to meet the needs of [Serverpod](https://serverpod.dev) for 
 
 Use this quick plan to get your app running on Relic. The detailed sections below show code for each step.
 
-1) ✅ Update dependencies: Remove `shelf`, `shelf_router`, `shelf_web_socket`. Add `relic` to the dependencies.
+1. Update dependencies: Remove `shelf`, `shelf_router`, `shelf_web_socket`. Add `relic` to the dependencies.
 
-2) ✅ Bootstrap the server: Replace `shelf_io.serve()` with `RelicApp().serve()` if using the io adapter, or integrate RelicApp into your hosting environment as needed.
+2. Bootstrap the server: Replace `shelf_io.serve()` with `RelicApp().serve()` if using the io adapter, or integrate RelicApp into your hosting environment as needed.
 
-3) ✅ Keep handlers as `Response handler(Request request)`. Handlers in Relic receive a `Request` and return a `Result` (usually a `Response`).
+3. Keep handlers as `Response handler(Request request)`. Handlers in Relic receive a `Request` and return a `Result` (usually a `Response`).
 
-4) ✅ Switch to Relic routing: Replace Router from shelf_router with `RelicApp().get/post/put/delete`. Replace `<id>` path params with `:id` and read them via `request.pathParameters[#id]`.
+4. Switch to Relic routing: Replace Router from shelf_router with `RelicApp().get/post/put/delete`. Replace `<id>` path params with `:id` and read them via `request.pathParameters[#id]`.
 
-5) ✅ Create responses with Body: Replace `Response.ok('text')` with `Response.ok(body:...)`. Let Relic manage content-length and content-type through Body.
+5. Create responses with Body: Replace `Response.ok('text')` with `Response.ok(body:...)`. Let Relic manage content-length and content-type through Body.
 
-6) ✅ Replace header access: Replace string lookups like `request.headers['cookie']` with typed accessors such as `request.headers.cookie`.
+6. Replace header access: Replace string lookups like `request.headers['cookie']` with typed accessors such as `request.headers.cookie`.
 
-7) ✅ Replace middleware and scoping: Replace `Pipeline().addMiddleware(...)` with `router.use(...)` and attach handlers under that path.
+7. Replace middleware and scoping: Replace `Pipeline().addMiddleware(...)` with `router.use(...)` and attach handlers under that path.
 
-8) ✅ Replace request.context usage: Replace `request.change(...)` and manual casts with `ContextProperty<T>().set/get` on the context.
+8. Replace request.context usage: Replace `request.change(...)` and manual casts with `ContextProperty<T>().set/get` on the context.
 
-9) ✅ Update WebSockets: Replace `webSocketHandler` and use `RelicWebSocket` for events and sending.
+9. Update WebSockets: Replace `webSocketHandler` and use `RelicWebSocket` for events and sending.
 
 ## Detailed migration steps
 
