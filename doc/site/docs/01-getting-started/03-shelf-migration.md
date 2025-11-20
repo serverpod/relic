@@ -9,7 +9,7 @@ This guide helps you migrate from [Shelf](https://github.com/dart-lang/shelf) to
 
 ### Why migrate?
 
-Relic was born out of the needs of [Serverpod](https://serverpod.dev) for a more modern web server foundation with stronger type safety. Shelf has been an excellent foundation for Dart web servers, but certain architectural decisions made years ago limit its ability to take advantage of modern Dart features.
+Relic was developed to meet the needs of [Serverpod](https://serverpod.dev) for a more modern web server foundation with stronger type safety. Shelf has been an excellent foundation for Dart web servers, but certain architectural decisions made years ago limit its ability to take advantage of modern Dart features.
 
 ## Migration overview
 

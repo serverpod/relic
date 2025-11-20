@@ -5,6 +5,10 @@ sidebar_label: Pipeline (Legacy)
 
 # Pipeline (legacy)
 
+:::warning Legacy Feature
+Pipeline is a legacy pattern for composing middleware. For modern Relic applications, use the `router.use()` approach described in the [Middleware](./middleware) documentation.
+:::
+
 Pipeline is a legacy pattern for composing middleware, see [Middleware](./middleware) for the modern approach.
 
 ## Overview

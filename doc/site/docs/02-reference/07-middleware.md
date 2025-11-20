@@ -26,7 +26,7 @@ Every middleware function receives an inner handler and returns a new handler th
 - **Transform responses** after the inner handler completes
 - **Handle errors** that occur in the inner handler
 
-Here's a simple example of a middleware function, it outlines the signature and the basic pattern of how middleware work:
+Here's a simple example of a middleware function; it outlines the signature and the basic pattern of how middleware work:
 
 ```dart
 Middleware myMiddleware() {
@@ -136,7 +136,7 @@ final app = RelicApp()
   ..get('/api/foo', fooHandler);
 ```
 
-Since `middlewareC` was added with `use('/api', middlewareC)` it won't impact requests towards other paths, but will be used specifically for `/api/foo`. Whereas `middlewareA` and `middlewareB` are both applicable for all paths below `/`.
+Since `middlewareC` was added with `use('/api', middlewareC)` it won't impact requests towards other paths, but will be used specifically for `/api/foo`. In contrast, `middlewareA` and `middlewareB` are both applicable for all paths below `/`.
 
 Let's look at an example of how middleware will work in same path scope:
 
