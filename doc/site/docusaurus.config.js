@@ -90,7 +90,7 @@ const config = {
             position: 'right',
           },
           {
-            href: 'https://github.com/serverpod/serverpod',
+            href: 'https://github.com/serverpod/relic',
             label: 'GitHub',
             position: 'right',
           },
