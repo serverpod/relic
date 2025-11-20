@@ -1,6 +1,6 @@
 ---
-sidebar_position: 8
-sidebar_label: Pipeline (Legacy)
+sidebar_position: 99
+sidebar_label: Pipeline (legacy)
 ---
 
 # Pipeline (legacy)
