@@ -4,6 +4,7 @@ import 'dart:developer';
 import 'package:relic/io_adapter.dart';
 import 'package:relic/relic.dart';
 
+/// Template middleware showing the basic structure.
 // doctag<simple-middleware>
 Middleware myMiddleware() {
   return (final Handler innerHandler) {
@@ -78,12 +79,14 @@ Future<Response> homeHandler(final Request req) async {
   return Response.ok(body: Body.fromString('Hello from home page!'));
 }
 
+/// Returns a simple JSON API response.
 Future<Response> apiHandler(final Request req) async {
   final data = {'message': 'Hello from API!'};
 
   return Response.ok(body: Body.fromString(jsonEncode(data)));
 }
 
+/// Demonstrates various middleware patterns and usage.
 void main() async {
   final app =
       RelicApp()

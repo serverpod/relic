@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 import 'package:relic/io_adapter.dart';
 import 'package:relic/relic.dart';
 
+/// Demonstrates authentication middleware with context properties.
 Future<void> main() async {
   // Start the server in a separate isolate for testing.
   final server = await Isolate.spawn((_) async {
@@ -40,10 +41,12 @@ Future<void> main() async {
 typedef User = int;
 final _auth = ContextProperty<User>('auth');
 
+/// Extension to provide easy access to the authenticated user.
 extension on Request {
   User get user => _auth[this];
 }
 
+/// Simple authentication middleware for demonstration purposes.
 class AuthMiddleware {
   // Simplified validation for demo.
   bool _validate(final String token) => true;

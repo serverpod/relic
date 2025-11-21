@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:relic/io_adapter.dart';
 import 'package:relic/relic.dart';
 
+/// Demonstrates using RelicServer with a router converted to a handler.
 Future<void> main() async {
   // Create a router that handles all requests with the same response.
   final router =

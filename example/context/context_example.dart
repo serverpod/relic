@@ -34,6 +34,7 @@ String _htmlHomePage() {
 ''';
 }
 
+/// Serves the main HTML page with links to all examples.
 Future<Response> homeHandler(final Request req) async {
   return Response.ok(
     body: Body.fromString(
@@ -59,6 +60,7 @@ Future<Response> apiHandler(final Request req) async {
 }
 // end:doctag<context-api-json>
 
+/// Returns user information based on the provided ID parameter.
 Future<Response> userHandler(final Request req) async {
   final userId = req.pathParameters[#id];
   final data = {
@@ -98,6 +100,7 @@ WebSocketUpgrade webSocketHandler(final Request req) {
 }
 // end:doctag<context-websocket-echo>
 
+/// Demonstrates connection hijacking for custom protocols.
 Hijack customProtocolHandler(final Request req) {
   return Hijack((final channel) {
     log('Connection hijacked for custom protocol');
@@ -153,6 +156,7 @@ Future<Response> dataHandler(final Request req) async {
 }
 // end:doctag<context-request-inspect>
 
+/// Demonstrates the four main context types in Relic with examples.
 void main() async {
   // Configure the application with all route handlers.
   final app =

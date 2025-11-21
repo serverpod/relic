@@ -77,6 +77,7 @@ Response contextInfoHandler(final Request req) {
 }
 // end:doctag<handler-context>
 
+/// Demonstrates different types of request handlers in Relic.
 Future<void> main() async {
   final app =
       RelicApp()

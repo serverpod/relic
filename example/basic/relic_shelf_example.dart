@@ -2,6 +2,8 @@
 // migration guide.
 
 import 'dart:developer';
+
+/// Examples showing Relic usage patterns and WebSocket handling.
 // doctag<complete-relic>
 import 'package:relic/io_adapter.dart';
 import 'package:relic/relic.dart';
@@ -20,6 +22,7 @@ void main() async {
 }
 // end:doctag<complete-relic>
 
+/// Handles WebSocket connections with event logging.
 // doctag<websocket-relic>
 WebSocketUpgrade websocketHandler(final Request req) {
   return WebSocketUpgrade((final ws) async {

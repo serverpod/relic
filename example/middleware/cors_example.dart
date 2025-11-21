@@ -46,6 +46,7 @@ Future<Response> apiHandler(final Request req) async {
   return Response.ok(body: Body.fromString(jsonEncode(data)));
 }
 
+/// Demonstrates CORS middleware for cross-origin requests.
 void main() async {
   final app =
       RelicApp()

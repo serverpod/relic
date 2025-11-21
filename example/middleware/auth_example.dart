@@ -31,6 +31,7 @@ Future<Response> protectedHandler(final Request req) async {
   return Response.ok(body: Body.fromString('This is protected!'));
 }
 
+/// Demonstrates API key authentication with protected routes.
 void main() async {
   final router =
       RelicApp()

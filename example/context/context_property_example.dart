@@ -3,9 +3,8 @@ import 'dart:developer';
 import 'package:relic/io_adapter.dart';
 import 'package:relic/relic.dart';
 
-// Define a ContextProperty for storing request-scoped data.
+/// Extension to provide easy access to the request ID.
 // doctag<context-prop-request-id>
-
 extension on Request {
   String get requestId => _requestIdProperty[this];
 }
@@ -36,6 +35,7 @@ Future<Response> handler(final Request req) async {
 }
 // end:doctag<context-prop-use-request-id>
 
+/// Demonstrates using ContextProperty for request-scoped data storage.
 void main() async {
   // Configure the application with middleware and routes.
   final app =

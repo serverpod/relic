@@ -27,6 +27,7 @@ Future<Response> simpleHandler(final Request req) async {
   return Response.ok(body: Body.fromString('Hello from Pipeline!'));
 }
 
+/// Compares Pipeline and RelicApp approaches for request handling.
 void main() async {
   // doctag<pipeline-usage>
   // Create a handler using the legacy Pipeline API.
