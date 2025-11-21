@@ -65,9 +65,9 @@ GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/
 
 `StaticHandler` includes built-in security features:
 
-- **Path traversal protection**: Prevents access to files outside the specified directory
-- **Hidden file protection**: Blocks access to files starting with `.` (like `.env`, `.git`)
-- **Symbolic link handling**: Safely resolves symbolic links within the allowed directory
+- **Path traversal protection**: Prevents access to files outside the specified directory.
+- **Hidden file protection**: Blocks access to files starting with `.` (like `.env`, `.git`).
+- **Symbolic link handling**: Safely resolves symbolic links within the allowed directory.
 
 These protections are automatically applied and ensure that your static file handler only serves files from the intended directory.
 
@@ -79,4 +79,4 @@ For single file serving with `StaticHandler.file()`, you don't need the tail pat
 
 ## Examples
 
-- **[Static files example](https://github.com/serverpod/relic/blob/main/example/advanced/static_files_example.dart)** - Complete example with cache busting
+- **[Static files example](https://github.com/serverpod/relic/blob/main/example/advanced/static_files_example.dart)** - Complete example with cache busting.

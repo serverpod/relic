@@ -27,8 +27,8 @@ The `Request` object exposes several important properties:
 - **`url`** - The relative URL from the current handler's perspective, including query parameters.
 - **`requestedUri`** - The complete original URI that was requested.
 - **`headers`** - Type-safe access to HTTP headers.
-- **`body`** - The request body wrapped in a `Body` helper. Use `await request.readAsString()` for text, or `request.read()` for the byte stream. Both are single-read.
-- **`protocolVersion`** - The HTTP protocol version (typically "1.1").
+- **`body`** - The request body wrapped in a `Body` helper. Use `await request.readAsString()` for text, or `request.read()` to access the byte stream. Both are single-read.
+- **`protocolVersion`** - The HTTP protocol version (typically `1.1`).
 
 ## Accessing request data
 
@@ -144,7 +144,7 @@ GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/
 
 This check doesn't consume the body stream, so you can still read the body afterward.
 
-## Summary
+## Final tips
 
 The `Request` object is your gateway to understanding what clients are asking for. By leveraging Relic's type-safe API, you can build secure, reliable handlers that properly validate and process client input.
 
@@ -154,4 +154,4 @@ Always validate all incoming data since query parameters, headers, and body cont
 
 ## Example
 
-- **[Requests example](https://github.com/serverpod/relic/blob/main/example/routing/request_response_example.dart)** - Comprehensive example covering complete request-response cycles
+- **[Requests example](https://github.com/serverpod/relic/blob/main/example/routing/request_response_example.dart)** - Comprehensive example covering complete request-response cycles.

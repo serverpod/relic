@@ -4,26 +4,27 @@ sidebar_position: 3
 
 # Basic routing
 
-_Routing_ determines how your application responds to a client request to a particular endpoint (URI/path) and HTTP method.
+_Routing_ maps each incoming request to a handler based on its path (URI) and HTTP method.
 
 Each route maps a request to a single handler.
 
 Route definitions are added via `RelicRouter.add(...)` (or convenience methods on `RelicRouter`/`RelicApp`):
 
 ```dart
-router.add(Method.get, PATH, HANDLER);
-// or with syntactic sugar:
-router.get(PATH, HANDLER);
+router.add(Method.get, '/my/path', myHandler);
+
+// Or, with a convenience method:
+router.get('/my/path', myHandler);
 ```
 
 Where:
 
 - `router` is an instance of `RelicRouter` or `RelicApp` (which implements `RelicRouter`).
 - `Method` is the `Method` enum (e.g. `Method.get`, `Method.post`).
-- `PATH` is a path on the server.
-- `HANDLER` is a `Handler` that executes when the route is matched.
+- `/my/path` is a path on the server.
+- `myHandler` is a `Handler` that executes when the route is matched.
 
-## The `add` method and syntactic sugar
+## The `add` method and its shortcuts
 
 At the core of routing is the `add` method:
 
@@ -31,7 +32,7 @@ At the core of routing is the `add` method:
 router.add(Method.get, '/', handler);
 ```
 
-The convenience methods like `.get()`, `.post()`, `.anyOf()`, and `.any()` are syntactic sugar that call `add` under the hood:
+The convenience methods `.get()`, `.post()`, `.anyOf()`, and `.any()` call `add()` for you:
 
 - `.get(path, handler)` → `.add(Method.get, path, handler)`
 - `.post(path, handler)` → `.add(Method.post, path, handler)`
@@ -42,9 +43,9 @@ The convenience methods like `.get()`, `.post()`, `.anyOf()`, and `.any()` are s
 
 The following examples break down each route from the complete example above.
 
-### Convenience methods (syntactic sugar)
+### Convenience methods
 
-These methods are syntactic sugar for the core `.add()` method:
+These are convenience methods for the core `.add()` method:
 
 **Respond with `Hello World!` on the homepage:**
 

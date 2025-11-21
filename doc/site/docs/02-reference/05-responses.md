@@ -22,7 +22,7 @@ Relic's `Response` class provides static convenience methods for common HTTP sta
 
 ## Creating responses
 
-#### Success responses
+### Success responses
 
 Success responses (2xx status codes) indicate that the request was received, understood, and processed successfully.
 
@@ -106,14 +106,14 @@ GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/
 For a comprehensive list of HTTP headers, check out [Mozilla's HTTP Headers documentation](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers).
 :::
 
-## Example
-
-- **[Responses example](https://github.com/serverpod/relic/blob/main/example/routing/request_response_example.dart)** - Comprehensive example covering complete request-response cycles
-
-## Summary
+## Final tips
 
 Effective HTTP responses are the foundation of reliable web applications. Beyond just sending data back to clients, responses communicate the outcome of operations, guide client behavior, and provide crucial feedback for debugging and user experience.
 
 Choose status codes that accurately reflect what happened - success codes for completed operations, client error codes for invalid requests, and server error codes for unexpected failures.
 
 The key principle is that every handler must return a response. Make those responses meaningful, consistent, and helpful as they represent your API's contract with the world.
+
+## Example
+
+- **[Responses example](https://github.com/serverpod/relic/blob/main/example/routing/request_response_example.dart)** - Comprehensive example covering complete request-response cycles.

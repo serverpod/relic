@@ -8,10 +8,10 @@ Context properties provide **type-safe, request-scoped data storage** in Relic a
 
 **Common use cases:**
 
-- Store request IDs for logging and tracing
-- Cache computed values within a request (like parsed authentication tokens)
-- Pass data between middleware and handlers
-- Track request-specific state (like authenticated user, request timing)
+- Store request IDs for logging and tracing.
+- Cache computed values within a request (like parsed authentication tokens).
+- Pass data between middleware and handlers.
+- Track request-specific state (like the authenticated user or request timing).
 
 ## Creating context properties
 
@@ -34,7 +34,7 @@ Context properties provide the following methods:
 
 | Method | Description | Returns |
 | ------ | ----------- | ------- |
-| `property[req] = value` | Set value for request | `void` |
+| `property[req] = value` | Set value for request | `T` (non-null) |
 | `property[req]` | Read value or throw if missing | `T` (non-null) |
 | `property.getOrNull(req)` | Read value from request | `T?` (nullable) |
 | `property.exists(req)` | Check if value is set | `bool` |
@@ -58,4 +58,4 @@ Context properties exist **only for the duration of the request**. Once the resp
 
 ## Example
 
-- **[Context Property Example](https://github.com/serverpod/relic/blob/main/example/context/context_property_example.dart)** - Shows how to use context properties for request IDs and user authentication
+- **[Context Property Example](https://github.com/serverpod/relic/blob/main/example/context/context_property_example.dart)** - Shows how to use context properties for request IDs and user authentication.
