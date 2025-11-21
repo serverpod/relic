@@ -2,7 +2,7 @@ import 'dart:developer';
 import 'package:relic/io_adapter.dart';
 import 'package:relic/relic.dart';
 
-/// Simple middleware that adds a header
+/// Middleware that adds a 'Server' header to responses.
 // doctag<middleware-add-server-header>
 Middleware addServerHeader() {
   return (final Handler next) {
@@ -11,9 +11,7 @@ Middleware addServerHeader() {
 
       if (result is Response) {
         final newResponse = result.copyWith(
-          headers: result.headers.transform(
-            (final mh) => mh['Server'] = ['Relic'],
-          ),
+          headers: result.headers.transform((final mh) => mh.server = 'Relic'),
         );
         return newResponse;
       }
@@ -24,14 +22,15 @@ Middleware addServerHeader() {
 }
 // end:doctag<middleware-add-server-header>
 
-/// Simple handler
+/// Basic handler that returns a greeting message.
 Future<Response> simpleHandler(final Request req) async {
   return Response.ok(body: Body.fromString('Hello from Pipeline!'));
 }
 
+/// Compares Pipeline and RelicApp approaches for request handling.
 void main() async {
   // doctag<pipeline-usage>
-  // Using Pipeline (legacy composition)
+  // Create a handler using the legacy Pipeline API.
   final pipelineHandler = const Pipeline()
       .addMiddleware(logRequests())
       .addMiddleware(addServerHeader())
@@ -39,7 +38,7 @@ void main() async {
   // end:doctag<pipeline-usage>
 
   // doctag<router-usage>
-  // Using Router (preferred)
+  // Create a handler using the modern RelicApp API.
   final router =
       RelicApp()
         ..use('/', logRequests())
@@ -49,7 +48,7 @@ void main() async {
         });
   // end:doctag<router-usage>
 
-  // Main router that shows both approaches
+  // Combine both approaches in a single application for comparison.
   final app =
       RelicApp()
         ..get('/pipeline', pipelineHandler)

@@ -10,10 +10,10 @@ Make sure that you have Node.js installed on your computer.
 brew install node
 ```
 
-Run `npm install` from the docs directory:
+Run `npm install` from the `docs/site` directory:
 
 ```bash
-cd docs
+cd docs/site
 npm install
 ```
 

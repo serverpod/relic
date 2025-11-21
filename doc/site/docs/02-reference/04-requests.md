@@ -26,8 +26,8 @@ The `Request` object exposes several important properties:
 - **`method`** - The HTTP method (GET, POST, PUT, DELETE, etc.) as a `Method` enum value.
 - **`url`** - The complete original URI that was requested.
 - **`headers`** - Type-safe access to HTTP headers.
-- **`body`** - The request body wrapped in a `Body` helper. Use `await request.readAsString()` for text, or `request.read()` for the byte stream. Both are single-read.
-- **`protocolVersion`** - The HTTP protocol version (typically "1.1").
+- **`body`** - The request body wrapped in a `Body` helper. Use `await request.readAsString()` for text, or `request.read()` to access the byte stream. Both are single-read.
+- **`protocolVersion`** - The HTTP protocol version (typically `1.1`).
 
 ## Accessing request data
 
@@ -141,7 +141,7 @@ GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/
 
 This check doesn't consume the body stream, so you can still read the body afterward.
 
-## Summary
+## Final tips
 
 The `Request` object is your gateway to understanding what clients are asking for. By leveraging Relic's type-safe API, you can build secure, reliable handlers that properly validate and process client input.
 
@@ -149,6 +149,22 @@ Key principles for working with requests include accessing data through the `Req
 
 Always validate all incoming data since query parameters, headers, and body content come from untrusted sources. Use try-catch blocks for JSON parsing and validation to provide meaningful error responses. By following these patterns, you'll create handlers that are both secure and user-friendly.
 
-## Example
+## Examples & further reading
 
-- **[Requests example](https://github.com/serverpod/relic/blob/main/example/routing/request_response_example.dart)** - Comprehensive example covering complete request-response cycles
+### Examples
+
+- **[Requests example](https://github.com/serverpod/relic/blob/main/example/routing/request_response_example.dart)** - Comprehensive example covering complete request-response cycles.
+
+### API documentation
+
+- [Request class](https://pub.dev/documentation/relic/latest/relic/Request-class.html) - HTTP request object.
+- [Method enum](https://pub.dev/documentation/relic/latest/relic/Method.html) - HTTP methods enumeration.
+- [Headers class](https://pub.dev/documentation/relic/latest/relic/Headers-class.html) - Type-safe HTTP headers.
+- [Body class](https://pub.dev/documentation/relic/latest/relic/Body-class.html) - Request/response body handling.
+- [AuthorizationHeader class](https://pub.dev/documentation/relic/latest/relic/AuthorizationHeader-class.html) - Authorization header parsing.
+
+### Further reading
+
+- [HTTP request methods](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods) - Mozilla documentation on HTTP methods.
+- [HTTP headers](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers) - Mozilla documentation on HTTP headers.
+- [What is a URL?](https://developer.mozilla.org/en-US/docs/Learn/Common_questions/What_is_a_URL) - Mozilla documentation on URL structure and query parameters.

@@ -6,15 +6,14 @@ import 'package:http/http.dart' as http;
 import 'package:relic/io_adapter.dart';
 import 'package:relic/relic.dart';
 
+/// Demonstrates authentication middleware with context properties.
 Future<void> main() async {
-  // start server
+  // Start the server in a separate isolate for testing.
   final server = await Isolate.spawn((_) async {
     final app =
         RelicApp()
-          ..use(
-            '/api',
-            AuthMiddleware().asMiddleware,
-          ) // <-- add auth middleware on /api
+          // Protect /api routes with authentication middleware.
+          ..use('/api', AuthMiddleware().asMiddleware)
           ..get(
             '/api/user/info',
             (final req) => Response.ok(body: Body.fromString('${req.user}')),
@@ -23,28 +22,34 @@ Future<void> main() async {
     await app.serve();
   }, null);
 
-  // call with client
+  // Make a test request to the protected endpoint.
   final response = await http.get(
     Uri.parse('http://localhost:8080/api/user/info'),
     headers: {
-      'Authorization': 'Bearer 42', // just an example
+      // Example bearer token.
+      'Authorization': 'Bearer 42',
     },
   );
 
   log(response.body);
 
-  server.kill(); // stop server again (a bit blunt)
+  // Forcefully terminate the server isolate.
+  server.kill();
 }
 
-typedef User = int; // just an example
+// Simplified user representation for demo.
+typedef User = int;
 final _auth = ContextProperty<User>('auth');
 
+/// Extension to provide easy access to the authenticated user.
 extension on Request {
   User get user => _auth[this];
 }
 
+/// Simple authentication middleware for demonstration purposes.
 class AuthMiddleware {
-  bool _validate(final String token) => true; // just an example
+  // Simplified validation for demo.
+  bool _validate(final String token) => true;
   User _extractUser(final String token) => int.parse(token);
 
   Handler call(final Handler next) {

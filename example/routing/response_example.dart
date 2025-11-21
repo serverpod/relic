@@ -2,18 +2,18 @@ import 'dart:developer';
 import 'package:relic/io_adapter.dart';
 import 'package:relic/relic.dart';
 
-// Examples from requests.md and responses.md
+// Simple examples demonstrating response creation patterns.
 Future<void> main() async {
   final app = RelicApp();
 
-  // Success response example
+  // Create a successful response with 200 status.
   // doctag<responses-status-ok>
   app.get('/status', (final req) {
     return Response.ok(body: Body.fromString('Status is Ok'));
   });
   // end:doctag<responses-status-ok>
 
-  // Bad request example
+  // Return a 400 Bad Request response for invalid input.
   // doctag<responses-bad-request>
   app.post('/api/users', (final req) async {
     try {

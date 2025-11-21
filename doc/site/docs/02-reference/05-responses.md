@@ -22,7 +22,7 @@ Relic's `Response` class provides static convenience methods for common HTTP sta
 
 ## Creating responses
 
-#### Success responses
+### Success responses
 
 Success responses (2xx status codes) indicate that the request was received, understood, and processed successfully.
 
@@ -47,7 +47,7 @@ For status codes without a dedicated constructor, use the general `Response` con
 GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/routing/request_response_example.dart) doctag="custom-status" title="Custom status code"
 
 :::tip
-For a comprehensive list of HTTP status codes, check out [Mozilla's HTTP Status Codes documentation](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Status).
+For a comprehensive list of HTTP status codes, check out [Mozilla's HTTP Status Codes documentation](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status).
 
 To ensure consistency and avoid memorizing numeric codes, use Relic's convenient response constructors like `Response.ok()`, `Response.badRequest()`, and `Response.notFound()` etc.
 :::
@@ -106,14 +106,29 @@ GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/
 For a comprehensive list of HTTP headers, check out [Mozilla's HTTP Headers documentation](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers).
 :::
 
-## Example
-
-- **[Responses example](https://github.com/serverpod/relic/blob/main/example/routing/request_response_example.dart)** - Comprehensive example covering complete request-response cycles
-
-## Summary
+## Final tips
 
 Effective HTTP responses are the foundation of reliable web applications. Beyond just sending data back to clients, responses communicate the outcome of operations, guide client behavior, and provide crucial feedback for debugging and user experience.
 
 Choose status codes that accurately reflect what happened - success codes for completed operations, client error codes for invalid requests, and server error codes for unexpected failures.
 
 The key principle is that every handler must return a response. Make those responses meaningful, consistent, and helpful as they represent your API's contract with the world.
+
+## Examples & further reading
+
+### Examples
+
+- **[Responses example](https://github.com/serverpod/relic/blob/main/example/routing/request_response_example.dart)** - Comprehensive example covering complete request-response cycles.
+
+### API documentation
+
+- [Response class](https://pub.dev/documentation/relic/latest/relic/Response-class.html) - HTTP response object.
+- [Body class](https://pub.dev/documentation/relic/latest/relic/Body-class.html) - Request/response body handling.
+- [Headers class](https://pub.dev/documentation/relic/latest/relic/Headers-class.html) - Type-safe HTTP headers.
+- [MimeType class](https://pub.dev/documentation/relic/latest/relic/MimeType-class.html) - MIME type handling.
+
+### Further reading
+
+- [HTTP response status codes](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status) - Mozilla documentation on HTTP status codes.
+- [HTTP headers](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers) - Mozilla documentation on HTTP headers.
+- [MIME types](https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types) - Mozilla documentation on MIME types.

@@ -1,5 +1,5 @@
 ---
-sidebar_position: 9
+sidebar_position: 8
 ---
 
 # Static files
@@ -65,9 +65,9 @@ GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/
 
 `StaticHandler` includes built-in security features:
 
-- **Path traversal protection**: Prevents access to files outside the specified directory
-- **Hidden file protection**: Blocks access to files starting with `.` (like `.env`, `.git`)
-- **Symbolic link handling**: Safely resolves symbolic links within the allowed directory
+- **Path traversal protection**: Prevents access to files outside the specified directory.
+- **Hidden file protection**: Blocks access to files starting with `.` (like `.env`, `.git`).
+- **Symbolic link handling**: Safely resolves symbolic links within the allowed directory.
 
 These protections are automatically applied and ensure that your static file handler only serves files from the intended directory.
 
@@ -77,6 +77,20 @@ When serving static files from a directory, always use a tail matching path patt
 For single file serving with `StaticHandler.file()`, you don't need the tail pattern, but it can be useful for SPAs or other routing scenarios.
 :::
 
-## Examples
+## Examples & further reading
 
-- **[Static files example](https://github.com/serverpod/relic/blob/main/example/advanced/static_files_example.dart)** - Complete example with cache busting
+### Examples
+
+- **[Static files example](https://github.com/serverpod/relic/blob/main/example/advanced/static_files_example.dart)** - Complete example with cache busting.
+
+### API documentation
+
+- [StaticHandler class](https://pub.dev/documentation/relic/latest/relic/StaticHandler-class.html) - Static file serving handler.
+- [CacheBustingConfig class](https://pub.dev/documentation/relic/latest/relic/CacheBustingConfig-class.html) - Cache busting configuration.
+- [CacheControlHeader class](https://pub.dev/documentation/relic/latest/relic/CacheControlHeader-class.html) - Cache control header handling.
+
+### Further reading
+
+- [HTTP caching](https://developer.mozilla.org/en-US/docs/Web/HTTP/Caching) - Mozilla documentation on HTTP caching.
+- [Cache-Control header](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control) - Mozilla documentation on Cache-Control.
+- [ETag header](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/ETag) - Mozilla documentation on ETags.

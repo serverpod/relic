@@ -3,11 +3,11 @@ import 'dart:developer';
 import 'package:relic/io_adapter.dart';
 import 'package:relic/relic.dart';
 
-// Examples from requests.md and responses.md
+// Comprehensive examples demonstrating request handling patterns.
 Future<void> main() async {
   final app = RelicApp();
 
-  // HTTP Method access
+  // Demonstrate accessing HTTP method information.
   // doctag<requests-method-and-url>
   app.get('/info', (final req) {
     final method = req.method; // Method.get
@@ -18,7 +18,7 @@ Future<void> main() async {
   });
   // end:doctag<requests-method-and-url>
 
-  // Path parameters example
+  // Extract and use path parameters from URLs.
   // doctag<requests-path-params-id>
   app.get('/users/:id', (final req) {
     final id = req.pathParameters[#id]!;
@@ -32,7 +32,7 @@ Future<void> main() async {
   });
   // end:doctag<requests-path-params-id>
 
-  // Query parameters - single values
+  // Handle single-value query parameters with validation.
   // doctag<requests-query-single>
   app.get('/search', (final req) {
     final query = req.url.queryParameters['query'];
@@ -50,7 +50,7 @@ Future<void> main() async {
   });
   // end:doctag<requests-query-single>
 
-  // Query parameters - multiple values
+  // Process multiple values for the same query parameter.
   // doctag<requests-query-multi>
   app.get('/filter', (final req) {
     final tags = req.url.queryParametersAll['tag'] ?? [];
@@ -61,10 +61,10 @@ Future<void> main() async {
   });
   // end:doctag<requests-query-multi>
 
-  // Type-safe headers
+  // Access headers using type-safe methods.
   // doctag<requests-headers-type-safe>
   app.get('/headers-info', (final req) {
-    // Get typed values
+    // Get typed header values.
     final mimeType = req.mimeType; // MimeType? (from Content-Type)
     final userAgent = req.headers.userAgent; // String?
     final contentLength = req.headers.contentLength; // int?
@@ -79,7 +79,7 @@ Future<void> main() async {
   });
   // end:doctag<requests-headers-type-safe>
 
-  // Authorization headers
+  // Handle different types of authorization headers.
   // doctag<requests-authorization-header>
   app.get('/protected', (final req) {
     final auth = req.headers.authorization;
@@ -103,7 +103,7 @@ Future<void> main() async {
   });
   // end:doctag<requests-authorization-header>
 
-  // Reading request body as string
+  // Read and process request body content as String values.
   // doctag<requests-body-as-string>
   app.post('/submit', (final req) async {
     final bodyText = await req.readAsString();
@@ -111,7 +111,7 @@ Future<void> main() async {
   });
   // end:doctag<requests-body-as-string>
 
-  // JSON parsing example
+  // Parse and validate JSON request bodies.
   // doctag<requests-json-parse>
   app.post('/api/users', (final req) async {
     try {
@@ -136,7 +136,7 @@ Future<void> main() async {
   });
   // end:doctag<requests-json-parse>
 
-  // Reading as a byte stream
+  // Process request body as a streaming byte sequence.
   // doctag<requests-body-byte-stream>
   app.post('/upload', (final req) async {
     final stream = req.read(); // Stream<Uint8List>
@@ -151,7 +151,7 @@ Future<void> main() async {
   });
   // end:doctag<requests-body-byte-stream>
 
-  // Check if body is empty
+  // Validate that request body is not empty.
   // doctag<requests-body-empty-check>
   app.post('/data', (final req) {
     if (req.isEmpty) {
@@ -165,7 +165,7 @@ Future<void> main() async {
   });
   // end:doctag<requests-body-empty-check>
 
-  // Validate query parameters
+  // Implement query parameter validation and parsing.
   // doctag<requests-query-validate-page>
   app.get('/page', (final req) {
     final pageStr = req.url.queryParameters['page'];
@@ -186,7 +186,7 @@ Future<void> main() async {
   });
   // end:doctag<requests-query-validate-page>
 
-  // Handle missing headers gracefully
+  // Gracefully handle missing headers.
   // doctag<requests-headers-user-agent>
   app.get('/info', (final req) {
     final userAgent = req.headers.userAgent;

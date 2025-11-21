@@ -6,11 +6,11 @@ import 'package:relic/io_adapter.dart';
 import 'package:relic/relic.dart';
 
 void main() async {
-  // The number of isolates to use. Making it proportional to number of
-  // processors ensure we have enough isolates to utilize the hardware.
+  // Calculate the number of isolates based on available CPU cores.
+  // Using 2x the processor count ensures optimal hardware utilization.
   final isolateCount = Platform.numberOfProcessors * 2;
 
-  // Wait for all the isolates to spawn
+  // Spawn all isolates concurrently and wait for them to start.
   log('Starting $isolateCount isolates');
   final isolates = await Future.wait(
     List.generate(
@@ -20,35 +20,37 @@ void main() async {
     ),
   );
 
-  // Wait for Ctrl-C before proceeding
+  // Wait for SIGINT (Ctrl-C) signal before shutting down.
   await ProcessSignal.sigint.watch().first;
 
-  // Shutdown again.
+  // Gracefully terminate all spawned isolates.
   for (final i in isolates) {
     i.kill(priority: Isolate.immediate);
   }
 }
 
-/// [_serve] is called in each spawned isolate.
+/// Starts a Relic server in each spawned isolate for load balancing.
 Future<void> _serve() async {
-  // A router with no routes but a fallback
+  // Create a simple app with logging middleware and an echo endpoint.
   final app =
       RelicApp()
         ..use('/', logRequests())
         ..put('/echo', respondWith(_echoRequest));
 
-  // start the server
+  // Start the server with shared socket binding for load balancing.
   await app.serve(shared: true);
 
   log('serving on ${Isolate.current.debugName}');
 }
 
-/// [_echoRequest] just echoes the path of the request
+/// Echoes the request path and shows which isolate handled it.
 Response _echoRequest(final Request req) {
-  sleep(const Duration(seconds: 1)); // pretend to be really slow
+  // Simulate slow processing to demonstrate load balancing.
+  sleep(const Duration(seconds: 1));
   return Response.ok(
     body: Body.fromString(
-      'Request for "${req.url}" handled by isolate ${Isolate.current.debugName}',
+      'Request for "${req.url}" '
+      'handled by isolate ${Isolate.current.debugName}',
     ),
   );
 }

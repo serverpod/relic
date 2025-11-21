@@ -6,11 +6,11 @@ sidebar_position: 1
 
 Handlers are functions that process incoming requests in Relic applications. Think of them as the core logic that decides what to do when someone visits your web server.
 
-What makes Relic handlers special is their flexibility. Unlike traditional web frameworks where handlers only return HTTP responses, Relic handlers can:
+What makes Relic handlers special is their flexibility. Unlike traditional web frameworks, where handlers only return HTTP responses, Relic handlers can:
 
-- Send regular HTTP responses (like web pages or API data)
-- Upgrade connections to WebSockets for real-time communication
-- Take direct control of the network connection for custom protocols
+- Send regular HTTP responses (like web pages or API data).
+- Upgrade connections to WebSockets for real-time communication.
+- Take direct control of the network connection for custom protocols.
 
 Relic handlers take a `Request` and return a `Result`, which can be a `Response`, `Hijack` (for connection hijacking), or `WebSocketUpgrade` (for WebSocket connections).
 
@@ -25,7 +25,7 @@ typedef Handler = FutureOr<Result> Function(Request req);
 
 **Example:**
 
-GITHUB_CODE_BLOCK lang="dart" doctag="handler-foundational" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/basic/handler_example.dart) title="Foundational Handler example"
+GITHUB_CODE_BLOCK lang="dart" doctag="handler-foundational" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/basic/handler_example.dart) title="Foundational handler example"
 
 ## How to define handlers
 
@@ -59,6 +59,16 @@ For advanced use cases like Server-Sent Events (SSE) or custom protocols, you ca
 
 GITHUB_CODE_BLOCK lang="dart" doctag="handler-hijack-sse" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/basic/handler_example.dart) title="Connection hijacking example"
 
-## Example
+## Examples & further reading
+
+### Examples
 
 - **[Handler example](https://github.com/serverpod/relic/blob/main/example/basic/handler_example.dart)** - The complete working example from this guide.
+
+### API documentation
+
+- [Handler typedef](https://pub.dev/documentation/relic/latest/relic/Handler.html) - Core handler function signature.
+- [Result class](https://pub.dev/documentation/relic/latest/relic/Result.html) - Base class for handler return values.
+- [Response class](https://pub.dev/documentation/relic/latest/relic/Response.html) - HTTP response result.
+- [WebSocketUpgrade class](https://pub.dev/documentation/relic/latest/relic/WebSocketUpgrade.html) - WebSocket upgrade result.
+- [Hijack class](https://pub.dev/documentation/relic/latest/relic/Hijack.html) - Connection hijacking result.

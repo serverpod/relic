@@ -4,12 +4,12 @@ import 'dart:typed_data';
 import 'package:relic/io_adapter.dart';
 import 'package:relic/relic.dart';
 
-// Consolidated examples from requests.md and responses.md
-// This file demonstrates complete request-response cycles
+// Consolidated examples from requests.md and responses.md.
+// This file demonstrates complete request-response cycles.
 Future<void> main() async {
   final app = RelicApp();
 
-  // Basic request method and response
+  // Demonstrate accessing HTTP method information.
   // doctag<basic-request-response>
   app.get('/info', (final req) {
     final method = req.method; // Method.get
@@ -19,7 +19,7 @@ Future<void> main() async {
   });
   // end:doctag<basic-request-response>
 
-  // Path parameters with response
+  // Extract and use path parameters from URLs.
   // doctag<path-params-complete>
   app.get('/users/:id', (final req) {
     final id = req.pathParameters[#id]!;
@@ -29,7 +29,7 @@ Future<void> main() async {
     log('Matched path: $matchedPath, id: $id');
     log('Full URI: $fullUri');
 
-    // Return user data as JSON
+    // Create a mock user object for the response and return it as JSON.
     final user = {
       'id': int.tryParse(id),
       'name': 'User $id',
@@ -42,7 +42,7 @@ Future<void> main() async {
   });
   // end:doctag<path-params-complete>
 
-  // Query parameters with validation and response
+  // Handle single-value query parameters with validation.
   // doctag<query-params-complete>
   app.get('/search', (final req) {
     final query = req.url.queryParameters['query'];
@@ -67,7 +67,7 @@ Future<void> main() async {
   });
   // end:doctag<query-params-complete>
 
-  // Multiple query parameters
+  // Process multiple values for the same query parameter.
   // doctag<query-multi-complete>
   app.get('/filter', (final req) {
     final tags = req.url.queryParametersAll['tag'] ?? [];
@@ -83,12 +83,12 @@ Future<void> main() async {
   });
   // end:doctag<query-multi-complete>
 
-  // Headers inspection with response
+  // Access headers using type-safe methods.
   // doctag<headers-complete>
   app.get('/headers-info', (final req) {
     final request = req;
 
-    // Get typed values
+    // Get typed header values.
     final mimeType = request.mimeType; // MimeType? (from Content-Type)
     final userAgent = request.headers.userAgent; // String?
     final contentLength = request.headers.contentLength; // int?
@@ -105,14 +105,14 @@ Future<void> main() async {
   });
   // end:doctag<headers-complete>
 
-  // Authorization with proper response
+  // Handle different types of authorization headers.
   // doctag<auth-complete>
   app.get('/protected', (final req) {
     final auth = req.headers.authorization;
 
     if (auth is BearerAuthorizationHeader) {
       final token = auth.token;
-      // In real app, validate token here
+      // In a real application, validate the token here.
       return Response.ok(
         body: Body.fromString(
           jsonEncode({
@@ -124,7 +124,7 @@ Future<void> main() async {
       );
     } else if (auth is BasicAuthorizationHeader) {
       final username = auth.username;
-      // In real app, validate credentials here
+      // In a real application, validate the credentials here.
       return Response.ok(
         body: Body.fromString(
           jsonEncode({'message': 'Basic auth received', 'username': username}),
@@ -137,7 +137,7 @@ Future<void> main() async {
   });
   // end:doctag<auth-complete>
 
-  // Request body handling with response
+  // Read and process request body content.
   // doctag<body-handling-complete>
   app.post('/submit', (final req) async {
     final bodyText = await req.readAsString();
@@ -150,7 +150,7 @@ Future<void> main() async {
   });
   // end:doctag<body-handling-complete>
 
-  // JSON API with full request/response cycle
+  // Parse and validate JSON request bodies.
   // doctag<json-api-complete>
   app.post('/api/users', (final req) async {
     try {
@@ -169,7 +169,7 @@ Future<void> main() async {
         );
       }
 
-      // Simulate user creation
+      // Create a mock user object with generated data.
       final newUser = {
         'id': DateTime.now().millisecondsSinceEpoch,
         'name': name,
@@ -194,7 +194,7 @@ Future<void> main() async {
   });
   // end:doctag<json-api-complete>
 
-  // File upload with streaming
+  // Process request body as a streaming byte sequence.
   // doctag<upload-complete>
   app.post('/upload', (final req) async {
     if (req.isEmpty) {
@@ -226,7 +226,7 @@ Future<void> main() async {
   });
   // end:doctag<upload-complete>
 
-  // HTML page response
+  // Generate and return HTML content.
   // doctag<html-response>
   app.get('/page', (final req) {
     final pageNum = req.url.queryParameters['page'];
@@ -255,7 +255,7 @@ Future<void> main() async {
   });
   // end:doctag<html-response>
 
-  // Custom status codes
+  // Return responses with custom HTTP status codes.
   // doctag<custom-status>
   app.get('/teapot', (final req) {
     return Response(
@@ -265,15 +265,15 @@ Future<void> main() async {
   });
   // end:doctag<custom-status>
 
-  // Binary data response
+  // Serve binary data with appropriate content types.
   // doctag<binary-response>
   app.get('/image.png', (final req) {
-    final imageBytes = Uint8List.fromList([1, 2, 3, 4]); // Mock image data
+    final imageBytes = Uint8List.fromList([1, 2, 3, 4]); // Mock image data.
     return Response.ok(body: Body.fromData(imageBytes));
   });
   // end:doctag<binary-response>
 
-  // Streaming response
+  // Stream data using chunked transfer encoding.
   // doctag<streaming-response>
   app.get('/large-file', (final req) {
     final dataStream = Stream.fromIterable([
@@ -285,33 +285,33 @@ Future<void> main() async {
       body: Body.fromDataStream(
         dataStream,
         mimeType: MimeType.octetStream,
-        contentLength: 6, // Optional but recommended
+        contentLength: 6, // Optional but recommended.
       ),
     );
   });
   // end:doctag<streaming-response>
 
-  // Empty responses
+  // Return empty responses using different methods.
   // doctag<empty-responses>
   app.get('/empty1', (final req) {
-    // Explicitly empty
+    // Return an explicitly empty response body.
     return Response.ok(body: Body.empty());
   });
 
   app.get('/empty2', (final req) {
-    // Or use noContent() which implies an empty body
+    // Use noContent() for a 204 status with no body.
     return Response.noContent();
   });
   // end:doctag<empty-responses>
 
-  // Response headers
+  // Add custom headers to responses.
   // doctag<response-headers>
   app.get('/api/data', (final req) {
     final headers = Headers.build((final h) {
-      // Set cache control
+      // Configure cache control headers.
       h.cacheControl = CacheControlHeader(maxAge: 3600, publicCache: true);
 
-      // Set custom header
+      // Add a custom application header.
       h['X-Custom-Header'] = ['value'];
     });
 

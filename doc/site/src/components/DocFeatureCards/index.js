@@ -4,7 +4,7 @@ import clsx from 'clsx';
 function FeatureCard({ title, description, icon }) {
   return (
     <div className={clsx('col col--4')}>
-      <div className="card">
+      <div className="card" style={{ height: '100%' }}>
         <div className="card__header">
           <h4>{icon ? `${icon} ${title}` : title}</h4>
         </div>

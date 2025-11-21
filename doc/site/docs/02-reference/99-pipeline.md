@@ -1,15 +1,19 @@
 ---
-sidebar_position: 8
-sidebar_label: Pipeline (Legacy)
+sidebar_position: 99
+sidebar_label: Pipeline (legacy)
 ---
 
 # Pipeline (legacy)
 
-Pipeline is a legacy pattern for composing middleware, see [Middleware](./middleware) for the modern approach.
+:::warning Legacy Feature
+Pipeline is a legacy pattern for composing middleware. For modern Relic applications, use the `router.use()` approach described in the [Middleware](./middleware) documentation.
+:::
+
+Pipeline is a legacy pattern for composing middleware, see [Middleware](./middleware) for the modern approach. It's included to ease the transition from Shelf to Relic.
 
 ## Overview
 
-The `Pipeline` class is a helper that makes it easy to compose a set of [Middleware] and a [Handler]. It provides a fluent API for building middleware chains that process requests and responses in a specific order.
+The `Pipeline` class is a helper that makes it easy to compose a set of `Middleware` and a `Handler`. It provides a fluent API for building middleware chains that process requests and responses in a specific order.
 
 GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/middleware/pipeline_example.dart) doctag="pipeline-usage" title="Pipeline usage"
 
@@ -26,19 +30,23 @@ This creates a nested structure where each middleware wraps the next, forming a 
 
 ### Migration from Pipeline to `router.use()`
 
-**Old Pipeline approach:**
+Old Pipeline approach, typically used in Shelf:
 
 GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/middleware/pipeline_example.dart) doctag="pipeline-usage" title="Pipeline usage"
 
-**New router.use() approach:**
+New router.use() approach:
 
 GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/middleware/pipeline_example.dart) doctag="router-usage" title="router.use() usage"
 
 The new approach is more concise, provides better path-specific middleware control, and integrates more naturally with Relic's routing system.
 
-## Examples
+## Examples & further reading
 
-Check out these examples to see pipeline in action:
+### Examples
 
-- **[Pipeline Example](https://github.com/serverpod/relic/blob/main/example/middleware/pipeline_example.dart)** - Pipeline vs Router comparison
-- [API Reference](https://pub.dev/documentation/relic/latest/relic/Pipeline-class.html)
+- **[Pipeline example](https://github.com/serverpod/relic/blob/main/example/middleware/pipeline_example.dart)** - Pipeline vs router comparison.
+
+### API documentation
+
+- [Pipeline class](https://pub.dev/documentation/relic/latest/relic/Pipeline-class.html) - Legacy middleware composition helper.
+- [Middleware typedef](https://pub.dev/documentation/relic/latest/relic/Middleware.html) - Middleware function signature.

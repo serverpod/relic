@@ -20,13 +20,13 @@ typedef Middleware = Handler Function(Handler innerHandler);
 
 Every middleware function receives an inner handler and returns a new handler that wraps the original. This wrapper can:
 
-- **Inspect requests** before passing them to the inner handler
-- **Modify requests** by creating new request objects
-- **Short-circuit processing** by returning a response without calling the inner handler
-- **Transform responses** after the inner handler completes
-- **Handle errors** that occur in the inner handler
+- **Inspect requests** before passing them to the inner handler.
+- **Modify requests** by creating new request objects.
+- **Short-circuit processing** by returning a response without calling the inner handler.
+- **Transform responses** after the inner handler completes.
+- **Handle errors** that occur in the inner handler.
 
-Here's a simple example of a middleware function, it outlines the signature and the basic pattern of how middleware work:
+Here's a simple example of a middleware function; it outlines the signature and the basic pattern of how middleware work:
 
 ```dart
 Middleware myMiddleware() {
@@ -120,10 +120,8 @@ final router = RelicApp()..use('/', logRequests());
 
 One of Relic's most powerful features is its hierarchical middleware application system. Middleware is applied based on path hierarchy first, with registration order only mattering within the same path scope. This allows you to create scoped middleware that only applies to certain sub-trees of your route structure.
 
-- Path Hierarchy is the order in which the different middleware are applied to a request. This hierarchical scoping enables powerful patterns like applying authentication only to API routes while keeping logging global, or adding specialized middleware for admin sections.
-
 :::tip Path Hierarchy
-One important thing to note is that path hierarchy takes precedence over registration order.
+Path Hierarchy is the order in which the different middleware are applied to a request. This hierarchical scoping enables powerful patterns like applying authentication only to API routes while keeping logging global, or adding specialized middleware for admin sections.
 :::
 
 This means that within the same path scope, different middleware are applied in the order they are registered, creating nested layers.
@@ -136,7 +134,7 @@ final app = RelicApp()
   ..get('/api/foo', fooHandler);
 ```
 
-Since `middlewareC` was added with `use('/api', middlewareC)` it won't impact requests towards other paths, but will be used specifically for `/api/foo`. Whereas `middlewareA` and `middlewareB` are both applicable for all paths below `/`.
+Since `middlewareC` was added with `use('/api', middlewareC)` it won't impact requests towards other paths, but will be used specifically for `/api/foo`. In contrast, `middlewareA` and `middlewareB` are both applicable for all paths below `/`.
 
 Let's look at an example of how middleware will work in same path scope:
 
@@ -183,7 +181,7 @@ When middleware is attached with `router.use(...)`, the request has already been
 
 ### CORS (Cross-Origin Resource Sharing)
 
-CORS is a security feature that allows web applications to make requests to resources from different origins. It is a mechanism that uses additional HTTP headers to tell browsers to let web applications running in one origin have permission to access resources from a different origin. [Learn more](https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CORS).
+CORS is a security feature that allows web applications to make requests to resources from different origins. It is a mechanism that uses additional HTTP headers to tell browsers to let web applications running in one origin have permission to access resources from a different origin. [Learn more](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS).
 
 In Relic you can create a CORS middleware that handles preflight requests and adds CORS headers to the response:
 
@@ -194,25 +192,35 @@ GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/
 The `Pipeline` class provides a legacy approach to composing middleware. While `router.use()` is now preferred for most applications, `Pipeline` is still useful in certain scenarios.
 Read more about [Pipeline](./pipeline) for more details.
 
-## Summary
+## Final tips
 
 Middleware is a powerful pattern that enables you to compose functionality around your handlers in a clean, reusable way. Relic provides excellent middleware support through both the modern `router.use()` approach and the legacy `Pipeline` class.
 
 Key takeaways:
 
-- Use `router.use()` for path-specific middleware in modern Relic applications
-- Write focused middleware that does one thing well
-- Handle errors gracefully and provide meaningful error responses
-- Test your middleware thoroughly to ensure correct behavior
+- Use `router.use()` for path-specific middleware in modern Relic applications.
+- Write focused middleware that does one thing well.
+- Handle errors gracefully and provide meaningful error responses.
+- Test your middleware thoroughly to ensure correct behavior.
 
 With these patterns and examples, you can build robust, maintainable web applications that handle cross-cutting concerns elegantly through middleware composition.
 
-## Examples
+## Examples & further reading
 
-Check out these examples to see middleware in action:
+### Examples
 
-- **[Middleware Example](https://github.com/serverpod/relic/blob/main/example/middleware/middleware_example.dart)** - Basic middleware patterns
-- **[Auth Example](https://github.com/serverpod/relic/blob/main/example/middleware/auth_example.dart)** - Authentication middleware  
-- **[CORS Example](https://github.com/serverpod/relic/blob/main/example/middleware/cors_example.dart)** - CORS handling
-- **[Pipeline Example](https://github.com/serverpod/relic/blob/main/example/middleware/pipeline_example.dart)** - Pipeline vs Router comparison
-- [Read more about CORS](https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CORS).
+- **[Middleware example](https://github.com/serverpod/relic/blob/main/example/middleware/middleware_example.dart)** - Basic middleware patterns.
+- **[Auth example](https://github.com/serverpod/relic/blob/main/example/middleware/auth_example.dart)** - Authentication middleware.
+- **[CORS example](https://github.com/serverpod/relic/blob/main/example/middleware/cors_example.dart)** - CORS handling.
+- **[Pipeline example](https://github.com/serverpod/relic/blob/main/example/middleware/pipeline_example.dart)** - Pipeline vs router comparison.
+
+### API documentation
+
+- [Middleware typedef](https://pub.dev/documentation/relic/latest/relic/Middleware.html) - Middleware function signature.
+- [Pipeline class](https://pub.dev/documentation/relic/latest/relic/Pipeline-class.html) - Legacy middleware composition.
+- [RelicApp class](https://pub.dev/documentation/relic/latest/relic/RelicApp-class.html) - Main application class with middleware support.
+
+### Further reading
+
+- [Cross-Origin Resource Sharing (CORS)](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS) - Mozilla documentation on CORS.
+- [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication) - Mozilla documentation on HTTP authentication.

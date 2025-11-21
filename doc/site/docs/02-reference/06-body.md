@@ -307,3 +307,21 @@ GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/
 This endpoint produces a stream of JSON lines to demonstrate chunked transfer encoding. Clients can start processing data as soon as it becomes available, which is useful for progress updates and long-running computations:
 
 GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/basic/body_example.dart) doctag="body-streaming-chunked" title="Streaming response (chunked)"
+
+## Examples & further reading
+
+### Examples
+
+- **[Body example](https://github.com/serverpod/relic/blob/main/example/basic/body_example.dart)** - Comprehensive examples covering JSON APIs, file uploads, image serving, and streaming.
+
+### API documentation
+
+- [Body class](https://pub.dev/documentation/relic/latest/relic/Body-class.html) - HTTP request/response body handling.
+- [BodyType class](https://pub.dev/documentation/relic/latest/relic/BodyType-class.html) - MIME type and encoding information.
+- [MimeType class](https://pub.dev/documentation/relic/latest/relic/MimeType-class.html) - MIME type handling.
+
+### Further reading
+
+- [MIME types](https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types) - Mozilla documentation on MIME types.
+- [Character encodings](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Type) - Mozilla documentation on Content-Type header.
+- [Streaming and chunked transfer encoding](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Transfer-Encoding) - Mozilla documentation on transfer encoding.

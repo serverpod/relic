@@ -5,13 +5,13 @@ import 'package:relic/io_adapter.dart';
 import 'package:relic/relic.dart';
 import 'package:web_socket/web_socket.dart';
 
-/// Demonstrates the four main context types in Relic using proper routing:
-/// - Request: Starting point for all requests
-/// - Response: HTTP response handling
-/// - WebSocketUpgrade: WebSocket connections
-/// - Hijack: Raw connection control
+/// Demonstrates the four main context types in Relic:
+/// - Request: Standard HTTP request handling.
+/// - Response: HTTP response creation.
+/// - WebSocketUpgrade: Real-time WebSocket connections.
+/// - Hijack: Low-level connection control.
 
-/// Simple HTML page for demonstration
+/// Generates an HTML page that links to all example endpoints.
 // doctag<context-html-homepage>
 String _htmlHomePage() {
   return '''
@@ -34,6 +34,7 @@ String _htmlHomePage() {
 ''';
 }
 
+/// Serves the main HTML page with links to all examples.
 Future<Response> homeHandler(final Request req) async {
   return Response.ok(
     body: Body.fromString(
@@ -59,6 +60,7 @@ Future<Response> apiHandler(final Request req) async {
 }
 // end:doctag<context-api-json>
 
+/// Returns user information based on the provided ID parameter.
 Future<Response> userHandler(final Request req) async {
   final userId = req.pathParameters[#id];
   final data = {
@@ -77,10 +79,10 @@ WebSocketUpgrade webSocketHandler(final Request req) {
   return WebSocketUpgrade((final webSocket) async {
     log('WebSocket connection established');
 
-    // Send welcome message
+    // Send initial greeting to the connected client.
     webSocket.sendText('Welcome to Relic WebSocket!');
 
-    // Echo incoming messages
+    // Listen for messages and echo them back to the client.
     await for (final event in webSocket.events) {
       switch (event) {
         case TextDataReceived(text: final message):
@@ -90,7 +92,7 @@ WebSocketUpgrade webSocketHandler(final Request req) {
           log('WebSocket connection closed');
           break;
         default:
-          // Handle other event types if needed
+          // Handle binary data, ping/pong, and other WebSocket events.
           break;
       }
     }
@@ -98,11 +100,12 @@ WebSocketUpgrade webSocketHandler(final Request req) {
 }
 // end:doctag<context-websocket-echo>
 
+/// Demonstrates connection hijacking for custom protocols.
 Hijack customProtocolHandler(final Request req) {
   return Hijack((final channel) {
     log('Connection hijacked for custom protocol');
 
-    // Send a custom HTTP response manually
+    // Manually craft and send a raw HTTP response.
     const response =
         'HTTP/1.1 200 OK\r\n'
         'Content-Type: text/plain\r\n'
@@ -117,7 +120,7 @@ Hijack customProtocolHandler(final Request req) {
 
 // doctag<context-request-inspect>
 Future<Response> dataHandler(final Request req) async {
-  // Access basic HTTP information
+  // Extract common request information for processing.
   final method = req.method; // 'GET', 'POST', etc.
   final path = req.matchedPath; // '/api/users'
   final query = req.url.query; // 'limit=10&offset=0'
@@ -153,8 +156,9 @@ Future<Response> dataHandler(final Request req) async {
 }
 // end:doctag<context-request-inspect>
 
+/// Demonstrates the four main context types in Relic with examples.
 void main() async {
-  // Set up the router with proper routes
+  // Configure the application with all route handlers.
   final app =
       RelicApp()
         ..get('/', homeHandler) // Home page
@@ -168,7 +172,7 @@ void main() async {
               Response.notFound(body: Body.fromString('Page not found')),
         );
 
-  // Start the server
+  // Start the server.
   await app.serve();
   log('Context example server running on http://localhost:8080');
   log('Try:');

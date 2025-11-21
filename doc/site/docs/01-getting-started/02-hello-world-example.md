@@ -5,7 +5,7 @@ sidebar_label: 👋 Hello world
 
 # Hello world
 
-Once you have Dart installed, it only takes a few lines of code to set up your Relic server. These are the steps you need to take to get a simple "Hello world" server up and running.
+Once you have Dart installed, it only takes a few lines of code to set up your Relic server. These are the steps you need to take to get a simple _Hello world_ server up and running.
 
 ## Create a Dart package
 
@@ -32,32 +32,30 @@ GITHUB_CODE_BLOCK lang="dart" doctag="hello-world-app" [src](https://raw.githubu
 
 **What this code does:**
 
-1. **Router**: `RelicApp()` is used to configure routing for the server.
-2. **Server**: `app.serve()` binds the router (as a handler) to port 8080 on all network interfaces.
-3. **Logging**: The server logs to the console when started.
+1. **Router and route**: `RelicApp()` configures routing and registers a `/user` route.
+2. **Middleware**: `use('/', logRequests())` logs each request for all paths under `/`.
+3. **Server and fallback**: `app.serve()` starts on port 8080; `fallback` handles unmatched routes and returns a 404 (not found).
 
-The result is a server that responds with "Hello, Relic!" when you send a GET request to `http://localhost:8080/`.
+The result is a server that responds with a personalized greeting when you send a GET request matching `/user/:name/age/:age`.
 
 ### Running locally
-
-First, make sure you have Relic installed by following the [installation guide](/getting-started/installation).
 
 Start your server with:
 
 ```bash
-dart run bin/hello_world.dart
+dart bin/hello_world.dart
 ```
 
-Then, open your browser and visit `http://localhost:8080/`, or use curl:
+Then, open your browser and visit `http://localhost:8080/user/Nova/age/27`, or use curl:
 
 ```bash
-curl http://localhost:8080/
+curl http://localhost:8080/user/Nova/age/37
 ```
 
 You should see:
 
 ```bash
-Hello, Relic!
+Hello Nova! To think you are 27 years old.
 ```
 
 Congratulations! You just ran your first Relic server.
