@@ -8,11 +8,11 @@ import 'package:relic/relic.dart';
 Middleware myMiddleware() {
   return (final Handler innerHandler) {
     return (final Request ctx) async {
-      // Before request processing
+      // Add logic here to run before the request is processed.
 
       final result = await innerHandler(ctx);
 
-      // After request processing
+      // Add logic here to run after the request is processed.
 
       return result;
     };
@@ -87,11 +87,11 @@ Future<Response> apiHandler(final Request req) async {
 void main() async {
   final app =
       RelicApp()
-        // Apply middleware to all routes
+        // Apply middleware globally to all routes.
         ..use('/', logRequests())
         ..use('/', timingMiddleware())
         ..use('/', addHeaderMiddleware())
-        // Routes
+        // Define application routes.
         ..get('/', homeHandler)
         ..use('/api', errorHandlingMiddleware())
         ..get('/api', apiHandler);

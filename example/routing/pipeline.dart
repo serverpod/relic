@@ -6,18 +6,19 @@ import 'package:relic/relic.dart';
 /// A pipeline 'Hello World' server
 // doctag<routing-pipeline-hello-world>
 Future<void> main() async {
-  // Create a pipeline that route all request to the same handler
+  // Build a request processing pipeline with middleware and a handler.
   final handler = const Pipeline()
-      // Pipelines allows middleware to run before routing
+      // Add logging middleware to the pipeline.
       .addMiddleware(logRequests())
+      // This handler responds to all HTTP methods and paths.
       .addHandler(
         respondWith(
           (final request) =>
               Response.ok(body: Body.fromString('Hello, Relic!')),
         ),
-      ); // handles any verb, and any path
+      );
 
-  // Start a server that forward request to the handler
+  // Create and start a server using the pipeline handler.
   final server = RelicServer(
     () => IOAdapter.bind(InternetAddress.anyIPv4, port: 8080),
   );

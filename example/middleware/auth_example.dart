@@ -7,7 +7,7 @@ import 'package:relic/relic.dart';
 Middleware authMiddleware() {
   return (final Handler next) {
     return (final Request req) async {
-      // Check for API key in header
+      // Extract API key from the X-API-Key header.
       final apiKey = req.headers['X-API-Key']?.first;
 
       if (apiKey != 'secret123') {
@@ -34,9 +34,9 @@ Future<Response> protectedHandler(final Request req) async {
 void main() async {
   final router =
       RelicApp()
-        // Public routes
+        // Routes accessible without authentication.
         ..get('/public', publicHandler)
-        // Protected routes (with auth middleware)
+        // Routes that require authentication via middleware.
         ..use('/protected', authMiddleware())
         ..get('/protected', protectedHandler);
 

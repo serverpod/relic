@@ -31,7 +31,7 @@ Future<Response> simpleHandler(final Request req) async {
 
 void main() async {
   // doctag<pipeline-usage>
-  // Using Pipeline (legacy composition)
+  // Create a handler using the legacy Pipeline API.
   final pipelineHandler = const Pipeline()
       .addMiddleware(logRequests())
       .addMiddleware(addServerHeader())
@@ -39,7 +39,7 @@ void main() async {
   // end:doctag<pipeline-usage>
 
   // doctag<router-usage>
-  // Using Router (preferred)
+  // Create a handler using the modern RelicApp API.
   final router =
       RelicApp()
         ..use('/', logRequests())
@@ -49,7 +49,7 @@ void main() async {
         });
   // end:doctag<router-usage>
 
-  // Main router that shows both approaches
+  // Combine both approaches in a single application for comparison.
   final app =
       RelicApp()
         ..get('/pipeline', pipelineHandler)

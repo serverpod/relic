@@ -6,8 +6,8 @@ import 'dart:typed_data';
 import 'package:relic/io_adapter.dart';
 import 'package:relic/relic.dart';
 
-/// Example demonstrating Body class features.
-/// Shows creating bodies from strings, files, and streams.
+/// Example demonstrating Body class features. Shows creating bodies from
+/// strings, files, and streams.
 Future<void> main() async {
   final app =
       RelicApp()
@@ -15,34 +15,34 @@ Future<void> main() async {
           return Response.ok(body: Body.fromString('Body Example'));
         };
 
-  // Basic text response
+  // Simple text response endpoint.
   app.get('/hello', helloHandler);
 
-  // JSON with automatic MIME detection
+  // JSON response with automatic content-type detection.
   app.get('/data', dataHandler);
 
-  // Small file - read entire file into memory
+  // Serve small files by loading them entirely into memory.
   app.get('/file/small', smallFileHandler);
 
-  // Large file - stream for memory efficiency
+  // Stream large files to avoid memory issues.
   app.get('/file/large', largeFileHandler);
 
-  // Reading request body as string
+  // Echo endpoint that reads and returns the request body.
   app.post('/echo', echoHandler);
 
-  // JSON API handler
+  // API endpoint that processes JSON requests.
   app.post('/api/data', apiDataHandler);
 
-  // File upload handler with size validation
+  // File upload endpoint with size limits.
   app.post('/upload', uploadHandler);
 
-  // Image response with automatic format detection
+  // Serve images with proper content-type headers.
   app.get('/image', imageHandler);
 
-  // Streaming response with chunked transfer encoding
+  // Stream data using chunked transfer encoding.
   app.get('/stream', streamHandler);
 
-  // Static file serving with directory handler
+  // Serve static files from a directory with caching.
   app.anyOf(
     {Method.get, Method.head},
     '/static/**',
@@ -52,7 +52,7 @@ Future<void> main() async {
     ).asHandler,
   );
 
-  // Single static file serving
+  // Serve a single static file with custom cache settings.
   app.get(
     '/logo',
     StaticHandler.file(
@@ -86,7 +86,7 @@ Response helloHandler(final Request req) {
 Response dataHandler(final Request req) {
   return Response.ok(
     body: Body.fromString('{"message": "Hello"}'),
-    // Automatically detects application/json
+    // Content-type is automatically detected as application/json.
   );
 }
 
@@ -188,7 +188,9 @@ Future<Response> streamHandler(final Request req) async {
   Stream<Uint8List> generateLargeDataset() async* {
     for (var i = 0; i < 100; i++) {
       await Future<void>.delayed(const Duration(milliseconds: 50));
-      yield utf8.encode('{"item": $i}\n'); // Changed from yield* to yield
+
+      // Yield individual chunks for streaming.
+      yield utf8.encode('{"item": $i}\n');
     }
   }
 
@@ -198,7 +200,7 @@ Future<Response> streamHandler(final Request req) async {
     body: Body.fromDataStream(
       dataStream,
       mimeType: MimeType.json,
-      // contentLength omitted for chunked encoding
+      // Omit contentLength to enable chunked transfer encoding.
     ),
   );
 }

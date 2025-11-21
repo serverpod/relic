@@ -21,44 +21,44 @@ import 'package:relic/relic.dart';
 Future<void> main() async {
   final app = RelicApp();
 
-  // Convenience methods - syntactic sugar for .add()
-  // Respond with "Hello World!" on the homepage
+  // Convenience methods that wrap the core .add() method for common HTTP verbs.
+  // Handle GET requests to the root path.
   // doctag<routing-basic-get-root>
   app.get('/', (final req) {
     return Response.ok(body: Body.fromString('Hello World!'));
   });
   // end:doctag<routing-basic-get-root>
 
-  // Respond to a POST request on the root route
+  // Handle POST requests to the root path.
   // doctag<routing-basic-post-root>
   app.post('/', (final req) {
     return Response.ok(body: Body.fromString('Got a POST request'));
   });
   // end:doctag<routing-basic-post-root>
 
-  // Respond to a PUT request to the /user route
+  // Handle PUT requests to the /user path.
   // doctag<routing-basic-put-user>
   app.put('/user', (final req) {
     return Response.ok(body: Body.fromString('Got a PUT request at /user'));
   });
   // end:doctag<routing-basic-put-user>
 
-  // Respond to a DELETE request to the /user route
+  // Handle DELETE requests to the /user path.
   // doctag<routing-basic-delete-user>
   app.delete('/user', (final req) {
     return Response.ok(body: Body.fromString('Got a DELETE request at /user'));
   });
   // end:doctag<routing-basic-delete-user>
 
-  // Using the core .add method directly
-  // This is what the convenience methods (.get, .post, etc.) call internally
+  // Use the core .add method directly for more control.
+  // This demonstrates the underlying method that convenience methods use.
   // doctag<routing-basic-patch-api>
   app.add(Method.patch, '/api', (final req) {
     return Response.ok(body: Body.fromString('Got a PATCH request at /api'));
   });
   // end:doctag<routing-basic-patch-api>
 
-  // Using .anyOf to handle multiple methods with the same handler
+  // Use .anyOf to handle multiple HTTP methods with a single handler.
   // doctag<routing-basic-anyof-admin>
   app.anyOf({Method.get, Method.post}, '/admin', (final req) {
     final method = req.method.name.toUpperCase();
@@ -66,7 +66,7 @@ Future<void> main() async {
   });
   // end:doctag<routing-basic-anyof-admin>
 
-  // Combine router with fallback for unmatched routes
+  // Set up a fallback handler for routes that don't match any defined routes.
   app.fallback = respondWith((final _) => Response.notFound());
 
   await app.serve();

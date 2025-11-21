@@ -4,14 +4,14 @@ import 'dart:convert';
 import 'package:relic/io_adapter.dart';
 import 'package:relic/relic.dart';
 
-// Foundational Handler: Request -> Response (hello world)
+// Basic handler that returns a simple greeting.
 // doctag<handler-foundational>
 Response helloHandler(final Request req) {
   return Response.ok(body: Body.fromString('Hello from Relic!'));
 }
 // end:doctag<handler-foundational>
 
-// Response-focused handler (standard API endpoint)
+// Handler that demonstrates custom headers and JSON response.
 // doctag<handler-response>
 Response apiResponseHandler(final Request req) {
   return Response.ok(
@@ -23,34 +23,34 @@ Response apiResponseHandler(final Request req) {
 }
 // end:doctag<handler-response>
 
-// Hijack handler: SSE-style streaming over a hijacked connection
+// Handler that hijacks the connection for Server-Sent Events (SSE) streaming.
 // doctag<handler-hijack-sse>
 Hijack sseHandler(final Request req) {
   return Hijack((final channel) async {
-    // Send Server-Sent Events
+    // Send Server-Sent Events.
     channel.sink.add(utf8.encode('data: Connected'));
 
-    // Send periodic updates
+    // Send periodic updates.
     final timer = Timer.periodic(
       const Duration(seconds: 1),
       (_) => channel.sink.add(utf8.encode('data: ${DateTime.now()}')),
     );
 
-    // Wait for client disconnect, then cleanup
+    // Wait for client disconnect, then cleanup.
     await channel.sink.done;
     timer.cancel();
   });
 }
 // end:doctag<handler-hijack-sse>
 
-// Synchronous handler example
+// Simple synchronous handler that returns immediately.
 // doctag<handler-sync>
 Response syncHandler(final Request req) {
   return Response.ok(body: Body.fromString('Fast response'));
 }
 // end:doctag<handler-sync>
 
-// Asynchronous handler example
+// Asynchronous handler that simulates delayed processing.
 // doctag<handler-async>
 Future<Response> asyncHandler(final Request req) async {
   final data = await Future<String>.delayed(
@@ -62,7 +62,7 @@ Future<Response> asyncHandler(final Request req) async {
 }
 // end:doctag<handler-async>
 
-// Using context data (method, url, headers)
+// Handler that demonstrates accessing request context information.
 // doctag<handler-context>
 Response contextInfoHandler(final Request req) {
   final method = req.method;

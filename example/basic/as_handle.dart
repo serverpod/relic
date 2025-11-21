@@ -4,10 +4,10 @@ import 'package:relic/io_adapter.dart';
 import 'package:relic/relic.dart';
 
 Future<void> main() async {
-  // Create a router that route all request to the same handler
+  // Create a router that handles all requests with the same response.
   final router =
       RelicRouter()
-        ..use('/', logRequests()) // log all request from / and down
+        ..use('/', logRequests()) // Apply logging middleware to all routes.
         ..any(
           '/**',
           respondWith(
@@ -16,9 +16,11 @@ Future<void> main() async {
           ),
         );
 
-  // Start a server that forward request to the handler
+  // Create and start a server using the low-level RelicServer API.
   final server = RelicServer(
     () => IOAdapter.bind(InternetAddress.anyIPv4, port: 8080),
   );
-  await server.mountAndStart(router.asHandler); // use asHandler to
+
+  // Convert router to handler and start serving.
+  await server.mountAndStart(router.asHandler);
 }

@@ -3,7 +3,7 @@ import 'dart:developer';
 import 'package:relic/io_adapter.dart';
 import 'package:relic/relic.dart';
 
-// Create a ContextProperty to store request-specific data
+// Define a ContextProperty for storing request-scoped data.
 // doctag<context-prop-request-id>
 
 extension on Request {
@@ -12,22 +12,22 @@ extension on Request {
 
 final _requestIdProperty = ContextProperty<String>('requestId');
 
-// Middleware that sets a unique ID for each request
+// Middleware that generates and stores a unique ID for each request.
 Handler requestIdMiddleware(final Handler next) {
   return (final req) async {
-    // Set a unique request ID
+    // Generate a timestamp-based unique ID for this request.
     _requestIdProperty[req] = 'req_${DateTime.now().millisecondsSinceEpoch}';
 
-    // Continue to the next handler
+    // Pass control to the next handler in the chain.
     return await next(req);
   };
 }
 // end:doctag<context-prop-request-id>
 
 // doctag<context-prop-use-request-id>
-// Handler that uses the stored request ID
+// Handler that retrieves and displays the request ID.
 Future<Response> handler(final Request req) async {
-  // Retrieve the request ID that was set by middleware
+  // Access the request ID (set by the middleware) using the extension method.
   final requestId = req.requestId;
 
   log('Request ID: $requestId');
@@ -37,11 +37,13 @@ Future<Response> handler(final Request req) async {
 // end:doctag<context-prop-use-request-id>
 
 void main() async {
-  // Set up the router with routes
+  // Configure the application with middleware and routes.
   final app =
       RelicApp()
-        ..use('/', requestIdMiddleware) // Sets the request ID
-        ..get('/', handler); // Uses the request ID
+        // Apply request ID middleware globally.
+        ..use('/', requestIdMiddleware)
+        // Route that displays the request ID.
+        ..get('/', handler);
 
   await app.serve();
   log('Server running on http://localhost:8080');

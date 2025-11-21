@@ -1,5 +1,5 @@
-// Relic Migration Examples
-// Complete code examples from the Shelf to Relic migration guide
+// Relic Migration Examples. Complete code examples from the Shelf to Relic
+// migration guide.
 
 import 'dart:developer';
 // doctag<complete-relic>
@@ -9,7 +9,7 @@ import 'package:relic/relic.dart';
 void main() async {
   final app =
       RelicApp()
-        ..use('/', logRequests()) // Apply logging to all routes
+        ..use('/', logRequests()) // Apply logging to all routes.
         ..get('/users/:id', (final Request req) {
           final id = req.pathParameters[#id]!;
           final name = req.url.queryParameters['name'] ?? 'Unknown';
@@ -27,10 +27,10 @@ WebSocketUpgrade websocketHandler(final Request req) {
       log('Received: $event');
     });
 
-    // Non-throwing variant - returns false if connection closed
+    // Non-throwing variant - returns false if connection is closed.
     ws.trySendText('Hello!');
 
-    // Or use the throwing variant if you want exceptions
+    // Or, use the throwing variant if you want exceptions.
     ws.sendText('Hello!');
   });
 }
