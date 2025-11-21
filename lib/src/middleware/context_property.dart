@@ -1,4 +1,4 @@
-import '../context/context.dart';
+import '../context/result.dart';
 
 /// Manages a piece of data associated with a specific [Request].
 ///

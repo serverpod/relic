@@ -7,6 +7,23 @@ import 'package:test_descriptor/test_descriptor.dart' as d;
 
 import 'test_util.dart';
 
+/// Helper to build a handler with a static file handler injected at [mountPath]
+Handler buildStaticHandler(
+  final String mountPath,
+  final Directory staticRoot, {
+  required final CacheBustingConfig cacheBustingConfig,
+}) {
+  return (RelicRouter()..injectAt(
+        mountPath,
+        StaticHandler.directory(
+          staticRoot,
+          cacheControl: (_, _) => null,
+          cacheBustingConfig: cacheBustingConfig,
+        ),
+      ))
+      .asHandler;
+}
+
 void main() {
   group(
     'Given a static asset served through a root-mounted cache busting static file handler',
@@ -15,27 +32,22 @@ void main() {
       setUp(() async {
         await d.dir('static', [d.file('logo.png', 'png-bytes')]).create();
         final staticRoot = Directory(p.join(d.sandbox, 'static'));
-        handler = const Pipeline().addHandler(
-          StaticHandler.directory(
-            staticRoot,
-            cacheControl: (_, _) => null,
-            cacheBustingConfig: CacheBustingConfig(
-              mountPrefix: '/static',
-              fileSystemRoot: staticRoot,
-              separator: '@',
-            ),
-          ).asHandler,
+
+        handler = buildStaticHandler(
+          '/static',
+          staticRoot,
+          cacheBustingConfig: CacheBustingConfig(
+            mountPrefix: '/static',
+            fileSystemRoot: staticRoot,
+            separator: '@',
+          ),
         );
       });
 
       test(
         'when requesting asset with a non-busted URL then it serves the asset',
         () async {
-          final response = await makeRequest(
-            handler,
-            '/static/logo.png',
-            handlerPath: 'static',
-          );
+          final response = await makeRequest(handler, '/static/logo.png');
           expect(response.statusCode, HttpStatus.ok);
           expect(await response.readAsString(), 'png-bytes');
         },
@@ -44,11 +56,7 @@ void main() {
       test(
         'when requesting asset with a cache busted URL then it serves the asset',
         () async {
-          final response = await makeRequest(
-            handler,
-            '/static/logo@abc.png',
-            handlerPath: 'static',
-          );
+          final response = await makeRequest(handler, '/static/logo@abc.png');
           expect(response.statusCode, HttpStatus.ok);
           expect(await response.readAsString(), 'png-bytes');
         },
@@ -63,23 +71,16 @@ void main() {
       setUp(() async {
         await d.dir('static', [d.file('logo.png', 'png-bytes')]).create();
         final staticRoot = Directory(p.join(d.sandbox, 'static'));
-        final router =
-            RelicRouter()..get(
-              '/static/**',
-              StaticHandler.directory(
-                staticRoot,
-                cacheControl: (_, _) => null,
-                cacheBustingConfig: CacheBustingConfig(
-                  mountPrefix: '/static',
-                  fileSystemRoot: staticRoot,
-                  separator: '@',
-                ),
-              ).asHandler,
-            );
 
-        handler = const Pipeline()
-            .addMiddleware(routeWith(router))
-            .addHandler(respondWith((_) => Response.notFound()));
+        handler = buildStaticHandler(
+          '/static/',
+          staticRoot,
+          cacheBustingConfig: CacheBustingConfig(
+            mountPrefix: '/static',
+            fileSystemRoot: staticRoot,
+            separator: '@',
+          ),
+        );
       });
 
       test(
@@ -108,27 +109,26 @@ void main() {
     setUp(() async {
       await d.dir('other', [d.file('logo.png', 'png-bytes')]).create();
       final staticRoot = Directory(p.join(d.sandbox, 'other'));
-      handler = const Pipeline().addHandler(
-        StaticHandler.directory(
-          staticRoot,
-          cacheControl: (_, _) => null,
-          cacheBustingConfig: CacheBustingConfig(
-            mountPrefix: '/static',
-            fileSystemRoot: staticRoot,
-            separator: '@',
-          ),
-        ).asHandler,
+      final staticHandler = StaticHandler.directory(
+        staticRoot,
+        cacheControl: (_, _) => null,
+        cacheBustingConfig: CacheBustingConfig(
+          mountPrefix: '/static',
+          fileSystemRoot: staticRoot,
+          separator: '@',
+        ),
       );
+      handler =
+          (RelicRouter()
+                ..injectAt('/static', staticHandler)
+                ..injectAt('/other', staticHandler))
+              .asHandler;
     });
 
     test(
       'when requesting asset with a non-busted URL then it serves the asset',
       () async {
-        final response = await makeRequest(
-          handler,
-          '/other/logo.png',
-          handlerPath: 'other',
-        );
+        final response = await makeRequest(handler, '/static/logo.png');
         expect(response.statusCode, HttpStatus.ok);
         expect(await response.readAsString(), 'png-bytes');
       },
@@ -137,11 +137,7 @@ void main() {
     test(
       'when requesting asset with a busted URL then it still serves the asset (handler-level cache busting)',
       () async {
-        final response = await makeRequest(
-          handler,
-          '/other/logo@abc.png',
-          handlerPath: 'other',
-        );
+        final response = await makeRequest(handler, '/other/logo@abc.png');
         expect(response.statusCode, HttpStatus.ok);
         expect(await response.readAsString(), 'png-bytes');
       },
@@ -155,27 +151,21 @@ void main() {
       setUp(() async {
         await d.dir('static', [d.file('@logo.png', 'png-bytes')]).create();
         final staticRoot = Directory(p.join(d.sandbox, 'static'));
-        handler = const Pipeline().addHandler(
-          StaticHandler.directory(
-            staticRoot,
-            cacheControl: (_, _) => null,
-            cacheBustingConfig: CacheBustingConfig(
-              mountPrefix: '/static',
-              fileSystemRoot: staticRoot,
-              separator: '@',
-            ),
-          ).asHandler,
+        handler = buildStaticHandler(
+          '/static',
+          staticRoot,
+          cacheBustingConfig: CacheBustingConfig(
+            mountPrefix: '/static',
+            fileSystemRoot: staticRoot,
+            separator: '@',
+          ),
         );
       });
 
       test(
         'when requesting asset with a non-busted URL then it serves the asset',
         () async {
-          final response = await makeRequest(
-            handler,
-            '/static/@logo.png',
-            handlerPath: 'static',
-          );
+          final response = await makeRequest(handler, '/static/@logo.png');
           expect(response.statusCode, HttpStatus.ok);
           expect(await response.readAsString(), 'png-bytes');
         },
@@ -184,11 +174,7 @@ void main() {
       test(
         'when requesting asset with a cache busted URL then it serves the asset',
         () async {
-          final response = await makeRequest(
-            handler,
-            '/static/@logo@abc.png',
-            handlerPath: 'static',
-          );
+          final response = await makeRequest(handler, '/static/@logo@abc.png');
           expect(response.statusCode, HttpStatus.ok);
           expect(await response.readAsString(), 'png-bytes');
         },
@@ -203,27 +189,21 @@ void main() {
       setUp(() async {
         await d.dir('static', [d.file('logo', 'file-contents')]).create();
         final staticRoot = Directory(p.join(d.sandbox, 'static'));
-        handler = const Pipeline().addHandler(
-          StaticHandler.directory(
-            staticRoot,
-            cacheControl: (_, _) => null,
-            cacheBustingConfig: CacheBustingConfig(
-              mountPrefix: '/static',
-              fileSystemRoot: staticRoot,
-              separator: '@',
-            ),
-          ).asHandler,
+        handler = buildStaticHandler(
+          '/static',
+          staticRoot,
+          cacheBustingConfig: CacheBustingConfig(
+            mountPrefix: '/static',
+            fileSystemRoot: staticRoot,
+            separator: '@',
+          ),
         );
       });
 
       test(
         'when requesting asset with a non-busted URL then it serves the asset',
         () async {
-          final response = await makeRequest(
-            handler,
-            '/static/logo',
-            handlerPath: 'static',
-          );
+          final response = await makeRequest(handler, '/static/logo');
           expect(response.statusCode, HttpStatus.ok);
           expect(await response.readAsString(), 'file-contents');
         },
@@ -232,11 +212,7 @@ void main() {
       test(
         'when requesting asset with a cache busted URL then it serves the asset',
         () async {
-          final response = await makeRequest(
-            handler,
-            '/static/logo@abc',
-            handlerPath: 'static',
-          );
+          final response = await makeRequest(handler, '/static/logo@abc');
           expect(response.statusCode, HttpStatus.ok);
           expect(await response.readAsString(), 'file-contents');
         },
@@ -251,27 +227,21 @@ void main() {
       setUp(() async {
         await d.dir('static', [d.file('logo.png', 'png-bytes')]).create();
         final staticRoot = Directory(p.join(d.sandbox, 'static'));
-        handler = const Pipeline().addHandler(
-          StaticHandler.directory(
-            staticRoot,
-            cacheControl: (_, _) => null,
-            cacheBustingConfig: CacheBustingConfig(
-              mountPrefix: '/static',
-              fileSystemRoot: staticRoot,
-              separator: '--',
-            ),
-          ).asHandler,
+        handler = buildStaticHandler(
+          '/static',
+          staticRoot,
+          cacheBustingConfig: CacheBustingConfig(
+            mountPrefix: '/static',
+            fileSystemRoot: staticRoot,
+            separator: '--',
+          ),
         );
       });
 
       test(
         'when requesting asset with a non-busted URL then it serves the asset',
         () async {
-          final response = await makeRequest(
-            handler,
-            '/static/logo.png',
-            handlerPath: 'static',
-          );
+          final response = await makeRequest(handler, '/static/logo.png');
           expect(response.statusCode, HttpStatus.ok);
           expect(await response.readAsString(), 'png-bytes');
         },
@@ -280,11 +250,7 @@ void main() {
       test(
         'when requesting asset with a cache busted URL using the custom separator then it serves the asset',
         () async {
-          final response = await makeRequest(
-            handler,
-            '/static/logo--abc.png',
-            handlerPath: 'static',
-          );
+          final response = await makeRequest(handler, '/static/logo--abc.png');
           expect(response.statusCode, HttpStatus.ok);
           expect(await response.readAsString(), 'png-bytes');
         },
@@ -293,11 +259,7 @@ void main() {
       test(
         'when requesting asset with a cache busted URL using the default separator then it does not find the asset',
         () async {
-          final response = await makeRequest(
-            handler,
-            '/static/logo@abc.png',
-            handlerPath: 'static',
-          );
+          final response = await makeRequest(handler, '/static/logo@abc.png');
           expect(response.statusCode, HttpStatus.notFound);
         },
       );
@@ -313,16 +275,14 @@ void main() {
           d.dir('@images', [d.file('logo.png', 'nested-bytes')]),
         ]).create();
         final staticRoot = Directory(p.join(d.sandbox, 'static'));
-        handler = const Pipeline().addHandler(
-          StaticHandler.directory(
-            staticRoot,
-            cacheControl: (_, _) => null,
-            cacheBustingConfig: CacheBustingConfig(
-              mountPrefix: '/static',
-              fileSystemRoot: staticRoot,
-              separator: '@',
-            ),
-          ).asHandler,
+        handler = buildStaticHandler(
+          '/static',
+          staticRoot,
+          cacheBustingConfig: CacheBustingConfig(
+            mountPrefix: '/static',
+            fileSystemRoot: staticRoot,
+            separator: '@',
+          ),
         );
       });
 
@@ -332,7 +292,6 @@ void main() {
           final response = await makeRequest(
             handler,
             '/static/@images/logo.png',
-            handlerPath: 'static',
           );
           expect(response.statusCode, HttpStatus.ok);
           expect(await response.readAsString(), 'nested-bytes');
@@ -345,7 +304,6 @@ void main() {
           final response = await makeRequest(
             handler,
             '/static/@images/logo@abc.png',
-            handlerPath: 'static',
           );
           expect(response.statusCode, HttpStatus.ok);
           expect(await response.readAsString(), 'nested-bytes');
@@ -365,17 +323,20 @@ void main() {
         await d.dir('cache', []).create();
         final staticRoot = Directory(p.join(d.sandbox, 'static'));
         final cacheRoot = Directory(p.join(d.sandbox, 'cache'));
-        handler = const Pipeline().addHandler(
-          StaticHandler.directory(
-            staticRoot,
-            cacheControl: (_, _) => null,
-            cacheBustingConfig: CacheBustingConfig(
-              mountPrefix: '/cache',
-              fileSystemRoot: cacheRoot,
-              separator: '@',
-            ),
-          ).asHandler,
+        final staticHandler = StaticHandler.directory(
+          staticRoot,
+          cacheControl: (_, _) => null,
+          cacheBustingConfig: CacheBustingConfig(
+            mountPrefix: '/cache',
+            fileSystemRoot: cacheRoot,
+            separator: '@',
+          ),
         );
+        handler =
+            (RelicRouter()
+                  ..injectAt('/static/', staticHandler)
+                  ..injectAt('/cache', staticHandler))
+                .asHandler;
       });
 
       test(
@@ -384,7 +345,6 @@ void main() {
           final response = await makeRequest(
             handler,
             '/static/images/logo.png',
-            handlerPath: 'static',
           );
           expect(response.statusCode, HttpStatus.ok);
           expect(await response.readAsString(), 'nested-bytes');
@@ -397,7 +357,6 @@ void main() {
           final response = await makeRequest(
             handler,
             '/static/images/logo@abc.png',
-            handlerPath: 'static',
           );
           expect(response.statusCode, HttpStatus.ok);
           expect(await response.readAsString(), 'nested-bytes');

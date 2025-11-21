@@ -24,8 +24,7 @@ The request flows through your middleware pipeline and reaches your handler, whe
 The `Request` object exposes several important properties:
 
 - **`method`** - The HTTP method (GET, POST, PUT, DELETE, etc.) as a `Method` enum value.
-- **`url`** - The relative URL from the current handler's perspective, including query parameters.
-- **`requestedUri`** - The complete original URI that was requested.
+- **`url`** - The complete original URI that was requested.
 - **`headers`** - Type-safe access to HTTP headers.
 - **`body`** - The request body wrapped in a `Body` helper. Use `await request.readAsString()` for text, or `request.read()` to access the byte stream. Both are single-read.
 - **`protocolVersion`** - The HTTP protocol version (typically `1.1`).
@@ -45,8 +44,6 @@ Common methods include `Method.get`, `Method.post`, `Method.put`, `Method.delete
 The `url` property provides the relative path and query parameters from the current handler's perspective. This is particularly useful when your handler is mounted at a specific path prefix.
 
 GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/routing/request_response_example.dart) doctag="path-params-complete" title="Path parameters and URL"
-
-When handling a request to `http://localhost:8080/users/123?details=true`, the `url.path` contains the path relative to the handler, while `requestedUri` contains the complete URL including the domain and all query parameters.
 
 ## Working with query parameters
 

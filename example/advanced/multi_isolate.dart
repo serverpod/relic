@@ -44,12 +44,12 @@ Future<void> _serve() async {
 }
 
 /// Echoes the request path and shows which isolate handled it.
-Response _echoRequest(final Request request) {
+Response _echoRequest(final Request req) {
   // Simulate slow processing to demonstrate load balancing.
   sleep(const Duration(seconds: 1));
   return Response.ok(
     body: Body.fromString(
-      'Request for "${request.url}" '
+      'Request for "${req.url}" '
       'handled by isolate ${Isolate.current.debugName}',
     ),
   );
