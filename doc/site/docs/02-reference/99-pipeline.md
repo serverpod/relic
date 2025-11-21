@@ -40,9 +40,13 @@ GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/
 
 The new approach is more concise, provides better path-specific middleware control, and integrates more naturally with Relic's routing system.
 
-## Examples
+## Examples & further reading
 
-Check out these examples to see pipeline in action:
+### Examples
 
 - **[Pipeline example](https://github.com/serverpod/relic/blob/main/example/middleware/pipeline_example.dart)** - Pipeline vs router comparison.
-- [API reference](https://pub.dev/documentation/relic/latest/relic/Pipeline-class.html).
+
+### API documentation
+
+- [Pipeline class](https://pub.dev/documentation/relic/latest/relic/Pipeline-class.html) - Legacy middleware composition helper.
+- [Middleware typedef](https://pub.dev/documentation/relic/latest/relic/Middleware.html) - Middleware function signature.

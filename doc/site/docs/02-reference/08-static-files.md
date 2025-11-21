@@ -77,6 +77,20 @@ When serving static files from a directory, always use a tail matching path patt
 For single file serving with `StaticHandler.file()`, you don't need the tail pattern, but it can be useful for SPAs or other routing scenarios.
 :::
 
-## Examples
+## Examples & further reading
+
+### Examples
 
 - **[Static files example](https://github.com/serverpod/relic/blob/main/example/advanced/static_files_example.dart)** - Complete example with cache busting.
+
+### API documentation
+
+- [StaticHandler class](https://pub.dev/documentation/relic/latest/relic/StaticHandler-class.html) - Static file serving handler.
+- [CacheBustingConfig class](https://pub.dev/documentation/relic/latest/relic/CacheBustingConfig-class.html) - Cache busting configuration.
+- [CacheControlHeader class](https://pub.dev/documentation/relic/latest/relic/CacheControlHeader-class.html) - Cache control header handling.
+
+### Further reading
+
+- [HTTP caching](https://developer.mozilla.org/en-US/docs/Web/HTTP/Caching) - Mozilla documentation on HTTP caching.
+- [Cache-Control header](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control) - Mozilla documentation on Cache-Control.
+- [ETag header](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/ETag) - Mozilla documentation on ETags.

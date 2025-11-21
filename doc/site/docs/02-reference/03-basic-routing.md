@@ -79,6 +79,14 @@ Handle multiple HTTP methods with the same handler:
 
 GITHUB_CODE_BLOCK lang="dart" title="GET|POST /admin" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/routing/basic_routing.dart) doctag="routing-basic-anyof-admin"
 
-## Example
+## Examples & further reading
+
+### Examples
 
 - **[Basic routing example](https://github.com/serverpod/relic/blob/main/example/routing/basic_routing.dart)** - The complete working example from this guide.
+
+### API documentation
+
+- [RelicApp class](https://pub.dev/documentation/relic/latest/relic/RelicApp-class.html) - Main application class with routing methods.
+- [Router class](https://pub.dev/documentation/relic/latest/relic/Router-class.html) - URL router for mapping path patterns.
+- [Method enum](https://pub.dev/documentation/relic/latest/relic/Method.html) - HTTP methods enumeration.

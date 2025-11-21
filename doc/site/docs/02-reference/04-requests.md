@@ -152,6 +152,22 @@ Key principles for working with requests include accessing data through the `Req
 
 Always validate all incoming data since query parameters, headers, and body content come from untrusted sources. Use try-catch blocks for JSON parsing and validation to provide meaningful error responses. By following these patterns, you'll create handlers that are both secure and user-friendly.
 
-## Example
+## Examples & further reading
+
+### Examples
 
 - **[Requests example](https://github.com/serverpod/relic/blob/main/example/routing/request_response_example.dart)** - Comprehensive example covering complete request-response cycles.
+
+### API documentation
+
+- [Request class](https://pub.dev/documentation/relic/latest/relic/Request-class.html) - HTTP request object.
+- [Method enum](https://pub.dev/documentation/relic/latest/relic/Method.html) - HTTP methods enumeration.
+- [Headers class](https://pub.dev/documentation/relic/latest/relic/Headers-class.html) - Type-safe HTTP headers.
+- [Body class](https://pub.dev/documentation/relic/latest/relic/Body-class.html) - Request/response body handling.
+- [AuthorizationHeader class](https://pub.dev/documentation/relic/latest/relic/AuthorizationHeader-class.html) - Authorization header parsing.
+
+### Further reading
+
+- [HTTP request methods](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods) - Mozilla documentation on HTTP methods.
+- [HTTP headers](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers) - Mozilla documentation on HTTP headers.
+- [Query string](https://developer.mozilla.org/en-US/docs/Web/API/URLSearchParams) - Mozilla documentation on URL query parameters.

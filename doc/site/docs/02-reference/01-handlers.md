@@ -59,6 +59,16 @@ For advanced use cases like Server-Sent Events (SSE) or custom protocols, you ca
 
 GITHUB_CODE_BLOCK lang="dart" doctag="handler-hijack-sse" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/basic/handler_example.dart) title="Connection hijacking example"
 
-## Example
+## Examples & further reading
+
+### Examples
 
 - **[Handler example](https://github.com/serverpod/relic/blob/main/example/basic/handler_example.dart)** - The complete working example from this guide.
+
+### API documentation
+
+- [Handler typedef](https://pub.dev/documentation/relic/latest/relic/Handler.html) - Core handler function signature.
+- [Result class](https://pub.dev/documentation/relic/latest/relic/Result.html) - Base class for handler return values.
+- [Response class](https://pub.dev/documentation/relic/latest/relic/Response.html) - HTTP response result.
+- [WebSocketUpgrade class](https://pub.dev/documentation/relic/latest/relic/WebSocketUpgrade.html) - WebSocket upgrade result.
+- [Hijack class](https://pub.dev/documentation/relic/latest/relic/Hijack.html) - Connection hijacking result.

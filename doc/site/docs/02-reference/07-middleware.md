@@ -205,12 +205,22 @@ Key takeaways:
 
 With these patterns and examples, you can build robust, maintainable web applications that handle cross-cutting concerns elegantly through middleware composition.
 
-## Examples
+## Examples & further reading
 
-Check out these examples to see middleware in action:
+### Examples
 
 - **[Middleware example](https://github.com/serverpod/relic/blob/main/example/middleware/middleware_example.dart)** - Basic middleware patterns.
-- **[Auth example](https://github.com/serverpod/relic/blob/main/example/middleware/auth_example.dart)** - Authentication middleware.  
+- **[Auth example](https://github.com/serverpod/relic/blob/main/example/middleware/auth_example.dart)** - Authentication middleware.
 - **[CORS example](https://github.com/serverpod/relic/blob/main/example/middleware/cors_example.dart)** - CORS handling.
 - **[Pipeline example](https://github.com/serverpod/relic/blob/main/example/middleware/pipeline_example.dart)** - Pipeline vs router comparison.
-- [Read more about CORS](https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CORS).
+
+### API documentation
+
+- [Middleware typedef](https://pub.dev/documentation/relic/latest/relic/Middleware.html) - Middleware function signature.
+- [Pipeline class](https://pub.dev/documentation/relic/latest/relic/Pipeline-class.html) - Legacy middleware composition.
+- [RelicApp class](https://pub.dev/documentation/relic/latest/relic/RelicApp-class.html) - Main application class with middleware support.
+
+### Further reading
+
+- [Cross-Origin Resource Sharing (CORS)](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS) - Mozilla documentation on CORS.
+- [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication) - Mozilla documentation on HTTP authentication.

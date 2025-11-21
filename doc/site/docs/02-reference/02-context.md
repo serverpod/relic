@@ -56,6 +56,13 @@ GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/
 Context properties exist **only for the duration of the request**. Once the response is sent, they're automatically cleaned up. Values are scoped to each request and do not leak between requests.
 :::
 
-## Example
+## Examples & further reading
+
+### Examples
 
 - **[Context Property Example](https://github.com/serverpod/relic/blob/main/example/context/context_property_example.dart)** - Shows how to use context properties for request IDs and user authentication.
+
+### API documentation
+
+- [ContextProperty class](https://pub.dev/documentation/relic/latest/relic/ContextProperty-class.html) - Type-safe request-scoped data storage.
+- [Request class](https://pub.dev/documentation/relic/latest/relic/Request-class.html) - HTTP request object that holds context properties.
