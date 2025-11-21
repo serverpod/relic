@@ -170,4 +170,4 @@ Always validate all incoming data since query parameters, headers, and body cont
 
 - [HTTP request methods](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods) - Mozilla documentation on HTTP methods.
 - [HTTP headers](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers) - Mozilla documentation on HTTP headers.
-- [Query string](https://developer.mozilla.org/en-US/docs/Web/API/URLSearchParams) - Mozilla documentation on URL query parameters.
+- [What is a URL?](https://developer.mozilla.org/en-US/docs/Learn/Common_questions/What_is_a_URL) - Mozilla documentation on URL structure and query parameters.

@@ -181,7 +181,7 @@ When middleware is attached with `router.use(...)`, the request has already been
 
 ### CORS (Cross-Origin Resource Sharing)
 
-CORS is a security feature that allows web applications to make requests to resources from different origins. It is a mechanism that uses additional HTTP headers to tell browsers to let web applications running in one origin have permission to access resources from a different origin. [Learn more](https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CORS).
+CORS is a security feature that allows web applications to make requests to resources from different origins. It is a mechanism that uses additional HTTP headers to tell browsers to let web applications running in one origin have permission to access resources from a different origin. [Learn more](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS).
 
 In Relic you can create a CORS middleware that handles preflight requests and adds CORS headers to the response:
 
