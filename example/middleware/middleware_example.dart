@@ -20,7 +20,7 @@ Middleware myMiddleware() {
 }
 // end:doctag<simple-middleware>
 
-/// Middleware that adds a custom header
+/// Middleware that adds a custom header to all responses.
 // doctag<middleware-add-custom-header>
 Middleware addHeaderMiddleware() {
   return (final Handler next) {
@@ -42,7 +42,7 @@ Middleware addHeaderMiddleware() {
 }
 // end:doctag<middleware-add-custom-header>
 
-/// Timing middleware
+/// Middleware that logs request processing time.
 Middleware timingMiddleware() {
   return (final Handler next) {
     return (final Request req) async {
@@ -58,7 +58,7 @@ Middleware timingMiddleware() {
   };
 }
 
-/// Simple error handling middleware
+/// Middleware that catches and handles errors gracefully.
 Middleware errorHandlingMiddleware() {
   return (final Handler next) {
     return (final Request req) async {
@@ -73,7 +73,7 @@ Middleware errorHandlingMiddleware() {
   };
 }
 
-/// Simple handlers
+/// Basic request handlers for demonstration.
 Future<Response> homeHandler(final Request req) async {
   return Response.ok(body: Body.fromString('Hello from home page!'));
 }

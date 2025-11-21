@@ -5,13 +5,13 @@ import 'package:relic/io_adapter.dart';
 import 'package:relic/relic.dart';
 import 'package:web_socket/web_socket.dart';
 
-/// Demonstrates the four main context types in Relic using proper routing:
-/// - Request: Starting point for all requests
-/// - Response: HTTP response handling
-/// - WebSocketUpgrade: WebSocket connections
-/// - Hijack: Raw connection control
+/// Demonstrates the four main context types in Relic:
+/// - Request: Standard HTTP request handling.
+/// - Response: HTTP response creation.
+/// - WebSocketUpgrade: Real-time WebSocket connections.
+/// - Hijack: Low-level connection control.
 
-/// Simple HTML page for demonstration
+/// Generates an HTML page that links to all example endpoints.
 // doctag<context-html-homepage>
 String _htmlHomePage() {
   return '''

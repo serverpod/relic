@@ -29,7 +29,7 @@ void main() async {
   }
 }
 
-/// [_serve] is called in each spawned isolate.
+/// Starts a Relic server in each spawned isolate for load balancing.
 Future<void> _serve() async {
   // Create a simple app with logging middleware and an echo endpoint.
   final app =
@@ -43,13 +43,14 @@ Future<void> _serve() async {
   log('serving on ${Isolate.current.debugName}');
 }
 
-/// [_echoRequest] just echoes the path of the request
+/// Echoes the request path and shows which isolate handled it.
 Response _echoRequest(final Request request) {
   // Simulate slow processing to demonstrate load balancing.
   sleep(const Duration(seconds: 1));
   return Response.ok(
     body: Body.fromString(
-      'Request for "${request.url}" handled by isolate ${Isolate.current.debugName}',
+      'Request for "${request.url}" '
+      'handled by isolate ${Isolate.current.debugName}',
     ),
   );
 }

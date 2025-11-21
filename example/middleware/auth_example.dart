@@ -2,7 +2,7 @@ import 'dart:developer';
 import 'package:relic/io_adapter.dart';
 import 'package:relic/relic.dart';
 
-/// Simple authentication middleware
+/// Middleware that validates API keys for authentication.
 // doctag<middleware-auth-basic>
 Middleware authMiddleware() {
   return (final Handler next) {
@@ -21,12 +21,12 @@ Middleware authMiddleware() {
 }
 // end:doctag<middleware-auth-basic>
 
-/// Public handler (no auth needed)
+/// Handler for public endpoints that don't require authentication.
 Future<Response> publicHandler(final Request req) async {
   return Response.ok(body: Body.fromString('This is public!'));
 }
 
-/// Protected handler (needs auth)
+/// Handler for protected endpoints that require authentication.
 Future<Response> protectedHandler(final Request req) async {
   return Response.ok(body: Body.fromString('This is protected!'));
 }

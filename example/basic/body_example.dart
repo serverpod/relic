@@ -77,12 +77,12 @@ Future<void> main() async {
   log('  GET  /logo - Single static file');
 }
 
-/// Basic text response handler
+/// Returns a simple text response.
 Response helloHandler(final Request req) {
   return Response.ok(body: Body.fromString('Hello, World!'));
 }
 
-/// JSON with automatic MIME detection handler
+/// Returns JSON with automatic content-type detection.
 Response dataHandler(final Request req) {
   return Response.ok(
     body: Body.fromString('{"message": "Hello"}'),
@@ -90,7 +90,7 @@ Response dataHandler(final Request req) {
   );
 }
 
-/// Small file handler - read entire file into memory
+/// Serves small files by loading them entirely into memory.
 Future<Response> smallFileHandler(final Request req) async {
   final file = File('example.txt');
 
@@ -103,7 +103,7 @@ Future<Response> smallFileHandler(final Request req) async {
   return Response.ok(body: Body.fromData(bytes));
 }
 
-/// Large file handler - stream for memory efficiency
+/// Streams large files to avoid memory issues.
 Future<Response> largeFileHandler(final Request req) async {
   final file = File('large-file.dat');
 
@@ -123,14 +123,14 @@ Future<Response> largeFileHandler(final Request req) async {
   );
 }
 
-/// Reading request body as string handler
+/// Echoes the request body back as a response.
 Future<Response> echoHandler(final Request req) async {
   final content = await req.readAsString();
 
   return Response.ok(body: Body.fromString('You sent: $content'));
 }
 
-/// JSON API handler
+/// Processes JSON requests and returns structured responses.
 // doctag<body-json-api-handler>
 Future<Response> apiDataHandler(final Request req) async {
   final jsonData = await req.readAsString();
@@ -147,7 +147,7 @@ Future<Response> apiDataHandler(final Request req) async {
 }
 // end:doctag<body-json-api-handler>
 
-/// File upload handler with size validation
+/// Handles file uploads with size validation and streaming.
 // doctag<body-upload-validate-size>
 Future<Response> uploadHandler(final Request req) async {
   const maxFileSize = 10 * 1024 * 1024; // 10MB
@@ -170,7 +170,7 @@ Future<Response> uploadHandler(final Request req) async {
 }
 // end:doctag<body-upload-validate-size>
 
-/// Image response handler with automatic format detection
+/// Serves images with proper content-type headers.
 // doctag<body-image-auto-format>
 Future<Response> imageHandler(final Request req) async {
   final file = File('example/static_files/logo.svg');
@@ -182,7 +182,7 @@ Future<Response> imageHandler(final Request req) async {
 }
 // end:doctag<body-image-auto-format>
 
-/// Streaming response handler with chunked transfer encoding
+/// Demonstrates streaming responses with chunked encoding.
 // doctag<body-streaming-chunked>
 Future<Response> streamHandler(final Request req) async {
   Stream<Uint8List> generateLargeDataset() async* {

@@ -4,7 +4,7 @@ import 'dart:developer';
 import 'package:relic/io_adapter.dart';
 import 'package:relic/relic.dart';
 
-/// Simple CORS middleware
+/// Middleware that handles Cross-Origin Resource Sharing (CORS).
 // doctag<middleware-cors-basic>
 Middleware corsMiddleware() {
   return (final Handler next) {
@@ -39,7 +39,7 @@ Middleware corsMiddleware() {
 }
 // end:doctag<middleware-cors-basic>
 
-/// API handler
+/// Simple API handler that returns JSON data.
 Future<Response> apiHandler(final Request req) async {
   final data = {'message': 'Hello from CORS API!'};
 

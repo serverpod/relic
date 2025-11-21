@@ -2,7 +2,7 @@
 import 'package:relic/io_adapter.dart';
 import 'package:relic/relic.dart';
 
-/// A simple 'Hello World' server.
+/// A simple 'Hello World' server demonstrating basic Relic usage.
 Future<void> main() async {
   // Setup the app.
   final app =
@@ -22,13 +22,13 @@ Future<void> main() async {
   await app.serve();
 }
 
-/// Handles a hello request.
+/// Handles requests to the hello endpoint with path parameters.
 Response hello(final Request req) {
   final name = req.pathParameters[#name];
   final age = int.parse(req.pathParameters[#age]!);
 
   return Response.ok(
-    body: Body.fromString('Hello $name! To think you are $age years old.\n'),
+    body: Body.fromString('Hello, $name! To think you are $age years old.\n'),
   );
 }
 

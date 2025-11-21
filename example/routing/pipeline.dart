@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:relic/io_adapter.dart';
 import 'package:relic/relic.dart';
 
-/// A pipeline 'Hello World' server
+/// Demonstrates using the Pipeline API for request processing.
 // doctag<routing-pipeline-hello-world>
 Future<void> main() async {
   // Build a request processing pipeline with middleware and a handler.

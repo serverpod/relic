@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:relic/io_adapter.dart';
 import 'package:relic/relic.dart';
 
-/// Examples from static-files.md
+/// Demonstrates various static file serving patterns and caching strategies.
 Future<void> main() async {
   final staticDir = Directory('example/static_files');
   final app = RelicApp();
