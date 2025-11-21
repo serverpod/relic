@@ -25,11 +25,7 @@ void main() {
             cacheControl: (_, _) => null,
           ).asHandler;
 
-      final response = await makeRequest(
-        handler,
-        '/static/root.txt',
-        handlerPath: 'static',
-      );
+      final response = await makeRequest(handler, '/root.txt');
       expect(response.statusCode, HttpStatus.ok);
       expect(response.body.contentLength, 8);
       expect(response.readAsString(), completion('root txt'));
@@ -45,11 +41,7 @@ void main() {
             cacheControl: (_, _) => null,
           ).asHandler;
 
-      final response = await makeRequest(
-        handler,
-        '/static/files/with%20space.txt',
-        handlerPath: 'static',
-      );
+      final response = await makeRequest(handler, '/files/with%20space.txt');
       expect(response.statusCode, HttpStatus.ok);
       expect(response.body.contentLength, 18);
       expect(response.readAsString(), completion('with space content'));
@@ -65,11 +57,7 @@ void main() {
             cacheControl: (_, _) => null,
           ).asHandler;
 
-      final response = await makeRequest(
-        handler,
-        '/static/files/with%20space.txt',
-        handlerPath: 'static',
-      );
+      final response = await makeRequest(handler, '/files/with%20space.txt');
       expect(response.statusCode, HttpStatus.ok);
       expect(response.body.contentLength, 18);
       expect(response.readAsString(), completion('with space content'));
@@ -85,11 +73,7 @@ void main() {
             cacheControl: (_, _) => null,
           ).asHandler;
 
-      final response = await makeRequest(
-        handler,
-        '/static/files/test.txt',
-        handlerPath: 'static',
-      );
+      final response = await makeRequest(handler, '/files/test.txt');
       expect(response.statusCode, HttpStatus.ok);
       expect(response.body.contentLength, 16);
       expect(response.readAsString(), completion('test txt content'));
@@ -105,11 +89,7 @@ void main() {
             cacheControl: (_, _) => null,
           ).asHandler;
 
-      final response = await makeRequest(
-        handler,
-        '/static/not_here.txt',
-        handlerPath: 'static',
-      );
+      final response = await makeRequest(handler, '/not_here.txt');
       expect(response.statusCode, HttpStatus.notFound);
     },
   );

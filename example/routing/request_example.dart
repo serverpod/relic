@@ -22,10 +22,10 @@ Future<void> main() async {
   // doctag<requests-path-params-id>
   app.get('/users/:id', (final req) {
     final id = req.pathParameters[#id]!;
-    final url = req.url;
-    final fullUri = req.requestedUri;
+    final matchedPath = req.matchedPath;
+    final fullUri = req.url;
 
-    log('Relative URL: $url, id: $id');
+    log('Matched path: $matchedPath, id: $id');
     log('Full URI: $fullUri');
 
     return Response.ok();

@@ -93,26 +93,22 @@ each request. For example, a routing middleware might choose which handler to
 call based on the request's URI or HTTP method, while a cascading middleware
 might call each one in sequence until one returns a successful response.
 
-Middleware that routes requests between handlers should be sure to update each
-request's [`handlerPath`][handlerpath] and [`url`][url]. This allows inner
-handlers to know where they are in the application so they can do their own
-routing correctly. This can be easily accomplished using
-[`Request.copyWith()`][change]:
+Relic provides built-in routing through the [`Router`][router] class and 
+[`routeWith`][routewith] middleware, which handles path matching and parameter 
+extraction automatically. Custom routing middleware can be created using the 
+[`Request.copyWith()`][change] method:
 
-[handlerpath]:
-  https://pub.dev/documentation/relic/latest/relic/Request/handlerPath.html
-[url]: https://pub.dev/documentation/relic/latest/relic/Request/url.html
+[router]: https://pub.dev/documentation/relic/latest/relic/Router-class.html
+[routewith]: https://pub.dev/documentation/relic/latest/relic/routeWith.html
 [change]: https://pub.dev/documentation/relic/latest/relic/Request/copyWith.html
 
 ```dart
-// In an imaginary routing middleware...
-var component = request.url.pathSegments.first;
-var handler = _handlers[component];
-if (handler == null) return Response.notFound();
+// Using the built-in router
+final router = Router()
+  ..get('/users/:id', userHandler)
+  ..get('/posts/:id', postHandler);
 
-// Create a new request just like this one but with whatever URL comes after
-// [component] instead.
-return handler(request.copyWith(path: component));
+final handler = router.asHandler;
 ```
 
 ## Adapters

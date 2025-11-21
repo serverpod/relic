@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'adapter/adapter.dart';
 import 'body/body.dart';
-import 'context/context.dart';
+import 'context/result.dart';
 import 'handler/handler.dart';
 import 'headers/exception/header_exception.dart';
 import 'headers/standard_headers_extensions.dart';
@@ -177,9 +177,9 @@ void _logError(
   final StackTrace stackTrace,
 ) {
   final buffer = StringBuffer();
-  buffer.write('${request.method} ${request.requestedUri.path}');
-  if (request.requestedUri.query.isNotEmpty) {
-    buffer.write('?${request.requestedUri.query}');
+  buffer.write('${request.method} ${request.url.path}');
+  if (request.url.query.isNotEmpty) {
+    buffer.write('?${request.url.query}');
   }
   buffer.writeln();
   buffer.write(message);

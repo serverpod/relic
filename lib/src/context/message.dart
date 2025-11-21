@@ -1,4 +1,4 @@
-part of 'context.dart';
+part of 'result.dart';
 
 abstract class Message {
   /// The HTTP headers associated with this message.

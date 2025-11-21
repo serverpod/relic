@@ -119,7 +119,7 @@ Hijack customProtocolHandler(final Request req) {
 Future<Response> dataHandler(final Request req) async {
   // Access basic HTTP information
   final method = req.method; // 'GET', 'POST', etc.
-  final path = req.url.path; // '/api/users'
+  final path = req.matchedPath; // '/api/users'
   final query = req.url.query; // 'limit=10&offset=0'
 
   log('method: $method, path: $path, query: $query');

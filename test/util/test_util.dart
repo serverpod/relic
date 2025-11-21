@@ -5,7 +5,7 @@ import 'dart:io';
 import 'package:meta/meta.dart';
 import 'package:relic/io_adapter.dart';
 import 'package:relic/relic.dart';
-import 'package:relic/src/context/context.dart';
+import 'package:relic/src/context/result.dart';
 import 'package:test/test.dart';
 
 final helloBytes = utf8.encode('hello,');
@@ -27,7 +27,7 @@ SyncHandler createSyncHandler({
     return Response(
       statusCode,
       headers: headers ?? Headers.empty(),
-      body: body ?? Body.fromString('Hello from ${req.requestedUri.path}'),
+      body: body ?? Body.fromString('Hello from ${req.url.path}'),
     );
   };
 }

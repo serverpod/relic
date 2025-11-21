@@ -44,11 +44,11 @@ Future<void> _serve() async {
 }
 
 /// [_echoRequest] just echoes the path of the request
-Response _echoRequest(final Request request) {
+Response _echoRequest(final Request req) {
   sleep(const Duration(seconds: 1)); // pretend to be really slow
   return Response.ok(
     body: Body.fromString(
-      'Request for "${request.url}" handled by isolate ${Isolate.current.debugName}',
+      'Request for "${req.url}" handled by isolate ${Isolate.current.debugName}',
     ),
   );
 }

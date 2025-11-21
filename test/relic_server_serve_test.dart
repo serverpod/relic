@@ -71,13 +71,12 @@ void main() {
     await _scheduleServer((final req) {
       expect(req.method, Method.get);
 
-      expect(req.requestedUri, uri);
+      expect(req.url, uri);
 
-      expect(req.url.path, 'foo/bar');
+      expect(req.url.path, '/foo/bar');
       expect(req.url.pathSegments, ['foo', 'bar']);
       expect(req.protocolVersion, '1.1');
       expect(req.url.query, 'qs=value');
-      expect(req.handlerPath, '/');
 
       return syncHandler(req);
     });
@@ -419,7 +418,6 @@ void main() {
                   .bind(controller.stream)
                   .map((final list) => Uint8List.fromList(list)),
             ),
-            context: {'buffer_output': false},
           );
         }),
       );
