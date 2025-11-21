@@ -115,6 +115,15 @@ extension RequestInternal on Request {
   Object get token => _token;
 }
 
+/// Extension methods for [Uri] used in tests and internal utilities.
 extension UriEx on Uri {
+  /// Returns a relative [Uri] containing only the path and query components
+  /// of this [Uri], omitting scheme, host, and port.
+  ///
+  /// Example:
+  /// ```dart
+  /// final absolute = Uri.parse('http://localhost:8080/foo/bar?x=1');
+  /// final relative = absolute.pathAndQuery; // Uri(path: '/foo/bar', query: 'x=1')
+  /// ```
   Uri get pathAndQuery => Uri(path: path, query: query);
 }
