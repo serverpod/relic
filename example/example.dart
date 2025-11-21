@@ -8,7 +8,7 @@ Future<void> main() async {
   final app =
       RelicApp()
         // Route with parameters (:name & :age).
-        ..get('/user/:name/age/:age', hello)
+        ..get('/user/:name/age/:age', helloHandler)
         // Middleware on all paths below '/'.
         ..use('/', logRequests())
         // Custom fallback - optional (default is 404 Not Found).
@@ -23,7 +23,7 @@ Future<void> main() async {
 }
 
 /// Handles requests to the hello endpoint with path parameters.
-Response hello(final Request req) {
+Response helloHandler(final Request req) {
   final name = req.pathParameters[#name];
   final age = int.parse(req.pathParameters[#age]!);
 

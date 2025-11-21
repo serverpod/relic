@@ -6,14 +6,14 @@ import 'package:relic/relic.dart';
 
 // Basic handler that returns a simple greeting.
 // doctag<handler-foundational>
-Response helloHandler(final Request req) {
+Response myHelloWorldHandler(final Request req) {
   return Response.ok(body: Body.fromString('Hello from Relic!'));
 }
 // end:doctag<handler-foundational>
 
 // Handler that demonstrates custom headers and JSON response.
 // doctag<handler-response>
-Response apiResponseHandler(final Request req) {
+Response myApiResponseHandler(final Request req) {
   return Response.ok(
     headers: Headers.build(
       (final MutableHeaders mh) => mh.xPoweredBy = 'Relic',
@@ -25,7 +25,7 @@ Response apiResponseHandler(final Request req) {
 
 // Handler that hijacks the connection for Server-Sent Events (SSE) streaming.
 // doctag<handler-hijack-sse>
-Hijack sseHandler(final Request req) {
+Hijack mySseHandler(final Request req) {
   return Hijack((final channel) async {
     // Send Server-Sent Events.
     channel.sink.add(utf8.encode('data: Connected'));
@@ -45,14 +45,14 @@ Hijack sseHandler(final Request req) {
 
 // Simple synchronous handler that returns immediately.
 // doctag<handler-sync>
-Response syncHandler(final Request req) {
+Response mySyncHandler(final Request req) {
   return Response.ok(body: Body.fromString('Fast response'));
 }
 // end:doctag<handler-sync>
 
 // Asynchronous handler that simulates delayed processing.
 // doctag<handler-async>
-Future<Response> asyncHandler(final Request req) async {
+Future<Response> myAsyncHandler(final Request req) async {
   final data = await Future<String>.delayed(
     const Duration(milliseconds: 250),
     () => 'Hello from Relic!',
@@ -64,7 +64,7 @@ Future<Response> asyncHandler(final Request req) async {
 
 // Handler that demonstrates accessing request context information.
 // doctag<handler-context>
-Response contextInfoHandler(final Request req) {
+Response myContextInfoHandler(final Request req) {
   final method = req.method;
   final url = req.url;
   final userAgent = req.headers.userAgent;
@@ -81,12 +81,12 @@ Response contextInfoHandler(final Request req) {
 Future<void> main() async {
   final app =
       RelicApp()
-        ..get('/hello', helloHandler)
-        ..get('/api', apiResponseHandler)
-        ..get('/sse', sseHandler)
-        ..get('/sync', syncHandler)
-        ..get('/async', asyncHandler)
-        ..get('/context', contextInfoHandler)
+        ..get('/hello', myHelloWorldHandler)
+        ..get('/api', myApiResponseHandler)
+        ..get('/sse', mySseHandler)
+        ..get('/sync', mySyncHandler)
+        ..get('/async', myAsyncHandler)
+        ..get('/context', myContextInfoHandler)
         ..fallback = respondWith(
           (final req) => Response.notFound(body: Body.fromString('Not Found')),
         );
