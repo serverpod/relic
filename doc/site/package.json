@@ -21,7 +21,7 @@
     "@docusaurus/preset-classic": "3.9.2",
     "@docusaurus/theme-mermaid": "^3.9.1",
     "@mdx-js/react": "^3.1.0",
-    "blended-include-code-plugin": "^0.1.2",
+    "blended-include-code-plugin": "github:serverpod/docusaurus-code-plugin#main",
     "clsx": "^2.1.1",
     "docusaurus-theme-github-codeblock": "^2.0.2",
     "node-fetch": "^3.3.2",
