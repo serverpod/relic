@@ -14,7 +14,7 @@ final class AcceptHeader {
   final List<MediaRange> mediaRanges;
 
   /// Constructs an [AcceptHeader] instance with the specified media ranges.
-  AcceptHeader({required final List<MediaRange> mediaRanges})
+  AcceptHeader.mediaRanges(final List<MediaRange> mediaRanges)
     : assert(mediaRanges.isNotEmpty),
       mediaRanges = List.unmodifiable(mediaRanges);
 
@@ -30,7 +30,7 @@ final class AcceptHeader {
 
     final mediaRanges = splitValues.map(MediaRange.parse).toList();
 
-    return AcceptHeader(mediaRanges: mediaRanges);
+    return AcceptHeader.mediaRanges(mediaRanges);
   }
 
   /// Converts the [AcceptHeader] instance into a string representation suitable for HTTP headers.
