@@ -681,9 +681,9 @@ void main() {
       (
         Headers.connection,
         (final h) =>
-            h.connection = const ConnectionHeader(
-              directives: [ConnectionHeaderType.keepAlive],
-            ),
+            h.connection = const ConnectionHeader.directives([
+              ConnectionHeaderType.keepAlive,
+            ]),
       ),
       (
         Headers.contentDisposition,
