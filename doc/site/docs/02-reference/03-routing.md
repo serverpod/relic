@@ -2,7 +2,7 @@
 sidebar_position: 3
 ---
 
-# Basic routing
+# Routing
 
 _Routing_ maps each incoming request to a handler based on its path (URI) and HTTP method.
 
@@ -78,6 +78,53 @@ Handle multiple HTTP methods with the same handler:
 **Handle both GET and POST requests to `/admin`:**
 
 GITHUB_CODE_BLOCK lang="dart" title="GET|POST /admin" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/routing/basic_routing.dart) doctag="routing-basic-anyof-admin"
+
+## Path parameters, wildcards, and tail segments
+
+Relic's router supports three types of variable path segments:
+
+- **Path parameters (`:id`)** capture named segments and are available via `request.pathParameters`.
+- **Wildcards (`*`)** match any single path segment but do not capture a value.
+- **Tail segments (`/**`)** capture the rest of the path and expose it through `request.remainingPath`.
+
+### Path parameters (`:id`)
+
+Use a colon-prefixed name to capture a segment. Access the value with the `Symbol`-based key that matches the parameter name.
+
+```dart
+final app = RelicApp()
+  ..get('/users/:id', (final Request request) {
+    final userId = request.pathParameters[#id];
+    return Response.ok(
+      body: Body.fromString('User $userId'),
+    );
+  });
+```
+
+### Wildcards (`*`)
+
+Use `*` to match any single segment without naming it. This is useful when the value does not matter, such as matching `/files/<anything>/download`.
+
+```dart
+app.get('/files/*/download', (final Request request) {
+  return Response.ok(body: Body.fromString('Downloading file...'));
+});
+```
+
+### Tail segments (`/**`)
+
+Use `/**` at the end of a pattern to match the entire remaining path. The unmatched portion is available via `request.remainingPath`.
+
+```dart
+app.get('/static/**', (final Request request) {
+  final relativeAssetPath = request.remainingPath.toString();
+  return Response.ok(
+    body: Body.fromString('Serve $relativeAssetPath'),
+  );
+});
+```
+
+Tail segments are required when serving directories so that the handler knows which file the client requested. A route like `/static` without `/**` would not expose the requested child path.
 
 ## Examples & further reading
 

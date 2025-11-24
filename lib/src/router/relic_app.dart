@@ -4,6 +4,17 @@ part of 'router.dart';
 ///
 /// [RelicApp] extends [RelicRouter] and provides a convenient way to create,
 /// configure, and run a Relic HTTP server.
+///
+/// ## Hot Reload Support
+///
+/// When running with `--enable-vm-service`, [RelicApp] automatically listens for
+/// hot-reload requests. When a hot reload is triggered, it will re-configure
+/// the internal router with the latest route definitions.
+///
+/// This allows you to modify your route handlers and see the changes immediately
+/// without restarting the server. Note that this only works for changes to the
+/// route configuration and handlers - changes to server state or global variables
+/// may require a full restart.
 final class RelicApp implements RelicRouter {
   RelicServer? _server;
   StreamSubscription? _reloadSubscription;

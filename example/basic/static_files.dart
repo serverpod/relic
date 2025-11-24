@@ -5,7 +5,7 @@ import 'package:relic/relic.dart';
 
 /// Demonstrates various static file serving patterns and caching strategies.
 Future<void> main() async {
-  final staticDir = Directory('example/static_files');
+  final staticDir = Directory('example/_static_files');
   final app = RelicApp();
 
   // Serve all files from a directory with basic caching.
@@ -28,7 +28,7 @@ Future<void> main() async {
   app.get(
     '/logo.svg',
     StaticHandler.file(
-      File('example/static_files/logo.svg'),
+      File('example/_static_files/logo.svg'),
       cacheControl:
           (final req, final fileInfo) => CacheControlHeader(maxAge: 3600),
     ).asHandler,
@@ -45,8 +45,10 @@ Future<void> main() async {
       staticDir,
       cacheControl:
           (final req, final fileInfo) => CacheControlHeader(
-            maxAge: 3600, // Cache for 1 hour.
-            publicCache: true, // Enable CDN and proxy caching.
+            // Cache for 1 hour.
+            maxAge: 3600,
+            // Enable CDN and proxy caching.
+            publicCache: true,
           ),
     ).asHandler,
   );
@@ -62,9 +64,11 @@ Future<void> main() async {
       staticDir,
       cacheControl:
           (final req, final fileInfo) => CacheControlHeader(
-            maxAge: 31536000, // Cache for 1 year.
+            // Cache for 1 year.
+            maxAge: 31536000,
             publicCache: true,
-            immutable: true, // Tell browsers never to revalidate.
+            // Tell browsers never to revalidate.
+            immutable: true,
           ),
     ).asHandler,
   );
@@ -104,7 +108,8 @@ Future<void> main() async {
       staticDir,
       cacheControl:
           (final req, final fileInfo) => CacheControlHeader(
-            maxAge: 31536000, // Safe to cache long-term with versioning.
+            // Safe to cache long term with versioning.
+            maxAge: 31536000,
             publicCache: true,
             immutable: true,
           ),

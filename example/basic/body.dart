@@ -47,7 +47,7 @@ Future<void> main() async {
     {Method.get, Method.head},
     '/static/**',
     StaticHandler.directory(
-      Directory('example/static_files'),
+      Directory('example/_static_files'),
       cacheControl: (_, _) => CacheControlHeader(maxAge: 3600),
     ).asHandler,
   );
@@ -56,7 +56,7 @@ Future<void> main() async {
   app.get(
     '/logo',
     StaticHandler.file(
-      File('example/static_files/logo.svg'),
+      File('example/_static_files/logo.svg'),
       cacheControl: (_, _) => CacheControlHeader(maxAge: 86400),
     ).asHandler,
   );
@@ -150,7 +150,8 @@ Future<Response> apiDataHandler(final Request req) async {
 /// Handles file uploads with size validation and streaming.
 // doctag<body-upload-validate-size>
 Future<Response> uploadHandler(final Request req) async {
-  const maxFileSize = 10 * 1024 * 1024; // 10MB
+  // Limit uploads to 10 MB.
+  const maxFileSize = 10 * 1024 * 1024;
   final contentLength = req.body.contentLength;
 
   if (contentLength != null && contentLength > maxFileSize) {
@@ -173,7 +174,7 @@ Future<Response> uploadHandler(final Request req) async {
 /// Serves images with proper content-type headers.
 // doctag<body-image-auto-format>
 Future<Response> imageHandler(final Request req) async {
-  final file = File('example/static_files/logo.svg');
+  final file = File('example/_static_files/logo.svg');
   final imageBytes = await file.readAsBytes();
 
   return Response.ok(
