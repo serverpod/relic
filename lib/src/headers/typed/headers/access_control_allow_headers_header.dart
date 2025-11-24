@@ -9,9 +9,8 @@ final class AccessControlAllowHeadersHeader extends WildcardListHeader<String> {
   static const codec = HeaderCodec(_parse, _encode);
 
   /// Constructs an instance allowing specific headers to be allowed.
-  AccessControlAllowHeadersHeader.headers({
-    required final Iterable<String> headers,
-  }) : super(List.from(headers));
+  AccessControlAllowHeadersHeader.headers(final Iterable<String> headers)
+    : super(List.from(headers));
 
   /// Constructs an instance allowing all headers to be allowed (`*`).
   const AccessControlAllowHeadersHeader.wildcard() : super.wildcard();
@@ -34,7 +33,7 @@ final class AccessControlAllowHeadersHeader extends WildcardListHeader<String> {
     if (parsed.isWildcard) {
       return const AccessControlAllowHeadersHeader.wildcard();
     } else {
-      return AccessControlAllowHeadersHeader.headers(headers: parsed.values);
+      return AccessControlAllowHeadersHeader.headers(parsed.values);
     }
   }
 
