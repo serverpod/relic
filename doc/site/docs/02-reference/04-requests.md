@@ -35,7 +35,7 @@ The `Request` object exposes several important properties:
 
 The request method indicates what action the client wants to perform. Relic uses a type-safe `Method` enum rather than strings, which prevents typos and provides better IDE support.
 
-GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/routing/request_response_example.dart) doctag="basic-request-response" title="HTTP method"
+GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/routing/request_response.dart) doctag="basic-request-response" title="HTTP method"
 
 Common methods include `Method.get`, `Method.post`, `Method.put`, `Method.delete`, `Method.patch`, and `Method.options`.
 
@@ -43,7 +43,7 @@ Common methods include `Method.get`, `Method.post`, `Method.put`, `Method.delete
 
 The `url` property provides the relative path and query parameters from the current handler's perspective. This is particularly useful when your handler is mounted at a specific path prefix.
 
-GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/routing/request_response_example.dart) doctag="path-params-complete" title="Path parameters and URL"
+GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/routing/request_response.dart) doctag="path-params-complete" title="Path parameters and URL"
 
 ## Working with query parameters
 
@@ -53,7 +53,7 @@ Query parameters are key-value pairs appended to the URL after a question mark (
 
 You can access individual query parameter values through the `queryParameters` map. Each parameter is returned as a string, or null if not present.
 
-GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/routing/request_response_example.dart) doctag="query-params-complete" title="Query parameters"
+GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/routing/request_response.dart) doctag="query-params-complete" title="Query parameters"
 
 When a client requests `/search?query=relic&page=2`, the query variable will contain `"relic"` and the page variable will contain `"2"`. Both values are strings, so you'll need to parse them if you need other types like integers.
 
@@ -61,7 +61,7 @@ When a client requests `/search?query=relic&page=2`, the query variable will con
 
 Some query parameters can appear multiple times in a URL to represent lists or arrays. The `queryParametersAll` map provides access to all values for each parameter name.
 
-GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/routing/request_response_example.dart) doctag="query-multi-complete" title="Multiple query values"
+GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/routing/request_response.dart) doctag="query-multi-complete" title="Multiple query values"
 
 For a request to `/filter?tag=dart&tag=server&tag=web`, the tags variable will be a list containing `["dart", "server", "web"]`. This allows you to handle multiple selections or filters cleanly.
 
@@ -73,7 +73,7 @@ HTTP headers carry metadata about the request, such as content type, authenticat
 
 Instead of working with raw string values, Relic's type-safe headers give you properly typed objects. This eliminates parsing errors and provides better code completion in your IDE.
 
-GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/routing/request_response_example.dart) doctag="headers-complete" title="Type-safe headers"
+GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/routing/request_response.dart) doctag="headers-complete" title="Type-safe headers"
 
 In this example, the `mimeType` is automatically parsed into a `MimeType` object, and `contentLength` is parsed into an integer rather than a string. This type safety helps catch errors at compile time.
 
@@ -81,7 +81,7 @@ In this example, the `mimeType` is automatically parsed into a `MimeType` object
 
 The `authorization` header receives special handling in Relic to distinguish between different authentication schemes like Bearer tokens and Basic authentication.
 
-GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/routing/request_response_example.dart) doctag="auth-complete" title="Authorization header parsing"
+GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/routing/request_response.dart) doctag="auth-complete" title="Authorization header parsing"
 
 Relic automatically parses the authorization header and creates the appropriate header object type, making it easy to handle different authentication schemes in a type-safe manner.
 
@@ -109,7 +109,7 @@ final body = await request.readAsString();
 
 The most common way to read the body is as a string, which works well for JSON, XML, or plain text data. The `readAsString` method automatically handles character encoding based on the Content-Type header.
 
-GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/routing/request_response_example.dart) doctag="body-handling-complete" title="Read body as string"
+GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/routing/request_response.dart) doctag="body-handling-complete" title="Read body as string"
 
 The method defaults to UTF-8 encoding if no encoding is specified in the request headers.
 
@@ -117,7 +117,7 @@ The method defaults to UTF-8 encoding if no encoding is specified in the request
 
 For JSON APIs, you'll typically read the body as a string and then decode it using Dart's `jsonDecode` function. This two-step process gives you control over error handling.
 
-GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/routing/request_response_example.dart) doctag="json-api-complete" title="Parse JSON body with validation"
+GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/routing/request_response.dart) doctag="json-api-complete" title="Parse JSON body with validation"
 
 This example shows proper validation of both the JSON structure and the required fields, providing clear error messages when something is wrong.
 
@@ -125,7 +125,7 @@ This example shows proper validation of both the JSON structure and the required
 
 For large files or binary data, you can read the body as a stream of bytes to avoid loading everything into memory at once. This is essential for handling file uploads or large payloads efficiently.
 
-GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/routing/request_response_example.dart) doctag="upload-complete" title="Read body as byte stream"
+GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/routing/request_response.dart) doctag="upload-complete" title="Read body as byte stream"
 
 By processing the data in chunks, your server can handle large uploads without running out of memory.
 
@@ -137,7 +137,7 @@ Before attempting to read the body, you can check if it's empty using the `isEmp
 `isEmpty` is based on the known content length when available. For requests using chunked transfer encoding (unknown length up front), `isEmpty` may return `false` even if no data is ultimately sent. Prefer defensive reads for streaming uploads.
 :::
 
-GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/routing/request_response_example.dart) doctag="upload-complete" title="Body empty check"
+GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/routing/request_response.dart) doctag="upload-complete" title="Body empty check"
 
 This check doesn't consume the body stream, so you can still read the body afterward.
 
@@ -153,7 +153,7 @@ Always validate all incoming data since query parameters, headers, and body cont
 
 ### Examples
 
-- **[Requests example](https://github.com/serverpod/relic/blob/main/example/routing/request_response_example.dart)** - Comprehensive example covering complete request-response cycles.
+- **[Requests example](https://github.com/serverpod/relic/blob/main/example/routing/request_response.dart)** - Comprehensive example covering complete request-response cycles.
 
 ### API documentation
 
