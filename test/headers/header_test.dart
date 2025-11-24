@@ -731,11 +731,9 @@ void main() {
       (
         Headers.contentSecurityPolicy,
         (final h) =>
-            h.contentSecurityPolicy = ContentSecurityPolicyHeader(
-              directives: [
-                ContentSecurityPolicyDirective(name: 'foo', values: []),
-              ],
-            ),
+            h.contentSecurityPolicy = ContentSecurityPolicyHeader.directives([
+              ContentSecurityPolicyDirective(name: 'foo', values: []),
+            ]),
       ),
       (
         Headers.cookie,
