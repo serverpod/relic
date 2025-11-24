@@ -578,9 +578,9 @@ void main() {
       (
         Headers.acceptLanguage,
         (final h) =>
-            h.acceptLanguage = AcceptLanguageHeader.languages(
-              languages: [const LanguageQuality('en', 1.0)],
-            ),
+            h.acceptLanguage = AcceptLanguageHeader.languages([
+              const LanguageQuality('en', 1.0),
+            ]),
       ),
       (
         Headers.acceptRanges,
