@@ -49,19 +49,19 @@ These are convenience methods for the core `.add()` method:
 
 **Respond with `Hello World!` on the homepage:**
 
-GITHUB_CODE_BLOCK lang="dart" title="GET /" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/routing/basic_routing.dart) doctag="routing-basic-get-root"
+GITHUB_CODE_BLOCK lang="dart" title="GET /" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/routing/basic_routing.dart) doctag="routing-get-root"
 
 **Respond to a POST request on the root route:**
 
-GITHUB_CODE_BLOCK lang="dart" title="POST /" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/routing/basic_routing.dart) doctag="routing-basic-post-root"
+GITHUB_CODE_BLOCK lang="dart" title="POST /" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/routing/basic_routing.dart) doctag="routing-post-root"
 
 **Respond to a PUT request to the `/user` route:**
 
-GITHUB_CODE_BLOCK lang="dart" title="PUT /user" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/routing/basic_routing.dart) doctag="routing-basic-put-user"
+GITHUB_CODE_BLOCK lang="dart" title="PUT /user" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/routing/basic_routing.dart) doctag="routing-put-user"
 
 **Respond to a DELETE request to the `/user` route:**
 
-GITHUB_CODE_BLOCK lang="dart" title="DELETE /user" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/routing/basic_routing.dart) doctag="routing-basic-delete-user"
+GITHUB_CODE_BLOCK lang="dart" title="DELETE /user" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/routing/basic_routing.dart) doctag="routing-delete-user"
 
 ### Using the `add` method
 
@@ -69,7 +69,7 @@ This is what the convenience methods call internally:
 
 **Respond to a PATCH request using the core `.add()` method:**
 
-GITHUB_CODE_BLOCK lang="dart" title="PATCH /api" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/routing/basic_routing.dart) doctag="routing-basic-patch-api"
+GITHUB_CODE_BLOCK lang="dart" title="PATCH /api" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/routing/basic_routing.dart) doctag="routing-patch-api"
 
 ### Using `anyOf` for multiple methods
 
@@ -77,7 +77,7 @@ Handle multiple HTTP methods with the same handler:
 
 **Handle both GET and POST requests to `/admin`:**
 
-GITHUB_CODE_BLOCK lang="dart" title="GET|POST /admin" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/routing/basic_routing.dart) doctag="routing-basic-anyof-admin"
+GITHUB_CODE_BLOCK lang="dart" title="GET|POST /admin" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/routing/basic_routing.dart) doctag="routing-anyof-admin"
 
 ## Path parameters, wildcards, and tail segments
 

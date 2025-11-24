@@ -15,7 +15,7 @@ Pipeline is a legacy pattern for composing middleware, see [Middleware](./middle
 
 The `Pipeline` class is a helper that makes it easy to compose a set of `Middleware` and a `Handler`. It provides a fluent API for building middleware chains that process requests and responses in a specific order.
 
-GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/middleware/pipeline_example.dart) doctag="pipeline-usage" title="Pipeline usage"
+GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/middleware/pipeline.dart) doctag="pipeline-usage" title="Pipeline usage"
 
 ## How Pipeline works
 
@@ -32,11 +32,11 @@ This creates a nested structure where each middleware wraps the next, forming a 
 
 Old Pipeline approach, typically used in Shelf:
 
-GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/middleware/pipeline_example.dart) doctag="pipeline-usage" title="Pipeline usage"
+GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/middleware/pipeline.dart) doctag="pipeline-usage" title="Pipeline usage"
 
 New router.use() approach:
 
-GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/middleware/pipeline_example.dart) doctag="router-usage" title="router.use() usage"
+GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/middleware/pipeline.dart) doctag="router-usage" title="router.use() usage"
 
 The new approach is more concise, provides better path-specific middleware control, and integrates more naturally with Relic's routing system.
 
@@ -44,7 +44,7 @@ The new approach is more concise, provides better path-specific middleware contr
 
 ### Examples
 
-- **[Pipeline example](https://github.com/serverpod/relic/blob/main/example/middleware/pipeline_example.dart)** - Pipeline vs router comparison.
+- **[Pipeline example](https://github.com/serverpod/relic/blob/main/example/middleware/pipeline.dart)** - Pipeline vs router comparison.
 
 ### API documentation
 

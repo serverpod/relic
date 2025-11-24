@@ -44,13 +44,13 @@ Context properties provide the following methods:
 
 Set values in middleware or handlers using the `[]` operator:
 
-GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/context/context_property_example.dart) doctag="context-prop-request-id" title="Add request ID to context"
+GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/context/context_property.dart) doctag="context-prop-request-id" title="Add request ID to context"
 
 ### Reading properties
 
 Read values with `property[req]` (throws if missing) or `property.getOrNull(req)`:
 
-GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/context/context_property_example.dart) doctag="context-prop-use-request-id" title="Use request ID from context"
+GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/context/context_property.dart) doctag="context-prop-use-request-id" title="Use request ID from context"
 
 :::info Property lifetime
 Context properties exist **only for the duration of the request**. Once the response is sent, they're automatically cleaned up. Values are scoped to each request and do not leak between requests.
@@ -60,7 +60,7 @@ Context properties exist **only for the duration of the request**. Once the resp
 
 ### Examples
 
-- **[Context Property Example](https://github.com/serverpod/relic/blob/main/example/context/context_property_example.dart)** - Shows how to use context properties for request IDs and user authentication.
+- **[Context Property Example](https://github.com/serverpod/relic/blob/main/example/context/context_property.dart)** - Shows how to use context properties for request IDs and user authentication.
 
 ### API documentation
 

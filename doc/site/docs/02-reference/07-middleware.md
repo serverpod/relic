@@ -173,7 +173,7 @@ Middleware layers wrap each other like an onion. Each layer may:
 - Rewrite parts of the request before calling `next(newRequest)`.
 - Prefer attaching derived/computed data to the context via `ContextProperty` rather than rewriting the request.
 
-GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/middleware/auth_example.dart) doctag="middleware-auth-basic" title="Basic auth middleware"
+GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/middleware/auth.dart) doctag="middleware-auth-basic" title="Basic auth middleware"
 
 :::warning Avoid rewriting `request.url` in middleware attached with `router.use`.
 When middleware is attached with `router.use(...)`, the request has already been routed. Changing `request.url` at this point will not re-route the request and will not update `request.pathParameters` or related routing metadata.
@@ -185,7 +185,7 @@ CORS is a security feature that allows web applications to make requests to reso
 
 In Relic you can create a CORS middleware that handles preflight requests and adds CORS headers to the response:
 
-GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/middleware/cors_example.dart) doctag="middleware-cors-basic" title="CORS middleware"
+GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/middleware/cors.dart) doctag="middleware-cors-basic" title="CORS middleware"
 
 ## Pipeline (legacy)
 
@@ -209,10 +209,10 @@ With these patterns and examples, you can build robust, maintainable web applica
 
 ### Examples
 
-- **[Middleware example](https://github.com/serverpod/relic/blob/main/example/middleware/middleware_example.dart)** - Basic middleware patterns.
-- **[Auth example](https://github.com/serverpod/relic/blob/main/example/middleware/auth_example.dart)** - Authentication middleware.
-- **[CORS example](https://github.com/serverpod/relic/blob/main/example/middleware/cors_example.dart)** - CORS handling.
-- **[Pipeline example](https://github.com/serverpod/relic/blob/main/example/middleware/pipeline_example.dart)** - Pipeline vs router comparison.
+- **[Middleware example](https://github.com/serverpod/relic/blob/main/example/middleware/middleware.dart)** - Basic middleware patterns.
+- **[Auth example](https://github.com/serverpod/relic/blob/main/example/middleware/auth.dart)** - Authentication middleware.
+- **[CORS example](https://github.com/serverpod/relic/blob/main/example/middleware/cors.dart)** - CORS handling.
+- **[Pipeline example](https://github.com/serverpod/relic/blob/main/example/middleware/pipeline.dart)** - Pipeline vs router comparison.
 
 ### API documentation
 
