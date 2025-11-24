@@ -717,7 +717,7 @@ void main() {
       (
         Headers.contentLanguage,
         (final h) =>
-            h.contentLanguage = ContentLanguageHeader(languages: ['en']),
+            h.contentLanguage = ContentLanguageHeader.languages(['en']),
       ),
       (Headers.contentLength, (final h) => h.contentLength = 1202),
       (
