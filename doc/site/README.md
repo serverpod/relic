@@ -13,7 +13,7 @@ brew install node
 Run `npm install` from the `docs/site` directory:
 
 ```bash
-cd docs/site
+cd doc/site
 npm install
 ```
 
