@@ -10,17 +10,17 @@ Make sure that you have Node.js installed on your computer.
 brew install node
 ```
 
-Run `npm install` from the `docs/site` directory:
+Run `make install` from the `doc/site` directory:
 
 ```bash
-cd docs/site
-npm install
+cd doc/site
+make install
 ```
 
 ### Local Development
 
 ```bash
-npm start
+make start
 ```
 
 This command starts a local development server and opens up a browser window. Most changes are reflected live without having to restart the server.
@@ -30,7 +30,7 @@ This command starts a local development server and opens up a browser window. Mo
 Make sure that the documentation is all up-to-date then run:
 
 ```bash
-npm run docusaurus docs:version X.X.X
+make version X.X.X
 ```
 
 ### Amend the latest version
@@ -38,7 +38,7 @@ npm run docusaurus docs:version X.X.X
 If you need to make changes to the latest version, you can do so by removing the latest version from `versions.json` and adding it again running the create version command with the same version number.
 
 ```bash
-npm run docusaurus docs:version X.X.X
+make version X.X.X
 ```
 
 ### Add redirects
