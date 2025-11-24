@@ -740,9 +740,9 @@ void main() {
       (
         Headers.cookie,
         (final h) =>
-            h.cookie = CookieHeader(
-              cookies: [Cookie(name: 'foo', value: 'bar')],
-            ),
+            h.cookie = CookieHeader.cookies([
+              Cookie(name: 'foo', value: 'bar'),
+            ]),
       ),
       (
         Headers.crossOriginEmbedderPolicy,
