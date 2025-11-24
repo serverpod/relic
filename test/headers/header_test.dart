@@ -710,9 +710,9 @@ void main() {
       (
         Headers.contentEncoding,
         (final h) =>
-            h.contentEncoding = ContentEncodingHeader(
-              encodings: [ContentEncoding.gzip],
-            ),
+            h.contentEncoding = ContentEncodingHeader.encodings([
+              ContentEncoding.gzip,
+            ]),
       ),
       (
         Headers.contentLanguage,
