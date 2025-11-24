@@ -886,9 +886,9 @@ void main() {
       (
         Headers.upgrade,
         (final h) =>
-            h.upgrade = UpgradeHeader(
-              protocols: [UpgradeProtocol(protocol: 'foo')],
-            ),
+            h.upgrade = UpgradeHeader.protocols([
+              UpgradeProtocol(protocol: 'foo'),
+            ]),
       ),
       (Headers.userAgent, (final h) => h.userAgent = 'null'),
       (Headers.vary, (final h) => h.vary = VaryHeader.wildcard()),
