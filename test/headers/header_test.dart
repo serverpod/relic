@@ -813,11 +813,9 @@ void main() {
       (
         Headers.permissionsPolicy,
         (final h) =>
-            h.permissionsPolicy = PermissionsPolicyHeader(
-              directives: [
-                const PermissionsPolicyDirective(name: 'foo', values: []),
-              ],
-            ),
+            h.permissionsPolicy = PermissionsPolicyHeader.directives([
+              const PermissionsPolicyDirective(name: 'foo', values: []),
+            ]),
       ),
       (
         Headers.proxyAuthenticate,

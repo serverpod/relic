@@ -20,10 +20,10 @@ final class PermissionsPolicyHeader {
   final List<PermissionsPolicyDirective> directives;
 
   /// Constructs a [PermissionsPolicyHeader] instance with the specified directives.
-  PermissionsPolicyHeader({
-    required final List<PermissionsPolicyDirective> directives,
-  }) : assert(directives.isNotEmpty),
-       directives = List.unmodifiable(directives);
+  PermissionsPolicyHeader.directives(
+    final List<PermissionsPolicyDirective> directives,
+  ) : assert(directives.isNotEmpty),
+      directives = List.unmodifiable(directives);
 
   /// Parses the Permissions-Policy header value and returns a [PermissionsPolicyHeader] instance.
   ///
@@ -53,7 +53,7 @@ final class PermissionsPolicyHeader {
       directives.add(PermissionsPolicyDirective(name: name, values: values));
     }
 
-    return PermissionsPolicyHeader(directives: directives);
+    return PermissionsPolicyHeader.directives(directives);
   }
 
   /// Converts the [PermissionsPolicyHeader] instance into a string
