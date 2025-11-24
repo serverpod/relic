@@ -24,7 +24,7 @@ Middleware addServerHeader() {
 
 /// Basic handler that returns a greeting message.
 Future<Response> simpleHandler(final Request req) async {
-  return Response.ok(body: Body.fromString('Hello from Pipeline!'));
+  return Response.ok(body: Body.fromString('Hello from the shared handler!'));
 }
 
 /// Compares Pipeline and RelicApp approaches for request handling.
@@ -43,9 +43,7 @@ void main() async {
       RelicApp()
         ..use('/', logRequests())
         ..use('/', addServerHeader())
-        ..get('/router', (final Request req) async {
-          return Response.ok(body: Body.fromString('Hello from Router!'));
-        });
+        ..get('/router', simpleHandler);
   // end:doctag<router-usage>
 
   // Combine both approaches in a single application for comparison.

@@ -19,7 +19,7 @@ GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/
 3. **Static Handler**: `StaticHandler.directory()` creates a handler that serves files from the specified directory with automatic MIME type detection.
 4. **Cache Control**: Sets a cache duration of 86400 seconds (1 day), instructing browsers and CDNs to cache the files.
 
-This serves all files from the `static_files` directory under `/basic/` URLs with 1-day caching. For example:
+This serves all files from the `_static_files` directory under `/basic/` URLs with 1-day caching. For example:
 
 - `static_files/hello.txt` → `http://localhost:8080/basic/hello.txt`
 - `static_files/logo.svg` → `http://localhost:8080/basic/logo.svg`

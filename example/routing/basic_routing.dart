@@ -23,48 +23,48 @@ Future<void> main() async {
 
   // Convenience methods that wrap the core .add() method for common HTTP verbs.
   // Handle GET requests to the root path.
-  // doctag<routing-basic-get-root>
+  // doctag<routing-get-root>
   app.get('/', (final req) {
     return Response.ok(body: Body.fromString('Hello World!'));
   });
-  // end:doctag<routing-basic-get-root>
+  // end:doctag<routing-get-root>
 
   // Handle POST requests to the root path.
-  // doctag<routing-basic-post-root>
+  // doctag<routing-post-root>
   app.post('/', (final req) {
     return Response.ok(body: Body.fromString('Got a POST request'));
   });
-  // end:doctag<routing-basic-post-root>
+  // end:doctag<routing-post-root>
 
   // Handle PUT requests to the /user path.
-  // doctag<routing-basic-put-user>
+  // doctag<routing-put-user>
   app.put('/user', (final req) {
     return Response.ok(body: Body.fromString('Got a PUT request at /user'));
   });
-  // end:doctag<routing-basic-put-user>
+  // end:doctag<routing-put-user>
 
   // Handle DELETE requests to the /user path.
-  // doctag<routing-basic-delete-user>
+  // doctag<routing-delete-user>
   app.delete('/user', (final req) {
     return Response.ok(body: Body.fromString('Got a DELETE request at /user'));
   });
-  // end:doctag<routing-basic-delete-user>
+  // end:doctag<routing-delete-user>
 
   // Use the core .add method directly for more control.
   // This demonstrates the underlying method that convenience methods use.
-  // doctag<routing-basic-patch-api>
+  // doctag<routing-patch-api>
   app.add(Method.patch, '/api', (final req) {
     return Response.ok(body: Body.fromString('Got a PATCH request at /api'));
   });
-  // end:doctag<routing-basic-patch-api>
+  // end:doctag<routing-patch-api>
 
   // Use .anyOf to handle multiple HTTP methods with a single handler.
-  // doctag<routing-basic-anyof-admin>
+  // doctag<routing-anyof-admin>
   app.anyOf({Method.get, Method.post}, '/admin', (final req) {
     final method = req.method.name.toUpperCase();
     return Response.ok(body: Body.fromString('Admin page - $method request'));
   });
-  // end:doctag<routing-basic-anyof-admin>
+  // end:doctag<routing-anyof-admin>
 
   // Set up a fallback handler for routes that don't match any defined routes.
   app.fallback = respondWith((final _) => Response.notFound());

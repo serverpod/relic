@@ -54,7 +54,7 @@ Future<void> main() async {
   await serve(router.asHandler, InternetAddress.anyIPv4, 8080);
 
   print('Serving at http://localhost:8080');
-  // Check the _example_ directory for other examples.
+  // Check the example directory for other examples.
 }
 
 ResponseContext hello(final RequestContext ctx) {
