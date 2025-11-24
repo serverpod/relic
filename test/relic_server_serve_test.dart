@@ -391,9 +391,9 @@ void main() {
           body: Body.empty(),
           headers: Headers.build(
             (final mh) =>
-                mh.transferEncoding = TransferEncodingHeader(
-                  encodings: [TransferEncoding.chunked],
-                ),
+                mh.transferEncoding = TransferEncodingHeader.encodings([
+                  TransferEncoding.chunked,
+                ]),
           ),
         ),
       );

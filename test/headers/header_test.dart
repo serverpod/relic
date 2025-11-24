@@ -879,9 +879,9 @@ void main() {
       (
         Headers.transferEncoding,
         (final h) =>
-            h.transferEncoding = TransferEncodingHeader(
-              encodings: [TransferEncoding.gzip],
-            ),
+            h.transferEncoding = TransferEncodingHeader.encodings([
+              TransferEncoding.gzip,
+            ]),
       ),
       (
         Headers.upgrade,
