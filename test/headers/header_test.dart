@@ -874,7 +874,7 @@ void main() {
               maxAge: 42,
             ),
       ),
-      (Headers.te, (final h) => h.te = TEHeader(encodings: [TeQuality('foo')])),
+      (Headers.te, (final h) => h.te = TEHeader.encodings([TeQuality('foo')])),
       (Headers.trailer, (final h) => h.trailer = ['foo']),
       (
         Headers.transferEncoding,
