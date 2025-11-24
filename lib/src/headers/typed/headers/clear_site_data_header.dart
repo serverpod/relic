@@ -8,9 +8,7 @@ final class ClearSiteDataHeader extends WildcardListHeader<ClearSiteDataType> {
   static const codec = HeaderCodec(_parse, _encode);
 
   /// Constructs an instance allowing specific data types to be cleared.
-  ClearSiteDataHeader.dataTypes({
-    required final List<ClearSiteDataType> dataTypes,
-  }) : super(dataTypes);
+  ClearSiteDataHeader.dataTypes(super.dataTypes);
 
   /// Constructs an instance allowing all data types to be cleared (`*`).
   const ClearSiteDataHeader.wildcard() : super.wildcard();
@@ -48,7 +46,7 @@ final class ClearSiteDataHeader extends WildcardListHeader<ClearSiteDataType> {
     }
 
     final dataTypes = splitValues.map(ClearSiteDataType.parse).toList();
-    return ClearSiteDataHeader.dataTypes(dataTypes: dataTypes);
+    return ClearSiteDataHeader.dataTypes(dataTypes);
   }
 
   static List<String> encodeHeader(final ClearSiteDataHeader header) {
