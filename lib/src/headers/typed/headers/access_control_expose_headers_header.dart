@@ -10,9 +10,8 @@ final class AccessControlExposeHeadersHeader
   static const codec = HeaderCodec(_parse, _encode);
 
   /// Constructs an instance allowing specific headers to be exposed.
-  AccessControlExposeHeadersHeader.headers({
-    required final Iterable<String> headers,
-  }) : super(List.from(headers));
+  AccessControlExposeHeadersHeader.headers(final Iterable<String> headers)
+    : super(List.from(headers));
 
   /// Constructs an instance allowing all headers to be exposed (`*`).
   const AccessControlExposeHeadersHeader.wildcard() : super.wildcard();
@@ -39,7 +38,7 @@ final class AccessControlExposeHeadersHeader
     if (parsed.isWildcard) {
       return const AccessControlExposeHeadersHeader.wildcard();
     } else {
-      return AccessControlExposeHeadersHeader.headers(headers: parsed.values);
+      return AccessControlExposeHeadersHeader.headers(parsed.values);
     }
   }
 

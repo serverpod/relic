@@ -21,10 +21,10 @@ final class ContentSecurityPolicyHeader {
 
   /// Constructs a [ContentSecurityPolicyHeader] instance with the specified
   /// directives.
-  ContentSecurityPolicyHeader({
-    required final List<ContentSecurityPolicyDirective> directives,
-  }) : assert(directives.isNotEmpty),
-       directives = List.unmodifiable(directives);
+  ContentSecurityPolicyHeader.directives(
+    final List<ContentSecurityPolicyDirective> directives,
+  ) : assert(directives.isNotEmpty),
+      directives = List.unmodifiable(directives);
 
   /// Parses a CSP header value and returns a [ContentSecurityPolicyHeader]
   /// instance.
@@ -46,7 +46,7 @@ final class ContentSecurityPolicyHeader {
           return ContentSecurityPolicyDirective(name: name, values: values);
         }).toList();
 
-    return ContentSecurityPolicyHeader(directives: directives);
+    return ContentSecurityPolicyHeader.directives(directives);
   }
 
   /// Converts the [ContentSecurityPolicyHeader] instance into a string

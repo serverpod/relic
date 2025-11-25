@@ -15,7 +15,7 @@ final class TEHeader {
   final List<TeQuality> encodings;
 
   /// Constructs a [TEHeader] instance with the specified list of encodings.
-  TEHeader({required final List<TeQuality> encodings})
+  TEHeader.encodings(final List<TeQuality> encodings)
     : assert(encodings.isNotEmpty),
       encodings = List.unmodifiable(encodings);
 
@@ -48,7 +48,7 @@ final class TEHeader {
           return TeQuality(encoding, quality);
         }).toList();
 
-    return TEHeader(encodings: encodings);
+    return TEHeader.encodings(encodings);
   }
 
   /// Converts the [TEHeader] instance into a string representation

@@ -16,7 +16,7 @@ final class ContentLanguageHeader {
   final List<String> languages;
 
   /// Constructs a [ContentLanguageHeader] instance with the specified language codes.
-  ContentLanguageHeader({required final Iterable<String> languages})
+  ContentLanguageHeader.languages(final Iterable<String> languages)
     : assert(languages.isNotEmpty),
       languages = List.unmodifiable(languages);
 
@@ -37,7 +37,7 @@ final class ContentLanguageHeader {
           return language;
         }).toList();
 
-    return ContentLanguageHeader(languages: languages);
+    return ContentLanguageHeader.languages(languages);
   }
 
   /// Converts the [ContentLanguageHeader] instance into a string representation

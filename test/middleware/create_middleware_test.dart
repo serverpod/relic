@@ -17,7 +17,7 @@ void main() {
             createSyncHandler(
               headers: Headers.build(
                 (final mh) =>
-                    mh.from = FromHeader(emails: ['next@serverpod.dev']),
+                    mh.from = FromHeader.emails(['next@serverpod.dev']),
               ),
             ),
           );
@@ -148,7 +148,7 @@ void main() {
               createSyncHandler(
                 headers: Headers.build(
                   (final mh) =>
-                      mh.from = FromHeader(emails: ['handler@serverpod.dev']),
+                      mh.from = FromHeader.emails(['handler@serverpod.dev']),
                 ),
               ),
             );
@@ -181,7 +181,7 @@ void main() {
                 () => createSyncHandler(
                   headers: Headers.build(
                     (final mh) =>
-                        mh.from = FromHeader(emails: ['handler@serverpod.dev']),
+                        mh.from = FromHeader.emails(['handler@serverpod.dev']),
                   ),
                 )(req),
               );
@@ -332,6 +332,6 @@ Response _failHandler(final Request request) => fail('should never get here');
 final Response _middlewareResponse = Response.ok(
   body: Body.fromString('middleware content'),
   headers: Headers.build(
-    (final mh) => mh.from = FromHeader(emails: ['middleware@serverpod.dev']),
+    (final mh) => mh.from = FromHeader.emails(['middleware@serverpod.dev']),
   ),
 );

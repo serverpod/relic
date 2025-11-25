@@ -8,9 +8,7 @@ final class AcceptLanguageHeader extends WildcardListHeader<LanguageQuality> {
   static const codec = HeaderCodec(_parse, _encode);
 
   /// Constructs an instance with the given languages
-  AcceptLanguageHeader.languages({
-    required final List<LanguageQuality> languages,
-  }) : super(languages);
+  AcceptLanguageHeader.languages(super.languages);
 
   /// Constructs an instance with a wildcard language
   const AcceptLanguageHeader.wildcard() : super.wildcard();
@@ -29,7 +27,7 @@ final class AcceptLanguageHeader extends WildcardListHeader<LanguageQuality> {
     if (parsed.isWildcard) {
       return const AcceptLanguageHeader.wildcard();
     } else {
-      return AcceptLanguageHeader.languages(languages: parsed.values);
+      return AcceptLanguageHeader.languages(parsed.values);
     }
   }
 
