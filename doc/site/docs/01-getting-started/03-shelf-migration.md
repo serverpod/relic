@@ -73,7 +73,7 @@ void main() async {
 
 Relic:
 
-GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/basic/relic_shelf.dart) doctag="complete-relic"
+GITHUB_CODE_BLOCK lang="dart" file="../_example/basic/relic_shelf.dart" doctag="complete-relic"
 
 ### 3. Update handler signatures
 
@@ -247,7 +247,7 @@ var handler = webSocketHandler((webSocket) {
 
 Relic has WebSockets built-in without the need for a separate package:
 
-GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/basic/relic_shelf.dart) doctag="websocket-relic"
+GITHUB_CODE_BLOCK lang="dart" file="../_example/basic/relic_shelf.dart" doctag="websocket-relic"
 
 ## Example comparison
 
@@ -277,7 +277,7 @@ void main() async {
 
 ### Relic version
 
-GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/basic/relic_shelf.dart) doctag="complete-relic"
+GITHUB_CODE_BLOCK lang="dart" file="../_example/basic/relic_shelf.dart" doctag="complete-relic"
 
 :::info Difference from Shelf's pipeline
 Unlike Shelf's `Pipeline().addMiddleware()`, which runs for _all_ requests (including 404s), Relic's `.use('/', ...)` only executes middleware for requests that match a route. Unmatched requests (404s) bypass middleware and go directly to the fallback handler.
