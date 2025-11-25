@@ -9,8 +9,7 @@ final class AccessControlAllowMethodsHeader extends WildcardListHeader<Method> {
   static const codec = HeaderCodec(_parse, _encode);
 
   /// Constructs an instance allowing specific methods to be allowed.
-  AccessControlAllowMethodsHeader.methods({required final List<Method> methods})
-    : super(methods);
+  AccessControlAllowMethodsHeader.methods(super.methods);
 
   /// Constructs an instance allowing all methods to be allowed (`*`).
   const AccessControlAllowMethodsHeader.wildcard() : super.wildcard();
@@ -30,7 +29,7 @@ final class AccessControlAllowMethodsHeader extends WildcardListHeader<Method> {
     if (parsed.isWildcard) {
       return const AccessControlAllowMethodsHeader.wildcard();
     } else {
-      return AccessControlAllowMethodsHeader.methods(methods: parsed.values);
+      return AccessControlAllowMethodsHeader.methods(parsed.values);
     }
   }
 

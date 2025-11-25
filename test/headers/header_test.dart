@@ -567,9 +567,9 @@ void main() {
       (
         Headers.acceptEncoding,
         (final h) =>
-            h.acceptEncoding = AcceptEncodingHeader.encodings(
-              encodings: [EncodingQuality('jpeg', 0.5)],
-            ),
+            h.acceptEncoding = AcceptEncodingHeader.encodings([
+              EncodingQuality('jpeg', 0.5),
+            ]),
       ),
       (
         Headers.acceptLanguage,
@@ -578,9 +578,9 @@ void main() {
       (
         Headers.acceptLanguage,
         (final h) =>
-            h.acceptLanguage = AcceptLanguageHeader.languages(
-              languages: [const LanguageQuality('en', 1.0)],
-            ),
+            h.acceptLanguage = AcceptLanguageHeader.languages([
+              const LanguageQuality('en', 1.0),
+            ]),
       ),
       (
         Headers.acceptRanges,
@@ -600,7 +600,7 @@ void main() {
         Headers.accessControlAllowHeaders,
         (final h) =>
             h.accessControlAllowHeaders =
-                AccessControlAllowHeadersHeader.headers(headers: ['foo']),
+                AccessControlAllowHeadersHeader.headers(['foo']),
       ),
       (
         Headers.accessControlAllowMethods,
@@ -612,7 +612,7 @@ void main() {
         Headers.accessControlAllowMethods,
         (final h) =>
             h.accessControlAllowMethods =
-                AccessControlAllowMethodsHeader.methods(methods: Method.values),
+                AccessControlAllowMethodsHeader.methods(Method.values),
       ),
       (
         Headers.accessControlAllowOrigin,
@@ -625,7 +625,7 @@ void main() {
         Headers.accessControlExposeHeaders,
         (final h) =>
             h.accessControlExposeHeaders =
-                AccessControlExposeHeadersHeader.headers(headers: ['foo']),
+                AccessControlExposeHeadersHeader.headers(['foo']),
       ),
       (Headers.accessControlMaxAge, (final h) => h.accessControlMaxAge = 42),
       (
@@ -674,9 +674,9 @@ void main() {
       (
         Headers.clearSiteData,
         (final h) =>
-            h.clearSiteData = ClearSiteDataHeader.dataTypes(
-              dataTypes: [ClearSiteDataType.cache],
-            ),
+            h.clearSiteData = ClearSiteDataHeader.dataTypes([
+              ClearSiteDataType.cache,
+            ]),
       ),
       (
         Headers.connection,
