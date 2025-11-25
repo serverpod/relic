@@ -19,11 +19,11 @@ While Shelf has been a solid foundation for Dart web applications, several areas
 
 - Strongly typed APIs with validated HTTP headers.
 - Simplified interface for setting up routing and middleware.
-- HTTP bodies have a unified encoding model.
+- Unified encoding model for HTTP bodies.
 - Built-in trie-based router, which improves performance.
-- Static file handling supports cache busting and etags.
+- Static file handling with support for cache busting and etags.
 - Built-in support for WebSockets.
-- Improvments in hot reload and running with multiple isolates.
+- Improvements in hot reload and running with multiple isolates.
 
 ## Quick start
 
@@ -77,6 +77,16 @@ Response helloHandler(final Request req) {
 ```
 
 Run it with `dart run bin/hello_world.dart` and visit `http://localhost:8080/user/Nova/age/27`.
+
+## Additional examples
+
+Relic comes with an extensive set of examples. To run them, clone the Relic repository from GitHub and navigate to the `example` directory.
+
+```bash
+git clone https://github.com/serverpod/relic.git
+cd relic/example
+dart example.dart
+```
 
 ## Migrating from Shelf
 
