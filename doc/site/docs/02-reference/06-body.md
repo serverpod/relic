@@ -260,7 +260,7 @@ if (length != null) {
 
 Relic's stream-based approach makes it practical to handle large payloads without exhausting memory, since data is processed incrementally. This pattern is especially helpful for uploads and transformations that work chunk by chunk.
 
-GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/basic/body.dart) doctag="body-upload-validate-size" title="Validate upload size"
+GITHUB_CODE_BLOCK lang="dart" file="../_example/basic/body.dart" doctag="body-upload-validate-size" title="Validate upload size"
 
 ### One-time read constraint
 
@@ -288,25 +288,25 @@ try {
 
 This example reads JSON input from the request, logs it for observability, and returns a JSON response. The body helper detects JSON automatically, and the explicit MIME type makes the intent clear to both clients and maintainers:
 
-GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/basic/body.dart) doctag="body-json-api-handler" title="JSON API handler"
+GITHUB_CODE_BLOCK lang="dart" file="../_example/basic/body.dart" doctag="body-json-api-handler" title="JSON API handler"
 
 ### File upload handler
 
 This handler validates the upload size before reading the stream, then writes the content directly to disk. Streaming avoids buffering the entire file in memory and keeps the server responsive under heavy load:
 
-GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/basic/body.dart) doctag="body-upload-validate-size" title="File upload handler"
+GITHUB_CODE_BLOCK lang="dart" file="../_example/basic/body.dart" doctag="body-upload-validate-size" title="File upload handler"
 
 ### Image response
 
 Here the server reads an SVG file from disk and returns it as binary data. The SVG type must be set explicitly with `MimeType.parse('image/svg+xml')` so clients receive the correct Content-Type.
 
-GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/basic/body.dart) doctag="body-image-auto-format" title="Serve image (SVG) response"
+GITHUB_CODE_BLOCK lang="dart" file="../_example/basic/body.dart" doctag="body-image-auto-format" title="Serve image (SVG) response"
 
 ### Streaming response
 
 This endpoint produces a stream of JSON lines to demonstrate chunked transfer encoding. Clients can start processing data as soon as it becomes available, which is useful for progress updates and long-running computations:
 
-GITHUB_CODE_BLOCK lang="dart" [src](https://raw.githubusercontent.com/serverpod/relic/main/example/basic/body.dart) doctag="body-streaming-chunked" title="Streaming response (chunked)"
+GITHUB_CODE_BLOCK lang="dart" file="../_example/basic/body.dart" doctag="body-streaming-chunked" title="Streaming response (chunked)"
 
 ## Examples & further reading
 
