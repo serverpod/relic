@@ -19,7 +19,6 @@ abstract class ReadOnlyAccessor<T extends Object, K, R> {
   const ReadOnlyAccessor(this.key, this.decode);
 }
 
-
 /// Holds the externalized state for [ReadOnlyAccessor] instances.
 ///
 /// This class stores the raw values and caches decoded results to avoid
@@ -65,4 +64,3 @@ class AccessorState<K, R> {
     }
   }
 }
-

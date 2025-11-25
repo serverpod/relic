@@ -8,7 +8,7 @@ Future<void> main() async {
   // Capture a named path parameter and read it from the request.
   // doctag<routing-path-params-id>
   app.get('/users/:id', (final req) {
-    final userId = req.pathParameters[#id];
+    final userId = req.rawPathParameters[#id];
 
     return Response.ok(body: Body.fromString('User $userId'));
   });

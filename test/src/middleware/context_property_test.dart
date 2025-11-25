@@ -35,21 +35,18 @@ void main() {
       expect(result, isNull);
     });
 
-    test(
-      'when a value is set for the context and then retrieved using getOrNull, '
-      'then the originally set value is returned.',
-      () {
-        const value = 'test value';
-        stringProperty[request] = value;
-        final retrievedValue = stringProperty[request];
-        expect(retrievedValue, value);
-      },
-    );
+    test('when a value is set for the context and then retrieved using [], '
+        'then the originally set value is returned.', () {
+      const value = 'test value';
+      stringProperty[request] = value;
+      final retrievedValue = stringProperty[request];
+      expect(retrievedValue, value);
+    });
   });
 
   group('Given a Request and a ContextProperty for which no value is set,', () {
     test(
-      'when the property has a debug name and the value is accessed using [], '
+      'when the property has a debug name and the value is accessed using get, '
       'then a StateError is thrown with a message containing the debug name.',
       () {
         final property = ContextProperty<String>('debugNameProperty');
@@ -70,7 +67,7 @@ void main() {
     );
 
     test(
-      'when the property (e.g., for int type) has no debug name and the value is accessed using [], '
+      'when the property (e.g., for int type) has no debug name and the value is accessed using get, '
       'then a StateError is thrown with a message containing the type name.',
       () {
         final property = ContextProperty<int>(); // No debug name

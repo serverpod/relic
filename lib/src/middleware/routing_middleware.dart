@@ -134,7 +134,7 @@ extension RoutingRequestEx on Request {
   NormalizedPath get matchedPath =>
       _routingContext[this]?.matched ?? NormalizedPath.empty;
 
-  /// Path parameters extracted from the matched route.
+  /// Raw path parameters extracted from the matched route.
   ///
   /// Parameters are defined in route patterns using `:` prefix (e.g., `:id`).
   /// The map keys are [Symbol]s of the parameter names, and values are the
@@ -143,14 +143,14 @@ extension RoutingRequestEx on Request {
   /// Example:
   /// ```dart
   /// router.get('/users/:id', (req) {
-  ///   final id = req.pathParameters[#id]; // Extract 'id' parameter
+  ///   final id = req.rawPathParameters[#id]; // Extract 'id' parameter
   ///   return Response.ok();
   /// });
   /// ```
   ///
   /// Returns an empty map if no parameters were extracted or if the request
   /// was not routed through a router.
-  Map<Symbol, String> get pathParameters =>
+  Map<Symbol, String> get rawPathParameters =>
       _routingContext[this]?.parameters ?? const <Symbol, String>{};
 
   /// The portion of the request path that was not consumed by the matched route.

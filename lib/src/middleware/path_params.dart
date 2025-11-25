@@ -11,8 +11,7 @@ typedef RawPathParam = String;
 /// ```dart
 /// const idParam = IntPathParam(#id);
 /// router.get('/users/:id', (req) {
-///   final params = PathParameters(req.pathParameters);
-///   final id = params(idParam); // typed as int
+///   int id = req.pathParameters(idParam); // typed as int
 ///   return Response.ok();
 /// });
 /// ```
@@ -39,4 +38,24 @@ final class IntPathParam extends PathParam<int> {
 
 final class DoublePathParam extends PathParam<double> {
   const DoublePathParam(final Symbol key) : super(key, double.parse);
+}
+
+final _pathParameters = ContextProperty<PathParameters>();
+
+extension PathParametersRequestEx on Request {
+  /// Typed path parameters extracted from the matched route.
+  ///
+  /// Parameters are defined in route patterns using `:` prefix (e.g., `:id`).
+  /// Access with [PathParam].
+  ///
+  /// Example:
+  /// ```dart
+  /// const idParam = IntPathParam(#id);
+  /// router.get('/users/:id', (req) {
+  ///   int id = req.pathParameters(idParam); // typed as int
+  ///   return Response.ok();
+  /// });
+  /// ```
+  PathParameters get pathParameters =>
+      _pathParameters[this] ??= PathParameters(rawPathParameters);
 }

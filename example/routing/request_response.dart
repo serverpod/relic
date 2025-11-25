@@ -22,7 +22,7 @@ Future<void> main() async {
   // Extract and use path parameters from URLs.
   // doctag<path-params-complete>
   app.get('/users/:id', (final req) {
-    final id = req.pathParameters[#id]!;
+    final id = req.rawPathParameters[#id]!;
     final matchedPath = req.matchedPath;
     final fullUri = req.url;
 

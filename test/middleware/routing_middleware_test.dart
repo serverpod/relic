@@ -26,7 +26,7 @@ void main() {
           'Then the handler receives correct path parameters', () async {
         Map<Symbol, String>? capturedParams;
         Future<Result> testHandler(final Request req) async {
-          capturedParams = req.pathParameters;
+          capturedParams = req.rawPathParameters;
           return Response(200);
         }
 
@@ -51,7 +51,7 @@ void main() {
         () async {
           Map<Symbol, String>? capturedParams;
           Future<Response> testHandler(final Request req) async {
-            capturedParams = req.pathParameters;
+            capturedParams = req.rawPathParameters;
             return Response(200);
           }
 
@@ -73,12 +73,12 @@ void main() {
       test(
         'Given RoutingMiddleware and a request that does not match any route, '
         'When the middleware processes the request, '
-        'Then the next handler is called and pathParameters is empty',
+        'Then the next handler is called and rawPathParameters is empty',
         () async {
           bool nextCalled = false;
           Future<Response> nextHandler(final Request req) async {
             nextCalled = true;
-            expect(req.pathParameters, isEmpty);
+            expect(req.rawPathParameters, isEmpty);
             return Response(404);
           }
 
@@ -118,7 +118,7 @@ void main() {
 
           router1.add(Method.get, '/router1/:item', (final Request req) async {
             handler1Called = true;
-            params1 = req.pathParameters;
+            params1 = req.rawPathParameters;
             return Response(201);
           });
           router2.add(
@@ -164,7 +164,7 @@ void main() {
           );
           router2.add(Method.get, '/router2/:data', (final Request req) async {
             handler2Called = true;
-            params2 = req.pathParameters;
+            params2 = req.rawPathParameters;
             return Response(202);
           });
 
@@ -241,7 +241,7 @@ void main() {
             final Request req,
           ) async {
             nestedHandlerCalled = true;
-            capturedParams = req.pathParameters;
+            capturedParams = req.rawPathParameters;
             return Response(200);
           });
 
@@ -286,7 +286,7 @@ void main() {
             final Request req,
           ) async {
             deeplyNestedHandlerCalled = true;
-            capturedParams = req.pathParameters;
+            capturedParams = req.rawPathParameters;
             return Response(200);
           });
 
@@ -328,7 +328,7 @@ void main() {
 
           subRouter.add(Method.get, '/:id/end', (final Request req) async {
             // sub-router uses :id
-            capturedParams = req.pathParameters;
+            capturedParams = req.rawPathParameters;
             return Response(200);
           });
 
