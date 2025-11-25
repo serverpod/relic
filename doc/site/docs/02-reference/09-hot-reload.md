@@ -12,6 +12,12 @@ Open the settings for the Dart plugin in your IDE and and make sure that _Hot Re
 
 ![Hot reload on save](/img/hot-reload/plugin-settings.png)
 
+Or, if you prefer, you can edit the `settings.json` directly:
+
+```json
+"dart.hotReloadOnSave": "manual",
+```
+
 Now, start the server in _Debug_ mode from your IDE. This will enable the VM service and your IDE will be able to connect to it.
 
 ## Enabling hot reload through the command line
