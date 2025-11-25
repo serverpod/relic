@@ -35,10 +35,8 @@ Context properties provide the following methods:
 | Method | Description | Returns |
 | ------ | ----------- | ------- |
 | `property[req] = value` | Set value for request | `T` (non-null) |
-| `property[req]` | Read value or throw if missing | `T` (non-null) |
-| `property.getOrNull(req)` | Read value from request | `T?` (nullable) |
-| `property.exists(req)` | Check if value is set | `bool` |
-| `property.clear(req)` | Remove value for request | `void` |
+| `property[req]` | Read value from request | `T?` (nullable) |
+| `property.get(req)` | Read value or throw if missing | `T` (non-null) |
 
 ### Adding properties
 
@@ -48,7 +46,7 @@ GITHUB_CODE_BLOCK lang="dart" file="../_example/context/context_property.dart" d
 
 ### Reading properties
 
-Read values with `property[req]` (throws if missing) or `property.getOrNull(req)`:
+Read values with `property[req]` (returns null if missing) or `property.get(req)` (throws if missing):
 
 GITHUB_CODE_BLOCK lang="dart" file="../_example/context/context_property.dart" doctag="context-prop-use-request-id" title="Use request ID from context"
 

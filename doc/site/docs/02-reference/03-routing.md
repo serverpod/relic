@@ -83,7 +83,7 @@ GITHUB_CODE_BLOCK lang="dart" title="GET|POST /admin" file="../_example/routing/
 
 Relic's router supports three types of variable path segments:
 
-- **Path parameters (`:id`)** capture named segments and are available via `request.pathParameters`.
+- **Path parameters (`:id`)** capture named segments and are available via `request.rawPathParameters`.
 - **Wildcards (`*`)** match any single path segment but do not capture a value.
 - **Tail segments (`/**`)** capture the rest of the path and expose it through `request.remainingPath`.
 
@@ -94,7 +94,7 @@ Use a colon-prefixed name to capture a segment. Access the value with the `Symbo
 ```dart
 final app = RelicApp()
   ..get('/users/:id', (final Request request) {
-    final userId = request.pathParameters[#id];
+    final userId = request.rawPathParameters[#id];
     return Response.ok(
       body: Body.fromString('User $userId'),
     );
