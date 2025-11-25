@@ -3,7 +3,7 @@ import 'package:relic/src/context/result.dart';
 import 'package:test/test.dart';
 
 void main() {
-  group('Given a Request, when copyWith is called with a new url,', () {
+  group('Given a Request, when copyWith is called with new headers,', () {
     late Request originalRequest;
     late Request newRequest;
     late Object token;
@@ -15,9 +15,10 @@ void main() {
         Object(),
       );
       token = originalRequest.token;
-      newRequest = originalRequest.copyWith(
-        url: Uri.parse('http://test.com/newpath'),
-      );
+      final newHeaders = Headers.fromMap({
+        'foo': ['bar'],
+      });
+      newRequest = originalRequest.copyWith(headers: newHeaders);
     });
 
     test('then it returns a Request instance', () {
@@ -67,29 +68,32 @@ void main() {
       });
 
       test('then it simplifies middleware request rewriting pattern', () {
-        final rewrittenRequest = originalRequest.copyWith(
-          url: Uri.parse('http://test.com/rewritten'),
-        );
+        final headers = Headers.fromMap({
+          'foo': ['bar'],
+        });
+        final rewrittenRequest = originalRequest.copyWith(headers: headers);
         expect(rewrittenRequest, isA<Request>());
-        expect(rewrittenRequest.url, Uri.parse('http://test.com/rewritten'));
+        expect(rewrittenRequest.headers, headers);
         expect(rewrittenRequest.token, same(token));
       });
 
       test(
         'then it maintains the same token across multiple transformations',
         () {
-          final request1 = originalRequest.copyWith(
-            url: Uri.parse('http://test.com/step1'),
-          );
+          final headers1 = Headers.fromMap({
+            'foo': ['bar'],
+          });
+          final request1 = originalRequest.copyWith(headers: headers1);
 
-          final request2 = request1.copyWith(
-            url: Uri.parse('http://test.com/step2'),
-          );
+          final headers2 = Headers.fromMap({
+            'bar': ['foo'],
+          });
+          final request2 = request1.copyWith(headers: headers2);
 
           expect(originalRequest.token, same(token));
           expect(request1.token, same(token));
           expect(request2.token, same(token));
-          expect(request2.url, Uri.parse('http://test.com/step2'));
+          expect(request2.headers, headers2);
         },
       );
     },

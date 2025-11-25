@@ -91,10 +91,10 @@ class Request extends Message {
   ///
   /// All parameters are optional. If not provided, the original values are used.
   @override
-  Request copyWith({final Headers? headers, final Uri? url, final Body? body}) {
+  Request copyWith({final Headers? headers, final Body? body}) {
     return Request._(
       method,
-      url ?? this.url,
+      url,
       token,
       headers: headers ?? this.headers,
       protocolVersion: protocolVersion,
