@@ -14,7 +14,7 @@ final class CookieHeader {
   final List<Cookie> cookies;
 
   /// Constructs a [CookieHeader] instance with the specified cookies.
-  CookieHeader({required final List<Cookie> cookies})
+  CookieHeader.cookies(final List<Cookie> cookies)
     : assert(cookies.isNotEmpty),
       cookies = List.unmodifiable(cookies);
 
@@ -39,7 +39,7 @@ final class CookieHeader {
       );
     }
 
-    return CookieHeader(cookies: cookies);
+    return CookieHeader.cookies(cookies);
   }
 
   Cookie? getCookie(final String name) {

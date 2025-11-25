@@ -135,9 +135,9 @@ void main() {
       response.applyHeaders(
         Headers.build(
           (final mh) =>
-              mh.transferEncoding = TransferEncodingHeader(
-                encodings: [TransferEncoding.identity],
-              ),
+              mh.transferEncoding = TransferEncodingHeader.encodings([
+                TransferEncoding.identity,
+              ]),
         ),
         Body.fromDataStream(const Stream.empty()),
       );
@@ -155,9 +155,9 @@ void main() {
       response.applyHeaders(
         Headers.build(
           (final mh) =>
-              mh.transferEncoding = TransferEncodingHeader(
-                encodings: [TransferEncoding.chunked],
-              ),
+              mh.transferEncoding = TransferEncodingHeader.encodings([
+                TransferEncoding.chunked,
+              ]),
         ),
         Body.fromDataStream(
           Stream.fromIterable([

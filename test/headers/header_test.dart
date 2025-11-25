@@ -681,9 +681,9 @@ void main() {
       (
         Headers.connection,
         (final h) =>
-            h.connection = const ConnectionHeader(
-              directives: [ConnectionHeaderType.keepAlive],
-            ),
+            h.connection = const ConnectionHeader.directives([
+              ConnectionHeaderType.keepAlive,
+            ]),
       ),
       (
         Headers.contentDisposition,
@@ -710,14 +710,14 @@ void main() {
       (
         Headers.contentEncoding,
         (final h) =>
-            h.contentEncoding = ContentEncodingHeader(
-              encodings: [ContentEncoding.gzip],
-            ),
+            h.contentEncoding = ContentEncodingHeader.encodings([
+              ContentEncoding.gzip,
+            ]),
       ),
       (
         Headers.contentLanguage,
         (final h) =>
-            h.contentLanguage = ContentLanguageHeader(languages: ['en']),
+            h.contentLanguage = ContentLanguageHeader.languages(['en']),
       ),
       (Headers.contentLength, (final h) => h.contentLength = 1202),
       (
@@ -731,18 +731,16 @@ void main() {
       (
         Headers.contentSecurityPolicy,
         (final h) =>
-            h.contentSecurityPolicy = ContentSecurityPolicyHeader(
-              directives: [
-                ContentSecurityPolicyDirective(name: 'foo', values: []),
-              ],
-            ),
+            h.contentSecurityPolicy = ContentSecurityPolicyHeader.directives([
+              ContentSecurityPolicyDirective(name: 'foo', values: []),
+            ]),
       ),
       (
         Headers.cookie,
         (final h) =>
-            h.cookie = CookieHeader(
-              cookies: [Cookie(name: 'foo', value: 'bar')],
-            ),
+            h.cookie = CookieHeader.cookies([
+              Cookie(name: 'foo', value: 'bar'),
+            ]),
       ),
       (
         Headers.crossOriginEmbedderPolicy,
@@ -768,7 +766,7 @@ void main() {
       (Headers.expires, (final h) => h.expires = DateTime.utc(2025, 9, 23)),
       (
         Headers.from,
-        (final h) => h.from = FromHeader(emails: ['info@serverpod.com']),
+        (final h) => h.from = FromHeader.emails(['info@serverpod.com']),
       ),
       (Headers.host, (final h) => h.host = HostHeader('www.example.com', 80)),
       (
@@ -815,11 +813,9 @@ void main() {
       (
         Headers.permissionsPolicy,
         (final h) =>
-            h.permissionsPolicy = PermissionsPolicyHeader(
-              directives: [
-                const PermissionsPolicyDirective(name: 'foo', values: []),
-              ],
-            ),
+            h.permissionsPolicy = PermissionsPolicyHeader.directives([
+              const PermissionsPolicyDirective(name: 'foo', values: []),
+            ]),
       ),
       (
         Headers.proxyAuthenticate,
@@ -874,21 +870,21 @@ void main() {
               maxAge: 42,
             ),
       ),
-      (Headers.te, (final h) => h.te = TEHeader(encodings: [TeQuality('foo')])),
+      (Headers.te, (final h) => h.te = TEHeader.encodings([TeQuality('foo')])),
       (Headers.trailer, (final h) => h.trailer = ['foo']),
       (
         Headers.transferEncoding,
         (final h) =>
-            h.transferEncoding = TransferEncodingHeader(
-              encodings: [TransferEncoding.gzip],
-            ),
+            h.transferEncoding = TransferEncodingHeader.encodings([
+              TransferEncoding.gzip,
+            ]),
       ),
       (
         Headers.upgrade,
         (final h) =>
-            h.upgrade = UpgradeHeader(
-              protocols: [UpgradeProtocol(protocol: 'foo')],
-            ),
+            h.upgrade = UpgradeHeader.protocols([
+              UpgradeProtocol(protocol: 'foo'),
+            ]),
       ),
       (Headers.userAgent, (final h) => h.userAgent = 'null'),
       (Headers.vary, (final h) => h.vary = VaryHeader.wildcard()),

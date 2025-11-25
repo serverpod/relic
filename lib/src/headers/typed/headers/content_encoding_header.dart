@@ -19,7 +19,7 @@ final class ContentEncodingHeader {
 
   /// Constructs a [ContentEncodingHeader] instance with the specified content
   /// encodings.
-  ContentEncodingHeader({required final List<ContentEncoding> encodings})
+  ContentEncodingHeader.encodings(final List<ContentEncoding> encodings)
     : assert(encodings.isNotEmpty),
       encodings = List.unmodifiable(encodings);
 
@@ -36,7 +36,7 @@ final class ContentEncodingHeader {
     final parsedEncodings =
         splitValues.map((final e) => ContentEncoding.parse(e)).toList();
 
-    return ContentEncodingHeader(encodings: parsedEncodings);
+    return ContentEncodingHeader.encodings(parsedEncodings);
   }
 
   /// Checks if the Content-Encoding contains a specific encoding.

@@ -16,7 +16,7 @@ final class TransferEncodingHeader {
   final List<TransferEncoding> encodings;
 
   /// Constructs a [TransferEncodingHeader] instance with the specified transfer encodings.
-  TransferEncodingHeader({required final List<TransferEncoding> encodings})
+  TransferEncodingHeader.encodings(final List<TransferEncoding> encodings)
     : encodings = List.unmodifiable(_reorderEncodings(encodings)) {
     if (encodings.isEmpty) {
       throw ArgumentError.value(encodings, 'encodings', 'cannot be empty');
@@ -34,7 +34,7 @@ final class TransferEncodingHeader {
 
     final encodings = splitValues.map(TransferEncoding.parse).toList();
 
-    return TransferEncodingHeader(encodings: encodings);
+    return TransferEncodingHeader.encodings(encodings);
   }
 
   /// Converts the [TransferEncodingHeader] instance into a string

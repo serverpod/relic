@@ -15,7 +15,7 @@ final class UpgradeHeader {
   final List<UpgradeProtocol> protocols;
 
   /// Constructs an [UpgradeHeader] instance with the specified protocols.
-  UpgradeHeader({required final List<UpgradeProtocol> protocols})
+  UpgradeHeader.protocols(final List<UpgradeProtocol> protocols)
     : assert(protocols.isNotEmpty),
       protocols = List.unmodifiable(protocols);
 
@@ -33,7 +33,7 @@ final class UpgradeHeader {
             .map((final protocol) => UpgradeProtocol.parse(protocol))
             .toList();
 
-    return UpgradeHeader(protocols: protocols);
+    return UpgradeHeader.protocols(protocols);
   }
 
   /// Converts the [UpgradeHeader] instance into a string representation

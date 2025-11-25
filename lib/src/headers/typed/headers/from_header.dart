@@ -16,7 +16,7 @@ final class FromHeader {
   final List<String> emails;
 
   /// Private constructor for initializing the [emails] list.
-  FromHeader({required final Iterable<String> emails})
+  FromHeader.emails(final Iterable<String> emails)
     : assert(emails.isNotEmpty),
       emails = List.unmodifiable(emails);
 
@@ -33,7 +33,7 @@ final class FromHeader {
       }
     }
 
-    return FromHeader(emails: emails);
+    return FromHeader.emails(emails);
   }
 
   /// Returns the single email address if the list only contains one email.

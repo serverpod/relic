@@ -18,7 +18,7 @@ final class ConnectionHeader {
   final List<ConnectionHeaderType> directives;
 
   /// Constructs a [ConnectionHeader] instance with the specified connection directives.
-  const ConnectionHeader({required this.directives});
+  const ConnectionHeader.directives(this.directives);
 
   /// Parses the Connection header value and returns a [ConnectionHeader] instance.
   ///
@@ -32,7 +32,7 @@ final class ConnectionHeader {
 
     final directives = splitValues.map(ConnectionHeaderType.parse).toList();
 
-    return ConnectionHeader(directives: directives);
+    return ConnectionHeader.directives(directives);
   }
 
   /// Checks if the connection is marked as `keep-alive`.
