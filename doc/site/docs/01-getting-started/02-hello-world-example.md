@@ -59,3 +59,7 @@ Hello Nova! To think you are 27 years old.
 ```
 
 Congratulations! You just ran your first Relic server.
+
+:::tip
+Relic works with **hot reload** out of the box. ⚡️ To use it, start your server in *Debug* mode from your IDE (or use `dart run --enable-vm-service bin/hello_world.dart`). Ensure that _Hot Reload On Save_ is enabled in your IDE settings (typically, set it to _manual_ which will trigger hot reload when you save your file).
+:::
