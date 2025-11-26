@@ -1,6 +1,5 @@
 import 'dart:collection';
 
-import 'codec.dart';
 import 'exception/header_exception.dart';
 import 'headers.dart';
 
