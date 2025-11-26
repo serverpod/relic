@@ -1,3 +1,15 @@
+## 0.11.0
+
+- feat!: Add typed accessor for query and path parameters ([#288](https://github.com/serverpod/relic/pull/288))
+- feat: Introduce ConnectionInfo ([#273](https://github.com/serverpod/relic/pull/273))
+- feat: Add IPAddress class (independent of dart:io) ([#272](https://github.com/serverpod/relic/pull/272))
+- refactor!: Simplify ContextProperty interface
+- refactor!: Disallow url rewriting in Request.copyWith ([#289](https://github.com/serverpod/relic/pull/289))
+- refactor!: Use named ctors on all header classes ([#283](https://github.com/serverpod/relic/pull/283))
+- refactor!: Avoid repeating ctor name on parameter ([#282](https://github.com/serverpod/relic/pull/282))
+- fix!: Remove stale arguments from Request and Response class ([#274](https://github.com/serverpod/relic/pull/274))
+- fix: Don't overwrite Content-Length when set as header ([#291](https://github.com/serverpod/relic/pull/291))
+
 ## 0.10.0
 - refactor!: The Great Simplification ([#264](https://github.com/serverpod/relic/pull/264))
   - Merged `RequestContext` into `Request` by moving the token property
