@@ -19,8 +19,8 @@ void main() {
       const nameParam = QueryParam<String>('name', _identity);
       const ageParam = IntQueryParam('age');
 
-      expect(request.queryParameters(nameParam), equals('john'));
-      expect(request.queryParameters(ageParam), equals(25));
+      expect(request.queryParameters.get(nameParam), equals('john'));
+      expect(request.queryParameters.get(ageParam), equals(25));
     });
 
     test('when queryParameters is accessed multiple times, '
@@ -52,7 +52,7 @@ void main() {
       (final v) {
         final request = _request('value=${v.input}');
 
-        final result = request.queryParameters(v.param);
+        final result = request.queryParameters.get(v.param);
         expect(result, equals(v.expected));
       },
       variants: const [
@@ -92,7 +92,7 @@ void main() {
       (final v) {
         final request = _request('value=${v.input}');
 
-        expect(() => request.queryParameters(v.param), throwsFormatException);
+        expect(() => request.queryParameters.get(v.param), throwsFormatException);
       },
       variants: const [
         _ParamTestCase('IntQueryParam', 'abc', IntQueryParam('value'), null),
@@ -116,7 +116,7 @@ void main() {
       // Custom decoder that splits comma-separated values
       const tagsParam = QueryParam<List<String>>('tags', _splitCommas);
 
-      expect(request.queryParameters(tagsParam), equals(['a', 'b', 'c']));
+      expect(request.queryParameters.get(tagsParam), equals(['a', 'b', 'c']));
     });
   });
 }

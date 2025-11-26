@@ -41,14 +41,14 @@ class AccessorState<K, R> {
   /// Returns the decoded value for the given [accessor].
   ///
   /// Throws if the value is missing or if decoding fails.
-  T call<T extends Object>(final ReadOnlyAccessor<T, K, R> accessor) =>
-      get(accessor) ??
+  T get<T extends Object>(final ReadOnlyAccessor<T, K, R> accessor) =>
+      call(accessor) ??
       (throw StateError('Missing value for key: ${accessor.key}'));
 
   /// Returns the decoded value for the given [accessor], or `null` if missing.
   ///
   /// Throws if decoding fails.
-  T? get<T extends Object>(final ReadOnlyAccessor<T, K, R> accessor) {
+  T? call<T extends Object>(final ReadOnlyAccessor<T, K, R> accessor) {
     final rawValue = raw[accessor.key];
     if (rawValue == null) return null;
     return (_cache[(accessor, rawValue)] ??= accessor.decode(rawValue)) as T;
@@ -58,7 +58,7 @@ class AccessorState<K, R> {
   /// or if decoding fails.
   T? tryGet<T extends Object>(final ReadOnlyAccessor<T, K, R> accessor) {
     try {
-      return get(accessor);
+      return call(accessor);
     } catch (_) {
       return null;
     }

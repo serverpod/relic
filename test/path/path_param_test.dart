@@ -22,8 +22,8 @@ void main() {
       const nameParam = PathParam<String>(#name, _identity);
       const idParam = IntPathParam(#id);
 
-      expect(request.pathParameters(nameParam), equals('john'));
-      expect(request.pathParameters(idParam), equals(42));
+      expect(request.pathParameters.get(nameParam), equals('john'));
+      expect(request.pathParameters.get(idParam), equals(42));
     });
 
     test('when pathParameters is accessed multiple times, '
@@ -47,8 +47,11 @@ void main() {
 
       const param = PathParam<String>(#any, _identity);
       expect(request.pathParameters[param], isNull);
-      expect(request.pathParameters.get(param), isNull);
-      expect(() => request.pathParameters(param), throwsA(isA<StateError>()));
+      expect(request.pathParameters.call(param), isNull);
+      expect(
+        () => request.pathParameters.get(param),
+        throwsA(isA<StateError>()),
+      );
     });
   });
 
@@ -63,7 +66,7 @@ void main() {
           'http://localhost/v/${v.input}',
         );
 
-        final result = request.pathParameters(v.param);
+        final result = request.pathParameters.get(v.param);
         expect(result, equals(v.expected));
       },
       variants: const [
@@ -101,7 +104,10 @@ void main() {
           'http://localhost/v/${v.input}',
         );
 
-        expect(() => request.pathParameters(v.param), throwsFormatException);
+        expect(
+          () => request.pathParameters.get(v.param),
+          throwsFormatException,
+        );
       },
       variants: const [
         _ParamTestCase('IntPathParam', 'abc', IntPathParam(#value), null),
@@ -123,7 +129,7 @@ void main() {
       // Custom decoder that converts slug to title case
       const slugParam = PathParam<String>(#slug, _toTitleCase);
 
-      expect(request.pathParameters(slugParam), equals('Hello World'));
+      expect(request.pathParameters.get(slugParam), equals('Hello World'));
     });
   });
 }

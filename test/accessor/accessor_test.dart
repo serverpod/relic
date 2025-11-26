@@ -21,18 +21,6 @@ void main() {
       expect(state[accessor], isNull);
     });
 
-    test('when calling with a present key, '
-        'then it returns the decoded value', () {
-      const accessor = _IntAccessor('age');
-      expect(state(accessor), equals(25));
-    });
-
-    test('when calling with a missing key, '
-        'then it throws a StateError', () {
-      const accessor = _IntAccessor('missing');
-      expect(() => state(accessor), throwsStateError);
-    });
-
     test('when calling get with a present key, '
         'then it returns the decoded value', () {
       const accessor = _IntAccessor('age');
@@ -40,9 +28,21 @@ void main() {
     });
 
     test('when calling get with a missing key, '
+        'then it throws a StateError', () {
+      const accessor = _IntAccessor('missing');
+      expect(() => state.get(accessor), throwsStateError);
+    });
+
+    test('when calling with a present key, '
+        'then it returns the decoded value', () {
+      const accessor = _IntAccessor('age');
+      expect(state(accessor), equals(25));
+    });
+
+    test('when calling with a missing key, '
         'then it returns null', () {
       const accessor = _IntAccessor('missing');
-      expect(state.get(accessor), isNull);
+      expect(state(accessor), isNull);
     });
 
     test('when calling tryGet with a valid key, '
@@ -65,16 +65,16 @@ void main() {
       state = AccessorState({'invalid': 'notanumber'});
     });
 
-    test('when calling with an invalid value, '
-        'then it throws a FormatException', () {
-      const accessor = _IntAccessor('invalid');
-      expect(() => state(accessor), throwsFormatException);
-    });
-
     test('when calling get with an invalid value, '
         'then it throws a FormatException', () {
       const accessor = _IntAccessor('invalid');
       expect(() => state.get(accessor), throwsFormatException);
+    });
+
+    test('when calling with an invalid value, '
+        'then it throws a FormatException', () {
+      const accessor = _IntAccessor('invalid');
+      expect(() => state(accessor), throwsFormatException);
     });
 
     test('when calling tryGet with an invalid value, '
@@ -91,9 +91,9 @@ void main() {
       _CountAccessor.count = 0;
       final state = AccessorState({'count': '42'});
 
-      final result1 = state.get(accessor);
-      final result2 = state.get(accessor);
-      final result3 = state(accessor);
+      final result1 = state(accessor);
+      final result2 = state(accessor);
+      final result3 = state.get(accessor);
 
       expect(result1?.value, equals(42));
       expect(result2?.value, equals(42));

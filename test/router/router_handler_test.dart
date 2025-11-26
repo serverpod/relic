@@ -36,8 +36,8 @@ void main() {
     const ageParam = IntPathParam(#age);
     int? capturedAge;
     router.get('/user/:name/age/:age', (final req) {
-      capturedName = req.pathParameters(nameParam);
-      capturedAge = req.pathParameters(ageParam);
+      capturedName = req.pathParameters.get(nameParam);
+      capturedAge = req.pathParameters.get(ageParam);
       return Response.ok();
     });
 
