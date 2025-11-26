@@ -9,7 +9,7 @@ typedef RawPathParam = String;
 ///
 /// Example:
 /// ```dart
-/// const idParam = IntPathParam(#id);
+/// const idParam = PathParam<int>(#id, int.Parse);
 /// router.get('/users/:id', (req) {
 ///   int id = req.pathParameters(idParam); // typed as int
 ///   return Response.ok();
@@ -28,14 +28,52 @@ class PathParameters extends AccessorState<Symbol, RawPathParam> {
   PathParameters(super.raw);
 }
 
+/// A path parameter accessor that parses values as [num].
+///
+/// Accepts both integer and decimal values from the path.
+///
+/// Example:
+/// ```dart
+/// const valueParam = NumPathParam(#value);
+/// router.get('/calculate/:value', (req) {
+///   num value = req.pathParameters(valueParam);
+///   return Response.ok();
+/// });
+/// ```
 final class NumPathParam extends PathParam<num> {
   const NumPathParam(final Symbol key) : super(key, num.parse);
 }
 
+/// A path parameter accessor that parses values as [int].
+///
+/// Use this for integer-only path parameters like IDs or counts.
+///
+/// Example:
+/// ```dart
+/// const idParam = IntPathParam(#id);
+/// router.get('/users/:id', (req) {
+///   int id = req.pathParameters(idParam);
+///   return Response.ok();
+/// });
+/// ```
 final class IntPathParam extends PathParam<int> {
   const IntPathParam(final Symbol key) : super(key, int.parse);
 }
 
+/// A path parameter accessor that parses values as [double].
+///
+/// Use this for decimal path parameters like coordinates or measurements.
+///
+/// Example:
+/// ```dart
+/// const latParam = DoublePathParam(#lat);
+/// const lonParam = DoublePathParam(#lon);
+/// router.get('/location/:lat/:lon/', (req) {
+///   double lat = req.pathParameters(latParam);
+///   double lon = req.pathParameters(lonParam);
+///   return Response.ok();
+/// });
+/// ```
 final class DoublePathParam extends PathParam<double> {
   const DoublePathParam(final Symbol key) : super(key, double.parse);
 }

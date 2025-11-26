@@ -11,7 +11,7 @@ typedef RawQueryParam = String;
 ///
 /// Example:
 /// ```dart
-/// const pageParam = IntQueryParam('page');
+/// const pageParam = QueryParam<int>('page', int.parse);
 /// handler(req) {
 ///   final page = req.queryParameters(pageParam); // typed as int
 ///   return Response.ok();
@@ -41,7 +41,7 @@ extension QueryParametersRequestEx on Request {
   /// Example:
   /// ```dart
   /// const pageParam = IntQueryParam('page');
-  /// handler(req) {
+  /// Result handler(Request req) {
   ///   int page = req.queryParameters(pageParam); // typed as int
   ///   return Response.ok();
   /// }
@@ -50,14 +50,50 @@ extension QueryParametersRequestEx on Request {
       _queryParameters[this] ??= QueryParameters(url.queryParameters);
 }
 
+/// A query parameter accessor that parses values as [num].
+///
+/// Accepts both integer and decimal values from the query string.
+///
+/// Example:
+/// ```dart
+/// const amountParam = NumQueryParam('amount');
+/// Result handler(Request req) {
+///   num amount = req.queryParameters(amountParam);
+///   return Response.ok();
+/// }
+/// ```
 final class NumQueryParam extends QueryParam<num> {
   const NumQueryParam(final String key) : super(key, num.parse);
 }
 
+/// A query parameter accessor that parses values as [int].
+///
+/// Use this for integer-only query parameters like page numbers or limits.
+///
+/// Example:
+/// ```dart
+/// const pageParam = IntQueryParam('page');
+/// Result handler(Request req) {
+///   int page = req.queryParameters(pageParam);
+///   return Response.ok();
+/// }
+/// ```
 final class IntQueryParam extends QueryParam<int> {
   const IntQueryParam(final String key) : super(key, int.parse);
 }
 
+/// A query parameter accessor that parses values as [double].
+///
+/// Use this for decimal query parameters like prices or percentages.
+///
+/// Example:
+/// ```dart
+/// const priceParam = DoubleQueryParam('price');
+/// Result handler(Request req) {
+///   double price = req.queryParameters(priceParam);
+///   return Response.ok();
+/// }
+/// ```
 final class DoubleQueryParam extends QueryParam<double> {
   const DoubleQueryParam(final String key) : super(key, double.parse);
 }
