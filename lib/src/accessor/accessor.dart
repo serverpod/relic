@@ -64,3 +64,11 @@ class AccessorState<K, R> {
     }
   }
 }
+
+extension RawEx<K, R> on Map<K, R> {
+  /// A non-nullable lookup of [key]
+  ///
+  /// Throws a [StateError] if the value is missing.
+  R get(final K key) =>
+      this[key] ?? (throw StateError('Missing value for key: $key'));
+}
