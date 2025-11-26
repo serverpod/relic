@@ -47,6 +47,8 @@ void main() {
 
       const param = PathParam<String>(#any, _identity);
       expect(request.pathParameters[param], isNull);
+      expect(request.pathParameters.get(param), isNull);
+      expect(() => request.pathParameters(param), throwsA(isA<StateError>()));
     });
   });
 
