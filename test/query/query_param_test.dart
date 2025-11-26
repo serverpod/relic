@@ -92,7 +92,10 @@ void main() {
       (final v) {
         final request = _request('value=${v.input}');
 
-        expect(() => request.queryParameters.get(v.param), throwsFormatException);
+        expect(
+          () => request.queryParameters.get(v.param),
+          throwsFormatException,
+        );
       },
       variants: const [
         _ParamTestCase('IntQueryParam', 'abc', IntQueryParam('value'), null),
