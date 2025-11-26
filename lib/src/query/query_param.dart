@@ -13,7 +13,7 @@ typedef RawQueryParam = String;
 /// ```dart
 /// const pageParam = QueryParam<int>('page', int.parse);
 /// handler(req) {
-///   final page = req.queryParameters(pageParam); // typed as int
+///   final page = req.queryParameters.get(pageParam); // typed as int
 ///   return Response.ok();
 /// }
 /// ```
@@ -42,7 +42,7 @@ extension QueryParametersRequestEx on Request {
   /// ```dart
   /// const pageParam = IntQueryParam('page');
   /// Result handler(Request req) {
-  ///   int page = req.queryParameters(pageParam); // typed as int
+  ///   final page = req.queryParameters.get(pageParam); // typed as int
   ///   return Response.ok();
   /// }
   /// ```
@@ -58,7 +58,7 @@ extension QueryParametersRequestEx on Request {
 /// ```dart
 /// const amountParam = NumQueryParam('amount');
 /// Result handler(Request req) {
-///   num amount = req.queryParameters(amountParam);
+///   final amount = req.queryParameters.get(amountParam);
 ///   return Response.ok();
 /// }
 /// ```
@@ -74,7 +74,7 @@ final class NumQueryParam extends QueryParam<num> {
 /// ```dart
 /// const pageParam = IntQueryParam('page');
 /// Result handler(Request req) {
-///   int page = req.queryParameters(pageParam);
+///   final page = req.queryParameters.get(pageParam);
 ///   return Response.ok();
 /// }
 /// ```
@@ -90,7 +90,7 @@ final class IntQueryParam extends QueryParam<int> {
 /// ```dart
 /// const priceParam = DoubleQueryParam('price');
 /// Result handler(Request req) {
-///   double price = req.queryParameters(priceParam);
+///   final price = req.queryParameters.get(priceParam);
 ///   return Response.ok();
 /// }
 /// ```

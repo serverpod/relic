@@ -4,6 +4,33 @@ import 'dart:typed_data';
 import 'package:relic/io_adapter.dart';
 import 'package:relic/relic.dart';
 
+// doctag<custom-query-param-specialization>
+/// A reusable query parameter accessor for [DateTime] values.
+final class DateTimeQueryParam extends QueryParam<DateTime> {
+  const DateTimeQueryParam(final String key) : super(key, DateTime.parse);
+}
+
+// Usage:
+const fromDateParam = DateTimeQueryParam('from');
+// In a handler: request.queryParameters.get(fromDateParam) returns DateTime
+// end:doctag<custom-query-param-specialization>
+
+// doctag<custom-query-param-inline>
+// Custom enum parameter
+const sortParam = QueryParam<SortOrder>('sort', SortOrder.parse);
+
+// Custom date parameter
+const fromParam = QueryParam<DateTime>('from', DateTime.parse);
+// end:doctag<custom-query-param-inline>
+
+// Dummy SortOrder enum for documentation purposes.
+enum SortOrder {
+  asc,
+  desc;
+
+  static SortOrder parse(final String value) => SortOrder.values.byName(value);
+}
+
 // Consolidated examples from requests.md and responses.md.
 // This file demonstrates complete request-response cycles.
 Future<void> main() async {
@@ -22,7 +49,7 @@ Future<void> main() async {
   // Extract and use path parameters from URLs.
   // doctag<path-params-complete>
   app.get('/users/:id', (final req) {
-    final id = req.rawPathParameters[#id]!;
+    final id = req.pathParameters.raw[#id]!;
     final matchedPath = req.matchedPath;
     final fullUri = req.url;
 
@@ -45,8 +72,8 @@ Future<void> main() async {
   // Handle single-value query parameters with validation.
   // doctag<query-params-complete>
   app.get('/search', (final req) {
-    final query = req.url.queryParameters['query'];
-    final page = req.url.queryParameters['page'];
+    final query = req.queryParameters.raw['query'];
+    final page = req.queryParameters.raw['page'];
 
     if (query == null) {
       return Response.badRequest(
@@ -66,6 +93,40 @@ Future<void> main() async {
     );
   });
   // end:doctag<query-params-complete>
+
+  // Use typed query parameters for automatic parsing.
+  // doctag<typed-query-params>
+  const pageParam = IntQueryParam('page');
+  const limitParam = IntQueryParam('limit');
+  const priceParam = DoubleQueryParam('price');
+
+  app.get('/products', (final req) {
+    // Automatically parsed as int (throws if missing or invalid)
+    final page = req.queryParameters.get(pageParam);
+    final limit = req.queryParameters.get(limitParam);
+
+    // Automatically parsed as double (throws if missing or invalid)
+    final maxPrice = req.queryParameters.get(priceParam);
+
+    final results = {
+      'page': page,
+      'limit': limit,
+      'max_price': maxPrice,
+      'products': ['Product A', 'Product B', 'Product C'],
+    };
+
+    return Response.ok(
+      body: Body.fromString(jsonEncode(results), mimeType: MimeType.json),
+    );
+  });
+  // end:doctag<typed-query-params>
+
+  // doctag<typed-query-params-nullable>
+  app.get('/search-optional', (final req) {
+    final page = req.queryParameters(pageParam); // int? - null if missing
+    return Response.ok(body: Body.fromString('Page: $page'));
+  });
+  // end:doctag<typed-query-params-nullable>
 
   // Process multiple values for the same query parameter.
   // doctag<query-multi-complete>
@@ -229,7 +290,7 @@ Future<void> main() async {
   // Generate and return HTML content.
   // doctag<html-response>
   app.get('/page', (final req) {
-    final pageNum = req.url.queryParameters['page'];
+    final pageNum = req.queryParameters.raw['page'];
 
     if (pageNum != null) {
       final page = int.tryParse(pageNum);

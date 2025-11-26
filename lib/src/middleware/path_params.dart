@@ -9,9 +9,9 @@ typedef RawPathParam = String;
 ///
 /// Example:
 /// ```dart
-/// const idParam = PathParam<int>(#id, int.Parse);
+/// const idParam = PathParam<int>(#id, int.parse);
 /// router.get('/users/:id', (req) {
-///   int id = req.pathParameters(idParam); // typed as int
+///   final id = req.pathParameters.get(idParam); // typed as int
 ///   return Response.ok();
 /// });
 /// ```
@@ -36,7 +36,7 @@ class PathParameters extends AccessorState<Symbol, RawPathParam> {
 /// ```dart
 /// const valueParam = NumPathParam(#value);
 /// router.get('/calculate/:value', (req) {
-///   num value = req.pathParameters(valueParam);
+///   final value = req.pathParameters.get(valueParam);
 ///   return Response.ok();
 /// });
 /// ```
@@ -52,7 +52,7 @@ final class NumPathParam extends PathParam<num> {
 /// ```dart
 /// const idParam = IntPathParam(#id);
 /// router.get('/users/:id', (req) {
-///   int id = req.pathParameters(idParam);
+///   final id = req.pathParameters.get(idParam);
 ///   return Response.ok();
 /// });
 /// ```
@@ -68,9 +68,9 @@ final class IntPathParam extends PathParam<int> {
 /// ```dart
 /// const latParam = DoublePathParam(#lat);
 /// const lonParam = DoublePathParam(#lon);
-/// router.get('/location/:lat/:lon/', (req) {
-///   double lat = req.pathParameters(latParam);
-///   double lon = req.pathParameters(lonParam);
+/// router.get('/location/:lat/:lon', (req) {
+///   final lat = req.pathParameters.get(latParam);
+///   final lon = req.pathParameters.get(lonParam);
 ///   return Response.ok();
 /// });
 /// ```
@@ -90,7 +90,7 @@ extension PathParametersRequestEx on Request {
   /// ```dart
   /// const idParam = IntPathParam(#id);
   /// router.get('/users/:id', (req) {
-  ///   int id = req.pathParameters(idParam); // typed as int
+  ///   final id = req.pathParameters.get(idParam); // typed as int
   ///   return Response.ok();
   /// });
   /// ```
