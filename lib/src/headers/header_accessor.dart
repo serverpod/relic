@@ -110,10 +110,22 @@ final class HeaderAccessor<T extends Object> {
 
 Null _returnNull(final Exception ex) => null;
 
+/// An interface defining a bidirectional conversion between types [T] and [StorageT].
+///
+/// This interface is used as a foundation for [HeaderCodec] which specializes
+/// in converting between header values and their string representations.
+abstract interface class _Codec<T, StorageT> {
+  /// Converts from the storage type [StorageT] to the target type [T]
+  T decode(final StorageT encoded);
+
+  /// Converts from the target type [T] to the storage type [StorageT]
+  StorageT encode(final T value);
+}
+
 /// A specialized codec for HTTP headers that defines conversion between a typed
 /// value [T] and its string representation in headers.
 ///
-/// This interface extends the generic [Codec] by specializing the storage type
+/// This interface extends the generic [_Codec] by specializing the storage type
 /// to [Iterable<String>], which represents how multiple header values can be
 /// stored for a single header name.
 ///
@@ -125,7 +137,7 @@ Null _returnNull(final Exception ex) => null;
 /// - [HeaderCodec]: For handling headers that need to process multiple values
 /// - [HeaderCodec.single]: For simpler headers that only need to process a single value
 sealed class HeaderCodec<T extends Object>
-    implements Codec<T, Iterable<String>> {
+    implements _Codec<T, Iterable<String>> {
   final Iterable<String> Function(T decoded) _encode;
 
   const HeaderCodec._(this._encode);
