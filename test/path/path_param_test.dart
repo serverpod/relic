@@ -11,20 +11,23 @@ import '../util/test_util.dart';
 /// on PathParam-specific behavior: integration with routing and the typed
 /// param classes.
 void main() {
-  group('Given a router with parameterized routes,', () {
-    test('when a request matches a route with path parameters, '
-        'then pathParameters returns the extracted values', () async {
-      final request = await _routeRequest(
-        '/users/:name/posts/:id',
-        'http://localhost/users/john/posts/42',
-      );
+  group('Given a router with a parameterized routes,', () {
+    test(
+      'when a request matches the route with path parameters, '
+      'then looking up the matching PathParams in pathParameters returns the extracted values',
+      () async {
+        final request = await _routeRequest(
+          '/users/:name/posts/:id',
+          'http://localhost/users/john/posts/42',
+        );
 
-      const nameParam = PathParam<String>(#name, _identity);
-      const idParam = IntPathParam(#id);
+        const nameParam = PathParam<String>(#name, _identity);
+        const idParam = IntPathParam(#id);
 
-      expect(request.pathParameters.get(nameParam), equals('john'));
-      expect(request.pathParameters.get(idParam), equals(42));
-    });
+        expect(request.pathParameters.get(nameParam), equals('john'));
+        expect(request.pathParameters.get(idParam), equals(42));
+      },
+    );
 
     test('when pathParameters is accessed multiple times, '
         'then it returns the same instance', () async {
@@ -41,18 +44,24 @@ void main() {
   });
 
   group('Given a router with a non-parameterized route,', () {
-    test('when a request matches the route, '
-        'then pathParameters returns an empty state', () async {
-      final request = await _routeRequest('/static', 'http://localhost/static');
+    test(
+      'when a request matches the route with no path parameters, '
+      'then looking up a PathParam in pathParameters returns null (or throws for get)',
+      () async {
+        final request = await _routeRequest(
+          '/static',
+          'http://localhost/static',
+        );
 
-      const param = PathParam<String>(#any, _identity);
-      expect(request.pathParameters[param], isNull);
-      expect(request.pathParameters.call(param), isNull);
-      expect(
-        () => request.pathParameters.get(param),
-        throwsA(isA<StateError>()),
-      );
-    });
+        const param = PathParam<String>(#any, _identity);
+        expect(request.pathParameters[param], isNull);
+        expect(request.pathParameters.call(param), isNull);
+        expect(
+          () => request.pathParameters.get(param),
+          throwsA(isA<StateError>()),
+        );
+      },
+    );
   });
 
   group('Given a path parameter with a valid numeric value,', () {
