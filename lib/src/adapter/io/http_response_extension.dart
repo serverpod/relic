@@ -20,6 +20,9 @@ extension HttpResponseExtension on io.HttpResponse {
     // Set Content-Type based on the MIME type of the body.
     responseHeaders.contentType = body.getContentType();
 
+    // If the content length is already set, then return.
+    if (responseHeaders.contentLength >= 0) return;
+
     // If the content length is known, set it and return.
     final contentLength = body.contentLength;
     if (contentLength != null) {
@@ -27,6 +30,7 @@ extension HttpResponseExtension on io.HttpResponse {
       return;
     }
 
+    // Otherwise, we need to consider chunked encoding
     final encodings = headers.transferEncoding?.encodings ?? [];
     final isChunked = headers.transferEncoding?.isChunked ?? false;
     final isIdentity = headers.transferEncoding?.isIdentity ?? false;

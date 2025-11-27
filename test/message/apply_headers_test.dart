@@ -9,6 +9,8 @@ import 'package:relic/relic.dart';
 import 'package:relic/src/adapter/io/http_response_extension.dart';
 import 'package:test/test.dart';
 
+import '../util/test_util.dart';
+
 class HttpHeadersMock extends Mock implements HttpHeaders {
   final Map<String, List<String>> _headers = {};
 
@@ -112,6 +114,21 @@ void main() {
 
       expect(response.headers.contentLength, equals(5));
     });
+
+    parameterizedTest(
+      (final v) =>
+          'with content length already set to ${v.$2} on response '
+          'when applying headers to http response '
+          'then the content length is not overwritten with the length of the body ${v.$1}',
+      variants: [(0, 5), (5, 0), (5, 10)],
+      (final v) async {
+        final HttpResponseMock response = HttpResponseMock();
+        response.headers.contentLength = v.$2;
+        response.applyHeaders(Headers.empty(), Body.fromData(Uint8List(v.$1)));
+
+        expect(response.headers.contentLength, equals(v.$2));
+      },
+    );
 
     test('with an unknown content length '
         'when applying headers to http response '
