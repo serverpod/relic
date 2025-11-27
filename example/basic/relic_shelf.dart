@@ -9,7 +9,7 @@ import 'package:relic/relic.dart';
 Future<void> main() async {
   final app =
       RelicApp()..get('/users/:id', (final Request request) {
-        final id = request.pathParameters[#id];
+        final id = request.rawPathParameters[#id];
         final name = request.url.queryParameters['name'] ?? 'Unknown';
         return Response.ok(body: Body.fromString('User $id: $name'));
       });

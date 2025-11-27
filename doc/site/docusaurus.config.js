@@ -22,10 +22,7 @@ const config = {
       onBrokenMarkdownLinks: 'warn',
     },
   },
-  themes: [
-    '@docusaurus/theme-mermaid',
-    'docusaurus-theme-github-codeblock'
-  ],
+  themes: ['@docusaurus/theme-mermaid', 'docusaurus-theme-github-codeblock'],
   presets: [
     [
       'classic',
@@ -35,11 +32,13 @@ const config = {
           routeBasePath: '/',
           sidebarPath: require.resolve('./sidebars.js'),
           // Please change this to your repo.
-          editUrl:
-            'https://github.com/serverpod/relic/tree/main/doc/site/',
+          editUrl: 'https://github.com/serverpod/relic/tree/main/doc/site/',
           breadcrumbs: false,
           remarkPlugins: [
-            [require('blended-include-code-plugin'), { marker: 'GITHUB_CODE_BLOCK' }]
+            [
+              require('blended-include-code-plugin'),
+              { marker: 'GITHUB_CODE_BLOCK' },
+            ],
           ],
         },
         blog: false,

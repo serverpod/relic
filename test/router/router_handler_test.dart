@@ -31,11 +31,13 @@ void main() {
       'when calling router with matching request, '
       'then path parameters are accessible via context', () async {
     final router = RelicRouter();
+    final nameParam = PathParam<String>(#name, (final s) => s);
     String? capturedName;
-    String? capturedAge;
+    const ageParam = IntPathParam(#age);
+    int? capturedAge;
     router.get('/user/:name/age/:age', (final req) {
-      capturedName = req.pathParameters[#name];
-      capturedAge = req.pathParameters[#age];
+      capturedName = req.pathParameters.get(nameParam);
+      capturedAge = req.pathParameters.get(ageParam);
       return Response.ok();
     });
 
@@ -44,7 +46,7 @@ void main() {
     await router.asHandler(req);
 
     expect(capturedName, 'alice');
-    expect(capturedAge, '30');
+    expect(capturedAge, 30);
   });
 
   test('Given a router with a GET route, '

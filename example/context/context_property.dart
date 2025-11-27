@@ -6,7 +6,7 @@ import 'package:relic/relic.dart';
 /// Extension to provide easy access to the request ID.
 // doctag<context-prop-request-id>
 extension on Request {
-  String get requestId => _requestIdProperty[this];
+  String get requestId => _requestIdProperty.get(this);
 }
 
 final _requestIdProperty = ContextProperty<String>('requestId');

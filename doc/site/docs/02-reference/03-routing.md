@@ -83,7 +83,7 @@ GITHUB_CODE_BLOCK lang="dart" title="GET|POST /admin" file="../_example/routing/
 
 Relic's router supports three types of variable path segments:
 
-- **Path parameters (`:id`)** capture named segments and are available via `request.pathParameters`.
+- **Path parameters (`:id`)** capture named segments and are available via `request.pathParameters.raw`.
 - **Wildcards (`*`)** match any single path segment but do not capture a value.
 - **Tail segments (`/**`)** capture the rest of the path and expose it through `request.remainingPath`.
 
@@ -94,35 +94,53 @@ Use a colon-prefixed name to capture a segment. Access the value with the `Symbo
 ```dart
 final app = RelicApp()
   ..get('/users/:id', (final Request request) {
-    final userId = request.pathParameters[#id];
+    final userId = request.pathParameters.raw[#id];
     return Response.ok(
       body: Body.fromString('User $userId'),
     );
   });
 ```
 
+#### Typed path parameters
+
+Raw path parameters are always strings, which means you need to parse them manually. Relic provides typed parameter accessors that handle parsing automatically and give you compile-time type safety.
+
+Define a parameter accessor once, then use it to extract typed values:
+
+GITHUB_CODE_BLOCK lang="dart" file="../_example/routing/dynamic_segments.dart" doctag="routing-typed-path-params" title="Typed path parameters"
+
+You can also use the nullable variant by calling the accessor directly:
+
+GITHUB_CODE_BLOCK lang="dart" file="../_example/routing/dynamic_segments.dart" doctag="routing-typed-path-params-nullable" title="Nullable typed path parameter"
+
+Relic provides these built-in typed parameter accessors:
+
+| Accessor | Type | Description |
+| -------- | ---- | ----------- |
+| `IntPathParam` | `int` | Integer values (IDs, counts) |
+| `DoublePathParam` | `double` | Decimal values (coordinates, measurements) |
+| `NumPathParam` | `num` | Any numeric value |
+| `PathParam<T>` | Custom | Create your own with a custom parser |
+
+For custom types, use `PathParam<T>` with your own parsing function:
+
+GITHUB_CODE_BLOCK lang="dart" file="../_example/routing/dynamic_segments.dart" doctag="routing-custom-path-param-inline" title="Custom type path parameters"
+
+To create a reusable accessor like the built-in ones, extend `PathParam<T>` with a fixed decoder. The decoder must be a static function with signature `T Function(String)`:
+
+GITHUB_CODE_BLOCK lang="dart" file="../_example/routing/dynamic_segments.dart" doctag="routing-custom-path-param" title="Custom PathParam specialization"
+
 ### Wildcards (`*`)
 
 Use `*` to match any single segment without naming it. This is useful when the value does not matter, such as matching `/files/<anything>/download`.
 
-```dart
-app.get('/files/*/download', (final Request request) {
-  return Response.ok(body: Body.fromString('Downloading file...'));
-});
-```
+GITHUB_CODE_BLOCK lang="dart" file="../_example/routing/dynamic_segments.dart" doctag="routing-wildcard-download" title="Wildcard path segment"
 
 ### Tail segments (`/**`)
 
 Use `/**` at the end of a pattern to match the entire remaining path. The unmatched portion is available via `request.remainingPath`.
 
-```dart
-app.get('/static/**', (final Request request) {
-  final relativeAssetPath = request.remainingPath.toString();
-  return Response.ok(
-    body: Body.fromString('Serve $relativeAssetPath'),
-  );
-});
-```
+GITHUB_CODE_BLOCK lang="dart" file="../_example/routing/dynamic_segments.dart" doctag="routing-tail-segment" title="Tail segment"
 
 Tail segments are required when serving directories so that the handler knows which file the client requested. A route like `/static` without `/**` would not expose the requested child path.
 

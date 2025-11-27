@@ -1,7 +1,16 @@
-import '../../relic.dart';
-
+import '../accessor/accessor.dart';
+import '../context/result.dart';
+import '../handler/handler.dart';
+import '../headers/headers.dart';
+import '../headers/standard_headers_extensions.dart';
+import '../router/lookup_result.dart';
 import '../router/normalized_path.dart';
 import '../router/path_trie.dart';
+import '../router/router.dart';
+import 'context_property.dart';
+import 'middleware.dart';
+
+part 'path_params.dart';
 
 final _routingContext =
     ContextProperty<
@@ -123,9 +132,9 @@ extension RoutingRequestEx on Request {
   /// Returns [NormalizedPath.empty] if the request was not routed through
   /// a router.
   NormalizedPath get matchedPath =>
-      _routingContext.getOrNull(this)?.matched ?? NormalizedPath.empty;
+      _routingContext[this]?.matched ?? NormalizedPath.empty;
 
-  /// Path parameters extracted from the matched route.
+  /// Raw path parameters extracted from the matched route.
   ///
   /// Parameters are defined in route patterns using `:` prefix (e.g., `:id`).
   /// The map keys are [Symbol]s of the parameter names, and values are the
@@ -134,15 +143,15 @@ extension RoutingRequestEx on Request {
   /// Example:
   /// ```dart
   /// router.get('/users/:id', (req) {
-  ///   final id = req.pathParameters[#id]; // Extract 'id' parameter
+  ///   final id = req.rawPathParameters[#id]; // Extract 'id' parameter
   ///   return Response.ok();
   /// });
   /// ```
   ///
   /// Returns an empty map if no parameters were extracted or if the request
   /// was not routed through a router.
-  Map<Symbol, String> get pathParameters =>
-      _routingContext.getOrNull(this)?.parameters ?? const <Symbol, String>{};
+  Map<Symbol, String> get rawPathParameters =>
+      _routingContext[this]?.parameters ?? const <Symbol, String>{};
 
   /// The portion of the request path that was not consumed by the matched route.
   ///
@@ -153,6 +162,6 @@ extension RoutingRequestEx on Request {
   /// For routes without tail segments, this is typically empty. If the request
   /// was not routed through a router, this returns the full request path.
   NormalizedPath get remainingPath =>
-      _routingContext.getOrNull(this)?.remaining ??
+      _routingContext[this]?.remaining ??
       NormalizedPath(Uri.decodeFull(url.path));
 }

@@ -43,7 +43,7 @@ final _auth = ContextProperty<User>('auth');
 
 /// Extension to provide easy access to the authenticated user.
 extension on Request {
-  User get user => _auth[this];
+  User get user => _auth.get(this);
 }
 
 /// Simple authentication middleware for demonstration purposes.

@@ -57,6 +57,39 @@ GITHUB_CODE_BLOCK lang="dart" file="../_example/routing/request_response.dart" d
 
 When a client requests `/search?query=relic&page=2`, the query variable will contain `"relic"` and the page variable will contain `"2"`. Both values are strings, so you'll need to parse them if you need other types like integers.
 
+### Typed query parameters
+
+Manually parsing query parameters can be tedious and error-prone. Relic provides typed parameter accessors that handle parsing automatically and give you compile-time type safety.
+
+Define a parameter accessor once, then use it to extract typed values:
+
+GITHUB_CODE_BLOCK lang="dart" file="../_example/routing/request_response.dart" doctag="typed-query-params" title="Typed query parameters"
+
+You can also use the nullable variant by calling the accessor directly:
+
+GITHUB_CODE_BLOCK lang="dart" file="../_example/routing/request_response.dart" doctag="typed-query-params-nullable" title="Nullable typed query parameter"
+
+Relic provides these built-in typed query parameter accessors:
+
+| Accessor | Type | Description |
+| -------- | ---- | ----------- |
+| `IntQueryParam` | `int` | Integer values (page numbers, limits) |
+| `DoubleQueryParam` | `double` | Decimal values (prices, percentages) |
+| `NumQueryParam` | `num` | Any numeric value |
+| `QueryParam<T>` | Custom | Create your own with a custom parser |
+
+For custom types, use `QueryParam<T>` with your own parsing function:
+
+GITHUB_CODE_BLOCK lang="dart" file="../_example/routing/request_response.dart" doctag="custom-query-param-inline" title="Custom type query parameters"
+
+To create a reusable accessor like the built-in ones, extend `QueryParam<T>` with a fixed decoder. The decoder must be a static function with signature `T Function(String)`:
+
+GITHUB_CODE_BLOCK lang="dart" file="../_example/routing/request_response.dart" doctag="custom-query-param-specialization" title="Custom QueryParam specialization"
+
+:::tip
+Typed parameter accessors are defined as `const` values, which means they can be defined once at the top level and reused across multiple handlers. This promotes consistency and reduces boilerplate.
+:::
+
 ### Multiple values
 
 Some query parameters can appear multiple times in a URL to represent lists or arrays. The `queryParametersAll` map provides access to all values for each parameter name.

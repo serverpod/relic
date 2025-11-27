@@ -21,7 +21,7 @@ Use this quick plan to get your app running on Relic. The detailed sections belo
 
 3. Keep handlers as `Response handler(Request request)`. Handlers in Relic receive a `Request` and return a `Result` (usually a `Response` subclass).
 
-4. Switch to Relic routing: Replace Router from shelf_router with `RelicApp`'s `get`, `post`, `put`, or `delete` methods. Replace `<id>` path parameters with `:id` and read them via `request.pathParameters[#id]`.
+4. Switch to Relic routing: Replace Router from shelf_router with `RelicApp`'s `get`, `post`, `put`, or `delete` methods. Replace `<id>` path parameters with `:id` and read them via `request.pathParameters.raw[#id]`.
 
 5. Create responses with `Body`: Replace `Response.ok('text')` with `Response.ok(body:...)`. Let Relic manage `content-length` and `content-type` through the `Body` class.
 
@@ -116,7 +116,7 @@ import 'package:relic/relic.dart';
 
 final router = RelicApp()
   ..get('/users/:id', (Request request) {
-    final id = request.pathParameters[#id];
+    final id = request.pathParameters.raw[#id];
     return Response.ok(body: Body.fromString('User $id'));
   });
 ```

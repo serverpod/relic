@@ -24,8 +24,8 @@ Future<void> main() async {
 
 /// Handles requests to the hello endpoint with path parameters.
 Response helloHandler(final Request req) {
-  final name = req.pathParameters[#name];
-  final age = int.parse(req.pathParameters[#age]!);
+  final name = req.rawPathParameters[#name];
+  final age = int.parse(req.rawPathParameters[#age]!);
 
   return Response.ok(
     body: Body.fromString('Hello, $name! To think you are $age years old.\n'),

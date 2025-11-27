@@ -18,12 +18,17 @@ import '../context/result.dart';
 ///
 /// // In a middleware, set the user for the current request.
 /// void authMiddleware(Request context, User user) {
-///   currentUserProperty[context] = user;
+///   _currentUserProperty[context] = user;
 /// }
 ///
 /// // Later, in a handler, retrieve the user.
 /// User? getCurrentUser(Request context) {
-///   return currentUserProperty.getOrNull(context);
+///   return _currentUserProperty[context];
+/// }
+///
+/// // Maybe create an extension method for convenience.
+/// extension on Request {
+///   User get currentUser => _currentUserProperty.get(this);
 /// }
 /// ```
 class ContextProperty<T extends Object> {
@@ -42,8 +47,8 @@ class ContextProperty<T extends Object> {
   /// Throws a [StateError] if no value is found for the [request]'s token
   /// and the property has not been set. This ensures that accidental access
   /// to an uninitialized property is caught early.
-  T operator [](final Request request) {
-    return _storage[request.token] ??
+  T get(final Request request) {
+    return this[request] ??
         (throw StateError(
           'ContextProperty value not found. Property: ${_debugName ?? T.toString()}. '
           'Ensure middleware has set this value for the request token.',
@@ -52,34 +57,14 @@ class ContextProperty<T extends Object> {
 
   /// Retrieves the value associated with the given [request], or `null` if no value is set.
   ///
-  /// This method is a non-throwing alternative to the `operator []`.
+  /// This operator is a non-throwing alternative to [get].
   /// Use this when it's acceptable for the property to be absent.
-  T? getOrNull(final Request request) {
-    return _storage[request.token];
-  }
+  T? operator [](final Request request) => _storage[request.token];
 
   /// Sets the [value] for the given [request].
   ///
   /// Associates the [value] with the [request]'s token, allowing it
-  /// to be retrieved later using `operator []` or `getOrNull`.
-  void operator []=(final Request request, final T value) {
-    _storage[request.token] = value;
-  }
-
-  /// Checks if a value exists for the given [request].
-  ///
-  /// Returns `true` if a non-null value has been set for the [request]'s
-  /// token, `false` otherwise.
-  bool exists(final Request request) {
-    return _storage[request.token] != null;
-  }
-
-  /// Clears the value associated with the given [request].
-  ///
-  /// This effectively removes the association in the underlying [Expando],
-  /// causing subsequent gets for this [request] (and this property)
-  /// to return `null` (for `getOrNull`) or throw (for `operator []`).
-  void clear(final Request request) {
-    _storage[request.token] = null; // Clears the association in Expando
-  }
+  /// to be retrieved later using [get] or `operator []`.
+  void operator []=(final Request request, final T? value) =>
+      _storage[request.token] = value;
 }

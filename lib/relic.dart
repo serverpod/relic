@@ -1,5 +1,6 @@
 library;
 
+export 'src/accessor/accessor.dart';
 export 'src/adapter/adapter.dart';
 export 'src/adapter/relic_web_socket.dart';
 export 'src/body/body.dart' show Body;
@@ -23,6 +24,7 @@ export 'src/middleware/middleware.dart';
 export 'src/middleware/middleware_extensions.dart' show MiddlewareExtensions;
 export 'src/middleware/middleware_logger.dart' show logRequests;
 export 'src/middleware/routing_middleware.dart';
+export 'src/query/query_param.dart';
 export 'src/relic_server.dart';
 export 'src/router/lookup_result.dart';
 export 'src/router/method.dart';

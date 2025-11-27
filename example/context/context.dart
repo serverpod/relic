@@ -62,7 +62,7 @@ Future<Response> apiHandler(final Request req) async {
 
 /// Returns user information based on the provided ID parameter.
 Future<Response> userHandler(final Request req) async {
-  final userId = req.pathParameters[#id];
+  final userId = req.rawPathParameters[#id];
   final data = {
     'userId': userId,
     'message': 'User details for ID: $userId',
