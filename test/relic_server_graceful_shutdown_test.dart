@@ -223,6 +223,10 @@ void main() {
     late RelicServer server;
     bool serverClosed = false;
 
+    /// Acceptable timing variance in milliseconds for shutdown timing tests.
+    /// This accounts for system scheduling delays and HTTP overhead.
+    const timingVarianceMs = 100;
+
     setUp(() async {
       serverClosed = false;
       server = RelicServer(
@@ -268,7 +272,7 @@ void main() {
       // The request should have taken most of its delay (minus the 50ms head start)
       expect(
         closeDuration.inMilliseconds,
-        greaterThan(requestDelay.inMilliseconds - 100),
+        greaterThan(requestDelay.inMilliseconds - timingVarianceMs),
         reason: 'Server close should wait for in-flight request to complete',
       );
     });
