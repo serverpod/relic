@@ -228,7 +228,9 @@ final class _MultiIsolateRelicServer implements RelicServer {
 
   @override
   Future<void> close() async {
-    await _children.map((final c) => c.close()).wait;
+    final children = List.of(_children);
+    _children.clear();
+    await children.map((final c) => c.close()).wait;
   }
 
   @override
