@@ -12,13 +12,12 @@ void main() async {
 
   // Spawn all isolates concurrently and wait for them to start.
   log('Starting $isolateCount isolates');
-  final isolates = await Future.wait(
-    List.generate(
-      isolateCount,
-      (final index) =>
-          Isolate.spawn((final _) => _serve(), null, debugName: '$index'),
-    ),
-  );
+  final isolates =
+      await List.generate(
+        isolateCount,
+        (final index) =>
+            Isolate.spawn((final _) => _serve(), null, debugName: '$index'),
+      ).wait;
 
   // Wait for SIGINT (Ctrl-C) signal before shutting down.
   await ProcessSignal.sigint.watch().first;

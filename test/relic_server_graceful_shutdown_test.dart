@@ -134,8 +134,7 @@ void main() {
         canComplete.complete();
 
         // Wait for all responses and server close at the same time
-        final responsesFuture = Future.wait(responseFutures);
-        final (responses, _) = await (responsesFuture, closeFuture).wait;
+        final (responses, _) = await (responseFutures.wait, closeFuture).wait;
 
         // Verify all requests completed successfully
         for (var i = 0; i < responses.length; i++) {
@@ -253,8 +252,7 @@ void main() {
         serverClosed = true;
 
         // Wait for all responses and server close at the same time
-        final responsesFuture = Future.wait(responseFutures);
-        final (responses, _) = await (responsesFuture, closeFuture).wait;
+        final (responses, _) = await (responseFutures.wait, closeFuture).wait;
 
         // Verify all requests completed successfully
         for (var i = 0; i < responses.length; i++) {
