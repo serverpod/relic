@@ -156,64 +156,58 @@ void main() {
       },
     );
 
-    test(
-      'when server.close() is called, '
-      'then new requests are not accepted after close begins',
-      () async {
-        final requestStarted = Completer<void>();
-        final canComplete = Completer<void>();
+    test('when server.close() is called, '
+        'then new requests are not accepted after close begins', () async {
+      final requestStarted = Completer<void>();
+      final canComplete = Completer<void>();
 
-        await server.mountAndStart(
-          _createSignalingHandler(
-            onRequestStarted: () {
-              if (!requestStarted.isCompleted) {
-                requestStarted.complete();
-              }
-            },
-            canComplete: canComplete,
-          ),
+      await server.mountAndStart(
+        _createSignalingHandler(
+          onRequestStarted: () {
+            if (!requestStarted.isCompleted) {
+              requestStarted.complete();
+            }
+          },
+          canComplete: canComplete,
+        ),
+      );
+
+      // Start an in-flight request
+      final inFlightRequest = http.get(Uri.http('localhost:${server.port}'));
+
+      // Wait for the request to start processing
+      await requestStarted.future;
+
+      // Close the server
+      final closeFuture = server.close();
+
+      // Try to start a new request after close is initiated
+      // (This should fail or be rejected)
+      late http.Response? newRequestResponse;
+      Object? newRequestError;
+      try {
+        newRequestResponse = await http.get(
+          Uri.http('localhost:${server.port}'),
         );
+      } catch (e) {
+        newRequestError = e;
+      }
 
-        // Start an in-flight request
-        final inFlightRequest = http.get(Uri.http('localhost:${server.port}'));
+      // Allow the in-flight request to complete
+      canComplete.complete();
 
-        // Wait for the request to start processing
-        await requestStarted.future;
+      // Wait for close and in-flight request to complete
+      await Future.wait([inFlightRequest, closeFuture]);
 
-        // Close the server
-        final closeFuture = server.close();
-
-        // Try to start a new request after close is initiated
-        // (This should fail or be rejected)
-        late http.Response? newRequestResponse;
-        Object? newRequestError;
-        try {
-          newRequestResponse = await http.get(
-            Uri.http('localhost:${server.port}'),
-          );
-        } catch (e) {
-          newRequestError = e;
-        }
-
-        // Allow the in-flight request to complete
-        canComplete.complete();
-
-        // Wait for close and in-flight request to complete
-        await Future.wait([inFlightRequest, closeFuture]);
-
-        // New request should have either failed with an error
-        // or received a connection refused/reset error
-        // The exact behavior depends on timing and the underlying HTTP server
-        expect(
-          newRequestError != null || newRequestResponse?.statusCode != 200,
-          isTrue,
-          reason: 'New requests should be rejected after server begins closing',
-        );
-      },
-      skip:
-          'This test depends on the timing of server shutdown '
-          'and may not reliably reproduce the rejection behavior',
-    );
+      // New request should have either failed with an error
+      // or received a connection refused/reset error
+      // The exact behavior depends on timing and the underlying HTTP server
+      expect(
+        newRequestError != null || newRequestResponse?.statusCode != 200,
+        isTrue,
+        reason: 'New requests should be rejected after server begins closing',
+      );
+    });
   });
 
   group('Given a RelicServer with multi-isolate configuration', () {
