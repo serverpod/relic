@@ -88,10 +88,9 @@ void main() {
         canComplete.complete();
 
         // Wait for both the response and server close to complete
-        final results = await Future.wait([responseFuture, closeFuture]);
+        final (response, _) = await (responseFuture, closeFuture).wait;
 
         // Verify the in-flight request completed successfully
-        final response = results[0] as http.Response;
         expect(response.statusCode, HttpStatus.ok);
         expect(response.body, 'Completed');
       },
@@ -195,7 +194,7 @@ void main() {
       canComplete.complete();
 
       // Wait for close and in-flight request to complete
-      await Future.wait([inFlightRequest, closeFuture]);
+      await (inFlightRequest, closeFuture).wait;
 
       // New request should have either failed with an error
       // or received a connection refused/reset error
