@@ -134,11 +134,9 @@ void main() {
         // Allow the requests to complete
         canComplete.complete();
 
-        // Wait for all responses
-        final responses = await Future.wait(responseFutures);
-
-        // Wait for server to close
-        await closeFuture;
+        // Wait for all responses and server close at the same time
+        final responsesFuture = Future.wait(responseFutures);
+        final (responses, _) = await (responsesFuture, closeFuture).wait;
 
         // Verify all requests completed successfully
         for (var i = 0; i < responses.length; i++) {
@@ -255,11 +253,9 @@ void main() {
         final closeFuture = server.close();
         serverClosed = true;
 
-        // Wait for all responses
-        final responses = await Future.wait(responseFutures);
-
-        // Wait for server to close
-        await closeFuture;
+        // Wait for all responses and server close at the same time
+        final responsesFuture = Future.wait(responseFutures);
+        final (responses, _) = await (responsesFuture, closeFuture).wait;
 
         // Verify all requests completed successfully
         for (var i = 0; i < responses.length; i++) {
@@ -271,69 +267,5 @@ void main() {
         }
       },
     );
-  });
-
-  group('Given a RelicServer shutdown timing', () {
-    late RelicServer server;
-    bool serverClosed = false;
-
-    setUp(() async {
-      serverClosed = false;
-      server = RelicServer(
-        () => IOAdapter.bind(InternetAddress.loopbackIPv4, port: 0),
-      );
-    });
-
-    tearDown(() async {
-      if (!serverClosed) {
-        try {
-          await server.close();
-        } catch (_) {}
-      }
-    });
-
-    test('when server.close() is called with a long-running request, '
-        'then server waits for the request to complete', () async {
-      final requestStarted = Completer<void>();
-      final canComplete = Completer<void>();
-      var responseReceived = false;
-
-      await server.mountAndStart(
-        _createSignalingHandler(
-          onRequestStarted: requestStarted.complete,
-          canComplete: canComplete,
-        ),
-      );
-
-      // Start a long-running request
-      final responseFuture = http
-          .get(Uri.http('localhost:${server.port}'))
-          .then((final response) {
-            responseReceived = true;
-            return response;
-          });
-
-      // Wait for the request to start processing
-      await requestStarted.future;
-
-      // Close the server while request is in-flight
-      serverClosed = true;
-      final closeFuture = server.close();
-
-      // Now allow the request to complete
-      canComplete.complete();
-
-      // Wait for both the response and server close to complete
-      final results = await Future.wait([responseFuture, closeFuture]);
-
-      // Verify the response was received (meaning the request was allowed to
-      // complete despite the server closing)
-      expect(responseReceived, isTrue);
-
-      // The response should have completed successfully
-      final response = results[0] as http.Response;
-      expect(response.statusCode, HttpStatus.ok);
-      expect(response.body, 'Completed');
-    });
   });
 }
