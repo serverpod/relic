@@ -404,16 +404,18 @@ final class PathTrie<T extends Object> {
     final child = node.children[segment];
     if (child != null) {
       final newMap = _composeMap(currentMap, child.map);
-      return _lookupRecursive(
+      final result = _lookupRecursive(
         child,
         normalizedPath,
         index + 1,
         newMap,
         parameters,
       );
+      if (result != null) return result;
+      // Fall through to try dynamic segment
     }
 
-    // Only try dynamic segment if no literal match exists
+    // Try dynamic segment, if no literal match exists
     final dynamicSegment = node.dynamicSegment;
     if (dynamicSegment != null) {
       final dynamicNode = dynamicSegment.node;
