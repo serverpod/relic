@@ -19,8 +19,13 @@ void main() async {
             Isolate.spawn((final _) => _serve(), null, debugName: '$index'),
       ).wait;
 
-  // Wait for SIGINT (Ctrl-C) signal before shutting down.
-  await ProcessSignal.sigint.watch().first;
+  // Wait for SIGINT (Ctrl-C) or SIGTERM signal before shutting down.
+  await Future.any(
+    [
+      ProcessSignal.sigterm,
+      ProcessSignal.sigint,
+    ].map((final s) => s.watch().first),
+  );
 
   // Gracefully terminate all spawned isolates.
   for (final i in isolates) {
