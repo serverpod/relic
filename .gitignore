@@ -17,4 +17,5 @@ pubspec.lock
 
 # Local build artifacts
 *.exe
+*.dill
 benchmark_results.csv

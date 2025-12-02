@@ -148,9 +148,12 @@ Also, sub-routers are kind of annoying to setup in Shelf.
 
 So we built a proper trie-based router with support for dynamic parameters (`/:id/`), wildcards (`/*/`), and tail segments (`/**`).
 
-#### Performance: O(segments) vs O(routes)
+#### Performance: O(segments) typical case
 
-Unlike `shelf_router` which performs a linear scan over registered routes, Relic's trie-based router looks up handlers in O(n) time where n is the number of path segments (typically 2-5), regardless of how many routes you've registered.
+Unlike `shelf_router` which performs a linear scan over registered routes,
+Relic's trie-based router typically looks up handlers in O(n) time where n is
+the number of path segments (typically 2-5), regardless of how many routes
+you've registered.
 
 ```dart
 // Trie lookup: O(segments) - typically ~3-5 operations
@@ -160,7 +163,20 @@ router.lookup(Method.get, '/api/v1/users/123/posts');
 // Gets slower as you add more routes
 ```
 
-Path normalization is cached using an LRU cache, so common paths like `/api/users` are interned and reused, avoiding repeated parsing.
+The router supports backtracking, ensuring it always finds a match if one
+exists. When a literal path leads to a dead end, the router backtracks to try
+dynamic alternatives. This lets you freely combine specific routes (like
+`/api/v1/users`) with parameterized routes (like `/api/:version/items`)
+without worrying about edge cases where valid matches would be missed.
+
+When routes have overlapping literal and parameter segments, the router may
+try multiple paths to find the best match. However, each node in the trie is
+visited at most once, so performance can never degrade below a linear scan of
+registered routes. In practice, most applications don't have significant
+overlap, so performance remains excellent.
+
+Path normalization is cached using an LRU cache, so common paths like
+`/api/users` are interned and reused, avoiding repeated parsing.
 
 #### PathMiss vs MethodMiss
 
@@ -268,7 +284,22 @@ Common paths like `/api/users` or `/assets/logo.png` are cached and reused, avoi
 
 #### Trie-based Routing
 
-As mentioned in the routing section, the trie data structure provides O(segments) lookup time regardless of how many routes are registered. This scales much better than linear scanning as your application grows.
+The trie data structure provides efficient route matching that scales much
+better than linear scanning as your application grows. Typical lookups run in
+O(segments) time regardless of how many routes are registered.
+
+The router uses backtracking to ensure it always finds a match if one exists.
+This lets you freely combine:
+
+- Specific routes (`/files/special/report`) with catch-all routes
+  (`/files/**`)
+- Literal and parameterized segments (`/api/v1/users` and
+  `/api/:version/items`)
+
+The router tries literal matches first, then backtracks to dynamic
+alternatives if needed. Since each trie node is visited at most once during
+lookup, the worst case is still bounded by the total size of the trie. Hence it is never
+worse than a linear scan.
 
 **These aren't premature optimizations** - they're foundational design choices that make Relic faster by default without requiring developers to think about performance.
 

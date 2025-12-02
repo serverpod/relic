@@ -144,6 +144,66 @@ GITHUB_CODE_BLOCK lang="dart" file="../_example/routing/dynamic_segments.dart" d
 
 Tail segments are required when serving directories so that the handler knows which file the client requested. A route like `/static` without `/**` would not expose the requested child path.
 
+## Route matching and priority
+
+When multiple routes could potentially match a request, Relic uses these rules:
+
+1. **Literal segments take priority over dynamic segments** - A route with
+   `/users/admin` is tried before `/users/:id` when matching `/users/admin`.
+
+2. **Backtracking ensures the best match** - If a literal path leads to a dead
+   end (no matching route), the router backtracks and tries dynamic
+   alternatives.
+
+This means you can freely combine:
+
+- Specific routes (`/files/special/report`) with catch-all routes
+  (`/files/**`)
+- Literal and parameterized segments (`/api/v1/users` and
+  `/api/:version/items`)
+
+Route registration order does not affect matching, which makes it easy to
+compose routers from separate modules without worrying about ordering.
+
+The router uses a trie data structure to provide efficient matching. Typical
+lookups run in _O(segments)_ time regardless of how many routes are registered.
+Since each trie node is visited at most once during lookup, the worst case is
+still bounded by the total number of paths registered. Hence it is never worse
+than a linear scan.
+
+### How backtracking works
+
+Consider these routes:
+
+```dart
+router.get('/:entity/:id', entityHandler);      // Route 1
+router.get('/users/:id/profile', profileHandler); // Route 2
+```
+
+When a request comes in for `/users/789`:
+
+1. The router first tries the literal `users` segment (from Route 2)
+2. Route 2 requires a third segment `/profile`, but the path ends at `789`
+3. The router backtracks and tries the parameter `:entity` instead
+4. Route 1 matches with `entity=users` and `id=789`
+
+Without backtracking, the request would fail because the router would commit to the literal `users` path and never consider Route 1.
+
+### Backtracking with tail segments
+
+Tail segments (`/**`) act as catch-alls and benefit from backtracking:
+
+```dart
+router.get('/files/**', catchAllHandler);           // Route 1
+router.get('/files/special/report', reportHandler); // Route 2
+```
+
+- `/files/special/report` → matches Route 2 (exact match)
+- `/files/special/other` → backtracks to Route 1 (catch-all)
+
+This allows you to define specific routes alongside catch-all routes, with the
+specific routes taking priority when they fully match.
+
 ## Examples & further reading
 
 ### Examples
