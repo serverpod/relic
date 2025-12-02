@@ -140,15 +140,21 @@ final class Router<T extends Object> {
 
   /// Looks up a route matching the provided [path].
   ///
-  /// The input [path] string is normalized before lookup. Static routes are
-  /// checked first, followed by dynamic routes in the trie.
+  /// The input [path] string is normalized before lookup. If [backtrack] is
+  /// true (default), the router is allowed to backtrack through the trie to
+  /// find a matching route.
   ///
   /// Returns a [RouterMatch] containing the associated value and any extracted
-  /// parameters if a match is found. Returns [PathMiss] if no matching route exists,
-  /// or [MethodMiss] if a route exists for the path, but the method don't match.
-  LookupResult<T> lookup(final Method method, final String path) {
+  /// parameters if a match is found. Returns [PathMiss] if no matching route
+  /// exists, or [MethodMiss] if a route exists for the path, but the method
+  /// don't match.
+  LookupResult<T> lookup(
+    final Method method,
+    final String path, {
+    final bool backtrack = true,
+  }) {
     final normalizedPath = NormalizedPath(path); // Normalize upfront
-    final entry = _allRoutes.lookup(normalizedPath);
+    final entry = _allRoutes.lookup(normalizedPath, backtrack: backtrack);
     if (entry == null) return PathMiss(normalizedPath);
 
     final route = entry.value.find(method);

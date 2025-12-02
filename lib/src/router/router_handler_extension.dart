@@ -26,5 +26,5 @@ extension RouterHandlerEx on RelicRouter {
   /// to be callable like a [Handler].
   FutureOr<Result> call(final Request req) => const Pipeline()
       .addMiddleware(routeWith(this))
-      .addHandler(fallback ?? respondWith((_) => Response.notFound()))(req);
+      .addHandler(fallback ?? (_) => Response.notFound())(req);
 }

@@ -355,15 +355,21 @@ final class PathTrie<T extends Object> {
     trie._root = currentNode;
   }
 
-  /// Looks up a path in the trie and extracts parameters.
+  /// Looks up a [normalizedPath] in the trie and extracts parameters.
   ///
-  /// The [normalizedPath] is expected to be pre-normalized. Literal segments are
-  /// prioritized over parameters during matching.
+  /// Literal segments are prioritized over parameters during matching.
+  /// If [backtrack] is set (default), then the search is allowed to use
+  /// backtracking.
   ///
   /// Returns a [TrieMatch] containing the associated value and extracted
   /// parameters if a matching path is found, otherwise returns `null`.
-  TrieMatch<T>? lookup(final NormalizedPath normalizedPath) {
-    return _lookupRecursive(_root, normalizedPath, 0, _root.map, const {});
+  TrieMatch<T>? lookup(
+    final NormalizedPath normalizedPath, {
+    final bool backtrack = true,
+  }) {
+    return backtrack
+        ? _lookupRecursive(_root, normalizedPath, 0, _root.map, const {})
+        : _lookupIterative(normalizedPath);
   }
 
   TrieMatch<T>? _lookupRecursive(

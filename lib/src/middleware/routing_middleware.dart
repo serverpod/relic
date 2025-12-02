@@ -25,19 +25,21 @@ final _routingContext =
 ///
 /// This function converts a [Router] into middleware that can be used in a
 /// [Pipeline]. When a request matches a route, the associated value is
-/// converted to a [Handler] and invoked. If no route matches (path miss),
-/// the next handler in the pipeline is called. If the path matches but the
-/// method doesn't (method miss), a 405 response is returned with the Allow
-/// header listing supported methods.
+/// converted to a [Handler] (via [toHandler], if needed) and invoked. The
+/// [backtrack] parameter determines if the router can use backtracking while
+/// searching for a match.
+///
+/// If no route matches (path miss), the next handler in the pipeline is called.
+/// If the path matches but the method doesn't (method miss), a 405 response is
+/// returned with the Allow header listing supported methods.
 ///
 /// Path parameters, matched path, and remaining path from the routing lookup
-/// are accessible via [RequestEx] extensions on the context passed to
-/// handlers.
+/// are accessible via [RequestEx] extensions on the context passed to handlers.
 ///
 /// **Note:** For [RelicRouter], prefer using [Router.use] for middleware
-/// composition, [Router.fallback] for 404 handling, and [RouterHandlerEx.asHandler]
-/// to use the router directly as a handler. This avoids the need for
-/// [Pipeline] and provides better composability.
+/// composition, [Router.fallback] for 404 handling, and
+/// [RouterHandlerEx.asHandler] to use the router directly as a handler. This
+/// avoids the need for [Pipeline] and provides better composability.
 ///
 /// Preferred approach:
 /// ```dart
@@ -67,17 +69,25 @@ final _routingContext =
 /// ```
 Middleware routeWith<T extends Object>(
   final Router<T> router, {
+  final bool backtrack = true,
   final Handler Function(T)? toHandler,
-}) => _RoutingMiddlewareBuilder(router, toHandler: toHandler).asMiddleware;
+}) =>
+    _RoutingMiddlewareBuilder(
+      router,
+      backtrack: backtrack,
+      toHandler: toHandler,
+    ).asMiddleware;
 
 bool _isSubtype<S, T>() => <S>[] is List<T>;
 
 class _RoutingMiddlewareBuilder<T extends Object> {
   final Router<T> _router;
+  final bool backtrack;
   late final Handler Function(T) _toHandler;
 
   _RoutingMiddlewareBuilder(
     this._router, {
+    this.backtrack = true,
     final Handler Function(T)? toHandler,
   }) {
     if (toHandler != null) {

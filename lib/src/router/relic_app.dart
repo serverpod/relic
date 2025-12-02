@@ -17,6 +17,7 @@ part of 'router.dart';
 /// may require a full restart.
 final class RelicApp implements RelicRouter {
   RelicServer? _server;
+  bool _backtrack = true;
   StreamSubscription? _reloadSubscription;
   var delegate = RelicRouter();
   final _setup = <RouterInjectable>[];
@@ -57,9 +58,11 @@ final class RelicApp implements RelicRouter {
   Future<RelicServer> run(
     final FutureOr<Adapter> Function() adapterFactory, {
     final int noOfIsolates = 1,
+    final bool backtrack = true,
   }) async {
     if (_server != null) throw StateError('Cannot call run twice');
     _server = RelicServer(adapterFactory, noOfIsolates: noOfIsolates);
+    _backtrack = backtrack;
     await _init();
     _reloadSubscription = await _hotReloader.register(this);
     return _server!;
@@ -73,7 +76,9 @@ final class RelicApp implements RelicRouter {
   }
 
   Future<void> _init() async {
-    await _server!.mountAndStart(delegate.asHandler);
+    await _server!.mountAndStart(
+      _RouterHandlerObject(delegate, backtrack: _backtrack).call,
+    );
   }
 
   Future<void> _reload() async {
@@ -122,8 +127,11 @@ final class RelicApp implements RelicRouter {
   bool get isEmpty => delegate.isEmpty;
 
   @override
-  LookupResult<Handler> lookup(final Method method, final String path) =>
-      delegate.lookup(method, path);
+  LookupResult<Handler> lookup(
+    final Method method,
+    final String path, {
+    final bool backtrack = true,
+  }) => delegate.lookup(method, path, backtrack: backtrack);
 }
 
 final class _Injectable implements RouterInjectable {
@@ -163,3 +171,15 @@ class _HotReloader {
 }
 
 final _hotReloader = _HotReloader();
+
+class _RouterHandlerObject extends HandlerObject {
+  final RelicRouter router;
+  final bool backtrack;
+
+  _RouterHandlerObject(this.router, {this.backtrack = true});
+
+  @override
+  FutureOr<Result> call(final Request req) => const Pipeline()
+      .addMiddleware(routeWith(router, backtrack: backtrack))
+      .addHandler(router.fallback ?? (_) => Response.notFound())(req);
+}
