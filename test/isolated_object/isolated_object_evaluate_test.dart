@@ -54,7 +54,7 @@ void main() {
         (final i) => isolated.evaluate((final counter) => counter.increment()),
       );
 
-      await Future.wait(futures);
+      await futures.wait;
 
       final result = await isolated.evaluate((final counter) => counter.value);
       expect(result, 10);
@@ -190,7 +190,7 @@ void main() {
         );
       }
 
-      final results = await Future.wait(futures);
+      final results = await futures.wait;
 
       // All operations should complete
       expect(results.length, 100);
