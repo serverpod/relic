@@ -112,26 +112,6 @@ void main() {
         expect(result!.value, equals(1));
         expect(result.parameters, equals({#id: '123'}));
       });
-
-      test(
-        'Given overlapping parameterized routes, '
-        'when looking up paths, '
-        'then literal segments are prioritized over parameters, even if it prevents a match',
-        () {
-          trie.add(NormalizedPath('/:entity/:id'), 1);
-          trie.add(NormalizedPath('/users/:id/profile'), 2);
-
-          final result = trie.lookup(NormalizedPath('/users/789'));
-          expect(
-            result,
-            isNull,
-            reason:
-                'Should not match the first route, as literal match has priority at each level. '
-                'Should not match the second route, as /profile segment is missing.',
-          );
-        },
-        skip: 'Backtracking now allows fallback to parameter routes',
-      );
     });
 
     group('Backtracking', () {
@@ -148,30 +128,36 @@ void main() {
         expect(result.parameters, equals({#entity: 'users', #id: '789'}));
       });
 
-      test('Given overlapping routes at multiple levels, '
-          'when deeper literal path matches, '
-          'then returns the deeper match without backtracking', () {
-        trie.add(NormalizedPath('/:a/:b'), 1);
-        trie.add(NormalizedPath('/x/:b'), 2);
-        trie.add(NormalizedPath('/x/y'), 3);
+      group('Given overlapping routes at multiple levels', () {
+        setUp(() {
+          trie.add(NormalizedPath('/:a/:b'), 1);
+          trie.add(NormalizedPath('/x/:b'), 2);
+          trie.add(NormalizedPath('/x/y'), 3);
+        });
 
-        // Exact literal match
-        var result = trie.lookup(NormalizedPath('/x/y'));
-        expect(result, isNotNull);
-        expect(result!.value, equals(3));
-        expect(result.parameters, isEmpty);
+        test('when exact literal path matches, '
+            'then returns the deeper match without backtracking', () {
+          final result = trie.lookup(NormalizedPath('/x/y'));
+          expect(result, isNotNull);
+          expect(result!.value, equals(3));
+          expect(result.parameters, isEmpty);
+        });
 
-        // Partial literal, then parameter
-        result = trie.lookup(NormalizedPath('/x/z'));
-        expect(result, isNotNull);
-        expect(result!.value, equals(2));
-        expect(result.parameters, equals({#b: 'z'}));
+        test('when literal prefix matches then parameter, '
+            'then returns the partial literal match', () {
+          final result = trie.lookup(NormalizedPath('/x/z'));
+          expect(result, isNotNull);
+          expect(result!.value, equals(2));
+          expect(result.parameters, equals({#b: 'z'}));
+        });
 
-        // Full parameter match
-        result = trie.lookup(NormalizedPath('/a/b'));
-        expect(result, isNotNull);
-        expect(result!.value, equals(1));
-        expect(result.parameters, equals({#a: 'a', #b: 'b'}));
+        test('when only parameter route matches, '
+            'then returns the full parameter match', () {
+          final result = trie.lookup(NormalizedPath('/a/b'));
+          expect(result, isNotNull);
+          expect(result!.value, equals(1));
+          expect(result.parameters, equals({#a: 'a', #b: 'b'}));
+        });
       });
 
       test('Given a literal route that leads to dead end, '
@@ -225,23 +211,27 @@ void main() {
         expect(result.parameters, isEmpty);
       });
 
-      test('Given tail route and more specific literal route, '
-          'when literal path fails, '
-          'then backtracks to tail route', () {
-        trie.add(NormalizedPath('/files/**'), 1);
-        trie.add(NormalizedPath('/files/special/report'), 2);
+      group('Given tail route and more specific literal route', () {
+        setUp(() {
+          trie.add(NormalizedPath('/files/**'), 1);
+          trie.add(NormalizedPath('/files/special/report'), 2);
+        });
 
-        // Exact match for specific route
-        var result = trie.lookup(NormalizedPath('/files/special/report'));
-        expect(result, isNotNull);
-        expect(result!.value, equals(2));
+        test('when exact literal path matches, '
+            'then returns the specific route', () {
+          final result = trie.lookup(NormalizedPath('/files/special/report'));
+          expect(result, isNotNull);
+          expect(result!.value, equals(2));
+        });
 
-        // Should backtrack to tail when literal path doesn't complete
-        result = trie.lookup(NormalizedPath('/files/special/other'));
-        expect(result, isNotNull);
-        expect(result!.value, equals(1));
-        expect(result.matched.path, equals('/files'));
-        expect(result.remaining.path, equals('/special/other'));
+        test('when literal path fails, '
+            'then backtracks to tail route', () {
+          final result = trie.lookup(NormalizedPath('/files/special/other'));
+          expect(result, isNotNull);
+          expect(result!.value, equals(1));
+          expect(result.matched.path, equals('/files'));
+          expect(result.remaining.path, equals('/special/other'));
+        });
       });
 
       test('Given tail route and literal route with parameter, '
