@@ -130,7 +130,100 @@ void main() {
                 'Should not match the second route, as /profile segment is missing.',
           );
         },
+        skip: 'Backtracking now allows fallback to parameter routes',
       );
+    });
+
+    group('Backtracking', () {
+      test('Given overlapping literal and parameter routes, '
+          'when literal path fails to match, '
+          'then backtracks to try parameter route', () {
+        trie.add(NormalizedPath('/:entity/:id'), 1);
+        trie.add(NormalizedPath('/users/:id/profile'), 2);
+
+        // /users/789 should now match /:entity/:id via backtracking
+        final result = trie.lookup(NormalizedPath('/users/789'));
+        expect(result, isNotNull);
+        expect(result!.value, equals(1));
+        expect(result.parameters, equals({#entity: 'users', #id: '789'}));
+      });
+
+      test('Given overlapping routes at multiple levels, '
+          'when deeper literal path matches, '
+          'then returns the deeper match without backtracking', () {
+        trie.add(NormalizedPath('/:a/:b'), 1);
+        trie.add(NormalizedPath('/x/:b'), 2);
+        trie.add(NormalizedPath('/x/y'), 3);
+
+        // Exact literal match
+        var result = trie.lookup(NormalizedPath('/x/y'));
+        expect(result, isNotNull);
+        expect(result!.value, equals(3));
+        expect(result.parameters, isEmpty);
+
+        // Partial literal, then parameter
+        result = trie.lookup(NormalizedPath('/x/z'));
+        expect(result, isNotNull);
+        expect(result!.value, equals(2));
+        expect(result.parameters, equals({#b: 'z'}));
+
+        // Full parameter match
+        result = trie.lookup(NormalizedPath('/a/b'));
+        expect(result, isNotNull);
+        expect(result!.value, equals(1));
+        expect(result.parameters, equals({#a: 'a', #b: 'b'}));
+      });
+
+      test('Given a literal route that leads to dead end, '
+          'when backtracking occurs, '
+          'then finds alternative parameter route', () {
+        trie.add(NormalizedPath('/api/v1/users'), 1);
+        trie.add(NormalizedPath('/api/:version/items'), 2);
+
+        // Should match /api/:version/items via backtracking
+        final result = trie.lookup(NormalizedPath('/api/v1/items'));
+        expect(result, isNotNull);
+        expect(result!.value, equals(2));
+        expect(result.parameters, equals({#version: 'v1'}));
+      });
+
+      test('Given multiple levels of backtracking needed, '
+          'when lookup occurs, '
+          'then correctly backtracks through all levels', () {
+        trie.add(NormalizedPath('/:a/:b/:c'), 1);
+        trie.add(NormalizedPath('/x/:b/z'), 2);
+        trie.add(NormalizedPath('/x/y/:c'), 3);
+
+        // Needs to backtrack from /x/y to try /x/:b, then to /:a
+        final result = trie.lookup(NormalizedPath('/x/y/w'));
+        expect(result, isNotNull);
+        expect(result!.value, equals(3));
+        expect(result.parameters, equals({#c: 'w'}));
+      });
+
+      test('Given backtracking scenario with no valid match, '
+          'when all paths exhausted, '
+          'then returns null', () {
+        trie.add(NormalizedPath('/users/:id/profile'), 1);
+        trie.add(NormalizedPath('/users/admin/settings'), 2);
+
+        // No route matches /users/admin/profile
+        final result = trie.lookup(NormalizedPath('/users/guest/settings'));
+        expect(result, isNull);
+      });
+
+      test('Given literal priority with successful match, '
+          'when literal path succeeds, '
+          'then does not consider parameter alternatives', () {
+        trie.add(NormalizedPath('/:entity/list'), 1);
+        trie.add(NormalizedPath('/users/list'), 2);
+
+        // Should match literal /users/list, not /:entity/list
+        final result = trie.lookup(NormalizedPath('/users/list'));
+        expect(result, isNotNull);
+        expect(result!.value, equals(2));
+        expect(result.parameters, isEmpty);
+      });
     });
 
     group('Error Handling', () {
