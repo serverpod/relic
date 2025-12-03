@@ -234,24 +234,28 @@ void main() {
         });
       });
 
-      test('Given tail route and literal route with parameter, '
-          'when literal path with parameter fails, '
-          'then backtracks to tail route', () {
-        trie.add(NormalizedPath('/api/**'), 1);
-        trie.add(NormalizedPath('/api/v1/:resource/docs'), 2);
+      group('Given tail route and literal route with parameter', () {
+        setUp(() {
+          trie.add(NormalizedPath('/api/**'), 1);
+          trie.add(NormalizedPath('/api/v1/:resource/docs'), 2);
+        });
 
-        // Match literal + parameter route
-        var result = trie.lookup(NormalizedPath('/api/v1/users/docs'));
-        expect(result, isNotNull);
-        expect(result!.value, equals(2));
-        expect(result.parameters, equals({#resource: 'users'}));
+        test('when exact literal path with parameter matches, '
+            'then returns the specific route', () {
+          final result = trie.lookup(NormalizedPath('/api/v1/users/docs'));
+          expect(result, isNotNull);
+          expect(result!.value, equals(2));
+          expect(result.parameters, equals({#resource: 'users'}));
+        });
 
-        // Should backtrack to tail when the deeper path doesn't complete
-        result = trie.lookup(NormalizedPath('/api/v1/users/other'));
-        expect(result, isNotNull);
-        expect(result!.value, equals(1));
-        expect(result.matched.path, equals('/api'));
-        expect(result.remaining.path, equals('/v1/users/other'));
+        test('when literal path with parameter fails, '
+            'then backtracks to tail route', () {
+          final result = trie.lookup(NormalizedPath('/api/v1/users/other'));
+          expect(result, isNotNull);
+          expect(result!.value, equals(1));
+          expect(result.matched.path, equals('/api'));
+          expect(result.remaining.path, equals('/v1/users/other'));
+        });
       });
 
       test('Given nested tail routes, '
