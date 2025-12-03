@@ -1,5 +1,8 @@
-## 0.11.0
+## 0.12.0
+- feat!: Support back-tracking during routing ([#297](https://github.com/serverpod/relic/pull/297))
+- fix: Ensure close is idempotent ([#295](https://github.com/serverpod/relic/pull/295))
 
+## 0.11.0
 - feat!: Add typed accessor for query and path parameters ([#288](https://github.com/serverpod/relic/pull/288))
 - feat: Introduce ConnectionInfo ([#273](https://github.com/serverpod/relic/pull/273))
 - feat: Add IPAddress class (independent of dart:io) ([#272](https://github.com/serverpod/relic/pull/272))
