@@ -355,14 +355,121 @@ final class PathTrie<T extends Object> {
     trie._root = currentNode;
   }
 
-  /// Looks up a path in the trie and extracts parameters.
+  /// Looks up a [normalizedPath] in the trie and extracts parameters.
   ///
-  /// The [normalizedPath] is expected to be pre-normalized. Literal segments are
-  /// prioritized over parameters during matching.
+  /// Literal segments are prioritized over parameters during matching.
+  /// If [backtrack] is set (default), then the search is allowed to use
+  /// backtracking.
   ///
   /// Returns a [TrieMatch] containing the associated value and extracted
   /// parameters if a matching path is found, otherwise returns `null`.
-  TrieMatch<T>? lookup(final NormalizedPath normalizedPath) {
+  TrieMatch<T>? lookup(
+    final NormalizedPath normalizedPath, {
+    final bool backtrack = true,
+  }) {
+    return backtrack
+        ? _lookupRecursive(_root, normalizedPath, 0, _root.map, const {})
+        : _lookupIterative(normalizedPath);
+  }
+
+  TrieMatch<T>? _lookupRecursive(
+    final _TrieNode<T> node,
+    final NormalizedPath normalizedPath,
+    final int index,
+    final T Function(T)? currentMap,
+    final Parameters parameters,
+  ) {
+    final segments = normalizedPath.segments;
+
+    // Base case: processed all segments
+    if (index == segments.length) {
+      T? value = node.value;
+
+      // If no value found, check if node has a tail. This handles cases
+      // like /archive/** matching /archive, where remainingPath would be empty.
+      if (value == null) {
+        final dynamicSegment = node.dynamicSegment;
+        if (dynamicSegment is _Tail<T>) {
+          value = dynamicSegment.node.value;
+        }
+      }
+
+      if (value == null) return null;
+      value = currentMap?.call(value) ?? value;
+      return TrieMatch(
+        value,
+        parameters,
+        normalizedPath.subPath(0, index),
+        normalizedPath.subPath(index),
+      );
+    }
+
+    final segment = segments[index];
+
+    // Try literal match first
+    final child = node.children[segment];
+    if (child != null) {
+      final newMap = _composeMap(currentMap, child.map);
+      final result = _lookupRecursive(
+        child,
+        normalizedPath,
+        index + 1,
+        newMap,
+        parameters,
+      );
+      if (result != null) return result;
+      // Fall through to try dynamic segment
+    }
+
+    // Try dynamic segment, if no literal match exists
+    final dynamicSegment = node.dynamicSegment;
+    if (dynamicSegment != null) {
+      final dynamicNode = dynamicSegment.node;
+      final newMap = _composeMap(currentMap, dynamicNode.map);
+      final newParams =
+          dynamicSegment is _Parameter<T>
+              ? {...parameters, Symbol(dynamicSegment.name): segment}
+              : parameters;
+
+      if (dynamicSegment is _Tail<T>) {
+        // Tail matches: check for value at this position
+        T? value = dynamicNode.value;
+        if (value != null) {
+          value = newMap?.call(value) ?? value;
+          return TrieMatch(
+            value,
+            newParams,
+            normalizedPath.subPath(0, index),
+            normalizedPath.subPath(index),
+          );
+        }
+      } else {
+        return _lookupRecursive(
+          dynamicNode,
+          normalizedPath,
+          index + 1,
+          newMap,
+          newParams,
+        );
+      }
+    }
+
+    return null;
+  }
+
+  /// Composes two map functions.
+  static T Function(T)? _composeMap<T>(
+    final T Function(T)? outer,
+    final T Function(T)? inner,
+  ) {
+    if (outer == null) return inner;
+    if (inner == null) return outer;
+    return (final v) => outer(inner(v));
+  }
+
+  // coverage:ignore-start
+  // ignore: unused_element
+  TrieMatch<T>? _lookupIterative(final NormalizedPath normalizedPath) {
     final segments = normalizedPath.segments;
     final parameters = <Symbol, String>{};
 
@@ -420,6 +527,7 @@ final class PathTrie<T extends Object> {
     value = currentMap?.call(value) ?? value;
     return TrieMatch(value, parameters, matchedPath, remainingPath);
   }
+  // coverage:ignore-end
 
   /// Returns true if the path trie has no routes.
   bool get isEmpty => _root.isEmpty;
