@@ -31,13 +31,75 @@ Handler _createDelayedHandler(final Duration delay) {
   };
 }
 
+/// Starts [numberOfRequests] requests to the server using a delay-based handler.
+/// Used for multi-isolate tests where Completers cannot cross isolate boundaries.
+///
+/// Returns the futures for all request responses. Waits briefly for requests
+/// to start processing before returning.
+Future<List<Future<http.Response>>> _startDelayedInFlightRequests(
+  final RelicServer server, {
+  final int numberOfRequests = 4,
+  final Duration requestDelay = const Duration(milliseconds: 300),
+}) async {
+  await server.mountAndStart(_createDelayedHandler(requestDelay));
+
+  final responseFutures = List.generate(
+    numberOfRequests,
+    (_) => http.get(Uri.http('localhost:${server.port}')),
+  );
+
+  // Give requests time to start processing
+  await Future<void>.delayed(const Duration(milliseconds: 50));
+
+  return responseFutures;
+}
+
+/// Starts [numberOfRequests] requests to the server and waits for all of them
+/// to begin processing in the handler.
+///
+/// Returns a record containing:
+/// - [responseFutures]: The futures for all request responses
+/// - [canComplete]: A completer that must be completed to allow requests to finish
+///
+/// The handler will block until [canComplete] is completed.
+Future<
+  ({List<Future<http.Response>> responseFutures, Completer<void> canComplete})
+>
+_startInFlightRequests(
+  final RelicServer server, {
+  final int numberOfRequests = 4,
+}) async {
+  var requestsStarted = 0;
+  final allRequestsStarted = Completer<void>();
+  final canComplete = Completer<void>();
+
+  await server.mountAndStart(
+    _createSignalingHandler(
+      onRequestStarted: () {
+        requestsStarted++;
+        if (requestsStarted == numberOfRequests) {
+          allRequestsStarted.complete();
+        }
+      },
+      canComplete: canComplete,
+    ),
+  );
+
+  final responseFutures = List.generate(
+    numberOfRequests,
+    (_) => http.get(Uri.http('localhost:${server.port}')),
+  );
+
+  await allRequestsStarted.future;
+
+  return (responseFutures: responseFutures, canComplete: canComplete);
+}
+
 void main() {
   group('Given a RelicServer with in-flight requests', () {
     late RelicServer server;
-    bool serverClosed = false;
 
     setUp(() async {
-      serverClosed = false;
       server = RelicServer(
         () => IOAdapter.bind(InternetAddress.loopbackIPv4, port: 0),
       );
@@ -45,90 +107,19 @@ void main() {
 
     tearDown(() async {
       // Server may already be closed by the test
-      if (!serverClosed) {
-        try {
-          await server.close();
-        } catch (_) {}
-      }
+      await server.close();
     });
 
     test(
-      'when server.close() is called during an in-flight request, '
-      'then the request completes successfully before server shuts down',
+      'when server.close() is called with in-flight requests, '
+      'then all requests complete successfully before server shuts down',
       () async {
-        final requestStarted = Completer<void>();
-        final canComplete = Completer<void>();
-
-        await server.mountAndStart(
-          _createSignalingHandler(
-            onRequestStarted: requestStarted.complete,
-            canComplete: canComplete,
-          ),
+        final (:responseFutures, :canComplete) = await _startInFlightRequests(
+          server,
         );
-
-        // Start a request
-        final responseFuture = http.get(Uri.http('localhost:${server.port}'));
-
-        // Wait for the request to start processing
-        await requestStarted.future;
-
-        // Verify request is in-flight
-        final infoBeforeClose = await server.connectionsInfo();
-        expect(
-          infoBeforeClose.active + infoBeforeClose.idle,
-          greaterThan(0),
-          reason: 'Expected at least one active or idle connection',
-        );
-
-        // Close the server while request is in-flight
-        final closeFuture = server.close();
-        serverClosed = true;
-
-        // Allow the request to complete
-        canComplete.complete();
-
-        // Wait for both the response and server close to complete
-        final (response, _) = await (responseFuture, closeFuture).wait;
-
-        // Verify the in-flight request completed successfully
-        expect(response.statusCode, HttpStatus.ok);
-        expect(response.body, 'Completed');
-      },
-    );
-
-    test(
-      'when server.close() is called with multiple concurrent in-flight requests, '
-      'then all requests complete successfully',
-      () async {
-        const numberOfRequests = 5;
-        var requestsStarted = 0;
-        final allRequestsStarted = Completer<void>();
-        final canComplete = Completer<void>();
-
-        await server.mountAndStart(
-          _createSignalingHandler(
-            onRequestStarted: () {
-              requestsStarted++;
-              if (requestsStarted == numberOfRequests) {
-                allRequestsStarted.complete();
-              }
-            },
-            canComplete: canComplete,
-          ),
-        );
-
-        // Start multiple concurrent requests
-        final responseFutures = List.generate(
-          numberOfRequests,
-          (_) => http.get(Uri.http('localhost:${server.port}')),
-        );
-
-        // Wait for all requests to start processing
-        await allRequestsStarted.future;
 
         // Close the server while requests are in-flight
         final closeFuture = server.close();
-        serverClosed = true;
 
         // Allow the requests to complete
         canComplete.complete();
@@ -204,6 +195,40 @@ void main() {
         reason: 'New requests should be rejected after server begins closing',
       );
     });
+
+    test('when server.close() is called twice sequentially, '
+        'then the second call should complete without hanging', () async {
+      // https://github.com/serverpod/relic/issues/293
+      await server.mountAndStart(
+        (final req) => Response.ok(body: Body.fromString('OK')),
+      );
+
+      await server.close();
+
+      await expectLater(server.close(), completes);
+    });
+
+    test('when server.close() is called twice concurrently, '
+        'then both calls should complete without error', () async {
+      // https://github.com/serverpod/relic/issues/293
+      final (:responseFutures, :canComplete) = await _startInFlightRequests(
+        server,
+      );
+
+      // Start both close calls concurrently
+      final closeFutures = (server.close(), server.close());
+
+      // Allow requests to complete
+      canComplete.complete();
+
+      // Both close calls and all requests should complete successfully
+      final (_, responses) =
+          await (closeFutures.wait, responseFutures.wait).wait;
+
+      for (final response in responses) {
+        expect(response.statusCode, HttpStatus.ok);
+      }
+    });
   });
 
   group('Given a RelicServer with multi-isolate configuration', () {
@@ -227,25 +252,10 @@ void main() {
     });
 
     test(
-      'when server.close() is called during in-flight requests across isolates, '
-      'then all requests complete successfully',
+      'when server.close() is called with in-flight requests, '
+      'then all requests complete successfully before server shuts down',
       () async {
-        // Use delay-based handler because Completers cannot cross isolate
-        // boundaries
-        const requestDelay = Duration(milliseconds: 300);
-        const numberOfRequests = 4;
-
-        await server.mountAndStart(_createDelayedHandler(requestDelay));
-
-        // Start multiple concurrent requests that will be distributed
-        // across isolates
-        final responseFutures = List.generate(
-          numberOfRequests,
-          (_) => http.get(Uri.http('localhost:${server.port}')),
-        );
-
-        // Give requests time to start processing
-        await Future<void>.delayed(const Duration(milliseconds: 50));
+        final responseFutures = await _startDelayedInFlightRequests(server);
 
         // Close the server while requests are in-flight
         final closeFuture = server.close();
@@ -264,5 +274,31 @@ void main() {
         }
       },
     );
+
+    test('when server.close() is called twice sequentially, '
+        'then the second call should complete without hanging', () async {
+      // https://github.com/serverpod/relic/issues/293
+      await server.mountAndStart(
+        (final req) => Response.ok(body: Body.fromString('OK')),
+      );
+
+      await server.close();
+      await expectLater(server.close(), completes);
+    });
+
+    test('when server.close() is called twice concurrently, '
+        'then both calls should complete without error', () async {
+      // https://github.com/serverpod/relic/issues/293
+      final responseFutures = await _startDelayedInFlightRequests(server);
+
+      // Both close calls should complete successfully
+      final closeFutures = (server.close(), server.close()).wait;
+      final (_, responses) = await (closeFutures, responseFutures.wait).wait;
+
+      // Verify requests completed
+      for (final response in responses) {
+        expect(response.statusCode, HttpStatus.ok);
+      }
+    });
   });
 }
