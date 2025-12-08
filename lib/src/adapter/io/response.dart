@@ -2,6 +2,7 @@ import 'dart:io';
 
 import '../../context/result.dart';
 
+import '../../headers/standard_headers_extensions.dart';
 import 'http_response_extension.dart';
 
 extension ResponseExIo on Response {
@@ -16,8 +17,12 @@ extension ResponseExIo on Response {
     // Apply all headers to the response.
     httpResponse.applyHeaders(headers, body);
 
-    return httpResponse
-        .addStream(body.read())
-        .then((_) => httpResponse.close());
+    // Close connection if requested. A bit weird this is not handled by dart:io
+    httpResponse.persistentConnection = !(headers.connection?.isClose ?? false);
+
+    await httpResponse.addStream(body.read());
+    await httpResponse.flush();
+
+    await httpResponse.close();
   }
 }
