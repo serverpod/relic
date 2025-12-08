@@ -283,6 +283,15 @@ class Body {
   /// Can only be called once to prevent accidental double-consumption
   /// and ensure predictable behavior.
   ///
+  /// If [maxLength] is provided, the stream will throw a [MaxBodySizeExceeded]
+  /// exception if the total bytes exceed the limit. This is useful for
+  /// preventing denial-of-service attacks from unbounded body reads.
+  ///
+  /// **Note**: When [contentLength] is known and exceeds [maxLength], the
+  /// exception is thrown immediately without consuming any data. When
+  /// [contentLength] is unknown (chunked encoding), the exception is thrown
+  /// as soon as the cumulative size exceeds the limit.
+  ///
   /// Examples:
   /// ```dart
   /// final body = Body.fromString('test');
@@ -303,8 +312,18 @@ class Body {
   ///   // Process chunk by chunk
   ///   await processChunk(chunk);
   /// }
+  ///
+  /// // With size limit (10 MB):
+  /// try {
+  ///   final limitedStream = request.body.read(maxLength: 10 * 1024 * 1024);
+  ///   await for (final chunk in limitedStream) {
+  ///     // Process chunk
+  ///   }
+  /// } on MaxBodySizeExceeded {
+  ///   // Handle oversized body
+  /// }
   /// ```
-  Stream<Uint8List> read() {
+  Stream<Uint8List> read({final int? maxLength}) {
     final stream = _stream;
     if (stream == null) {
       throw StateError(
@@ -313,6 +332,44 @@ class Body {
       );
     }
     _stream = null;
-    return stream;
+
+    if (maxLength == null) {
+      return stream;
+    }
+
+    // If content length is known and exceeds limit, fail immediately.
+    final knownLength = contentLength;
+    if (knownLength != null && knownLength > maxLength) {
+      throw MaxBodySizeExceeded(maxLength);
+    }
+
+    // Wrap stream to track cumulative size.
+    return _limitedStream(stream, maxLength);
   }
+
+  static Stream<Uint8List> _limitedStream(
+    final Stream<Uint8List> source,
+    final int maxLength,
+  ) async* {
+    var totalBytes = 0;
+    await for (final chunk in source) {
+      totalBytes += chunk.length;
+      if (totalBytes > maxLength) {
+        throw MaxBodySizeExceeded(maxLength);
+      }
+      yield chunk;
+    }
+  }
+}
+
+/// Exception thrown when the body size exceeds the maximum allowed length.
+class MaxBodySizeExceeded implements Exception {
+  /// The maximum allowed body size in bytes.
+  final int maxLength;
+
+  /// Creates a new [MaxBodySizeExceeded] exception.
+  MaxBodySizeExceeded(this.maxLength);
+
+  @override
+  String toString() => 'MaxBodySizeExceeded: Body exceeded $maxLength bytes';
 }

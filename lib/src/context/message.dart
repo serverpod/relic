@@ -16,7 +16,11 @@ abstract class Message {
   Encoding? get encoding => body.bodyType?.encoding;
 
   /// Reads the body as a stream of bytes. Can only be called once.
-  Stream<Uint8List> read() => body.read();
+  ///
+  /// If [maxLength] is provided, throws [MaxBodySizeExceeded] if the body
+  /// exceeds the limit. See [Body.read] for details.
+  Stream<Uint8List> read({final int? maxLength}) =>
+      body.read(maxLength: maxLength);
 
   /// Reads the body as a string, decoding it using the specified or detected encoding.
   /// Defaults to utf8 if no encoding is provided or detected.
@@ -30,9 +34,9 @@ abstract class Message {
   ///   // Use data...
   /// });
   /// ```
-  Future<String> readAsString([Encoding? encoding]) {
+  Future<String> readAsString({Encoding? encoding, final int? maxLength}) {
     encoding ??= body.bodyType?.encoding ?? utf8;
-    return encoding.decodeStream(read());
+    return encoding.decodeStream(read(maxLength: maxLength));
   }
 
   /// Determines if the body is empty by checking the content length.
