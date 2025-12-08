@@ -152,17 +152,16 @@ Future<Response> apiDataHandler(final Request req) async {
 Future<Response> uploadHandler(final Request req) async {
   // Limit uploads to 10 MB.
   const maxFileSize = 10 * 1024 * 1024;
-  final contentLength = req.body.contentLength;
-
-  if (contentLength != null && contentLength > maxFileSize) {
-    return Response.badRequest(body: Body.fromString('File too large'));
-  }
 
   final file = File('uploads/file.bin');
   await file.create(recursive: true);
   final sink = file.openWrite();
   try {
-    await sink.addStream(req.read());
+    // Use maxLength to enforce the size limit across all chunks.
+    // This works correctly even when content-length is unknown (chunked encoding).
+    await sink.addStream(req.read(maxLength: maxFileSize));
+  } on MaxBodySizeExceeded {
+    return Response.badRequest(body: Body.fromString('File too large'));
   } finally {
     await sink.close();
   }
