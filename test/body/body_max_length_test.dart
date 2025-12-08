@@ -1,8 +1,11 @@
-import 'dart:async';
+import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:relic/src/body/body.dart';
+import 'package:relic/io_adapter.dart';
+import 'package:relic/relic.dart';
 import 'package:test/test.dart';
+
+import '../headers/headers_test_utils.dart';
 
 void main() {
   group('Given Body.read with maxLength', () {
@@ -128,6 +131,91 @@ void main() {
       body.read(maxLength: 100);
 
       expect(() => body.read(maxLength: 100), throwsA(isA<StateError>()));
+    });
+  });
+
+  group('Given maxLength on a keep-alive connection', () {
+    late RelicServer server;
+    late HttpClient client;
+
+    setUp(() {
+      client = HttpClient();
+      client.idleTimeout = const Duration(seconds: 30);
+      client.maxConnectionsPerHost = 1;
+    });
+
+    tearDown(() async {
+      client.close();
+      await server.close();
+    });
+
+    test('when the first request body exceeds maxLength, '
+        'then subsequent requests succeed', () async {
+      const maxLength = 10;
+      var requestCount = 0;
+
+      server = RelicServer(() => IOAdapter.bind(InternetAddress.loopbackIPv4));
+
+      await server.mountAndStart((final req) async {
+        requestCount++;
+        final body = await req.readAsString(maxLength: maxLength);
+        return Response.ok(body: Body.fromString('Received: $body'));
+      });
+
+      final url = server.url;
+
+      // First request: Send body larger than maxLength.
+      final request1 = await client.postUrl(url);
+      request1.add(List.filled(50, 65)); // 50 bytes of 'A', exceeds maxLength.
+      final response1 = await request1.close();
+
+      expect(response1.statusCode, HttpStatus.requestEntityTooLarge);
+      await response1.drain<void>(); // <-- important, otherwise client hang!
+
+      // Second request should still work
+      final request2 = await client.postUrl(url);
+      request2.add(List.filled(5, 66)); // 5 bytes of 'B', within maxLength.
+      final response2 = await request2.close();
+
+      expect(response2.statusCode, HttpStatus.ok);
+      expect(requestCount, 2);
+    });
+
+    test('when chunked request body exceeds maxLength mid-stream, '
+        'then subsequent requests succeed', () async {
+      const maxLength = 10;
+      var requestCount = 0;
+
+      server = RelicServer(() => IOAdapter.bind(InternetAddress.loopbackIPv4));
+
+      await server.mountAndStart((final req) async {
+        requestCount++;
+        final body = await req.readAsString(maxLength: maxLength);
+        return Response.ok(body: Body.fromString('Received: $body'));
+      });
+
+      final url = server.url;
+
+      // First request: chunked encoding, exceeds maxLength.
+      final request1 = await client.postUrl(url);
+      request1.headers.chunkedTransferEncoding = true;
+      request1.bufferOutput = false;
+      // Send multiple chunks that together exceed maxLength.
+      request1.add(List.filled(5, 65)); // First chunk: 5 bytes.
+      request1.add(List.filled(5, 65)); // Second chunk: 5 bytes.
+      request1.add(List.filled(5, 65)); // Third chunk: exceeds limit.
+      final response1 = await request1.close();
+
+      expect(response1.statusCode, HttpStatus.requestEntityTooLarge);
+      await response1.drain<void>();
+
+      // Second request should still work
+      final request2 = await client.postUrl(url);
+      request2.add(List.filled(5, 66)); // 5 bytes, within limit.
+      final response2 = await request2.close();
+
+      expect(response2.statusCode, HttpStatus.ok);
+      expect(requestCount, 2);
     });
   });
 }
