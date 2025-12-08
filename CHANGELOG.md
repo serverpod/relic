@@ -1,3 +1,6 @@
+## 0.13.0
+- feat!: Add maxLength argument on read ([#301](https://github.com/serverpod/relic/pull/301))
+
 ## 0.12.0
 - feat!: Support back-tracking during routing ([#297](https://github.com/serverpod/relic/pull/297))
 - fix: Ensure close is idempotent ([#295](https://github.com/serverpod/relic/pull/295))
