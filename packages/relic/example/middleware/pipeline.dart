@@ -1,5 +1,4 @@
 import 'dart:developer';
-import 'package:relic/io_adapter.dart';
 import 'package:relic/relic.dart';
 
 /// Middleware that adds a 'Server' header to responses.

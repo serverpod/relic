@@ -3,7 +3,7 @@ import 'dart:io' as io;
 
 import 'package:stream_channel/stream_channel.dart';
 
-import '../../../relic.dart';
+import 'package:relic_core/relic_core.dart';
 import 'bind_http_server.dart';
 import 'io_relic_web_socket.dart';
 import 'request.dart';

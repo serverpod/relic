@@ -1,6 +1,5 @@
 import 'dart:developer';
 
-import 'package:relic/io_adapter.dart';
 import 'package:relic/relic.dart';
 
 /// Extension to provide easy access to the request ID.

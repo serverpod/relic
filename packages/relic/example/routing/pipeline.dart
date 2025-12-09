@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:relic/io_adapter.dart';
 import 'package:relic/relic.dart';
 
 /// Demonstrates using the Pipeline API for request processing.

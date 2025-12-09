@@ -5,7 +5,6 @@ import 'dart:typed_data';
 
 import 'package:http_parser/http_parser.dart';
 import 'package:mockito/mockito.dart';
-import 'package:relic/io_adapter.dart';
 import 'package:relic/relic.dart';
 import 'package:test/test.dart';
 

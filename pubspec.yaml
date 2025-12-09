@@ -7,3 +7,4 @@ environment:
 workspace:
   - packages/relic
   - packages/relic_core
+  - packages/relic_io

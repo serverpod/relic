@@ -1,12 +1,8 @@
 /// Relic web server framework.
 ///
-/// This package re-exports [relic_core] and adds dart:io specific functionality.
+/// This package re-exports [relic_core] and [relic_io] for convenience.
 library;
 
-// Re-export all of relic_core
+// Re-export all of relic_core and relic_io
 export 'package:relic_core/relic_core.dart';
-
-// dart:io specific exports
-export 'src/io/static/cache_busting_config.dart';
-export 'src/io/static/extension/datetime_extension.dart';
-export 'src/io/static/static_handler.dart';
+export 'package:relic_io/relic_io.dart';

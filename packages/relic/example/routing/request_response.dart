@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'dart:developer';
 import 'dart:typed_data';
-import 'package:relic/io_adapter.dart';
 import 'package:relic/relic.dart';
 
 // doctag<custom-query-param-specialization>

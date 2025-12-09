@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:relic/io_adapter.dart';
 import 'package:relic/relic.dart';
 import 'package:test/test.dart';
 

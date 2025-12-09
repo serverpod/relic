@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:relic/io_adapter.dart';
 import 'package:relic/relic.dart';
 
 // Basic handler that returns a simple greeting.

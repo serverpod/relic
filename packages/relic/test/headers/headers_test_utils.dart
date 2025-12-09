@@ -3,7 +3,6 @@ import 'dart:io';
 import 'dart:isolate';
 
 import 'package:http/http.dart' as http;
-import 'package:relic/io_adapter.dart';
 import 'package:relic/relic.dart';
 import 'package:test/test.dart';
 

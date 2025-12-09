@@ -1,5 +1,4 @@
 // doctag<hello-world-app>
-import 'package:relic/io_adapter.dart';
 import 'package:relic/relic.dart';
 
 /// A simple 'Hello World' server demonstrating basic Relic usage.

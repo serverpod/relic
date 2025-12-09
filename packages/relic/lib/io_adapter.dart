@@ -1,5 +1,7 @@
-export 'src/adapter/io/bind_http_server.dart';
-export 'src/adapter/io/http_response_extension.dart';
-export 'src/adapter/io/io_adapter.dart';
-export 'src/adapter/io/io_relic_web_socket.dart';
-export 'src/adapter/io/io_serve.dart';
+/// dart:io adapter for Relic web server.
+///
+/// This file re-exports [relic_io] for backwards compatibility.
+/// Consider using `package:relic_io/relic_io.dart` directly.
+library;
+
+export 'package:relic_io/relic_io.dart';

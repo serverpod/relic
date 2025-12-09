@@ -1,9 +1,6 @@
 import 'dart:developer';
 import 'dart:io';
 
-/// Complete code sample referenced by the Shelf migration guide.
-// doctag<complete-relic>
-import 'package:relic/io_adapter.dart';
 import 'package:relic/relic.dart';
 
 Future<void> main() async {

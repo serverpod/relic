@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
-import '../../../relic.dart';
+import 'package:relic_core/relic_core.dart';
 import 'io_adapter.dart';
 
 extension RelicAppIOServeEx on RelicApp {

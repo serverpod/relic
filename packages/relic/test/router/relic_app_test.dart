@@ -5,7 +5,6 @@ import 'dart:isolate';
 import 'dart:math';
 
 import 'package:mockito/mockito.dart';
-import 'package:relic/io_adapter.dart';
 import 'package:relic/relic.dart';
 
 import 'package:test/test.dart';

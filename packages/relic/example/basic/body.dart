@@ -3,7 +3,6 @@ import 'dart:developer';
 import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:relic/io_adapter.dart';
 import 'package:relic/relic.dart';
 
 /// Example demonstrating Body class features. Shows creating bodies from

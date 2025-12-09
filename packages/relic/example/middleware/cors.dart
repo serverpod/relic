@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'dart:developer';
 
-import 'package:relic/io_adapter.dart';
 import 'package:relic/relic.dart';
 
 /// Middleware that handles Cross-Origin Resource Sharing (CORS).

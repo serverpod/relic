@@ -1,4 +1,3 @@
-import 'package:relic/io_adapter.dart';
 import 'package:relic/relic.dart';
 
 // doctag<routing-custom-path-param>

@@ -1,5 +1,4 @@
 import 'dart:developer';
-import 'package:relic/io_adapter.dart';
 import 'package:relic/relic.dart';
 
 // Simple examples demonstrating response creation patterns.

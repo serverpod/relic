@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'dart:developer';
-import 'package:relic/io_adapter.dart';
 import 'package:relic/relic.dart';
 
 // Comprehensive examples demonstrating request handling patterns.

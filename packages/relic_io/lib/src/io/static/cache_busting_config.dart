@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:path/path.dart' as p;
 
-import '../../../relic.dart';
+import 'static_handler.dart';
 
 /// Cache-busting for asset URLs that embed a content hash.
 ///
