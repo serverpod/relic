@@ -1,3 +1,6 @@
+## 0.13.1
+- fix: Close connection, if request too large ([#303](https://github.com/serverpod/relic/pull/303))
+
 ## 0.13.0
 - feat!: Add maxLength argument on read ([#301](https://github.com/serverpod/relic/pull/301))
 
