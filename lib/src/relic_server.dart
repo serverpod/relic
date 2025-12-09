@@ -166,6 +166,10 @@ final class _RelicServer implements RelicServer {
         return Response.badRequest(
           body: Body.fromString(error.httpResponseBody),
         );
+      } on MaxBodySizeExceeded catch (error, stackTrace) {
+        // If the request body is too large, respond with a 413 Payload Too Large status.
+        _logError(req, 'Error handling request.\n$error', stackTrace);
+        return Response.contentTooLarge();
       }
     };
   }

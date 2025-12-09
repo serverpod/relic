@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
 
@@ -355,10 +356,21 @@ class Body {
     await for (final chunk in source) {
       totalBytes += chunk.length;
       if (totalBytes > maxLength) {
-        throw MaxBodySizeExceeded(maxLength);
+        // Windows TCP behavior:
+        // When you close a socket with unread data in the receive buffer,
+        // Windows sends RST instead of FIN. This nukes the connection before
+        // send buffer flushes.
+        //
+        // To avoid this causing missed responses on a client we keep draining
+        // the socket, but discard the content, before throwing.
+        if (Platform.isWindows) continue;
+        break; // other platforms send FIN, so just raise immediately
+      } else {
+        yield chunk;
       }
-      yield chunk;
     }
+    // check again to not throw on success
+    if (totalBytes > maxLength) throw MaxBodySizeExceeded(maxLength);
   }
 }
 
