@@ -41,6 +41,9 @@ jobs:
           key: ${{ runner.os }}-pub-cache-${{ matrix.dart_sdk }}
           restore-keys: ${{ runner.os }}-pub-cache-
 
+      - name: Install Dependencies
+        run: dart pub get
+
       - name: Verify Formatting
         run: dart format --output=none --set-exit-if-changed .
 
