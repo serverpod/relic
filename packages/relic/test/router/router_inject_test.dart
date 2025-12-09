@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:relic/relic.dart';
-import 'package:relic/src/context/result.dart';
 import 'package:test/test.dart';
 
 void main() {

@@ -8,9 +8,8 @@ import 'dart:typed_data';
 import 'package:crypto/crypto.dart';
 import 'package:mime/mime.dart';
 import 'package:path/path.dart' as p;
+import 'package:relic_core/relic_core.dart';
 
-import '../../../relic.dart';
-import '../../router/lru_cache.dart';
 import 'cache_busting_config.dart';
 
 /// The default resolver for MIME types based on file extensions.

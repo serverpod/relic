@@ -1,6 +1,4 @@
-import 'package:relic/src/router/lookup_result.dart';
-import 'package:relic/src/router/method.dart';
-import 'package:relic/src/router/router.dart';
+import 'package:relic/relic.dart';
 import 'package:test/test.dart';
 
 void main() {

@@ -1,6 +1,6 @@
 import 'dart:typed_data';
 
-import 'package:relic/src/ip_address/ip_address.dart';
+import 'package:relic/relic.dart';
 import 'package:test/test.dart';
 
 void main() {

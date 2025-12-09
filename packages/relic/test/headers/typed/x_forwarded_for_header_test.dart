@@ -1,4 +1,4 @@
-import 'package:relic/src/headers/typed/headers/x_forwarded_for_header.dart';
+import 'package:relic/relic.dart';
 import 'package:test/test.dart';
 
 void main() {

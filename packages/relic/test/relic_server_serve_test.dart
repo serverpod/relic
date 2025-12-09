@@ -7,7 +7,6 @@ import 'package:async/async.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart' as parser;
 import 'package:relic/relic.dart';
-import 'package:relic/src/headers/codecs/common_types_codecs.dart';
 import 'package:test/test.dart';
 import 'package:web_socket/web_socket.dart';
 

@@ -1,13 +1,7 @@
 import 'dart:convert';
 import 'dart:io' as io;
 
-import '../../body/body.dart';
-import '../../body/types/mime_type.dart';
-import '../../context/result.dart';
-import '../../headers/headers.dart';
-import '../../ip_address/ip_address.dart';
-import '../../router/method.dart';
-import '../connection_info.dart';
+import 'package:relic_core/relic_core.dart';
 
 /// Creates a new [Request] from an [io.HttpRequest].
 Request fromHttpRequest(final io.HttpRequest request) {

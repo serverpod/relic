@@ -1,8 +1,6 @@
 import 'dart:async';
 
 import 'package:relic/relic.dart';
-import 'package:relic/src/context/result.dart';
-import 'package:relic/src/io/static/extension/datetime_extension.dart';
 import 'package:test/test.dart';
 
 /// Makes a simple GET request to [handler] and returns the result.

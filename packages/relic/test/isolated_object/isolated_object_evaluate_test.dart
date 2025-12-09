@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:isolate';
 
-import 'package:relic/src/isolated_object.dart';
+import 'package:relic/relic.dart';
 import 'package:test/test.dart';
 
 void main() {

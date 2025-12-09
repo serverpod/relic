@@ -6,3 +6,4 @@ environment:
 
 workspace:
   - packages/relic
+  - packages/relic_core

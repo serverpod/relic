@@ -1,5 +1,4 @@
-import 'package:relic/src/router/normalized_path.dart';
-import 'package:relic/src/router/path_trie.dart';
+import 'package:relic/relic.dart';
 import 'package:test/test.dart';
 
 void main() {

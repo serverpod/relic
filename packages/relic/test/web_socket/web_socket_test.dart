@@ -4,8 +4,8 @@ import 'dart:io' as io;
 import 'dart:isolate';
 import 'dart:typed_data';
 
+import 'package:relic/io_adapter.dart';
 import 'package:relic/relic.dart';
-import 'package:relic/src/adapter/io/io_relic_web_socket.dart';
 import 'package:test/test.dart';
 import 'package:web_socket/web_socket.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';

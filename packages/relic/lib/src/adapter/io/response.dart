@@ -1,8 +1,7 @@
 import 'dart:io';
 
-import '../../context/result.dart';
+import 'package:relic_core/relic_core.dart';
 
-import '../../headers/standard_headers_extensions.dart';
 import 'http_response_extension.dart';
 
 extension ResponseExIo on Response {

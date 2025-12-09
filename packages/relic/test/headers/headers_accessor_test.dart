@@ -1,6 +1,4 @@
-import 'package:relic/src/headers/codecs/common_types_codecs.dart';
-import 'package:relic/src/headers/header_accessor.dart';
-import 'package:relic/src/headers/headers.dart';
+import 'package:relic/relic.dart';
 import 'package:test/test.dart';
 
 import 'headers_test_utils.dart';

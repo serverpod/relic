@@ -1,4 +1,4 @@
-import 'package:relic/src/router/lru_cache.dart';
+import 'package:relic/relic.dart';
 import 'package:test/test.dart';
 
 void main() {

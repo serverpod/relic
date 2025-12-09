@@ -1,8 +1,7 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
-import 'package:relic/src/body/body.dart';
-import 'package:relic/src/body/types/mime_type.dart';
+import 'package:relic/relic.dart';
 import 'package:test/test.dart';
 
 void main() {
