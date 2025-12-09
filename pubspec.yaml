@@ -1,4 +1,4 @@
-name: _
+name: relic_workspace
 publish_to: none
 
 environment:
@@ -8,3 +8,28 @@ workspace:
   - packages/relic
   - packages/relic_core
   - packages/relic_io
+
+dev_dependencies:
+  melos: ^7.0.0
+
+melos:
+  packages:
+    - packages/*
+
+  scripts:
+    test:
+      run: dart test
+      exec:
+        concurrency: 1
+      packageFilters:
+        flutter: false
+        dependsOn: test
+        dirExists: test
+      description: Run tests in all packages
+
+    check:
+      steps:
+        - dart analyze --fatal-infos .
+        - dart format --set-exit-if-changed .
+        - melos run test
+      description: Run all checks (analyze, format, test)
