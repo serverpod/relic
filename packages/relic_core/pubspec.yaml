@@ -28,3 +28,9 @@ dependencies:
   vm_service: ^15.0.0
   web_socket: ^1.0.1
   web_socket_channel: ^3.0.3
+
+dev_dependencies:
+  lints: ">=5.0.0 <7.0.0"
+  mockito: ^5.4.4
+  serverpod_lints: ^3.0.0
+  test: ^1.25.10
