@@ -5,9 +5,7 @@ import 'body/body.dart';
 import 'context/result.dart';
 import 'handler/handler.dart';
 import 'headers/exception/header_exception.dart';
-import 'headers/headers.dart';
 import 'headers/standard_headers_extensions.dart';
-import 'headers/typed/typed_headers.dart';
 import 'isolated_object.dart';
 import 'logger/logger.dart';
 import 'util/util.dart';
@@ -171,16 +169,7 @@ final class _RelicServer implements RelicServer {
       } on MaxBodySizeExceeded catch (error, stackTrace) {
         // If the request body is too large, respond with a 413 Payload Too Large status.
         _logError(req, 'Error handling request.\n$error', stackTrace);
-        return Response(
-          413,
-          body: Body.fromString('Request too large'),
-          headers: Headers.build(
-            (final mh) =>
-                mh.connection = const ConnectionHeader.directives([
-                  ConnectionHeaderType.close,
-                ]),
-          ),
-        );
+        return Response.contentTooLarge();
       }
     };
   }

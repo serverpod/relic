@@ -137,7 +137,7 @@ class Response extends Message implements Result {
     final Headers? headers,
   }) : this._redirect(303, location, body, headers);
 
-  /// Constructs a helper constructor for redirect responses.
+  /// A helper constructor for redirect responses.
   Response._redirect(
     final int statusCode,
     final Uri location,
@@ -248,6 +248,24 @@ class Response extends Message implements Result {
         501,
         headers: headers ?? Headers.empty(),
         body: body ?? Body.fromString('Not Implemented'),
+      );
+
+  /// Constructs a 413 Content Too Large response.
+  ///
+  /// This indicates that the request entity is larger than the server is willing
+  /// or able to process.
+  ///
+  /// {@macro relic_response_body_and_encoding_param}
+  Response.contentTooLarge({final Body? body, final Headers? headers})
+    : this(
+        413,
+        headers: (headers ?? Headers.empty()).transform(
+          (final mh) =>
+              mh.connection = const ConnectionHeader.directives([
+                ConnectionHeaderType.close,
+              ]),
+        ),
+        body: body ?? Body.fromString('Content Too Large'),
       );
 
   /// Constructs an HTTP response with the given [statusCode].
