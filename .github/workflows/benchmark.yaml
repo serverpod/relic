@@ -41,6 +41,7 @@ jobs:
 
       - name: Run Benchmark
         id: run-benchmark
+        working-directory: packages/relic
         run: |
           dart compile exe benchmark/benchmark.dart
           ./benchmark/benchmark.exe run --store-in-git-notes --verbose
