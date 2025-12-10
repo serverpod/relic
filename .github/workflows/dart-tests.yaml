@@ -14,8 +14,8 @@ env:
   LOWEST_DART_SDK: "3.8.1"
 
 jobs:
-  build:
-    name: Verify Build
+  analyze:
+    name: Analyze
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -47,13 +47,6 @@ jobs:
       - name: Verify Formatting
         run: dart format --output=none --set-exit-if-changed .
 
-      - name: Check Dependency Bounds
-        working-directory: packages/relic
-        run: >-
-          dart pub downgrade --tighten &&
-          dart pub upgrade --major-versions &&
-          git diff-files --quiet -- .
-
       - name: Analyze (downgraded)
         run: >-
           dart pub downgrade &&
@@ -66,21 +59,52 @@ jobs:
           dart pub get &&
           dart analyze ${{ matrix.dart_sdk == env.LOWEST_DART_SDK && '--fatal-infos' || '--fatal-warnings' }}
 
+  verify_packages:
+    name: Verify Package (${{ matrix.package }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        package: [relic_core, relic_io, relic]
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Dart
+        uses: dart-lang/setup-dart@v1
+        with:
+          sdk: stable
+
+      - name: Cache Dart Dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.PUB_CACHE_PATH }}
+          key: ${{ runner.os }}-pub-cache-stable
+          restore-keys: ${{ runner.os }}-pub-cache-
+
+      - name: Install Dependencies
+        run: dart pub get
+
+      - name: Check Dependency Bounds
+        working-directory: packages/${{ matrix.package }}
+        run: >-
+          dart pub downgrade --tighten &&
+          dart pub upgrade --major-versions &&
+          git diff-files --quiet -- .
+
       - name: Doc Dry Run
-        working-directory: packages/relic
+        working-directory: packages/${{ matrix.package }}
         run: dart doc --dry-run
 
       - name: Check Pana Score
-        if: ${{ matrix.dart_sdk == 'stable' }}
         # temporary workaround until https://github.com/dart-lang/pana/issues/1499 is resolved
         continue-on-error: true
-        working-directory: packages/relic
+        working-directory: packages/${{ matrix.package }}
         run: >-
           dart pub global activate pana &&
           dart pub global run pana --no-warning --exit-code-threshold=0 --json
 
       - name: Publish Dry Run
-        working-directory: packages/relic
+        working-directory: packages/${{ matrix.package }}
         run: dart pub publish --dry-run
 
   unit_tests:
@@ -114,23 +138,34 @@ jobs:
           dart pub ${{ matrix.deps }} &&
           dart pub get
 
+      - name: Activate Melos
+        run: dart pub global activate melos
+
       - name: Hot-reload Test
         working-directory: packages/relic
         run: >-
           dart --enable-vm-service test test/router/relic_app_test.dart -t hot-reload -c source
 
+      - name: Run Tests
+        run: melos run test --no-select -- --reporter=failures-only
+
       - name: Run Tests With Coverage
-        working-directory: packages/relic
-        run: >-
-          dart pub global activate coverage &&
-          dart pub global run coverage:test_with_coverage --branch-coverage -- --reporter=failures-only
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.dart_sdk == '3.8.1' && matrix.deps == 'upgrade' }}
+        run: |
+          dart pub global activate coverage
+          for package in packages/relic_core packages/relic_io packages/relic; do
+            if [ -d "$package/test" ]; then
+              echo "Running coverage for $package"
+              (cd "$package" && dart pub global run coverage:test_with_coverage --branch-coverage -- --reporter=failures-only)
+            fi
+          done
 
       - name: Upload Coverage
         uses: codecov/codecov-action@v5
-        if: ${{ !cancelled() }} # upload coverage irrespective of test results
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.dart_sdk == '3.8.1' && matrix.deps == 'upgrade' && !cancelled() }}
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          files: packages/relic/coverage/lcov.info
+          files: packages/relic_core/coverage/lcov.info,packages/relic_io/coverage/lcov.info,packages/relic/coverage/lcov.info
 
   docs-markdown-lint:
     name: Markdown lint for docs
