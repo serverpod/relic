@@ -5,6 +5,8 @@ environment:
   sdk: ^3.8.0
 
 workspace:
+  - packages/benchmark
+  - packages/examples
   - packages/relic
   - packages/relic_core
   - packages/relic_io

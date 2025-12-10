@@ -13,7 +13,7 @@ import 'package:relic/relic.dart';
 import 'package:routingkit/routingkit.dart' as routingkit;
 import 'package:spanner/spanner.dart' as spanner;
 
-import 'completion_script_carapace.dart';
+import 'package:benchmark/src/completion_script_carapace.dart';
 
 late final List<int> indexes;
 late final List<String> staticRoutesToLookup;
