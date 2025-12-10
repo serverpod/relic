@@ -12,7 +12,7 @@ workspace:
   - packages/relic_io
 
 dev_dependencies:
-  melos: ^7.0.0
+  melos: ^7.0.0-dev.9
 
 melos:
   packages:
