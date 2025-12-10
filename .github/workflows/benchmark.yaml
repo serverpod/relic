@@ -41,9 +41,10 @@ jobs:
 
       - name: Run Benchmark
         id: run-benchmark
+        working-directory: packages/benchmark
         run: |
-          dart compile exe benchmark/benchmark.dart
-          ./benchmark/benchmark.exe run --store-in-git-notes --verbose
+          dart compile exe bin/benchmark.dart
+          ./bin/benchmark.exe run --store-in-git-notes --verbose
 
       - name: Push Benchmark Data
         # This step runs only if the pull request is NOT from a fork.

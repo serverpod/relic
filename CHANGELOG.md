@@ -1,3 +1,39 @@
+# Change Log
+
+All notable changes to this project will be documented in this file.
+See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
+
+## 2025-12-10
+
+### Changes
+
+---
+
+Packages with breaking changes:
+
+ - There are no breaking changes in this release.
+
+Packages with other changes:
+
+ - [`relic` - `v0.13.2`](#relic---v0132)
+ - [`relic_core` - `v0.13.2`](#relic_core---v0132)
+ - [`relic_io` - `v0.13.2`](#relic_io---v0132)
+
+---
+
+#### `relic` - `v0.13.2`
+
+ - **FEAT**: Extract relic_io package.
+ - **FEAT**: Extract relic_core package.
+
+#### `relic_core` - `v0.13.2`
+
+ - **FEAT**: Extract relic_core package.
+
+#### `relic_io` - `v0.13.2`
+
+ - **FEAT**: Extract relic_io package.
+
 ## 0.13.1
 - fix: Close connection, if request too large ([#303](https://github.com/serverpod/relic/pull/303))
 

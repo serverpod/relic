@@ -3,7 +3,7 @@
 # Extract version from command line (e.g., "make version 1.2.3")
 # Filter out known targets to get the version argument
 VERSION := $(filter-out install start version,$(MAKECMDGOALS))
-EXAMPLE_SOURCE_DIR := $(abspath $(CURDIR)/../../example)
+EXAMPLE_SOURCE_DIR := $(abspath $(CURDIR)/../../packages/examples)
 VERSIONED_EXAMPLE_DIR := versioned_docs/version-$(VERSION)/_example
 
 install:
@@ -35,4 +35,3 @@ validate-version:
 # Create dummy targets for version arguments to prevent Make errors
 %:
 	@:
-
