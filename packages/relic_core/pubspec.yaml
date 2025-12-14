@@ -15,12 +15,12 @@ environment:
 resolution: workspace
 
 dependencies:
-  async: ^2.11.0
-  collection: ^1.18.0
+  async: ^2.13.0
+  collection: ^1.19.0
   convert: ^3.1.1
   crypto: ^3.0.0
   http_parser: ^4.0.2
-  meta: ^1.15.0
+  meta: ^1.16.0
   mime: ">=1.0.6 <3.0.0"
   path: ^1.8.3
   stack_trace: ^1.10.0
