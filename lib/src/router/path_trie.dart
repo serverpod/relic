@@ -325,6 +325,13 @@ final class PathTrie<T extends Object> {
   /// - Both nodes has an associated dynamic segment.
   /// - There are overlapping children between the nodes.
   void attach(final NormalizedPath normalizedPath, final PathTrie<T> trie) {
+    final segments = normalizedPath.segments;
+    if (segments.isNotEmpty && segments.last == '**') {
+      throw ArgumentError(
+        'Cannot attach at a tail path. Tail segments (**) cannot be extended.',
+      );
+    }
+
     final node = trie._root;
     final currentNode = _build(normalizedPath);
 
