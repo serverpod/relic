@@ -249,5 +249,29 @@ void main() {
         );
       });
     });
+
+    test('Given a trie, '
+        'when attaching another trie at /**, '
+        'then an ArgumentError is thrown', () {
+      final subTrie = PathTrie<int>();
+      subTrie.add(NormalizedPath('/**'), 42);
+
+      expect(
+        () => trie.attach(NormalizedPath('/**'), subTrie),
+        throwsArgumentError,
+      );
+    });
+
+    test('Given a trie, '
+        'when attaching another trie at /a/**, '
+        'then an ArgumentError is thrown', () {
+      final subTrie = PathTrie<int>();
+      subTrie.add(NormalizedPath('/foo'), 42);
+
+      expect(
+        () => trie.attach(NormalizedPath('/a/**'), subTrie),
+        throwsArgumentError,
+      );
+    });
   });
 }
