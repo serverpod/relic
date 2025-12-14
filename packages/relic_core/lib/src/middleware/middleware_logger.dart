@@ -1,0 +1,69 @@
+import '../../relic_core.dart';
+
+/// Middleware which prints the time of the request, the elapsed time for the
+/// inner handlers, the response's status code and the request URI.
+///
+/// If [logger] is passed, it's called for each request. The `msg` parameter is
+/// a formatted string that includes the request time, duration, request method,
+/// and requested path. When an exception is thrown, it also includes the
+/// exception's string and stack trace; otherwise, it includes the status code.
+/// The `isError` parameter indicates whether the message is caused by an error.
+///
+/// If [logger] is not passed, the message is just passed to [print].
+Middleware logRequests({final Logger? logger}) {
+  return (final next) {
+    final localLogger = logger ?? logMessage;
+
+    return (final req) async {
+      final startTime = DateTime.now();
+      final watch = Stopwatch()..start();
+
+      try {
+        final result = await next(req);
+        final msg = switch (result) {
+          final Response rc => '${rc.statusCode}',
+          final Hijack _ => 'hijacked',
+          final WebSocketUpgrade _ => 'connected',
+        };
+        localLogger(_message(startTime, req, watch.elapsed, msg));
+        return result;
+      } catch (error, stackTrace) {
+        localLogger(
+          _errorMessage(startTime, req, watch.elapsed, error),
+          type: LoggerType.error,
+          stackTrace: stackTrace,
+        );
+
+        rethrow;
+      }
+    };
+  };
+}
+
+String _formatQuery(final String query) {
+  return query == '' ? '' : '?$query';
+}
+
+String _message(
+  final DateTime requestTime,
+  final Request request,
+  final Duration elapsedTime,
+  final String message,
+) {
+  final method = request.method.value;
+  final url = request.url;
+
+  return '${requestTime.toIso8601String()} '
+      '${elapsedTime.toString().padLeft(15)} '
+      '${method.padRight(7)} [$message] ' // 7 - longest standard HTTP method
+      '${url.path}${_formatQuery(url.query)}';
+}
+
+String _errorMessage(
+  final DateTime requestTime,
+  final Request request,
+  final Duration elapsedTime,
+  final Object error,
+) {
+  return _message(requestTime, request, elapsedTime, 'ERROR: $error');
+}
