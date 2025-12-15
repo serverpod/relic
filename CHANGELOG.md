@@ -1,3 +1,12 @@
+## 0.14.0
+- feat!: Add optional consume flag to attach ([#309](https://github.com/serverpod/relic/pull/309))
+  - BREAKING: `attach` now throws `ArgumentError` when called with a tail path (`/**`), unless `consume: true` and the attached trie/router has a single value at the root (`isSingle`) 
+  - BREAKING: `group` now throws `ArgumentError` when called with a tail path
+  - Add `consume` flag to `attach` that resets the attached trie's root after attachment
+  - Add `isSingle` property to check if a trie/router has only a single root value/route
+  - Allow `attach(..., consume: true)` at tail paths (`/**`) when the attached trie/router `isSingle`
+  - Update `injectAt` to use `attach(..., consume: true)`, still enabling injection at tail paths for simple `HandlerObject`s (those adding a single handler at the root ('/'))
+
 ## 0.13.1
 - fix: Close connection, if request too large ([#303](https://github.com/serverpod/relic/pull/303))
 
