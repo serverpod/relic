@@ -103,12 +103,13 @@ final class RelicApp implements RelicRouter {
       inject(_Injectable((final r) => r.add(method, path, route)));
 
   @override
-  void attach(final String path, final RelicRouter subRouter) =>
-      inject(_Injectable((final r) => r.attach(path, subRouter)));
-
-  @override
-  void attachAndConsume(final String path, final RelicRouter subRouter) =>
-      inject(_Injectable((final r) => r.attachAndConsume(path, subRouter)));
+  void attach(
+    final String path,
+    final RelicRouter subRouter, {
+    final bool consume = false,
+  }) => inject(
+    _Injectable((final r) => r.attach(path, subRouter, consume: consume)),
+  );
 
   @override
   void use(final String path, final Middleware map) =>

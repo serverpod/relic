@@ -129,12 +129,20 @@ final class Router<T extends Object> {
   ///
   /// The [path] string defines the route prefix for the sub-router. All routes
   /// defined in the sub-router will be prefixed with this path when matched.
-  void attach(final String path, final Router<T> subRouter) {
-    _allRoutes.attach(NormalizedPath(path), subRouter._allRoutes);
-  }
-
-  void attachAndConsume(final String path, final Router<T> subRouter) {
-    _allRoutes.attachAndConsume(NormalizedPath(path), subRouter._allRoutes);
+  ///
+  /// If [consume] is `true`, the sub-router is reset after attachment,
+  /// preventing further modifications to it from affecting this router.
+  /// This also allows attaching a single-value router at a tail path (`/**`).
+  void attach(
+    final String path,
+    final Router<T> subRouter, {
+    final bool consume = false,
+  }) {
+    _allRoutes.attach(
+      NormalizedPath(path),
+      subRouter._allRoutes,
+      consume: consume,
+    );
   }
 
   /// Injects an [injectable] into the router. Unlike [add] it allows
@@ -249,7 +257,7 @@ extension RouteEx<T extends Object> on Router<T> {
   /// Injects [injectable] at [path]
   void injectAt(final String path, final InjectableIn<Router<T>> injectable) {
     final subRouter = Router<T>()..inject(injectable);
-    attachAndConsume(path, subRouter);
+    attach(path, subRouter, consume: true);
   }
 }
 

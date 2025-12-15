@@ -672,14 +672,18 @@ void main() {
         },
       );
 
-      test('Given a trie attached at a tail path using attachAndConsume, '
+      test('Given a trie attached at a tail path with consume: true, '
           'when the attached trie is a single value trie, '
           'then it succeeds and the value is accessible', () {
         trieB.add(NormalizedPath('/'), 1);
 
         // Should succeed because trieB is a single value trie
         expect(
-          () => trieA.attachAndConsume(NormalizedPath('/files/**'), trieB),
+          () => trieA.attach(
+            NormalizedPath('/files/**'),
+            trieB,
+            consume: true,
+          ),
           returnsNormally,
         );
 
@@ -691,11 +695,11 @@ void main() {
         expect(result.remaining.path, equals('/any/path'));
       });
 
-      test('Given a trie attached using attachAndConsume, '
+      test('Given a trie attached with consume: true, '
           'when a new path is added to the consumed trie, '
           'then it is not visible in the parent trie', () {
         trieB.add(NormalizedPath('/'), 1);
-        trieA.attachAndConsume(NormalizedPath('/api'), trieB);
+        trieA.attach(NormalizedPath('/api'), trieB, consume: true);
 
         // Add a new route to trieB after attachment
         trieB.add(NormalizedPath('/new'), 2);
@@ -710,7 +714,7 @@ void main() {
         expect(originalResult!.value, equals(1));
       });
 
-      test('Given a trie attached at a tail path using attachAndConsume, '
+      test('Given a trie attached at a tail path with consume: true, '
           'when the attached trie is not a single value trie, '
           'then it throws an ArgumentError', () {
         trieB.add(NormalizedPath('/'), 1);
@@ -718,7 +722,11 @@ void main() {
 
         // Should fail because trieB is not a single value trie
         expect(
-          () => trieA.attachAndConsume(NormalizedPath('/files/**'), trieB),
+          () => trieA.attach(
+            NormalizedPath('/files/**'),
+            trieB,
+            consume: true,
+          ),
           throwsArgumentError,
         );
       });

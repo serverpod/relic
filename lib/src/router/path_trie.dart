@@ -325,17 +325,19 @@ final class PathTrie<T extends Object> {
   /// For example, if this trie has a path `/a/b` and you attach another trie
   /// at `/a/b/c`, the attached trie's root will be accessible via `/a/b/c`.
   ///
+  /// If [consume] is `true`, the attached trie's root is reset after attachment,
+  /// preventing further modifications to the attached trie from affecting this
+  /// trie. This also allows attaching a single-value trie at a tail path (`/**`).
+  ///
   /// Throws an [ArgumentError] if:
   /// - The node at [normalizedPath] has a value, and the root node of [trie] has as well.
   /// - Both nodes has an associated dynamic segment.
   /// - There are overlapping children between the nodes.
-  void attach(final NormalizedPath normalizedPath, final PathTrie<T> trie) =>
-      _attach(normalizedPath, trie, consume: false);
-
-  void _attach(
+  /// - Attaching at a tail path without [consume] being `true` and [trie] being single-value.
+  void attach(
     final NormalizedPath normalizedPath,
     final PathTrie<T> trie, {
-    required final bool consume,
+    final bool consume = false,
   }) {
     final segments = normalizedPath.segments;
     if (segments.isNotEmpty &&
@@ -376,11 +378,6 @@ final class PathTrie<T extends Object> {
     currentNode.children.addAll(node.children);
     trie._root = consume ? _TrieNode() : currentNode;
   }
-
-  void attachAndConsume(
-    final NormalizedPath normalizedPath,
-    final PathTrie<T> trie,
-  ) => _attach(normalizedPath, trie, consume: true);
 
   /// Looks up a [normalizedPath] in the trie and extracts parameters.
   ///
