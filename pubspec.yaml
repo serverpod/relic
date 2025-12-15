@@ -1,6 +1,6 @@
 name: relic
 description: A lightweight and flexible web server inspired by Shelf for building APIs and backend services.
-version: 0.13.1
+version: 0.14.0
 repository: https://github.com/serverpod/relic
 homepage: https://docs.dartrelic.dev/
 topics:
