@@ -64,6 +64,40 @@ void main() {
       expect(result.statusCode, 200);
       expect(await result.readAsString(), 'injected at path');
     });
+
+    test('Given a simple HandlerObject that mounts at root, '
+        'when using injectAt with a tail path, '
+        'then it succeeds and the handler is accessible', () async {
+      final router = Router<Handler>();
+      router.injectAt('/files/**', const _EchoHandlerObject(mountAt: '/'));
+
+      final request = RequestInternal.create(
+        Method.post,
+        Uri.parse('http://localhost/files/any/path'),
+        Object(),
+        body: Body.fromString('tail path handler'),
+      );
+      final req = request;
+      final result = await router.asHandler(req) as Response;
+
+      expect(result.statusCode, 200);
+      expect(await result.readAsString(), 'tail path handler');
+    });
+
+    test('Given a non-simple HandlerObject that mounts at a sub-path, '
+        'when using injectAt with a tail path, '
+        'then it throws an ArgumentError', () {
+      final router = Router<Handler>();
+
+      // Should fail because the HandlerObject mounts at '/echo', not '/'
+      expect(
+        () => router.injectAt(
+          '/files/**',
+          const _EchoHandlerObject(mountAt: '/echo'),
+        ),
+        throwsArgumentError,
+      );
+    });
   });
 
   group('Router.inject with MiddlewareObject', () {
