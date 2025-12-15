@@ -134,8 +134,9 @@ Future<void> main() async {
     final tags = req.url.queryParametersAll['tag'] ?? [];
     final results = {
       'tags': tags,
-      'filtered_items':
-          tags.map((final tag) => 'Item tagged with $tag').toList(),
+      'filtered_items': tags
+          .map((final tag) => 'Item tagged with $tag')
+          .toList(),
     };
 
     return Response.ok(
@@ -301,7 +302,8 @@ Future<void> main() async {
       }
     }
 
-    final html = '''
+    final html =
+        '''
 <!DOCTYPE html>
 <html>
 <head><title>My Page</title></head>

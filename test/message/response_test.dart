@@ -152,10 +152,9 @@ void main() {
           Response.ok(
             body: Body.fromString('okay!'),
             headers: Headers.build(
-              (final mh) =>
-                  mh.lastModified = parseHttpDate(
-                    'Sun, 06 Nov 1994 08:49:37 GMT',
-                  ),
+              (final mh) => mh.lastModified = parseHttpDate(
+                'Sun, 06 Nov 1994 08:49:37 GMT',
+              ),
             ),
           ).headers.lastModified,
           equals(DateTime.parse('1994-11-06 08:49:37z')),

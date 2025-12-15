@@ -22,22 +22,20 @@ late final List<String> dynamicRoutesToLookup;
 void setupBenchmarkData(final int routeCount) {
   logger.info('Setting up benchmark data with $routeCount routes...');
   indexes = List.generate(routeCount, (final i) => i);
-  final permutedIndexes =
-      indexes.toList()
-        ..shuffle(Random(123)); // Use fixed seed for reproducibility
+  final permutedIndexes = indexes.toList()
+    ..shuffle(Random(123)); // Use fixed seed for reproducibility
 
   // Pre-generate lookup paths
   staticRoutesToLookup = permutedIndexes.map((final i) => '/path$i').toList();
-  dynamicRoutesToLookup =
-      permutedIndexes
-          .map(
-            (final i) =>
-                // Fixed seed for reproducibility
-                '/users/user_${Random(i).nextInt(1000)}'
-                '/items/item_${Random(i + 1).nextInt(5000)}'
-                '/profile$i',
-          )
-          .toList();
+  dynamicRoutesToLookup = permutedIndexes
+      .map(
+        (final i) =>
+            // Fixed seed for reproducibility
+            '/users/user_${Random(i).nextInt(1000)}'
+            '/items/item_${Random(i + 1).nextInt(5000)}'
+            '/profile$i',
+      )
+      .toList();
   logger.info('Setup complete.');
 }
 

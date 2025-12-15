@@ -71,12 +71,11 @@ Middleware routeWith<T extends Object>(
   final Router<T> router, {
   final bool backtrack = true,
   final Handler Function(T)? toHandler,
-}) =>
-    _RoutingMiddlewareBuilder(
-      router,
-      backtrack: backtrack,
-      toHandler: toHandler,
-    ).asMiddleware;
+}) => _RoutingMiddlewareBuilder(
+  router,
+  backtrack: backtrack,
+  toHandler: toHandler,
+).asMiddleware;
 
 bool _isSubtype<S, T>() => <S>[] is List<T>;
 

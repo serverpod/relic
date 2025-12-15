@@ -12,12 +12,11 @@ void main() async {
 
   // Spawn all isolates concurrently and wait for them to start.
   log('Starting $isolateCount isolates');
-  final isolates =
-      await List.generate(
-        isolateCount,
-        (final index) =>
-            Isolate.spawn((final _) => _serve(), null, debugName: '$index'),
-      ).wait;
+  final isolates = await List.generate(
+    isolateCount,
+    (final index) =>
+        Isolate.spawn((final _) => _serve(), null, debugName: '$index'),
+  ).wait;
 
   // Wait for SIGINT (Ctrl-C) or SIGTERM signal before shutting down.
   await Future.any(
@@ -36,10 +35,9 @@ void main() async {
 /// Starts a Relic server in each spawned isolate for load balancing.
 Future<void> _serve() async {
   // Create a simple app with logging middleware and an echo endpoint.
-  final app =
-      RelicApp()
-        ..use('/', logRequests())
-        ..put('/echo', respondWith(_echoRequest));
+  final app = RelicApp()
+    ..use('/', logRequests())
+    ..put('/echo', respondWith(_echoRequest));
 
   // Start the server with shared socket binding for load balancing.
   await app.serve(shared: true);

@@ -13,11 +13,10 @@ void main() {
 
   setUp(() async {
     await d.file('test_file.txt', fileContent).create();
-    handler =
-        StaticHandler.directory(
-          Directory(d.sandbox),
-          cacheControl: (_, _) => null,
-        ).asHandler;
+    handler = StaticHandler.directory(
+      Directory(d.sandbox),
+      cacheControl: (_, _) => null,
+    ).asHandler;
   });
 
   test(
@@ -28,10 +27,9 @@ void main() {
       final initialResponse = await makeRequest(handler, '/test_file.txt');
       final etag = initialResponse.headers.etag!.value;
       final headers = Headers.build(
-        (final mh) =>
-            mh
-              ..range = RangeHeader(ranges: [Range(start: 0, end: 4)])
-              ..ifRange = IfRangeHeader(etag: ETagHeader(value: etag)),
+        (final mh) => mh
+          ..range = RangeHeader(ranges: [Range(start: 0, end: 4)])
+          ..ifRange = IfRangeHeader(etag: ETagHeader(value: etag)),
       );
 
       final response = await makeRequest(
@@ -51,10 +49,9 @@ void main() {
       'then a 200 OK status with full content is returned', () async {
     const nonMatchingEtag = ETagHeader(value: 'non-existent-etag');
     final headers = Headers.build(
-      (final mh) =>
-          mh
-            ..range = RangeHeader(ranges: [Range(end: 4)])
-            ..ifRange = IfRangeHeader(etag: nonMatchingEtag),
+      (final mh) => mh
+        ..range = RangeHeader(ranges: [Range(end: 4)])
+        ..ifRange = IfRangeHeader(etag: nonMatchingEtag),
     );
 
     final response = await makeRequest(
@@ -76,10 +73,9 @@ void main() {
       final rootPath = p.join(d.sandbox, 'test_file.txt');
       final modified = File(rootPath).statSync().modified.toUtc();
       final headers = Headers.build(
-        (final mh) =>
-            mh
-              ..range = RangeHeader(ranges: [Range(start: 0, end: 4)])
-              ..ifRange = IfRangeHeader(lastModified: modified),
+        (final mh) => mh
+          ..range = RangeHeader(ranges: [Range(start: 0, end: 4)])
+          ..ifRange = IfRangeHeader(lastModified: modified),
       );
 
       final response = await makeRequest(
@@ -103,10 +99,9 @@ void main() {
       final modified = File(rootPath).statSync().modified.toUtc();
       final earlierModified = modified.subtract(const Duration(days: 1));
       final headers = Headers.build(
-        (final mh) =>
-            mh
-              ..range = RangeHeader(ranges: [Range(start: 0, end: 4)])
-              ..ifRange = IfRangeHeader(lastModified: earlierModified),
+        (final mh) => mh
+          ..range = RangeHeader(ranges: [Range(start: 0, end: 4)])
+          ..ifRange = IfRangeHeader(lastModified: earlierModified),
       );
 
       final response = await makeRequest(

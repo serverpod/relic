@@ -84,8 +84,9 @@ class MediaRange {
 
     double? quality;
     if (parts.length > 1) {
-      final qualityParts =
-          parts[1].splitTrimAndFilterUnique(separator: 'q=').firstOrNull;
+      final qualityParts = parts[1]
+          .splitTrimAndFilterUnique(separator: 'q=')
+          .firstOrNull;
       if (qualityParts != null) {
         final value = double.tryParse(qualityParts);
         if (value == null || value < 0 || value > 1) {

@@ -12,11 +12,10 @@ void main() {
 
   setUp(() async {
     await d.file('test_file.txt', fileContent).create();
-    handler =
-        StaticHandler.directory(
-          Directory(d.sandbox),
-          cacheControl: (_, _) => null,
-        ).asHandler;
+    handler = StaticHandler.directory(
+      Directory(d.sandbox),
+      cacheControl: (_, _) => null,
+    ).asHandler;
   });
 
   test('Given an If-None-Match header with a matching ETag, '
@@ -67,12 +66,11 @@ void main() {
       final initialResponse = await makeRequest(handler, '/test_file.txt');
       final etag = initialResponse.headers.etag!.value;
       final headers = Headers.build(
-        (final mh) =>
-            mh.ifNoneMatch = IfNoneMatchHeader.etags([
-              const ETagHeader(value: 'first-non-matching'),
-              ETagHeader(value: etag), // correct value
-              const ETagHeader(value: 'second-non-matching'),
-            ]),
+        (final mh) => mh.ifNoneMatch = IfNoneMatchHeader.etags([
+          const ETagHeader(value: 'first-non-matching'),
+          ETagHeader(value: etag), // correct value
+          const ETagHeader(value: 'second-non-matching'),
+        ]),
       );
 
       final response = await makeRequest(

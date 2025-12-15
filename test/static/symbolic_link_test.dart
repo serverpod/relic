@@ -42,11 +42,10 @@ void main() {
   group('Given links pointing inside root dir', () {
     test('when accessing a sym linked file in a real dir, '
         'then it returns the file content', () async {
-      final handler =
-          StaticHandler.directory(
-            Directory(d.sandbox),
-            cacheControl: (_, _) => null,
-          ).asHandler;
+      final handler = StaticHandler.directory(
+        Directory(d.sandbox),
+        cacheControl: (_, _) => null,
+      ).asHandler;
 
       final response = await makeRequest(handler, '/link_index.html');
       expect(response.statusCode, HttpStatus.ok);
@@ -56,11 +55,10 @@ void main() {
 
     test('when accessing a file in a sym linked dir, '
         'then it returns the file content', () async {
-      final handler =
-          StaticHandler.directory(
-            Directory(d.sandbox),
-            cacheControl: (_, _) => null,
-          ).asHandler;
+      final handler = StaticHandler.directory(
+        Directory(d.sandbox),
+        cacheControl: (_, _) => null,
+      ).asHandler;
 
       final response = await makeRequest(handler, '/link_dir/index.html');
       expect(response.statusCode, HttpStatus.ok);
@@ -72,11 +70,10 @@ void main() {
   group('Given links pointing out of root dir', () {
     test('when accessing a sym linked file in a real dir, '
         'then it returns a 404', () async {
-      final handler =
-          StaticHandler.directory(
-            Directory(p.join(d.sandbox, 'alt_root')),
-            cacheControl: (_, _) => null,
-          ).asHandler;
+      final handler = StaticHandler.directory(
+        Directory(p.join(d.sandbox, 'alt_root')),
+        cacheControl: (_, _) => null,
+      ).asHandler;
 
       final response = await makeRequest(handler, '/link_index.html');
       expect(response.statusCode, HttpStatus.notFound);
@@ -84,11 +81,10 @@ void main() {
 
     test('when accessing a real file in a sym linked dir, '
         'then it returns a 404', () async {
-      final handler =
-          StaticHandler.directory(
-            Directory(p.join(d.sandbox, 'alt_root')),
-            cacheControl: (_, _) => null,
-          ).asHandler;
+      final handler = StaticHandler.directory(
+        Directory(p.join(d.sandbox, 'alt_root')),
+        cacheControl: (_, _) => null,
+      ).asHandler;
 
       final response = await makeRequest(handler, '/link_dir/index.html');
       expect(response.statusCode, HttpStatus.notFound);

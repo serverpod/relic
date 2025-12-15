@@ -6,16 +6,14 @@ import 'package:relic/relic.dart';
 /// Demonstrates using RelicServer with a router converted to a handler.
 Future<void> main() async {
   // Create a router that handles all requests with the same response.
-  final router =
-      RelicRouter()
-        ..use('/', logRequests()) // Apply logging middleware to all routes.
-        ..any(
-          '/**',
-          respondWith(
-            (final request) =>
-                Response.ok(body: Body.fromString('Hello, Relic!')),
-          ),
-        );
+  final router = RelicRouter()
+    ..use('/', logRequests()) // Apply logging middleware to all routes.
+    ..any(
+      '/**',
+      respondWith(
+        (final request) => Response.ok(body: Body.fromString('Hello, Relic!')),
+      ),
+    );
 
   // Create and start a server using the low-level RelicServer API.
   final server = RelicServer(

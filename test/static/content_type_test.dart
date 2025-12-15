@@ -26,11 +26,10 @@ void main() {
     await d.file('image.svg', '<svg></svg>').create();
     await d.file('app.wasm', 'fake wasm content').create();
     await d.file('no_extension', 'content without extension').create();
-    handler =
-        StaticHandler.directory(
-          Directory(d.sandbox),
-          cacheControl: (_, _) => null,
-        ).asHandler;
+    handler = StaticHandler.directory(
+      Directory(d.sandbox),
+      cacheControl: (_, _) => null,
+    ).asHandler;
   });
 
   parameterizedTest(
@@ -38,22 +37,21 @@ void main() {
         'Given a file "${v.key}", '
         'when requested, '
         'then the mimetype is "${v.value.toHeaderValue()}"',
-    variants:
-        {
-          '/test.html': MimeType.html,
-          '/test.json': MimeType.json,
-          '/test.css': MimeType.css,
-          '/test.js': MimeType.javascript,
-          '/test.txt': MimeType.plainText,
-          '/test.xml': MimeType.xml,
-          '/test.pdf': MimeType.pdf,
-          '/image.jpg': const MimeType('image', 'jpeg'),
-          '/image.png': const MimeType('image', 'png'),
-          '/image.gif': const MimeType('image', 'gif'),
-          '/image.svg': const MimeType('image', 'svg+xml'),
-          '/app.wasm': const MimeType('application', 'wasm'),
-          '/no_extension': MimeType.octetStream,
-        }.entries,
+    variants: {
+      '/test.html': MimeType.html,
+      '/test.json': MimeType.json,
+      '/test.css': MimeType.css,
+      '/test.js': MimeType.javascript,
+      '/test.txt': MimeType.plainText,
+      '/test.xml': MimeType.xml,
+      '/test.pdf': MimeType.pdf,
+      '/image.jpg': const MimeType('image', 'jpeg'),
+      '/image.png': const MimeType('image', 'png'),
+      '/image.gif': const MimeType('image', 'gif'),
+      '/image.svg': const MimeType('image', 'svg+xml'),
+      '/app.wasm': const MimeType('application', 'wasm'),
+      '/no_extension': MimeType.octetStream,
+    }.entries,
     (final v) async {
       final fileName = v.key;
       final mimeType = v.value;
@@ -71,14 +69,13 @@ void main() {
       'when a .txt file is requested, '
       'then the Content-Type is application/x-my-text',
       () async {
-        final customResolver =
-            MimeTypeResolver()..addExtension('txt', 'application/x-my-text');
-        handler =
-            StaticHandler.directory(
-              Directory(d.sandbox),
-              cacheControl: (_, _) => null,
-              mimeResolver: customResolver,
-            ).asHandler;
+        final customResolver = MimeTypeResolver()
+          ..addExtension('txt', 'application/x-my-text');
+        handler = StaticHandler.directory(
+          Directory(d.sandbox),
+          cacheControl: (_, _) => null,
+          mimeResolver: customResolver,
+        ).asHandler;
 
         final response = await makeRequest(handler, '/test.txt');
 
@@ -92,14 +89,13 @@ void main() {
         'when a .custom file is requested, '
         'then the Content-Type is text/custom', () async {
       await d.file('test.custom', 'custom file content').create();
-      final customResolver =
-          MimeTypeResolver()..addExtension('custom', 'text/custom');
-      handler =
-          StaticHandler.directory(
-            Directory(d.sandbox),
-            cacheControl: (_, _) => null,
-            mimeResolver: customResolver,
-          ).asHandler;
+      final customResolver = MimeTypeResolver()
+        ..addExtension('custom', 'text/custom');
+      handler = StaticHandler.directory(
+        Directory(d.sandbox),
+        cacheControl: (_, _) => null,
+        mimeResolver: customResolver,
+      ).asHandler;
 
       final response = await makeRequest(handler, '/test.custom');
 

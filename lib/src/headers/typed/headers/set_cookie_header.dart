@@ -96,8 +96,8 @@ final class SetCookieHeader {
         sameSite = SameSite.values.firstWhere(
           (final sameSite) =>
               sameSite.name.toLowerCase() == samesiteValue.toLowerCase(),
-          orElse:
-              () => throw const FormatException('Invalid SameSite attribute'),
+          orElse: () =>
+              throw const FormatException('Invalid SameSite attribute'),
         );
         continue;
       }

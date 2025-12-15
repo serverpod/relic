@@ -12,11 +12,10 @@ void main() {
 
   setUp(() async {
     await d.file('test_file.txt', fileContent).create();
-    handler =
-        StaticHandler.directory(
-          Directory(d.sandbox),
-          cacheControl: (_, _) => null,
-        ).asHandler;
+    handler = StaticHandler.directory(
+      Directory(d.sandbox),
+      cacheControl: (_, _) => null,
+    ).asHandler;
   });
 
   test('Given an If-Modified-Since header with a matching date, '

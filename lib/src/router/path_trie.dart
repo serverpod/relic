@@ -348,8 +348,9 @@ final class PathTrie<T extends Object> {
     final childMap = node.map;
     if (childMap != null) {
       final parentMap = currentNode.map;
-      currentNode.map =
-          parentMap == null ? childMap : (final v) => parentMap(childMap(v));
+      currentNode.map = parentMap == null
+          ? childMap
+          : (final v) => parentMap(childMap(v));
     }
     currentNode.children.addAll(node.children);
     trie._root = currentNode;
@@ -426,10 +427,9 @@ final class PathTrie<T extends Object> {
     if (dynamicSegment != null) {
       final dynamicNode = dynamicSegment.node;
       final newMap = _composeMap(currentMap, dynamicNode.map);
-      final newParams =
-          dynamicSegment is _Parameter<T>
-              ? {...parameters, Symbol(dynamicSegment.name): segment}
-              : parameters;
+      final newParams = dynamicSegment is _Parameter<T>
+          ? {...parameters, Symbol(dynamicSegment.name): segment}
+          : parameters;
 
       if (dynamicSegment is _Tail<T>) {
         // Tail matches: check for value at this position
@@ -480,12 +480,9 @@ final class PathTrie<T extends Object> {
     void updateMap() {
       final cm = currentMap;
       final m = currentNode.map;
-      currentMap =
-          cm == null
-              ? m // may also be null
-              : (m == null
-                  ? cm
-                  : (final v) => cm(m(v))); // compose map function
+      currentMap = cm == null
+          ? m // may also be null
+          : (m == null ? cm : (final v) => cm(m(v))); // compose map function
     }
 
     int i = 0;

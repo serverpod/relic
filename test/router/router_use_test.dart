@@ -151,9 +151,21 @@ void main() {
       'when looking up and applying the route function, '
       'then the call order is root to leaf', () {
     final router = Router<String Function(String)>();
-    router.use('/a', (final next) => (final s) => '<a>${next(s)}</a>');
-    router.use('/a/b', (final next) => (final s) => '<b>${next(s)}</b>');
-    router.use('/a/b/c', (final next) => (final s) => '<c>${next(s)}</c>');
+    router.use(
+      '/a',
+      (final next) =>
+          (final s) => '<a>${next(s)}</a>',
+    );
+    router.use(
+      '/a/b',
+      (final next) =>
+          (final s) => '<b>${next(s)}</b>',
+    );
+    router.use(
+      '/a/b/c',
+      (final next) =>
+          (final s) => '<c>${next(s)}</c>',
+    );
     router.get('/a/b/c/d', (final s) => s);
     final result =
         router.lookup(Method.get, '/a/b/c/d')

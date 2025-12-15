@@ -30,8 +30,9 @@ extension type const SocketAddress._(_SocketAddressRecord record) {
   bool get isWellKnownPort => port < 1024;
 
   String get display {
-    final addressString =
-        address is IPv6Address ? '[$address]' : address.toString();
+    final addressString = address is IPv6Address
+        ? '[$address]'
+        : address.toString();
     return '$addressString:$port';
   }
 }

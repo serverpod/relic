@@ -196,21 +196,22 @@ class StaticHandler extends HandlerObject {
       null =>
         (final String resolvedRootPath, final List<String> requestSegments) =>
             p.joinAll([resolvedRootPath, ...requestSegments]),
-      final cfg => (
-        final String resolvedRootPath,
-        final List<String> requestSegments,
-      ) {
-        if (requestSegments.isEmpty) {
-          return resolvedRootPath;
-        }
+      final cfg =>
+        (
+          final String resolvedRootPath,
+          final List<String> requestSegments,
+        ) {
+          if (requestSegments.isEmpty) {
+            return resolvedRootPath;
+          }
 
-        final fileName = cfg.tryStripHashFromFilename(requestSegments.last);
-        return p.joinAll([
-          resolvedRootPath,
-          ...requestSegments.sublist(0, requestSegments.length - 1),
-          fileName,
-        ]);
-      },
+          final fileName = cfg.tryStripHashFromFilename(requestSegments.last);
+          return p.joinAll([
+            resolvedRootPath,
+            ...requestSegments.sublist(0, requestSegments.length - 1),
+            fileName,
+          ]);
+        },
     };
 
     final filePath = resolveFilePath(
@@ -326,11 +327,10 @@ Future<MimeType?> _detectMimeType(
   final File file,
   final MimeTypeResolver mimeResolver,
 ) async {
-  final headerBytes =
-      await file
-          .openRead(0, mimeResolver.magicNumbersMaxLength)
-          .cast<Uint8List>()
-          .firstOrNull;
+  final headerBytes = await file
+      .openRead(0, mimeResolver.magicNumbersMaxLength)
+      .cast<Uint8List>()
+      .firstOrNull;
 
   final mimeString = mimeResolver.lookup(file.path, headerBytes: headerBytes);
   return mimeString != null ? MimeType.parse(mimeString) : null;
@@ -342,12 +342,11 @@ Headers _buildBaseHeaders(
   final CacheControlHeader? cacheControl,
 ) {
   return Headers.build(
-    (final mh) =>
-        mh
-          ..acceptRanges = AcceptRangesHeader.bytes()
-          ..etag = ETagHeader(value: fileInfo.etag)
-          ..lastModified = fileInfo.stat.modified
-          ..cacheControl = cacheControl,
+    (final mh) => mh
+      ..acceptRanges = AcceptRangesHeader.bytes()
+      ..etag = ETagHeader(value: fileInfo.etag)
+      ..lastModified = fileInfo.stat.modified
+      ..cacheControl = cacheControl,
   );
 }
 
@@ -447,13 +446,12 @@ Response _serveSingleRange(
   return Response(
     HttpStatus.partialContent,
     headers: headers.transform(
-      (final mh) =>
-          mh
-            ..contentRange = ContentRangeHeader(
-              start: start,
-              end: end - 1,
-              size: fileInfo.stat.size,
-            ),
+      (final mh) => mh
+        ..contentRange = ContentRangeHeader(
+          start: start,
+          end: end - 1,
+          size: fileInfo.stat.size,
+        ),
     ),
     body: _createRangeBody(fileInfo, start, end),
   );
@@ -490,11 +488,10 @@ Future<Response> _serveMultipleRanges(
   return Response(
     HttpStatus.partialContent,
     headers: headers.transform(
-      (final mh) =>
-          mh
-            ..[Headers.contentTypeHeader] = [
-              '${MimeType.multipartByteranges.toHeaderValue()}; boundary=$boundary',
-            ],
+      (final mh) => mh
+        ..[Headers.contentTypeHeader] = [
+          '${MimeType.multipartByteranges.toHeaderValue()}; boundary=$boundary',
+        ],
     ),
     body: Body.fromDataStream(
       controller.stream,

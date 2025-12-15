@@ -38,13 +38,14 @@ final class ContentSecurityPolicyHeader {
     }
 
     final directiveSeparator = RegExp(r'\s+');
-    final directives =
-        splitValues.map<ContentSecurityPolicyDirective>((final part) {
-          final directiveParts = part.split(directiveSeparator);
-          final name = directiveParts.first;
-          final values = directiveParts.skip(1).toList();
-          return ContentSecurityPolicyDirective(name: name, values: values);
-        }).toList();
+    final directives = splitValues.map<ContentSecurityPolicyDirective>((
+      final part,
+    ) {
+      final directiveParts = part.split(directiveSeparator);
+      final name = directiveParts.first;
+      final values = directiveParts.skip(1).toList();
+      return ContentSecurityPolicyDirective(name: name, values: values);
+    }).toList();
 
     return ContentSecurityPolicyHeader.directives(directives);
   }

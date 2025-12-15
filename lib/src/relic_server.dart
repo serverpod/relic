@@ -33,12 +33,11 @@ sealed class RelicServer {
     final int noOfIsolates = 1,
   }) {
     return switch (noOfIsolates) {
-      < 1 =>
-        throw RangeError.value(
-          noOfIsolates,
-          'noOfIsolates',
-          'Must be larger than 0',
-        ),
+      < 1 => throw RangeError.value(
+        noOfIsolates,
+        'noOfIsolates',
+        'Must be larger than 0',
+      ),
       == 1 => _RelicServer(adapterFactory),
       _ => _MultiIsolateRelicServer(adapterFactory, noOfIsolates),
     };
@@ -152,12 +151,12 @@ final class _RelicServer implements RelicServer {
         final result = await handler(req);
         return switch (result) {
           final Response rc =>
-          // If the response doesn't have a date header, add the default one
-          rc.copyWith(
-            headers: rc.headers.transform((final mh) {
-              mh.date ??= DateTime.now();
-            }),
-          ),
+            // If the response doesn't have a date header, add the default one
+            rc.copyWith(
+              headers: rc.headers.transform((final mh) {
+                mh.date ??= DateTime.now();
+              }),
+            ),
           _ => result,
         };
       } on HeaderException catch (error, stackTrace) {

@@ -12,11 +12,10 @@ void main() {
 
   setUp(() async {
     await d.file('test_file.txt', fileContent).create();
-    handler =
-        StaticHandler.directory(
-          Directory(d.sandbox),
-          cacheControl: (_, _) => null,
-        ).asHandler;
+    handler = StaticHandler.directory(
+      Directory(d.sandbox),
+      cacheControl: (_, _) => null,
+    ).asHandler;
   });
 
   group('Given a single byte range request', () {
@@ -117,14 +116,13 @@ void main() {
         // Ranges: bytes=0-0,2-3,14-
         // Expected parts: '0', '23', 'EF'
         final headers = Headers.build(
-          (final mh) =>
-              mh.range = RangeHeader(
-                ranges: [
-                  Range(start: 0, end: 0), // '0'
-                  Range(start: 2, end: 3), // '23'
-                  Range(start: 14), // 'EF'
-                ],
-              ),
+          (final mh) => mh.range = RangeHeader(
+            ranges: [
+              Range(start: 0, end: 0), // '0'
+              Range(start: 2, end: 3), // '23'
+              Range(start: 14), // 'EF'
+            ],
+          ),
         );
 
         final response = await makeRequest(

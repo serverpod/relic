@@ -260,10 +260,9 @@ class Response extends Message implements Result {
     : this(
         413,
         headers: (headers ?? Headers.empty()).transform(
-          (final mh) =>
-              mh.connection = const ConnectionHeader.directives([
-                ConnectionHeaderType.close,
-              ]),
+          (final mh) => mh.connection = const ConnectionHeader.directives([
+            ConnectionHeaderType.close,
+          ]),
         ),
         body: body ?? Body.fromString('Content Too Large'),
       );

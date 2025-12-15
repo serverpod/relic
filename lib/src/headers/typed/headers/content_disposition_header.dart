@@ -48,8 +48,10 @@ final class ContentDispositionHeader {
       throw const FormatException('Type cannot be empty or a parameter');
     }
 
-    final parameters =
-        splitValues.skip(1).map(ContentDispositionParameter.parse).toList();
+    final parameters = splitValues
+        .skip(1)
+        .map(ContentDispositionParameter.parse)
+        .toList();
 
     return ContentDispositionHeader(type: type, parameters: parameters);
   }

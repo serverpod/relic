@@ -29,8 +29,9 @@ final class CookieHeader {
     final splitValues = value.splitTrimAndFilterUnique(separator: ';');
 
     final cookies = splitValues.map(Cookie.parse).toList();
-    final names =
-        cookies.map((final cookie) => cookie.name.toLowerCase()).toList();
+    final names = cookies
+        .map((final cookie) => cookie.name.toLowerCase())
+        .toList();
     final uniqueNames = names.toSet();
 
     if (names.length != uniqueNames.length) {

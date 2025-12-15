@@ -191,10 +191,9 @@ Future<void> main() async {
   app.get('/info', (final req) {
     final userAgent = req.headers.userAgent;
 
-    final message =
-        userAgent != null
-            ? 'Your browser: $userAgent'
-            : 'Browser information not available';
+    final message = userAgent != null
+        ? 'Your browser: $userAgent'
+        : 'Browser information not available';
 
     return Response.ok(body: Body.fromString(message));
   });

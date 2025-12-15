@@ -222,8 +222,10 @@ void main() {
       canComplete.complete();
 
       // Both close calls and all requests should complete successfully
-      final (_, responses) =
-          await (closeFutures.wait, responseFutures.wait).wait;
+      final (_, responses) = await (
+        closeFutures.wait,
+        responseFutures.wait,
+      ).wait;
 
       for (final response in responses) {
         expect(response.statusCode, HttpStatus.ok);

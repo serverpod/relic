@@ -97,9 +97,8 @@ void main() {
 
       int count = 0;
       final called = StreamController<int>();
-      final app =
-          RelicApp()
-            ..inject(_Injectable(() => called.add(++count))); // 1 original
+      final app = RelicApp()
+        ..inject(_Injectable(() => called.add(++count))); // 1 original
 
       await app.serve(noOfIsolates: 2);
 

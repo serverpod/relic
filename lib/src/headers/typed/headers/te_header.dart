@@ -30,23 +30,22 @@ final class TEHeader {
       throw const FormatException('Value cannot be empty');
     }
 
-    final encodings =
-        splitValues.map((final value) {
-          final encodingParts = value.split(';q=');
-          final encoding = encodingParts[0].trim().toLowerCase();
-          if (encoding.isEmpty) {
-            throw const FormatException('Invalid encoding');
-          }
-          double? quality;
-          if (encodingParts.length > 1) {
-            final value = double.tryParse(encodingParts[1].trim());
-            if (value == null || value < 0 || value > 1) {
-              throw const FormatException('Invalid quality value');
-            }
-            quality = value;
-          }
-          return TeQuality(encoding, quality);
-        }).toList();
+    final encodings = splitValues.map((final value) {
+      final encodingParts = value.split(';q=');
+      final encoding = encodingParts[0].trim().toLowerCase();
+      if (encoding.isEmpty) {
+        throw const FormatException('Invalid encoding');
+      }
+      double? quality;
+      if (encodingParts.length > 1) {
+        final value = double.tryParse(encodingParts[1].trim());
+        if (value == null || value < 0 || value > 1) {
+          throw const FormatException('Invalid quality value');
+        }
+        quality = value;
+      }
+      return TeQuality(encoding, quality);
+    }).toList();
 
     return TEHeader.encodings(encodings);
   }

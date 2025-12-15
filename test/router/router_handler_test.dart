@@ -259,11 +259,11 @@ void main() {
     final router = RelicRouter();
     router.get('/users', (final req) => Response.ok());
 
-    router.fallback =
-        (final req) => Response.ok(body: Body.fromString('first fallback'));
+    router.fallback = (final req) =>
+        Response.ok(body: Body.fromString('first fallback'));
 
-    router.fallback =
-        (final req) => Response.ok(body: Body.fromString('second fallback'));
+    router.fallback = (final req) =>
+        Response.ok(body: Body.fromString('second fallback'));
 
     final request = _request('/nonexistent');
     final req = request;
@@ -278,8 +278,8 @@ void main() {
     final router = RelicRouter();
     router.get('/users', (final req) => Response.ok());
 
-    router.fallback =
-        (final req) => Response.ok(body: Body.fromString('fallback'));
+    router.fallback = (final req) =>
+        Response.ok(body: Body.fromString('fallback'));
     router.fallback = null; // Clear fallback
 
     final request = _request('/nonexistent');

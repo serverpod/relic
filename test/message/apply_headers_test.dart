@@ -151,10 +151,9 @@ void main() {
       final HttpResponseMock response = HttpResponseMock();
       response.applyHeaders(
         Headers.build(
-          (final mh) =>
-              mh.transferEncoding = TransferEncodingHeader.encodings([
-                TransferEncoding.identity,
-              ]),
+          (final mh) => mh.transferEncoding = TransferEncodingHeader.encodings([
+            TransferEncoding.identity,
+          ]),
         ),
         Body.fromDataStream(const Stream.empty()),
       );
@@ -171,10 +170,9 @@ void main() {
       final HttpResponseMock response = HttpResponseMock();
       response.applyHeaders(
         Headers.build(
-          (final mh) =>
-              mh.transferEncoding = TransferEncodingHeader.encodings([
-                TransferEncoding.chunked,
-              ]),
+          (final mh) => mh.transferEncoding = TransferEncodingHeader.encodings([
+            TransferEncoding.chunked,
+          ]),
         ),
         Body.fromDataStream(
           Stream.fromIterable([

@@ -443,11 +443,10 @@ void main() {
   );
 
   group('ssl tests', () {
-    final securityContext =
-        SecurityContext()
-          ..setTrustedCertificatesBytes(certChainBytes)
-          ..useCertificateChainBytes(certChainBytes)
-          ..usePrivateKeyBytes(certKeyBytes, password: 'dartdart');
+    final securityContext = SecurityContext()
+      ..setTrustedCertificatesBytes(certChainBytes)
+      ..useCertificateChainBytes(certChainBytes)
+      ..usePrivateKeyBytes(certKeyBytes, password: 'dartdart');
 
     final sslClient = HttpClient(context: securityContext);
 

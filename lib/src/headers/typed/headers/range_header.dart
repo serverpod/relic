@@ -49,23 +49,22 @@ final class RangeHeader {
     }
 
     final rangeStrings = rangesPart.split(',');
-    final ranges =
-        rangeStrings.map((final rangeStr) {
-          final trimmedRange = rangeStr.trim();
-          final rangeMatch = RegExp(r'^(\d*)-(\d*)$').firstMatch(trimmedRange);
-          if (rangeMatch == null) {
-            throw const FormatException('Invalid range');
-          }
+    final ranges = rangeStrings.map((final rangeStr) {
+      final trimmedRange = rangeStr.trim();
+      final rangeMatch = RegExp(r'^(\d*)-(\d*)$').firstMatch(trimmedRange);
+      if (rangeMatch == null) {
+        throw const FormatException('Invalid range');
+      }
 
-          final start = int.tryParse(rangeMatch.group(1) ?? '');
-          final end = int.tryParse(rangeMatch.group(2) ?? '');
+      final start = int.tryParse(rangeMatch.group(1) ?? '');
+      final end = int.tryParse(rangeMatch.group(2) ?? '');
 
-          if (start == null && end == null) {
-            throw const FormatException('Both start and end cannot be empty');
-          }
+      if (start == null && end == null) {
+        throw const FormatException('Both start and end cannot be empty');
+      }
 
-          return Range(start: start, end: end);
-        }).toList();
+      return Range(start: start, end: end);
+    }).toList();
 
     return RangeHeader(unit: unit, ranges: ranges);
   }

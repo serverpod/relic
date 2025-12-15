@@ -39,18 +39,16 @@ void main() async {
 
   // doctag<router-usage>
   // Create a handler using the modern RelicApp API.
-  final router =
-      RelicApp()
-        ..use('/', logRequests())
-        ..use('/', addServerHeader())
-        ..get('/router', simpleHandler);
+  final router = RelicApp()
+    ..use('/', logRequests())
+    ..use('/', addServerHeader())
+    ..get('/router', simpleHandler);
   // end:doctag<router-usage>
 
   // Combine both approaches in a single application for comparison.
-  final app =
-      RelicApp()
-        ..get('/pipeline', pipelineHandler)
-        ..get('/router', router.asHandler);
+  final app = RelicApp()
+    ..get('/pipeline', pipelineHandler)
+    ..get('/router', router.asHandler);
 
   await app.serve();
   log('Pipeline example running on http://localhost:8080');

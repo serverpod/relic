@@ -16,12 +16,11 @@ void main() {
       ]).create();
 
       // Return 403 Forbidden instead of 404 Not Found, as default
-      handler =
-          StaticHandler.directory(
-            Directory(d.sandbox),
-            cacheControl: (_, _) => null,
-            defaultHandler: respondWith((_) => Response.forbidden()),
-          ).asHandler;
+      handler = StaticHandler.directory(
+        Directory(d.sandbox),
+        cacheControl: (_, _) => null,
+        defaultHandler: respondWith((_) => Response.forbidden()),
+      ).asHandler;
     });
 
     test('when accessing exisiting directory "/files" '

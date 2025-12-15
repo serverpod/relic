@@ -133,10 +133,9 @@ final class ForwardedElement {
     this.proto,
     this.host,
     final Map<String, String>? extensions,
-  }) : extensions =
-           extensions != null && extensions.isNotEmpty
-               ? CaseInsensitiveMap<String>.from(extensions)
-               : null;
+  }) : extensions = extensions != null && extensions.isNotEmpty
+           ? CaseInsensitiveMap<String>.from(extensions)
+           : null;
 
   @override
   bool operator ==(final Object other) =>
@@ -215,10 +214,9 @@ final class ForwardedHeader {
         if (parts[0].isEmpty) continue;
         if (parts[1].isEmpty) continue;
 
-        final key =
-            parts[0]
-                .trim()
-                .toLowerCase(); // Parameter names are case-insensitive
+        final key = parts[0]
+            .trim()
+            .toLowerCase(); // Parameter names are case-insensitive
         String value = parts[1].trim();
         value = _unquote(value); // Unquote if it's a quoted-string
 

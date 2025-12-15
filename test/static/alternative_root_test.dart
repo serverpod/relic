@@ -19,11 +19,10 @@ void main() {
   test(
     'Given a root file when accessed then it returns the file content',
     () async {
-      final handler =
-          StaticHandler.directory(
-            Directory(d.sandbox),
-            cacheControl: (_, _) => null,
-          ).asHandler;
+      final handler = StaticHandler.directory(
+        Directory(d.sandbox),
+        cacheControl: (_, _) => null,
+      ).asHandler;
 
       final response = await makeRequest(handler, '/root.txt');
       expect(response.statusCode, HttpStatus.ok);
@@ -35,11 +34,10 @@ void main() {
   test(
     'Given a root file with space when accessed then it returns the file content',
     () async {
-      final handler =
-          StaticHandler.directory(
-            Directory(d.sandbox),
-            cacheControl: (_, _) => null,
-          ).asHandler;
+      final handler = StaticHandler.directory(
+        Directory(d.sandbox),
+        cacheControl: (_, _) => null,
+      ).asHandler;
 
       final response = await makeRequest(handler, '/files/with%20space.txt');
       expect(response.statusCode, HttpStatus.ok);
@@ -51,11 +49,10 @@ void main() {
   test(
     'Given a root file with unencoded space when accessed then it returns the file content',
     () async {
-      final handler =
-          StaticHandler.directory(
-            Directory(d.sandbox),
-            cacheControl: (_, _) => null,
-          ).asHandler;
+      final handler = StaticHandler.directory(
+        Directory(d.sandbox),
+        cacheControl: (_, _) => null,
+      ).asHandler;
 
       final response = await makeRequest(handler, '/files/with%20space.txt');
       expect(response.statusCode, HttpStatus.ok);
@@ -67,11 +64,10 @@ void main() {
   test(
     'Given a file under directory when accessed then it returns the file content',
     () async {
-      final handler =
-          StaticHandler.directory(
-            Directory(d.sandbox),
-            cacheControl: (_, _) => null,
-          ).asHandler;
+      final handler = StaticHandler.directory(
+        Directory(d.sandbox),
+        cacheControl: (_, _) => null,
+      ).asHandler;
 
       final response = await makeRequest(handler, '/files/test.txt');
       expect(response.statusCode, HttpStatus.ok);
@@ -83,11 +79,10 @@ void main() {
   test(
     'Given a non-existent file when accessed then it returns a 404 status',
     () async {
-      final handler =
-          StaticHandler.directory(
-            Directory(d.sandbox),
-            cacheControl: (_, _) => null,
-          ).asHandler;
+      final handler = StaticHandler.directory(
+        Directory(d.sandbox),
+        cacheControl: (_, _) => null,
+      ).asHandler;
 
       final response = await makeRequest(handler, '/not_here.txt');
       expect(response.statusCode, HttpStatus.notFound);

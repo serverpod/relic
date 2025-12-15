@@ -358,9 +358,8 @@ void main() {
     final strRouter = Router<String>()..add(Method.get, '/', 'Hurrah!');
     final mw = routeWith<String>(
       strRouter,
-      toHandler:
-          (final s) =>
-              respondWith((_) => Response.ok(body: Body.fromString(s))),
+      toHandler: (final s) =>
+          respondWith((_) => Response.ok(body: Body.fromString(s))),
     );
 
     final req = _request('/');

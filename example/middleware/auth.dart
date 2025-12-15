@@ -33,13 +33,12 @@ Future<Response> protectedHandler(final Request req) async {
 
 /// Demonstrates API key authentication with protected routes.
 void main() async {
-  final router =
-      RelicApp()
-        // Routes accessible without authentication.
-        ..get('/public', publicHandler)
-        // Routes that require authentication via middleware.
-        ..use('/protected', authMiddleware())
-        ..get('/protected', protectedHandler);
+  final router = RelicApp()
+    // Routes accessible without authentication.
+    ..get('/public', publicHandler)
+    // Routes that require authentication via middleware.
+    ..use('/protected', authMiddleware())
+    ..get('/protected', protectedHandler);
 
   await router.serve(port: 8080);
   log('Auth example running on http://localhost:8080');

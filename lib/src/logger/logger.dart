@@ -20,12 +20,11 @@ void logMessage(
   var chain = Chain.current();
 
   if (stackTrace != null) {
-    chain =
-        Chain.forTrace(stackTrace)
-            .foldFrames(
-              (final frame) => frame.isCore || frame.package == 'relic',
-            )
-            .terse;
+    chain = Chain.forTrace(stackTrace)
+        .foldFrames(
+          (final frame) => frame.isCore || frame.package == 'relic',
+        )
+        .terse;
   }
 
   switch (type) {
