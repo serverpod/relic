@@ -671,6 +671,65 @@ void main() {
           expect(result.parameters, equals({#id: '456'}));
         },
       );
+
+      test('Given a trie attached at a tail path with consume: true, '
+          'when the attached trie is a single value trie, '
+          'then it succeeds and the value is accessible', () {
+        trieB.add(NormalizedPath('/'), 1);
+
+        // Should succeed because trieB is a single value trie
+        expect(
+          () => trieA.attach(
+            NormalizedPath('/files/**'),
+            trieB,
+            consume: true,
+          ),
+          returnsNormally,
+        );
+
+        // The attached value should be accessible via the tail path
+        final result = trieA.lookup(NormalizedPath('/files/any/path'));
+        expect(result, isNotNull);
+        expect(result!.value, equals(1));
+        expect(result.matched.path, equals('/files'));
+        expect(result.remaining.path, equals('/any/path'));
+      });
+
+      test('Given a trie attached with consume: true, '
+          'when a new path is added to the consumed trie, '
+          'then it is not visible in the parent trie', () {
+        trieB.add(NormalizedPath('/'), 1);
+        trieA.attach(NormalizedPath('/api'), trieB, consume: true);
+
+        // Add a new route to trieB after attachment
+        trieB.add(NormalizedPath('/new'), 2);
+
+        // The new route should NOT be visible in trieA
+        final result = trieA.lookup(NormalizedPath('/api/new'));
+        expect(result, isNull);
+
+        // But the original route should still be accessible
+        final originalResult = trieA.lookup(NormalizedPath('/api'));
+        expect(originalResult, isNotNull);
+        expect(originalResult!.value, equals(1));
+      });
+
+      test('Given a trie attached at a tail path with consume: true, '
+          'when the attached trie is not a single value trie, '
+          'then it throws an ArgumentError', () {
+        trieB.add(NormalizedPath('/'), 1);
+        trieB.add(NormalizedPath('/child'), 2);
+
+        // Should fail because trieB is not a single value trie
+        expect(
+          () => trieA.attach(
+            NormalizedPath('/files/**'),
+            trieB,
+            consume: true,
+          ),
+          throwsArgumentError,
+        );
+      });
     });
   });
 }

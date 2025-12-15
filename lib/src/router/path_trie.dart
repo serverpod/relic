@@ -41,9 +41,14 @@ final class _TrieNode<T> {
   /// If null, no mapping is applied.
   T Function(T value)? map;
 
+  /// Indicates whether this node has child nodes, either literal or dynamic.
+  bool get _hasNoChildren => children.isEmpty && dynamicSegment == null;
+
   /// Indicates whether this node is empty.
-  bool get isEmpty =>
-      children.isEmpty && dynamicSegment == null && value == null;
+  bool get isEmpty => _hasNoChildren && value == null;
+
+  /// Indicates if this node holds a single value
+  bool get isSingle => _hasNoChildren && value != null;
 }
 
 sealed class _DynamicSegment<T> {
@@ -320,11 +325,29 @@ final class PathTrie<T extends Object> {
   /// For example, if this trie has a path `/a/b` and you attach another trie
   /// at `/a/b/c`, the attached trie's root will be accessible via `/a/b/c`.
   ///
+  /// If [consume] is `true`, the attached trie's root is reset after attachment,
+  /// preventing further modifications to the attached trie from affecting this
+  /// trie. This also allows attaching a single-value trie at a tail path (`/**`).
+  ///
   /// Throws an [ArgumentError] if:
   /// - The node at [normalizedPath] has a value, and the root node of [trie] has as well.
   /// - Both nodes has an associated dynamic segment.
   /// - There are overlapping children between the nodes.
-  void attach(final NormalizedPath normalizedPath, final PathTrie<T> trie) {
+  /// - Attaching at a tail path without [consume] being `true` and [trie] being single-value.
+  void attach(
+    final NormalizedPath normalizedPath,
+    final PathTrie<T> trie, {
+    final bool consume = false,
+  }) {
+    final segments = normalizedPath.segments;
+    if (segments.isNotEmpty &&
+        segments.last == '**' &&
+        !(trie.isSingle && consume)) {
+      throw ArgumentError(
+        'Cannot attach at a tail path. Tail segments (**) cannot be extended.',
+      );
+    }
+
     final node = trie._root;
     final currentNode = _build(normalizedPath);
 
@@ -353,7 +376,7 @@ final class PathTrie<T extends Object> {
           : (final v) => parentMap(childMap(v));
     }
     currentNode.children.addAll(node.children);
-    trie._root = currentNode;
+    trie._root = consume ? _TrieNode() : currentNode;
   }
 
   /// Looks up a [normalizedPath] in the trie and extracts parameters.
@@ -528,6 +551,9 @@ final class PathTrie<T extends Object> {
 
   /// Returns true if the path trie has no routes.
   bool get isEmpty => _root.isEmpty;
+
+  /// Returns true if the path trie has a single root route ('/').
+  bool get isSingle => _root.isSingle;
 }
 
 extension on NormalizedPath {

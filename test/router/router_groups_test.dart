@@ -145,4 +145,18 @@ void main() {
     router.isEmpty;
     expect(result, isA<PathMiss>());
   });
+
+  test('Given a router, '
+      'when creating a group with /** path, '
+      'then an ArgumentError is thrown', () {
+    final router = Router<int>();
+    expect(() => router.group('/**'), throwsArgumentError);
+  });
+
+  test('Given a router, '
+      'when creating a group with /api/** path, '
+      'then an ArgumentError is thrown', () {
+    final router = Router<int>();
+    expect(() => router.group('/api/**'), throwsArgumentError);
+  });
 }
