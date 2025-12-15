@@ -110,10 +110,9 @@ class Body {
     this.contentLength, {
     final Encoding? encoding,
     final MimeType? mimeType,
-  }) : bodyType =
-           mimeType == null
-               ? null
-               : BodyType(mimeType: mimeType, encoding: encoding);
+  }) : bodyType = mimeType == null
+           ? null
+           : BodyType(mimeType: mimeType, encoding: encoding);
 
   /// Creates an empty body.
   ///

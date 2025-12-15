@@ -13,11 +13,10 @@ void main() {
   setUp(() async {
     await d.file('test_file.txt', fileContent).create();
     await d.dir('test_directory').create();
-    handler =
-        StaticHandler.directory(
-          Directory(d.sandbox),
-          cacheControl: (_, _) => null,
-        ).asHandler;
+    handler = StaticHandler.directory(
+      Directory(d.sandbox),
+      cacheControl: (_, _) => null,
+    ).asHandler;
   });
 
   test('Given a request for a non-existent file, '

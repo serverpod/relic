@@ -129,11 +129,10 @@ Future<Response> dataHandler(final Request req) async {
 
   // Access headers (these are typed accessors from the Headers class)
   final authHeader = req.headers.authorization; // 'Bearer token123' or null
-  final contentType =
-      req
-          .body
-          .bodyType
-          ?.mimeType; // appljson, octet-stream, plainText, etc. or null
+  final contentType = req
+      .body
+      .bodyType
+      ?.mimeType; // appljson, octet-stream, plainText, etc. or null
 
   log('authHeader: $authHeader, contentType: $contentType');
 
@@ -159,18 +158,17 @@ Future<Response> dataHandler(final Request req) async {
 /// Demonstrates the four main context types in Relic with examples.
 void main() async {
   // Configure the application with all route handlers.
-  final app =
-      RelicApp()
-        ..get('/', homeHandler) // Home page
-        ..get('/api', apiHandler) // Simple API
-        ..get('/api/users/:id', userHandler) // API with parameters
-        ..get('/ws', webSocketHandler) // WebSocket
-        ..get('/custom', customProtocolHandler) // Custom protocol
-        ..post('/data', dataHandler) // Data handler
-        ..fallback = respondWith(
-          (final request) =>
-              Response.notFound(body: Body.fromString('Page not found')),
-        );
+  final app = RelicApp()
+    ..get('/', homeHandler) // Home page
+    ..get('/api', apiHandler) // Simple API
+    ..get('/api/users/:id', userHandler) // API with parameters
+    ..get('/ws', webSocketHandler) // WebSocket
+    ..get('/custom', customProtocolHandler) // Custom protocol
+    ..post('/data', dataHandler) // Data handler
+    ..fallback = respondWith(
+      (final request) =>
+          Response.notFound(body: Body.fromString('Page not found')),
+    );
 
   // Start the server.
   await app.serve();

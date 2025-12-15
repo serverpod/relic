@@ -126,8 +126,9 @@ void main() {
 
 /// Creates a request with the given query string.
 Request _request(final String? query) {
-  final url =
-      query != null ? 'http://localhost/test?$query' : 'http://localhost/test';
+  final url = query != null
+      ? 'http://localhost/test?$query'
+      : 'http://localhost/test';
   return RequestInternal.create(Method.get, Uri.parse(url), Object());
 }
 

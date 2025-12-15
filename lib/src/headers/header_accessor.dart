@@ -221,8 +221,10 @@ extension type const Header<T extends Object>(HeaderTuple<T> tuple) {
 }
 
 /// Internal record for bundling an [accessor] with its externalized state [headers].
-typedef HeaderTuple<T extends Object> =
-    ({HeaderAccessor<T> accessor, HeadersBase headers});
+typedef HeaderTuple<T extends Object> = ({
+  HeaderAccessor<T> accessor,
+  HeadersBase headers,
+});
 
 /// Throws an [InvalidHeaderException] with the appropriate message based on
 /// the type of the given [exception].

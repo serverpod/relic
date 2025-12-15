@@ -10,14 +10,13 @@ import 'package:relic/relic.dart';
 Future<void> main() async {
   // Start the server in a separate isolate for testing.
   final server = await Isolate.spawn((_) async {
-    final app =
-        RelicApp()
-          // Protect /api routes with authentication middleware.
-          ..use('/api', AuthMiddleware().asMiddleware)
-          ..get(
-            '/api/user/info',
-            (final req) => Response.ok(body: Body.fromString('${req.user}')),
-          );
+    final app = RelicApp()
+      // Protect /api routes with authentication middleware.
+      ..use('/api', AuthMiddleware().asMiddleware)
+      ..get(
+        '/api/user/info',
+        (final req) => Response.ok(body: Body.fromString('${req.user}')),
+      );
 
     await app.serve();
   }, null);

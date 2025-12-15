@@ -220,88 +220,84 @@ void main() {
       expect(() => v.value(Headers.empty()), returnsNormally);
       expect(v.value(Headers.empty()), isNull);
     },
-    variants:
-        <HeaderAccessor, dynamic Function(Headers)>{
-          Headers.accept: (final h) => h.accept,
-          Headers.acceptEncoding: (final h) => h.acceptEncoding,
-          Headers.acceptLanguage: (final h) => h.acceptLanguage,
-          Headers.acceptRanges: (final h) => h.acceptRanges,
-          Headers.accessControlAllowCredentials:
-              (final h) => h.accessControlAllowCredentials,
-          Headers.accessControlAllowHeaders:
-              (final h) => h.accessControlAllowHeaders,
-          Headers.accessControlAllowMethods:
-              (final h) => h.accessControlAllowMethods,
-          Headers.accessControlAllowOrigin:
-              (final h) => h.accessControlAllowOrigin,
-          Headers.accessControlExposeHeaders:
-              (final h) => h.accessControlExposeHeaders,
-          Headers.accessControlMaxAge: (final h) => h.accessControlMaxAge,
-          Headers.accessControlRequestHeaders:
-              (final h) => h.accessControlRequestHeaders,
-          Headers.accessControlRequestMethod:
-              (final h) => h.accessControlRequestMethod,
-          Headers.age: (final h) => h.age,
-          Headers.allow: (final h) => h.allow,
-          Headers.authorization: (final h) => h.authorization,
-          Headers.cacheControl: (final h) => h.cacheControl,
-          Headers.clearSiteData: (final h) => h.clearSiteData,
-          Headers.connection: (final h) => h.connection,
-          Headers.contentDisposition: (final h) => h.contentDisposition,
-          Headers.contentEncoding: (final h) => h.contentEncoding,
-          Headers.contentLanguage: (final h) => h.contentLanguage,
-          Headers.contentLength: (final h) => h.contentLength,
-          Headers.contentLocation: (final h) => h.contentLocation,
-          Headers.contentRange: (final h) => h.contentRange,
-          Headers.contentSecurityPolicy: (final h) => h.contentSecurityPolicy,
-          Headers.cookie: (final h) => h.cookie,
-          Headers.crossOriginEmbedderPolicy:
-              (final h) => h.crossOriginEmbedderPolicy,
-          Headers.crossOriginOpenerPolicy:
-              (final h) => h.crossOriginOpenerPolicy,
-          Headers.crossOriginResourcePolicy:
-              (final h) => h.crossOriginResourcePolicy,
-          Headers.date: (final h) => h.date,
-          Headers.etag: (final h) => h.etag,
-          Headers.expect: (final h) => h.expect,
-          Headers.expires: (final h) => h.expires,
-          Headers.from: (final h) => h.from,
-          Headers.host: (final h) => h.host,
-          Headers.ifMatch: (final h) => h.ifMatch,
-          Headers.ifModifiedSince: (final h) => h.ifModifiedSince,
-          Headers.ifNoneMatch: (final h) => h.ifNoneMatch,
-          Headers.ifRange: (final h) => h.ifRange,
-          Headers.ifUnmodifiedSince: (final h) => h.ifUnmodifiedSince,
-          Headers.lastModified: (final h) => h.lastModified,
-          Headers.location: (final h) => h.location,
-          Headers.maxForwards: (final h) => h.maxForwards,
-          Headers.origin: (final h) => h.origin,
-          Headers.permissionsPolicy: (final h) => h.permissionsPolicy,
-          Headers.proxyAuthenticate: (final h) => h.proxyAuthenticate,
-          Headers.proxyAuthorization: (final h) => h.proxyAuthorization,
-          Headers.range: (final h) => h.range,
-          Headers.referer: (final h) => h.referer,
-          Headers.referrerPolicy: (final h) => h.referrerPolicy,
-          Headers.retryAfter: (final h) => h.retryAfter,
-          Headers.secFetchDest: (final h) => h.secFetchDest,
-          Headers.secFetchMode: (final h) => h.secFetchMode,
-          Headers.secFetchSite: (final h) => h.secFetchSite,
-          Headers.server: (final h) => h.server,
-          Headers.setCookie: (final h) => h.setCookie,
-          Headers.strictTransportSecurity:
-              (final h) => h.strictTransportSecurity,
-          Headers.te: (final h) => h.te,
-          Headers.trailer: (final h) => h.trailer,
-          Headers.transferEncoding: (final h) => h.transferEncoding,
-          Headers.upgrade: (final h) => h.upgrade,
-          Headers.userAgent: (final h) => h.userAgent,
-          Headers.vary: (final h) => h.vary,
-          Headers.via: (final h) => h.via,
-          Headers.wwwAuthenticate: (final h) => h.wwwAuthenticate,
-          Headers.xPoweredBy: (final h) => h.xPoweredBy,
-          Headers.forwarded: (final h) => h.forwarded,
-          Headers.xForwardedFor: (final h) => h.xForwardedFor,
-        }.entries,
+    variants: <HeaderAccessor, dynamic Function(Headers)>{
+      Headers.accept: (final h) => h.accept,
+      Headers.acceptEncoding: (final h) => h.acceptEncoding,
+      Headers.acceptLanguage: (final h) => h.acceptLanguage,
+      Headers.acceptRanges: (final h) => h.acceptRanges,
+      Headers.accessControlAllowCredentials: (final h) =>
+          h.accessControlAllowCredentials,
+      Headers.accessControlAllowHeaders: (final h) =>
+          h.accessControlAllowHeaders,
+      Headers.accessControlAllowMethods: (final h) =>
+          h.accessControlAllowMethods,
+      Headers.accessControlAllowOrigin: (final h) => h.accessControlAllowOrigin,
+      Headers.accessControlExposeHeaders: (final h) =>
+          h.accessControlExposeHeaders,
+      Headers.accessControlMaxAge: (final h) => h.accessControlMaxAge,
+      Headers.accessControlRequestHeaders: (final h) =>
+          h.accessControlRequestHeaders,
+      Headers.accessControlRequestMethod: (final h) =>
+          h.accessControlRequestMethod,
+      Headers.age: (final h) => h.age,
+      Headers.allow: (final h) => h.allow,
+      Headers.authorization: (final h) => h.authorization,
+      Headers.cacheControl: (final h) => h.cacheControl,
+      Headers.clearSiteData: (final h) => h.clearSiteData,
+      Headers.connection: (final h) => h.connection,
+      Headers.contentDisposition: (final h) => h.contentDisposition,
+      Headers.contentEncoding: (final h) => h.contentEncoding,
+      Headers.contentLanguage: (final h) => h.contentLanguage,
+      Headers.contentLength: (final h) => h.contentLength,
+      Headers.contentLocation: (final h) => h.contentLocation,
+      Headers.contentRange: (final h) => h.contentRange,
+      Headers.contentSecurityPolicy: (final h) => h.contentSecurityPolicy,
+      Headers.cookie: (final h) => h.cookie,
+      Headers.crossOriginEmbedderPolicy: (final h) =>
+          h.crossOriginEmbedderPolicy,
+      Headers.crossOriginOpenerPolicy: (final h) => h.crossOriginOpenerPolicy,
+      Headers.crossOriginResourcePolicy: (final h) =>
+          h.crossOriginResourcePolicy,
+      Headers.date: (final h) => h.date,
+      Headers.etag: (final h) => h.etag,
+      Headers.expect: (final h) => h.expect,
+      Headers.expires: (final h) => h.expires,
+      Headers.from: (final h) => h.from,
+      Headers.host: (final h) => h.host,
+      Headers.ifMatch: (final h) => h.ifMatch,
+      Headers.ifModifiedSince: (final h) => h.ifModifiedSince,
+      Headers.ifNoneMatch: (final h) => h.ifNoneMatch,
+      Headers.ifRange: (final h) => h.ifRange,
+      Headers.ifUnmodifiedSince: (final h) => h.ifUnmodifiedSince,
+      Headers.lastModified: (final h) => h.lastModified,
+      Headers.location: (final h) => h.location,
+      Headers.maxForwards: (final h) => h.maxForwards,
+      Headers.origin: (final h) => h.origin,
+      Headers.permissionsPolicy: (final h) => h.permissionsPolicy,
+      Headers.proxyAuthenticate: (final h) => h.proxyAuthenticate,
+      Headers.proxyAuthorization: (final h) => h.proxyAuthorization,
+      Headers.range: (final h) => h.range,
+      Headers.referer: (final h) => h.referer,
+      Headers.referrerPolicy: (final h) => h.referrerPolicy,
+      Headers.retryAfter: (final h) => h.retryAfter,
+      Headers.secFetchDest: (final h) => h.secFetchDest,
+      Headers.secFetchMode: (final h) => h.secFetchMode,
+      Headers.secFetchSite: (final h) => h.secFetchSite,
+      Headers.server: (final h) => h.server,
+      Headers.setCookie: (final h) => h.setCookie,
+      Headers.strictTransportSecurity: (final h) => h.strictTransportSecurity,
+      Headers.te: (final h) => h.te,
+      Headers.trailer: (final h) => h.trailer,
+      Headers.transferEncoding: (final h) => h.transferEncoding,
+      Headers.upgrade: (final h) => h.upgrade,
+      Headers.userAgent: (final h) => h.userAgent,
+      Headers.vary: (final h) => h.vary,
+      Headers.via: (final h) => h.via,
+      Headers.wwwAuthenticate: (final h) => h.wwwAuthenticate,
+      Headers.xPoweredBy: (final h) => h.xPoweredBy,
+      Headers.forwarded: (final h) => h.forwarded,
+      Headers.xForwardedFor: (final h) => h.xForwardedFor,
+    }.entries,
   );
 
   parameterizedTest(
@@ -313,88 +309,84 @@ void main() {
       expect(() => Headers.build((final mh) => v.value(mh)), returnsNormally);
       Headers.build((final mh) => expect(v.value(mh), isNull));
     },
-    variants:
-        <HeaderAccessor, dynamic Function(MutableHeaders)>{
-          Headers.accept: (final h) => h.accept,
-          Headers.acceptEncoding: (final h) => h.acceptEncoding,
-          Headers.acceptLanguage: (final h) => h.acceptLanguage,
-          Headers.acceptRanges: (final h) => h.acceptRanges,
-          Headers.accessControlAllowCredentials:
-              (final h) => h.accessControlAllowCredentials,
-          Headers.accessControlAllowHeaders:
-              (final h) => h.accessControlAllowHeaders,
-          Headers.accessControlAllowMethods:
-              (final h) => h.accessControlAllowMethods,
-          Headers.accessControlAllowOrigin:
-              (final h) => h.accessControlAllowOrigin,
-          Headers.accessControlExposeHeaders:
-              (final h) => h.accessControlExposeHeaders,
-          Headers.accessControlMaxAge: (final h) => h.accessControlMaxAge,
-          Headers.accessControlRequestHeaders:
-              (final h) => h.accessControlRequestHeaders,
-          Headers.accessControlRequestMethod:
-              (final h) => h.accessControlRequestMethod,
-          Headers.age: (final h) => h.age,
-          Headers.allow: (final h) => h.allow,
-          Headers.authorization: (final h) => h.authorization,
-          Headers.cacheControl: (final h) => h.cacheControl,
-          Headers.clearSiteData: (final h) => h.clearSiteData,
-          Headers.connection: (final h) => h.connection,
-          Headers.contentDisposition: (final h) => h.contentDisposition,
-          Headers.contentEncoding: (final h) => h.contentEncoding,
-          Headers.contentLanguage: (final h) => h.contentLanguage,
-          Headers.contentLength: (final h) => h.contentLength,
-          Headers.contentLocation: (final h) => h.contentLocation,
-          Headers.contentRange: (final h) => h.contentRange,
-          Headers.contentSecurityPolicy: (final h) => h.contentSecurityPolicy,
-          Headers.cookie: (final h) => h.cookie,
-          Headers.crossOriginEmbedderPolicy:
-              (final h) => h.crossOriginEmbedderPolicy,
-          Headers.crossOriginOpenerPolicy:
-              (final h) => h.crossOriginOpenerPolicy,
-          Headers.crossOriginResourcePolicy:
-              (final h) => h.crossOriginResourcePolicy,
-          Headers.date: (final h) => h.date,
-          Headers.etag: (final h) => h.etag,
-          Headers.expect: (final h) => h.expect,
-          Headers.expires: (final h) => h.expires,
-          Headers.from: (final h) => h.from,
-          Headers.host: (final h) => h.host,
-          Headers.ifMatch: (final h) => h.ifMatch,
-          Headers.ifModifiedSince: (final h) => h.ifModifiedSince,
-          Headers.ifNoneMatch: (final h) => h.ifNoneMatch,
-          Headers.ifRange: (final h) => h.ifRange,
-          Headers.ifUnmodifiedSince: (final h) => h.ifUnmodifiedSince,
-          Headers.lastModified: (final h) => h.lastModified,
-          Headers.location: (final h) => h.location,
-          Headers.maxForwards: (final h) => h.maxForwards,
-          Headers.origin: (final h) => h.origin,
-          Headers.permissionsPolicy: (final h) => h.permissionsPolicy,
-          Headers.proxyAuthenticate: (final h) => h.proxyAuthenticate,
-          Headers.proxyAuthorization: (final h) => h.proxyAuthorization,
-          Headers.range: (final h) => h.range,
-          Headers.referer: (final h) => h.referer,
-          Headers.referrerPolicy: (final h) => h.referrerPolicy,
-          Headers.retryAfter: (final h) => h.retryAfter,
-          Headers.secFetchDest: (final h) => h.secFetchDest,
-          Headers.secFetchMode: (final h) => h.secFetchMode,
-          Headers.secFetchSite: (final h) => h.secFetchSite,
-          Headers.server: (final h) => h.server,
-          Headers.setCookie: (final h) => h.setCookie,
-          Headers.strictTransportSecurity:
-              (final h) => h.strictTransportSecurity,
-          Headers.te: (final h) => h.te,
-          Headers.trailer: (final h) => h.trailer,
-          Headers.transferEncoding: (final h) => h.transferEncoding,
-          Headers.upgrade: (final h) => h.upgrade,
-          Headers.userAgent: (final h) => h.userAgent,
-          Headers.vary: (final h) => h.vary,
-          Headers.via: (final h) => h.via,
-          Headers.wwwAuthenticate: (final h) => h.wwwAuthenticate,
-          Headers.xPoweredBy: (final h) => h.xPoweredBy,
-          Headers.forwarded: (final h) => h.forwarded,
-          Headers.xForwardedFor: (final h) => h.xForwardedFor,
-        }.entries,
+    variants: <HeaderAccessor, dynamic Function(MutableHeaders)>{
+      Headers.accept: (final h) => h.accept,
+      Headers.acceptEncoding: (final h) => h.acceptEncoding,
+      Headers.acceptLanguage: (final h) => h.acceptLanguage,
+      Headers.acceptRanges: (final h) => h.acceptRanges,
+      Headers.accessControlAllowCredentials: (final h) =>
+          h.accessControlAllowCredentials,
+      Headers.accessControlAllowHeaders: (final h) =>
+          h.accessControlAllowHeaders,
+      Headers.accessControlAllowMethods: (final h) =>
+          h.accessControlAllowMethods,
+      Headers.accessControlAllowOrigin: (final h) => h.accessControlAllowOrigin,
+      Headers.accessControlExposeHeaders: (final h) =>
+          h.accessControlExposeHeaders,
+      Headers.accessControlMaxAge: (final h) => h.accessControlMaxAge,
+      Headers.accessControlRequestHeaders: (final h) =>
+          h.accessControlRequestHeaders,
+      Headers.accessControlRequestMethod: (final h) =>
+          h.accessControlRequestMethod,
+      Headers.age: (final h) => h.age,
+      Headers.allow: (final h) => h.allow,
+      Headers.authorization: (final h) => h.authorization,
+      Headers.cacheControl: (final h) => h.cacheControl,
+      Headers.clearSiteData: (final h) => h.clearSiteData,
+      Headers.connection: (final h) => h.connection,
+      Headers.contentDisposition: (final h) => h.contentDisposition,
+      Headers.contentEncoding: (final h) => h.contentEncoding,
+      Headers.contentLanguage: (final h) => h.contentLanguage,
+      Headers.contentLength: (final h) => h.contentLength,
+      Headers.contentLocation: (final h) => h.contentLocation,
+      Headers.contentRange: (final h) => h.contentRange,
+      Headers.contentSecurityPolicy: (final h) => h.contentSecurityPolicy,
+      Headers.cookie: (final h) => h.cookie,
+      Headers.crossOriginEmbedderPolicy: (final h) =>
+          h.crossOriginEmbedderPolicy,
+      Headers.crossOriginOpenerPolicy: (final h) => h.crossOriginOpenerPolicy,
+      Headers.crossOriginResourcePolicy: (final h) =>
+          h.crossOriginResourcePolicy,
+      Headers.date: (final h) => h.date,
+      Headers.etag: (final h) => h.etag,
+      Headers.expect: (final h) => h.expect,
+      Headers.expires: (final h) => h.expires,
+      Headers.from: (final h) => h.from,
+      Headers.host: (final h) => h.host,
+      Headers.ifMatch: (final h) => h.ifMatch,
+      Headers.ifModifiedSince: (final h) => h.ifModifiedSince,
+      Headers.ifNoneMatch: (final h) => h.ifNoneMatch,
+      Headers.ifRange: (final h) => h.ifRange,
+      Headers.ifUnmodifiedSince: (final h) => h.ifUnmodifiedSince,
+      Headers.lastModified: (final h) => h.lastModified,
+      Headers.location: (final h) => h.location,
+      Headers.maxForwards: (final h) => h.maxForwards,
+      Headers.origin: (final h) => h.origin,
+      Headers.permissionsPolicy: (final h) => h.permissionsPolicy,
+      Headers.proxyAuthenticate: (final h) => h.proxyAuthenticate,
+      Headers.proxyAuthorization: (final h) => h.proxyAuthorization,
+      Headers.range: (final h) => h.range,
+      Headers.referer: (final h) => h.referer,
+      Headers.referrerPolicy: (final h) => h.referrerPolicy,
+      Headers.retryAfter: (final h) => h.retryAfter,
+      Headers.secFetchDest: (final h) => h.secFetchDest,
+      Headers.secFetchMode: (final h) => h.secFetchMode,
+      Headers.secFetchSite: (final h) => h.secFetchSite,
+      Headers.server: (final h) => h.server,
+      Headers.setCookie: (final h) => h.setCookie,
+      Headers.strictTransportSecurity: (final h) => h.strictTransportSecurity,
+      Headers.te: (final h) => h.te,
+      Headers.trailer: (final h) => h.trailer,
+      Headers.transferEncoding: (final h) => h.transferEncoding,
+      Headers.upgrade: (final h) => h.upgrade,
+      Headers.userAgent: (final h) => h.userAgent,
+      Headers.vary: (final h) => h.vary,
+      Headers.via: (final h) => h.via,
+      Headers.wwwAuthenticate: (final h) => h.wwwAuthenticate,
+      Headers.xPoweredBy: (final h) => h.xPoweredBy,
+      Headers.forwarded: (final h) => h.forwarded,
+      Headers.xForwardedFor: (final h) => h.xForwardedFor,
+    }.entries,
   );
 
   parameterizedTest(
@@ -405,90 +397,88 @@ void main() {
     (final v) {
       expect(() => Headers.build((final mh) => v.value(mh)), returnsNormally);
     },
-    variants:
-        <HeaderAccessor, dynamic Function(MutableHeaders)>{
-          Headers.accept: (final h) => h.accept = null,
-          Headers.acceptEncoding: (final h) => h.acceptEncoding = null,
-          Headers.acceptLanguage: (final h) => h.acceptLanguage = null,
-          Headers.acceptRanges: (final h) => h.acceptRanges = null,
-          Headers.accessControlAllowCredentials:
-              (final h) => h.accessControlAllowCredentials = null,
-          Headers.accessControlAllowHeaders:
-              (final h) => h.accessControlAllowHeaders = null,
-          Headers.accessControlAllowMethods:
-              (final h) => h.accessControlAllowMethods = null,
-          Headers.accessControlAllowOrigin:
-              (final h) => h.accessControlAllowOrigin = null,
-          Headers.accessControlExposeHeaders:
-              (final h) => h.accessControlExposeHeaders = null,
-          Headers.accessControlMaxAge:
-              (final h) => h.accessControlMaxAge = null,
-          Headers.accessControlRequestHeaders:
-              (final h) => h.accessControlRequestHeaders = null,
-          Headers.accessControlRequestMethod:
-              (final h) => h.accessControlRequestMethod = null,
-          Headers.age: (final h) => h.age = null,
-          Headers.allow: (final h) => h.allow = null,
-          Headers.authorization: (final h) => h.authorization = null,
-          Headers.cacheControl: (final h) => h.cacheControl = null,
-          Headers.clearSiteData: (final h) => h.clearSiteData = null,
-          Headers.connection: (final h) => h.connection = null,
-          Headers.contentDisposition: (final h) => h.contentDisposition = null,
-          Headers.contentEncoding: (final h) => h.contentEncoding = null,
-          Headers.contentLanguage: (final h) => h.contentLanguage = null,
-          Headers.contentLength: (final h) => h.contentLength = null,
-          Headers.contentLocation: (final h) => h.contentLocation = null,
-          Headers.contentRange: (final h) => h.contentRange = null,
-          Headers.contentSecurityPolicy:
-              (final h) => h.contentSecurityPolicy = null,
-          Headers.cookie: (final h) => h.cookie = null,
-          Headers.crossOriginEmbedderPolicy:
-              (final h) => h.crossOriginEmbedderPolicy = null,
-          Headers.crossOriginOpenerPolicy:
-              (final h) => h.crossOriginOpenerPolicy = null,
-          Headers.crossOriginResourcePolicy:
-              (final h) => h.crossOriginResourcePolicy = null,
-          Headers.date: (final h) => h.date = null,
-          Headers.etag: (final h) => h.etag = null,
-          Headers.expect: (final h) => h.expect = null,
-          Headers.expires: (final h) => h.expires = null,
-          Headers.from: (final h) => h.from = null,
-          Headers.host: (final h) => h.host = null,
-          Headers.ifMatch: (final h) => h.ifMatch = null,
-          Headers.ifModifiedSince: (final h) => h.ifModifiedSince = null,
-          Headers.ifNoneMatch: (final h) => h.ifNoneMatch = null,
-          Headers.ifRange: (final h) => h.ifRange = null,
-          Headers.ifUnmodifiedSince: (final h) => h.ifUnmodifiedSince = null,
-          Headers.lastModified: (final h) => h.lastModified = null,
-          Headers.location: (final h) => h.location = null,
-          Headers.maxForwards: (final h) => h.maxForwards = null,
-          Headers.origin: (final h) => h.origin = null,
-          Headers.permissionsPolicy: (final h) => h.permissionsPolicy = null,
-          Headers.proxyAuthenticate: (final h) => h.proxyAuthenticate = null,
-          Headers.proxyAuthorization: (final h) => h.proxyAuthorization = null,
-          Headers.range: (final h) => h.range = null,
-          Headers.referer: (final h) => h.referer = null,
-          Headers.referrerPolicy: (final h) => h.referrerPolicy = null,
-          Headers.retryAfter: (final h) => h.retryAfter = null,
-          Headers.secFetchDest: (final h) => h.secFetchDest = null,
-          Headers.secFetchMode: (final h) => h.secFetchMode = null,
-          Headers.secFetchSite: (final h) => h.secFetchSite = null,
-          Headers.server: (final h) => h.server = null,
-          Headers.setCookie: (final h) => h.setCookie = null,
-          Headers.strictTransportSecurity:
-              (final h) => h.strictTransportSecurity = null,
-          Headers.te: (final h) => h.te = null,
-          Headers.trailer: (final h) => h.trailer = null,
-          Headers.transferEncoding: (final h) => h.transferEncoding = null,
-          Headers.upgrade: (final h) => h.upgrade = null,
-          Headers.userAgent: (final h) => h.userAgent = null,
-          Headers.vary: (final h) => h.vary = null,
-          Headers.via: (final h) => h.via = null,
-          Headers.wwwAuthenticate: (final h) => h.wwwAuthenticate = null,
-          Headers.xPoweredBy: (final h) => h.xPoweredBy = null,
-          Headers.forwarded: (final h) => h.forwarded = null,
-          Headers.xForwardedFor: (final h) => h.xForwardedFor = null,
-        }.entries,
+    variants: <HeaderAccessor, dynamic Function(MutableHeaders)>{
+      Headers.accept: (final h) => h.accept = null,
+      Headers.acceptEncoding: (final h) => h.acceptEncoding = null,
+      Headers.acceptLanguage: (final h) => h.acceptLanguage = null,
+      Headers.acceptRanges: (final h) => h.acceptRanges = null,
+      Headers.accessControlAllowCredentials: (final h) =>
+          h.accessControlAllowCredentials = null,
+      Headers.accessControlAllowHeaders: (final h) =>
+          h.accessControlAllowHeaders = null,
+      Headers.accessControlAllowMethods: (final h) =>
+          h.accessControlAllowMethods = null,
+      Headers.accessControlAllowOrigin: (final h) =>
+          h.accessControlAllowOrigin = null,
+      Headers.accessControlExposeHeaders: (final h) =>
+          h.accessControlExposeHeaders = null,
+      Headers.accessControlMaxAge: (final h) => h.accessControlMaxAge = null,
+      Headers.accessControlRequestHeaders: (final h) =>
+          h.accessControlRequestHeaders = null,
+      Headers.accessControlRequestMethod: (final h) =>
+          h.accessControlRequestMethod = null,
+      Headers.age: (final h) => h.age = null,
+      Headers.allow: (final h) => h.allow = null,
+      Headers.authorization: (final h) => h.authorization = null,
+      Headers.cacheControl: (final h) => h.cacheControl = null,
+      Headers.clearSiteData: (final h) => h.clearSiteData = null,
+      Headers.connection: (final h) => h.connection = null,
+      Headers.contentDisposition: (final h) => h.contentDisposition = null,
+      Headers.contentEncoding: (final h) => h.contentEncoding = null,
+      Headers.contentLanguage: (final h) => h.contentLanguage = null,
+      Headers.contentLength: (final h) => h.contentLength = null,
+      Headers.contentLocation: (final h) => h.contentLocation = null,
+      Headers.contentRange: (final h) => h.contentRange = null,
+      Headers.contentSecurityPolicy: (final h) =>
+          h.contentSecurityPolicy = null,
+      Headers.cookie: (final h) => h.cookie = null,
+      Headers.crossOriginEmbedderPolicy: (final h) =>
+          h.crossOriginEmbedderPolicy = null,
+      Headers.crossOriginOpenerPolicy: (final h) =>
+          h.crossOriginOpenerPolicy = null,
+      Headers.crossOriginResourcePolicy: (final h) =>
+          h.crossOriginResourcePolicy = null,
+      Headers.date: (final h) => h.date = null,
+      Headers.etag: (final h) => h.etag = null,
+      Headers.expect: (final h) => h.expect = null,
+      Headers.expires: (final h) => h.expires = null,
+      Headers.from: (final h) => h.from = null,
+      Headers.host: (final h) => h.host = null,
+      Headers.ifMatch: (final h) => h.ifMatch = null,
+      Headers.ifModifiedSince: (final h) => h.ifModifiedSince = null,
+      Headers.ifNoneMatch: (final h) => h.ifNoneMatch = null,
+      Headers.ifRange: (final h) => h.ifRange = null,
+      Headers.ifUnmodifiedSince: (final h) => h.ifUnmodifiedSince = null,
+      Headers.lastModified: (final h) => h.lastModified = null,
+      Headers.location: (final h) => h.location = null,
+      Headers.maxForwards: (final h) => h.maxForwards = null,
+      Headers.origin: (final h) => h.origin = null,
+      Headers.permissionsPolicy: (final h) => h.permissionsPolicy = null,
+      Headers.proxyAuthenticate: (final h) => h.proxyAuthenticate = null,
+      Headers.proxyAuthorization: (final h) => h.proxyAuthorization = null,
+      Headers.range: (final h) => h.range = null,
+      Headers.referer: (final h) => h.referer = null,
+      Headers.referrerPolicy: (final h) => h.referrerPolicy = null,
+      Headers.retryAfter: (final h) => h.retryAfter = null,
+      Headers.secFetchDest: (final h) => h.secFetchDest = null,
+      Headers.secFetchMode: (final h) => h.secFetchMode = null,
+      Headers.secFetchSite: (final h) => h.secFetchSite = null,
+      Headers.server: (final h) => h.server = null,
+      Headers.setCookie: (final h) => h.setCookie = null,
+      Headers.strictTransportSecurity: (final h) =>
+          h.strictTransportSecurity = null,
+      Headers.te: (final h) => h.te = null,
+      Headers.trailer: (final h) => h.trailer = null,
+      Headers.transferEncoding: (final h) => h.transferEncoding = null,
+      Headers.upgrade: (final h) => h.upgrade = null,
+      Headers.userAgent: (final h) => h.userAgent = null,
+      Headers.vary: (final h) => h.vary = null,
+      Headers.via: (final h) => h.via = null,
+      Headers.wwwAuthenticate: (final h) => h.wwwAuthenticate = null,
+      Headers.xPoweredBy: (final h) => h.xPoweredBy = null,
+      Headers.forwarded: (final h) => h.forwarded = null,
+      Headers.xForwardedFor: (final h) => h.xForwardedFor = null,
+    }.entries,
   );
 
   parameterizedGroup(
@@ -566,10 +556,9 @@ void main() {
       ),
       (
         Headers.acceptEncoding,
-        (final h) =>
-            h.acceptEncoding = AcceptEncodingHeader.encodings([
-              EncodingQuality('jpeg', 0.5),
-            ]),
+        (final h) => h.acceptEncoding = AcceptEncodingHeader.encodings([
+          EncodingQuality('jpeg', 0.5),
+        ]),
       ),
       (
         Headers.acceptLanguage,
@@ -577,10 +566,9 @@ void main() {
       ),
       (
         Headers.acceptLanguage,
-        (final h) =>
-            h.acceptLanguage = AcceptLanguageHeader.languages([
-              const LanguageQuality('en', 1.0),
-            ]),
+        (final h) => h.acceptLanguage = AcceptLanguageHeader.languages([
+          const LanguageQuality('en', 1.0),
+        ]),
       ),
       (
         Headers.acceptRanges,
@@ -592,27 +580,23 @@ void main() {
       ),
       (
         Headers.accessControlAllowHeaders,
-        (final h) =>
-            h.accessControlAllowHeaders =
-                const AccessControlAllowHeadersHeader.wildcard(),
+        (final h) => h.accessControlAllowHeaders =
+            const AccessControlAllowHeadersHeader.wildcard(),
       ),
       (
         Headers.accessControlAllowHeaders,
-        (final h) =>
-            h.accessControlAllowHeaders =
-                AccessControlAllowHeadersHeader.headers(['foo']),
+        (final h) => h.accessControlAllowHeaders =
+            AccessControlAllowHeadersHeader.headers(['foo']),
       ),
       (
         Headers.accessControlAllowMethods,
-        (final h) =>
-            h.accessControlAllowMethods =
-                const AccessControlAllowMethodsHeader.wildcard(),
+        (final h) => h.accessControlAllowMethods =
+            const AccessControlAllowMethodsHeader.wildcard(),
       ),
       (
         Headers.accessControlAllowMethods,
-        (final h) =>
-            h.accessControlAllowMethods =
-                AccessControlAllowMethodsHeader.methods(Method.values),
+        (final h) => h.accessControlAllowMethods =
+            AccessControlAllowMethodsHeader.methods(Method.values),
       ),
       (
         Headers.accessControlAllowOrigin,
@@ -623,9 +607,8 @@ void main() {
       ),
       (
         Headers.accessControlExposeHeaders,
-        (final h) =>
-            h.accessControlExposeHeaders =
-                AccessControlExposeHeadersHeader.headers(['foo']),
+        (final h) => h.accessControlExposeHeaders =
+            AccessControlExposeHeadersHeader.headers(['foo']),
       ),
       (Headers.accessControlMaxAge, (final h) => h.accessControlMaxAge = 42),
       (
@@ -645,22 +628,20 @@ void main() {
       ),
       (
         Headers.authorization,
-        (final h) =>
-            h.authorization = BasicAuthorizationHeader(
-              username: 'foo',
-              password: 'bar',
-            ),
+        (final h) => h.authorization = BasicAuthorizationHeader(
+          username: 'foo',
+          password: 'bar',
+        ),
       ),
       (
         Headers.authorization,
-        (final h) =>
-            h.authorization = DigestAuthorizationHeader(
-              username: 'foo',
-              realm: 'bar',
-              nonce: 'random',
-              uri: 'https://example.com',
-              response: 'modnar',
-            ),
+        (final h) => h.authorization = DigestAuthorizationHeader(
+          username: 'foo',
+          realm: 'bar',
+          nonce: 'random',
+          uri: 'https://example.com',
+          response: 'modnar',
+        ),
       ),
       (
         Headers.cacheControl,
@@ -673,24 +654,21 @@ void main() {
       ),
       (
         Headers.clearSiteData,
-        (final h) =>
-            h.clearSiteData = ClearSiteDataHeader.dataTypes([
-              ClearSiteDataType.cache,
-            ]),
+        (final h) => h.clearSiteData = ClearSiteDataHeader.dataTypes([
+          ClearSiteDataType.cache,
+        ]),
       ),
       (
         Headers.connection,
-        (final h) =>
-            h.connection = const ConnectionHeader.directives([
-              ConnectionHeaderType.keepAlive,
-            ]),
+        (final h) => h.connection = const ConnectionHeader.directives([
+          ConnectionHeaderType.keepAlive,
+        ]),
       ),
       (
         Headers.contentDisposition,
-        (final h) =>
-            h.contentDisposition = ContentDispositionHeader.parse(
-              'attachment; filename="report.pdf"',
-            ),
+        (final h) => h.contentDisposition = ContentDispositionHeader.parse(
+          'attachment; filename="report.pdf"',
+        ),
       ),
       (
         Headers.contentDisposition,
@@ -709,10 +687,9 @@ void main() {
       ),
       (
         Headers.contentEncoding,
-        (final h) =>
-            h.contentEncoding = ContentEncodingHeader.encodings([
-              ContentEncoding.gzip,
-            ]),
+        (final h) => h.contentEncoding = ContentEncodingHeader.encodings([
+          ContentEncoding.gzip,
+        ]),
       ),
       (
         Headers.contentLanguage,
@@ -737,28 +714,24 @@ void main() {
       ),
       (
         Headers.cookie,
-        (final h) =>
-            h.cookie = CookieHeader.cookies([
-              Cookie(name: 'foo', value: 'bar'),
-            ]),
+        (final h) => h.cookie = CookieHeader.cookies([
+          Cookie(name: 'foo', value: 'bar'),
+        ]),
       ),
       (
         Headers.crossOriginEmbedderPolicy,
-        (final h) =>
-            h.crossOriginEmbedderPolicy =
-                CrossOriginEmbedderPolicyHeader.unsafeNone,
+        (final h) => h.crossOriginEmbedderPolicy =
+            CrossOriginEmbedderPolicyHeader.unsafeNone,
       ),
       (
         Headers.crossOriginOpenerPolicy,
-        (final h) =>
-            h.crossOriginOpenerPolicy =
-                CrossOriginOpenerPolicyHeader.unsafeNone,
+        (final h) => h.crossOriginOpenerPolicy =
+            CrossOriginOpenerPolicyHeader.unsafeNone,
       ),
       (
         Headers.crossOriginResourcePolicy,
-        (final h) =>
-            h.crossOriginResourcePolicy =
-                CrossOriginResourcePolicyHeader.sameSite,
+        (final h) => h.crossOriginResourcePolicy =
+            CrossOriginResourcePolicyHeader.sameSite,
       ),
       (Headers.date, (final h) => h.date = DateTime.utc(2025, 9, 23)),
       (Headers.etag, (final h) => h.etag = const ETagHeader(value: '')),
@@ -775,10 +748,9 @@ void main() {
       ),
       (
         Headers.ifMatch,
-        (final h) =>
-            h.ifMatch = IfMatchHeader.etags([
-              const ETagHeader(value: 'foobar'),
-            ]),
+        (final h) => h.ifMatch = IfMatchHeader.etags([
+          const ETagHeader(value: 'foobar'),
+        ]),
       ),
       (
         Headers.ifModifiedSince,
@@ -812,18 +784,16 @@ void main() {
       ),
       (
         Headers.permissionsPolicy,
-        (final h) =>
-            h.permissionsPolicy = PermissionsPolicyHeader.directives([
-              const PermissionsPolicyDirective(name: 'foo', values: []),
-            ]),
+        (final h) => h.permissionsPolicy = PermissionsPolicyHeader.directives([
+          const PermissionsPolicyDirective(name: 'foo', values: []),
+        ]),
       ),
       (
         Headers.proxyAuthenticate,
-        (final h) =>
-            h.proxyAuthenticate = AuthenticationHeader(
-              scheme: 'Bearer',
-              parameters: [const AuthenticationParameter('foo', 'bar')],
-            ),
+        (final h) => h.proxyAuthenticate = AuthenticationHeader(
+          scheme: 'Bearer',
+          parameters: [const AuthenticationParameter('foo', 'bar')],
+        ),
       ),
       (
         Headers.proxyAuthorization,
@@ -865,47 +835,42 @@ void main() {
       ),
       (
         Headers.strictTransportSecurity,
-        (final h) =>
-            h.strictTransportSecurity = StrictTransportSecurityHeader(
-              maxAge: 42,
-            ),
+        (final h) => h.strictTransportSecurity = StrictTransportSecurityHeader(
+          maxAge: 42,
+        ),
       ),
       (Headers.te, (final h) => h.te = TEHeader.encodings([TeQuality('foo')])),
       (Headers.trailer, (final h) => h.trailer = ['foo']),
       (
         Headers.transferEncoding,
-        (final h) =>
-            h.transferEncoding = TransferEncodingHeader.encodings([
-              TransferEncoding.gzip,
-            ]),
+        (final h) => h.transferEncoding = TransferEncodingHeader.encodings([
+          TransferEncoding.gzip,
+        ]),
       ),
       (
         Headers.upgrade,
-        (final h) =>
-            h.upgrade = UpgradeHeader.protocols([
-              UpgradeProtocol(protocol: 'foo'),
-            ]),
+        (final h) => h.upgrade = UpgradeHeader.protocols([
+          UpgradeProtocol(protocol: 'foo'),
+        ]),
       ),
       (Headers.userAgent, (final h) => h.userAgent = 'null'),
       (Headers.vary, (final h) => h.vary = VaryHeader.wildcard()),
       (Headers.via, (final h) => h.via = ['foo']),
       (
         Headers.wwwAuthenticate,
-        (final h) =>
-            h.wwwAuthenticate = AuthenticationHeader(
-              scheme: 'Bearer',
-              parameters: [const AuthenticationParameter('foo', 'bar')],
-            ),
+        (final h) => h.wwwAuthenticate = AuthenticationHeader(
+          scheme: 'Bearer',
+          parameters: [const AuthenticationParameter('foo', 'bar')],
+        ),
       ),
       (Headers.xPoweredBy, (final h) => h.xPoweredBy = 'null'),
       (
         Headers.forwarded,
-        (final h) =>
-            h.forwarded = ForwardedHeader([
-              ForwardedElement(
-                forwardedFor: const ForwardedIdentifier('192.1.0.1'),
-              ),
-            ]),
+        (final h) => h.forwarded = ForwardedHeader([
+          ForwardedElement(
+            forwardedFor: const ForwardedIdentifier('192.1.0.1'),
+          ),
+        ]),
       ),
       (
         Headers.xForwardedFor,

@@ -38,12 +38,11 @@ Future<Response> handler(final Request req) async {
 /// Demonstrates using ContextProperty for request-scoped data storage.
 void main() async {
   // Configure the application with middleware and routes.
-  final app =
-      RelicApp()
-        // Apply request ID middleware globally.
-        ..use('/', requestIdMiddleware)
-        // Route that displays the request ID.
-        ..get('/', handler);
+  final app = RelicApp()
+    // Apply request ID middleware globally.
+    ..use('/', requestIdMiddleware)
+    // Route that displays the request ID.
+    ..get('/', handler);
 
   await app.serve();
   log('Server running on http://localhost:8080');

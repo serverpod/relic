@@ -39,16 +39,15 @@ final class PermissionsPolicyHeader {
     for (final part in splitValues) {
       final directiveParts = part.split('=');
       final name = directiveParts.first.trim();
-      final values =
-          directiveParts.length > 1
-              ? directiveParts[1]
-                  .replaceAll('(', '')
-                  .replaceAll(')', '')
-                  .split(' ')
-                  .map((final s) => s.trim())
-                  .where((final s) => s.isNotEmpty)
-                  .toList()
-              : <String>[];
+      final values = directiveParts.length > 1
+          ? directiveParts[1]
+                .replaceAll('(', '')
+                .replaceAll(')', '')
+                .split(' ')
+                .map((final s) => s.trim())
+                .where((final s) => s.isNotEmpty)
+                .toList()
+          : <String>[];
 
       directives.add(PermissionsPolicyDirective(name: name, values: values));
     }

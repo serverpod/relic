@@ -9,11 +9,10 @@ import 'package:relic/relic.dart';
 /// Example demonstrating Body class features. Shows creating bodies from
 /// strings, files, and streams.
 Future<void> main() async {
-  final app =
-      RelicApp()
-        ..fallback = (final req) {
-          return Response.ok(body: Body.fromString('Body Example'));
-        };
+  final app = RelicApp()
+    ..fallback = (final req) {
+      return Response.ok(body: Body.fromString('Body Example'));
+    };
 
   // Simple text response endpoint.
   app.get('/hello', helloHandler);

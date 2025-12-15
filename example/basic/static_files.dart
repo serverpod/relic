@@ -16,8 +16,8 @@ Future<void> main() async {
     '/basic/**',
     StaticHandler.directory(
       staticDir,
-      cacheControl:
-          (final req, final fileInfo) => CacheControlHeader(maxAge: 86400),
+      cacheControl: (final req, final fileInfo) =>
+          CacheControlHeader(maxAge: 86400),
     ).asHandler,
   );
   // end:doctag<static-files-dir-serve>
@@ -29,8 +29,8 @@ Future<void> main() async {
     '/logo.svg',
     StaticHandler.file(
       File('example/_static_files/logo.svg'),
-      cacheControl:
-          (final req, final fileInfo) => CacheControlHeader(maxAge: 3600),
+      cacheControl: (final req, final fileInfo) =>
+          CacheControlHeader(maxAge: 3600),
     ).asHandler,
   );
   // end:doctag<static-files-single-file>
@@ -43,13 +43,12 @@ Future<void> main() async {
     '/short-cache/**',
     StaticHandler.directory(
       staticDir,
-      cacheControl:
-          (final req, final fileInfo) => CacheControlHeader(
-            // Cache for 1 hour.
-            maxAge: 3600,
-            // Enable CDN and proxy caching.
-            publicCache: true,
-          ),
+      cacheControl: (final req, final fileInfo) => CacheControlHeader(
+        // Cache for 1 hour.
+        maxAge: 3600,
+        // Enable CDN and proxy caching.
+        publicCache: true,
+      ),
     ).asHandler,
   );
   // end:doctag<static-files-cache-short>
@@ -62,14 +61,13 @@ Future<void> main() async {
     '/long-cache/**',
     StaticHandler.directory(
       staticDir,
-      cacheControl:
-          (final req, final fileInfo) => CacheControlHeader(
-            // Cache for 1 year.
-            maxAge: 31536000,
-            publicCache: true,
-            // Tell browsers never to revalidate.
-            immutable: true,
-          ),
+      cacheControl: (final req, final fileInfo) => CacheControlHeader(
+        // Cache for 1 year.
+        maxAge: 31536000,
+        publicCache: true,
+        // Tell browsers never to revalidate.
+        immutable: true,
+      ),
     ).asHandler,
   );
   // end:doctag<static-files-cache-long-immutable>
@@ -106,13 +104,12 @@ Future<void> main() async {
     '/static/**',
     StaticHandler.directory(
       staticDir,
-      cacheControl:
-          (final req, final fileInfo) => CacheControlHeader(
-            // Safe to cache long term with versioning.
-            maxAge: 31536000,
-            publicCache: true,
-            immutable: true,
-          ),
+      cacheControl: (final req, final fileInfo) => CacheControlHeader(
+        // Safe to cache long term with versioning.
+        maxAge: 31536000,
+        publicCache: true,
+        immutable: true,
+      ),
       cacheBustingConfig: buster,
     ).asHandler,
   );

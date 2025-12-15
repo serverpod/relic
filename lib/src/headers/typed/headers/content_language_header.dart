@@ -29,13 +29,12 @@ final class ContentLanguageHeader {
       throw const FormatException('Value cannot be empty');
     }
 
-    final languages =
-        splitValues.map((final language) {
-          if (!language.isValidLanguageCode()) {
-            throw const FormatException('Invalid language code');
-          }
-          return language;
-        }).toList();
+    final languages = splitValues.map((final language) {
+      if (!language.isValidLanguageCode()) {
+        throw const FormatException('Invalid language code');
+      }
+      return language;
+    }).toList();
 
     return ContentLanguageHeader.languages(languages);
   }

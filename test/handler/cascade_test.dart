@@ -8,42 +8,41 @@ void main() {
   group('Given a cascade with several handlers', () {
     late Handler handler;
     setUp(() {
-      handler =
-          Cascade()
-              .add(
-                respondWith((final request) {
-                  if (request.headers['one']?.first == 'false') {
-                    return Response.notFound(
-                      body: Body.fromString('handler 1'),
-                    );
-                  } else {
-                    return Response.ok(body: Body.fromString('handler 1'));
-                  }
-                }),
-              )
-              .add(
-                respondWith((final request) {
-                  if (request.headers['two']?.first == 'false') {
-                    return Response.notFound(
-                      body: Body.fromString('handler 2'),
-                    );
-                  } else {
-                    return Response.ok(body: Body.fromString('handler 2'));
-                  }
-                }),
-              )
-              .add(
-                respondWith((final request) {
-                  if (request.headers['three']?.first == 'false') {
-                    return Response.notFound(
-                      body: Body.fromString('handler 3'),
-                    );
-                  } else {
-                    return Response.ok(body: Body.fromString('handler 3'));
-                  }
-                }),
-              )
-              .handler;
+      handler = Cascade()
+          .add(
+            respondWith((final request) {
+              if (request.headers['one']?.first == 'false') {
+                return Response.notFound(
+                  body: Body.fromString('handler 1'),
+                );
+              } else {
+                return Response.ok(body: Body.fromString('handler 1'));
+              }
+            }),
+          )
+          .add(
+            respondWith((final request) {
+              if (request.headers['two']?.first == 'false') {
+                return Response.notFound(
+                  body: Body.fromString('handler 2'),
+                );
+              } else {
+                return Response.ok(body: Body.fromString('handler 2'));
+              }
+            }),
+          )
+          .add(
+            respondWith((final request) {
+              if (request.headers['three']?.first == 'false') {
+                return Response.notFound(
+                  body: Body.fromString('handler 3'),
+                );
+              } else {
+                return Response.ok(body: Body.fromString('handler 3'));
+              }
+            }),
+          )
+          .handler;
     });
 
     test(
@@ -118,20 +117,18 @@ void main() {
   test(
     'Given a cascade with a 404 response when processed then it triggers the next handler',
     () async {
-      final handler =
-          Cascade()
-              .add(
-                respondWith(
-                  (_) =>
-                      Response.notFound(body: Body.fromString(('handler 1'))),
-                ),
-              )
-              .add(
-                respondWith(
-                  (_) => Response.ok(body: Body.fromString('handler 2')),
-                ),
-              )
-              .handler;
+      final handler = Cascade()
+          .add(
+            respondWith(
+              (_) => Response.notFound(body: Body.fromString(('handler 1'))),
+            ),
+          )
+          .add(
+            respondWith(
+              (_) => Response.ok(body: Body.fromString('handler 2')),
+            ),
+          )
+          .handler;
 
       final response = await makeSimpleRequest(handler);
       expect(response.statusCode, equals(200));
@@ -142,15 +139,14 @@ void main() {
   test(
     'Given a cascade with a 405 response when processed then it triggers the next handler',
     () async {
-      final handler =
-          Cascade()
-              .add(respondWith((_) => Response(405)))
-              .add(
-                respondWith(
-                  (_) => Response.ok(body: Body.fromString('handler 2')),
-                ),
-              )
-              .handler;
+      final handler = Cascade()
+          .add(respondWith((_) => Response(405)))
+          .add(
+            respondWith(
+              (_) => Response.ok(body: Body.fromString('handler 2')),
+            ),
+          )
+          .handler;
 
       final response = await makeSimpleRequest(handler);
       expect(response.statusCode, equals(200));
@@ -161,25 +157,24 @@ void main() {
   test(
     'Given a cascade with specific statusCodes when processed then it controls which statuses cause cascading',
     () async {
-      final handler =
-          Cascade(statusCodes: [302, 403])
-              .add(respondWith((_) => Response.found(Uri.parse('/'))))
-              .add(
-                respondWith(
-                  (_) => Response.forbidden(body: Body.fromString('handler 2')),
-                ),
-              )
-              .add(
-                respondWith(
-                  (_) => Response.notFound(body: Body.fromString('handler 3')),
-                ),
-              )
-              .add(
-                respondWith(
-                  (_) => Response.ok(body: Body.fromString('handler 4')),
-                ),
-              )
-              .handler;
+      final handler = Cascade(statusCodes: [302, 403])
+          .add(respondWith((_) => Response.found(Uri.parse('/'))))
+          .add(
+            respondWith(
+              (_) => Response.forbidden(body: Body.fromString('handler 2')),
+            ),
+          )
+          .add(
+            respondWith(
+              (_) => Response.notFound(body: Body.fromString('handler 3')),
+            ),
+          )
+          .add(
+            respondWith(
+              (_) => Response.ok(body: Body.fromString('handler 4')),
+            ),
+          )
+          .handler;
 
       final response = await makeSimpleRequest(handler);
       expect(response.statusCode, equals(404));

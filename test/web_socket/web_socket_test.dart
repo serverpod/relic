@@ -337,16 +337,17 @@ void main() {
         completers[idx++].complete(e);
       });
 
-      final isolate = await Isolate.spawn((final sendPort) async {
-          final server = await testServe((final req) {
-            return WebSocketUpgrade((final serverSocket) async {
-              serverSocket.sendText('running');
-              sendPort.send(true); // signal ready
-            });
-          });
-          sendPort.send(server.url.port); // signal port
-        }, recv.sendPort)
-        ..addOnExitListener(recv.sendPort, response: true); // signal killed
+      final isolate =
+          await Isolate.spawn((final sendPort) async {
+              final server = await testServe((final req) {
+                return WebSocketUpgrade((final serverSocket) async {
+                  serverSocket.sendText('running');
+                  sendPort.send(true); // signal ready
+                });
+              });
+              sendPort.send(server.url.port); // signal port
+            }, recv.sendPort)
+            ..addOnExitListener(recv.sendPort, response: true); // signal killed
 
       final clientSocket = await IORelicWebSocket.connect(
         Uri.parse('ws://localhost:${await port.future}'),

@@ -88,16 +88,15 @@ Future<Response> apiHandler(final Request req) async {
 
 /// Demonstrates various middleware patterns and usage.
 void main() async {
-  final app =
-      RelicApp()
-        // Apply middleware globally to all routes.
-        ..use('/', logRequests())
-        ..use('/', timingMiddleware())
-        ..use('/', addHeaderMiddleware())
-        // Define application routes.
-        ..get('/', homeHandler)
-        ..use('/api', errorHandlingMiddleware())
-        ..get('/api', apiHandler);
+  final app = RelicApp()
+    // Apply middleware globally to all routes.
+    ..use('/', logRequests())
+    ..use('/', timingMiddleware())
+    ..use('/', addHeaderMiddleware())
+    // Define application routes.
+    ..get('/', homeHandler)
+    ..use('/api', errorHandlingMiddleware())
+    ..get('/api', apiHandler);
 
   await app.serve();
   log('Middleware example running on http://localhost:8080');

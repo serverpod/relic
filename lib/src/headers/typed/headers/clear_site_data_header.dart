@@ -23,13 +23,12 @@ final class ClearSiteDataHeader extends WildcardListHeader<ClearSiteDataType> {
 
   static ClearSiteDataHeader _parse(final Iterable<String> values) {
     // Custom parsing logic for ClearSiteData with quote removal
-    final splitValues =
-        values
-            .expand((final value) => value.split(','))
-            .map((final s) => s.trim().replaceAll('"', ''))
-            .where((final s) => s.isNotEmpty)
-            .toSet()
-            .toList();
+    final splitValues = values
+        .expand((final value) => value.split(','))
+        .map((final s) => s.trim().replaceAll('"', ''))
+        .where((final s) => s.isNotEmpty)
+        .toSet()
+        .toList();
 
     if (splitValues.isEmpty) {
       throw const FormatException('Value cannot be empty');

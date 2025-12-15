@@ -145,10 +145,9 @@ final class CacheControlHeader {
 
     // Check for invalid directives
     final invalidDirectives = directives.where(
-      (final directive) =>
-          !_validDirectives.any(
-            (final validDirective) => directive.startsWith(validDirective),
-          ),
+      (final directive) => !_validDirectives.any(
+        (final validDirective) => directive.startsWith(validDirective),
+      ),
     );
 
     if (!foundOneDirective || invalidDirectives.isNotEmpty) {

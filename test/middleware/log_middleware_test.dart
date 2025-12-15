@@ -53,16 +53,17 @@ void main() {
       final handler = const Pipeline()
           .addMiddleware(
             logRequests(
-              logger: (
-                final msg, {
-                final LoggerType type = LoggerType.info,
-                final StackTrace? stackTrace,
-              }) {
-                expect(gotLog, isFalse);
-                gotLog = true;
-                expect(type, LoggerType.error);
-                expect(msg, contains('oh no'));
-              },
+              logger:
+                  (
+                    final msg, {
+                    final LoggerType type = LoggerType.info,
+                    final StackTrace? stackTrace,
+                  }) {
+                    expect(gotLog, isFalse);
+                    gotLog = true;
+                    expect(type, LoggerType.error);
+                    expect(msg, contains('oh no'));
+                  },
             ),
           )
           .addHandler((final request) {

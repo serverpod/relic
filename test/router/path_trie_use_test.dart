@@ -185,9 +185,21 @@ void main() {
     final pathB = NormalizedPath('/a/b');
     final pathC = NormalizedPath('/a/b/c');
     final pathD = NormalizedPath('/a/b/c/d');
-    trie.use(pathA, (final next) => (final s) => '<a>${next(s)}</a>');
-    trie.use(pathB, (final next) => (final s) => '<b>${next(s)}</b>');
-    trie.use(pathC, (final next) => (final s) => '<c>${next(s)}</c>');
+    trie.use(
+      pathA,
+      (final next) =>
+          (final s) => '<a>${next(s)}</a>',
+    );
+    trie.use(
+      pathB,
+      (final next) =>
+          (final s) => '<b>${next(s)}</b>',
+    );
+    trie.use(
+      pathC,
+      (final next) =>
+          (final s) => '<c>${next(s)}</c>',
+    );
     trie.add(pathD, (final s) => s);
     expect(
       trie.lookup(pathD)?.value('request'),

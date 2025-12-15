@@ -48,12 +48,11 @@ Future<Response> apiHandler(final Request req) async {
 
 /// Demonstrates CORS middleware for cross-origin requests.
 void main() async {
-  final app =
-      RelicApp()
-        // Enable CORS for all application routes.
-        ..use('/', corsMiddleware())
-        // Define the main API endpoint.
-        ..get('/api', apiHandler);
+  final app = RelicApp()
+    // Enable CORS for all application routes.
+    ..use('/', corsMiddleware())
+    // Define the main API endpoint.
+    ..get('/api', apiHandler);
 
   await app.serve();
   log('Simple CORS example running on http://localhost:8080');

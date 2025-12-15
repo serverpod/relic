@@ -7,12 +7,12 @@ import 'package:relic/io_adapter.dart';
 import 'package:relic/relic.dart';
 
 Future<void> main() async {
-  final app =
-      RelicApp()..get('/users/:id', (final Request request) {
-        final id = request.rawPathParameters[#id];
-        final name = request.url.queryParameters['name'] ?? 'Unknown';
-        return Response.ok(body: Body.fromString('User $id: $name'));
-      });
+  final app = RelicApp()
+    ..get('/users/:id', (final Request request) {
+      final id = request.rawPathParameters[#id];
+      final name = request.url.queryParameters['name'] ?? 'Unknown';
+      return Response.ok(body: Body.fromString('User $id: $name'));
+    });
 
   await app.serve(address: InternetAddress.loopbackIPv4, port: 8080);
 }

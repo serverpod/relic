@@ -28,10 +28,9 @@ final class UpgradeHeader {
       throw const FormatException('Value cannot be empty');
     }
 
-    final protocols =
-        splitValues
-            .map((final protocol) => UpgradeProtocol.parse(protocol))
-            .toList();
+    final protocols = splitValues
+        .map((final protocol) => UpgradeProtocol.parse(protocol))
+        .toList();
 
     return UpgradeHeader.protocols(protocols);
   }

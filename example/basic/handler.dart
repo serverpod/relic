@@ -79,17 +79,16 @@ Response myContextInfoHandler(final Request req) {
 
 /// Demonstrates different types of request handlers in Relic.
 Future<void> main() async {
-  final app =
-      RelicApp()
-        ..get('/hello', myHelloWorldHandler)
-        ..get('/api', myApiResponseHandler)
-        ..get('/sse', mySseHandler)
-        ..get('/sync', mySyncHandler)
-        ..get('/async', myAsyncHandler)
-        ..get('/context', myContextInfoHandler)
-        ..fallback = respondWith(
-          (final req) => Response.notFound(body: Body.fromString('Not Found')),
-        );
+  final app = RelicApp()
+    ..get('/hello', myHelloWorldHandler)
+    ..get('/api', myApiResponseHandler)
+    ..get('/sse', mySseHandler)
+    ..get('/sync', mySyncHandler)
+    ..get('/async', myAsyncHandler)
+    ..get('/context', myContextInfoHandler)
+    ..fallback = respondWith(
+      (final req) => Response.notFound(body: Body.fromString('Not Found')),
+    );
 
   await app.serve();
 }

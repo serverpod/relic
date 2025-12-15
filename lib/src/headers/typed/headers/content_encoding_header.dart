@@ -33,8 +33,9 @@ final class ContentEncodingHeader {
       throw const FormatException('Value cannot be empty');
     }
 
-    final parsedEncodings =
-        splitValues.map((final e) => ContentEncoding.parse(e)).toList();
+    final parsedEncodings = splitValues
+        .map((final e) => ContentEncoding.parse(e))
+        .toList();
 
     return ContentEncodingHeader.encodings(parsedEncodings);
   }

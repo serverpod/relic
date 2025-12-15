@@ -14,14 +14,14 @@ void main() {
   test('Given a static handler mounted on a router under "/**" '
       'when retrieving the same file twice '
       'then it should return 200 Ok both times', () async {
-    final router =
-        RelicRouter()..get(
-          '/**',
-          StaticHandler.directory(
-            Directory(d.sandbox),
-            cacheControl: (_, _) => null,
-          ).asHandler,
-        );
+    final router = RelicRouter()
+      ..get(
+        '/**',
+        StaticHandler.directory(
+          Directory(d.sandbox),
+          cacheControl: (_, _) => null,
+        ).asHandler,
+      );
 
     final handler = router.asHandler;
 

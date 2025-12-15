@@ -18,11 +18,10 @@ void main() {
     'Given a non-existent relative path when creating a static handler then it throws an ArgumentError',
     () async {
       expect(
-        () =>
-            StaticHandler.directory(
-              Directory('random/relative'),
-              cacheControl: (_, _) => null,
-            ).asHandler,
+        () => StaticHandler.directory(
+          Directory('random/relative'),
+          cacheControl: (_, _) => null,
+        ).asHandler,
         throwsArgumentError,
       );
     },
@@ -33,11 +32,10 @@ void main() {
     () async {
       final existingRelative = p.relative(d.sandbox);
       expect(
-        () =>
-            StaticHandler.directory(
-              Directory(existingRelative),
-              cacheControl: (_, _) => null,
-            ).asHandler,
+        () => StaticHandler.directory(
+          Directory(existingRelative),
+          cacheControl: (_, _) => null,
+        ).asHandler,
         returnsNormally,
       );
     },
@@ -48,11 +46,10 @@ void main() {
     () {
       final nonExistingAbsolute = p.join(d.sandbox, 'not_here');
       expect(
-        () =>
-            StaticHandler.directory(
-              Directory(nonExistingAbsolute),
-              cacheControl: (_, _) => null,
-            ).asHandler,
+        () => StaticHandler.directory(
+          Directory(nonExistingAbsolute),
+          cacheControl: (_, _) => null,
+        ).asHandler,
         throwsArgumentError,
       );
     },
@@ -62,11 +59,10 @@ void main() {
     'Given an existing absolute path when creating a static handler then it returns normally',
     () {
       expect(
-        () =>
-            StaticHandler.directory(
-              Directory(d.sandbox),
-              cacheControl: (_, _) => null,
-            ).asHandler,
+        () => StaticHandler.directory(
+          Directory(d.sandbox),
+          cacheControl: (_, _) => null,
+        ).asHandler,
         returnsNormally,
       );
     },

@@ -26,11 +26,10 @@ void main() {
         'then it returns a 400 Bad Request response with exception message '
         'included in the response body', () async {
       await _scheduleServer(
-        (_) =>
-            throw const InvalidHeaderException(
-              'Value cannot be empty',
-              headerType: 'test',
-            ),
+        (_) => throw const InvalidHeaderException(
+          'Value cannot be empty',
+          headerType: 'test',
+        ),
       );
       final response = await _get();
       expect(response.statusCode, 400);
