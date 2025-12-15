@@ -107,6 +107,10 @@ final class RelicApp implements RelicRouter {
       inject(_Injectable((final r) => r.attach(path, subRouter)));
 
   @override
+  void attachAndConsume(final String path, final RelicRouter subRouter) =>
+      inject(_Injectable((final r) => r.attachAndConsume(path, subRouter)));
+
+  @override
   void use(final String path, final Middleware map) =>
       inject(_Injectable((final r) => r.use(path, map)));
 
@@ -125,6 +129,9 @@ final class RelicApp implements RelicRouter {
 
   @override
   bool get isEmpty => delegate.isEmpty;
+
+  @override
+  bool get isSingle => delegate.isSingle;
 
   @override
   LookupResult<Handler> lookup(

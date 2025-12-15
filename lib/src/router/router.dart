@@ -133,6 +133,10 @@ final class Router<T extends Object> {
     _allRoutes.attach(NormalizedPath(path), subRouter._allRoutes);
   }
 
+  void attachAndConsume(final String path, final Router<T> subRouter) {
+    _allRoutes.attachAndConsume(NormalizedPath(path), subRouter._allRoutes);
+  }
+
   /// Injects an [injectable] into the router. Unlike [add] it allows
   /// the [injectable] object to determine how to be mounted on the router.
   void inject(final InjectableIn<Router<T>> injectable) =>
@@ -165,6 +169,9 @@ final class Router<T extends Object> {
 
   /// Returns true if the router has no routes.
   bool get isEmpty => _allRoutes.isEmpty;
+
+  /// Returns true if the router has a single root route ('/').
+  bool get isSingle => _allRoutes.isSingle;
 }
 
 extension RouteEx<T extends Object> on Router<T> {
@@ -240,8 +247,10 @@ extension RouteEx<T extends Object> on Router<T> {
   }
 
   /// Injects [injectable] at [path]
-  void injectAt(final String path, final InjectableIn<Router<T>> injectable) =>
-      group(path).inject(injectable);
+  void injectAt(final String path, final InjectableIn<Router<T>> injectable) {
+    final subRouter = Router<T>()..inject(injectable);
+    attachAndConsume(path, subRouter);
+  }
 }
 
 /// Just a typedef for better auto-complete
