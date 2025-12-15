@@ -41,17 +41,14 @@ jobs:
           key: ${{ runner.os }}-pub-cache-${{ matrix.dart_sdk }}
           restore-keys: ${{ runner.os }}-pub-cache-
 
-      - name: Verify Formatting
-        # Disable formatting check on stable for now.
-        # Dart stable (3.7.2 as of 2025-03-14) has radically different formatting
-        if: ${{ matrix.dart_sdk == env.LOWEST_DART_SDK }}
-        run: dart format --output=none --set-exit-if-changed .
-
       - name: Check Dependency Bounds
         run: >-
           dart pub downgrade --tighten &&
           dart pub upgrade --major-versions &&
           git diff-files --quiet
+
+      - name: Verify Formatting
+        run: dart format --output=none --set-exit-if-changed .
 
       - name: Analyze (downgraded)
         run: >-
