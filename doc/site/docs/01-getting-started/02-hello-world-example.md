@@ -49,7 +49,7 @@ dart bin/hello_world.dart
 Then, open your browser and visit `http://localhost:8080/user/Nova/age/27`, or use curl:
 
 ```bash
-curl http://localhost:8080/user/Nova/age/37
+curl http://localhost:8080/user/Nova/age/27
 ```
 
 You should see:
