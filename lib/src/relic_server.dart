@@ -18,7 +18,12 @@ sealed class RelicServer {
   Future<void> mountAndStart(final Handler handler);
 
   /// Close the server
-  Future<void> close();
+  ///
+  /// If [force] is true, the server will immediately close all connections
+  /// and shut down without waiting for in-flight requests to complete.
+  /// If [force] is false (the default), the server will wait for all
+  /// in-flight requests to finish before shutting down.
+  Future<void> close({final bool force = false});
 
   /// Returns information about the current connections.
   Future<ConnectionsInfo> connectionsInfo();
@@ -65,9 +70,9 @@ final class _RelicServer implements RelicServer {
   }
 
   @override
-  Future<void> close() async {
+  Future<void> close({final bool force = false}) async {
     await _stopListening();
-    await (await _adapter).close();
+    await (await _adapter).close(force: force);
     _port = null;
   }
 
@@ -196,8 +201,8 @@ final class _IsolatedRelicServer extends IsolatedObject<RelicServer>
     : super(() => RelicServer(adapterFactory));
 
   @override
-  Future<void> close() async {
-    await evaluate((final r) => r.close());
+  Future<void> close({final bool force = false}) async {
+    await evaluate((final r) => r.close(force: force));
     await super.close();
     _port = null;
   }
@@ -230,10 +235,10 @@ final class _MultiIsolateRelicServer implements RelicServer {
       );
 
   @override
-  Future<void> close() async {
+  Future<void> close({final bool force = false}) async {
     final children = List.of(_children);
     _children.clear();
-    await children.map((final c) => c.close()).wait;
+    await children.map((final c) => c.close(force: force)).wait;
   }
 
   @override

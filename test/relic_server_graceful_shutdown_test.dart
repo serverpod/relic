@@ -96,6 +96,135 @@ _startInFlightRequests(
 }
 
 void main() {
+  group('Given a RelicServer with force close', () {
+    late RelicServer server;
+
+    setUp(() async {
+      server = RelicServer(
+        () => IOAdapter.bind(InternetAddress.loopbackIPv4, port: 0),
+      );
+    });
+
+    tearDown(() async {
+      // Server may already be closed by the test
+      try {
+        await server.close(force: true);
+      } catch (_) {}
+    });
+
+    test(
+      'when server.close(force: true) is called with in-flight requests, '
+      'then server shuts down immediately without waiting for requests',
+      () async {
+        final (:responseFutures, :canComplete) = await _startInFlightRequests(
+          server,
+        );
+
+        // Close the server forcefully while requests are in-flight
+        await server.close(force: true);
+
+        // The server should close immediately, even though requests are blocked
+        // Now allow the requests to try to complete
+        canComplete.complete();
+
+        // Wait for all responses - they should fail or be incomplete
+        final results = await Future.wait(
+          responseFutures.map(
+            (final f) => f.then<http.Response?>(
+              (final r) => r,
+              onError: (final Object e) => null,
+            ),
+          ),
+        );
+
+        // At least some requests should have failed due to forced closure
+        // (exact behavior may vary based on timing, but we expect errors)
+        final failedCount = results.where((final r) => r == null).length;
+        expect(
+          failedCount,
+          greaterThan(0),
+          reason: 'Some requests should fail when force closing',
+        );
+      },
+    );
+
+    test(
+      'when server.close(force: false) is called with in-flight requests, '
+      'then server waits for all requests to complete',
+      () async {
+        final (:responseFutures, :canComplete) = await _startInFlightRequests(
+          server,
+          numberOfRequests: 2,
+        );
+
+        // Close the server gracefully while requests are in-flight
+        final closeFuture = server.close(force: false);
+
+        // Allow the requests to complete
+        canComplete.complete();
+
+        // Wait for all responses and server close
+        final (responses, _) = await (responseFutures.wait, closeFuture).wait;
+
+        // All requests should complete successfully
+        for (var i = 0; i < responses.length; i++) {
+          expect(
+            responses[i].statusCode,
+            HttpStatus.ok,
+            reason: 'Request $i should have completed with 200 OK',
+          );
+          expect(
+            responses[i].body,
+            'Completed',
+            reason: 'Request $i should have the expected body',
+          );
+        }
+      },
+    );
+
+    test(
+      'when server.close() is called without force parameter, '
+      'then it defaults to graceful shutdown',
+      () async {
+        final (:responseFutures, :canComplete) = await _startInFlightRequests(
+          server,
+          numberOfRequests: 2,
+        );
+
+        // Close the server without specifying force (should default to false)
+        final closeFuture = server.close();
+
+        // Allow the requests to complete
+        canComplete.complete();
+
+        // Wait for all responses and server close
+        final (responses, _) = await (responseFutures.wait, closeFuture).wait;
+
+        // All requests should complete successfully
+        for (final response in responses) {
+          expect(response.statusCode, HttpStatus.ok);
+          expect(response.body, 'Completed');
+        }
+      },
+    );
+
+    test(
+      'when server.close(force: true) is called on idle server, '
+      'then server closes immediately',
+      () async {
+        await server.mountAndStart(
+          (final req) => Response.ok(body: Body.fromString('OK')),
+        );
+
+        // Close an idle server with force
+        await expectLater(
+          server.close(force: true),
+          completes,
+        );
+      },
+    );
+  });
+
   group('Given a RelicServer with in-flight requests', () {
     late RelicServer server;
 
