@@ -133,5 +133,5 @@ class _FakeAdapter extends Fake implements Adapter {
   late int port = Random().nextInt(65536);
 
   @override
-  Future<void> close() async {}
+  Future<void> close({final bool force = false}) async {}
 }
