@@ -98,7 +98,12 @@ abstract class Adapter {
   ///
   /// For example, for an HTTP server adapter, this might close the underlying
   /// server socket.
-  Future<void> close();
+  ///
+  /// If [force] is true, the adapter will immediately close all connections
+  /// and shut down without waiting for in-flight requests to complete.
+  /// If [force] is false (the default), the adapter will wait for all
+  /// in-flight requests to finish before shutting down.
+  Future<void> close({final bool force = false});
 
   ConnectionsInfo get connectionsInfo;
 }

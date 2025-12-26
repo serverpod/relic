@@ -231,6 +231,58 @@ void main() {
         expect(response.statusCode, HttpStatus.ok);
       }
     });
+
+    test(
+      'when server.close(force: true) is called with in-flight requests, '
+      'then server shuts down immediately without waiting for requests',
+      () async {
+        final (:responseFutures, :canComplete) = await _startInFlightRequests(
+          server,
+        );
+
+        // Close the server forcefully while requests are in-flight
+        await server.close(force: true);
+
+        // The server should close immediately, even though requests are blocked
+        // Now allow the requests to try to complete
+        canComplete.complete();
+
+        // Wait for all responses - they should fail or be incomplete
+        final results = await Future.wait(
+          responseFutures.map(
+            (final f) => f.then<http.Response?>(
+              (final r) => r,
+              onError: (final Object e) => null,
+            ),
+          ),
+        );
+
+        // At least some requests should have failed due to forced closure
+        // (exact behavior may vary based on timing, but we expect errors)
+        final failedCount = results.where((final r) => r == null).length;
+        expect(
+          failedCount,
+          greaterThan(0),
+          reason: 'Some requests should fail when force closing',
+        );
+      },
+    );
+
+    test(
+      'when server.close(force: true) is called on idle server, '
+      'then server closes immediately',
+      () async {
+        await server.mountAndStart(
+          (final req) => Response.ok(body: Body.fromString('OK')),
+        );
+
+        // Close an idle server with force
+        await expectLater(
+          server.close(force: true),
+          completes,
+        );
+      },
+    );
   });
 
   group('Given a RelicServer with multi-isolate configuration', () {
