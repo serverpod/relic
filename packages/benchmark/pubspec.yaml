@@ -1,0 +1,18 @@
+name: benchmark
+description: Benchmarks for Relic router.
+publish_to: none
+
+environment:
+  sdk: ^3.8.0
+
+resolution: workspace
+
+dependencies:
+  benchmark_harness: ^2.3.1
+  cli_tools: ^0.9.0
+  config: ^0.8.3
+  git: ^2.2.1
+  path: ^1.8.3
+  relic: ^0.14.0
+  routingkit: ^5.1.2
+  spanner: ^1.0.5

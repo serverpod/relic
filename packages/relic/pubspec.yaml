@@ -1,0 +1,42 @@
+name: relic
+description: A lightweight and flexible web server inspired by Shelf for building APIs and backend services.
+version: 0.14.0
+repository: https://github.com/serverpod/relic
+homepage: https://docs.dartrelic.dev/
+topics:
+  - server
+  - web
+  - backend
+  - http
+
+environment:
+  sdk: ^3.8.0
+
+resolution: workspace
+
+dependencies:
+  relic_core: ^0.14.0
+  relic_io: ^0.14.0
+
+dev_dependencies:
+  async: ^2.13.0
+  http: ^1.5.0
+  http_parser: ^4.0.2
+  lints: ">=5.0.0 <7.0.0"
+  meta: ^1.16.0
+  mime: ">=1.0.6 <3.0.0"
+  mockito: ^5.4.4
+  path: ^1.8.3
+  serverpod_lints: ^3.0.0
+  test: ^1.25.10
+  test_descriptor: ^2.0.1
+  vm_service: ^15.0.0
+  web_socket: ^1.0.1
+  web_socket_channel: ^3.0.3
+  # The following are not used directly, but are included transitively.
+  # Due to bad semver hygiene we need to bound the versions higher than
+  # our direct dependencies indicate.
+  file: ^7.0.1 # ignore: sort_pub_dependencies
+  frontend_server_client: ^4.0.0
+  pub_semver: ^2.2.0
+  watcher: ^1.1.0

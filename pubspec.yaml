@@ -1,49 +1,37 @@
-name: relic
-description: A lightweight and flexible web server inspired by Shelf for building APIs and backend services.
-version: 0.14.0
-repository: https://github.com/serverpod/relic
-homepage: https://docs.dartrelic.dev/
-topics:
-  - server
-  - web
-  - backend
-  - http
+name: relic_workspace
+publish_to: none
 
 environment:
   sdk: ^3.8.0
 
-dependencies:
-  async: ^2.11.0
-  collection: ^1.18.0
-  convert: ^3.1.1
-  crypto: ^3.0.0
-  http_parser: ^4.0.2
-  meta: ^1.15.0
-  mime: ">=1.0.6 <3.0.0"
-  path: ^1.8.3
-  stack_trace: ^1.10.0
-  stream_channel: ^2.1.1
-  vm_service: ^15.0.0
-  web_socket: ^1.0.1
-  web_socket_channel: ^3.0.3
+workspace:
+  - packages/benchmark
+  - packages/examples
+  - packages/relic
+  - packages/relic_core
+  - packages/relic_io
 
 dev_dependencies:
-  benchmark_harness: ^2.3.1
-  cli_tools: ^0.10.0
-  config: ^0.8.3
-  git: ^2.2.1
-  http: ^1.1.0
-  lints: ">=5.0.0 <7.0.0"
-  mockito: ^5.4.4
-  routingkit: ^5.1.2
-  serverpod_lints: ^3.0.1
-  spanner: ^1.0.5
-  test: ^1.25.10
-  test_descriptor: ^2.0.1
-  # The following are not used directly, but are included transitively.
-  # Due to bad semver hygiene we need to bound the versions higher than
-  # our direct dependencies indicate.
-  file: ^7.0.0 # ignore: sort_pub_dependencies
-  frontend_server_client: ^4.0.0
-  pub_semver: ^2.1.4
-  watcher: ^1.1.0
+  melos: ^7.4.0-dev.0 # Special support for Dart 3.8 (see https://github.com/invertase/melos/pull/979)
+
+melos:
+  packages:
+    - packages/*
+
+  scripts:
+    test:
+      run: dart test
+      exec:
+        concurrency: 1
+      packageFilters:
+        flutter: false
+        dependsOn: test
+        dirExists: test
+      description: Run tests in all packages
+
+    check:
+      steps:
+        - dart analyze --fatal-infos .
+        - dart format --set-exit-if-changed .
+        - dart pub run melos run test
+      description: Run all checks (analyze, format, test)
