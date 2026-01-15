@@ -1,0 +1,23 @@
+coverage:
+  status:
+    project:
+      default:
+        target: auto
+    patch:
+      default:
+        target: auto
+
+flag_management:
+  individual_flags:
+    - name: relic_core
+      paths:
+        - packages/relic_core/
+      carryforward: true
+    - name: relic_io
+      paths:
+        - packages/relic_io/
+      carryforward: true
+    - name: relic
+      paths:
+        - packages/relic/
+      carryforward: true

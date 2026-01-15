@@ -1,0 +1,11 @@
+name: examples
+description: Examples for Relic web server framework.
+publish_to: none
+
+environment:
+  sdk: ^3.8.0
+
+resolution: workspace
+
+dependencies:
+  relic: ^0.14.0
