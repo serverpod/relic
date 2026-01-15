@@ -1,3 +1,6 @@
+## Next Release
+- refactor: Restructure into multi-package workspace with relic_core, relic_io, and relic packages
+
 ## 0.14.0
 - feat!: Add optional consume flag to attach ([#309](https://github.com/serverpod/relic/pull/309))
   - BREAKING: `attach` now throws `ArgumentError` when called with a tail path (`/**`), unless `consume: true` and the attached trie/router has a single value at the root (`isSingle`) 
