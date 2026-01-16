@@ -230,6 +230,35 @@ void main() {
         expect(response.statusCode, HttpStatus.ok);
       }
     });
+
+    test(
+      'when server.close(force: true) is called with in-flight requests, '
+      'then all requests are terminated immediately',
+      () async {
+        final (:responseFutures, :canComplete) = await _startInFlightRequests(
+          server,
+        );
+
+        // Force close the server while requests are in-flight
+        await server.close(force: true);
+
+        // All requests should fail because connections were forcefully terminated
+        await expectLater(
+          responseFutures.wait,
+          throwsA(
+            isA<ParallelWaitError<List<http.Response?>, List<AsyncError?>>>()
+                .having(
+                  (final e) => e.errors.nonNulls.length,
+                  'error count',
+                  responseFutures.length,
+                ),
+          ),
+        );
+
+        // Complete the completer to clean up (even though it won't matter)
+        canComplete.complete();
+      },
+    );
   });
 
   group('Given a RelicServer with multi-isolate configuration', () {
