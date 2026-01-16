@@ -90,15 +90,20 @@ abstract class Adapter {
     final WebSocketCallback callback,
   );
 
-  /// Gracefully shuts down the adapter.
+  /// Shuts down the adapter.
   ///
   /// This method should release any resources held by the adapter, such as
   /// closing server sockets or stopping listening for incoming requests.
   /// It ensures a clean termination of the adapter's operations.
   ///
+  /// If [force] is `false` (the default), the adapter will wait for all
+  /// in-flight requests to complete before closing. If [force] is `true`,
+  /// the adapter will immediately close and forcefully terminate any
+  /// remaining connections.
+  ///
   /// For example, for an HTTP server adapter, this might close the underlying
   /// server socket.
-  Future<void> close();
+  Future<void> close({final bool force = false});
 
   ConnectionsInfo get connectionsInfo;
 }

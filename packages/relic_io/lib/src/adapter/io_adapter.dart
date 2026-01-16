@@ -99,7 +99,7 @@ class IOAdapter extends Adapter {
   }
 
   @override
-  Future<void> close() => _server.close();
+  Future<void> close({final bool force = false}) => _server.close(force: force);
 
   @override
   ConnectionsInfo get connectionsInfo {
