@@ -246,11 +246,12 @@ void main() {
         await expectLater(
           responseFutures.wait,
           throwsA(
-            isA<ParallelWaitError>().having(
-              (final e) => e.errors.whereType<AsyncError>().length,
-              'error count',
-              responseFutures.length,
-            ),
+            isA<ParallelWaitError<List<http.Response?>, List<AsyncError?>>>()
+                .having(
+                  (final e) => e.errors.nonNulls.length,
+                  'error count',
+                  responseFutures.length,
+                ),
           ),
         );
 
