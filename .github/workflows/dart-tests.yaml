@@ -160,12 +160,29 @@ jobs:
             fi
           done
 
-      - name: Upload Coverage
+      - name: Upload Coverage (relic_core)
         uses: codecov/codecov-action@v5
         if: ${{ matrix.os == 'ubuntu-latest' && matrix.dart_sdk == '3.8.1' && matrix.deps == 'upgrade' && !cancelled() }}
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          files: packages/relic_core/coverage/lcov.info,packages/relic_io/coverage/lcov.info,packages/relic/coverage/lcov.info
+          files: packages/relic_core/coverage/lcov.info
+          flags: relic_core
+
+      - name: Upload Coverage (relic_io)
+        uses: codecov/codecov-action@v5
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.dart_sdk == '3.8.1' && matrix.deps == 'upgrade' && !cancelled() }}
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: packages/relic_io/coverage/lcov.info
+          flags: relic_io
+
+      - name: Upload Coverage (relic)
+        uses: codecov/codecov-action@v5
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.dart_sdk == '3.8.1' && matrix.deps == 'upgrade' && !cancelled() }}
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: packages/relic/coverage/lcov.info
+          flags: relic
 
   docs-markdown-lint:
     name: Markdown lint for docs
