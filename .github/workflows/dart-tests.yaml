@@ -153,12 +153,7 @@ jobs:
         if: ${{ matrix.os == 'ubuntu-latest' && matrix.dart_sdk == '3.8.1' && matrix.deps == 'upgrade' }}
         run: |
           dart pub global activate coverage
-          for package in packages/relic_core packages/relic_io packages/relic; do
-            if [ -d "$package/test" ]; then
-              echo "Running coverage for $package"
-              (cd "$package" && dart pub global run coverage:test_with_coverage --branch-coverage --scope-output=relic --scope-output=relic_core --scope-output=relic_io -- --reporter=failures-only)
-            fi
-          done
+          melos run coverage --no-select
 
       - name: Upload Coverage (relic_core)
         uses: codecov/codecov-action@v5

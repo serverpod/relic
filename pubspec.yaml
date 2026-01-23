@@ -29,6 +29,20 @@ melos:
         dirExists: test
       description: Run tests in all packages
 
+    coverage:
+      run: >-
+        dart pub global run coverage:test_with_coverage --branch-coverage
+        --scope-output=relic
+        --scope-output=relic_core
+        --scope-output=relic_io
+      exec:
+        concurrency: 1 # for saner output
+      packageFilters:
+        flutter: false
+        dependsOn: test
+        dirExists: test
+      description: Run tests with coverage collection for all packages
+
     check:
       steps:
         - dart analyze --fatal-infos .
