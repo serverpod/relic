@@ -1,7 +1,6 @@
-import 'package:relic/relic.dart';
+import 'package:relic_core/relic_core.dart';
+import 'package:relic_core/src/test/test_util.dart';
 import 'package:test/test.dart';
-
-import '../util/test_util.dart';
 
 void main() {
   group('Given a cascade with several handlers', () {
@@ -11,9 +10,7 @@ void main() {
           .add(
             respondWith((final request) {
               if (request.headers['one']?.first == 'false') {
-                return Response.notFound(
-                  body: Body.fromString('handler 1'),
-                );
+                return Response.notFound(body: Body.fromString('handler 1'));
               } else {
                 return Response.ok(body: Body.fromString('handler 1'));
               }
@@ -22,9 +19,7 @@ void main() {
           .add(
             respondWith((final request) {
               if (request.headers['two']?.first == 'false') {
-                return Response.notFound(
-                  body: Body.fromString('handler 2'),
-                );
+                return Response.notFound(body: Body.fromString('handler 2'));
               } else {
                 return Response.ok(body: Body.fromString('handler 2'));
               }
@@ -33,9 +28,7 @@ void main() {
           .add(
             respondWith((final request) {
               if (request.headers['three']?.first == 'false') {
-                return Response.notFound(
-                  body: Body.fromString('handler 3'),
-                );
+                return Response.notFound(body: Body.fromString('handler 3'));
               } else {
                 return Response.ok(body: Body.fromString('handler 3'));
               }
@@ -123,9 +116,7 @@ void main() {
             ),
           )
           .add(
-            respondWith(
-              (_) => Response.ok(body: Body.fromString('handler 2')),
-            ),
+            respondWith((_) => Response.ok(body: Body.fromString('handler 2'))),
           )
           .handler;
 
@@ -141,9 +132,7 @@ void main() {
       final handler = Cascade()
           .add(respondWith((_) => Response(405)))
           .add(
-            respondWith(
-              (_) => Response.ok(body: Body.fromString('handler 2')),
-            ),
+            respondWith((_) => Response.ok(body: Body.fromString('handler 2'))),
           )
           .handler;
 
@@ -169,9 +158,7 @@ void main() {
             ),
           )
           .add(
-            respondWith(
-              (_) => Response.ok(body: Body.fromString('handler 4')),
-            ),
+            respondWith((_) => Response.ok(body: Body.fromString('handler 4'))),
           )
           .handler;
 

@@ -1,7 +1,6 @@
-import 'package:relic/relic.dart';
+import 'package:relic_core/relic_core.dart';
+import 'package:relic_core/src/test/test_util.dart';
 import 'package:test/test.dart';
-
-import '../util/test_util.dart';
 
 void main() {
   var accessLocation = 0;
