@@ -1,7 +1,7 @@
 import 'package:relic/relic.dart';
 import 'package:test/test.dart';
+import 'package:test_utils/test_utils.dart';
 
-import '../util/test_util.dart';
 import 'headers_test_utils.dart';
 
 void main() {

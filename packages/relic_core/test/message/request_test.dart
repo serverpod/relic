@@ -4,8 +4,7 @@ import 'dart:typed_data';
 import 'package:http_parser/http_parser.dart';
 import 'package:relic_core/relic_core.dart';
 import 'package:test/test.dart';
-
-import 'package:relic_core/src/test/test_util.dart';
+import 'package:test_utils/test_utils.dart';
 
 Request _request({final Headers? headers, final Body? body}) {
   return RequestInternal.create(

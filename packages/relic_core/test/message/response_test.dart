@@ -5,8 +5,7 @@ import 'dart:typed_data';
 import 'package:http_parser/http_parser.dart';
 import 'package:relic_core/relic_core.dart';
 import 'package:test/test.dart';
-
-import 'package:relic_core/src/test/test_util.dart';
+import 'package:test_utils/test_utils.dart';
 
 void main() {
   group('Given a response with a String body', () {

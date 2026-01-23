@@ -7,8 +7,7 @@ import 'package:http_parser/http_parser.dart';
 import 'package:mockito/mockito.dart';
 import 'package:relic/relic.dart';
 import 'package:test/test.dart';
-
-import '../util/test_util.dart';
+import 'package:test_utils/test_utils.dart';
 
 class HttpHeadersMock extends Mock implements HttpHeaders {
   final Map<String, List<String>> _headers = {};

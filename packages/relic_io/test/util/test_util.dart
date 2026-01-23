@@ -4,7 +4,7 @@ import 'package:relic_core/relic_core.dart';
 import 'package:relic_io/relic_io.dart';
 
 // Re-export shared test utilities from relic_core
-export 'package:relic_core/src/test/test_util.dart';
+export '../util/test_util.dart';
 
 /// Extension methods for RelicServer
 extension RelicServerTestEx on RelicServer {
