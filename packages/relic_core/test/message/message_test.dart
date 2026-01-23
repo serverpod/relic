@@ -2,10 +2,10 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
-import 'package:relic/relic.dart';
+import 'package:relic_core/relic_core.dart';
 import 'package:test/test.dart';
 
-import '../util/test_util.dart';
+import 'package:relic_core/src/test/test_util.dart';
 
 class _TestMessage extends Message {
   _TestMessage(

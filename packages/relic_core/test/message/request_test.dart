@@ -2,10 +2,10 @@ import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:http_parser/http_parser.dart';
-import 'package:relic/relic.dart';
+import 'package:relic_core/relic_core.dart';
 import 'package:test/test.dart';
 
-import '../util/test_util.dart';
+import 'package:relic_core/src/test/test_util.dart';
 
 Request _request({final Headers? headers, final Body? body}) {
   return RequestInternal.create(
