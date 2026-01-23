@@ -53,6 +53,12 @@ final _defaultRequest = RequestInternal.create(
 
 final localhostUri = Uri.parse('http://localhost/');
 
+final isOhNoStateError = isA<StateError>().having(
+  (final e) => e.message,
+  'message',
+  'oh no',
+);
+
 /// Like [group], but takes a [variants] argument and creates a group for each
 /// variant.
 ///
