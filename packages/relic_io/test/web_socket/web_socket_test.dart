@@ -4,12 +4,12 @@ import 'dart:io' as io;
 import 'dart:isolate';
 import 'dart:typed_data';
 
-import 'package:relic/relic.dart';
+import 'package:relic_core/relic_core.dart';
+import 'package:relic_io/relic_io.dart';
 import 'package:test/test.dart';
 import 'package:web_socket/web_socket.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
-import '../headers/headers_test_utils.dart';
 import '../util/test_util.dart';
 
 RelicServer? _server;
