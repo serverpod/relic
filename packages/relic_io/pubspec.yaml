@@ -16,7 +16,7 @@ resolution: workspace
 
 dependencies:
   crypto: ^3.0.0
-  mime: ">=1.0.6 <3.0.0"
+  mime: ^2.0.0
   path: ^1.8.3
   relic_core: ^0.14.0
   stack_trace: ^1.10.0
@@ -24,7 +24,7 @@ dependencies:
   web_socket: ^1.0.1
 
 dev_dependencies:
-  lints: ">=5.0.0 <7.0.0"
+  lints: ^6.0.0
   serverpod_lints: ^3.0.0
   test: ^1.25.10
   test_descriptor: ^2.0.1
