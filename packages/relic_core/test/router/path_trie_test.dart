@@ -722,5 +722,218 @@ void main() {
         );
       });
     });
+
+    group('Path Enumeration', () {
+      test('Given an empty trie, '
+          'when paths is accessed, '
+          'then returns an empty iterable', () {
+        expect(trie.paths, isEmpty);
+      });
+
+      test('Given an empty trie, '
+          'when toString is called, '
+          'then returns "PathTrie (empty)"', () {
+        expect(trie.toString(), equals('PathTrie (empty)'));
+      });
+
+      test('Given a trie with only a root path, '
+          'when paths is accessed, '
+          'then returns a list containing only "/"', () {
+        trie.add(NormalizedPath('/'), 1);
+        expect(trie.paths.toList(), equals(['/']));
+      });
+
+      test('Given a trie with multiple literal paths, '
+          'when paths is accessed, '
+          'then returns paths sorted alphabetically', () {
+        trie.add(NormalizedPath('/zebra'), 1);
+        trie.add(NormalizedPath('/apple'), 2);
+        trie.add(NormalizedPath('/mango'), 3);
+
+        expect(trie.paths.toList(), equals(['/apple', '/mango', '/zebra']));
+      });
+
+      test('Given a trie with parameter segments, '
+          'when paths is accessed, '
+          'then returns paths with :paramName format', () {
+        trie.add(NormalizedPath('/users/:id'), 1);
+        trie.add(NormalizedPath('/users/:id/posts/:postId'), 2);
+
+        expect(
+          trie.paths.toList(),
+          equals(['/users/:id', '/users/:id/posts/:postId']),
+        );
+      });
+
+      test('Given a trie with wildcard segments, '
+          'when paths is accessed, '
+          'then returns paths with * format', () {
+        trie.add(NormalizedPath('/files/*'), 1);
+        trie.add(NormalizedPath('/files/*/info'), 2);
+
+        expect(trie.paths.toList(), equals(['/files/*', '/files/*/info']));
+      });
+
+      test('Given a trie with tail segments, '
+          'when paths is accessed, '
+          'then returns paths with ** format', () {
+        trie.add(NormalizedPath('/static/**'), 1);
+        trie.add(NormalizedPath('/assets/**'), 2);
+
+        expect(trie.paths.toList(), equals(['/assets/**', '/static/**']));
+      });
+
+      test('Given a trie with mixed segment types, '
+          'when paths is accessed, '
+          'then returns paths with literals before dynamic segments', () {
+        trie.add(NormalizedPath('/api/users/:id'), 1);
+        trie.add(NormalizedPath('/api/posts'), 2);
+        trie.add(NormalizedPath('/static/**'), 3);
+
+        expect(
+          trie.paths.toList(),
+          equals(['/api/posts', '/api/users/:id', '/static/**']),
+        );
+      });
+
+      test('Given a trie with intermediate nodes without values, '
+          'when paths is accessed, '
+          'then only returns paths with values', () {
+        // Only /users/:id/profile has a value, not /users or /users/:id
+        trie.add(NormalizedPath('/users/:id/profile'), 1);
+
+        expect(trie.paths.toList(), equals(['/users/:id/profile']));
+      });
+
+      test('Given a trie with deep nesting, '
+          'when paths is accessed, '
+          'then returns all nested paths correctly', () {
+        trie.add(NormalizedPath('/a/b/c/d'), 1);
+        trie.add(NormalizedPath('/a/b/c'), 2);
+        trie.add(NormalizedPath('/a/b'), 3);
+        trie.add(NormalizedPath('/a'), 4);
+
+        expect(
+          trie.paths.toList(),
+          equals(['/a', '/a/b', '/a/b/c', '/a/b/c/d']),
+        );
+      });
+
+      test('Given a trie with toString called, '
+          'when trie has multiple paths, '
+          'then returns formatted string with all paths', () {
+        trie.add(NormalizedPath('/users'), 1);
+        trie.add(NormalizedPath('/posts'), 2);
+
+        expect(trie.toString(), equals('PathTrie:\n  /posts\n  /users'));
+      });
+
+      group('Cycle Detection', () {
+        late PathTrie<int> trieA;
+        late PathTrie<int> trieB;
+
+        setUp(() {
+          trieA = PathTrie<int>();
+          trieB = PathTrie<int>();
+        });
+
+        test('Given a trie attached to itself, '
+            'when paths is accessed, '
+            'then completes without infinite loop', () {
+          trieA.add(NormalizedPath('/a'), 1);
+          trieA.attach(NormalizedPath('/a'), trieA);
+
+          // After self-attachment, trieA._root points to the /a node
+          // So the root now has the value, and path enumeration sees it as '/'
+          // This would hang if cycle detection wasn't working
+          final paths = trieA.paths.toList();
+          expect(paths, contains('/'));
+        });
+
+        test('Given two tries attached to each other creating a cycle, '
+            'when paths is accessed on either, '
+            'then completes without infinite loop', () {
+          trieA.add(NormalizedPath('/pathA'), 1);
+          trieB.add(NormalizedPath('/pathB'), 2);
+
+          // Create mutual attachment
+          trieA.attach(NormalizedPath('/pathA'), trieB);
+
+          // Now trieB's root points to /pathA in trieA
+          // Adding to trieB adds to trieA as well
+          // This creates a potential cycle when iterating
+
+          final pathsA = trieA.paths.toList();
+          expect(pathsA, contains('/pathA'));
+          expect(pathsA, contains('/pathA/pathB'));
+        });
+      });
+
+      group('DOT Graph Output', () {
+        test('Given an empty trie, '
+            'when toDot is called, '
+            'then returns valid DOT with single root node', () {
+          final dot = trie.toDot();
+          expect(dot, contains('digraph PathTrie {'));
+          expect(dot, contains('n0 [shape=circle'));
+          expect(dot, endsWith('}\n'));
+        });
+
+        test('Given a trie with a root value, '
+            'when toDot is called, '
+            'then root node has doublecircle shape', () {
+          trie.add(NormalizedPath('/'), 42);
+          final dot = trie.toDot();
+          expect(dot, contains('n0 [shape=doublecircle, label="42"]'));
+        });
+
+        test('Given a trie with literal paths, '
+            'when toDot is called, '
+            'then shows edges with segment labels', () {
+          trie.add(NormalizedPath('/users'), 1);
+          trie.add(NormalizedPath('/posts'), 2);
+          final dot = trie.toDot();
+          expect(dot, contains('-> n1 [label="posts"]'));
+          expect(dot, contains('-> n2 [label="users"]'));
+        });
+
+        test('Given a trie with parameter segments, '
+            'when toDot is called, '
+            'then shows :paramName in edge labels', () {
+          trie.add(NormalizedPath('/users/:id'), 1);
+          final dot = trie.toDot();
+          expect(dot, contains('[label=":id"]'));
+        });
+
+        test('Given a trie with wildcard segments, '
+            'when toDot is called, '
+            'then shows * in edge labels', () {
+          trie.add(NormalizedPath('/files/*'), 1);
+          final dot = trie.toDot();
+          expect(dot, contains('[label="*"]'));
+        });
+
+        test('Given a trie with tail segments, '
+            'when toDot is called, '
+            'then shows ** in edge labels', () {
+          trie.add(NormalizedPath('/static/**'), 1);
+          final dot = trie.toDot();
+          expect(dot, contains('[label="**"]'));
+        });
+
+        test('Given a trie with a cycle from self-attachment, '
+            'when toDot is called, '
+            'then shows cycle as dashed red edge', () {
+          final trieA = PathTrie<int>();
+          trieA.add(NormalizedPath('/a'), 1);
+          trieA.add(NormalizedPath('/a/b'), 2);
+          trieA.attach(NormalizedPath('/a/b'), trieA);
+
+          final dot = trieA.toDot();
+          // The cycle edge should be dashed and red
+          expect(dot, contains('style=dashed, color=red'));
+        });
+      });
+    });
   });
 }
