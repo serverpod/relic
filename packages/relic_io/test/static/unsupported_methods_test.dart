@@ -1,6 +1,7 @@
 import 'dart:io';
 
-import 'package:relic/relic.dart';
+import 'package:relic_core/relic_core.dart';
+import 'package:relic_io/relic_io.dart';
 import 'package:test/test.dart';
 import 'package:test_descriptor/test_descriptor.dart' as d;
 

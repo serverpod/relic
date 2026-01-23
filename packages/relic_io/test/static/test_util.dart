@@ -1,6 +1,7 @@
 import 'dart:async';
 
-import 'package:relic/relic.dart';
+import 'package:relic_core/relic_core.dart';
+import 'package:relic_io/relic_io.dart';
 import 'package:test/test.dart';
 
 /// Makes a simple GET request to [handler] and returns the result.
