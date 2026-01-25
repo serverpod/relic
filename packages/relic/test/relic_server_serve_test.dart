@@ -443,12 +443,21 @@ void main() {
   );
 
   group('ssl tests', () {
-    final securityContext = SecurityContext()
-      ..setTrustedCertificatesBytes(certChainBytes)
-      ..useCertificateChainBytes(certChainBytes)
-      ..usePrivateKeyBytes(certKeyBytes, password: 'dartdart');
+    late SecurityContext securityContext;
+    late HttpClient sslClient;
 
-    final sslClient = HttpClient(context: securityContext);
+    setUp(() {
+      securityContext = SecurityContext()
+        ..setTrustedCertificatesBytes(certChainBytes)
+        ..useCertificateChainBytes(certChainBytes)
+        ..usePrivateKeyBytes(certKeyBytes, password: 'dartdart');
+
+      sslClient = HttpClient(context: securityContext);
+    });
+
+    tearDown(() {
+      sslClient.close();
+    });
 
     Future<HttpClientRequest> scheduleSecureGet() =>
         sslClient.getUrl(_server!.url.replace(scheme: 'https'));

@@ -8,7 +8,7 @@ import 'package:test_descriptor/test_descriptor.dart' as d;
 import 'test_util.dart';
 
 void main() {
-  setUpAll(() async {
+  setUp(() async {
     // Setup the following directory hierarchy:
     //
     // originals/
