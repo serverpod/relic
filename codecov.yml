@@ -3,9 +3,22 @@ coverage:
     project:
       default:
         target: auto
+        paths:
+          - "packages/relic_core/**"
+          - "packages/relic_io/**"
+          - "packages/relic/**"
     patch:
       default:
         target: auto
+        paths:
+          - "packages/relic_core/**"
+          - "packages/relic_io/**"
+          - "packages/relic/**"
+
+ignore:
+  - "packages/examples/**"
+  - "packages/benchmark/**"
+  - "doc/**"
 
 flag_management:
   individual_flags:

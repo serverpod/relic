@@ -8,6 +8,7 @@ import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart' as parser;
 import 'package:relic/relic.dart';
 import 'package:test/test.dart';
+import 'package:test_utils/test_utils.dart';
 import 'package:web_socket/web_socket.dart';
 
 import 'headers/headers_test_utils.dart';

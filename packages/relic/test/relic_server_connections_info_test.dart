@@ -4,8 +4,7 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:relic/relic.dart';
 import 'package:test/test.dart';
-
-import 'util/test_util.dart';
+import 'package:test_utils/test_utils.dart';
 
 Handler _createDelayedHandler() {
   return (final req) async {

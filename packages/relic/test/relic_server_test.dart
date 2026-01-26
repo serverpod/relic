@@ -3,9 +3,9 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:relic/relic.dart';
 import 'package:test/test.dart';
+import 'package:test_utils/test_utils.dart';
 
 import 'headers/headers_test_utils.dart';
-import 'util/test_util.dart';
 
 void main() {
   // Use concrete type to ensure extensions are applied

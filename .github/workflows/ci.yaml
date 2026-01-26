@@ -1,0 +1,209 @@
+name: Relic Ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: "0 0 * * 0" # every Sunday at 00:00 UTC
+  workflow_dispatch: # allow manual triggering
+
+env:
+  PUB_CACHE_PATH: ~/.pub-cache
+  LOWEST_DART_SDK: "3.8.1"
+
+jobs:
+  analyze:
+    name: Analyze
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        dart_sdk:
+          # ${{ env.LOWEST_DART_SDK }} won't work at job level as env context not available for strategy ¯\_(ツ)_/¯
+          # (see https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/accessing-contextual-information-about-workflow-runs#context-availability)
+          - "3.8.1"
+          - stable
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Dart
+        uses: dart-lang/setup-dart@v1
+        with:
+          sdk: ${{ matrix.dart_sdk }}
+
+      - name: Cache Dart Dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.PUB_CACHE_PATH }}
+          key: ${{ runner.os }}-pub-cache-${{ matrix.dart_sdk }}
+          restore-keys: ${{ runner.os }}-pub-cache-
+
+      - name: Install Dependencies
+        run: dart pub get
+
+      - name: Verify Formatting
+        run: dart format --output=none --set-exit-if-changed .
+
+      - name: Analyze (downgraded)
+        run: >-
+          dart pub downgrade &&
+          dart pub get &&
+          dart analyze ${{ matrix.dart_sdk == env.LOWEST_DART_SDK && '--fatal-infos' || '--fatal-warnings' }}
+
+      - name: Analyze (upgraded)
+        run: >-
+          dart pub upgrade &&
+          dart pub get &&
+          dart analyze ${{ matrix.dart_sdk == env.LOWEST_DART_SDK && '--fatal-infos' || '--fatal-warnings' }}
+
+  verify_packages:
+    name: Verify Package (${{ matrix.package }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        package: [relic_core, relic_io, relic]
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Dart
+        uses: dart-lang/setup-dart@v1
+        with:
+          sdk: stable
+
+      - name: Cache Dart Dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.PUB_CACHE_PATH }}
+          key: ${{ runner.os }}-pub-cache-stable
+          restore-keys: ${{ runner.os }}-pub-cache-
+
+      - name: Install Dependencies
+        run: dart pub get
+
+      - name: Check Dependency Bounds
+        working-directory: packages/${{ matrix.package }}
+        run: >-
+          dart pub downgrade --tighten &&
+          dart pub upgrade --major-versions &&
+          git diff-files --quiet -- .
+
+      - name: Doc Dry Run
+        working-directory: packages/${{ matrix.package }}
+        run: dart doc --dry-run
+
+      - name: Check Pana Score
+        # temporary workaround until https://github.com/dart-lang/pana/issues/1499 is resolved
+        continue-on-error: true
+        working-directory: packages/${{ matrix.package }}
+        run: >-
+          dart pub global activate pana &&
+          dart pub global run pana --no-warning --exit-code-threshold=0 --json
+
+      - name: Publish Dry Run
+        working-directory: packages/${{ matrix.package }}
+        run: dart pub publish --dry-run
+
+  unit_tests:
+    name: Run Unit Tests
+    runs-on: ${{ matrix.os }}
+    continue-on-error: ${{ matrix.dart_sdk != '3.8.1' }} # env context not available for continue-on-error
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+        dart_sdk: ["3.8.1", stable, beta] # env context not available for strategy
+        deps: [downgrade, upgrade]
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Dart
+        uses: dart-lang/setup-dart@v1.3
+        with:
+          sdk: ${{ matrix.dart_sdk }}
+
+      - name: Cache Dart Dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.PUB_CACHE_PATH }}
+          key: ${{ runner.os }}-pub-cache-${{ matrix.dart_sdk }}
+          restore-keys: ${{ runner.os }}-pub-cache-
+
+      - name: Install Dependencies (${{ matrix.deps }})
+        run: >-
+          dart pub ${{ matrix.deps }} &&
+          dart pub get
+
+      - name: Activate Melos
+        run: dart pub global activate melos
+
+      - name: Hot-reload Test
+        working-directory: packages/relic
+        run: >-
+          dart --enable-vm-service test test/router/relic_app_test.dart -t hot-reload -c source
+
+      - name: Run Tests
+        run: melos run test --no-select -- --reporter=failures-only
+
+      - name: Run Tests With Coverage
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.dart_sdk == '3.8.1' && matrix.deps == 'upgrade' }}
+        run: |
+          dart pub global activate coverage
+          melos run coverage --no-select
+
+      - name: Upload Coverage (relic_core)
+        uses: codecov/codecov-action@v5
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.dart_sdk == '3.8.1' && matrix.deps == 'upgrade' && !cancelled() }}
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: packages/relic_core/coverage/lcov.info
+          flags: relic_core
+
+      - name: Upload Coverage (relic_io)
+        uses: codecov/codecov-action@v5
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.dart_sdk == '3.8.1' && matrix.deps == 'upgrade' && !cancelled() }}
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: packages/relic_io/coverage/lcov.info
+          flags: relic_io
+
+      - name: Upload Coverage (relic)
+        uses: codecov/codecov-action@v5
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.dart_sdk == '3.8.1' && matrix.deps == 'upgrade' && !cancelled() }}
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: packages/relic/coverage/lcov.info
+          flags: relic
+
+  docs-markdown-lint:
+    name: Markdown lint for docs
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run markdownlint on maintained docs
+        uses: articulate/actions-markdownlint@v1
+        with:
+          config: ./doc/site/.markdownlint.yaml
+          files: ./doc/site/**/*.md
+
+  docs-test-build:
+    name: Test build docs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: doc/site/package-lock.json
+      - name: Install dependencies
+        run: npm ci
+        working-directory: ./doc/site
+      - name: Build
+        run: npm run build
+        working-directory: ./doc/site
