@@ -554,6 +554,134 @@ final class PathTrie<T extends Object> {
 
   /// Returns true if the path trie has a single root route ('/').
   bool get isSingle => _root.isSingle;
+
+  /// Returns an iterable of all registered path patterns.
+  ///
+  /// Paths are returned in a deterministic order: literal segments are
+  /// sorted alphabetically, with dynamic segments following literals.
+  /// Only paths with associated values are included.
+  ///
+  /// Handles cycles created by self-attachment by tracking visited nodes.
+  Iterable<String> get paths sync* {
+    yield* _enumeratePaths(_root, '', <_TrieNode<T>>{});
+  }
+
+  Iterable<String> _enumeratePaths(
+    final _TrieNode<T> node,
+    final String currentPath,
+    final Set<_TrieNode<T>> visited,
+  ) sync* {
+    if (!visited.add(node)) return; // Cycle detection
+
+    if (node.value != null) {
+      yield currentPath.isEmpty ? '/' : currentPath;
+    }
+
+    // Traverse literal children (sorted for deterministic output)
+    final sortedKeys = node.children.keys.toList()..sort();
+    for (final segment in sortedKeys) {
+      yield* _enumeratePaths(
+        node.children[segment]!,
+        '$currentPath/$segment',
+        visited,
+      );
+    }
+
+    // Traverse dynamic segment
+    final dynamicSegment = node.dynamicSegment;
+    if (dynamicSegment != null) {
+      final segmentStr = switch (dynamicSegment) {
+        _Parameter<T>(:final name) => ':$name',
+        _Wildcard<T>() => '*',
+        _Tail<T>() => '**',
+      };
+      yield* _enumeratePaths(
+        dynamicSegment.node,
+        '$currentPath/$segmentStr',
+        visited,
+      );
+    }
+  }
+
+  @override
+  String toString() {
+    final pathList = paths.toList();
+    if (pathList.isEmpty) return 'PathTrie (empty)';
+    return 'PathTrie:\n${pathList.map((final p) => '  $p').join('\n')}';
+  }
+
+  /// Returns a DOT graph representation of the trie structure.
+  ///
+  /// The output can be visualized using Graphviz or similar tools.
+  /// Nodes with values are shown with a double border (shape=doublecircle).
+  /// Cycles created by self-attachment are shown as edges to already-visited
+  /// nodes, making the recursive structure visible.
+  ///
+  /// Example usage:
+  /// ```dart
+  /// final trie = PathTrie<int>();
+  /// trie.add(NormalizedPath('/users/:id'), 1);
+  /// print(trie.toDot());
+  /// // Paste output into https://dreampuf.github.io/GraphvizOnline/
+  /// ```
+  String toDot() {
+    final buffer = StringBuffer();
+    buffer.writeln('digraph PathTrie {');
+    buffer.writeln('  rankdir=TB;');
+    buffer.writeln('  node [shape=circle];');
+    buffer.writeln();
+
+    final visited = <_TrieNode<T>, String>{};
+    var nodeCounter = 0;
+
+    String getNodeId(_TrieNode<T> node) {
+      return visited.putIfAbsent(node, () => 'n${nodeCounter++}');
+    }
+
+    void traverse(_TrieNode<T> node, String? parentId, String? edgeLabel) {
+      final nodeId = getNodeId(node);
+      final isNewNode =
+          !visited.containsKey(node) || visited[node] == 'n${nodeCounter - 1}';
+
+      if (isNewNode) {
+        // Define node with appropriate shape
+        final shape = node.value != null ? 'doublecircle' : 'circle';
+        final label = node.value != null ? '${node.value}' : '';
+        buffer.writeln('  $nodeId [shape=$shape, label="$label"];');
+      }
+
+      // Add edge from parent
+      if (parentId != null && edgeLabel != null) {
+        final style = !isNewNode ? ', style=dashed, color=red' : '';
+        buffer.writeln('  $parentId -> $nodeId [label="$edgeLabel"$style];');
+      }
+
+      // Don't recurse into already-visited nodes (cycle detected)
+      if (!isNewNode && parentId != null) return;
+
+      // Traverse literal children (sorted for deterministic output)
+      final sortedKeys = node.children.keys.toList()..sort();
+      for (final segment in sortedKeys) {
+        traverse(node.children[segment]!, nodeId, segment);
+      }
+
+      // Traverse dynamic segment
+      final dynamicSegment = node.dynamicSegment;
+      if (dynamicSegment != null) {
+        final segmentStr = switch (dynamicSegment) {
+          _Parameter<T>(:final name) => ':$name',
+          _Wildcard<T>() => '*',
+          _Tail<T>() => '**',
+        };
+        traverse(dynamicSegment.node, nodeId, segmentStr);
+      }
+    }
+
+    traverse(_root, null, null);
+
+    buffer.writeln('}');
+    return buffer.toString();
+  }
 }
 
 extension on NormalizedPath {
