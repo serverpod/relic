@@ -5,6 +5,23 @@ part of 'router.dart';
 /// [RelicApp] extends [RelicRouter] and provides a convenient way to create,
 /// configure, and run a Relic HTTP server.
 ///
+/// ## Virtual Host Routing
+///
+/// When [useHostWhenRouting] is `true`, the router prepends the request's
+/// `Host` header to the path during route lookup. This enables virtual host
+/// routing where different hosts can have different route handlers.
+///
+/// Routes should be registered with the host as the first path segment:
+/// ```dart
+/// final app = RelicApp(useHostWhenRouting: true)
+///   ..get('api.example.com/users', apiUsersHandler)
+///   ..get('www.example.com/about', aboutHandler)
+///   ..get('*/health', healthHandler);  // Matches any host
+/// ```
+///
+/// When `useHostWhenRouting` is `false` (the default), routing works as normal
+/// using only the request path.
+///
 /// ## Hot Reload Support
 ///
 /// When running with `--enable-vm-service`, [RelicApp] automatically listens for
@@ -16,11 +33,23 @@ part of 'router.dart';
 /// route configuration and handlers - changes to server state or global variables
 /// may require a full restart.
 final class RelicApp implements RelicRouter {
+  /// Whether to prepend the request's `Host` header to the path during routing.
+  ///
+  /// When `true`, routes should include the host as the first segment
+  /// (e.g., `'api.example.com/users'`). Use `'*'` as the host segment to match
+  /// any host (e.g., `'*/health'`).
+  final bool useHostWhenRouting;
+
   RelicServer? _server;
   bool _backtrack = true;
   StreamSubscription? _reloadSubscription;
   var delegate = RelicRouter();
   final _setup = <RouterInjectable>[];
+
+  /// Creates a new [RelicApp].
+  ///
+  /// Set [useHostWhenRouting] to `true` to enable virtual host routing.
+  RelicApp({this.useHostWhenRouting = false});
 
   /// Creates and starts a [RelicServer] with the configured routes.
   ///
@@ -77,7 +106,11 @@ final class RelicApp implements RelicRouter {
 
   Future<void> _init() async {
     await _server!.mountAndStart(
-      _RouterHandlerObject(delegate, backtrack: _backtrack).call,
+      _RouterHandlerObject(
+        delegate,
+        backtrack: _backtrack,
+        useHostWhenRouting: useHostWhenRouting,
+      ).call,
     );
   }
 
@@ -183,11 +216,22 @@ final _hotReloader = _HotReloader();
 class _RouterHandlerObject extends HandlerObject {
   final RelicRouter router;
   final bool backtrack;
+  final bool useHostWhenRouting;
 
-  _RouterHandlerObject(this.router, {this.backtrack = true});
+  _RouterHandlerObject(
+    this.router, {
+    this.backtrack = true,
+    this.useHostWhenRouting = false,
+  });
 
   @override
   FutureOr<Result> call(final Request req) => const Pipeline()
-      .addMiddleware(routeWith(router, backtrack: backtrack))
+      .addMiddleware(
+        routeWith(
+          router,
+          backtrack: backtrack,
+          useHostWhenRouting: useHostWhenRouting,
+        ),
+      )
       .addHandler(router.fallback ?? (_) => Response.notFound())(req);
 }

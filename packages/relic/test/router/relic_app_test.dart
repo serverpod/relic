@@ -66,6 +66,129 @@ void main() {
       await app.close();
     });
 
+    group('Virtual hosting', () {
+      test('Given RelicApp with useHostWhenRouting enabled, '
+          'when a request matches a host-specific route, '
+          'then the correct handler is invoked', () async {
+        final app = RelicApp(useHostWhenRouting: true)
+          ..get(
+            'www.example.org/foo',
+            (final _) => Response.ok(body: Body.fromString('host-specific')),
+          )
+          ..get(
+            '*/bar',
+            (final _) => Response.ok(body: Body.fromString('any-host')),
+          );
+
+        final server = await app.serve(port: 0);
+        final client = HttpClient();
+
+        try {
+          final request = await client.getUrl(
+            Uri.parse('http://localhost:${server.port}/foo'),
+          );
+          request.headers.set('Host', 'www.example.org');
+          final response = await request.close();
+
+          expect(response.statusCode, 200);
+          final body = await response
+              .transform(const SystemEncoding().decoder)
+              .join();
+          expect(body, 'host-specific');
+        } finally {
+          client.close();
+          await app.close();
+        }
+      });
+
+      test('Given RelicApp with useHostWhenRouting enabled, '
+          'when a request matches a wildcard host route, '
+          'then the wildcard handler is invoked', () async {
+        final app = RelicApp(useHostWhenRouting: true)
+          ..get(
+            'www.example.org/foo',
+            (final _) => Response.ok(body: Body.fromString('host-specific')),
+          )
+          ..get(
+            '*/bar',
+            (final _) => Response.ok(body: Body.fromString('any-host')),
+          );
+
+        final server = await app.serve(port: 0);
+        final client = HttpClient();
+
+        try {
+          final request = await client.getUrl(
+            Uri.parse('http://localhost:${server.port}/bar'),
+          );
+          request.headers.set('Host', 'other.example.com');
+          final response = await request.close();
+
+          expect(response.statusCode, 200);
+          final body = await response
+              .transform(const SystemEncoding().decoder)
+              .join();
+          expect(body, 'any-host');
+        } finally {
+          client.close();
+          await app.close();
+        }
+      });
+
+      test('Given RelicApp with useHostWhenRouting enabled, '
+          'when a request does not match any host route, '
+          'then 404 is returned', () async {
+        final app = RelicApp(useHostWhenRouting: true)
+          ..get('www.example.org/foo', (final _) => Response.ok());
+
+        final server = await app.serve(port: 0);
+        final client = HttpClient();
+
+        try {
+          final request = await client.getUrl(
+            Uri.parse('http://localhost:${server.port}/foo'),
+          );
+          request.headers.set('Host', 'other.example.com');
+          final response = await request.close();
+
+          expect(response.statusCode, 404);
+        } finally {
+          client.close();
+          await app.close();
+        }
+      });
+
+      test('Given RelicApp without useHostWhenRouting, '
+          'when a request is made, '
+          'then routing ignores the host header', () async {
+        final app = RelicApp()
+          ..get(
+            '/foo',
+            (final _) => Response.ok(body: Body.fromString('no-vhost')),
+          );
+
+        final server = await app.serve(port: 0);
+        final client = HttpClient();
+
+        try {
+          final request = await client.getUrl(
+            Uri.parse('http://localhost:${server.port}/foo'),
+          );
+          request.headers.set('Host', 'any.host.com');
+          final response = await request.close();
+
+          expect(response.statusCode, 200);
+          final body = await response
+              .transform(const SystemEncoding().decoder)
+              .join();
+          expect(body, 'no-vhost');
+        } finally {
+          client.close();
+          await app.close();
+        }
+      });
+    });
+
     test('Given a RelicApp, '
         'when hot-reloading isolate, '
         'then it is rebuild', () async {

@@ -497,4 +497,85 @@ void main() {
       expect(response.statusCode, isNot(405));
     });
   });
+
+  group('Virtual hosting', () {
+    late Handler handler;
+
+    setUp(() {
+      final globalRouter = Router<int>()..get('/bar', 2);
+      final router = Router<int>()
+        // Adding a route for a single host is the same as normal,
+        // just add the host as the first segment.
+        ..get('www.example.org/foo', 1)
+        // For global routes, ie. routes that can be reached no matter
+        // what host is used we need to attach a global router for every
+        // virtual host, as well as '*' (since we don't do back-tracking),
+        // but given that trie nodes are shared this is super efficient.
+        // (no duplication)
+        ..attach('www.example.org', globalRouter)
+        ..attach('*', globalRouter); // all other hosts
+
+      final middleware = routeWith(
+        router,
+        useHostWhenRouting: true,
+        toHandler: (final i) =>
+            respondWith((final _) => Response.ok(body: Body.fromString('$i'))),
+      );
+
+      handler = const Pipeline()
+          .addMiddleware(middleware)
+          .addHandler(respondWith((final _) => Response.notFound()));
+    });
+
+    test('Given virtual hosting enabled, '
+        'when a request matches a host-specific route, '
+        'then the correct handler is invoked', () async {
+      final request = _request('/foo', host: 'www.example.org');
+
+      final result = await handler(request);
+
+      expect(result, isA<Response>());
+      final response = result as Response;
+      expect(response.statusCode, 200);
+      expect(await response.readAsString(), '1');
+    });
+
+    test('Given virtual hosting enabled with attached global router, '
+        'when a request matches a global route on the configured host, '
+        'then the global handler is invoked', () async {
+      final request = _request('/bar', host: 'www.example.org');
+
+      final result = await handler(request);
+
+      expect(result, isA<Response>());
+      final response = result as Response;
+      expect(response.statusCode, 200);
+      expect(await response.readAsString(), '2');
+    });
+
+    test('Given virtual hosting enabled with wildcard fallback, '
+        'when a request from an unknown host matches a global route, '
+        'then the global handler is invoked via wildcard', () async {
+      final request = _request('/bar', host: 'other.example.com');
+
+      final result = await handler(request);
+
+      expect(result, isA<Response>());
+      final response = result as Response;
+      expect(response.statusCode, 200);
+      expect(await response.readAsString(), '2');
+    });
+
+    test('Given virtual hosting enabled, '
+        'when a request from an unknown host does not match any route, '
+        'then the fallback handler is invoked', () async {
+      final request = _request('/unknown', host: 'other.example.com');
+
+      final result = await handler(request);
+
+      expect(result, isA<Response>());
+      final response = result as Response;
+      expect(response.statusCode, 404);
+    });
+  });
 }
