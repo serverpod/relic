@@ -497,4 +497,139 @@ void main() {
       expect(response.statusCode, isNot(405));
     });
   });
+
+  group('Virtual hosting', () {
+    Handler _createHandler(
+      final Router<int> router, {
+      final bool useHostWhenRouting = true,
+    }) {
+      final middleware = routeWith(
+        router,
+        useHostWhenRouting: useHostWhenRouting,
+        toHandler: (final i) =>
+            respondWith((final _) => Response.ok(body: Body.fromString('$i'))),
+      );
+      return const Pipeline()
+          .addMiddleware(middleware)
+          .addHandler(respondWith((final _) => Response.notFound()));
+    }
+
+    // Router with host-specific route (1), and global route (2) for wildcard
+    Router<int> _createVirtualHostRouter() {
+      final globalRouter = Router<int>()..get('/bar', 2);
+      return Router<int>()
+        ..get('www.example.org/foo', 1)
+        ..attach('www.example.org', globalRouter)
+        ..attach('*', globalRouter);
+    }
+
+    test('Given virtual hosting enabled, '
+        'when a request matches a host-specific route, '
+        'then the correct handler is invoked', () async {
+      final handler = _createHandler(_createVirtualHostRouter());
+
+      final request = _request('/foo', host: 'www.example.org');
+      final result = await handler(request);
+
+      expect(result, isA<Response>());
+      final response = result as Response;
+      expect(response.statusCode, 200);
+      expect(await response.readAsString(), '1');
+    });
+
+    test('Given virtual hosting enabled with attached global router, '
+        'when a request matches a global route on the configured host, '
+        'then the global handler is invoked', () async {
+      final handler = _createHandler(_createVirtualHostRouter());
+
+      final request = _request('/bar', host: 'www.example.org');
+      final result = await handler(request);
+
+      expect(result, isA<Response>());
+      final response = result as Response;
+      expect(response.statusCode, 200);
+      expect(await response.readAsString(), '2');
+    });
+
+    test('Given virtual hosting enabled with wildcard fallback, '
+        'when a request from an unknown host matches a global route, '
+        'then the global handler is invoked via wildcard', () async {
+      final handler = _createHandler(_createVirtualHostRouter());
+
+      final request = _request('/bar', host: 'other.example.com');
+      final result = await handler(request);
+
+      expect(result, isA<Response>());
+      final response = result as Response;
+      expect(response.statusCode, 200);
+      expect(await response.readAsString(), '2');
+    });
+
+    test('Given virtual hosting enabled, '
+        'when a request from an unknown host does not match any route, '
+        'then the fallback handler is invoked', () async {
+      final handler = _createHandler(_createVirtualHostRouter());
+
+      final request = _request('/unknown', host: 'other.example.com');
+      final result = await handler(request);
+
+      expect(result, isA<Response>());
+      final response = result as Response;
+      expect(response.statusCode, 404);
+    });
+
+    test('Given useHostWhenRouting disabled (default), '
+        'when a request is made, '
+        'then routing ignores the host header', () async {
+      final router = Router<int>()..get('/foo', 1);
+      final handler = _createHandler(router, useHostWhenRouting: false);
+
+      final request = _request('/foo', host: 'any.host.com');
+      final result = await handler(request);
+
+      expect(result, isA<Response>());
+      final response = result as Response;
+      expect(response.statusCode, 200);
+      expect(await response.readAsString(), '1');
+    });
+
+    test('Given virtual hosting enabled, '
+        'when host header has different case, '
+        'then routing normalizes to lowercase (per RFC 3986)', () async {
+      final router = Router<int>()..get('www.example.org/foo', 1);
+      final handler = _createHandler(router);
+
+      final request = _request('/foo', host: 'WWW.EXAMPLE.ORG');
+      final result = await handler(request);
+
+      expect(result, isA<Response>());
+      final response = result as Response;
+      expect(response.statusCode, 200);
+      expect(await response.readAsString(), '1');
+    });
+
+    test(
+      'Given virtual hosting enabled, '
+      'when host header contains port, '
+      'then port is stripped from routing path (Uri.host behavior)',
+      () async {
+        final router = Router<int>()..get('example.com/foo', 1);
+        final handler = _createHandler(router);
+
+        // Host with port - port is stripped by Uri.host
+        final requestWithPort = _request('/foo', host: 'example.com:8080');
+        final resultWithPort = await handler(requestWithPort);
+        expect(resultWithPort, isA<Response>());
+        expect((resultWithPort as Response).statusCode, 200);
+        expect(await resultWithPort.readAsString(), '1');
+
+        // Host without port - same route matches
+        final requestWithoutPort = _request('/foo', host: 'example.com');
+        final resultWithoutPort = await handler(requestWithoutPort);
+        expect(resultWithoutPort, isA<Response>());
+        expect((resultWithoutPort as Response).statusCode, 200);
+        expect(await resultWithoutPort.readAsString(), '1');
+      },
+    );
+  });
 }

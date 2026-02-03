@@ -9,17 +9,19 @@ import 'test_util.dart'; // Provides the makeRequest helper
 
 void main() {
   const fileContent = '0123456789ABCDEF'; // 16 bytes
-  final cacheControl = CacheControlHeader(
-    maxAge: 3600,
-    publicCache: true,
-    mustRevalidate: true,
-  );
+  late CacheControlHeader cacheControl;
 
-  setUpAll(() async {
+  setUp(() async {
     await d.dir('', [
       d.file('test_file.txt', fileContent),
       d.file('image.jpg'),
     ]).create();
+
+    cacheControl = CacheControlHeader(
+      maxAge: 3600,
+      publicCache: true,
+      mustRevalidate: true,
+    );
   });
 
   test(
@@ -56,7 +58,7 @@ void main() {
 
   group('Given Cache-Control header is set for a file pattern', () {
     late Handler handler;
-    setUpAll(() {
+    setUp(() {
       handler = StaticHandler.directory(
         Directory(d.sandbox),
         cacheControl: (_, final fileInfo) =>

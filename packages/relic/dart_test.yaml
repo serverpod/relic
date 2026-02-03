@@ -1,2 +1,3 @@
 tags:
-  hot-reload: {}
+  hot-reload:
+    skip: "Skipping hot-reload by default"

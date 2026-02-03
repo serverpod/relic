@@ -9,9 +9,9 @@ import 'test_util.dart';
 
 void main() {
   group('Given a default handler that returns 403 Forbidden', () {
-    late final Handler handler;
+    late Handler handler;
 
-    setUpAll(() async {
+    setUp(() async {
       await d.dir('files', [
         d.file('index.html', '<html><body>files</body></html>'),
       ]).create();

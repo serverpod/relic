@@ -70,10 +70,12 @@ final _routingContext =
 Middleware routeWith<T extends Object>(
   final Router<T> router, {
   final bool backtrack = true,
+  final bool useHostWhenRouting = false,
   final Handler Function(T)? toHandler,
 }) => _RoutingMiddlewareBuilder(
   router,
   backtrack: backtrack,
+  useHostWhenRouting: useHostWhenRouting,
   toHandler: toHandler,
 ).asMiddleware;
 
@@ -82,11 +84,13 @@ bool _isSubtype<S, T>() => <S>[] is List<T>;
 class _RoutingMiddlewareBuilder<T extends Object> {
   final Router<T> _router;
   final bool backtrack;
+  final bool useHostWhenRouting;
   late final Handler Function(T) _toHandler;
 
   _RoutingMiddlewareBuilder(
     this._router, {
     this.backtrack = true,
+    this.useHostWhenRouting = false,
     final Handler Function(T)? toHandler,
   }) {
     if (toHandler != null) {
@@ -101,7 +105,9 @@ class _RoutingMiddlewareBuilder<T extends Object> {
 
   Handler call(final Handler next) {
     return (final req) async {
-      final path = Uri.decodeFull(req.url.path);
+      final path = useHostWhenRouting
+          ? '${req.url.host}${Uri.decodeFull(req.url.path)}'
+          : Uri.decodeFull(req.url.path);
       final result = _router.lookup(req.method, path);
       switch (result) {
         case MethodMiss():
