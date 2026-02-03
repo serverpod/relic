@@ -1,4 +1,10 @@
-## Next Release
+## 0.15.0
+- feat: Add virtual host routing support ([#321](https://github.com/serverpod/relic/pull/321))
+  - Add `useHostWhenRouting` parameter to `routeWith()` middleware
+  - Add `useHostWhenRouting` parameter to `RelicApp`
+  - When enabled, routing uses `{host}{path}` for route matching
+- feat: Add `paths`, `toString()`, and `toDot()` to PathTrie for debugging ([#320](https://github.com/serverpod/relic/pull/320))
+- feat: Add `force` parameter to server `close()` method ([#317](https://github.com/serverpod/relic/pull/317))
 - refactor: Restructure into multi-package workspace with relic_core, relic_io, and relic packages
 
 ## 0.14.0

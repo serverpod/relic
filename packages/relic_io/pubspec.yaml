@@ -1,6 +1,6 @@
 name: relic_io
 description: dart:io adapter for Relic web server.
-version: 0.14.0
+version: 0.15.0
 repository: https://github.com/serverpod/relic
 homepage: https://docs.dartrelic.dev/
 topics:
@@ -18,7 +18,7 @@ dependencies:
   crypto: ^3.0.0
   mime: ^2.0.0
   path: ^1.8.3
-  relic_core: ^0.14.0
+  relic_core: ^0.15.0
   stack_trace: ^1.10.0
   stream_channel: ^2.1.1
   web_socket: ^1.0.1
