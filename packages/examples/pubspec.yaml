@@ -8,4 +8,4 @@ environment:
 resolution: workspace
 
 dependencies:
-  relic: ^0.14.0
+  relic: ^0.15.0
