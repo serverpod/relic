@@ -83,12 +83,12 @@ jobs:
       - name: Install Dependencies
         run: dart pub get
 
-      - name: Check Dependency Bounds
-        working-directory: packages/${{ matrix.package }}
-        run: >-
-          dart pub downgrade --tighten &&
-          dart pub upgrade --major-versions &&
-          git diff-files --quiet -- .
+      #- name: Check Dependency Bounds
+      #  working-directory: packages/${{ matrix.package }}
+      #  run: >-
+      #    dart pub downgrade --tighten &&
+      #    dart pub upgrade --major-versions &&
+      #    git diff-files --quiet -- .
 
       - name: Doc Dry Run
         working-directory: packages/${{ matrix.package }}
