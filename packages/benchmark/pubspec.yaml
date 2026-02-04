@@ -12,7 +12,7 @@ dependencies:
   cli_tools: ^0.11.0
   config: ^0.8.3
   git: ^2.2.1
-  path: ^1.8.3
+  path: ^1.8.4
   relic: ^0.15.0
   routingkit: ^5.1.2
   spanner: ^1.0.5
