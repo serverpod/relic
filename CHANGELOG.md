@@ -1,5 +1,8 @@
+## 0.15.1
+- fix: Downgrade meta dep to ^1.16.0 to match flutter 3.32.0 (serverpod lower bound) ([#325](https://github.com/serverpod/relic/pull/325)))
+
 ## 0.15.0
-- feat: Add virtual host routing support ([#321](https://github.com/serverpod/relic/pull/321))
+- feat: Add virtual host routing support ([#322](https://github.com/serverpod/relic/pull/322))
   - Add `useHostWhenRouting` parameter to `routeWith()` middleware
   - Add `useHostWhenRouting` parameter to `RelicApp`
   - When enabled, routing uses `{host}{path}` for route matching
