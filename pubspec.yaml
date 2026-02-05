@@ -14,7 +14,7 @@ workspace:
   - packages/test_utils
 
 dev_dependencies:
-  melos: 7.4.0-dev.0 # Special support for Dart 3.8 (see https://github.com/invertase/melos/pull/979)
+  melos: 7.4.0 # Special support for Dart 3.8 (see https://github.com/invertase/melos/pull/979)
 
 melos:
   packages:
