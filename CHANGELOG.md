@@ -1,5 +1,9 @@
+## 1.0.0
+
+Relic is now considered stable and production-ready! 🎉
+
 ## 0.15.1
-- fix: Downgrade meta dep to ^1.16.0 to match flutter 3.32.0 (serverpod lower bound) ([#325](https://github.com/serverpod/relic/pull/325)))
+- fix: Downgrade meta dep to ^1.16.0 to match flutter 3.32.0 (serverpod lower bound) ([#325](https://github.com/serverpod/relic/pull/325))
 
 ## 0.15.0
 - feat: Add virtual host routing support ([#322](https://github.com/serverpod/relic/pull/322))
@@ -12,7 +16,7 @@
 
 ## 0.14.0
 - feat!: Add optional consume flag to attach ([#309](https://github.com/serverpod/relic/pull/309))
-  - BREAKING: `attach` now throws `ArgumentError` when called with a tail path (`/**`), unless `consume: true` and the attached trie/router has a single value at the root (`isSingle`) 
+  - BREAKING: `attach` now throws `ArgumentError` when called with a tail path (`/**`), unless `consume: true` and the attached trie/router has a single value at the root (`isSingle`)
   - BREAKING: `group` now throws `ArgumentError` when called with a tail path
   - Add `consume` flag to `attach` that resets the attached trie's root after attachment
   - Add `isSingle` property to check if a trie/router has only a single root value/route
