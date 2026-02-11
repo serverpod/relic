@@ -44,7 +44,7 @@ The new approach is more concise, provides better path-specific middleware contr
 
 ### Examples
 
-- **[Pipeline example](https://github.com/serverpod/relic/blob/main/example/middleware/pipeline.dart)** - Pipeline vs router comparison.
+- **[Pipeline example](https://github.com/serverpod/relic/blob/main/packages/examples/middleware/pipeline.dart)** - Pipeline vs router comparison.
 
 ### API documentation
 

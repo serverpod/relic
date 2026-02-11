@@ -39,7 +39,7 @@ dart pub add relic
 
 ### Run your first Relic server
 
-Place this file in `bin/hello_world.dart` (runnable example is also under [`example/example.dart`](https://github.com/serverpod/relic/blob/main/example/example.dart)):
+Place this file in `bin/hello_world.dart` (runnable example is also under [`example/example.dart`](https://github.com/serverpod/relic/blob/main/packages/examples/example.dart)):
 
 ```dart
 import 'package:relic/io_adapter.dart';
@@ -68,7 +68,7 @@ Future<void> main() async {
 const _ageParam = PathParam<int>(#age, int.parse);
 /// Handles requests to the hello endpoint with path parameters.
 Response helloHandler(final Request req) {
-  final name = req.pathParameters.raw[#name]; 
+  final name = req.pathParameters.raw[#name];
   final age = req.pathParameters.get(_ageParam);
 
   return Response.ok(

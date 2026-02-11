@@ -118,7 +118,7 @@ The key principle is that every handler must return a response. Make those respo
 
 ### Examples
 
-- **[Responses example](https://github.com/serverpod/relic/blob/main/example/routing/request_response.dart)** - Comprehensive example covering complete request-response cycles.
+- **[Responses example](https://github.com/serverpod/relic/blob/main/packages/examples/routing/request_response.dart)** - Comprehensive example covering complete request-response cycles.
 
 ### API documentation
 

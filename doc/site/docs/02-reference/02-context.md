@@ -58,7 +58,7 @@ Context properties exist **only for the duration of the request**. Once the resp
 
 ### Examples
 
-- **[Context Property Example](https://github.com/serverpod/relic/blob/main/example/context/context_property.dart)** - Shows how to use context properties for request IDs and user authentication.
+- **[Context Property Example](https://github.com/serverpod/relic/blob/main/packages/examples/context/context_property.dart)** - Shows how to use context properties for request IDs and user authentication.
 
 ### API documentation
 

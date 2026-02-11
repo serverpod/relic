@@ -186,7 +186,7 @@ Always validate all incoming data since query parameters, headers, and body cont
 
 ### Examples
 
-- **[Requests example](https://github.com/serverpod/relic/blob/main/example/routing/request_response.dart)** - Comprehensive example covering complete request-response cycles.
+- **[Requests example](https://github.com/serverpod/relic/blob/main/packages/examples/routing/request_response.dart)** - Comprehensive example covering complete request-response cycles.
 
 ### API documentation
 

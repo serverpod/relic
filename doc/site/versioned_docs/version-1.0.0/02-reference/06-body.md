@@ -312,7 +312,7 @@ GITHUB_CODE_BLOCK lang="dart" file="../_example/basic/body.dart" doctag="body-st
 
 ### Examples
 
-- **[Body example](https://github.com/serverpod/relic/blob/main/example/basic/body.dart)** - Comprehensive examples covering JSON APIs, file uploads, image serving, and streaming.
+- **[Body example](https://github.com/serverpod/relic/blob/main/packages/examples/basic/body.dart)** - Comprehensive examples covering JSON APIs, file uploads, image serving, and streaming.
 
 ### API documentation
 
