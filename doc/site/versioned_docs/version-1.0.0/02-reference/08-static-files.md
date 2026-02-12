@@ -81,7 +81,7 @@ For single file serving with `StaticHandler.file()`, you don't need the tail pat
 
 ### Examples
 
-- **[Static files example](https://github.com/serverpod/relic/blob/main/example/basic/static_files.dart)** - Complete example with cache busting.
+- **[Static files example](https://github.com/serverpod/relic/blob/main/packages/examples/basic/static_files.dart)** - Complete example with cache busting.
 
 ### API documentation
 

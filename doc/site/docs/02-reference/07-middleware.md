@@ -60,10 +60,10 @@ import 'package:relic/relic.dart';
 final router = RelicApp()
   // Apply logging to all routes
   ..use('/', logRequests())
-  
+
   // Apply authentication to API routes
   ..use('/api', authMiddleware())
-  
+
   // Define your routes
   ..get('/api/users', usersHandler)
   ..post('/api/users', createUserHandler);
@@ -80,7 +80,7 @@ final app = RelicApp()
   // Global middleware - applies to ALL routes
   ..use('/', logRequests())
   ..use('/', corsMiddleware())
-  
+
   // Your routes
   ..get('/users', usersHandler)
   ..get('/posts', postsHandler);
@@ -98,10 +98,10 @@ This means that when you use `router.use('/', middleware)`, the middleware appli
 final app = RelicApp()
   // Global logging
   ..use('/', logRequests())
-  
+
   // Authentication only for API routes
   ..use('/api', authMiddleware())
-  
+
   // Routes
   ..get('/', homeHandler)           // Only logging
   ..get('/api/users', usersHandler) // Logging + auth
@@ -209,10 +209,10 @@ With these patterns and examples, you can build robust, maintainable web applica
 
 ### Examples
 
-- **[Middleware example](https://github.com/serverpod/relic/blob/main/example/middleware/middleware.dart)** - Basic middleware patterns.
-- **[Auth example](https://github.com/serverpod/relic/blob/main/example/middleware/auth.dart)** - Authentication middleware.
-- **[CORS example](https://github.com/serverpod/relic/blob/main/example/middleware/cors.dart)** - CORS handling.
-- **[Pipeline example](https://github.com/serverpod/relic/blob/main/example/middleware/pipeline.dart)** - Pipeline vs router comparison.
+- **[Middleware example](https://github.com/serverpod/relic/blob/main/packages/examples/middleware/middleware.dart)** - Basic middleware patterns.
+- **[Auth example](https://github.com/serverpod/relic/blob/main/packages/examples/middleware/auth.dart)** - Authentication middleware.
+- **[CORS example](https://github.com/serverpod/relic/blob/main/packages/examples/middleware/cors.dart)** - CORS handling.
+- **[Pipeline example](https://github.com/serverpod/relic/blob/main/packages/examples/middleware/pipeline.dart)** - Pipeline vs router comparison.
 
 ### API documentation
 

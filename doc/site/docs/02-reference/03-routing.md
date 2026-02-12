@@ -208,7 +208,7 @@ specific routes taking priority when they fully match.
 
 ### Examples
 
-- **[Basic routing example](https://github.com/serverpod/relic/blob/main/example/routing/basic_routing.dart)** - The complete working example from this guide.
+- **[Basic routing example](https://github.com/serverpod/relic/blob/main/packages/examples/routing/basic_routing.dart)** - The complete working example from this guide.
 
 ### API documentation
 

@@ -63,7 +63,7 @@ GITHUB_CODE_BLOCK lang="dart" doctag="handler-hijack-sse" file="../_example/basi
 
 ### Examples
 
-- **[Handler example](https://github.com/serverpod/relic/blob/main/example/basic/handler.dart)** - The complete working example from this guide.
+- **[Handler example](https://github.com/serverpod/relic/blob/main/packages/examples/basic/handler.dart)** - The complete working example from this guide.
 
 ### API documentation
 
