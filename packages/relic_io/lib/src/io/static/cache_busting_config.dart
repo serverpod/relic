@@ -30,6 +30,10 @@ class CacheBustingConfig {
   /// Separator between base filename and hash (e.g., "@").
   final String separator;
 
+  /// Internal cache mapping original static paths to their cache-busted
+  /// equivalents. Populated by [indexAssets] and as a side-effect of [assetPath].
+  final Map<String, String> _cache = {};
+
   CacheBustingConfig({
     required final String mountPrefix,
     required final Directory fileSystemRoot,
@@ -44,6 +48,9 @@ class CacheBustingConfig {
   ///
   /// Example: '/static/logo.svg' → '/static/logo@hash.svg'.
   Future<String> assetPath(final String staticPath) async {
+    final cached = _cache[staticPath];
+    if (cached != null) return cached;
+
     if (!staticPath.startsWith(mountPrefix)) return staticPath;
 
     final relative = staticPath.substring(mountPrefix.length);
@@ -91,9 +98,11 @@ class CacheBustingConfig {
     final ext = p.url.extension(staticPath); // includes leading dot or ''
 
     final bustedName = '$baseName$separator${info.etag}$ext';
-    return directory == '.'
+    final bustedPath = directory == '.'
         ? '/$bustedName'
         : p.url.join(directory, bustedName);
+    _cache[staticPath] = bustedPath;
+    return bustedPath;
   }
 
   /// Attempts to generate a cache-busted URL. If the file cannot be found or
@@ -104,6 +113,36 @@ class CacheBustingConfig {
     } catch (_) {
       return staticPath;
     }
+  }
+
+  /// Walks [fileSystemRoot] recursively, computes cache-busted paths for
+  /// every file, and stores them internally so that [tryAssetPathSync]
+  /// returns results synchronously.
+  Future<void> indexAssets() async {
+    final resolvedRootPath = fileSystemRoot.resolveSymbolicLinksSync();
+    await for (final entity in fileSystemRoot.list(recursive: true)) {
+      if (entity is! File) continue;
+
+      final resolvedFilePath = entity.resolveSymbolicLinksSync();
+      if (!p.isWithin(resolvedRootPath, resolvedFilePath)) continue;
+
+      final relative = p.relative(resolvedFilePath, from: resolvedRootPath);
+      final staticPath = mountPrefix + Uri.file(relative).path;
+
+      try {
+        await assetPath(staticPath);
+      } catch (_) {
+        // Skip files that fail (permissions, broken symlinks, etc.)
+      }
+    }
+  }
+
+  /// Returns the cache-busted path for [staticPath] if previously computed
+  /// by [assetPath], [tryAssetPath], or [indexAssets].
+  ///
+  /// Returns [staticPath] unchanged if not in the cache.
+  String tryAssetPathSync(final String staticPath) {
+    return _cache[staticPath] ?? staticPath;
   }
 }
 

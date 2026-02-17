@@ -472,4 +472,95 @@ void main() {
       },
     );
   });
+
+  group('Given CacheBustingConfig configured for a directory with nested files', () {
+    late CacheBustingConfig cfg;
+    setUp(() async {
+      await d.dir('static', [
+        d.file('logo.png', 'png-bytes'),
+        d.dir('images', [d.file('hero.jpg', 'jpg-bytes')]),
+      ]).create();
+      final staticRoot = Directory(p.join(d.sandbox, 'static'));
+      cfg = CacheBustingConfig(
+        mountPrefix: '/static',
+        fileSystemRoot: staticRoot,
+      );
+    });
+
+    test(
+      'when tryAssetPathSync is called before indexAssets then it returns the original path',
+      () {
+        expect(cfg.tryAssetPathSync('/static/logo.png'), '/static/logo.png');
+      },
+    );
+
+    test(
+      'when indexAssets is called then tryAssetPathSync returns a cache-busted path for root-level files',
+      () async {
+        await cfg.indexAssets();
+        final busted = cfg.tryAssetPathSync('/static/logo.png');
+        expect(busted, startsWith('/static/logo@'));
+        expect(busted, endsWith('.png'));
+      },
+    );
+
+    test(
+      'when indexAssets is called then tryAssetPathSync returns a cache-busted path for nested files',
+      () async {
+        await cfg.indexAssets();
+        final busted = cfg.tryAssetPathSync('/static/images/hero.jpg');
+        expect(busted, startsWith('/static/images/hero@'));
+        expect(busted, endsWith('.jpg'));
+      },
+    );
+
+    test(
+      'when tryAssetPathSync is called for a path not in the cache then it returns the original path',
+      () async {
+        await cfg.indexAssets();
+        expect(
+          cfg.tryAssetPathSync('/static/missing.txt'),
+          '/static/missing.txt',
+        );
+      },
+    );
+
+    test(
+      'when tryAssetPathSync is called for a path outside mount prefix then it returns the original path',
+      () async {
+        await cfg.indexAssets();
+        expect(cfg.tryAssetPathSync('/other/logo.png'), '/other/logo.png');
+      },
+    );
+  });
+
+  test(
+    'Given CacheBustingConfig when assetPath is called then tryAssetPathSync returns the same result',
+    () async {
+      await d.dir('static', [d.file('logo.png', 'png-bytes')]).create();
+      final staticRoot = Directory(p.join(d.sandbox, 'static'));
+      final cfg = CacheBustingConfig(
+        mountPrefix: '/static',
+        fileSystemRoot: staticRoot,
+      );
+
+      final busted = await cfg.assetPath('/static/logo.png');
+      expect(cfg.tryAssetPathSync('/static/logo.png'), busted);
+    },
+  );
+
+  test(
+    'Given CacheBustingConfig when tryAssetPath is called then tryAssetPathSync returns the same result',
+    () async {
+      await d.dir('static', [d.file('logo.png', 'png-bytes')]).create();
+      final staticRoot = Directory(p.join(d.sandbox, 'static'));
+      final cfg = CacheBustingConfig(
+        mountPrefix: '/static',
+        fileSystemRoot: staticRoot,
+      );
+
+      final busted = await cfg.tryAssetPath('/static/logo.png');
+      expect(cfg.tryAssetPathSync('/static/logo.png'), busted);
+    },
+  );
 }
