@@ -365,4 +365,48 @@ void main() {
       );
     },
   );
+
+  group('Given a StaticHandler.directory created with a CacheBustingConfig', () {
+    late CacheBustingConfig buster;
+    late Handler handler;
+    setUp(() async {
+      await d.dir('static', [
+        d.file('logo.png', 'png-bytes'),
+        d.dir('images', [d.file('hero.jpg', 'jpg-bytes')]),
+      ]).create();
+      final staticRoot = Directory(p.join(d.sandbox, 'static'));
+      buster = CacheBustingConfig(
+        mountPrefix: '/static',
+        fileSystemRoot: staticRoot,
+      );
+      handler = buildStaticHandler(
+        '/static',
+        staticRoot,
+        cacheBustingConfig: buster,
+      );
+    });
+
+    test(
+      'when a request is made then tryAssetPathSync returns cache-busted paths',
+      () async {
+        // Make a request to trigger the awaited indexFuture
+        await makeRequest(handler, '/static/logo.png');
+
+        final busted = buster.tryAssetPathSync('/static/logo.png');
+        expect(busted, startsWith('/static/logo@'));
+        expect(busted, endsWith('.png'));
+      },
+    );
+
+    test(
+      'when a request is made then nested assets are also indexed',
+      () async {
+        await makeRequest(handler, '/static/logo.png');
+
+        final busted = buster.tryAssetPathSync('/static/images/hero.jpg');
+        expect(busted, startsWith('/static/images/hero@'));
+        expect(busted, endsWith('.jpg'));
+      },
+    );
+  });
 }

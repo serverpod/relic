@@ -563,4 +563,96 @@ void main() {
       expect(cfg.tryAssetPathSync('/static/logo.png'), busted);
     },
   );
+
+  test(
+    'Given CacheBustingConfig when assetPath is called twice for the same path then it returns the same result',
+    () async {
+      await d.dir('static', [d.file('logo.png', 'png-bytes')]).create();
+      final staticRoot = Directory(p.join(d.sandbox, 'static'));
+      final cfg = CacheBustingConfig(
+        mountPrefix: '/static',
+        fileSystemRoot: staticRoot,
+      );
+
+      final first = await cfg.assetPath('/static/logo.png');
+      final second = await cfg.assetPath('/static/logo.png');
+      expect(second, first);
+    },
+  );
+
+  group(
+    'Given CacheBustingConfig with a symlink escaping root among regular files',
+    () {
+      late CacheBustingConfig cfg;
+      setUp(() async {
+        await d.file('outside.txt', 'outside-content').create();
+        await d.dir('static', [d.file('good.txt', 'good-content')]).create();
+        final outsidePath = p.join(d.sandbox, 'outside.txt');
+        final linkPath = p.join(d.sandbox, 'static', 'escape.txt');
+        Link(linkPath).createSync(outsidePath);
+
+        final staticRoot = Directory(p.join(d.sandbox, 'static'));
+        cfg = CacheBustingConfig(
+          mountPrefix: '/static',
+          fileSystemRoot: staticRoot,
+        );
+      });
+
+      test(
+        'when indexAssets is called then it indexes the regular file but skips the escaping symlink',
+        () async {
+          await cfg.indexAssets();
+          expect(
+            cfg.tryAssetPathSync('/static/good.txt'),
+            startsWith('/static/good@'),
+          );
+          expect(
+            cfg.tryAssetPathSync('/static/escape.txt'),
+            '/static/escape.txt',
+          );
+        },
+      );
+    },
+  );
+
+  test(
+    'Given CacheBustingConfig for an empty directory when indexAssets is called then tryAssetPathSync returns original paths',
+    () async {
+      await d.dir('static', []).create();
+      final staticRoot = Directory(p.join(d.sandbox, 'static'));
+      final cfg = CacheBustingConfig(
+        mountPrefix: '/static',
+        fileSystemRoot: staticRoot,
+      );
+
+      await cfg.indexAssets();
+      expect(
+        cfg.tryAssetPathSync('/static/anything.txt'),
+        '/static/anything.txt',
+      );
+    },
+  );
+
+  test(
+    'Given CacheBustingConfig when indexAssets is called then subdirectories are not indexed as paths',
+    () async {
+      await d.dir('static', [
+        d.dir('subdir', [d.file('file.txt', 'content')]),
+      ]).create();
+      final staticRoot = Directory(p.join(d.sandbox, 'static'));
+      final cfg = CacheBustingConfig(
+        mountPrefix: '/static',
+        fileSystemRoot: staticRoot,
+      );
+
+      await cfg.indexAssets();
+      // Only the file should be indexed, not the directory itself
+      expect(
+        cfg.tryAssetPathSync('/static/subdir/file.txt'),
+        startsWith('/static/subdir/file@'),
+      );
+      // The directory path should not be in the cache
+      expect(cfg.tryAssetPathSync('/static/subdir'), '/static/subdir');
+    },
+  );
 }
