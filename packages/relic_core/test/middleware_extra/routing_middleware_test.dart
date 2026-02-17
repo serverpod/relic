@@ -632,4 +632,65 @@ void main() {
       },
     );
   });
+
+  group('Router ContextProperty', () {
+    test('Given a RelicRouter with a route and routeWith middleware, '
+        'when a request matches the route, '
+        'then req.router returns the router instance', () async {
+      final router = RelicRouter();
+      RelicRouter? capturedRouter;
+      router.get('/test', (final Request req) {
+        capturedRouter = req.router;
+        return Response.ok();
+      });
+
+      final middleware = routeWith(router);
+      final request = _request('/test');
+      await middleware(respondWith((_) => Response.notFound()))(request);
+
+      expect(capturedRouter, same(router));
+    });
+
+    test('Given a request that was not routed, '
+        'when accessing req.router, '
+        'then it returns null', () {
+      final request = _request('/test');
+      expect(request.router, isNull);
+    });
+
+    test('Given a Router<String> (non-RelicRouter) with routeWith, '
+        'when a request matches the route, '
+        'then req.router returns null', () async {
+      final strRouter = Router<String>()..add(Method.get, '/test', 'hello');
+      RelicRouter? capturedRouter;
+      final middleware = routeWith<String>(
+        strRouter,
+        toHandler: (final s) => (final Request req) {
+          capturedRouter = req.router;
+          return Response.ok(body: Body.fromString(s));
+        },
+      );
+
+      final request = _request('/test');
+      await middleware(respondWith((_) => Response.notFound()))(request);
+
+      expect(capturedRouter, isNull);
+    });
+
+    test('Given a RelicRouter used via asHandler, '
+        'when a request matches the route, '
+        'then req.router returns the router instance', () async {
+      final router = RelicRouter();
+      RelicRouter? capturedRouter;
+      router.get('/test', (final Request req) {
+        capturedRouter = req.router;
+        return Response.ok();
+      });
+
+      final request = _request('/test');
+      await router.asHandler(request);
+
+      expect(capturedRouter, same(router));
+    });
+  });
 }

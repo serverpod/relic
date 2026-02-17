@@ -21,6 +21,8 @@ final _routingContext =
       })
     >();
 
+final _routerProperty = ContextProperty<RelicRouter>('router');
+
 /// Creates middleware that routes requests using the provided [router].
 ///
 /// This function converts a [Router] into middleware that can be used in a
@@ -123,6 +125,9 @@ class _RoutingMiddlewareBuilder<T extends Object> {
             matched: match.matched,
             remaining: match.remaining,
           );
+          if (_isSubtype<T, Handler>()) {
+            _routerProperty[req] = _router as RelicRouter;
+          }
           final handler = _toHandler(match.value);
           return await handler(req);
       }
@@ -179,4 +184,9 @@ extension RoutingRequestEx on Request {
   NormalizedPath get remainingPath =>
       _routingContext[this]?.remaining ??
       NormalizedPath(Uri.decodeFull(url.path));
+
+  /// The [RelicRouter] that routed this request, if available.
+  ///
+  /// Returns `null` if the request was not routed through a [RelicRouter].
+  RelicRouter? get router => _routerProperty[this];
 }
