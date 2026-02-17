@@ -117,6 +117,7 @@ class StaticHandler extends HandlerObject {
   final MimeTypeResolver? mimeResolver;
   final CacheControlFactory cacheControl;
   final CacheBustingConfig? cacheBustingConfig;
+  final Future<void>? _indexFuture;
 
   @override
   void injectIn(final RelicRouter router) {
@@ -130,7 +131,8 @@ class StaticHandler extends HandlerObject {
     this.mimeResolver,
     required this.cacheControl,
     this.cacheBustingConfig,
-  });
+    Future<void>? indexFuture,
+  }) : _indexFuture = indexFuture;
 
   /// Creates a [StaticHandler] for serving files from a [Directory].
   factory StaticHandler.directory(
@@ -149,6 +151,7 @@ class StaticHandler extends HandlerObject {
       mimeResolver: mimeResolver,
       cacheControl: cacheControl,
       cacheBustingConfig: cacheBustingConfig,
+      indexFuture: cacheBustingConfig?.indexAssets(),
     );
   }
 
@@ -174,7 +177,10 @@ class StaticHandler extends HandlerObject {
   }
 
   @override
-  FutureOr<Result> call(final Request req) {
+  FutureOr<Result> call(final Request req) async {
+    final indexFuture = _indexFuture;
+    if (indexFuture != null) await indexFuture;
+
     return switch (entity) {
       Directory() => _handleDirectory(req, entity as Directory),
       File() => _handleFile(req, entity as File),
