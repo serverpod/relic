@@ -632,4 +632,176 @@ void main() {
       },
     );
   });
+
+  group('Router ContextProperty', () {
+    test('Given a RelicRouter with a route and routeWith middleware, '
+        'when a request matches the route, '
+        'then req.router returns the router instance', () async {
+      final router = RelicRouter();
+      RelicRouter? capturedRouter;
+      router.get('/test', (final Request req) {
+        capturedRouter = req.router;
+        return Response.ok();
+      });
+
+      final middleware = routeWith(router);
+      final request = _request('/test');
+      await middleware(respondWith((_) => Response.notFound()))(request);
+
+      expect(capturedRouter, same(router));
+    });
+
+    test('Given a request that was not routed, '
+        'when accessing req.router, '
+        'then it returns null', () {
+      final request = _request('/test');
+      expect(request.router, isNull);
+    });
+
+    test('Given a Router<String> (non-RelicRouter) with routeWith, '
+        'when a request matches the route, '
+        'then req.router returns null', () async {
+      final strRouter = Router<String>()..add(Method.get, '/test', 'hello');
+      RelicRouter? capturedRouter;
+      final middleware = routeWith<String>(
+        strRouter,
+        toHandler: (final s) => (final Request req) {
+          capturedRouter = req.router;
+          return Response.ok(body: Body.fromString(s));
+        },
+      );
+
+      final request = _request('/test');
+      await middleware(respondWith((_) => Response.notFound()))(request);
+
+      expect(capturedRouter, isNull);
+    });
+
+    test('Given a RelicRouter used via asHandler, '
+        'when a request matches the route, '
+        'then req.router returns the router instance', () async {
+      final router = RelicRouter();
+      RelicRouter? capturedRouter;
+      router.get('/test', (final Request req) {
+        capturedRouter = req.router;
+        return Response.ok();
+      });
+
+      final request = _request('/test');
+      await router.asHandler(request);
+
+      expect(capturedRouter, same(router));
+    });
+  });
+
+  group('forwardTo', () {
+    test('Given a router with two routes, '
+        'when a handler forwards to a different path, '
+        'then the forwarded route handler is invoked', () async {
+      final router = RelicRouter();
+
+      router.get('/target', (final Request req) {
+        return Response.ok(body: Body.fromString('target reached'));
+      });
+
+      router.get('/source', (final Request req) {
+        final newReq = req.copyWith(url: Uri.http('localhost', '/target'));
+        return req.forwardTo(newReq);
+      });
+
+      final request = _request('/source');
+      final result = await router.asHandler(request) as Response;
+
+      expect(result.statusCode, 200);
+      expect(await result.readAsString(), 'target reached');
+    });
+
+    test('Given a router with parameterized routes, '
+        'when forwarding to a parameterized path, '
+        'then the target handler receives correct path parameters', () async {
+      final router = RelicRouter();
+      Map<Symbol, String>? capturedParams;
+
+      router.get('/users/:id', (final Request req) {
+        capturedParams = req.rawPathParameters;
+        return Response.ok();
+      });
+
+      router.get('/alias/:name', (final Request req) {
+        final newReq = req.copyWith(url: Uri.http('localhost', '/users/42'));
+        return req.forwardTo(newReq);
+      });
+
+      final request = _request('/alias/alice');
+      final result = await router.asHandler(request) as Response;
+
+      expect(result.statusCode, 200);
+      expect(capturedParams, equals({#id: '42'}));
+    });
+
+    test('Given a request that was not routed through a RelicRouter, '
+        'when forwardTo is called, '
+        'then it throws a StateError', () {
+      final request = _request('/test');
+      final newRequest = _request('/other');
+
+      expect(
+        () => request.forwardTo(newRequest),
+        throwsA(
+          isA<StateError>().having(
+            (e) => e.message,
+            'message',
+            'Cannot forward: no RelicRouter found. '
+                'Ensure this request was routed through a RelicRouter.',
+          ),
+        ),
+      );
+    });
+
+    test('Given a router where the forwarded path does not match any route, '
+        'when forwardTo is called, '
+        'then the router fallback is invoked', () async {
+      final router = RelicRouter();
+
+      router.get('/source', (final Request req) {
+        final newReq = req.copyWith(url: Uri.http('localhost', '/nonexistent'));
+        return req.forwardTo(newReq);
+      });
+
+      final request = _request('/source');
+      final result = await router.asHandler(request) as Response;
+
+      expect(result.statusCode, 404);
+    });
+
+    test('Given a router with middleware applied via use, '
+        'when forwarding a request, '
+        'then the middleware is applied to the forwarded request', () async {
+      final router = RelicRouter();
+
+      router.get('/target', (final Request req) {
+        return Response.ok();
+      });
+
+      router.get('/source', (final Request req) {
+        final newReq = req.copyWith(url: Uri.http('localhost', '/target'));
+        return req.forwardTo(newReq);
+      });
+
+      router.use('/', (final handler) {
+        return (final req) async {
+          final result = await handler(req) as Response;
+          return result.copyWith(
+            headers: Headers.build((final h) => h['X-Forwarded'] = ['true']),
+          );
+        };
+      });
+
+      final request = _request('/source');
+      final result = await router.asHandler(request) as Response;
+
+      expect(result.statusCode, 200);
+      expect(result.headers['X-Forwarded'], ['true']);
+    });
+  });
 }

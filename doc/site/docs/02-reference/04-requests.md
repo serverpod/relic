@@ -28,6 +28,8 @@ The `Request` object exposes several important properties:
 - **`headers`** - Type-safe access to HTTP headers.
 - **`body`** - The request body wrapped in a `Body` helper. Use `await request.readAsString()` for text, or `request.read()` to access the byte stream. Both are single-read.
 - **`protocolVersion`** - The HTTP protocol version (typically `1.1`).
+- **`router`** - The `RelicRouter` that routed this request (available after routing, `null` otherwise).
+- **`copyWith()`** - Create a modified copy of the request with a different `url`, `headers`, or `body`.
 
 ## Accessing request data
 
@@ -173,6 +175,64 @@ Before attempting to read the body, you can check if it's empty using the `isEmp
 GITHUB_CODE_BLOCK lang="dart" file="../_example/routing/request_response.dart" doctag="upload-complete" title="Body empty check"
 
 This check doesn't consume the body stream, so you can still read the body afterward.
+
+## Modifying requests
+
+Since `Request` objects are immutable, Relic provides `copyWith` to create modified copies. This is useful in middleware for modifying headers or body, and in handlers for URL rewriting and request forwarding.
+
+### Creating modified copies
+
+Use `copyWith` to create a new request with different values. Any field you don't specify is carried over from the original:
+
+```dart
+// Change just the URL
+final rewritten = request.copyWith(
+  url: request.url.replace(path: '/new-path'),
+);
+
+// Change URL and headers
+final modified = request.copyWith(
+  url: request.url.replace(path: '/other'),
+  headers: Headers.build((h) => h['X-Custom'] = ['value']),
+);
+```
+
+The new URL must be absolute and must not contain a fragment, just like the original request URL.
+
+### Forwarding requests
+
+When you need to internally redirect a request to a different route, use `copyWith` to change the URL and `forwardTo` to re-route it through the same router:
+
+```dart
+final app = RelicApp()
+  ..get('/old-path', (req) {
+    final newReq = req.copyWith(url: req.url.replace(path: '/new-path'));
+    return req.forwardTo(newReq);
+  })
+  ..get('/new-path', (req) {
+    return Response.ok(body: Body.fromString('You arrived!'));
+  });
+```
+
+`forwardTo` sends the new request through the full routing pipeline of the router that handled the current request, including any middleware applied via `router.use()`. This means path parameters and routing metadata are correctly updated for the forwarded request.
+
+:::info
+`forwardTo` throws a `StateError` if the request was not routed through a `RelicRouter`. This can happen when using `Pipeline` directly without a router, or with a generic `Router<T>` where `T` is not `Handler`.
+:::
+
+### Accessing the router
+
+The `router` property gives you access to the `RelicRouter` that routed the current request:
+
+```dart
+router.get('/info', (req) {
+  final currentRouter = req.router; // RelicRouter?
+  // null if not routed through a RelicRouter
+  return Response.ok();
+});
+```
+
+This is primarily used internally by `forwardTo`, but can be useful for advanced patterns like conditional routing or router introspection.
 
 ## Final tips
 

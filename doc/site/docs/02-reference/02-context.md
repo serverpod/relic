@@ -54,6 +54,17 @@ GITHUB_CODE_BLOCK lang="dart" file="../_example/context/context_property.dart" d
 Context properties exist **only for the duration of the request**. Once the response is sent, they're automatically cleaned up. Values are scoped to each request and do not leak between requests.
 :::
 
+## Built-in context properties
+
+Relic uses context properties internally to expose routing data on `Request` objects. These work exactly like user-defined properties but are set automatically by the routing middleware:
+
+- **`request.pathParameters`** - Path parameters extracted from the matched route (e.g., `:id`).
+- **`request.queryParameters`** - Typed query parameter accessors.
+- **`request.router`** - The `RelicRouter` that routed the request (used by `forwardTo`).
+- **`request.matchedPath`** / **`request.remainingPath`** - The portions of the path consumed and remaining after route matching.
+
+This demonstrates the power of context properties: they provide a consistent, type-safe mechanism for attaching request-scoped data, whether from the framework or your own middleware.
+
 ## Examples & further reading
 
 ### Examples

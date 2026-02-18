@@ -204,6 +204,26 @@ router.get('/files/special/report', reportHandler); // Route 2
 This allows you to define specific routes alongside catch-all routes, with the
 specific routes taking priority when they fully match.
 
+## Request forwarding
+
+Sometimes a handler needs to internally redirect a request to a different route. Relic supports this through `copyWith` and `forwardTo`:
+
+```dart
+final app = RelicApp()
+  // Redirect old endpoint to new one
+  ..get('/v1/users', (req) {
+    final newReq = req.copyWith(url: req.url.replace(path: '/v2/users'));
+    return req.forwardTo(newReq);
+  })
+  ..get('/v2/users', (req) {
+    return Response.ok(body: Body.fromString('Users list'));
+  });
+```
+
+`forwardTo` re-routes the new request through the same router, so route matching, path parameters, and middleware all work correctly on the forwarded request. This is different from simply calling another handler directly, which would bypass routing entirely. The host in the URL is typically irrelevant since `forwardTo` uses the router's path-based matching.
+
+For more details on `copyWith` and `forwardTo`, see [Modifying requests](./requests#modifying-requests).
+
 ## Examples & further reading
 
 ### Examples

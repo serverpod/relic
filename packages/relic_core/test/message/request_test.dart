@@ -191,5 +191,59 @@ void main() {
       expect(changed1.read, throwsStateError);
       expect(request.read, throwsStateError);
     });
+
+    test(
+      'when a new url is provided then it returns an instance with the new url',
+      () {
+        final request = RequestInternal.create(
+          Method.get,
+          Uri.parse('https://test.example.com/original'),
+          Object(),
+        );
+
+        final newUri = Uri.parse('https://test.example.com/new-path?q=1');
+        final copy = request.copyWith(url: newUri);
+
+        expect(copy.url, equals(newUri));
+        expect(copy.method, equals(request.method));
+        expect(copy.protocolVersion, equals(request.protocolVersion));
+      },
+    );
+
+    test('when a new url and headers are provided then both are updated', () {
+      final request = RequestInternal.create(
+        Method.post,
+        Uri.parse('https://test.example.com/original'),
+        Object(),
+      );
+
+      final newUri = Uri.parse('https://test.example.com/updated');
+      final newHeaders = Headers.build(
+        (final mh) => mh['X-Custom'] = ['value'],
+      );
+      final copy = request.copyWith(url: newUri, headers: newHeaders);
+
+      expect(copy.url, equals(newUri));
+      expect(copy.headers, same(newHeaders));
+    });
+
+    test('when a relative url is provided then it throws an ArgumentError', () {
+      final request = _request();
+      expect(
+        () => request.copyWith(url: Uri.parse('/relative-path')),
+        throwsArgumentError,
+      );
+    });
+
+    test(
+      'when a url with a fragment is provided then it throws an ArgumentError',
+      () {
+        final request = _request();
+        expect(
+          () => request.copyWith(url: Uri.parse('http://localhost/path#frag')),
+          throwsArgumentError,
+        );
+      },
+    );
   });
 }

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import '../accessor/accessor.dart';
 import '../context/result.dart';
 import '../handler/handler.dart';
@@ -7,6 +9,7 @@ import '../router/lookup_result.dart';
 import '../router/normalized_path.dart';
 import '../router/path_trie.dart';
 import '../router/router.dart';
+import '../router/router_handler_extension.dart';
 import 'context_property.dart';
 import 'middleware.dart';
 
@@ -20,6 +23,8 @@ final _routingContext =
         NormalizedPath remaining,
       })
     >();
+
+final _routerProperty = ContextProperty<RelicRouter>('router');
 
 /// Creates middleware that routes requests using the provided [router].
 ///
@@ -123,6 +128,9 @@ class _RoutingMiddlewareBuilder<T extends Object> {
             matched: match.matched,
             remaining: match.remaining,
           );
+          if (_isSubtype<T, Handler>()) {
+            _routerProperty[req] = _router as RelicRouter;
+          }
           final handler = _toHandler(match.value);
           return await handler(req);
       }
@@ -179,4 +187,40 @@ extension RoutingRequestEx on Request {
   NormalizedPath get remainingPath =>
       _routingContext[this]?.remaining ??
       NormalizedPath(Uri.decodeFull(url.path));
+
+  /// The [RelicRouter] that routed this request, if available.
+  ///
+  /// Returns `null` if the request was not routed through a [RelicRouter].
+  RelicRouter? get router => _routerProperty[this];
+}
+
+/// Extension on [Request] for forwarding requests through the current router.
+extension ForwardingRequestEx on Request {
+  /// Forwards [request] through the [RelicRouter] that routed this request.
+  ///
+  /// This re-routes [request] through the same router that handled
+  /// the current request, enabling URL rewriting and internal redirects.
+  ///
+  /// Typically used with [Request.copyWith] to change the URL:
+  /// ```dart
+  /// router.get('/old-path', (req) {
+  ///   final newReq = req.copyWith(
+  ///     url: req.url.replace(path: '/new-path'),
+  ///   );
+  ///   return req.forwardTo(newReq);
+  /// });
+  /// ```
+  ///
+  /// Throws a [StateError] if this request was not routed through a
+  /// [RelicRouter].
+  FutureOr<Result> forwardTo(final Request request) {
+    final r = router;
+    if (r == null) {
+      throw StateError(
+        'Cannot forward: no RelicRouter found. '
+        'Ensure this request was routed through a RelicRouter.',
+      );
+    }
+    return r.asHandler(request);
+  }
 }

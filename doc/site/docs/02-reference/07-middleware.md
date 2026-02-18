@@ -175,8 +175,10 @@ Middleware layers wrap each other like an onion. Each layer may:
 
 GITHUB_CODE_BLOCK lang="dart" file="../_example/middleware/auth.dart" doctag="middleware-auth-basic" title="Basic auth middleware"
 
-:::warning Avoid rewriting `request.url` in middleware attached with `router.use`.
-When middleware is attached with `router.use(...)`, the request has already been routed. Changing `request.url` at this point will not re-route the request and will not update `request.pathParameters` or related routing metadata.
+:::warning Changing `request.url` in middleware does not re-route.
+When middleware is attached with `router.use(...)`, the request has already been routed. Changing `request.url` via `copyWith` will not re-route the request or update `request.pathParameters` and other routing metadata.
+
+If you need to re-route a request to a different path, use `request.forwardTo()` instead, which sends the request back through the router's full routing pipeline. See [Request forwarding](./requests#forwarding-requests) for details.
 :::
 
 ### CORS (Cross-Origin Resource Sharing)
