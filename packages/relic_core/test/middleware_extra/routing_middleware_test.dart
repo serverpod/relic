@@ -745,7 +745,17 @@ void main() {
       final request = _request('/test');
       final newRequest = _request('/other');
 
-      expect(() => request.forwardTo(newRequest), throwsStateError);
+      expect(
+        () => request.forwardTo(newRequest),
+        throwsA(
+          isA<StateError>().having(
+            (e) => e.message,
+            'message',
+            'Cannot forward: no RelicRouter found. '
+                'Ensure this request was routed through a RelicRouter.',
+          ),
+        ),
+      );
     });
 
     test('Given a router where the forwarded path does not match any route, '
