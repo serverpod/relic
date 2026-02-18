@@ -17,7 +17,7 @@ resolution: workspace
 dependencies:
   crypto: ^3.0.0
   mime: ^2.0.0
-  path: ^1.8.3
+  path: ^1.9.0
   relic_core: ^1.0.0
   stack_trace: ^1.10.0
   stream_channel: ^2.1.1
