@@ -1,0 +1,44 @@
+---
+sidebar_position: -1
+title: 🎯 Introduction
+---
+
+# Introduction
+Relic is a modern, high-performance web server framework inspired by [Shelf](https://pub.dev/packages/shelf) and built by the [Serverpod](https://serverpod.dev) team to meet the demanding requirements of modern web applications. Relic provides a robust, type-safe, and efficient foundation for building scalable web services.
+
+#### Why Relic?
+
+While Shelf has been a solid foundation for Dart web applications, several areas for improvement were identified. Rather than work around these limitations, Relic was created as a next-generation framework that maintains Shelf's familiar structure while delivering significant enhancements.
+
+## Features
+Relic aims to be a comprehensive web server framework for Dart. It provides a wide range of features out of the box and allows you to extend it with middleware. Here are some of the key features:
+
+import DocFeatureCards from '@site/src/components/DocFeatureCards';
+
+<DocFeatureCards
+  features={[
+    { icon: '🔒', title: 'Type Safe', description: 'Strongly typed APIs with validated HTTP headers.' },
+    { icon: '⚡', title: 'Fast', description: 'High performance through trie-based routing and LRU caching.' },
+    { icon: '🔌', title: 'WebSockets', description: 'Built-in WebSocket support for real time communication.' },
+    { icon: '🔧', title: 'Middleware', description: 'Composable middleware pipeline with router integration.' },
+    { icon: '👨‍💻', title: 'Dev Ready', description: 'Great IDE support, clear errors, and full documentation.' },
+    { icon: '🚀', title: 'Production', description: 'Production-ready with high test coverage (3,000+ tests).' },
+  ]}
+/>
+
+
+## Comparison with Shelf
+
+Relic started out as a clone of Shelf, but has since diverged. An adapter is being built so that you can use Shelf middleware with Relic. Here is a comparison of some of the key differences:
+
+| Feature | Shelf | Relic |
+|---------|-------|-------|
+| Type Safety | ❌ Uses dynamic types | ✅ Strongly typed APIs with validated HTTP headers|
+| Routing | ❌ Linear scan over routes | ✅ Built-in trie-based router |
+| WebSockets | ❌ External packages | ✅ Built-in support |
+| Performance | ✅ Good | ✅ Optimized (trie routing, LRU cache) |
+| Path Parameters | ❌ String-based | ✅ Symbol-based |
+| Static Files | ❌ Limited | ✅ Includes cache busting & etag support |
+| Control Flow | ❌ Exceptions for control flow | ✅ Explicit state machine |
+| Request State | ❌ Untyped context bag | ✅ Context properties with IDE discoverability |
+| Body Model | ❌ Body and encoding are separate | ✅ Unified |
