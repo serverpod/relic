@@ -26,83 +26,103 @@ Handler buildStaticHandler(
 }
 
 void main() {
-  group(
-    'Given a static asset served through a root-mounted cache busting static file handler',
-    () {
-      late Handler handler;
-      setUp(() async {
-        await d.dir('static', [d.file('logo.png', 'png-bytes')]).create();
-        final staticRoot = Directory(p.join(d.sandbox, 'static'));
+  group('Given a cache busting static file handler', () {
+    late Handler handler;
+    setUp(() async {
+      await d.dir('static', [
+        d.file('logo.png', 'png-bytes'),
+        d.file('@logo.png', 'at-logo-bytes'),
+        d.file('logo', 'file-contents'),
+        d.dir('@images', [d.file('logo.png', 'nested-bytes')]),
+      ]).create();
+      final staticRoot = Directory(p.join(d.sandbox, 'static'));
 
-        handler = buildStaticHandler(
-          '/static',
-          staticRoot,
-          cacheBustingConfig: CacheBustingConfig(
-            mountPrefix: '/static',
-            fileSystemRoot: staticRoot,
-            separator: '@',
-          ),
+      handler = buildStaticHandler(
+        '/static',
+        staticRoot,
+        cacheBustingConfig: CacheBustingConfig(
+          mountPrefix: '/static',
+          fileSystemRoot: staticRoot,
+          separator: '@',
+        ),
+      );
+    });
+
+    test(
+      'when requesting asset with a non-busted URL then it serves the asset',
+      () async {
+        final response = await makeRequest(handler, '/static/logo.png');
+        expect(response.statusCode, HttpStatus.ok);
+        expect(await response.readAsString(), 'png-bytes');
+      },
+    );
+
+    test(
+      'when requesting asset with a cache busted URL then it serves the asset',
+      () async {
+        final response = await makeRequest(handler, '/static/logo@abc.png');
+        expect(response.statusCode, HttpStatus.ok);
+        expect(await response.readAsString(), 'png-bytes');
+      },
+    );
+
+    test(
+      'when requesting asset with filename starting with separator with a non-busted URL then it serves the asset',
+      () async {
+        final response = await makeRequest(handler, '/static/@logo.png');
+        expect(response.statusCode, HttpStatus.ok);
+        expect(await response.readAsString(), 'at-logo-bytes');
+      },
+    );
+
+    test(
+      'when requesting asset with filename starting with separator with a cache busted URL then it serves the asset',
+      () async {
+        final response = await makeRequest(handler, '/static/@logo@abc.png');
+        expect(response.statusCode, HttpStatus.ok);
+        expect(await response.readAsString(), 'at-logo-bytes');
+      },
+    );
+
+    test(
+      'when requesting asset without extension with a non-busted URL then it serves the asset',
+      () async {
+        final response = await makeRequest(handler, '/static/logo');
+        expect(response.statusCode, HttpStatus.ok);
+        expect(await response.readAsString(), 'file-contents');
+      },
+    );
+
+    test(
+      'when requesting asset without extension with a cache busted URL then it serves the asset',
+      () async {
+        final response = await makeRequest(handler, '/static/logo@abc');
+        expect(response.statusCode, HttpStatus.ok);
+        expect(await response.readAsString(), 'file-contents');
+      },
+    );
+
+    test(
+      'when requesting asset in nested directory containing separator with a non-busted URL then it serves the asset',
+      () async {
+        final response = await makeRequest(handler, '/static/@images/logo.png');
+        expect(response.statusCode, HttpStatus.ok);
+        expect(await response.readAsString(), 'nested-bytes');
+      },
+    );
+
+    test(
+      'when requesting asset in nested directory containing separator with a cache busted URL then it serves the asset',
+      () async {
+        final response = await makeRequest(
+          handler,
+          '/static/@images/logo@abc.png',
         );
-      });
-
-      test(
-        'when requesting asset with a non-busted URL then it serves the asset',
-        () async {
-          final response = await makeRequest(handler, '/static/logo.png');
-          expect(response.statusCode, HttpStatus.ok);
-          expect(await response.readAsString(), 'png-bytes');
-        },
-      );
-
-      test(
-        'when requesting asset with a cache busted URL then it serves the asset',
-        () async {
-          final response = await makeRequest(handler, '/static/logo@abc.png');
-          expect(response.statusCode, HttpStatus.ok);
-          expect(await response.readAsString(), 'png-bytes');
-        },
-      );
-    },
-  );
-
-  group(
-    'Given a static asset served through a router-mounted cache busting static handler',
-    () {
-      late Handler handler;
-      setUp(() async {
-        await d.dir('static', [d.file('logo.png', 'png-bytes')]).create();
-        final staticRoot = Directory(p.join(d.sandbox, 'static'));
-
-        handler = buildStaticHandler(
-          '/static/',
-          staticRoot,
-          cacheBustingConfig: CacheBustingConfig(
-            mountPrefix: '/static',
-            fileSystemRoot: staticRoot,
-            separator: '@',
-          ),
-        );
-      });
-
-      test(
-        'when requesting asset with a non-busted URL then it serves the asset',
-        () async {
-          final response = await makeRequest(handler, '/static/logo.png');
-          expect(response.statusCode, HttpStatus.ok);
-          expect(await response.readAsString(), 'png-bytes');
-        },
-      );
-
-      test(
-        'when requesting asset with a cache busted URL then it serves the asset',
-        () async {
-          final response = await makeRequest(handler, '/static/logo@abc.png');
-          expect(response.statusCode, HttpStatus.ok);
-          expect(await response.readAsString(), 'png-bytes');
-        },
-      );
-    },
-  );
+        expect(response.statusCode, HttpStatus.ok);
+        expect(await response.readAsString(), 'nested-bytes');
+      },
+    );
+  });
 
   group('Given static asset served outside of cache busting mountPrefix', () {
     late Handler handler;
@@ -146,82 +166,6 @@ void main() {
   });
 
   group(
-    'Given a static asset with a filename starting with separator served through cache busting static file handler',
-    () {
-      late Handler handler;
-      setUp(() async {
-        await d.dir('static', [d.file('@logo.png', 'png-bytes')]).create();
-        final staticRoot = Directory(p.join(d.sandbox, 'static'));
-        handler = buildStaticHandler(
-          '/static',
-          staticRoot,
-          cacheBustingConfig: CacheBustingConfig(
-            mountPrefix: '/static',
-            fileSystemRoot: staticRoot,
-            separator: '@',
-          ),
-        );
-      });
-
-      test(
-        'when requesting asset with a non-busted URL then it serves the asset',
-        () async {
-          final response = await makeRequest(handler, '/static/@logo.png');
-          expect(response.statusCode, HttpStatus.ok);
-          expect(await response.readAsString(), 'png-bytes');
-        },
-      );
-
-      test(
-        'when requesting asset with a cache busted URL then it serves the asset',
-        () async {
-          final response = await makeRequest(handler, '/static/@logo@abc.png');
-          expect(response.statusCode, HttpStatus.ok);
-          expect(await response.readAsString(), 'png-bytes');
-        },
-      );
-    },
-  );
-
-  group(
-    'Given a static asset without extension served through cache busting static file handler',
-    () {
-      late Handler handler;
-      setUp(() async {
-        await d.dir('static', [d.file('logo', 'file-contents')]).create();
-        final staticRoot = Directory(p.join(d.sandbox, 'static'));
-        handler = buildStaticHandler(
-          '/static',
-          staticRoot,
-          cacheBustingConfig: CacheBustingConfig(
-            mountPrefix: '/static',
-            fileSystemRoot: staticRoot,
-            separator: '@',
-          ),
-        );
-      });
-
-      test(
-        'when requesting asset with a non-busted URL then it serves the asset',
-        () async {
-          final response = await makeRequest(handler, '/static/logo');
-          expect(response.statusCode, HttpStatus.ok);
-          expect(await response.readAsString(), 'file-contents');
-        },
-      );
-
-      test(
-        'when requesting asset with a cache busted URL then it serves the asset',
-        () async {
-          final response = await makeRequest(handler, '/static/logo@abc');
-          expect(response.statusCode, HttpStatus.ok);
-          expect(await response.readAsString(), 'file-contents');
-        },
-      );
-    },
-  );
-
-  group(
     'Given a static asset served through cache busting static file handler with a custom separator',
     () {
       late Handler handler;
@@ -262,52 +206,6 @@ void main() {
         () async {
           final response = await makeRequest(handler, '/static/logo@abc.png');
           expect(response.statusCode, HttpStatus.notFound);
-        },
-      );
-    },
-  );
-
-  group(
-    'Given a static asset served through cache busting static handler in a nested directory containing the separator',
-    () {
-      late Handler handler;
-      setUp(() async {
-        await d.dir('static', [
-          d.dir('@images', [d.file('logo.png', 'nested-bytes')]),
-        ]).create();
-        final staticRoot = Directory(p.join(d.sandbox, 'static'));
-        handler = buildStaticHandler(
-          '/static',
-          staticRoot,
-          cacheBustingConfig: CacheBustingConfig(
-            mountPrefix: '/static',
-            fileSystemRoot: staticRoot,
-            separator: '@',
-          ),
-        );
-      });
-
-      test(
-        'when requesting asset with a non-busted URL then it serves the asset',
-        () async {
-          final response = await makeRequest(
-            handler,
-            '/static/@images/logo.png',
-          );
-          expect(response.statusCode, HttpStatus.ok);
-          expect(await response.readAsString(), 'nested-bytes');
-        },
-      );
-
-      test(
-        'when requesting asset with a cache busted URL then it serves the asset',
-        () async {
-          final response = await makeRequest(
-            handler,
-            '/static/@images/logo@abc.png',
-          );
-          expect(response.statusCode, HttpStatus.ok);
-          expect(await response.readAsString(), 'nested-bytes');
         },
       );
     },
@@ -363,6 +261,40 @@ void main() {
           expect(await response.readAsString(), 'nested-bytes');
         },
       );
+    },
+  );
+
+  group(
+    'Given a StaticHandler.directory created with a CacheBustingConfig when a request is made',
+    () {
+      late CacheBustingConfig buster;
+      setUp(() async {
+        await d.dir('static', [
+          d.file('logo.png', 'png-bytes'),
+          d.dir('images', [d.file('hero.jpg', 'jpg-bytes')]),
+        ]).create();
+        final staticRoot = Directory(p.join(d.sandbox, 'static'));
+        buster = CacheBustingConfig(
+          mountPrefix: '/static',
+          fileSystemRoot: staticRoot,
+        );
+        final handler = buildStaticHandler(
+          '/static',
+          staticRoot,
+          cacheBustingConfig: buster,
+        );
+        await makeRequest(handler, '/static/logo.png');
+      });
+
+      test('then tryAssetPathSync returns cache-busted paths', () {
+        final busted = buster.tryAssetPathSync('/static/logo.png');
+        expect(busted, startsWith('/static/logo@'));
+      });
+
+      test('then nested assets are also indexed', () {
+        final busted = buster.tryAssetPathSync('/static/images/hero.jpg');
+        expect(busted, startsWith('/static/images/hero@'));
+      });
     },
   );
 }
