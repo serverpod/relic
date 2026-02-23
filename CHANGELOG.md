@@ -1,3 +1,8 @@
+## 1.1.0
+- feat: Allow internal request forwarding with `req.forwardTo(newReq)` ([#331](https://github.com/serverpod/relic/pull/331))
+- feat: Add `indexAssets()` and `tryAssetPathSync()` to `CacheBustingConfig` ([#332](https://github.com/serverpod/relic/pull/332))
+- feat: Auto-index assets in `StaticHandler` when cache busting is configured ([#332](https://github.com/serverpod/relic/pull/332))
+
 ## 1.0.0
 
 Relic is now considered stable and production-ready! 🎉
