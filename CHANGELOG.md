@@ -1,3 +1,6 @@
+## 1.1.1
+- docs(ai): Adds skills for AI agents based on documentation. ([#338](https://github.com/serverpod/relic/pull/338))
+
 ## 1.1.0
 - feat: Allow internal request forwarding with `req.forwardTo(newReq)` ([#331](https://github.com/serverpod/relic/pull/331))
 - feat: Add `indexAssets()` and `tryAssetPathSync()` to `CacheBustingConfig` ([#332](https://github.com/serverpod/relic/pull/332))
