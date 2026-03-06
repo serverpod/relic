@@ -189,6 +189,20 @@ void main() {
       });
     });
 
+    test('Given a RelicApp before run is called, '
+        'when checking isDevMode, '
+        'then it returns false', () {
+      final app = RelicApp();
+      expect(app.developerTools.isDevMode, isFalse);
+    });
+
+    test('Given a RelicApp before run is called, '
+        'when checking reloadCount, '
+        'then it returns 0', () {
+      final app = RelicApp();
+      expect(app.developerTools.reloadCount, 0);
+    });
+
     test('Given a RelicApp, '
         'when hot-reloading isolate, '
         'then it is rebuild', () async {
@@ -224,8 +238,14 @@ void main() {
 
       await app.serve(noOfIsolates: 2);
 
+      expect(app.developerTools.reloadCount, 0);
+
       await hotReload(); // 2
+      expect(app.developerTools.reloadCount, 1);
+
       await hotReload(); // 3
+      expect(app.developerTools.reloadCount, 2);
+
       await app.close();
       await hotReload(); // won't emit
       await hotReload(); // won't emit
@@ -233,6 +253,26 @@ void main() {
       await expectLater(called.stream, emitsInOrder([1, 2, 3]));
 
       await vmService.dispose();
+    }, tags: {'hot-reload'});
+
+    test('Given a RelicApp with VM service available, '
+        'when serve is called, '
+        'then isDevMode returns true', () async {
+      final wsUri = (await Service.getInfo()).serverWebSocketUri;
+      if (wsUri == null) {
+        markTestSkipped(
+          'VM service not available! Use: dart run --enable-vm-service',
+        );
+        return;
+      }
+
+      final app = RelicApp()..any('/', (final req) => Response.ok());
+
+      expect(app.developerTools.isDevMode, isFalse);
+      await app.serve(port: 0);
+      expect(app.developerTools.isDevMode, isTrue);
+      await app.close();
+      expect(app.developerTools.isDevMode, isFalse);
     }, tags: {'hot-reload'});
   });
 }

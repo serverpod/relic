@@ -177,6 +177,12 @@ final class Router<T extends Object> {
 
   /// Returns true if the router has a single root route ('/').
   bool get isSingle => _allRoutes.isSingle;
+
+  /// Injects [injectable] at [path], creating a consumed sub-router.
+  void injectAt(final String path, final InjectableIn<Router<T>> injectable) {
+    final subRouter = Router<T>()..inject(injectable);
+    attach(path, subRouter, consume: true);
+  }
 }
 
 extension RouteEx<T extends Object> on Router<T> {
@@ -249,12 +255,6 @@ extension RouteEx<T extends Object> on Router<T> {
     final subRouter = Router<T>();
     attach(path, subRouter);
     return subRouter;
-  }
-
-  /// Injects [injectable] at [path]
-  void injectAt(final String path, final InjectableIn<Router<T>> injectable) {
-    final subRouter = Router<T>()..inject(injectable);
-    attach(path, subRouter, consume: true);
   }
 }
 

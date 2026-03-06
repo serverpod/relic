@@ -32,7 +32,11 @@ part of 'router.dart';
 /// without restarting the server. Note that this only works for changes to the
 /// route configuration and handlers - changes to server state or global variables
 /// may require a full restart.
-final class RelicApp implements RelicRouter {
+abstract interface class _Reloadable {
+  Future<void> _reload();
+}
+
+final class RelicApp implements RelicRouter, _Reloadable {
   /// Whether to prepend the request's `Host` header to the path during routing.
   ///
   /// When `true`, routes should include the host as the first segment
@@ -42,9 +46,11 @@ final class RelicApp implements RelicRouter {
 
   RelicServer? _server;
   bool _backtrack = true;
-  StreamSubscription? _reloadSubscription;
   var delegate = RelicRouter();
   final _setup = <RouterInjectable>[];
+
+  /// Developer tools for inspecting and debugging the app.
+  late final developerTools = DeveloperTools._();
 
   /// Creates a new [RelicApp].
   ///
@@ -93,13 +99,12 @@ final class RelicApp implements RelicRouter {
     _server = RelicServer(adapterFactory, noOfIsolates: noOfIsolates);
     _backtrack = backtrack;
     await _init();
-    _reloadSubscription = await _hotReloader.register(this);
+    await developerTools._registerForReload(this);
     return _server!;
   }
 
   Future<void> close() async {
-    await _reloadSubscription?.cancel();
-    _reloadSubscription = null;
+    await developerTools._dispose();
     await _server?.close();
     _server = null;
   }
@@ -115,6 +120,7 @@ final class RelicApp implements RelicRouter {
   }
 
   Future<void> _reload() async {
+    developerTools._onReload();
     await _rebuild();
     await _init();
   }
@@ -148,6 +154,12 @@ final class RelicApp implements RelicRouter {
   void use(final String path, final Middleware map) =>
       inject(_Injectable((final r) => r.use(path, map)));
 
+  /// Recreates the sub-router on each hot-reload replay instead of reusing
+  /// the consumed (emptied) one from the first call.
+  @override
+  void injectAt(final String path, final RouterInjectable injectable) =>
+      inject(_InjectableAt(path, injectable));
+
   @override
   void inject(final RouterInjectable injectable) => _injectAndTrack(injectable);
 
@@ -175,6 +187,31 @@ final class RelicApp implements RelicRouter {
   }) => delegate.lookup(method, path, backtrack: backtrack);
 }
 
+/// Developer tools for inspecting and debugging a [RelicApp].
+final class DeveloperTools {
+  int _reloadCount = 0;
+  StreamSubscription? _reloadSubscription;
+
+  DeveloperTools._();
+
+  /// Number of hot reloads that have occurred since the app started.
+  int get reloadCount => _reloadCount;
+
+  /// Whether the VM service is available (i.e. running in dev mode).
+  bool get isDevMode => _reloadSubscription != null;
+
+  Future<void> _registerForReload(final _Reloadable app) async {
+    _reloadSubscription = await _hotReloader.registerForReload(app);
+  }
+
+  Future<void> _dispose() async {
+    await _reloadSubscription?.cancel();
+    _reloadSubscription = null;
+  }
+
+  void _onReload() => _reloadCount++;
+}
+
 final class _Injectable implements RouterInjectable {
   final void Function(RelicRouter) setup;
 
@@ -182,6 +219,25 @@ final class _Injectable implements RouterInjectable {
 
   @override
   void injectIn(final RelicRouter owner) => setup(owner);
+}
+
+/// Creates a fresh sub-router on each replay so routes survive hot-reload.
+///
+/// The base [Router.injectAt] creates a sub-router and attaches it with
+/// `consume: true`, which empties it. On replay the emptied router produces
+/// no routes. This class recreates the sub-router from the [injectable]
+/// each time [injectIn] is called.
+final class _InjectableAt implements RouterInjectable {
+  final String path;
+  final RouterInjectable injectable;
+
+  _InjectableAt(this.path, this.injectable);
+
+  @override
+  void injectIn(final RelicRouter owner) {
+    final subRouter = RelicRouter()..inject(injectable);
+    owner.attach(path, subRouter, consume: true);
+  }
 }
 
 class _HotReloader {
@@ -202,7 +258,7 @@ class _HotReloader {
     return null; // no vm service available
   }
 
-  Future<StreamSubscription?> register(final RelicApp app) async {
+  Future<StreamSubscription?> registerForReload(final _Reloadable app) async {
     final reloadStream = await _reloadStream;
     if (reloadStream != null) {
       return reloadStream.asyncListen((_) => app._reload());
