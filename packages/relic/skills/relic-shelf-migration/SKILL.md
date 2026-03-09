@@ -180,12 +180,9 @@ final user = request.context['user'] as User?;
 ```dart
 final userProperty = ContextProperty<User>('user');
 final sessionProperty = ContextProperty<Session>('session');
+```
 
-extension AuthContext on Request {
-  User get currentUser => userProperty[this];
-  Session get session => sessionProperty[this];
-}
-
+```dart
 // Set in middleware
 userProperty[req] = authenticatedUser;
 

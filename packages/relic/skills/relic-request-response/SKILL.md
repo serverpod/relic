@@ -192,43 +192,43 @@ try {
 ### Status code constructors
 
 ```dart
-Response.ok(body: Body.fromString('Success'))           // 200
-Response.noContent()                                     // 204
-Response.badRequest(body: Body.fromString('Bad input'))  // 400
-Response.unauthorized()                                  // 401
-Response.notFound()                                      // 404
-Response.internalServerError()                           // 500
-Response(418, body: Body.fromString('I am a teapot'))   // custom
+Response.ok(body: Body.fromString('Success')); // 200
+Response.noContent(); // 204
+Response.badRequest(body: Body.fromString('Bad input')); // 400
+Response.unauthorized(); // 401
+Response.notFound(); // 404
+Response.internalServerError(); // 500
+Response(418, body: Body.fromString('I am a teapot')); // custom
 ```
 
 ### Body types
 
 ```dart
 // Text (auto-detects MIME: JSON, HTML, XML, or plain text)
-Body.fromString('Hello')                                    // text/plain
-Body.fromString('{"key": "value"}')                         // application/json
-Body.fromString('<!DOCTYPE html><html>...</html>')          // text/html
+Body.fromString('Hello'); // text/plain
+Body.fromString('{"key": "value"}'); // application/json
+Body.fromString('<!DOCTYPE html><html>...</html>'); // text/html
 
 // Explicit MIME type
-Body.fromString('<html>...</html>', mimeType: MimeType.html)
-Body.fromString(jsonEncode(data), mimeType: MimeType.json)
+Body.fromString('<html>...</html>', mimeType: MimeType.html);
+Body.fromString(jsonEncode(data), mimeType: MimeType.json);
 
 // Binary (auto-detects PNG, JPEG, PDF, etc.)
-Body.fromData(imageBytes)                                    // image/png, etc.
-Body.fromData(data, mimeType: MimeType.octetStream)         // explicit
+Body.fromData(imageBytes); // image/png, etc.
+Body.fromData(data, mimeType: MimeType.octetStream); // explicit
 
 // Streaming (for large payloads)
-Body.fromDataStream(fileStream, contentLength: fileSize)    // known size
-Body.fromDataStream(dynamicStream)                          // chunked encoding
+Body.fromDataStream(fileStream, contentLength: fileSize); // known size
+Body.fromDataStream(dynamicStream); // chunked encoding
 
 // Empty
-Body.empty()
+Body.empty();
 ```
 
 Encoding defaults to UTF-8. Override with:
 
 ```dart
-Body.fromString('Café', mimeType: MimeType.plainText, encoding: latin1)
+Body.fromString('Café', mimeType: MimeType.plainText, encoding: latin1);
 ```
 
 ### Response headers

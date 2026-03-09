@@ -43,10 +43,10 @@ app.get(
 StaticHandler.directory(
   dir,
   cacheControl: (req, fileInfo) => CacheControlHeader(
-    maxAge: 3600,        // 1 hour
-    publicCache: true,   // allow CDN/proxy caching
+    maxAge: 3600, // 1 hour
+    publicCache: true, // allow CDN/proxy caching
   ),
-).asHandler
+).asHandler;
 ```
 
 ### Long-term immutable (versioned assets)
@@ -55,11 +55,11 @@ StaticHandler.directory(
 StaticHandler.directory(
   dir,
   cacheControl: (req, fileInfo) => CacheControlHeader(
-    maxAge: 31536000,    // 1 year
+    maxAge: 31536000, // 1 year
     publicCache: true,
-    immutable: true,     // browsers never revalidate
+    immutable: true, // browsers never revalidate
   ),
-).asHandler
+).asHandler;
 ```
 
 ## Cache busting

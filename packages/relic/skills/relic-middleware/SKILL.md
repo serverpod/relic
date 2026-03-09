@@ -38,13 +38,11 @@ final app = RelicApp()
   // Global -- applies to all matched routes
   ..use('/', logRequests())
   ..use('/', corsMiddleware())
-
   // Scoped -- only /api routes
   ..use('/api', authMiddleware())
-
   // Routes
-  ..get('/', homeHandler)           // logRequests + cors
-  ..get('/api/users', usersHandler) // logRequests + cors + auth
+  ..get('/', homeHandler) // logRequests + cors
+  ..get('/api/users', usersHandler); // logRequests + cors + auth
 ```
 
 ## Execution order
@@ -171,12 +169,9 @@ final id = requestIdProperty.get(req); // String -- throws if missing
 ```dart
 final _userProperty = ContextProperty<User>('user');
 final _sessionProperty = ContextProperty<Session>('session');
+```
 
-extension AuthContext on Request {
-  User get currentUser => _userProperty.get(this);
-  Session get session => _sessionProperty.get(this);
-}
-
+```dart
 // In middleware: set values
 _userProperty[req] = authenticatedUser;
 
