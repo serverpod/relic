@@ -19,16 +19,13 @@ import 'types/mime_type.dart';
 ///
 /// ### Text Body
 /// ```dart
-/// Body.fromString('Hello, World!')
+/// Body.fromString('Hello, World!');
 /// ```
 ///
 /// ### JSON Body
 /// ```dart
 /// final data = {'name': 'Alice', 'age': 30};
-/// Body.fromString(
-///   jsonEncode(data),
-///   mimeType: MimeType.json,
-/// )
+/// Body.fromString(jsonEncode(data), mimeType: MimeType.json);
 /// ```
 ///
 /// ### HTML Body
@@ -36,13 +33,13 @@ import 'types/mime_type.dart';
 /// Body.fromString(
 ///   '<html><body><h1>Welcome!</h1></body></html>',
 ///   mimeType: MimeType.html,
-/// )
+/// );
 /// ```
 ///
 /// ### Binary Data
 /// ```dart
 /// final bytes = Uint8List.fromList([1, 2, 3, 4]);
-/// Body.fromData(bytes)
+/// Body.fromData(bytes);
 /// ```
 ///
 /// ### Streaming Data
@@ -52,12 +49,12 @@ import 'types/mime_type.dart';
 ///   dataStream,
 ///   contentLength: fileSize,
 ///   mimeType: MimeType.octetStream,
-/// )
+/// );
 /// ```
 ///
 /// ### Empty Body
 /// ```dart
-/// Body.empty()
+/// Body.empty();
 /// ```
 ///
 /// ## Reading Request Bodies
@@ -246,15 +243,12 @@ class Body {
   /// Examples:
   /// ```dart
   /// // Binary data with automatic format detection
-  /// final imageData = Uint8List.fromList([0x89, 0x50, 0x4E, 0x47, ...]);
+  /// final imageData = Uint8List.fromList([0x89, 0x50, 0x4E, 0x47]);
   /// final imageBody = Body.fromData(imageData);
   /// // Automatically detects image/png from magic bytes
   ///
   /// // Binary data with explicit MIME type
-  /// final binaryBody = Body.fromData(
-  ///   data,
-  ///   mimeType: MimeType.octetStream,
-  /// );
+  /// final binaryBody = Body.fromData(data, mimeType: MimeType.octetStream);
   ///
   /// // PDF document detection
   /// final pdfBytes = utf8.encode('%PDF-1.4...');
