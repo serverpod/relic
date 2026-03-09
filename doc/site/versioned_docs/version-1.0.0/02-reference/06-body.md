@@ -66,10 +66,7 @@ final body = Body.fromData(bytes);
 When you know a file is binary or want to enforce a specific type, you can set the MIME type explicitly. This can help when serving files with uncommon formats or when autodetection is not desirable:
 
 ```dart
-final binaryBody = Body.fromData(
-  data,
-  mimeType: MimeType.octetStream,
-);
+final binaryBody = Body.fromData(data, mimeType: MimeType.octetStream);
 ```
 
 For large files or data that arrives incrementally, prefer streaming to avoid excessive memory usage. Streaming lets clients start receiving data immediately and keeps your server responsive under load:
@@ -172,10 +169,7 @@ print(body.bodyType?.encoding); // utf8
 If you must use a different character set, set the encoding explicitly. This keeps your intent clear and ensures the Content-Type header reflects the actual encoding used:
 
 ```dart
-final latinBody = Body.fromString(
-  'Café',
-  encoding: latin1,
-);
+final latinBody = Body.fromString('Café', encoding: latin1);
 ```
 
 Binary content does not use a character encoding, so the encoding field is absent. This distinction helps prevent accidental misinterpretation of raw bytes as text:
@@ -220,10 +214,7 @@ final file = File('large-file.dat');
 final fileStream = file.openRead();
 final fileSize = await file.length();
 
-final body = Body.fromDataStream(
-  fileStream,
-  contentLength: fileSize,
-);
+final body = Body.fromDataStream(fileStream, contentLength: fileSize);
 ```
 
 If the size is unknown, Relic will use chunked transfer encoding so that data can start flowing immediately. This is ideal for generated content or pipelines that produce output over time:

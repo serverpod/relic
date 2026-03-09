@@ -22,9 +22,7 @@ import '../router/router.dart';
 ///
 /// ```dart
 /// Response myHandler(Request req) {
-///   return Response.ok(
-///     body: Body.fromString('Hello, World!'),
-///   );
+///   return Response.ok(body: Body.fromString('Hello, World!'));
 /// }
 /// ```
 ///
@@ -45,9 +43,7 @@ import '../router/router.dart';
 /// // Route: /users/:id
 /// Handler userHandler(Request req) {
 ///   final id = req.pathParameters[#id];
-///   return Response.ok(
-///     body: Body.fromString('User ID: $id'),
-///   );
+///   return Response.ok(body: Body.fromString('User ID: $id'));
 /// }
 /// ```
 typedef Handler = FutureOr<Result> Function(Request req);
@@ -68,9 +64,7 @@ typedef Responder = FutureOr<Response> Function(Request);
 /// Example:
 /// ```dart
 /// final handler = respondWith(
-///   (final request) => Response.ok(
-///     body: Body.fromString('Hello, Relic!'),
-///   ),
+///   (final request) => Response.ok(body: Body.fromString('Hello, Relic!')),
 /// );
 /// ```
 Handler respondWith(final Responder responder) {

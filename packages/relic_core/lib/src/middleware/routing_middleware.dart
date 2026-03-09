@@ -47,7 +47,6 @@ final _routerProperty = ContextProperty<RelicRouter>('router');
 /// avoids the need for [Pipeline] and provides better composability.
 ///
 /// Preferred approach:
-/// ```dart
 /// final router = RelicRouter()
 ///   ..get('/users/:id', userHandler)
 ///   ..use('/', logRequests())
@@ -60,16 +59,16 @@ final _routerProperty = ContextProperty<RelicRouter>('router');
 /// [Handler], requiring conversion via [toHandler]:
 ///
 /// ```dart
-/// final router = Router<String>()
-///   ..get('/hello', 'Hello World');
+/// final router = Router<String>()..get('/hello', 'Hello World');
 ///
 /// final handler = const Pipeline()
-///     .addMiddleware(routeWith(
-///       router,
-///       toHandler: (message) => respondWith(
-///         (_) => Response.ok(body: Body.fromString(message))
+///     .addMiddleware(
+///       routeWith(
+///         router,
+///         toHandler: (message) =>
+///             respondWith((_) => Response.ok(body: Body.fromString(message))),
 ///       ),
-///     ))
+///     )
 ///     .addHandler(notFoundHandler);
 /// ```
 Middleware routeWith<T extends Object>(
@@ -204,9 +203,7 @@ extension ForwardingRequestEx on Request {
   /// Typically used with [Request.copyWith] to change the URL:
   /// ```dart
   /// router.get('/old-path', (req) {
-  ///   final newReq = req.copyWith(
-  ///     url: req.url.replace(path: '/new-path'),
-  ///   );
+  ///   final newReq = req.copyWith(url: req.url.replace(path: '/new-path'));
   ///   return req.forwardTo(newReq);
   /// });
   /// ```

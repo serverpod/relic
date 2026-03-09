@@ -126,8 +126,7 @@ Comprehensive testing is crucial for maintaining the quality and stability of Re
 
     void main() {
       group('My Feature Logic', () {
-        test(
-            'Given a specific input string, '
+        test('Given a specific input string, '
             'when the processing function is called, '
             'then the output should be correctly formatted', () {
           // Arrange: Set up preconditions
@@ -177,8 +176,7 @@ Based on `relic/test/router/normalized_path_test.dart`:
 ```dart
 // relic/test/router/normalized_path_test.dart
 group('Normalization Logic', () {
-  test(
-      'Given a simple path, '
+  test('Given a simple path, '
       'when normalized, '
       'then segments are correct and toString is canonical', () {
     // Arrange
@@ -192,8 +190,7 @@ group('Normalization Logic', () {
     expect(normalized.toString(), equals('/a/b/c'));
   });
 
-  test(
-      'Given path with ".." segments, '
+  test('Given path with ".." segments, '
       'when normalized, '
       'then ".." navigates up correctly', () {
     // Arrange

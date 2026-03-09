@@ -53,9 +53,9 @@ Path hierarchy first, then registration order within the same path scope:
 
 ```dart
 final app = RelicApp()
-  ..use('/api', middlewareC)    // specific to /api
-  ..use('/', middlewareA)       // all paths
-  ..use('/', middlewareB)       // all paths
+  ..use('/api', middlewareC) // specific to /api
+  ..use('/', middlewareA) // all paths
+  ..use('/', middlewareB) // all paths
   ..get('/api/foo', fooHandler);
 ```
 
@@ -162,7 +162,7 @@ final requestIdProperty = ContextProperty<String>('requestId');
 requestIdProperty[req] = 'req_${DateTime.now().millisecondsSinceEpoch}';
 
 // Read in handler
-final id = requestIdProperty[req];    // String? -- null if not set
+final id = requestIdProperty[req]; // String? -- null if not set
 final id = requestIdProperty.get(req); // String -- throws if missing
 ```
 

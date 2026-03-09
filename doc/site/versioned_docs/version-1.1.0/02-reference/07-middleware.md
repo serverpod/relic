@@ -60,10 +60,8 @@ import 'package:relic/relic.dart';
 final router = RelicApp()
   // Apply logging to all routes
   ..use('/', logRequests())
-
   // Apply authentication to API routes
   ..use('/api', authMiddleware())
-
   // Define your routes
   ..get('/api/users', usersHandler)
   ..post('/api/users', createUserHandler);
@@ -80,7 +78,6 @@ final app = RelicApp()
   // Global middleware - applies to ALL routes
   ..use('/', logRequests())
   ..use('/', corsMiddleware())
-
   // Your routes
   ..get('/users', usersHandler)
   ..get('/posts', postsHandler);
@@ -128,9 +125,12 @@ This means that within the same path scope, different middleware are applied in 
 
 ```dart
 final app = RelicApp()
-  ..use('/api', middlewareC)    // Registered first, but specific to /api
-  ..use('/', middlewareA)       // Registered second and applicable to all paths below /
-  ..use('/', middlewareB)       // Registered last and applicable to all paths below /
+  ..use('/api', middlewareC) // Registered first, but specific to /api
+  ..use(
+    '/',
+    middlewareA,
+  ) // Registered second and applicable to all paths below /
+  ..use('/', middlewareB) // Registered last and applicable to all paths below /
   ..get('/api/foo', fooHandler);
 ```
 
@@ -140,10 +140,10 @@ Let's look at an example of how middleware will work in same path scope:
 
 ```dart
 final app = RelicApp()
-  ..use('/api', middleware1)  // MW1 - outermost (registered first)
-  ..use('/api', middleware2)  // MW2 - middle
-  ..use('/api', middleware3)  // MW3 - innermost (registered last)
-  ..get('/api/users', usersHandler);  // H - handler
+  ..use('/api', middleware1) // MW1 - outermost (registered first)
+  ..use('/api', middleware2) // MW2 - middle
+  ..use('/api', middleware3) // MW3 - innermost (registered last)
+  ..get('/api/users', usersHandler); // H - handler
 ```
 
 The request flows from the outermost middleware to the innermost handler, and the response flows back out in reverse. The diagram below shows execution for a request to `/api/users` with three middleware layers registered at the same path.

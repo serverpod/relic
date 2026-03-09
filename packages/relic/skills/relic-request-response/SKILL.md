@@ -38,10 +38,12 @@ const limitParam = IntQueryParam('limit');
 const priceParam = DoubleQueryParam('price');
 
 app.get('/products', (req) {
-  final page = req.queryParameters.get(pageParam);    // int (throws if missing)
-  final limit = req.queryParameters.get(limitParam);   // int
+  final page = req.queryParameters.get(pageParam); // int (throws if missing)
+  final limit = req.queryParameters.get(limitParam); // int
   final maxPrice = req.queryParameters.get(priceParam); // double
-  return Response.ok(body: Body.fromString('page=$page limit=$limit price=$maxPrice'));
+  return Response.ok(
+    body: Body.fromString('page=$page limit=$limit price=$maxPrice'),
+  );
 });
 ```
 
@@ -80,9 +82,9 @@ app.get('/filter', (req) {
 
 ```dart
 app.get('/info', (req) {
-  final userAgent = req.headers.userAgent;        // String?
+  final userAgent = req.headers.userAgent; // String?
   final contentLength = req.headers.contentLength; // int?
-  final mimeType = req.mimeType;                   // MimeType?
+  final mimeType = req.mimeType; // MimeType?
   // ...
 });
 ```
@@ -144,7 +146,10 @@ app.post('/api/users', (req) async {
     );
   } catch (e) {
     return Response.badRequest(
-      body: Body.fromString(jsonEncode({'error': 'Invalid JSON: $e'}), mimeType: MimeType.json),
+      body: Body.fromString(
+        jsonEncode({'error': 'Invalid JSON: $e'}),
+        mimeType: MimeType.json,
+      ),
     );
   }
 });
@@ -237,7 +242,10 @@ app.get('/api/data', (req) {
 
   return Response.ok(
     headers: headers,
-    body: Body.fromString(jsonEncode({'status': 'ok'}), mimeType: MimeType.json),
+    body: Body.fromString(
+      jsonEncode({'status': 'ok'}),
+      mimeType: MimeType.json,
+    ),
   );
 });
 ```
@@ -273,9 +281,7 @@ app.get('/stream', (req) async {
 `Request` is immutable. Use `copyWith` to create a modified copy:
 
 ```dart
-final rewritten = request.copyWith(
-  url: request.url.replace(path: '/new-path'),
-);
+final rewritten = request.copyWith(url: request.url.replace(path: '/new-path'));
 
 final modified = request.copyWith(
   url: request.url.replace(path: '/other'),

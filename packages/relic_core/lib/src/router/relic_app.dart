@@ -16,7 +16,7 @@ part of 'router.dart';
 /// final app = RelicApp(useHostWhenRouting: true)
 ///   ..get('api.example.com/users', apiUsersHandler)
 ///   ..get('www.example.com/about', aboutHandler)
-///   ..get('*/health', healthHandler);  // Matches any host
+///   ..get('*/health', healthHandler); // Matches any host
 /// ```
 ///
 /// When `useHostWhenRouting` is `false` (the default), routing works as normal
@@ -77,10 +77,10 @@ final class RelicApp implements RelicRouter, _Reloadable {
   ///
   /// Example:
   /// ```dart
-  /// final app = RelicApp()
-  ///   ..get('/', (req) => req.ok('Hello!'));
+  /// final app = RelicApp()..get('/', (req) => req.ok('Hello!'));
   ///
-  /// final adapterFactory = () => IOAdapter.bind(InternetAddress.loopbackIPv4, port: 8080);
+  /// final adapterFactory = () =>
+  ///     IOAdapter.bind(InternetAddress.loopbackIPv4, port: 8080);
   /// final server = await app.run(adapterFactory);
   ///
   /// // later .. when done

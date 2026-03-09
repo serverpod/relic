@@ -33,8 +33,8 @@ app.get('/ws', (Request req) {
 ### Sending data
 
 ```dart
-webSocket.sendText('Hello!');      // throws on failure
-webSocket.trySendText('Hello!');   // silent on failure
+webSocket.sendText('Hello!'); // throws on failure
+webSocket.trySendText('Hello!'); // silent on failure
 ```
 
 ### Event types
@@ -71,9 +71,7 @@ app.get('/sse', (Request req) {
 
     final timer = Timer.periodic(
       Duration(seconds: 1),
-      (_) => channel.sink.add(
-        utf8.encode('data: ${DateTime.now()}\n\n'),
-      ),
+      (_) => channel.sink.add(utf8.encode('data: ${DateTime.now()}\n\n')),
     );
 
     await channel.sink.done;

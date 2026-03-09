@@ -73,11 +73,14 @@ final buster = CacheBustingConfig(
 );
 
 // Generate cache-busted URLs (e.g., /static/hello@6cb65f8d.txt)
-app.get('/', respondWith((req) async {
-  final cssUrl = await buster.assetPath('/static/style.css');
-  final html = '<link rel="stylesheet" href="$cssUrl">';
-  return Response.ok(body: Body.fromString(html, mimeType: MimeType.html));
-}));
+app.get(
+  '/',
+  respondWith((req) async {
+    final cssUrl = await buster.assetPath('/static/style.css');
+    final html = '<link rel="stylesheet" href="$cssUrl">';
+    return Response.ok(body: Body.fromString(html, mimeType: MimeType.html));
+  }),
+);
 
 // Serve with aggressive caching (safe because URL changes on content change)
 app.anyOf(

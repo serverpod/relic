@@ -76,7 +76,9 @@ updateHeader(headers, {'Cache-Control': 'max-age: 3600'}); // in shelf
 ```
 you do:
 ```dart
-headers.transform((mh) => mh.cacheControl = CacheControlHeader(maxAge: 3600)); // in relic
+headers.transform(
+  (mh) => mh.cacheControl = CacheControlHeader(maxAge: 3600),
+); // in relic
 ```
 A bit longer, but fully type safe
 
@@ -109,7 +111,7 @@ Middleware authMiddleware() {
     return (RequestContext ctx) {
       final token = ctx.request.headers.authorization?.credentials;
       final user = validateToken(token);
-      _currentUser[ctx] = user;  // Type-safe assignment
+      _currentUser[ctx] = user; // Type-safe assignment
       return innerHandler(ctx);
     };
   };
@@ -117,9 +119,9 @@ Middleware authMiddleware() {
 
 // Access it in handlers
 Handler protectedResource = (RequestContext ctx) {
-  final user = ctx.currentUser;  // Type-safe access, no casting needed
+  final user = ctx.currentUser; // Type-safe access, no casting needed
   return (ctx as RespondableContext).respond(
-    Response.ok(body: Body.fromString('Hello ${user.name}'))
+    Response.ok(body: Body.fromString('Hello ${user.name}')),
   );
 };
 ```
@@ -129,8 +131,10 @@ Handler protectedResource = (RequestContext ctx) {
 In Shelf, you'd use the context bag:
 ```dart
 // Shelf approach - no type safety, potential name conflicts
-request = request.change(context: {'user': user});  // Set is inherently unsafe (untyped)
-final user = request.context['user'] as User;       // Get (runtime cast can fail)
+request = request.change(
+  context: {'user': user},
+); // Set is inherently unsafe (untyped)
+final user = request.context['user'] as User; // Get (runtime cast can fail)
 ```
 
 **Advantages of ContextProperty:**
@@ -190,7 +194,7 @@ final class PathMiss<T> extends LookupResult<T> {
 }
 
 final class MethodMiss<T> extends LookupResult<T> {
-  final Set<Method> allowed;  // Path exists but wrong method
+  final Set<Method> allowed; // Path exists but wrong method
   // Return 405 Method Not Allowed with Allow header
 }
 
@@ -222,7 +226,7 @@ api.get('/users', listUsers);
 
 // Nested groups work too
 final v1 = api.group('/v1');
-v1.get('/posts', listPosts);  // Accessible at /api/v1/posts
+v1.get('/posts', listPosts); // Accessible at /api/v1/posts
 
 // Sub-routers can be created in separate packages for modularity
 ```
@@ -233,7 +237,7 @@ Path parameters use symbols instead of strings:
 
 ```dart
 router.get('/users/:id/posts/:postId', (RequestContext ctx) {
-  final userId = ctx.pathParameters[#id];      // Symbol, not string
+  final userId = ctx.pathParameters[#id]; // Symbol, not string
   final postId = ctx.pathParameters[#postId];
 });
 ```
@@ -250,10 +254,10 @@ While Shelf uses `Uint8List` at runtime (since v1.1.1), its type signature decla
 
 ```dart
 // Shelf
-Stream<List<int>> body;  // Runtime is Uint8List, but type says List<int>
+Stream<List<int>> body; // Runtime is Uint8List, but type says List<int>
 
 // Relic
-Stream<Uint8List> body;  // Type matches runtime, making intent clear
+Stream<Uint8List> body; // Type matches runtime, making intent clear
 ```
 
 This eliminates potential type confusion and makes the API contract explicit.
@@ -266,7 +270,7 @@ In Shelf, the content-type header and encoding live separately from the body, wh
 class Body {
   final Stream<Uint8List> stream;
   final int? contentLength;
-  final BodyType? bodyType;  // Combines mimeType + encoding
+  final BodyType? bodyType; // Combines mimeType + encoding
 }
 ```
 
@@ -332,7 +336,7 @@ if (ws.trySendText('Hello')) {
 }
 
 // Standard throwing variant also available
-ws.sendText('Hello');  // Throws WebSocketConnectionClosed if closed
+ws.sendText('Hello'); // Throws WebSocketConnectionClosed if closed
 
 // Check state explicitly
 if (!ws.isClosed) {
