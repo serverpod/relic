@@ -140,10 +140,10 @@ Relic automatically detects MIME types for common formats, reducing boilerplate 
 JSON, HTML, XML, and plain text are automatically detected:
 
 ```dart
-Body.fromString('{"key": "value"}') // → application/json
-Body.fromString('<!DOCTYPE html>...') // → text/html
-Body.fromString('<?xml version="1.0"?>...') // → application/xml
-Body.fromString('Plain text') // → text/plain
+Body.fromString('{"key": "value"}'); // → application/json
+Body.fromString('<!DOCTYPE html>...'); // → text/html
+Body.fromString('<?xml version="1.0"?>...'); // → application/xml
+Body.fromString('Plain text'); // → text/plain
 ```
 
 #### Binary content detection
@@ -151,10 +151,10 @@ Body.fromString('Plain text') // → text/plain
 Common image formats, documents, and other binary files are automatically detected:
 
 ```dart
-Body.fromData(pngBytes) // → image/png
-Body.fromData(jpegBytes) // → image/jpeg
-Body.fromData(pdfBytes) // → application/pdf
-Body.fromData(unknownBytes) // → application/octet-stream
+Body.fromData(pngBytes); // → image/png
+Body.fromData(jpegBytes); // → image/jpeg
+Body.fromData(pdfBytes); // → application/pdf
+Body.fromData(unknownBytes); // → application/octet-stream
 ```
 
 ### Encoding handling

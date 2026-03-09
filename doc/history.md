@@ -353,15 +353,15 @@ This makes it easier to write robust WebSocket handlers that gracefully handle c
 import 'package:shelf_web_socket/shelf_web_socket.dart';
 
 var handler = webSocketHandler((webSocket) {
-  webSocket.stream.listen(...);
-  webSocket.sink.add(...);
+  webSocket.stream.listen(/* ... */);
+  webSocket.sink.add(/* ... */);
 });
 
 // Relic approach (built-in, state machine integration)
 Handler handler = (NewContext ctx) {
   return ctx.connect((RelicWebSocket ws) {
-    ws.events.listen(...);
-    ws.trySendText(...);  // Non-throwing variant
+    ws.events.listen(/* ... */);
+    ws.trySendText(/* ... */); // Non-throwing variant
   });
 };
 ```

@@ -95,13 +95,11 @@ This means that when you use `router.use('/', middleware)`, the middleware appli
 final app = RelicApp()
   // Global logging
   ..use('/', logRequests())
-
   // Authentication only for API routes
   ..use('/api', authMiddleware())
-
   // Routes
-  ..get('/', homeHandler)           // Only logging
-  ..get('/api/users', usersHandler) // Logging + auth
+  ..get('/', homeHandler) // Only logging
+  ..get('/api/users', usersHandler); // Logging + auth
 ```
 
 :::info Built-in logging
