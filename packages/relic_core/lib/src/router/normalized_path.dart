@@ -1,5 +1,6 @@
 import 'package:meta/meta.dart';
 
+import 'cache.dart';
 import 'lru_cache.dart';
 
 /// Represents a URL path that has been normalized.
@@ -13,8 +14,20 @@ import 'lru_cache.dart';
 /// normalized paths will often share the same object instance.
 @immutable
 class NormalizedPath {
-  /// Cache of interned instances
-  static var interned = LruCache<String, NormalizedPath>(10000);
+  /// Cache of interned instances.
+  ///
+  /// Defaults to an [LruCache] with 10,000 entries. Can be replaced with any
+  /// [Cache] implementation to tune caching behavior:
+  ///
+  /// ```dart
+  /// // Disable caching for high-cardinality workloads
+  /// NormalizedPath.interned = NoCache();
+  ///
+  /// // Use a larger cache
+  /// NormalizedPath.interned = LruCache(50000);
+  /// ```
+  static Cache<String, NormalizedPath> interned =
+      LruCache<String, NormalizedPath>(10000);
 
   /// The individual segments of the normalized path.
   /// For example, the path `/a/b/c` would have segments `['a', 'b', 'c']`.
