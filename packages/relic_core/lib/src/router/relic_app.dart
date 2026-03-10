@@ -190,6 +190,7 @@ final class RelicApp implements RelicRouter, _Reloadable {
 /// Developer tools for inspecting and debugging a [RelicApp].
 final class DeveloperTools {
   int _reloadCount = 0;
+  int _staticChangeCount = 0;
   StreamSubscription? _reloadSubscription;
 
   DeveloperTools._();
@@ -197,20 +198,45 @@ final class DeveloperTools {
   /// Number of hot reloads that have occurred since the app started.
   int get reloadCount => _reloadCount;
 
+  /// Number of static file changes that have been notified since the app
+  /// started. This is incremented by external tools (e.g. the CLI) via the
+  /// `ext.relic.notifyStaticChange` VM service extension.
+  int get staticChangeCount => _staticChangeCount;
+
   /// Whether the VM service is available (i.e. running in dev mode).
   bool get isDevMode => _reloadSubscription != null;
 
   Future<void> _registerForReload(final _Reloadable app) async {
     _reloadSubscription = await _hotReloader.registerForReload(app);
+    if (_reloadSubscription != null) {
+      _registerStaticChangeExtension();
+    }
   }
 
   Future<void> _dispose() async {
+    _staticChangeInstances.remove(this);
     await _reloadSubscription?.cancel();
     _reloadSubscription = null;
   }
 
   void _onReload() => _reloadCount++;
+
+  void _registerStaticChangeExtension() {
+    _staticChangeInstances.add(this);
+    if (!_staticChangeExtensionRegistered) {
+      _staticChangeExtensionRegistered = true;
+      registerExtension('ext.relic.notifyStaticChange', (method, params) async {
+        for (final instance in _staticChangeInstances) {
+          instance._staticChangeCount++;
+        }
+        return ServiceExtensionResponse.result('{"type":"Success"}');
+      });
+    }
+  }
 }
+
+bool _staticChangeExtensionRegistered = false;
+final _staticChangeInstances = <DeveloperTools>{};
 
 final class _Injectable implements RouterInjectable {
   final void Function(RelicRouter) setup;

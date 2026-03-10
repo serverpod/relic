@@ -255,6 +255,48 @@ void main() {
       await vmService.dispose();
     }, tags: {'hot-reload'});
 
+    test('Given a RelicApp before run is called, '
+        'when checking staticChangeCount, '
+        'then it returns 0', () {
+      final app = RelicApp();
+      expect(app.developerTools.staticChangeCount, 0);
+    });
+
+    test('Given a running RelicApp with VM service available, '
+        'when notifyStaticChange is called, '
+        'then staticChangeCount increments', () async {
+      final wsUri = (await Service.getInfo()).serverWebSocketUri;
+      if (wsUri == null) {
+        markTestSkipped(
+          'VM service not available! Use: dart run --enable-vm-service',
+        );
+        return;
+      }
+
+      final vmService = await vmi.vmServiceConnectUri(wsUri.toString());
+      final isolateId = Service.getIsolateId(Isolate.current)!;
+      final app = RelicApp()..any('/', (final req) => Response.ok());
+
+      await app.serve(port: 0);
+
+      expect(app.developerTools.staticChangeCount, 0);
+
+      await vmService.callServiceExtension(
+        'ext.relic.notifyStaticChange',
+        isolateId: isolateId,
+      );
+      expect(app.developerTools.staticChangeCount, 1);
+
+      await vmService.callServiceExtension(
+        'ext.relic.notifyStaticChange',
+        isolateId: isolateId,
+      );
+      expect(app.developerTools.staticChangeCount, 2);
+
+      await app.close();
+      await vmService.dispose();
+    }, tags: {'hot-reload'});
+
     test('Given a RelicApp with VM service available, '
         'when serve is called, '
         'then isDevMode returns true', () async {
