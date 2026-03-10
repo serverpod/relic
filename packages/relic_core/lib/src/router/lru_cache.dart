@@ -1,11 +1,13 @@
 import 'dart:collection';
 
+import 'cache.dart';
+
 /// A simple Least Recently Used (LRU) cache implementation.
 ///
 /// Keeps a fixed number of items ([_maxSize]). When the cache is full and a new
 /// item is added, the least recently used item is evicted. Accessing an item
 /// (get or update) marks it as the most recently used.
-final class LruCache<K, V> {
+final class LruCache<K, V> implements Cache<K, V> {
   final int _maxSize;
 
   // ignore: prefer_collection_literals
