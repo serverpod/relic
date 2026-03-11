@@ -127,9 +127,7 @@ typedef Middleware = Handler Function(Handler next);
 /// final errorHandler = createMiddleware(
 ///   onError: (error, stackTrace) {
 ///     print('Error: $error');
-///     return Response.internalServerError(
-///       body: Body.fromString('Server error'),
-///     );
+///     return Response.internalServerError(body: Body.fromString('Server error'));
 ///   },
 /// );
 /// ```

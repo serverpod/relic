@@ -38,13 +38,11 @@ final app = RelicApp()
   // Global -- applies to all matched routes
   ..use('/', logRequests())
   ..use('/', corsMiddleware())
-
   // Scoped -- only /api routes
   ..use('/api', authMiddleware())
-
   // Routes
-  ..get('/', homeHandler)           // logRequests + cors
-  ..get('/api/users', usersHandler) // logRequests + cors + auth
+  ..get('/', homeHandler) // logRequests + cors
+  ..get('/api/users', usersHandler); // logRequests + cors + auth
 ```
 
 ## Execution order
@@ -53,9 +51,9 @@ Path hierarchy first, then registration order within the same path scope:
 
 ```dart
 final app = RelicApp()
-  ..use('/api', middlewareC)    // specific to /api
-  ..use('/', middlewareA)       // all paths
-  ..use('/', middlewareB)       // all paths
+  ..use('/api', middlewareC) // specific to /api
+  ..use('/', middlewareA) // all paths
+  ..use('/', middlewareB) // all paths
   ..get('/api/foo', fooHandler);
 ```
 
@@ -162,7 +160,7 @@ final requestIdProperty = ContextProperty<String>('requestId');
 requestIdProperty[req] = 'req_${DateTime.now().millisecondsSinceEpoch}';
 
 // Read in handler
-final id = requestIdProperty[req];    // String? -- null if not set
+final id = requestIdProperty[req]; // String? -- null if not set
 final id = requestIdProperty.get(req); // String -- throws if missing
 ```
 
@@ -171,12 +169,9 @@ final id = requestIdProperty.get(req); // String -- throws if missing
 ```dart
 final _userProperty = ContextProperty<User>('user');
 final _sessionProperty = ContextProperty<Session>('session');
+```
 
-extension AuthContext on Request {
-  User get currentUser => _userProperty.get(this);
-  Session get session => _sessionProperty.get(this);
-}
-
+```dart
 // In middleware: set values
 _userProperty[req] = authenticatedUser;
 

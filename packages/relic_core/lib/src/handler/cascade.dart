@@ -18,11 +18,11 @@ typedef _ShouldCascade = bool Function(Response response);
 /// returned.
 ///
 /// ```dart
-///  var handler = new Cascade()
-///      .add(webSocketHandler)
-///      .add(staticFileHandler)
-///      .add(application)
-///      .handler;
+/// var handler = new Cascade()
+///     .add(webSocketHandler)
+///     .add(staticFileHandler)
+///     .add(application)
+///     .handler;
 /// ```
 class Cascade {
   /// The function used to determine whether the cascade should continue on to

@@ -115,29 +115,35 @@ The CI runs on multiple Dart versions (3.5.0, stable, beta) and OS (Ubuntu, Wind
 
 **Example test structure (one approach):**
 ```dart
-group('Given a NewContext, when withRequest is called with a new Request,', () {
-  late NewContext context;
-  late Request newRequest;
-  late NewContext newContext;
-  
-  setUp(() {
-    // Arrange
-    context = Request(Method.get, Uri.parse('http://test.com')).toContext(Object());
-    newRequest = Request(Method.post, Uri.parse('http://test.com/new'));
-    // Act (shared action for all tests in this group)
-    newContext = context.withRequest(newRequest);
-  });
-  
-  test('then it returns a NewContext instance', () {
-    // Assert
-    expect(newContext, isA<NewContext>());
-  });
-  
-  test('then the new context contains the new request', () {
-    // Assert
-    expect(newContext.request, same(newRequest));
-  });
-});
+group(
+  'Given a NewContext, when withRequest is called with a new Request,',
+  () {
+    late NewContext context;
+    late Request newRequest;
+    late NewContext newContext;
+
+    setUp(() {
+      // Arrange
+      context = Request(
+        Method.get,
+        Uri.parse('http://test.com'),
+      ).toContext(Object());
+      newRequest = Request(Method.post, Uri.parse('http://test.com/new'));
+      // Act (shared action for all tests in this group)
+      newContext = context.withRequest(newRequest);
+    });
+
+    test('then it returns a NewContext instance', () {
+      // Assert
+      expect(newContext, isA<NewContext>());
+    });
+
+    test('then the new context contains the new request', () {
+      // Assert
+      expect(newContext.request, same(newRequest));
+    });
+  },
+);
 ```
 
 ### Common Development Patterns
@@ -153,8 +159,11 @@ group('Given a NewContext, when withRequest is called with a new Request,', () {
 ResponseContext hello(final NewContext ctx) {
   final name = ctx.pathParameters[#name];
   final age = int.parse(ctx.pathParameters[#age]!);
-  return ctx.respond(Response.ok(
-      body: Body.fromString('Hello $name! To think you are $age years old.')));
+  return ctx.respond(
+    Response.ok(
+      body: Body.fromString('Hello $name! To think you are $age years old.'),
+    ),
+  );
 }
 ```
 
