@@ -1,3 +1,12 @@
+## 1.2.0
+- feat: Make `NormalizedPath` interning cache configurable ([#343](https://github.com/serverpod/relic/pull/343))
+  - Introduce abstract `Cache<K, V>` interface
+  - Add `NoCache` implementation for high-cardinality workloads
+  - `LruCache` now implements `Cache`
+  - `NormalizedPath.interned` can be swapped to any `Cache` implementation
+- feat: Add `staticChangeCount` and VM service extension to `DeveloperTools` ([#341](https://github.com/serverpod/relic/pull/341))
+- feat: Add `DeveloperTools` class to `RelicApp` ([#340](https://github.com/serverpod/relic/pull/340))
+
 ## 1.1.1
 - docs(ai): Adds skills for AI agents based on documentation. ([#338](https://github.com/serverpod/relic/pull/338))
 
