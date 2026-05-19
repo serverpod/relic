@@ -24,6 +24,7 @@ export 'src/headers/typed/primitives/host.dart' show Host;
 export 'src/headers/typed/primitives/language_tag.dart' show LanguageTag;
 export 'src/headers/typed/primitives/origin.dart'
     show OpaqueOrigin, Origin, TupleOrigin;
+export 'src/headers/typed/primitives/parameter_value.dart' show ParameterValue;
 export 'src/headers/typed/primitives/token.dart' show Token, TokenValue;
 export 'src/headers/typed/typed_headers.dart';
 export 'src/ip_address/endianness.dart';
