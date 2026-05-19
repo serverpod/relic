@@ -58,7 +58,13 @@ final class HostHeader {
     }
   }
 
-  HostHeader.fromUri(final Uri uri) : this._(uri.host, uri.port);
+  /// Constructs a [HostHeader] from a [Uri], preserving the absence of an
+  /// explicit port: a URI like `http://example.com/` produces a [HostHeader]
+  /// with `port: null` rather than the default `80`. This matches RFC 9110
+  /// 7.2, where `Host = uri-host [ ":" port ]` only sends the port when one
+  /// was explicitly given.
+  HostHeader.fromUri(final Uri uri)
+    : this._(uri.host, uri.hasPort ? uri.port : null);
 
   String _encode() => port == null ? host : '$host:$port';
 
