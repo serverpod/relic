@@ -31,18 +31,25 @@ final class TEHeader {
     }
 
     final encodings = splitValues.map((final value) {
-      final encodingParts = value.split(';q=');
-      final encoding = encodingParts[0].trim().toLowerCase();
+      final parts = value.split(';');
+      final encoding = parts[0].trim().toLowerCase();
       if (encoding.isEmpty) {
         throw const FormatException('Invalid encoding');
       }
       double? quality;
-      if (encodingParts.length > 1) {
-        final value = double.tryParse(encodingParts[1].trim());
-        if (value == null || value < 0 || value > 1) {
+      // Per RFC 9110 12.4.2 the weight parameter is `q`, case-insensitive,
+      // with OWS allowed around the surrounding `;` and `=`.
+      for (var i = 1; i < parts.length; i++) {
+        final eq = parts[i].indexOf('=');
+        if (eq < 0) continue;
+        final name = parts[i].substring(0, eq).trim();
+        if (name.toLowerCase() != 'q') continue;
+        final parsed = double.tryParse(parts[i].substring(eq + 1).trim());
+        if (parsed == null || parsed < 0 || parsed > 1) {
           throw const FormatException('Invalid quality value');
         }
-        quality = value;
+        quality = parsed;
+        break;
       }
       return TeQuality(encoding, quality);
     }).toList();
@@ -79,8 +86,20 @@ class TeQuality {
   /// Constructs an instance of [TeQuality].
   TeQuality(this.encoding, [final double? quality]) : quality = quality ?? 1.0;
 
-  /// Converts the [TeQuality] instance into a string representation suitable for HTTP headers.
-  String _encode() => quality == 1.0 ? encoding : '$encoding;q=$quality';
+  /// Converts the [TeQuality] instance into a string representation suitable
+  /// for HTTP headers. The q-value is rendered with at most 3 fractional
+  /// digits per RFC 9110 12.4.2.
+  String _encode() =>
+      quality == 1.0 ? encoding : '$encoding;q=${_formatQValue(quality!)}';
+
+  static String _formatQValue(final double q) {
+    var s = q.toStringAsFixed(3);
+    while (s.endsWith('0') && !s.endsWith('.0')) {
+      s = s.substring(0, s.length - 1);
+    }
+    if (s.endsWith('.0')) s = s.substring(0, s.length - 2);
+    return s;
+  }
 
   @override
   bool operator ==(final Object other) =>
