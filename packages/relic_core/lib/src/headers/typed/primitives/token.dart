@@ -30,10 +30,13 @@ abstract interface class Token {
   static bool isValid(final String s) {
     if (s.isEmpty) return false;
     for (var i = 0; i < s.length; i++) {
-      if (!_isTchar(s.codeUnitAt(i))) return false;
+      if (!isTchar(s.codeUnitAt(i))) return false;
     }
     return true;
   }
+
+  /// True if [c] is a single `tchar` code unit per RFC 9110 5.6.2.
+  static bool isTchar(final int c) => _isTchar(c);
 
   /// Returns [s] unchanged if it is a valid token, otherwise throws
   /// [FormatException].
