@@ -23,9 +23,24 @@ final class ContentRangeHeader {
   final int? size;
 
   /// Constructs a [ContentRangeHeader] with the specified range and optional total size.
+  ///
+  /// Per RFC 9110 14.4, `start` and `end` must both be present (a specified
+  /// range) or both absent (an `unsatisfied-range`). The `unsatisfied-range`
+  /// form requires `size` (the `complete-length`); passing `size: null` with
+  /// no range is not representable on the wire.
   ContentRangeHeader({this.unit = 'bytes', this.start, this.end, this.size}) {
+    if ((start == null) != (end == null)) {
+      throw const FormatException(
+        'start and end must both be set or both be null',
+      );
+    }
     if (start != null && end != null && start! > end!) {
       throw const FormatException('Invalid range');
+    }
+    if (start == null && end == null && size == null) {
+      throw const FormatException(
+        'unsatisfied-range form requires a complete-length (size)',
+      );
     }
   }
 
