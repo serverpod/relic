@@ -20,6 +20,8 @@ export 'src/headers/standard_headers_extensions.dart';
 export 'src/headers/typed/primitives/delta_seconds.dart' show DeltaSeconds;
 export 'src/headers/typed/primitives/header_scanner.dart' show HeaderScanner;
 export 'src/headers/typed/primitives/host.dart' show Host;
+export 'src/headers/typed/primitives/origin.dart'
+    show OpaqueOrigin, Origin, TupleOrigin;
 export 'src/headers/typed/primitives/token.dart' show Token, TokenValue;
 export 'src/headers/typed/typed_headers.dart';
 export 'src/ip_address/endianness.dart';
