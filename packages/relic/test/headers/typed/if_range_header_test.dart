@@ -84,20 +84,17 @@ void main() {
       },
     );
 
-    test(
-      'when an If-Range header with a weak ETag is passed then it should parse correctly',
-      () async {
-        final headers = await getServerRequestHeaders(
+    test('when an If-Range header with a weak ETag is passed then the server '
+        'rejects it per RFC 9110 13.1.5', () async {
+      expect(
+        getServerRequestHeaders(
           server: server,
           touchHeaders: (final h) => h.ifRange,
           headers: {'if-range': 'W/"123456"'},
-        );
-
-        expect(headers.ifRange?.etag?.value, equals('123456'));
-        expect(headers.ifRange?.etag?.isWeak, isTrue);
-        expect(headers.ifRange?.lastModified, isNull);
-      },
-    );
+        ),
+        throwsA(isA<BadRequestException>()),
+      );
+    });
 
     test(
       'when an If-Range header with a valid HTTP date is passed then it should parse correctly',
