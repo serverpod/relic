@@ -349,6 +349,12 @@ final class DigestAuthorizationHeader extends AuthorizationHeader {
   }
 
   /// Returns the full authorization string for Digest authentication.
+  ///
+  /// Per RFC 7616 section 3.4, the `algorithm`, `qop`, `nc`, and `stale`
+  /// parameters carry token values and MUST NOT be quoted on the wire; only
+  /// `username`, `realm`, `nonce`, `uri`, `response`, `cnonce`, and `opaque`
+  /// take quoted-string form. Strict server implementations (e.g. Apache
+  /// `mod_auth_digest`) reject requests that quote the token-form parameters.
   @override
   String get headerValue {
     return [
@@ -358,9 +364,9 @@ final class DigestAuthorizationHeader extends AuthorizationHeader {
       '$_nonce="$nonce"',
       '$_uri="$uri"',
       '$_response="$response"',
-      if (algorithm != null) '$_algorithm="$algorithm"',
-      if (qop != null) '$_qop="$qop"',
-      if (nc != null) '$_nc="$nc"',
+      if (algorithm != null) '$_algorithm=$algorithm',
+      if (qop != null) '$_qop=$qop',
+      if (nc != null) '$_nc=$nc',
       if (cnonce != null) '$_cnonce="$cnonce"',
       if (opaque != null) '$_opaque="$opaque"',
     ].join(', ');
