@@ -53,28 +53,47 @@ class EncodingQuality {
     : quality = quality ?? 1.0;
 
   /// Parses a string value and returns an [EncodingQuality] instance.
+  ///
+  /// The weight is recognized as the parameter named `q` (RFC 9110 12.4.2),
+  /// case-insensitive, tolerating OWS around the surrounding `;` and `=`.
   factory EncodingQuality.parse(final String value) {
-    final encodingParts = value.split(';q=');
-    final encoding = encodingParts[0].trim().toLowerCase();
+    final parts = value.split(';');
+    final encoding = parts[0].trim().toLowerCase();
     if (encoding.isEmpty) {
       throw const FormatException('Invalid encoding');
     }
 
     double? quality;
-    if (encodingParts.length > 1) {
-      final qualityValue = double.tryParse(encodingParts[1].trim());
-      if (qualityValue == null || qualityValue < 0 || qualityValue > 1) {
+    for (var i = 1; i < parts.length; i++) {
+      final eq = parts[i].indexOf('=');
+      if (eq < 0) continue;
+      final name = parts[i].substring(0, eq).trim();
+      if (name.toLowerCase() != 'q') continue;
+      final parsed = double.tryParse(parts[i].substring(eq + 1).trim());
+      if (parsed == null || parsed < 0 || parsed > 1) {
         throw const FormatException('Invalid quality value');
       }
-      quality = qualityValue;
+      quality = parsed;
+      break;
     }
 
     return EncodingQuality(encoding, quality);
   }
 
-  /// Encodes this [EncodingQuality] into a string representation suitable for HTTP headers.
+  /// Encodes this [EncodingQuality] into a string representation suitable for
+  /// HTTP headers. The q-value is rendered with at most 3 fractional digits
+  /// per RFC 9110 12.4.2.
   String encode() {
-    return quality == 1.0 ? encoding : '$encoding;q=$quality';
+    return quality == 1.0 ? encoding : '$encoding;q=${_formatQValue(quality!)}';
+  }
+
+  static String _formatQValue(final double q) {
+    var s = q.toStringAsFixed(3);
+    while (s.endsWith('0') && !s.endsWith('.0')) {
+      s = s.substring(0, s.length - 1);
+    }
+    if (s.endsWith('.0')) s = s.substring(0, s.length - 2);
+    return s;
   }
 
   @override
