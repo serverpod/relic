@@ -17,6 +17,7 @@ export 'src/headers/exception/header_exception.dart'
 export 'src/headers/header_accessor.dart';
 export 'src/headers/headers.dart';
 export 'src/headers/standard_headers_extensions.dart';
+export 'src/headers/typed/primitives/delta_seconds.dart' show DeltaSeconds;
 export 'src/headers/typed/primitives/header_scanner.dart' show HeaderScanner;
 export 'src/headers/typed/primitives/token.dart' show Token, TokenValue;
 export 'src/headers/typed/typed_headers.dart';
