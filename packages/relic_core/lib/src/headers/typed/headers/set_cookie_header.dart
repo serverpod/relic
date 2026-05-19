@@ -36,10 +36,17 @@ final class SetCookieHeader {
   final int? maxAge;
 
   /// The domain that the cookie applies to.
-  final Uri? domain;
+  ///
+  /// Per RFC 6265 5.2.3, this is a bare hostname (`<subdomain>`): no scheme,
+  /// no leading slashes, no port, no path. Modeling it as [Host] enforces
+  /// that on construction and on the wire.
+  final Host? domain;
 
   /// The path within the [domain] that the cookie applies to.
-  final Uri? path;
+  ///
+  /// Per RFC 6265 5.2.4, this is an opaque string (any CHAR except CTLs or
+  /// `;`); it is not a URI.
+  final String? path;
 
   /// Whether to only send this cookie on secure connections.
   final bool secure;
@@ -82,8 +89,8 @@ final class SetCookieHeader {
     SameSite? sameSite;
     DateTime? expires;
     int? maxAge;
-    Uri? domain;
-    Uri? path;
+    Host? domain;
+    String? path;
 
     for (final cookie in splitValue) {
       // Handle SameSite attribute
@@ -106,8 +113,7 @@ final class SetCookieHeader {
         if (path != null) {
           throw const FormatException('Supplied multiple Path attributes');
         }
-        final pathValue = cookie.split('=')[1].trim();
-        path = parseUri(pathValue);
+        path = cookie.split('=')[1].trim();
         continue;
       }
 
@@ -117,7 +123,7 @@ final class SetCookieHeader {
           throw const FormatException('Supplied multiple Domain attributes');
         }
         final domainValue = cookie.split('=')[1].trim();
-        domain = parseUri(domainValue);
+        domain = Host.parse(domainValue);
         continue;
       }
 
@@ -197,8 +203,8 @@ final class SetCookieHeader {
       attributes.add('$_expires${formatHttpDate(expires!)}');
     }
     if (maxAge != null) attributes.add('$_maxAge$maxAge');
-    if (domain != null) attributes.add('$_domain${domain.toString()}');
-    if (path != null) attributes.add('$_path${path.toString()}');
+    if (domain != null) attributes.add('$_domain${domain!.encode()}');
+    if (path != null) attributes.add('$_path$path');
 
     return attributes.join('; ');
   }

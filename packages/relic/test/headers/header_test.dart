@@ -602,7 +602,7 @@ void main() {
         Headers.accessControlAllowOrigin,
         (final h) =>
             h.accessControlAllowOrigin = AccessControlAllowOriginHeader.origin(
-              origin: Uri.parse('https://example.com'),
+              origin: Origin.parse('https://example.com'),
             ),
       ),
       (
@@ -703,7 +703,7 @@ void main() {
       ),
       (
         Headers.contentRange,
-        (final h) => h.contentRange = ContentRangeHeader(),
+        (final h) => h.contentRange = ContentRangeHeader(size: 1234),
       ),
       (
         Headers.contentSecurityPolicy,
