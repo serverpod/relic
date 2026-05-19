@@ -201,6 +201,7 @@ void main() {
       Headers.permissionsPolicy,
       Headers.referer,
       Headers.server,
+      Headers.setCookie,
       Headers.te,
       Headers.trailer,
       Headers.upgrade,

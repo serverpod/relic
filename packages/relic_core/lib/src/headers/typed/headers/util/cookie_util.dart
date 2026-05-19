@@ -84,3 +84,21 @@ String validateCookieValue(final String value) {
   // and should be applied/reversed by the application, not the parser.
   return value;
 }
+
+/// Validates a Set-Cookie `Path` (or `Domain` path-style) attribute value and
+/// returns it unchanged.
+///
+/// Per RFC 6265 5.2.4 a path-value is `*av-octet` where `av-octet` is any
+/// CHAR except CTLs or `;`. Rejecting control characters here prevents
+/// header injection (CR/LF) when a path is built from untrusted input and
+/// later serialized.
+String validateCookiePath(final String path) {
+  for (int i = 0; i < path.length; i++) {
+    final int codeUnit = path.codeUnitAt(i);
+    // CTLs (0x00-0x1F, 0x7F) and ';' (0x3B) are not allowed in a path-value.
+    if (codeUnit <= 0x1F || codeUnit == 0x7F || codeUnit == 0x3B) {
+      throw const FormatException('Invalid cookie path');
+    }
+  }
+  return path;
+}

@@ -48,5 +48,77 @@ void main() {
         );
       });
     });
+
+    group('Given a Host domain that carries a port,', () {
+      test('when used to construct a SetCookieHeader, '
+          'then it throws (RFC 6265 5.2.3 forbids a port in Domain).', () {
+        expect(
+          () => SetCookieHeader(
+            name: 'sid',
+            value: 'abc',
+            domain: Host('example.com', 8080),
+          ),
+          throwsFormatException,
+        );
+      });
+    });
+  });
+
+  group('SetCookieHeader parser hardening', () {
+    group('Given a cookie name that contains an attribute keyword,', () {
+      test('when parsed, '
+          'then the first pair is the cookie, not the attribute.', () {
+        final parsed = SetCookieHeader.parse('sessionhttponly=xyz');
+
+        expect(parsed.name, equals('sessionhttponly'));
+        expect(parsed.value, equals('xyz'));
+        expect(parsed.httpOnly, isFalse);
+      });
+    });
+
+    group('Given a cookie value that contains an "=",', () {
+      test('when parsed, '
+          'then only the first "=" splits name from value.', () {
+        final parsed = SetCookieHeader.parse('token=a=b=c');
+
+        expect(parsed.name, equals('token'));
+        expect(parsed.value, equals('a=b=c'));
+      });
+    });
+
+    group('Given a Path attribute value that contains an "=",', () {
+      test('when parsed, '
+          'then the full path after the first "=" is preserved.', () {
+        final parsed = SetCookieHeader.parse('sid=x; Path=/foo=bar');
+
+        expect(parsed.path, equals('/foo=bar'));
+      });
+    });
+
+    group('Given a cookie name equal to an attribute label,', () {
+      test('when encoded, '
+          'then the cookie-pair is not collapsed with the attribute.', () {
+        final cookie = SetCookieHeader(name: 'Path', value: '/foo', path: '/x');
+
+        final encoded = SetCookieHeader.codec.encode(cookie).single;
+        expect(encoded, contains('Path=/foo'));
+        expect(encoded, contains('Path=/x'));
+        expect(encoded, equals('Path=/foo; Path=/x'));
+      });
+    });
+
+    group('Given a path containing a control character,', () {
+      test('when used to construct a SetCookieHeader, '
+          'then it throws to prevent header injection.', () {
+        expect(
+          () => SetCookieHeader(
+            name: 'sid',
+            value: 'x',
+            path: '/foo\r\nSet-Cookie: evil=1',
+          ),
+          throwsFormatException,
+        );
+      });
+    });
   });
 }
