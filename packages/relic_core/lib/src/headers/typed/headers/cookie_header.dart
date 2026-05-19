@@ -29,9 +29,9 @@ final class CookieHeader {
     final splitValues = value.splitTrimAndFilterUnique(separator: ';');
 
     final cookies = splitValues.map(Cookie.parse).toList();
-    final names = cookies
-        .map((final cookie) => cookie.name.toLowerCase())
-        .toList();
+    // Cookie names are case-sensitive per RFC 6265 4.2.2/5.4, so `Sid` and
+    // `sid` are distinct cookies that must both be preserved.
+    final names = cookies.map((final cookie) => cookie.name).toList();
     final uniqueNames = names.toSet();
 
     if (names.length != uniqueNames.length) {
@@ -82,12 +82,16 @@ class Cookie {
       value = validateCookieValue(value);
 
   factory Cookie.parse(final String value) {
-    final splitValue = value.split('=');
-    if (splitValue.length != 2) {
+    // Split on the FIRST '=' only; RFC 6265 cookie-octets permit '=' to
+    // appear inside the value (e.g. base64 padding).
+    final eq = value.indexOf('=');
+    if (eq < 0) {
       throw const FormatException('Invalid cookie format');
     }
-
-    return Cookie(name: splitValue.first.trim(), value: splitValue.last.trim());
+    return Cookie(
+      name: value.substring(0, eq).trim(),
+      value: value.substring(eq + 1).trim(),
+    );
   }
 
   /// Converts the [Cookie] instance into a string representation suitable for HTTP headers.

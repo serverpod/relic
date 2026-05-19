@@ -79,5 +79,8 @@ String validateCookieValue(final String value) {
     }
   }
 
-  return Uri.decodeComponent(value);
+  // Cookie values are an opaque octet string per RFC 6265; servers MUST NOT
+  // percent-decode them. Any URL encoding is an application-level convention
+  // and should be applied/reversed by the application, not the parser.
+  return value;
 }

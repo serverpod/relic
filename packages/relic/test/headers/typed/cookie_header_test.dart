@@ -153,6 +153,9 @@ void main() {
     test(
       'when a Cookie header with encoded characters in the value is passed then it should parse correctly',
       () async {
+        // Cookie values are opaque octets per RFC 6265; percent encoding is
+        // an application-level convention and MUST NOT be decoded by the
+        // server. The raw bytes round-trip through the parser unchanged.
         final headers = await getServerRequestHeaders(
           server: server,
           touchHeaders: (final h) => h.cookie,
@@ -165,7 +168,7 @@ void main() {
         );
         expect(
           headers.cookie?.cookies.map((final c) => c.value).toList(),
-          equals(['abc 123', '42']),
+          equals(['abc%20123', '42']),
         );
       },
     );
