@@ -46,6 +46,7 @@ final class PermissionsPolicyHeader {
                 .split(' ')
                 .map((final s) => s.trim())
                 .where((final s) => s.isNotEmpty)
+                .map(_unquote)
                 .toList()
           : <String>[];
 
@@ -81,6 +82,16 @@ final class PermissionsPolicyHeader {
   }
 }
 
+String _unquote(final String s) {
+  if (s.length >= 2 && s.startsWith('"') && s.endsWith('"')) {
+    return s
+        .substring(1, s.length - 1)
+        .replaceAll(r'\"', '"')
+        .replaceAll(r'\\', r'\');
+  }
+  return s;
+}
+
 /// A class representing a single Permissions-Policy directive.
 class PermissionsPolicyDirective {
   /// The name of the directive (e.g., `geolocation`, `microphone`).
@@ -92,10 +103,24 @@ class PermissionsPolicyDirective {
   /// Constructs a [PermissionsPolicyDirective] instance with the specified name and values.
   const PermissionsPolicyDirective({required this.name, required this.values});
 
-  /// Converts the [PermissionsPolicyDirective] instance into a string representation.
+  /// Converts the [PermissionsPolicyDirective] instance into a string
+  /// representation.
+  ///
+  /// Per the W3C Permissions Policy spec, the header is an RFC 8941
+  /// Structured Field Dictionary whose values are inner-lists of sf-tokens
+  /// and sf-strings. The tokens `*` and `self` appear bare; URL origins MUST
+  /// be serialized as sf-strings (RFC 8941 String), i.e. quoted with
+  /// `"..."`. Without this distinction, conforming user agents drop the
+  /// entire directive because `https://example.com` is not a valid sf-token.
   String _encode() {
-    final valuesStr = values.isNotEmpty ? '(${values.join(' ')})' : '()';
+    final rendered = values.map(_renderItem).toList();
+    final valuesStr = rendered.isNotEmpty ? '(${rendered.join(' ')})' : '()';
     return '$name=$valuesStr';
+  }
+
+  static String _renderItem(final String v) {
+    if (v == '*' || v == 'self') return v;
+    return '"${v.replaceAll(r'\', r'\\').replaceAll('"', r'\"')}"';
   }
 
   @override
