@@ -70,8 +70,11 @@ class MediaRange {
 
   /// Parses a media range string and returns a [MediaRange] instance.
   ///
-  /// This method processes the media range string, extracting the type,
-  /// subtype, quality, and parameters.
+  /// Parameters are split on `;` (RFC 9110 12.5.1 `parameters`), and the
+  /// quality value `q=...` is matched by parameter name (case-insensitive,
+  /// surrounded by OWS) per RFC 9110 12.4.2 - not by a literal `q=`
+  /// substring, which silently misparses any input with whitespace around
+  /// the semicolon.
   factory MediaRange.parse(final String value) {
     final parts = value.splitTrimAndFilterUnique(separator: ';').toList();
     final typeSubtype = parts.first.split('/');
@@ -83,26 +86,38 @@ class MediaRange {
     final subtype = typeSubtype[1].trim();
 
     double? quality;
-    if (parts.length > 1) {
-      final qualityParts = parts[1]
-          .splitTrimAndFilterUnique(separator: 'q=')
-          .firstOrNull;
-      if (qualityParts != null) {
-        final value = double.tryParse(qualityParts);
-        if (value == null || value < 0 || value > 1) {
-          throw const FormatException('Invalid quality value');
-        }
-        quality = value;
+    for (var i = 1; i < parts.length; i++) {
+      final eq = parts[i].indexOf('=');
+      if (eq < 0) continue;
+      final name = parts[i].substring(0, eq).trim();
+      if (name.toLowerCase() != 'q') continue;
+      final parsed = double.tryParse(parts[i].substring(eq + 1).trim());
+      if (parsed == null || parsed < 0 || parsed > 1) {
+        throw const FormatException('Invalid quality value');
       }
+      quality = parsed;
+      break;
     }
 
     return MediaRange(type, subtype, quality: quality);
   }
 
-  /// Converts the [MediaRange] instance into a string representation suitable for HTTP headers.
+  /// Converts the [MediaRange] instance into a string representation suitable
+  /// for HTTP headers. The q-value is rendered with at most 3 fractional
+  /// digits per RFC 9110 12.4.2 (`qvalue = ( "0" [ "." 0*3DIGIT ] ) / ...`).
   String _encode() {
-    final qualityStr = quality == 1.0 ? '' : ';q=$quality';
+    final qualityStr = quality == 1.0 ? '' : ';q=${_formatQValue(quality)}';
     return '$type/$subtype$qualityStr';
+  }
+
+  static String _formatQValue(final double q) {
+    var s = q.toStringAsFixed(3);
+    // strip insignificant trailing zeros, but keep a digit after the dot
+    while (s.endsWith('0') && !s.endsWith('.0')) {
+      s = s.substring(0, s.length - 1);
+    }
+    if (s.endsWith('.0')) s = s.substring(0, s.length - 2);
+    return s;
   }
 
   @override
