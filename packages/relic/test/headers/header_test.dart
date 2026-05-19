@@ -194,6 +194,7 @@ void main() {
       Headers.contentLanguage,
       Headers.contentLocation,
       Headers.contentSecurityPolicy,
+      Headers.expect,
       Headers.host,
       Headers.location,
       Headers.origin,

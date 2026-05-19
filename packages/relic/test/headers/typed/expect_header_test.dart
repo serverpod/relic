@@ -35,26 +35,16 @@ void main() {
       );
     });
 
-    test(
-      'when an invalid Expect header is passed then the server should respond with a bad request '
-      'including a message that states the value is invalid',
-      () async {
-        expect(
-          getServerRequestHeaders(
-            server: server,
-            touchHeaders: (final h) => h.expect,
-            headers: {'expect': 'custom-directive'},
-          ),
-          throwsA(
-            isA<BadRequestException>().having(
-              (final e) => e.message,
-              'message',
-              contains('Invalid value'),
-            ),
-          ),
-        );
-      },
-    );
+    test('when an Expect header carries an unknown expectation '
+        'then it is preserved so the server can respond with 417', () async {
+      final headers = await getServerRequestHeaders(
+        server: server,
+        touchHeaders: (final h) => h.expect,
+        headers: {'expect': 'custom-directive'},
+      );
+
+      expect(headers.expect?.value, equals('custom-directive'));
+    });
 
     test('when an Expect header with an invalid value is passed '
         'then the server does not respond with a bad request if the headers '
