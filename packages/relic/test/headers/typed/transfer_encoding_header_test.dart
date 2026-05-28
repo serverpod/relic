@@ -70,76 +70,14 @@ void main() {
       expect(headers, isNotNull);
     });
 
-    test(
-      'when a valid Transfer-Encoding header is passed then it should parse the encodings correctly',
-      () async {
-        final headers = await getServerRequestHeaders(
-          server: server,
-          touchHeaders: (final h) => h.transferEncoding,
-          headers: {'transfer-encoding': 'gzip, chunked'},
-        );
-
-        expect(
-          headers.transferEncoding?.encodings.map((final e) => e.name),
-          equals(['gzip', 'chunked']),
-        );
-      },
-    );
-
-    /// According to the HTTP/1.1 specification (RFC 9112), the 'chunked' transfer
-    /// encoding must be the final encoding applied to the response body.
-    test(
-      'when a valid Transfer-Encoding header is passed with "chunked" as not the last '
-      'encoding then it should parse the encodings correctly and reorder them sot the '
-      'chunked encoding is the last encoding',
-      () async {
-        final headers = await getServerRequestHeaders(
-          server: server,
-          touchHeaders: (final h) => h.transferEncoding,
-          headers: {'transfer-encoding': 'chunked, gzip'},
-        );
-
-        expect(
-          headers.transferEncoding?.encodings.map((final e) => e.name),
-          equals(['gzip', 'chunked']),
-        );
-      },
-    );
-
-    test(
-      'when a Transfer-Encoding header with duplicate encodings is passed then '
-      'it should parse the encodings correctly and remove duplicates',
-      () async {
-        final headers = await getServerRequestHeaders(
-          server: server,
-          touchHeaders: (final h) => h.transferEncoding,
-          headers: {'transfer-encoding': 'gzip, chunked, chunked'},
-        );
-
-        expect(
-          headers.transferEncoding?.encodings.map((final e) => e.name),
-          equals(['gzip', 'chunked']),
-        );
-      },
-    );
-
-    test(
-      'when a Transfer-Encoding header contains "chunked" then isChunked should be true',
-      () async {
-        final headers = await getServerRequestHeaders(
-          server: server,
-          touchHeaders: (final h) => h.transferEncoding,
-          headers: {'transfer-encoding': 'gzip, chunked'},
-        );
-
-        expect(
-          headers.transferEncoding?.encodings.any(
-            (final e) => e.name == TransferEncoding.chunked.name,
-          ),
-          isTrue,
-        );
-      },
-    );
+    // Note: parse/encode behavior for valid multi-coding values (ordering,
+    // reordering 'chunked' last, duplicate removal, isChunked) is covered by
+    // direct unit tests in
+    // packages/relic_core/test/headers/typed/transfer_encoding_header_test.dart.
+    // Those cannot run as server round-trips here: sending a Transfer-Encoding
+    // header on a bodyless GET makes dart:io HttpServer wait for a chunked body
+    // that the client never frames, so the response never completes. See the
+    // dart-io-transfer-encoding-close-hang reproduction.
 
     test(
       'when no Transfer-Encoding header is passed then it should return null',
