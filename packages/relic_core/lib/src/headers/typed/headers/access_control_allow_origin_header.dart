@@ -60,7 +60,9 @@ final class AccessControlAllowOriginHeader {
       other is AccessControlAllowOriginHeader && origin == other.origin;
 
   @override
-  int get hashCode => origin.hashCode;
+  // The wildcard (`origin == null`) gets a distinct sentinel hash so it does
+  // not share bucket 0 with an opaque-origin value.
+  int get hashCode => origin?.hashCode ?? 0x2A; // '*'
 
   @override
   String toString() => 'AccessControlAllowOriginHeader($origin)';

@@ -98,7 +98,10 @@ final class OpaqueOrigin extends Origin {
   bool operator ==(final Object other) => other is OpaqueOrigin;
 
   @override
-  int get hashCode => 0;
+  // A fixed non-zero hash for the single opaque-origin value. Non-zero so it
+  // does not collide with the common `null`/0 bucket (e.g. an Allow-Origin
+  // wildcard whose origin is null).
+  int get hashCode => 0x09A9;
 
   @override
   String toString() => 'null';
