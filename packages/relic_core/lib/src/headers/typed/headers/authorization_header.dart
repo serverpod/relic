@@ -300,10 +300,17 @@ final class DigestAuthorizationHeader extends AuthorizationHeader {
       throw const FormatException('Digest token cannot be empty.');
     }
 
+    // Each auth-param is `token = ( token / quoted-string )` (RFC 7616 3.4):
+    // quoted-string values are DQUOTE-wrapped (group 2, with quoted-pair
+    // escapes), token values are bare (group 3). Accepting both is required
+    // because conformant peers send algorithm/qop/nc/stale unquoted.
     final Map<String, String> params = {};
-    final regex = RegExp(r'(\w+)="([^"]*)"');
+    final regex = RegExp(r'(\w+)\s*=\s*(?:"((?:[^"\\]|\\.)*)"|([^",\s]+))');
     for (final match in regex.allMatches(value)) {
-      params[match.group(1)!] = match.group(2)!;
+      final quoted = match.group(2);
+      params[match.group(1)!] = quoted != null
+          ? _unescapeQuoted(quoted)
+          : match.group(3)!;
     }
 
     if (params.isEmpty) {
@@ -357,19 +364,21 @@ final class DigestAuthorizationHeader extends AuthorizationHeader {
   /// `mod_auth_digest`) reject requests that quote the token-form parameters.
   @override
   String get headerValue {
-    return [
-      'Digest',
-      '$_username="$username"',
-      '$_realm="$realm"',
-      '$_nonce="$nonce"',
-      '$_uri="$uri"',
-      '$_response="$response"',
+    final params = [
+      '$_username=${_quoteString(username)}',
+      '$_realm=${_quoteString(realm)}',
+      '$_nonce=${_quoteString(nonce)}',
+      '$_uri=${_quoteString(uri)}',
+      '$_response=${_quoteString(response)}',
       if (algorithm != null) '$_algorithm=$algorithm',
       if (qop != null) '$_qop=$qop',
       if (nc != null) '$_nc=$nc',
-      if (cnonce != null) '$_cnonce="$cnonce"',
-      if (opaque != null) '$_opaque="$opaque"',
-    ].join(', ');
+      if (cnonce != null) '$_cnonce=${_quoteString(cnonce!)}',
+      if (opaque != null) '$_opaque=${_quoteString(opaque!)}',
+    ];
+    // RFC 7235 2.1: a single SP separates the auth-scheme from the first
+    // auth-param; auth-params are then comma-separated.
+    return 'Digest ${params.join(', ')}';
   }
 
   @override
@@ -438,3 +447,13 @@ final class DigestAuthorizationHeader extends AuthorizationHeader {
         ')';
   }
 }
+
+/// Wraps [s] in DQUOTEs, escaping interior `"` and `\` as `quoted-pair`
+/// (RFC 9110 5.6.4). Without this a value containing a quote would terminate
+/// the quoted-string early and corrupt the parsed credentials.
+String _quoteString(final String s) =>
+    '"${s.replaceAll(r'\', r'\\').replaceAll('"', r'\"')}"';
+
+/// Decodes `quoted-pair` escapes in a quoted-string body: `\x` becomes `x`.
+String _unescapeQuoted(final String s) =>
+    s.replaceAllMapped(RegExp(r'\\(.)'), (final m) => m.group(1)!);

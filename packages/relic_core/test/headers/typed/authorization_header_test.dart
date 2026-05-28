@@ -1,0 +1,122 @@
+import 'package:relic_core/relic_core.dart';
+import 'package:test/test.dart';
+
+void main() {
+  group('DigestAuthorizationHeader encoding', () {
+    group('Given a Digest header,', () {
+      test('when encoded, '
+          'then the scheme and first param are separated by a space.', () {
+        final header = DigestAuthorizationHeader(
+          username: 'user',
+          realm: 'realm',
+          nonce: 'nonce',
+          uri: '/',
+          response: 'resp',
+        );
+
+        expect(header.headerValue, startsWith('Digest username='));
+        expect(header.headerValue, isNot(contains('Digest, ')));
+      });
+
+      test('when algorithm/qop/nc are present, '
+          'then they are emitted as bare tokens (not quoted).', () {
+        final header = DigestAuthorizationHeader(
+          username: 'user',
+          realm: 'realm',
+          nonce: 'nonce',
+          uri: '/',
+          response: 'resp',
+          algorithm: 'MD5',
+          qop: 'auth',
+          nc: '00000001',
+        );
+
+        expect(header.headerValue, contains('algorithm=MD5'));
+        expect(header.headerValue, contains('qop=auth'));
+        expect(header.headerValue, contains('nc=00000001'));
+        expect(header.headerValue, isNot(contains('algorithm="MD5"')));
+      });
+    });
+
+    group('Given a Digest header with a quote in a quoted field,', () {
+      test('when encoded, '
+          'then the interior quote is escaped as a quoted-pair.', () {
+        final header = DigestAuthorizationHeader(
+          username: 'a"b',
+          realm: 'realm',
+          nonce: 'nonce',
+          uri: '/',
+          response: 'resp',
+        );
+
+        expect(header.headerValue, contains(r'username="a\"b"'));
+      });
+    });
+  });
+
+  group('DigestAuthorizationHeader round-trip', () {
+    group('Given a header with bare-token algorithm/qop/nc,', () {
+      test('when encoded and re-parsed, '
+          'then all fields are preserved.', () {
+        final header = DigestAuthorizationHeader(
+          username: 'user',
+          realm: 'realm',
+          nonce: 'nonce',
+          uri: '/',
+          response: 'resp',
+          algorithm: 'MD5',
+          qop: 'auth',
+          nc: '00000001',
+          cnonce: 'cnonce',
+          opaque: 'opaque',
+        );
+
+        final reparsed = DigestAuthorizationHeader.parse(
+          header.headerValue.substring('Digest '.length),
+        );
+
+        expect(reparsed.username, equals('user'));
+        expect(reparsed.algorithm, equals('MD5'));
+        expect(reparsed.qop, equals('auth'));
+        expect(reparsed.nc, equals('00000001'));
+        expect(reparsed.cnonce, equals('cnonce'));
+        expect(reparsed.opaque, equals('opaque'));
+      });
+    });
+
+    group('Given a username containing an escaped quote,', () {
+      test('when encoded and re-parsed, '
+          'then the original username is recovered.', () {
+        final header = DigestAuthorizationHeader(
+          username: r'a"b',
+          realm: 'realm',
+          nonce: 'nonce',
+          uri: '/',
+          response: 'resp',
+        );
+
+        final reparsed = DigestAuthorizationHeader.parse(
+          header.headerValue.substring('Digest '.length),
+        );
+
+        expect(reparsed.username, equals(r'a"b'));
+      });
+    });
+  });
+
+  group('DigestAuthorizationHeader.parse with bare tokens', () {
+    group('Given a wire value with unquoted algorithm/qop/nc,', () {
+      test('when parsed, '
+          'then the token-form parameters are captured.', () {
+        final header = DigestAuthorizationHeader.parse(
+          'username="user", realm="realm", nonce="n", uri="/", '
+          'response="r", algorithm=MD5, qop=auth, nc=00000001',
+        );
+
+        expect(header.algorithm, equals('MD5'));
+        expect(header.qop, equals('auth'));
+        expect(header.nc, equals('00000001'));
+      });
+    });
+  });
+}
