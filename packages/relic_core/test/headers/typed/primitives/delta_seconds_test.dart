@@ -60,6 +60,27 @@ void main() {
         expect(() => DeltaSeconds.parse('0x10'), throwsFormatException);
       });
     });
+
+    group('Given an all-digit value too large to represent,', () {
+      test('when parsed, '
+          'then it is clamped to maxValue instead of overflowing.', () {
+        expect(
+          DeltaSeconds.parse('99999999999999999999').seconds,
+          equals(DeltaSeconds.maxValue),
+        );
+        expect(
+          DeltaSeconds.parse('9007199254740993').seconds,
+          equals(DeltaSeconds.maxValue),
+        );
+      });
+    });
+
+    group('Given a value just under the clamp ceiling,', () {
+      test('when parsed, '
+          'then it is preserved exactly.', () {
+        expect(DeltaSeconds.parse('2147483647').seconds, equals(2147483647));
+      });
+    });
   });
 
   group('DeltaSeconds.encode', () {
