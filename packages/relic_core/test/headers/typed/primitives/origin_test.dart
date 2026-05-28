@@ -96,6 +96,34 @@ void main() {
         expect(() => Origin.parse('https://'), throwsFormatException);
       });
     });
+
+    group('Given an origin that includes userinfo,', () {
+      test('when parsed, '
+          'then it throws a FormatException.', () {
+        expect(
+          () => Origin.parse('http://user:pass@example.com'),
+          throwsFormatException,
+        );
+        expect(
+          () => Origin.parse('http://user@example.com'),
+          throwsFormatException,
+        );
+      });
+    });
+
+    group('Given an origin containing whitespace or a control character,', () {
+      test('when parsed, '
+          'then it throws a FormatException.', () {
+        expect(
+          () => Origin.parse('http://exa mple.com'),
+          throwsFormatException,
+        );
+        expect(
+          () => Origin.parse('http://example.com\r\nevil'),
+          throwsFormatException,
+        );
+      });
+    });
   });
 
   group('TupleOrigin construction', () {

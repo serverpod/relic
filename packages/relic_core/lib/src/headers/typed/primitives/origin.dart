@@ -50,9 +50,26 @@ sealed class Origin {
         inBracket = false;
         continue;
       }
-      if (!inBracket && (c == 0x2F || c == 0x3F || c == 0x23)) {
+      if (inBracket) continue;
+      // A serialized origin is scheme "://" host [ ":" port ] only: no
+      // path/query/fragment, no userinfo, and no controls or whitespace.
+      if (c == 0x2F || c == 0x3F || c == 0x23) {
         throw FormatException(
           'origin must not include path, query, or fragment',
+          source,
+          schemeEnd + 3 + i,
+        );
+      }
+      if (c == 0x40) {
+        throw FormatException(
+          'origin must not include userinfo',
+          source,
+          schemeEnd + 3 + i,
+        );
+      }
+      if (c <= 0x20 || c == 0x7F) {
+        throw FormatException(
+          'origin must not contain control characters or whitespace',
           source,
           schemeEnd + 3 + i,
         );

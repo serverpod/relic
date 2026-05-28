@@ -161,6 +161,15 @@ void main() {
       });
     });
 
+    group('Given a bracketed literal that is not a valid IPv6 address,', () {
+      test('when parsed, '
+          'then it throws a FormatException.', () {
+        expect(() => Host.parse('[zzz]'), throwsFormatException);
+        expect(() => Host.parse('[gggg::1]'), throwsFormatException);
+        expect(() => Host.parse('[1.2.3.4]'), throwsFormatException);
+      });
+    });
+
     group('Given a port that is non-numeric,', () {
       test('when parsed, '
           'then it throws a FormatException.', () {

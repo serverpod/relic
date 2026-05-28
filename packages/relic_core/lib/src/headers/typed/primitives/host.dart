@@ -71,6 +71,7 @@ final class Host {
       if (inner.isEmpty) {
         throw FormatException('empty IP-literal', source);
       }
+      _validateIpLiteral(inner, source);
       final tail = source.substring(close + 1);
       if (tail.isEmpty) return Host(inner);
       if (!tail.startsWith(':')) {
@@ -115,6 +116,23 @@ final class Host {
 
   @override
   String toString() => encode();
+}
+
+/// Validates the contents of an `IP-literal` (the text inside `[...]`).
+///
+/// Per RFC 3986 3.2.2 an IP-literal is `IPv6address` or `IPvFuture`. Without
+/// this check `Host.parse('[zzz]')` would be accepted as a host named `zzz`.
+void _validateIpLiteral(final String inner, final String source) {
+  // IPvFuture = "v" 1*HEXDIG "." 1*( unreserved / sub-delims / ":" )
+  if (inner.length >= 2 && (inner[0] == 'v' || inner[0] == 'V')) {
+    if (inner.contains('.')) return;
+    throw FormatException('invalid IPvFuture literal', source);
+  }
+  try {
+    Uri.parseIPv6Address(inner);
+  } on FormatException {
+    throw FormatException('invalid IPv6 address in IP-literal', source);
+  }
 }
 
 int _parsePort(final String s, final String source) {
