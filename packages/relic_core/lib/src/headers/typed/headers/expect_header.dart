@@ -34,6 +34,15 @@ final class ExpectHeader {
     if (trimmed.toLowerCase() == _continue100) {
       return continue100;
     }
+    // Unknown expectations are preserved (so a server can answer 417), but
+    // control characters are rejected so a CR/LF cannot be injected into the
+    // header when the value is later re-emitted.
+    for (var i = 0; i < trimmed.length; i++) {
+      final c = trimmed.codeUnitAt(i);
+      if (c <= 0x1F || c == 0x7F) {
+        throw const FormatException('Invalid value');
+      }
+    }
     return ExpectHeader._(trimmed);
   }
 
