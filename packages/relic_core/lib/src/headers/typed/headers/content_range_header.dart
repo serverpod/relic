@@ -51,7 +51,9 @@ final class ContentRangeHeader {
       throw const FormatException('Value cannot be empty');
     }
 
-    final regex = RegExp(r'(\w+) (?:(\d+)-(\d+)|\*)/(\*|\d+)');
+    // Anchored so trailing (or leading) garbage is rejected rather than
+    // silently dropped by firstMatch extracting a partial prefix.
+    final regex = RegExp(r'^(\w+) (?:(\d+)-(\d+)|\*)/(\*|\d+)$');
     final match = regex.firstMatch(trimmed);
 
     if (match == null) {

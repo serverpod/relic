@@ -106,5 +106,25 @@ void main() {
         );
       });
     });
+
+    group('Given a valid range followed by trailing garbage,', () {
+      test('when parsed, '
+          'then it throws instead of silently dropping the tail.', () {
+        expect(
+          () => ContentRangeHeader.parse('bytes 0-499/1234 evil'),
+          throwsFormatException,
+        );
+      });
+    });
+
+    group('Given leading garbage before a valid range,', () {
+      test('when parsed, '
+          'then it throws.', () {
+        expect(
+          () => ContentRangeHeader.parse('x bytes 0-499/1234'),
+          throwsFormatException,
+        );
+      });
+    });
   });
 }
