@@ -39,5 +39,23 @@ void main() {
         expect(h.port, isNull);
       });
     });
+
+    group('Given an IPv6 URI,', () {
+      test('when HostHeader.fromUri is called, '
+          'then the host keeps its brackets and encodes unambiguously.', () {
+        final h = HostHeader.fromUri(Uri.parse('http://[::1]:8080/'));
+
+        expect(h.host, equals('[::1]'));
+        expect(h.port, equals(8080));
+      });
+
+      test('when compared with the equivalent parse(), '
+          'then the two are equal.', () {
+        final fromUri = HostHeader.fromUri(Uri.parse('http://[::1]:8080/'));
+        final parsed = HostHeader.parse('[::1]:8080');
+
+        expect(fromUri, equals(parsed));
+      });
+    });
   });
 }

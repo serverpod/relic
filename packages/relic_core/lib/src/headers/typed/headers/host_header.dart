@@ -58,13 +58,22 @@ final class HostHeader {
     }
   }
 
-  /// Constructs a [HostHeader] from a [Uri], preserving the absence of an
-  /// explicit port: a URI like `http://example.com/` produces a [HostHeader]
-  /// with `port: null` rather than the default `80`. This matches RFC 9110
-  /// 7.2, where `Host = uri-host [ ":" port ]` only sends the port when one
-  /// was explicitly given.
-  HostHeader.fromUri(final Uri uri)
-    : this._(uri.host, uri.hasPort ? uri.port : null);
+  /// Constructs a [HostHeader] from a [Uri].
+  ///
+  /// Preserves the absence of an explicit port: a URI like
+  /// `http://example.com/` produces `port: null` rather than the default
+  /// `80`, matching RFC 9110 7.2 (`Host = uri-host [ ":" port ]`).
+  ///
+  /// Dart's [Uri.host] returns an IPv6 address without its brackets, but the
+  /// `Host` wire form requires them (RFC 3986 `host = IP-literal`). They are
+  /// re-added here so [HostHeader.fromUri] matches [HostHeader.parse] (which
+  /// keeps the brackets) and encodes unambiguous syntax. Routing through the
+  /// public factory also applies the same normalization and port-range check
+  /// as the other constructors.
+  factory HostHeader.fromUri(final Uri uri) {
+    final host = uri.host.contains(':') ? '[${uri.host}]' : uri.host;
+    return HostHeader(host, uri.hasPort ? uri.port : null);
+  }
 
   String _encode() => port == null ? host : '$host:$port';
 
