@@ -74,17 +74,15 @@ class ClearSiteDataType {
   const ClearSiteDataType._(this.value);
 
   /// Predefined Clear-Site-Data types per the [W3C spec][csd]:
-  /// `cache`, `clientHints`, `cookies`, `storage`, `executionContexts`.
+  /// `cache`, `cookies`, `storage`, `executionContexts`.
   ///
   /// [csd]: https://www.w3.org/TR/clear-site-data/#grammardef-type
   static const _cache = 'cache';
-  static const _clientHints = 'clientHints';
   static const _cookies = 'cookies';
   static const _storage = 'storage';
   static const _executionContexts = 'executionContexts';
 
   static const cache = ClearSiteDataType._(_cache);
-  static const clientHints = ClearSiteDataType._(_clientHints);
   static const cookies = ClearSiteDataType._(_cookies);
   static const storage = ClearSiteDataType._(_storage);
   static const executionContexts = ClearSiteDataType._(_executionContexts);
@@ -99,8 +97,6 @@ class ClearSiteDataType {
     switch (trimmed) {
       case _cache:
         return cache;
-      case _clientHints:
-        return clientHints;
       case _cookies:
         return cookies;
       case _storage:
