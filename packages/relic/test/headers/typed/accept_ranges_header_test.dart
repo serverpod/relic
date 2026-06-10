@@ -58,7 +58,24 @@ void main() {
           headers: {'accept-ranges': 'bytes'},
         );
 
-        expect(headers.acceptRanges?.rangeUnit, equals('bytes'));
+        expect(headers.acceptRanges?.rangeUnits, equals(['bytes']));
+        expect(headers.acceptRanges?.isBytes, isTrue);
+      },
+    );
+
+    test(
+      'when multiple range units are passed then they are all parsed',
+      () async {
+        final headers = await getServerRequestHeaders(
+          server: server,
+          touchHeaders: (final h) => h.acceptRanges,
+          headers: {'accept-ranges': 'bytes, custom-unit'},
+        );
+
+        expect(
+          headers.acceptRanges?.rangeUnits,
+          equals(['bytes', 'custom-unit']),
+        );
         expect(headers.acceptRanges?.isBytes, isTrue);
       },
     );
@@ -72,7 +89,7 @@ void main() {
           headers: {'accept-ranges': 'none'},
         );
 
-        expect(headers.acceptRanges?.rangeUnit, equals('none'));
+        expect(headers.acceptRanges?.rangeUnits, equals(['none']));
         expect(headers.acceptRanges?.isNone, isTrue);
       },
     );
