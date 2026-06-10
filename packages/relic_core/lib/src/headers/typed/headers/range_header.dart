@@ -109,6 +109,11 @@ class Range {
         'At least one of start or end must be specified',
       );
     }
+    // An inverted range (last-pos < first-pos) is represented faithfully
+    // rather than rejected. RFC 9110 14.2 has the recipient ignore or answer
+    // 416 for a range it cannot satisfy, so satisfiability against a concrete
+    // resource is the consumer's call (e.g. a file handler returning 416),
+    // not the parser's.
   }
 
   /// Converts the [Range] instance into a string representation suitable
