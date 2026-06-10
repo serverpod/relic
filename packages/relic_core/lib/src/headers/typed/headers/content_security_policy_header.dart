@@ -87,7 +87,14 @@ class ContentSecurityPolicyDirective {
 
   /// Constructs a [ContentSecurityPolicyDirective] instance with the specified
   /// name and values.
-  ContentSecurityPolicyDirective({required this.name, required this.values});
+  ///
+  /// CSP directive names are ASCII case-insensitive, so the name is
+  /// canonicalized to lowercase for case-insensitive equality. The values are
+  /// left untouched (source expressions can be case-sensitive).
+  ContentSecurityPolicyDirective({
+    required final String name,
+    required this.values,
+  }) : name = name.toLowerCase();
 
   /// Converts the [ContentSecurityPolicyDirective] instance into a string
   /// representation.

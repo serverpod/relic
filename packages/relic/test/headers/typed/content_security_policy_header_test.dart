@@ -69,6 +69,20 @@ void main() {
       },
     );
 
+    test('when a directive name is in mixed case then it is canonicalized to '
+        'lowercase', () async {
+      final headers = await getServerRequestHeaders(
+        server: server,
+        touchHeaders: (final h) => h.contentSecurityPolicy,
+        headers: {'content-security-policy': "DEFAULT-SRC 'self'"},
+      );
+
+      expect(
+        headers.contentSecurityPolicy?.directives.first.name,
+        equals('default-src'),
+      );
+    });
+
     test(
       'when a Content-Security-Policy header with multiple directives is passed then it should parse correctly',
       () async {
