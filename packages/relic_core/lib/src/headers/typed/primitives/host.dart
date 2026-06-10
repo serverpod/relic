@@ -39,6 +39,21 @@ final class Host {
         host,
       );
     }
+    // Reject control characters, whitespace, and structural delimiters. This
+    // covers every host form (reg-name, IPv6, IPvFuture: none contain these)
+    // and, critically, blocks CR/LF injection when a host built from
+    // untrusted input is later serialized (e.g. into a cookie Domain).
+    for (var i = 0; i < host.length; i++) {
+      if (_isForbiddenHostChar(host.codeUnitAt(i))) {
+        throw FormatException('invalid character in host', host, i);
+      }
+    }
+    // A colon is only valid in an IP-literal (IPv6 / IPvFuture). Validating it
+    // here rejects a reg-name like `a:b`, which would otherwise be bracketed
+    // by [encode] to `[a:b]` and then fail to re-parse.
+    if (host.codeUnits.contains(0x3A)) {
+      _validateIpLiteral(host, host);
+    }
     final p = port;
     if (p != null && (p < 0 || p > 65535)) {
       throw FormatException('port must be in 0-65535', p.toString());
@@ -99,6 +114,10 @@ final class Host {
 
   /// The wire form: `uri-host [ ":" port ]`, adding IPv6 brackets when [host]
   /// contains a colon.
+  ///
+  /// A colon-less IPvFuture host (`vX.…`, essentially never seen in practice)
+  /// is not re-bracketed here, because it cannot be told apart from a
+  /// versioned reg-name such as `v2.example.com` by content alone.
   String encode() {
     final h = host.codeUnits.contains(0x3A) ? '[$host]' : host;
     return port == null ? h : '$h:$port';
@@ -123,16 +142,86 @@ final class Host {
 /// Per RFC 3986 3.2.2 an IP-literal is `IPv6address` or `IPvFuture`. Without
 /// this check `Host.parse('[zzz]')` would be accepted as a host named `zzz`.
 void _validateIpLiteral(final String inner, final String source) {
-  // IPvFuture = "v" 1*HEXDIG "." 1*( unreserved / sub-delims / ":" )
-  if (inner.length >= 2 && (inner[0] == 'v' || inner[0] == 'V')) {
-    if (inner.contains('.')) return;
-    throw FormatException('invalid IPvFuture literal', source);
+  if (inner[0] == 'v' || inner[0] == 'V') {
+    _validateIpvFuture(inner, source);
+    return;
   }
   try {
     Uri.parseIPv6Address(inner);
   } on FormatException {
     throw FormatException('invalid IPv6 address in IP-literal', source);
   }
+}
+
+/// Validates `IPvFuture = "v" 1*HEXDIG "." 1*( unreserved / sub-delims / ":" )`.
+void _validateIpvFuture(final String inner, final String source) {
+  final dot = inner.indexOf('.');
+  // Need at least one HEXDIG between the leading 'v' and the '.', and at least
+  // one character after it.
+  if (dot < 2 || dot == inner.length - 1) {
+    throw FormatException('invalid IPvFuture literal', source);
+  }
+  for (var i = 1; i < dot; i++) {
+    if (!_isHexDigit(inner.codeUnitAt(i))) {
+      throw FormatException('invalid IPvFuture version', source);
+    }
+  }
+  for (var i = dot + 1; i < inner.length; i++) {
+    if (!_isIpvFutureTailChar(inner.codeUnitAt(i))) {
+      throw FormatException('invalid IPvFuture character', source);
+    }
+  }
+}
+
+bool _isHexDigit(final int c) =>
+    (c >= 0x30 && c <= 0x39) ||
+    (c >= 0x41 && c <= 0x46) ||
+    (c >= 0x61 && c <= 0x66);
+
+bool _isIpvFutureTailChar(final int c) {
+  // unreserved
+  if ((c >= 0x41 && c <= 0x5A) || (c >= 0x61 && c <= 0x7A))
+    return true; // ALPHA
+  if (c >= 0x30 && c <= 0x39) return true; // DIGIT
+  if (c == 0x2D || c == 0x2E || c == 0x5F || c == 0x7E) return true; // - . _ ~
+  // sub-delims: ! $ & ' ( ) * + , ; =
+  switch (c) {
+    case 0x21:
+    case 0x24:
+    case 0x26:
+    case 0x27:
+    case 0x28:
+    case 0x29:
+    case 0x2A:
+    case 0x2B:
+    case 0x2C:
+    case 0x3B:
+    case 0x3D:
+    case 0x3A: // ":"
+      return true;
+  }
+  return false;
+}
+
+bool _isForbiddenHostChar(final int c) {
+  if (c <= 0x20 || c == 0x7F) return true; // CTLs + SP + DEL
+  switch (c) {
+    case 0x22: // "
+    case 0x23: // #
+    case 0x2F: // /
+    case 0x3C: // <
+    case 0x3E: // >
+    case 0x3F: // ?
+    case 0x40: // @
+    case 0x5C: // backslash
+    case 0x5E: // ^
+    case 0x60: // backtick
+    case 0x7B: // {
+    case 0x7C: // |
+    case 0x7D: // }
+      return true;
+  }
+  return false;
 }
 
 int _parsePort(final String s, final String source) {

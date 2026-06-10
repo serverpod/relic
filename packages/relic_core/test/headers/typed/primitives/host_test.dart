@@ -43,6 +43,85 @@ void main() {
         expect(() => Host('example.com', 65536), throwsFormatException);
       });
     });
+
+    group('Given a host containing control characters or whitespace,', () {
+      test('when Host is constructed, '
+          'then it throws (blocks CR/LF injection).', () {
+        expect(() => Host('evil\r\nSet-Cookie: x=1'), throwsFormatException);
+        expect(() => Host('exa mple.com'), throwsFormatException);
+        expect(() => Host('host\x00name'), throwsFormatException);
+      });
+    });
+
+    group('Given a host containing structural delimiters,', () {
+      test('when Host is constructed, '
+          'then it throws.', () {
+        expect(() => Host('user@host.com'), throwsFormatException);
+        expect(() => Host('foo/bar'), throwsFormatException);
+        expect(() => Host('a?b'), throwsFormatException);
+      });
+    });
+
+    group('Given a normal reg-name (including versioned API hosts),', () {
+      test('when Host is constructed, '
+          'then it is accepted.', () {
+        expect(Host('v2.api.example.com').host, equals('v2.api.example.com'));
+        expect(Host('example.com').host, equals('example.com'));
+      });
+    });
+
+    group('Given a colon-containing host that is not a valid IP-literal,', () {
+      test(
+        'when Host is constructed, '
+        'then it throws (would otherwise encode to an unparseable [a:b]).',
+        () {
+          expect(() => Host('a:b'), throwsFormatException);
+        },
+      );
+    });
+
+    group('Given a bare IPv6 host (valid IP-literal),', () {
+      test('when Host is constructed, '
+          'then it is accepted and encodes bracketed.', () {
+        expect(Host('::1').encode(), equals('[::1]'));
+        expect(Host('2001:db8::1').encode(), equals('[2001:db8::1]'));
+      });
+    });
+  });
+
+  group('Host IPvFuture validation', () {
+    group('Given a valid IPvFuture literal,', () {
+      test('when parsed, '
+          'then it is accepted unbracketed and round-trips.', () {
+        final h = Host.parse('[v1.fe80]');
+
+        expect(h.host, equals('v1.fe80'));
+      });
+    });
+
+    group('Given an IPvFuture with a non-hex version,', () {
+      test('when parsed, '
+          'then it throws.', () {
+        expect(() => Host.parse('[vG.x]'), throwsFormatException);
+        expect(() => Host.parse('[vZ.x]'), throwsFormatException);
+      });
+    });
+
+    group('Given an IPvFuture with no version or empty tail,', () {
+      test('when parsed, '
+          'then it throws.', () {
+        expect(() => Host.parse('[v.foo]'), throwsFormatException);
+        expect(() => Host.parse('[v1.]'), throwsFormatException);
+        expect(() => Host.parse('[v]'), throwsFormatException);
+      });
+    });
+
+    group('Given an IP-literal whose inner contains a control character,', () {
+      test('when parsed, '
+          'then it throws.', () {
+        expect(() => Host.parse('[v1.a\r\nX]'), throwsFormatException);
+      });
+    });
   });
 
   group('Host.fromUri', () {
