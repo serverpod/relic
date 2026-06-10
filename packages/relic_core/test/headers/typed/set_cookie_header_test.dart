@@ -120,5 +120,20 @@ void main() {
         );
       });
     });
+
+    group('Given an empty cookie name (the "=value" quirk),', () {
+      test('when encoded, '
+          'then the cookie-pair is still emitted and round-trips.', () {
+        final cookie = SetCookieHeader(name: '', value: 'abc123', secure: true);
+
+        final encoded = SetCookieHeader.codec.encode(cookie).single;
+        expect(encoded, equals('=abc123; Secure'));
+
+        final reparsed = SetCookieHeader.parse(encoded);
+        expect(reparsed.name, isEmpty);
+        expect(reparsed.value, equals('abc123'));
+        expect(reparsed.secure, isTrue);
+      });
+    });
   });
 }

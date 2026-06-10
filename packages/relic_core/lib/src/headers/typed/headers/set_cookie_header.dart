@@ -183,7 +183,10 @@ final class SetCookieHeader {
     // is correct here; a Set would silently collapse a cookie-pair whose name
     // coincides with an attribute rendering (e.g. name 'Path', value '/x').
     final attributes = <String>[];
-    if (name.isNotEmpty) attributes.add('$name=$value');
+    // Always emit the cookie-pair first, even for the empty-name `=value`
+    // quirk, so that encode round-trips with parse (which requires the first
+    // token to contain '=').
+    attributes.add('$name=$value');
 
     if (secure) attributes.add(_secure);
     if (httpOnly) attributes.add(_httpOnly);
