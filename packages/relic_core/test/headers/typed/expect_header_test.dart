@@ -36,5 +36,12 @@ void main() {
         );
       });
     });
+
+    group('Given an unknown expectation containing a HTAB,', () {
+      test('when parsed, '
+          'then it is accepted (HTAB is legal OWS).', () {
+        expect(ExpectHeader.parse('foo\tbar').value, equals('foo\tbar'));
+      });
+    });
   });
 }

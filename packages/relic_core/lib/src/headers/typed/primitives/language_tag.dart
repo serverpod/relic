@@ -7,10 +7,10 @@ import 'package:meta/meta.dart';
 ///
 /// BCP 47 tags are matched case-insensitively, but conventional output uses
 /// title casing for script subtags, uppercase for ALPHA region subtags, and
-/// lowercase for everything else. This class normalizes to that convention
-/// in [encode], so a tag parsed as `EN-us-Latn` round-trips as `en-Latn-US`
-/// (note: layout-correctness is preserved; subtags are re-ordered only if
-/// the input is already in correct BCP 47 order).
+/// lowercase for everything else. This class normalizes the case of each
+/// subtag in [encode] without reordering them, so a correctly-ordered tag
+/// such as `EN-Latn-us` round-trips as `en-Latn-US`. Subtags supplied in the
+/// wrong order (e.g. region before script) are rejected, not reordered.
 ///
 /// Equality is case-insensitive (operates on the canonical form).
 ///

@@ -36,10 +36,11 @@ final class ExpectHeader {
     }
     // Unknown expectations are preserved (so a server can answer 417), but
     // control characters are rejected so a CR/LF cannot be injected into the
-    // header when the value is later re-emitted.
+    // header when the value is later re-emitted. HTAB (0x09) is legal OWS in a
+    // field value and is allowed.
     for (var i = 0; i < trimmed.length; i++) {
       final c = trimmed.codeUnitAt(i);
-      if (c <= 0x1F || c == 0x7F) {
+      if ((c <= 0x1F && c != 0x09) || c == 0x7F) {
         throw const FormatException('Invalid value');
       }
     }
