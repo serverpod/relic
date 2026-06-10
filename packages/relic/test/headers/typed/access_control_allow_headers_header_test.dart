@@ -87,7 +87,7 @@ void main() {
         expect(allowedHeaders?.length, equals(2));
         expect(
           allowedHeaders,
-          containsAll(['Content-Type', 'X-Custom-Header']),
+          containsAll(['content-type', 'x-custom-header']),
         );
       },
     );

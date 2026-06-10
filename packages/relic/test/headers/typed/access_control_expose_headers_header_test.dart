@@ -88,7 +88,7 @@ void main() {
 
         expect(
           headers.accessControlExposeHeaders?.headers,
-          equals(['X-Custom-Header']),
+          equals(['x-custom-header']),
         );
       },
     );
@@ -133,7 +133,7 @@ void main() {
 
         expect(
           headers.accessControlExposeHeaders?.headers,
-          equals(['X-Custom-Header', 'X-Another-Header']),
+          equals(['x-custom-header', 'x-another-header']),
         );
       });
 
@@ -149,7 +149,7 @@ void main() {
 
         expect(
           headers.accessControlExposeHeaders?.headers,
-          equals(['X-Custom-Header', 'X-Another-Header']),
+          equals(['x-custom-header', 'x-another-header']),
         );
       });
     });
