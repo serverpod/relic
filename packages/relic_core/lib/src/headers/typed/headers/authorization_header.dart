@@ -33,16 +33,31 @@ abstract class AuthorizationHeader {
       throw const FormatException('Value cannot be empty');
     }
 
-    if (value.startsWith(BearerAuthorizationHeader.prefix.trim())) {
-      return BearerAuthorizationHeader.parse(value);
-    } else if (value.startsWith(BasicAuthorizationHeader.prefix.trim())) {
-      return BasicAuthorizationHeader.parse(value);
-    } else if (value.startsWith(DigestAuthorizationHeader.prefix.trim())) {
-      return DigestAuthorizationHeader.parse(value);
+    // The auth-scheme is case-insensitive (RFC 9110 11.1).
+    final sp = value.indexOf(' ');
+    final scheme = (sp < 0 ? value : value.substring(0, sp)).toLowerCase();
+    switch (scheme) {
+      case 'bearer':
+        return BearerAuthorizationHeader.parse(value);
+      case 'basic':
+        return BasicAuthorizationHeader.parse(value);
+      case 'digest':
+        return DigestAuthorizationHeader.parse(value);
+      default:
+        throw const FormatException('Invalid header format');
     }
-
-    throw const FormatException('Invalid header format');
   }
+}
+
+/// Strips a case-insensitive auth-scheme [prefix] (e.g. `"Bearer "`) from
+/// [value], returning the trimmed remainder. Throws [FormatException] if
+/// [value] does not start with [prefix].
+String _stripScheme(final String value, final String prefix) {
+  if (value.length < prefix.length ||
+      value.substring(0, prefix.length).toLowerCase() != prefix.toLowerCase()) {
+    throw FormatException('Invalid ${prefix.trim()} prefix', value);
+  }
+  return value.substring(prefix.length).trim();
 }
 
 /// Represents a Bearer token for HTTP Authorization.
@@ -74,11 +89,7 @@ final class BearerAuthorizationHeader extends AuthorizationHeader {
       throw const FormatException('Bearer token cannot be empty.');
     }
 
-    if (!value.startsWith(prefix)) {
-      throw const FormatException('Invalid bearer prefix');
-    }
-
-    final token = value.substring(prefix.length).trim();
+    final token = _stripScheme(value, prefix);
     if (token.isEmpty) {
       throw const FormatException('Bearer token cannot be empty.');
     }
@@ -148,9 +159,8 @@ final class BasicAuthorizationHeader extends AuthorizationHeader {
     if (username.contains(':')) {
       throw const FormatException('Username cannot contain ":"');
     }
-    if (password.isEmpty) {
-      throw const FormatException('Password cannot be empty');
-    }
+    // RFC 7617 permits an empty password (e.g. the `apikey:` pattern), so it
+    // is not rejected here.
   }
 
   /// Factory constructor to create a [BasicAuthorizationHeader] from a token string.
@@ -163,11 +173,7 @@ final class BasicAuthorizationHeader extends AuthorizationHeader {
       throw const FormatException('Basic token cannot be empty.');
     }
 
-    if (!value.startsWith(prefix)) {
-      throw const FormatException('Invalid basic prefix');
-    }
-
-    final base64Part = value.substring(prefix.length).trim();
+    final base64Part = _stripScheme(value, prefix);
 
     try {
       final decoded = utf8.decode(base64Decode(base64Part));

@@ -77,7 +77,7 @@ void main() {
               isA<BadRequestException>().having(
                 (final e) => e.message,
                 'message',
-                contains('Invalid bearer prefix'),
+                contains('Invalid Bearer prefix'),
               ),
             ),
           );

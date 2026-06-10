@@ -81,7 +81,7 @@ void main() {
               isA<BadRequestException>().having(
                 (final e) => e.message,
                 'message',
-                contains('Invalid bearer prefix'),
+                contains('Invalid Bearer prefix'),
               ),
             ),
           );
@@ -474,7 +474,11 @@ void main() {
     variants: [
       ('valid', 'valid:Password', returnsNormally), // : in password is legal
       ('invalid:Username', 'validPassword', throwsFormatException),
-      ('validUsername', '', throwsFormatException), // empty password
+      (
+        'validUsername',
+        '',
+        returnsNormally,
+      ), // empty password is legal (RFC 7617)
       ('', 'validPassword', throwsFormatException), // empty username
     ],
     (final v) => //

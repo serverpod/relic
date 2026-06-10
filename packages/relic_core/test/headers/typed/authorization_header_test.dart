@@ -151,4 +151,43 @@ void main() {
       });
     });
   });
+
+  group('AuthorizationHeader scheme dispatch', () {
+    group('Given a scheme in lowercase,', () {
+      test('when parsed, '
+          'then it is matched case-insensitively.', () {
+        expect(
+          AuthorizationHeader.parse('bearer abc123'),
+          isA<BearerAuthorizationHeader>(),
+        );
+        expect(
+          AuthorizationHeader.parse(
+            'DIGEST username="u", realm="r", '
+            'nonce="n", uri="/", response="r"',
+          ),
+          isA<DigestAuthorizationHeader>(),
+        );
+      });
+    });
+  });
+
+  group('BasicAuthorizationHeader empty password', () {
+    group('Given an empty password (apikey pattern),', () {
+      test('when constructed and round-tripped, '
+          'then the empty password is preserved.', () {
+        final header = BasicAuthorizationHeader(
+          username: 'apikey',
+          password: '',
+        );
+
+        expect(header.password, isEmpty);
+
+        final reparsed =
+            AuthorizationHeader.parse(header.headerValue)
+                as BasicAuthorizationHeader;
+        expect(reparsed.username, equals('apikey'));
+        expect(reparsed.password, isEmpty);
+      });
+    });
+  });
 }
