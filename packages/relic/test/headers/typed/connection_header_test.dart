@@ -35,32 +35,39 @@ void main() {
       );
     });
 
-    test('when an invalid Connection header is passed then the server responds '
-        'with a bad request including a message that states the value '
-        'is invalid', () async {
+    test('when a non-token Connection value is passed then the server responds '
+        'with a bad request', () async {
       expect(
         getServerRequestHeaders(
           server: server,
           touchHeaders: (final h) => h.connection,
-          headers: {'connection': 'custom-directive'},
+          headers: {'connection': 'bad directive'},
         ),
-        throwsA(
-          isA<BadRequestException>().having(
-            (final e) => e.message,
-            'message',
-            contains('Invalid value'),
-          ),
-        ),
+        throwsA(isA<BadRequestException>()),
       );
     });
 
-    test('when a Connection header with an invalid value is passed '
+    test('when an unknown but valid connection-option is passed '
+        'then it parses (open token set)', () async {
+      final headers = await getServerRequestHeaders(
+        server: server,
+        touchHeaders: (final h) => h.connection,
+        headers: {'connection': 'TE'},
+      );
+
+      expect(
+        headers.connection?.directives.map((final d) => d.value),
+        equals(['te']),
+      );
+    });
+
+    test('when a non-token Connection value is passed '
         'then the server does not respond with a bad request if the headers '
         'is not actually used', () async {
       final headers = await getServerRequestHeaders(
         server: server,
         touchHeaders: (_) {},
-        headers: {'connection': 'invalid-connection-format'},
+        headers: {'connection': 'bad directive'},
       );
 
       expect(headers, isNotNull);

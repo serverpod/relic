@@ -44,9 +44,6 @@ final class ConnectionHeader {
   /// Checks if the connection is marked as `upgrade`.
   bool get isUpgrade => directives.contains(ConnectionHeaderType.upgrade);
 
-  /// Checks if the connection is marked as `downgrade`.
-  bool get isDowngrade => directives.contains(ConnectionHeaderType.downgrade);
-
   /// Converts the [ConnectionHeader] instance into a string representation suitable for HTTP headers.
   ///
   /// This method generates the header string by concatenating the connection directives.
@@ -85,32 +82,23 @@ class ConnectionHeaderType {
   static const _keepAlive = 'keep-alive';
   static const _close = 'close';
   static const _upgrade = 'upgrade';
-  static const _downgrade = 'downgrade';
 
   static const keepAlive = ConnectionHeaderType._(_keepAlive);
   static const close = ConnectionHeaderType._(_close);
   static const upgrade = ConnectionHeaderType._(_upgrade);
-  static const downgrade = ConnectionHeaderType._(_downgrade);
 
-  /// Parses a [value] and returns the corresponding [ConnectionHeaderType] instance.
-  /// If the value does not match any predefined types, it returns a custom instance.
+  /// Parses a [value] into a [ConnectionHeaderType].
+  ///
+  /// A `connection-option` is a `token` naming a hop-by-hop field (RFC 9110
+  /// 7.6.1), so any valid token is accepted (e.g. `TE`, `Trailer`, custom
+  /// hop-by-hop headers), not only the predefined ones. Options are
+  /// case-insensitive and canonicalized to lowercase.
   factory ConnectionHeaderType.parse(final String value) {
     final trimmed = value.trim();
     if (trimmed.isEmpty) {
       throw const FormatException('Value cannot be empty');
     }
-    switch (trimmed) {
-      case _keepAlive:
-        return keepAlive;
-      case _close:
-        return close;
-      case _upgrade:
-        return upgrade;
-      case _downgrade:
-        return downgrade;
-      default:
-        throw const FormatException('Invalid value');
-    }
+    return ConnectionHeaderType._(Token.validate(trimmed).toLowerCase());
   }
 
   @override

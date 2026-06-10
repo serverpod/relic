@@ -90,30 +90,18 @@ class ContentEncoding {
   static const identity = ContentEncoding._(_identity);
   static const zstd = ContentEncoding._(_zstd);
 
-  /// Parses a [name] and returns the corresponding [ContentEncoding] instance.
-  /// If the name does not match any predefined encodings, it returns a custom
-  /// instance.
+  /// Parses a [name] into a [ContentEncoding].
+  ///
+  /// The set of content-codings is an open IANA registry (RFC 9110 8.4.1), so
+  /// any valid `token` is accepted rather than only the predefined ones; this
+  /// lets recipients pass through unknown codings instead of failing. Codings
+  /// are case-insensitive, so the name is canonicalized to lowercase.
   factory ContentEncoding.parse(final String name) {
     final trimmed = name.trim();
     if (trimmed.isEmpty) {
       throw const FormatException('Name cannot be empty');
     }
-    switch (trimmed) {
-      case _gzip:
-        return gzip;
-      case _compress:
-        return compress;
-      case _deflate:
-        return deflate;
-      case _br:
-        return br;
-      case _identity:
-        return identity;
-      case _zstd:
-        return zstd;
-      default:
-        throw const FormatException('Invalid value');
-    }
+    return ContentEncoding._(Token.validate(trimmed).toLowerCase());
   }
 
   @override
