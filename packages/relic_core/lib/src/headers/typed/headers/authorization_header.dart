@@ -289,6 +289,11 @@ final class DigestAuthorizationHeader extends AuthorizationHeader {
     if (response.isEmpty) {
       throw const FormatException('Response cannot be empty');
     }
+    // algorithm/qop/nc are serialized as bare tokens (RFC 7616 3.4), so they
+    // must be valid tokens to avoid emitting a malformed or injectable header.
+    if (algorithm != null) Token.validate(algorithm!);
+    if (qop != null) Token.validate(qop!);
+    if (nc != null) Token.validate(nc!);
   }
 
   /// Parses a Digest authorization header value and returns a [DigestAuthorizationHeader] instance.
@@ -308,9 +313,12 @@ final class DigestAuthorizationHeader extends AuthorizationHeader {
     final regex = RegExp(r'(\w+)\s*=\s*(?:"((?:[^"\\]|\\.)*)"|([^",\s]+))');
     for (final match in regex.allMatches(value)) {
       final quoted = match.group(2);
+      // A bare (unquoted) value must be a valid token; reject e.g.
+      // `algorithm=MD5;evil`, which would otherwise be stored and re-emitted
+      // verbatim.
       params[match.group(1)!] = quoted != null
           ? _unescapeQuoted(quoted)
-          : match.group(3)!;
+          : Token.validate(match.group(3)!);
     }
 
     if (params.isEmpty) {

@@ -118,5 +118,37 @@ void main() {
         expect(header.nc, equals('00000001'));
       });
     });
+
+    group('Given a bare auth-param value that is not a token,', () {
+      test('when parsed, '
+          'then it throws a FormatException.', () {
+        expect(
+          () => DigestAuthorizationHeader.parse(
+            'username="user", realm="r", nonce="n", uri="/", '
+            'response="r", algorithm=MD5;evil',
+          ),
+          throwsFormatException,
+        );
+      });
+    });
+  });
+
+  group('DigestAuthorizationHeader construction', () {
+    group('Given a non-token algorithm/qop/nc,', () {
+      test('when constructed, '
+          'then it throws (these are emitted unquoted).', () {
+        expect(
+          () => DigestAuthorizationHeader(
+            username: 'u',
+            realm: 'r',
+            nonce: 'n',
+            uri: '/',
+            response: 'r',
+            algorithm: 'MD5\r\nInjected: 1',
+          ),
+          throwsFormatException,
+        );
+      });
+    });
   });
 }
