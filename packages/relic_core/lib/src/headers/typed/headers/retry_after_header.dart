@@ -39,19 +39,19 @@ final class RetryAfterHeader {
       throw const FormatException('Value cannot be empty');
     }
 
-    final delay = int.tryParse(trimmed);
-    if (delay != null) {
-      if (delay < 0) {
+    // A numeric value is a delay (delta-seconds = 1*DIGIT). Reject a leading
+    // sign: `-120` is negative and `+120` is not a valid delta-seconds.
+    if (RegExp(r'^[+-]?[0-9]+$').hasMatch(trimmed)) {
+      if (trimmed.startsWith('-')) {
         throw const FormatException('Delay cannot be negative');
       }
-      return RetryAfterHeader(delay: delay);
-    } else {
-      try {
-        final date = parseHttpDate(trimmed);
-        return RetryAfterHeader(date: date);
-      } catch (e) {
-        throw const FormatException('Invalid date format');
-      }
+      return RetryAfterHeader(delay: DeltaSeconds.parse(trimmed).seconds);
+    }
+    try {
+      final date = parseHttpDate(trimmed);
+      return RetryAfterHeader(date: date);
+    } catch (e) {
+      throw const FormatException('Invalid date format');
     }
   }
 
