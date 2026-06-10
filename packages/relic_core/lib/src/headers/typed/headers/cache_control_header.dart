@@ -118,11 +118,20 @@ final class CacheControlHeader {
     if (publicCache == true && privateCache == true) {
       throw const FormatException('Must be either public or private');
     }
-    if (maxAge != null && staleWhileRevalidate != null) {
-      throw const FormatException(
-        'Cannot have both max-age and stale-while-revalidate directives',
-      );
+  }
+
+  static final Set<String> _validDirectiveSet = _validDirectives.toSet();
+
+  /// Parses a `delta-seconds` directive value, returning `null` for an absent
+  /// or non-numeric value (lenient) but rejecting a negative value.
+  static int? _delta(final String? raw, final String name) {
+    if (raw == null || raw.isEmpty) return null;
+    final n = int.tryParse(raw);
+    if (n == null) return null;
+    if (n < 0) {
+      throw FormatException('$name must be non-negative');
     }
+    return n;
   }
 
   /// Parses the Cache-Control header value and returns a [CacheControlHeader] instance.
@@ -136,75 +145,76 @@ final class CacheControlHeader {
       throw const FormatException('Directives cannot be empty');
     }
 
-    // Check if at least one directive is valid
-    final foundOneDirective = directives.any(
-      (final directive) => _validDirectives.any(
-        (final validDirective) => directive.startsWith(validDirective),
-      ),
-    );
-
-    // Check for invalid directives
-    final invalidDirectives = directives.where(
-      (final directive) => !_validDirectives.any(
-        (final validDirective) => directive.startsWith(validDirective),
-      ),
-    );
-
-    if (!foundOneDirective || invalidDirectives.isNotEmpty) {
-      throw const FormatException('Invalid directive');
-    }
-
-    final bool noCache = directives.contains(_noCacheDirective);
-    final bool noStore = directives.contains(_noStoreDirective);
-    final bool mustRevalidate = directives.contains(_mustRevalidateDirective);
-    final bool proxyRevalidate = directives.contains(_proxyRevalidateDirective);
-    final bool noTransform = directives.contains(_noTransformDirective);
-    final bool onlyIfCached = directives.contains(_onlyIfCachedDirective);
-    final bool immutable = directives.contains(_immutableDirective);
-    final bool mustUnderstand = directives.contains(_mustUnderstandDirective);
+    bool noCache = false;
+    bool noStore = false;
+    bool mustRevalidate = false;
+    bool proxyRevalidate = false;
+    bool noTransform = false;
+    bool onlyIfCached = false;
+    bool immutable = false;
+    bool mustUnderstand = false;
+    bool publicCache = false;
+    bool privateCache = false;
     int? maxAge;
     int? staleWhileRevalidate;
     int? sMaxAge;
     int? staleIfError;
     int? maxStale;
     int? minFresh;
-    final bool publicCache = directives.contains(_publicDirective);
-    final bool privateCache = directives.contains(_privateDirective);
 
     for (final directive in directives) {
-      if (directive.startsWith('$_maxAgeDirective=')) {
-        maxAge = int.tryParse(directive.substring(_maxAgeDirective.length + 1));
-      } else if (directive.startsWith('$_staleWhileRevalidateDirective=')) {
-        staleWhileRevalidate = int.tryParse(
-          directive.substring(_staleWhileRevalidateDirective.length + 1),
-        );
-      } else if (directive.startsWith('$_sMaxAgeDirective=')) {
-        sMaxAge = int.tryParse(
-          directive.substring(_sMaxAgeDirective.length + 1),
-        );
-      } else if (directive.startsWith('$_staleIfErrorDirective=')) {
-        staleIfError = int.tryParse(
-          directive.substring(_staleIfErrorDirective.length + 1),
-        );
-      } else if (directive.startsWith('$_maxStaleDirective=')) {
-        maxStale = int.tryParse(
-          directive.substring(_maxStaleDirective.length + 1),
-        );
-      } else if (directive.startsWith('$_minFreshDirective=')) {
-        minFresh = int.tryParse(
-          directive.substring(_minFreshDirective.length + 1),
-        );
+      // Directive names are matched exactly (so `max-age-extended` is not
+      // mistaken for `max-age`) and case-insensitively (RFC 9111 5.2). The
+      // optional `="..."` argument is split off here; `no-cache`/`private`
+      // are recognized even when carrying a field-list.
+      final eq = directive.indexOf('=');
+      final name = (eq < 0 ? directive : directive.substring(0, eq))
+          .trim()
+          .toLowerCase();
+      final rawValue = eq < 0 ? null : directive.substring(eq + 1).trim();
+
+      if (!_validDirectiveSet.contains(name)) {
+        throw const FormatException('Invalid directive');
+      }
+
+      switch (name) {
+        case _noCacheDirective:
+          noCache = true;
+        case _noStoreDirective:
+          noStore = true;
+        case _mustRevalidateDirective:
+          mustRevalidate = true;
+        case _proxyRevalidateDirective:
+          proxyRevalidate = true;
+        case _noTransformDirective:
+          noTransform = true;
+        case _onlyIfCachedDirective:
+          onlyIfCached = true;
+        case _immutableDirective:
+          immutable = true;
+        case _mustUnderstandDirective:
+          mustUnderstand = true;
+        case _publicDirective:
+          publicCache = true;
+        case _privateDirective:
+          privateCache = true;
+        case _maxAgeDirective:
+          maxAge = _delta(rawValue, name);
+        case _staleWhileRevalidateDirective:
+          staleWhileRevalidate = _delta(rawValue, name);
+        case _sMaxAgeDirective:
+          sMaxAge = _delta(rawValue, name);
+        case _staleIfErrorDirective:
+          staleIfError = _delta(rawValue, name);
+        case _maxStaleDirective:
+          maxStale = _delta(rawValue, name);
+        case _minFreshDirective:
+          minFresh = _delta(rawValue, name);
       }
     }
 
-    if (publicCache == true && privateCache == true) {
+    if (publicCache && privateCache) {
       throw const FormatException('Cannot be both public and private');
-    }
-
-    if (maxAge != null && staleWhileRevalidate != null) {
-      throw const FormatException(
-        'Cannot have both max-age and stale-while-revalidate directives',
-      );
     }
 
     return CacheControlHeader(

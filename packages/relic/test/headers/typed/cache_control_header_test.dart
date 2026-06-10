@@ -102,26 +102,45 @@ void main() {
     );
 
     test(
-      'when a Cache-Control header with both max-age and stale-while-revalidate is passed then the server responds '
-      'with a bad request including a message that states the directives cannot be both max-age and stale-while-revalidate',
+      'when a Cache-Control header has both max-age and stale-while-revalidate '
+      'then both parse (they are independent directives, RFC 9111)',
+      () async {
+        final headers = await getServerRequestHeaders(
+          server: server,
+          touchHeaders: (final h) => h.cacheControl,
+          headers: {
+            'cache-control': 'max-age=3600, stale-while-revalidate=300',
+          },
+        );
+
+        expect(headers.cacheControl?.maxAge, equals(3600));
+        expect(headers.cacheControl?.staleWhileRevalidate, equals(300));
+      },
+    );
+
+    test('when a Cache-Control header has a negative max-age then the server '
+        'responds with a bad request', () async {
+      expect(
+        getServerRequestHeaders(
+          server: server,
+          touchHeaders: (final h) => h.cacheControl,
+          headers: {'cache-control': 'max-age=-5'},
+        ),
+        throwsA(isA<BadRequestException>()),
+      );
+    });
+
+    test(
+      'when a Cache-Control header has an unknown directive with a known prefix '
+      'then the server responds with a bad request',
       () async {
         expect(
           getServerRequestHeaders(
             server: server,
             touchHeaders: (final h) => h.cacheControl,
-            headers: {
-              'cache-control': 'max-age=3600, stale-while-revalidate=300',
-            },
+            headers: {'cache-control': 'max-age-extended=5'},
           ),
-          throwsA(
-            isA<BadRequestException>().having(
-              (final e) => e.message,
-              'message',
-              contains(
-                'Cannot have both max-age and stale-while-revalidate directives',
-              ),
-            ),
-          ),
+          throwsA(isA<BadRequestException>()),
         );
       },
     );
