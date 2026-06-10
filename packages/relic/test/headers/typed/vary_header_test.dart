@@ -80,7 +80,7 @@ void main() {
           headers: {'vary': 'Accept-Encoding, User-Agent'},
         );
 
-        expect(headers.vary?.fields, equals(['Accept-Encoding', 'User-Agent']));
+        expect(headers.vary?.fields, equals(['accept-encoding', 'user-agent']));
       },
     );
 
@@ -93,7 +93,21 @@ void main() {
           headers: {'vary': ' Accept-Encoding , User-Agent '},
         );
 
-        expect(headers.vary?.fields, equals(['Accept-Encoding', 'User-Agent']));
+        expect(headers.vary?.fields, equals(['accept-encoding', 'user-agent']));
+      },
+    );
+
+    test(
+      'when two Vary headers differ only in field-name case then they are equal',
+      () {
+        expect(
+          VaryHeader.parse(['Accept-Encoding']),
+          equals(VaryHeader.parse(['accept-encoding'])),
+        );
+        expect(
+          VaryHeader.parse(['Accept-Encoding']).hashCode,
+          equals(VaryHeader.parse(['accept-encoding']).hashCode),
+        );
       },
     );
 

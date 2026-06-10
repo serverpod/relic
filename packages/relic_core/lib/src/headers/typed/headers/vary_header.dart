@@ -19,7 +19,13 @@ final class VaryHeader {
   final bool isWildcard;
 
   /// Constructs an instance allowing specific headers to vary.
-  VaryHeader.headers({required this.fields}) : isWildcard = false {
+  ///
+  /// Field names are HTTP field names, which are case-insensitive (RFC 9110
+  /// 5.1), so they are canonicalized to lowercase. This makes equality,
+  /// hashing, and membership checks case-insensitive.
+  VaryHeader.headers({required final Iterable<String> fields})
+    : fields = List.unmodifiable(fields.map((final f) => f.toLowerCase())),
+      isWildcard = false {
     if (fields.isEmpty) {
       throw ArgumentError.value(fields, 'fields', 'cannot be empty');
     }
