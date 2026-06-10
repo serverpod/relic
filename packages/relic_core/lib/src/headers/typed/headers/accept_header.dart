@@ -2,6 +2,7 @@ import 'package:collection/collection.dart';
 
 import '../../../../relic_core.dart';
 import '../../extension/string_list_extensions.dart';
+import 'util/qvalue.dart';
 
 /// A class representing the HTTP Accept header.
 ///
@@ -106,18 +107,8 @@ class MediaRange {
   /// for HTTP headers. The q-value is rendered with at most 3 fractional
   /// digits per RFC 9110 12.4.2 (`qvalue = ( "0" [ "." 0*3DIGIT ] ) / ...`).
   String _encode() {
-    final qualityStr = quality == 1.0 ? '' : ';q=${_formatQValue(quality)}';
+    final qualityStr = quality == 1.0 ? '' : ';q=${formatQValue(quality)}';
     return '$type/$subtype$qualityStr';
-  }
-
-  static String _formatQValue(final double q) {
-    var s = q.toStringAsFixed(3);
-    // strip insignificant trailing zeros, but keep a digit after the dot
-    while (s.endsWith('0') && !s.endsWith('.0')) {
-      s = s.substring(0, s.length - 1);
-    }
-    if (s.endsWith('.0')) s = s.substring(0, s.length - 2);
-    return s;
   }
 
   @override

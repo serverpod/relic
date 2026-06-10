@@ -2,6 +2,7 @@ import 'package:collection/collection.dart';
 
 import '../../../../relic_core.dart';
 import '../../extension/string_list_extensions.dart';
+import 'util/qvalue.dart';
 
 /// A class representing the HTTP TE header.
 ///
@@ -90,16 +91,7 @@ class TeQuality {
   /// for HTTP headers. The q-value is rendered with at most 3 fractional
   /// digits per RFC 9110 12.4.2.
   String _encode() =>
-      quality == 1.0 ? encoding : '$encoding;q=${_formatQValue(quality!)}';
-
-  static String _formatQValue(final double q) {
-    var s = q.toStringAsFixed(3);
-    while (s.endsWith('0') && !s.endsWith('.0')) {
-      s = s.substring(0, s.length - 1);
-    }
-    if (s.endsWith('.0')) s = s.substring(0, s.length - 2);
-    return s;
-  }
+      quality == 1.0 ? encoding : '$encoding;q=${formatQValue(quality!)}';
 
   @override
   bool operator ==(final Object other) =>
