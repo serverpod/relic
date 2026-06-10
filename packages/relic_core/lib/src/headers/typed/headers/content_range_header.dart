@@ -61,17 +61,28 @@ final class ContentRangeHeader {
     }
 
     final unit = match.group(1)!;
-    final start = match.group(2) != null ? int.tryParse(match.group(2)!) : null;
-    final end = match.group(3) != null ? int.tryParse(match.group(3)!) : null;
+    // The regex guarantees these groups are all digits; parse them with a
+    // guard so an overflowing run throws a FormatException instead of
+    // int.tryParse silently yielding null (which would turn a specified range
+    // into an unsatisfied one) or int.parse throwing an unrelated error.
+    final start = _parseField(match.group(2));
+    final end = _parseField(match.group(3));
     if (start != null && end != null && start > end) {
       throw const FormatException('Invalid range');
     }
     final sizeGroup = match.group(4)!;
-
-    // If totalSize is '*', it means the total size is unknown
-    final size = sizeGroup == '*' ? null : int.parse(sizeGroup);
+    final size = sizeGroup == '*' ? null : _parseField(sizeGroup);
 
     return ContentRangeHeader(unit: unit, start: start, end: end, size: size);
+  }
+
+  static int? _parseField(final String? digits) {
+    if (digits == null) return null;
+    final n = int.tryParse(digits);
+    if (n == null) {
+      throw FormatException('Content-Range value out of range', digits);
+    }
+    return n;
   }
 
   /// Returns the full content range string in the format "bytes start-end/totalSize".

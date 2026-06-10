@@ -126,5 +126,21 @@ void main() {
         );
       });
     });
+
+    group('Given a numeric field too large to represent,', () {
+      test('when parsed, '
+          'then it throws instead of silently becoming unsatisfied.', () {
+        expect(
+          () => ContentRangeHeader.parse(
+            'bytes 99999999999999999999-99999999999999999999/100',
+          ),
+          throwsFormatException,
+        );
+        expect(
+          () => ContentRangeHeader.parse('bytes 0-10/99999999999999999999'),
+          throwsFormatException,
+        );
+      });
+    });
   });
 }
