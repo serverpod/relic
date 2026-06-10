@@ -48,12 +48,25 @@ final class StrictTransportSecurityHeader {
     bool includeSubDomains = false;
     bool preload = false;
 
+    // RFC 6797 6.1: directive names are case-insensitive; `max-age` is a
+    // non-negative integer that may be supplied as a quoted-string.
     for (final directive in splitValues) {
-      if (directive.startsWith(_maxAgePrefix)) {
-        maxAge = int.tryParse(directive.substring(_maxAgePrefix.length));
-      } else if (directive == _includeSubDomains) {
+      final lower = directive.toLowerCase();
+      if (lower.startsWith(_maxAgePrefix)) {
+        var v = directive.substring(_maxAgePrefix.length).trim();
+        if (v.length >= 2 && v.startsWith('"') && v.endsWith('"')) {
+          v = v.substring(1, v.length - 1);
+        }
+        try {
+          maxAge = DeltaSeconds.parse(v).seconds;
+        } on FormatException {
+          throw const FormatException(
+            'Max-age directive is missing or invalid',
+          );
+        }
+      } else if (lower == _includeSubDomains.toLowerCase()) {
         includeSubDomains = true;
-      } else if (directive == _preload) {
+      } else if (lower == _preload.toLowerCase()) {
         preload = true;
       }
     }
