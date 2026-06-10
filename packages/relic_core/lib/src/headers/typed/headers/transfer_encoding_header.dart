@@ -16,10 +16,23 @@ final class TransferEncodingHeader {
   final List<TransferEncoding> encodings;
 
   /// Constructs a [TransferEncodingHeader] instance with the specified transfer encodings.
+  ///
+  /// Per RFC 9112 6.1 the `chunked` transfer-coding, if present, MUST be the
+  /// final coding. A list with `chunked` in any other position is rejected
+  /// rather than silently reordered (which would misrepresent the actual body
+  /// framing and hide caller bugs).
   TransferEncodingHeader.encodings(final List<TransferEncoding> encodings)
-    : encodings = List.unmodifiable(_reorderEncodings(encodings)) {
+    : encodings = List.unmodifiable(encodings) {
     if (encodings.isEmpty) {
       throw ArgumentError.value(encodings, 'encodings', 'cannot be empty');
+    }
+    final chunkedIndex = encodings.indexWhere(
+      (final e) => e.name == TransferEncoding.chunked.name,
+    );
+    if (chunkedIndex >= 0 && chunkedIndex != encodings.length - 1) {
+      throw const FormatException(
+        'chunked transfer-coding must be the final coding (RFC 9112 6.1)',
+      );
     }
   }
 
@@ -32,7 +45,18 @@ final class TransferEncodingHeader {
       throw const FormatException('Value cannot be empty');
     }
 
-    final encodings = splitValues.map(TransferEncoding.parse).toList();
+    // Deduplicate by canonical (case-insensitive) coding name, since
+    // splitTrimAndFilterUnique only removes exact-string duplicates. Without
+    // this, `chunked, CHUNKED` would keep both and then fail the
+    // chunked-must-be-last check even though they are the same coding.
+    final encodings = <TransferEncoding>[];
+    final seen = <String>{};
+    for (final raw in splitValues) {
+      final encoding = TransferEncoding.parse(raw);
+      if (seen.add(encoding.name)) {
+        encodings.add(encoding);
+      }
+    }
 
     return TransferEncodingHeader.encodings(encodings);
   }
@@ -58,35 +82,6 @@ final class TransferEncodingHeader {
   String toString() {
     return 'TransferEncodingHeader(encodings: $encodings)';
   }
-
-  /// Ensures that the 'chunked' transfer encoding is always the last in the list.
-  ///
-  /// According to the HTTP/1.1 specification (RFC 9112), the 'chunked' transfer
-  /// encoding must be the final encoding applied to the response body. This is
-  /// because 'chunked' signals the end of the response message, and any
-  /// encoding after 'chunked' would cause ambiguity or violate the standard.
-  ///
-  /// Example of valid ordering:
-  ///   Transfer-Encoding: gzip, chunked
-  ///
-  /// Example of invalid ordering:
-  ///   Transfer-Encoding: chunked, gzip
-  ///
-  /// This function reorders the encodings to comply with the standard and
-  /// ensures compatibility with HTTP clients and intermediaries.
-  static List<TransferEncoding> _reorderEncodings(
-    final List<TransferEncoding> encodings,
-  ) {
-    final TransferEncoding? chunked = encodings.firstWhereOrNull(
-      (final e) => e.name == TransferEncoding.chunked.name,
-    );
-    if (chunked == null) return encodings;
-
-    final reordered = List<TransferEncoding>.from(encodings);
-    reordered.removeWhere((final e) => e.name == TransferEncoding.chunked.name);
-    reordered.add(chunked);
-    return reordered;
-  }
 }
 
 /// A class representing valid transfer encodings.
@@ -111,13 +106,15 @@ class TransferEncoding {
   static const gzip = TransferEncoding._(_gzip);
 
   /// Parses a [name] and returns the corresponding [TransferEncoding] instance.
-  /// If the name does not match any predefined encodings, it returns a custom instance.
+  ///
+  /// Transfer-codings are case-insensitive (RFC 9112 7), so the name is
+  /// matched case-insensitively against the registered codings.
   factory TransferEncoding.parse(final String name) {
     final trimmed = name.trim();
     if (trimmed.isEmpty) {
       throw const FormatException('Name cannot be empty');
     }
-    switch (trimmed) {
+    switch (trimmed.toLowerCase()) {
       case _identity:
         return identity;
       case _chunked:
