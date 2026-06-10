@@ -48,6 +48,50 @@ void main() {
         );
       });
     });
+
+    group('Given an unbalanced inner-list,', () {
+      test('when parsed, '
+          'then it throws.', () {
+        expect(
+          () => PermissionsPolicyHeader.parse('geolocation=(self'),
+          throwsFormatException,
+        );
+        expect(
+          () => PermissionsPolicyHeader.parse('geolocation=self)'),
+          throwsFormatException,
+        );
+      });
+    });
+
+    group('Given an empty feature name,', () {
+      test('when parsed, '
+          'then it throws.', () {
+        expect(
+          () => PermissionsPolicyHeader.parse('=()'),
+          throwsFormatException,
+        );
+      });
+
+      test('when a header is built from a directive with an empty name, '
+          'then it throws (matching the parser).', () {
+        expect(
+          () => PermissionsPolicyHeader.directives([
+            PermissionsPolicyDirective(name: '', values: const []),
+          ]),
+          throwsFormatException,
+        );
+      });
+    });
+
+    group('Given no directives,', () {
+      test('when a header is built from an empty list, '
+          'then it throws (the invariant holds in release too).', () {
+        expect(
+          () => PermissionsPolicyHeader.directives(const []),
+          throwsFormatException,
+        );
+      });
+    });
   });
 
   group('PermissionsPolicyHeader encoding', () {

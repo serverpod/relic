@@ -22,10 +22,22 @@ final class PermissionsPolicyHeader {
   final List<PermissionsPolicyDirective> directives;
 
   /// Constructs a [PermissionsPolicyHeader] instance with the specified directives.
+  ///
+  /// Every directive must have a non-empty feature name, otherwise the header
+  /// would encode to a malformed `=()` that no conforming user agent (nor
+  /// [PermissionsPolicyHeader.parse]) accepts.
   PermissionsPolicyHeader.directives(
     final List<PermissionsPolicyDirective> directives,
-  ) : assert(directives.isNotEmpty),
-      directives = List.unmodifiable(directives);
+  ) : directives = List.unmodifiable(directives) {
+    if (this.directives.isEmpty) {
+      throw const FormatException(
+        'Permissions-Policy requires at least one directive',
+      );
+    }
+    if (this.directives.any((final d) => d.name.isEmpty)) {
+      throw const FormatException('Permissions-Policy feature name is empty');
+    }
+  }
 
   /// Parses the Permissions-Policy header value and returns a [PermissionsPolicyHeader] instance.
   ///
@@ -54,10 +66,7 @@ final class PermissionsPolicyHeader {
       );
     }
 
-    if (directives.isEmpty) {
-      throw const FormatException('Value cannot be empty');
-    }
-
+    // The non-empty invariant is enforced by the .directives() constructor.
     return PermissionsPolicyHeader.directives(directives);
   }
 
@@ -66,8 +75,14 @@ final class PermissionsPolicyHeader {
   /// whitespace so an sf-string containing a space stays intact.
   static List<String> _parseInnerList(final String raw) {
     var inner = raw;
-    if (inner.startsWith('(') && inner.endsWith(')')) {
+    final hasOpen = inner.startsWith('(');
+    final hasClose = inner.endsWith(')');
+    if (hasOpen && hasClose) {
       inner = inner.substring(1, inner.length - 1);
+    } else if (hasOpen || hasClose) {
+      // An inner-list parenthesis is unbalanced; reject rather than keep the
+      // stray paren as part of a token value.
+      throw FormatException('unbalanced Permissions-Policy inner-list', raw);
     }
     inner = inner.trim();
     if (inner.isEmpty) return const [];
