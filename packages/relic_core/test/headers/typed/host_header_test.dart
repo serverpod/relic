@@ -58,4 +58,52 @@ void main() {
       });
     });
   });
+
+  group('HostHeader factory validation', () {
+    group('Given a URI with no host,', () {
+      test('when HostHeader.fromUri is called, '
+          'then it throws a FormatException (matching parse).', () {
+        expect(
+          () => HostHeader.fromUri(Uri.parse('http:///path')),
+          throwsFormatException,
+        );
+      });
+    });
+
+    group('Given an empty host,', () {
+      test('when HostHeader is constructed, '
+          'then it throws a FormatException.', () {
+        expect(() => HostHeader(''), throwsFormatException);
+      });
+    });
+
+    group('Given an out-of-range port,', () {
+      test('when HostHeader is constructed, '
+          'then it throws a FormatException (not a RangeError).', () {
+        expect(() => HostHeader('h', 70000), throwsFormatException);
+      });
+    });
+
+    group('Given a non-digit port in parse,', () {
+      test('when HostHeader.parse is called, '
+          'then hex, signs, and whitespace are rejected.', () {
+        expect(
+          () => HostHeader.parse('example.com:0x10'),
+          throwsFormatException,
+        );
+        expect(
+          () => HostHeader.parse('example.com:+80'),
+          throwsFormatException,
+        );
+        expect(
+          () => HostHeader.parse('example.com: 80'),
+          throwsFormatException,
+        );
+        expect(
+          () => HostHeader.parse('example.com:99999999999'),
+          throwsFormatException,
+        );
+      });
+    });
+  });
 }
