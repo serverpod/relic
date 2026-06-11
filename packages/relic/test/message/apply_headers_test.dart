@@ -185,6 +185,27 @@ void main() {
       );
     });
 
+    test('with a non-chunked transfer encoding and a streaming body '
+        'when applying headers to http response '
+        'then "chunked" is appended without throwing', () async {
+      final HttpResponseMock response = HttpResponseMock();
+      response.applyHeaders(
+        Headers.build(
+          (final mh) => mh.transferEncoding = TransferEncodingHeader.encodings([
+            TransferEncoding.gzip,
+          ]),
+        ),
+        Body.fromDataStream(
+          Stream.fromIterable([Uint8List.fromList('hello'.codeUnits)]),
+        ),
+      );
+
+      expect(
+        response.headers['transfer-encoding'],
+        equals([TransferEncoding.gzip.name, TransferEncoding.chunked.name]),
+      );
+    });
+
     group('with status code', () {
       test('100 (continue) '
           'when applying headers to http response '

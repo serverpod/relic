@@ -30,8 +30,10 @@ extension HttpResponseExtension on io.HttpResponse {
       return;
     }
 
-    // Otherwise, we need to consider chunked encoding
-    final encodings = headers.transferEncoding?.encodings ?? [];
+    // Otherwise, we need to consider chunked encoding. Copy into a growable
+    // list: TransferEncodingHeader.encodings is unmodifiable, so adding the
+    // chunked coding below would otherwise throw.
+    final encodings = [...?headers.transferEncoding?.encodings];
     final isChunked = headers.transferEncoding?.isChunked ?? false;
     final isIdentity = headers.transferEncoding?.isIdentity ?? false;
     final shouldEnableChunkedEncoding = _shouldEnableChunkedEncoding(body);
@@ -42,11 +44,14 @@ extension HttpResponseExtension on io.HttpResponse {
       encodings.add(TransferEncoding.chunked);
     }
 
-    // Set the transfer encoding header.
-    responseHeaders.set(
-      Headers.transferEncodingHeader,
-      encodings.map((final e) => e.name).toList(),
-    );
+    // Set the transfer encoding header (only when there is a coding to emit;
+    // an empty list would otherwise set an empty Transfer-Encoding).
+    if (encodings.isNotEmpty) {
+      responseHeaders.set(
+        Headers.transferEncodingHeader,
+        encodings.map((final e) => e.name).toList(),
+      );
+    }
   }
 
   /// Check if chunked encoding should be applied.
