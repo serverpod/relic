@@ -195,6 +195,32 @@ void main() {
     );
 
     test(
+      'when a Cookie header has two cookies with the same name but different '
+      'values then both are preserved and getCookie returns the first',
+      () async {
+        // RFC 6265 5.4 allows a Cookie header to carry duplicate cookie names
+        // (e.g. a host-only cookie plus a Domain-scoped one); the server cannot
+        // distinguish them from the header alone. The header must still parse,
+        // since rejecting it would make an otherwise valid cookie unreadable.
+        final headers = await getServerRequestHeaders(
+          server: server,
+          touchHeaders: (final h) => h.cookie,
+          headers: {'cookie': 'sessionId=abc123; sessionId=xyz789'},
+        );
+
+        expect(
+          headers.cookie?.cookies.map((final c) => c.name).toList(),
+          equals(['sessionId', 'sessionId']),
+        );
+        expect(
+          headers.cookie?.cookies.map((final c) => c.value).toList(),
+          equals(['abc123', 'xyz789']),
+        );
+        expect(headers.cookie?.getCookie('sessionId')?.value, equals('abc123'));
+      },
+    );
+
+    test(
       'when a Cookie header is passed with extra whitespace then it should parse the cookies correctly',
       () async {
         final headers = await getServerRequestHeaders(
