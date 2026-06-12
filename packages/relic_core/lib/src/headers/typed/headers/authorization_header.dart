@@ -295,11 +295,16 @@ final class DigestAuthorizationHeader extends AuthorizationHeader {
     if (response.isEmpty) {
       throw const FormatException('Response cannot be empty');
     }
-    // algorithm/qop/nc are serialized as bare tokens (RFC 7616 3.4), so they
-    // must be valid tokens to avoid emitting a malformed or injectable header.
+    // algorithm/qop are serialized as bare tokens (RFC 7616 3.4), so they must
+    // be valid tokens to avoid emitting a malformed or injectable header.
     if (algorithm != null) Token.validate(algorithm!);
     if (qop != null) Token.validate(qop!);
-    if (nc != null) Token.validate(nc!);
+    // nc is `nc-value = 8LHEX` (RFC 7616 3.4), not an arbitrary token.
+    if (nc != null && !RegExp(r'^[0-9A-Fa-f]{8}$').hasMatch(nc!)) {
+      throw const FormatException(
+        'Digest nc must be exactly 8 hexadecimal digits',
+      );
+    }
   }
 
   /// Parses a Digest authorization header value and returns a [DigestAuthorizationHeader] instance.

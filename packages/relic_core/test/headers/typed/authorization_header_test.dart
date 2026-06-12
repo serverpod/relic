@@ -152,7 +152,7 @@ void main() {
   });
 
   group('DigestAuthorizationHeader construction', () {
-    group('Given a non-token algorithm/qop/nc,', () {
+    group('Given a non-token algorithm/qop,', () {
       test('when constructed, '
           'then it throws (these are emitted unquoted).', () {
         expect(
@@ -166,6 +166,26 @@ void main() {
           ),
           throwsFormatException,
         );
+      });
+    });
+
+    group('Given an nc that is not exactly 8 hex digits,', () {
+      test('when constructed, '
+          'then it throws (RFC 7616 nc-value = 8LHEX).', () {
+        for (final bad in ['123', '0000000g', '000000010']) {
+          expect(
+            () => DigestAuthorizationHeader(
+              username: 'u',
+              realm: 'r',
+              nonce: 'n',
+              uri: '/',
+              response: 'r',
+              nc: bad,
+            ),
+            throwsFormatException,
+            reason: 'nc="$bad" should be rejected',
+          );
+        }
       });
     });
   });
