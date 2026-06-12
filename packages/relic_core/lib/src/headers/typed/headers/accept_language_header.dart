@@ -71,10 +71,13 @@ class LanguageQuality {
       final name = parts[i].substring(0, eq).trim();
       if (name.toLowerCase() != 'q') continue;
       final parsed = double.tryParse(parts[i].substring(eq + 1).trim());
-      if (parsed == null || parsed < 0 || parsed > 1) {
-        throw const FormatException('Invalid quality value');
+      // A malformed or out-of-range weight is treated as absent (defaulting to
+      // 1.0) rather than rejecting the whole header: the client did list this
+      // entry, so it is acceptable; only the unparseable preference is dropped
+      // (RFC 9110 12.4.2; robustness on received headers).
+      if (parsed != null && parsed >= 0 && parsed <= 1) {
+        quality = parsed;
       }
-      quality = parsed;
       break;
     }
 

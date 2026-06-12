@@ -37,24 +37,24 @@ void main() {
       },
     );
 
-    test('when an Accept-Encoding header with invalid quality values is passed '
-        'then the server responds with a bad request including a message that '
-        'states the quality value is invalid', () async {
-      expect(
-        getServerRequestHeaders(
+    test(
+      'when an Accept-Encoding header with a malformed quality value is '
+      'passed then the weight defaults to 1.0 instead of being rejected',
+      () async {
+        final headers = await getServerRequestHeaders(
           server: server,
           headers: {'accept-encoding': 'gzip;q=abc'},
           touchHeaders: (final h) => h.acceptEncoding,
-        ),
-        throwsA(
-          isA<BadRequestException>().having(
-            (final e) => e.message,
-            'message',
-            contains('Invalid quality value'),
-          ),
-        ),
-      );
-    });
+        );
+
+        expect(
+          headers.acceptEncoding?.encodings
+              .map((final e) => e.quality)
+              .toList(),
+          equals([1.0]),
+        );
+      },
+    );
 
     test(
       'when an Accept-Encoding header with wildcard (*) and other encodings is '
@@ -349,18 +349,25 @@ void main() {
     });
 
     group(
-      'when Accept-Encoding headers with invalid quality values are passed',
+      'when Accept-Encoding headers with a malformed quality value are passed',
       () {
-        test('then it should return null', () async {
-          final headers = await getServerRequestHeaders(
-            server: server,
-            touchHeaders: (_) {},
-            headers: {'accept-encoding': 'gzip;q=abc, deflate, br'},
-          );
+        test(
+          'then the header still parses and the weight defaults to 1.0',
+          () async {
+            final headers = await getServerRequestHeaders(
+              server: server,
+              touchHeaders: (_) {},
+              headers: {'accept-encoding': 'gzip;q=abc, deflate, br'},
+            );
 
-          expect(Headers.acceptEncoding[headers].valueOrNullIfInvalid, isNull);
-          expect(() => headers.acceptEncoding, throwsInvalidHeader);
-        });
+            expect(
+              headers.acceptEncoding?.encodings
+                  .map((final e) => e.quality)
+                  .toList(),
+              equals([1.0, 1.0, 1.0]),
+            );
+          },
+        );
       },
     );
   });

@@ -37,27 +37,18 @@ void main() {
       },
     );
 
-    test(
-      'when an Accept header with invalid quality value is passed then the server '
-      'should respond with a bad request including a message that states the '
-      'quality value is invalid',
-      () async {
-        expect(
-          getServerRequestHeaders(
-            server: server,
-            touchHeaders: (final h) => h.accept,
-            headers: {'accept': 'text/html;q=abc'},
-          ),
-          throwsA(
-            isA<BadRequestException>().having(
-              (final e) => e.message,
-              'message',
-              contains('Invalid quality value'),
-            ),
-          ),
-        );
-      },
-    );
+    test('when an Accept header with a malformed quality value is passed '
+        'then the weight defaults to 1.0 instead of being rejected', () async {
+      final headers = await getServerRequestHeaders(
+        server: server,
+        touchHeaders: (final h) => h.accept,
+        headers: {'accept': 'text/html;q=abc'},
+      );
+
+      final mediaRanges = headers.accept?.mediaRanges;
+      expect(mediaRanges?.length, equals(1));
+      expect(mediaRanges?[0].quality, equals(1.0));
+    });
 
     test('when an Accept header with an invalid value is passed '
         'then the server does not respond with a bad request if the headers '
@@ -65,7 +56,7 @@ void main() {
       final headers = await getServerRequestHeaders(
         server: server,
         touchHeaders: (_) {},
-        headers: {'accept': 'text/html;q=abc'},
+        headers: {'accept': 'invalid'},
       );
 
       expect(headers, isNotNull);
@@ -146,25 +137,22 @@ void main() {
 
     group('when multiple Accept media ranges are passed', () {
       test(
-        'with invalid quality values are passed then the server should respond with a bad request '
-        'including a message that states the quality value is invalid',
+        'with malformed quality values then those weights default to 1.0 and '
+        'valid weights are preserved',
         () async {
-          expect(
-            getServerRequestHeaders(
-              server: server,
-              touchHeaders: (final h) => h.accept,
-              headers: {
-                'accept': 'text/html;q=test, application/json;q=abc, */*;q=0.5',
-              },
-            ),
-            throwsA(
-              isA<BadRequestException>().having(
-                (final e) => e.message,
-                'message',
-                contains('Invalid quality value'),
-              ),
-            ),
+          final headers = await getServerRequestHeaders(
+            server: server,
+            touchHeaders: (final h) => h.accept,
+            headers: {
+              'accept': 'text/html;q=test, application/json;q=abc, */*;q=0.5',
+            },
           );
+
+          final mediaRanges = headers.accept?.mediaRanges;
+          expect(mediaRanges?.length, equals(3));
+          expect(mediaRanges?[0].quality, equals(1.0));
+          expect(mediaRanges?[1].quality, equals(1.0));
+          expect(mediaRanges?[2].quality, equals(0.5));
         },
       );
       test(
@@ -219,12 +207,12 @@ void main() {
 
     tearDown(() => server.close());
 
-    group('when an Accept header with invalid quality value is passed', () {
+    group('when an Accept header with an invalid value is passed', () {
       test('then it should return null', () async {
         final headers = await getServerRequestHeaders(
           server: server,
           touchHeaders: (_) {},
-          headers: {'accept': 'text/html;q=abc'},
+          headers: {'accept': 'invalid'},
         );
 
         expect(Headers.accept[headers].valueOrNullIfInvalid, isNull);

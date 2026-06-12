@@ -38,24 +38,24 @@ void main() {
       },
     );
 
-    test('when an Accept-Language header with invalid quality values is passed '
-        'then the server responds with a bad request including a message that '
-        'states the quality value is invalid', () async {
-      expect(
-        getServerRequestHeaders(
+    test(
+      'when an Accept-Language header with a malformed quality value is '
+      'passed then the weight defaults to 1.0 instead of being rejected',
+      () async {
+        final headers = await getServerRequestHeaders(
           server: server,
           touchHeaders: (final h) => h.acceptLanguage,
           headers: {'accept-language': 'en;q=abc'},
-        ),
-        throwsA(
-          isA<BadRequestException>().having(
-            (final e) => e.message,
-            'message',
-            contains('Invalid quality value'),
-          ),
-        ),
-      );
-    });
+        );
+
+        expect(
+          headers.acceptLanguage?.languages
+              .map((final e) => e.quality)
+              .toList(),
+          equals([1.0]),
+        );
+      },
+    );
 
     test(
       'when an Accept-Language header with wildcard (*) and other languages is '
@@ -373,18 +373,25 @@ void main() {
     });
 
     group(
-      'when Accept-Language headers with invalid quality values are passed',
+      'when Accept-Language headers with a malformed quality value are passed',
       () {
-        test('then it should return null', () async {
-          final headers = await getServerRequestHeaders(
-            server: server,
-            touchHeaders: (_) {},
-            headers: {'accept-language': 'en;q=abc, fr, de'},
-          );
+        test(
+          'then the header still parses and the weight defaults to 1.0',
+          () async {
+            final headers = await getServerRequestHeaders(
+              server: server,
+              touchHeaders: (_) {},
+              headers: {'accept-language': 'en;q=abc, fr, de'},
+            );
 
-          expect(Headers.acceptLanguage[headers].valueOrNullIfInvalid, isNull);
-          expect(() => headers.acceptLanguage, throwsInvalidHeader);
-        });
+            expect(
+              headers.acceptLanguage?.languages
+                  .map((final e) => e.quality)
+                  .toList(),
+              equals([1.0, 1.0, 1.0]),
+            );
+          },
+        );
       },
     );
   });
