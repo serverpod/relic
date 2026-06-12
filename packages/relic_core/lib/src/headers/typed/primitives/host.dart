@@ -180,8 +180,9 @@ bool _isHexDigit(final int c) =>
 
 bool _isIpvFutureTailChar(final int c) {
   // unreserved
-  if ((c >= 0x41 && c <= 0x5A) || (c >= 0x61 && c <= 0x7A))
+  if ((c >= 0x41 && c <= 0x5A) || (c >= 0x61 && c <= 0x7A)) {
     return true; // ALPHA
+  }
   if (c >= 0x30 && c <= 0x39) return true; // DIGIT
   if (c == 0x2D || c == 0x2E || c == 0x5F || c == 0x7E) return true; // - . _ ~
   // sub-delims: ! $ & ' ( ) * + , ; =
