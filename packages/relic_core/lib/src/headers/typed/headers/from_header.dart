@@ -27,12 +27,10 @@ final class FromHeader {
       throw const FormatException('Value cannot be empty');
     }
 
-    for (final email in emails) {
-      if (!email.isValidEmail()) {
-        throw const FormatException('Invalid email format');
-      }
-    }
-
+    // From is advisory contact information (RFC 9110 10.1.2, a mailbox). Its
+    // real syntax (RFC 5322) is far richer than a bare addr-spec, and a value
+    // the server cannot parse must not fail the request, so values are kept
+    // as-is rather than format-validated.
     return FromHeader.emails(emails);
   }
 

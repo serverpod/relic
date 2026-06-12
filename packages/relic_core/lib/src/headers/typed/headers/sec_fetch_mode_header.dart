@@ -31,8 +31,9 @@ final class SecFetchModeHeader {
   static const navigate = SecFetchModeHeader._(_navigate);
   static const webSocket = SecFetchModeHeader._(_webSocket);
 
-  /// Parses a [value] and returns the corresponding [SecFetchModeHeader] instance.
-  /// If the value does not match any predefined types, it returns a custom instance.
+  /// Parses a [value] into a [SecFetchModeHeader]. A value outside the
+  /// predefined set is rejected; new Fetch values are adopted by updating the
+  /// set in a relic release rather than accepted ad hoc.
   factory SecFetchModeHeader.parse(final String value) {
     final trimmed = value.trim();
     if (trimmed.isEmpty) {

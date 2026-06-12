@@ -27,8 +27,9 @@ final class SecFetchSiteHeader {
   static const crossSite = SecFetchSiteHeader._(_crossSite);
   static const none = SecFetchSiteHeader._(_none);
 
-  /// Parses a [value] and returns the corresponding [SecFetchSiteHeader] instance.
-  /// If the value does not match any predefined types, it returns a custom instance.
+  /// Parses a [value] into a [SecFetchSiteHeader]. A value outside the
+  /// predefined set is rejected; new Fetch values are adopted by updating the
+  /// set in a relic release rather than accepted ad hoc.
   factory SecFetchSiteHeader.parse(final String value) {
     final trimmed = value.trim();
     if (trimmed.isEmpty) {

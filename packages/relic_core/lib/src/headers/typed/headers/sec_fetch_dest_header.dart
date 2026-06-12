@@ -64,8 +64,9 @@ final class SecFetchDestHeader {
   static const worker = SecFetchDestHeader._(_worker);
   static const xslt = SecFetchDestHeader._(_xslt);
 
-  /// Parses a [value] and returns the corresponding [SecFetchDestHeader] instance.
-  /// If the value does not match any predefined types, it returns a custom instance.
+  /// Parses a [value] into a [SecFetchDestHeader]. A value outside the
+  /// predefined set is rejected; new Fetch values are adopted by updating the
+  /// set in a relic release rather than accepted ad hoc.
   factory SecFetchDestHeader.parse(final String value) {
     final trimmed = value.trim();
     if (trimmed.isEmpty) {

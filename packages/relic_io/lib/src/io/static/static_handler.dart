@@ -405,9 +405,10 @@ bool _isRangeRequestValid(final Request req, final FileInfo fileInfo) {
   final ifRange = req.headers.ifRange;
   if (ifRange == null) return true;
 
-  // Check ETag match
+  // Check ETag match. A weak validator cannot satisfy a range request
+  // (RFC 9110 13.1.5): treat it as a no-match so the full file is served.
   final etag = ifRange.etag;
-  if (etag != null) return etag.value == fileInfo.etag;
+  if (etag != null) return !etag.isWeak && etag.value == fileInfo.etag;
 
   // Check Last-Modified match
   final lastModified = ifRange.lastModified;

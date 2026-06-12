@@ -122,15 +122,15 @@ final class CacheControlHeader {
 
   static final Set<String> _validDirectiveSet = _validDirectives.toSet();
 
-  /// Parses a `delta-seconds` directive value, returning `null` for an absent
-  /// or non-numeric value (lenient) but rejecting a negative value.
-  static int? _delta(final String? raw, final String name) {
+  /// Parses a `delta-seconds` directive value, returning `null` for an absent,
+  /// non-numeric, or negative value. A `delta-seconds` is `1*DIGIT` (RFC 9111
+  /// 1.2.2), so anything else is malformed; the directive is ignored rather
+  /// than failing the whole header (RFC 9111 5.2 has recipients ignore
+  /// directives they cannot use).
+  static int? _delta(final String? raw) {
     if (raw == null || raw.isEmpty) return null;
     final n = int.tryParse(raw);
-    if (n == null) return null;
-    if (n < 0) {
-      throw FormatException('$name must be non-negative');
-    }
+    if (n == null || n < 0) return null;
     return n;
   }
 
@@ -199,17 +199,17 @@ final class CacheControlHeader {
         case _privateDirective:
           privateCache = true;
         case _maxAgeDirective:
-          maxAge = _delta(rawValue, name);
+          maxAge = _delta(rawValue);
         case _staleWhileRevalidateDirective:
-          staleWhileRevalidate = _delta(rawValue, name);
+          staleWhileRevalidate = _delta(rawValue);
         case _sMaxAgeDirective:
-          sMaxAge = _delta(rawValue, name);
+          sMaxAge = _delta(rawValue);
         case _staleIfErrorDirective:
-          staleIfError = _delta(rawValue, name);
+          staleIfError = _delta(rawValue);
         case _maxStaleDirective:
-          maxStale = _delta(rawValue, name);
+          maxStale = _delta(rawValue);
         case _minFreshDirective:
-          minFresh = _delta(rawValue, name);
+          minFresh = _delta(rawValue);
       }
     }
 

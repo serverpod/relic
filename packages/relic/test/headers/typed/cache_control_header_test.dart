@@ -118,16 +118,15 @@ void main() {
       },
     );
 
-    test('when a Cache-Control header has a negative max-age then the server '
-        'responds with a bad request', () async {
-      expect(
-        getServerRequestHeaders(
-          server: server,
-          touchHeaders: (final h) => h.cacheControl,
-          headers: {'cache-control': 'max-age=-5'},
-        ),
-        throwsA(isA<BadRequestException>()),
+    test('when a Cache-Control header has a negative max-age '
+        'then the directive is ignored (max-age is null)', () async {
+      final headers = await getServerRequestHeaders(
+        server: server,
+        touchHeaders: (final h) => h.cacheControl,
+        headers: {'cache-control': 'max-age=-5'},
       );
+
+      expect(headers.cacheControl?.maxAge, isNull);
     });
 
     test(
