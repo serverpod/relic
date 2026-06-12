@@ -34,5 +34,17 @@ void main() {
         );
       });
     });
+
+    group('Given OWS around the directive "=",', () {
+      test('when parsed, '
+          'then max-age is still recognized.', () {
+        final hsts = StrictTransportSecurityHeader.parse(
+          'MAX-AGE = "31536000" ; includeSubDomains',
+        );
+
+        expect(hsts.maxAge, equals(31536000));
+        expect(hsts.includeSubDomains, isTrue);
+      });
+    });
   });
 }
