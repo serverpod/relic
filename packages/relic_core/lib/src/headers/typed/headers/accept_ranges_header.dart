@@ -36,6 +36,14 @@ final class AcceptRangesHeader {
     if (units.isEmpty) {
       throw const FormatException('Value cannot be empty');
     }
+    // `none` is the no-range-support sentinel; combining it with real range
+    // units (e.g. `bytes, none`) is contradictory and is rejected so isBytes /
+    // isNone cannot both hold.
+    if (units.contains('none') && units.length > 1) {
+      throw const FormatException(
+        'Accept-Ranges "none" must not be combined with other range units',
+      );
+    }
     return AcceptRangesHeader._(List.unmodifiable(units));
   }
 
