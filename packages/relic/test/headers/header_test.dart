@@ -190,6 +190,7 @@ void main() {
       Headers.accessControlAllowOrigin,
       Headers.accessControlExposeHeaders,
       Headers.accessControlRequestHeaders,
+      Headers.cacheControl,
       Headers.connection,
       Headers.contentDisposition,
       Headers.contentEncoding,

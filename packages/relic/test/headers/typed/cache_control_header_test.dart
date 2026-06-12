@@ -38,47 +38,28 @@ void main() {
       },
     );
 
-    test(
-      'when an invalid Cache-Control directive is passed then the server responds '
-      'with a bad request including a message that states the directive is invalid',
-      () async {
-        expect(
-          getServerRequestHeaders(
-            server: server,
-            touchHeaders: (final h) => h.cacheControl,
-            headers: {'cache-control': 'invalid-directive'},
-          ),
-          throwsA(
-            isA<BadRequestException>().having(
-              (final e) => e.message,
-              'message',
-              contains('Invalid directive'),
-            ),
-          ),
-        );
-      },
-    );
+    test('when an unknown Cache-Control directive is passed '
+        'then it is ignored (RFC 9111 5.2 extension directives)', () async {
+      final headers = await getServerRequestHeaders(
+        server: server,
+        touchHeaders: (final h) => h.cacheControl,
+        headers: {'cache-control': 'invalid-directive'},
+      );
 
-    test(
-      'when a Cache-Control header with an invalid directive is passed then the server responds '
-      'with a bad request including a message that states the directive is invalid',
-      () async {
-        expect(
-          getServerRequestHeaders(
-            server: server,
-            touchHeaders: (final h) => h.cacheControl,
-            headers: {'cache-control': 'public, invalid-directive'},
-          ),
-          throwsA(
-            isA<BadRequestException>().having(
-              (final e) => e.message,
-              'message',
-              contains('Invalid directive'),
-            ),
-          ),
-        );
-      },
-    );
+      expect(headers.cacheControl?.maxAge, isNull);
+      expect(headers.cacheControl?.noCache, isFalse);
+    });
+
+    test('when a Cache-Control header mixes a known and an unknown directive '
+        'then the known one is kept and the unknown one is ignored', () async {
+      final headers = await getServerRequestHeaders(
+        server: server,
+        touchHeaders: (final h) => h.cacheControl,
+        headers: {'cache-control': 'public, invalid-directive'},
+      );
+
+      expect(headers.cacheControl?.publicCache, isTrue);
+    });
 
     test(
       'when a Cache-Control header with both public and private is passed then the server responds '
@@ -131,16 +112,15 @@ void main() {
 
     test(
       'when a Cache-Control header has an unknown directive with a known prefix '
-      'then the server responds with a bad request',
+      'then it is ignored, not mistaken for max-age',
       () async {
-        expect(
-          getServerRequestHeaders(
-            server: server,
-            touchHeaders: (final h) => h.cacheControl,
-            headers: {'cache-control': 'max-age-extended=5'},
-          ),
-          throwsA(isA<BadRequestException>()),
+        final headers = await getServerRequestHeaders(
+          server: server,
+          touchHeaders: (final h) => h.cacheControl,
+          headers: {'cache-control': 'max-age-extended=5'},
         );
+
+        expect(headers.cacheControl?.maxAge, isNull);
       },
     );
 
@@ -355,7 +335,7 @@ void main() {
         final headers = await getServerRequestHeaders(
           server: server,
           touchHeaders: (_) {},
-          headers: {'cache-control': 'invalid-directive'},
+          headers: {'cache-control': 'public, private'},
         );
 
         expect(Headers.cacheControl[headers].valueOrNullIfInvalid, isNull);

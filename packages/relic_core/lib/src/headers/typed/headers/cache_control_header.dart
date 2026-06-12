@@ -173,8 +173,12 @@ final class CacheControlHeader {
           .toLowerCase();
       final rawValue = eq < 0 ? null : directive.substring(eq + 1).trim();
 
+      // RFC 9111 5.2: a recipient MUST ignore cache directives it does not
+      // recognize (the directive set is extensible), rather than rejecting the
+      // whole header. Exact-name matching still keeps `max-age-extended` from
+      // being mistaken for `max-age`.
       if (!_validDirectiveSet.contains(name)) {
-        throw const FormatException('Invalid directive');
+        continue;
       }
 
       switch (name) {
