@@ -31,10 +31,6 @@ final class FromHeader {
     return FromHeader(mailbox);
   }
 
-  /// Converts the [FromHeader] instance into a string representation suitable
-  /// for HTTP headers.
-  String _encode() => mailbox;
-
   @override
   bool operator ==(final Object other) =>
       identical(this, other) || other is FromHeader && mailbox == other.mailbox;
