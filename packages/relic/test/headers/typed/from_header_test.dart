@@ -16,22 +16,49 @@ void main() {
 
     tearDown(() => server.close());
 
-    test('when an empty From header is passed then the server responds '
-        'with a bad request including a message that states the header value '
-        'cannot be empty', () async {
-      expect(
-        getServerRequestHeaders(
-          server: server,
-          touchHeaders: (final h) => h.from,
-          headers: {'from': ''},
-        ),
-        throwsA(
-          isA<BadRequestException>().having(
-            (final e) => e.message,
-            'message',
-            contains('Value cannot be empty'),
+    test(
+      'when an empty From header is passed '
+      'then the server responds with a bad request stating the value cannot be empty',
+      () async {
+        expect(
+          getServerRequestHeaders(
+            server: server,
+            touchHeaders: (final h) => h.from,
+            headers: {'from': ''},
           ),
-        ),
+          throwsA(
+            isA<BadRequestException>().having(
+              (final e) => e.message,
+              'message',
+              contains('Value cannot be empty'),
+            ),
+          ),
+        );
+      },
+    );
+
+    test('when a From header carries a plain addr-spec '
+        'then it is parsed as the mailbox', () async {
+      final headers = await getServerRequestHeaders(
+        server: server,
+        touchHeaders: (final h) => h.from,
+        headers: {'from': 'user@example.com'},
+      );
+
+      expect(headers.from?.mailbox, equals('user@example.com'));
+    });
+
+    test('when a From header carries a name-addr form '
+        'then it is preserved verbatim', () async {
+      final headers = await getServerRequestHeaders(
+        server: server,
+        touchHeaders: (final h) => h.from,
+        headers: {'from': 'Webmaster <webmaster@example.org>'},
+      );
+
+      expect(
+        headers.from?.mailbox,
+        equals('Webmaster <webmaster@example.org>'),
       );
     });
 
@@ -45,9 +72,20 @@ void main() {
           headers: {'from': 'invalid-email-format'},
         );
 
-        expect(headers.from?.emails, equals(['invalid-email-format']));
+        expect(headers.from?.mailbox, equals('invalid-email-format'));
       },
     );
+
+    test('when a From header has surrounding whitespace '
+        'then the mailbox is trimmed', () async {
+      final headers = await getServerRequestHeaders(
+        server: server,
+        touchHeaders: (final h) => h.from,
+        headers: {'from': ' user@example.com '},
+      );
+
+      expect(headers.from?.mailbox, equals('user@example.com'));
+    });
 
     test(
       'when an empty From header is passed '
@@ -62,106 +100,6 @@ void main() {
         expect(headers, isNotNull);
       },
     );
-
-    test(
-      'when a valid From header is passed then it should parse the email correctly',
-      () async {
-        final headers = await getServerRequestHeaders(
-          server: server,
-          touchHeaders: (final h) => h.from,
-          headers: {'from': 'user@example.com'},
-        );
-
-        expect(headers.from?.emails, equals(['user@example.com']));
-      },
-    );
-
-    test(
-      'when a From header with extra whitespace is passed then it should parse the email correctly',
-      () async {
-        final headers = await getServerRequestHeaders(
-          server: server,
-          touchHeaders: (final h) => h.from,
-          headers: {'from': ' user@example.com '},
-        );
-
-        expect(headers.from?.emails, equals(['user@example.com']));
-      },
-    );
-
-    group('when multiple', () {
-      test(
-        'From headers are passed then they should parse all emails correctly',
-        () async {
-          final headers = await getServerRequestHeaders(
-            server: server,
-            touchHeaders: (final h) => h.from,
-            headers: {'from': 'user1@example.com, user2@example.com'},
-          );
-
-          expect(
-            headers.from?.emails,
-            equals(['user1@example.com', 'user2@example.com']),
-          );
-        },
-      );
-
-      test(
-        'From headers with extra whitespace are passed then they should parse all emails correctly',
-        () async {
-          final headers = await getServerRequestHeaders(
-            server: server,
-            touchHeaders: (final h) => h.from,
-            headers: {'from': ' user1@example.com , user2@example.com '},
-          );
-
-          expect(
-            headers.from?.emails,
-            equals(['user1@example.com', 'user2@example.com']),
-          );
-        },
-      );
-
-      test(
-        'From headers with extra duplicate values are passed then they should '
-        'parse all emails correctly and remove duplicates',
-        () async {
-          final headers = await getServerRequestHeaders(
-            server: server,
-            touchHeaders: (final h) => h.from,
-            headers: {
-              'from': 'user1@example.com, user2@example.com, user1@example.com',
-            },
-          );
-
-          expect(
-            headers.from?.emails,
-            equals(['user1@example.com', 'user2@example.com']),
-          );
-        },
-      );
-
-      test('From headers with a non-email value among valid ones are passed '
-          'then every value is preserved as-is', () async {
-        final headers = await getServerRequestHeaders(
-          server: server,
-          touchHeaders: (final h) => h.from,
-          headers: {
-            'from':
-                'user1@example.com, invalid-email-format, user2@example.com',
-          },
-        );
-
-        expect(
-          headers.from?.emails,
-          equals([
-            'user1@example.com',
-            'invalid-email-format',
-            'user2@example.com',
-          ]),
-        );
-      });
-    });
 
     test('when no From header is passed then it should return null', () async {
       final headers = await getServerRequestHeaders(

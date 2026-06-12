@@ -1,58 +1,47 @@
-import 'package:collection/collection.dart';
-
 import '../../../../relic_core.dart';
-import '../../extension/string_list_extensions.dart';
 
 /// A class representing the HTTP `From` header.
 ///
-/// The `From` header is used to indicate the email address of the user making the request.
-/// It usually contains a single email address, but in edge cases, it could contain multiple
-/// email addresses separated by commas.
+/// Per RFC 9110 10.1.2 the `From` header is a single `mailbox` -- the email
+/// address of the human controlling the requesting user agent. The full
+/// RFC 5322 `mailbox` syntax is richer than a bare `addr-spec` (it also allows
+/// a `name-addr` like `Webmaster <webmaster@example.org>`, whose display-name
+/// may even contain a comma), so the value is preserved verbatim rather than
+/// split or format-validated.
 final class FromHeader {
-  static const codec = HeaderCodec(FromHeader.parse, __encode);
-  static List<String> __encode(final FromHeader value) => [value._encode()];
+  static const codec = HeaderCodec.single(FromHeader.parse, __encode);
+  static List<String> __encode(final FromHeader value) => [value.mailbox];
 
-  /// A list of email addresses provided in the `From` header.
-  final List<String> emails;
+  /// The single mailbox value (RFC 9110 10.1.2 `From = mailbox`).
+  final String mailbox;
 
-  /// Private constructor for initializing the [emails] list.
-  FromHeader.emails(final Iterable<String> emails)
-    : assert(emails.isNotEmpty),
-      emails = List.unmodifiable(emails);
+  /// Constructs a [FromHeader] from a [mailbox] value.
+  const FromHeader(this.mailbox);
 
-  /// Parses a `From` header value and returns a [FromHeader] instance.
-  factory FromHeader.parse(final Iterable<String> values) {
-    final emails = values.splitTrimAndFilterUnique();
-    if (emails.isEmpty) {
+  /// Parses a `From` header value into a [FromHeader].
+  ///
+  /// The value is a single mailbox; it is not split on `,` (a `display-name`
+  /// may legitimately contain one) and is kept as-is, since an unparseable
+  /// mailbox must not fail the request.
+  factory FromHeader.parse(final String value) {
+    final mailbox = value.trim();
+    if (mailbox.isEmpty) {
       throw const FormatException('Value cannot be empty');
     }
-
-    // From is advisory contact information (RFC 9110 10.1.2, a mailbox). Its
-    // real syntax (RFC 5322) is far richer than a bare addr-spec, and a value
-    // the server cannot parse must not fail the request, so values are kept
-    // as-is rather than format-validated.
-    return FromHeader.emails(emails);
+    return FromHeader(mailbox);
   }
 
-  /// Returns the single email address if the list only contains one email.
-  String? get singleEmail => emails.length == 1 ? emails.first : null;
-
-  /// Converts the [FromHeader] instance into a string representation
-  /// suitable for HTTP headers.
-
-  String _encode() => emails.join(', ');
+  /// Converts the [FromHeader] instance into a string representation suitable
+  /// for HTTP headers.
+  String _encode() => mailbox;
 
   @override
   bool operator ==(final Object other) =>
-      identical(this, other) ||
-      other is FromHeader &&
-          const ListEquality<String>().equals(emails, other.emails);
+      identical(this, other) || other is FromHeader && mailbox == other.mailbox;
 
   @override
-  int get hashCode => const ListEquality<String>().hash(emails);
+  int get hashCode => mailbox.hashCode;
 
   @override
-  String toString() {
-    return 'FromHeader(emails: $emails)';
-  }
+  String toString() => 'FromHeader(mailbox: $mailbox)';
 }

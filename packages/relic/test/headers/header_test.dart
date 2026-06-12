@@ -744,7 +744,7 @@ void main() {
       (Headers.expires, (final h) => h.expires = DateTime.utc(2025, 9, 23)),
       (
         Headers.from,
-        (final h) => h.from = FromHeader.emails(['info@serverpod.com']),
+        (final h) => h.from = const FromHeader('info@serverpod.com'),
       ),
       (Headers.host, (final h) => h.host = HostHeader('www.example.com', 80)),
       (
