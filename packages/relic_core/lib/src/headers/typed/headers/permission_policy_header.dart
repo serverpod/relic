@@ -34,8 +34,13 @@ final class PermissionsPolicyHeader {
         'Permissions-Policy requires at least one directive',
       );
     }
-    if (this.directives.any((final d) => d.name.isEmpty)) {
-      throw const FormatException('Permissions-Policy feature name is empty');
+    for (final d in this.directives) {
+      if (d.name.isEmpty) {
+        throw const FormatException('Permissions-Policy feature name is empty');
+      }
+      // The feature name is a token; a value like `geolocation allow` (with a
+      // space) would otherwise serialize as a malformed `name=(...)` directive.
+      Token.validate(d.name);
     }
   }
 

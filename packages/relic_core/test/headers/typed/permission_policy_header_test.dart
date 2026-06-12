@@ -92,6 +92,24 @@ void main() {
         );
       });
     });
+
+    group('Given a feature name that is not a token,', () {
+      test(
+        'when a header is built from it, '
+        'then it throws (a space would serialize a malformed directive).',
+        () {
+          expect(
+            () => PermissionsPolicyHeader.directives([
+              PermissionsPolicyDirective(
+                name: 'geolocation allow',
+                values: const [],
+              ),
+            ]),
+            throwsFormatException,
+          );
+        },
+      );
+    });
   });
 
   group('PermissionsPolicyHeader encoding', () {
