@@ -16,24 +16,11 @@ void main() {
 
     tearDown(() => server.close());
 
-    test('when an empty Connection header is passed then the server responds '
-        'with a bad request including a message that states the directives '
-        'cannot be empty', () async {
-      expect(
-        getServerRequestHeaders(
-          server: server,
-          touchHeaders: (final h) => h.connection,
-          headers: {'connection': ''},
-        ),
-        throwsA(
-          isA<BadRequestException>().having(
-            (final e) => e.message,
-            'message',
-            contains('Value cannot be empty'),
-          ),
-        ),
-      );
-    });
+    // Note: rejection of an empty Connection value is covered by a direct unit
+    // test in packages/relic_core/test/headers/typed/connection_header_test.dart.
+    // It cannot run as a server round-trip: dart:io's HttpServer drops an empty
+    // Connection request header (a hop-by-hop, connection-managed field), so it
+    // never reaches the handler.
 
     test('when a non-token Connection value is passed then the server responds '
         'with a bad request', () async {
@@ -144,7 +131,7 @@ void main() {
         final headers = await getServerRequestHeaders(
           server: server,
           touchHeaders: (_) {},
-          headers: {'connection': ''},
+          headers: {'connection': 'bad directive'},
         );
 
         expect(Headers.connection[headers].valueOrNullIfInvalid, isNull);

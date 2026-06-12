@@ -16,68 +16,15 @@ void main() {
 
     tearDown(() => server.close());
 
-    test(
-      'when an empty Transfer-Encoding header is passed then the server should respond with a bad request '
-      'including a message that states the encodings cannot be empty',
-      () async {
-        expect(
-          getServerRequestHeaders(
-            server: server,
-            touchHeaders: (final h) => h.transferEncoding,
-            headers: {'transfer-encoding': ''},
-          ),
-          throwsA(
-            isA<BadRequestException>().having(
-              (final e) => e.message,
-              'message',
-              contains('Value cannot be empty'),
-            ),
-          ),
-        );
-      },
-    );
-
-    test(
-      'when an invalid Transfer-Encoding header is passed then the server should respond with a bad request '
-      'including a message that states the value is invalid',
-      () async {
-        expect(
-          getServerRequestHeaders(
-            server: server,
-            touchHeaders: (final h) => h.transferEncoding,
-            headers: {'transfer-encoding': 'custom-encoding'},
-          ),
-          throwsA(
-            isA<BadRequestException>().having(
-              (final e) => e.message,
-              'message',
-              contains('Invalid value'),
-            ),
-          ),
-        );
-      },
-    );
-
-    test('when a Transfer-Encoding header with an invalid value is passed '
-        'then the server does not respond with a bad request if the headers '
-        'is not actually used', () async {
-      final headers = await getServerRequestHeaders(
-        server: server,
-        touchHeaders: (_) {},
-        headers: {'transfer-encoding': 'custom-encoding'},
-      );
-
-      expect(headers, isNotNull);
-    });
-
-    // Note: parse/encode behavior for valid multi-coding values (ordering,
-    // reordering 'chunked' last, duplicate removal, isChunked) is covered by
-    // direct unit tests in
+    // Note: validation and parse/encode behavior (empty value, unknown coding,
+    // chunked-not-last, multi-coding ordering, duplicate removal, isChunked) is
+    // covered by direct unit tests in
     // packages/relic_core/test/headers/typed/transfer_encoding_header_test.dart.
-    // Those cannot run as server round-trips here: sending a Transfer-Encoding
-    // header on a bodyless GET makes dart:io HttpServer wait for a chunked body
-    // that the client never frames, so the response never completes. See the
-    // dart-io-transfer-encoding-close-hang reproduction.
+    // These cannot run as server round-trips: dart:io owns Transfer-Encoding
+    // framing. On a bodyless GET it waits for a chunked body the client never
+    // sends, and on Dart 3.13+ HttpServer rejects an empty or unknown coding at
+    // the protocol layer (closing the connection before the handler runs). See
+    // the dart-io-transfer-encoding-close-hang reproduction.
 
     test(
       'when no Transfer-Encoding header is passed then it should return null',
@@ -91,28 +38,5 @@ void main() {
         expect(headers.transferEncoding, isNull);
       },
     );
-  });
-
-  group('Given a Transfer-Encoding header without validation', () {
-    late RelicServer server;
-
-    setUp(() async {
-      server = await createServer();
-    });
-
-    tearDown(() => server.close());
-
-    group('when an empty Transfer-Encoding header is passed', () {
-      test('then it should return null', () async {
-        final headers = await getServerRequestHeaders(
-          server: server,
-          touchHeaders: (_) {},
-          headers: {'transfer-encoding': ''},
-        );
-
-        expect(Headers.transferEncoding[headers].valueOrNullIfInvalid, isNull);
-        expect(() => headers.transferEncoding, throwsInvalidHeader);
-      });
-    });
   });
 }
