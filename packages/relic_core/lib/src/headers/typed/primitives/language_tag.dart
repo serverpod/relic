@@ -101,15 +101,30 @@ final class LanguageTag {
       }
     }
 
+    // BCP 47 (RFC 5646 2.2.5): the same variant subtag MUST NOT appear twice.
+    final seenVariants = <String>{};
     while (i < raw.length && _isVariant(raw[i])) {
-      canonical.add(_lower(raw[i]));
+      final variant = _lower(raw[i]);
+      if (!seenVariants.add(variant)) {
+        throw FormatException('duplicate variant subtag "$variant"', source);
+      }
+      canonical.add(variant);
       i++;
     }
 
+    // BCP 47 (RFC 5646 2.2.6): a given extension singleton MUST NOT repeat.
+    final seenSingletons = <String>{};
     while (i < raw.length &&
         raw[i].length == 1 &&
         _isExtensionSingleton(raw[i].codeUnitAt(0))) {
-      canonical.add(_lower(raw[i]));
+      final singleton = _lower(raw[i]);
+      if (!seenSingletons.add(singleton)) {
+        throw FormatException(
+          'duplicate extension singleton "$singleton"',
+          source,
+        );
+      }
+      canonical.add(singleton);
       i++;
       var subCount = 0;
       while (i < raw.length &&

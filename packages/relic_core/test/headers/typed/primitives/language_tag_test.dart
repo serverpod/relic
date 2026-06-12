@@ -208,4 +208,23 @@ void main() {
       });
     });
   });
+
+  group('LanguageTag.parse - duplicate subtags', () {
+    group('Given a repeated variant subtag,', () {
+      test('when parsed, '
+          'then it throws (RFC 5646 2.2.5).', () {
+        expect(() => LanguageTag.parse('en-1996-1996'), throwsFormatException);
+      });
+    });
+
+    group('Given a repeated extension singleton,', () {
+      test('when parsed, '
+          'then it throws (RFC 5646 2.2.6).', () {
+        expect(
+          () => LanguageTag.parse('en-a-foo-a-bar'),
+          throwsFormatException,
+        );
+      });
+    });
+  });
 }
