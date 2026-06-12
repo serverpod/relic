@@ -29,6 +29,11 @@ final class ContentRangeHeader {
   /// form requires `size` (the `complete-length`); passing `size: null` with
   /// no range is not representable on the wire.
   ContentRangeHeader({this.unit = 'bytes', this.start, this.end, this.size}) {
+    if ((start != null && start! < 0) ||
+        (end != null && end! < 0) ||
+        (size != null && size! < 0)) {
+      throw const FormatException('Content-Range members must not be negative');
+    }
     if ((start == null) != (end == null)) {
       throw const FormatException(
         'start and end must both be set or both be null',

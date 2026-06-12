@@ -43,6 +43,20 @@ void main() {
       });
     });
 
+    group('Given a negative member,', () {
+      test('when constructed, '
+          'then it throws a FormatException.', () {
+        expect(
+          () => ContentRangeHeader(start: -1, end: 5, size: 100),
+          throwsFormatException,
+        );
+        expect(
+          () => ContentRangeHeader(start: 0, end: 5, size: -1),
+          throwsFormatException,
+        );
+      });
+    });
+
     group('Given the unsatisfied-range form (no range, size set),', () {
       test('when constructed and encoded, '
           'then the wire form is "unit */size".', () {
