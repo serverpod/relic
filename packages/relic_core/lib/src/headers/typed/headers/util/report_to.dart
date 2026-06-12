@@ -33,6 +33,16 @@ String? parseReportToParam(final Iterable<String> params) {
 /// `"` and `\` as `quoted-pair` so the value round-trips through
 /// [parseReportToParam].
 String encodeReportToParam(final String value) {
+  // Reject control characters (CR/LF in particular) rather than emitting them
+  // verbatim inside the header, so untrusted input cannot split it.
+  for (var i = 0; i < value.length; i++) {
+    final c = value.codeUnitAt(i);
+    if (c <= 0x1F || c == 0x7F) {
+      throw const FormatException(
+        'report-to value must not contain control characters',
+      );
+    }
+  }
   final escaped = value.replaceAll(r'\', r'\\').replaceAll('"', r'\"');
   return 'report-to="$escaped"';
 }

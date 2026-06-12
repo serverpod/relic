@@ -52,6 +52,24 @@ void main() {
         expect(header.headerValue, contains(r'username="a\"b"'));
       });
     });
+
+    group(
+      'Given a Digest header with a control character in a quoted field,',
+      () {
+        test('when encoded, '
+            'then it throws to prevent header injection.', () {
+          final header = DigestAuthorizationHeader(
+            username: 'user\r\nInjected: evil',
+            realm: 'realm',
+            nonce: 'nonce',
+            uri: '/',
+            response: 'resp',
+          );
+
+          expect(() => header.headerValue, throwsFormatException);
+        });
+      },
+    );
   });
 
   group('DigestAuthorizationHeader round-trip', () {

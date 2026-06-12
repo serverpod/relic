@@ -465,8 +465,20 @@ final class DigestAuthorizationHeader extends AuthorizationHeader {
 /// Wraps [s] in DQUOTEs, escaping interior `"` and `\` as `quoted-pair`
 /// (RFC 9110 5.6.4). Without this a value containing a quote would terminate
 /// the quoted-string early and corrupt the parsed credentials.
-String _quoteString(final String s) =>
-    '"${s.replaceAll(r'\', r'\\').replaceAll('"', r'\"')}"';
+///
+/// A control character (CR/LF in particular) is rejected rather than emitted
+/// verbatim, so a caller-controlled Digest field cannot split the header.
+String _quoteString(final String s) {
+  for (var i = 0; i < s.length; i++) {
+    final c = s.codeUnitAt(i);
+    if (c <= 0x1F || c == 0x7F) {
+      throw const FormatException(
+        'Digest quoted-string value must not contain control characters',
+      );
+    }
+  }
+  return '"${s.replaceAll(r'\', r'\\').replaceAll('"', r'\"')}"';
+}
 
 /// Decodes `quoted-pair` escapes in a quoted-string body: `\x` becomes `x`.
 String _unescapeQuoted(final String s) =>
