@@ -79,7 +79,13 @@ void main() {
           touchHeaders: (final h) => h.accessControlAllowOrigin,
           headers: {'access-control-allow-origin': 'https://example.com/'},
         ),
-        throwsA(isA<BadRequestException>()),
+        throwsA(
+          isA<BadRequestException>().having(
+            (final e) => e.message,
+            'message',
+            contains('origin must not include path'),
+          ),
+        ),
       );
     });
 
