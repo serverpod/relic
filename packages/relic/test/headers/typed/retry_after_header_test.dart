@@ -88,6 +88,17 @@ void main() {
         );
       });
 
+      test('then it should throw an error on a leading-plus value', () async {
+        expect(
+          getServerRequestHeaders(
+            server: server,
+            touchHeaders: (final h) => h.retryAfter,
+            headers: {'retry-after': '+120'},
+          ),
+          throwsA(isA<BadRequestException>()),
+        );
+      });
+
       test('then it should throw an error on a non-integer value', () async {
         expect(
           getServerRequestHeaders(

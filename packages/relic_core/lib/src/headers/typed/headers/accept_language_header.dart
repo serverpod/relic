@@ -1,4 +1,5 @@
 import '../../../../relic_core.dart';
+import 'util/qvalue.dart';
 import 'wildcard_list_header.dart';
 
 /// A class representing the HTTP Accept-Language header.
@@ -53,28 +54,41 @@ class LanguageQuality {
     : quality = quality ?? 1.0;
 
   /// Parses a string value and returns a [LanguageQuality] instance.
+  ///
+  /// The weight is recognized as the parameter named `q` (RFC 9110 12.4.2),
+  /// case-insensitive, tolerating OWS around the surrounding `;` and `=`.
   factory LanguageQuality.parse(final String value) {
-    final languageParts = value.split(';q=');
-    final language = languageParts[0].trim().toLowerCase();
+    final parts = value.split(';');
+    final language = parts[0].trim().toLowerCase();
     if (language.isEmpty) {
       throw const FormatException('Invalid language');
     }
 
     double? quality;
-    if (languageParts.length > 1) {
-      final qualityValue = double.tryParse(languageParts[1].trim());
-      if (qualityValue == null || qualityValue < 0 || qualityValue > 1) {
-        throw const FormatException('Invalid quality value');
+    for (var i = 1; i < parts.length; i++) {
+      final eq = parts[i].indexOf('=');
+      if (eq < 0) continue;
+      final name = parts[i].substring(0, eq).trim();
+      if (name.toLowerCase() != 'q') continue;
+      final parsed = double.tryParse(parts[i].substring(eq + 1).trim());
+      // A malformed or out-of-range weight is treated as absent (defaulting to
+      // 1.0) rather than rejecting the whole header: the client did list this
+      // entry, so it is acceptable; only the unparseable preference is dropped
+      // (RFC 9110 12.4.2; robustness on received headers).
+      if (parsed != null && parsed >= 0 && parsed <= 1) {
+        quality = parsed;
       }
-      quality = qualityValue;
+      break;
     }
 
     return LanguageQuality(language, quality);
   }
 
-  /// Encodes this [LanguageQuality] into a string representation suitable for HTTP headers.
+  /// Encodes this [LanguageQuality] into a string representation suitable for
+  /// HTTP headers. The q-value is rendered with at most 3 fractional digits
+  /// per RFC 9110 12.4.2.
   String encode() {
-    return quality == 1.0 ? language : '$language;q=$quality';
+    return quality == 1.0 ? language : '$language;q=${formatQValue(quality!)}';
   }
 
   @override

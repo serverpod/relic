@@ -67,6 +67,33 @@ void main() {
   });
 
   test(
+    'Given an If-Range header with a weak ETag whose value matches the current one, '
+    'when a range request is made, '
+    'then a 200 OK with full content is returned (a weak validator cannot satisfy a range, RFC 9110 13.1.5)',
+    () async {
+      final initialResponse = await makeRequest(handler, '/test_file.txt');
+      final etag = initialResponse.headers.etag!.value;
+      final headers = Headers.build(
+        (final mh) => mh
+          ..range = RangeHeader(ranges: [Range(start: 0, end: 4)])
+          ..ifRange = IfRangeHeader(
+            etag: ETagHeader(value: etag, isWeak: true),
+          ),
+      );
+
+      final response = await makeRequest(
+        handler,
+        '/test_file.txt',
+        headers: headers,
+      );
+
+      expect(response.statusCode, HttpStatus.ok);
+      expect(response.body.contentLength, fileContent.length);
+      expect(response.readAsString(), completion(fileContent));
+    },
+  );
+
+  test(
     'Given an If-Range header with a matching Last-Modified date, '
     'when a range request is made, '
     'then a 206 Partial Content response with partial content is returned',

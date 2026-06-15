@@ -39,9 +39,8 @@ void main() {
     );
 
     test(
-      'when a Access-Control-Allow-Origin header with an invalid URI is passed '
-      'then the server responds with a bad request including a message that '
-      'states the URI is invalid',
+      'when a Access-Control-Allow-Origin header with an invalid origin is passed '
+      'then the server responds with a bad request',
       () async {
         expect(
           getServerRequestHeaders(
@@ -49,21 +48,14 @@ void main() {
             touchHeaders: (final h) => h.accessControlAllowOrigin,
             headers: {'access-control-allow-origin': 'ht!tp://invalid-url'},
           ),
-          throwsA(
-            isA<BadRequestException>().having(
-              (final e) => e.message,
-              'message',
-              contains('Invalid URI format'),
-            ),
-          ),
+          throwsA(isA<BadRequestException>()),
         );
       },
     );
 
     test(
       'when an Access-Control-Allow-Origin header with an invalid port is passed '
-      'then the server responds with a bad request including a message that '
-      'states the URI is invalid',
+      'then the server responds with a bad request',
       () async {
         expect(
           getServerRequestHeaders(
@@ -73,16 +65,29 @@ void main() {
               'access-control-allow-origin': 'https://example.com:test',
             },
           ),
-          throwsA(
-            isA<BadRequestException>().having(
-              (final e) => e.message,
-              'message',
-              contains('Invalid URI format'),
-            ),
-          ),
+          throwsA(isA<BadRequestException>()),
         );
       },
     );
+
+    test('when an Access-Control-Allow-Origin header has a trailing slash '
+        'then the server responds with a bad request '
+        '(origins must not include paths per the Fetch spec)', () async {
+      expect(
+        getServerRequestHeaders(
+          server: server,
+          touchHeaders: (final h) => h.accessControlAllowOrigin,
+          headers: {'access-control-allow-origin': 'https://example.com/'},
+        ),
+        throwsA(
+          isA<BadRequestException>().having(
+            (final e) => e.message,
+            'message',
+            contains('origin must not include path'),
+          ),
+        ),
+      );
+    });
 
     test(
       'when a Access-Control-Allow-Origin header with an invalid value is passed '
@@ -100,7 +105,7 @@ void main() {
     );
 
     test(
-      'when a Access-Control-Allow-Origin header with a valid URI origin is passed '
+      'when a Access-Control-Allow-Origin header with a valid origin is passed '
       'then it should parse correctly',
       () async {
         final headers = await getServerRequestHeaders(
@@ -111,13 +116,13 @@ void main() {
 
         expect(
           headers.accessControlAllowOrigin?.origin,
-          equals(Uri.parse('https://example.com')),
+          equals(Origin.parse('https://example.com')),
         );
       },
     );
 
     test(
-      'when a Access-Control-Allow-Origin header with a valid URI origin and port is passed '
+      'when a Access-Control-Allow-Origin header with a valid origin and port is passed '
       'then it should parse correctly',
       () async {
         final headers = await getServerRequestHeaders(
@@ -126,26 +131,25 @@ void main() {
           headers: {'access-control-allow-origin': 'https://example.com:8080'},
         );
 
-        expect(headers.accessControlAllowOrigin?.origin?.port, equals(8080));
+        final origin = headers.accessControlAllowOrigin?.origin;
+        expect(origin, isA<TupleOrigin>());
+        expect((origin as TupleOrigin).host.port, equals(8080));
       },
     );
 
-    test(
-      'when a Access-Control-Allow-Origin header with a valid URI origin with '
-      'spaces is passed then it should parse correctly',
-      () async {
-        final headers = await getServerRequestHeaders(
-          server: server,
-          touchHeaders: (final h) => h.accessControlAllowOrigin,
-          headers: {'access-control-allow-origin': ' https://example.com '},
-        );
+    test('when a Access-Control-Allow-Origin header with a valid origin with '
+        'spaces is passed then it should parse correctly', () async {
+      final headers = await getServerRequestHeaders(
+        server: server,
+        touchHeaders: (final h) => h.accessControlAllowOrigin,
+        headers: {'access-control-allow-origin': ' https://example.com '},
+      );
 
-        expect(
-          headers.accessControlAllowOrigin?.origin,
-          equals(Uri.parse('https://example.com')),
-        );
-      },
-    );
+      expect(
+        headers.accessControlAllowOrigin?.origin,
+        equals(Origin.parse('https://example.com')),
+      );
+    });
 
     test(
       'when a Access-Control-Allow-Origin header with a wildcard (*) is passed '
@@ -161,6 +165,20 @@ void main() {
         expect(headers.accessControlAllowOrigin?.origin, isNull);
       },
     );
+
+    test('when a Access-Control-Allow-Origin header is the literal "null" '
+        'then it parses as the opaque-origin sentinel', () async {
+      final headers = await getServerRequestHeaders(
+        server: server,
+        touchHeaders: (final h) => h.accessControlAllowOrigin,
+        headers: {'access-control-allow-origin': 'null'},
+      );
+
+      expect(
+        headers.accessControlAllowOrigin?.origin,
+        same(OpaqueOrigin.instance),
+      );
+    });
 
     test(
       'when no Access-Control-Allow-Origin header is passed then it should return null',

@@ -84,7 +84,7 @@ void main() {
         expect(policies?[0].name, equals('geolocation'));
         expect(policies?[0].values, equals(['self']));
         expect(policies?[1].name, equals('camera'));
-        expect(policies?[1].values, equals(['self', '"https://example.com"']));
+        expect(policies?[1].values, equals(['self', 'https://example.com']));
       },
     );
 

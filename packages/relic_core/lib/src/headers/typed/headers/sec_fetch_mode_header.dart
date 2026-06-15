@@ -15,23 +15,25 @@ final class SecFetchModeHeader {
   /// Private constructor for [SecFetchModeHeader].
   const SecFetchModeHeader._(this.mode);
 
-  /// Predefined mode values.
+  /// Predefined mode values per the [Fetch Standard][fetch]: `cors`,
+  /// `no-cors`, `same-origin`, `navigate`, `websocket`.
+  ///
+  /// [fetch]: https://fetch.spec.whatwg.org/#concept-request-mode
   static const _cors = 'cors';
   static const _noCors = 'no-cors';
   static const _sameOrigin = 'same-origin';
   static const _navigate = 'navigate';
-  static const _nestedNavigate = 'nested-navigate';
   static const _webSocket = 'websocket';
 
   static const cors = SecFetchModeHeader._(_cors);
   static const noCors = SecFetchModeHeader._(_noCors);
   static const sameOrigin = SecFetchModeHeader._(_sameOrigin);
   static const navigate = SecFetchModeHeader._(_navigate);
-  static const nestedNavigate = SecFetchModeHeader._(_nestedNavigate);
   static const webSocket = SecFetchModeHeader._(_webSocket);
 
-  /// Parses a [value] and returns the corresponding [SecFetchModeHeader] instance.
-  /// If the value does not match any predefined types, it returns a custom instance.
+  /// Parses a [value] into a [SecFetchModeHeader]. A value outside the
+  /// predefined set is rejected; new Fetch values are adopted by updating the
+  /// set in a relic release rather than accepted ad hoc.
   factory SecFetchModeHeader.parse(final String value) {
     final trimmed = value.trim();
     if (trimmed.isEmpty) {
@@ -47,8 +49,6 @@ final class SecFetchModeHeader {
         return sameOrigin;
       case _navigate:
         return navigate;
-      case _nestedNavigate:
-        return nestedNavigate;
       case _webSocket:
         return webSocket;
       default:

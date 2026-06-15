@@ -46,7 +46,7 @@ void main() {
           getServerRequestHeaders(
             server: server,
             touchHeaders: (final h) => h.contentLanguage,
-            headers: {'content-language': 'en-123'},
+            headers: {'content-language': 'en_US'},
           ),
           throwsA(
             isA<BadRequestException>().having(
@@ -65,7 +65,7 @@ void main() {
       final headers = await getServerRequestHeaders(
         server: server,
         touchHeaders: (_) {},
-        headers: {'content-language': 'en-123'},
+        headers: {'content-language': 'en_US'},
       );
 
       expect(headers, isNotNull);
@@ -83,6 +83,20 @@ void main() {
         expect(headers.contentLanguage?.languages, equals(['en']));
       },
     );
+
+    test('when BCP 47 tags with regions, scripts, and private-use are passed '
+        'then they parse (full grammar, not a narrow regex)', () async {
+      final headers = await getServerRequestHeaders(
+        server: server,
+        touchHeaders: (final h) => h.contentLanguage,
+        headers: {'content-language': 'es-419, zh-Hant-TW, x-pig-latin'},
+      );
+
+      expect(
+        headers.contentLanguage?.languages,
+        equals(['es-419', 'zh-Hant-TW', 'x-pig-latin']),
+      );
+    });
 
     group('when multiple Content-Language languages are passed', () {
       test('then they should parse correctly', () async {
@@ -150,7 +164,7 @@ void main() {
         final headers = await getServerRequestHeaders(
           server: server,
           touchHeaders: (_) {},
-          headers: {'content-language': 'en-123'},
+          headers: {'content-language': 'en_US'},
         );
 
         expect(Headers.contentLanguage[headers].valueOrNullIfInvalid, isNull);

@@ -60,16 +60,27 @@ final class UpgradeHeader {
   }
 }
 
-/// A class representing a single protocol in the Upgrade header.
+/// A single protocol entry in an `Upgrade` header.
+///
+///     protocol         = protocol-name ["/" protocol-version]
+///     protocol-name    = token
+///     protocol-version = token
+///
+/// `protocol-version` is therefore an opaque token (e.g. `13` for WebSocket,
+/// `2` for HTTP/2, `6.9` for IRC); it is not a number. Storing it as a string
+/// preserves whatever the peer sent and avoids `HTTP/2` and `HTTP/2.0`
+/// collapsing into the same value on the wire.
 class UpgradeProtocol {
-  /// The name of the protocol.
+  /// The name of the protocol (a token, e.g. `HTTP`, `WebSocket`).
   final String protocol;
 
-  /// The version of the protocol.
-  final double? version;
+  /// The version of the protocol (a token), or `null` when absent.
+  final String? version;
 
   /// Constructs an [UpgradeProtocol] instance with the specified name and version.
-  UpgradeProtocol({required this.protocol, this.version});
+  UpgradeProtocol({required final String protocol, final String? version})
+    : protocol = Token.validate(protocol),
+      version = version == null ? null : Token.validate(version);
 
   /// Parses a protocol string and returns an [UpgradeProtocol] instance.
   factory UpgradeProtocol.parse(final String value) {
@@ -78,31 +89,26 @@ class UpgradeProtocol {
       throw const FormatException('Protocol cannot be empty');
     }
 
-    final split = trimmed.split('/');
-    if (split.length == 1) {
-      return UpgradeProtocol(protocol: split[0]);
+    final slash = trimmed.indexOf('/');
+    if (slash < 0) {
+      return UpgradeProtocol(protocol: trimmed);
     }
 
-    final protocol = split[0];
+    final protocol = trimmed.substring(0, slash);
     if (protocol.isEmpty) {
       throw const FormatException('Protocol cannot be empty');
     }
 
-    final version = split[1];
+    final version = trimmed.substring(slash + 1);
     if (version.isEmpty) {
       throw const FormatException('Version cannot be empty');
     }
 
-    final parsedVersion = double.tryParse(version);
-    if (parsedVersion == null) {
-      throw const FormatException('Invalid version');
-    }
-
-    return UpgradeProtocol(protocol: protocol, version: parsedVersion);
+    return UpgradeProtocol(protocol: protocol, version: version);
   }
 
   /// Converts the [UpgradeProtocol] instance into a string representation.
-  String _encode() => '$protocol${version != null ? '/$version' : ''}';
+  String _encode() => version != null ? '$protocol/$version' : protocol;
 
   @override
   bool operator ==(final Object other) =>

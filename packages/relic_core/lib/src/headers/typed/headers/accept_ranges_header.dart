@@ -1,60 +1,71 @@
+import 'package:collection/collection.dart';
+
 import '../../../../relic_core.dart';
 
 /// A class representing the HTTP Accept-Ranges header.
 ///
-/// This class manages the range units that the server supports.
+/// Per RFC 9110 14.3, `Accept-Ranges = acceptable-ranges` where
+/// `acceptable-ranges = 1#range-unit` (a comma-separated list). The legacy
+/// value `none` indicates the server does not support range requests.
 final class AcceptRangesHeader {
   static const codec = HeaderCodec.single(AcceptRangesHeader.parse, __encode);
   static List<String> __encode(final AcceptRangesHeader value) => [
     value._encode(),
   ];
 
-  /// The range unit supported by the server, or `none` if not supported.
-  final String rangeUnit;
+  /// The range units supported by the server (canonical lowercase tokens).
+  final List<String> rangeUnits;
 
-  /// Constructs an [AcceptRangesHeader] instance with the specified range unit.
-  const AcceptRangesHeader._({required this.rangeUnit});
+  /// Constructs an [AcceptRangesHeader] with the given range units.
+  const AcceptRangesHeader._(this.rangeUnits);
 
-  /// Constructs an [AcceptRangesHeader] instance with the range unit set to 'none'.
-  factory AcceptRangesHeader.none() =>
-      const AcceptRangesHeader._(rangeUnit: 'none');
+  /// Constructs an [AcceptRangesHeader] signalling no range support (`none`).
+  factory AcceptRangesHeader.none() => const AcceptRangesHeader._(['none']);
 
-  /// Constructs an [AcceptRangesHeader] instance with the range unit set to 'bytes'.
-  factory AcceptRangesHeader.bytes() =>
-      const AcceptRangesHeader._(rangeUnit: 'bytes');
+  /// Constructs an [AcceptRangesHeader] supporting byte ranges (`bytes`).
+  factory AcceptRangesHeader.bytes() => const AcceptRangesHeader._(['bytes']);
 
-  /// Parses the Accept-Ranges header value and returns an [AcceptRangesHeader] instance.
-  ///
-  /// This method processes the header value, extracting the range unit.
+  /// Parses the Accept-Ranges header value as `1#range-unit`.
   factory AcceptRangesHeader.parse(final String value) {
-    final trimmed = value.trim();
-    if (trimmed.isEmpty) {
+    final units = value
+        .split(',')
+        .map((final u) => u.trim())
+        .where((final u) => u.isNotEmpty)
+        .map((final u) => Token.validate(u).toLowerCase())
+        .toList();
+    if (units.isEmpty) {
       throw const FormatException('Value cannot be empty');
     }
-
-    return AcceptRangesHeader._(rangeUnit: trimmed);
+    // `none` is the no-range-support sentinel; combining it with real range
+    // units (e.g. `bytes, none`) is contradictory and is rejected so isBytes /
+    // isNone cannot both hold.
+    if (units.contains('none') && units.length > 1) {
+      throw const FormatException(
+        'Accept-Ranges "none" must not be combined with other range units',
+      );
+    }
+    return AcceptRangesHeader._(List.unmodifiable(units));
   }
 
-  /// Returns `true` if the range unit is 'bytes', otherwise `false`.
-  bool get isBytes => rangeUnit == 'bytes';
+  /// Returns `true` if `bytes` is among the supported range units.
+  bool get isBytes => rangeUnits.contains('bytes');
 
-  /// Returns `true` if the range unit is 'none' or `null`, otherwise `false`.
-  bool get isNone => rangeUnit == 'none';
+  /// Returns `true` if the header is exactly the `none` no-support signal.
+  bool get isNone => rangeUnits.length == 1 && rangeUnits.first == 'none';
 
-  /// Converts the [AcceptRangesHeader] instance into a string representation suitable for HTTP headers.
-
-  String _encode() => rangeUnit;
+  String _encode() => rangeUnits.join(', ');
 
   @override
   bool operator ==(final Object other) =>
       identical(this, other) ||
-      other is AcceptRangesHeader && rangeUnit == other.rangeUnit;
+      other is AcceptRangesHeader &&
+          const ListEquality<String>().equals(rangeUnits, other.rangeUnits);
 
   @override
-  int get hashCode => rangeUnit.hashCode;
+  int get hashCode => const ListEquality<String>().hash(rangeUnits);
 
   @override
   String toString() {
-    return 'AcceptRangesHeader(rangeUnit: $rangeUnit)';
+    return 'AcceptRangesHeader(rangeUnits: $rangeUnits)';
   }
 }

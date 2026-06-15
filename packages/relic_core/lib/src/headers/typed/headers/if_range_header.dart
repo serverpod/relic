@@ -18,7 +18,10 @@ final class IfRangeHeader {
 
   /// Constructs an [IfRangeHeader] instance with either a date or an ETag.
   ///
-  /// Either [lastModified] or [etag] must be non-null.
+  /// Either [lastModified] or [etag] must be non-null. A weak ETag is accepted
+  /// but can never satisfy a range request: RFC 9110 13.1.5 requires a strong
+  /// validator, so a consumer treats a weak `If-Range` as a no-match and serves
+  /// the full representation rather than rejecting the request.
   IfRangeHeader({this.lastModified, this.etag}) {
     if (lastModified == null && etag == null) {
       throw const FormatException('Either date or etag must be provided');
@@ -34,7 +37,6 @@ final class IfRangeHeader {
       throw const FormatException('Value cannot be empty');
     }
 
-    // Check if the value is a valid ETag
     if (ETagHeader.isValidETag(trimmed)) {
       return IfRangeHeader(etag: ETagHeader.parse(trimmed));
     }

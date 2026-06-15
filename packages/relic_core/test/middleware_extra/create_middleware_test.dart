@@ -15,14 +15,13 @@ void main() {
           .addHandler(
             createSyncHandler(
               headers: Headers.build(
-                (final mh) =>
-                    mh.from = FromHeader.emails(['next@serverpod.dev']),
+                (final mh) => mh.from = FromHeader('next@serverpod.dev'),
               ),
             ),
           );
 
       final response = await makeSimpleRequest(handler);
-      expect(response.headers.from?.emails, contains('next@serverpod.dev'));
+      expect(response.headers.from?.mailbox, contains('next@serverpod.dev'));
     },
   );
 
@@ -64,7 +63,7 @@ void main() {
 
       final response = await makeSimpleRequest(handler);
       expect(
-        response.headers.from?.emails,
+        response.headers.from?.mailbox,
         contains('middleware@serverpod.dev'),
       );
     });
@@ -80,7 +79,7 @@ void main() {
 
       final response = await makeSimpleRequest(handler);
       expect(
-        response.headers.from?.emails,
+        response.headers.from?.mailbox,
         contains('middleware@serverpod.dev'),
       );
     });
@@ -100,7 +99,7 @@ void main() {
 
           final response = await makeSimpleRequest(handler);
           expect(
-            response.headers.from?.emails,
+            response.headers.from?.mailbox,
             contains('middleware@serverpod.dev'),
           );
         },
@@ -119,7 +118,7 @@ void main() {
 
           final response = await makeSimpleRequest(handler);
           expect(
-            response.headers.from?.emails,
+            response.headers.from?.mailbox,
             contains('middleware@serverpod.dev'),
           );
         },
@@ -136,7 +135,7 @@ void main() {
               createMiddleware(
                 onResponse: (final response) {
                   expect(
-                    response.headers.from?.emails,
+                    response.headers.from?.mailbox,
                     contains('handler@serverpod.dev'),
                   );
                   return _middlewareResponse;
@@ -146,15 +145,14 @@ void main() {
             .addHandler(
               createSyncHandler(
                 headers: Headers.build(
-                  (final mh) =>
-                      mh.from = FromHeader.emails(['handler@serverpod.dev']),
+                  (final mh) => mh.from = FromHeader('handler@serverpod.dev'),
                 ),
               ),
             );
 
         final response = await makeSimpleRequest(handler);
         expect(
-          response.headers.from?.emails,
+          response.headers.from?.mailbox,
           contains('middleware@serverpod.dev'),
         );
       },
@@ -168,7 +166,7 @@ void main() {
               createMiddleware(
                 onResponse: (final response) {
                   expect(
-                    response.headers.from?.emails,
+                    response.headers.from?.mailbox,
                     contains('handler@serverpod.dev'),
                   );
                   return Future.value(_middlewareResponse);
@@ -179,8 +177,7 @@ void main() {
               return Future(
                 () => createSyncHandler(
                   headers: Headers.build(
-                    (final mh) =>
-                        mh.from = FromHeader.emails(['handler@serverpod.dev']),
+                    (final mh) => mh.from = FromHeader('handler@serverpod.dev'),
                   ),
                 )(req),
               );
@@ -188,7 +185,7 @@ void main() {
 
         final response = await makeSimpleRequest(handler);
         expect(
-          response.headers.from?.emails,
+          response.headers.from?.mailbox,
           contains('middleware@serverpod.dev'),
         );
       },
@@ -279,7 +276,7 @@ void main() {
 
         final response = await makeSimpleRequest(handler);
         expect(
-          response.headers.from?.emails,
+          response.headers.from?.mailbox,
           contains('middleware@serverpod.dev'),
         );
       },
@@ -331,6 +328,6 @@ Response _failHandler(final Request request) => fail('should never get here');
 final Response _middlewareResponse = Response.ok(
   body: Body.fromString('middleware content'),
   headers: Headers.build(
-    (final mh) => mh.from = FromHeader.emails(['middleware@serverpod.dev']),
+    (final mh) => mh.from = FromHeader('middleware@serverpod.dev'),
   ),
 );

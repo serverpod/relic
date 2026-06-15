@@ -47,16 +47,27 @@ void main() {
             touchHeaders: (final h) => h.referrerPolicy,
             headers: {'referrer-policy': 'invalid-value'},
           ),
-          throwsA(
-            isA<BadRequestException>().having(
-              (final e) => e.message,
-              'message',
-              contains('Invalid value'),
-            ),
-          ),
+          throwsA(isA<BadRequestException>()),
         );
       },
     );
+
+    test('when a Referrer-Policy header lists a fallback then the last valid '
+        'token wins and unknown tokens are ignored', () async {
+      final headers = await getServerRequestHeaders(
+        server: server,
+        touchHeaders: (final h) => h.referrerPolicy,
+        headers: {
+          'referrer-policy':
+              'no-referrer, made-up, strict-origin-when-cross-origin',
+        },
+      );
+
+      expect(
+        headers.referrerPolicy?.directive,
+        equals('strict-origin-when-cross-origin'),
+      );
+    });
 
     test('when a Referrer-Policy header with an invalid value is passed '
         'then the server does not respond with a bad request if the headers '

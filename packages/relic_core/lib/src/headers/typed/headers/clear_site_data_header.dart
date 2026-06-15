@@ -73,7 +73,10 @@ class ClearSiteDataType {
   /// Private constructor for [ClearSiteDataType].P
   const ClearSiteDataType._(this.value);
 
-  /// Predefined Clear-Site-Data types.
+  /// Predefined Clear-Site-Data types per the [W3C spec][csd]:
+  /// `cache`, `cookies`, `storage`, `executionContexts`.
+  ///
+  /// [csd]: https://www.w3.org/TR/clear-site-data/#grammardef-type
   static const _cache = 'cache';
   static const _cookies = 'cookies';
   static const _storage = 'storage';

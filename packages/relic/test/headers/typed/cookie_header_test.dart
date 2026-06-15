@@ -153,6 +153,9 @@ void main() {
     test(
       'when a Cookie header with encoded characters in the value is passed then it should parse correctly',
       () async {
+        // Cookie values are opaque octets per RFC 6265; percent encoding is
+        // an application-level convention and MUST NOT be decoded by the
+        // server. The raw bytes round-trip through the parser unchanged.
         final headers = await getServerRequestHeaders(
           server: server,
           touchHeaders: (final h) => h.cookie,
@@ -165,7 +168,7 @@ void main() {
         );
         expect(
           headers.cookie?.cookies.map((final c) => c.value).toList(),
-          equals(['abc 123', '42']),
+          equals(['abc%20123', '42']),
         );
       },
     );
@@ -188,6 +191,32 @@ void main() {
           headers.cookie?.cookies.map((final c) => c.value).toList(),
           equals(['abc123', '42']),
         );
+      },
+    );
+
+    test(
+      'when a Cookie header has two cookies with the same name but different '
+      'values then both are preserved and getCookie returns the first',
+      () async {
+        // RFC 6265 5.4 allows a Cookie header to carry duplicate cookie names
+        // (e.g. a host-only cookie plus a Domain-scoped one); the server cannot
+        // distinguish them from the header alone. The header must still parse,
+        // since rejecting it would make an otherwise valid cookie unreadable.
+        final headers = await getServerRequestHeaders(
+          server: server,
+          touchHeaders: (final h) => h.cookie,
+          headers: {'cookie': 'sessionId=abc123; sessionId=xyz789'},
+        );
+
+        expect(
+          headers.cookie?.cookies.map((final c) => c.name).toList(),
+          equals(['sessionId', 'sessionId']),
+        );
+        expect(
+          headers.cookie?.cookies.map((final c) => c.value).toList(),
+          equals(['abc123', 'xyz789']),
+        );
+        expect(headers.cookie?.getCookie('sessionId')?.value, equals('abc123'));
       },
     );
 

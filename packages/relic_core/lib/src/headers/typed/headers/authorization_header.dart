@@ -33,16 +33,31 @@ abstract class AuthorizationHeader {
       throw const FormatException('Value cannot be empty');
     }
 
-    if (value.startsWith(BearerAuthorizationHeader.prefix.trim())) {
-      return BearerAuthorizationHeader.parse(value);
-    } else if (value.startsWith(BasicAuthorizationHeader.prefix.trim())) {
-      return BasicAuthorizationHeader.parse(value);
-    } else if (value.startsWith(DigestAuthorizationHeader.prefix.trim())) {
-      return DigestAuthorizationHeader.parse(value);
+    // The auth-scheme is case-insensitive (RFC 9110 11.1).
+    final sp = value.indexOf(' ');
+    final scheme = (sp < 0 ? value : value.substring(0, sp)).toLowerCase();
+    switch (scheme) {
+      case 'bearer':
+        return BearerAuthorizationHeader.parse(value);
+      case 'basic':
+        return BasicAuthorizationHeader.parse(value);
+      case 'digest':
+        return DigestAuthorizationHeader.parse(value);
+      default:
+        throw const FormatException('Invalid header format');
     }
-
-    throw const FormatException('Invalid header format');
   }
+}
+
+/// Strips a case-insensitive auth-scheme [prefix] (e.g. `"Bearer "`) from
+/// [value], returning the trimmed remainder. Throws [FormatException] if
+/// [value] does not start with [prefix].
+String _stripScheme(final String value, final String prefix) {
+  if (value.length < prefix.length ||
+      value.substring(0, prefix.length).toLowerCase() != prefix.toLowerCase()) {
+    throw FormatException('Invalid ${prefix.trim()} prefix', value);
+  }
+  return value.substring(prefix.length).trim();
 }
 
 /// Represents a Bearer token for HTTP Authorization.
@@ -74,11 +89,7 @@ final class BearerAuthorizationHeader extends AuthorizationHeader {
       throw const FormatException('Bearer token cannot be empty.');
     }
 
-    if (!value.startsWith(prefix)) {
-      throw const FormatException('Invalid bearer prefix');
-    }
-
-    final token = value.substring(prefix.length).trim();
+    final token = _stripScheme(value, prefix);
     if (token.isEmpty) {
       throw const FormatException('Bearer token cannot be empty.');
     }
@@ -148,9 +159,8 @@ final class BasicAuthorizationHeader extends AuthorizationHeader {
     if (username.contains(':')) {
       throw const FormatException('Username cannot contain ":"');
     }
-    if (password.isEmpty) {
-      throw const FormatException('Password cannot be empty');
-    }
+    // RFC 7617 permits an empty password (e.g. the `apikey:` pattern), so it
+    // is not rejected here.
   }
 
   /// Factory constructor to create a [BasicAuthorizationHeader] from a token string.
@@ -163,11 +173,7 @@ final class BasicAuthorizationHeader extends AuthorizationHeader {
       throw const FormatException('Basic token cannot be empty.');
     }
 
-    if (!value.startsWith(prefix)) {
-      throw const FormatException('Invalid basic prefix');
-    }
-
-    final base64Part = value.substring(prefix.length).trim();
+    final base64Part = _stripScheme(value, prefix);
 
     try {
       final decoded = utf8.decode(base64Decode(base64Part));
@@ -289,6 +295,16 @@ final class DigestAuthorizationHeader extends AuthorizationHeader {
     if (response.isEmpty) {
       throw const FormatException('Response cannot be empty');
     }
+    // algorithm/qop are serialized as bare tokens (RFC 7616 3.4), so they must
+    // be valid tokens to avoid emitting a malformed or injectable header.
+    if (algorithm != null) Token.validate(algorithm!);
+    if (qop != null) Token.validate(qop!);
+    // nc is `nc-value = 8LHEX` (RFC 7616 3.4), not an arbitrary token.
+    if (nc != null && !RegExp(r'^[0-9A-Fa-f]{8}$').hasMatch(nc!)) {
+      throw const FormatException(
+        'Digest nc must be exactly 8 hexadecimal digits',
+      );
+    }
   }
 
   /// Parses a Digest authorization header value and returns a [DigestAuthorizationHeader] instance.
@@ -300,10 +316,20 @@ final class DigestAuthorizationHeader extends AuthorizationHeader {
       throw const FormatException('Digest token cannot be empty.');
     }
 
+    // Each auth-param is `token = ( token / quoted-string )` (RFC 7616 3.4):
+    // quoted-string values are DQUOTE-wrapped (group 2, with quoted-pair
+    // escapes), token values are bare (group 3). Accepting both is required
+    // because conformant peers send algorithm/qop/nc/stale unquoted.
     final Map<String, String> params = {};
-    final regex = RegExp(r'(\w+)="([^"]*)"');
+    final regex = RegExp(r'(\w+)\s*=\s*(?:"((?:[^"\\]|\\.)*)"|([^",\s]+))');
     for (final match in regex.allMatches(value)) {
-      params[match.group(1)!] = match.group(2)!;
+      final quoted = match.group(2);
+      // A bare (unquoted) value must be a valid token; reject e.g.
+      // `algorithm=MD5;evil`, which would otherwise be stored and re-emitted
+      // verbatim.
+      params[match.group(1)!] = quoted != null
+          ? _unescapeQuoted(quoted)
+          : Token.validate(match.group(3)!);
     }
 
     if (params.isEmpty) {
@@ -349,21 +375,29 @@ final class DigestAuthorizationHeader extends AuthorizationHeader {
   }
 
   /// Returns the full authorization string for Digest authentication.
+  ///
+  /// Per RFC 7616 section 3.4, the `algorithm`, `qop`, `nc`, and `stale`
+  /// parameters carry token values and MUST NOT be quoted on the wire; only
+  /// `username`, `realm`, `nonce`, `uri`, `response`, `cnonce`, and `opaque`
+  /// take quoted-string form. Strict server implementations (e.g. Apache
+  /// `mod_auth_digest`) reject requests that quote the token-form parameters.
   @override
   String get headerValue {
-    return [
-      'Digest',
-      '$_username="$username"',
-      '$_realm="$realm"',
-      '$_nonce="$nonce"',
-      '$_uri="$uri"',
-      '$_response="$response"',
-      if (algorithm != null) '$_algorithm="$algorithm"',
-      if (qop != null) '$_qop="$qop"',
-      if (nc != null) '$_nc="$nc"',
-      if (cnonce != null) '$_cnonce="$cnonce"',
-      if (opaque != null) '$_opaque="$opaque"',
-    ].join(', ');
+    final params = [
+      '$_username=${_quoteString(username)}',
+      '$_realm=${_quoteString(realm)}',
+      '$_nonce=${_quoteString(nonce)}',
+      '$_uri=${_quoteString(uri)}',
+      '$_response=${_quoteString(response)}',
+      if (algorithm != null) '$_algorithm=$algorithm',
+      if (qop != null) '$_qop=$qop',
+      if (nc != null) '$_nc=$nc',
+      if (cnonce != null) '$_cnonce=${_quoteString(cnonce!)}',
+      if (opaque != null) '$_opaque=${_quoteString(opaque!)}',
+    ];
+    // RFC 7235 2.1: a single SP separates the auth-scheme from the first
+    // auth-param; auth-params are then comma-separated.
+    return 'Digest ${params.join(', ')}';
   }
 
   @override
@@ -432,3 +466,25 @@ final class DigestAuthorizationHeader extends AuthorizationHeader {
         ')';
   }
 }
+
+/// Wraps [s] in DQUOTEs, escaping interior `"` and `\` as `quoted-pair`
+/// (RFC 9110 5.6.4). Without this a value containing a quote would terminate
+/// the quoted-string early and corrupt the parsed credentials.
+///
+/// A control character (CR/LF in particular) is rejected rather than emitted
+/// verbatim, so a caller-controlled Digest field cannot split the header.
+String _quoteString(final String s) {
+  for (var i = 0; i < s.length; i++) {
+    final c = s.codeUnitAt(i);
+    if (c <= 0x1F || c == 0x7F) {
+      throw const FormatException(
+        'Digest quoted-string value must not contain control characters',
+      );
+    }
+  }
+  return '"${s.replaceAll(r'\', r'\\').replaceAll('"', r'\"')}"';
+}
+
+/// Decodes `quoted-pair` escapes in a quoted-string body: `\x` becomes `x`.
+String _unescapeQuoted(final String s) =>
+    s.replaceAllMapped(RegExp(r'\\(.)'), (final m) => m.group(1)!);

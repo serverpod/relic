@@ -16,51 +16,45 @@ void main() {
 
     tearDown(() => server.close());
 
-    test('when an empty Connection header is passed then the server responds '
-        'with a bad request including a message that states the directives '
-        'cannot be empty', () async {
+    // Note: rejection of an empty Connection value is covered by a direct unit
+    // test in packages/relic_core/test/headers/typed/connection_header_test.dart.
+    // It cannot run as a server round-trip: dart:io's HttpServer drops an empty
+    // Connection request header (a hop-by-hop, connection-managed field), so it
+    // never reaches the handler.
+
+    test('when a non-token Connection value is passed then the server responds '
+        'with a bad request', () async {
       expect(
         getServerRequestHeaders(
           server: server,
           touchHeaders: (final h) => h.connection,
-          headers: {'connection': ''},
+          headers: {'connection': 'bad directive'},
         ),
-        throwsA(
-          isA<BadRequestException>().having(
-            (final e) => e.message,
-            'message',
-            contains('Value cannot be empty'),
-          ),
-        ),
+        throwsA(isA<BadRequestException>()),
       );
     });
 
-    test('when an invalid Connection header is passed then the server responds '
-        'with a bad request including a message that states the value '
-        'is invalid', () async {
+    test('when an unknown but valid connection-option is passed '
+        'then it parses (open token set)', () async {
+      final headers = await getServerRequestHeaders(
+        server: server,
+        touchHeaders: (final h) => h.connection,
+        headers: {'connection': 'TE'},
+      );
+
       expect(
-        getServerRequestHeaders(
-          server: server,
-          touchHeaders: (final h) => h.connection,
-          headers: {'connection': 'custom-directive'},
-        ),
-        throwsA(
-          isA<BadRequestException>().having(
-            (final e) => e.message,
-            'message',
-            contains('Invalid value'),
-          ),
-        ),
+        headers.connection?.directives.map((final d) => d.value),
+        equals(['te']),
       );
     });
 
-    test('when a Connection header with an invalid value is passed '
+    test('when a non-token Connection value is passed '
         'then the server does not respond with a bad request if the headers '
         'is not actually used', () async {
       final headers = await getServerRequestHeaders(
         server: server,
         touchHeaders: (_) {},
-        headers: {'connection': 'invalid-connection-format'},
+        headers: {'connection': 'bad directive'},
       );
 
       expect(headers, isNotNull);
@@ -137,7 +131,7 @@ void main() {
         final headers = await getServerRequestHeaders(
           server: server,
           touchHeaders: (_) {},
-          headers: {'connection': ''},
+          headers: {'connection': 'bad directive'},
         );
 
         expect(Headers.connection[headers].valueOrNullIfInvalid, isNull);

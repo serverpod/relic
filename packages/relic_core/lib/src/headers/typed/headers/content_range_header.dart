@@ -23,9 +23,29 @@ final class ContentRangeHeader {
   final int? size;
 
   /// Constructs a [ContentRangeHeader] with the specified range and optional total size.
+  ///
+  /// Per RFC 9110 14.4, `start` and `end` must both be present (a specified
+  /// range) or both absent (an `unsatisfied-range`). The `unsatisfied-range`
+  /// form requires `size` (the `complete-length`); passing `size: null` with
+  /// no range is not representable on the wire.
   ContentRangeHeader({this.unit = 'bytes', this.start, this.end, this.size}) {
+    if ((start != null && start! < 0) ||
+        (end != null && end! < 0) ||
+        (size != null && size! < 0)) {
+      throw const FormatException('Content-Range members must not be negative');
+    }
+    if ((start == null) != (end == null)) {
+      throw const FormatException(
+        'start and end must both be set or both be null',
+      );
+    }
     if (start != null && end != null && start! > end!) {
       throw const FormatException('Invalid range');
+    }
+    if (start == null && end == null && size == null) {
+      throw const FormatException(
+        'unsatisfied-range form requires a complete-length (size)',
+      );
     }
   }
 
@@ -36,7 +56,9 @@ final class ContentRangeHeader {
       throw const FormatException('Value cannot be empty');
     }
 
-    final regex = RegExp(r'(\w+) (?:(\d+)-(\d+)|\*)/(\*|\d+)');
+    // Anchored so trailing (or leading) garbage is rejected rather than
+    // silently dropped by firstMatch extracting a partial prefix.
+    final regex = RegExp(r'^(\w+) (?:(\d+)-(\d+)|\*)/(\*|\d+)$');
     final match = regex.firstMatch(trimmed);
 
     if (match == null) {
@@ -44,17 +66,28 @@ final class ContentRangeHeader {
     }
 
     final unit = match.group(1)!;
-    final start = match.group(2) != null ? int.tryParse(match.group(2)!) : null;
-    final end = match.group(3) != null ? int.tryParse(match.group(3)!) : null;
+    // The regex guarantees these groups are all digits; parse them with a
+    // guard so an overflowing run throws a FormatException instead of
+    // int.tryParse silently yielding null (which would turn a specified range
+    // into an unsatisfied one) or int.parse throwing an unrelated error.
+    final start = _parseField(match.group(2));
+    final end = _parseField(match.group(3));
     if (start != null && end != null && start > end) {
       throw const FormatException('Invalid range');
     }
     final sizeGroup = match.group(4)!;
-
-    // If totalSize is '*', it means the total size is unknown
-    final size = sizeGroup == '*' ? null : int.parse(sizeGroup);
+    final size = sizeGroup == '*' ? null : _parseField(sizeGroup);
 
     return ContentRangeHeader(unit: unit, start: start, end: end, size: size);
+  }
+
+  static int? _parseField(final String? digits) {
+    if (digits == null) return null;
+    final n = int.tryParse(digits);
+    if (n == null) {
+      throw FormatException('Content-Range value out of range', digits);
+    }
+    return n;
   }
 
   /// Returns the full content range string in the format "bytes start-end/totalSize".

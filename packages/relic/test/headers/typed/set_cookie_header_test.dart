@@ -82,47 +82,31 @@ void main() {
     );
 
     test(
-      'when a Set-Cookie header with missing name and value is passed then server '
-      'responds with a bad request including a message that states the Name and Value '
-      'are supplied multiple times',
+      'when a Set-Cookie header carries a second name=value pair '
+      'then the second pair is treated as an unknown attribute and dropped',
       () async {
-        expect(
-          getServerRequestHeaders(
-            server: server,
-            touchHeaders: (final h) => h.setCookie,
-            headers: {'set-cookie': 'sessionId=test; userId=42'},
-          ),
-          throwsA(
-            isA<BadRequestException>().having(
-              (final e) => e.message,
-              'message',
-              contains('Supplied multiple Name and Value attributes'),
-            ),
-          ),
+        final headers = await getServerRequestHeaders(
+          server: server,
+          touchHeaders: (final h) => h.setCookie,
+          headers: {'set-cookie': 'sessionId=test; userId=42'},
         );
+
+        expect(headers.setCookie?.name, equals('sessionId'));
+        expect(headers.setCookie?.value, equals('test'));
       },
     );
 
-    test(
-      'when a Set-Cookie header with invalid format is passed then the server responds '
-      'with a bad request including a message that states the cookie format is invalid',
-      () async {
-        expect(
-          getServerRequestHeaders(
-            server: server,
-            touchHeaders: (final h) => h.setCookie,
-            headers: {'set-cookie': 'sessionId=abc123; invalidCookie'},
-          ),
-          throwsA(
-            isA<BadRequestException>().having(
-              (final e) => e.message,
-              'message',
-              contains('Invalid cookie format'),
-            ),
-          ),
-        );
-      },
-    );
+    test('when a Set-Cookie header carries an unknown attribute '
+        'then the attribute is ignored per RFC 6265 5.2', () async {
+      final headers = await getServerRequestHeaders(
+        server: server,
+        touchHeaders: (final h) => h.setCookie,
+        headers: {'set-cookie': 'sessionId=abc123; invalidCookie'},
+      );
+
+      expect(headers.setCookie?.name, equals('sessionId'));
+      expect(headers.setCookie?.value, equals('abc123'));
+    });
 
     test(
       'when a Set-Cookie header with an invalid name is passed then the server responds '
@@ -241,20 +225,24 @@ void main() {
 
     tearDown(() => server.close());
 
-    group('when parsing an invalid cookie header', () {
-      test(
-        'when an invalid Set-Cookie header is passed then it should return null',
-        () async {
-          final headers = await getServerRequestHeaders(
-            server: server,
-            touchHeaders: (_) {},
-            headers: {'set-cookie': 'sessionId=abc123; invalidCookie'},
-          );
+    group(
+      'when parsing a Set-Cookie header with an unrecognized attribute',
+      () {
+        test(
+          'when the cookie-pair is present alongside the unknown attribute '
+          'then the attribute is ignored and the cookie still parses',
+          () async {
+            final headers = await getServerRequestHeaders(
+              server: server,
+              touchHeaders: (_) {},
+              headers: {'set-cookie': 'sessionId=abc123; invalidCookie'},
+            );
 
-          expect(Headers.setCookie[headers].valueOrNullIfInvalid, isNull);
-          expect(() => headers.setCookie, throwsInvalidHeader);
-        },
-      );
-    });
+            expect(headers.setCookie?.name, equals('sessionId'));
+            expect(headers.setCookie?.value, equals('abc123'));
+          },
+        );
+      },
+    );
   });
 }

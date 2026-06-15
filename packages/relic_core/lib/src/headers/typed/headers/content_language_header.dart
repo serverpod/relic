@@ -30,10 +30,15 @@ final class ContentLanguageHeader {
     }
 
     final languages = splitValues.map((final language) {
-      if (!language.isValidLanguageCode()) {
+      // Validate against the full BCP 47 grammar (RFC 5646) rather than a
+      // narrow regex, so tags like `es-419`, `zh-Hant-TW`, and `x-foo` are
+      // accepted, and store the canonical-cased form so equality and hashing
+      // are case-insensitive (`en-US` == `EN-us`).
+      try {
+        return LanguageTag.parse(language).encode();
+      } on FormatException {
         throw const FormatException('Invalid language code');
       }
-      return language;
     }).toList();
 
     return ContentLanguageHeader.languages(languages);

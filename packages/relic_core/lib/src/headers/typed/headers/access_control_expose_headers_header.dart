@@ -10,8 +10,11 @@ final class AccessControlExposeHeadersHeader
   static const codec = HeaderCodec(_parse, _encode);
 
   /// Constructs an instance allowing specific headers to be exposed.
+  ///
+  /// Header names are case-insensitive (RFC 9110 5.1), so they are
+  /// canonicalized to lowercase for case-insensitive equality and membership.
   AccessControlExposeHeadersHeader.headers(final Iterable<String> headers)
-    : super(List.from(headers));
+    : super(List.from(headers.map((final h) => h.toLowerCase())));
 
   /// Constructs an instance allowing all headers to be exposed (`*`).
   const AccessControlExposeHeadersHeader.wildcard() : super.wildcard();
@@ -32,7 +35,7 @@ final class AccessControlExposeHeadersHeader
   ) {
     final parsed = WildcardListHeader.parse(
       values,
-      (final String value) => value,
+      (final String value) => value.toLowerCase(),
     );
 
     if (parsed.isWildcard) {

@@ -9,7 +9,7 @@ final class ETagHeader {
   static const codec = HeaderCodec.single(ETagHeader.parse, __encode);
   static List<String> __encode(final ETagHeader value) => [value._encode()];
 
-  /// The ETag value without quotes.
+  /// The opaque-tag value, without the surrounding quotes.
   final String value;
 
   /// Indicates whether the ETag is weak.
@@ -22,39 +22,41 @@ final class ETagHeader {
   static const _weakPrefix = 'W/';
   static const _quote = '"';
 
-  /// Checks if a string is a valid ETag format (either strong or weak).
+  /// Checks whether [value] is a well-formed entity-tag (strong or weak) with a
+  /// valid `etagc` opaque-tag (RFC 9110 8.8.3).
   ///
-  /// Returns true if the string is either:
-  /// - A strong ETag: quoted string (e.g., "123456")
-  /// - A weak ETag: W/ followed by a quoted string (e.g., W/"123456")
+  /// Returns false (rather than throwing) for any malformed input, including
+  /// empty, so callers can use it to distinguish an ETag from, e.g., an
+  /// HTTP-date in `If-Range`.
   static bool isValidETag(final String value) {
     final trimmed = value.trim();
-    if (trimmed.isEmpty) {
-      throw const FormatException('Value cannot be empty');
+    if (trimmed.isEmpty) return false;
+    try {
+      ETagValue.parse(trimmed);
+      return true;
+    } on FormatException {
+      return false;
     }
-
-    // Check for weak ETag format
-    if (trimmed.startsWith(_weakPrefix)) {
-      final tag = trimmed.substring(2).trim();
-      return tag.startsWith(_quote) && tag.endsWith(_quote);
-    }
-
-    // Check for strong ETag format
-    return trimmed.startsWith(_quote) && trimmed.endsWith(_quote);
   }
 
   /// Parses the ETag header value and returns an [ETagHeader] instance.
   ///
-  /// This method validates the format of the ETag string and parses
-  /// the ETag value and whether it is weak.
+  /// Delegates to the [ETagValue] primitive, which enforces the `etagc` grammar
+  /// (RFC 9110 8.8.3): the opaque-tag is taken from between the quotes without
+  /// stripping interior quotes, an interior `"` or CTL is rejected, and no
+  /// whitespace is allowed between `W/` and the opening quote.
   factory ETagHeader.parse(final String value) {
-    if (!isValidETag(value)) {
+    final trimmed = value.trim();
+    if (trimmed.isEmpty) {
+      throw const FormatException('Value cannot be empty');
+    }
+    final ETagValue etag;
+    try {
+      etag = ETagValue.parse(trimmed);
+    } on FormatException {
       throw const FormatException('Invalid format');
     }
-
-    final isWeak = value.startsWith(_weakPrefix);
-    final tagValue = isWeak ? value.substring(2).trim() : value.trim();
-    return ETagHeader(value: tagValue.replaceAll(_quote, ''), isWeak: isWeak);
+    return ETagHeader(value: etag.value, isWeak: etag.isWeak);
   }
 
   /// Converts the [ETagHeader] instance into a string representation suitable

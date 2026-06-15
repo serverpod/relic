@@ -38,8 +38,8 @@ void main() {
     );
 
     test(
-      'when an invalid Sec-Fetch-Dest header is passed then the server should respond with a bad request '
-      'including a message that states the value is invalid',
+      'when an invalid Sec-Fetch-Dest header is passed '
+      'then the server responds with a bad request including a message that states the value is invalid',
       () async {
         expect(
           getServerRequestHeaders(
@@ -58,16 +58,18 @@ void main() {
       },
     );
 
-    test('when a Sec-Fetch-Dest header with an invalid value is passed '
-        'then the server does not respond with a bad request if the headers '
-        'is not actually used', () async {
-      final headers = await getServerRequestHeaders(
-        server: server,
-        touchHeaders: (_) {},
-        headers: {'sec-fetch-dest': 'custom-destination'},
-      );
-      expect(headers, isNotNull);
-    });
+    test(
+      'when a Sec-Fetch-Dest header with an invalid value is passed '
+      'then the server does not respond with a bad request if the headers is not actually used',
+      () async {
+        final headers = await getServerRequestHeaders(
+          server: server,
+          touchHeaders: (_) {},
+          headers: {'sec-fetch-dest': 'custom-destination'},
+        );
+        expect(headers, isNotNull);
+      },
+    );
 
     test(
       'when a valid Sec-Fetch-Dest header is passed then it should parse the destination correctly',

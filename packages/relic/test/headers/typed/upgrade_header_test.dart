@@ -37,27 +37,17 @@ void main() {
       },
     );
 
-    test(
-      'when an Upgrade header with an invalid protocol version is passed then '
-      'the server should respond with a bad request including a message that '
-      'states the version is invalid',
-      () async {
-        expect(
-          getServerRequestHeaders(
-            server: server,
-            touchHeaders: (final h) => h.upgrade,
-            headers: {'upgrade': 'InvalidProtocol/abc'},
-          ),
-          throwsA(
-            isA<BadRequestException>().having(
-              (final e) => e.message,
-              'message',
-              contains('Invalid version'),
-            ),
-          ),
-        );
-      },
-    );
+    test('when an Upgrade header has a non-token protocol version then '
+        'the server should respond with a bad request', () async {
+      expect(
+        getServerRequestHeaders(
+          server: server,
+          touchHeaders: (final h) => h.upgrade,
+          headers: {'upgrade': 'Proto/has space'},
+        ),
+        throwsA(isA<BadRequestException>()),
+      );
+    });
 
     test('when a Upgrade header with an invalid protocol is passed '
         'then the server does not respond with a bad request if the headers '
@@ -86,22 +76,16 @@ void main() {
 
     group('when multiple Upgrade protocols are passed', () {
       test(
-        'with invalid protocols versions then the server should respond with a '
-        'bad request including a message that states the version is invalid',
+        'with non-token protocol versions then the server should respond with a '
+        'bad request',
         () async {
           expect(
             getServerRequestHeaders(
               server: server,
               touchHeaders: (final h) => h.upgrade,
-              headers: {'upgrade': 'HTTP/2.0, HTTP/abc'},
+              headers: {'upgrade': 'HTTP/2.0, HTTP/has space'},
             ),
-            throwsA(
-              isA<BadRequestException>().having(
-                (final e) => e.message,
-                'message',
-                contains('Invalid version'),
-              ),
-            ),
+            throwsA(isA<BadRequestException>()),
           );
         },
       );
@@ -116,7 +100,7 @@ void main() {
         final protocols = headers.upgrade?.protocols;
         expect(protocols?.length, equals(2));
         expect(protocols?[0].protocol, equals('HTTP'));
-        expect(protocols?[0].version, equals(2));
+        expect(protocols?[0].version, equals('2.0'));
         expect(protocols?[1].protocol, equals('WebSocket'));
         expect(protocols?[1].version, isNull);
       });

@@ -190,16 +190,22 @@ void main() {
       Headers.accessControlAllowOrigin,
       Headers.accessControlExposeHeaders,
       Headers.accessControlRequestHeaders,
+      Headers.cacheControl,
+      Headers.connection,
       Headers.contentDisposition,
+      Headers.contentEncoding,
       Headers.contentLanguage,
       Headers.contentLocation,
       Headers.contentSecurityPolicy,
+      Headers.expect,
+      Headers.from,
       Headers.host,
       Headers.location,
       Headers.origin,
       Headers.permissionsPolicy,
       Headers.referer,
       Headers.server,
+      Headers.setCookie,
       Headers.te,
       Headers.trailer,
       Headers.upgrade,
@@ -602,7 +608,7 @@ void main() {
         Headers.accessControlAllowOrigin,
         (final h) =>
             h.accessControlAllowOrigin = AccessControlAllowOriginHeader.origin(
-              origin: Uri.parse('https://example.com'),
+              origin: Origin.parse('https://example.com'),
             ),
       ),
       (
@@ -703,7 +709,7 @@ void main() {
       ),
       (
         Headers.contentRange,
-        (final h) => h.contentRange = ContentRangeHeader(),
+        (final h) => h.contentRange = ContentRangeHeader(size: 1234),
       ),
       (
         Headers.contentSecurityPolicy,
@@ -739,7 +745,7 @@ void main() {
       (Headers.expires, (final h) => h.expires = DateTime.utc(2025, 9, 23)),
       (
         Headers.from,
-        (final h) => h.from = FromHeader.emails(['info@serverpod.com']),
+        (final h) => h.from = const FromHeader('info@serverpod.com'),
       ),
       (Headers.host, (final h) => h.host = HostHeader('www.example.com', 80)),
       (

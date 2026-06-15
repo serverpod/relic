@@ -38,35 +38,41 @@ void main() {
       },
     );
 
+    test('when a non-token Content-Encoding value is passed then the server '
+        'responds with a bad request', () async {
+      expect(
+        getServerRequestHeaders(
+          server: server,
+          touchHeaders: (final h) => h.contentEncoding,
+          headers: {'content-encoding': 'bad encoding'},
+        ),
+        throwsA(isA<BadRequestException>()),
+      );
+    });
+
     test(
-      'when an invalid Content-Encoding header is passed then the server responds '
-      'with a bad request including a message that states the header value '
-      'is invalid',
+      'when an unknown but valid coding is passed then it parses (open registry)',
       () async {
+        final headers = await getServerRequestHeaders(
+          server: server,
+          touchHeaders: (final h) => h.contentEncoding,
+          headers: {'content-encoding': 'custom-encoding'},
+        );
+
         expect(
-          getServerRequestHeaders(
-            server: server,
-            touchHeaders: (final h) => h.contentEncoding,
-            headers: {'content-encoding': 'custom-encoding'},
-          ),
-          throwsA(
-            isA<BadRequestException>().having(
-              (final e) => e.message,
-              'message',
-              contains('Invalid value'),
-            ),
-          ),
+          headers.contentEncoding?.encodings.map((final e) => e.name),
+          equals(['custom-encoding']),
         );
       },
     );
 
-    test('when a Content-Encoding header with an invalid value is passed '
+    test('when a non-token Content-Encoding value is passed '
         'then the server does not respond with a bad request if the headers '
         'is not actually used', () async {
       final headers = await getServerRequestHeaders(
         server: server,
         touchHeaders: (_) {},
-        headers: {'content-encoding': 'custom-encoding'},
+        headers: {'content-encoding': 'bad encoding'},
       );
 
       expect(headers, isNotNull);

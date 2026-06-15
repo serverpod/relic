@@ -35,22 +35,17 @@ void main() {
       );
     });
 
-    test('when a TE header with invalid quality values is passed '
-        'then the server responds with a bad request including a message that '
-        'states the quality value is invalid', () async {
+    test('when a TE header with a malformed quality value is passed '
+        'then the weight defaults to 1.0 instead of being rejected', () async {
+      final headers = await getServerRequestHeaders(
+        server: server,
+        touchHeaders: (final h) => h.te,
+        headers: {'te': 'trailers;q=abc'},
+      );
+
       expect(
-        getServerRequestHeaders(
-          server: server,
-          touchHeaders: (final h) => h.te,
-          headers: {'te': 'trailers;q=abc'},
-        ),
-        throwsA(
-          isA<BadRequestException>().having(
-            (final e) => e.message,
-            'message',
-            contains('Invalid quality value'),
-          ),
-        ),
+        headers.te?.encodings.map((final e) => e.quality).toList(),
+        equals([1.0]),
       );
     });
 
@@ -79,7 +74,7 @@ void main() {
       final headers = await getServerRequestHeaders(
         server: server,
         touchHeaders: (_) {},
-        headers: {'te': 'trailers;q=abc'},
+        headers: {'te': ';q=1.0'},
       );
 
       expect(headers, isNotNull);
@@ -209,17 +204,22 @@ void main() {
       });
     });
 
-    group('when TE headers with invalid quality values are passed', () {
-      test('then it should return null', () async {
-        final headers = await getServerRequestHeaders(
-          server: server,
-          touchHeaders: (_) {},
-          headers: {'te': 'trailers;q=abc, deflate, gzip'},
-        );
+    group('when TE headers with a malformed quality value are passed', () {
+      test(
+        'then the header still parses and the weight defaults to 1.0',
+        () async {
+          final headers = await getServerRequestHeaders(
+            server: server,
+            touchHeaders: (_) {},
+            headers: {'te': 'trailers;q=abc, deflate, gzip'},
+          );
 
-        expect(Headers.te[headers].valueOrNullIfInvalid, isNull);
-        expect(() => headers.te, throwsInvalidHeader);
-      });
+          expect(
+            headers.te?.encodings.map((final e) => e.quality).toList(),
+            equals([1.0, 1.0, 1.0]),
+          );
+        },
+      );
     });
   });
 }

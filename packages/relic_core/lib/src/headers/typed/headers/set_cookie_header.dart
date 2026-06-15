@@ -36,10 +36,17 @@ final class SetCookieHeader {
   final int? maxAge;
 
   /// The domain that the cookie applies to.
-  final Uri? domain;
+  ///
+  /// Per RFC 6265 5.2.3, this is a bare hostname (`<subdomain>`): no scheme,
+  /// no leading slashes, no port, no path. Modeling it as [Host] enforces
+  /// that on construction and on the wire.
+  final Host? domain;
 
   /// The path within the [domain] that the cookie applies to.
-  final Uri? path;
+  ///
+  /// Per RFC 6265 5.2.4, this is an opaque string (any CHAR except CTLs or
+  /// `;`); it is not a URI.
+  final String? path;
 
   /// Whether to only send this cookie on secure connections.
   final bool secure;
@@ -56,18 +63,33 @@ final class SetCookieHeader {
   final SameSite? sameSite;
 
   /// Constructs a [Cookie] instance with the specified name and value.
+  ///
+  /// Per RFC 6265 5.2.3 the `Domain` attribute is host-only, so [domain] must
+  /// not carry a port; a [Host] with a port throws [FormatException]. [path]
+  /// is validated against the path-value grammar (no CTLs or `;`).
   SetCookieHeader({
     required final String name,
     required final String value,
     this.expires,
     this.maxAge,
-    this.domain,
-    this.path,
+    final Host? domain,
+    final String? path,
     this.secure = false,
     this.httpOnly = false,
     this.sameSite,
   }) : name = validateCookieName(name),
-       value = validateCookieValue(value);
+       value = validateCookieValue(value),
+       domain = _validateCookieDomain(domain),
+       path = path == null ? null : validateCookiePath(path);
+
+  static Host? _validateCookieDomain(final Host? domain) {
+    if (domain != null && domain.port != null) {
+      throw const FormatException(
+        'Cookie Domain must not include a port (RFC 6265 5.2.3)',
+      );
+    }
+    return domain;
+  }
 
   factory SetCookieHeader.parse(final String value) {
     final splitValue = value.splitTrimAndFilterUnique(separator: ';');
@@ -75,99 +97,70 @@ final class SetCookieHeader {
       throw const FormatException('Value cannot be empty');
     }
 
+    // RFC 6265 5.2: the first ';'-delimited token is the cookie-pair; every
+    // subsequent token is a cookie attribute (cookie-av). Splitting on the
+    // first '=' keeps a '=' that appears inside the value or an attribute.
+    final pair = splitValue.first;
+    final pairEq = pair.indexOf('=');
+    if (pairEq < 0) {
+      throw const FormatException('Invalid cookie format');
+    }
+    final cookieName = pair.substring(0, pairEq).trim();
+    final cookieValue = pair.substring(pairEq + 1).trim();
+
     bool secure = false;
     bool httpOnly = false;
-    String cookieName = '';
-    String cookieValue = '';
     SameSite? sameSite;
     DateTime? expires;
     int? maxAge;
-    Uri? domain;
-    Uri? path;
+    Host? domain;
+    String? path;
 
-    for (final cookie in splitValue) {
-      // Handle SameSite attribute
-      if (cookie.toLowerCase().contains(_sameSite.toLowerCase())) {
-        if (sameSite != null) {
-          throw const FormatException('Supplied multiple SameSite attributes');
-        }
-        final samesiteValue = cookie.split('=')[1].trim();
-        sameSite = SameSite.values.firstWhere(
-          (final sameSite) =>
-              sameSite.name.toLowerCase() == samesiteValue.toLowerCase(),
-          orElse: () =>
-              throw const FormatException('Invalid SameSite attribute'),
-        );
-        continue;
-      }
+    for (final av in splitValue.skip(1)) {
+      final eq = av.indexOf('=');
+      final attrName = (eq < 0 ? av : av.substring(0, eq)).trim();
+      final attrValue = eq < 0 ? '' : av.substring(eq + 1).trim();
 
-      // Handle Path attribute;
-      if (cookie.toLowerCase().contains(_path.toLowerCase())) {
-        if (path != null) {
-          throw const FormatException('Supplied multiple Path attributes');
-        }
-        final pathValue = cookie.split('=')[1].trim();
-        path = parseUri(pathValue);
-        continue;
-      }
-
-      // Handle Domain attribute
-      if (cookie.toLowerCase().contains(_domain.toLowerCase())) {
-        if (domain != null) {
-          throw const FormatException('Supplied multiple Domain attributes');
-        }
-        final domainValue = cookie.split('=')[1].trim();
-        domain = parseUri(domainValue);
-        continue;
-      }
-
-      // Handle Max-Age attribute
-      if (cookie.toLowerCase().contains(_maxAge.toLowerCase())) {
-        if (maxAge != null) {
-          throw const FormatException('Supplied multiple Max-Age attributes');
-        }
-        final maxAgeValue = cookie.split('=')[1].trim();
-        maxAge = parseInt(maxAgeValue);
-        continue;
-      }
-
-      // Handle Expires attribute
-      if (cookie.toLowerCase().contains(_expires.toLowerCase())) {
-        if (expires != null) {
-          throw const FormatException('Supplied multiple Expires attributes');
-        }
-        final expiresValue = cookie.split('=')[1].trim();
-        expires = parseDate(expiresValue);
-        continue;
-      }
-
-      // Handle Secure attribute
-      if (cookie.toLowerCase().contains(_secure.toLowerCase())) {
-        secure = true;
-        continue;
-      }
-
-      // Handle HttpOnly attribute
-      if (cookie.toLowerCase().contains(_httpOnly.toLowerCase())) {
-        httpOnly = true;
-        continue;
-      }
-
-      // Handle Name and Value
-      // If non of the other attributes are present, then the cookie is a name and value pair
-      if (cookie.contains('=')) {
-        if (cookieName.isNotEmpty || cookieValue.isNotEmpty) {
-          throw const FormatException(
-            'Supplied multiple Name and Value attributes',
+      switch (attrName.toLowerCase()) {
+        case 'samesite':
+          if (sameSite != null) {
+            throw const FormatException(
+              'Supplied multiple SameSite attributes',
+            );
+          }
+          sameSite = SameSite.values.firstWhere(
+            (final s) => s.name.toLowerCase() == attrValue.toLowerCase(),
+            orElse: () =>
+                throw const FormatException('Invalid SameSite attribute'),
           );
-        }
-        final parts = cookie.split('=');
-        cookieName = parts.first.trim();
-        cookieValue = parts.last.trim();
-        continue;
+        case 'path':
+          if (path != null) {
+            throw const FormatException('Supplied multiple Path attributes');
+          }
+          path = attrValue;
+        case 'domain':
+          if (domain != null) {
+            throw const FormatException('Supplied multiple Domain attributes');
+          }
+          domain = Host.parse(attrValue);
+        case 'max-age':
+          if (maxAge != null) {
+            throw const FormatException('Supplied multiple Max-Age attributes');
+          }
+          maxAge = parseInt(attrValue);
+        case 'expires':
+          if (expires != null) {
+            throw const FormatException('Supplied multiple Expires attributes');
+          }
+          expires = parseDate(attrValue);
+        case 'secure':
+          secure = true;
+        case 'httponly':
+          httpOnly = true;
+        default:
+        // RFC 6265 5.2: ignore unrecognized attributes (e.g. future tokens
+        // like `Partitioned`, `Priority`) rather than failing the parse.
       }
-
-      throw const FormatException('Invalid cookie format');
     }
 
     return SetCookieHeader(
@@ -186,9 +179,14 @@ final class SetCookieHeader {
   /// Converts the [Cookie] instance into a string representation suitable for HTTP headers.
 
   String _encode() {
-    // Use a set to ensure unique attributes
-    final attributes = <String>{};
-    if (name.isNotEmpty) attributes.add('$name=$value');
+    // Each attribute is emitted at most once by construction, so a plain list
+    // is correct here; a Set would silently collapse a cookie-pair whose name
+    // coincides with an attribute rendering (e.g. name 'Path', value '/x').
+    final attributes = <String>[];
+    // Always emit the cookie-pair first, even for the empty-name `=value`
+    // quirk, so that encode round-trips with parse (which requires the first
+    // token to contain '=').
+    attributes.add('$name=$value');
 
     if (secure) attributes.add(_secure);
     if (httpOnly) attributes.add(_httpOnly);
@@ -197,8 +195,8 @@ final class SetCookieHeader {
       attributes.add('$_expires${formatHttpDate(expires!)}');
     }
     if (maxAge != null) attributes.add('$_maxAge$maxAge');
-    if (domain != null) attributes.add('$_domain${domain.toString()}');
-    if (path != null) attributes.add('$_path${path.toString()}');
+    if (domain != null) attributes.add('$_domain${domain!.encode()}');
+    if (path != null) attributes.add('$_path$path');
 
     return attributes.join('; ');
   }

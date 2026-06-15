@@ -1,4 +1,7 @@
 import '../../../../relic_core.dart';
+import 'util/report_to.dart';
+
+const int _semicolon = 0x3B;
 
 /// A class representing the HTTP Cross-Origin-Opener-Policy header.
 ///
@@ -15,52 +18,69 @@ final class CrossOriginOpenerPolicyHeader {
   /// The policy value of the header.
   final String policy;
 
+  /// The optional `report-to` reporting endpoint, if present.
+  final String? reportTo;
+
   /// Constructs a [CrossOriginOpenerPolicyHeader] instance with the specified value.
-  const CrossOriginOpenerPolicyHeader._(this.policy);
+  const CrossOriginOpenerPolicyHeader._(this.policy, [this.reportTo]);
 
   /// Predefined policy values.
   static const _sameOrigin = 'same-origin';
   static const _sameOriginAllowPopups = 'same-origin-allow-popups';
+  static const _noopenerAllowPopups = 'noopener-allow-popups';
   static const _unsafeNone = 'unsafe-none';
 
   static const sameOrigin = CrossOriginOpenerPolicyHeader._(_sameOrigin);
   static const sameOriginAllowPopups = CrossOriginOpenerPolicyHeader._(
     _sameOriginAllowPopups,
   );
+  static const noopenerAllowPopups = CrossOriginOpenerPolicyHeader._(
+    _noopenerAllowPopups,
+  );
   static const unsafeNone = CrossOriginOpenerPolicyHeader._(_unsafeNone);
 
-  /// Parses a [value] and returns the corresponding [CrossOriginOpenerPolicyHeader] instance.
-  /// If the value does not match any predefined types, it returns a custom instance.
+  static const _known = {
+    _sameOrigin,
+    _sameOriginAllowPopups,
+    _noopenerAllowPopups,
+    _unsafeNone,
+  };
+
+  /// Parses a [value] into a [CrossOriginOpenerPolicyHeader].
+  ///
+  /// The value is the policy token optionally followed by parameters, e.g.
+  /// `same-origin; report-to="endpoint"`. The `report-to` parameter is
+  /// captured; an unknown policy token is rejected.
   factory CrossOriginOpenerPolicyHeader.parse(final String value) {
-    final trimmed = value.trim();
-    if (trimmed.isEmpty) {
+    if (value.trim().isEmpty) {
       throw const FormatException('Value cannot be empty');
     }
-
-    switch (trimmed) {
-      case _sameOrigin:
-        return sameOrigin;
-      case _sameOriginAllowPopups:
-        return sameOriginAllowPopups;
-      case _unsafeNone:
-        return unsafeNone;
-      default:
-        throw const FormatException('Invalid value');
+    // Split parameters at top-level ';' only, so a ';' inside a quoted
+    // report-to value does not split the value.
+    final parts = HeaderScanner(value).splitTopLevel(_semicolon).toList();
+    final token = parts.first.trim().toLowerCase();
+    if (!_known.contains(token)) {
+      throw const FormatException('Invalid value');
     }
+    final reportTo = parseReportToParam(parts.skip(1));
+    return CrossOriginOpenerPolicyHeader._(token, reportTo);
   }
 
   /// Converts the [CrossOriginOpenerPolicyHeader] instance into a string
   /// representation suitable for HTTP headers.
 
-  String _encode() => policy;
+  String _encode() =>
+      reportTo == null ? policy : '$policy; ${encodeReportToParam(reportTo!)}';
 
   @override
   bool operator ==(final Object other) =>
       identical(this, other) ||
-      other is CrossOriginOpenerPolicyHeader && policy == other.policy;
+      other is CrossOriginOpenerPolicyHeader &&
+          policy == other.policy &&
+          reportTo == other.reportTo;
 
   @override
-  int get hashCode => policy.hashCode;
+  int get hashCode => Object.hash(policy, reportTo);
 
   @override
   String toString() {

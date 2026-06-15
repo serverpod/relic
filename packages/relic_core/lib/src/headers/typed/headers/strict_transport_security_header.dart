@@ -31,7 +31,8 @@ final class StrictTransportSecurityHeader {
   });
 
   /// Predefined directive values.
-  static const _maxAgePrefix = 'max-age=';
+  static const _maxAgeName = 'max-age';
+  static const _maxAgePrefix = '$_maxAgeName=';
   static const _includeSubDomains = 'includeSubDomains';
   static const _preload = 'preload';
 
@@ -48,12 +49,30 @@ final class StrictTransportSecurityHeader {
     bool includeSubDomains = false;
     bool preload = false;
 
+    // RFC 6797 6.1: directive names are case-insensitive; `max-age` is a
+    // non-negative integer that may be supplied as a quoted-string. Split the
+    // name from its optional value on the first `=`, tolerating OWS around it
+    // (e.g. `max-age = 31536000`), and ignore unknown directives.
     for (final directive in splitValues) {
-      if (directive.startsWith(_maxAgePrefix)) {
-        maxAge = int.tryParse(directive.substring(_maxAgePrefix.length));
-      } else if (directive == _includeSubDomains) {
+      final eq = directive.indexOf('=');
+      final name = (eq < 0 ? directive : directive.substring(0, eq))
+          .trim()
+          .toLowerCase();
+      if (name == _maxAgeName) {
+        var v = eq < 0 ? '' : directive.substring(eq + 1).trim();
+        if (v.length >= 2 && v.startsWith('"') && v.endsWith('"')) {
+          v = v.substring(1, v.length - 1);
+        }
+        try {
+          maxAge = DeltaSeconds.parse(v).seconds;
+        } on FormatException {
+          throw const FormatException(
+            'Max-age directive is missing or invalid',
+          );
+        }
+      } else if (name == _includeSubDomains.toLowerCase()) {
         includeSubDomains = true;
-      } else if (directive == _preload) {
+      } else if (name == _preload.toLowerCase()) {
         preload = true;
       }
     }

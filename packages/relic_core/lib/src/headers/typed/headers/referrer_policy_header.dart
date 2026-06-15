@@ -41,34 +41,39 @@ final class ReferrerPolicyHeader {
   );
   static const unsafeUrl = ReferrerPolicyHeader._(_unsafeUrl);
 
-  /// Parses a [directive] and returns the corresponding [ReferrerPolicyHeader] instance.
-  /// If the directive does not match any predefined types, it returns a custom instance.
+  static const Map<String, ReferrerPolicyHeader> _byName = {
+    _noReferrer: noReferrer,
+    _noReferrerWhenDowngrade: noReferrerWhenDowngrade,
+    _origin: origin,
+    _originWhenCrossOrigin: originWhenCrossOrigin,
+    _sameOrigin: sameOrigin,
+    _strictOrigin: strictOrigin,
+    _strictOriginWhenCrossOrigin: strictOriginWhenCrossOrigin,
+    _unsafeUrl: unsafeUrl,
+  };
+
+  /// Parses a Referrer-Policy header value.
+  ///
+  /// Per the W3C Referrer Policy spec, the value is a comma-separated list of
+  /// policy tokens processed left-to-right, keeping the last one the user
+  /// agent recognizes (so a deployment can list `no-referrer, strict-origin`
+  /// as a fallback for older agents). Unknown tokens are ignored, and the
+  /// match is case-insensitive.
   factory ReferrerPolicyHeader.parse(final String value) {
-    final trimmed = value.trim();
-    if (trimmed.isEmpty) {
+    if (value.trim().isEmpty) {
       throw const FormatException('Value cannot be empty');
     }
 
-    switch (trimmed) {
-      case _noReferrer:
-        return noReferrer;
-      case _noReferrerWhenDowngrade:
-        return noReferrerWhenDowngrade;
-      case _origin:
-        return origin;
-      case _originWhenCrossOrigin:
-        return originWhenCrossOrigin;
-      case _sameOrigin:
-        return sameOrigin;
-      case _strictOrigin:
-        return strictOrigin;
-      case _strictOriginWhenCrossOrigin:
-        return strictOriginWhenCrossOrigin;
-      case _unsafeUrl:
-        return unsafeUrl;
-      default:
-        throw const FormatException('Invalid value');
+    ReferrerPolicyHeader? lastValid;
+    for (final token in value.split(',')) {
+      final policy = _byName[token.trim().toLowerCase()];
+      if (policy != null) lastValid = policy;
     }
+
+    if (lastValid == null) {
+      throw const FormatException('No valid referrer policy directive');
+    }
+    return lastValid;
   }
 
   /// Converts the [ReferrerPolicyHeader] instance into a string

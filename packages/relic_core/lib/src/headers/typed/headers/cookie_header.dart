@@ -28,17 +28,16 @@ final class CookieHeader {
 
     final splitValues = value.splitTrimAndFilterUnique(separator: ';');
 
+    // RFC 6265 5.4 allows a Cookie header to carry several cookies with the
+    // same name (e.g. a host-only cookie plus a Domain-scoped one, or
+    // path-scoped duplicates); the server cannot tell them apart from the
+    // header alone. Keep such same-name cookies rather than rejecting the
+    // whole header, so one duplicate name does not make an otherwise valid
+    // cookie unreadable. splitTrimAndFilterUnique still collapses byte-identical
+    // segments, which is harmless since they are indistinguishable. [getCookie]
+    // returns the first match. Cookie names are case-sensitive per RFC 6265
+    // 4.2.2/5.4, so `Sid` and `sid` stay distinct.
     final cookies = splitValues.map(Cookie.parse).toList();
-    final names = cookies
-        .map((final cookie) => cookie.name.toLowerCase())
-        .toList();
-    final uniqueNames = names.toSet();
-
-    if (names.length != uniqueNames.length) {
-      throw const FormatException(
-        'Supplied multiple Name and Value attributes',
-      );
-    }
 
     return CookieHeader.cookies(cookies);
   }
@@ -82,12 +81,16 @@ class Cookie {
       value = validateCookieValue(value);
 
   factory Cookie.parse(final String value) {
-    final splitValue = value.split('=');
-    if (splitValue.length != 2) {
+    // Split on the FIRST '=' only; RFC 6265 cookie-octets permit '=' to
+    // appear inside the value (e.g. base64 padding).
+    final eq = value.indexOf('=');
+    if (eq < 0) {
       throw const FormatException('Invalid cookie format');
     }
-
-    return Cookie(name: splitValue.first.trim(), value: splitValue.last.trim());
+    return Cookie(
+      name: value.substring(0, eq).trim(),
+      value: value.substring(eq + 1).trim(),
+    );
   }
 
   /// Converts the [Cookie] instance into a string representation suitable for HTTP headers.
