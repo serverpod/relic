@@ -28,16 +28,40 @@ final class CookieHeader {
 
     final splitValues = value.splitTrimAndFilterUnique(separator: ';');
 
-    // RFC 6265 5.4 allows a Cookie header to carry several cookies with the
-    // same name (e.g. a host-only cookie plus a Domain-scoped one, or
-    // path-scoped duplicates); the server cannot tell them apart from the
-    // header alone. Keep such same-name cookies rather than rejecting the
-    // whole header, so one duplicate name does not make an otherwise valid
-    // cookie unreadable. splitTrimAndFilterUnique still collapses byte-identical
-    // segments, which is harmless since they are indistinguishable. [getCookie]
-    // returns the first match. Cookie names are case-sensitive per RFC 6265
-    // 4.2.2/5.4, so `Sid` and `sid` stay distinct.
-    final cookies = splitValues.map(Cookie.parse).toList();
+    // Parse each cookie independently and skip the malformed ones rather than
+    // rejecting the entire header. The Cookie header is a single line carrying
+    // every cookie the user agent decided to send; one invalid cookie (fx. a
+    // stray third-party cookie that does not meet RFC 6265's grammar) must not
+    // make the other, well-formed cookies - including a session or auth cookie
+    // - unreadable.
+    //
+    // RFC 6265 5.4 also allows a Cookie header to carry several cookies with
+    // the same name (a host-only cookie plus a Domain-scoped one, or
+    // path-scoped duplicates).
+    //
+    // The server cannot tell them apart from the header alone. Keep such
+    // same-name cookies rather than rejecting the whole header.
+    // splitTrimAndFilterUnique still collapses byte-identical segments, which
+    // is harmless since they are indistinguishable. [getCookie] returns the
+    // first match.
+    //
+    // Cookie names are case-sensitive per RFC 6265 4.2.2/5.4, so `Sid` and
+    // `sid` stay distinct.
+    final cookies = <Cookie>[];
+    for (final cookie in splitValues) {
+      try {
+        cookies.add(Cookie.parse(cookie));
+      } on FormatException {
+        // Skip this malformed cookie; keep the rest.
+      }
+    }
+
+    // The header is only treated as invalid when nothing in it is a usable
+    // cookie (an empty value is already rejected above). Consumers that want a
+    // tolerant read of a possibly-absent header can use `valueOrNullIfInvalid`.
+    if (cookies.isEmpty) {
+      throw const FormatException('No valid cookies in Cookie header');
+    }
 
     return CookieHeader.cookies(cookies);
   }
