@@ -837,7 +837,9 @@ void main() {
       (Headers.server, (final h) => h.server = 'localhost'),
       (
         Headers.setCookie,
-        (final h) => h.setCookie = SetCookieHeader(name: 'foo', value: 'bar'),
+        (final h) => h.setCookie = SetCookieHeader([
+          SetCookie(name: 'foo', value: 'bar'),
+        ]),
       ),
       (
         Headers.strictTransportSecurity,
