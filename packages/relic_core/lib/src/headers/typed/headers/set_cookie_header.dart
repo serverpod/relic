@@ -83,10 +83,15 @@ final class SetCookieHeader {
        path = path == null ? null : validateCookiePath(path);
 
   static Host? _validateCookieDomain(final Host? domain) {
-    if (domain != null && domain.port != null) {
+    if (domain == null) return null;
+    if (domain.port != null) {
       throw const FormatException(
         'Cookie Domain must not include a port (RFC 6265 5.2.3)',
       );
+    }
+    // A leading '.' on the Domain attribute is allowed for historical reasons (RFC 6265 5.2.3)
+    if (domain.host.startsWith('.')) {
+      return Host(domain.host.substring(1));
     }
     return domain;
   }

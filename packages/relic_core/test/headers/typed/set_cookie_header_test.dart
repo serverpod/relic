@@ -62,6 +62,30 @@ void main() {
         );
       });
     });
+
+    group('Given a Domain with a leading dot,', () {
+      test('when constructed, '
+          'then the dot is stripped (RFC 6265 5.2.3 normalization).', () {
+        final header = SetCookieHeader(
+          name: 'sid',
+          value: 'abc',
+          domain: Host('.example.com'),
+        );
+
+        expect(header.domain?.host, equals('example.com'));
+        expect(
+          SetCookieHeader.codec.encode(header).single,
+          contains('Domain=example.com'),
+        );
+      });
+
+      test('when parsed from the wire, '
+          'then the dot is stripped.', () {
+        final parsed = SetCookieHeader.parse('sid=abc; Domain=.example.com');
+
+        expect(parsed.domain?.host, equals('example.com'));
+      });
+    });
   });
 
   group('SetCookieHeader parser hardening', () {
