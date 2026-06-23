@@ -66,8 +66,18 @@ final class CookieHeader {
     return CookieHeader.cookies(cookies);
   }
 
+  /// Returns the first cookie named [name], or `null` if absent.
+  ///
+  /// A `Cookie` header may carry more than one cookie with the same name (RFC 6265 5.4).
+  /// Use [getCookies] when you must distinguish "exactly one" from a duplicate,
+  /// rather than blindly trusting the first.
   Cookie? getCookie(final String name) {
     return cookies.firstWhereOrNull((final cookie) => cookie.name == name);
+  }
+
+  /// Returns every cookie named [name], in header order (possibly empty).
+  Iterable<Cookie> getCookies(final String name) {
+    return cookies.where((final cookie) => cookie.name == name);
   }
 
   /// Converts the [CookieHeader] instance into a string representation
