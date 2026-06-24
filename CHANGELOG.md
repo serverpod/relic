@@ -1,3 +1,19 @@
+## 2.0.0-beta.0
+
+Overhaul of typed HTTP headers for RFC compliance, landing in concert with serverpod 4.0. Parsing of received (request) headers is lenient (except security-sensitive ones), while construction and serialization are always strict. Many typed headers changed shape and/or semantics, so this is a breaking release.
+
+- refactor!: Cookie and Set-Cookie headers ([#361](https://github.com/serverpod/relic/pull/361))
+  - BREAKING: `SetCookie` now represents a single cookie, and `SetCookieHeader` is a `List<SetCookie>` collection (one `Set-Cookie` line per cookie, RFC 6265 4.1). The previous single-cookie `SetCookieHeader(name:, value:, ...)` API is replaced by `SetCookie(...)`; augment a response with `mh.setCookie = (mh.setCookie ?? const SetCookieHeader.empty()).add(cookie)`
+  - The request `Cookie` header is parsed leniently: a malformed cookie is skipped and the header is rejected only when no cookie in it is usable
+  - Add `CookieHeader.getCookies(name)` returning every cookie with that name in order; byte-identical duplicates are preserved (not collapsed)
+  - `Set-Cookie` decode is strict (it is produced by the server): a malformed attribute rejects the cookie
+  - `Domain` is normalized per RFC 6265 5.2.3 — the full leading-dot run is stripped and the host is lower-cased; an all-dots `Domain` is rejected
+  - `Max-Age` is parsed as a strict decimal integer per RFC 6265 5.2.2; non-decimal values such as `0xFF` are rejected
+  - Nameless `=value` segments are dropped when parsing the request `Cookie` header
+- feat!: RFC compliant typed headers ([#360](https://github.com/serverpod/relic/pull/360)) — fixes [#113](https://github.com/serverpod/relic/issues/113), [#142](https://github.com/serverpod/relic/issues/142)
+  - Many typed headers changed their Dart interface and/or their parse/serialize semantics
+  - Parsing is lenient on receive; construction and serialization are strict
+
 ## 1.2.0
 - feat: Make `NormalizedPath` interning cache configurable ([#343](https://github.com/serverpod/relic/pull/343))
   - Introduce abstract `Cache<K, V>` interface
