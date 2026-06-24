@@ -2,7 +2,7 @@ name: relic_workspace
 publish_to: none
 
 environment:
-  sdk: ^3.8.0
+  sdk: ^3.9.0
 
 workspace:
   - packages/relic
@@ -14,7 +14,7 @@ workspace:
   - packages/test_utils
 
 dev_dependencies:
-  melos: 7.4.0-dev.0 # Special support for Dart 3.8 (see https://github.com/invertase/melos/pull/979)
+  melos: 8.0.0 # Required for Dart 3.9+ support
 
 melos:
   packages:
@@ -22,8 +22,8 @@ melos:
 
   scripts:
     test:
-      run: dart test
       exec:
+        command: dart test
         concurrency: 1
       packageFilters:
         flutter: false
@@ -32,12 +32,12 @@ melos:
       description: Run tests in all packages
 
     coverage:
-      run: >-
-        dart pub global run coverage:test_with_coverage --branch-coverage
-        --scope-output=relic
-        --scope-output=relic_core
-        --scope-output=relic_io
       exec:
+        command: >-
+          dart pub global run coverage:test_with_coverage --branch-coverage
+          --scope-output=relic
+          --scope-output=relic_core
+          --scope-output=relic_io
         concurrency: 1 # for saner output
       packageFilters:
         flutter: false
