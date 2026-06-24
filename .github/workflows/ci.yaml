@@ -11,7 +11,7 @@ on:
 
 env:
   PUB_CACHE_PATH: ~/.pub-cache
-  LOWEST_DART_SDK: "3.8.1"
+  LOWEST_DART_SDK: "3.9.0"
 
 jobs:
   analyze:
@@ -22,7 +22,7 @@ jobs:
         dart_sdk:
           # ${{ env.LOWEST_DART_SDK }} won't work at job level as env context not available for strategy ¯\_(ツ)_/¯
           # (see https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/accessing-contextual-information-about-workflow-runs#context-availability)
-          - "3.8.1"
+          - "3.9.0"
           - stable
     steps:
       - name: Checkout Code
@@ -109,12 +109,12 @@ jobs:
   unit_tests:
     name: Run Unit Tests
     runs-on: ${{ matrix.os }}
-    continue-on-error: ${{ matrix.dart_sdk != '3.8.1' }} # env context not available for continue-on-error
+    continue-on-error: ${{ matrix.dart_sdk != '3.9.0' }} # env context not available for continue-on-error
     strategy:
       fail-fast: false
       matrix:
         os: [windows-latest, ubuntu-latest, macos-latest]
-        dart_sdk: ["3.8.1", stable, beta] # env context not available for strategy
+        dart_sdk: ["3.9.0", stable, beta] # env context not available for strategy
         deps: [downgrade, upgrade]
     steps:
       - name: Checkout Code
@@ -149,14 +149,14 @@ jobs:
         run: melos run test --no-select -- --reporter=failures-only
 
       - name: Run Tests With Coverage
-        if: ${{ matrix.os == 'ubuntu-latest' && matrix.dart_sdk == '3.8.1' && matrix.deps == 'upgrade' }}
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.dart_sdk == '3.9.0' && matrix.deps == 'upgrade' }}
         run: |
           dart pub global activate coverage
           melos run coverage --no-select
 
       - name: Upload Coverage (relic_core)
         uses: codecov/codecov-action@v5
-        if: ${{ matrix.os == 'ubuntu-latest' && matrix.dart_sdk == '3.8.1' && matrix.deps == 'upgrade' && !cancelled() }}
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.dart_sdk == '3.9.0' && matrix.deps == 'upgrade' && !cancelled() }}
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: packages/relic_core/coverage/lcov.info
@@ -164,7 +164,7 @@ jobs:
 
       - name: Upload Coverage (relic_io)
         uses: codecov/codecov-action@v5
-        if: ${{ matrix.os == 'ubuntu-latest' && matrix.dart_sdk == '3.8.1' && matrix.deps == 'upgrade' && !cancelled() }}
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.dart_sdk == '3.9.0' && matrix.deps == 'upgrade' && !cancelled() }}
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: packages/relic_io/coverage/lcov.info
@@ -172,7 +172,7 @@ jobs:
 
       - name: Upload Coverage (relic)
         uses: codecov/codecov-action@v5
-        if: ${{ matrix.os == 'ubuntu-latest' && matrix.dart_sdk == '3.8.1' && matrix.deps == 'upgrade' && !cancelled() }}
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.dart_sdk == '3.9.0' && matrix.deps == 'upgrade' && !cancelled() }}
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: packages/relic/coverage/lcov.info
