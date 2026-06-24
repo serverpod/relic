@@ -191,6 +191,32 @@ void main() {
     });
   });
 
+  group('SetCookie Max-Age attribute', () {
+    group('Given a decimal Max-Age,', () {
+      test('when parsed, '
+          'then it is accepted.', () {
+        expect(SetCookie.parse('a=b; Max-Age=3600').maxAge, equals(3600));
+      });
+    });
+
+    group('Given a negative Max-Age,', () {
+      test('when parsed, '
+          'then it is accepted (a non-positive value expires the cookie).', () {
+        expect(SetCookie.parse('a=b; Max-Age=-1').maxAge, equals(-1));
+      });
+    });
+
+    group('Given a hexadecimal Max-Age,', () {
+      test('when parsed, '
+          'then it throws (RFC 6265 5.2.2 allows decimal digits only).', () {
+        expect(
+          () => SetCookie.parse('a=b; Max-Age=0xFF'),
+          throwsFormatException,
+        );
+      });
+    });
+  });
+
   group('SetCookieHeader collection', () {
     final a = SetCookie(name: 'a', value: '1');
     final b = SetCookie(name: 'b', value: '2', secure: true);

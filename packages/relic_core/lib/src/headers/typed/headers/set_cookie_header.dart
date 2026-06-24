@@ -104,6 +104,17 @@ final class SetCookie {
     return domain;
   }
 
+  // RFC 6265 5.2.2: Max-Age is a decimal integer, optionally negative (a
+  // non-positive value expires the cookie). The generic numeric parser would
+  // also accept hex (`0xFF`) and other forms, silently reinterpreting the
+  // lifetime, so validate the decimal grammar before parsing.
+  static int _parseMaxAge(final String value) {
+    if (!RegExp(r'^-?\d+$').hasMatch(value)) {
+      throw const FormatException('Invalid Max-Age attribute');
+    }
+    return int.parse(value);
+  }
+
   /// Parses a single `Set-Cookie` line (without the header name) into a
   /// [SetCookie].
   factory SetCookie.parse(final String value) {
@@ -162,7 +173,7 @@ final class SetCookie {
           if (maxAge != null) {
             throw const FormatException('Supplied multiple Max-Age attributes');
           }
-          maxAge = parseInt(attrValue);
+          maxAge = _parseMaxAge(attrValue);
         case 'expires':
           if (expires != null) {
             throw const FormatException('Supplied multiple Expires attributes');
