@@ -91,8 +91,8 @@ void main() {
           headers: {'set-cookie': 'sessionId=test; userId=42'},
         );
 
-        expect(headers.setCookie?.name, equals('sessionId'));
-        expect(headers.setCookie?.value, equals('test'));
+        expect(headers.setCookie?.cookies.single.name, equals('sessionId'));
+        expect(headers.setCookie?.cookies.single.value, equals('test'));
       },
     );
 
@@ -104,8 +104,8 @@ void main() {
         headers: {'set-cookie': 'sessionId=abc123; invalidCookie'},
       );
 
-      expect(headers.setCookie?.name, equals('sessionId'));
-      expect(headers.setCookie?.value, equals('abc123'));
+      expect(headers.setCookie?.cookies.single.name, equals('sessionId'));
+      expect(headers.setCookie?.cookies.single.value, equals('abc123'));
     });
 
     test(
@@ -171,8 +171,8 @@ void main() {
           headers: {'set-cookie': '=abc123'},
         );
 
-        expect(headers.setCookie?.name, isEmpty);
-        expect(headers.setCookie?.value, equals('abc123'));
+        expect(headers.setCookie?.cookies.single.name, isEmpty);
+        expect(headers.setCookie?.cookies.single.value, equals('abc123'));
       },
     );
 
@@ -188,15 +188,21 @@ void main() {
           },
         );
 
-        expect(headers.setCookie?.name, equals('sessionId'));
-        expect(headers.setCookie?.value, equals('abc123'));
-        expect(headers.setCookie?.expires, isNotNull);
-        expect(headers.setCookie?.maxAge, equals(3600));
-        expect(headers.setCookie?.domain.toString(), equals('example.com'));
-        expect(headers.setCookie?.path.toString(), equals('/'));
-        expect(headers.setCookie?.secure, isTrue);
-        expect(headers.setCookie?.httpOnly, isTrue);
-        expect(headers.setCookie?.sameSite?.name, equals(SameSite.strict.name));
+        expect(headers.setCookie?.cookies.single.name, equals('sessionId'));
+        expect(headers.setCookie?.cookies.single.value, equals('abc123'));
+        expect(headers.setCookie?.cookies.single.expires, isNotNull);
+        expect(headers.setCookie?.cookies.single.maxAge, equals(3600));
+        expect(
+          headers.setCookie?.cookies.single.domain.toString(),
+          equals('example.com'),
+        );
+        expect(headers.setCookie?.cookies.single.path.toString(), equals('/'));
+        expect(headers.setCookie?.cookies.single.secure, isTrue);
+        expect(headers.setCookie?.cookies.single.httpOnly, isTrue);
+        expect(
+          headers.setCookie?.cookies.single.sameSite?.name,
+          equals(SameSite.strict.name),
+        );
       },
     );
 
@@ -209,9 +215,9 @@ void main() {
           headers: {'set-cookie': ' sessionId=abc123 ; Secure '},
         );
 
-        expect(headers.setCookie?.name, equals('sessionId'));
-        expect(headers.setCookie?.value, equals('abc123'));
-        expect(headers.setCookie?.secure, isTrue);
+        expect(headers.setCookie?.cookies.single.name, equals('sessionId'));
+        expect(headers.setCookie?.cookies.single.value, equals('abc123'));
+        expect(headers.setCookie?.cookies.single.secure, isTrue);
       },
     );
   });
@@ -238,8 +244,8 @@ void main() {
               headers: {'set-cookie': 'sessionId=abc123; invalidCookie'},
             );
 
-            expect(headers.setCookie?.name, equals('sessionId'));
-            expect(headers.setCookie?.value, equals('abc123'));
+            expect(headers.setCookie?.cookies.single.name, equals('sessionId'));
+            expect(headers.setCookie?.cookies.single.value, equals('abc123'));
           },
         );
       },

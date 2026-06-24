@@ -1,19 +1,19 @@
+import 'package:collection/collection.dart';
 import 'package:http_parser/http_parser.dart';
 import '../../../../relic_core.dart';
 
 import '../../extension/string_list_extensions.dart';
 import 'util/cookie_util.dart';
 
-/// A class representing the HTTP Set-Cookie header.
+/// A single HTTP `Set-Cookie` cookie: a name/value pair plus its attributes.
 ///
-/// This class manages the parsing and representation of set cookie.
-final class SetCookieHeader {
-  static const codec = HeaderCodec.single(SetCookieHeader.parse, __encode);
-  static List<String> __encode(final SetCookieHeader value) => [
-    value._encode(),
-  ];
-
-  /// The keys used for the Set-Cookie header.
+/// One `Set-Cookie` response header line maps to one [SetCookie]. A response
+/// may set several cookies; the set of them is the [SetCookieHeader]
+/// collection. Mirrors the request side, where one [Cookie] is an element of
+/// the [CookieHeader] collection (but a request [Cookie] carries no
+/// attributes).
+final class SetCookie {
+  /// The keys used for the Set-Cookie attributes.
   static const String _expires = 'Expires=';
   static const String _maxAge = 'Max-Age=';
   static const String _domain = 'Domain=';
@@ -62,12 +62,12 @@ final class SetCookieHeader {
   /// See [SameSite] for more information.
   final SameSite? sameSite;
 
-  /// Constructs a [Cookie] instance with the specified name and value.
+  /// Constructs a [SetCookie] with the specified name, value and attributes.
   ///
   /// Per RFC 6265 5.2.3 the `Domain` attribute is host-only, so [domain] must
   /// not carry a port; a [Host] with a port throws [FormatException]. [path]
   /// is validated against the path-value grammar (no CTLs or `;`).
-  SetCookieHeader({
+  SetCookie({
     required final String name,
     required final String value,
     this.expires,
@@ -83,30 +83,51 @@ final class SetCookieHeader {
        path = path == null ? null : validateCookiePath(path);
 
   static Host? _validateCookieDomain(final Host? domain) {
-    if (domain != null && domain.port != null) {
+    if (domain == null) return null;
+    if (domain.port != null) {
       throw const FormatException(
         'Cookie Domain must not include a port (RFC 6265 5.2.3)',
       );
     }
-    return domain;
+    // A leading '.' on the Domain attribute is historical (RFC 6265 5.2.3);
+    // normalize it away so `.example.com` is stored and emitted as the
+    // host-only `example.com`.
+    var host = domain.host;
+    if (host.startsWith('.')) {
+      host = host.replaceFirst(RegExp(r'^\.+'), '');
+      if (host.isEmpty) {
+        throw const FormatException(
+          'Cookie Domain must not be only dots (RFC 6265 5.2.3)',
+        );
+      }
+    }
+    // Normalize to lower-case as per RFC 6265 5.2.3.
+    host = host.toLowerCase();
+    return host == domain.host ? domain : Host(host);
   }
 
-  factory SetCookieHeader.parse(final String value) {
-    final splitValue = value.splitTrimAndFilterUnique(separator: ';');
+  // RFC 6265 5.2.2: Max-Age is a decimal integer, optionally negative (a
+  // non-positive value expires the cookie). The generic numeric parser would
+  // also accept hex (`0xFF`) and other forms, silently reinterpreting the
+  // lifetime, so validate the decimal grammar before parsing.
+  static int _parseMaxAge(final String value) {
+    if (!RegExp(r'^-?\d+$').hasMatch(value)) {
+      throw const FormatException('Invalid Max-Age attribute');
+    }
+    return int.parse(value);
+  }
+
+  /// Parses a single `Set-Cookie` line (without the header name) into a
+  /// [SetCookie].
+  factory SetCookie.parse(final String value) {
+    final splitValue = value.splitAndTrim(separator: ';');
     if (splitValue.isEmpty) {
       throw const FormatException('Value cannot be empty');
     }
 
     // RFC 6265 5.2: the first ';'-delimited token is the cookie-pair; every
-    // subsequent token is a cookie attribute (cookie-av). Splitting on the
-    // first '=' keeps a '=' that appears inside the value or an attribute.
-    final pair = splitValue.first;
-    final pairEq = pair.indexOf('=');
-    if (pairEq < 0) {
-      throw const FormatException('Invalid cookie format');
-    }
-    final cookieName = pair.substring(0, pairEq).trim();
-    final cookieValue = pair.substring(pairEq + 1).trim();
+    // subsequent token is a cookie attribute (cookie-av).
+    final pair = Cookie.parse(splitValue.first);
 
     bool secure = false;
     bool httpOnly = false;
@@ -147,7 +168,7 @@ final class SetCookieHeader {
           if (maxAge != null) {
             throw const FormatException('Supplied multiple Max-Age attributes');
           }
-          maxAge = parseInt(attrValue);
+          maxAge = _parseMaxAge(attrValue);
         case 'expires':
           if (expires != null) {
             throw const FormatException('Supplied multiple Expires attributes');
@@ -163,9 +184,9 @@ final class SetCookieHeader {
       }
     }
 
-    return SetCookieHeader(
-      name: cookieName,
-      value: cookieValue,
+    return SetCookie(
+      name: pair.name,
+      value: pair.value,
       secure: secure,
       httpOnly: httpOnly,
       sameSite: sameSite,
@@ -176,9 +197,9 @@ final class SetCookieHeader {
     );
   }
 
-  /// Converts the [Cookie] instance into a string representation suitable for HTTP headers.
-
-  String _encode() {
+  /// The wire form of this cookie: a single `Set-Cookie` value (without the
+  /// header name).
+  String encode() {
     // Each attribute is emitted at most once by construction, so a plain list
     // is correct here; a Set would silently collapse a cookie-pair whose name
     // coincides with an attribute rendering (e.g. name 'Path', value '/x').
@@ -204,7 +225,7 @@ final class SetCookieHeader {
   @override
   bool operator ==(final Object other) =>
       identical(this, other) ||
-      other is SetCookieHeader &&
+      other is SetCookie &&
           name == other.name &&
           value == other.value &&
           expires == other.expires &&
@@ -230,7 +251,7 @@ final class SetCookieHeader {
 
   @override
   String toString() {
-    return 'SetCookieHeader(name: $name, '
+    return 'SetCookie(name: $name, '
         'value: $value, '
         'expires: $expires, '
         'maxAge: $maxAge, '
@@ -242,9 +263,67 @@ final class SetCookieHeader {
   }
 }
 
+/// The HTTP `Set-Cookie` response header: the ordered set of [SetCookie]s a
+/// response sets.
+///
+/// Unlike most headers, `Set-Cookie` is emitted as one line per cookie and is
+/// never comma-folded (RFC 6265 4.1), so this is a true collection rather than
+/// a comma-list. Set it to replace the response's cookies; use [add]/[addAll]
+/// to augment without dropping existing ones:
+///
+/// ```dart
+/// mh.setCookie = (mh.setCookie ?? const SetCookieHeader.empty()).add(cookie);
+/// ```
+final class SetCookieHeader {
+  static const codec = HeaderCodec(SetCookieHeader.parse, _encode);
+
+  /// The cookies this header sets, in order.
+  final List<SetCookie> cookies;
+
+  /// Wraps [cookies] (defensively copied and unmodifiable).
+  SetCookieHeader(final List<SetCookie> cookies)
+    : cookies = List.unmodifiable(cookies);
+
+  /// An empty collection -- a convenient starting point for [add]/[addAll].
+  const SetCookieHeader.empty() : cookies = const [];
+
+  /// Parses the response's `Set-Cookie` header lines into a collection, one
+  /// [SetCookie] per line.
+  ///
+  /// Decoding is strict: a malformed line throws [FormatException] with the
+  /// specific reason. Unlike the request [CookieHeader] -- which skips a stray
+  /// malformed cookie sent by an untrusted client -- `Set-Cookie` is produced
+  /// by the server itself, so there is no lenient-skip rationale.
+  factory SetCookieHeader.parse(final Iterable<String> values) =>
+      SetCookieHeader(values.map(SetCookie.parse).toList());
+
+  /// Returns a new collection with [cookie] appended.
+  SetCookieHeader add(final SetCookie cookie) =>
+      SetCookieHeader([...cookies, cookie]);
+
+  /// Returns a new collection with all of [cookies] appended.
+  SetCookieHeader addAll(final Iterable<SetCookie> cookies) =>
+      SetCookieHeader([...this.cookies, ...cookies]);
+
+  static List<String> _encode(final SetCookieHeader value) =>
+      value.cookies.map((final c) => c.encode()).toList();
+
+  @override
+  bool operator ==(final Object other) =>
+      identical(this, other) ||
+      other is SetCookieHeader &&
+          const ListEquality<SetCookie>().equals(cookies, other.cookies);
+
+  @override
+  int get hashCode => const ListEquality<SetCookie>().hash(cookies);
+
+  @override
+  String toString() => 'SetCookieHeader(cookies: $cookies)';
+}
+
 /// Cookie cross-site availability configuration.
 ///
-/// The value of [Cookie.sameSite], which defines whether an
+/// The value of [SetCookie.sameSite], which defines whether an
 /// HTTP cookie is available from other sites or not.
 ///
 /// Has three possible values: [lax], [strict] and [none].
@@ -258,7 +337,7 @@ final class SameSite {
 
   /// Cookie with this value will be sent in all requests.
   ///
-  /// [Cookie.secure] must also be set to true, otherwise the `none` value
+  /// [SetCookie.secure] must also be set to true, otherwise the `none` value
   /// will have no effect.
   static const none = SameSite._('None');
 

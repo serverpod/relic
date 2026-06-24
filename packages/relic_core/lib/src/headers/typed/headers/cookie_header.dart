@@ -26,24 +26,62 @@ final class CookieHeader {
       throw const FormatException('Value cannot be empty');
     }
 
-    final splitValues = value.splitTrimAndFilterUnique(separator: ';');
+    final splitValues = value.splitAndTrim(separator: ';');
 
-    // RFC 6265 5.4 allows a Cookie header to carry several cookies with the
-    // same name (e.g. a host-only cookie plus a Domain-scoped one, or
-    // path-scoped duplicates); the server cannot tell them apart from the
-    // header alone. Keep such same-name cookies rather than rejecting the
-    // whole header, so one duplicate name does not make an otherwise valid
-    // cookie unreadable. splitTrimAndFilterUnique still collapses byte-identical
-    // segments, which is harmless since they are indistinguishable. [getCookie]
-    // returns the first match. Cookie names are case-sensitive per RFC 6265
-    // 4.2.2/5.4, so `Sid` and `sid` stay distinct.
-    final cookies = splitValues.map(Cookie.parse).toList();
+    // Parse each cookie independently and skip the malformed ones rather than
+    // rejecting the entire header. The Cookie header is a single line carrying
+    // every cookie the user agent decided to send; one invalid cookie (fx. a
+    // stray third-party cookie that does not meet RFC 6265's grammar) must not
+    // make the other, well-formed cookies - including a session or auth cookie
+    // - unreadable.
+    //
+    // RFC 6265 5.4 also allows a Cookie header to carry several cookies with
+    // the same name (a host-only cookie plus a Domain-scoped one, or
+    // path-scoped duplicates).
+    //
+    // The server cannot tell them apart from the header alone, so keep every
+    // segment - including byte-identical duplicates - rather than collapsing
+    // them, so [getCookies] reports the true count. [getCookie] returns the
+    // first match.
+    //
+    // Cookie names are case-sensitive per RFC 6265 4.2.2/5.4, so `Sid` and
+    // `sid` stay distinct.
+    final cookies = <Cookie>[];
+    for (final cookie in splitValues) {
+      try {
+        final parsed = Cookie.parse(cookie);
+        // A nameless segment like `=value` (or a bare `=`) is not a cookie the
+        // client meaningfully set; skip it so such junk does not survive as an
+        // empty-named entry and slip past the "no valid cookies" guard below.
+        if (parsed.name.isEmpty) continue;
+        cookies.add(parsed);
+      } on FormatException {
+        // Skip this malformed cookie; keep the rest.
+      }
+    }
+
+    // The header is only treated as invalid when nothing in it is a usable
+    // cookie (an empty value is already rejected above). Consumers that want a
+    // tolerant read of a possibly-absent header can use `valueOrNullIfInvalid`.
+    if (cookies.isEmpty) {
+      throw const FormatException('No valid cookies in Cookie header');
+    }
 
     return CookieHeader.cookies(cookies);
   }
 
+  /// Returns the first cookie named [name], or `null` if absent.
+  ///
+  /// A `Cookie` header may carry more than one cookie with the same name (RFC 6265 5.4).
+  /// Use [getCookies] when you must distinguish "exactly one" from a duplicate,
+  /// rather than blindly trusting the first.
   Cookie? getCookie(final String name) {
     return cookies.firstWhereOrNull((final cookie) => cookie.name == name);
+  }
+
+  /// Returns every cookie named [name], in header order (possibly empty).
+  Iterable<Cookie> getCookies(final String name) {
+    return cookies.where((final cookie) => cookie.name == name);
   }
 
   /// Converts the [CookieHeader] instance into a string representation

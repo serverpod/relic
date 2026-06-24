@@ -17,16 +17,22 @@ extension StringListExtensions on Iterable<String> {
   Iterable<String> splitTrimAndFilterUnique({
     final String separator = ',',
     final bool emptyCheck = true,
+    final bool noTrim = false,
   }) => LinkedHashSet<String>.from(
-    splitAndTrim(separator: separator, emptyCheck: emptyCheck),
+    splitAndTrim(separator: separator, emptyCheck: emptyCheck, noTrim: noTrim),
   );
 
   Iterable<String> splitAndTrim({
     final String separator = ',',
     final bool emptyCheck = true,
-  }) => expand((final element) => element.split(separator))
-      .map((final el) => el.trim())
-      .where((final e) => !emptyCheck || e.isNotEmpty);
+    final bool noTrim = false,
+  }) => expand(
+    (final element) => element.splitAndTrim(
+      separator: separator,
+      emptyCheck: emptyCheck,
+      noTrim: noTrim,
+    ),
+  );
 }
 
 extension StringExtensions on String {
@@ -47,21 +53,29 @@ extension StringExtensions on String {
     final String separator = ',',
     final bool emptyCheck = true,
     final bool noTrim = false,
-  }) {
-    final filtered = split(separator)
-        .map((final el) => noTrim ? el : el.trim())
-        .where((final e) => !emptyCheck || e.isNotEmpty);
-    return LinkedHashSet<String>.from(filtered);
-  }
+  }) => LinkedHashSet<String>.from(
+    splitAndTrim(separator: separator, emptyCheck: emptyCheck, noTrim: noTrim),
+  );
+
+  /// Like [splitTrimAndFilterUnique] but preserves order and duplicates.
+  ///
+  /// Use this where each token is positional and a repeated token is significant.
+  Iterable<String> splitAndTrim({
+    final String separator = ',',
+    final bool emptyCheck = true,
+    final bool noTrim = false,
+  }) => split(separator)
+      .map((final el) => noTrim ? el : el.trim())
+      .where((final e) => !emptyCheck || e.isNotEmpty);
 
   /// Checks if the string is a valid email address.
-
   bool isValidEmail() {
     return RegExp(
       r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
     ).hasMatch(this);
   }
 
+  /// Checks if the string is a valid language code.
   bool isValidLanguageCode() {
     return RegExp(r'^[a-zA-Z]{2,8}(-[a-zA-Z]{2,8})?$').hasMatch(this);
   }
