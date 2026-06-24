@@ -43,6 +43,39 @@ void main() {
     });
   });
 
+  group('CookieHeader skip-malformed ordering', () {
+    group('Given a malformed cookie before a valid one,', () {
+      test('when parsed, '
+          'then the malformed cookie is skipped and the valid one kept.', () {
+        final h = CookieHeader.parse('invalid cookie; sessionId=abc');
+
+        expect(h.cookies.map((final c) => c.name), equals(['sessionId']));
+      });
+    });
+
+    group('Given a malformed cookie after a valid one,', () {
+      test('when parsed, '
+          'then the malformed cookie is skipped and the valid one kept.', () {
+        final h = CookieHeader.parse('sessionId=abc; invalid cookie');
+
+        expect(h.cookies.map((final c) => c.name), equals(['sessionId']));
+      });
+    });
+  });
+
+  group('CookieHeader name case-sensitivity', () {
+    group('Given two cookies whose names differ only in case,', () {
+      test('when parsed, '
+          'then they are kept distinct (RFC 6265 4.2.2/5.4).', () {
+        final h = CookieHeader.parse('Sid=a; sid=b');
+
+        expect(h.cookies.map((final c) => c.name), equals(['Sid', 'sid']));
+        expect(h.getCookie('Sid')?.value, equals('a'));
+        expect(h.getCookie('sid')?.value, equals('b'));
+      });
+    });
+  });
+
   group('CookieHeader nameless segments', () {
     group('Given a nameless `=value` segment alongside a valid cookie,', () {
       test(

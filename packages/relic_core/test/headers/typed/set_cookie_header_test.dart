@@ -238,6 +238,73 @@ void main() {
     });
   });
 
+  group('SetCookie Secure flag', () {
+    group('Given a cookie with secure false (the default),', () {
+      test('when encoded, '
+          'then the Secure attribute is omitted.', () {
+        final cookie = SetCookie(name: 'sid', value: 'abc');
+
+        expect(cookie.secure, isFalse);
+        expect(cookie.encode(), equals('sid=abc'));
+      });
+    });
+
+    group('Given a cookie with secure true,', () {
+      test('when encoded, '
+          'then the Secure attribute is present.', () {
+        final cookie = SetCookie(name: 'sid', value: 'abc', secure: true);
+
+        expect(cookie.encode(), equals('sid=abc; Secure'));
+      });
+    });
+  });
+
+  group('SetCookie equality', () {
+    group('Given two SetCookies with identical fields,', () {
+      test('when compared, '
+          'then they are equal and share a hashCode.', () {
+        final x = SetCookie(name: 'a', value: '1', secure: true);
+        final y = SetCookie(name: 'a', value: '1', secure: true);
+
+        expect(x, equals(y));
+        expect(x.hashCode, equals(y.hashCode));
+      });
+    });
+
+    group('Given two SetCookies that differ in one field,', () {
+      test('when compared, '
+          'then they are not equal.', () {
+        final x = SetCookie(name: 'a', value: '1');
+        final y = SetCookie(name: 'a', value: '2');
+
+        expect(x, isNot(equals(y)));
+      });
+    });
+  });
+
+  group('SetCookieHeader equality', () {
+    group('Given two collections with equal cookies,', () {
+      test('when compared, '
+          'then they are equal and share a hashCode.', () {
+        final x = SetCookieHeader([SetCookie(name: 'a', value: '1')]);
+        final y = SetCookieHeader([SetCookie(name: 'a', value: '1')]);
+
+        expect(x, equals(y));
+        expect(x.hashCode, equals(y.hashCode));
+      });
+    });
+
+    group('Given two collections with different cookies,', () {
+      test('when compared, '
+          'then they are not equal.', () {
+        final x = SetCookieHeader([SetCookie(name: 'a', value: '1')]);
+        final y = SetCookieHeader([SetCookie(name: 'b', value: '2')]);
+
+        expect(x, isNot(equals(y)));
+      });
+    });
+  });
+
   group('SetCookieHeader collection', () {
     final a = SetCookie(name: 'a', value: '1');
     final b = SetCookie(name: 'b', value: '2', secure: true);
@@ -271,6 +338,25 @@ void main() {
       test('when addAll is called, '
           'then all cookies are appended in order.', () {
         expect(SetCookieHeader([a]).addAll([b]).cookies, equals([a, b]));
+      });
+    });
+
+    group('Given the const empty collection,', () {
+      test('when add/addAll is called, '
+          'then a new collection is returned and empty() stays empty.', () {
+        const empty = SetCookieHeader.empty();
+
+        expect(empty.add(a).cookies, equals([a]));
+        expect(empty.addAll([a, b]).cookies, equals([a, b]));
+        expect(empty.cookies, isEmpty);
+      });
+
+      test('when its cookies list is mutated, '
+          'then it throws (the list is unmodifiable).', () {
+        expect(
+          () => SetCookieHeader([a]).cookies.add(b),
+          throwsUnsupportedError,
+        );
       });
     });
 
