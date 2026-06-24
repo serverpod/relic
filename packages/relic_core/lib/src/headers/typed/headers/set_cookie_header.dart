@@ -93,7 +93,13 @@ final class SetCookie {
     // normalize it away so `.example.com` is stored and emitted as the
     // host-only `example.com`.
     if (domain.host.startsWith('.')) {
-      return Host(domain.host.substring(1));
+      final stripped = domain.host.replaceFirst(RegExp(r'^\.+'), '');
+      if (stripped.isEmpty) {
+        throw const FormatException(
+          'Cookie Domain must not be only dots (RFC 6265 5.2.3)',
+        );
+      }
+      return Host(stripped);
     }
     return domain;
   }

@@ -74,6 +74,30 @@ void main() {
         expect(parsed.domain?.host, equals('example.com'));
       });
     });
+
+    group('Given a Domain with several leading dots,', () {
+      test('when constructed, '
+          'then the whole leading run is stripped (not just one).', () {
+        final cookie = SetCookie(
+          name: 'sid',
+          value: 'abc',
+          domain: Host('..example.com'),
+        );
+
+        expect(cookie.domain?.host, equals('example.com'));
+        expect(cookie.encode(), contains('Domain=example.com'));
+      });
+    });
+
+    group('Given a Domain that is only dots,', () {
+      test('when constructed, '
+          'then it throws rather than emitting an empty Host.', () {
+        expect(
+          () => SetCookie(name: 'sid', value: 'abc', domain: Host('.')),
+          throwsFormatException,
+        );
+      });
+    });
   });
 
   group('SetCookie parser hardening', () {
