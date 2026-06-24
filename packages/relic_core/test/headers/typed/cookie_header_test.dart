@@ -32,4 +32,27 @@ void main() {
       });
     });
   });
+
+  group('CookieHeader nameless segments', () {
+    group('Given a nameless `=value` segment alongside a valid cookie,', () {
+      test(
+        'when parsed, '
+        'then the nameless segment is dropped and the valid cookie kept.',
+        () {
+          final h = CookieHeader.parse('auth=tok; =garbage');
+
+          expect(h.cookies.map((final c) => c.name), equals(['auth']));
+          expect(h.getCookie(''), isNull);
+        },
+      );
+    });
+
+    group('Given a header that is only nameless segments,', () {
+      test('when parsed, '
+          'then it throws (no usable cookie remains).', () {
+        expect(() => CookieHeader.parse('='), throwsFormatException);
+        expect(() => CookieHeader.parse('=a; =b'), throwsFormatException);
+      });
+    });
+  });
 }

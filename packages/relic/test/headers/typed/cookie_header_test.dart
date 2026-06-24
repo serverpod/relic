@@ -135,8 +135,8 @@ void main() {
       },
     );
 
-    test('when a valid Cookie header is passed with an empty name '
-        'then it should parse the cookies correctly', () async {
+    test('when a Cookie header carries a nameless `=value` segment '
+        'then it is dropped and the named cookies are kept', () async {
       final headers = await getServerRequestHeaders(
         server: server,
         touchHeaders: (final h) => h.cookie,
@@ -145,11 +145,11 @@ void main() {
 
       expect(
         headers.cookie?.cookies.map((final c) => c.name).toList(),
-        equals(['', 'userId']),
+        equals(['userId']),
       );
       expect(
         headers.cookie?.cookies.map((final c) => c.value).toList(),
-        equals(['abc123', '42']),
+        equals(['42']),
       );
     });
 

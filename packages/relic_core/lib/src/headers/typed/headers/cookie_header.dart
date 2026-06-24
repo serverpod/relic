@@ -50,7 +50,12 @@ final class CookieHeader {
     final cookies = <Cookie>[];
     for (final cookie in splitValues) {
       try {
-        cookies.add(Cookie.parse(cookie));
+        final parsed = Cookie.parse(cookie);
+        // A nameless segment like `=value` (or a bare `=`) is not a cookie the
+        // client meaningfully set; skip it so such junk does not survive as an
+        // empty-named entry and slip past the "no valid cookies" guard below.
+        if (parsed.name.isEmpty) continue;
+        cookies.add(parsed);
       } on FormatException {
         // Skip this malformed cookie; keep the rest.
       }
