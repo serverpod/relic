@@ -126,15 +126,8 @@ final class SetCookie {
     }
 
     // RFC 6265 5.2: the first ';'-delimited token is the cookie-pair; every
-    // subsequent token is a cookie attribute (cookie-av). Splitting on the
-    // first '=' keeps a '=' that appears inside the value or an attribute.
-    final pair = splitValue.first;
-    final pairEq = pair.indexOf('=');
-    if (pairEq < 0) {
-      throw const FormatException('Invalid cookie format');
-    }
-    final cookieName = pair.substring(0, pairEq).trim();
-    final cookieValue = pair.substring(pairEq + 1).trim();
+    // subsequent token is a cookie attribute (cookie-av).
+    final pair = Cookie.parse(splitValue.first);
 
     bool secure = false;
     bool httpOnly = false;
@@ -192,8 +185,8 @@ final class SetCookie {
     }
 
     return SetCookie(
-      name: cookieName,
-      value: cookieValue,
+      name: pair.name,
+      value: pair.value,
       secure: secure,
       httpOnly: httpOnly,
       sameSite: sameSite,
