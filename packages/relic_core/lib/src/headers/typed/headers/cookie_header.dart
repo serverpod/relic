@@ -26,7 +26,7 @@ final class CookieHeader {
       throw const FormatException('Value cannot be empty');
     }
 
-    final splitValues = value.splitTrimAndFilterUnique(separator: ';');
+    final splitValues = value.splitAndTrim(separator: ';');
 
     // Parse each cookie independently and skip the malformed ones rather than
     // rejecting the entire header. The Cookie header is a single line carrying
@@ -39,10 +39,9 @@ final class CookieHeader {
     // the same name (a host-only cookie plus a Domain-scoped one, or
     // path-scoped duplicates).
     //
-    // The server cannot tell them apart from the header alone. Keep such
-    // same-name cookies rather than rejecting the whole header.
-    // splitTrimAndFilterUnique still collapses byte-identical segments, which
-    // is harmless since they are indistinguishable. [getCookie] returns the
+    // The server cannot tell them apart from the header alone, so keep every
+    // segment - including byte-identical duplicates - rather than collapsing
+    // them, so [getCookies] reports the true count. [getCookie] returns the
     // first match.
     //
     // Cookie names are case-sensitive per RFC 6265 4.2.2/5.4, so `Sid` and

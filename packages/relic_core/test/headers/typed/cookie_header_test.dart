@@ -20,6 +20,16 @@ void main() {
 
         expect(h.getCookie('sid')?.value, equals('a'));
       });
+
+      test('when the duplicates are byte-identical, '
+          'then they are not collapsed and getCookies returns each.', () {
+        final h = CookieHeader.parse('sid=a; sid=a');
+
+        expect(
+          h.getCookies('sid').map((final c) => c.value),
+          equals(['a', 'a']),
+        );
+      });
     });
 
     group('Given no cookie with the requested name,', () {

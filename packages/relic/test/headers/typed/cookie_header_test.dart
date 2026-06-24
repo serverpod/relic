@@ -192,23 +192,29 @@ void main() {
       );
     });
 
-    test('when a valid Cookie header with duplicate cookies is passed '
-        'then it should parse correctly and remove the duplicates', () async {
-      final headers = await getServerRequestHeaders(
-        server: server,
-        touchHeaders: (final h) => h.cookie,
-        headers: {'cookie': 'sessionId=abc123; userId=42; sessionId=abc123'},
-      );
+    test(
+      'when a valid Cookie header with byte-identical duplicate cookies is passed '
+      'then every cookie is preserved (duplicates are not collapsed)',
+      () async {
+        // RFC 6265 5.4 permits repeated cookies; the server cannot distinguish
+        // them from the header alone, so getCookies must report the true count
+        // rather than silently deduping byte-identical segments.
+        final headers = await getServerRequestHeaders(
+          server: server,
+          touchHeaders: (final h) => h.cookie,
+          headers: {'cookie': 'sessionId=abc123; userId=42; sessionId=abc123'},
+        );
 
-      expect(
-        headers.cookie?.cookies.map((final c) => c.name).toList(),
-        equals(['sessionId', 'userId']),
-      );
-      expect(
-        headers.cookie?.cookies.map((final c) => c.value).toList(),
-        equals(['abc123', '42']),
-      );
-    });
+        expect(
+          headers.cookie?.cookies.map((final c) => c.name).toList(),
+          equals(['sessionId', 'userId', 'sessionId']),
+        );
+        expect(
+          headers.cookie?.cookies.map((final c) => c.value).toList(),
+          equals(['abc123', '42', 'abc123']),
+        );
+      },
+    );
 
     test(
       'when a Cookie header has two cookies with the same name but different values '
