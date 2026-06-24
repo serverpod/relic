@@ -122,6 +122,24 @@ void main() {
       });
     });
 
+    group('Given a duplicated attribute,', () {
+      test('when the duplicates are byte-identical, '
+          'then it still throws (the split must not dedup them away).', () {
+        expect(
+          () => SetCookie.parse('a=x; Path=/p; Path=/p'),
+          throwsFormatException,
+        );
+      });
+
+      test('when the duplicates differ, '
+          'then it throws (consistent with the identical case).', () {
+        expect(
+          () => SetCookie.parse('a=x; Path=/p; Path=/q'),
+          throwsFormatException,
+        );
+      });
+    });
+
     group('Given a Path attribute value that contains an "=",', () {
       test('when parsed, '
           'then the full path after the first "=" is preserved.', () {

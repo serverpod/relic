@@ -107,7 +107,7 @@ final class SetCookie {
   /// Parses a single `Set-Cookie` line (without the header name) into a
   /// [SetCookie].
   factory SetCookie.parse(final String value) {
-    final splitValue = value.splitTrimAndFilterUnique(separator: ';');
+    final splitValue = value.splitAndTrim(separator: ';');
     if (splitValue.isEmpty) {
       throw const FormatException('Value cannot be empty');
     }
