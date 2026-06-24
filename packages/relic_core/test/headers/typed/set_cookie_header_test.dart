@@ -98,6 +98,27 @@ void main() {
         );
       });
     });
+
+    group('Given an uppercase Domain,', () {
+      test('when constructed, '
+          'then it is lower-cased (RFC 6265 5.2.3).', () {
+        final cookie = SetCookie(
+          name: 'sid',
+          value: 'abc',
+          domain: Host('EXAMPLE.COM'),
+        );
+
+        expect(cookie.domain?.host, equals('example.com'));
+        expect(cookie.encode(), contains('Domain=example.com'));
+      });
+
+      test('when parsed from the wire (with a leading dot), '
+          'then it is lower-cased.', () {
+        final parsed = SetCookie.parse('sid=abc; Domain=.EXAMPLE.COM');
+
+        expect(parsed.domain?.host, equals('example.com'));
+      });
+    });
   });
 
   group('SetCookie parser hardening', () {

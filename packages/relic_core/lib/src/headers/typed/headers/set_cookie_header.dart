@@ -92,16 +92,18 @@ final class SetCookie {
     // A leading '.' on the Domain attribute is historical (RFC 6265 5.2.3);
     // normalize it away so `.example.com` is stored and emitted as the
     // host-only `example.com`.
-    if (domain.host.startsWith('.')) {
-      final stripped = domain.host.replaceFirst(RegExp(r'^\.+'), '');
-      if (stripped.isEmpty) {
+    var host = domain.host;
+    if (host.startsWith('.')) {
+      host = host.replaceFirst(RegExp(r'^\.+'), '');
+      if (host.isEmpty) {
         throw const FormatException(
           'Cookie Domain must not be only dots (RFC 6265 5.2.3)',
         );
       }
-      return Host(stripped);
     }
-    return domain;
+    // Normalize to lower-case as per RFC 6265 5.2.3.
+    host = host.toLowerCase();
+    return host == domain.host ? domain : Host(host);
   }
 
   // RFC 6265 5.2.2: Max-Age is a decimal integer, optionally negative (a
