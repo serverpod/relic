@@ -9,8 +9,8 @@ resolution: workspace
 
 dependencies:
   benchmark_harness: ^2.3.1
-  cli_tools: ^0.11.0
-  config: ^0.8.3
+  cli_tools: ">=0.11.0 <0.14.0"
+  config: ">=0.8.3 <0.10.0"
   git: ^2.2.1
   path: ^1.8.4
   relic: ^2.0.0-beta.0
