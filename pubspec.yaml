@@ -14,7 +14,7 @@ workspace:
   - packages/test_utils
 
 dev_dependencies:
-  melos: 8.0.0 # Required for Dart 3.9+ support
+  melos: 8.1.0 # Required for Dart 3.9+ support
 
 melos:
   packages:
