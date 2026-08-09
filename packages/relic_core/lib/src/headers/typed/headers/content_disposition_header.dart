@@ -1,7 +1,6 @@
 import 'package:collection/collection.dart';
 
 import '../../../../relic_core.dart';
-import '../../extension/string_list_extensions.dart';
 
 /// A class representing the HTTP Content-Disposition header.
 ///
@@ -36,8 +35,13 @@ final class ContentDispositionHeader {
   /// [ContentDispositionHeader] instance.
   ///
   /// This method splits the header by `;` and processes the type and attributes.
+  ///
+  /// Splitting is quote-aware, so a `;` inside a quoted parameter value is
+  /// part of that value rather than a separator.
   factory ContentDispositionHeader.parse(final String value) {
-    final splitValues = value.splitTrimAndFilterUnique(separator: ';');
+    final splitValues = HeaderScanner(
+      value,
+    ).splitTopLevel(_semicolon).where((final e) => e.isNotEmpty).toList();
 
     if (splitValues.isEmpty) {
       throw const FormatException('Value cannot be empty');
@@ -116,15 +120,19 @@ class ContentDispositionParameter {
   /// Parses a parameter string and returns a [ContentDispositionParameter]
   /// instance.
   factory ContentDispositionParameter.parse(final String part) {
-    final keyValue = part.split('=').map((final e) => e.trim()).toList();
-
-    if (keyValue.length != 2) {
+    final equals = part.indexOf('=');
+    if (equals < 0) {
       throw const FormatException('Invalid parameter format');
     }
 
-    final name = keyValue[0];
-    var value = keyValue[1].replaceAll('"', '');
+    final name = part.substring(0, equals).trim();
+    final rawValue = part.substring(equals + 1).trim();
+    if (name.isEmpty) {
+      throw const FormatException('Invalid parameter format');
+    }
+
     final bool isExtended = name.endsWith('*');
+    var value = isExtended ? rawValue : _readParameterValue(rawValue);
     String? encoding;
     String? language;
 
@@ -158,10 +166,15 @@ class ContentDispositionParameter {
   /// Converts the [ContentDispositionParameter] instance into a string
   /// representation suitable for HTTP headers.
   String _encode() {
+    Token.validate(name);
     if (isExtended) {
-      return "$name*=${encoding ?? ''}'${language ?? ''}'${Uri.encodeComponent(value)}";
+      final charset = encoding;
+      final lang = language;
+      if (charset != null) Token.validate(charset);
+      if (lang != null) Token.validate(lang);
+      return "$name*=${charset ?? ''}'${lang ?? ''}'${Uri.encodeComponent(value)}";
     }
-    return '$name="$value"';
+    return '$name=${ParameterValue(value).encode()}';
   }
 
   @override
@@ -186,4 +199,21 @@ class ContentDispositionParameter {
 
 extension on String {
   String? get nullIfEmpty => isEmpty ? null : this;
+}
+
+const int _semicolon = 0x3B;
+
+/// Reads an ordinary parameter value, which is `token / quoted-string`.
+String _readParameterValue(final String raw) {
+  final scanner = HeaderScanner(raw);
+  final value = scanner.readTokenOrQuotedString();
+  scanner.skipOws();
+  if (!scanner.atEnd) {
+    throw FormatException(
+      'unexpected characters after parameter value',
+      raw,
+      scanner.position,
+    );
+  }
+  return value;
 }
