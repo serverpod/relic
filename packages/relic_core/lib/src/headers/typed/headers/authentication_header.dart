@@ -1,6 +1,7 @@
 import 'package:collection/collection.dart';
 
 import '../../../../relic_core.dart';
+import 'util/auth_params.dart';
 
 /// A class representing the HTTP Authentication header.
 final class AuthenticationHeader {
@@ -44,24 +45,33 @@ final class AuthenticationHeader {
     final parameters = <AuthenticationParameter>[];
 
     if (paramsString.isNotEmpty) {
-      // Split parameters by comma, but not within quotes
-      final paramRegex = RegExp(r'(\w+)="([^"]*)"');
-      final matches = paramRegex.allMatches(paramsString);
-
-      if (matches.isEmpty && paramsString.isNotEmpty) {
-        // If no key="value" pairs found but string is not empty,
-        // treat the entire remaining string as a single parameter value
+      final authParams = _tryParseAuthParams(paramsString);
+      if (authParams == null) {
         parameters.add(AuthenticationParameter('', paramsString));
       } else {
-        for (final match in matches) {
-          final key = match.group(1)!;
-          final value = match.group(2)!;
-          parameters.add(AuthenticationParameter(key, value));
-        }
+        parameters.addAll(authParams);
       }
     }
 
     return AuthenticationHeader._(scheme: scheme, parameters: parameters);
+  }
+
+  /// Parses [value] as an `#auth-param` list, returning `null` if it is not
+  /// one so the caller can fall back to the `token68` form.
+  static List<AuthenticationParameter>? _tryParseAuthParams(
+    final String value,
+  ) {
+    final List<(String, String)> params;
+    try {
+      params = parseAuthParams(value);
+    } on FormatException {
+      return null;
+    }
+    if (params.isEmpty) return null;
+    return [
+      for (final (name, paramValue) in params)
+        AuthenticationParameter(name, paramValue),
+    ];
   }
 
   /// Converts the [AuthenticationHeader] instance into a string representation

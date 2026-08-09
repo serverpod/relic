@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import '../../../../relic_core.dart';
+import 'util/auth_params.dart';
 
 /// An abstract base class representing an HTTP Authorization header.
 ///
@@ -49,15 +50,25 @@ abstract class AuthorizationHeader {
   }
 }
 
+/// Strips a case-insensitive auth-scheme [prefix] from [value] if present,
+/// returning the trimmed remainder, or [value] itself when absent.
+String _stripOptionalScheme(final String value, final String prefix) {
+  if (value.length < prefix.length ||
+      value.substring(0, prefix.length).toLowerCase() != prefix.toLowerCase()) {
+    return value;
+  }
+  return value.substring(prefix.length).trim();
+}
+
 /// Strips a case-insensitive auth-scheme [prefix] (e.g. `"Bearer "`) from
 /// [value], returning the trimmed remainder. Throws [FormatException] if
 /// [value] does not start with [prefix].
 String _stripScheme(final String value, final String prefix) {
-  if (value.length < prefix.length ||
-      value.substring(0, prefix.length).toLowerCase() != prefix.toLowerCase()) {
+  final result = _stripOptionalScheme(value, prefix);
+  if (identical(result, value)) {
     throw FormatException('Invalid ${prefix.trim()} prefix', value);
   }
-  return value.substring(prefix.length).trim();
+  return result;
 }
 
 /// Represents a Bearer token for HTTP Authorization.
@@ -309,27 +320,26 @@ final class DigestAuthorizationHeader extends AuthorizationHeader {
 
   /// Parses a Digest authorization header value and returns a [DigestAuthorizationHeader] instance.
   ///
-  /// This method extracts the various components of the Digest header from the provided string.
+  /// The leading `Digest` auth-scheme is optional: [AuthorizationHeader.parse]
+  /// dispatches on the scheme without removing it, while callers that have
+  /// already split it off pass the bare auth-param list.
+  ///
   /// Throws a [FormatException] if the header value is invalid or unrecognized.
   factory DigestAuthorizationHeader.parse(final String value) {
     if (value.isEmpty) {
       throw const FormatException('Digest token cannot be empty.');
     }
 
-    // Each auth-param is `token = ( token / quoted-string )` (RFC 7616 3.4):
-    // quoted-string values are DQUOTE-wrapped (group 2, with quoted-pair
-    // escapes), token values are bare (group 3). Accepting both is required
-    // because conformant peers send algorithm/qop/nc/stale unquoted.
-    final Map<String, String> params = {};
-    final regex = RegExp(r'(\w+)\s*=\s*(?:"((?:[^"\\]|\\.)*)"|([^",\s]+))');
-    for (final match in regex.allMatches(value)) {
-      final quoted = match.group(2);
-      // A bare (unquoted) value must be a valid token; reject e.g.
-      // `algorithm=MD5;evil`, which would otherwise be stored and re-emitted
-      // verbatim.
-      params[match.group(1)!] = quoted != null
-          ? _unescapeQuoted(quoted)
-          : Token.validate(match.group(3)!);
+    final Map<String, String> params;
+    try {
+      params = {
+        for (final (name, paramValue) in parseAuthParams(
+          _stripOptionalScheme(value, 'Digest '),
+        ))
+          name: paramValue,
+      };
+    } on FormatException catch (e) {
+      throw FormatException('Invalid digest token format: ${e.message}');
     }
 
     if (params.isEmpty) {
@@ -484,7 +494,3 @@ String _quoteString(final String s) {
   }
   return '"${s.replaceAll(r'\', r'\\').replaceAll('"', r'\"')}"';
 }
-
-/// Decodes `quoted-pair` escapes in a quoted-string body: `\x` becomes `x`.
-String _unescapeQuoted(final String s) =>
-    s.replaceAllMapped(RegExp(r'\\(.)'), (final m) => m.group(1)!);

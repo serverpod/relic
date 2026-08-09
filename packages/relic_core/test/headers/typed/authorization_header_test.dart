@@ -209,6 +209,41 @@ void main() {
     });
   });
 
+  group('DigestAuthorizationHeader.parse with adversarial input', () {
+    group('Given a long value containing no auth-param separators,', () {
+      test('when parsed, '
+          'then it is rejected without super-linear backtracking.', () {
+        final value = 'a' * 32000;
+
+        final stopwatch = Stopwatch()..start();
+        expect(
+          () => DigestAuthorizationHeader.parse(value),
+          throwsFormatException,
+        );
+        stopwatch.stop();
+
+        expect(
+          stopwatch.elapsedMilliseconds,
+          lessThan(1000),
+          reason: 'Parsing must be linear in the length of the value',
+        );
+      });
+    });
+
+    group('Given a value with unparsable text between auth-params,', () {
+      test('when parsed, '
+          'then the value is rejected rather than the text being skipped.', () {
+        expect(
+          () => DigestAuthorizationHeader.parse(
+            'username="u", realm="r" GARBAGE, nonce="n", '
+            'uri="/", response="abc"',
+          ),
+          throwsFormatException,
+        );
+      });
+    });
+  });
+
   group('BasicAuthorizationHeader empty password', () {
     group('Given an empty password (apikey pattern),', () {
       test('when constructed and round-tripped, '
