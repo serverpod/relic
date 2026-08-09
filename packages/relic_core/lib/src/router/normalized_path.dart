@@ -10,8 +10,11 @@ import 'lru_cache.dart';
 /// - Removing empty segments caused by multiple consecutive slashes.
 /// - Ensuring the path starts with a `/`.
 ///
-/// Instances are interned using an LRU cache for efficiency, meaning identical
-/// normalized paths will often share the same object instance.
+/// Instances created from a path string are interned using an LRU cache for
+/// efficiency, so identical paths will often share the same object instance.
+/// Segment-built instances ([fromSegments], [fromUri]) are never interned: a
+/// string cache key cannot tell a separator inside a segment from a real one.
+/// Equality compares segments, so this affects allocation only.
 @immutable
 class NormalizedPath {
   /// Cache of interned instances.
@@ -48,7 +51,7 @@ class NormalizedPath {
   factory NormalizedPath(final String path) {
     var result = interned[path];
     if (result == null) {
-      result = NormalizedPath._(_normalize(path));
+      result = NormalizedPath._(_normalizeSegments(path.split('/')));
       // intern for both normalized path and path
       result = interned[result.path] ??= result;
       interned[path] = result; // cache for original path as well
@@ -63,25 +66,25 @@ class NormalizedPath {
   /// new one. Empty and `.` segments are dropped and `..` segments resolved,
   /// exactly as for a path string, so the result carries the same guarantee
   /// that no segment is `..`.
-  factory NormalizedPath.fromSegments(final Iterable<String> segments) {
-    final result = <String>[];
-    for (final segment in segments) {
-      if (segment == '..') {
-        if (result.isNotEmpty) result.removeLast();
-      } else if (segment != '.' && segment.isNotEmpty) {
-        result.add(segment);
-      }
-    }
-    return NormalizedPath._(List.unmodifiable(result));
-  }
+  factory NormalizedPath.fromSegments(final Iterable<String> segments) =>
+      NormalizedPath._(_normalizeSegments(segments));
 
-  /// Normalizes the given [path] string into a list of segments.
+  /// Creates a [NormalizedPath] from the path of [url].
   ///
-  /// Handles `.` and `..` segments and removes empty ones.
-  static List<String> _normalize(final String path) {
+  /// This is the correct way to derive a path from a request. It reads
+  /// [Uri.pathSegments], which splits on the separator and only then decodes
+  /// each segment, so an encoded separator such as `%2F` stays inside its
+  /// segment. Building from [Uri.path] instead would decode first and then
+  /// split, introducing separators that no proxy in front of the server ever
+  /// saw.
+  factory NormalizedPath.fromUri(final Uri url) =>
+      NormalizedPath.fromSegments(url.pathSegments);
+
+  /// Normalizes [segments] by resolving `.` and `..` and dropping empty ones.
+  static List<String> _normalizeSegments(final Iterable<String> segments) {
     final result = <String>[];
 
-    for (final segment in path.split('/')) {
+    for (final segment in segments) {
       if (segment == '..') {
         if (result.isNotEmpty) {
           result.removeLast();

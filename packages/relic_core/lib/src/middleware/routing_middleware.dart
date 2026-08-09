@@ -110,7 +110,7 @@ class _RoutingMiddlewareBuilder<T extends Object> {
 
   Handler call(final Handler next) {
     return (final req) async {
-      final path = NormalizedPath(Uri.decodeFull(req.url.path));
+      final path = NormalizedPath.fromUri(req.url);
       final routingKey = useHostWhenRouting
           ? NormalizedPath.fromSegments([req.url.host, ...path.segments])
           : path;
@@ -186,8 +186,7 @@ extension RoutingRequestEx on Request {
   /// For routes without tail segments, this is typically empty. If the request
   /// was not routed through a router, this returns the full request path.
   NormalizedPath get remainingPath =>
-      _routingContext[this]?.remaining ??
-      NormalizedPath(Uri.decodeFull(url.path));
+      _routingContext[this]?.remaining ?? NormalizedPath.fromUri(url);
 
   /// The [RelicRouter] that routed this request, if available.
   ///

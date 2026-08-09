@@ -852,4 +852,49 @@ void main() {
       expect(await statusFor('/index'), 200);
     });
   });
+
+  group('Given routes for an admin path and a public catch-all', () {
+    Handler handlerFor(final Router<int> router) => const Pipeline()
+        .addMiddleware(
+          routeWith(
+            router,
+            toHandler: (final i) => respondWith(
+              (final _) => Response.ok(body: Body.fromString('$i')),
+            ),
+          ),
+        )
+        .addHandler(respondWith((final _) => Response.notFound()));
+
+    Router<int> aclRouter() => Router<int>()
+      ..get('/admin/secret', 1)
+      ..get('/public/**', 2);
+
+    Future<String> routeFor(final String rawPath) async {
+      final request = RequestInternal.create(
+        Method.get,
+        Uri.parse('http://localhost$rawPath'),
+        Object(),
+      );
+      final result = await handlerFor(aclRouter())(request) as Response;
+      if (result.statusCode != 200) return 'none';
+      return switch (await result.readAsString()) {
+        '1' => 'admin',
+        '2' => 'public',
+        final other => other,
+      };
+    }
+
+    test('when a request encodes the separator as %2F, '
+        'then it does not reach the admin route.', () async {
+      expect(await routeFor('/admin%2Fsecret'), 'none');
+      expect(await routeFor('/public/%2E%2E%2Fadmin%2Fsecret'), 'public');
+      expect(await routeFor('/public/..%2Fadmin%2Fsecret'), 'public');
+    });
+
+    test('when a request uses real separators, '
+        'then it is routed normally.', () async {
+      expect(await routeFor('/admin/secret'), 'admin');
+      expect(await routeFor('/public/a/b'), 'public');
+    });
+  });
 }

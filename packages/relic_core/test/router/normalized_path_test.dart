@@ -93,6 +93,43 @@ void main() {
     });
   });
 
+  group('Construction from segments', () {
+    test('Given pre-split segments with ".", "..", and empty entries, '
+        'when constructed with fromSegments, '
+        'then they are dropped and resolved as for a path string', () {
+      final path = NormalizedPath.fromSegments(['a', '.', '', 'b', '..', 'c']);
+      expect(path.segments, equals(['a', 'c']));
+    });
+
+    test('Given a ".." segment with nothing left to remove, '
+        'when constructed with fromSegments, '
+        'then it is dropped instead of escaping the root', () {
+      final path = NormalizedPath.fromSegments(['..', '..', 'a']);
+      expect(path.segments, equals(['a']));
+    });
+
+    test('Given a segment containing a separator, '
+        'when constructed with fromSegments, '
+        'then it stays a single segment', () {
+      final path = NormalizedPath.fromSegments(['a/b', 'c']);
+      expect(path.segments, equals(['a/b', 'c']));
+    });
+
+    test('Given a url with an encoded separator in a segment, '
+        'when constructed with fromUri, '
+        'then the separator stays inside its segment', () {
+      final path = NormalizedPath.fromUri(Uri.parse('/a%2Fb/c'));
+      expect(path.segments, equals(['a/b', 'c']));
+    });
+
+    test('Given a url with an encoded ".." segment, '
+        'when constructed with fromUri, '
+        'then the traversal is resolved', () {
+      final path = NormalizedPath.fromUri(Uri.parse('/a/%2E%2E/b'));
+      expect(path.segments, equals(['b']));
+    });
+  });
+
   group('Interning', () {
     test('Given identical path strings, '
         'when creating NormalizedPath, '
