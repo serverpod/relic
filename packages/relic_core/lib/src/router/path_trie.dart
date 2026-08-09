@@ -408,6 +408,7 @@ final class PathTrie<T extends Object> {
     // Base case: processed all segments
     if (index == segments.length) {
       T? value = node.value;
+      var map = currentMap;
 
       // If no value found, check if node has a tail. This handles cases
       // like /archive/** matching /archive, where remainingPath would be empty.
@@ -415,11 +416,12 @@ final class PathTrie<T extends Object> {
         final dynamicSegment = node.dynamicSegment;
         if (dynamicSegment is _Tail<T>) {
           value = dynamicSegment.node.value;
+          map = _composeMap(currentMap, dynamicSegment.node.map);
         }
       }
 
       if (value == null) return null;
-      value = currentMap?.call(value) ?? value;
+      value = map?.call(value) ?? value;
       return TrieMatch(
         value,
         parameters,
@@ -540,6 +542,7 @@ final class PathTrie<T extends Object> {
       if (dynamicSegment is _Tail<T>) {
         currentNode = dynamicSegment.node;
         value = currentNode.value;
+        updateMap();
       }
     }
 

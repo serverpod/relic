@@ -147,6 +147,28 @@ void main() {
     );
   });
 
+  group('Given a catch-all route with use applied to the same catch-all', () {
+    late Router<int> router;
+
+    setUp(() {
+      router = Router<int>();
+      router.get('/api/**', 1);
+      router.use('/api/**', (final i) => i * 2);
+    });
+
+    for (final path in ['/api/keys', '/api', '/api/', '/api/x/..']) {
+      test('when looking up $path, '
+          'then the value is transformed', () {
+        final result = router.lookup(Method.get, path) as RouterMatch<int>;
+        expect(
+          result.value,
+          2,
+          reason: 'Every path under the catch-all must get the mapping',
+        );
+      });
+    }
+  });
+
   test('Given a router of middleware functions with hierarchical use, '
       'when looking up and applying the route function, '
       'then the call order is root to leaf', () {

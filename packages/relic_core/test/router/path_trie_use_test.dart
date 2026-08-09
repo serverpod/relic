@@ -47,6 +47,55 @@ void main() {
     );
   });
 
+  group(
+    'Given a value at a tail wildcard with use applied to the same tail',
+    () {
+      late PathTrie<int> trie;
+
+      setUp(() {
+        trie = PathTrie<int>();
+        trie.add(NormalizedPath('/api/**'), 1);
+        trie.use(NormalizedPath('/api/**'), (final i) => i * 2);
+      });
+
+      test('when looking up a path with a non-empty tail, '
+          'then the value is transformed', () {
+        expect(
+          trie.lookup(NormalizedPath('/api/keys'))?.value,
+          2,
+          reason: 'Should double',
+        );
+      });
+
+      test('when looking up the prefix itself, '
+          'then the value is transformed', () {
+        expect(
+          trie.lookup(NormalizedPath('/api'))?.value,
+          2,
+          reason: 'An empty tail must not skip the mapping',
+        );
+      });
+
+      test('when looking up a path that normalizes to the prefix, '
+          'then the value is transformed', () {
+        expect(
+          trie.lookup(NormalizedPath('/api/x/..'))?.value,
+          2,
+          reason: 'A synthesized empty tail must not skip the mapping',
+        );
+      });
+
+      test('when looking up the prefix without backtracking, '
+          'then the value is transformed', () {
+        expect(
+          trie.lookup(NormalizedPath('/api'), backtrack: false)?.value,
+          2,
+          reason: 'An empty tail must not skip the mapping',
+        );
+      });
+    },
+  );
+
   test('Given a value at parameterized path, '
       'when use is applied to parameter prefix, '
       'then descendant values are transformed', () {
