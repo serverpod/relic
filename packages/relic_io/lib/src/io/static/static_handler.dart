@@ -393,12 +393,22 @@ Future<Response> _handleRangeRequest(
   }
 
   final ranges = rangeHeader.ranges;
+  if (ranges.length > _maxRanges) {
+    return Response(HttpStatus.requestedRangeNotSatisfiable, headers: headers);
+  }
   return switch (ranges.length) {
     0 => _serveFullFile(fileInfo, headers, req.method),
     1 => _serveSingleRange(fileInfo, headers, ranges.first),
-    _ => await _serveMultipleRanges(fileInfo, headers, ranges),
+    _ => _serveMultipleRanges(fileInfo, headers, ranges),
   };
 }
+
+/// The greatest number of ranges honoured in a single multipart response.
+///
+/// Real clients ask for a handful at most: a browser seeking in a video sends
+/// one, and a document viewer a few. The limit exists so the count cannot be
+/// used to amplify a request.
+const _maxRanges = 16;
 
 /// Validates If-Range header for range requests.
 bool _isRangeRequestValid(final Request req, final FileInfo fileInfo) {
@@ -461,32 +471,27 @@ Response _serveSingleRange(
 }
 
 /// Serves multiple ranges as multipart response.
-Future<Response> _serveMultipleRanges(
+///
+/// Sections are produced as the body is consumed, so only the chunk in flight
+/// is held in memory rather than the whole response.
+Response _serveMultipleRanges(
   final FileInfo fileInfo,
   final Headers headers,
   final List<Range> ranges,
-) async {
+) {
   final boundary = 'RelicMultipartBoundary-${Random().nextInt(1000000)}';
-  final controller = StreamController<Uint8List>();
-  int totalLength = 0;
+  final bounds = [
+    for (final range in ranges)
+      _calculateRangeBounds(range, fileInfo.stat.size),
+  ];
 
-  for (final range in ranges) {
-    final (start, end) = _calculateRangeBounds(range, fileInfo.stat.size);
-    totalLength += await _writeMultipartSection(
-      controller,
-      fileInfo,
-      boundary,
-      start,
-      end,
-    );
+  final footer = utf8.encode('\r\n--$boundary--\r\n');
+  var totalLength = footer.length;
+  for (final (start, end) in bounds) {
+    totalLength +=
+        _multipartSectionHeader(fileInfo, boundary, start, end).length +
+        (end - start);
   }
-
-  // Write final boundary
-  final footerBytes = utf8.encode('\r\n--$boundary--\r\n');
-  controller.add(footerBytes);
-  totalLength += footerBytes.length;
-
-  unawaited(controller.close());
 
   return Response(
     HttpStatus.partialContent,
@@ -497,11 +502,41 @@ Future<Response> _serveMultipleRanges(
         ],
     ),
     body: Body.fromDataStream(
-      controller.stream,
+      _multipartSections(fileInfo, boundary, bounds, footer),
       contentLength: totalLength,
       mimeType: MimeType.multipartByteranges,
       encoding: fileInfo.mimeType?.isText == true ? utf8 : null,
     ),
+  );
+}
+
+/// Emits the multipart sections for [bounds], reading each range from disk
+/// only when the consumer asks for it.
+Stream<Uint8List> _multipartSections(
+  final FileInfo fileInfo,
+  final String boundary,
+  final List<(int start, int end)> bounds,
+  final Uint8List footer,
+) async* {
+  for (final (start, end) in bounds) {
+    yield _multipartSectionHeader(fileInfo, boundary, start, end);
+    yield* fileInfo.file.openRead(start, end).cast<Uint8List>();
+  }
+  yield footer;
+}
+
+/// Builds the header bytes introducing one multipart section.
+Uint8List _multipartSectionHeader(
+  final FileInfo fileInfo,
+  final String boundary,
+  final int start,
+  final int end,
+) {
+  final mimeType = fileInfo.mimeType ?? MimeType.octetStream;
+  return utf8.encode(
+    '\r\n--$boundary\r\n'
+    'Content-Type: ${mimeType.toHeaderValue()}\r\n'
+    'Content-Range: bytes $start-${end - 1}/${fileInfo.stat.size}\r\n\r\n',
   );
 }
 
@@ -525,37 +560,6 @@ Future<Response> _serveMultipleRanges(
   start = start.clamp(0, fileSize);
   end = end.clamp(start, fileSize);
   return (start, end);
-}
-
-/// Writes a single multipart section to the controller.
-Future<int> _writeMultipartSection(
-  final StreamController<Uint8List> controller,
-  final FileInfo fileInfo,
-  final String boundary,
-  final int start,
-  final int end,
-) async {
-  int totalBytes = 0;
-
-  // Write part header
-  final mimeType = fileInfo.mimeType ?? MimeType.octetStream;
-  final partHeader =
-      '\r\n--$boundary\r\n'
-      'Content-Type: ${mimeType.toHeaderValue()}\r\n'
-      'Content-Range: bytes $start-${end - 1}/${fileInfo.stat.size}\r\n\r\n';
-
-  final partHeaderBytes = utf8.encode(partHeader);
-  controller.add(partHeaderBytes);
-  totalBytes += partHeaderBytes.length;
-
-  // Write file content
-  await for (final chunk
-      in fileInfo.file.openRead(start, end).cast<Uint8List>()) {
-    controller.add(chunk);
-    totalBytes += chunk.length;
-  }
-
-  return totalBytes;
 }
 
 /// Creates a Body for the full file.
