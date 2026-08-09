@@ -67,5 +67,19 @@ final class WebSocketUpgrade extends Result {
   /// The callback function provided to handle the duplex stream connection.
   final WebSocketCallback callback;
 
-  WebSocketUpgrade(this.callback);
+  /// Whether to accept the upgrade whatever `Origin` the client sends.
+  ///
+  /// By default an upgrade whose `Origin` names a different host is refused
+  /// with 403. Browsers do not apply CORS to WebSockets and do attach cookies
+  /// to them, so accepting any origin lets any page open an authenticated
+  /// socket on a visitor's session.
+  ///
+  /// A request with no `Origin` is always accepted: non-browser clients do not
+  /// send one, and they are not subject to this attack.
+  ///
+  /// Set this only for an endpoint that is genuinely meant to be opened by
+  /// other sites, and that does not rely on cookies to authenticate.
+  final bool allowAnyOrigin;
+
+  WebSocketUpgrade(this.callback, {this.allowAnyOrigin = false});
 }

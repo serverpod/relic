@@ -133,10 +133,10 @@ final class _RelicServer implements RelicServer {
       return await switch (result) {
         final Response rc => adapter.respond(adapterRequest, rc),
         final Hijack hc => adapter.hijack(adapterRequest, hc.callback),
-        final WebSocketUpgrade cc => adapter.connect(
-          adapterRequest,
-          cc.callback,
-        ),
+        final WebSocketUpgrade cc =>
+          _isOriginAllowed(request, cc)
+              ? adapter.connect(adapterRequest, cc.callback)
+              : adapter.respond(adapterRequest, Response.forbidden()),
       };
     } catch (error, stackTrace) {
       _logError(
@@ -147,6 +147,30 @@ final class _RelicServer implements RelicServer {
       await adapter.respond(adapterRequest, Response.internalServerError());
       return;
     }
+  }
+
+  /// Whether [upgrade] may proceed for [request].
+  ///
+  /// Compares the host of `Origin` against the host the request was addressed
+  /// to. Only the host is compared: a proxy terminating TLS changes both the
+  /// scheme and the port the server observes, so comparing those would refuse
+  /// ordinary same-site traffic. The host is what differs in the attack.
+  ///
+  /// A request without `Origin` is allowed, since non-browser clients do not
+  /// send one.
+  static bool _isOriginAllowed(
+    final Request request,
+    final WebSocketUpgrade upgrade,
+  ) {
+    if (upgrade.allowAnyOrigin) return true;
+    final Uri? origin;
+    try {
+      origin = request.headers.origin;
+    } on Exception {
+      return false;
+    }
+    if (origin == null) return true;
+    return origin.host.toLowerCase() == request.url.host.toLowerCase();
   }
 
   /// Wraps a handler with middleware for error handling, header normalization, etc.
