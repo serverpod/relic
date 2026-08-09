@@ -1,3 +1,5 @@
+import '../../headers/typed/primitives/token.dart';
+
 /// A MIME type representing the format of content.
 ///
 /// MIME types consist of a primary type and a subtype, separated by a slash.
@@ -106,7 +108,7 @@ class MimeType {
       throw FormatException('Invalid mime type $type');
     }
 
-    return MimeType(primaryType, subType);
+    return MimeType(primaryType, subType)..validate();
   }
 
   /// Returns `true` if the mime type represents text-based content.
@@ -147,8 +149,24 @@ class MimeType {
     return false;
   }
 
+  /// Checks that both parts are RFC 9110 `token`s.
+  ///
+  /// The constructor is `const` so it cannot check this itself, and the parts
+  /// are written straight into the `Content-Type` header. A CR or LF in
+  /// either would end the header, or the header block, and hand the rest of
+  /// the response to whoever supplied the type.
+  ///
+  /// Throws [FormatException] if either part is not a valid token.
+  void validate() {
+    Token.validate(primaryType);
+    Token.validate(subType);
+  }
+
   /// Returns the value to use for the Content-Type header.
-  String toHeaderValue() => '$primaryType/$subType';
+  String toHeaderValue() {
+    validate();
+    return '$primaryType/$subType';
+  }
 
   @override
   String toString() => 'MimeType(primaryType: $primaryType, subType: $subType)';

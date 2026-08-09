@@ -111,9 +111,10 @@ extension on Body {
   io.ContentType? getContentType() {
     final mBodyType = bodyType;
     if (mBodyType == null) return null;
+    final mimeType = mBodyType.mimeType..validate();
     return io.ContentType(
-      mBodyType.mimeType.primaryType,
-      mBodyType.mimeType.subType,
+      mimeType.primaryType,
+      mimeType.subType,
       charset: mBodyType.encoding?.name,
     );
   }
