@@ -17,6 +17,22 @@ import 'response.dart';
 class IOAdapter extends Adapter {
   final io.HttpServer _server;
 
+  /// Connections that have been detached from [_server].
+  ///
+  /// Hijacking and upgrading both take the connection out of the underlying
+  /// server's bookkeeping, so from that point on nothing else knows they
+  /// exist. They are tracked here so shutdown can close them and
+  /// [connectionsInfo] can report them.
+  final _hijackedSockets = <io.Socket>{};
+  final _webSockets = <IORelicWebSocket>{};
+
+  /// How long a graceful shutdown waits for a detached connection to finish
+  /// on its own before it is closed anyway.
+  ///
+  /// Without a ceiling a peer that never answers would keep the shutdown
+  /// pending forever.
+  static const _drainTimeout = Duration(seconds: 5);
+
   /// Creates an [IOAdapter] that wraps the provided [io.HttpServer].
   ///
   /// The adapter will listen for incoming requests from the [_server] and
@@ -87,6 +103,12 @@ class IOAdapter extends Adapter {
     final socket = await request._httpRequest.response.detachSocket(
       writeHeaders: false,
     );
+    _hijackedSockets.add(socket);
+    unawaited(
+      socket.done
+          .catchError((final _) {})
+          .whenComplete(() => _hijackedSockets.remove(socket)),
+    );
     callback(StreamChannel(socket, socket));
   }
 
@@ -95,16 +117,68 @@ class IOAdapter extends Adapter {
     covariant final IOAdapterRequest request,
     final WebSocketCallback callback,
   ) async {
-    callback(await IORelicWebSocket.fromHttpRequest(request._httpRequest));
+    final webSocket = await IORelicWebSocket.fromHttpRequest(
+      request._httpRequest,
+    );
+    _webSockets
+      ..removeWhere((final ws) => ws.isClosed)
+      ..add(webSocket);
+    callback(webSocket);
   }
 
   @override
-  Future<void> close({final bool force = false}) => _server.close(force: force);
+  Future<void> close({final bool force = false}) async {
+    if (force) {
+      await _server.close(force: true);
+      _destroyDetached();
+      return;
+    }
+    await _server.close();
+    await _closeDetached().timeout(_drainTimeout, onTimeout: _destroyDetached);
+    _destroyDetached();
+  }
+
+  /// Asks every detached connection to close, telling WebSocket peers that
+  /// the server is going away (RFC 6455 1001).
+  ///
+  /// The tracking sets are deliberately left alone: a hijacked socket removes
+  /// itself when it completes, so whatever is still tracked when the drain
+  /// deadline passes is exactly what [_destroyDetached] must drop.
+  Future<void> _closeDetached() async {
+    await Future.wait([
+      for (final ws in _webSockets.toList()) ws.closeGoingAway(),
+      for (final socket in _hijackedSockets.toList()) socket.close(),
+    ], eagerError: false).catchError((final _) => const <Object?>[]);
+  }
+
+  /// Drops whatever is left without waiting for the peer.
+  ///
+  /// Hijacked sockets are destroyed outright. WebSockets get a fire-and-forget
+  /// [IORelicWebSocket.closeGoingAway] instead: `dart:io` exposes no hard
+  /// teardown for an upgraded socket, but bounds internally how long a peer
+  /// can stall the close handshake.
+  void _destroyDetached() {
+    for (final socket in _hijackedSockets.toList()) {
+      socket.destroy();
+    }
+    _hijackedSockets.clear();
+    for (final ws in _webSockets.toList()) {
+      unawaited(ws.closeGoingAway());
+    }
+    _webSockets.clear();
+  }
 
   @override
   ConnectionsInfo get connectionsInfo {
     final info = _server.connectionsInfo();
-    return (active: info.active, closing: info.closing, idle: info.idle);
+    final detached =
+        _hijackedSockets.length +
+        _webSockets.where((final ws) => !ws.isClosed).length;
+    return (
+      active: info.active + detached,
+      closing: info.closing,
+      idle: info.idle,
+    );
   }
 }
 
