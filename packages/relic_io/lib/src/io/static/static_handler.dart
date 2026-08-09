@@ -479,7 +479,7 @@ Response _serveMultipleRanges(
   final Headers headers,
   final List<Range> ranges,
 ) {
-  final boundary = 'RelicMultipartBoundary-${Random().nextInt(1000000)}';
+  final boundary = 'RelicMultipartBoundary-${_boundaryToken()}';
   final bounds = [
     for (final range in ranges)
       _calculateRangeBounds(range, fileInfo.stat.size),
@@ -508,6 +508,19 @@ Response _serveMultipleRanges(
       encoding: fileInfo.mimeType?.isText == true ? utf8 : null,
     ),
   );
+}
+
+/// Generates the random part of a multipart boundary.
+///
+/// A boundary delimits attacker-influenced bytes, so it is drawn from a
+/// cryptographic generator over a space wide enough that it can neither
+/// repeat across responses nor be guessed from earlier ones.
+String _boundaryToken() {
+  final random = Random.secure();
+  return List.generate(
+    4,
+    (final _) => random.nextInt(1 << 16).toRadixString(16).padLeft(4, '0'),
+  ).join();
 }
 
 /// Emits the multipart sections for [bounds], reading each range from disk
