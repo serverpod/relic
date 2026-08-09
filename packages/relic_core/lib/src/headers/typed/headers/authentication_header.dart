@@ -77,10 +77,12 @@ final class AuthenticationHeader {
   /// Converts the [AuthenticationHeader] instance into a string representation
   /// suitable for HTTP headers.
   String _encode() {
+    Token.validate(scheme);
     final paramsString = parameters
         .map((final param) {
-          if (param.key.isEmpty) return param.value;
-          return '${param.key}="${param.value}"';
+          if (param.key.isEmpty) return Token68.validate(param.value);
+          return '${Token.validate(param.key)}='
+              '${ParameterValue(param.value).encode()}';
         })
         .join(', ');
     return '$scheme $paramsString';
