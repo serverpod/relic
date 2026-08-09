@@ -10,28 +10,23 @@ import '../util/test_util.dart';
 void main() {
   tearDown(() async {
     final server = _server;
-    if (server != null) {
-      try {
-        await server.close().timeout(const Duration(seconds: 5));
-      } catch (e) {
-        await server.close();
-      } finally {
-        _server = null;
-      }
-    }
+    _server = null;
+    await server?.close(force: true).timeout(const Duration(seconds: 5));
   });
 
   group('Given a server', () {
-    test('when request is hijacked '
-        'then a Hijack is returned and the request times out because '
-        'server does not write the response to the HTTP response', () async {
-      await _scheduleServer((final req) {
-        final newCtx = Hijack((_) {});
-        expect(newCtx, isA<Hijack>());
-        return newCtx;
-      });
-      expect(_get(), throwsA(isA<TimeoutException>()));
-    });
+    test(
+      'when request is hijacked '
+      'then a Hijack is returned and the request times out because server does not write the response to the HTTP response',
+      () async {
+        await _scheduleServer((final req) {
+          final newCtx = Hijack((_) {});
+          expect(newCtx, isA<Hijack>());
+          return newCtx;
+        });
+        await expectLater(_get(), throwsA(isA<TimeoutException>()));
+      },
+    );
   });
 }
 
