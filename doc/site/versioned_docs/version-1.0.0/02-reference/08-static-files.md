@@ -21,8 +21,8 @@ GITHUB_CODE_BLOCK lang="dart" file="../_example/basic/static_files.dart" doctag=
 
 This serves all files from the `_static_files` directory under `/basic/` URLs with 1-day caching. For example:
 
-- `static_files/hello.txt` → `http://localhost:8080/basic/hello.txt`
-- `static_files/logo.svg` → `http://localhost:8080/basic/logo.svg`
+- `static_files/hello.txt` -> `http://localhost:8080/basic/hello.txt`
+- `static_files/logo.svg` -> `http://localhost:8080/basic/logo.svg`
 
 ## Single file serving
 
@@ -66,7 +66,6 @@ GITHUB_CODE_BLOCK lang="dart" file="../_example/basic/static_files.dart" doctag=
 `StaticHandler` includes built-in security features:
 
 - **Path traversal protection**: Prevents access to files outside the specified directory.
-- **Hidden file protection**: Blocks access to files starting with `.` (like `.env`, `.git`).
 - **Symbolic link handling**: Safely resolves symbolic links within the allowed directory.
 
 These protections are automatically applied and ensure that your static file handler only serves files from the intended directory.

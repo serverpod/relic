@@ -21,8 +21,8 @@ GITHUB_CODE_BLOCK lang="dart" file="../_example/basic/static_files.dart" doctag=
 
 This serves all files from the `_static_files` directory under `/basic/` URLs with 1-day caching. For example:
 
-- `static_files/hello.txt` → `http://localhost:8080/basic/hello.txt`
-- `static_files/logo.svg` → `http://localhost:8080/basic/logo.svg`
+- `static_files/hello.txt` -> `http://localhost:8080/basic/hello.txt`
+- `static_files/logo.svg` -> `http://localhost:8080/basic/logo.svg`
 
 ## Single file serving
 
@@ -66,10 +66,16 @@ GITHUB_CODE_BLOCK lang="dart" file="../_example/basic/static_files.dart" doctag=
 `StaticHandler` includes built-in security features:
 
 - **Path traversal protection**: Prevents access to files outside the specified directory.
-- **Hidden file protection**: Blocks access to files starting with `.` (like `.env`, `.git`).
 - **Symbolic link handling**: Safely resolves symbolic links within the allowed directory.
 
 These protections are automatically applied and ensure that your static file handler only serves files from the intended directory.
+
+:::warning Every file in the directory is served
+There is no filtering by file name. Anything inside the directory is reachable,
+including dot files such as `.env` and the contents of `.git`. Serve a directory
+that holds only public assets, rather than a project or build root that happens
+to contain them.
+:::
 
 :::tip Directory paths
 When serving static files from a directory, always use a tail matching path pattern (`/**`) to capture all files and subdirectories. The tail portion (`/**`) is used to determine the file path within the directory. Without it, the handler won't know which file to serve.

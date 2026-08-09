@@ -107,10 +107,14 @@ Future<FileInfo> getStaticFileInfo(
 ///
 /// The handler includes built-in security protections:
 /// - **Path traversal protection**: Prevents access to files outside the directory
-/// - **Hidden file protection**: Blocks access to files starting with `.`
 /// - **Symbolic link handling**: Safely resolves symlinks within the allowed directory
 ///
 /// These protections are automatically applied and cannot be disabled.
+///
+/// They confine serving to the directory; they do not filter what within it is
+/// served. There is no hidden file rule, so a dot file such as `.env`, or the
+/// contents of `.git`, is served like any other. Point the handler at a
+/// directory of public assets rather than at a project or build root.
 class StaticHandler extends HandlerObject {
   final FileSystemEntity entity;
   final Handler? defaultHandler;
