@@ -56,6 +56,25 @@ class NormalizedPath {
     return result;
   }
 
+  /// Creates a [NormalizedPath] from segments that have already been split.
+  ///
+  /// Each element of [segments] is one segment and is never split further, so
+  /// a separator inside a segment stays part of it rather than introducing a
+  /// new one. Empty and `.` segments are dropped and `..` segments resolved,
+  /// exactly as for a path string, so the result carries the same guarantee
+  /// that no segment is `..`.
+  factory NormalizedPath.fromSegments(final Iterable<String> segments) {
+    final result = <String>[];
+    for (final segment in segments) {
+      if (segment == '..') {
+        if (result.isNotEmpty) result.removeLast();
+      } else if (segment != '.' && segment.isNotEmpty) {
+        result.add(segment);
+      }
+    }
+    return NormalizedPath._(List.unmodifiable(result));
+  }
+
   /// Normalizes the given [path] string into a list of segments.
   ///
   /// Handles `.` and `..` segments and removes empty ones.

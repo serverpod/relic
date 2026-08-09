@@ -19,6 +19,26 @@ void main() {
       expect(app, isA<Router<Handler>>());
     });
 
+    test('Given a RelicApp with a route, '
+        'when calling lookupPath, '
+        'then it delegates to the underlying router', () {
+      Response handler(final Request req) => Response.ok();
+      final app = RelicApp()..get('/a/b', handler);
+
+      final hit = app.lookupPath(Method.get, NormalizedPath('/a/b'));
+      expect(hit, isA<RouterMatch<Handler>>());
+      expect((hit as RouterMatch<Handler>).value, same(handler));
+
+      expect(
+        app.lookupPath(Method.post, NormalizedPath('/a/b')),
+        isA<MethodMiss<Handler>>(),
+      );
+      expect(
+        app.lookupPath(Method.get, NormalizedPath('/nope'), backtrack: false),
+        isA<PathMiss<Handler>>(),
+      );
+    });
+
     test('Given a RelicApp, '
         'when calling run with adapter factory, '
         'then it creates a RelicServer and mounts the handler', () async {

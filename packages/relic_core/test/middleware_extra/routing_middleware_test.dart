@@ -804,4 +804,52 @@ void main() {
       expect(result.headers['X-Forwarded'], ['true']);
     });
   });
+
+  group('Given virtual hosting with an internal and a public host', () {
+    Handler handlerFor(final Router<int> router) => const Pipeline()
+        .addMiddleware(
+          routeWith(
+            router,
+            useHostWhenRouting: true,
+            toHandler: (final i) => respondWith(
+              (final _) => Response.ok(body: Body.fromString('$i')),
+            ),
+          ),
+        )
+        .addHandler(respondWith((final _) => Response.notFound()));
+
+    Router<int> vhostRouter() => Router<int>()
+      ..get('public.example.com/index', 1)
+      ..get('admin.internal/secret', 2);
+
+    Future<int> statusFor(final String rawPath) async {
+      final request = RequestInternal.create(
+        Method.get,
+        Uri.parse('http://public.example.com$rawPath'),
+        Object(),
+      );
+      final result = await handlerFor(vhostRouter())(request);
+      return (result as Response).statusCode;
+    }
+
+    test('when the public host is reached with an encoded traversal, '
+        'then the internal host is not served.', () async {
+      for (final rawPath in [
+        '/%2E%2E%2Fadmin.internal%2Fsecret',
+        '/..%2Fadmin.internal%2Fsecret',
+        '/../admin.internal/secret',
+      ]) {
+        expect(
+          await statusFor(rawPath),
+          404,
+          reason: '$rawPath must not reach the internal virtual host',
+        );
+      }
+    });
+
+    test('when the public host is reached with its own route, '
+        'then it is served.', () async {
+      expect(await statusFor('/index'), 200);
+    });
+  });
 }

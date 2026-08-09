@@ -110,10 +110,11 @@ class _RoutingMiddlewareBuilder<T extends Object> {
 
   Handler call(final Handler next) {
     return (final req) async {
-      final path = useHostWhenRouting
-          ? '${req.url.host}${Uri.decodeFull(req.url.path)}'
-          : Uri.decodeFull(req.url.path);
-      final result = _router.lookup(req.method, path);
+      final path = NormalizedPath(Uri.decodeFull(req.url.path));
+      final routingKey = useHostWhenRouting
+          ? NormalizedPath.fromSegments([req.url.host, ...path.segments])
+          : path;
+      final result = _router.lookupPath(req.method, routingKey);
       switch (result) {
         case MethodMiss():
           return Response(

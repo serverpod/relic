@@ -161,8 +161,18 @@ final class Router<T extends Object> {
     final Method method,
     final String path, {
     final bool backtrack = true,
+  }) => lookupPath(method, NormalizedPath(path), backtrack: backtrack);
+
+  /// Looks up a route matching an already normalized [normalizedPath].
+  ///
+  /// Use this when the caller has built the path from parts and must not have
+  /// them re-split, such as when a routing key is assembled from a host and a
+  /// request path.
+  LookupResult<T> lookupPath(
+    final Method method,
+    final NormalizedPath normalizedPath, {
+    final bool backtrack = true,
   }) {
-    final normalizedPath = NormalizedPath(path); // Normalize upfront
     final entry = _allRoutes.lookup(normalizedPath, backtrack: backtrack);
     if (entry == null) return PathMiss(normalizedPath);
 
