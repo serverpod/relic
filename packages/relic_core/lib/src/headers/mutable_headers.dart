@@ -26,7 +26,34 @@ class MutableHeaders extends HeadersBase
     if (value == null) {
       _backing.remove(key);
     } else {
+      if (!Token.isValid(key)) {
+        throw FormatException('Invalid header name', key);
+      }
+      for (final v in value) {
+        _validateFieldValue(key, v);
+      }
       _backing[key] = value;
+    }
+  }
+
+  /// Rejects the characters that would end a header field or the header block
+  /// itself, handing the rest of the message to whoever supplied [value].
+  ///
+  /// Deliberately narrower than RFC 9110 `field-value`: the rest of the
+  /// grammar is checked by the typed accessors, which report a malformed
+  /// header as a bad request, and only when that header is actually read. A
+  /// stricter check here would turn any odd inbound header into a failure to
+  /// construct the request at all.
+  static void _validateFieldValue(final String name, final String value) {
+    for (var i = 0; i < value.length; i++) {
+      final c = value.codeUnitAt(i);
+      if (c == 0x0D || c == 0x0A || c == 0x00) {
+        throw FormatException(
+          'Header "$name" value must not contain CR, LF or NUL',
+          value,
+          i,
+        );
+      }
     }
   }
 

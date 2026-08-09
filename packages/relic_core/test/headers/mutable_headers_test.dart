@@ -44,4 +44,43 @@ void main() {
     });
     expect(headers['foo'], ['bar']);
   });
+
+  group('Given a header value carrying a line break', () {
+    test('when it is assigned, '
+        'then it is rejected rather than written verbatim.', () {
+      for (final injected in [
+        'a\r\nX-Injected: 1',
+        'a\nX-Injected: 1',
+        'a\rX-Injected: 1',
+      ]) {
+        expect(
+          () => MutableHeaders()['x-reflected'] = [injected],
+          throwsFormatException,
+          reason:
+              'Value ${injected.replaceAll('\r', r'\r').replaceAll('\n', r'\n')} should be rejected',
+        );
+      }
+    });
+
+    test('when an ordinary value is assigned, '
+        'then it is accepted.', () {
+      expect(
+        () => MutableHeaders()['x-reflected'] = ['a plain value', 'another'],
+        returnsNormally,
+      );
+    });
+  });
+
+  group('Given a header name that is not a token', () {
+    test('when it is assigned, '
+        'then it is rejected.', () {
+      for (final name in ['bad name', 'bad\r\nname', 'bad:name', '']) {
+        expect(
+          () => MutableHeaders()[name] = ['x'],
+          throwsFormatException,
+          reason: 'Name "$name" should be rejected',
+        );
+      }
+    });
+  });
 }
