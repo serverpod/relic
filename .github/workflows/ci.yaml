@@ -26,7 +26,7 @@ jobs:
           - stable
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Dart
         uses: dart-lang/setup-dart@v1
@@ -34,7 +34,7 @@ jobs:
           sdk: ${{ matrix.dart_sdk }}
 
       - name: Cache Dart Dependencies
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ${{ env.PUB_CACHE_PATH }}
           key: ${{ runner.os }}-pub-cache-${{ matrix.dart_sdk }}
@@ -66,7 +66,7 @@ jobs:
         package: [relic_core, relic_io, relic]
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Dart
         uses: dart-lang/setup-dart@v1
@@ -74,7 +74,7 @@ jobs:
           sdk: stable
 
       - name: Cache Dart Dependencies
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ${{ env.PUB_CACHE_PATH }}
           key: ${{ runner.os }}-pub-cache-stable
@@ -118,7 +118,7 @@ jobs:
         deps: [downgrade, upgrade]
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Dart
         uses: dart-lang/setup-dart@v1
@@ -126,7 +126,7 @@ jobs:
           sdk: ${{ matrix.dart_sdk }}
 
       - name: Cache Dart Dependencies
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ${{ env.PUB_CACHE_PATH }}
           key: ${{ runner.os }}-pub-cache-${{ matrix.dart_sdk }}
@@ -155,7 +155,7 @@ jobs:
           melos run coverage --no-select
 
       - name: Upload Coverage (relic_core)
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v7
         if: ${{ matrix.os == 'ubuntu-latest' && matrix.dart_sdk == '3.9.0' && matrix.deps == 'upgrade' && !cancelled() }}
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
@@ -163,7 +163,7 @@ jobs:
           flags: relic_core
 
       - name: Upload Coverage (relic_io)
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v7
         if: ${{ matrix.os == 'ubuntu-latest' && matrix.dart_sdk == '3.9.0' && matrix.deps == 'upgrade' && !cancelled() }}
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
@@ -171,7 +171,7 @@ jobs:
           flags: relic_io
 
       - name: Upload Coverage (relic)
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v7
         if: ${{ matrix.os == 'ubuntu-latest' && matrix.dart_sdk == '3.9.0' && matrix.deps == 'upgrade' && !cancelled() }}
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
@@ -183,7 +183,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Run markdownlint on maintained docs
         uses: articulate/actions-markdownlint@v1
@@ -195,8 +195,8 @@ jobs:
     name: Test build docs
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: 20
           cache: npm
