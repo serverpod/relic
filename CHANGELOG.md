@@ -1,3 +1,8 @@
+## 2.0.0-beta.1
+- feat: Add `CacheControlHeader.parseStrict` for validating own values ([#370](https://github.com/serverpod/relic/pull/370))
+  - Throws a `FormatException` for an unrecognized directive or a malformed delta-seconds value instead of ignoring it
+  - Intended for values under the sender's own control, such as server configuration; `parse` remains lenient per RFC 9111 5.2
+
 ## 2.0.0-beta.0
 
 Overhaul of typed HTTP headers for RFC compliance, landing in concert with serverpod 4.0. Parsing of received (request) headers is lenient (except security-sensitive ones), while construction and serialization are always strict. Many typed headers changed shape and/or semantics, so this is a breaking release.
