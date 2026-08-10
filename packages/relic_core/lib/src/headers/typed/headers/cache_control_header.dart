@@ -122,15 +122,33 @@ final class CacheControlHeader {
 
   static final Set<String> _validDirectiveSet = _validDirectives.toSet();
 
-  /// Parses a `delta-seconds` directive value, returning `null` for an absent,
-  /// non-numeric, or negative value. A `delta-seconds` is `1*DIGIT` (RFC 9111
-  /// 1.2.2), so anything else is malformed; the directive is ignored rather
-  /// than failing the whole header (RFC 9111 5.2 has recipients ignore
-  /// directives they cannot use).
-  static int? _delta(final String? raw) {
-    if (raw == null || raw.isEmpty) return null;
+  /// Parses a `delta-seconds` directive value (`1*DIGIT`, RFC 9111 1.2.2).
+  ///
+  /// A malformed value returns `null` so the directive is ignored (RFC 9111
+  /// 5.2), or throws a [FormatException] when [strict].
+  static int? _delta(
+    final String name,
+    final String? raw, {
+    required final bool strict,
+  }) {
+    if (raw == null || raw.isEmpty) {
+      if (strict) {
+        throw FormatException(
+          'Missing delta-seconds value for Cache-Control directive "$name"',
+        );
+      }
+      return null;
+    }
     final n = int.tryParse(raw);
-    if (n == null || n < 0) return null;
+    if (n == null || n < 0) {
+      if (strict) {
+        throw FormatException(
+          'Invalid delta-seconds value "$raw" for Cache-Control directive '
+          '"$name"',
+        );
+      }
+      return null;
+    }
     return n;
   }
 
@@ -138,7 +156,24 @@ final class CacheControlHeader {
   ///
   /// This method splits the header value by commas, trims each directive, and processes
   /// common cache directives like `no-cache`, `no-store`, `max-age`, etc.
-  factory CacheControlHeader.parse(final Iterable<String> values) {
+  ///
+  /// Unrecognized directives and malformed values are ignored (RFC 9111 5.2);
+  /// use [parseStrict] to reject them instead.
+  factory CacheControlHeader.parse(final Iterable<String> values) =>
+      CacheControlHeader._parse(values, strict: false);
+
+  /// Like [parse], but throws a [FormatException] for an unrecognized
+  /// directive or a malformed delta-seconds value instead of ignoring it.
+  ///
+  /// Intended for values under the sender's own control, such as server
+  /// configuration, where a typo should fail fast.
+  factory CacheControlHeader.parseStrict(final Iterable<String> values) =>
+      CacheControlHeader._parse(values, strict: true);
+
+  factory CacheControlHeader._parse(
+    final Iterable<String> values, {
+    required final bool strict,
+  }) {
     final directives = values.splitTrimAndFilterUnique();
 
     if (directives.isEmpty) {
@@ -176,8 +211,13 @@ final class CacheControlHeader {
       // RFC 9111 5.2: a recipient MUST ignore cache directives it does not
       // recognize (the directive set is extensible), rather than rejecting the
       // whole header. Exact-name matching still keeps `max-age-extended` from
-      // being mistaken for `max-age`.
+      // being mistaken for `max-age`. Strict parsing rejects them instead.
       if (!_validDirectiveSet.contains(name)) {
+        if (strict) {
+          throw FormatException(
+            'Unrecognized Cache-Control directive: "$name"',
+          );
+        }
         continue;
       }
 
@@ -203,17 +243,17 @@ final class CacheControlHeader {
         case _privateDirective:
           privateCache = true;
         case _maxAgeDirective:
-          maxAge = _delta(rawValue);
+          maxAge = _delta(name, rawValue, strict: strict);
         case _staleWhileRevalidateDirective:
-          staleWhileRevalidate = _delta(rawValue);
+          staleWhileRevalidate = _delta(name, rawValue, strict: strict);
         case _sMaxAgeDirective:
-          sMaxAge = _delta(rawValue);
+          sMaxAge = _delta(name, rawValue, strict: strict);
         case _staleIfErrorDirective:
-          staleIfError = _delta(rawValue);
+          staleIfError = _delta(name, rawValue, strict: strict);
         case _maxStaleDirective:
-          maxStale = _delta(rawValue);
+          maxStale = _delta(name, rawValue, strict: strict);
         case _minFreshDirective:
-          minFresh = _delta(rawValue);
+          minFresh = _delta(name, rawValue, strict: strict);
       }
     }
 
