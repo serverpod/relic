@@ -8,18 +8,23 @@ import 'package:test/test.dart';
 void main() {
   group('Given a handler whose response cannot be written', () {
     late RelicServer server;
+    var handlerCompleted = false;
 
     setUp(() async {
+      handlerCompleted = false;
       server = RelicServer(
         () => IOAdapter.bind(InternetAddress.loopbackIPv4, port: 0),
       );
-      await server.mountAndStart(
-        (final req) async => Response.ok(
-          headers: Headers.build(
-            (final mh) => mh['x-reflected'] = ['a\r\nX-Injected: 1'],
+      await server.mountAndStart((final req) async {
+        final response = Response.ok(
+          body: Body.fromString(
+            'x',
+            mimeType: const MimeType('text', 'plain\r\nX-Injected: 1'),
           ),
-        ),
-      );
+        );
+        handlerCompleted = true;
+        return response;
+      });
     });
 
     tearDown(() => server.close());
@@ -37,6 +42,13 @@ void main() {
           );
 
       expect(response.statusCode, HttpStatus.internalServerError);
+      expect(
+        handlerCompleted,
+        isTrue,
+        reason:
+            'The failure must happen while writing the response, '
+            'not inside the handler',
+      );
     });
 
     test('when several requests fail to write, '
@@ -61,6 +73,13 @@ void main() {
         await active(),
         0,
         reason: 'A response that failed to write must not pin its connection',
+      );
+      expect(
+        handlerCompleted,
+        isTrue,
+        reason:
+            'The failure must happen while writing the response, '
+            'not inside the handler',
       );
     });
   });
