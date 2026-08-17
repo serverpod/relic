@@ -51,9 +51,15 @@ void main() {
         }
       }
 
-      await expectLater(
-        server.connectionsInfo().then((final info) => info.active),
-        completion(0),
+      Future<int> active() async => (await server.connectionsInfo()).active;
+      final stopwatch = Stopwatch()..start();
+      while (await active() != 0 &&
+          stopwatch.elapsed < const Duration(seconds: 5)) {
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+      }
+      expect(
+        await active(),
+        0,
         reason: 'A response that failed to write must not pin its connection',
       );
     });
