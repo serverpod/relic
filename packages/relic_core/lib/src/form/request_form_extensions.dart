@@ -39,6 +39,116 @@ extension FormRequestExtension on Request {
     );
   }
 
+  /// Parses a request body as form data based on its Content-Type.
+  Future<FormData> formData({
+    final FormLimits limits = FormLimits.defaults,
+    final UploadStorage? uploadStorage,
+    final Encoding? defaultEncoding,
+  }) async {
+    final contentType = headers.contentType;
+    if (contentType?.mimeType == MimeType.urlEncoded) {
+      return await urlEncodedForm(
+        limits: limits,
+        defaultEncoding: defaultEncoding,
+      );
+    }
+    if (contentType?.mimeType == MimeType.multipartFormData) {
+      return await multipartForm(
+        limits: limits,
+        uploadStorage: uploadStorage,
+        defaultEncoding: defaultEncoding,
+      );
+    }
+    throw const UnsupportedFormMediaTypeException(
+      'Expected an HTML form request body.',
+    );
+  }
+
+  /// Parses a `multipart/form-data` request body into aggregate form data.
+  Future<MultipartFormData> multipartForm({
+    final FormLimits limits = FormLimits.defaults,
+    final UploadStorage? uploadStorage,
+    final Encoding? defaultEncoding,
+  }) async {
+    final storage = uploadStorage ?? const MemoryUploadStorage();
+    final fields = <FormFieldEntry>[];
+    final files = <FileFieldEntry>[];
+    final entries = <FormEntry>[];
+    var totalFileSize = 0;
+
+    try {
+      await for (final part in multipart(limits: limits)) {
+        final name = part.name;
+        if (name == null) {
+          await part.discard();
+          continue;
+        }
+
+        if (part.isField) {
+          if (fields.length == limits.maxFieldCount) {
+            throw const FormLimitExceededException(
+              limit: 'maxFieldCount',
+              message: 'Too many form fields.',
+            );
+          }
+
+          final encoding =
+              Encoding.getByName(part.contentType?.charset ?? '') ??
+              defaultEncoding ??
+              utf8;
+          final value = await _readPartAsString(
+            part,
+            encoding,
+            limits.maxFieldSize,
+          );
+          final entry = FormFieldEntry(name: name, value: value);
+          fields.add(entry);
+          entries.add(entry);
+          continue;
+        }
+
+        if (!part.isFile) {
+          await part.discard();
+          continue;
+        }
+
+        if (files.length == limits.maxFileCount) {
+          throw const FormLimitExceededException(
+            limit: 'maxFileCount',
+            message: 'Too many uploaded files.',
+          );
+        }
+
+        final file = await storage.store(
+          fieldName: name,
+          filename: part.filename,
+          contentType: part.contentType,
+          headers: part.headers,
+          content: _limitedFileStream(
+            part.body.read(),
+            limits,
+            () => totalFileSize,
+            (final value) => totalFileSize = value,
+          ),
+        );
+        final entry = FileFieldEntry(name: name, file: file);
+        files.add(entry);
+        entries.add(entry);
+      }
+
+      return MultipartFormData(
+        fields: FormFields(fields),
+        files: UploadedFiles(files),
+        entries: entries,
+      );
+    } catch (_) {
+      for (final entry in files) {
+        await entry.file.dispose();
+      }
+      rethrow;
+    }
+  }
+
   /// Streams a `multipart/form-data` request body as individual parts.
   Stream<MultipartPart> multipart({
     final FormLimits limits = FormLimits.defaults,
@@ -89,6 +199,53 @@ extension FormRequestExtension on Request {
     } on MimeMultipartException catch (error) {
       throw MalformedFormDataException('Malformed multipart body: $error');
     }
+  }
+}
+
+Future<String> _readPartAsString(
+  final MultipartPart part,
+  final Encoding encoding,
+  final int maxLength,
+) async {
+  final builder = BytesBuilder(copy: false);
+  await for (final chunk in part.body.read()) {
+    builder.add(chunk);
+    if (builder.length > maxLength) {
+      throw const FormLimitExceededException(
+        limit: 'maxFieldSize',
+        message: 'Form field is too large.',
+      );
+    }
+  }
+  return encoding.decode(builder.takeBytes());
+}
+
+Stream<Uint8List> _limitedFileStream(
+  final Stream<Uint8List> stream,
+  final FormLimits limits,
+  final int Function() getTotalFileSize,
+  final void Function(int) setTotalFileSize,
+) async* {
+  var fileSize = 0;
+  await for (final chunk in stream) {
+    fileSize += chunk.length;
+    if (fileSize > limits.maxFileSize) {
+      throw const FormLimitExceededException(
+        limit: 'maxFileSize',
+        message: 'Uploaded file is too large.',
+      );
+    }
+
+    final totalFileSize = getTotalFileSize() + chunk.length;
+    if (totalFileSize > limits.maxTotalFileSize) {
+      throw const FormLimitExceededException(
+        limit: 'maxTotalFileSize',
+        message: 'Uploaded files are too large.',
+      );
+    }
+
+    setTotalFileSize(totalFileSize);
+    yield chunk;
   }
 }
 
