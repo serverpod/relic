@@ -8,6 +8,7 @@ export 'src/body/body.dart' show Body, MaxBodySizeExceeded;
 export 'src/body/types/body_type.dart' show BodyType;
 export 'src/body/types/mime_type.dart' show MimeType;
 export 'src/context/result.dart';
+export 'src/form/form_data.dart';
 export 'src/handler/cascade.dart' show Cascade;
 export 'src/handler/handler.dart';
 export 'src/handler/pipeline.dart' show Pipeline;
