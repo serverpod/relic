@@ -25,6 +25,7 @@ extension HeadersEx on Headers {
   AuthorizationHeader? get authorization => Headers.authorization[this]();
   ConnectionHeader? get connection => Headers.connection[this]();
   int? get contentLength => Headers.contentLength[this]();
+  ContentTypeHeader? get contentType => Headers.contentType[this]();
   ExpectHeader? get expect => Headers.expect[this]();
   IfMatchHeader? get ifMatch => Headers.ifMatch[this]();
   IfNoneMatchHeader? get ifNoneMatch => Headers.ifNoneMatch[this]();
@@ -120,6 +121,8 @@ extension MutableHeadersEx on MutableHeaders {
   set connection(final ConnectionHeader? value) =>
       Headers.connection[this].set(value);
   set contentLength(final int? value) => Headers.contentLength[this].set(value);
+  set contentType(final ContentTypeHeader? value) =>
+      Headers.contentType[this].set(value);
   set expect(final ExpectHeader? value) => Headers.expect[this].set(value);
   set ifMatch(final IfMatchHeader? value) => Headers.ifMatch[this].set(value);
   set ifNoneMatch(final IfNoneMatchHeader? value) =>
@@ -229,6 +232,7 @@ extension MutableHeadersEx on MutableHeaders {
   AuthorizationHeader? get authorization => Headers.authorization[this]();
   ConnectionHeader? get connection => Headers.connection[this]();
   int? get contentLength => Headers.contentLength[this]();
+  ContentTypeHeader? get contentType => Headers.contentType[this]();
   ExpectHeader? get expect => Headers.expect[this]();
   IfMatchHeader? get ifMatch => Headers.ifMatch[this]();
   IfNoneMatchHeader? get ifNoneMatch => Headers.ifNoneMatch[this]();
