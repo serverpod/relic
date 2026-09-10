@@ -52,10 +52,12 @@ final class MultipartPart {
   });
 
   /// Whether this part is a non-file form field.
-  bool get isField => name != null && filename == null;
+  bool get isField => _isFormData && name != null && filename == null;
 
   /// Whether this part is a file upload field.
-  bool get isFile => name != null && filename != null;
+  bool get isFile => _isFormData && name != null && filename != null;
+
+  bool get _isFormData => contentDisposition?.type.toLowerCase() == 'form-data';
 
   /// Reads the part body as a string.
   Future<String> readAsString({Encoding? encoding, final int? maxLength}) {
