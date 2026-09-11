@@ -271,7 +271,8 @@ final class UploadedFiles {
 
   /// Returns the first file for [name], or throws if absent.
   UploadedFile getRequired(final String name) =>
-      get(name) ?? (throw StateError('Missing required uploaded file "$name".'));
+      get(name) ??
+      (throw StateError('Missing required uploaded file "$name".'));
 
   /// Returns all files for [name] in file order.
   List<UploadedFile> getAll(final String name) => [

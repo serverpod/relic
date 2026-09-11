@@ -27,9 +27,7 @@ void main() {
     test(
       'when values contain plus and percent escapes, then they are decoded',
       () async {
-        final request = _request(
-          body: 'name=Gustavo+Guzman&city=Napoli',
-        );
+        final request = _request(body: 'name=Gustavo+Guzman&city=Napoli');
 
         final form = await request.urlEncodedForm();
 
