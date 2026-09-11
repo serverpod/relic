@@ -169,6 +169,52 @@ void main() {
       expect(form.fields.contains('ignored'), isFalse);
       expect(form.entries.map((final entry) => entry.name), ['actual']);
     });
+
+    test(
+      'when uploaded filename includes a path, then only basename is exposed',
+      () async {
+        final request = _multipartRequest(
+          boundary: 'basename',
+          body: _multipartBody('basename', [
+            _Part(
+              headers: const {
+                Headers.contentDispositionHeader:
+                    'form-data; name="upload"; filename="../../report.txt"',
+              },
+              body: 'file-body',
+            ),
+          ]),
+        );
+
+        final form = await request.multipartForm();
+
+        expect(form.files.getRequired('upload').filename, 'report.txt');
+      },
+    );
+
+    test(
+      'when multipart filename is empty, then it is aggregated as a field',
+      () async {
+        final request = _multipartRequest(
+          boundary: 'empty-file',
+          body: _multipartBody('empty-file', [
+            _Part(
+              headers: const {
+                Headers.contentDispositionHeader:
+                    'form-data; name="upload"; filename=""',
+              },
+              body: '',
+            ),
+          ]),
+        );
+
+        final form = await request.multipartForm();
+
+        expect(form.fields.get('upload'), '');
+        expect(form.files.entries, isEmpty);
+        expect(form.entries, [const FormFieldEntry(name: 'upload', value: '')]);
+      },
+    );
   });
 
   group('Given a multipart form request with latin1 field data', () {

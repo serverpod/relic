@@ -118,6 +118,88 @@ void main() {
         await part.discard();
       }
     });
+
+    test(
+      'when a file name contains path separators, then only basename is used',
+      () async {
+        final request = _request(
+          boundary: 'filename-path',
+          body: _multipartBody('filename-path', [
+            _Part(
+              headers: const {
+                Headers.contentDispositionHeader:
+                    'form-data; name="upload"; filename="..\\\\..\\\\evil.txt"',
+              },
+              body: 'file-body',
+            ),
+            _Part(
+              headers: const {
+                Headers.contentDispositionHeader:
+                    'form-data; name="upload"; filename="../../other.txt"',
+              },
+              body: 'file-body',
+            ),
+          ]),
+        );
+
+        final filenames = <String?>[];
+        await for (final part in request.multipart()) {
+          filenames.add(part.filename);
+          await part.discard();
+        }
+
+        expect(filenames, ['evil.txt', 'other.txt']);
+      },
+    );
+
+    test(
+      'when file name is empty, then the part is treated as a field',
+      () async {
+        final request = _request(
+          boundary: 'empty-filename',
+          body: _multipartBody('empty-filename', [
+            _Part(
+              headers: const {
+                Headers.contentDispositionHeader:
+                    'form-data; name="upload"; filename=""',
+              },
+              body: '',
+            ),
+          ]),
+        );
+
+        await for (final part in request.multipart()) {
+          expect(part.filename, isNull);
+          expect(part.isFile, isFalse);
+          expect(part.isField, isTrue);
+          expect(await part.readAsString(), '');
+        }
+      },
+    );
+
+    test(
+      'when regular and extended file names are present, then extended wins',
+      () async {
+        final request = _request(
+          boundary: 'extended-filename',
+          body: _multipartBody('extended-filename', [
+            _Part(
+              headers: const {
+                Headers.contentDispositionHeader:
+                    "form-data; name=\"upload\"; filename=\"plain.txt\"; filename*=UTF-8''extended%20name.txt",
+              },
+              body: 'file-body',
+            ),
+          ]),
+        );
+
+        await for (final part in request.multipart()) {
+          expect(part.filename, 'extended name.txt');
+          expect(part.isFile, isTrue);
+          await part.discard();
+        }
+      },
+    );
   });
 
   group('Given a multipart request with a latin1 text part', () {

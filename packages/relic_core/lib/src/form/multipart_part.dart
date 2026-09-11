@@ -37,7 +37,7 @@ final class MultipartPart {
       contentDisposition: contentDisposition,
       contentType: _parseContentType(headers),
       name: _contentDispositionParameter(contentDisposition, 'name'),
-      filename: _contentDispositionParameter(contentDisposition, 'filename'),
+      filename: _filename(contentDisposition),
       body: body,
     );
   }
@@ -55,7 +55,8 @@ final class MultipartPart {
   bool get isField => _isFormData && name != null && filename == null;
 
   /// Whether this part is a file upload field.
-  bool get isFile => _isFormData && name != null && filename != null;
+  bool get isFile =>
+      _isFormData && name != null && filename?.isNotEmpty == true;
 
   bool get _isFormData => contentDisposition?.type.toLowerCase() == 'form-data';
 
@@ -102,6 +103,32 @@ String? _contentDispositionParameter(
     if (parameter.name.toLowerCase() == name) return parameter.value;
   }
   return null;
+}
+
+String? _filename(final ContentDispositionHeader? disposition) {
+  final parameter = _contentDispositionFilename(disposition);
+  if (parameter == null || parameter.isEmpty) return null;
+  return _basename(parameter);
+}
+
+String? _contentDispositionFilename(
+  final ContentDispositionHeader? disposition,
+) {
+  if (disposition == null) return null;
+  ContentDispositionParameter? fallback;
+  for (final parameter in disposition.parameters) {
+    if (parameter.name.toLowerCase() != 'filename') continue;
+    if (parameter.isExtended) return parameter.value;
+    fallback ??= parameter;
+  }
+  return fallback?.value;
+}
+
+String _basename(final String path) {
+  final slash = path.lastIndexOf('/');
+  final backslash = path.lastIndexOf(r'\');
+  final separator = slash > backslash ? slash : backslash;
+  return separator == -1 ? path : path.substring(separator + 1);
 }
 
 extension<T> on Iterable<T> {
