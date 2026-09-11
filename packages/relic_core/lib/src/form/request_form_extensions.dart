@@ -14,6 +14,8 @@ import 'multipart_part.dart';
 /// Form parsing helpers for [Request].
 extension FormRequestExtension on Request {
   /// Parses an `application/x-www-form-urlencoded` request body.
+  ///
+  /// This consumes the request body. It should only be called once for a request.
   Future<UrlEncodedFormData> urlEncodedForm({
     final FormLimits limits = FormLimits.defaults,
     Encoding? defaultEncoding,
@@ -40,6 +42,9 @@ extension FormRequestExtension on Request {
   }
 
   /// Parses a request body as form data based on its Content-Type.
+  ///
+  /// Supports `application/x-www-form-urlencoded` and `multipart/form-data`.
+  /// This consumes the request body. It should only be called once for a request.
   Future<FormData> formData({
     final FormLimits limits = FormLimits.defaults,
     final UploadStorage? uploadStorage,
@@ -65,6 +70,12 @@ extension FormRequestExtension on Request {
   }
 
   /// Parses a `multipart/form-data` request body into aggregate form data.
+  ///
+  /// Uploaded files use [uploadStorage], or [MemoryUploadStorage] when omitted.
+  /// Call [MultipartFormData.dispose] after processing uploads so storage backends
+  /// can release resources, such as deleting temp files.
+  ///
+  /// This consumes the request body. It should only be called once for a request.
   Future<MultipartFormData> multipartForm({
     final FormLimits limits = FormLimits.defaults,
     final UploadStorage? uploadStorage,
