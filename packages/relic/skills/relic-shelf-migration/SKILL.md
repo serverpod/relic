@@ -102,10 +102,7 @@ final router = RelicApp()
 ```dart
 Response.ok('Hello, World!');
 
-Response.ok(
-  '<html>...</html>',
-  headers: {'content-type': 'text/html'},
-);
+Response.ok('<html>...</html>', headers: {'content-type': 'text/html'});
 ```
 
 **Relic:** Requires `Body` object. Content-Length is automatic. MIME type is auto-detected or explicit:
@@ -124,16 +121,16 @@ Response.ok(
 
 ```dart
 final contentType = request.headers['content-type']; // String?
-final cookies = request.headers['cookie'];            // String?
-final date = request.headers['date'];                 // String?
+final cookies = request.headers['cookie']; // String?
+final date = request.headers['date']; // String?
 ```
 
 **Relic:** Type-safe accessors with automatic parsing:
 
 ```dart
-final contentType = request.body.bodyType?.mimeType;  // MimeType?
-final cookies = request.headers.cookie;                // CookieHeader?
-final date = request.headers.date;                     // DateTime?
+final contentType = request.body.bodyType?.mimeType; // MimeType?
+final cookies = request.headers.cookie; // CookieHeader?
+final date = request.headers.date; // DateTime?
 ```
 
 ## 7. Middleware
@@ -147,9 +144,9 @@ final app = Router()
   });
 
 final handler = Pipeline()
-  .addMiddleware(logRequests())
-  .addMiddleware(authentication())
-  .addHandler(app);
+    .addMiddleware(logRequests())
+    .addMiddleware(authentication())
+    .addHandler(app);
 ```
 
 **Relic:** `router.use()` scopes middleware by path and only runs on matched routes:
@@ -170,10 +167,9 @@ Unmatched requests (404s) bypass middleware and go directly to the fallback hand
 **Shelf:** Dynamic map with manual casting:
 
 ```dart
-final modifiedRequest = request.change(context: {
-  'user': currentUser,
-  'session': sessionData,
-});
+final modifiedRequest = request.change(
+  context: {'user': currentUser, 'session': sessionData},
+);
 
 // Later...
 final user = request.context['user'] as User?;
@@ -184,12 +180,9 @@ final user = request.context['user'] as User?;
 ```dart
 final userProperty = ContextProperty<User>('user');
 final sessionProperty = ContextProperty<Session>('session');
+```
 
-extension AuthContext on Request {
-  User get currentUser => userProperty[this];
-  Session get session => sessionProperty[this];
-}
-
+```dart
 // Set in middleware
 userProperty[req] = authenticatedUser;
 
@@ -243,9 +236,7 @@ void main() async {
       return Response.ok('User $id: $name');
     });
 
-  final handler = Pipeline()
-      .addMiddleware(logRequests())
-      .addHandler(router);
+  final handler = Pipeline().addMiddleware(logRequests()).addHandler(router);
 
   await shelf_io.serve(handler, 'localhost', 8080);
 }

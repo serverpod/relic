@@ -28,9 +28,7 @@ part of 'result.dart';
 ///   // Access headers
 ///   final userAgent = req.headers.userAgent;
 ///
-///   return Response.ok(
-///     body: Body.fromString('User request'),
-///   );
+///   return Response.ok(body: Body.fromString('User request'));
 /// });
 ///
 /// // Reading request body

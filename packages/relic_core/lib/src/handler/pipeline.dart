@@ -27,9 +27,9 @@ import 'handler.dart';
 /// // 5. Logging middleware (response)
 ///
 /// final handler = const Pipeline()
-///     .addMiddleware(loggingMiddleware)    // First to see request
-///     .addMiddleware(authMiddleware)       // Second to see request
-///     .addHandler(apiHandler);             // Last to process
+///     .addMiddleware(loggingMiddleware) // First to see request
+///     .addMiddleware(authMiddleware) // Second to see request
+///     .addHandler(apiHandler); // Last to process
 /// ```
 ///
 /// Note: this package also provides `addMiddleware` and `addHandler` extensions

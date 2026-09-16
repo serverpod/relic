@@ -72,15 +72,13 @@ final isOhNoStateError = isA<StateError>().having(
 ///
 /// Example:
 /// ```dart
-/// parameterizedGroup<String>(
-///   (protocol) => 'Testing protocol: $protocol',
-///   (protocol) {
-///     test('connects successfully', () {
-///       // Test using the protocol parameter
-///     });
-///   },
-///   variants: ['http', 'https', 'ws'],
-/// );
+/// parameterizedGroup<String>((protocol) => 'Testing protocol: $protocol', (
+///   protocol,
+/// ) {
+///   test('connects successfully', () {
+///     // Test using the protocol parameter
+///   });
+/// }, variants: ['http', 'https', 'ws']);
 /// ```
 @isTestGroup
 void parameterizedGroup<T>(
@@ -105,13 +103,9 @@ void parameterizedGroup<T>(
 ///
 /// Example:
 /// ```dart
-/// parameterizedTest<int>(
-///   (value) => 'Test with value: $value',
-///   (value) {
-///     expect(value * 2, greaterThan(value));
-///   },
-///   variants: [1, 2, 3, 4, 5],
-/// );
+/// parameterizedTest<int>((value) => 'Test with value: $value', (value) {
+///   expect(value * 2, greaterThan(value));
+/// }, variants: [1, 2, 3, 4, 5]);
 /// ```
 @isTest
 void parameterizedTest<T>(

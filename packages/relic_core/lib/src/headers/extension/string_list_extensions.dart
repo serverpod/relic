@@ -9,7 +9,7 @@ extension StringListExtensions on Iterable<String> {
   ///
   /// Example:
   /// ```dart
-  /// ['apple, banana', 'banana, orange'].splitTrimAndFilterUnique()
+  /// ['apple, banana', 'banana, orange'].splitTrimAndFilterUnique();
   /// // Returns: ['apple', 'banana', 'orange']
   /// ```
   ///
@@ -44,7 +44,7 @@ extension StringExtensions on String {
   ///
   /// Example:
   /// ```dart
-  /// 'apple, banana, banana, orange'.splitTrimAndFilterUnique()
+  /// 'apple, banana, banana, orange'.splitTrimAndFilterUnique();
   /// // Returns: ['apple', 'banana', 'orange']
   /// ```
   ///

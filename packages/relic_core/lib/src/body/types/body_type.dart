@@ -10,10 +10,7 @@ import 'mime_type.dart';
 /// Examples:
 /// ```dart
 /// // Text content with encoding
-/// const textType = BodyType(
-///   mimeType: MimeType.plainText,
-///   encoding: utf8,
-/// );
+/// const textType = BodyType(mimeType: MimeType.plainText, encoding: utf8);
 /// print(textType.toHeaderValue()); // "text/plain; charset=utf-8"
 ///
 /// // Binary content without encoding
@@ -21,10 +18,7 @@ import 'mime_type.dart';
 /// print(binaryType.toHeaderValue()); // "application/octet-stream"
 ///
 /// // JSON content
-/// const jsonType = BodyType(
-///   mimeType: MimeType.json,
-///   encoding: utf8,
-/// );
+/// const jsonType = BodyType(mimeType: MimeType.json, encoding: utf8);
 /// print(jsonType.toHeaderValue()); // "application/json; charset=utf-8"
 /// ```
 class BodyType {

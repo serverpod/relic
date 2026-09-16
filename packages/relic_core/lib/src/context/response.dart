@@ -9,61 +9,56 @@ part of 'result.dart';
 ///
 /// ```dart
 /// // 200 OK - Standard success
-/// Response.ok(body: Body.fromString('Success!'))
+/// Response.ok(body: Body.fromString('Success!'));
 ///
 /// // 204 No Content - Success without body
-/// Response.noContent()
+/// Response.noContent();
 /// ```
 ///
 /// ## Redirect Responses
 ///
 /// ```dart
 /// // 301 Moved Permanently
-/// Response.movedPermanently(Uri.parse('/new-location'))
+/// Response.movedPermanently(Uri.parse('/new-location'));
 ///
 /// // 302 Found - Temporary redirect
-/// Response.found(Uri.parse('/temporary'))
+/// Response.found(Uri.parse('/temporary'));
 ///
 /// // 303 See Other - Redirect after POST
-/// Response.seeOther(Uri.parse('/success'))
+/// Response.seeOther(Uri.parse('/success'));
 /// ```
 ///
 /// ## Client Error Responses
 ///
 /// ```dart
 /// // 400 Bad Request
-/// Response.badRequest(body: Body.fromString('Invalid input'))
+/// Response.badRequest(body: Body.fromString('Invalid input'));
 ///
 /// // 401 Unauthorized
-/// Response.unauthorized(body: Body.fromString('Please log in'))
+/// Response.unauthorized(body: Body.fromString('Please log in'));
 ///
 /// // 403 Forbidden
-/// Response.forbidden(body: Body.fromString('Access denied'))
+/// Response.forbidden(body: Body.fromString('Access denied'));
 ///
 /// // 404 Not Found
-/// Response.notFound(body: Body.fromString('Page not found'))
+/// Response.notFound(body: Body.fromString('Page not found'));
 /// ```
 ///
 /// ## Server Error Responses
 ///
 /// ```dart
 /// // 500 Internal Server Error
-/// Response.internalServerError(body: Body.fromString('Server error'))
+/// Response.internalServerError(body: Body.fromString('Server error'));
 ///
 /// // 501 Not Implemented
-/// Response.notImplemented(body: Body.fromString('Coming soon'))
+/// Response.notImplemented(body: Body.fromString('Coming soon'));
 /// ```
 ///
 /// ## JSON Response
 ///
 /// ```dart
 /// final data = {'name': 'Alice', 'age': 30};
-/// Response.ok(
-///   body: Body.fromString(
-///     jsonEncode(data),
-///     mimeType: MimeType.json,
-///   ),
-/// )
+/// Response.ok(body: Body.fromString(jsonEncode(data), mimeType: MimeType.json));
 /// ```
 ///
 /// ## HTML Response
@@ -74,7 +69,7 @@ part of 'result.dart';
 ///     '<html><body><h1>Hello!</h1></body></html>',
 ///     mimeType: MimeType.html,
 ///   ),
-/// )
+/// );
 /// ```
 class Response extends Message implements Result {
   /// The HTTP status code of the response.

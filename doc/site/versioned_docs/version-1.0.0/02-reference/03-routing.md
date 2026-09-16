@@ -95,9 +95,7 @@ Use a colon-prefixed name to capture a segment. Access the value with the `Symbo
 final app = RelicApp()
   ..get('/users/:id', (final Request request) {
     final userId = request.pathParameters.raw[#id];
-    return Response.ok(
-      body: Body.fromString('User $userId'),
-    );
+    return Response.ok(body: Body.fromString('User $userId'));
   });
 ```
 
@@ -176,7 +174,7 @@ than a linear scan.
 Consider these routes:
 
 ```dart
-router.get('/:entity/:id', entityHandler);      // Route 1
+router.get('/:entity/:id', entityHandler); // Route 1
 router.get('/users/:id/profile', profileHandler); // Route 2
 ```
 
@@ -194,7 +192,7 @@ Without backtracking, the request would fail because the router would commit to 
 Tail segments (`/**`) act as catch-alls and benefit from backtracking:
 
 ```dart
-router.get('/files/**', catchAllHandler);           // Route 1
+router.get('/files/**', catchAllHandler); // Route 1
 router.get('/files/special/report', reportHandler); // Route 2
 ```
 
