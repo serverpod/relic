@@ -43,7 +43,7 @@ class HeadersBase extends UnmodifiableMapView<String, Iterable<String>> {
 ///   // Set standard headers
 ///   h.contentType = ContentTypeHeader(
 ///     mimeType: MimeType.json,
-///     charset: 'utf-8',
+///     parameters: {'charset': 'utf-8'},
 ///   );
 ///
 ///   h.cacheControl = CacheControlHeader(
@@ -184,6 +184,11 @@ class Headers extends HeadersBase {
   static const contentLength = HeaderAccessor(
     Headers.contentLengthHeader,
     intHeaderCodec,
+  );
+
+  static const contentType = HeaderAccessor(
+    Headers.contentTypeHeader,
+    ContentTypeHeader.codec,
   );
 
   static const expect = HeaderAccessor(
@@ -429,7 +434,7 @@ class Headers extends HeadersBase {
     contentLanguage,
     contentLength,
     contentLocation,
-    // contentType, // Huh?
+    contentType,
     date,
     referrerPolicy,
     trailer,

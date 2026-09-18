@@ -36,6 +36,41 @@ void main() {
       expect(response.body, "Invalid 'test' header: Value cannot be empty");
     });
 
+    test('when a handler throws an UnsupportedFormMediaTypeException '
+        'then it returns a 415 Unsupported Media Type response', () async {
+      await _scheduleServer(
+        (_) => throw const UnsupportedFormMediaTypeException(
+          'Expected an HTML form request body.',
+        ),
+      );
+      final response = await _get();
+      expect(response.statusCode, 415);
+      expect(response.body, 'Expected an HTML form request body.');
+    });
+
+    test('when a handler throws a MalformedFormDataException '
+        'then it returns a 400 Bad Request response', () async {
+      await _scheduleServer(
+        (_) => throw const MalformedFormDataException('Malformed form data.'),
+      );
+      final response = await _get();
+      expect(response.statusCode, 400);
+      expect(response.body, 'Malformed form data.');
+    });
+
+    test('when a handler throws a FormLimitExceededException '
+        'then it returns a 413 Content Too Large response', () async {
+      await _scheduleServer(
+        (_) => throw const FormLimitExceededException(
+          limit: 'maxFieldCount',
+          message: 'Too many form fields.',
+        ),
+      );
+      final response = await _get();
+      expect(response.statusCode, 413);
+      expect(response.body, 'Too many form fields.');
+    });
+
     test('when a handler throws an UnimplementedError '
         'then it returns a 500 Internal Server Error response', () async {
       await _scheduleServer((_) => throw UnimplementedError());
