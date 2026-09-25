@@ -1,4 +1,5 @@
 import 'dart:io' as io;
+import 'dart:typed_data';
 
 import 'package:relic_core/relic_core.dart';
 import 'package:test/test.dart';
@@ -53,5 +54,24 @@ void main() {
       );
       expect(response, startsWith('HTTP/1.1 500'));
     });
+  });
+
+  test('Given a response body whose boundary parameter carries a line break, '
+      'when the response is written, '
+      'then a 500 response goes out without the injected header.', () async {
+    server = await testServe(
+      (final req) async => Response.ok(
+        body: Body.fromData(
+          Uint8List.fromList('x'.codeUnits),
+          mimeType: const MimeType('multipart', 'mixed'),
+          parameters: const {'boundary': 'abc\r\nX-Injected: 1'},
+        ),
+      ),
+    );
+
+    final response = await rawResponse();
+
+    expect(response, startsWith('HTTP/1.1 500'));
+    expect(response.toLowerCase(), isNot(contains('x-injected')));
   });
 }

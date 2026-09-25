@@ -137,8 +137,10 @@ void main() {
         expect(mimeType.primaryType, 'multipart');
         expect(mimeType.subType, 'byteranges');
 
-        final boundary = _extractBoundary(
-          response.headers[Headers.contentTypeHeader]!.first,
+        final boundary = response.body.bodyType!.parameter('boundary')!;
+        expect(
+          response.body.bodyType!.toHeaderValue(),
+          'multipart/byteranges; boundary=$boundary',
         );
 
         final bodyString = await response.readAsString();
@@ -165,27 +167,4 @@ void main() {
       },
     );
   });
-}
-
-String? _extractBoundary(final String contentType) {
-  // Split the Content-Type header by ';' to get individual parameters
-  final parts = contentType.split(';');
-
-  // Find the part that starts with 'boundary='
-  final boundaryPart = parts.firstWhere(
-    (final part) => part.trim().startsWith('boundary='),
-    orElse: () => '',
-  );
-
-  if (boundaryPart.isEmpty) {
-    return null;
-  }
-
-  // Extract the boundary string itself and remove any surrounding quotes
-  final boundary = boundaryPart
-      .trim()
-      .substring('boundary='.length)
-      .replaceAll('"', '');
-
-  return boundary;
 }

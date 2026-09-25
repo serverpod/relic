@@ -28,8 +28,7 @@ void main() {
         ),
       ),
     );
-    final contentType = response.headers[Headers.contentTypeHeader]!.first;
-    return contentType.split('boundary=').last;
+    return response.body.bodyType!.parameter('boundary')!;
   }
 
   group('Given many multipart range responses', () {

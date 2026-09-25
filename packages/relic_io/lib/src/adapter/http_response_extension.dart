@@ -107,15 +107,17 @@ extension on TransferEncodingHeader {
 extension on Body {
   /// Returns the content type of the body as a [ContentType].
   ///
-  /// This is a convenience method that combines [mimeType] and [encoding].
+  /// Combines the mime type, encoding and parameters of [bodyType].
   io.ContentType? getContentType() {
     final mBodyType = bodyType;
     if (mBodyType == null) return null;
-    final mimeType = mBodyType.mimeType..validate();
+    mBodyType.validate();
+    final mimeType = mBodyType.mimeType;
     return io.ContentType(
       mimeType.primaryType,
       mimeType.subType,
       charset: mBodyType.encoding?.name,
+      parameters: mBodyType.parameters,
     );
   }
 }

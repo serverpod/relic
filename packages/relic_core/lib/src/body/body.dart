@@ -87,7 +87,8 @@ class Body {
   /// determined efficiently.
   final int? contentLength;
 
-  /// Body type is a combination of [mimeType] and [encoding].
+  /// The media type, charset and parameters of this body, or null if it has
+  /// no media type.
   ///
   /// For incoming requests, this is populated from the request content type
   /// header.
@@ -95,9 +96,6 @@ class Body {
   /// For outgoing responses, this field is used to create the content type
   /// header.
   ///
-  /// This will be `null` if the body is empty.
-  ///
-  /// This is a convenience property that combines [mimeType] and [encoding].
   /// Example:
   /// ```dart
   /// var body = Body.fromString('hello', mimeType: MimeType.plainText);
@@ -110,9 +108,30 @@ class Body {
     this.contentLength, {
     final Encoding? encoding,
     final MimeType? mimeType,
-  }) : bodyType = mimeType == null
-           ? null
-           : BodyType(mimeType: mimeType, encoding: encoding);
+    final Map<String, String> parameters = const {},
+  }) : bodyType = _bodyType(mimeType, encoding, parameters);
+
+  static BodyType? _bodyType(
+    final MimeType? mimeType,
+    final Encoding? encoding,
+    final Map<String, String> parameters,
+  ) {
+    if (mimeType == null) {
+      if (parameters.isNotEmpty) {
+        throw ArgumentError.value(
+          parameters,
+          'parameters',
+          'Requires a mimeType',
+        );
+      }
+      return null;
+    }
+    return BodyType(
+      mimeType: mimeType,
+      encoding: encoding,
+      parameters: parameters,
+    );
+  }
 
   /// Creates an empty body.
   ///
@@ -220,11 +239,23 @@ class Body {
   ///   mimeType: MimeType.json,
   ///   // contentLength omitted for chunked encoding
   /// );
+  ///
+  /// // Multipart stream with its boundary
+  /// final multipartBody = Body.fromDataStream(
+  ///   partsStream,
+  ///   mimeType: MimeType.multipartFormData,
+  ///   parameters: {'boundary': boundary},
+  /// );
   /// ```
+  ///
+  /// [parameters] holds media type parameters other than `charset`, which
+  /// [encoding] sets. Throws [ArgumentError] if [parameters] has a `charset`,
+  /// or is not empty while [mimeType] is null.
   factory Body.fromDataStream(
     final Stream<Uint8List> body, {
     final Encoding? encoding,
     final MimeType? mimeType = MimeType.octetStream,
+    final Map<String, String> parameters = const {},
     final int? contentLength,
   }) {
     return Body._(
@@ -232,6 +263,7 @@ class Body {
       contentLength,
       encoding: encoding ?? (mimeType?.isText == true ? utf8 : null),
       mimeType: mimeType,
+      parameters: parameters,
     );
   }
 
@@ -261,10 +293,14 @@ class Body {
   /// final pdfBody = Body.fromData(pdfBytes);
   /// // Automatically detects application/pdf
   /// ```
+  ///
+  /// [parameters] holds media type parameters other than `charset`, which
+  /// [encoding] sets. Throws [ArgumentError] if [parameters] has a `charset`.
   factory Body.fromData(
     final Uint8List body, {
     final Encoding? encoding,
     MimeType? mimeType,
+    final Map<String, String> parameters = const {},
   }) {
     if (mimeType == null) {
       final mimeString = _resolver.lookup('', headerBytes: body);
@@ -275,6 +311,7 @@ class Body {
       body.length,
       encoding: encoding ?? (mimeType?.isText == true ? utf8 : null),
       mimeType: mimeType ?? MimeType.octetStream,
+      parameters: parameters,
     );
   }
 

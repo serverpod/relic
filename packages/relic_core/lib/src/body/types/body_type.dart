@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import '../../headers/typed/primitives/parameter_value.dart';
+import '../../headers/typed/primitives/token.dart';
 import 'mime_type.dart';
 
 /// A body type that combines MIME type and encoding information.
@@ -10,18 +12,18 @@ import 'mime_type.dart';
 /// Examples:
 /// ```dart
 /// // Text content with encoding
-/// const textType = BodyType(
+/// final textType = BodyType(
 ///   mimeType: MimeType.plainText,
 ///   encoding: utf8,
 /// );
 /// print(textType.toHeaderValue()); // "text/plain; charset=utf-8"
 ///
 /// // Binary content without encoding
-/// const binaryType = BodyType(mimeType: MimeType.octetStream);
+/// final binaryType = BodyType(mimeType: MimeType.octetStream);
 /// print(binaryType.toHeaderValue()); // "application/octet-stream"
 ///
 /// // JSON content
-/// const jsonType = BodyType(
+/// final jsonType = BodyType(
 ///   mimeType: MimeType.json,
 ///   encoding: utf8,
 /// );
@@ -34,28 +36,76 @@ class BodyType {
   /// The encoding of the body.
   final Encoding? encoding;
 
-  const BodyType({required this.mimeType, this.encoding});
+  /// Media type parameters other than `charset`, such as `boundary`.
+  ///
+  /// Keys are lowercase.
+  final Map<String, String> parameters;
 
-  /// Returns the value to use for the Content-Type header.
+  /// Creates a [BodyType].
   ///
-  /// If encoding is present, it's included as a charset parameter.
+  /// Lowercases the names in [parameters]. Throws [ArgumentError] if
+  /// [parameters] has a `charset`, which [encoding] sets.
+  BodyType({
+    required this.mimeType,
+    this.encoding,
+    final Map<String, String> parameters = const {},
+  }) : parameters = Map.unmodifiable(_normalizeParameters(parameters));
+
+  /// Returns the value of the parameter [name], matched case-insensitively.
+  String? parameter(final String name) => parameters[name.toLowerCase()];
+
+  /// Checks that the mime type and every parameter fit in a Content-Type
+  /// header.
   ///
-  /// Examples:
-  /// ```dart
-  /// const bodyType = BodyType(mimeType: MimeType.plainText, encoding: utf8);
-  /// print(bodyType.toHeaderValue()); // "text/plain; charset=utf-8"
-  ///
-  /// const binaryType = BodyType(mimeType: MimeType.octetStream);
-  /// print(binaryType.toHeaderValue()); // "application/octet-stream"
-  /// ```
-  String toHeaderValue() {
-    if (encoding != null) {
-      return '${mimeType.toHeaderValue()}; charset=${encoding!.name}';
-    } else {
-      return mimeType.toHeaderValue();
+  /// Throws [FormatException] if one does not.
+  void validate() {
+    mimeType.validate();
+    for (final MapEntry(:key, :value) in parameters.entries) {
+      Token.validate(key);
+      ParameterValue(value);
     }
   }
 
+  /// Returns the value to use for the Content-Type header.
+  ///
+  /// Writes [encoding] as the `charset` parameter, then each entry of
+  /// [parameters]. Throws [FormatException] where [validate] would.
+  ///
+  /// Examples:
+  /// ```dart
+  /// final bodyType = BodyType(mimeType: MimeType.plainText, encoding: utf8);
+  /// print(bodyType.toHeaderValue()); // "text/plain; charset=utf-8"
+  ///
+  /// final binaryType = BodyType(mimeType: MimeType.octetStream);
+  /// print(binaryType.toHeaderValue()); // "application/octet-stream"
+  /// ```
+  String toHeaderValue() {
+    final charset = encoding;
+    return [
+      mimeType.toHeaderValue(),
+      if (charset != null) 'charset=${charset.name}',
+      for (final MapEntry(:key, :value) in parameters.entries)
+        '${Token.validate(key)}=${ParameterValue(value).encode()}',
+    ].join('; ');
+  }
+
   @override
-  String toString() => 'BodyType(mimeType: $mimeType, encoding: $encoding)';
+  String toString() =>
+      'BodyType(mimeType: $mimeType, encoding: $encoding, '
+      'parameters: $parameters)';
+}
+
+Map<String, String> _normalizeParameters(final Map<String, String> parameters) {
+  final normalized = {
+    for (final MapEntry(:key, :value) in parameters.entries)
+      key.toLowerCase(): value,
+  };
+  if (normalized.containsKey('charset')) {
+    throw ArgumentError.value(
+      parameters,
+      'parameters',
+      'Use encoding to set the charset',
+    );
+  }
+  return normalized;
 }

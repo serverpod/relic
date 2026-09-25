@@ -45,7 +45,24 @@ Body bodyFromHttpRequest(final io.HttpRequest request) {
     contentLength: request.contentLength <= 0 ? null : request.contentLength,
     encoding: Encoding.getByName(contentType?.charset),
     mimeType: contentType?.toMimeType,
+    parameters: {
+      if (contentType != null)
+        for (final MapEntry(:key, :value) in contentType.parameters.entries)
+          if (key != 'charset' && value != null && _isWritable(key, value))
+            key: value,
+    },
   );
+}
+
+/// Whether relic can write a Content-Type parameter back to a header.
+bool _isWritable(final String name, final String value) {
+  if (!Token.isValid(name)) return false;
+  try {
+    ParameterValue(value);
+    return true;
+  } on FormatException {
+    return false;
+  }
 }
 
 /// Extension to convert a [ContentType] to a [MimeType].
