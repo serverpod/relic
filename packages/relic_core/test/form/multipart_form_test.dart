@@ -475,6 +475,30 @@ void main() {
       },
     );
   });
+
+  test(
+    'Given a multipart form whose text field has bytes that are not valid UTF-8, '
+    'when multipartForm is parsed, '
+    'then it throws MalformedFormDataException.',
+    () async {
+      final request = _multipartRequestBytes(
+        boundary: 'bad-utf8',
+        bodyBytes: _multipartBodyBytes('bad-utf8', [
+          const _PartBytes(
+            headers: {
+              Headers.contentDispositionHeader: 'form-data; name="name"',
+            },
+            body: [0xff, 0xfe],
+          ),
+        ]),
+      );
+
+      await expectLater(
+        request.multipartForm(),
+        throwsA(isA<MalformedFormDataException>()),
+      );
+    },
+  );
 }
 
 Request _urlEncodedRequest(final String body) {

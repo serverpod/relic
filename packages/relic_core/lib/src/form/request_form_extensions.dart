@@ -9,6 +9,7 @@ import '../context/result.dart';
 import '../headers/headers.dart';
 import '../headers/standard_headers_extensions.dart';
 import 'form_data.dart';
+import 'form_text.dart';
 import 'multipart_part.dart';
 
 /// Form parsing helpers for [Request].
@@ -31,9 +32,10 @@ extension FormRequestExtension on Request {
         Encoding.getByName(contentType?.charset ?? '') ??
         defaultEncoding ??
         utf8;
-    final body = await readAsString(
-      encoding: encoding,
-      maxLength: limits.maxBodySize,
+    final body = await decodeFormText(
+      read(maxLength: limits.maxBodySize),
+      encoding,
+      'Malformed form data',
     );
 
     return UrlEncodedFormData(
@@ -218,17 +220,18 @@ Future<String> _readPartAsString(
   final Encoding encoding,
   final int maxLength,
 ) async {
-  final builder = BytesBuilder(copy: false);
-  await for (final chunk in part.body.read()) {
-    builder.add(chunk);
-    if (builder.length > maxLength) {
-      throw const FormLimitExceededException(
-        limit: 'maxFieldSize',
-        message: 'Form field is too large.',
-      );
-    }
+  try {
+    return await decodeFormText(
+      part.body.read(maxLength: maxLength),
+      encoding,
+      'Malformed form field',
+    );
+  } on MaxBodySizeExceeded {
+    throw const FormLimitExceededException(
+      limit: 'maxFieldSize',
+      message: 'Form field is too large.',
+    );
   }
-  return encoding.decode(builder.takeBytes());
 }
 
 Stream<Uint8List> _limitedFileStream(

@@ -491,6 +491,26 @@ void main() {
       expect(() => request.read(), throwsStateError);
     });
   });
+
+  test('Given a multipart part whose body has bytes that are not valid UTF-8, '
+      'when the part is read as a string, '
+      'then it throws MalformedFormDataException.', () async {
+    final request = _request(
+      boundary: 'bad-utf8',
+      bodyBytes: _multipartBodyBytes('bad-utf8', [
+        const _PartBytes(
+          headers: {Headers.contentDispositionHeader: 'form-data; name="name"'},
+          body: [0xff, 0xfe],
+        ),
+      ]),
+    );
+    final part = await request.multipart().first;
+
+    await expectLater(
+      part.readAsString(),
+      throwsA(isA<MalformedFormDataException>()),
+    );
+  });
 }
 
 Request _request({
