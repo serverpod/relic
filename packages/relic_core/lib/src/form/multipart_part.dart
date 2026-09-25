@@ -8,7 +8,7 @@ import 'form_data.dart';
 import 'form_text.dart';
 
 /// A streamed multipart form part.
-final class MultipartPart {
+sealed class MultipartPart {
   /// Part headers.
   final Headers headers;
 
@@ -18,28 +18,57 @@ final class MultipartPart {
   /// Parsed part Content-Type header, if present.
   final ContentTypeHeader? contentType;
 
-  /// Form field name from Content-Disposition, if present.
-  final String? name;
-
-  /// Uploaded filename from Content-Disposition, if present.
-  final String? filename;
-
   /// Single-read body for this part.
   final Body body;
 
-  /// Creates a multipart part.
+  /// Creates the multipart part that matches the Content-Disposition in
+  /// [headers].
+  ///
+  /// Throws [MalformedFormDataException] if the Content-Disposition or
+  /// Content-Type in [headers] does not parse.
   factory MultipartPart({
     required final Headers headers,
     required final Body body,
   }) {
     final contentDisposition = _parseContentDisposition(headers);
-    return MultipartPart._(
+    final contentType = _parseContentType(headers);
+    final name = contentDisposition?.type.toLowerCase() == 'form-data'
+        ? _contentDispositionParameter(contentDisposition, 'name')
+        : null;
+    if (name == null) {
+      return MultipartOtherPart._(
+        headers: headers,
+        contentDisposition: contentDisposition,
+        contentType: contentType,
+        body: body,
+      );
+    }
+
+    final filename = _filename(contentDisposition);
+    if (filename == null) {
+      return MultipartFieldPart._(
+        headers: headers,
+        contentDisposition: contentDisposition,
+        contentType: contentType,
+        body: body,
+        name: name,
+      );
+    }
+    if (filename.isEmpty) {
+      return MultipartOtherPart._(
+        headers: headers,
+        contentDisposition: contentDisposition,
+        contentType: contentType,
+        body: body,
+      );
+    }
+    return MultipartFilePart._(
       headers: headers,
       contentDisposition: contentDisposition,
-      contentType: _parseContentType(headers),
-      name: _contentDispositionParameter(contentDisposition, 'name'),
-      filename: _filename(contentDisposition),
+      contentType: contentType,
       body: body,
+      name: name,
+      filename: filename,
     );
   }
 
@@ -47,19 +76,8 @@ final class MultipartPart {
     required this.headers,
     required this.contentDisposition,
     required this.contentType,
-    required this.name,
-    required this.filename,
     required this.body,
   });
-
-  /// Whether this part is a non-file form field.
-  bool get isField => _isFormData && name != null && filename == null;
-
-  /// Whether this part is a file upload field.
-  bool get isFile =>
-      _isFormData && name != null && filename?.isNotEmpty == true;
-
-  bool get _isFormData => contentDisposition?.type.toLowerCase() == 'form-data';
 
   /// Reads the part body as a string.
   ///
@@ -77,6 +95,49 @@ final class MultipartPart {
 
   /// Consumes and discards the part body.
   Future<void> discard() => body.read().drain<void>();
+}
+
+/// A named `form-data` part without a filename.
+final class MultipartFieldPart extends MultipartPart {
+  /// Form field name from Content-Disposition.
+  final String name;
+
+  MultipartFieldPart._({
+    required super.headers,
+    required super.contentDisposition,
+    required super.contentType,
+    required super.body,
+    required this.name,
+  }) : super._();
+}
+
+/// A named `form-data` part with a filename.
+final class MultipartFilePart extends MultipartPart {
+  /// Form field name from Content-Disposition.
+  final String name;
+
+  /// Uploaded filename from Content-Disposition, reduced to its basename.
+  final String filename;
+
+  MultipartFilePart._({
+    required super.headers,
+    required super.contentDisposition,
+    required super.contentType,
+    required super.body,
+    required this.name,
+    required this.filename,
+  }) : super._();
+}
+
+/// A part that is neither a [MultipartFieldPart] nor a [MultipartFilePart],
+/// such as a part without a name or without `form-data` disposition.
+final class MultipartOtherPart extends MultipartPart {
+  MultipartOtherPart._({
+    required super.headers,
+    required super.contentDisposition,
+    required super.contentType,
+    required super.body,
+  }) : super._();
 }
 
 ContentDispositionHeader? _parseContentDisposition(final Headers headers) {

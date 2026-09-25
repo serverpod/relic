@@ -91,62 +91,55 @@ extension FormRequestExtension on Request {
 
     try {
       await for (final part in multipart(limits: limits)) {
-        final name = part.name;
-        if (name == null) {
-          await part.discard();
-          continue;
-        }
+        switch (part) {
+          case MultipartFieldPart(:final name):
+            if (fields.length == limits.maxFieldCount) {
+              throw const FormLimitExceededException(
+                limit: 'maxFieldCount',
+                message: 'Too many form fields.',
+              );
+            }
 
-        if (part.isField) {
-          if (fields.length == limits.maxFieldCount) {
-            throw const FormLimitExceededException(
-              limit: 'maxFieldCount',
-              message: 'Too many form fields.',
+            final encoding =
+                Encoding.getByName(part.contentType?.charset ?? '') ??
+                defaultEncoding ??
+                utf8;
+            final value = await _readPartAsString(
+              part,
+              encoding,
+              limits.maxFieldSize,
             );
-          }
+            final entry = FormFieldEntry(name: name, value: value);
+            fields.add(entry);
+            entries.add(entry);
 
-          final encoding =
-              Encoding.getByName(part.contentType?.charset ?? '') ??
-              defaultEncoding ??
-              utf8;
-          final value = await _readPartAsString(
-            part,
-            encoding,
-            limits.maxFieldSize,
-          );
-          final entry = FormFieldEntry(name: name, value: value);
-          fields.add(entry);
-          entries.add(entry);
-          continue;
+          case MultipartFilePart(:final name, :final filename):
+            if (files.length == limits.maxFileCount) {
+              throw const FormLimitExceededException(
+                limit: 'maxFileCount',
+                message: 'Too many uploaded files.',
+              );
+            }
+
+            final file = await storage.store(
+              fieldName: name,
+              filename: filename,
+              contentType: part.contentType,
+              headers: part.headers,
+              content: _limitedFileStream(
+                part.body.read(),
+                limits,
+                () => totalFileSize,
+                (final value) => totalFileSize = value,
+              ),
+            );
+            final entry = FileFieldEntry(name: name, file: file);
+            files.add(entry);
+            entries.add(entry);
+
+          case MultipartOtherPart():
+            await part.discard();
         }
-
-        if (!part.isFile) {
-          await part.discard();
-          continue;
-        }
-
-        if (files.length == limits.maxFileCount) {
-          throw const FormLimitExceededException(
-            limit: 'maxFileCount',
-            message: 'Too many uploaded files.',
-          );
-        }
-
-        final file = await storage.store(
-          fieldName: name,
-          filename: part.filename,
-          contentType: part.contentType,
-          headers: part.headers,
-          content: _limitedFileStream(
-            part.body.read(),
-            limits,
-            () => totalFileSize,
-            (final value) => totalFileSize = value,
-          ),
-        );
-        final entry = FileFieldEntry(name: name, file: file);
-        files.add(entry);
-        entries.add(entry);
       }
 
       return MultipartFormData(
