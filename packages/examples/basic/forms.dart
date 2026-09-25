@@ -98,7 +98,7 @@ Future<Response> _streamUpload(final Request req) async {
             bytes += chunk.length;
           }
           lines.add(
-            'file $name: filename=$filename, '
+            'file $name: filename=${filename ?? ''}, '
             'content-type=${part.contentType?.mimeType ?? ''}, bytes=$bytes',
           );
 

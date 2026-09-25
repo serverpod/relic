@@ -44,8 +44,8 @@ sealed class MultipartPart {
       );
     }
 
-    final filename = _filename(contentDisposition);
-    if (filename == null) {
+    final rawFilename = _contentDispositionFilename(contentDisposition);
+    if (rawFilename == null || rawFilename.isEmpty) {
       return MultipartFieldPart._(
         headers: headers,
         contentDisposition: contentDisposition,
@@ -54,21 +54,13 @@ sealed class MultipartPart {
         name: name,
       );
     }
-    if (filename.isEmpty) {
-      return MultipartOtherPart._(
-        headers: headers,
-        contentDisposition: contentDisposition,
-        contentType: contentType,
-        body: body,
-      );
-    }
     return MultipartFilePart._(
       headers: headers,
       contentDisposition: contentDisposition,
       contentType: contentType,
       body: body,
       name: name,
-      filename: filename,
+      filename: _sanitizeFilename(rawFilename),
     );
   }
 
@@ -117,7 +109,11 @@ final class MultipartFilePart extends MultipartPart {
   final String name;
 
   /// Uploaded filename from Content-Disposition, reduced to its basename.
-  final String filename;
+  ///
+  /// It holds no control characters, line or paragraph separators,
+  /// zero-width spaces or bidirectional formatting characters. Null when
+  /// nothing usable is left, such as for `.`, `..` or `dir/`.
+  final String? filename;
 
   MultipartFilePart._({
     required super.headers,
@@ -175,11 +171,19 @@ String? _contentDispositionParameter(
   return null;
 }
 
-String? _filename(final ContentDispositionHeader? disposition) {
-  final parameter = _contentDispositionFilename(disposition);
-  if (parameter == null || parameter.isEmpty) return null;
-  return _basename(parameter);
+String? _sanitizeFilename(final String filename) {
+  final basename = _basename(filename.replaceAll(_unsafeCharacters, ''));
+  if (basename.isEmpty || basename == '.' || basename == '..') return null;
+  return basename;
 }
+
+/// C0 and C1 controls, line and paragraph separators, zero-width spaces and
+/// bidirectional formatting characters, which can disguise a name when it is
+/// displayed. Zero-width joiners and non-joiners stay, since emoji sequences
+/// and scripts such as Persian need them.
+final _unsafeCharacters = RegExp(
+  r'[\x00-\x1f\x7f-\x9f\u061c\u200b\u200e\u200f\u2028\u2029\u202a-\u202e\u2066-\u2069\ufeff]',
+);
 
 String? _contentDispositionFilename(
   final ContentDispositionHeader? disposition,
