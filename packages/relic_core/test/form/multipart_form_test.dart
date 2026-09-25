@@ -190,30 +190,6 @@ void main() {
         expect(form.files.getRequired('upload').filename, 'report.txt');
       },
     );
-
-    test(
-      'when multipart filename is empty, then it is aggregated as a field',
-      () async {
-        final request = _multipartRequest(
-          boundary: 'empty-file',
-          body: _multipartBody('empty-file', [
-            _Part(
-              headers: const {
-                Headers.contentDispositionHeader:
-                    'form-data; name="upload"; filename=""',
-              },
-              body: '',
-            ),
-          ]),
-        );
-
-        final form = await request.multipartForm();
-
-        expect(form.fields.get('upload'), '');
-        expect(form.files.entries, isEmpty);
-        expect(form.entries, [const FormFieldEntry(name: 'upload', value: '')]);
-      },
-    );
   });
 
   group('Given a multipart form request with latin1 field data', () {
@@ -498,6 +474,135 @@ void main() {
       );
     },
   );
+
+  test('Given a multipart form with an empty file input sent as filename="", '
+      'when multipartForm is parsed, '
+      'then the file input is left out of the form.', () async {
+    final request = _multipartRequest(
+      boundary: 'empty-file-input',
+      body: _multipartBody('empty-file-input', [
+        const _Part(
+          headers: {
+            Headers.contentDispositionHeader:
+                'form-data; name="upload"; filename=""',
+            Headers.contentTypeHeader: 'application/octet-stream',
+          },
+          body: '',
+        ),
+      ]),
+    );
+
+    final form = await request.multipartForm();
+
+    expect(form.entries, isEmpty);
+  });
+
+  test(
+    'Given a multipart form with one text field and an empty file input sent as filename="", '
+    'when multipartForm is parsed with a maxFieldCount of 1, '
+    'then it returns the text field.',
+    () async {
+      final request = _multipartRequest(
+        boundary: 'empty-file-count',
+        body: _multipartBody('empty-file-count', [
+          _field('title', 'Report'),
+          const _Part(
+            headers: {
+              Headers.contentDispositionHeader:
+                  'form-data; name="upload"; filename=""',
+              Headers.contentTypeHeader: 'application/octet-stream',
+            },
+            body: '',
+          ),
+        ]),
+      );
+
+      final form = await request.multipartForm(
+        limits: FormLimits(maxFieldCount: 1),
+      );
+
+      expect(form.fields.get('title'), 'Report');
+    },
+  );
+
+  test(
+    'Given a multipart form with a file part sent as filename="" that holds binary content, '
+    'when multipartForm is parsed, '
+    'then the content is not decoded as a text field.',
+    () async {
+      final request = _multipartRequestBytes(
+        boundary: 'empty-filename-binary',
+        bodyBytes: _multipartBodyBytes('empty-filename-binary', [
+          const _PartBytes(
+            headers: {
+              Headers.contentDispositionHeader:
+                  'form-data; name="upload"; filename=""',
+              Headers.contentTypeHeader: 'application/octet-stream',
+            },
+            body: [0x89, 0x50, 0x4e, 0x47, 0xff, 0xfe],
+          ),
+        ]),
+      );
+
+      final form = await request.multipartForm();
+
+      expect(form.fields.getAll('upload'), isEmpty);
+    },
+  );
+
+  test('Given a multipart form with two empty file inputs sent as filename="", '
+      'when multipartForm is parsed with a maxFileCount of 1, '
+      'then it returns the form.', () async {
+    final request = _multipartRequest(
+      boundary: 'empty-file-inputs',
+      body: _multipartBody('empty-file-inputs', [
+        const _Part(
+          headers: {
+            Headers.contentDispositionHeader:
+                'form-data; name="first"; filename=""',
+            Headers.contentTypeHeader: 'application/octet-stream',
+          },
+          body: '',
+        ),
+        const _Part(
+          headers: {
+            Headers.contentDispositionHeader:
+                'form-data; name="second"; filename=""',
+            Headers.contentTypeHeader: 'application/octet-stream',
+          },
+          body: '',
+        ),
+      ]),
+    );
+
+    await expectLater(
+      request.multipartForm(limits: FormLimits(maxFileCount: 1)),
+      completes,
+    );
+  });
+
+  test('Given a multipart form with an empty file input sent as filename="", '
+      'when multipartForm is parsed with an upload storage, '
+      'then the upload storage receives no file.', () async {
+    final storage = _RecordingUploadStorage();
+    final request = _multipartRequest(
+      boundary: 'empty-file-storage',
+      body: _multipartBody('empty-file-storage', [
+        const _Part(
+          headers: {
+            Headers.contentDispositionHeader:
+                'form-data; name="upload"; filename=""',
+            Headers.contentTypeHeader: 'application/octet-stream',
+          },
+          body: '',
+        ),
+      ]),
+    );
+
+    await request.multipartForm(uploadStorage: storage);
+
+    expect(storage.files, isEmpty);
+  });
 
   test('Given a multipart file part with filename "..", '
       'when multipartForm is parsed, '

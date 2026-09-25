@@ -45,7 +45,7 @@ sealed class MultipartPart {
     }
 
     final rawFilename = _contentDispositionFilename(contentDisposition);
-    if (rawFilename == null || rawFilename.isEmpty) {
+    if (rawFilename == null) {
       return MultipartFieldPart._(
         headers: headers,
         contentDisposition: contentDisposition,
@@ -61,6 +61,7 @@ sealed class MultipartPart {
       body: body,
       name: name,
       filename: _sanitizeFilename(rawFilename),
+      hasEmptyFilename: rawFilename.isEmpty,
     );
   }
 
@@ -89,7 +90,7 @@ sealed class MultipartPart {
   Future<void> discard() => body.read().drain<void>();
 }
 
-/// A named `form-data` part without a filename.
+/// A named `form-data` part without a filename parameter.
 final class MultipartFieldPart extends MultipartPart {
   /// Form field name from Content-Disposition.
   final String name;
@@ -103,7 +104,8 @@ final class MultipartFieldPart extends MultipartPart {
   }) : super._();
 }
 
-/// A named `form-data` part with a filename.
+/// A named `form-data` part with a `filename` or `filename*` parameter,
+/// even an empty one.
 final class MultipartFilePart extends MultipartPart {
   /// Form field name from Content-Disposition.
   final String name;
@@ -112,8 +114,13 @@ final class MultipartFilePart extends MultipartPart {
   ///
   /// It holds no control characters, line or paragraph separators,
   /// zero-width spaces or bidirectional formatting characters. Null when
-  /// nothing usable is left, such as for `.`, `..` or `dir/`.
+  /// nothing usable is left, such as for an empty filename, `.`, `..` or
+  /// `dir/`.
   final String? filename;
+
+  /// Whether the filename parameter is empty, as browsers send it for a file
+  /// input with no file selected.
+  final bool hasEmptyFilename;
 
   MultipartFilePart._({
     required super.headers,
@@ -122,6 +129,7 @@ final class MultipartFilePart extends MultipartPart {
     required super.body,
     required this.name,
     required this.filename,
+    required this.hasEmptyFilename,
   }) : super._();
 }
 
