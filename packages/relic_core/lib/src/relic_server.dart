@@ -6,7 +6,9 @@ import 'context/result.dart';
 import 'form/form_data.dart';
 import 'handler/handler.dart';
 import 'headers/exception/header_exception.dart';
+import 'headers/headers.dart';
 import 'headers/standard_headers_extensions.dart';
+import 'headers/typed/headers/connection_header.dart';
 import 'isolated_object.dart';
 import 'logger/logger.dart';
 import 'util/util.dart';
@@ -195,15 +197,17 @@ final class _RelicServer implements RelicServer {
         return Response.badRequest(
           body: Body.fromString(error.httpResponseBody),
         );
-      } on UnsupportedFormMediaTypeException catch (error, stackTrace) {
-        _logError(req, 'Unsupported form media type.\n$error', stackTrace);
-        return Response(error.statusCode, body: Body.fromString(error.message));
-      } on MalformedFormDataException catch (error, stackTrace) {
-        _logError(req, 'Malformed form data.\n$error', stackTrace);
-        return Response.badRequest(body: Body.fromString(error.message));
-      } on FormLimitExceededException catch (error, stackTrace) {
-        _logError(req, 'Form limit exceeded.\n$error', stackTrace);
-        return Response.contentTooLarge(body: Body.fromString(error.message));
+      } on FormException catch (error, stackTrace) {
+        _logError(req, 'Error handling form data.\n$error', stackTrace);
+        return Response(
+          error.statusCode,
+          headers: Headers.build(
+            (final mh) => mh.connection = const ConnectionHeader.directives([
+              ConnectionHeaderType.close,
+            ]),
+          ),
+          body: Body.fromString(error.message),
+        );
       } on MaxBodySizeExceeded catch (error, stackTrace) {
         // If the request body is too large, respond with a 413 Payload Too Large status.
         _logError(req, 'Error handling request.\n$error', stackTrace);
