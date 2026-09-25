@@ -1,6 +1,7 @@
 import 'package:collection/collection.dart';
 
 import '../../../../relic_core.dart';
+import '../primitives/ext_value.dart';
 
 /// A class representing the HTTP Content-Disposition header.
 ///
@@ -98,14 +99,12 @@ class ContentDispositionParameter {
   /// The value of the parameter.
   final String value;
 
-  /// Whether the parameter uses extended encoding (e.g., `filename*`).
+  /// Whether the parameter uses the RFC 8187 extended form, such as
+  /// `filename*`, whose value always encodes as UTF-8.
   final bool isExtended;
 
-  /// The character encoding used, if specified (e.g., `UTF-8`).
-  final String? encoding;
-
-  /// The optional language tag, if specified (e.g., `en`).
-  final String? language;
+  /// The language of an extended parameter, such as `en`, if it has one.
+  final LanguageTag? language;
 
   /// Constructs a [ContentDispositionParameter] with the specified name, value,
   /// and whether it uses extended encoding.
@@ -113,12 +112,16 @@ class ContentDispositionParameter {
     required this.name,
     required this.value,
     this.isExtended = false,
-    this.encoding,
     this.language,
   });
 
   /// Parses a parameter string and returns a [ContentDispositionParameter]
   /// instance.
+  ///
+  /// Throws [FormatException] if the parameter is malformed, including an
+  /// extended value that is not a UTF-8 [RFC 8187][rfc8187] `ext-value`.
+  ///
+  /// [rfc8187]: https://datatracker.ietf.org/doc/html/rfc8187#section-3.2
   factory ContentDispositionParameter.parse(final String part) {
     final equals = part.indexOf('=');
     if (equals < 0) {
@@ -131,35 +134,19 @@ class ContentDispositionParameter {
       throw const FormatException('Invalid parameter format');
     }
 
-    final bool isExtended = name.endsWith('*');
-    var value = isExtended ? rawValue : _readParameterValue(rawValue);
-    String? encoding;
-    String? language;
-
-    if (isExtended) {
-      /* Legal extended forms
-      filename*=UTF-8'en'example.txt    // charset and language
-      filename*=UTF-8''example.txt      // charset only
-      filename*='en'example.txt         // language only
-      filename*=''example.txt           // neither
-      */
-      final extendedRegex = RegExp(r"^([\w-]*)'([\w-]*)'(.*)$");
-      final match = extendedRegex.firstMatch(value);
-      if (match != null) {
-        // match guarentees 3 groups, some may be empty
-        final groups = match.groups([0, 1, 2, 3]).cast<String>();
-        encoding = groups[1].nullIfEmpty;
-        language = groups[2].nullIfEmpty;
-        value = Uri.decodeComponent(groups[3]);
-      }
+    if (name.endsWith('*')) {
+      final extValue = ExtValue.parse(rawValue);
+      return ContentDispositionParameter(
+        name: name.replaceAll('*', ''),
+        value: extValue.value,
+        isExtended: true,
+        language: extValue.language,
+      );
     }
 
     return ContentDispositionParameter(
       name: name.replaceAll('*', ''),
-      value: value,
-      isExtended: isExtended,
-      encoding: encoding,
-      language: language,
+      value: _readParameterValue(rawValue),
     );
   }
 
@@ -168,11 +155,7 @@ class ContentDispositionParameter {
   String _encode() {
     Token.validate(name);
     if (isExtended) {
-      final charset = encoding;
-      final lang = language;
-      if (charset != null) Token.validate(charset);
-      if (lang != null) Token.validate(lang);
-      return "$name*=${charset ?? ''}'${lang ?? ''}'${Uri.encodeComponent(value)}";
+      return '$name*=${ExtValue(value, language: language).encode()}';
     }
     return '$name=${ParameterValue(value).encode()}';
   }
@@ -184,21 +167,16 @@ class ContentDispositionParameter {
           name == other.name &&
           value == other.value &&
           isExtended == other.isExtended &&
-          encoding == other.encoding &&
           language == other.language;
 
   @override
-  int get hashCode => Object.hash(name, value, isExtended, encoding, language);
+  int get hashCode => Object.hash(name, value, isExtended, language);
 
   @override
   String toString() {
     return 'ContentDispositionParameter(name: $name, value: $value, '
-        'isExtended: $isExtended, encoding: $encoding, language: $language)';
+        'isExtended: $isExtended, language: $language)';
   }
-}
-
-extension on String {
-  String? get nullIfEmpty => isEmpty ? null : this;
 }
 
 const int _semicolon = 0x3B;
