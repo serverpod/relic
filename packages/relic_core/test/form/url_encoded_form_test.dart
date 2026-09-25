@@ -75,19 +75,16 @@ void main() {
 
       expect(form.fields.get('name'), 'André');
     });
+  });
 
-    test(
-      'when no charset is present, then the default encoding is used',
-      () async {
-        final request = _request(
-          bodyBytes: Uint8List.fromList(latin1.encode('name=Andr%E9')),
-        );
+  test('Given a urlencoded form request without a charset, '
+      'when parsed, '
+      'then it decodes percent escapes as UTF-8.', () async {
+    final request = _request(body: 'name=Andr%C3%A9');
 
-        final form = await request.urlEncodedForm(defaultEncoding: latin1);
+    final form = await request.urlEncodedForm();
 
-        expect(form.fields.get('name'), 'André');
-      },
-    );
+    expect(form.fields.get('name'), 'André');
   });
 
   group('Given a request with an unsupported Content-Type', () {
@@ -225,10 +222,6 @@ void main() {
         Method.post,
         Uri.parse('http://localhost/form'),
         Object(),
-        headers: Headers.build(
-          (final mh) =>
-              mh.contentType = ContentTypeHeader(mimeType: MimeType.urlEncoded),
-        ),
         body: Body.fromDataStream(
           Stream.error(upstream),
           mimeType: MimeType.urlEncoded,
@@ -238,6 +231,21 @@ void main() {
       await expectLater(request.urlEncodedForm(), throwsA(same(upstream)));
     },
   );
+
+  test('Given a request with a urlencoded body and no Content-Type header, '
+      'when parsed, '
+      'then it returns the fields.', () async {
+    final request = RequestInternal.create(
+      Method.post,
+      Uri.parse('http://localhost/form'),
+      Object(),
+      body: Body.fromString('name=Gustavo', mimeType: MimeType.urlEncoded),
+    );
+
+    final form = await request.urlEncodedForm();
+
+    expect(form.fields.get('name'), 'Gustavo');
+  });
 }
 
 Request _request({
@@ -245,19 +253,28 @@ Request _request({
   final Uint8List? bodyBytes,
   final ContentTypeHeader? contentType,
 }) {
-  final headers = Headers.build(
-    (final mh) => mh.contentType =
-        contentType ?? ContentTypeHeader(mimeType: MimeType.urlEncoded),
-  );
-
   return RequestInternal.create(
     Method.post,
     Uri.parse('http://localhost/form'),
     Object(),
-    headers: headers,
-    body: Body.fromData(
+    body: _bodyFromContentType(
       bodyBytes ?? Uint8List.fromList(utf8.encode(body ?? '')),
-      mimeType: contentType?.mimeType ?? MimeType.urlEncoded,
+      contentType ?? ContentTypeHeader(mimeType: MimeType.urlEncoded),
     ),
+  );
+}
+
+Body _bodyFromContentType(
+  final Uint8List bytes,
+  final ContentTypeHeader contentType,
+) {
+  return Body.fromData(
+    bytes,
+    mimeType: contentType.mimeType,
+    encoding: Encoding.getByName(contentType.charset ?? ''),
+    parameters: {
+      for (final MapEntry(:key, :value) in contentType.parameters.entries)
+        if (key != 'charset') key: value,
+    },
   );
 }

@@ -641,17 +641,30 @@ Request _request({
     mimeType: MimeType.multipartFormData,
     parameters: {if (boundary != null) 'boundary': boundary},
   );
-  final headers = Headers.build((final mh) => mh.contentType = contentType);
 
   return RequestInternal.create(
     Method.post,
     Uri.parse('http://localhost/form'),
     Object(),
-    headers: headers,
-    body: Body.fromData(
+    body: _bodyFromContentType(
       bodyBytes ?? Uint8List.fromList(utf8.encode(body ?? '')),
-      mimeType: contentType.mimeType,
+      contentType,
     ),
+  );
+}
+
+Body _bodyFromContentType(
+  final Uint8List bytes,
+  final ContentTypeHeader contentType,
+) {
+  return Body.fromData(
+    bytes,
+    mimeType: contentType.mimeType,
+    encoding: Encoding.getByName(contentType.charset ?? ''),
+    parameters: {
+      for (final MapEntry(:key, :value) in contentType.parameters.entries)
+        if (key != 'charset') key: value,
+    },
   );
 }
 

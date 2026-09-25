@@ -192,27 +192,24 @@ void main() {
     );
   });
 
-  group('Given a multipart form request with latin1 field data', () {
-    test(
-      'when no part charset is present, then the default encoding is used',
-      () async {
-        final request = _multipartRequestBytes(
-          boundary: 'latin-default',
-          bodyBytes: _multipartBodyBytes('latin-default', [
-            _PartBytes(
-              headers: const {
-                Headers.contentDispositionHeader: 'form-data; name="name"',
-              },
-              body: latin1.encode('André'),
-            ),
-          ]),
-        );
-
-        final form = await request.multipartForm(defaultEncoding: latin1);
-
-        expect(form.fields.get('name'), 'André');
-      },
+  test('Given a multipart form whose text field has no charset, '
+      'when multipartForm is parsed, '
+      'then it decodes the field as UTF-8.', () async {
+    final request = _multipartRequestBytes(
+      boundary: 'utf8-default',
+      bodyBytes: _multipartBodyBytes('utf8-default', [
+        _PartBytes(
+          headers: const {
+            Headers.contentDispositionHeader: 'form-data; name="name"',
+          },
+          body: utf8.encode('André'),
+        ),
+      ]),
     );
+
+    final form = await request.multipartForm();
+
+    expect(form.fields.get('name'), 'André');
   });
 
   group('Given a multipart form with uploaded files', () {
@@ -248,11 +245,6 @@ void main() {
           Method.post,
           Uri.parse('http://localhost/form'),
           Object(),
-          headers: Headers.build(
-            (final mh) => mh.contentType = ContentTypeHeader(
-              mimeType: MimeType.plainText,
-            ),
-          ),
           body: Body.fromString('plain', mimeType: MimeType.plainText),
         );
 
@@ -270,11 +262,6 @@ void main() {
           Method.post,
           Uri.parse('http://localhost/form'),
           Object(),
-          headers: Headers.build(
-            (final mh) => mh.contentType = ContentTypeHeader(
-              mimeType: MimeType.plainText,
-            ),
-          ),
           body: Body.fromString('plain', mimeType: MimeType.plainText),
         );
 
@@ -692,6 +679,22 @@ void main() {
 
     expect(form.files.getRequired('upload').filename, 'report.txt');
   });
+
+  test('Given a request with a urlencoded body and no Content-Type header, '
+      'when formData is parsed, '
+      'then it returns UrlEncodedFormData with the fields.', () async {
+    final request = RequestInternal.create(
+      Method.post,
+      Uri.parse('http://localhost/form'),
+      Object(),
+      body: Body.fromString('name=Gustavo', mimeType: MimeType.urlEncoded),
+    );
+
+    final form = await request.formData();
+
+    expect(form, isA<UrlEncodedFormData>());
+    expect(form.fields.get('name'), 'Gustavo');
+  });
 }
 
 Request _urlEncodedRequest(final String body) {
@@ -699,10 +702,6 @@ Request _urlEncodedRequest(final String body) {
     Method.post,
     Uri.parse('http://localhost/form'),
     Object(),
-    headers: Headers.build(
-      (final mh) =>
-          mh.contentType = ContentTypeHeader(mimeType: MimeType.urlEncoded),
-    ),
     body: Body.fromString(body, mimeType: MimeType.urlEncoded),
   );
 }
@@ -725,13 +724,11 @@ Request _multipartRequestBytes({
     Method.post,
     Uri.parse('http://localhost/form'),
     Object(),
-    headers: Headers.build(
-      (final mh) => mh.contentType = ContentTypeHeader(
-        mimeType: MimeType.multipartFormData,
-        parameters: {'boundary': boundary},
-      ),
+    body: Body.fromData(
+      bodyBytes,
+      mimeType: MimeType.multipartFormData,
+      parameters: {'boundary': boundary},
     ),
-    body: Body.fromData(bodyBytes, mimeType: MimeType.multipartFormData),
   );
 }
 

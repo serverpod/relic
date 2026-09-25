@@ -242,13 +242,14 @@ Future<
 >
 _storeMemoryUpload() async {
   const storage = MemoryUploadStorage();
-  final headers = Headers.build(
-    (final mh) => mh.contentType = ContentTypeHeader(
-      mimeType: MimeType.plainText,
-      parameters: const {'charset': 'utf-8'},
-    ),
+  final contentType = ContentTypeHeader(
+    mimeType: MimeType.plainText,
+    parameters: const {'charset': 'utf-8'},
   );
-  final contentType = headers.contentType;
+  final headers = Headers.build(
+    (final mh) => mh[Headers.contentTypeHeader] = ContentTypeHeader.codec
+        .encode(contentType),
+  );
 
   final file = await storage.store(
     fieldName: 'upload',

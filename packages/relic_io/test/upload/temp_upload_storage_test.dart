@@ -25,17 +25,19 @@ void main() {
       'when content is stored, then it returns a temp uploaded file with metadata',
       () async {
         final storage = TempUploadStorage(directory: tempDir);
+        final contentType = ContentTypeHeader(
+          mimeType: MimeType.plainText,
+          parameters: const {'charset': 'utf-8'},
+        );
         final headers = Headers.build(
-          (final mh) => mh.contentType = ContentTypeHeader(
-            mimeType: MimeType.plainText,
-            parameters: const {'charset': 'utf-8'},
-          ),
+          (final mh) => mh[Headers.contentTypeHeader] = ContentTypeHeader.codec
+              .encode(contentType),
         );
 
         final uploaded = await storage.store(
           fieldName: 'upload',
           filename: 'hello.txt',
-          contentType: headers.contentType,
+          contentType: contentType,
           headers: headers,
           content: Stream.value(Uint8List.fromList(utf8.encode('hello'))),
         );
@@ -208,15 +210,10 @@ Request _multipartRequest({
     Method.post,
     Uri.parse('http://localhost/form'),
     Object(),
-    headers: Headers.build(
-      (final mh) => mh.contentType = ContentTypeHeader(
-        mimeType: MimeType.multipartFormData,
-        parameters: {'boundary': boundary},
-      ),
-    ),
     body: Body.fromData(
       Uint8List.fromList(utf8.encode(body)),
       mimeType: MimeType.multipartFormData,
+      parameters: {'boundary': boundary},
     ),
   );
 }
