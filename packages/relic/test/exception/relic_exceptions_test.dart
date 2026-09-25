@@ -85,7 +85,7 @@ void main() {
         'then it returns a 413 Content Too Large response', () async {
       await _scheduleServer(
         (_) => throw const FormLimitExceededException(
-          limit: 'maxFieldCount',
+          limit: FormLimit.maxFieldCount,
           message: 'Too many form fields.',
         ),
       );
@@ -139,7 +139,7 @@ void main() {
         'then the response closes the connection.', () async {
       await _scheduleServer(
         (_) => throw const FormLimitExceededException(
-          limit: 'maxFieldCount',
+          limit: FormLimit.maxFieldCount,
           message: 'Too many form fields.',
         ),
       );

@@ -77,6 +77,19 @@ final class FormLimits {
   }
 }
 
+/// A limit in [FormLimits].
+enum FormLimit {
+  maxBodySize,
+  maxFieldCount,
+  maxFileCount,
+  maxPartCount,
+  maxFieldSize,
+  maxFileSize,
+  maxTotalFileSize,
+  maxPartHeaderSize,
+  maxBoundarySize,
+}
+
 /// Base exception for form parsing failures.
 sealed class FormException implements Exception {
   /// Human-readable error message.
@@ -121,8 +134,8 @@ final class FormLimitExceededException implements FormException {
   @override
   final String message;
 
-  /// The exceeded limit name.
-  final String limit;
+  /// The exceeded limit.
+  final FormLimit limit;
 
   /// Creates a form limit exceeded exception.
   const FormLimitExceededException({

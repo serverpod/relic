@@ -277,20 +277,18 @@ void main() {
   });
 
   group('Given multipart form limits', () {
-    test(
-      'when maxBodySize is exceeded, then it throws MaxBodySizeExceeded',
-      () async {
-        final request = _multipartRequest(
-          boundary: 'body-size',
-          body: _multipartBody('body-size', [_field('name', 'value')]),
-        );
+    test('when maxBodySize is exceeded, '
+        'then it throws FormLimitExceededException.', () async {
+      final request = _multipartRequest(
+        boundary: 'body-size',
+        body: _multipartBody('body-size', [_field('name', 'value')]),
+      );
 
-        await expectLater(
-          request.multipartForm(limits: FormLimits(maxBodySize: 4)),
-          throwsA(isA<MaxBodySizeExceeded>()),
-        );
-      },
-    );
+      await expectLater(
+        request.multipartForm(limits: FormLimits(maxBodySize: 4)),
+        throwsA(_limitExceeded(FormLimit.maxBodySize)),
+      );
+    });
 
     test(
       'when maxPartCount is exceeded, then it throws FormLimitExceededException',
@@ -305,7 +303,7 @@ void main() {
 
         await expectLater(
           request.multipartForm(limits: FormLimits(maxPartCount: 1)),
-          throwsA(_limitExceeded('maxPartCount')),
+          throwsA(_limitExceeded(FormLimit.maxPartCount)),
         );
       },
     );
@@ -323,7 +321,7 @@ void main() {
 
         await expectLater(
           request.multipartForm(limits: FormLimits(maxFieldCount: 1)),
-          throwsA(_limitExceeded('maxFieldCount')),
+          throwsA(_limitExceeded(FormLimit.maxFieldCount)),
         );
       },
     );
@@ -341,7 +339,7 @@ void main() {
 
         await expectLater(
           request.multipartForm(limits: FormLimits(maxFileCount: 1)),
-          throwsA(_limitExceeded('maxFileCount')),
+          throwsA(_limitExceeded(FormLimit.maxFileCount)),
         );
       },
     );
@@ -356,7 +354,7 @@ void main() {
 
         await expectLater(
           request.multipartForm(limits: FormLimits(maxFieldSize: 3)),
-          throwsA(_limitExceeded('maxFieldSize')),
+          throwsA(_limitExceeded(FormLimit.maxFieldSize)),
         );
       },
     );
@@ -373,7 +371,7 @@ void main() {
 
         await expectLater(
           request.multipartForm(limits: FormLimits(maxFileSize: 3)),
-          throwsA(_limitExceeded('maxFileSize')),
+          throwsA(_limitExceeded(FormLimit.maxFileSize)),
         );
       },
     );
@@ -391,7 +389,7 @@ void main() {
 
         await expectLater(
           request.multipartForm(limits: FormLimits(maxTotalFileSize: 5)),
-          throwsA(_limitExceeded('maxTotalFileSize')),
+          throwsA(_limitExceeded(FormLimit.maxTotalFileSize)),
         );
       },
     );
@@ -415,7 +413,7 @@ void main() {
             limits: FormLimits(maxFileCount: 1),
             uploadStorage: storage,
           ),
-          throwsA(_limitExceeded('maxFileCount')),
+          throwsA(_limitExceeded(FormLimit.maxFileCount)),
         );
 
         expect(storage.files, hasLength(1));
@@ -779,7 +777,7 @@ _Part _file(final String name, final String filename, final String content) {
   );
 }
 
-Matcher _limitExceeded(final String limit) {
+Matcher _limitExceeded(final FormLimit limit) {
   return isA<FormLimitExceededException>().having(
     (final error) => error.limit,
     'limit',

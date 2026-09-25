@@ -362,27 +362,25 @@ void main() {
   });
 
   group('Given multipart limits', () {
-    test(
-      'when maxBodySize is exceeded, then it throws MaxBodySizeExceeded',
-      () async {
-        final request = _request(
-          boundary: 'size',
-          body: _multipartBody('size', [
-            _Part(
-              headers: const {
-                Headers.contentDispositionHeader: 'form-data; name="a"',
-              },
-              body: 'value',
-            ),
-          ]),
-        );
+    test('when maxBodySize is exceeded, '
+        'then it throws FormLimitExceededException.', () async {
+      final request = _request(
+        boundary: 'size',
+        body: _multipartBody('size', [
+          _Part(
+            headers: const {
+              Headers.contentDispositionHeader: 'form-data; name="a"',
+            },
+            body: 'value',
+          ),
+        ]),
+      );
 
-        await expectLater(
-          request.multipart(limits: FormLimits(maxBodySize: 4)).drain<void>(),
-          throwsA(isA<MaxBodySizeExceeded>()),
-        );
-      },
-    );
+      await expectLater(
+        request.multipart(limits: FormLimits(maxBodySize: 4)).drain<void>(),
+        throwsA(_limitExceeded(FormLimit.maxBodySize)),
+      );
+    });
 
     test(
       'when maxBoundarySize is exceeded, then it throws FormLimitExceededException',
@@ -397,7 +395,7 @@ void main() {
             isA<FormLimitExceededException>().having(
               (final error) => error.limit,
               'limit',
-              'maxBoundarySize',
+              FormLimit.maxBoundarySize,
             ),
           ),
         );
@@ -437,7 +435,7 @@ void main() {
             isA<FormLimitExceededException>().having(
               (final error) => error.limit,
               'limit',
-              'maxPartCount',
+              FormLimit.maxPartCount,
             ),
           ),
         );
@@ -468,7 +466,7 @@ void main() {
             isA<FormLimitExceededException>().having(
               (final error) => error.limit,
               'limit',
-              'maxPartHeaderSize',
+              FormLimit.maxPartHeaderSize,
             ),
           ),
         );
@@ -629,6 +627,14 @@ void main() {
       ),
     ]);
   });
+}
+
+Matcher _limitExceeded(final FormLimit limit) {
+  return isA<FormLimitExceededException>().having(
+    (final error) => error.limit,
+    'limit',
+    limit,
+  );
 }
 
 Request _request({
