@@ -58,6 +58,29 @@ void main() {
       expect(response.body, 'Malformed form data.');
     });
 
+    test('when a handler throws a MissingFormFieldException, '
+        'then it returns a 400 Bad Request response.', () async {
+      await _scheduleServer(
+        (_) => throw const MissingFormFieldException('name'),
+      );
+      final response = await _get();
+      expect(response.statusCode, 400);
+      expect(response.body, 'Missing form field "name".');
+    });
+
+    test('when a handler throws an InvalidFormFieldException, '
+        'then it returns a 400 Bad Request response.', () async {
+      await _scheduleServer(
+        (_) => throw const InvalidFormFieldException(
+          'age',
+          FormatException('abc'),
+        ),
+      );
+      final response = await _get();
+      expect(response.statusCode, 400);
+      expect(response.body, 'Invalid form field "age".');
+    });
+
     test('when a handler throws a FormLimitExceededException '
         'then it returns a 413 Content Too Large response', () async {
       await _scheduleServer(
@@ -89,6 +112,27 @@ void main() {
       );
       final response = await _get();
       expect(response.headers['connection'], 'close');
+    });
+
+    test('when a handler throws a MissingFormFieldException, '
+        'then the response keeps the connection open.', () async {
+      await _scheduleServer(
+        (_) => throw const MissingFormFieldException('name'),
+      );
+      final response = await _get();
+      expect(response.headers['connection'], isNot('close'));
+    });
+
+    test('when a handler throws an InvalidFormFieldException, '
+        'then the response keeps the connection open.', () async {
+      await _scheduleServer(
+        (_) => throw const InvalidFormFieldException(
+          'age',
+          FormatException('abc'),
+        ),
+      );
+      final response = await _get();
+      expect(response.headers['connection'], isNot('close'));
     });
 
     test('when a handler throws a FormLimitExceededException, '

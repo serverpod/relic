@@ -13,9 +13,12 @@ void main() {
 
         final form = await request.urlEncodedForm();
 
-        expect(form.fields.get('name'), 'Gustavo');
-        expect(form.fields.getAll('name'), ['Gustavo', 'Relic']);
-        expect(form.fields.get('city'), 'Rome');
+        expect(form.fields.raw['name'], 'Gustavo');
+        expect(form.fields.getAll(const StringFormField('name')), [
+          'Gustavo',
+          'Relic',
+        ]);
+        expect(form.fields.raw['city'], 'Rome');
         expect(form.entries, [
           const FormFieldEntry(name: 'name', value: 'Gustavo'),
           const FormFieldEntry(name: 'city', value: 'Rome'),
@@ -31,8 +34,8 @@ void main() {
 
         final form = await request.urlEncodedForm();
 
-        expect(form.fields.get('name'), 'Gustavo Guzman');
-        expect(form.fields.get('city'), 'Napoli');
+        expect(form.fields.raw['name'], 'Gustavo Guzman');
+        expect(form.fields.raw['city'], 'Napoli');
       },
     );
 
@@ -73,7 +76,7 @@ void main() {
 
       final form = await request.urlEncodedForm();
 
-      expect(form.fields.get('name'), 'André');
+      expect(form.fields.raw['name'], 'André');
     });
   });
 
@@ -84,7 +87,7 @@ void main() {
 
     final form = await request.urlEncodedForm();
 
-    expect(form.fields.get('name'), 'André');
+    expect(form.fields.raw['name'], 'André');
   });
 
   group('Given a request with an unsupported Content-Type', () {
@@ -244,7 +247,7 @@ void main() {
 
     final form = await request.urlEncodedForm();
 
-    expect(form.fields.get('name'), 'Gustavo');
+    expect(form.fields.raw['name'], 'Gustavo');
   });
 }
 

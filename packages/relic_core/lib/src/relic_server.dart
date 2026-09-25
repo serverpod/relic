@@ -201,11 +201,17 @@ final class _RelicServer implements RelicServer {
         _logError(req, 'Error handling form data.\n$error', stackTrace);
         return Response(
           error.statusCode,
-          headers: Headers.build(
-            (final mh) => mh.connection = const ConnectionHeader.directives([
-              ConnectionHeaderType.close,
-            ]),
-          ),
+          headers: switch (error) {
+            UnsupportedFormMediaTypeException() ||
+            MalformedFormDataException() ||
+            FormLimitExceededException() => Headers.build(
+              (final mh) => mh.connection = const ConnectionHeader.directives([
+                ConnectionHeaderType.close,
+              ]),
+            ),
+            // Form accessors throw these after parsing has read the whole body.
+            MissingFormFieldException() || InvalidFormFieldException() => null,
+          },
           body: Body.fromString(error.message),
         );
       } on MaxBodySizeExceeded catch (error, stackTrace) {

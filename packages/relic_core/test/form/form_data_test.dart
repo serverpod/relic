@@ -93,12 +93,15 @@ void main() {
       ]);
 
       expect(fields.entries.map((final e) => e.name), ['name', 'role', 'name']);
-      expect(fields.get('name'), 'first');
-      expect(fields.getRequired('role'), 'admin');
-      expect(fields.getAll('name'), ['first', 'second']);
-      expect(fields.contains('name'), isTrue);
-      expect(fields.contains('missing'), isFalse);
-      expect(() => fields.getRequired('missing'), throwsStateError);
+      expect(fields.raw['name'], 'first');
+      expect(fields.get(const StringFormField('role')), 'admin');
+      expect(fields.getAll(const StringFormField('name')), ['first', 'second']);
+      expect(fields.raw.containsKey('name'), isTrue);
+      expect(fields.raw.containsKey('missing'), isFalse);
+      expect(
+        () => fields.get(const StringFormField('missing')),
+        throwsA(isA<MissingFormFieldException>()),
+      );
     });
 
     test('when the source list changes after construction, '
@@ -108,7 +111,7 @@ void main() {
 
       source.add(const FormFieldEntry(name: 'name', value: 'second'));
 
-      expect(fields.getAll('name'), ['first']);
+      expect(fields.getAll(const StringFormField('name')), ['first']);
     });
 
     test('when the entries list is mutated, '
@@ -124,13 +127,33 @@ void main() {
     });
   });
 
+  test('Given FormFields with one field, '
+      'when its raw map is mutated, '
+      'then it throws UnsupportedError.', () {
+    final fields = FormFields([
+      const FormFieldEntry(name: 'name', value: 'first'),
+    ]);
+
+    expect(() => fields.raw['name'] = 'second', throwsUnsupportedError);
+  });
+
   group('Given UrlEncodedFormData', () {
+    test('when the raw map of its files is mutated, '
+        'then it throws UnsupportedError.', () {
+      final form = UrlEncodedFormData(fields: FormFields(const []));
+
+      expect(
+        () => form.files.raw['file'] = _file(filename: 'a.txt', bytes: 'a'),
+        throwsUnsupportedError,
+      );
+    });
+
     test('when created, '
         'then files are empty and entries mirror fields', () {
       final field = const FormFieldEntry(name: 'name', value: 'Gustavo');
       final form = UrlEncodedFormData(fields: FormFields([field]));
 
-      expect(form.fields.get('name'), 'Gustavo');
+      expect(form.fields.raw['name'], 'Gustavo');
       expect(form.files.entries, isEmpty);
       expect(form.entries, [field]);
     });
@@ -153,12 +176,15 @@ void main() {
         'attachment',
         'avatar',
       ]);
-      expect(files.get('avatar'), same(file1));
-      expect(files.getRequired('attachment'), same(file2));
-      expect(files.getAll('avatar'), [file1, file3]);
-      expect(files.contains('avatar'), isTrue);
-      expect(files.contains('missing'), isFalse);
-      expect(() => files.getRequired('missing'), throwsStateError);
+      expect(files(const FormFile('avatar')), same(file1));
+      expect(files.get(const FormFile('attachment')), same(file2));
+      expect(files.getAll(const FormFile('avatar')), [file1, file3]);
+      expect(files.raw.containsKey('avatar'), isTrue);
+      expect(files.raw.containsKey('missing'), isFalse);
+      expect(
+        () => files.get(const FormFile('missing')),
+        throwsA(isA<MissingFormFieldException>()),
+      );
     });
   });
 
@@ -175,15 +201,15 @@ void main() {
       );
 
       expect(form.entries, [field, fileEntry]);
-      expect(form.fields.get('title'), 'Report');
-      expect(form.files.get('upload'), same(file));
+      expect(form.fields.raw['title'], 'Report');
+      expect(form.files(const FormFile('upload')), same(file));
     });
 
     test('when disposed, '
         'then uploaded files are disposed', () async {
       final file = _file(filename: 'report.txt', bytes: 'file-body');
       final form = MultipartFormData(
-        fields: FormFields.empty,
+        fields: FormFields(const []),
         files: UploadedFiles([FileFieldEntry(name: 'upload', file: file)]),
         entries: [FileFieldEntry(name: 'upload', file: file)],
       );
@@ -223,6 +249,102 @@ void main() {
       expect(() => stored.file.read(), throwsStateError);
     });
   });
+
+  test('Given form fields with age "42", '
+      'when age is read with an IntFormField, '
+      'then it returns 42.', () {
+    final fields = FormFields([const FormFieldEntry(name: 'age', value: '42')]);
+
+    expect(fields.get(const IntFormField('age')), 42);
+  });
+
+  test('Given form fields without age, '
+      'when age is read by calling the fields with an IntFormField, '
+      'then it returns null.', () {
+    final fields = FormFields([
+      const FormFieldEntry(name: 'name', value: 'Relic'),
+    ]);
+
+    expect(fields(const IntFormField('age')), isNull);
+  });
+
+  test('Given form fields with age "abc", '
+      'when age is read with an IntFormField, '
+      'then it throws InvalidFormFieldException naming the field.', () {
+    final fields = FormFields([
+      const FormFieldEntry(name: 'age', value: 'abc'),
+    ]);
+
+    expect(
+      () => fields.get(const IntFormField('age')),
+      throwsA(
+        isA<InvalidFormFieldException>().having(
+          (final e) => e.name,
+          'name',
+          'age',
+        ),
+      ),
+    );
+  });
+
+  test('Given a form field whose decoder throws an Error, '
+      'when the field is read, '
+      'then it throws that Error.', () {
+    final fields = FormFields([
+      const FormFieldEntry(name: 'color', value: 'purple'),
+    ]);
+    final colorField = FormField<String>(
+      'color',
+      (final value) => throw ArgumentError.value(value),
+    );
+
+    expect(() => fields.get(colorField), throwsArgumentError);
+  });
+
+  test('Given form fields with age "abc", '
+      'when age is read with tryGet, '
+      'then it returns null.', () {
+    final fields = FormFields([
+      const FormFieldEntry(name: 'age', value: 'abc'),
+    ]);
+
+    expect(fields.tryGet(const IntFormField('age')), isNull);
+  });
+
+  test('Given form fields with ids "1" and "x", '
+      'when ids are read with getAll and an IntFormField, '
+      'then it throws InvalidFormFieldException.', () {
+    final fields = FormFields([
+      const FormFieldEntry(name: 'id', value: '1'),
+      const FormFieldEntry(name: 'id', value: 'x'),
+    ]);
+
+    expect(
+      () => fields.getAll(const IntFormField('id')),
+      throwsA(isA<InvalidFormFieldException>()),
+    );
+  });
+
+  test('Given uploaded files without avatar, '
+      'when avatar is read by calling the files with a FormFile, '
+      'then it returns null.', () {
+    final files = UploadedFiles([]);
+
+    expect(files(const FormFile('avatar')), isNull);
+  });
+
+  test(
+    'Given a missing form field exception and an invalid form field exception, '
+    'when their status codes are read, '
+    'then both are 400.',
+    () {
+      const missing = MissingFormFieldException('name');
+      const invalid = InvalidFormFieldException('age', FormatException('x'));
+
+      expect(missing.statusCode, 400);
+      expect(invalid.statusCode, 400);
+    },
+  );
 }
 
 MemoryUploadedFile _file({
