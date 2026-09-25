@@ -499,17 +499,12 @@ Response _serveMultipleRanges(
 
   return Response(
     HttpStatus.partialContent,
-    headers: headers.transform(
-      (final mh) => mh
-        ..[Headers.contentTypeHeader] = [
-          '${MimeType.multipartByteranges.toHeaderValue()}; boundary=$boundary',
-        ],
-    ),
+    headers: headers,
     body: Body.fromDataStream(
       _multipartSections(fileInfo, boundary, bounds, footer),
       contentLength: totalLength,
       mimeType: MimeType.multipartByteranges,
-      encoding: fileInfo.mimeType?.isText == true ? utf8 : null,
+      parameters: {'boundary': boundary},
     ),
   );
 }
