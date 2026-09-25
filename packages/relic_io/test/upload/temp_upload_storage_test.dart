@@ -171,6 +171,34 @@ void main() {
       expect(await tempDir.list().toList(), isEmpty);
     });
   });
+
+  test(
+    'Given TempUploadStorage with a configured directory and upload content that arrives in several chunks, '
+    'when the content is stored, '
+    'then it pauses the content stream while it writes each chunk.',
+    () async {
+      final storage = TempUploadStorage(directory: tempDir);
+      var paused = false;
+      final controller = StreamController<Uint8List>(
+        onPause: () => paused = true,
+      );
+      for (var i = 0; i < 16; i++) {
+        controller.add(Uint8List(64 * 1024));
+      }
+      unawaited(controller.close());
+
+      final uploaded = await storage.store(
+        fieldName: 'upload',
+        filename: 'large.bin',
+        contentType: null,
+        headers: Headers.empty(),
+        content: controller.stream,
+      );
+
+      expect(uploaded.size, 16 * 64 * 1024);
+      expect(paused, isTrue);
+    },
+  );
 }
 
 Request _multipartRequest({

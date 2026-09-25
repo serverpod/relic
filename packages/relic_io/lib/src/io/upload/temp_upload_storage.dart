@@ -29,17 +29,11 @@ final class TempUploadStorage implements UploadStorage {
     required final Stream<Uint8List> content,
   }) async {
     final file = await _createTempFile(await _directory());
-    final sink = file.openWrite();
-    var size = 0;
+    final int size;
 
     try {
-      await for (final chunk in content) {
-        size += chunk.length;
-        sink.add(chunk);
-      }
-      await sink.close();
+      size = await _write(file, content);
     } catch (_) {
-      await _ignoreErrors(sink.close);
       await _deleteIfExists(file);
       rethrow;
     }
@@ -130,6 +124,28 @@ final class TempUploadedFile implements UploadedFile {
     _size = null;
     await _deleteIfExists(File(path));
   }
+}
+
+/// Writes [content] to [file] one chunk at a time and returns the number of
+/// bytes written.
+///
+/// [content] stays paused while each write runs. The file closes before this
+/// completes, even when [content] fails, so the caller can delete it.
+/// `IOSink.addStream` does not wait for that close.
+Future<int> _write(final File file, final Stream<Uint8List> content) async {
+  final output = await file.open(mode: FileMode.writeOnly);
+  var size = 0;
+  try {
+    await for (final chunk in content) {
+      size += chunk.length;
+      await output.writeFrom(chunk);
+    }
+  } catch (_) {
+    await _ignoreErrors(output.close);
+    rethrow;
+  }
+  await output.close();
+  return size;
 }
 
 Future<void> _deleteIfExists(final File file) async {
