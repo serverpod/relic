@@ -26,26 +26,23 @@ void main() {
       'when content is stored, then it returns a temp uploaded file with metadata',
       () async {
         final storage = TempUploadStorage(directory: tempDir);
-        final contentType = ContentTypeHeader(
-          mimeType: MimeType.plainText,
-          parameters: const {'charset': 'utf-8'},
-        );
+        final bodyType = BodyType(mimeType: MimeType.plainText, encoding: utf8);
         final headers = Headers.build(
-          (final mh) => mh[Headers.contentTypeHeader] = ContentTypeHeader.codec
-              .encode(contentType),
+          (final mh) =>
+              mh[Headers.contentTypeHeader] = [bodyType.toHeaderValue()],
         );
 
         final uploaded = await storage.store(
           fieldName: 'upload',
           filename: 'hello.txt',
-          contentType: contentType,
+          bodyType: bodyType,
           headers: headers,
           content: Stream.value(Uint8List.fromList(utf8.encode('hello'))),
         );
 
         expect(uploaded, isA<TempUploadedFile>());
         expect(uploaded.filename, 'hello.txt');
-        expect(uploaded.contentType?.mimeType, MimeType.plainText);
+        expect(uploaded.bodyType?.mimeType, MimeType.plainText);
         expect(uploaded.headers, headers);
         expect(uploaded.size, 5);
         expect((uploaded as TempUploadedFile).path, startsWith(tempDir.path));
@@ -60,7 +57,7 @@ void main() {
         final uploaded = await storage.store(
           fieldName: 'upload',
           filename: 'hello.txt',
-          contentType: null,
+          bodyType: null,
           headers: Headers.empty(),
           content: Stream.value(Uint8List.fromList(utf8.encode('hello'))),
         );
@@ -75,7 +72,7 @@ void main() {
           await storage.store(
                 fieldName: 'upload',
                 filename: 'hello.txt',
-                contentType: null,
+                bodyType: null,
                 headers: Headers.empty(),
                 content: Stream.value(Uint8List.fromList(utf8.encode('hello'))),
               )
@@ -98,7 +95,7 @@ void main() {
             await storage.store(
                   fieldName: 'upload',
                   filename: 'hello.txt',
-                  contentType: null,
+                  bodyType: null,
                   headers: Headers.empty(),
                   content: Stream.value(
                     Uint8List.fromList(utf8.encode('hello')),
@@ -122,7 +119,7 @@ void main() {
         return await storage.store(
               fieldName: 'upload',
               filename: filename,
-              contentType: null,
+              bodyType: null,
               headers: Headers.empty(),
               content: Stream.value(Uint8List.fromList(utf8.encode(filename))),
             )
@@ -148,7 +145,7 @@ void main() {
           await TempUploadStorage(prefix: 'relic_io_mode_test_').store(
                 fieldName: 'upload',
                 filename: 'secret.txt',
-                contentType: null,
+                bodyType: null,
                 headers: Headers.empty(),
                 content: Stream.value(Uint8List.fromList([1])),
               )
@@ -200,7 +197,7 @@ void main() {
       final storing = storage.store(
         fieldName: 'upload',
         filename: 'hello.txt',
-        contentType: null,
+        bodyType: null,
         headers: Headers.empty(),
         content: controller.stream,
       );
@@ -232,7 +229,7 @@ void main() {
       final uploaded = await storage.store(
         fieldName: 'upload',
         filename: 'large.bin',
-        contentType: null,
+        bodyType: null,
         headers: Headers.empty(),
         content: controller.stream,
       );
@@ -250,7 +247,7 @@ void main() {
     final uploaded = await storage.store(
       fieldName: 'upload',
       filename: 'hello.txt',
-      contentType: null,
+      bodyType: null,
       headers: Headers.empty(),
       content: Stream.value(Uint8List.fromList(utf8.encode('hello'))),
     );

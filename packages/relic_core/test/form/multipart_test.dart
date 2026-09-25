@@ -40,13 +40,13 @@ void main() {
         expect(parts, [
           isA<MultipartFieldPart>()
               .having((final p) => p.name, 'name', 'text')
-              .having((final p) => p.contentType, 'contentType', isNull),
+              .having((final p) => p.body.bodyType, 'bodyType', isNull),
           isA<MultipartFilePart>()
               .having((final p) => p.name, 'name', 'upload')
               .having((final p) => p.filename, 'filename', 'file.txt')
               .having(
-                (final p) => p.contentType?.mimeType,
-                'contentType.mimeType',
+                (final p) => p.body.bodyType?.mimeType,
+                'body.bodyType.mimeType',
                 MimeType.plainText,
               ),
         ]);
@@ -169,6 +169,28 @@ void main() {
         }
       },
     );
+  });
+
+  test('Given a multipart text part without a charset, '
+      'when the request is streamed, '
+      'then its body type has no encoding.', () async {
+    final request = _request(
+      boundary: 'no-charset',
+      body: _multipartBody('no-charset', [
+        _Part(
+          headers: const {
+            Headers.contentDispositionHeader:
+                'form-data; name="upload"; filename="file.txt"',
+            Headers.contentTypeHeader: 'text/plain',
+          },
+          body: 'file-body',
+        ),
+      ]),
+    );
+
+    final part = await request.multipart().first;
+
+    expect(part.body.bodyType?.encoding, isNull);
   });
 
   test('Given a multipart file part with an empty filename, '

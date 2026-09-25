@@ -79,7 +79,7 @@ void main() {
         expect(form.fields.raw['title'], 'Report');
         expect(form.fields.raw['tag'], 'draft');
         expect(file.filename, 'report.txt');
-        expect(file.contentType?.mimeType, MimeType.plainText);
+        expect(file.bodyType?.mimeType, MimeType.plainText);
         expect(file.size, 9);
         expect(await utf8.decodeStream(file.read()), 'file-body');
         expect(form.entries.map((final entry) => entry.name), [
@@ -806,7 +806,7 @@ final class _RecordingUploadStorage implements UploadStorage {
   Future<UploadedFile> store({
     required final String fieldName,
     required final String? filename,
-    required final ContentTypeHeader? contentType,
+    required final BodyType? bodyType,
     required final Headers headers,
     required final Stream<Uint8List> content,
   }) async {
@@ -816,7 +816,7 @@ final class _RecordingUploadStorage implements UploadStorage {
     }
     final file = _RecordingUploadedFile(
       filename: filename,
-      contentType: contentType,
+      bodyType: bodyType,
       headers: headers,
       bytes: bytes.takeBytes(),
     );
@@ -830,7 +830,7 @@ final class _RecordingUploadedFile implements UploadedFile {
   final String? filename;
 
   @override
-  final ContentTypeHeader? contentType;
+  final BodyType? bodyType;
 
   @override
   final Headers headers;
@@ -841,7 +841,7 @@ final class _RecordingUploadedFile implements UploadedFile {
 
   _RecordingUploadedFile({
     required this.filename,
-    required this.contentType,
+    required this.bodyType,
     required this.headers,
     required this.bytes,
   });

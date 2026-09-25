@@ -99,7 +99,7 @@ Future<Response> _streamUpload(final Request req) async {
           }
           lines.add(
             'file $name: filename=${filename ?? ''}, '
-            'content-type=${part.contentType?.mimeType ?? ''}, bytes=$bytes',
+            'content-type=${part.body.bodyType?.mimeType ?? ''}, bytes=$bytes',
           );
 
         case MultipartOtherPart():
@@ -227,7 +227,7 @@ String _formResult(final FormData form) {
         final file = entry.file;
         lines.add(
           'file ${entry.name}: filename=${file.filename ?? ''}, '
-          'content-type=${file.contentType?.mimeType ?? ''}, '
+          'content-type=${file.bodyType?.mimeType ?? ''}, '
           'size=${file.size ?? ''}',
         );
     }
