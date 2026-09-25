@@ -77,11 +77,10 @@ void main() {
 
         expect(form.fields.get('title'), 'Report');
         expect(form.fields.get('tag'), 'draft');
-        expect(file.fieldName, 'upload');
         expect(file.filename, 'report.txt');
         expect(file.contentType?.mimeType, MimeType.plainText);
         expect(file.size, 9);
-        expect(await utf8.decodeStream(file.openRead()), 'file-body');
+        expect(await utf8.decodeStream(file.read()), 'file-body');
         expect(form.entries.map((final entry) => entry.name), [
           'title',
           'upload',
@@ -261,7 +260,7 @@ void main() {
       await form.dispose();
 
       expect(file.size, isNull);
-      expect(() => file.openRead(), throwsStateError);
+      expect(() => file.read(), throwsStateError);
     });
   });
 
@@ -624,7 +623,6 @@ final class _RecordingUploadStorage implements UploadStorage {
       bytes.add(chunk);
     }
     final file = _RecordingUploadedFile(
-      fieldName: fieldName,
       filename: filename,
       contentType: contentType,
       headers: headers,
@@ -636,9 +634,6 @@ final class _RecordingUploadStorage implements UploadStorage {
 }
 
 final class _RecordingUploadedFile implements UploadedFile {
-  @override
-  final String fieldName;
-
   @override
   final String? filename;
 
@@ -653,7 +648,6 @@ final class _RecordingUploadedFile implements UploadedFile {
   bool disposed = false;
 
   _RecordingUploadedFile({
-    required this.fieldName,
     required this.filename,
     required this.contentType,
     required this.headers,
@@ -664,7 +658,7 @@ final class _RecordingUploadedFile implements UploadedFile {
   int? get size => disposed ? null : bytes.length;
 
   @override
-  Stream<Uint8List> openRead() {
+  Stream<Uint8List> read() {
     if (disposed) throw StateError('Uploaded file has been disposed.');
     return Stream.value(bytes);
   }

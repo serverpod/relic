@@ -41,7 +41,6 @@ void main() {
         );
 
         expect(uploaded, isA<TempUploadedFile>());
-        expect(uploaded.fieldName, 'upload');
         expect(uploaded.filename, 'hello.txt');
         expect(uploaded.contentType?.mimeType, MimeType.plainText);
         expect(uploaded.headers, headers);
@@ -63,7 +62,7 @@ void main() {
           content: Stream.value(Uint8List.fromList(utf8.encode('hello'))),
         );
 
-        expect(await utf8.decodeStream(uploaded.openRead()), 'hello');
+        expect(await utf8.decodeStream(uploaded.read()), 'hello');
       },
     );
 
@@ -83,7 +82,7 @@ void main() {
 
       expect(uploaded.size, isNull);
       expect(await File(uploaded.path).exists(), isFalse);
-      expect(() => uploaded.openRead(), throwsStateError);
+      expect(() => uploaded.read(), throwsStateError);
     });
   });
 
@@ -142,7 +141,7 @@ void main() {
         final uploaded = form.files.getRequired('file') as TempUploadedFile;
 
         expect(uploaded.path, startsWith(tempDir.path));
-        expect(await utf8.decodeStream(uploaded.openRead()), 'hello');
+        expect(await utf8.decodeStream(uploaded.read()), 'hello');
 
         await form.dispose();
 

@@ -139,9 +139,9 @@ void main() {
   group('Given UploadedFiles with duplicate names', () {
     test('when queried, '
         'then order and duplicate files are preserved', () {
-      final file1 = _file(fieldName: 'avatar', bytes: 'one');
-      final file2 = _file(fieldName: 'attachment', bytes: 'two');
-      final file3 = _file(fieldName: 'avatar', bytes: 'three');
+      final file1 = _file(filename: 'one.png', bytes: 'one');
+      final file2 = _file(filename: 'two.pdf', bytes: 'two');
+      final file3 = _file(filename: 'three.png', bytes: 'three');
       final files = UploadedFiles([
         FileFieldEntry(name: 'avatar', file: file1),
         FileFieldEntry(name: 'attachment', file: file2),
@@ -166,7 +166,7 @@ void main() {
     test('when created, '
         'then it preserves mixed entry order', () {
       final field = const FormFieldEntry(name: 'title', value: 'Report');
-      final file = _file(fieldName: 'upload', bytes: 'file-body');
+      final file = _file(filename: 'report.txt', bytes: 'file-body');
       final fileEntry = FileFieldEntry(name: 'upload', file: file);
       final form = MultipartFormData(
         fields: FormFields([field]),
@@ -181,7 +181,7 @@ void main() {
 
     test('when disposed, '
         'then uploaded files are disposed', () async {
-      final file = _file(fieldName: 'upload', bytes: 'file-body');
+      final file = _file(filename: 'report.txt', bytes: 'file-body');
       final form = MultipartFormData(
         fields: FormFields.empty,
         files: UploadedFiles([FileFieldEntry(name: 'upload', file: file)]),
@@ -191,7 +191,7 @@ void main() {
       await form.dispose();
 
       expect(file.size, isNull);
-      expect(() => file.openRead(), throwsStateError);
+      expect(() => file.read(), throwsStateError);
     });
   });
 
@@ -200,7 +200,6 @@ void main() {
         'then it returns an uploaded file with metadata', () async {
       final stored = await _storeMemoryUpload();
 
-      expect(stored.file.fieldName, 'upload');
       expect(stored.file.filename, 'hello.txt');
       expect(stored.file.contentType, stored.contentType);
       expect(stored.file.headers, stored.headers);
@@ -211,7 +210,7 @@ void main() {
         'then it streams the stored bytes', () async {
       final stored = await _storeMemoryUpload();
 
-      expect(await utf8.decodeStream(stored.file.openRead()), 'hello');
+      expect(await utf8.decodeStream(stored.file.read()), 'hello');
     });
 
     test('when the stored upload is disposed, '
@@ -221,18 +220,17 @@ void main() {
       await stored.file.dispose();
 
       expect(stored.file.size, isNull);
-      expect(() => stored.file.openRead(), throwsStateError);
+      expect(() => stored.file.read(), throwsStateError);
     });
   });
 }
 
 MemoryUploadedFile _file({
-  required final String fieldName,
+  required final String filename,
   required final String bytes,
 }) {
   return MemoryUploadedFile(
-    fieldName: fieldName,
-    filename: '$fieldName.txt',
+    filename: filename,
     contentType: null,
     headers: Headers.empty(),
     bytes: Uint8List.fromList(utf8.encode(bytes)),

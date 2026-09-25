@@ -39,7 +39,6 @@ final class TempUploadStorage implements UploadStorage {
     }
 
     return TempUploadedFile(
-      fieldName: fieldName,
       filename: filename,
       contentType: contentType,
       headers: headers,
@@ -79,9 +78,6 @@ final class TempUploadStorage implements UploadStorage {
 /// Uploaded file backed by a temp file on disk.
 final class TempUploadedFile implements UploadedFile {
   @override
-  final String fieldName;
-
-  @override
   final String? filename;
 
   @override
@@ -98,7 +94,6 @@ final class TempUploadedFile implements UploadedFile {
 
   /// Creates a temp-file-backed uploaded file.
   TempUploadedFile({
-    required this.fieldName,
     required this.filename,
     required this.contentType,
     required this.headers,
@@ -110,7 +105,7 @@ final class TempUploadedFile implements UploadedFile {
   int? get size => _size;
 
   @override
-  Stream<Uint8List> openRead() {
+  Stream<Uint8List> read() {
     if (_disposed) {
       throw StateError('Uploaded file has been disposed.');
     }
