@@ -91,8 +91,7 @@ void main() {
       );
       final parameter = header.parameters.single;
       expect(parameter.isExtended, isTrue);
-      expect(parameter.encoding, 'UTF-8');
-      expect(parameter.language, 'en');
+      expect(parameter.language, LanguageTag.parse('en'));
       expect(parameter.value, 'a b.txt');
 
       final headers = Headers.build(
@@ -105,25 +104,64 @@ void main() {
     });
   });
 
-  group('Given an extended parameter with a non-token charset', () {
-    test('when the header is encoded, '
-        'then it throws rather than emitting a broken charset.', () {
-      const header = ContentDispositionHeader(
-        type: 'attachment',
-        parameters: [
-          ContentDispositionParameter(
-            name: 'filename',
-            value: 'a.txt',
-            isExtended: true,
-            encoding: 'UTF 8',
-          ),
-        ],
-      );
+  test('Given an extended parameter value with characters outside attr-char, '
+      'when the header is encoded, '
+      'then it percent-encodes those characters as UTF-8.', () {
+    const header = ContentDispositionHeader(
+      type: 'attachment',
+      parameters: [
+        ContentDispositionParameter(
+          name: 'filename',
+          value: "it's (1) caf\u00e9.txt",
+          isExtended: true,
+        ),
+      ],
+    );
 
-      expect(
-        () => Headers.build((final mh) => mh.contentDisposition = header),
-        throwsFormatException,
-      );
-    });
+    final headers = Headers.build((final mh) => mh.contentDisposition = header);
+    expect(
+      headers[Headers.contentDispositionHeader]!.first,
+      "attachment; filename*=UTF-8''it%27s%20%281%29%20caf%C3%A9.txt",
+    );
+  });
+
+  test('Given an extended parameter in the ISO-8859-1 charset, '
+      'when the header is parsed, '
+      'then it throws FormatException.', () {
+    expect(
+      () => ContentDispositionHeader.parse(
+        "attachment; filename*=ISO-8859-1''na%EFve.txt",
+      ),
+      throwsFormatException,
+    );
+  });
+
+  test('Given an extended parameter without the charset and language, '
+      'when the header is parsed, '
+      'then it throws FormatException.', () {
+    expect(
+      () => ContentDispositionHeader.parse('attachment; filename*=evil.html'),
+      throwsFormatException,
+    );
+  });
+
+  test('Given an extended parameter with an invalid percent escape, '
+      'when the header is parsed, '
+      'then it throws FormatException.', () {
+    expect(
+      () =>
+          ContentDispositionHeader.parse("form-data; filename*=UTF-8''%zz.txt"),
+      throwsFormatException,
+    );
+  });
+
+  test('Given an extended parameter ending in a truncated percent escape, '
+      'when the header is parsed, '
+      'then it throws FormatException.', () {
+    expect(
+      () =>
+          ContentDispositionHeader.parse("form-data; filename*=UTF-8''report%"),
+      throwsFormatException,
+    );
   });
 }
