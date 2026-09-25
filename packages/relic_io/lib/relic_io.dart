@@ -9,3 +9,4 @@ export 'src/adapter/io_serve.dart';
 export 'src/io/static/cache_busting_config.dart';
 export 'src/io/static/extension/datetime_extension.dart';
 export 'src/io/static/static_handler.dart';
+export 'src/io/upload/temp_upload_storage.dart';

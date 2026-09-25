@@ -16,6 +16,7 @@ export 'headers/content_encoding_header.dart';
 export 'headers/content_language_header.dart';
 export 'headers/content_range_header.dart';
 export 'headers/content_security_policy_header.dart';
+export 'headers/content_type_header.dart';
 export 'headers/cookie_header.dart';
 export 'headers/cross_origin_embedder_policy_header.dart';
 export 'headers/cross_origin_opener_policy_header.dart';
