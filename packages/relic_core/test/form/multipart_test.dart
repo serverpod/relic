@@ -141,29 +141,6 @@ void main() {
     );
 
     test(
-      'when file name is empty, then the part is treated as a field',
-      () async {
-        final request = _request(
-          boundary: 'empty-filename',
-          body: _multipartBody('empty-filename', [
-            _Part(
-              headers: const {
-                Headers.contentDispositionHeader:
-                    'form-data; name="upload"; filename=""',
-              },
-              body: '',
-            ),
-          ]),
-        );
-
-        await for (final part in request.multipart()) {
-          expect(part, isA<MultipartFieldPart>());
-          expect(await part.readAsString(), '');
-        }
-      },
-    );
-
-    test(
       'when regular and extended file names are present, then extended wins',
       () async {
         final request = _request(
@@ -192,6 +169,87 @@ void main() {
         }
       },
     );
+  });
+
+  test('Given a multipart file part with an empty filename, '
+      'when the request is streamed, '
+      'then the part is a file part without a filename.', () async {
+    final request = _request(
+      boundary: 'empty-filename',
+      body: _multipartBody('empty-filename', [
+        _Part(
+          headers: const {
+            Headers.contentDispositionHeader:
+                'form-data; name="upload"; filename=""',
+          },
+          body: '',
+        ),
+      ]),
+    );
+
+    final parts = await request.multipart().toList();
+
+    expect(parts, [
+      isA<MultipartFilePart>().having(
+        (final p) => p.filename,
+        'filename',
+        isNull,
+      ),
+    ]);
+  });
+
+  test('Given a multipart file part with an empty filename, '
+      'when the request is streamed, '
+      'then hasEmptyFilename is true.', () async {
+    final request = _request(
+      boundary: 'empty-filename-flag',
+      body: _multipartBody('empty-filename-flag', [
+        _Part(
+          headers: const {
+            Headers.contentDispositionHeader:
+                'form-data; name="upload"; filename=""',
+          },
+          body: '',
+        ),
+      ]),
+    );
+
+    final parts = await request.multipart().toList();
+
+    expect(parts, [
+      isA<MultipartFilePart>().having(
+        (final p) => p.hasEmptyFilename,
+        'hasEmptyFilename',
+        isTrue,
+      ),
+    ]);
+  });
+
+  test('Given a multipart file part with the filename "..", '
+      'when the request is streamed, '
+      'then hasEmptyFilename is false.', () async {
+    final request = _request(
+      boundary: 'dotdot-filename-flag',
+      body: _multipartBody('dotdot-filename-flag', [
+        _Part(
+          headers: const {
+            Headers.contentDispositionHeader:
+                'form-data; name="upload"; filename=".."',
+          },
+          body: '',
+        ),
+      ]),
+    );
+
+    final parts = await request.multipart().toList();
+
+    expect(parts, [
+      isA<MultipartFilePart>().having(
+        (final p) => p.hasEmptyFilename,
+        'hasEmptyFilename',
+        isFalse,
+      ),
+    ]);
   });
 
   group('Given a multipart request with a latin1 text part', () {

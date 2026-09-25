@@ -77,6 +77,8 @@ extension FormRequestExtension on Request {
   /// Call [MultipartFormData.dispose] after processing uploads so storage backends
   /// can release resources, such as deleting temp files.
   ///
+  /// Leaves out file parts with [MultipartFilePart.hasEmptyFilename].
+  ///
   /// This consumes the request body. It should only be called once for a request.
   Future<MultipartFormData> multipartForm({
     final FormLimits limits = FormLimits.defaults,
@@ -112,6 +114,9 @@ extension FormRequestExtension on Request {
             final entry = FormFieldEntry(name: name, value: value);
             fields.add(entry);
             entries.add(entry);
+
+          case MultipartFilePart(hasEmptyFilename: true):
+            await part.discard();
 
           case MultipartFilePart(:final name, :final filename):
             if (files.length == limits.maxFileCount) {
