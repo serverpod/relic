@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:typed_data';
 
+import '../body/body.dart';
 import '../headers/headers.dart';
 import '../headers/typed/headers/content_type_header.dart';
 
@@ -301,9 +302,6 @@ final class UploadedFiles {
 
 /// A handle to an uploaded file.
 abstract interface class UploadedFile {
-  /// Form field name that carried this upload.
-  String get fieldName;
-
   /// Original filename reported by the client, if any.
   String? get filename;
 
@@ -316,8 +314,11 @@ abstract interface class UploadedFile {
   /// Uploaded file size in bytes, if known.
   int? get size;
 
-  /// Opens a byte stream for the uploaded file.
-  Stream<Uint8List> openRead();
+  /// Reads the uploaded file as a stream of bytes.
+  ///
+  /// Unlike [Body.read], it works any number of times until [dispose].
+  /// Throws [StateError] after [dispose].
+  Stream<Uint8List> read();
 
   /// Releases resources associated with this uploaded file.
   Future<void> dispose();
@@ -353,7 +354,6 @@ final class MemoryUploadStorage implements UploadStorage {
       builder.add(chunk);
     }
     return MemoryUploadedFile(
-      fieldName: fieldName,
       filename: filename,
       contentType: contentType,
       headers: headers,
@@ -364,9 +364,6 @@ final class MemoryUploadStorage implements UploadStorage {
 
 /// Uploaded file backed by memory.
 final class MemoryUploadedFile implements UploadedFile {
-  @override
-  final String fieldName;
-
   @override
   final String? filename;
 
@@ -380,7 +377,6 @@ final class MemoryUploadedFile implements UploadedFile {
 
   /// Creates a memory-backed uploaded file.
   MemoryUploadedFile({
-    required this.fieldName,
     required this.filename,
     required this.contentType,
     required this.headers,
@@ -391,7 +387,7 @@ final class MemoryUploadedFile implements UploadedFile {
   int? get size => _bytes?.length;
 
   @override
-  Stream<Uint8List> openRead() {
+  Stream<Uint8List> read() {
     final bytes = _bytes;
     if (bytes == null) {
       throw StateError('Uploaded file has been disposed.');
