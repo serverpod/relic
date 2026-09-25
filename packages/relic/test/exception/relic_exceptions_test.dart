@@ -71,6 +71,38 @@ void main() {
       expect(response.body, 'Too many form fields.');
     });
 
+    test('when a handler throws an UnsupportedFormMediaTypeException, '
+        'then the response closes the connection.', () async {
+      await _scheduleServer(
+        (_) => throw const UnsupportedFormMediaTypeException(
+          'Expected an HTML form request body.',
+        ),
+      );
+      final response = await _get();
+      expect(response.headers['connection'], 'close');
+    });
+
+    test('when a handler throws a MalformedFormDataException, '
+        'then the response closes the connection.', () async {
+      await _scheduleServer(
+        (_) => throw const MalformedFormDataException('Malformed form data.'),
+      );
+      final response = await _get();
+      expect(response.headers['connection'], 'close');
+    });
+
+    test('when a handler throws a FormLimitExceededException, '
+        'then the response closes the connection.', () async {
+      await _scheduleServer(
+        (_) => throw const FormLimitExceededException(
+          limit: 'maxFieldCount',
+          message: 'Too many form fields.',
+        ),
+      );
+      final response = await _get();
+      expect(response.headers['connection'], 'close');
+    });
+
     test('when a handler throws an UnimplementedError '
         'then it returns a 500 Internal Server Error response', () async {
       await _scheduleServer((_) => throw UnimplementedError());
