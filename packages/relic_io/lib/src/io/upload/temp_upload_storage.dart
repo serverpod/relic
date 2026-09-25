@@ -5,20 +5,21 @@ import 'package:path/path.dart' as p;
 import 'package:relic_core/relic_core.dart';
 
 /// Temp-file-backed upload storage for `dart:io` applications.
+///
+/// [store] writes each upload to its own directory, which
+/// [Directory.createTemp] creates. [TempUploadedFile.dispose] deletes that
+/// directory. On POSIX systems only the current user can read it.
 final class TempUploadStorage implements UploadStorage {
-  /// Directory where uploaded files are written.
+  /// The parent of the upload directories.
   ///
-  /// If omitted, a process temp directory is created lazily on first upload.
+  /// When null, the upload directories go in [Directory.systemTemp].
   final Directory? directory;
 
-  /// Prefix used for lazily-created upload directories.
-  final String directoryPrefix;
-
-  Directory? _createdDirectory;
-  var _counter = 0;
+  /// Prefix of every upload directory name.
+  final String prefix;
 
   /// Creates temp-file upload storage.
-  TempUploadStorage({this.directory, this.directoryPrefix = 'relic_upload_'});
+  TempUploadStorage({this.directory, this.prefix = 'relic_upload_'});
 
   @override
   Future<UploadedFile> store({
@@ -28,50 +29,31 @@ final class TempUploadStorage implements UploadStorage {
     required final Headers headers,
     required final Stream<Uint8List> content,
   }) async {
-    final file = await _createTempFile(await _directory());
+    final uploadDirectory = await _createUploadDirectory();
+    final file = File(p.join(uploadDirectory.path, _fileName));
     final int size;
 
     try {
       size = await _write(file, content);
     } catch (_) {
-      await _deleteIfExists(file);
+      await _deleteQuietly(uploadDirectory);
       rethrow;
     }
 
-    return TempUploadedFile(
+    return TempUploadedFile._(
       filename: filename,
       contentType: contentType,
       headers: headers,
-      path: file.path,
+      directory: uploadDirectory,
       size: size,
     );
   }
 
-  Future<Directory> _directory() async {
+  Future<Directory> _createUploadDirectory() async {
     final configured = directory;
-    if (configured != null) {
-      await configured.create(recursive: true);
-      return configured;
-    }
-    return _createdDirectory ??= await Directory.systemTemp.createTemp(
-      directoryPrefix,
-    );
-  }
-
-  Future<File> _createTempFile(final Directory uploadDirectory) async {
-    while (true) {
-      final file = File(
-        p.join(
-          uploadDirectory.path,
-          'upload_${DateTime.now().microsecondsSinceEpoch}_${_counter++}.tmp',
-        ),
-      );
-      try {
-        return await file.create(exclusive: true);
-      } on PathExistsException {
-        // Extremely unlikely, but avoid ever overwriting caller data.
-      }
-    }
+    if (configured == null) return Directory.systemTemp.createTemp(prefix);
+    await configured.create(recursive: true);
+    return configured.createTemp(prefix);
   }
 }
 
@@ -86,20 +68,23 @@ final class TempUploadedFile implements UploadedFile {
   @override
   final Headers headers;
 
-  /// Temp file path.
-  final String path;
+  /// The upload directory holding [path]. [dispose] deletes it.
+  final Directory _directory;
 
   int? _size;
   var _disposed = false;
 
-  /// Creates a temp-file-backed uploaded file.
-  TempUploadedFile({
+  TempUploadedFile._({
     required this.filename,
     required this.contentType,
     required this.headers,
-    required this.path,
+    required final Directory directory,
     required final int size,
-  }) : _size = size;
+  }) : _directory = directory,
+       _size = size;
+
+  /// The path of the temp file that holds the upload.
+  String get path => p.join(_directory.path, _fileName);
 
   @override
   int? get size => _size;
@@ -117,9 +102,11 @@ final class TempUploadedFile implements UploadedFile {
     if (_disposed) return;
     _disposed = true;
     _size = null;
-    await _deleteIfExists(File(path));
+    await _deleteQuietly(_directory);
   }
 }
+
+const _fileName = 'upload';
 
 /// Writes [content] to [file] one chunk at a time and returns the number of
 /// bytes written.
@@ -143,9 +130,9 @@ Future<int> _write(final File file, final Stream<Uint8List> content) async {
   return size;
 }
 
-Future<void> _deleteIfExists(final File file) async {
+Future<void> _deleteQuietly(final Directory directory) async {
   try {
-    await file.delete();
+    await directory.delete(recursive: true);
   } on FileSystemException {
     // The caller only needs disposal/cleanup best-effort semantics.
   }
