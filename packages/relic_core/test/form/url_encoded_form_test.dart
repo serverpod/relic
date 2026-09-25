@@ -125,7 +125,7 @@ void main() {
         final request = _request(body: 'name=Gustavo');
 
         await expectLater(
-          request.urlEncodedForm(limits: _limits(maxBodySize: 4)),
+          request.urlEncodedForm(limits: FormLimits(maxBodySize: 4)),
           throwsA(isA<MaxBodySizeExceeded>()),
         );
       },
@@ -137,7 +137,7 @@ void main() {
         final request = _request(body: 'a=1&b=2');
 
         await expectLater(
-          request.urlEncodedForm(limits: _limits(maxFieldCount: 1)),
+          request.urlEncodedForm(limits: FormLimits(maxFieldCount: 1)),
           throwsA(
             isA<FormLimitExceededException>().having(
               (final error) => error.limit,
@@ -155,7 +155,7 @@ void main() {
         final request = _request(body: 'name=Gustavo');
 
         await expectLater(
-          request.urlEncodedForm(limits: _limits(maxFieldSize: 3)),
+          request.urlEncodedForm(limits: FormLimits(maxFieldSize: 3)),
           throwsA(
             isA<FormLimitExceededException>().having(
               (final error) => error.limit,
@@ -259,24 +259,5 @@ Request _request({
       bodyBytes ?? Uint8List.fromList(utf8.encode(body ?? '')),
       mimeType: contentType?.mimeType ?? MimeType.urlEncoded,
     ),
-  );
-}
-
-FormLimits _limits({
-  final int? maxBodySize,
-  final int? maxFieldCount,
-  final int? maxFieldSize,
-}) {
-  const defaults = FormLimits.defaults;
-  return FormLimits(
-    maxBodySize: maxBodySize ?? defaults.maxBodySize,
-    maxFieldCount: maxFieldCount ?? defaults.maxFieldCount,
-    maxFileCount: defaults.maxFileCount,
-    maxPartCount: defaults.maxPartCount,
-    maxFieldSize: maxFieldSize ?? defaults.maxFieldSize,
-    maxFileSize: defaults.maxFileSize,
-    maxTotalFileSize: defaults.maxTotalFileSize,
-    maxPartHeaderSize: defaults.maxPartHeaderSize,
-    maxBoundarySize: defaults.maxBoundarySize,
   );
 }

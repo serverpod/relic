@@ -22,6 +22,42 @@ void main() {
     });
   });
 
+  test('Given only maxFileSize, '
+      'when FormLimits is constructed, '
+      'then every other limit has its default value.', () {
+    const defaults = FormLimits.defaults;
+
+    const limits = FormLimits(maxFileSize: 1024);
+
+    expect(limits.maxBodySize, defaults.maxBodySize);
+    expect(limits.maxFieldCount, defaults.maxFieldCount);
+    expect(limits.maxFileCount, defaults.maxFileCount);
+    expect(limits.maxPartCount, defaults.maxPartCount);
+    expect(limits.maxFieldSize, defaults.maxFieldSize);
+    expect(limits.maxFileSize, 1024);
+    expect(limits.maxTotalFileSize, defaults.maxTotalFileSize);
+    expect(limits.maxPartHeaderSize, defaults.maxPartHeaderSize);
+    expect(limits.maxBoundarySize, defaults.maxBoundarySize);
+  });
+
+  test('Given FormLimits.defaults, '
+      'when copyWith replaces maxFieldCount, '
+      'then every other limit keeps its default value.', () {
+    const defaults = FormLimits.defaults;
+
+    final limits = defaults.copyWith(maxFieldCount: 3);
+
+    expect(limits.maxBodySize, defaults.maxBodySize);
+    expect(limits.maxFieldCount, 3);
+    expect(limits.maxFileCount, defaults.maxFileCount);
+    expect(limits.maxPartCount, defaults.maxPartCount);
+    expect(limits.maxFieldSize, defaults.maxFieldSize);
+    expect(limits.maxFileSize, defaults.maxFileSize);
+    expect(limits.maxTotalFileSize, defaults.maxTotalFileSize);
+    expect(limits.maxPartHeaderSize, defaults.maxPartHeaderSize);
+    expect(limits.maxBoundarySize, defaults.maxBoundarySize);
+  });
+
   group('Given form exceptions', () {
     test('when created, '
         'then they expose messages and status codes', () {

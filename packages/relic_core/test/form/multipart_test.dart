@@ -328,7 +328,7 @@ void main() {
         );
 
         await expectLater(
-          request.multipart(limits: _limits(maxBodySize: 4)).drain<void>(),
+          request.multipart(limits: FormLimits(maxBodySize: 4)).drain<void>(),
           throwsA(isA<MaxBodySizeExceeded>()),
         );
       },
@@ -340,7 +340,9 @@ void main() {
         final request = _request(boundary: 'abcdef', body: '');
 
         await expectLater(
-          request.multipart(limits: _limits(maxBoundarySize: 3)).drain<void>(),
+          request
+              .multipart(limits: FormLimits(maxBoundarySize: 3))
+              .drain<void>(),
           throwsA(
             isA<FormLimitExceededException>().having(
               (final error) => error.limit,
@@ -374,7 +376,7 @@ void main() {
         );
 
         final queue = StreamQueue(
-          request.multipart(limits: _limits(maxPartCount: 1)),
+          request.multipart(limits: FormLimits(maxPartCount: 1)),
         );
 
         final first = await queue.next;
@@ -410,7 +412,7 @@ void main() {
 
         await expectLater(
           request
-              .multipart(limits: _limits(maxPartHeaderSize: 8))
+              .multipart(limits: FormLimits(maxPartHeaderSize: 8))
               .drain<void>(),
           throwsA(
             isA<FormLimitExceededException>().having(
@@ -562,26 +564,6 @@ Uint8List _multipartBodyBytes(
   }
   bytes.add(utf8.encode('--$boundary--\r\n'));
   return bytes.takeBytes();
-}
-
-FormLimits _limits({
-  final int? maxBodySize,
-  final int? maxBoundarySize,
-  final int? maxPartCount,
-  final int? maxPartHeaderSize,
-}) {
-  const defaults = FormLimits.defaults;
-  return FormLimits(
-    maxBodySize: maxBodySize ?? defaults.maxBodySize,
-    maxFieldCount: defaults.maxFieldCount,
-    maxFileCount: defaults.maxFileCount,
-    maxPartCount: maxPartCount ?? defaults.maxPartCount,
-    maxFieldSize: defaults.maxFieldSize,
-    maxFileSize: defaults.maxFileSize,
-    maxTotalFileSize: defaults.maxTotalFileSize,
-    maxPartHeaderSize: maxPartHeaderSize ?? defaults.maxPartHeaderSize,
-    maxBoundarySize: maxBoundarySize ?? defaults.maxBoundarySize,
-  );
 }
 
 final class _Part {

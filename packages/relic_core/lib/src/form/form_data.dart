@@ -35,29 +35,44 @@ final class FormLimits {
 
   /// Creates form parsing limits.
   const FormLimits({
-    required this.maxBodySize,
-    required this.maxFieldCount,
-    required this.maxFileCount,
-    required this.maxPartCount,
-    required this.maxFieldSize,
-    required this.maxFileSize,
-    required this.maxTotalFileSize,
-    required this.maxPartHeaderSize,
-    required this.maxBoundarySize,
+    this.maxBodySize = 10 * 1024 * 1024,
+    this.maxFieldCount = 100,
+    this.maxFileCount = 8,
+    this.maxPartCount = 128,
+    this.maxFieldSize = 64 * 1024,
+    this.maxFileSize = 10 * 1024 * 1024,
+    this.maxTotalFileSize = 10 * 1024 * 1024,
+    this.maxPartHeaderSize = 8 * 1024,
+    this.maxBoundarySize = 200,
   });
 
   /// Default form parsing limits.
-  static const defaults = FormLimits(
-    maxBodySize: 10 * 1024 * 1024,
-    maxFieldCount: 100,
-    maxFileCount: 8,
-    maxPartCount: 128,
-    maxFieldSize: 64 * 1024,
-    maxFileSize: 10 * 1024 * 1024,
-    maxTotalFileSize: 10 * 1024 * 1024,
-    maxPartHeaderSize: 8 * 1024,
-    maxBoundarySize: 200,
-  );
+  static const defaults = FormLimits();
+
+  /// Returns a copy with the given limits replaced.
+  FormLimits copyWith({
+    final int? maxBodySize,
+    final int? maxFieldCount,
+    final int? maxFileCount,
+    final int? maxPartCount,
+    final int? maxFieldSize,
+    final int? maxFileSize,
+    final int? maxTotalFileSize,
+    final int? maxPartHeaderSize,
+    final int? maxBoundarySize,
+  }) {
+    return FormLimits(
+      maxBodySize: maxBodySize ?? this.maxBodySize,
+      maxFieldCount: maxFieldCount ?? this.maxFieldCount,
+      maxFileCount: maxFileCount ?? this.maxFileCount,
+      maxPartCount: maxPartCount ?? this.maxPartCount,
+      maxFieldSize: maxFieldSize ?? this.maxFieldSize,
+      maxFileSize: maxFileSize ?? this.maxFileSize,
+      maxTotalFileSize: maxTotalFileSize ?? this.maxTotalFileSize,
+      maxPartHeaderSize: maxPartHeaderSize ?? this.maxPartHeaderSize,
+      maxBoundarySize: maxBoundarySize ?? this.maxBoundarySize,
+    );
+  }
 }
 
 /// Base exception for form parsing failures.

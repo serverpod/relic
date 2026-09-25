@@ -72,8 +72,6 @@ Future<Response> _limitedUpload(
         maxFieldSize: 64,
         maxFileSize: 1024,
         maxTotalFileSize: 1024,
-        maxPartHeaderSize: 8 * 1024,
-        maxBoundarySize: 200,
       ),
       uploadStorage: TempUploadStorage(directory: uploadDir),
     );
