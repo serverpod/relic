@@ -498,6 +498,95 @@ void main() {
       );
     },
   );
+
+  test('Given a multipart file part with filename "..", '
+      'when multipartForm is parsed, '
+      'then the uploaded file has no filename.', () async {
+    final request = _multipartRequest(
+      boundary: 'dotdot',
+      body: _multipartBody('dotdot', [_file('upload', '..', 'content')]),
+    );
+
+    final form = await request.multipartForm();
+
+    expect(form.files.getRequired('upload').filename, isNull);
+  });
+
+  test('Given a multipart file part with filename ".", '
+      'when multipartForm is parsed, '
+      'then the uploaded file has no filename.', () async {
+    final request = _multipartRequest(
+      boundary: 'dot',
+      body: _multipartBody('dot', [_file('upload', '.', 'content')]),
+    );
+
+    final form = await request.multipartForm();
+
+    expect(form.files.getRequired('upload').filename, isNull);
+  });
+
+  test('Given a multipart file part whose filename is a path ending in "..", '
+      'when multipartForm is parsed, '
+      'then the uploaded file has no filename.', () async {
+    final request = _multipartRequest(
+      boundary: 'path-dotdot',
+      body: _multipartBody('path-dotdot', [
+        const _Part(
+          headers: {
+            Headers.contentDispositionHeader:
+                'form-data; name="upload"; filename="a/.."',
+          },
+          body: 'content',
+        ),
+      ]),
+    );
+
+    final form = await request.multipartForm();
+
+    expect(form.files.getRequired('upload').filename, isNull);
+  });
+
+  test('Given a multipart file part whose filename has a tab, '
+      'when multipartForm is parsed, '
+      'then the uploaded file name has no tab.', () async {
+    final request = _multipartRequest(
+      boundary: 'tab-filename',
+      body: _multipartBody('tab-filename', [
+        const _Part(
+          headers: {
+            Headers.contentDispositionHeader:
+                'form-data; name="upload"; filename="report\t.txt"',
+          },
+          body: 'content',
+        ),
+      ]),
+    );
+
+    final form = await request.multipartForm();
+
+    expect(form.files.getRequired('upload').filename, 'report.txt');
+  });
+
+  test('Given a multipart file part whose filename has a C1 control character, '
+      'when multipartForm is parsed, '
+      'then the uploaded file name has no C1 control character.', () async {
+    final request = _multipartRequest(
+      boundary: 'c1-filename',
+      body: _multipartBody('c1-filename', [
+        const _Part(
+          headers: {
+            Headers.contentDispositionHeader:
+                'form-data; name="upload"; filename="report\u0085.txt"',
+          },
+          body: 'content',
+        ),
+      ]),
+    );
+
+    final form = await request.multipartForm();
+
+    expect(form.files.getRequired('upload').filename, 'report.txt');
+  });
 }
 
 Request _urlEncodedRequest(final String body) {

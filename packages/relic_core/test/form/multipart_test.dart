@@ -130,7 +130,7 @@ void main() {
           ]),
         );
 
-        final filenames = <String>[];
+        final filenames = <String?>[];
         await for (final part in request.multipart()) {
           filenames.add((part as MultipartFilePart).filename);
           await part.discard();
@@ -543,6 +543,33 @@ void main() {
     final parts = await request.multipart().toList();
 
     expect(parts, [isA<MultipartOtherPart>()]);
+  });
+
+  test('Given a named multipart part whose filename is only a directory path, '
+      'when the request is streamed, '
+      'then the part is a MultipartFilePart without a filename.', () async {
+    final request = _request(
+      boundary: 'directory-filename',
+      body: _multipartBody('directory-filename', [
+        const _Part(
+          headers: {
+            Headers.contentDispositionHeader:
+                'form-data; name="upload"; filename="uploads/"',
+          },
+          body: 'value',
+        ),
+      ]),
+    );
+
+    final parts = await request.multipart().toList();
+
+    expect(parts, [
+      isA<MultipartFilePart>().having(
+        (final p) => p.filename,
+        'filename',
+        isNull,
+      ),
+    ]);
   });
 }
 
