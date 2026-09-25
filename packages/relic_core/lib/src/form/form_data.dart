@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:typed_data';
 
+import '../accessor/accessor.dart';
 import '../body/body.dart';
 import '../headers/headers.dart';
 import '../headers/typed/headers/content_type_header.dart';
@@ -136,6 +137,45 @@ final class FormLimitExceededException implements FormException {
   String toString() => message;
 }
 
+/// Exception thrown when a required form field or file is absent.
+final class MissingFormFieldException implements FormException {
+  /// Name of the missing field.
+  final String name;
+
+  /// Creates a missing form field exception for [name].
+  const MissingFormFieldException(this.name);
+
+  @override
+  String get message => 'Missing form field "$name".';
+
+  @override
+  int get statusCode => 400;
+
+  @override
+  String toString() => message;
+}
+
+/// Exception thrown when a form field value does not decode.
+final class InvalidFormFieldException implements FormException {
+  /// Name of the invalid field.
+  final String name;
+
+  /// The exception the decoder threw.
+  final Exception error;
+
+  /// Creates an invalid form field exception for [name].
+  const InvalidFormFieldException(this.name, this.error);
+
+  @override
+  String get message => 'Invalid form field "$name".';
+
+  @override
+  int get statusCode => 400;
+
+  @override
+  String toString() => '$message $error';
+}
+
 /// Parsed HTML form data.
 sealed class FormData {
   /// Text field entries grouped and queried by name.
@@ -154,7 +194,7 @@ final class UrlEncodedFormData implements FormData {
   final FormFields fields;
 
   @override
-  UploadedFiles get files => UploadedFiles.empty;
+  UploadedFiles get files => _noFiles;
 
   @override
   final List<FormEntry> entries;
@@ -231,74 +271,158 @@ final class FileFieldEntry implements FormEntry {
   const FileFieldEntry({required this.name, required this.file});
 }
 
-/// Text form fields preserving duplicate names and original field order.
-final class FormFields {
-  /// Empty field collection.
-  static final empty = FormFields([]);
+/// A read-only accessor for a typed form field.
+///
+/// Use this with [FormFields] to read typed values:
+/// ```dart
+/// const ageField = IntFormField('age');
+/// final age = form.fields.get(ageField); // typed as int
+/// ```
+///
+/// The decoder must throw an [Exception] for an invalid value, which
+/// [FormFields] reports as [InvalidFormFieldException]. An [Error] propagates
+/// unchanged. Catch the [ArgumentError] from a decoder such as
+/// `Enum.values.byName` and throw a [FormatException] instead.
+class FormField<T extends Object> extends ReadOnlyAccessor<T, String, String> {
+  const FormField(super.key, super.decode);
+}
 
+/// A form field accessor that returns the value as is.
+final class StringFormField extends FormField<String> {
+  const StringFormField(final String key) : super(key, _identity);
+}
+
+/// A form field accessor that parses values as [num].
+final class NumFormField extends FormField<num> {
+  const NumFormField(final String key) : super(key, num.parse);
+}
+
+/// A form field accessor that parses values as [int].
+final class IntFormField extends FormField<int> {
+  const IntFormField(final String key) : super(key, int.parse);
+}
+
+/// A form field accessor that parses values as [double].
+final class DoubleFormField extends FormField<double> {
+  const DoubleFormField(final String key) : super(key, double.parse);
+}
+
+/// Text form fields, read through [FormField] accessors.
+///
+/// [raw] maps each name to its first value. [entries] keeps every value in
+/// form order, and [getAll] decodes every value for a name.
+final class FormFields extends AccessorState<String, String> {
   /// Text field entries in original field order.
   final List<FormFieldEntry> entries;
 
   /// Creates form fields from [entries].
-  FormFields(final Iterable<FormFieldEntry> entries)
-    : entries = List.unmodifiable(entries);
+  factory FormFields(final Iterable<FormFieldEntry> entries) =>
+      FormFields._(List.unmodifiable(entries));
 
-  /// Returns the first value for [name], or null if absent.
-  String? get(final String name) {
-    for (final entry in entries) {
-      if (entry.name == name) return entry.value;
+  FormFields._(this.entries)
+    : super(
+        Map.unmodifiable({
+          for (final entry in entries.reversed) entry.name: entry.value,
+        }),
+      );
+
+  /// Returns the decoded first value for [accessor].
+  ///
+  /// Throws [MissingFormFieldException] if the field is absent, and
+  /// [InvalidFormFieldException] if the value does not decode.
+  @override
+  T get<T extends Object>(final ReadOnlyAccessor<T, String, String> accessor) =>
+      call(accessor) ?? (throw MissingFormFieldException(accessor.key));
+
+  /// Returns the decoded first value for [accessor], or null if absent.
+  ///
+  /// Throws [InvalidFormFieldException] if the value does not decode.
+  @override
+  T? call<T extends Object>(
+    final ReadOnlyAccessor<T, String, String> accessor,
+  ) {
+    try {
+      return super.call(accessor);
+    } on Exception catch (error) {
+      throw InvalidFormFieldException(accessor.key, error);
     }
-    return null;
   }
 
-  /// Returns the first value for [name], or throws if absent.
-  String getRequired(final String name) =>
-      get(name) ?? (throw StateError('Missing required form field "$name".'));
-
-  /// Returns all values for [name] in field order.
-  List<String> getAll(final String name) => [
-    for (final entry in entries)
-      if (entry.name == name) entry.value,
-  ];
-
-  /// Returns true if any field exists for [name].
-  bool contains(final String name) => get(name) != null;
+  /// Returns every decoded value for [accessor] in form order.
+  ///
+  /// Throws [InvalidFormFieldException] if a value does not decode.
+  List<T> getAll<T extends Object>(
+    final ReadOnlyAccessor<T, String, String> accessor,
+  ) {
+    return [
+      for (final entry in entries)
+        if (entry.name == accessor.key) _decode(accessor, entry.value),
+    ];
+  }
 }
 
-/// Uploaded files preserving duplicate names and original file order.
-final class UploadedFiles {
-  /// Empty uploaded file collection.
-  static final empty = UploadedFiles([]);
+T _decode<T extends Object>(
+  final ReadOnlyAccessor<T, String, String> accessor,
+  final String value,
+) {
+  try {
+    return accessor.decode(value);
+  } on Exception catch (error) {
+    throw InvalidFormFieldException(accessor.key, error);
+  }
+}
 
+String _identity(final String value) => value;
+
+/// A read-only accessor for an uploaded file.
+///
+/// ```dart
+/// const avatarFile = FormFile('avatar');
+/// final avatar = form.files.get(avatarFile);
+/// ```
+final class FormFile
+    extends ReadOnlyAccessor<UploadedFile, String, UploadedFile> {
+  const FormFile(final String key) : super(key, _identityFile);
+}
+
+UploadedFile _identityFile(final UploadedFile file) => file;
+
+/// Uploaded files, read through [FormFile] accessors.
+///
+/// [raw] maps each name to its first file. [entries] keeps every file in
+/// form order, and [getAll] returns every file for a name.
+final class UploadedFiles extends AccessorState<String, UploadedFile> {
   /// File field entries in original file order.
   final List<FileFieldEntry> entries;
 
   /// Creates uploaded files from [entries].
-  UploadedFiles(final Iterable<FileFieldEntry> entries)
-    : entries = List.unmodifiable(entries);
+  factory UploadedFiles(final Iterable<FileFieldEntry> entries) =>
+      UploadedFiles._(List.unmodifiable(entries));
 
-  /// Returns the first file for [name], or null if absent.
-  UploadedFile? get(final String name) {
-    for (final entry in entries) {
-      if (entry.name == name) return entry.file;
-    }
-    return null;
-  }
+  UploadedFiles._(this.entries)
+    : super(
+        Map.unmodifiable({
+          for (final entry in entries.reversed) entry.name: entry.file,
+        }),
+      );
 
-  /// Returns the first file for [name], or throws if absent.
-  UploadedFile getRequired(final String name) =>
-      get(name) ??
-      (throw StateError('Missing required uploaded file "$name".'));
+  /// Returns the first file for [accessor].
+  ///
+  /// Throws [MissingFormFieldException] if the form has no file for
+  /// [accessor].
+  @override
+  T get<T extends Object>(
+    final ReadOnlyAccessor<T, String, UploadedFile> accessor,
+  ) => call(accessor) ?? (throw MissingFormFieldException(accessor.key));
 
-  /// Returns all files for [name] in file order.
-  List<UploadedFile> getAll(final String name) => [
+  /// Returns every file for [accessor] in form order.
+  List<UploadedFile> getAll(final FormFile accessor) => [
     for (final entry in entries)
-      if (entry.name == name) entry.file,
+      if (entry.name == accessor.key) entry.file,
   ];
-
-  /// Returns true if any uploaded file exists for [name].
-  bool contains(final String name) => get(name) != null;
 }
+
+final _noFiles = UploadedFiles(const []);
 
 /// A handle to an uploaded file.
 abstract interface class UploadedFile {

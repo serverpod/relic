@@ -180,7 +180,8 @@ void main() {
         final form = await request.multipartForm(
           uploadStorage: TempUploadStorage(directory: tempDir),
         );
-        final uploaded = form.files.getRequired('file') as TempUploadedFile;
+        final uploaded =
+            form.files.get(const FormFile('file')) as TempUploadedFile;
 
         expect(uploaded.path, startsWith(tempDir.path));
         expect(await utf8.decodeStream(uploaded.read()), 'hello');

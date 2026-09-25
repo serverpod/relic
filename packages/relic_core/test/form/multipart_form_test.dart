@@ -14,7 +14,7 @@ void main() {
         final form = await request.formData();
 
         expect(form, isA<UrlEncodedFormData>());
-        expect(form.fields.get('name'), 'Gustavo');
+        expect(form.fields.raw['name'], 'Gustavo');
         expect(form.files.entries, isEmpty);
       },
     );
@@ -39,7 +39,7 @@ void main() {
         final form = await request.formData();
 
         expect(form, isA<MultipartFormData>());
-        expect(form.fields.get('name'), 'Gustavo');
+        expect(form.fields.raw['name'], 'Gustavo');
       },
     );
 
@@ -73,10 +73,11 @@ void main() {
         );
 
         final form = await request.multipartForm();
-        final file = form.files.getRequired('upload') as MemoryUploadedFile;
+        final file =
+            form.files.get(const FormFile('upload')) as MemoryUploadedFile;
 
-        expect(form.fields.get('title'), 'Report');
-        expect(form.fields.get('tag'), 'draft');
+        expect(form.fields.raw['title'], 'Report');
+        expect(form.fields.raw['tag'], 'draft');
         expect(file.filename, 'report.txt');
         expect(file.contentType?.mimeType, MimeType.plainText);
         expect(file.size, 9);
@@ -114,10 +115,12 @@ void main() {
 
         final form = await request.multipartForm();
 
-        expect(form.files.getAll('photo').map((final file) => file.filename), [
-          'one.txt',
-          'two.txt',
-        ]);
+        expect(
+          form.files
+              .getAll(const FormFile('photo'))
+              .map((final file) => file.filename),
+          ['one.txt', 'two.txt'],
+        );
       },
     );
 
@@ -143,7 +146,7 @@ void main() {
 
       final form = await request.multipartForm();
 
-      expect(form.fields.get('actual'), 'value');
+      expect(form.fields.raw['actual'], 'value');
       expect(form.files.entries, isEmpty);
       expect(form.entries.map((final entry) => entry.name), ['actual']);
     });
@@ -164,8 +167,8 @@ void main() {
 
       final form = await request.multipartForm();
 
-      expect(form.fields.get('actual'), 'value');
-      expect(form.fields.contains('ignored'), isFalse);
+      expect(form.fields.raw['actual'], 'value');
+      expect(form.fields.raw.containsKey('ignored'), isFalse);
       expect(form.entries.map((final entry) => entry.name), ['actual']);
     });
 
@@ -187,7 +190,7 @@ void main() {
 
         final form = await request.multipartForm();
 
-        expect(form.files.getRequired('upload').filename, 'report.txt');
+        expect(form.files.get(const FormFile('upload')).filename, 'report.txt');
       },
     );
   });
@@ -209,7 +212,7 @@ void main() {
 
     final form = await request.multipartForm();
 
-    expect(form.fields.get('name'), 'André');
+    expect(form.fields.raw['name'], 'André');
   });
 
   group('Given a multipart form with uploaded files', () {
@@ -228,7 +231,7 @@ void main() {
       );
 
       final form = await request.multipartForm();
-      final file = form.files.getRequired('file');
+      final file = form.files.get(const FormFile('file'));
 
       await form.dispose();
 
@@ -508,7 +511,7 @@ void main() {
         limits: FormLimits(maxFieldCount: 1),
       );
 
-      expect(form.fields.get('title'), 'Report');
+      expect(form.fields.raw['title'], 'Report');
     },
   );
 
@@ -533,7 +536,7 @@ void main() {
 
       final form = await request.multipartForm();
 
-      expect(form.fields.getAll('upload'), isEmpty);
+      expect(form.fields.getAll(const StringFormField('upload')), isEmpty);
     },
   );
 
@@ -601,7 +604,7 @@ void main() {
 
     final form = await request.multipartForm();
 
-    expect(form.files.getRequired('upload').filename, isNull);
+    expect(form.files.get(const FormFile('upload')).filename, isNull);
   });
 
   test('Given a multipart file part with filename ".", '
@@ -614,7 +617,7 @@ void main() {
 
     final form = await request.multipartForm();
 
-    expect(form.files.getRequired('upload').filename, isNull);
+    expect(form.files.get(const FormFile('upload')).filename, isNull);
   });
 
   test('Given a multipart file part whose filename is a path ending in "..", '
@@ -635,7 +638,7 @@ void main() {
 
     final form = await request.multipartForm();
 
-    expect(form.files.getRequired('upload').filename, isNull);
+    expect(form.files.get(const FormFile('upload')).filename, isNull);
   });
 
   test('Given a multipart file part whose filename has a tab, '
@@ -656,7 +659,7 @@ void main() {
 
     final form = await request.multipartForm();
 
-    expect(form.files.getRequired('upload').filename, 'report.txt');
+    expect(form.files.get(const FormFile('upload')).filename, 'report.txt');
   });
 
   test('Given a multipart file part whose filename has a C1 control character, '
@@ -677,7 +680,7 @@ void main() {
 
     final form = await request.multipartForm();
 
-    expect(form.files.getRequired('upload').filename, 'report.txt');
+    expect(form.files.get(const FormFile('upload')).filename, 'report.txt');
   });
 
   test('Given a request with a urlencoded body and no Content-Type header, '
@@ -693,7 +696,7 @@ void main() {
     final form = await request.formData();
 
     expect(form, isA<UrlEncodedFormData>());
-    expect(form.fields.get('name'), 'Gustavo');
+    expect(form.fields.raw['name'], 'Gustavo');
   });
 }
 
