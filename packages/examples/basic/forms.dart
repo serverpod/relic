@@ -88,23 +88,23 @@ Future<Response> _streamUpload(final Request req) async {
     final lines = <String>[];
 
     await for (final part in req.multipart()) {
-      if (part.isField) {
-        lines.add('field ${part.name}: ${await part.readAsString()}');
-        continue;
-      }
-      if (!part.isFile) {
-        await part.discard();
-        continue;
-      }
+      switch (part) {
+        case MultipartFieldPart(:final name):
+          lines.add('field $name: ${await part.readAsString()}');
 
-      var bytes = 0;
-      await for (final chunk in part.body.read()) {
-        bytes += chunk.length;
+        case MultipartFilePart(:final name, :final filename):
+          var bytes = 0;
+          await for (final chunk in part.body.read()) {
+            bytes += chunk.length;
+          }
+          lines.add(
+            'file $name: filename=$filename, '
+            'content-type=${part.contentType?.mimeType ?? ''}, bytes=$bytes',
+          );
+
+        case MultipartOtherPart():
+          await part.discard();
       }
-      lines.add(
-        'file ${part.name}: filename=${part.filename ?? ''}, '
-        'content-type=${part.contentType?.mimeType ?? ''}, bytes=$bytes',
-      );
     }
 
     return _resultPage(req, lines.join('\n'));

@@ -30,36 +30,27 @@ void main() {
           ]),
         );
 
-        final seen = <Map<String, Object?>>[];
+        final parts = <MultipartPart>[];
+        final bodies = <String>[];
         await for (final part in request.multipart()) {
-          seen.add({
-            'name': part.name,
-            'filename': part.filename,
-            'isField': part.isField,
-            'isFile': part.isFile,
-            'contentType': part.contentType?.mimeType.toHeaderValue(),
-            'body': await part.readAsString(),
-          });
+          parts.add(part);
+          bodies.add(await part.readAsString());
         }
 
-        expect(seen, [
-          {
-            'name': 'text',
-            'filename': null,
-            'isField': true,
-            'isFile': false,
-            'contentType': null,
-            'body': 'hello',
-          },
-          {
-            'name': 'upload',
-            'filename': 'file.txt',
-            'isField': false,
-            'isFile': true,
-            'contentType': 'text/plain',
-            'body': 'file-body',
-          },
+        expect(parts, [
+          isA<MultipartFieldPart>()
+              .having((final p) => p.name, 'name', 'text')
+              .having((final p) => p.contentType, 'contentType', isNull),
+          isA<MultipartFilePart>()
+              .having((final p) => p.name, 'name', 'upload')
+              .having((final p) => p.filename, 'filename', 'file.txt')
+              .having(
+                (final p) => p.contentType?.mimeType,
+                'contentType.mimeType',
+                MimeType.plainText,
+              ),
         ]);
+        expect(bodies, ['hello', 'file-body']);
       },
     );
 
@@ -84,10 +75,10 @@ void main() {
           ]),
         );
 
-        final names = <String?>[];
+        final names = <String>[];
         final values = <String>[];
         await for (final part in request.multipart()) {
-          names.add(part.name);
+          names.add((part as MultipartFieldPart).name);
           values.add(await part.readAsString());
         }
 
@@ -111,10 +102,7 @@ void main() {
       );
 
       await for (final part in request.multipart()) {
-        expect(part.name, isNull);
-        expect(part.filename, 'file.txt');
-        expect(part.isField, isFalse);
-        expect(part.isFile, isFalse);
+        expect(part, isA<MultipartOtherPart>());
         await part.discard();
       }
     });
@@ -142,9 +130,9 @@ void main() {
           ]),
         );
 
-        final filenames = <String?>[];
+        final filenames = <String>[];
         await for (final part in request.multipart()) {
-          filenames.add(part.filename);
+          filenames.add((part as MultipartFilePart).filename);
           await part.discard();
         }
 
@@ -169,9 +157,7 @@ void main() {
         );
 
         await for (final part in request.multipart()) {
-          expect(part.filename, isNull);
-          expect(part.isFile, isFalse);
-          expect(part.isField, isTrue);
+          expect(part, isA<MultipartFieldPart>());
           expect(await part.readAsString(), '');
         }
       },
@@ -194,8 +180,14 @@ void main() {
         );
 
         await for (final part in request.multipart()) {
-          expect(part.filename, 'extended name.txt');
-          expect(part.isFile, isTrue);
+          expect(
+            part,
+            isA<MultipartFilePart>().having(
+              (final p) => p.filename,
+              'filename',
+              'extended name.txt',
+            ),
+          );
           await part.discard();
         }
       },
@@ -512,6 +504,45 @@ void main() {
       part.readAsString(),
       throwsA(isA<MalformedFormDataException>()),
     );
+  });
+
+  test('Given a multipart part without a Content-Disposition header, '
+      'when the request is streamed, '
+      'then the part is a MultipartOtherPart.', () async {
+    final request = _request(
+      boundary: 'no-disposition',
+      body: _multipartBody('no-disposition', [
+        const _Part(
+          headers: {Headers.contentTypeHeader: 'text/plain'},
+          body: 'value',
+        ),
+      ]),
+    );
+
+    final parts = await request.multipart().toList();
+
+    expect(parts, [isA<MultipartOtherPart>()]);
+  });
+
+  test('Given a named multipart part with an attachment disposition, '
+      'when the request is streamed, '
+      'then the part is a MultipartOtherPart.', () async {
+    final request = _request(
+      boundary: 'attachment',
+      body: _multipartBody('attachment', [
+        const _Part(
+          headers: {
+            Headers.contentDispositionHeader:
+                'attachment; name="upload"; filename="file.txt"',
+          },
+          body: 'value',
+        ),
+      ]),
+    );
+
+    final parts = await request.multipart().toList();
+
+    expect(parts, [isA<MultipartOtherPart>()]);
   });
 }
 
