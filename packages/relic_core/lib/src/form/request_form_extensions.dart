@@ -88,8 +88,7 @@ extension FormRequestExtension on Request {
               );
             }
 
-            final encoding =
-                Encoding.getByName(part.contentType?.charset ?? '') ?? utf8;
+            final encoding = part.body.bodyType?.encoding ?? utf8;
             final value = await _readPartAsString(
               part,
               encoding,
@@ -113,7 +112,7 @@ extension FormRequestExtension on Request {
             final file = await storage.store(
               fieldName: name,
               filename: filename,
-              contentType: part.contentType,
+              bodyType: part.body.bodyType,
               headers: part.headers,
               content: _limitedFileStream(
                 part.body.read(),
@@ -188,7 +187,7 @@ extension FormRequestExtension on Request {
 
         yield MultipartPart(
           headers: headers,
-          body: Body.fromDataStream(_asUint8ListStream(part)),
+          content: _asUint8ListStream(part),
         );
       }
     } on MimeMultipartException catch (error) {

@@ -410,6 +410,12 @@ class Body {
   }
 }
 
+/// Internal extension methods for [Body], not exported from relic_core.dart.
+extension BodyInternal on Body {
+  /// The private `Body._` constructor.
+  static const create = Body._;
+}
+
 /// Exception thrown when the body size exceeds the maximum allowed length.
 class MaxBodySizeExceeded implements Exception {
   /// The maximum allowed body size in bytes.

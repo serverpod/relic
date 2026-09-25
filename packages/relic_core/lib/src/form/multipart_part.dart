@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
 import '../body/body.dart';
 import '../headers/headers.dart';
@@ -15,23 +16,23 @@ sealed class MultipartPart {
   /// Parsed part Content-Disposition header, if present.
   final ContentDispositionHeader? contentDisposition;
 
-  /// Parsed part Content-Type header, if present.
-  final ContentTypeHeader? contentType;
-
   /// Single-read body for this part.
+  ///
+  /// [Body.bodyType] holds the part Content-Type, or null if the part has
+  /// none.
   final Body body;
 
   /// Creates the multipart part that matches the Content-Disposition in
-  /// [headers].
+  /// [headers], with [content] as its body.
   ///
   /// Throws [MalformedFormDataException] if the Content-Disposition or
   /// Content-Type in [headers] does not parse.
   factory MultipartPart({
     required final Headers headers,
-    required final Body body,
+    required final Stream<Uint8List> content,
   }) {
     final contentDisposition = _parseContentDisposition(headers);
-    final contentType = _parseContentType(headers);
+    final body = _body(content, _parseContentType(headers));
     final name = contentDisposition?.type.toLowerCase() == 'form-data'
         ? _contentDispositionParameter(contentDisposition, 'name')
         : null;
@@ -39,7 +40,6 @@ sealed class MultipartPart {
       return MultipartOtherPart._(
         headers: headers,
         contentDisposition: contentDisposition,
-        contentType: contentType,
         body: body,
       );
     }
@@ -49,7 +49,6 @@ sealed class MultipartPart {
       return MultipartFieldPart._(
         headers: headers,
         contentDisposition: contentDisposition,
-        contentType: contentType,
         body: body,
         name: name,
       );
@@ -57,7 +56,6 @@ sealed class MultipartPart {
     return MultipartFilePart._(
       headers: headers,
       contentDisposition: contentDisposition,
-      contentType: contentType,
       body: body,
       name: name,
       filename: _sanitizeFilename(rawFilename),
@@ -68,7 +66,6 @@ sealed class MultipartPart {
   MultipartPart._({
     required this.headers,
     required this.contentDisposition,
-    required this.contentType,
     required this.body,
   });
 
@@ -82,7 +79,7 @@ sealed class MultipartPart {
     final int? maxLength,
   }) => decodeFormText(
     body.read(maxLength: maxLength),
-    encoding ?? Encoding.getByName(contentType?.charset ?? '') ?? utf8,
+    encoding ?? body.bodyType?.encoding ?? utf8,
     'Malformed multipart part',
   );
 
@@ -98,7 +95,6 @@ final class MultipartFieldPart extends MultipartPart {
   MultipartFieldPart._({
     required super.headers,
     required super.contentDisposition,
-    required super.contentType,
     required super.body,
     required this.name,
   }) : super._();
@@ -125,7 +121,6 @@ final class MultipartFilePart extends MultipartPart {
   MultipartFilePart._({
     required super.headers,
     required super.contentDisposition,
-    required super.contentType,
     required super.body,
     required this.name,
     required this.filename,
@@ -139,7 +134,6 @@ final class MultipartOtherPart extends MultipartPart {
   MultipartOtherPart._({
     required super.headers,
     required super.contentDisposition,
-    required super.contentType,
     required super.body,
   }) : super._();
 }
@@ -154,6 +148,28 @@ ContentDispositionHeader? _parseContentDisposition(final Headers headers) {
       'Malformed multipart Content-Disposition: ${error.message}',
     );
   }
+}
+
+/// Builds a part body with no default charset, unlike [Body.fromDataStream],
+/// which defaults text to UTF-8.
+///
+/// It drops a declared charset that [Encoding.getByName] does not know, so
+/// readers fall back to UTF-8.
+Body _body(
+  final Stream<Uint8List> content,
+  final ContentTypeHeader? contentType,
+) {
+  if (contentType == null) return BodyInternal.create(content, null);
+  return BodyInternal.create(
+    content,
+    null,
+    mimeType: contentType.mimeType,
+    encoding: Encoding.getByName(contentType.charset),
+    parameters: {
+      for (final MapEntry(:key, :value) in contentType.parameters.entries)
+        if (key != 'charset') key: value,
+    },
+  );
 }
 
 ContentTypeHeader? _parseContentType(final Headers headers) {

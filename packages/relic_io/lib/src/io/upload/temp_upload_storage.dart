@@ -25,7 +25,7 @@ final class TempUploadStorage implements UploadStorage {
   Future<UploadedFile> store({
     required final String fieldName,
     required final String? filename,
-    required final ContentTypeHeader? contentType,
+    required final BodyType? bodyType,
     required final Headers headers,
     required final Stream<Uint8List> content,
   }) async {
@@ -42,7 +42,7 @@ final class TempUploadStorage implements UploadStorage {
 
     return TempUploadedFile._(
       filename: filename,
-      contentType: contentType,
+      bodyType: bodyType,
       headers: headers,
       directory: uploadDirectory,
       size: size,
@@ -63,7 +63,7 @@ final class TempUploadedFile implements UploadedFile {
   final String? filename;
 
   @override
-  final ContentTypeHeader? contentType;
+  final BodyType? bodyType;
 
   @override
   final Headers headers;
@@ -76,7 +76,7 @@ final class TempUploadedFile implements UploadedFile {
 
   TempUploadedFile._({
     required this.filename,
-    required this.contentType,
+    required this.bodyType,
     required this.headers,
     required final Directory directory,
     required final int size,

@@ -227,7 +227,7 @@ void main() {
       final stored = await _storeMemoryUpload();
 
       expect(stored.file.filename, 'hello.txt');
-      expect(stored.file.contentType, stored.contentType);
+      expect(stored.file.bodyType, stored.bodyType);
       expect(stored.file.headers, stored.headers);
       expect(stored.file.size, 5);
     });
@@ -353,36 +353,30 @@ MemoryUploadedFile _file({
 }) {
   return MemoryUploadedFile(
     filename: filename,
-    contentType: null,
+    bodyType: null,
     headers: Headers.empty(),
     bytes: Uint8List.fromList(utf8.encode(bytes)),
   );
 }
 
-Future<
-  ({ContentTypeHeader? contentType, MemoryUploadedFile file, Headers headers})
->
+Future<({BodyType? bodyType, MemoryUploadedFile file, Headers headers})>
 _storeMemoryUpload() async {
   const storage = MemoryUploadStorage();
-  final contentType = ContentTypeHeader(
-    mimeType: MimeType.plainText,
-    parameters: const {'charset': 'utf-8'},
-  );
+  final bodyType = BodyType(mimeType: MimeType.plainText, encoding: utf8);
   final headers = Headers.build(
-    (final mh) => mh[Headers.contentTypeHeader] = ContentTypeHeader.codec
-        .encode(contentType),
+    (final mh) => mh[Headers.contentTypeHeader] = [bodyType.toHeaderValue()],
   );
 
   final file = await storage.store(
     fieldName: 'upload',
     filename: 'hello.txt',
-    contentType: contentType,
+    bodyType: bodyType,
     headers: headers,
     content: Stream.value(Uint8List.fromList(utf8.encode('hello'))),
   );
 
   return (
-    contentType: contentType,
+    bodyType: bodyType,
     file: file as MemoryUploadedFile,
     headers: headers,
   );

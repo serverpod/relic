@@ -4,7 +4,7 @@ import 'dart:typed_data';
 import '../accessor/accessor.dart';
 import '../body/body.dart';
 import '../headers/headers.dart';
-import '../headers/typed/headers/content_type_header.dart';
+import '../body/types/body_type.dart';
 
 /// Limits used while parsing HTML forms and multipart uploads.
 final class FormLimits {
@@ -443,7 +443,7 @@ abstract interface class UploadedFile {
   String? get filename;
 
   /// Content type reported for the uploaded file, if any.
-  ContentTypeHeader? get contentType;
+  BodyType? get bodyType;
 
   /// Part headers associated with this upload.
   Headers get headers;
@@ -467,7 +467,7 @@ abstract interface class UploadStorage {
   Future<UploadedFile> store({
     required String fieldName,
     required String? filename,
-    required ContentTypeHeader? contentType,
+    required BodyType? bodyType,
     required Headers headers,
     required Stream<Uint8List> content,
   });
@@ -482,7 +482,7 @@ final class MemoryUploadStorage implements UploadStorage {
   Future<UploadedFile> store({
     required final String fieldName,
     required final String? filename,
-    required final ContentTypeHeader? contentType,
+    required final BodyType? bodyType,
     required final Headers headers,
     required final Stream<Uint8List> content,
   }) async {
@@ -492,7 +492,7 @@ final class MemoryUploadStorage implements UploadStorage {
     }
     return MemoryUploadedFile(
       filename: filename,
-      contentType: contentType,
+      bodyType: bodyType,
       headers: headers,
       bytes: builder.takeBytes(),
     );
@@ -505,7 +505,7 @@ final class MemoryUploadedFile implements UploadedFile {
   final String? filename;
 
   @override
-  final ContentTypeHeader? contentType;
+  final BodyType? bodyType;
 
   @override
   final Headers headers;
@@ -515,7 +515,7 @@ final class MemoryUploadedFile implements UploadedFile {
   /// Creates a memory-backed uploaded file.
   MemoryUploadedFile({
     required this.filename,
-    required this.contentType,
+    required this.bodyType,
     required this.headers,
     required final Uint8List bytes,
   }) : _bytes = Uint8List.fromList(bytes);
