@@ -28,55 +28,42 @@ void main() {
     });
   });
 
-  group('Given Content-Type headers', () {
-    test('when accessed through Headers then they are parsed once typed', () {
-      final headers = Headers.build(
-        (final mh) => mh[Headers.contentTypeHeader] = [
-          'multipart/form-data; boundary=abc123',
-        ],
-      );
-
-      expect(headers.contentType?.mimeType, MimeType.multipartFormData);
-      expect(headers.contentType?.parameter('boundary'), 'abc123');
-    });
-
-    test(
-      'when set through MutableHeaders then it encodes the header value',
-      () {
-        final headers = Headers.build(
-          (final mh) => mh.contentType = ContentTypeHeader(
-            mimeType: MimeType.urlEncoded,
-            parameters: const {'charset': 'utf-8'},
-          ),
-        );
-
-        expect(headers[Headers.contentTypeHeader], [
-          'application/x-www-form-urlencoded; charset=utf-8',
-        ]);
-        expect(headers.contentType?.charset, 'utf-8');
-      },
+  test('Given headers with a multipart Content-Type, '
+      'when contentType is read, '
+      'then it returns the MIME type and boundary.', () {
+    final headers = Headers.build(
+      (final mh) => mh[Headers.contentTypeHeader] = [
+        'multipart/form-data; boundary=abc123',
+      ],
     );
+
+    expect(headers.contentType?.mimeType, MimeType.multipartFormData);
+    expect(headers.contentType?.parameter('boundary'), 'abc123');
+  });
+
+  test('Given headers with an invalid Content-Type, '
+      'when contentType is read, '
+      'then it throws InvalidHeaderException.', () {
+    final headers = Headers.build(
+      (final mh) => mh[Headers.contentTypeHeader] = ['not-a-content-type'],
+    );
+
+    expect(() => headers.contentType, throwsA(isA<InvalidHeaderException>()));
   });
 
   group('Given an invalid Content-Type header', () {
-    test(
-      'when accessed through Headers then it throws InvalidHeaderException',
-      () {
-        final headers = Headers.build(
-          (final mh) => mh[Headers.contentTypeHeader] = ['not-a-content-type'],
-        );
-
-        expect(
-          () => headers.contentType,
-          throwsA(isA<InvalidHeaderException>()),
-        );
-      },
-    );
+    test('when parsed, '
+        'then it throws FormatException.', () {
+      expect(
+        () => ContentTypeHeader.parse('not-a-content-type'),
+        throwsFormatException,
+      );
+    });
 
     test('when a parameter name is invalid then encoding throws', () {
       expect(
-        () => Headers.build(
-          (final mh) => mh.contentType = ContentTypeHeader(
+        () => ContentTypeHeader.codec.encode(
+          ContentTypeHeader(
             mimeType: MimeType.json,
             parameters: const {'bad name': 'value'},
           ),

@@ -99,7 +99,7 @@ class Body {
   /// Example:
   /// ```dart
   /// var body = Body.fromString('hello', mimeType: MimeType.plainText);
-  /// print(body.contentType); // ContentType(text/plain; charset=utf-8)
+  /// print(body.bodyType?.toHeaderValue()); // text/plain; charset=utf-8
   /// ```
   final BodyType? bodyType;
 

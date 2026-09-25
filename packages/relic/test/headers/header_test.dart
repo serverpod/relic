@@ -258,7 +258,6 @@ void main() {
       Headers.contentLocation: (final h) => h.contentLocation,
       Headers.contentRange: (final h) => h.contentRange,
       Headers.contentSecurityPolicy: (final h) => h.contentSecurityPolicy,
-      Headers.contentType: (final h) => h.contentType,
       Headers.cookie: (final h) => h.cookie,
       Headers.crossOriginEmbedderPolicy: (final h) =>
           h.crossOriginEmbedderPolicy,
@@ -348,7 +347,6 @@ void main() {
       Headers.contentLocation: (final h) => h.contentLocation,
       Headers.contentRange: (final h) => h.contentRange,
       Headers.contentSecurityPolicy: (final h) => h.contentSecurityPolicy,
-      Headers.contentType: (final h) => h.contentType,
       Headers.cookie: (final h) => h.cookie,
       Headers.crossOriginEmbedderPolicy: (final h) =>
           h.crossOriginEmbedderPolicy,
@@ -439,7 +437,6 @@ void main() {
       Headers.contentRange: (final h) => h.contentRange = null,
       Headers.contentSecurityPolicy: (final h) =>
           h.contentSecurityPolicy = null,
-      Headers.contentType: (final h) => h.contentType = null,
       Headers.cookie: (final h) => h.cookie = null,
       Headers.crossOriginEmbedderPolicy: (final h) =>
           h.crossOriginEmbedderPolicy = null,
@@ -720,13 +717,6 @@ void main() {
             h.contentSecurityPolicy = ContentSecurityPolicyHeader.directives([
               ContentSecurityPolicyDirective(name: 'foo', values: []),
             ]),
-      ),
-      (
-        Headers.contentType,
-        (final h) => h.contentType = ContentTypeHeader(
-          mimeType: MimeType.multipartFormData,
-          parameters: const {'boundary': 'abc123'},
-        ),
       ),
       (
         Headers.cookie,

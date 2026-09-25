@@ -7,7 +7,6 @@ import '../body/body.dart';
 import '../body/types/mime_type.dart';
 import '../context/result.dart';
 import '../headers/headers.dart';
-import '../headers/standard_headers_extensions.dart';
 import 'form_data.dart';
 import 'form_text.dart';
 import 'multipart_part.dart';
@@ -19,27 +18,23 @@ extension FormRequestExtension on Request {
   /// This consumes the request body. It should only be called once for a request.
   Future<UrlEncodedFormData> urlEncodedForm({
     final FormLimits limits = FormLimits.defaults,
-    Encoding? defaultEncoding,
   }) async {
-    final contentType = headers.contentType;
-    if (contentType?.mimeType != MimeType.urlEncoded) {
+    final bodyType = body.bodyType;
+    if (bodyType?.mimeType != MimeType.urlEncoded) {
       throw const UnsupportedFormMediaTypeException(
         'Expected application/x-www-form-urlencoded request body.',
       );
     }
 
-    final encoding =
-        Encoding.getByName(contentType?.charset ?? '') ??
-        defaultEncoding ??
-        utf8;
-    final body = await decodeFormText(
+    final encoding = bodyType?.encoding ?? utf8;
+    final text = await decodeFormText(
       read(maxLength: limits.maxBodySize),
       encoding,
       'Malformed form data',
     );
 
     return UrlEncodedFormData(
-      fields: FormFields(_parseUrlEncodedFields(body, encoding, limits)),
+      fields: FormFields(_parseUrlEncodedFields(text, encoding, limits)),
     );
   }
 
@@ -50,21 +45,13 @@ extension FormRequestExtension on Request {
   Future<FormData> formData({
     final FormLimits limits = FormLimits.defaults,
     final UploadStorage? uploadStorage,
-    final Encoding? defaultEncoding,
   }) async {
-    final contentType = headers.contentType;
-    if (contentType?.mimeType == MimeType.urlEncoded) {
-      return await urlEncodedForm(
-        limits: limits,
-        defaultEncoding: defaultEncoding,
-      );
+    final mimeType = body.bodyType?.mimeType;
+    if (mimeType == MimeType.urlEncoded) {
+      return await urlEncodedForm(limits: limits);
     }
-    if (contentType?.mimeType == MimeType.multipartFormData) {
-      return await multipartForm(
-        limits: limits,
-        uploadStorage: uploadStorage,
-        defaultEncoding: defaultEncoding,
-      );
+    if (mimeType == MimeType.multipartFormData) {
+      return await multipartForm(limits: limits, uploadStorage: uploadStorage);
     }
     throw const UnsupportedFormMediaTypeException(
       'Expected an HTML form request body.',
@@ -83,7 +70,6 @@ extension FormRequestExtension on Request {
   Future<MultipartFormData> multipartForm({
     final FormLimits limits = FormLimits.defaults,
     final UploadStorage? uploadStorage,
-    final Encoding? defaultEncoding,
   }) async {
     final storage = uploadStorage ?? const MemoryUploadStorage();
     final fields = <FormFieldEntry>[];
@@ -103,9 +89,7 @@ extension FormRequestExtension on Request {
             }
 
             final encoding =
-                Encoding.getByName(part.contentType?.charset ?? '') ??
-                defaultEncoding ??
-                utf8;
+                Encoding.getByName(part.contentType?.charset ?? '') ?? utf8;
             final value = await _readPartAsString(
               part,
               encoding,
@@ -164,14 +148,14 @@ extension FormRequestExtension on Request {
   Stream<MultipartPart> multipart({
     final FormLimits limits = FormLimits.defaults,
   }) async* {
-    final contentType = headers.contentType;
-    if (contentType?.mimeType != MimeType.multipartFormData) {
+    final bodyType = body.bodyType;
+    if (bodyType?.mimeType != MimeType.multipartFormData) {
       throw const UnsupportedFormMediaTypeException(
         'Expected multipart/form-data request body.',
       );
     }
 
-    final boundary = contentType?.parameter('boundary');
+    final boundary = bodyType?.parameter('boundary');
     if (boundary == null || boundary.isEmpty) {
       throw const MalformedFormDataException('Missing multipart boundary.');
     }

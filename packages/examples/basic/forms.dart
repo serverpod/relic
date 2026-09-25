@@ -130,7 +130,7 @@ Response _resultPage(
       '''
 method: ${req.method.name}
 path: ${req.url.path}
-content-type: ${req.headers.contentType?.mimeType ?? ''}
+content-type: ${req.mimeType ?? ''}
 
 $body
 ''';

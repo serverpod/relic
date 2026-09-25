@@ -26,8 +26,10 @@ class HeadersBase extends UnmodifiableMapView<String, Iterable<String>> {
 ///
 ///   // Type-safe accessors
 ///   final userAgent = headers.userAgent;
-///   final contentType = headers.contentType;
 ///   final contentLength = headers.contentLength;
+///
+///   // Content-Type lives on the body
+///   final mimeType = req.mimeType;
 ///
 ///   // Raw access
 ///   final custom = headers['X-Custom-Header'];
@@ -41,11 +43,6 @@ class HeadersBase extends UnmodifiableMapView<String, Iterable<String>> {
 /// ```dart
 /// final headers = Headers.build((h) {
 ///   // Set standard headers
-///   h.contentType = ContentTypeHeader(
-///     mimeType: MimeType.json,
-///     parameters: {'charset': 'utf-8'},
-///   );
-///
 ///   h.cacheControl = CacheControlHeader(
 ///     maxAge: 3600,
 ///     publicCache: true,
@@ -56,7 +53,11 @@ class HeadersBase extends UnmodifiableMapView<String, Iterable<String>> {
 ///   h['X-Request-ID'] = ['abc123'];
 /// });
 ///
-/// Response.ok(headers: headers, body: Body.fromString('data'));
+/// // Content-Type comes from the body
+/// Response.ok(
+///   headers: headers,
+///   body: Body.fromString('{}', mimeType: MimeType.json),
+/// );
 /// ```
 ///
 /// ## Common Type-Safe Headers
@@ -73,7 +74,6 @@ class HeadersBase extends UnmodifiableMapView<String, Iterable<String>> {
 /// headers.cacheControl;  // CacheControlHeader?
 /// headers.setCookie;     // SetCookieHeader?
 /// headers.location;      // Uri?
-/// headers.contentType;   // ContentTypeHeader?
 /// ```
 class Headers extends HeadersBase {
   factory Headers.fromMap(final Map<String, Iterable<String>>? values) {
@@ -184,11 +184,6 @@ class Headers extends HeadersBase {
   static const contentLength = HeaderAccessor(
     Headers.contentLengthHeader,
     intHeaderCodec,
-  );
-
-  static const contentType = HeaderAccessor(
-    Headers.contentTypeHeader,
-    ContentTypeHeader.codec,
   );
 
   static const expect = HeaderAccessor(
@@ -434,7 +429,6 @@ class Headers extends HeadersBase {
     contentLanguage,
     contentLength,
     contentLocation,
-    contentType,
     date,
     referrerPolicy,
     trailer,
