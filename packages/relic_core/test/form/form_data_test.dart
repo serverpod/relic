@@ -64,7 +64,7 @@ void main() {
       const unsupported = UnsupportedFormMediaTypeException('unsupported');
       const malformed = MalformedFormDataException('malformed');
       const limitExceeded = FormLimitExceededException(
-        limit: 'maxFieldSize',
+        limit: FormLimit.maxFieldSize,
         message: 'too large',
       );
 
@@ -77,7 +77,7 @@ void main() {
       expect(malformed.toString(), 'malformed');
 
       expect(limitExceeded.message, 'too large');
-      expect(limitExceeded.limit, 'maxFieldSize');
+      expect(limitExceeded.limit, FormLimit.maxFieldSize);
       expect(limitExceeded.statusCode, 413);
       expect(limitExceeded.toString(), 'too large');
     });

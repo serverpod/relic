@@ -28,7 +28,7 @@ extension FormRequestExtension on Request {
 
     final encoding = bodyType?.encoding ?? utf8;
     final text = await decodeFormText(
-      read(maxLength: limits.maxBodySize),
+      _readFormBody(limits),
       encoding,
       'Malformed form data',
     );
@@ -83,7 +83,7 @@ extension FormRequestExtension on Request {
           case MultipartFieldPart(:final name):
             if (fields.length == limits.maxFieldCount) {
               throw const FormLimitExceededException(
-                limit: 'maxFieldCount',
+                limit: FormLimit.maxFieldCount,
                 message: 'Too many form fields.',
               );
             }
@@ -105,7 +105,7 @@ extension FormRequestExtension on Request {
           case MultipartFilePart(:final name, :final filename):
             if (files.length == limits.maxFileCount) {
               throw const FormLimitExceededException(
-                limit: 'maxFileCount',
+                limit: FormLimit.maxFileCount,
                 message: 'Too many uploaded files.',
               );
             }
@@ -161,7 +161,7 @@ extension FormRequestExtension on Request {
     }
     if (utf8.encode(boundary).length > limits.maxBoundarySize) {
       throw const FormLimitExceededException(
-        limit: 'maxBoundarySize',
+        limit: FormLimit.maxBoundarySize,
         message: 'Multipart boundary is too large.',
       );
     }
@@ -170,12 +170,12 @@ extension FormRequestExtension on Request {
     try {
       final parts = MimeMultipartTransformer(
         boundary,
-      ).bind(read(maxLength: limits.maxBodySize));
+      ).bind(_readFormBody(limits));
 
       await for (final part in parts) {
         if (partCount == limits.maxPartCount) {
           throw const FormLimitExceededException(
-            limit: 'maxPartCount',
+            limit: FormLimit.maxPartCount,
             message: 'Too many multipart parts.',
           );
         }
@@ -195,6 +195,21 @@ extension FormRequestExtension on Request {
       throw MalformedFormDataException('Malformed multipart body: $error');
     }
   }
+
+  /// Reads the body, throwing [FormLimitExceededException] once it exceeds
+  /// [FormLimits.maxBodySize].
+  Stream<Uint8List> _readFormBody(final FormLimits limits) async* {
+    try {
+      await for (final chunk in read(maxLength: limits.maxBodySize)) {
+        yield chunk;
+      }
+    } on MaxBodySizeExceeded {
+      throw const FormLimitExceededException(
+        limit: FormLimit.maxBodySize,
+        message: 'Form body is too large.',
+      );
+    }
+  }
 }
 
 Future<String> _readPartAsString(
@@ -210,7 +225,7 @@ Future<String> _readPartAsString(
     );
   } on MaxBodySizeExceeded {
     throw const FormLimitExceededException(
-      limit: 'maxFieldSize',
+      limit: FormLimit.maxFieldSize,
       message: 'Form field is too large.',
     );
   }
@@ -227,7 +242,7 @@ Stream<Uint8List> _limitedFileStream(
     fileSize += chunk.length;
     if (fileSize > limits.maxFileSize) {
       throw const FormLimitExceededException(
-        limit: 'maxFileSize',
+        limit: FormLimit.maxFileSize,
         message: 'Uploaded file is too large.',
       );
     }
@@ -235,7 +250,7 @@ Stream<Uint8List> _limitedFileStream(
     final totalFileSize = getTotalFileSize() + chunk.length;
     if (totalFileSize > limits.maxTotalFileSize) {
       throw const FormLimitExceededException(
-        limit: 'maxTotalFileSize',
+        limit: FormLimit.maxTotalFileSize,
         message: 'Uploaded files are too large.',
       );
     }
@@ -255,7 +270,7 @@ void _checkPartHeaderSize(final Headers headers, final FormLimits limits) {
   }
   if (size > limits.maxPartHeaderSize) {
     throw const FormLimitExceededException(
-      limit: 'maxPartHeaderSize',
+      limit: FormLimit.maxPartHeaderSize,
       message: 'Multipart part headers are too large.',
     );
   }
@@ -274,7 +289,7 @@ List<FormFieldEntry> _parseUrlEncodedFields(
 
     if (entries.length == limits.maxFieldCount) {
       throw const FormLimitExceededException(
-        limit: 'maxFieldCount',
+        limit: FormLimit.maxFieldCount,
         message: 'Too many form fields.',
       );
     }
@@ -287,7 +302,7 @@ List<FormFieldEntry> _parseUrlEncodedFields(
 
     if (encoding.encode(value).length > limits.maxFieldSize) {
       throw const FormLimitExceededException(
-        limit: 'maxFieldSize',
+        limit: FormLimit.maxFieldSize,
         message: 'Form field is too large.',
       );
     }

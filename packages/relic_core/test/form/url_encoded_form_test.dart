@@ -119,17 +119,15 @@ void main() {
   });
 
   group('Given urlencoded form limits', () {
-    test(
-      'when maxBodySize is exceeded, then it throws MaxBodySizeExceeded',
-      () async {
-        final request = _request(body: 'name=Gustavo');
+    test('when maxBodySize is exceeded, '
+        'then it throws FormLimitExceededException.', () async {
+      final request = _request(body: 'name=Gustavo');
 
-        await expectLater(
-          request.urlEncodedForm(limits: FormLimits(maxBodySize: 4)),
-          throwsA(isA<MaxBodySizeExceeded>()),
-        );
-      },
-    );
+      await expectLater(
+        request.urlEncodedForm(limits: FormLimits(maxBodySize: 4)),
+        throwsA(_limitExceeded(FormLimit.maxBodySize)),
+      );
+    });
 
     test(
       'when maxFieldCount is exceeded, then it throws FormLimitExceededException',
@@ -142,7 +140,7 @@ void main() {
             isA<FormLimitExceededException>().having(
               (final error) => error.limit,
               'limit',
-              'maxFieldCount',
+              FormLimit.maxFieldCount,
             ),
           ),
         );
@@ -160,11 +158,30 @@ void main() {
             isA<FormLimitExceededException>().having(
               (final error) => error.limit,
               'limit',
-              'maxFieldSize',
+              FormLimit.maxFieldSize,
             ),
           ),
         );
       },
+    );
+  });
+
+  test('Given a urlencoded form request whose body has no known length, '
+      'when parsed with a maxBodySize smaller than the body, '
+      'then it throws FormLimitExceededException.', () async {
+    final request = RequestInternal.create(
+      Method.post,
+      Uri.parse('http://localhost/form'),
+      Object(),
+      body: Body.fromDataStream(
+        Stream.value(Uint8List.fromList(utf8.encode('name=Gustavo'))),
+        mimeType: MimeType.urlEncoded,
+      ),
+    );
+
+    await expectLater(
+      request.urlEncodedForm(limits: FormLimits(maxBodySize: 4)),
+      throwsA(_limitExceeded(FormLimit.maxBodySize)),
     );
   });
 
@@ -249,6 +266,14 @@ void main() {
 
     expect(form.fields.raw['name'], 'Gustavo');
   });
+}
+
+Matcher _limitExceeded(final FormLimit limit) {
+  return isA<FormLimitExceededException>().having(
+    (final error) => error.limit,
+    'limit',
+    limit,
+  );
 }
 
 Request _request({
