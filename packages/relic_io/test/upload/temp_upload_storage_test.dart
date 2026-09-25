@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:path/path.dart' as p;
 import 'package:relic_core/relic_core.dart';
 import 'package:relic_io/relic_io.dart';
 import 'package:test/test.dart';
@@ -92,7 +93,7 @@ void main() {
     test(
       'when content is stored, then it creates a system temp file',
       () async {
-        final storage = TempUploadStorage(directoryPrefix: 'relic_io_default_');
+        final storage = TempUploadStorage(prefix: 'relic_io_default_');
         final uploaded =
             await storage.store(
                   fieldName: 'upload',
@@ -110,13 +111,52 @@ void main() {
           expect(await File(uploaded.path).exists(), isTrue);
         } finally {
           await uploaded.dispose();
-          final parent = File(uploaded.path).parent;
-          if (await parent.exists()) {
-            await parent.delete(recursive: true);
-          }
         }
       },
     );
+
+    test('when two uploads are stored concurrently, '
+        'then each file lands in its own directory.', () async {
+      final storage = TempUploadStorage(prefix: 'relic_io_race_test_');
+      Future<TempUploadedFile> store(final String filename) async {
+        return await storage.store(
+              fieldName: 'upload',
+              filename: filename,
+              contentType: null,
+              headers: Headers.empty(),
+              content: Stream.value(Uint8List.fromList(utf8.encode(filename))),
+            )
+            as TempUploadedFile;
+      }
+
+      final uploads = await Future.wait([store('one.txt'), store('two.txt')]);
+      addTearDown(() async {
+        for (final upload in uploads) {
+          await upload.dispose();
+        }
+      });
+
+      expect(
+        File(uploads[0].path).parent.path,
+        isNot(File(uploads[1].path).parent.path),
+      );
+    });
+
+    test('when an upload is stored, '
+        'then only the current user can access its directory.', () async {
+      final uploaded =
+          await TempUploadStorage(prefix: 'relic_io_mode_test_').store(
+                fieldName: 'upload',
+                filename: 'secret.txt',
+                contentType: null,
+                headers: Headers.empty(),
+                content: Stream.value(Uint8List.fromList([1])),
+              )
+              as TempUploadedFile;
+      addTearDown(uploaded.dispose);
+
+      expect(File(uploaded.path).parent.statSync().modeString(), 'rwx------');
+    }, testOn: '!windows');
   });
 
   group('Given TempUploadStorage used by multipartForm', () {
@@ -200,6 +240,30 @@ void main() {
       expect(paused, isTrue);
     },
   );
+
+  test('Given TempUploadStorage without a configured directory, '
+      'when an upload is stored and then disposed, '
+      'then the system temp directory has no entry with its prefix.', () async {
+    final storage = TempUploadStorage(prefix: 'relic_io_cleanup_test_');
+
+    final uploaded = await storage.store(
+      fieldName: 'upload',
+      filename: 'hello.txt',
+      contentType: null,
+      headers: Headers.empty(),
+      content: Stream.value(Uint8List.fromList(utf8.encode('hello'))),
+    );
+    await uploaded.dispose();
+
+    final leftovers = await Directory.systemTemp
+        .list()
+        .where(
+          (final entity) =>
+              p.basename(entity.path).startsWith('relic_io_cleanup_test_'),
+        )
+        .toList();
+    expect(leftovers, isEmpty);
+  });
 }
 
 Request _multipartRequest({
