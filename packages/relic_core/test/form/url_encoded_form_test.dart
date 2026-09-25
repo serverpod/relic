@@ -178,6 +178,66 @@ void main() {
       expect(() => request.read(), throwsStateError);
     });
   });
+
+  test(
+    'Given a urlencoded form request whose body has bytes that are not valid UTF-8, '
+    'when parsed, '
+    'then it throws MalformedFormDataException.',
+    () async {
+      final request = _request(
+        bodyBytes: Uint8List.fromList([...utf8.encode('name='), 0xff, 0xfe]),
+      );
+
+      await expectLater(
+        request.urlEncodedForm(),
+        throwsA(isA<MalformedFormDataException>()),
+      );
+    },
+  );
+
+  test(
+    'Given a US-ASCII urlencoded form request whose body has a non-ASCII byte, '
+    'when parsed, '
+    'then it throws MalformedFormDataException.',
+    () async {
+      final request = _request(
+        bodyBytes: Uint8List.fromList([...ascii.encode('name='), 0xe9]),
+        contentType: ContentTypeHeader(
+          mimeType: MimeType.urlEncoded,
+          parameters: const {'charset': 'us-ascii'},
+        ),
+      );
+
+      await expectLater(
+        request.urlEncodedForm(),
+        throwsA(isA<MalformedFormDataException>()),
+      );
+    },
+  );
+
+  test(
+    'Given a urlencoded form request whose body stream fails with a FormatException, '
+    'when parsed, '
+    'then it rethrows that FormatException unchanged.',
+    () async {
+      const upstream = FormatException('upstream');
+      final request = RequestInternal.create(
+        Method.post,
+        Uri.parse('http://localhost/form'),
+        Object(),
+        headers: Headers.build(
+          (final mh) =>
+              mh.contentType = ContentTypeHeader(mimeType: MimeType.urlEncoded),
+        ),
+        body: Body.fromDataStream(
+          Stream.error(upstream),
+          mimeType: MimeType.urlEncoded,
+        ),
+      );
+
+      await expectLater(request.urlEncodedForm(), throwsA(same(upstream)));
+    },
+  );
 }
 
 Request _request({

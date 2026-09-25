@@ -5,6 +5,7 @@ import '../headers/headers.dart';
 import '../headers/typed/headers/content_disposition_header.dart';
 import '../headers/typed/headers/content_type_header.dart';
 import 'form_data.dart';
+import 'form_text.dart';
 
 /// A streamed multipart form part.
 final class MultipartPart {
@@ -61,10 +62,18 @@ final class MultipartPart {
   bool get _isFormData => contentDisposition?.type.toLowerCase() == 'form-data';
 
   /// Reads the part body as a string.
-  Future<String> readAsString({Encoding? encoding, final int? maxLength}) {
-    encoding ??= Encoding.getByName(contentType?.charset ?? '') ?? utf8;
-    return encoding.decodeStream(body.read(maxLength: maxLength));
-  }
+  ///
+  /// Decodes with [encoding], or else the part charset, or else UTF-8. Throws
+  /// [MalformedFormDataException] if the bytes do not decode, and
+  /// [MaxBodySizeExceeded] if the body is longer than [maxLength].
+  Future<String> readAsString({
+    final Encoding? encoding,
+    final int? maxLength,
+  }) => decodeFormText(
+    body.read(maxLength: maxLength),
+    encoding ?? Encoding.getByName(contentType?.charset ?? '') ?? utf8,
+    'Malformed multipart part',
+  );
 
   /// Consumes and discards the part body.
   Future<void> discard() => body.read().drain<void>();
