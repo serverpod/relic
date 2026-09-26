@@ -38,10 +38,12 @@ const limitParam = IntQueryParam('limit');
 const priceParam = DoubleQueryParam('price');
 
 app.get('/products', (req) {
-  final page = req.queryParameters.get(pageParam);    // int (throws if missing)
-  final limit = req.queryParameters.get(limitParam);   // int
+  final page = req.queryParameters.get(pageParam); // int (throws if missing)
+  final limit = req.queryParameters.get(limitParam); // int
   final maxPrice = req.queryParameters.get(priceParam); // double
-  return Response.ok(body: Body.fromString('page=$page limit=$limit price=$maxPrice'));
+  return Response.ok(
+    body: Body.fromString('page=$page limit=$limit price=$maxPrice'),
+  );
 });
 ```
 
@@ -80,9 +82,9 @@ app.get('/filter', (req) {
 
 ```dart
 app.get('/info', (req) {
-  final userAgent = req.headers.userAgent;        // String?
+  final userAgent = req.headers.userAgent; // String?
   final contentLength = req.headers.contentLength; // int?
-  final mimeType = req.mimeType;                   // MimeType?
+  final mimeType = req.mimeType; // MimeType?
   // ...
 });
 ```
@@ -144,7 +146,10 @@ app.post('/api/users', (req) async {
     );
   } catch (e) {
     return Response.badRequest(
-      body: Body.fromString(jsonEncode({'error': 'Invalid JSON: $e'}), mimeType: MimeType.json),
+      body: Body.fromString(
+        jsonEncode({'error': 'Invalid JSON: $e'}),
+        mimeType: MimeType.json,
+      ),
     );
   }
 });
@@ -187,43 +192,43 @@ try {
 ### Status code constructors
 
 ```dart
-Response.ok(body: Body.fromString('Success'))           // 200
-Response.noContent()                                     // 204
-Response.badRequest(body: Body.fromString('Bad input'))  // 400
-Response.unauthorized()                                  // 401
-Response.notFound()                                      // 404
-Response.internalServerError()                           // 500
-Response(418, body: Body.fromString('I am a teapot'))   // custom
+Response.ok(body: Body.fromString('Success')); // 200
+Response.noContent(); // 204
+Response.badRequest(body: Body.fromString('Bad input')); // 400
+Response.unauthorized(); // 401
+Response.notFound(); // 404
+Response.internalServerError(); // 500
+Response(418, body: Body.fromString('I am a teapot')); // custom
 ```
 
 ### Body types
 
 ```dart
 // Text (auto-detects MIME: JSON, HTML, XML, or plain text)
-Body.fromString('Hello')                                    // text/plain
-Body.fromString('{"key": "value"}')                         // application/json
-Body.fromString('<!DOCTYPE html><html>...</html>')          // text/html
+Body.fromString('Hello'); // text/plain
+Body.fromString('{"key": "value"}'); // application/json
+Body.fromString('<!DOCTYPE html><html>...</html>'); // text/html
 
 // Explicit MIME type
-Body.fromString('<html>...</html>', mimeType: MimeType.html)
-Body.fromString(jsonEncode(data), mimeType: MimeType.json)
+Body.fromString('<html>...</html>', mimeType: MimeType.html);
+Body.fromString(jsonEncode(data), mimeType: MimeType.json);
 
 // Binary (auto-detects PNG, JPEG, PDF, etc.)
-Body.fromData(imageBytes)                                    // image/png, etc.
-Body.fromData(data, mimeType: MimeType.octetStream)         // explicit
+Body.fromData(imageBytes); // image/png, etc.
+Body.fromData(data, mimeType: MimeType.octetStream); // explicit
 
 // Streaming (for large payloads)
-Body.fromDataStream(fileStream, contentLength: fileSize)    // known size
-Body.fromDataStream(dynamicStream)                          // chunked encoding
+Body.fromDataStream(fileStream, contentLength: fileSize); // known size
+Body.fromDataStream(dynamicStream); // chunked encoding
 
 // Empty
-Body.empty()
+Body.empty();
 ```
 
 Encoding defaults to UTF-8. Override with:
 
 ```dart
-Body.fromString('Café', mimeType: MimeType.plainText, encoding: latin1)
+Body.fromString('Café', mimeType: MimeType.plainText, encoding: latin1);
 ```
 
 ### Response headers
@@ -237,7 +242,10 @@ app.get('/api/data', (req) {
 
   return Response.ok(
     headers: headers,
-    body: Body.fromString(jsonEncode({'status': 'ok'}), mimeType: MimeType.json),
+    body: Body.fromString(
+      jsonEncode({'status': 'ok'}),
+      mimeType: MimeType.json,
+    ),
   );
 });
 ```
@@ -273,9 +281,7 @@ app.get('/stream', (req) async {
 `Request` is immutable. Use `copyWith` to create a modified copy:
 
 ```dart
-final rewritten = request.copyWith(
-  url: request.url.replace(path: '/new-path'),
-);
+final rewritten = request.copyWith(url: request.url.replace(path: '/new-path'));
 
 final modified = request.copyWith(
   url: request.url.replace(path: '/other'),

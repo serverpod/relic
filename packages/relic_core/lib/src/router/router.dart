@@ -288,17 +288,13 @@ extension RouteEx<T extends Object> on Router<T> {
 ///
 /// // Static routes
 /// router.get('/', (req) {
-///   return Response.ok(
-///     body: Body.fromString('Home'),
-///   );
+///   return Response.ok(body: Body.fromString('Home'));
 /// });
 ///
 /// // Route with parameters
 /// router.get('/users/:id', (req) {
 ///   final id = req.pathParameters['id'];
-///   return Response.ok(
-///     body: Body.fromString('User $id'),
-///   );
+///   return Response.ok(body: Body.fromString('User $id'));
 /// });
 ///
 /// // Multiple parameters
@@ -312,7 +308,6 @@ extension RouteEx<T extends Object> on Router<T> {
 ///
 /// ## HTTP Methods
 ///
-/// ```dart
 /// router.get('/users', (req) => /* list users */);
 /// router.post('/users', (req) => /* create user */);
 /// router.put('/users/:id', (req) => /* update user */);
@@ -322,7 +317,6 @@ extension RouteEx<T extends Object> on Router<T> {
 ///
 /// ## Sub-routers
 ///
-/// ```dart
 /// final apiRouter = Router<Handler>();
 /// apiRouter.get('/users', (req) => /* users */);
 /// apiRouter.get('/posts', (req) => /* posts */);
@@ -362,10 +356,10 @@ typedef RelicRouter = Router<Handler>;
 ///       ..delete('/', delete);
 ///   }
 ///
-///   Response create(final Request req) { }
-///   Response read(final Request req) { }
-///   Response update(final Request req) { }
-///   Response delete(final Request req) { }
+///   Response create(final Request req) {}
+///   Response read(final Request req) {}
+///   Response update(final Request req) {}
+///   Response delete(final Request req) {}
 /// }
 /// ```
 typedef RouterInjectable = InjectableIn<RelicRouter>;

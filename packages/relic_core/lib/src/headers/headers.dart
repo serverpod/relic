@@ -46,10 +46,7 @@ class HeadersBase extends UnmodifiableMapView<String, Iterable<String>> {
 ///     charset: 'utf-8',
 ///   );
 ///
-///   h.cacheControl = CacheControlHeader(
-///     maxAge: 3600,
-///     publicCache: true,
-///   );
+///   h.cacheControl = CacheControlHeader(maxAge: 3600, publicCache: true);
 ///
 ///   // Set custom headers
 ///   h['X-API-Version'] = ['2.0'];
@@ -64,16 +61,16 @@ class HeadersBase extends UnmodifiableMapView<String, Iterable<String>> {
 /// ```dart
 /// // Request headers
 /// headers.authorization; // AuthorizationHeader?
-/// headers.cookie;        // List<Cookie>
-/// headers.accept;        // List<MediaType>
-/// headers.userAgent;     // String?
-/// headers.host;          // HostHeader?
+/// headers.cookie; // List<Cookie>
+/// headers.accept; // List<MediaType>
+/// headers.userAgent; // String?
+/// headers.host; // HostHeader?
 ///
 /// // Response headers
-/// headers.cacheControl;  // CacheControlHeader?
-/// headers.setCookie;     // SetCookieHeader?
-/// headers.location;      // Uri?
-/// headers.contentType;   // ContentTypeHeader?
+/// headers.cacheControl; // CacheControlHeader?
+/// headers.setCookie; // SetCookieHeader?
+/// headers.location; // Uri?
+/// headers.contentType; // ContentTypeHeader?
 /// ```
 class Headers extends HeadersBase {
   factory Headers.fromMap(final Map<String, Iterable<String>>? values) {

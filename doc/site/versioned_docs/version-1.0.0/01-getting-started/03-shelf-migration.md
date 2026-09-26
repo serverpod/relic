@@ -140,9 +140,7 @@ Relic uses an explicit body type that unifies content, encoding, and MIME type:
 
 ```dart
 // Relic - explicit Body object is required.
-final response = Response.ok(
-  body: Body.fromString('Hello, World!'),
-);
+final response = Response.ok(body: Body.fromString('Hello, World!'));
 
 // Content-Length is automatically calculated and Content-Type and
 // encoding are part of the Body.
@@ -180,10 +178,9 @@ final app = Router()
   });
 
 final handler = Pipeline()
-  .addMiddleware(logRequests())
-  .addMiddleware(authentication()) 
-  .addHandler(app);
-
+    .addMiddleware(logRequests())
+    .addMiddleware(authentication())
+    .addHandler(app);
 ```
 
 Relic:
@@ -203,13 +200,12 @@ Shelf:
 
 ```dart
 // Shelf - Dynamic types.
-final modifiedRequest = request.change(context: {
-  'user': currentUser,
-  'session': sessionData,
-});
+final modifiedRequest = request.change(
+  context: {'user': currentUser, 'session': sessionData},
+);
 
 // Later...
-final user = request.context['user'] as User?;  // Manual casting
+final user = request.context['user'] as User?; // Manual casting
 ```
 
 Relic:
@@ -267,9 +263,7 @@ void main() async {
       return Response.ok('User $id: $name');
     });
 
-  final handler = Pipeline()
-      .addMiddleware(logRequests())
-      .addHandler(router);
+  final handler = Pipeline().addMiddleware(logRequests()).addHandler(router);
 
   await shelf_io.serve(handler, 'localhost', 8080);
 }

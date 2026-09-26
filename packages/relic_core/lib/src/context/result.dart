@@ -27,7 +27,8 @@ sealed class Result {}
 ///     log('Connection hijacked for custom protocol');
 ///
 ///     // Send a custom HTTP response manually
-///     const response = 'HTTP/1.1 200 OK\r\n'
+///     const response =
+///         'HTTP/1.1 200 OK\r\n'
 ///         'Content-Type: text/plain\r\n'
 ///         'Connection: close\r\n'
 ///         '\r\n'

@@ -186,9 +186,7 @@ Use `copyWith` to create a new request with different values. Any field you don'
 
 ```dart
 // Change just the URL
-final rewritten = request.copyWith(
-  url: request.url.replace(path: '/new-path'),
-);
+final rewritten = request.copyWith(url: request.url.replace(path: '/new-path'));
 
 // Change URL and headers
 final modified = request.copyWith(

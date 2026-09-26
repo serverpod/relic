@@ -74,33 +74,33 @@ Future<FileInfo> getStaticFileInfo(
 /// ### Examples
 ///
 /// ```dart
-///   // Basic directory, 1 day cache
-///   StaticHandler.directory(
-///     Directory('static'),
-///     cacheControl: (_, __) => CacheControlHeader(maxAge: 86400),
-///   );
+/// // Basic directory, 1 day cache
+/// StaticHandler.directory(
+///   Directory('static'),
+///   cacheControl: (_, __) => CacheControlHeader(maxAge: 86400),
+/// );
 ///
-///   // Long term/immutable + cache busting
-///   final staticDir = Directory('static');
-///   final buster = CacheBustingConfig(
-///     mountPrefix: '/static',
-///     fileSystemRoot: staticDir,
-///   );
-///   StaticHandler.directory(
-///     staticDir,
-///     cacheControl: (_, __) => CacheControlHeader(
-///       maxAge: 31536000,
-///       publicCache: true,
-///       immutable: true,
-///     ),
-///     cacheBustingConfig: buster,
-///   );
+/// // Long term/immutable + cache busting
+/// final staticDir = Directory('static');
+/// final buster = CacheBustingConfig(
+///   mountPrefix: '/static',
+///   fileSystemRoot: staticDir,
+/// );
+/// StaticHandler.directory(
+///   staticDir,
+///   cacheControl: (_, __) => CacheControlHeader(
+///     maxAge: 31536000,
+///     publicCache: true,
+///     immutable: true,
+///   ),
+///   cacheBustingConfig: buster,
+/// );
 ///
-///   // Single file, 1 day cache
-///   StaticHandler.file(
-///     File('assets/favicon.ico'),
-///     cacheControl: (_, __) => CacheControlHeader(maxAge: 86400),
-///   );
+/// // Single file, 1 day cache
+/// StaticHandler.file(
+///   File('assets/favicon.ico'),
+///   cacheControl: (_, __) => CacheControlHeader(maxAge: 86400),
+/// );
 /// ```
 ///
 /// ## Security Features

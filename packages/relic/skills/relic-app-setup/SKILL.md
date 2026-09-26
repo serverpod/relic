@@ -24,15 +24,11 @@ Future<void> main() async {
   final app = RelicApp()
     ..get('/hello/:name', (Request req) {
       final name = req.rawPathParameters[#name];
-      return Response.ok(
-        body: Body.fromString('Hello, $name!'),
-      );
+      return Response.ok(body: Body.fromString('Hello, $name!'));
     })
     ..use('/', logRequests())
     ..fallback = respondWith(
-      (_) => Response.notFound(
-        body: Body.fromString('Not found'),
-      ),
+      (_) => Response.notFound(body: Body.fromString('Not found')),
     );
 
   await app.serve();
@@ -44,10 +40,7 @@ Future<void> main() async {
 ```dart
 await app.serve(); // defaults to 0.0.0.0:8080
 
-await app.serve(
-  address: InternetAddress.loopbackIPv4,
-  port: 3000,
-);
+await app.serve(address: InternetAddress.loopbackIPv4, port: 3000);
 ```
 
 ## Fallback handler
@@ -56,9 +49,7 @@ The fallback handles requests that don't match any route. Default is 404 with an
 
 ```dart
 app.fallback = respondWith(
-  (_) => Response.notFound(
-    body: Body.fromString('Page not found'),
-  ),
+  (_) => Response.notFound(body: Body.fromString('Page not found')),
 );
 ```
 

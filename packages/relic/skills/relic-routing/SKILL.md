@@ -22,7 +22,10 @@ final app = RelicApp()
   ..get('/', (req) => Response.ok(body: Body.fromString('Hello World!')))
   ..post('/', (req) => Response.ok(body: Body.fromString('Got POST')))
   ..put('/user', (req) => Response.ok(body: Body.fromString('PUT /user')))
-  ..delete('/user', (req) => Response.ok(body: Body.fromString('DELETE /user')));
+  ..delete(
+    '/user',
+    (req) => Response.ok(body: Body.fromString('DELETE /user')),
+  );
 ```
 
 ### Core `add` method
