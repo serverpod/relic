@@ -142,7 +142,7 @@ ContentDispositionHeader? _parseContentDisposition(final Headers headers) {
   final raw = headers[Headers.contentDispositionHeader]?.firstOrNull;
   if (raw == null) return null;
   try {
-    return ContentDispositionHeader.parse(raw);
+    return ContentDispositionHeaderInternal.parseFormData(raw);
   } on FormatException catch (error) {
     throw MalformedFormDataException(
       'Malformed multipart Content-Disposition: ${error.message}',

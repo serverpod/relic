@@ -237,6 +237,15 @@ void main() {
         expect(s.position, equals(0));
       });
     });
+
+    test('Given a quoted-string with a character beyond Latin-1, '
+        'when tryReadQuotedString is called, '
+        'then it throws and rewinds the cursor.', () {
+      final s = HeaderScanner('"\u65e5\u672c"');
+
+      expect(s.tryReadQuotedString, throwsFormatException);
+      expect(s.position, equals(0));
+    });
   });
 
   group('HeaderScanner.tryReadTokenOrQuotedString', () {

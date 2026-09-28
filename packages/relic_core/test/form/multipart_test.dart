@@ -171,6 +171,200 @@ void main() {
     );
   });
 
+  test(
+    'Given a multipart file part whose filename has characters beyond Latin-1, '
+    'when the request is streamed, '
+    'then the part has that filename.',
+    () async {
+      final request = _request(
+        boundary: 'utf8-filename',
+        body: _multipartBody('utf8-filename', [
+          _Part(
+            headers: const {
+              Headers.contentDispositionHeader:
+                  'form-data; name="upload"; filename="\u65e5\u672c \u{1F600}.pdf"',
+            },
+            body: 'file-body',
+          ),
+        ]),
+      );
+
+      final parts = await request.multipart().toList();
+
+      expect(parts, [
+        isA<MultipartFilePart>().having(
+          (final p) => p.filename,
+          'filename',
+          '\u65e5\u672c \u{1F600}.pdf',
+        ),
+      ]);
+    },
+  );
+
+  test(
+    'Given a multipart file part whose filename has a right-to-left override, '
+    'when the request is streamed, '
+    'then the filename has no override.',
+    () async {
+      final request = _request(
+        boundary: 'rtl-override-filename',
+        body: _multipartBody('rtl-override-filename', [
+          _Part(
+            headers: const {
+              Headers.contentDispositionHeader:
+                  'form-data; name="upload"; filename="invoice\u202Efdp.exe"',
+            },
+            body: 'file-body',
+          ),
+        ]),
+      );
+
+      final parts = await request.multipart().toList();
+
+      expect(parts, [
+        isA<MultipartFilePart>().having(
+          (final p) => p.filename,
+          'filename',
+          'invoicefdp.exe',
+        ),
+      ]);
+    },
+  );
+
+  test('Given a multipart file part whose filename has a line separator, '
+      'when the request is streamed, '
+      'then the filename has no line separator.', () async {
+    final request = _request(
+      boundary: 'line-separator-filename',
+      body: _multipartBody('line-separator-filename', [
+        _Part(
+          headers: const {
+            Headers.contentDispositionHeader:
+                'form-data; name="upload"; filename="report\u2028.txt"',
+          },
+          body: 'file-body',
+        ),
+      ]),
+    );
+
+    final parts = await request.multipart().toList();
+
+    expect(parts, [
+      isA<MultipartFilePart>().having(
+        (final p) => p.filename,
+        'filename',
+        'report.txt',
+      ),
+    ]);
+  });
+
+  test('Given a multipart file part whose filename has zero-width spaces, '
+      'when the request is streamed, '
+      'then the filename has no zero-width spaces.', () async {
+    final request = _request(
+      boundary: 'zero-width-space-filename',
+      body: _multipartBody('zero-width-space-filename', [
+        _Part(
+          headers: const {
+            Headers.contentDispositionHeader:
+                'form-data; name="upload"; filename="in\u200Bvoice\uFEFF.pdf"',
+          },
+          body: 'file-body',
+        ),
+      ]),
+    );
+
+    final parts = await request.multipart().toList();
+
+    expect(parts, [
+      isA<MultipartFilePart>().having(
+        (final p) => p.filename,
+        'filename',
+        'invoice.pdf',
+      ),
+    ]);
+  });
+
+  test('Given a multipart file part whose filename has an Arabic letter mark, '
+      'when the request is streamed, '
+      'then the filename has no Arabic letter mark.', () async {
+    final request = _request(
+      boundary: 'arabic-letter-mark-filename',
+      body: _multipartBody('arabic-letter-mark-filename', [
+        _Part(
+          headers: const {
+            Headers.contentDispositionHeader:
+                'form-data; name="upload"; filename="report\u061C.pdf"',
+          },
+          body: 'file-body',
+        ),
+      ]),
+    );
+
+    final parts = await request.multipart().toList();
+
+    expect(parts, [
+      isA<MultipartFilePart>().having(
+        (final p) => p.filename,
+        'filename',
+        'report.pdf',
+      ),
+    ]);
+  });
+
+  test('Given a multipart file part whose filename has a zero-width joiner, '
+      'when the request is streamed, '
+      'then the filename keeps the joiner.', () async {
+    final request = _request(
+      boundary: 'zero-width-joiner-filename',
+      body: _multipartBody('zero-width-joiner-filename', [
+        _Part(
+          headers: const {
+            Headers.contentDispositionHeader:
+                'form-data; name="upload"; filename="\u{1F468}\u200D\u{1F4BB}.png"',
+          },
+          body: 'file-body',
+        ),
+      ]),
+    );
+
+    final parts = await request.multipart().toList();
+
+    expect(parts, [
+      isA<MultipartFilePart>().having(
+        (final p) => p.filename,
+        'filename',
+        '\u{1F468}\u200D\u{1F4BB}.png',
+      ),
+    ]);
+  });
+
+  test('Given a multipart field part whose name has characters beyond Latin-1, '
+      'when the request is streamed, '
+      'then the part has that name.', () async {
+    final request = _request(
+      boundary: 'utf8-name',
+      body: _multipartBody('utf8-name', [
+        _Part(
+          headers: const {
+            Headers.contentDispositionHeader: 'form-data; name="\u540d\u524d"',
+          },
+          body: 'value',
+        ),
+      ]),
+    );
+
+    final parts = await request.multipart().toList();
+
+    expect(parts, [
+      isA<MultipartFieldPart>().having(
+        (final p) => p.name,
+        'name',
+        '\u540d\u524d',
+      ),
+    ]);
+  });
+
   test('Given a multipart text part without a charset, '
       'when the request is streamed, '
       'then its body type has no encoding.', () async {
