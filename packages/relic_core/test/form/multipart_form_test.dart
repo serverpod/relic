@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:relic_core/relic_core.dart';
@@ -696,6 +697,43 @@ void main() {
     expect(form, isA<UrlEncodedFormData>());
     expect(form.fields.raw['name'], 'Gustavo');
   });
+
+  test('Given a streamed multipart body that ends inside a file part, '
+      'when multipartForm is parsed, '
+      'then it throws MalformedFormDataException.', () async {
+    final request = _streamedMultipartRequest(
+      boundary: 'truncated',
+      body:
+          '--truncated\r\n'
+          'Content-Disposition: form-data; name="upload"; filename="a.txt"\r\n'
+          '\r\n'
+          '${'x' * 200}',
+    );
+
+    await expectLater(
+      request.multipartForm(),
+      throwsA(isA<MalformedFormDataException>()),
+    );
+  }, timeout: const Timeout(Duration(seconds: 5)));
+
+  test('Given a streamed multipart body with a 200-byte file part, '
+      'when multipartForm is parsed with a maxBodySize of 150, '
+      'then it throws FormLimitExceededException.', () async {
+    final request = _streamedMultipartRequest(
+      boundary: 'limited',
+      body:
+          '--limited\r\n'
+          'Content-Disposition: form-data; name="upload"; filename="a.txt"\r\n'
+          '\r\n'
+          '${'x' * 200}\r\n'
+          '--limited--\r\n',
+    );
+
+    await expectLater(
+      request.multipartForm(limits: FormLimits(maxBodySize: 150)),
+      throwsA(_limitExceeded(FormLimit.maxBodySize)),
+    );
+  }, timeout: const Timeout(Duration(seconds: 5)));
 }
 
 Request _urlEncodedRequest(final String body) {
@@ -727,6 +765,27 @@ Request _multipartRequestBytes({
     Object(),
     body: Body.fromData(
       bodyBytes,
+      mimeType: MimeType.multipartFormData,
+      parameters: {'boundary': boundary},
+    ),
+  );
+}
+
+/// A request whose body arrives in small chunks with no known length.
+Request _streamedMultipartRequest({
+  required final String boundary,
+  required final String body,
+}) {
+  final bytes = utf8.encode(body);
+  return RequestInternal.create(
+    Method.post,
+    Uri.parse('http://localhost/form'),
+    Object(),
+    body: Body.fromDataStream(
+      Stream.fromIterable([
+        for (var i = 0; i < bytes.length; i += 10)
+          bytes.sublist(i, min(i + 10, bytes.length)),
+      ]),
       mimeType: MimeType.multipartFormData,
       parameters: {'boundary': boundary},
     ),
