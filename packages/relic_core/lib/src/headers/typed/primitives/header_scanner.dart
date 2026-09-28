@@ -20,10 +20,15 @@ final class HeaderScanner {
   /// The full source string being scanned.
   final String source;
 
+  /// The highest code unit that counts as `obs-text`.
+  final int _obsTextEnd;
+
   int _pos = 0;
 
   /// Creates a scanner positioned at the start of [source].
-  HeaderScanner(this.source);
+  HeaderScanner(this.source) : _obsTextEnd = 0xFF;
+
+  HeaderScanner._utf8(this.source) : _obsTextEnd = 0xFFFF;
 
   /// The current cursor position (0-based, inclusive).
   int get position => _pos;
@@ -109,7 +114,7 @@ final class HeaderScanner {
           throw _error('unterminated quoted-pair', start);
         }
         final esc = source.codeUnitAt(_pos);
-        if (!_isQuotedPairTarget(esc)) {
+        if (!_isQuotedPairTarget(esc, _obsTextEnd)) {
           _pos = start;
           throw _error('invalid quoted-pair', start);
         }
@@ -117,7 +122,7 @@ final class HeaderScanner {
         _pos++;
         continue;
       }
-      if (!_isQdtext(c)) {
+      if (!_isQdtext(c, _obsTextEnd)) {
         _pos = start;
         throw _error('invalid character in quoted-string', start);
       }
@@ -204,23 +209,23 @@ final class HeaderScanner {
 const int _dquote = 0x22;
 const int _backslash = 0x5C;
 
-bool _isQdtext(final int c) {
+bool _isQdtext(final int c, final int obsTextEnd) {
   // qdtext = HTAB / SP / %x21 / %x23-5B / %x5D-7E / obs-text
   if (c == 0x09) return true;
   if (c == 0x20) return true;
   if (c == 0x21) return true;
   if (c >= 0x23 && c <= 0x5B) return true;
   if (c >= 0x5D && c <= 0x7E) return true;
-  if (c >= 0x80 && c <= 0xFF) return true; // obs-text
+  if (c >= 0x80 && c <= obsTextEnd) return true; // obs-text
   return false;
 }
 
-bool _isQuotedPairTarget(final int c) {
+bool _isQuotedPairTarget(final int c, final int obsTextEnd) {
   // quoted-pair = "\" ( HTAB / SP / VCHAR / obs-text )
   if (c == 0x09) return true;
   if (c == 0x20) return true;
   if (c >= 0x21 && c <= 0x7E) return true; // VCHAR
-  if (c >= 0x80 && c <= 0xFF) return true; // obs-text
+  if (c >= 0x80 && c <= obsTextEnd) return true; // obs-text
   return false;
 }
 
@@ -232,4 +237,12 @@ String _rtrimOws(final String s) {
     end--;
   }
   return end == s.length ? s : s.substring(0, end);
+}
+
+/// Internal constructors for [HeaderScanner], not exported from
+/// relic_core.dart.
+extension HeaderScannerInternal on HeaderScanner {
+  /// Creates a scanner for a source decoded from UTF-8. It reads every
+  /// non-ASCII code unit as `obs-text`.
+  static const utf8 = HeaderScanner._utf8;
 }

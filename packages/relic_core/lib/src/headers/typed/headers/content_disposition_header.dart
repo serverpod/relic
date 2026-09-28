@@ -2,6 +2,7 @@ import 'package:collection/collection.dart';
 
 import '../../../../relic_core.dart';
 import '../primitives/ext_value.dart';
+import '../primitives/header_scanner.dart';
 
 /// A class representing the HTTP Content-Disposition header.
 ///
@@ -39,8 +40,14 @@ final class ContentDispositionHeader {
   ///
   /// Splitting is quote-aware, so a `;` inside a quoted parameter value is
   /// part of that value rather than a separator.
-  factory ContentDispositionHeader.parse(final String value) {
-    final splitValues = HeaderScanner(
+  factory ContentDispositionHeader.parse(final String value) =>
+      ContentDispositionHeader._parse(value, HeaderScanner.new);
+
+  factory ContentDispositionHeader._parse(
+    final String value,
+    final HeaderScanner Function(String) createScanner,
+  ) {
+    final splitValues = createScanner(
       value,
     ).splitTopLevel(_semicolon).where((final e) => e.isNotEmpty).toList();
 
@@ -55,7 +62,10 @@ final class ContentDispositionHeader {
 
     final parameters = splitValues
         .skip(1)
-        .map(ContentDispositionParameter.parse)
+        .map(
+          (final part) =>
+              ContentDispositionParameter._parse(part, createScanner),
+        )
         .toList();
 
     return ContentDispositionHeader(type: type, parameters: parameters);
@@ -122,7 +132,13 @@ class ContentDispositionParameter {
   /// extended value that is not a UTF-8 [RFC 8187][rfc8187] `ext-value`.
   ///
   /// [rfc8187]: https://datatracker.ietf.org/doc/html/rfc8187#section-3.2
-  factory ContentDispositionParameter.parse(final String part) {
+  factory ContentDispositionParameter.parse(final String part) =>
+      ContentDispositionParameter._parse(part, HeaderScanner.new);
+
+  factory ContentDispositionParameter._parse(
+    final String part,
+    final HeaderScanner Function(String) createScanner,
+  ) {
     final equals = part.indexOf('=');
     if (equals < 0) {
       throw const FormatException('Invalid parameter format');
@@ -146,7 +162,7 @@ class ContentDispositionParameter {
 
     return ContentDispositionParameter(
       name: name.replaceAll('*', ''),
-      value: _readParameterValue(rawValue),
+      value: _readParameterValue(rawValue, createScanner),
     );
   }
 
@@ -182,8 +198,11 @@ class ContentDispositionParameter {
 const int _semicolon = 0x3B;
 
 /// Reads an ordinary parameter value, which is `token / quoted-string`.
-String _readParameterValue(final String raw) {
-  final scanner = HeaderScanner(raw);
+String _readParameterValue(
+  final String raw,
+  final HeaderScanner Function(String) createScanner,
+) {
+  final scanner = createScanner(raw);
   final value = scanner.readTokenOrQuotedString();
   scanner.skipOws();
   if (!scanner.atEnd) {
@@ -194,4 +213,13 @@ String _readParameterValue(final String raw) {
     );
   }
   return value;
+}
+
+/// Internal parsing for [ContentDispositionHeader], not exported from
+/// relic_core.dart.
+extension ContentDispositionHeaderInternal on ContentDispositionHeader {
+  /// Parses the Content-Disposition [value] of a multipart form-data part,
+  /// which package:mime hands over decoded from UTF-8.
+  static ContentDispositionHeader parseFormData(final String value) =>
+      ContentDispositionHeader._parse(value, HeaderScannerInternal.utf8);
 }

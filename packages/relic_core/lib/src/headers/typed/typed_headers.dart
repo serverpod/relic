@@ -11,7 +11,8 @@ export 'headers/authorization_header.dart';
 export 'headers/cache_control_header.dart';
 export 'headers/clear_site_data_header.dart';
 export 'headers/connection_header.dart';
-export 'headers/content_disposition_header.dart';
+export 'headers/content_disposition_header.dart'
+    hide ContentDispositionHeaderInternal;
 export 'headers/content_encoding_header.dart';
 export 'headers/content_language_header.dart';
 export 'headers/content_range_header.dart';
