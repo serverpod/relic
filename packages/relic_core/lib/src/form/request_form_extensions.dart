@@ -213,7 +213,7 @@ Stream<MultipartPart> _parts(
   }
 
   void fail(final Object error, final StackTrace stackTrace) {
-    final mapped = error is MimeMultipartException
+    final mapped = error is MimeMultipartException || error is FormatException
         ? MalformedFormDataException('Malformed multipart body: $error')
         : error;
     final part = openPart;
@@ -285,9 +285,19 @@ Stream<MultipartPart> _parts(
 
   parts
     ..onListen = () {
-      subscription = MimeMultipartTransformer(
-        boundary,
-      ).bind(body).listen(addPart, onError: fail, onDone: parts.close);
+      runZonedGuarded(
+        () {
+          subscription = MimeMultipartTransformer(
+            boundary,
+          ).bind(body).listen(addPart, onError: fail, onDone: parts.close);
+        },
+        (final error, final stackTrace) {
+          if (parts.isClosed) Error.throwWithStackTrace(error, stackTrace);
+          fail(error, stackTrace);
+          subscription.cancel();
+          parts.close();
+        },
+      );
     }
     ..onPause = pauseBetweenParts
     ..onResume = () {
