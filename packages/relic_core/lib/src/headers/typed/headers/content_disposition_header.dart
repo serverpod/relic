@@ -45,8 +45,9 @@ final class ContentDispositionHeader {
 
   factory ContentDispositionHeader._parse(
     final String value,
-    final HeaderScanner Function(String) createScanner,
-  ) {
+    final HeaderScanner Function(String) createScanner, {
+    final bool decodeExtended = true,
+  }) {
     final splitValues = createScanner(
       value,
     ).splitTopLevel(_semicolon).where((final e) => e.isNotEmpty).toList();
@@ -63,8 +64,11 @@ final class ContentDispositionHeader {
     final parameters = splitValues
         .skip(1)
         .map(
-          (final part) =>
-              ContentDispositionParameter._parse(part, createScanner),
+          (final part) => ContentDispositionParameter._parse(
+            part,
+            createScanner,
+            decodeExtended: decodeExtended,
+          ),
         )
         .toList();
 
@@ -137,8 +141,9 @@ class ContentDispositionParameter {
 
   factory ContentDispositionParameter._parse(
     final String part,
-    final HeaderScanner Function(String) createScanner,
-  ) {
+    final HeaderScanner Function(String) createScanner, {
+    final bool decodeExtended = true,
+  }) {
     final equals = part.indexOf('=');
     if (equals < 0) {
       throw const FormatException('Invalid parameter format');
@@ -148,6 +153,10 @@ class ContentDispositionParameter {
     final rawValue = part.substring(equals + 1).trim();
     if (name.isEmpty) {
       throw const FormatException('Invalid parameter format');
+    }
+
+    if (name.endsWith('*') && !decodeExtended) {
+      return ContentDispositionParameter(name: name, value: rawValue);
     }
 
     if (name.endsWith('*')) {
@@ -220,6 +229,13 @@ String _readParameterValue(
 extension ContentDispositionHeaderInternal on ContentDispositionHeader {
   /// Parses the Content-Disposition [value] of a multipart form-data part,
   /// which package:mime hands over decoded from UTF-8.
+  ///
+  /// It leaves parameters with a `*`, such as `filename*`, undecoded and keeps
+  /// the `*` in their name. RFC 7578 section 4.2 forbids them in form data.
   static ContentDispositionHeader parseFormData(final String value) =>
-      ContentDispositionHeader._parse(value, HeaderScannerInternal.utf8);
+      ContentDispositionHeader._parse(
+        value,
+        HeaderScannerInternal.utf8,
+        decodeExtended: false,
+      );
 }

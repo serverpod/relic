@@ -14,6 +14,9 @@ sealed class MultipartPart {
   final Headers headers;
 
   /// Parsed part Content-Disposition header, if present.
+  ///
+  /// Parameters with a `*`, such as `filename*`, keep the `*` in their name
+  /// and their raw, undecoded value.
   final ContentDispositionHeader? contentDisposition;
 
   /// Single-read body for this part.
@@ -44,8 +47,7 @@ sealed class MultipartPart {
       );
     }
 
-    final rawFilename = _contentDispositionFilename(contentDisposition);
-    if (rawFilename == null) {
+    if (!_hasFilename(contentDisposition)) {
       return MultipartFieldPart._(
         headers: headers,
         contentDisposition: contentDisposition,
@@ -53,13 +55,17 @@ sealed class MultipartPart {
         name: name,
       );
     }
+    final rawFilename = _contentDispositionParameter(
+      contentDisposition,
+      'filename',
+    );
     return MultipartFilePart._(
       headers: headers,
       contentDisposition: contentDisposition,
       body: body,
       name: name,
-      filename: _sanitizeFilename(rawFilename),
-      hasEmptyFilename: rawFilename.isEmpty,
+      filename: rawFilename == null ? null : _sanitizeFilename(rawFilename),
+      hasEmptyFilename: rawFilename == '',
     );
   }
 
@@ -106,12 +112,14 @@ final class MultipartFilePart extends MultipartPart {
   /// Form field name from Content-Disposition.
   final String name;
 
-  /// Uploaded filename from Content-Disposition, reduced to its basename.
+  /// Uploaded filename from the Content-Disposition `filename` parameter,
+  /// reduced to its basename.
   ///
   /// It holds no control characters, line or paragraph separators,
   /// zero-width spaces or bidirectional formatting characters. Null when
   /// nothing usable is left, such as for an empty filename, `.`, `..` or
-  /// `dir/`.
+  /// `dir/`. Also null when the part only has `filename*`, which RFC 7578
+  /// section 4.2 forbids in form data.
   final String? filename;
 
   /// Whether the filename parameter is empty, as browsers send it for a file
@@ -209,18 +217,14 @@ final _unsafeCharacters = RegExp(
   r'[\x00-\x1f\x7f-\x9f\u061c\u200b\u200e\u200f\u2028\u2029\u202a-\u202e\u2066-\u2069\ufeff]',
 );
 
-String? _contentDispositionFilename(
-  final ContentDispositionHeader? disposition,
-) {
-  if (disposition == null) return null;
-  ContentDispositionParameter? fallback;
-  for (final parameter in disposition.parameters) {
-    if (parameter.name.toLowerCase() != 'filename') continue;
-    if (parameter.isExtended) return parameter.value;
-    fallback ??= parameter;
-  }
-  return fallback?.value;
-}
+bool _hasFilename(final ContentDispositionHeader? disposition) =>
+    disposition != null &&
+    disposition.parameters.any(
+      (final parameter) => const {
+        'filename',
+        'filename*',
+      }.contains(parameter.name.toLowerCase()),
+    );
 
 String _basename(final String path) {
   final slash = path.lastIndexOf('/');

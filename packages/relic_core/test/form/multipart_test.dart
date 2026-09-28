@@ -139,36 +139,145 @@ void main() {
         expect(filenames, ['evil.txt', 'other.txt']);
       },
     );
+  });
 
-    test(
-      'when regular and extended file names are present, then extended wins',
-      () async {
-        final request = _request(
-          boundary: 'extended-filename',
-          body: _multipartBody('extended-filename', [
-            _Part(
-              headers: const {
-                Headers.contentDispositionHeader:
-                    "form-data; name=\"upload\"; filename=\"plain.txt\"; filename*=UTF-8''extended%20name.txt",
-              },
-              body: 'file-body',
-            ),
-          ]),
+  test(
+    'Given a multipart file part with both a regular and an extended filename, '
+    'when the request is streamed, '
+    'then the filename is the regular one.',
+    () async {
+      final request = _request(
+        boundary: 'extended-filename',
+        body: _multipartBody('extended-filename', [
+          _Part(
+            headers: const {
+              Headers.contentDispositionHeader:
+                  "form-data; name=\"upload\"; filename=\"plain.txt\"; filename*=UTF-8''extended%20name.txt",
+            },
+            body: 'file-body',
+          ),
+        ]),
+      );
+
+      await for (final part in request.multipart()) {
+        expect(
+          part,
+          isA<MultipartFilePart>().having(
+            (final p) => p.filename,
+            'filename',
+            'plain.txt',
+          ),
         );
+        await part.discard();
+      }
+    },
+  );
 
-        await for (final part in request.multipart()) {
-          expect(
-            part,
-            isA<MultipartFilePart>().having(
-              (final p) => p.filename,
-              'filename',
-              'extended name.txt',
-            ),
-          );
-          await part.discard();
-        }
-      },
+  test(
+    'Given a multipart file part with a regular filename and an ISO-8859-1 extended filename, '
+    'when the request is streamed, '
+    'then the filename is the regular one.',
+    () async {
+      final request = _request(
+        boundary: 'latin1-extended-filename',
+        body: _multipartBody('latin1-extended-filename', [
+          _Part(
+            headers: const {
+              Headers.contentDispositionHeader:
+                  "form-data; name=\"upload\"; filename=\"plain.txt\"; filename*=ISO-8859-1''na%EFve.txt",
+            },
+            body: 'file-body',
+          ),
+        ]),
+      );
+
+      final parts = await request.multipart().toList();
+
+      expect(parts, [
+        isA<MultipartFilePart>().having(
+          (final p) => p.filename,
+          'filename',
+          'plain.txt',
+        ),
+      ]);
+    },
+  );
+
+  test(
+    'Given a multipart file part with a regular filename and an extended filename with an invalid percent escape, '
+    'when the request is streamed, '
+    'then the filename is the regular one.',
+    () async {
+      final request = _request(
+        boundary: 'bad-escape-extended-filename',
+        body: _multipartBody('bad-escape-extended-filename', [
+          _Part(
+            headers: const {
+              Headers.contentDispositionHeader:
+                  "form-data; name=\"upload\"; filename=\"plain.txt\"; filename*=UTF-8''%zz.txt",
+            },
+            body: 'file-body',
+          ),
+        ]),
+      );
+
+      final parts = await request.multipart().toList();
+
+      expect(parts, [
+        isA<MultipartFilePart>().having(
+          (final p) => p.filename,
+          'filename',
+          'plain.txt',
+        ),
+      ]);
+    },
+  );
+
+  test('Given a multipart file part with only an extended filename, '
+      'when the request is streamed, '
+      'then the part is a file part without a filename.', () async {
+    final request = _request(
+      boundary: 'extended-only-filename',
+      body: _multipartBody('extended-only-filename', [
+        _Part(
+          headers: const {
+            Headers.contentDispositionHeader:
+                "form-data; name=\"upload\"; filename*=UTF-8''extended%20name.txt",
+          },
+          body: 'file-body',
+        ),
+      ]),
     );
+
+    final parts = await request.multipart().toList();
+
+    expect(parts, [
+      isA<MultipartFilePart>().having(
+        (final p) => p.filename,
+        'filename',
+        isNull,
+      ),
+    ]);
+  });
+
+  test('Given a multipart part with only an extended field name, '
+      'when the request is streamed, '
+      'then it is not a field part.', () async {
+    final request = _request(
+      boundary: 'extended-only-name',
+      body: _multipartBody('extended-only-name', [
+        _Part(
+          headers: const {
+            Headers.contentDispositionHeader: "form-data; name*=UTF-8''x",
+          },
+          body: 'value',
+        ),
+      ]),
+    );
+
+    final parts = await request.multipart().toList();
+
+    expect(parts, [isA<MultipartOtherPart>()]);
   });
 
   test(
