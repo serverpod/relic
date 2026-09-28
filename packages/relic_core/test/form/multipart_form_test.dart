@@ -734,6 +734,26 @@ void main() {
       throwsA(_limitExceeded(FormLimit.maxBodySize)),
     );
   }, timeout: const Timeout(Duration(seconds: 5)));
+
+  test('Given a multipart file part with a Latin-1 encoded filename, '
+      'when multipartForm is parsed, '
+      'then it throws MalformedFormDataException.', () async {
+    final request = _multipartRequestBytes(
+      boundary: 'latin1-filename',
+      bodyBytes: latin1.encode(
+        '--latin1-filename\r\n'
+        'Content-Disposition: form-data; name="upload"; filename="r\xe9sum\xe9.pdf"\r\n'
+        '\r\n'
+        'content\r\n'
+        '--latin1-filename--\r\n',
+      ),
+    );
+
+    await expectLater(
+      request.multipartForm(),
+      throwsA(isA<MalformedFormDataException>()),
+    );
+  }, timeout: const Timeout(Duration(seconds: 5)));
 }
 
 Request _urlEncodedRequest(final String body) {

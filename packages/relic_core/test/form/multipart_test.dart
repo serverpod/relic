@@ -721,6 +721,68 @@ void main() {
 
     await expectLater(readParts(), throwsA(same(error)));
   }, timeout: const Timeout(Duration(seconds: 5)));
+
+  test('Given a multipart part header with a byte that is not UTF-8, '
+      'when the parts are streamed, '
+      'then it throws MalformedFormDataException.', () async {
+    final request = _request(
+      boundary: 'latin1-header',
+      bodyBytes: latin1.encode(
+        '--latin1-header\r\n'
+        'Content-Disposition: form-data; name="upload"; filename="r\xe9sum\xe9.pdf"\r\n'
+        '\r\n'
+        'content\r\n'
+        '--latin1-header--\r\n',
+      ),
+    );
+
+    await expectLater(
+      request.multipart().drain<void>(),
+      throwsA(isA<MalformedFormDataException>()),
+    );
+  }, timeout: const Timeout(Duration(seconds: 5)));
+
+  test(
+    'Given a multipart part header line with a CR that is not followed by LF, '
+    'when the parts are streamed, '
+    'then it throws MalformedFormDataException.',
+    () async {
+      final request = _request(
+        boundary: 'bare-cr',
+        body:
+            '--bare-cr\r\n'
+            'Content-Disposition: form-data; name="a"\rX\r\n'
+            '\r\n'
+            'value\r\n'
+            '--bare-cr--\r\n',
+      );
+
+      await expectLater(
+        request.multipart().drain<void>(),
+        throwsA(isA<MalformedFormDataException>()),
+      );
+    },
+    timeout: const Timeout(Duration(seconds: 5)),
+  );
+
+  test('Given a multipart part header name with a space, '
+      'when the parts are streamed, '
+      'then it throws MalformedFormDataException.', () async {
+    final request = _request(
+      boundary: 'bad-header-name',
+      body:
+          '--bad-header-name\r\n'
+          'Content Disposition: form-data; name="a"\r\n'
+          '\r\n'
+          'value\r\n'
+          '--bad-header-name--\r\n',
+    );
+
+    await expectLater(
+      request.multipart().drain<void>(),
+      throwsA(isA<MalformedFormDataException>()),
+    );
+  }, timeout: const Timeout(Duration(seconds: 5)));
 }
 
 Matcher _limitExceeded(final FormLimit limit) {
