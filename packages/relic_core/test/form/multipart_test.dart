@@ -649,6 +649,78 @@ void main() {
       ),
     ]);
   });
+
+  test('Given a streamed multipart body that fails inside a part, '
+      'when the part body is read, '
+      'then it throws the body error.', () async {
+    const boundary = 'failing';
+    final error = Exception('connection lost');
+    final request = RequestInternal.create(
+      Method.post,
+      Uri.parse('http://localhost/form'),
+      Object(),
+      body: Body.fromDataStream(
+        (() async* {
+          yield Uint8List.fromList(
+            utf8.encode(
+              '--$boundary\r\n'
+              'Content-Disposition: form-data; name="a"\r\n'
+              '\r\n'
+              'partial',
+            ),
+          );
+          throw error;
+        })(),
+        mimeType: MimeType.multipartFormData,
+        parameters: {'boundary': boundary},
+      ),
+    );
+
+    Future<void> readParts() async {
+      await for (final part in request.multipart()) {
+        await part.readAsString();
+      }
+    }
+
+    await expectLater(readParts(), throwsA(same(error)));
+  }, timeout: const Timeout(Duration(seconds: 5)));
+
+  test('Given a streamed multipart body that fails after a part buffers data, '
+      'when the part body is read only after the body has failed, '
+      'then it throws the body error and nothing else.', () async {
+    const boundary = 'failing-late';
+    final error = Exception('connection lost');
+    final request = RequestInternal.create(
+      Method.post,
+      Uri.parse('http://localhost/form'),
+      Object(),
+      body: Body.fromDataStream(
+        (() async* {
+          yield Uint8List.fromList(
+            utf8.encode(
+              '--$boundary\r\n'
+              'Content-Disposition: form-data; name="a"\r\n'
+              '\r\n'
+              'one',
+            ),
+          );
+          yield Uint8List.fromList(utf8.encode('two'));
+          throw error;
+        })(),
+        mimeType: MimeType.multipartFormData,
+        parameters: {'boundary': boundary},
+      ),
+    );
+
+    Future<void> readParts() async {
+      await for (final part in request.multipart()) {
+        await Future<void>.delayed(Duration.zero);
+        await part.readAsString();
+      }
+    }
+
+    await expectLater(readParts(), throwsA(same(error)));
+  }, timeout: const Timeout(Duration(seconds: 5)));
 }
 
 Matcher _limitExceeded(final FormLimit limit) {

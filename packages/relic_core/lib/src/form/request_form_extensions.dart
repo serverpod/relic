@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
@@ -165,34 +166,7 @@ extension FormRequestExtension on Request {
       );
     }
 
-    var partCount = 0;
-    try {
-      final parts = MimeMultipartTransformer(
-        boundary,
-      ).bind(_readFormBody(limits));
-
-      await for (final part in parts) {
-        if (partCount == limits.maxPartCount) {
-          throw const FormLimitExceededException(
-            limit: FormLimit.maxPartCount,
-            message: 'Too many multipart parts.',
-          );
-        }
-        partCount++;
-
-        final headers = Headers.fromMap(
-          part.headers.map((final key, final value) => MapEntry(key, [value])),
-        );
-        _checkPartHeaderSize(headers, limits);
-
-        yield MultipartPart(
-          headers: headers,
-          content: _asUint8ListStream(part),
-        );
-      }
-    } on MimeMultipartException catch (error) {
-      throw MalformedFormDataException('Malformed multipart body: $error');
-    }
+    yield* _parts(_readFormBody(limits), boundary, limits);
   }
 
   /// Reads the body, throwing [FormLimitExceededException] once it exceeds
@@ -209,6 +183,118 @@ extension FormRequestExtension on Request {
       );
     }
   }
+}
+
+/// Splits [body] into multipart parts.
+///
+/// [MimeMultipartTransformer] reports a body that fails, or ends before the
+/// closing boundary, only on its stream of parts, never on the open part. A
+/// consumer that reads the open part pauses that stream, so it would wait for
+/// the part forever. [_parts] keeps the stream running while the consumer
+/// reads a part, and fails that part with the error. Remove this workaround
+/// once package:mime reports these errors on the open part.
+Stream<MultipartPart> _parts(
+  final Stream<Uint8List> body,
+  final String boundary,
+  final FormLimits limits,
+) {
+  final parts = StreamController<MultipartPart>();
+  late final StreamSubscription<MimeMultipart> subscription;
+  StreamController<Uint8List>? openPart;
+  StreamSubscription<List<int>>? openMimePartSubscription;
+  var partCount = 0;
+
+  void pauseBetweenParts() {
+    final part = openPart;
+    final reading = part != null && part.hasListener && !part.isClosed;
+    if (!reading && parts.isPaused && !subscription.isPaused) {
+      subscription.pause();
+    }
+  }
+
+  void fail(final Object error, final StackTrace stackTrace) {
+    final mapped = error is MimeMultipartException
+        ? MalformedFormDataException('Malformed multipart body: $error')
+        : error;
+    final part = openPart;
+    if (part != null && !part.isClosed) {
+      openMimePartSubscription?.cancel();
+      part
+        ..addError(mapped, stackTrace)
+        ..close();
+    }
+    parts.addError(mapped, stackTrace);
+  }
+
+  void addPart(final MimeMultipart mimePart) {
+    final content = StreamController<Uint8List>();
+    final MultipartPart part;
+    try {
+      if (partCount == limits.maxPartCount) {
+        throw const FormLimitExceededException(
+          limit: FormLimit.maxPartCount,
+          message: 'Too many multipart parts.',
+        );
+      }
+      partCount++;
+
+      final headers = Headers.fromMap(
+        mimePart.headers.map(
+          (final key, final value) => MapEntry(key, [value]),
+        ),
+      );
+      _checkPartHeaderSize(headers, limits);
+      part = MultipartPart(headers: headers, content: content.stream);
+    } on FormException catch (error, stackTrace) {
+      parts.addError(error, stackTrace);
+      subscription.cancel();
+      parts.close();
+      return;
+    }
+
+    StreamSubscription<List<int>>? contentSubscription;
+    content
+      ..onListen = () {
+        if (content.isClosed) return;
+        contentSubscription = mimePart.listen(
+          (final chunk) => content.add(
+            chunk is Uint8List ? chunk : Uint8List.fromList(chunk),
+          ),
+          onError: content.addError,
+          onDone: () {
+            content.close();
+            pauseBetweenParts();
+          },
+        );
+        openMimePartSubscription = contentSubscription;
+        if (subscription.isPaused) subscription.resume();
+      }
+      ..onPause = () {
+        contentSubscription?.pause();
+      }
+      ..onResume = () {
+        contentSubscription?.resume();
+      }
+      ..onCancel = () {
+        contentSubscription?.cancel();
+      };
+    openPart = content;
+    openMimePartSubscription = null;
+    parts.add(part);
+  }
+
+  parts
+    ..onListen = () {
+      subscription = MimeMultipartTransformer(
+        boundary,
+      ).bind(body).listen(addPart, onError: fail, onDone: parts.close);
+    }
+    ..onPause = pauseBetweenParts
+    ..onResume = () {
+      if (subscription.isPaused) subscription.resume();
+    }
+    ..onCancel = () => subscription.cancel();
+  return parts.stream;
 }
 
 Future<String> _readPartAsString(
@@ -310,16 +396,6 @@ List<FormFieldEntry> _parseUrlEncodedFields(
   }
 
   return entries;
-}
-
-Stream<Uint8List> _asUint8ListStream(final Stream<List<int>> stream) async* {
-  await for (final chunk in stream) {
-    if (chunk is Uint8List) {
-      yield chunk;
-    } else {
-      yield Uint8List.fromList(chunk);
-    }
-  }
 }
 
 String _decodeFormComponent(final String value, final Encoding encoding) {
