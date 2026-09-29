@@ -495,6 +495,7 @@ final class MemoryUploadStorage implements UploadStorage {
       bodyType: bodyType,
       headers: headers,
       bytes: builder.takeBytes(),
+      copy: false,
     );
   }
 }
@@ -513,12 +514,16 @@ final class MemoryUploadedFile implements UploadedFile {
   Uint8List? _bytes;
 
   /// Creates a memory-backed uploaded file.
+  ///
+  /// The file keeps a copy of [bytes], unless [copy] is false. Then it keeps
+  /// [bytes] itself, which the caller must not change afterwards.
   MemoryUploadedFile({
     required this.filename,
     required this.bodyType,
     required this.headers,
     required final Uint8List bytes,
-  }) : _bytes = Uint8List.fromList(bytes);
+    final bool copy = true,
+  }) : _bytes = copy ? Uint8List.fromList(bytes) : bytes;
 
   @override
   int? get size => _bytes?.length;
