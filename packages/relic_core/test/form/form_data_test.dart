@@ -250,6 +250,37 @@ void main() {
     });
   });
 
+  test('Given bytes passed to a MemoryUploadedFile, '
+      'when the caller changes the bytes afterwards, '
+      'then the file content is unchanged.', () async {
+    final bytes = Uint8List.fromList(utf8.encode('hello'));
+    final file = MemoryUploadedFile(
+      filename: 'hello.txt',
+      bodyType: null,
+      headers: Headers.empty(),
+      bytes: bytes,
+    );
+
+    bytes[0] = 0x4A;
+
+    expect(utf8.decode(await file.read().single), 'hello');
+  });
+
+  test('Given bytes passed to a MemoryUploadedFile with copy false, '
+      'when the file is read, '
+      'then it streams those bytes without a copy.', () async {
+    final bytes = Uint8List.fromList(utf8.encode('hello'));
+    final file = MemoryUploadedFile(
+      filename: 'hello.txt',
+      bodyType: null,
+      headers: Headers.empty(),
+      bytes: bytes,
+      copy: false,
+    );
+
+    expect(await file.read().single, same(bytes));
+  });
+
   test('Given form fields with age "42", '
       'when age is read with an IntFormField, '
       'then it returns 42.', () {
