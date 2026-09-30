@@ -1,3 +1,18 @@
+## 2.0.0-rc.2
+- feat!: Add HTML form and multipart parsing ([#380](https://github.com/serverpod/relic/pull/380)) - closes [#379](https://github.com/serverpod/relic/issues/379)
+  - BREAKING: The minimum Dart SDK is 3.10.0. The Dart 3.9.0 compiler crashes in the FFI transform ([dart-lang/sdk#61321](https://github.com/dart-lang/sdk/issues/61321))
+  - BREAKING: `BodyType` has no const constructor. Drop `const` from `BodyType(...)` calls
+  - BREAKING: Extended `Content-Disposition` parameters such as `filename*` are RFC 8187 ext-values and always encode as UTF-8. `ContentDispositionParameter` has no `encoding`, and its `language` is a `LanguageTag`. Parsing throws `FormatException` for a charset other than UTF-8 and for a malformed ext-value
+  - Add `req.urlEncodedForm()`, `req.multipartForm()` and `req.formData()`, which picks the parser from the request Content-Type
+  - Add `req.multipart()` to stream parts without aggregating them. Each part is a `MultipartFieldPart`, `MultipartFilePart` or `MultipartOtherPart`
+  - Read fields through accessors such as `IntFormField('age')` with `form.fields.get`, `tryGet` and `getAll`, and files through `FormFile`. A missing field throws `MissingFormFieldException`, a value that does not decode throws `InvalidFormFieldException`
+  - `FormLimits` caps body size, part, field and file counts, and field and file sizes. Going over one throws `FormLimitExceededException`, whose `limit` names the `FormLimit`
+  - Uploads go to `MemoryUploadStorage` by default. `TempUploadStorage` in relic_io writes each upload to its own directory. On POSIX systems the directory has mode 0700. On Windows it inherits the permissions of its parent, and the default parent, the user's temp directory, is private to that user. Call `MultipartFormData.dispose()` to delete them
+  - Upload filenames are reduced to their basename, with control and bidi formatting characters removed. `.`, `..` and an empty filename give a null `filename`. `filename*` is ignored, per RFC 7578
+  - The server answers an uncaught `FormException` with its `statusCode`, which is 400, 413 or 415. When parsing fails it also sends `Connection: close`, as the rest of the body may be unread
+  - `BodyType` carries Content-Type parameters such as `boundary` in `parameters`. `Body.fromData` and `Body.fromDataStream` take a `parameters` argument, and the dart:io adapter carries them through
+  - Add a typed `ContentTypeHeader`, read with `headers.contentType`. Set Content-Type through the body
+
 ## 2.0.0-rc.1
 - refactor!: Drop `NormalizedPath` interning ([#375](https://github.com/serverpod/relic/pull/375)) - fixes [#118](https://github.com/serverpod/relic/issues/118), [#342](https://github.com/serverpod/relic/issues/342), closes [#344](https://github.com/serverpod/relic/issues/344)
   - BREAKING: `NormalizedPath.interned` is removed. Construction no longer caches, so there is no per-isolate cache to size, and no input that can thrash it
