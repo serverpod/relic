@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'dart:ffi';
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -8,7 +10,8 @@ import 'package:relic_core/relic_core.dart';
 ///
 /// [store] writes each upload to its own directory, which
 /// [Directory.createTemp] creates. [TempUploadedFile.dispose] deletes that
-/// directory. On POSIX systems only the current user can read it.
+/// directory. On POSIX systems only the current user can read it. On Windows
+/// it keeps the permissions it inherits from its parent.
 final class TempUploadStorage implements UploadStorage {
   /// The parent of the upload directories.
   ///
@@ -51,11 +54,39 @@ final class TempUploadStorage implements UploadStorage {
 
   Future<Directory> _createUploadDirectory() async {
     final configured = directory;
-    if (configured == null) return Directory.systemTemp.createTemp(prefix);
-    await configured.create(recursive: true);
-    return configured.createTemp(prefix);
+    if (configured != null) await configured.create(recursive: true);
+    final uploadDirectory = await (configured ?? Directory.systemTemp)
+        .createTemp(prefix);
+    if (Platform.isWindows) return uploadDirectory;
+
+    try {
+      _restrictToOwner(uploadDirectory.path);
+    } catch (_) {
+      await _deleteQuietly(uploadDirectory);
+      rethrow;
+    }
+    return uploadDirectory;
   }
 }
+
+/// Sets the mode of [path] to 0700.
+///
+/// On Linux, [Directory.createTemp] leaves the mode to the umask, which
+/// typically gives 0755. See `runtime/bin/directory_linux.cc` in the Dart SDK.
+void _restrictToOwner(final String path) {
+  final encoded = utf8.encode(path);
+  final cPath = Uint8List(encoded.length + 1)..setAll(0, encoded);
+  if (_chmod(cPath.address, _ownerOnly) != 0) {
+    throw FileSystemException('Cannot restrict permissions to owner', path);
+  }
+}
+
+// mode_t is 16 bits on Apple platforms. Their ABIs pass it in a full register,
+// so binding it as 32 bits works there too.
+@Native<Int Function(Pointer<Uint8>, Uint32)>(symbol: 'chmod', isLeaf: true)
+external int _chmod(Pointer<Uint8> path, int mode);
+
+const _ownerOnly = 0x1c0; // 0700
 
 /// Uploaded file backed by a temp file on disk.
 final class TempUploadedFile implements UploadedFile {
