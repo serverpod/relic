@@ -332,4 +332,68 @@ void main() {
       });
     });
   });
+
+  group('Host.checkAuthority', () {
+    for (final authority in [
+      'example.com',
+      'example.com:8080',
+      'v2.example.com',
+      '192.0.2.1:80',
+      '[::1]',
+      '[::1]:8080',
+    ]) {
+      test('Given the authority "$authority", when checked, '
+          'then it passes', () {
+        expect(() => Host.checkAuthority(authority), returnsNormally);
+      });
+    }
+
+    for (final authority in [
+      '',
+      ':80',
+      'example.com:',
+      'example.com:8x',
+      'example.com:80:1',
+      '::1',
+      '[::1',
+      'exa mple.com',
+      'example.com/path',
+    ]) {
+      test('Given the authority "$authority", when checked, '
+          'then it throws a FormatException', () {
+        expect(() => Host.checkAuthority(authority), throwsFormatException);
+      });
+    }
+
+    test('Given authorities the character scan decides on its own, '
+        'when checked, then the verdict is the one Host.parse gives', () {
+      for (final authority in [
+        '',
+        ':',
+        ':80',
+        'a:',
+        'a:1',
+        'a:1:',
+        'a.b-c:65535',
+        'a:65536',
+        'a_b:1',
+        '%41:1',
+      ]) {
+        bool throws(void Function() f) {
+          try {
+            f();
+            return false;
+          } on FormatException {
+            return true;
+          }
+        }
+
+        expect(
+          throws(() => Host.checkAuthority(authority)),
+          throws(() => Host.parse(authority)),
+          reason: '"$authority"',
+        );
+      }
+    });
+  });
 }

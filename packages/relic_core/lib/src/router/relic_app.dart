@@ -320,14 +320,28 @@ class _RouterHandlerObject extends HandlerObject {
     this.useHostWhenRouting = false,
   });
 
+  Handler? _handler;
+  Handler? _fallback;
+
+  /// The pipeline is built once and again when the fallback changes,
+  /// not per request.
   @override
-  FutureOr<Result> call(final Request req) => const Pipeline()
-      .addMiddleware(
-        routeWith(
-          router,
-          backtrack: backtrack,
-          useHostWhenRouting: useHostWhenRouting,
-        ),
-      )
-      .addHandler(router.fallback ?? (_) => Response.notFound())(req);
+  FutureOr<Result> call(final Request req) {
+    final fallback = router.fallback;
+    if (_handler == null || !identical(fallback, _fallback)) {
+      _fallback = fallback;
+      _handler = const Pipeline()
+          .addMiddleware(
+            routeWith(
+              router,
+              backtrack: backtrack,
+              useHostWhenRouting: useHostWhenRouting,
+            ),
+          )
+          .addHandler(fallback ?? _notFound);
+    }
+    return _handler!(req);
+  }
+
+  static Result _notFound(final Request _) => Response.notFound();
 }

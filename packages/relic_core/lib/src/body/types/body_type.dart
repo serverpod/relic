@@ -48,11 +48,13 @@ class BodyType {
   BodyType({
     required this.mimeType,
     this.encoding,
-    final Map<String, String> parameters = const {},
-  }) : parameters = Map.unmodifiable(_normalizeParameters(parameters));
+    Map<String, String> parameters = const {},
+  }) : parameters = parameters.isEmpty
+           ? const {}
+           : Map.unmodifiable(_normalizeParameters(parameters));
 
   /// Returns the value of the parameter [name], matched case-insensitively.
-  String? parameter(final String name) => parameters[name.toLowerCase()];
+  String? parameter(String name) => parameters[name.toLowerCase()];
 
   /// Checks that the mime type and every parameter fit in a Content-Type
   /// header.
@@ -66,10 +68,13 @@ class BodyType {
     }
   }
 
-  /// Returns the value to use for the Content-Type header.
+  String? _headerValue;
+
+  /// The value to use for the Content-Type header, built once per instance.
   ///
   /// Writes [encoding] as the `charset` parameter, then each entry of
-  /// [parameters]. Throws [FormatException] where [validate] would.
+  /// [parameters], separated by `; `. Throws [FormatException] where
+  /// [validate] would.
   ///
   /// Examples:
   /// ```dart
@@ -79,8 +84,14 @@ class BodyType {
   /// final binaryType = BodyType(mimeType: MimeType.octetStream);
   /// print(binaryType.toHeaderValue()); // "application/octet-stream"
   /// ```
-  String toHeaderValue() {
+  String toHeaderValue() => _headerValue ??= _buildHeaderValue();
+
+  String _buildHeaderValue() {
     final charset = encoding;
+    if (parameters.isEmpty) {
+      final type = mimeType.toHeaderValue();
+      return charset == null ? type : '$type; charset=${charset.name}';
+    }
     return [
       mimeType.toHeaderValue(),
       if (charset != null) 'charset=${charset.name}',
@@ -95,7 +106,7 @@ class BodyType {
       'parameters: $parameters)';
 }
 
-Map<String, String> _normalizeParameters(final Map<String, String> parameters) {
+Map<String, String> _normalizeParameters(Map<String, String> parameters) {
   final normalized = {
     for (final MapEntry(:key, :value) in parameters.entries)
       key.toLowerCase(): value,

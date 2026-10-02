@@ -62,7 +62,7 @@ final class Host {
 
   /// Creates a [Host] from a [Uri], honoring `Uri.hasPort` so that an
   /// implicit default port is left as `null` rather than coerced to 80/443.
-  factory Host.fromUri(final Uri uri) {
+  factory Host.fromUri(Uri uri) {
     if (uri.host.isEmpty) {
       throw FormatException('URI has no host', uri.toString());
     }
@@ -73,7 +73,7 @@ final class Host {
   ///
   /// IPv6 / IPvFuture hosts MUST be bracketed on the wire; unbracketed IPv6
   /// (e.g. `::1:80`) is ambiguous and rejected.
-  factory Host.parse(final String source) {
+  factory Host.parse(String source) {
     if (source.isEmpty) {
       throw const FormatException('host cannot be empty');
     }
@@ -124,7 +124,7 @@ final class Host {
   }
 
   @override
-  bool operator ==(final Object other) =>
+  bool operator ==(Object other) =>
       identical(this, other) ||
       (other is Host &&
           _asciiCaseInsensitiveEquals(host, other.host) &&
@@ -135,13 +135,57 @@ final class Host {
 
   @override
   String toString() => encode();
+
+  /// Throws [FormatException] unless [authority] is `uri-host [":" port]`
+  /// as [parse] accepts it.
+  ///
+  /// A name with an in-range port after one colon passes on a character
+  /// scan alone. Whatever else the scan does not refuse goes through
+  /// [parse], such as an IP literal, a second colon, a port that is not a
+  /// number or is too large, or a colon with nothing on one side.
+  static void checkAuthority(String authority) {
+    if (authority.isEmpty) {
+      throw const FormatException('Not a valid authority: empty');
+    }
+    var colonAt = -1;
+    var port = 0;
+    var parse = false;
+    for (var i = 0; i < authority.length; i++) {
+      final c = authority.codeUnitAt(i);
+      if (c >= 0x80 || !_authorityChars[c]) {
+        throw FormatException('Not a valid authority', authority);
+      }
+      if (c == 0x3a) {
+        if (colonAt >= 0) parse = true;
+        colonAt = i;
+      } else if (c == 0x5b || c == 0x5d) {
+        parse = true;
+      } else if (colonAt >= 0) {
+        if (c < 0x30 || c > 0x39) parse = true;
+        port = port * 10 + (c - 0x30);
+        if (port > 65535) parse = true;
+      }
+    }
+    if (colonAt == 0 || colonAt == authority.length - 1) parse = true;
+    if (parse) Host.parse(authority);
+  }
+
+  /// RFC 3986 unreserved and sub-delims, plus `:` for the port, `%` for an
+  /// escape and the brackets of an IPv6 literal.
+  static final _authorityChars = List<bool>.generate(128, (c) {
+    const extra = r"-._~!$&'()*+,;=:%[]";
+    return (c >= 0x30 && c <= 0x39) ||
+        (c >= 0x41 && c <= 0x5a) ||
+        (c >= 0x61 && c <= 0x7a) ||
+        extra.codeUnits.contains(c);
+  });
 }
 
 /// Validates the contents of an `IP-literal` (the text inside `[...]`).
 ///
 /// Per RFC 3986 3.2.2 an IP-literal is `IPv6address` or `IPvFuture`. Without
 /// this check `Host.parse('[zzz]')` would be accepted as a host named `zzz`.
-void _validateIpLiteral(final String inner, final String source) {
+void _validateIpLiteral(String inner, String source) {
   if (inner[0] == 'v' || inner[0] == 'V') {
     _validateIpvFuture(inner, source);
     return;
@@ -154,7 +198,7 @@ void _validateIpLiteral(final String inner, final String source) {
 }
 
 /// Validates `IPvFuture = "v" 1*HEXDIG "." 1*( unreserved / sub-delims / ":" )`.
-void _validateIpvFuture(final String inner, final String source) {
+void _validateIpvFuture(String inner, String source) {
   final dot = inner.indexOf('.');
   // Need at least one HEXDIG between the leading 'v' and the '.', and at least
   // one character after it.
@@ -173,12 +217,12 @@ void _validateIpvFuture(final String inner, final String source) {
   }
 }
 
-bool _isHexDigit(final int c) =>
+bool _isHexDigit(int c) =>
     (c >= 0x30 && c <= 0x39) ||
     (c >= 0x41 && c <= 0x46) ||
     (c >= 0x61 && c <= 0x66);
 
-bool _isIpvFutureTailChar(final int c) {
+bool _isIpvFutureTailChar(int c) {
   // unreserved
   if ((c >= 0x41 && c <= 0x5A) || (c >= 0x61 && c <= 0x7A)) {
     return true; // ALPHA
@@ -204,7 +248,7 @@ bool _isIpvFutureTailChar(final int c) {
   return false;
 }
 
-bool _isForbiddenHostChar(final int c) {
+bool _isForbiddenHostChar(int c) {
   if (c <= 0x20 || c == 0x7F) return true; // CTLs + SP + DEL
   switch (c) {
     case 0x22: // "
@@ -225,7 +269,7 @@ bool _isForbiddenHostChar(final int c) {
   return false;
 }
 
-int _parsePort(final String s, final String source) {
+int _parsePort(String s, String source) {
   if (s.isEmpty) {
     throw FormatException('port cannot be empty', source);
   }
@@ -246,7 +290,7 @@ int _parsePort(final String s, final String source) {
   return v;
 }
 
-bool _asciiCaseInsensitiveEquals(final String a, final String b) {
+bool _asciiCaseInsensitiveEquals(String a, String b) {
   if (identical(a, b)) return true;
   if (a.length != b.length) return false;
   for (var i = 0; i < a.length; i++) {
@@ -257,7 +301,7 @@ bool _asciiCaseInsensitiveEquals(final String a, final String b) {
   return true;
 }
 
-String _asciiLower(final String s) {
+String _asciiLower(String s) {
   final buf = StringBuffer();
   for (var i = 0; i < s.length; i++) {
     buf.writeCharCode(_asciiFold(s.codeUnitAt(i)));
@@ -265,7 +309,7 @@ String _asciiLower(final String s) {
   return buf.toString();
 }
 
-int _asciiFold(final int c) {
+int _asciiFold(int c) {
   if (c >= 0x41 && c <= 0x5A) return c + 0x20;
   return c;
 }

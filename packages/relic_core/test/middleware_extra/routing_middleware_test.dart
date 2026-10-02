@@ -3,12 +3,22 @@ import 'package:test/test.dart';
 import 'package:test_utils/test_utils.dart';
 
 Request _request(
-  final String path, {
-  final String host = 'localhost',
-  final Method method = Method.get,
+  String path, {
+  String host = 'localhost',
+  Method method = Method.get,
 }) => RequestInternal.create(method, Uri.http(host, path), Object());
 
 void main() {
+  test('Given a route whose handler answers synchronously, '
+      'when the routing middleware is called, '
+      'then the response comes back without a Future', () {
+    final router = RelicRouter()..get('/', (_) => Response(200));
+    final result = routeWith(router)(respondWith((_) => Response(404)))(
+      _request('/'),
+    );
+    expect(result, isA<Response>());
+  });
+
   group('RoutingMiddleware', () {
     late RelicRouter router;
     late Middleware middleware;
@@ -23,7 +33,7 @@ void main() {
           'When a request matches the parameterized route, '
           'Then the handler receives correct path parameters', () async {
         Map<Symbol, String>? capturedParams;
-        Future<Result> testHandler(final Request req) async {
+        Future<Result> testHandler(Request req) async {
           capturedParams = req.rawPathParameters;
           return Response(200);
         }
@@ -48,7 +58,7 @@ void main() {
         'Then the handler receives empty path parameters',
         () async {
           Map<Symbol, String>? capturedParams;
-          Future<Response> testHandler(final Request req) async {
+          Future<Response> testHandler(Request req) async {
             capturedParams = req.rawPathParameters;
             return Response(200);
           }
@@ -74,7 +84,7 @@ void main() {
         'Then the next handler is called and rawPathParameters is empty',
         () async {
           bool nextCalled = false;
-          Future<Response> nextHandler(final Request req) async {
+          Future<Response> nextHandler(Request req) async {
             nextCalled = true;
             expect(req.rawPathParameters, isEmpty);
             return Response(404);
@@ -114,7 +124,7 @@ void main() {
           bool handler1Called = false;
           bool handler2Called = false;
 
-          router1.add(Method.get, '/router1/:item', (final Request req) async {
+          router1.add(Method.get, '/router1/:item', (Request req) async {
             handler1Called = true;
             params1 = req.rawPathParameters;
             return Response(201);
@@ -160,7 +170,7 @@ void main() {
               return Response(201);
             }),
           );
-          router2.add(Method.get, '/router2/:data', (final Request req) async {
+          router2.add(Method.get, '/router2/:data', (Request req) async {
             handler2Called = true;
             params2 = req.rawPathParameters;
             return Response(202);
@@ -236,7 +246,7 @@ void main() {
           final nestedRouter = RelicRouter();
 
           nestedRouter.add(Method.get, '/details/:detailId', (
-            final Request req,
+            Request req,
           ) async {
             nestedHandlerCalled = true;
             capturedParams = req.rawPathParameters;
@@ -281,7 +291,7 @@ void main() {
 
           // Define handler for the leaf router
           leafRouter.add(Method.get, '/action/:actionName', (
-            final Request req,
+            Request req,
           ) async {
             deeplyNestedHandlerCalled = true;
             capturedParams = req.rawPathParameters;
@@ -324,7 +334,7 @@ void main() {
           final mainRouter = RelicRouter();
           final subRouter = RelicRouter();
 
-          subRouter.add(Method.get, '/:id/end', (final Request req) async {
+          subRouter.add(Method.get, '/:id/end', (Request req) async {
             // sub-router uses :id
             capturedParams = req.rawPathParameters;
             return Response(200);
@@ -356,7 +366,7 @@ void main() {
     final strRouter = Router<String>()..add(Method.get, '/', 'Hurrah!');
     final mw = routeWith<String>(
       strRouter,
-      toHandler: (final s) =>
+      toHandler: (s) =>
           respondWith((_) => Response.ok(body: Body.fromString(s))),
     );
 
@@ -372,17 +382,17 @@ void main() {
   // for verbs. These test ensures all mappings are exercised.
   parameterizedTest(
     variants: Method.values,
-    (final v) =>
+    (v) =>
         'Given a route for verb: "${v.value}", '
         'when responding, '
         'then the request.method is "$v"',
-    (final v) async {
+    (v) async {
       late Method method;
       final middleware = routeWith(
         RelicRouter()..add(
           v,
           '/',
-          respondWith((final req) {
+          respondWith((req) {
             method = req.method;
             return Response.ok();
           }),
@@ -486,7 +496,7 @@ void main() {
 
       bool nextCalled = false;
       final initialCtx = _request('/posts', method: Method.get);
-      final resultingCtx = await middleware((final req) async {
+      final resultingCtx = await middleware((req) async {
         nextCalled = true;
         return Response(404);
       })(initialCtx);
@@ -500,18 +510,18 @@ void main() {
 
   group('Virtual hosting', () {
     Handler _createHandler(
-      final Router<int> router, {
-      final bool useHostWhenRouting = true,
+      Router<int> router, {
+      bool useHostWhenRouting = true,
     }) {
       final middleware = routeWith(
         router,
         useHostWhenRouting: useHostWhenRouting,
-        toHandler: (final i) =>
-            respondWith((final _) => Response.ok(body: Body.fromString('$i'))),
+        toHandler: (i) =>
+            respondWith((_) => Response.ok(body: Body.fromString('$i'))),
       );
       return const Pipeline()
           .addMiddleware(middleware)
-          .addHandler(respondWith((final _) => Response.notFound()));
+          .addHandler(respondWith((_) => Response.notFound()));
     }
 
     // Router with host-specific route (1), and global route (2) for wildcard
@@ -639,7 +649,7 @@ void main() {
         'then req.router returns the router instance', () async {
       final router = RelicRouter();
       RelicRouter? capturedRouter;
-      router.get('/test', (final Request req) {
+      router.get('/test', (Request req) {
         capturedRouter = req.router;
         return Response.ok();
       });
@@ -665,7 +675,7 @@ void main() {
       RelicRouter? capturedRouter;
       final middleware = routeWith<String>(
         strRouter,
-        toHandler: (final s) => (final Request req) {
+        toHandler: (s) => (Request req) {
           capturedRouter = req.router;
           return Response.ok(body: Body.fromString(s));
         },
@@ -682,7 +692,7 @@ void main() {
         'then req.router returns the router instance', () async {
       final router = RelicRouter();
       RelicRouter? capturedRouter;
-      router.get('/test', (final Request req) {
+      router.get('/test', (Request req) {
         capturedRouter = req.router;
         return Response.ok();
       });
@@ -700,11 +710,11 @@ void main() {
         'then the forwarded route handler is invoked', () async {
       final router = RelicRouter();
 
-      router.get('/target', (final Request req) {
+      router.get('/target', (Request req) {
         return Response.ok(body: Body.fromString('target reached'));
       });
 
-      router.get('/source', (final Request req) {
+      router.get('/source', (Request req) {
         final newReq = req.copyWith(url: Uri.http('localhost', '/target'));
         return req.forwardTo(newReq);
       });
@@ -722,12 +732,12 @@ void main() {
       final router = RelicRouter();
       Map<Symbol, String>? capturedParams;
 
-      router.get('/users/:id', (final Request req) {
+      router.get('/users/:id', (Request req) {
         capturedParams = req.rawPathParameters;
         return Response.ok();
       });
 
-      router.get('/alias/:name', (final Request req) {
+      router.get('/alias/:name', (Request req) {
         final newReq = req.copyWith(url: Uri.http('localhost', '/users/42'));
         return req.forwardTo(newReq);
       });
@@ -763,7 +773,7 @@ void main() {
         'then the router fallback is invoked', () async {
       final router = RelicRouter();
 
-      router.get('/source', (final Request req) {
+      router.get('/source', (Request req) {
         final newReq = req.copyWith(url: Uri.http('localhost', '/nonexistent'));
         return req.forwardTo(newReq);
       });
@@ -779,20 +789,20 @@ void main() {
         'then the middleware is applied to the forwarded request', () async {
       final router = RelicRouter();
 
-      router.get('/target', (final Request req) {
+      router.get('/target', (Request req) {
         return Response.ok();
       });
 
-      router.get('/source', (final Request req) {
+      router.get('/source', (Request req) {
         final newReq = req.copyWith(url: Uri.http('localhost', '/target'));
         return req.forwardTo(newReq);
       });
 
-      router.use('/', (final handler) {
-        return (final req) async {
+      router.use('/', (handler) {
+        return (req) async {
           final result = await handler(req) as Response;
           return result.copyWith(
-            headers: Headers.build((final h) => h['X-Forwarded'] = ['true']),
+            headers: Headers.build((h) => h['X-Forwarded'] = ['true']),
           );
         };
       });
@@ -806,23 +816,22 @@ void main() {
   });
 
   group('Given virtual hosting with an internal and a public host', () {
-    Handler handlerFor(final Router<int> router) => const Pipeline()
+    Handler handlerFor(Router<int> router) => const Pipeline()
         .addMiddleware(
           routeWith(
             router,
             useHostWhenRouting: true,
-            toHandler: (final i) => respondWith(
-              (final _) => Response.ok(body: Body.fromString('$i')),
-            ),
+            toHandler: (i) =>
+                respondWith((_) => Response.ok(body: Body.fromString('$i'))),
           ),
         )
-        .addHandler(respondWith((final _) => Response.notFound()));
+        .addHandler(respondWith((_) => Response.notFound()));
 
     Router<int> vhostRouter() => Router<int>()
       ..get('public.example.com/index', 1)
       ..get('admin.internal/secret', 2);
 
-    Future<int> statusFor(final String rawPath) async {
+    Future<int> statusFor(String rawPath) async {
       final request = RequestInternal.create(
         Method.get,
         Uri.parse('http://public.example.com$rawPath'),
@@ -854,22 +863,21 @@ void main() {
   });
 
   group('Given routes for an admin path and a public catch-all', () {
-    Handler handlerFor(final Router<int> router) => const Pipeline()
+    Handler handlerFor(Router<int> router) => const Pipeline()
         .addMiddleware(
           routeWith(
             router,
-            toHandler: (final i) => respondWith(
-              (final _) => Response.ok(body: Body.fromString('$i')),
-            ),
+            toHandler: (i) =>
+                respondWith((_) => Response.ok(body: Body.fromString('$i'))),
           ),
         )
-        .addHandler(respondWith((final _) => Response.notFound()));
+        .addHandler(respondWith((_) => Response.notFound()));
 
     Router<int> aclRouter() => Router<int>()
       ..get('/admin/secret', 1)
       ..get('/public/**', 2);
 
-    Future<String> routeFor(final String rawPath) async {
+    Future<String> routeFor(String rawPath) async {
       final request = RequestInternal.create(
         Method.get,
         Uri.parse('http://localhost$rawPath'),

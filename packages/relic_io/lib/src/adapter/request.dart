@@ -9,11 +9,12 @@ import 'package:relic_core/relic_core.dart';
 /// answers that with 400 before any handler runs.
 Request fromHttpRequest(io.HttpRequest request) {
   final url = request.requestedUri;
-  RequestTarget.fromUri(url).validate();
+  final target = RequestTarget.fromUri(url)..validate();
   return RequestInternal.create(
     Method.parse(request.method),
     url,
     request,
+    target: target,
     protocol: httpProtocolOf(request),
     headers: headersFromHttpRequest(request),
     body: bodyFromHttpRequest(request),

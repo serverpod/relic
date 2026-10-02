@@ -58,7 +58,17 @@ class Request extends Message {
   /// The original [Uri] for the request.
   ///
   /// Absolute, with the scheme and authority the request was addressed to.
-  final Uri url;
+  /// An adapter that hands over the target and the authority instead has
+  /// it built on first read, so a route that never asks never parses it.
+  Uri get url =>
+      _url ??= _target!.toUri(scheme: _scheme, authority: _authority!);
+
+  Uri? _url;
+  final String? _authority;
+
+  /// The native adapter speaks plain HTTP. An adapter with TLS hands over
+  /// a Uri.
+  static const _scheme = 'http';
 
   /// Information about the IP connection carrying the request.
   ///
@@ -68,17 +78,36 @@ class Request extends Message {
   final ConnectionInfo connectionInfo;
 
   /// Creates a new [Request].
+  /// Takes [url], or [target] with [authority] for a url built on demand.
   Request._(
     this.method,
-    this.url,
+    final Uri? url,
     this._token, {
     final Headers? headers,
     final HttpProtocol? protocol,
     final Body? body,
     final ConnectionInfo? connectionInfo,
-  }) : protocol = protocol ?? HttpProtocol.http11,
+    final List<Object?>? properties,
+    final RequestTarget? target,
+    final String? authority,
+  }) : _url = url,
+       _target = target,
+       _authority = authority,
+       protocol = protocol ?? HttpProtocol.http11,
        connectionInfo = connectionInfo ?? ConnectionInfo.empty,
+       _properties = properties ?? <Object?>[],
        super(body: body ?? Body.empty(), headers: headers ?? Headers.empty()) {
+    if (url == null) {
+      if (target == null || authority == null) {
+        throw ArgumentError(
+          'A request takes a url, or a target and an authority',
+        );
+      }
+      // The URL is built on demand, so this is the check that used to come
+      // free with parsing it. A FormatException here is a 400.
+      Host.checkAuthority(authority);
+      return;
+    }
     // Cheap shape checks only. Whether the path and query decode is the
     // adapter's job, before the request reaches a handler.
     if (!url.isAbsolute) {
@@ -117,16 +146,24 @@ class Request extends Message {
   Request copyWith({final Uri? url, final Headers? headers, final Body? body}) {
     return Request._(
       method,
-      url ?? this.url,
+      url ?? _url,
       token,
       headers: headers ?? this.headers,
       protocol: protocol,
       body: body ?? this.body,
       connectionInfo: connectionInfo,
+      properties: _properties,
+      target: url == null ? _target : null,
+      authority: _authority,
     );
   }
 
   final Object _token;
+
+  /// What [ContextProperty] stores for this request, one slot per property.
+  /// A copy made with [copyWith] shares the list, so a value set on either
+  /// is read from both.
+  final List<Object?> _properties;
 }
 
 /// Internal extension methods for [Request].
@@ -137,6 +174,9 @@ extension RequestInternal on Request {
 
   /// Expose token internally
   Object get token => _token;
+
+  /// The [ContextProperty] slots, indexed by the property.
+  List<Object?> get properties => _properties;
 }
 
 /// Extension methods for [Uri] used in tests and internal utilities.

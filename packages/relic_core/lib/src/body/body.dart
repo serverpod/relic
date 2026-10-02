@@ -1,9 +1,11 @@
 import 'dart:async';
+import 'dart:collection';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
 
+import 'package:async/async.dart';
 import 'package:mime/mime.dart';
 
 import 'types/body_type.dart';
@@ -78,13 +80,14 @@ import 'types/mime_type.dart';
 /// }
 /// ```
 class Body {
-  /// The contents of the message body.
-  ///
-  /// This will be `null` after [read] is called.
+  /// The stream [read] hands out, or null for a body built from [bytes],
+  /// whose stream is made when it is read, and not at all when an
+  /// adapter writes the bytes instead.
   Stream<Uint8List>? _stream;
+  var _isRead = false;
 
   /// Whether [read] has handed the stream over. A body is read once.
-  bool get isRead => _stream == null;
+  bool get isRead => _isRead;
 
   /// The length of the stream returned by [read], or `null` if that can't be
   /// determined efficiently.
@@ -136,12 +139,33 @@ class Body {
       }
       return null;
     }
-    return BodyType(
+    if (parameters.isNotEmpty) {
+      return BodyType(
+        mimeType: mimeType,
+        encoding: encoding,
+        parameters: parameters,
+      );
+    }
+    // A BodyType is immutable and builds its header value once, so the
+    // common pairs are shared. Keyed by identity: the MIME types and
+    // encodings in use are constants. The cap keeps a caller that makes a
+    // MIME type per request from growing it without bound.
+    var byEncoding = _sharedBodyTypes[mimeType];
+    if (byEncoding == null) {
+      if (_sharedBodyTypes.length >= _sharedBodyTypesLimit) {
+        return BodyType(mimeType: mimeType, encoding: encoding);
+      }
+      byEncoding = _sharedBodyTypes[mimeType] = HashMap.identity();
+    }
+    return byEncoding[encoding] ??= BodyType(
       mimeType: mimeType,
       encoding: encoding,
-      parameters: parameters,
     );
   }
+
+  static final _sharedBodyTypes =
+      HashMap<MimeType, Map<Encoding?, BodyType>>.identity();
+  static const _sharedBodyTypesLimit = 256;
 
   /// Creates an empty body.
   ///
@@ -187,7 +211,7 @@ class Body {
     mimeType ??= _tryInferTextMimeTypeFrom(body) ?? MimeType.plainText;
 
     return Body._(
-      Stream.value(encoded),
+      null,
       encoded.length,
       bytes: encoded,
       encoding: encoding,
@@ -318,7 +342,7 @@ class Body {
       mimeType = mimeString == null ? null : MimeType.parse(mimeString);
     }
     return Body._(
-      Stream.value(body),
+      null,
       body.length,
       bytes: body,
       encoding: encoding ?? (mimeType?.isText == true ? utf8 : null),
@@ -338,7 +362,7 @@ class Body {
     final Encoding? encoding,
     final Map<String, String> parameters = const {},
   }) => Body._(
-    Stream.value(bytes),
+    null,
     bytes.length,
     bytes: bytes,
     encoding: encoding,
@@ -354,15 +378,7 @@ class Body {
       read(maxLength: maxLength);
       return bytes;
     }
-    return _collect(read(maxLength: maxLength));
-  }
-
-  static Future<Uint8List> _collect(final Stream<Uint8List> stream) async {
-    final builder = BytesBuilder(copy: false);
-    await for (final chunk in stream) {
-      builder.add(chunk);
-    }
-    return builder.takeBytes();
+    return collectBytes(read(maxLength: maxLength));
   }
 
   /// Returns a [Stream] representing the body.
@@ -411,13 +427,14 @@ class Body {
   /// }
   /// ```
   Stream<Uint8List> read({final int? maxLength}) {
-    final stream = _stream;
-    if (stream == null) {
+    if (_isRead) {
       throw StateError(
         "The 'read' method can only be called once on a "
         'Request/Response object.',
       );
     }
+    _isRead = true;
+    final stream = _stream ?? Stream.value(bytes!);
     _stream = null;
 
     if (maxLength == null) {

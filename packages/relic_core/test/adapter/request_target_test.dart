@@ -105,4 +105,74 @@ void main() {
     });
     expect(request.target, same(request.target));
   });
+
+  group('Given the same target from bytes and from a Uri', () {
+    const targets = [
+      '',
+      '/',
+      '/a',
+      '/a/b',
+      '/a/b/',
+      '/a//b',
+      '/a%2Fb/c%20d',
+      '/caf%C3%A9',
+      '/p?',
+      '/p?q',
+      '/p?x=1&x=2&y=%C3%A9',
+      '/p?a+b=c+d',
+    ];
+    for (final form in targets) {
+      test("when '$form' is read both ways, "
+          'then the segments, the parameters and the origin form agree', () {
+        final q = form.indexOf('?');
+        final bytes = RequestTarget.fromBytes(
+          _bytes(q < 0 ? form : form.substring(0, q)),
+          q < 0 ? null : _bytes(form.substring(q + 1)),
+        );
+        final uri = RequestTarget.fromUri(Uri.parse('http://h$form'));
+        expect(bytes.pathSegments, uri.pathSegments);
+        expect(bytes.queryParametersAll, uri.queryParametersAll);
+        expect(bytes.originForm, uri.originForm);
+      });
+    }
+  });
+
+  test('Given a target from bytes with dot segments, '
+      'when the segments are read, then they are kept for the router', () {
+    final target = RequestTarget.fromBytes(_bytes('/a/./b/../c'));
+    expect(target.pathSegments, ['a', '.', 'b', '..', 'c']);
+    expect(NormalizedPath.fromPathSegments(target.pathSegments).segments, [
+      'a',
+      'c',
+    ]);
+  });
+
+  test('Given a target from bytes with a backslash, when validated, '
+      'then its segments are those of the url built from it', () {
+    final target = RequestTarget.fromBytes(_bytes(r'/files/a\b'))..validate();
+    final url = target.toUri(scheme: 'http', authority: 'h');
+
+    expect(target.pathSegments, url.pathSegments);
+  });
+
+  test('Given a request from a target and an authority, '
+      'when url is read, then it is the absolute URL for them', () {
+    final request = RequestInternal.create(
+      Method.get,
+      null,
+      Object(),
+      target: RequestTarget.fromBytes(_bytes('/a/b'), _bytes('x=1')),
+      authority: 'example.com:8080',
+    );
+    expect(request.target.pathSegments, ['a', 'b']);
+    expect(request.url, Uri.parse('http://example.com:8080/a/b?x=1'));
+  });
+
+  test('Given a request with neither a url nor a target, '
+      'when created, then it throws', () {
+    expect(
+      () => RequestInternal.create(Method.get, null, Object()),
+      throwsArgumentError,
+    );
+  });
 }
