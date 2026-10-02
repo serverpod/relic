@@ -1,3 +1,22 @@
+## Unreleased
+- feat!: Replace the request stream with an exchange-based `Adapter`
+  - BREAKING: An `Adapter` provides `listeners`, `capabilities` and `start(sink)`, and hands over `AdapterExchange` objects with `respond`, `hijack`, `upgradeWebSocket` and `abort`. `Adapter.requests` and `AdapterRequest` are gone, `Adapter.port` is deprecated
+  - BREAKING: `HijackCallback` receives a `StreamChannel<Uint8List>`
+  - BREAKING: `Request.protocolVersion` is `Request.protocol`, an `HttpProtocol`
+  - BREAKING: `RelicWebSocket` implementers provide `done` and `closeGoingAway`. The server sends 1001 to every socket on `close()`
+  - The adapter conformance suite in `test_utils` runs against any adapter
+- feat!: Rebase `Headers` on `HeaderStore`
+  - BREAKING: `Headers` is no longer a `Map`. Read with `headers[name]`, `headers(accessor)`, `get` or `tryGet`, write with `Headers.build`, `transform` and `MutableHeaders.assign`. The `Headers.x[headers]` form and the `Header` extension type are gone
+  - BREAKING: `HeaderAccessor` takes a `HeaderName`
+  - BREAKING: `Request.target` holds the path and query as a `RequestTarget`, which the constructor no longer decodes. An adapter answers 400 to a malformed one
+  - New package `relic_headers`: `HeaderName`, `HeaderStore`, `MutableHeaderStore` and `MapHeaderStore`, re-exported by relic_core
+- feat: `ResponseFraming.of` frames every response in the core and `Body.ofRequest` types every request body. A request without a body is `Body.empty()`, and an HTTP/1.0 client gets no chunked coding
+- feat: `FramedWebSocket` frames RFC 6455 over any `StreamChannel<Uint8List>`. The server uses the adapter's own upgrade when `capabilities.webSocket` is set, frames over `hijack` otherwise, and answers 501 with neither
+- feat: New package `relic_native`, a Relic adapter on a Zig HTTP server
+- feat: `Body.bytes`, `Body.readAll()`, `Body.consume`, `holdHttpDate` and `releaseHttpDate`
+- fix: A response head carries `Connection: close` when the connection closes after it (RFC 9112 9.6)
+- perf: `Request.url`, the routing pipeline, `BodyType` values and `ContextProperty` slots are built once or on first read, and a sync response reaches the adapter without a Future
+
 ## 2.0.0-rc.2
 - feat!: Add HTML form and multipart parsing ([#380](https://github.com/serverpod/relic/pull/380)) - closes [#379](https://github.com/serverpod/relic/issues/379)
   - BREAKING: The minimum Dart SDK is 3.10.0. The Dart 3.9.0 compiler crashes in the FFI transform ([dart-lang/sdk#61321](https://github.com/dart-lang/sdk/issues/61321))
