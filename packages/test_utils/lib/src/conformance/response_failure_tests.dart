@@ -2,20 +2,19 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:http/http.dart' as http;
-import 'package:relic/relic.dart';
+import 'package:relic_core/relic_core.dart';
 import 'package:test/test.dart';
 
-void main() {
+import 'conformance.dart';
+
+void responseFailureTests(AdapterConformance conformance) {
   group('Given a handler whose response cannot be written', () {
     late RelicServer server;
     var handlerCompleted = false;
 
     setUp(() async {
       handlerCompleted = false;
-      server = RelicServer(
-        () => IOAdapter.bind(InternetAddress.loopbackIPv4, port: 0),
-      );
-      await server.mountAndStart((final req) async {
+      server = await conformance.serve((req) async {
         final response = Response.ok(
           body: Body.fromString(
             'x',

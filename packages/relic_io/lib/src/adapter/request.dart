@@ -4,12 +4,15 @@ import 'dart:io' as io;
 import 'package:relic_core/relic_core.dart';
 
 /// Creates a new [Request] from an [io.HttpRequest].
-Request fromHttpRequest(final io.HttpRequest request) {
+Request fromHttpRequest(io.HttpRequest request) {
   return RequestInternal.create(
     Method.parse(request.method),
     request.requestedUri,
     request,
-    protocolVersion: request.protocolVersion,
+    protocol: switch (request.protocolVersion) {
+      '1.0' => HttpProtocol.http10,
+      _ => HttpProtocol.http11,
+    },
     headers: headersFromHttpRequest(request),
     body: bodyFromHttpRequest(request),
     connectionInfo: connectionInfoFromHttpConnectionInfo(
@@ -19,7 +22,7 @@ Request fromHttpRequest(final io.HttpRequest request) {
 }
 
 ConnectionInfo connectionInfoFromHttpConnectionInfo(
-  final io.HttpConnectionInfo? info,
+  io.HttpConnectionInfo? info,
 ) {
   if (info == null) return ConnectionInfo.empty;
   return ConnectionInfo(
@@ -31,14 +34,14 @@ ConnectionInfo connectionInfoFromHttpConnectionInfo(
   );
 }
 
-Headers headersFromHttpRequest(final io.HttpRequest request) {
-  return Headers.build((final mh) {
-    request.headers.forEach((final k, final v) => mh[k] = v);
+Headers headersFromHttpRequest(io.HttpRequest request) {
+  return Headers.build((mh) {
+    request.headers.forEach((k, v) => mh[k] = v);
   });
 }
 
 /// Creates a body from a [HttpRequest].
-Body bodyFromHttpRequest(final io.HttpRequest request) {
+Body bodyFromHttpRequest(io.HttpRequest request) {
   final contentType = request.headers.contentType;
   return Body.fromDataStream(
     request,
@@ -55,7 +58,7 @@ Body bodyFromHttpRequest(final io.HttpRequest request) {
 }
 
 /// Whether relic can write a Content-Type parameter back to a header.
-bool _isWritable(final String name, final String value) {
+bool _isWritable(String name, String value) {
   if (!Token.isValid(name)) return false;
   try {
     ParameterValue(value);

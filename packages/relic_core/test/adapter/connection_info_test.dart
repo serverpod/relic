@@ -1,4 +1,4 @@
-import 'package:relic/relic.dart';
+import 'package:relic_core/relic_core.dart';
 import 'package:test/test.dart';
 import 'package:test_utils/test_utils.dart';
 

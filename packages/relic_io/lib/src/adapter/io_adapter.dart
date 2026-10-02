@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io' as io;
+import 'dart:typed_data';
 
 import 'package:stream_channel/stream_channel.dart';
 
@@ -14,8 +15,9 @@ import 'response.dart';
 /// This adapter bridges Relic with a standard Dart HTTP server, allowing
 /// Relic applications to handle HTTP requests and responses, as well as
 /// WebSocket connections.
-class IOAdapter extends Adapter {
+class IOAdapter implements Adapter {
   final io.HttpServer _server;
+  StreamSubscription<io.HttpRequest>? _subscription;
 
   /// Connections that have been detached from [_server].
   ///
@@ -35,8 +37,8 @@ class IOAdapter extends Adapter {
 
   /// Creates an [IOAdapter] that wraps the provided [io.HttpServer].
   ///
-  /// The adapter will listen for incoming requests from the [_server] and
-  /// expose them through the [requests] stream.
+  /// The adapter listens for requests from [_server] once [start] is
+  /// called.
   IOAdapter(this._server);
 
   /// Binds an HTTP server to the given [address] and [port].
@@ -58,12 +60,12 @@ class IOAdapter extends Adapter {
   ///
   /// Returns a [Future] that completes with the bound [io.HttpServer].
   static Future<IOAdapter> bind(
-    final io.InternetAddress address, {
-    final int port = 0,
-    final io.SecurityContext? context,
-    final int backlog = 0,
-    final bool v6Only = false,
-    final bool shared = false,
+    io.InternetAddress address, {
+    int port = 0,
+    io.SecurityContext? context,
+    int backlog = 0,
+    bool v6Only = false,
+    bool shared = false,
   }) async {
     return IOAdapter(
       await bindHttpServer(
@@ -81,53 +83,30 @@ class IOAdapter extends Adapter {
   io.InternetAddress get address => _server.address;
 
   @override
-  int get port => _server.port;
+  AdapterCapabilities get capabilities =>
+      const AdapterCapabilities(hijack: true, webSocket: true);
 
   @override
-  Stream<AdapterRequest> get requests => _server.map(IOAdapterRequest.new);
+  List<Listener> get listeners => [
+    Listener(Transport.tcp, _server.address.address, _server.port, const {
+      HttpProtocol.http10,
+      HttpProtocol.http11,
+    }),
+  ];
 
   @override
-  Future<void> respond(
-    covariant final IOAdapterRequest request,
-    final Response response,
-  ) async {
-    final httpResponse = request._httpRequest.response;
-    await response.writeHttpResponse(httpResponse);
+  void start(ExchangeSink sink) {
+    if (_subscription != null) throw StateError('start was already called');
+    _subscription = _server.listen((request) {
+      final pending = sink(IOExchange._(this, request));
+      // The sink never fails by contract. An error here is a bug in the
+      // core, and the zone around `start` reports it.
+      if (pending is Future<void>) unawaited(pending);
+    });
   }
 
   @override
-  Future<void> hijack(
-    covariant final IOAdapterRequest request,
-    final HijackCallback callback,
-  ) async {
-    final socket = await request._httpRequest.response.detachSocket(
-      writeHeaders: false,
-    );
-    _hijackedSockets.add(socket);
-    unawaited(
-      socket.done
-          .catchError((final _) {})
-          .whenComplete(() => _hijackedSockets.remove(socket)),
-    );
-    callback(StreamChannel(socket, socket));
-  }
-
-  @override
-  Future<void> connect(
-    covariant final IOAdapterRequest request,
-    final WebSocketCallback callback,
-  ) async {
-    final webSocket = await IORelicWebSocket.fromHttpRequest(
-      request._httpRequest,
-    );
-    _webSockets
-      ..removeWhere((final ws) => ws.isClosed)
-      ..add(webSocket);
-    callback(webSocket);
-  }
-
-  @override
-  Future<void> close({final bool force = false}) async {
+  Future<void> close({bool force = false}) async {
     if (force) {
       await _server.close(force: true);
       _destroyDetached();
@@ -148,7 +127,7 @@ class IOAdapter extends Adapter {
     await Future.wait([
       for (final ws in _webSockets.toList()) ws.closeGoingAway(),
       for (final socket in _hijackedSockets.toList()) socket.close(),
-    ], eagerError: false).catchError((final _) => const <Object?>[]);
+    ], eagerError: false).catchError((_) => const <Object?>[]);
   }
 
   /// Drops whatever is left without waiting for the peer.
@@ -173,19 +152,133 @@ class IOAdapter extends Adapter {
     final info = _server.connectionsInfo();
     final detached =
         _hijackedSockets.length +
-        _webSockets.where((final ws) => !ws.isClosed).length;
+        _webSockets.where((ws) => !ws.isClosed).length;
     return (
       active: info.active + detached,
       closing: info.closing,
       idle: info.idle,
     );
   }
+
+  void _trackHijacked(io.Socket socket) {
+    _hijackedSockets.add(socket);
+    unawaited(
+      socket.done
+          .catchError((_) {})
+          .whenComplete(() => _hijackedSockets.remove(socket)),
+    );
+  }
+
+  void _trackWebSocket(IORelicWebSocket webSocket) {
+    _webSockets
+      ..removeWhere((ws) => ws.isClosed)
+      ..add(webSocket);
+  }
 }
 
-class IOAdapterRequest extends AdapterRequest {
-  final io.HttpRequest _httpRequest;
-  IOAdapterRequest(this._httpRequest);
+/// One `dart:io` request and its response.
+final class IOExchange implements AdapterExchange {
+  final IOAdapter _adapter;
+  final io.HttpRequest _request;
+  final _done = Completer<ExchangeEnd>();
+  final _cancelled = Completer<void>();
+
+  IOExchange._(this._adapter, this._request) {
+    // dart:io reports a peer that went away as an error on `done`. That is
+    // its only signal, and it fires only once something was written, so
+    // `cancelled` is best effort on this adapter.
+    _request.response.done.then(
+      (_) {},
+      onError: (Object _) {
+        if (!_cancelled.isCompleted) _cancelled.complete();
+        _finish(ExchangeEnd.cancelledByPeer);
+      },
+    );
+  }
 
   @override
-  Request toRequest() => fromHttpRequest(_httpRequest);
+  HttpProtocol get protocol => switch (_request.protocolVersion) {
+    '1.0' => HttpProtocol.http10,
+    _ => HttpProtocol.http11,
+  };
+
+  @override
+  Request toRequest() => fromHttpRequest(_request);
+
+  @override
+  Future<void> respond(Response response) async {
+    try {
+      await response.writeHttpResponse(_request.response);
+      _finish(ExchangeEnd.completed);
+    } catch (_) {
+      _finish(ExchangeEnd.aborted);
+      rethrow;
+    }
+  }
+
+  @override
+  Future<StreamChannel<Uint8List>> hijack() async {
+    final socket = await _request.response.detachSocket(writeHeaders: false);
+    _adapter._trackHijacked(socket);
+    _finish(ExchangeEnd.hijacked);
+    return StreamChannel<Uint8List>(socket, _SocketSink(socket));
+  }
+
+  @override
+  Future<RelicWebSocket> upgradeWebSocket() async {
+    final webSocket = await IORelicWebSocket.fromHttpRequest(_request);
+    _adapter._trackWebSocket(webSocket);
+    _finish(ExchangeEnd.upgraded);
+    return webSocket;
+  }
+
+  @override
+  void abort() {
+    if (_done.isCompleted) return;
+    _finish(ExchangeEnd.aborted);
+    unawaited(
+      _request.response
+          .detachSocket(writeHeaders: false)
+          .then((socket) => socket.destroy())
+          .catchError((_) => _request.response.close())
+          .catchError((_) {}),
+    );
+  }
+
+  @override
+  Future<void> get cancelled => _cancelled.future;
+
+  @override
+  Future<ExchangeEnd> get done => _done.future;
+
+  void _finish(ExchangeEnd end) {
+    if (!_done.isCompleted) _done.complete(end);
+  }
+}
+
+/// The socket's sink, narrowed to [Uint8List].
+///
+/// `StreamChannel.cast` would pipe a controller into the socket instead,
+/// which binds the socket sink to a stream, and a later `socket.close()`
+/// from shutdown then throws.
+final class _SocketSink implements StreamSink<Uint8List> {
+  final io.Socket _socket;
+
+  _SocketSink(this._socket);
+
+  @override
+  void add(Uint8List data) => _socket.add(data);
+
+  @override
+  void addError(Object error, [StackTrace? stackTrace]) =>
+      _socket.addError(error, stackTrace);
+
+  @override
+  Future<void> addStream(Stream<Uint8List> stream) => _socket.addStream(stream);
+
+  @override
+  Future<void> close() => _socket.close();
+
+  @override
+  Future<void> get done => _socket.done;
 }

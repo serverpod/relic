@@ -18,25 +18,25 @@ Request _request({final Headers? headers, final Body? body}) {
 
 void main() {
   group('Given a request constructor', () {
-    test('when no protocolVersion is provided then it defaults to "1.1"', () {
+    test('when no protocol is provided then it defaults to HTTP/1.1', () {
       final request = RequestInternal.create(
         Method.get,
         localhostUri,
         Object(),
       );
-      expect(request.protocolVersion, '1.1');
+      expect(request.protocol, HttpProtocol.http11);
     });
 
     test(
-      'when a non-default protocolVersion is provided then it is set correctly',
+      'when a non-default protocol is provided then it is set correctly',
       () {
         final request = RequestInternal.create(
           Method.get,
           localhostUri,
           Object(),
-          protocolVersion: '1.0',
+          protocol: HttpProtocol.http10,
         );
-        expect(request.protocolVersion, '1.0');
+        expect(request.protocol, HttpProtocol.http10);
       },
     );
 
@@ -141,7 +141,7 @@ void main() {
           Method.get,
           uri,
           Object(),
-          protocolVersion: '2.0',
+          protocol: HttpProtocol.http10,
           headers: Headers.build(
             (final mh) => mh['header1'] = ['header value 1'],
           ),
@@ -152,7 +152,7 @@ void main() {
 
         expect(copy.method, request.method);
         expect(copy.url, request.url);
-        expect(copy.protocolVersion, request.protocolVersion);
+        expect(copy.protocol, request.protocol);
         expect(copy.headers, same(request.headers));
         expect(copy.url.pathAndQuery, request.url.pathAndQuery);
         expect(copy.readAsString(), completion('hello, world'));
@@ -206,7 +206,7 @@ void main() {
 
         expect(copy.url, equals(newUri));
         expect(copy.method, equals(request.method));
-        expect(copy.protocolVersion, equals(request.protocolVersion));
+        expect(copy.protocol, equals(request.protocol));
       },
     );
 

@@ -52,8 +52,8 @@ class Request extends Message {
   /// The HTTP request method, such as "GET" or "POST".
   final Method method;
 
-  /// The HTTP protocol version used in the request, either "1.0" or "1.1".
-  final String protocolVersion;
+  /// The HTTP version the request arrived with.
+  final HttpProtocol protocol;
 
   /// The original [Uri] for the request.
   final Uri url;
@@ -71,10 +71,10 @@ class Request extends Message {
     this.url,
     this._token, {
     final Headers? headers,
-    final String? protocolVersion,
+    final HttpProtocol? protocol,
     final Body? body,
     final ConnectionInfo? connectionInfo,
-  }) : protocolVersion = protocolVersion ?? '1.1',
+  }) : protocol = protocol ?? HttpProtocol.http11,
        connectionInfo = connectionInfo ?? ConnectionInfo.empty,
        super(body: body ?? Body.empty(), headers: headers ?? Headers.empty()) {
     try {
@@ -106,7 +106,7 @@ class Request extends Message {
       url ?? this.url,
       token,
       headers: headers ?? this.headers,
-      protocolVersion: protocolVersion,
+      protocol: protocol,
       body: body ?? this.body,
       connectionInfo: connectionInfo,
     );

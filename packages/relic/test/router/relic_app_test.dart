@@ -22,7 +22,7 @@ void main() {
     test('Given a RelicApp with a route, '
         'when calling lookupPath, '
         'then it delegates to the underlying router', () {
-      Response handler(final Request req) => Response.ok();
+      Response handler(Request req) => Response.ok();
       final app = RelicApp()..get('/a/b', handler);
 
       final hit = app.lookupPath(Method.get, NormalizedPath('/a/b'));
@@ -42,7 +42,7 @@ void main() {
     test('Given a RelicApp with a route, '
         'when calling lookupUri, '
         'then it delegates to the underlying router', () {
-      Response handler(final Request req) => Response.ok();
+      Response handler(Request req) => Response.ok();
       final app = RelicApp()..get('/a/b', handler);
 
       // The query and fragment are not part of the route path.
@@ -70,7 +70,7 @@ void main() {
     test('Given a RelicApp, '
         'when calling run with adapter factory, '
         'then it creates a RelicServer and mounts the handler', () async {
-      final app = RelicApp()..any('/', (final req) => Response.ok());
+      final app = RelicApp()..any('/', (req) => Response.ok());
 
       final server = await app.run(() => _FakeAdapter());
 
@@ -82,7 +82,7 @@ void main() {
     test('Given a RelicApp, '
         'when calling serve, '
         'then it creates a RelicServer and mounts the handler', () async {
-      final app = RelicApp()..any('/', (final req) => Response.ok());
+      final app = RelicApp()..any('/', (req) => Response.ok());
 
       final server = await app.serve(port: 0);
 
@@ -94,7 +94,7 @@ void main() {
     test('Given a RelicApp, '
         'when calling serve twice, '
         'then it fails the second time', () async {
-      final app = RelicApp()..any('/', (final req) => Response.ok());
+      final app = RelicApp()..any('/', (req) => Response.ok());
 
       await app.serve(port: 0);
       await expectLater(app.serve(port: 0), throwsStateError);
@@ -105,7 +105,7 @@ void main() {
     test('Given a RelicApp, '
         'when calling serve, close, serve, '
         'then it succeeds', () async {
-      final app = RelicApp()..any('/', (final req) => Response.ok());
+      final app = RelicApp()..any('/', (req) => Response.ok());
 
       await app.serve(port: 0);
       await app.close();
@@ -121,12 +121,9 @@ void main() {
         final app = RelicApp(useHostWhenRouting: true)
           ..get(
             'www.example.org/foo',
-            (final _) => Response.ok(body: Body.fromString('host-specific')),
+            (_) => Response.ok(body: Body.fromString('host-specific')),
           )
-          ..get(
-            '*/bar',
-            (final _) => Response.ok(body: Body.fromString('any-host')),
-          );
+          ..get('*/bar', (_) => Response.ok(body: Body.fromString('any-host')));
 
         final server = await app.serve(port: 0);
         final client = HttpClient();
@@ -155,12 +152,9 @@ void main() {
         final app = RelicApp(useHostWhenRouting: true)
           ..get(
             'www.example.org/foo',
-            (final _) => Response.ok(body: Body.fromString('host-specific')),
+            (_) => Response.ok(body: Body.fromString('host-specific')),
           )
-          ..get(
-            '*/bar',
-            (final _) => Response.ok(body: Body.fromString('any-host')),
-          );
+          ..get('*/bar', (_) => Response.ok(body: Body.fromString('any-host')));
 
         final server = await app.serve(port: 0);
         final client = HttpClient();
@@ -187,7 +181,7 @@ void main() {
           'when a request does not match any host route, '
           'then 404 is returned', () async {
         final app = RelicApp(useHostWhenRouting: true)
-          ..get('www.example.org/foo', (final _) => Response.ok());
+          ..get('www.example.org/foo', (_) => Response.ok());
 
         final server = await app.serve(port: 0);
         final client = HttpClient();
@@ -210,10 +204,7 @@ void main() {
           'when a request is made, '
           'then routing ignores the host header', () async {
         final app = RelicApp()
-          ..get(
-            '/foo',
-            (final _) => Response.ok(body: Body.fromString('no-vhost')),
-          );
+          ..get('/foo', (_) => Response.ok(body: Body.fromString('no-vhost')));
 
         final server = await app.serve(port: 0);
         final client = HttpClient();
@@ -323,7 +314,7 @@ void main() {
 
       final vmService = await vmi.vmServiceConnectUri(wsUri.toString());
       final isolateId = Service.getIsolateId(Isolate.current)!;
-      final app = RelicApp()..any('/', (final req) => Response.ok());
+      final app = RelicApp()..any('/', (req) => Response.ok());
 
       await app.serve(port: 0);
 
@@ -356,7 +347,7 @@ void main() {
         return;
       }
 
-      final app = RelicApp()..any('/', (final req) => Response.ok());
+      final app = RelicApp()..any('/', (req) => Response.ok());
 
       expect(app.developerTools.isDevMode, isFalse);
       await app.serve(port: 0);
@@ -373,17 +364,24 @@ class _Injectable implements RouterInjectable {
   _Injectable(this._action);
 
   @override
-  void injectIn(final RelicRouter owner) => _action();
+  void injectIn(RelicRouter owner) => _action();
 }
 
 // Minimal fake adapter for testing
 class _FakeAdapter extends Fake implements Adapter {
-  @override
-  Stream<AdapterRequest> get requests => const Stream.empty();
+  final int port = Random().nextInt(65536);
 
   @override
-  late int port = Random().nextInt(65536);
+  List<Listener> get listeners => [
+    Listener(Transport.tcp, '127.0.0.1', port, const {HttpProtocol.http11}),
+  ];
 
   @override
-  Future<void> close({final bool force = false}) async {}
+  AdapterCapabilities get capabilities => const AdapterCapabilities();
+
+  @override
+  void start(ExchangeSink sink) {}
+
+  @override
+  Future<void> close({bool force = false}) async {}
 }
