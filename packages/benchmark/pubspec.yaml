@@ -11,8 +11,16 @@ dependencies:
   benchmark_harness: ^2.3.1
   cli_tools: ">=0.11.0 <0.14.0"
   config: ">=0.8.4 <0.10.0"
+  ffi: ^2.1.0
   git: ^2.2.1
   path: ^1.9.0
   relic: ^2.0.0-rc.2
+  relic_native: ^2.0.0-rc.2
   routingkit: ^5.1.2
+  shelf: ^1.4.2
+  shelf_router: ^1.1.4
+  shelf_web_socket: ^3.0.0
   spanner: ^1.0.5
+  stream_channel: ^2.1.1
+  vm_service: ^15.0.0
+  web_socket: ^1.0.1
