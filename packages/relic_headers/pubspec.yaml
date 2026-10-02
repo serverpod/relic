@@ -1,0 +1,21 @@
+name: relic_headers
+description: HTTP header names and stores shared by Relic adapters and other packages.
+version: 2.0.0-rc.2
+repository: https://github.com/serverpod/relic
+homepage: https://docs.dartrelic.dev/
+topics:
+  - server
+  - web
+  - http
+
+environment:
+  sdk: ^3.10.0
+
+resolution: workspace
+
+dev_dependencies:
+  dart_style: ^3.0.0
+  lints: ^6.0.0
+  pub_semver: ^2.2.0
+  serverpod_lints: ">=3.0.0 <5.0.0"
+  test: ^1.25.13

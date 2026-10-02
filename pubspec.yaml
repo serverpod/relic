@@ -7,6 +7,7 @@ environment:
 workspace:
   - packages/relic
   - packages/relic_core
+  - packages/relic_headers
   - packages/relic_io
   # Internal support packages (not published)
   - packages/benchmark
@@ -37,6 +38,7 @@ melos:
           dart pub global run coverage:test_with_coverage --branch-coverage
           --scope-output=relic
           --scope-output=relic_core
+          --scope-output=relic_headers
           --scope-output=relic_io
         concurrency: 1 # for saner output
       packageFilters:
