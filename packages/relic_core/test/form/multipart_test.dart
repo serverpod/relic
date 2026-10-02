@@ -961,7 +961,7 @@ void main() {
     final request = RequestInternal.create(
       Method.post,
       Uri.parse('http://localhost/form'),
-      Object(),
+      null,
       body: Body.fromDataStream(
         (() async* {
           yield Uint8List.fromList(
@@ -996,7 +996,7 @@ void main() {
     final request = RequestInternal.create(
       Method.post,
       Uri.parse('http://localhost/form'),
-      Object(),
+      null,
       body: Body.fromDataStream(
         (() async* {
           yield Uint8List.fromList(
@@ -1110,7 +1110,7 @@ Request _request({
   return RequestInternal.create(
     Method.post,
     Uri.parse('http://localhost/form'),
-    Object(),
+    null,
     body: _bodyFromContentType(
       bodyBytes ?? Uint8List.fromList(utf8.encode(body ?? '')),
       contentType,

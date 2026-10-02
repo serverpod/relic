@@ -11,6 +11,11 @@ abstract interface class RelicWebSocket implements WebSocket {
   /// If `null`, no ping messages are sent.
   Duration? pingInterval;
 
+  /// Completes once the connection is closed, whoever closed it.
+  ///
+  /// Never completes with an error.
+  Future<void> get done;
+
   /// Whether the web-socket is closed.
   ///
   /// May return false positives (`true`), if the peer is disconnected but the
@@ -23,7 +28,7 @@ abstract interface class RelicWebSocket implements WebSocket {
   ///
   /// Data sent through [sendText] will be silently discarded if the peer is
   /// disconnected but the disconnect has not yet been detected.
-  bool trySendText(final String s);
+  bool trySendText(String s);
 
   /// Sends binary data to the peer, unless connection is already
   /// closed (either through [close] or by the peer). Returns `false` if
@@ -31,7 +36,7 @@ abstract interface class RelicWebSocket implements WebSocket {
   ///
   /// Data sent through [sendBytes] will be silently discarded if the peer is
   /// disconnected but the disconnect has not yet been detected.
-  bool trySendBytes(final Uint8List b);
+  bool trySendBytes(Uint8List b);
 
   /// Try to close the WebSocket connection and the [events] `Stream`.
   ///
@@ -45,7 +50,14 @@ abstract interface class RelicWebSocket implements WebSocket {
   ///
   /// Throws an [ArgumentError] if [reason] is longer than 123 bytes when
   /// encoded as UTF-8
-  Future<bool> tryClose([final int? code, final String? reason]);
+  Future<bool> tryClose([int? code, String? reason]);
+
+  /// Tells the peer the server is going away (RFC 6455 1001) and waits,
+  /// within a bound, for the connection to end.
+  ///
+  /// For the server on shutdown. Does nothing on a closed socket. Never
+  /// throws.
+  Future<void> closeGoingAway();
 }
 
 /// A callback function invoked when a [socket] connection is established.

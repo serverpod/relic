@@ -40,8 +40,10 @@ final class FramedWebSocket implements RelicWebSocket {
   Duration? _pingInterval;
   var _pongPending = false;
 
-  FramedWebSocket(this._channel, {int maxMessageSize = defaultMaxMessageSize})
-    : _assembler = WebSocketMessageAssembler(maxMessageSize: maxMessageSize) {
+  FramedWebSocket(
+    this._channel, {
+    final int maxMessageSize = defaultMaxMessageSize,
+  }) : _assembler = WebSocketMessageAssembler(maxMessageSize: maxMessageSize) {
     _frames = _channel.stream
         .transform(WebSocketFrameDecoder(maxFrameSize: maxMessageSize))
         .listen(
@@ -52,7 +54,7 @@ final class FramedWebSocket implements RelicWebSocket {
         );
   }
 
-  /// Completes once the connection is closed, whoever closed it.
+  @override
   Future<void> get done => _done.future;
 
   @override
@@ -68,7 +70,7 @@ final class FramedWebSocket implements RelicWebSocket {
   Duration? get pingInterval => _pingInterval;
 
   @override
-  set pingInterval(Duration? value) {
+  set pingInterval(final Duration? value) {
     _pingInterval = value;
     _pingTimer?.cancel();
     _pingTimer = null;
@@ -89,36 +91,36 @@ final class FramedWebSocket implements RelicWebSocket {
   }
 
   @override
-  void sendBytes(Uint8List b) {
+  void sendBytes(final Uint8List b) {
     if (!trySendBytes(b)) throw WebSocketConnectionClosed();
   }
 
   @override
-  void sendText(String s) {
+  void sendText(final String s) {
     if (!trySendText(s)) throw WebSocketConnectionClosed();
   }
 
   @override
-  bool trySendBytes(Uint8List b) {
+  bool trySendBytes(final Uint8List b) {
     if (isClosed) return false;
     _send(WebSocketOpcode.binary, b);
     return true;
   }
 
   @override
-  bool trySendText(String s) {
+  bool trySendText(final String s) {
     if (isClosed) return false;
     _send(WebSocketOpcode.text, utf8.encode(s));
     return true;
   }
 
   @override
-  Future<void> close([int? code, String? reason]) async {
+  Future<void> close([final int? code, final String? reason]) async {
     if (!await tryClose(code, reason)) throw WebSocketConnectionClosed();
   }
 
   @override
-  Future<bool> tryClose([int? code, String? reason]) async {
+  Future<bool> tryClose([final int? code, final String? reason]) async {
     if (isClosed) return false;
     checkCloseCode(code);
     checkCloseReason(reason);
@@ -127,9 +129,9 @@ final class FramedWebSocket implements RelicWebSocket {
     return true;
   }
 
-  /// Tells the peer the server is going away (RFC 6455 1001) and waits for
-  /// its close frame, [closeTimeout] at most. Nothing happens on a socket
-  /// that is already closed, and nothing here throws.
+  /// Waits for the peer's close frame, [closeTimeout] at most, then for
+  /// the channel to flush, as long again.
+  @override
   Future<void> closeGoingAway() {
     if (!isClosed) {
       _closeEvents();
@@ -138,7 +140,7 @@ final class FramedWebSocket implements RelicWebSocket {
     return _done.future;
   }
 
-  void _onFrame(WebSocketFrame raw) {
+  void _onFrame(final WebSocketFrame raw) {
     final WebSocketInbound? inbound;
     try {
       inbound = _assembler.add(raw);
@@ -170,7 +172,7 @@ final class FramedWebSocket implements RelicWebSocket {
     }
   }
 
-  void _onCloseFrame(Uint8List payload) {
+  void _onCloseFrame(final Uint8List payload) {
     int? code;
     var reason = '';
     if (payload.length == 1) {
@@ -206,12 +208,12 @@ final class FramedWebSocket implements RelicWebSocket {
 
   /// A frame the peer should not have sent. The connection closes with
   /// the code the violation calls for, and the handler hears why.
-  void _fail(WebSocketProtocolException e) {
+  void _fail(final WebSocketProtocolException e) {
     if (!_events.isClosed) _events.addError(WebSocketException(e.message));
     _goAway(e.code, e.message);
   }
 
-  void _onError(Object error, StackTrace stackTrace) {
+  void _onError(final Object error, final StackTrace stackTrace) {
     if (error is WebSocketProtocolException) {
       _fail(error);
       // The decoder ended the frame stream, so the peer's answer to the
@@ -234,20 +236,20 @@ final class FramedWebSocket implements RelicWebSocket {
   }
 
   /// Closes from our side with [code], and the handler sees that close.
-  void _goAway(int code, String reason) {
+  void _goAway(final int code, final String reason) {
     _closeEvents(CloseReceived(code, reason));
     _sendClose(code, reason);
   }
 
   /// Ends the handler's events, after [close] when it should hear how the
   /// connection closed. Nothing happens on events that already ended.
-  void _closeEvents([CloseReceived? close]) {
+  void _closeEvents([final CloseReceived? close]) {
     if (_events.isClosed) return;
     if (close != null) _events.add(close);
     unawaited(_events.close());
   }
 
-  void _sendClose(int? code, String reason) {
+  void _sendClose(final int? code, final String reason) {
     if (_closeSent) return;
     _closeSent = true;
     _pingTimer?.cancel();
@@ -256,7 +258,7 @@ final class FramedWebSocket implements RelicWebSocket {
     _closeTimer = Timer(closeTimeout, _closeSink);
   }
 
-  void _send(WebSocketOpcode opcode, List<int> payload) {
+  void _send(final WebSocketOpcode opcode, final List<int> payload) {
     if (_sinkClosed) return;
     try {
       _channel.sink.add(encodeWebSocketFrame(opcode, payload));

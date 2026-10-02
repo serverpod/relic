@@ -77,4 +77,22 @@ void main() {
       throwsA(isA<MaxBodySizeExceeded>()),
     );
   });
+
+  test('Given an unread body, when it is consumed, '
+      'then it counts as read and a read fails.', () {
+    final body = Body.fromData(Uint8List.fromList([1, 2, 3]));
+
+    body.consume();
+
+    expect(body.isRead, isTrue);
+    expect(body.read, throwsStateError);
+  });
+
+  test('Given a body that was read, when it is consumed, '
+      'then it fails with a StateError.', () {
+    final body = Body.fromData(Uint8List.fromList([1, 2, 3]));
+    body.read();
+
+    expect(body.consume, throwsStateError);
+  });
 }

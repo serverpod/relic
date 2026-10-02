@@ -14,5 +14,11 @@ void main() {
           shared: shared,
         ),
     capabilities: const AdapterCapabilities(hijack: true, webSocket: true),
+    // dart:io reports a gone peer only as an error after a write, swallows
+    // a lost connection under addStream, and its parser has eaten what
+    // followed the body before the socket is detached.
+    seesPeerGone: false,
+    failsRespondMidStream: false,
+    keepsPipelinedBytes: false,
   );
 }

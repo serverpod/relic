@@ -5,10 +5,10 @@ import 'package:crypto/crypto.dart';
 import 'package:relic_headers/relic_headers.dart';
 
 import '../context/result.dart';
-import '../headers/codecs/common_types_codecs.dart';
 import '../headers/exception/header_exception.dart';
 import '../headers/standard_headers_extensions.dart';
 import '../router/method.dart';
+import '../util/http_date.dart';
 
 /// The string RFC 6455 1.3 derives the accept key with.
 const _guid = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11';
@@ -51,14 +51,11 @@ String? webSocketAcceptKey(final Request request) {
 }
 
 /// The 101 response that completes the handshake, as bytes for the wire.
-Uint8List webSocketHandshakeResponse(final String acceptKey) =>
-    Uint8List.fromList(
-      utf8.encode(
-        'HTTP/1.1 101 Switching Protocols\r\n'
-        'Upgrade: websocket\r\n'
-        'Connection: Upgrade\r\n'
-        'Sec-WebSocket-Accept: $acceptKey\r\n'
-        'Date: ${encodeDate(DateTime.now().toUtc()).first}\r\n'
-        '\r\n',
-      ),
-    );
+Uint8List webSocketHandshakeResponse(final String acceptKey) => utf8.encode(
+  'HTTP/1.1 101 Switching Protocols\r\n'
+  'Upgrade: websocket\r\n'
+  'Connection: Upgrade\r\n'
+  'Sec-WebSocket-Accept: $acceptKey\r\n'
+  'Date: ${httpDate()}\r\n'
+  '\r\n',
+);

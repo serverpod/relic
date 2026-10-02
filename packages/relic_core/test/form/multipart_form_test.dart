@@ -248,7 +248,7 @@ void main() {
         final request = RequestInternal.create(
           Method.post,
           Uri.parse('http://localhost/form'),
-          Object(),
+          null,
           body: Body.fromString('plain', mimeType: MimeType.plainText),
         );
 
@@ -265,7 +265,7 @@ void main() {
         final request = RequestInternal.create(
           Method.post,
           Uri.parse('http://localhost/form'),
-          Object(),
+          null,
           body: Body.fromString('plain', mimeType: MimeType.plainText),
         );
 
@@ -688,7 +688,7 @@ void main() {
     final request = RequestInternal.create(
       Method.post,
       Uri.parse('http://localhost/form'),
-      Object(),
+      null,
       body: Body.fromString('name=Gustavo', mimeType: MimeType.urlEncoded),
     );
 
@@ -760,7 +760,7 @@ Request _urlEncodedRequest(final String body) {
   return RequestInternal.create(
     Method.post,
     Uri.parse('http://localhost/form'),
-    Object(),
+    null,
     body: Body.fromString(body, mimeType: MimeType.urlEncoded),
   );
 }
@@ -782,7 +782,7 @@ Request _multipartRequestBytes({
   return RequestInternal.create(
     Method.post,
     Uri.parse('http://localhost/form'),
-    Object(),
+    null,
     body: Body.fromData(
       bodyBytes,
       mimeType: MimeType.multipartFormData,
@@ -800,7 +800,7 @@ Request _streamedMultipartRequest({
   return RequestInternal.create(
     Method.post,
     Uri.parse('http://localhost/form'),
-    Object(),
+    null,
     body: Body.fromDataStream(
       Stream.fromIterable([
         for (var i = 0; i < bytes.length; i += 10)

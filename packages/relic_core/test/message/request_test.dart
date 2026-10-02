@@ -10,7 +10,7 @@ Request _request({final Headers? headers, final Body? body}) {
   return RequestInternal.create(
     Method.get,
     localhostUri,
-    Object(),
+    null,
     headers: headers,
     body: body,
   );
@@ -19,11 +19,7 @@ Request _request({final Headers? headers, final Body? body}) {
 void main() {
   group('Given a request constructor', () {
     test('when no protocol is provided then it defaults to HTTP/1.1', () {
-      final request = RequestInternal.create(
-        Method.get,
-        localhostUri,
-        Object(),
-      );
+      final request = RequestInternal.create(Method.get, localhostUri, null);
       expect(request.protocol, HttpProtocol.http11);
     });
 
@@ -33,7 +29,7 @@ void main() {
         final request = RequestInternal.create(
           Method.get,
           localhostUri,
-          Object(),
+          null,
           protocol: HttpProtocol.http10,
         );
         expect(request.protocol, HttpProtocol.http10);
@@ -47,7 +43,7 @@ void main() {
           final request = RequestInternal.create(
             Method.get,
             Uri.parse('http://localhost/foo/bar?q=1'),
-            Object(),
+            null,
           );
           expect(request.url.pathAndQuery, equals(Uri.parse('/foo/bar?q=1')));
         },
@@ -57,7 +53,7 @@ void main() {
         final request = RequestInternal.create(
           Method.get,
           Uri.parse('http://localhost/foo/bar:42'),
-          Object(),
+          null,
         );
         expect(request.url.pathAndQuery, equals(Uri.parse('/foo/bar:42')));
       });
@@ -68,7 +64,7 @@ void main() {
           final request = RequestInternal.create(
             Method.get,
             Uri.parse('http://localhost/foo:bar/42'),
-            Object(),
+            null,
           );
           expect(request.url.pathAndQuery, equals(Uri.parse('/foo:bar/42')));
         },
@@ -78,7 +74,7 @@ void main() {
         final request = RequestInternal.create(
           Method.get,
           Uri.parse('http://localhost/foo/bar%2f42'),
-          Object(),
+          null,
         );
         expect(request.url.pathAndQuery, equals(Uri.parse('/foo/bar%2f42')));
       });
@@ -88,11 +84,7 @@ void main() {
       group('Given a url', () {
         test('when it is not absolute then it throws an ArgumentError', () {
           expect(
-            () => RequestInternal.create(
-              Method.get,
-              Uri.parse('/path'),
-              Object(),
-            ),
+            () => RequestInternal.create(Method.get, Uri.parse('/path'), null),
             throwsArgumentError,
           );
         });
@@ -102,7 +94,7 @@ void main() {
             RequestInternal.create(
               Method.get,
               Uri.parse('http://localhost/#fragment'),
-              Object(),
+              null,
             );
           }, throwsArgumentError);
         });
@@ -140,7 +132,7 @@ void main() {
         final request = RequestInternal.create(
           Method.get,
           uri,
-          Object(),
+          null,
           protocol: HttpProtocol.http10,
           headers: Headers.build(
             (final mh) => mh['header1'] = ['header value 1'],
@@ -198,7 +190,7 @@ void main() {
         final request = RequestInternal.create(
           Method.get,
           Uri.parse('https://test.example.com/original'),
-          Object(),
+          null,
         );
 
         final newUri = Uri.parse('https://test.example.com/new-path?q=1');
@@ -214,7 +206,7 @@ void main() {
       final request = RequestInternal.create(
         Method.post,
         Uri.parse('https://test.example.com/original'),
-        Object(),
+        null,
       );
 
       final newUri = Uri.parse('https://test.example.com/updated');

@@ -172,8 +172,8 @@ void serveTests(AdapterConformance conformance) {
     await scheduleServer((req) {
       expect(req.headers['custom-header'], ['client value']);
 
-      // A multi-value header arrives as one field and is split by the
-      // typed accessor, whatever the adapter did with it on the way in.
+      // A multi-value header arrives as one field. The typed accessor
+      // splits it, whatever the adapter did with it on the way in.
       expect(req.headers['multi-header'], ['foo,bar,baz']);
 
       expect(req.headers.get(multi), ['foo', 'bar', 'baz']);
@@ -197,7 +197,8 @@ void serveTests(AdapterConformance conformance) {
       expect(req.mimeType, isNull);
       expect(req.encoding, isNull);
       expect(req.method, Method.post);
-      expect(req.body.contentLength, isNull);
+      expect(req.body.contentLength, 0);
+      expect(req.isEmpty, isTrue);
 
       final body = await req.readAsString();
       expect(body, '');
@@ -346,33 +347,75 @@ void serveTests(AdapterConformance conformance) {
       'then the client receives a 400', () async {
     await scheduleServer(syncHandler);
 
-    final socket = await Socket.connect('localhost', serverPort());
+    final reply = await rawExchange(
+      serverPort(),
+      'GET / HTTP/1.1\r\nHost: ^^super bad !@#host\r\n'
+      'Connection: close\r\n\r\n',
+    );
 
-    try {
-      socket.write('GET / HTTP/1.1\r\n');
-      socket.write('Host: ^^super bad !@#host\r\n');
-      socket.write('\r\n');
-    } finally {
-      await socket.close();
-    }
+    expect(reply, contains('400 Bad Request'));
+  });
 
-    expect(await utf8.decodeStream(socket), contains('400 Bad Request'));
+  test('Given a request with a method relic has no Method for, '
+      'when the request is made, then the client receives a 400', () async {
+    await scheduleServer(syncHandler);
+
+    final reply = await rawExchange(
+      serverPort(),
+      'PROPFIND / HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n',
+    );
+
+    expect(reply, contains('400 Bad Request'));
   });
 
   test('Given a request target with a fragment, when the request is made, '
       'then the client receives a 400', () async {
     await scheduleServer(syncHandler);
-    final socket = await Socket.connect('localhost', serverPort());
 
-    try {
-      socket.write('GET /#/ HTTP/1.1\r\n');
-      socket.write('Host: localhost\r\n');
-      socket.write('\r\n');
-    } finally {
-      await socket.close();
-    }
+    final reply = await rawExchange(
+      serverPort(),
+      'GET /#/ HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n',
+    );
 
-    expect(await utf8.decodeStream(socket), contains('400 Bad Request'));
+    expect(reply, contains('400 Bad Request'));
+  });
+
+  test(
+    'Given an absolute-form request target, when the request is made, '
+    'then the handler sees the path and the authority of the target',
+    () async {
+      await scheduleServer(
+        (req) => Response.ok(body: Body.fromString('${req.url}')),
+      );
+
+      // RFC 9112 3.2.2: a server accepts the absolute form, and its
+      // authority wins over the Host header.
+      final reply = await rawExchange(
+        serverPort(),
+        'GET http://proxied.example:8080/x?y=1 HTTP/1.1\r\n'
+        'Host: localhost\r\nConnection: close\r\n\r\n',
+      );
+
+      expect(reply, startsWith('HTTP/1.1 200'));
+      expect(reply, endsWith('http://proxied.example:8080/x?y=1'));
+    },
+  );
+
+  test('Given a response with a Connection header that does not parse, '
+      'when it is sent, then the client receives a 500', () async {
+    await scheduleServer(
+      (req) => Response.ok(
+        headers: Headers.build((mh) => mh['connection'] = ['close;x']),
+      ),
+    );
+
+    final response = await get();
+
+    expect(
+      response.statusCode,
+      500,
+      reason: 'the handler produced the header, not the client',
+    );
   });
 
   group('Given a response without a Date header', () {

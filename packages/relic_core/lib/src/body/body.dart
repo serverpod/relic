@@ -8,6 +8,12 @@ import 'dart:typed_data';
 import 'package:async/async.dart';
 import 'package:mime/mime.dart';
 
+import '../headers/exception/header_exception.dart';
+import '../headers/headers.dart';
+import '../headers/standard_headers_extensions.dart';
+import '../headers/typed/headers/content_type_header.dart';
+import '../headers/typed/primitives/parameter_value.dart';
+import '../headers/typed/primitives/token.dart';
 import 'types/body_type.dart';
 import 'types/mime_type.dart';
 
@@ -370,12 +376,74 @@ class Body {
     parameters: parameters,
   );
 
+  /// The body of a request, typed by its Content-Type, for an adapter.
+  ///
+  /// [bytes] when the adapter read the body already, [stream] when it
+  /// arrives as the handler reads, with [contentLength] when declared,
+  /// and neither for a request without a body. A Content-Type that does
+  /// not parse counts as none, and a parameter relic could not write back
+  /// is dropped.
+  factory Body.ofRequest(
+    final Headers headers, {
+    final Uint8List? bytes,
+    final Stream<Uint8List>? stream,
+    final int? contentLength,
+  }) {
+    if (bytes == null && stream == null) return Body.empty();
+    ContentTypeHeader? contentType;
+    try {
+      contentType = headers.contentType;
+    } on HeaderException {
+      // No type.
+    }
+    final mimeType = contentType?.mimeType;
+    final encoding =
+        Encoding.getByName(contentType?.charset) ??
+        (mimeType?.isText == true ? utf8 : null);
+    final given = contentType?.parameters;
+    final parameters = given == null || given.isEmpty
+        ? const <String, String>{}
+        : <String, String>{
+            for (final MapEntry(:key, :value) in given.entries)
+              if (key != 'charset' && _isWritableParameter(key, value))
+                key: value,
+          };
+    if (bytes != null) {
+      return Body.fromBytes(
+        bytes,
+        mimeType: mimeType,
+        encoding: encoding,
+        parameters: parameters,
+      );
+    }
+    return Body._(
+      stream!,
+      contentLength,
+      encoding: encoding,
+      mimeType: mimeType,
+      parameters: parameters,
+    );
+  }
+
+  static bool _isWritableParameter(final String name, final String value) {
+    if (!Token.isValid(name)) return false;
+    try {
+      ParameterValue(value);
+      return true;
+    } on FormatException {
+      return false;
+    }
+  }
+
   /// The whole body as one buffer. Synchronous when the body was built from
   /// bytes or a string. Counts as reading the body, like [read].
   FutureOr<Uint8List> readAll({final int? maxLength}) {
     final bytes = this.bytes;
     if (bytes != null) {
-      read(maxLength: maxLength);
+      consume();
+      if (maxLength != null && bytes.length > maxLength) {
+        throw MaxBodySizeExceeded(maxLength);
+      }
       return bytes;
     }
     return collectBytes(read(maxLength: maxLength));
@@ -427,13 +495,7 @@ class Body {
   /// }
   /// ```
   Stream<Uint8List> read({final int? maxLength}) {
-    if (_isRead) {
-      throw StateError(
-        "The 'read' method can only be called once on a "
-        'Request/Response object.',
-      );
-    }
-    _isRead = true;
+    _markRead();
     final stream = _stream ?? Stream.value(bytes!);
     _stream = null;
 
@@ -474,6 +536,31 @@ class Body {
     }
     // check again to not throw on success
     if (totalBytes > maxLength) throw MaxBodySizeExceeded(maxLength);
+  }
+}
+
+/// What an adapter does with a body it does not stream.
+extension BodyConsume on Body {
+  /// Marks the body as read, as [Body.read] does, without the stream.
+  ///
+  /// An adapter that sends [Body.bytes] itself, or sends no body at all,
+  /// has no use for the stream, and for a body held as bytes [Body.read]
+  /// creates one on every call.
+  ///
+  /// Throws a [StateError] when the body was already read.
+  void consume() {
+    _markRead();
+    _stream = null;
+  }
+
+  void _markRead() {
+    if (_isRead) {
+      throw StateError(
+        "The 'read' method can only be called once on a "
+        'Request/Response object.',
+      );
+    }
+    _isRead = true;
   }
 }
 

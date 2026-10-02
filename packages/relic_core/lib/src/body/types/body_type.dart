@@ -48,19 +48,22 @@ class BodyType {
   BodyType({
     required this.mimeType,
     this.encoding,
-    Map<String, String> parameters = const {},
+    final Map<String, String> parameters = const {},
   }) : parameters = parameters.isEmpty
            ? const {}
            : Map.unmodifiable(_normalizeParameters(parameters));
 
   /// Returns the value of the parameter [name], matched case-insensitively.
-  String? parameter(String name) => parameters[name.toLowerCase()];
+  String? parameter(final String name) => parameters[name.toLowerCase()];
 
   /// Checks that the mime type and every parameter fit in a Content-Type
   /// header.
   ///
   /// Throws [FormatException] if one does not.
   void validate() {
+    // Building the header value runs the same checks and keeps the value,
+    // so a type that has one has passed them.
+    if (_headerValue != null) return;
     mimeType.validate();
     for (final MapEntry(:key, :value) in parameters.entries) {
       Token.validate(key);
@@ -106,7 +109,7 @@ class BodyType {
       'parameters: $parameters)';
 }
 
-Map<String, String> _normalizeParameters(Map<String, String> parameters) {
+Map<String, String> _normalizeParameters(final Map<String, String> parameters) {
   final normalized = {
     for (final MapEntry(:key, :value) in parameters.entries)
       key.toLowerCase(): value,

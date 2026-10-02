@@ -74,7 +74,7 @@ final class _FakeExchange implements AdapterExchange {
   @override
   Request toRequest() {
     if (toRequestThrows) throw const FormatException('bad target');
-    return RequestInternal.create(Method.get, url, Object(), headers: headers);
+    return RequestInternal.create(Method.get, url, this, headers: headers);
   }
 
   @override
@@ -103,11 +103,13 @@ final class _FakeExchange implements AdapterExchange {
     return StreamChannel(controller.stream, controller.sink);
   }
 
+  final webSocket = _FakeWebSocket();
+
   @override
   FutureOr<RelicWebSocket> upgradeWebSocket(final String acceptKey) {
     upgraded = true;
     _finish(ExchangeEnd.upgraded);
-    return _FakeWebSocket();
+    return webSocket;
   }
 
   @override
@@ -116,8 +118,13 @@ final class _FakeExchange implements AdapterExchange {
     _finish(ExchangeEnd.aborted);
   }
 
+  final _cancelled = Completer<void>();
+
+  /// Reports that the peer hung up.
+  void cancel() => _cancelled.complete();
+
   @override
-  Future<void> get cancelled => Completer<void>().future;
+  Future<void> get cancelled => _cancelled.future;
 
   @override
   Future<ExchangeEnd> get done => _done.future;
@@ -127,7 +134,23 @@ final class _FakeExchange implements AdapterExchange {
   }
 }
 
-final class _FakeWebSocket extends Fake implements RelicWebSocket {}
+/// A socket whose peer the test can hang up, and that records the
+/// going-away close the server sends on shutdown.
+final class _FakeWebSocket extends Fake implements RelicWebSocket {
+  final _done = Completer<void>();
+  var toldToGoAway = false;
+
+  void peerClosed() => _done.complete();
+
+  @override
+  Future<void> get done => _done.future;
+
+  @override
+  bool get isClosed => _done.isCompleted;
+
+  @override
+  Future<void> closeGoingAway() async => toldToGoAway = true;
+}
 
 Future<(RelicServer, _FakeAdapter)> _serve(final Handler handler) async {
   final adapter = _FakeAdapter();
@@ -383,6 +406,31 @@ void main() {
     expect(exchange.responses.single.statusCode, 400);
   });
 
+  test('Given two upgraded WebSockets of which one closed, '
+      'when the server closes, '
+      'then only the open one is told to go away', () async {
+    final (server, adapter) = await _serve(
+      (final _) => WebSocketUpgrade((final _) {}),
+    );
+    final closed = _FakeExchange(
+      url: Uri.parse('http://example.com/ws'),
+      headers: _handshake(),
+    );
+    final open = _FakeExchange(
+      url: Uri.parse('http://example.com/ws'),
+      headers: _handshake(),
+    );
+    await _push(adapter, closed);
+    await _push(adapter, open);
+    closed.webSocket.peerClosed();
+    await closed.webSocket.done;
+
+    await server.close();
+
+    expect(closed.webSocket.toldToGoAway, isFalse);
+    expect(open.webSocket.toldToGoAway, isTrue);
+  });
+
   test('Given a handler that upgrades to WebSocket, '
       'when a cross-origin exchange is pushed, '
       'then a 403 is sent and no upgrade happens', () async {
@@ -412,5 +460,24 @@ void main() {
 
     expect(adapter.sink, same(firstSink));
     expect(exchange.responses.single.statusCode, 200);
+  });
+
+  test('Given a handler that reads cancelled, '
+      'when the exchange reports the peer gone, '
+      "then the request's cancelled completes", () async {
+    Future<void>? cancelled;
+    final (_, adapter) = await _serve((final req) {
+      cancelled = req.cancelled;
+      return _ok();
+    });
+    final exchange = _FakeExchange();
+    await _push(adapter, exchange);
+
+    exchange.cancel();
+
+    await expectLater(
+      cancelled!.timeout(const Duration(seconds: 1)),
+      completes,
+    );
   });
 }

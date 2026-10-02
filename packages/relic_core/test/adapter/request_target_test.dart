@@ -97,7 +97,7 @@ void main() {
     final request = RequestInternal.create(
       Method.get,
       Uri.parse('http://localhost/foo/bar?q=1'),
-      Object(),
+      null,
     );
     expect(request.target.pathSegments, ['foo', 'bar']);
     expect(request.target.queryParametersAll, {
@@ -160,7 +160,7 @@ void main() {
     final request = RequestInternal.create(
       Method.get,
       null,
-      Object(),
+      null,
       target: RequestTarget.fromBytes(_bytes('/a/b'), _bytes('x=1')),
       authority: 'example.com:8080',
     );
@@ -171,7 +171,7 @@ void main() {
   test('Given a request with neither a url nor a target, '
       'when created, then it throws', () {
     expect(
-      () => RequestInternal.create(Method.get, null, Object()),
+      () => RequestInternal.create(Method.get, null, null),
       throwsArgumentError,
     );
   });

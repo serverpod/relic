@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:relic_core/relic_core.dart';
 import 'package:test/test.dart';
+import 'package:test_utils/adapter_conformance.dart';
 
 import '../util/test_util.dart';
 
@@ -15,7 +16,7 @@ void main() {
     final socket = await io.Socket.connect('127.0.0.1', server.url.port);
     socket.write('GET / HTTP/1.1\r\nHost: x\r\nConnection: close\r\n\r\n');
     final bytes = await socket
-        .fold<List<int>>([], (final a, final b) => a..addAll(b))
+        .fold<List<int>>([], (a, b) => a..addAll(b))
         .timeout(const Duration(seconds: 5), onTimeout: () => const []);
     return String.fromCharCodes(bytes);
   }
@@ -23,7 +24,7 @@ void main() {
   group('Given a body whose MIME type carries a line break', () {
     setUp(() async {
       server = await testServe(
-        (final req) async => Response.ok(
+        (req) async => Response.ok(
           body: Body.fromString(
             'x',
             mimeType: const MimeType('text', 'plain\r\nX-Injected: 1'),
@@ -60,7 +61,7 @@ void main() {
       'when the response is written, '
       'then a 500 response goes out without the injected header.', () async {
     server = await testServe(
-      (final req) async => Response.ok(
+      (req) async => Response.ok(
         body: Body.fromData(
           Uint8List.fromList('x'.codeUnits),
           mimeType: const MimeType('multipart', 'mixed'),

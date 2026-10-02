@@ -13,7 +13,7 @@ Request _request({
 }) => RequestInternal.create(
   method,
   Uri.parse('http://localhost/chat'),
-  Object(),
+  null,
   headers: Headers.fromMap({
     'upgrade': ['websocket'],
     'connection': ['Upgrade'],

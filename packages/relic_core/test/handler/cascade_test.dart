@@ -54,7 +54,7 @@ void main() {
           RequestInternal.create(
             Method.get,
             localhostUri,
-            Object(),
+            null,
             headers: Headers.build((final mh) => mh['one'] = ['false']),
           ),
         );
@@ -71,7 +71,7 @@ void main() {
           RequestInternal.create(
             Method.get,
             localhostUri,
-            Object(),
+            null,
             headers: Headers.build((final mh) {
               mh['one'] = ['false'];
               mh['two'] = ['false'];
@@ -92,7 +92,7 @@ void main() {
           RequestInternal.create(
             Method.get,
             localhostUri,
-            Object(),
+            null,
             headers: Headers.build((final mh) {
               mh['one'] = ['false'];
               mh['two'] = ['false'];

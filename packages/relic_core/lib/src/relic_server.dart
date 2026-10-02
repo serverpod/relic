@@ -24,7 +24,7 @@ sealed class RelicServer {
   ///
   /// Only one [handler] can be mounted at a time, but it will be replaced
   /// on each call.
-  Future<void> mountAndStart(Handler handler);
+  Future<void> mountAndStart(final Handler handler);
 
   /// Shuts down the server.
   ///
@@ -32,7 +32,7 @@ sealed class RelicServer {
   /// in-flight requests to complete before closing. If [force] is `true`,
   /// the server will immediately close and forcefully terminate any
   /// remaining connections.
-  Future<void> close({bool force = false});
+  Future<void> close({final bool force = false});
 
   /// Returns information about the current connections.
   Future<ConnectionsInfo> connectionsInfo();
@@ -42,7 +42,10 @@ sealed class RelicServer {
   /// This will throw a [LateInitializationError], if called before [mountAndStart].
   int get port;
 
-  factory RelicServer(Factory<Adapter> adapterFactory, {int noOfIsolates = 1}) {
+  factory RelicServer(
+    final Factory<Adapter> adapterFactory, {
+    final int noOfIsolates = 1,
+  }) {
     return switch (noOfIsolates) {
       < 1 => throw RangeError.value(
         noOfIsolates,
@@ -65,20 +68,27 @@ final class _RelicServer implements RelicServer {
   Handler? _handler;
   bool _started = false;
 
-  /// WebSockets this server frames itself, over hijacked connections.
-  /// The adapter knows them as raw channels, so the going-away close on
-  /// shutdown is this server's job.
-  final _framedSockets = <FramedWebSocket>{};
+  /// The WebSockets handed to handlers, framed here or by the adapter.
+  /// The going-away close on shutdown is this server's job for all of them.
+  final _sockets = <RelicWebSocket>{};
+
+  /// The raw channels handed to handlers, to close on shutdown.
+  final _channels = <StreamChannel<Uint8List>>{};
+
+  /// How long a graceful close waits for the in-flight exchanges, the
+  /// going-away closes and the flush of every hijacked channel before the
+  /// adapter drops what is left.
+  static const _drainTimeout = Duration(seconds: 5);
 
   /// Creates a server with the given parameters.
-  _RelicServer(Factory<Adapter> adapterFactory)
+  _RelicServer(final Factory<Adapter> adapterFactory)
     : _pendingAdapter = adapterFactory();
 
   /// Mounts a handler to the server and starts listening for requests.
   ///
   /// Only one handler can be mounted at a time.
   @override
-  Future<void> mountAndStart(Handler handler) async {
+  Future<void> mountAndStart(final Handler handler) async {
     final adapter = _adapter ??= await _pendingAdapter;
     _handler = handler;
     if (_started) return;
@@ -86,7 +96,10 @@ final class _RelicServer implements RelicServer {
     // One guarded zone for the errors that escape from `unawaited` work in
     // handlers. Per-request zones would put every dispatch through a zone
     // hop, and the sync path must stay free of that.
-    catchTopLevelErrors(() => adapter.start(_handle), (error, stackTrace) {
+    catchTopLevelErrors(() => adapter.start(_handle), (
+      final error,
+      final stackTrace,
+    ) {
       logMessage(
         'Asynchronous error\n$error',
         stackTrace: stackTrace,
@@ -96,17 +109,34 @@ final class _RelicServer implements RelicServer {
   }
 
   @override
-  Future<void> close({bool force = false}) async {
+  Future<void> close({final bool force = false}) async {
     _handler = null;
     final adapter = _adapter ?? await _pendingAdapter;
-    final goingAway = [
-      for (final socket in _framedSockets.toList()) socket.closeGoingAway(),
+    final closing = [
+      for (final socket in _sockets.toList())
+        if (!socket.isClosed) socket.closeGoingAway(),
     ];
-    // A graceful close waits for the peers' answers. A forced close queues
-    // the frames and drops the channels at once, so a frame reaches a peer
-    // only when its adapter flushes before it drops.
-    if (!force) await Future.wait(goingAway);
-    await adapter.close(force: force);
+    // A graceful close waits for the peers' answers to the going-away
+    // close, for every hijacked channel to flush what its handler wrote,
+    // and for the exchanges in flight, under one deadline. A forced close
+    // queues the frames and drops the channels at once, so a frame reaches
+    // a peer only when its adapter flushes before it drops.
+    if (!force) {
+      closing.addAll([
+        for (final channel in _channels.toList())
+          Future.sync(channel.sink.close),
+        adapter.close(),
+      ]);
+      await _settled(closing).timeout(_drainTimeout, onTimeout: () {});
+    }
+    await adapter.close(force: true);
+  }
+
+  /// Completes when every future in [futures] has, however it did.
+  static Future<void> _settled(final List<Future<void>> futures) async {
+    await Future.wait([
+      for (final future in futures) future.then((_) {}, onError: (_) {}),
+    ]);
   }
 
   @override
@@ -126,7 +156,7 @@ final class _RelicServer implements RelicServer {
   /// A sync handler with a sync `respond` completes without a single
   /// await. `await` always suspends, even on a non-Future, so the sync path
   /// branches on `is Future` instead.
-  FutureOr<void> _handle(AdapterExchange exchange) {
+  FutureOr<void> _handle(final AdapterExchange exchange) {
     final handler = _handler;
     if (handler == null) {
       // Closing. The adapter stops calling once its own close completes.
@@ -163,9 +193,9 @@ final class _RelicServer implements RelicServer {
   }
 
   Future<void> _handleAsync(
-    AdapterExchange exchange,
-    Request request,
-    Future<Result> pending,
+    final AdapterExchange exchange,
+    final Request request,
+    final Future<Result> pending,
   ) async {
     try {
       await _dispatch(exchange, request, await pending);
@@ -176,13 +206,13 @@ final class _RelicServer implements RelicServer {
 
   /// Routes a failure from a Future returned by `_dispatch` into `_fail`.
   FutureOr<void> _guard(
-    AdapterExchange exchange,
-    Request request,
-    FutureOr<void> pending,
+    final AdapterExchange exchange,
+    final Request request,
+    final FutureOr<void> pending,
   ) {
     if (pending is Future<void>) {
       return pending.catchError(
-        (Object error, StackTrace stackTrace) =>
+        (final Object error, final StackTrace stackTrace) =>
             _fail(exchange, request, error, stackTrace),
       );
     }
@@ -190,15 +220,18 @@ final class _RelicServer implements RelicServer {
   }
 
   FutureOr<void> _dispatch(
-    AdapterExchange exchange,
-    Request request,
-    Result result,
+    final AdapterExchange exchange,
+    final Request request,
+    final Result result,
   ) {
     switch (result) {
       case final Response response:
         return exchange.respond(response);
       case final Hijack hijack:
-        return _withChannel(exchange, hijack.callback);
+        return _withChannel(exchange, (final channel) {
+          _keep(channel);
+          return hijack.callback(channel);
+        });
       case final WebSocketUpgrade upgrade:
         if (!_isOriginAllowed(request, upgrade)) {
           return exchange.respond(Response.forbidden());
@@ -217,9 +250,9 @@ final class _RelicServer implements RelicServer {
         if (capabilities.webSocket) {
           final socket = exchange.upgradeWebSocket(acceptKey);
           if (socket is Future<RelicWebSocket>) {
-            return socket.then(upgrade.callback);
+            return socket.then((final socket) => _handOver(socket, upgrade));
           }
-          upgrade.callback(socket);
+          _handOver(socket, upgrade);
           return null;
         }
         if (!capabilities.hijack) {
@@ -229,7 +262,7 @@ final class _RelicServer implements RelicServer {
         // with no framer of its own.
         return _withChannel(
           exchange,
-          (channel) => _frame(channel, acceptKey, upgrade),
+          (final channel) => _frame(channel, acceptKey, upgrade),
         );
     }
   }
@@ -237,8 +270,8 @@ final class _RelicServer implements RelicServer {
   /// Hijacks the connection and hands the channel to [use], now or when
   /// the adapter has it.
   static FutureOr<void> _withChannel(
-    AdapterExchange exchange,
-    FutureOr<void> Function(StreamChannel<Uint8List>) use,
+    final AdapterExchange exchange,
+    final FutureOr<void> Function(StreamChannel<Uint8List>) use,
   ) {
     final channel = exchange.hijack();
     if (channel is Future<StreamChannel<Uint8List>>) return channel.then(use);
@@ -247,14 +280,29 @@ final class _RelicServer implements RelicServer {
   }
 
   void _frame(
-    StreamChannel<Uint8List> channel,
-    String acceptKey,
-    WebSocketUpgrade upgrade,
+    final StreamChannel<Uint8List> channel,
+    final String acceptKey,
+    final WebSocketUpgrade upgrade,
   ) {
     channel.sink.add(webSocketHandshakeResponse(acceptKey));
-    final socket = FramedWebSocket(channel);
-    _framedSockets.add(socket);
-    unawaited(socket.done.whenComplete(() => _framedSockets.remove(socket)));
+    _handOver(FramedWebSocket(channel), upgrade);
+  }
+
+  /// Keeps [channel] for the close on shutdown until its sink is done.
+  void _keep(final StreamChannel<Uint8List> channel) {
+    _channels.add(channel);
+    unawaited(
+      channel.sink.done
+          .then((_) {}, onError: (_) {})
+          .whenComplete(() => _channels.remove(channel)),
+    );
+  }
+
+  /// Keeps [socket] for the going-away close until it is done, and gives
+  /// it to the handler.
+  void _handOver(final RelicWebSocket socket, final WebSocketUpgrade upgrade) {
+    _sockets.add(socket);
+    unawaited(socket.done.whenComplete(() => _sockets.remove(socket)));
     upgrade.callback(socket);
   }
 
@@ -264,10 +312,10 @@ final class _RelicServer implements RelicServer {
   /// for example because a streaming response already sent its headers.
   /// Must not throw.
   FutureOr<void> _fail(
-    AdapterExchange exchange,
-    Request request,
-    Object error,
-    StackTrace stackTrace,
+    final AdapterExchange exchange,
+    final Request request,
+    final Object error,
+    final StackTrace stackTrace,
   ) {
     final Response response;
     switch (error) {
@@ -284,7 +332,7 @@ final class _RelicServer implements RelicServer {
             UnsupportedFormMediaTypeException() ||
             MalformedFormDataException() ||
             FormLimitExceededException() => Headers.build(
-              (mh) => mh.connection = const ConnectionHeader.directives([
+              (final mh) => mh.connection = const ConnectionHeader.directives([
                 ConnectionHeaderType.close,
               ]),
             ),
@@ -308,13 +356,13 @@ final class _RelicServer implements RelicServer {
   }
 
   static FutureOr<void> _respondOrAbort(
-    AdapterExchange exchange,
-    Response response,
+    final AdapterExchange exchange,
+    final Response response,
   ) {
     try {
       final pending = exchange.respond(response);
       if (pending is Future<void>) {
-        return pending.catchError((Object _) => exchange.abort());
+        return pending.catchError((final Object _) => exchange.abort());
       }
       return pending;
     } catch (_) {
@@ -332,7 +380,10 @@ final class _RelicServer implements RelicServer {
   ///
   /// A request without `Origin` is allowed, since non-browser clients do not
   /// send one.
-  static bool _isOriginAllowed(Request request, WebSocketUpgrade upgrade) {
+  static bool _isOriginAllowed(
+    final Request request,
+    final WebSocketUpgrade upgrade,
+  ) {
     if (upgrade.allowAnyOrigin) return true;
     final Uri? origin;
     try {
@@ -345,7 +396,11 @@ final class _RelicServer implements RelicServer {
   }
 }
 
-void _logError(Request request, String message, StackTrace stackTrace) {
+void _logError(
+  final Request request,
+  final String message,
+  final StackTrace stackTrace,
+) {
   final buffer = StringBuffer();
   buffer.write('${request.method} ${request.url.path}');
   if (request.url.query.isNotEmpty) {
@@ -359,25 +414,25 @@ void _logError(Request request, String message, StackTrace stackTrace) {
 
 final class _IsolatedRelicServer extends IsolatedObject<RelicServer>
     implements RelicServer {
-  _IsolatedRelicServer(Factory<Adapter> adapterFactory)
+  _IsolatedRelicServer(final Factory<Adapter> adapterFactory)
     : super(() => RelicServer(adapterFactory));
 
   @override
-  Future<void> close({bool force = false}) async {
-    await evaluate((r) => r.close(force: force));
+  Future<void> close({final bool force = false}) async {
+    await evaluate((final r) => r.close(force: force));
     await super.close();
     _port = null;
   }
 
   @override
-  Future<void> mountAndStart(Handler handler) async {
-    await evaluate((r) => r.mountAndStart(handler));
-    _port ??= await evaluate((r) => r.port);
+  Future<void> mountAndStart(final Handler handler) async {
+    await evaluate((final r) => r.mountAndStart(handler));
+    _port ??= await evaluate((final r) => r.port);
   }
 
   @override
   Future<ConnectionsInfo> connectionsInfo() =>
-      evaluate((r) => r.connectionsInfo());
+      evaluate((final r) => r.connectionsInfo());
 
   int? _port;
   @override
@@ -387,23 +442,25 @@ final class _IsolatedRelicServer extends IsolatedObject<RelicServer>
 final class _MultiIsolateRelicServer implements RelicServer {
   final List<RelicServer> _children;
 
-  _MultiIsolateRelicServer(Factory<Adapter> adapterFactory, int noOfIsolates)
-    : assert(noOfIsolates > 1),
+  _MultiIsolateRelicServer(
+    final Factory<Adapter> adapterFactory,
+    final int noOfIsolates,
+  ) : assert(noOfIsolates > 1),
       _children = List.generate(
         noOfIsolates,
         (_) => _IsolatedRelicServer(adapterFactory),
       );
 
   @override
-  Future<void> close({bool force = false}) async {
+  Future<void> close({final bool force = false}) async {
     final children = List.of(_children);
     _children.clear();
-    await children.map((c) => c.close(force: force)).wait;
+    await children.map((final c) => c.close(force: force)).wait;
   }
 
   @override
-  Future<void> mountAndStart(Handler handler) async {
-    await _children.map((c) => c.mountAndStart(handler)).wait;
+  Future<void> mountAndStart(final Handler handler) async {
+    await _children.map((final c) => c.mountAndStart(handler)).wait;
   }
 
   @override

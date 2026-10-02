@@ -14,7 +14,7 @@ void main() {
       final request = RequestInternal.create(
         Method.post,
         Uri.parse('http://localhost/'),
-        Object(),
+        null,
         body: Body.fromString('Hello from the other side'),
       );
       final req = request;
@@ -33,7 +33,7 @@ void main() {
       final request = RequestInternal.create(
         Method.post,
         Uri.parse('http://localhost/custom/path'),
-        Object(),
+        null,
         body: Body.fromString('custom handler'),
       );
       final req = request;
@@ -54,7 +54,7 @@ void main() {
       final request = RequestInternal.create(
         Method.post,
         Uri.parse('http://localhost/api/echo'),
-        Object(),
+        null,
         body: Body.fromString('injected at path'),
       );
       final req = request;
@@ -73,7 +73,7 @@ void main() {
       final request = RequestInternal.create(
         Method.post,
         Uri.parse('http://localhost/files/any/path'),
-        Object(),
+        null,
         body: Body.fromString('tail path handler'),
       );
       final req = request;
@@ -116,7 +116,7 @@ void main() {
         final request = RequestInternal.create(
           Method.get,
           Uri.parse('http://localhost/test'),
-          Object(),
+          null,
         );
         final req = request;
         final result = await router.asHandler(req) as Response;
@@ -143,7 +143,7 @@ void main() {
       final apiRequest = RequestInternal.create(
         Method.get,
         Uri.parse('http://localhost/api/users'),
-        Object(),
+        null,
       );
       final apiCtx = apiRequest;
       final apiResult = await router.asHandler(apiCtx) as Response;
@@ -155,7 +155,7 @@ void main() {
       final otherRequest = RequestInternal.create(
         Method.get,
         Uri.parse('http://localhost/other'),
-        Object(),
+        null,
       );
       final otherCtx = otherRequest;
       final otherResult = await router.asHandler(otherCtx) as Response;
@@ -183,7 +183,7 @@ void main() {
       final request = RequestInternal.create(
         Method.get,
         Uri.parse('http://localhost/test'),
-        Object(),
+        null,
       );
       final req = request;
       final result = await router.asHandler(req) as Response;

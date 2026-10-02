@@ -5,7 +5,7 @@ Request _request() {
   final request = RequestInternal.create(
     Method.get,
     Uri.parse('http://test.com/'),
-    Object(),
+    null,
   );
   return request;
 }
@@ -55,7 +55,7 @@ void main() {
       final other = RequestInternal.create(
         Method.get,
         Uri.parse('http://test.com/'),
-        RequestInternal(request).token,
+        RequestInternal(request).exchange,
       );
       expect(stringProperty[other], isNull);
     });

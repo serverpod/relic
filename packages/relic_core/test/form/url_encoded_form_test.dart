@@ -138,7 +138,7 @@ void main() {
           request.urlEncodedForm(limits: FormLimits(maxFieldCount: 1)),
           throwsA(
             isA<FormLimitExceededException>().having(
-              (final error) => error.limit,
+              (error) => error.limit,
               'limit',
               FormLimit.maxFieldCount,
             ),
@@ -156,7 +156,7 @@ void main() {
           request.urlEncodedForm(limits: FormLimits(maxFieldSize: 3)),
           throwsA(
             isA<FormLimitExceededException>().having(
-              (final error) => error.limit,
+              (error) => error.limit,
               'limit',
               FormLimit.maxFieldSize,
             ),
@@ -172,7 +172,7 @@ void main() {
     final request = RequestInternal.create(
       Method.post,
       Uri.parse('http://localhost/form'),
-      Object(),
+      null,
       body: Body.fromDataStream(
         Stream.value(Uint8List.fromList(utf8.encode('name=Gustavo'))),
         mimeType: MimeType.urlEncoded,
@@ -241,7 +241,7 @@ void main() {
       final request = RequestInternal.create(
         Method.post,
         Uri.parse('http://localhost/form'),
-        Object(),
+        null,
         body: Body.fromDataStream(
           Stream.error(upstream),
           mimeType: MimeType.urlEncoded,
@@ -258,7 +258,7 @@ void main() {
     final request = RequestInternal.create(
       Method.post,
       Uri.parse('http://localhost/form'),
-      Object(),
+      null,
       body: Body.fromString('name=Gustavo', mimeType: MimeType.urlEncoded),
     );
 
@@ -268,23 +268,23 @@ void main() {
   });
 }
 
-Matcher _limitExceeded(final FormLimit limit) {
+Matcher _limitExceeded(FormLimit limit) {
   return isA<FormLimitExceededException>().having(
-    (final error) => error.limit,
+    (error) => error.limit,
     'limit',
     limit,
   );
 }
 
 Request _request({
-  final String? body,
-  final Uint8List? bodyBytes,
-  final ContentTypeHeader? contentType,
+  String? body,
+  Uint8List? bodyBytes,
+  ContentTypeHeader? contentType,
 }) {
   return RequestInternal.create(
     Method.post,
     Uri.parse('http://localhost/form'),
-    Object(),
+    null,
     body: _bodyFromContentType(
       bodyBytes ?? Uint8List.fromList(utf8.encode(body ?? '')),
       contentType ?? ContentTypeHeader(mimeType: MimeType.urlEncoded),
@@ -292,10 +292,7 @@ Request _request({
   );
 }
 
-Body _bodyFromContentType(
-  final Uint8List bytes,
-  final ContentTypeHeader contentType,
-) {
+Body _bodyFromContentType(Uint8List bytes, ContentTypeHeader contentType) {
   return Body.fromData(
     bytes,
     mimeType: contentType.mimeType,

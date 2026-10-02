@@ -1,14 +1,14 @@
 library;
 
+export 'package:relic_headers/relic_headers.dart';
+
 export 'src/accessor/accessor.dart';
 export 'src/adapter/adapter.dart';
 export 'src/adapter/connection_info.dart';
 export 'src/adapter/relic_web_socket.dart';
-export 'src/web_socket/framed_web_socket.dart';
-export 'src/web_socket/web_socket_frame.dart';
-export 'src/web_socket/web_socket_handshake.dart';
 export 'src/adapter/request_target.dart';
-export 'src/body/body.dart' show Body, MaxBodySizeExceeded;
+export 'src/adapter/response_framing.dart';
+export 'src/body/body.dart' show Body, BodyConsume, MaxBodySizeExceeded;
 export 'src/body/types/body_type.dart' show BodyType;
 export 'src/body/types/mime_type.dart' show MimeType;
 export 'src/context/result.dart';
@@ -18,8 +18,6 @@ export 'src/form/request_form_extensions.dart';
 export 'src/handler/cascade.dart' show Cascade;
 export 'src/handler/handler.dart';
 export 'src/handler/pipeline.dart' show Pipeline;
-export 'package:relic_headers/relic_headers.dart';
-
 export 'src/headers/byte_header_store.dart';
 export 'src/headers/codecs/common_types_codecs.dart';
 export 'src/headers/exception/header_exception.dart'
@@ -49,13 +47,17 @@ export 'src/middleware/middleware_logger.dart' show logRequests;
 export 'src/middleware/routing_middleware.dart';
 export 'src/query/query_param.dart';
 export 'src/relic_server.dart';
-export 'src/util/util.dart';
 export 'src/router/cache.dart';
 export 'src/router/lookup_result.dart';
 export 'src/router/lru_cache.dart';
-export 'src/router/no_cache.dart';
 export 'src/router/method.dart';
+export 'src/router/no_cache.dart';
 export 'src/router/normalized_path.dart';
 export 'src/router/path_trie.dart';
 export 'src/router/router.dart';
 export 'src/router/router_handler_extension.dart';
+export 'src/util/http_date.dart';
+export 'src/util/util.dart';
+export 'src/web_socket/framed_web_socket.dart';
+export 'src/web_socket/web_socket_frame.dart';
+export 'src/web_socket/web_socket_handshake.dart';

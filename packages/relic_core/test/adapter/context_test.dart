@@ -1,19 +1,22 @@
 import 'package:relic_core/relic_core.dart';
+import 'package:test/fake.dart';
 import 'package:test/test.dart';
+
+final class _FakeExchange extends Fake implements AdapterExchange {}
 
 void main() {
   group('Given a Request, when copyWith is called with new headers,', () {
     late Request originalRequest;
     late Request newRequest;
-    late Object token;
+    late AdapterExchange? token;
 
     setUp(() {
       originalRequest = RequestInternal.create(
         Method.get,
         Uri.parse('http://test.com/path'),
-        Object(),
+        null,
       );
-      token = originalRequest.token;
+      token = originalRequest.exchange;
       final newHeaders = Headers.fromMap({
         'foo': ['bar'],
       });
@@ -25,7 +28,7 @@ void main() {
     });
 
     test('then the new request preserves the same token', () {
-      expect(newRequest.token, same(token));
+      expect(newRequest.exchange, same(token));
     });
 
     test('then the new request is not the same instance as the original', () {
@@ -55,10 +58,10 @@ void main() {
     'Given a Request, when copyWith is called to transform the request,',
     () {
       late Request originalRequest;
-      late Object token;
+      late AdapterExchange? token;
 
       setUp(() {
-        token = Object();
+        token = _FakeExchange();
         originalRequest = RequestInternal.create(
           Method.get,
           Uri.parse('http://test.com/path'),
@@ -73,7 +76,7 @@ void main() {
         final rewrittenRequest = originalRequest.copyWith(headers: headers);
         expect(rewrittenRequest, isA<Request>());
         expect(rewrittenRequest.headers, headers);
-        expect(rewrittenRequest.token, same(token));
+        expect(rewrittenRequest.exchange, same(token));
       });
 
       test(
@@ -89,9 +92,9 @@ void main() {
           });
           final request2 = request1.copyWith(headers: headers2);
 
-          expect(originalRequest.token, same(token));
-          expect(request1.token, same(token));
-          expect(request2.token, same(token));
+          expect(originalRequest.exchange, same(token));
+          expect(request1.exchange, same(token));
+          expect(request2.exchange, same(token));
           expect(request2.headers, headers2);
         },
       );

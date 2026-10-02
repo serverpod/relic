@@ -8,6 +8,7 @@ import 'package:relic_core/relic_core.dart';
 class IORelicWebSocket implements RelicWebSocket {
   final io.WebSocket _webSocket;
   final _events = StreamController<WebSocketEvent>();
+  final _done = Completer<void>();
 
   /// Create a new RelicWebSocket connection using dart:io WebSocket.
   ///
@@ -73,6 +74,7 @@ class IORelicWebSocket implements RelicWebSocket {
         _events.addError(wse, st);
       },
       onDone: () {
+        _done.complete();
         if (_events.isClosed) return;
         _events
           ..add(
@@ -118,15 +120,15 @@ class IORelicWebSocket implements RelicWebSocket {
 
   /// Sends a going-away close (RFC 6455 1001) and waits for the handshake.
   ///
-  /// Not part of [RelicWebSocket]: [tryClose] follows `package:web_socket`'s
+  /// [tryClose] cannot send it. It follows `package:web_socket`'s
   /// application close-code restriction (1000 or 3000-4999), which excludes
   /// the protocol-level 1001 a shutting-down server should send.
   ///
-  /// The adapter awaits this during a graceful drain and fires it unawaited
-  /// on forced shutdown; `dart:io` exposes no hard teardown for an upgraded
-  /// socket, but bounds internally how long a peer can stall the handshake.
-  /// Close errors are swallowed: teardown must not throw, least of all into
-  /// an unawaited future.
+  /// dart:io exposes no hard teardown for an upgraded socket, but bounds
+  /// internally how long a peer can stall the handshake. This swallows
+  /// close errors, since teardown must not throw, least of all into an
+  /// unawaited future.
+  @override
   Future<void> closeGoingAway() async {
     if (isClosed) return;
     unawaited(_events.close());
@@ -167,4 +169,7 @@ class IORelicWebSocket implements RelicWebSocket {
 
   @override
   bool get isClosed => _events.isClosed;
+
+  @override
+  Future<void> get done => _done.future;
 }

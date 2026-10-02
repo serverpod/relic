@@ -7,6 +7,7 @@ import 'dart:isolate';
 import 'package:relic_core/relic_core.dart';
 import 'package:relic_io/relic_io.dart';
 import 'package:test/test.dart';
+import 'package:test_utils/adapter_conformance.dart';
 import 'package:web_socket/web_socket.dart';
 
 import '../util/test_util.dart';
@@ -23,6 +24,22 @@ void main() {
   tearDown(() async {
     await _server?.close(); // close previous, if any
     _server = null;
+  });
+
+  test('Given a connected IORelicWebSocket, '
+      'when the server closes it, '
+      'then done completes', () async {
+    await scheduleServer((req) => WebSocketUpgrade((ws) => ws.close()));
+
+    final client = await IORelicWebSocket.connect(
+      Uri.parse('ws://localhost:$_serverPort'),
+    );
+
+    await expectLater(
+      client.done.timeout(const Duration(seconds: 2)),
+      completes,
+    );
+    expect(client.isClosed, isTrue);
   });
 
   test('Given a web socket connection with a ping interval, '
