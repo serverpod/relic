@@ -26,11 +26,11 @@ void main() {
           getServerRequestHeaders(
             server: server,
             headers: {'if-unmodified-since': ''},
-            touchHeaders: (final h) => h.ifUnmodifiedSince,
+            touchHeaders: (h) => h.ifUnmodifiedSince,
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (final e) => e.message,
+              (e) => e.message,
               'message',
               contains('Value cannot be empty'),
             ),
@@ -48,11 +48,11 @@ void main() {
           getServerRequestHeaders(
             server: server,
             headers: {'if-unmodified-since': 'invalid-date-format'},
-            touchHeaders: (final h) => h.ifUnmodifiedSince,
+            touchHeaders: (h) => h.ifUnmodifiedSince,
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (final e) => e.message,
+              (e) => e.message,
               'message',
               contains('Invalid date format'),
             ),
@@ -83,7 +83,7 @@ void main() {
         final headers = await getServerRequestHeaders(
           server: server,
           headers: {'if-unmodified-since': 'Wed, 21 Oct 2015 07:28:00 GMT'},
-          touchHeaders: (final h) => h.ifUnmodifiedSince,
+          touchHeaders: (h) => h.ifUnmodifiedSince,
         );
 
         expect(
@@ -99,7 +99,7 @@ void main() {
         final headers = await getServerRequestHeaders(
           server: server,
           headers: {'if-unmodified-since': ' Wed, 21 Oct 2015 07:28:00 GMT '},
-          touchHeaders: (final h) => h.ifUnmodifiedSince,
+          touchHeaders: (h) => h.ifUnmodifiedSince,
         );
 
         expect(
@@ -115,7 +115,7 @@ void main() {
         final headers = await getServerRequestHeaders(
           server: server,
           headers: {},
-          touchHeaders: (final h) => h.ifUnmodifiedSince,
+          touchHeaders: (h) => h.ifUnmodifiedSince,
         );
 
         expect(headers.ifUnmodifiedSince, isNull);
@@ -140,7 +140,7 @@ void main() {
           headers: {'if-unmodified-since': ''},
         );
 
-        expect(Headers.ifUnmodifiedSince[headers].valueOrNullIfInvalid, isNull);
+        expect(headers.tryGet(Headers.ifUnmodifiedSince), isNull);
         expect(() => headers.ifUnmodifiedSince, throwsInvalidHeader);
       });
     });
@@ -153,7 +153,7 @@ void main() {
           headers: {'if-unmodified-since': 'invalid-date-format'},
         );
 
-        expect(Headers.ifUnmodifiedSince[headers].valueOrNullIfInvalid, isNull);
+        expect(headers.tryGet(Headers.ifUnmodifiedSince), isNull);
         expect(() => headers.ifUnmodifiedSince, throwsInvalidHeader);
       });
     });

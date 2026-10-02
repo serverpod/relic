@@ -24,12 +24,12 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (final h) => h.contentEncoding,
+            touchHeaders: (h) => h.contentEncoding,
             headers: {'content-encoding': ''},
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (final e) => e.message,
+              (e) => e.message,
               'message',
               contains('Value cannot be empty'),
             ),
@@ -43,7 +43,7 @@ void main() {
       expect(
         getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.contentEncoding,
+          touchHeaders: (h) => h.contentEncoding,
           headers: {'content-encoding': 'bad encoding'},
         ),
         throwsA(isA<BadRequestException>()),
@@ -55,12 +55,12 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.contentEncoding,
+          touchHeaders: (h) => h.contentEncoding,
           headers: {'content-encoding': 'custom-encoding'},
         );
 
         expect(
-          headers.contentEncoding?.encodings.map((final e) => e.name),
+          headers.contentEncoding?.encodings.map((e) => e.name),
           equals(['custom-encoding']),
         );
       },
@@ -83,12 +83,12 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.contentEncoding,
+          touchHeaders: (h) => h.contentEncoding,
           headers: {'content-encoding': 'gzip'},
         );
 
         expect(
-          headers.contentEncoding?.encodings.map((final e) => e.name).toList(),
+          headers.contentEncoding?.encodings.map((e) => e.name).toList(),
           equals(['gzip']),
         );
       },
@@ -99,7 +99,7 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.contentEncoding,
+          touchHeaders: (h) => h.contentEncoding,
           headers: {},
         );
 
@@ -111,12 +111,12 @@ void main() {
       test('then they should parse correctly', () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.contentEncoding,
+          touchHeaders: (h) => h.contentEncoding,
           headers: {'content-encoding': 'gzip, deflate'},
         );
 
         expect(
-          headers.contentEncoding?.encodings.map((final e) => e.name).toList(),
+          headers.contentEncoding?.encodings.map((e) => e.name).toList(),
           equals(['gzip', 'deflate']),
         );
       });
@@ -124,12 +124,12 @@ void main() {
       test('with extra whitespace should parse correctly', () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.contentEncoding,
+          touchHeaders: (h) => h.contentEncoding,
           headers: {'content-encoding': ' gzip , deflate '},
         );
 
         expect(
-          headers.contentEncoding?.encodings.map((final e) => e.name).toList(),
+          headers.contentEncoding?.encodings.map((e) => e.name).toList(),
           equals(['gzip', 'deflate']),
         );
       });
@@ -139,14 +139,12 @@ void main() {
         () async {
           final headers = await getServerRequestHeaders(
             server: server,
-            touchHeaders: (final h) => h.contentEncoding,
+            touchHeaders: (h) => h.contentEncoding,
             headers: {'content-encoding': 'gzip, deflate, gzip'},
           );
 
           expect(
-            headers.contentEncoding?.encodings
-                .map((final e) => e.name)
-                .toList(),
+            headers.contentEncoding?.encodings.map((e) => e.name).toList(),
             equals(['gzip', 'deflate']),
           );
         },
@@ -171,7 +169,7 @@ void main() {
           headers: {'content-encoding': ''},
         );
 
-        expect(Headers.contentEncoding[headers].valueOrNullIfInvalid, isNull);
+        expect(headers.tryGet(Headers.contentEncoding), isNull);
         expect(() => headers.contentEncoding, throwsInvalidHeader);
       });
     });

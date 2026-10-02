@@ -23,12 +23,12 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (final h) => h.permissionsPolicy,
+            touchHeaders: (h) => h.permissionsPolicy,
             headers: {'permissions-policy': ''},
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (final e) => e.message,
+              (e) => e.message,
               'message',
               contains('Value cannot be empty'),
             ),
@@ -54,7 +54,7 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.permissionsPolicy,
+          touchHeaders: (h) => h.permissionsPolicy,
           headers: {'permissions-policy': 'geolocation=(self), microphone=()'},
         );
 
@@ -76,7 +76,7 @@ void main() {
             'permissions-policy':
                 'geolocation=(self), camera=(self "https://example.com")',
           },
-          touchHeaders: (final h) => h.permissionsPolicy,
+          touchHeaders: (h) => h.permissionsPolicy,
         );
 
         final policies = headers.permissionsPolicy?.directives;
@@ -94,7 +94,7 @@ void main() {
         final headers = await getServerRequestHeaders(
           server: server,
           headers: {},
-          touchHeaders: (final h) => h.permissionsPolicy,
+          touchHeaders: (h) => h.permissionsPolicy,
         );
 
         expect(headers.permissionsPolicy, isNull);
@@ -119,7 +119,7 @@ void main() {
           headers: {'permissions-policy': ''},
         );
 
-        expect(Headers.permissionsPolicy[headers].valueOrNullIfInvalid, isNull);
+        expect(headers.tryGet(Headers.permissionsPolicy), isNull);
         expect(() => headers.permissionsPolicy, throwsInvalidHeader);
       });
     });

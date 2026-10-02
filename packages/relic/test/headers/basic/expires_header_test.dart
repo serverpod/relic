@@ -24,11 +24,11 @@ void main() {
         getServerRequestHeaders(
           server: server,
           headers: {'expires': ''},
-          touchHeaders: (final h) => h.expires,
+          touchHeaders: (h) => h.expires,
         ),
         throwsA(
           isA<BadRequestException>().having(
-            (final e) => e.message,
+            (e) => e.message,
             'message',
             contains('Value cannot be empty'),
           ),
@@ -43,11 +43,11 @@ void main() {
         getServerRequestHeaders(
           server: server,
           headers: {'expires': 'invalid-date-format'},
-          touchHeaders: (final h) => h.expires,
+          touchHeaders: (h) => h.expires,
         ),
         throwsA(
           isA<BadRequestException>().having(
-            (final e) => e.message,
+            (e) => e.message,
             'message',
             contains('Invalid date format'),
           ),
@@ -73,7 +73,7 @@ void main() {
         final headers = await getServerRequestHeaders(
           server: server,
           headers: {'expires': 'Wed, 21 Oct 2015 07:28:00 GMT'},
-          touchHeaders: (final h) => h.expires,
+          touchHeaders: (h) => h.expires,
         );
 
         expect(
@@ -89,7 +89,7 @@ void main() {
         final headers = await getServerRequestHeaders(
           server: server,
           headers: {'expires': ' Wed, 21 Oct 2015 07:28:00 GMT '},
-          touchHeaders: (final h) => h.expires,
+          touchHeaders: (h) => h.expires,
         );
 
         expect(
@@ -105,7 +105,7 @@ void main() {
         final headers = await getServerRequestHeaders(
           server: server,
           headers: {},
-          touchHeaders: (final h) => h.expires,
+          touchHeaders: (h) => h.expires,
         );
 
         expect(headers.expires, isNull);
@@ -130,7 +130,7 @@ void main() {
           headers: {'expires': ''},
         );
 
-        expect(Headers.expires[headers].valueOrNullIfInvalid, isNull);
+        expect(headers.tryGet(Headers.expires), isNull);
         expect(() => headers.expires, throwsInvalidHeader);
       });
     });
@@ -143,7 +143,7 @@ void main() {
           headers: {'expires': 'invalid-date-format'},
         );
 
-        expect(Headers.expires[headers].valueOrNullIfInvalid, isNull);
+        expect(headers.tryGet(Headers.expires), isNull);
         expect(() => headers.expires, throwsInvalidHeader);
       });
     });

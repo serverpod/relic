@@ -56,6 +56,8 @@ class Request extends Message {
   final HttpProtocol protocol;
 
   /// The original [Uri] for the request.
+  ///
+  /// Absolute, with the scheme and authority the request was addressed to.
   final Uri url;
 
   /// Information about the IP connection carrying the request.
@@ -77,23 +79,23 @@ class Request extends Message {
   }) : protocol = protocol ?? HttpProtocol.http11,
        connectionInfo = connectionInfo ?? ConnectionInfo.empty,
        super(body: body ?? Body.empty(), headers: headers ?? Headers.empty()) {
-    try {
-      // Trigger URI parsing methods that may throw format exception (in Request
-      // constructor or in handlers / routing).
-      url.pathSegments;
-      url.queryParametersAll;
-    } on FormatException catch (e) {
-      throw ArgumentError.value(url, 'url', 'URI parsing failed: $e');
-    }
-
+    // Cheap shape checks only. Whether the path and query decode is the
+    // adapter's job, before the request reaches a handler.
     if (!url.isAbsolute) {
       throw ArgumentError.value(url, 'url', 'must be an absolute URL.');
     }
-
     if (url.fragment.isNotEmpty) {
       throw ArgumentError.value(url, 'url', 'may not have a fragment.');
     }
   }
+
+  RequestTarget? _target;
+
+  /// The path and query as received. Decoded on first use.
+  ///
+  /// The adapter checks that a target decodes before the request reaches a
+  /// handler, and the core answers 400 when it does not.
+  RequestTarget get target => _target ??= RequestTarget.fromUri(url);
 
   /// Creates a new [Request] by copying existing values and applying specified
   /// changes.

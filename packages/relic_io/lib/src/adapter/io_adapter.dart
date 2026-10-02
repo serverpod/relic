@@ -180,8 +180,12 @@ class IOAdapter implements Adapter {
 final class IOExchange implements AdapterExchange {
   final IOAdapter _adapter;
   final io.HttpRequest _request;
-  final _done = Completer<ExchangeEnd>();
-  final _cancelled = Completer<void>();
+
+  /// How the exchange ended, once it has. The completers exist only for a
+  /// caller that asked before then.
+  ExchangeEnd? _end;
+  Completer<ExchangeEnd>? _done;
+  Completer<void>? _cancelled;
 
   IOExchange._(this._adapter, this._request) {
     // dart:io reports a peer that went away as an error on `done`. That is
@@ -189,18 +193,12 @@ final class IOExchange implements AdapterExchange {
     // `cancelled` is best effort on this adapter.
     _request.response.done.then(
       (_) {},
-      onError: (Object _) {
-        if (!_cancelled.isCompleted) _cancelled.complete();
-        _finish(ExchangeEnd.cancelledByPeer);
-      },
+      onError: (Object _) => _finish(ExchangeEnd.cancelledByPeer),
     );
   }
 
   @override
-  HttpProtocol get protocol => switch (_request.protocolVersion) {
-    '1.0' => HttpProtocol.http10,
-    _ => HttpProtocol.http11,
-  };
+  HttpProtocol get protocol => httpProtocolOf(_request);
 
   @override
   Request toRequest() => fromHttpRequest(_request);
@@ -234,7 +232,7 @@ final class IOExchange implements AdapterExchange {
 
   @override
   void abort() {
-    if (_done.isCompleted) return;
+    if (_end != null) return;
     _finish(ExchangeEnd.aborted);
     unawaited(
       _request.response
@@ -246,13 +244,22 @@ final class IOExchange implements AdapterExchange {
   }
 
   @override
-  Future<void> get cancelled => _cancelled.future;
+  Future<void> get cancelled => _end == ExchangeEnd.cancelledByPeer
+      ? Future.value()
+      : (_cancelled ??= Completer<void>()).future;
 
   @override
-  Future<ExchangeEnd> get done => _done.future;
+  Future<ExchangeEnd> get done {
+    final end = _end;
+    if (end != null) return Future.value(end);
+    return (_done ??= Completer<ExchangeEnd>()).future;
+  }
 
   void _finish(ExchangeEnd end) {
-    if (!_done.isCompleted) _done.complete(end);
+    if (_end != null) return;
+    _end = end;
+    _done?.complete(end);
+    if (end == ExchangeEnd.cancelledByPeer) _cancelled?.complete();
   }
 }
 

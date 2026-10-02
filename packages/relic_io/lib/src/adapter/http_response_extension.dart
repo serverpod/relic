@@ -8,13 +8,13 @@ extension HttpResponseExtension on io.HttpResponse {
   ///
   /// Transfer encoding 'chunked' may be added to the response if it is required
   /// and does not conflict with existing headers.
-  void applyHeaders(final Headers headers, final Body body) {
+  void applyHeaders(Headers headers, Body body) {
     final responseHeaders = this.headers;
     responseHeaders.clear();
 
     // Apply all headers from the provided headers map.
-    for (final entry in headers.entries) {
-      responseHeaders.set(entry.key, entry.value);
+    for (final name in headers.names) {
+      responseHeaders.set(name.lower, headers.values(name));
     }
 
     // Set Content-Type based on the MIME type of the body.
@@ -48,37 +48,17 @@ extension HttpResponseExtension on io.HttpResponse {
     // an empty list would otherwise set an empty Transfer-Encoding).
     if (encodings.isNotEmpty) {
       responseHeaders.set(
-        Headers.transferEncodingHeader,
-        encodings.map((final e) => e.name).toList(),
+        HeaderName.transferEncoding.lower,
+        encodings.map((e) => e.name).toList(),
       );
     }
   }
 
-  /// Check if chunked encoding should be applied.
-  ///
-  /// References:
-  /// - RFC 7230, Section 3.3: "Message Body" (https://datatracker.ietf.org/doc/html/rfc7230#section-3.3)
-  ///   - Responses with status codes 1xx (Informational), 204 (No Content), and 304 (Not Modified) MUST NOT include a body.
-  ///   - As these responses lack a body, there is no content to encode, making `Transfer-Encoding` unnecessary
-  ///     and inapplicable in such cases.
-  ///
-  /// - RFC 7233, Section 4.1: "Multipart/byteranges" (https://datatracker.ietf.org/doc/html/rfc7233#section-4.1)
-  ///   - Multipart/byteranges responses use the `Content-Range` mechanism instead of chunked transfer encoding.
-  ///
-  /// This logic ensures compliance with HTTP/1.1 by:
-  /// - Excluding status codes 1xx, 204, and 304 from chunked encoding.
-  /// - Handling multipart/byteranges responses according to their specific requirements.
-  bool _shouldEnableChunkedEncoding(final Body body) {
-    return
-    // Exclude 1xx status codes (no body allowed).
-    statusCode >= 200 &&
-        // Exclude 204 (No Content) status code (no body allowed).
-        statusCode != 204 &&
-        // Exclude 304 (Not Modified) status code (no body allowed).
-        statusCode != 304 &&
-        // Exclude multipart/byteranges responses (handled via Content-Range).
-        !body.isMultipartByteranges;
-  }
+  /// Whether the response is sent with chunked transfer encoding. A status
+  /// that carries no body is not, and neither is a multipart/byteranges
+  /// response, which frames itself with Content-Range (RFC 7233 4.1).
+  bool _shouldEnableChunkedEncoding(Body body) =>
+      statusMayHaveBody(statusCode) && !body.isMultipartByteranges;
 }
 
 /// Extension for [MimeType] to check if it is multipart/byteranges.
@@ -93,8 +73,8 @@ extension on Body {
 
 extension on TransferEncodingHeader {
   /// Checks if the Transfer-Encoding contains the specified encoding.
-  bool _exists(final TransferEncoding encoding) {
-    return encodings.any((final e) => e.name == encoding.name);
+  bool _exists(TransferEncoding encoding) {
+    return encodings.any((e) => e.name == encoding.name);
   }
 
   /// Checks if the Transfer-Encoding contains `chunked`.

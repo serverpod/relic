@@ -23,12 +23,12 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (final h) => h.contentDisposition,
+            touchHeaders: (h) => h.contentDisposition,
             headers: {'content-disposition': ''},
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (final e) => e.message,
+              (e) => e.message,
               'message',
               contains('Value cannot be empty'),
             ),
@@ -77,7 +77,7 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.contentDisposition,
+          touchHeaders: (h) => h.contentDisposition,
           headers: {'content-disposition': 'inline'},
         );
 
@@ -123,7 +123,7 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.contentDisposition,
+          touchHeaders: (h) => h.contentDisposition,
           headers: {},
         );
 
@@ -149,10 +149,7 @@ void main() {
           headers: {'content-disposition': ''},
         );
 
-        expect(
-          Headers.contentDisposition[headers].valueOrNullIfInvalid,
-          isNull,
-        );
+        expect(headers.tryGet(Headers.contentDisposition), isNull);
         expect(() => headers.contentDisposition, throwsInvalidHeader);
       });
     });

@@ -4,6 +4,7 @@ export 'src/accessor/accessor.dart';
 export 'src/adapter/adapter.dart';
 export 'src/adapter/connection_info.dart';
 export 'src/adapter/relic_web_socket.dart';
+export 'src/adapter/request_target.dart';
 export 'src/body/body.dart' show Body, MaxBodySizeExceeded;
 export 'src/body/types/body_type.dart' show BodyType;
 export 'src/body/types/mime_type.dart' show MimeType;
@@ -14,6 +15,9 @@ export 'src/form/request_form_extensions.dart';
 export 'src/handler/cascade.dart' show Cascade;
 export 'src/handler/handler.dart';
 export 'src/handler/pipeline.dart' show Pipeline;
+export 'package:relic_headers/relic_headers.dart';
+
+export 'src/headers/byte_header_store.dart';
 export 'src/headers/codecs/common_types_codecs.dart';
 export 'src/headers/exception/header_exception.dart'
     show HeaderException, InvalidHeaderException, MissingHeaderException;

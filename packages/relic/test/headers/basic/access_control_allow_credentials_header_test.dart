@@ -31,11 +31,11 @@ void main() {
           getServerRequestHeaders(
             server: server,
             headers: {'access-control-allow-credentials': ''},
-            touchHeaders: (final h) => h.accessControlAllowCredentials,
+            touchHeaders: (h) => h.accessControlAllowCredentials,
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (final e) => e.message,
+              (e) => e.message,
               'message',
               contains('Value cannot be empty'),
             ),
@@ -52,11 +52,11 @@ void main() {
           getServerRequestHeaders(
             server: server,
             headers: {'access-control-allow-credentials': 'blabla'},
-            touchHeaders: (final h) => h.accessControlAllowCredentials,
+            touchHeaders: (h) => h.accessControlAllowCredentials,
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (final e) => e.message,
+              (e) => e.message,
               'message',
               contains('Invalid boolean'),
             ),
@@ -72,11 +72,11 @@ void main() {
         getServerRequestHeaders(
           server: server,
           headers: {'access-control-allow-credentials': 'false'},
-          touchHeaders: (final h) => h.accessControlAllowCredentials,
+          touchHeaders: (h) => h.accessControlAllowCredentials,
         ),
         throwsA(
           isA<BadRequestException>().having(
-            (final e) => e.message,
+            (e) => e.message,
             'message',
             contains('Must be true or null'),
           ),
@@ -104,7 +104,7 @@ void main() {
       final headers = await getServerRequestHeaders(
         server: server,
         headers: {'access-control-allow-credentials': 'true'},
-        touchHeaders: (final h) => h.accessControlAllowCredentials,
+        touchHeaders: (h) => h.accessControlAllowCredentials,
       );
 
       expect(headers.accessControlAllowCredentials, isTrue);
@@ -116,7 +116,7 @@ void main() {
         final headers = await getServerRequestHeaders(
           server: server,
           headers: {},
-          touchHeaders: (final h) => h.accessControlAllowCredentials,
+          touchHeaders: (h) => h.accessControlAllowCredentials,
         );
 
         expect(headers.accessControlAllowCredentials, isNull);
@@ -137,10 +137,18 @@ void main() {
               headers: {'access-control-allow-credentials': ''},
             );
 
-            final header = Headers.accessControlAllowCredentials[headers];
-            expect(header.valueOrNullIfInvalid, isNull);
-            expect(() => header.valueOrNull, throwsInvalidHeader);
-            expect(() => header.value, throwsInvalidHeader);
+            expect(
+              headers.tryGet(Headers.accessControlAllowCredentials),
+              isNull,
+            );
+            expect(
+              () => headers(Headers.accessControlAllowCredentials),
+              throwsInvalidHeader,
+            );
+            expect(
+              () => headers.get(Headers.accessControlAllowCredentials),
+              throwsInvalidHeader,
+            );
           });
         },
       );

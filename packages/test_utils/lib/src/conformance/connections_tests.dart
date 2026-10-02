@@ -7,9 +7,11 @@ import 'package:test/test.dart';
 import '../test_utils_base.dart';
 import 'conformance.dart';
 
+/// Holds every request well past the point where the test counts
+/// connections, so none has been answered and closed by then.
 Handler _delayedHandler() {
   return (req) async {
-    final delay = Platform.environment['CI'] != null ? 1000 : 100;
+    final delay = Platform.environment['CI'] != null ? 2000 : 500;
     await Future<void>.delayed(Duration(milliseconds: delay));
     return Response.ok();
   };

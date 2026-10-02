@@ -106,7 +106,7 @@ void main() {
 }
 
 class _MyAccessor<T extends Object>
-    extends ReadOnlyAccessor<T, String, String> {
+    extends FunctionAccessor<T, String, String> {
   const _MyAccessor(super.key, super.decode);
 }
 

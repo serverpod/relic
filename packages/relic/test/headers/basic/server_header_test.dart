@@ -23,11 +23,11 @@ void main() {
         getServerRequestHeaders(
           server: server,
           headers: {'server': ''},
-          touchHeaders: (final h) => h.server,
+          touchHeaders: (h) => h.server,
         ),
         throwsA(
           isA<BadRequestException>().having(
-            (final e) => e.message,
+            (e) => e.message,
             'message',
             contains('Value cannot be empty'),
           ),
@@ -66,7 +66,7 @@ void main() {
         final headers = await getServerRequestHeaders(
           server: server,
           headers: {'server': ' MyServer/1.0 '},
-          touchHeaders: (final h) => h.server,
+          touchHeaders: (h) => h.server,
         );
 
         expect(headers.server, equals('MyServer/1.0'));
@@ -79,7 +79,7 @@ void main() {
         final headers = await getServerRequestHeaders(
           server: server,
           headers: {},
-          touchHeaders: (final h) => h.server,
+          touchHeaders: (h) => h.server,
         );
 
         expect(headers.server, isNull);
@@ -104,7 +104,7 @@ void main() {
           headers: {'server': ''},
         );
 
-        expect(Headers.server[headers].valueOrNullIfInvalid, isNull);
+        expect(headers.tryGet(Headers.server), isNull);
         expect(() => headers.server, throwsInvalidHeader);
       });
     });

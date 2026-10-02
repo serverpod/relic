@@ -24,11 +24,11 @@ void main() {
           getServerRequestHeaders(
             server: server,
             headers: {'accept-encoding': ''},
-            touchHeaders: (final h) => h.acceptEncoding,
+            touchHeaders: (h) => h.acceptEncoding,
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (final e) => e.message,
+              (e) => e.message,
               'message',
               contains('Value cannot be empty'),
             ),
@@ -44,13 +44,11 @@ void main() {
         final headers = await getServerRequestHeaders(
           server: server,
           headers: {'accept-encoding': 'gzip;q=abc'},
-          touchHeaders: (final h) => h.acceptEncoding,
+          touchHeaders: (h) => h.acceptEncoding,
         );
 
         expect(
-          headers.acceptEncoding?.encodings
-              .map((final e) => e.quality)
-              .toList(),
+          headers.acceptEncoding?.encodings.map((e) => e.quality).toList(),
           equals([1.0]),
         );
       },
@@ -65,11 +63,11 @@ void main() {
           getServerRequestHeaders(
             server: server,
             headers: {'accept-encoding': '*, gzip'},
-            touchHeaders: (final h) => h.acceptEncoding,
+            touchHeaders: (h) => h.acceptEncoding,
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (final e) => e.message,
+              (e) => e.message,
               'message',
               contains('Wildcard (*) cannot be used with other values'),
             ),
@@ -85,11 +83,11 @@ void main() {
         getServerRequestHeaders(
           server: server,
           headers: {'accept-encoding': ';q=0.5'},
-          touchHeaders: (final h) => h.acceptEncoding,
+          touchHeaders: (h) => h.acceptEncoding,
         ),
         throwsA(
           isA<BadRequestException>().having(
-            (final e) => e.message,
+            (e) => e.message,
             'message',
             contains('Invalid encoding'),
           ),
@@ -115,13 +113,11 @@ void main() {
         final headers = await getServerRequestHeaders(
           server: server,
           headers: {'accept-encoding': 'gzip'},
-          touchHeaders: (final h) => h.acceptEncoding,
+          touchHeaders: (h) => h.acceptEncoding,
         );
 
         expect(
-          headers.acceptEncoding?.encodings
-              .map((final e) => e.encoding)
-              .toList(),
+          headers.acceptEncoding?.encodings.map((e) => e.encoding).toList(),
           equals(['gzip']),
         );
       },
@@ -132,11 +128,11 @@ void main() {
       final headers = await getServerRequestHeaders(
         server: server,
         headers: {'accept-encoding': 'gzip'},
-        touchHeaders: (final h) => h.acceptEncoding,
+        touchHeaders: (h) => h.acceptEncoding,
       );
 
       expect(
-        headers.acceptEncoding?.encodings.map((final e) => e.quality).toList(),
+        headers.acceptEncoding?.encodings.map((e) => e.quality).toList(),
         equals([1.0]),
       );
     });
@@ -146,11 +142,11 @@ void main() {
       final headers = await getServerRequestHeaders(
         server: server,
         headers: {'accept-encoding': 'gzip;q=0.5'},
-        touchHeaders: (final h) => h.acceptEncoding,
+        touchHeaders: (h) => h.acceptEncoding,
       );
 
       expect(
-        headers.acceptEncoding?.encodings.map((final e) => e.quality).toList(),
+        headers.acceptEncoding?.encodings.map((e) => e.quality).toList(),
         equals([0.5]),
       );
     });
@@ -162,13 +158,11 @@ void main() {
         final headers = await getServerRequestHeaders(
           server: server,
           headers: {'accept-encoding': 'GZip'},
-          touchHeaders: (final h) => h.acceptEncoding,
+          touchHeaders: (h) => h.acceptEncoding,
         );
 
         expect(
-          headers.acceptEncoding?.encodings
-              .map((final e) => e.encoding)
-              .toList(),
+          headers.acceptEncoding?.encodings.map((e) => e.encoding).toList(),
           equals(['gzip']),
         );
       },
@@ -181,7 +175,7 @@ void main() {
         final headers = await getServerRequestHeaders(
           server: server,
           headers: {'accept-encoding': '*'},
-          touchHeaders: (final h) => h.acceptEncoding,
+          touchHeaders: (h) => h.acceptEncoding,
         );
 
         expect(headers.acceptEncoding?.isWildcard, isTrue);
@@ -196,19 +190,15 @@ void main() {
         final headers = await getServerRequestHeaders(
           server: server,
           headers: {'accept-encoding': '*;q=0.5'},
-          touchHeaders: (final h) => h.acceptEncoding,
+          touchHeaders: (h) => h.acceptEncoding,
         );
 
         expect(
-          headers.acceptEncoding?.encodings
-              .map((final e) => e.encoding)
-              .toList(),
+          headers.acceptEncoding?.encodings.map((e) => e.encoding).toList(),
           equals(['*']),
         );
         expect(
-          headers.acceptEncoding?.encodings
-              .map((final e) => e.quality)
-              .toList(),
+          headers.acceptEncoding?.encodings.map((e) => e.quality).toList(),
           equals([0.5]),
         );
       },
@@ -220,19 +210,15 @@ void main() {
         final headers = await getServerRequestHeaders(
           server: server,
           headers: {},
-          touchHeaders: (final h) => h.acceptEncoding,
+          touchHeaders: (h) => h.acceptEncoding,
         );
 
         expect(
-          headers.acceptEncoding?.encodings
-              .map((final e) => e.encoding)
-              .toList(),
+          headers.acceptEncoding?.encodings.map((e) => e.encoding).toList(),
           equals(['gzip']),
         );
         expect(
-          headers.acceptEncoding?.encodings
-              .map((final e) => e.quality)
-              .toList(),
+          headers.acceptEncoding?.encodings.map((e) => e.quality).toList(),
           equals([1.0]),
         );
       },
@@ -243,13 +229,11 @@ void main() {
         final headers = await getServerRequestHeaders(
           server: server,
           headers: {'accept-encoding': 'gzip, deflate, br'},
-          touchHeaders: (final h) => h.acceptEncoding,
+          touchHeaders: (h) => h.acceptEncoding,
         );
 
         expect(
-          headers.acceptEncoding?.encodings
-              .map((final e) => e.encoding)
-              .toList(),
+          headers.acceptEncoding?.encodings.map((e) => e.encoding).toList(),
           equals(['gzip', 'deflate', 'br']),
         );
       });
@@ -260,13 +244,11 @@ void main() {
           final headers = await getServerRequestHeaders(
             server: server,
             headers: {'accept-encoding': 'gzip;q=1.0, deflate;q=0.5, br;q=0.8'},
-            touchHeaders: (final h) => h.acceptEncoding,
+            touchHeaders: (h) => h.acceptEncoding,
           );
 
           expect(
-            headers.acceptEncoding?.encodings
-                .map((final e) => e.encoding)
-                .toList(),
+            headers.acceptEncoding?.encodings.map((e) => e.encoding).toList(),
             equals(['gzip', 'deflate', 'br']),
           );
         },
@@ -278,13 +260,11 @@ void main() {
           final headers = await getServerRequestHeaders(
             server: server,
             headers: {'accept-encoding': 'gzip;q=1.0, deflate;q=0.5, br;q=0.8'},
-            touchHeaders: (final h) => h.acceptEncoding,
+            touchHeaders: (h) => h.acceptEncoding,
           );
 
           expect(
-            headers.acceptEncoding?.encodings
-                .map((final e) => e.quality)
-                .toList(),
+            headers.acceptEncoding?.encodings.map((e) => e.quality).toList(),
             equals([1.0, 0.5, 0.8]),
           );
         },
@@ -295,13 +275,11 @@ void main() {
         final headers = await getServerRequestHeaders(
           server: server,
           headers: {'accept-encoding': 'gzip, gzip, deflate, br'},
-          touchHeaders: (final h) => h.acceptEncoding,
+          touchHeaders: (h) => h.acceptEncoding,
         );
 
         expect(
-          headers.acceptEncoding?.encodings
-              .map((final e) => e.encoding)
-              .toList(),
+          headers.acceptEncoding?.encodings.map((e) => e.encoding).toList(),
           equals(['gzip', 'deflate', 'br']),
         );
       });
@@ -312,13 +290,11 @@ void main() {
           final headers = await getServerRequestHeaders(
             server: server,
             headers: {'accept-encoding': ' gzip , deflate , br '},
-            touchHeaders: (final h) => h.acceptEncoding,
+            touchHeaders: (h) => h.acceptEncoding,
           );
 
           expect(
-            headers.acceptEncoding?.encodings
-                .map((final e) => e.encoding)
-                .toList(),
+            headers.acceptEncoding?.encodings.map((e) => e.encoding).toList(),
             equals(['gzip', 'deflate', 'br']),
           );
         },
@@ -343,7 +319,7 @@ void main() {
           headers: {'accept-encoding': ''},
         );
 
-        expect(Headers.acceptEncoding[headers].valueOrNullIfInvalid, isNull);
+        expect(headers.tryGet(Headers.acceptEncoding), isNull);
         expect(() => headers.acceptEncoding, throwsInvalidHeader);
       });
     });
@@ -361,9 +337,7 @@ void main() {
             );
 
             expect(
-              headers.acceptEncoding?.encodings
-                  .map((final e) => e.quality)
-                  .toList(),
+              headers.acceptEncoding?.encodings.map((e) => e.quality).toList(),
               equals([1.0, 1.0, 1.0]),
             );
           },

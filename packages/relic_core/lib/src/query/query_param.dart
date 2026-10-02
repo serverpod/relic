@@ -18,7 +18,7 @@ typedef RawQueryParam = String;
 /// }
 /// ```
 class QueryParam<T extends Object>
-    extends ReadOnlyAccessor<T, String, RawQueryParam> {
+    extends FunctionAccessor<T, String, RawQueryParam> {
   const QueryParam(super.key, super.decode);
 }
 
@@ -63,7 +63,7 @@ extension QueryParametersRequestEx on Request {
 /// }
 /// ```
 final class NumQueryParam extends QueryParam<num> {
-  const NumQueryParam(final String key) : super(key, num.parse);
+  const NumQueryParam(String key) : super(key, num.parse);
 }
 
 /// A query parameter accessor that parses values as [int].
@@ -79,7 +79,7 @@ final class NumQueryParam extends QueryParam<num> {
 /// }
 /// ```
 final class IntQueryParam extends QueryParam<int> {
-  const IntQueryParam(final String key) : super(key, int.parse);
+  const IntQueryParam(String key) : super(key, int.parse);
 }
 
 /// A query parameter accessor that parses values as [double].
@@ -95,5 +95,5 @@ final class IntQueryParam extends QueryParam<int> {
 /// }
 /// ```
 final class DoubleQueryParam extends QueryParam<double> {
-  const DoubleQueryParam(final String key) : super(key, double.parse);
+  const DoubleQueryParam(String key) : super(key, double.parse);
 }

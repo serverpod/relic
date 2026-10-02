@@ -4,15 +4,17 @@ import 'dart:io' as io;
 import 'package:relic_core/relic_core.dart';
 
 /// Creates a new [Request] from an [io.HttpRequest].
+///
+/// Throws [FormatException] for a target that does not decode. The core
+/// answers that with 400 before any handler runs.
 Request fromHttpRequest(io.HttpRequest request) {
+  final url = request.requestedUri;
+  RequestTarget.fromUri(url).validate();
   return RequestInternal.create(
     Method.parse(request.method),
-    request.requestedUri,
+    url,
     request,
-    protocol: switch (request.protocolVersion) {
-      '1.0' => HttpProtocol.http10,
-      _ => HttpProtocol.http11,
-    },
+    protocol: httpProtocolOf(request),
     headers: headersFromHttpRequest(request),
     body: bodyFromHttpRequest(request),
     connectionInfo: connectionInfoFromHttpConnectionInfo(
@@ -20,6 +22,13 @@ Request fromHttpRequest(io.HttpRequest request) {
     ),
   );
 }
+
+/// The HTTP version [request] arrived with.
+HttpProtocol httpProtocolOf(io.HttpRequest request) =>
+    switch (request.protocolVersion) {
+      '1.0' => HttpProtocol.http10,
+      _ => HttpProtocol.http11,
+    };
 
 ConnectionInfo connectionInfoFromHttpConnectionInfo(
   io.HttpConnectionInfo? info,
@@ -35,9 +44,11 @@ ConnectionInfo connectionInfoFromHttpConnectionInfo(
 }
 
 Headers headersFromHttpRequest(io.HttpRequest request) {
-  return Headers.build((mh) {
-    request.headers.forEach((k, v) => mh[k] = v);
-  });
+  final store = MapHeaderStore();
+  request.headers.forEach(
+    (name, values) => store.set(HeaderName.lookup(name), values),
+  );
+  return Headers.fromStore(store);
 }
 
 /// Creates a body from a [HttpRequest].

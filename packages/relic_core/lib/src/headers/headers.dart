@@ -1,22 +1,14 @@
-import 'dart:collection';
-
-import 'package:http_parser/http_parser.dart';
-
 import '../../relic_core.dart';
 
 part 'mutable_headers.dart';
 
-typedef _BackingStore = CaseInsensitiveMap<Iterable<String>>;
+/// Typed reads over header values, shared by [Headers] and [MutableHeaders].
+typedef HeaderValues = AccessorStateMixin<HeaderName, Iterable<String>>;
 
-class HeadersBase extends UnmodifiableMapView<String, Iterable<String>> {
-  final _BackingStore _backing;
-  HeadersBase._(this._backing) : super(_backing);
-}
-
-/// [Headers] is a case-insensitive, unmodifiable map that stores headers.
+/// [Headers] is an immutable, case-insensitive view over a [HeaderStore].
 ///
-/// Headers provide both raw access via map operations and type-safe accessors
-/// for standard HTTP headers.
+/// Read a header through its accessor, the way path, query and form
+/// parameters are read, or by name for a header Relic has no accessor for.
 ///
 /// ## Accessing Headers
 ///
@@ -24,9 +16,14 @@ class HeadersBase extends UnmodifiableMapView<String, Iterable<String>> {
 /// router.get('/info', (req) {
 ///   final headers = req.headers;
 ///
-///   // Type-safe accessors
+///   // Typed accessors, as getters
 ///   final userAgent = headers.userAgent;
 ///   final contentLength = headers.contentLength;
+///
+///   // The same through accessors. headers(...) is null when absent.
+///   final length = headers(Headers.contentLength);
+///   // get throws when absent.
+///   final host = headers.get(Headers.host);
 ///
 ///   // Content-Type lives on the body
 ///   final mimeType = req.mimeType;
@@ -75,14 +72,22 @@ class HeadersBase extends UnmodifiableMapView<String, Iterable<String>> {
 /// headers.setCookie;     // SetCookieHeader?
 /// headers.location;      // Uri?
 /// ```
-class Headers extends HeadersBase {
+final class Headers extends HeaderStore
+    with AccessorStateMixin<HeaderName, Iterable<String>>, _StoreReads {
+  @override
+  final HeaderStore _store;
+
+  Headers._(this._store);
+
+  /// A view over [store], or [store] itself when it already is one.
+  factory Headers.fromStore(final HeaderStore store) =>
+      store is Headers ? store : Headers._(store);
+
   factory Headers.fromMap(final Map<String, Iterable<String>>? values) {
     if (values == null || values.isEmpty) {
       return _emptyHeaders;
-    } else if (values is Headers) {
-      return values;
     } else {
-      return Headers._fromEntries(values.entries);
+      return Headers._(MapHeaderStore.from(values));
     }
   }
 
@@ -91,333 +96,311 @@ class Headers extends HeadersBase {
   factory Headers.build(final void Function(MutableHeaders) update) =>
       Headers.empty().transform(update);
 
-  // cannot be made const before: <insert link to dart CL
-  Headers._empty() : this._fromEntries(const {});
-
-  Headers._fromEntries(
-    final Iterable<MapEntry<String, Iterable<String>>> entries,
-  ) : this._(
-        CaseInsensitiveMap.from(
-          Map.fromEntries(
-            entries
-                .where((final e) => e.value.isNotEmpty)
-                .map((final e) => MapEntry(e.key, List.unmodifiable(e.value))),
-          ),
-        ),
-      );
-
-  Headers._(super.backing) : super._();
+  /// The store behind this view, for an adapter that knows what to do with
+  /// its own kind.
+  HeaderStore get store => _store;
 
   Headers transform(final void Function(MutableHeaders) update) {
-    final mutable = MutableHeaders._from(this);
+    final mutable = MutableHeaders._(_store.toMutable())..adoptCache(this);
     update(mutable);
-    return mutable._freeze();
+    return Headers._(mutable._store)..adoptCache(mutable);
   }
 
+  @override
+  String toString() => 'Headers(${toMap()})';
+
   /// Date-related headers
-  static const date = HeaderAccessor(Headers.dateHeader, dateTimeHeaderCodec);
+  static const date = HeaderAccessor(HeaderName.date, dateTimeHeaderCodec);
 
   static const expires = HeaderAccessor(
-    Headers.expiresHeader,
+    HeaderName.expires,
     dateTimeHeaderCodec,
   );
 
   static const lastModified = HeaderAccessor(
-    Headers.lastModifiedHeader,
+    HeaderName.lastModified,
     dateTimeHeaderCodec,
   );
 
   static const ifModifiedSince = HeaderAccessor(
-    Headers.ifModifiedSinceHeader,
+    HeaderName.ifModifiedSince,
     dateTimeHeaderCodec,
   );
 
   static const ifUnmodifiedSince = HeaderAccessor(
-    Headers.ifUnmodifiedSinceHeader,
+    HeaderName.ifUnmodifiedSince,
     dateTimeHeaderCodec,
   );
 
   /// General Headers
-  static const origin = HeaderAccessor(Headers.originHeader, uriHeaderCodec);
+  static const origin = HeaderAccessor(HeaderName.origin, uriHeaderCodec);
 
-  static const server = HeaderAccessor(Headers.serverHeader, stringHeaderCodec);
+  static const server = HeaderAccessor(HeaderName.server, stringHeaderCodec);
 
-  static const via = HeaderAccessor(Headers.viaHeader, stringListCodec);
+  static const via = HeaderAccessor(HeaderName.via, stringListCodec);
 
   /// Request Headers
-  static const from = HeaderAccessor(Headers.fromHeader, FromHeader.codec);
+  static const from = HeaderAccessor(HeaderName.from, FromHeader.codec);
 
-  static const host = HeaderAccessor(Headers.hostHeader, HostHeader.codec);
+  static const host = HeaderAccessor(HeaderName.host, HostHeader.codec);
 
   static const acceptEncoding = HeaderAccessor(
-    Headers.acceptEncodingHeader,
+    HeaderName.acceptEncoding,
     AcceptEncodingHeader.codec,
   );
 
   static const acceptLanguage = HeaderAccessor(
-    Headers.acceptLanguageHeader,
+    HeaderName.acceptLanguage,
     AcceptLanguageHeader.codec,
   );
 
   static const accessControlRequestHeaders = HeaderAccessor(
-    Headers.accessControlRequestHeadersHeader,
+    HeaderName.accessControlRequestHeaders,
     stringListCodec,
   );
 
   static const accessControlRequestMethod = HeaderAccessor(
-    Headers.accessControlRequestMethodHeader,
+    HeaderName.accessControlRequestMethod,
     methodCodec,
   );
 
-  static const age = HeaderAccessor(Headers.ageHeader, positiveIntHeaderCodec);
+  static const age = HeaderAccessor(HeaderName.age, positiveIntHeaderCodec);
 
   static const authorization = HeaderAccessor(
-    Headers.authorizationHeader,
+    HeaderName.authorization,
     AuthorizationHeader.codec,
   );
 
   static const connection = HeaderAccessor(
-    Headers.connectionHeader,
+    HeaderName.connection,
     ConnectionHeader.codec,
   );
 
   static const contentLength = HeaderAccessor(
-    Headers.contentLengthHeader,
+    HeaderName.contentLength,
     intHeaderCodec,
   );
 
-  static const expect = HeaderAccessor(
-    Headers.expectHeader,
-    ExpectHeader.codec,
-  );
+  static const expect = HeaderAccessor(HeaderName.expect, ExpectHeader.codec);
 
   static const ifMatch = HeaderAccessor(
-    Headers.ifMatchHeader,
+    HeaderName.ifMatch,
     IfMatchHeader.codec,
   );
 
   static const ifNoneMatch = HeaderAccessor(
-    Headers.ifNoneMatchHeader,
+    HeaderName.ifNoneMatch,
     IfNoneMatchHeader.codec,
   );
 
   static const ifRange = HeaderAccessor(
-    Headers.ifRangeHeader,
+    HeaderName.ifRange,
     IfRangeHeader.codec,
   );
 
   static const maxForwards = HeaderAccessor(
-    Headers.maxForwardsHeader,
+    HeaderName.maxForwards,
     positiveIntHeaderCodec,
   );
 
   static const proxyAuthorization = HeaderAccessor(
-    Headers.proxyAuthorizationHeader,
+    HeaderName.proxyAuthorization,
     AuthorizationHeader.codec,
   );
 
-  static const range = HeaderAccessor(Headers.rangeHeader, RangeHeader.codec);
+  static const range = HeaderAccessor(HeaderName.range, RangeHeader.codec);
 
-  static const referer = HeaderAccessor(Headers.refererHeader, uriHeaderCodec);
+  static const referer = HeaderAccessor(HeaderName.referer, uriHeaderCodec);
 
   static const userAgent = HeaderAccessor(
-    Headers.userAgentHeader,
+    HeaderName.userAgent,
     stringHeaderCodec,
   );
 
-  static const te = HeaderAccessor(Headers.teHeader, TEHeader.codec);
+  static const te = HeaderAccessor(HeaderName.te, TEHeader.codec);
 
   static const upgrade = HeaderAccessor(
-    Headers.upgradeHeader,
+    HeaderName.upgrade,
     UpgradeHeader.codec,
   );
 
   /// Response Headers
-  static const location = HeaderAccessor(
-    Headers.locationHeader,
-    uriHeaderCodec,
-  );
+  static const location = HeaderAccessor(HeaderName.location, uriHeaderCodec);
 
   static const xPoweredBy = HeaderAccessor(
-    Headers.xPoweredByHeader,
+    HeaderName.xPoweredBy,
     stringHeaderCodec,
   );
 
   static const accessControlAllowOrigin = HeaderAccessor(
-    Headers.accessControlAllowOriginHeader,
+    HeaderName.accessControlAllowOrigin,
     AccessControlAllowOriginHeader.codec,
   );
 
   static const accessControlExposeHeaders = HeaderAccessor(
-    Headers.accessControlExposeHeadersHeader,
+    HeaderName.accessControlExposeHeaders,
     AccessControlExposeHeadersHeader.codec,
   );
 
   static const accessControlMaxAge = HeaderAccessor(
-    Headers.accessControlMaxAgeHeader,
+    HeaderName.accessControlMaxAge,
     intHeaderCodec,
   );
 
   static const allow = HeaderAccessor(
-    Headers.allowHeader,
+    HeaderName.allow,
     HeaderCodec(parseMethodSet, encodeMethodList),
   );
 
   static const cacheControl = HeaderAccessor(
-    Headers.cacheControlHeader,
+    HeaderName.cacheControl,
     CacheControlHeader.codec,
   );
 
   static const contentEncoding = HeaderAccessor(
-    Headers.contentEncodingHeader,
+    HeaderName.contentEncoding,
     ContentEncodingHeader.codec,
   );
 
   static const contentLanguage = HeaderAccessor(
-    Headers.contentLanguageHeader,
+    HeaderName.contentLanguage,
     ContentLanguageHeader.codec,
   );
 
   static const contentLocation = HeaderAccessor(
-    Headers.contentLocationHeader,
+    HeaderName.contentLocation,
     uriHeaderCodec,
   );
 
   static const contentRange = HeaderAccessor(
-    Headers.contentRangeHeader,
+    HeaderName.contentRange,
     ContentRangeHeader.codec,
   );
 
-  static const etag = HeaderAccessor(Headers.etagHeader, ETagHeader.codec);
+  static const etag = HeaderAccessor(HeaderName.etag, ETagHeader.codec);
 
   static const proxyAuthenticate = HeaderAccessor(
-    Headers.proxyAuthenticateHeader,
+    HeaderName.proxyAuthenticate,
     AuthenticationHeader.codec,
   );
 
   static const retryAfter = HeaderAccessor(
-    Headers.retryAfterHeader,
+    HeaderName.retryAfter,
     RetryAfterHeader.codec,
   );
 
-  static const trailer = HeaderAccessor(Headers.trailerHeader, stringListCodec);
+  static const trailer = HeaderAccessor(HeaderName.trailer, stringListCodec);
 
-  static const vary = HeaderAccessor(Headers.varyHeader, VaryHeader.codec);
+  static const vary = HeaderAccessor(HeaderName.vary, VaryHeader.codec);
 
   static const wwwAuthenticate = HeaderAccessor(
-    Headers.wwwAuthenticateHeader,
+    HeaderName.wwwAuthenticate,
     AuthenticationHeader.codec,
   );
 
   static const contentDisposition = HeaderAccessor(
-    Headers.contentDispositionHeader,
+    HeaderName.contentDisposition,
     ContentDispositionHeader.codec,
   );
 
   /// Common Headers (Used in Both Requests and Responses)
-  static const accept = HeaderAccessor(
-    Headers.acceptHeader,
-    AcceptHeader.codec,
-  );
+  static const accept = HeaderAccessor(HeaderName.accept, AcceptHeader.codec);
 
   static const acceptRanges = HeaderAccessor(
-    Headers.acceptRangesHeader,
+    HeaderName.acceptRanges,
     AcceptRangesHeader.codec,
   );
 
   static const transferEncoding = HeaderAccessor(
-    Headers.transferEncodingHeader,
+    HeaderName.transferEncoding,
     TransferEncodingHeader.codec,
   );
 
-  static const cookie = HeaderAccessor(
-    Headers.cookieHeader,
-    CookieHeader.codec,
-  );
+  static const cookie = HeaderAccessor(HeaderName.cookie, CookieHeader.codec);
 
   static const setCookie = HeaderAccessor(
-    Headers.setCookieHeader,
+    HeaderName.setCookie,
     SetCookieHeader.codec,
   );
 
   /// Security and Modern Headers
   static const strictTransportSecurity = HeaderAccessor(
-    Headers.strictTransportSecurityHeader,
+    HeaderName.strictTransportSecurity,
     StrictTransportSecurityHeader.codec,
   );
 
   static const contentSecurityPolicy = HeaderAccessor(
-    Headers.contentSecurityPolicyHeader,
+    HeaderName.contentSecurityPolicy,
     ContentSecurityPolicyHeader.codec,
   );
 
   static const referrerPolicy = HeaderAccessor(
-    Headers.referrerPolicyHeader,
+    HeaderName.referrerPolicy,
     ReferrerPolicyHeader.codec,
   );
 
   static const permissionsPolicy = HeaderAccessor(
-    Headers.permissionsPolicyHeader,
+    HeaderName.permissionsPolicy,
     PermissionsPolicyHeader.codec,
   );
 
   static const accessControlAllowCredentials = HeaderAccessor(
-    Headers.accessControlAllowCredentialsHeader,
+    HeaderName.accessControlAllowCredentials,
     positiveBoolHeaderCodec,
   );
 
   static const accessControlAllowMethods = HeaderAccessor(
-    Headers.accessControlAllowMethodsHeader,
+    HeaderName.accessControlAllowMethods,
     AccessControlAllowMethodsHeader.codec,
   );
 
   static const accessControlAllowHeaders = HeaderAccessor(
-    Headers.accessControlAllowHeadersHeader,
+    HeaderName.accessControlAllowHeaders,
     AccessControlAllowHeadersHeader.codec,
   );
 
   static const clearSiteData = HeaderAccessor(
-    Headers.clearSiteDataHeader,
+    HeaderName.clearSiteData,
     ClearSiteDataHeader.codec,
   );
 
   static const secFetchDest = HeaderAccessor(
-    Headers.secFetchDestHeader,
+    HeaderName.secFetchDest,
     SecFetchDestHeader.codec,
   );
 
   static const secFetchMode = HeaderAccessor(
-    Headers.secFetchModeHeader,
+    HeaderName.secFetchMode,
     SecFetchModeHeader.codec,
   );
 
   static const secFetchSite = HeaderAccessor(
-    Headers.secFetchSiteHeader,
+    HeaderName.secFetchSite,
     SecFetchSiteHeader.codec,
   );
 
   static const forwarded = HeaderAccessor(
-    Headers.forwardedHeader,
+    HeaderName.forwarded,
     ForwardedHeader.codec,
   );
 
   static const xForwardedFor = HeaderAccessor(
-    Headers.xForwardedForHeader,
+    HeaderName.xForwardedFor,
     XForwardedForHeader.codec,
   );
 
   static const crossOriginResourcePolicy = HeaderAccessor(
-    Headers.crossOriginResourcePolicyHeader,
+    HeaderName.crossOriginResourcePolicy,
     CrossOriginResourcePolicyHeader.codec,
   );
 
   static const crossOriginEmbedderPolicy = HeaderAccessor(
-    Headers.crossOriginEmbedderPolicyHeader,
+    HeaderName.crossOriginEmbedderPolicy,
     CrossOriginEmbedderPolicyHeader.codec,
   );
 
   static const crossOriginOpenerPolicy = HeaderAccessor(
-    Headers.crossOriginOpenerPolicyHeader,
+    HeaderName.crossOriginOpenerPolicy,
     CrossOriginOpenerPolicyHeader.codec,
   );
 
@@ -585,4 +568,128 @@ class Headers extends HeadersBase {
   static const crossOriginOpenerPolicyHeader = 'cross-origin-opener-policy';
 }
 
-final _emptyHeaders = Headers._empty();
+/// The read side [Headers] and [MutableHeaders] share.
+///
+/// It delegates the [HeaderStore] members to the store behind the view,
+/// and its typed reads decode from the wire bytes when the codec can.
+base mixin _StoreReads on HeaderStore, HeaderValues {
+  HeaderStore get _store;
+
+  @override
+  Iterable<HeaderName> get names => _store.names;
+
+  @override
+  Iterable<String> values(final HeaderName name) => _store.values(name);
+
+  @override
+  String? value(final HeaderName name) => _store.value(name);
+
+  @override
+  bool contains(final HeaderName name) => _store.contains(name);
+
+  @override
+  int get fieldCount => _store.fieldCount;
+
+  @override
+  void forEach(final void Function(HeaderName name, String value) visit) =>
+      _store.forEach(visit);
+
+  @override
+  MutableHeaderStore toMutable() => _store.toMutable();
+
+  @override
+  Iterable<String>? lookup(final HeaderName key) {
+    final found = _store.values(key);
+    return found.isEmpty ? null : found;
+  }
+
+  /// The raw values for [key], a [HeaderName], a name as text, or an
+  /// accessor.
+  ///
+  /// Null when absent, or when the text is not a header name at all.
+  @override
+  Iterable<String>? operator [](final Object key) => _lookupAny(this, key);
+
+  /// Decodes from the wire bytes when the accessor's codec can and the store
+  /// is a [ByteHeaderSource], else from the text.
+  @override
+  T? call<T extends Object>(
+    final ReadOnlyAccessor<T, HeaderName, Iterable<String>> accessor,
+  ) {
+    if (accessor is HeaderAccessor<T>) {
+      final codec = accessor.codec;
+      // Typed as Object so the is-test promotes. HeaderStore does not
+      // implement ByteHeaderSource, a store that keeps its bytes does.
+      final Object store = _store;
+      if (codec.decodeBytes != null && store is ByteHeaderSource) {
+        final bytes = store.rawValue(accessor.key);
+        if (bytes != null) {
+          final value = decodeCached<Object>(
+            accessor,
+            bytes,
+            () => accessor.decodeBytes(bytes) ?? _undecoded,
+          );
+          if (!identical(value, _undecoded)) return value as T;
+        }
+      }
+      if (codec.isSingle) {
+        // The first value alone, so a lazy store decodes one field and
+        // builds no list of every value for the name.
+        final first = _store.value(accessor.key);
+        if (first == null) return null;
+        return decodeCached(accessor, first, () => accessor.decode([first]));
+      }
+    }
+    return super.call(accessor);
+  }
+
+  /// The decoded value for [accessor].
+  ///
+  /// Throws [MissingHeaderException] when absent and
+  /// [InvalidHeaderException] when it does not decode.
+  @override
+  T get<T extends Object>(
+    final ReadOnlyAccessor<T, HeaderName, Iterable<String>> accessor,
+  ) =>
+      call(accessor) ??
+      (throw MissingHeaderException('', headerType: accessor.key.lower));
+
+  /// The fields as a map from lowercase name to values.
+  Map<String, List<String>> toMap() => {
+    for (final name in names) name.lower: values(name).toList(),
+  };
+}
+
+/// The Map view the previous [Headers] had, for code that iterates it.
+extension HeadersEntries on Headers {
+  /// Every field as a map entry from lowercase name to values.
+  @Deprecated('Use names and values, or forEach')
+  Iterable<MapEntry<String, Iterable<String>>> get entries => [
+    for (final name in names) MapEntry(name.lower, values(name)),
+  ];
+}
+
+Iterable<String>? _lookupAny(final HeaderValues headers, final Object key) {
+  switch (key) {
+    case final HeaderName name:
+      return headers.lookup(name);
+    case final ReadOnlyAccessor<dynamic, HeaderName, Iterable<String>> a:
+      return headers.lookup(a.key);
+    case final String text:
+      final HeaderName name;
+      try {
+        name = HeaderName.lookup(text);
+      } on FormatException {
+        return null;
+      }
+      return headers.lookup(name);
+    default:
+      throw ArgumentError.value(key, 'key', 'Not a header name');
+  }
+}
+
+final _emptyHeaders = Headers._(MapHeaderStore());
+
+/// The cached result of a byte decode the codec declined, so the text path
+/// runs and the decline is remembered.
+final _undecoded = Object();

@@ -27,7 +27,7 @@ void main() {
       expect(
         getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.connection,
+          touchHeaders: (h) => h.connection,
           headers: {'connection': 'bad directive'},
         ),
         throwsA(isA<BadRequestException>()),
@@ -38,12 +38,12 @@ void main() {
         'then it parses (open token set)', () async {
       final headers = await getServerRequestHeaders(
         server: server,
-        touchHeaders: (final h) => h.connection,
+        touchHeaders: (h) => h.connection,
         headers: {'connection': 'TE'},
       );
 
       expect(
-        headers.connection?.directives.map((final d) => d.value),
+        headers.connection?.directives.map((d) => d.value),
         equals(['te']),
       );
     });
@@ -65,12 +65,12 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.connection,
+          touchHeaders: (h) => h.connection,
           headers: {'connection': 'keep-alive, upgrade'},
         );
 
         expect(
-          headers.connection?.directives.map((final d) => d.value),
+          headers.connection?.directives.map((d) => d.value),
           containsAll(['keep-alive', 'upgrade']),
         );
       },
@@ -80,12 +80,12 @@ void main() {
         'they should be parsed correctly and remove duplicates', () async {
       final headers = await getServerRequestHeaders(
         server: server,
-        touchHeaders: (final h) => h.connection,
+        touchHeaders: (h) => h.connection,
         headers: {'connection': 'keep-alive, upgrade, keep-alive'},
       );
 
       expect(
-        headers.connection?.directives.map((final d) => d.value),
+        headers.connection?.directives.map((d) => d.value),
         containsAll(['keep-alive', 'upgrade']),
       );
     });
@@ -95,7 +95,7 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.connection,
+          touchHeaders: (h) => h.connection,
           headers: {'connection': 'keep-alive'},
         );
 
@@ -108,7 +108,7 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.connection,
+          touchHeaders: (h) => h.connection,
           headers: {'connection': 'close'},
         );
 
@@ -134,7 +134,7 @@ void main() {
           headers: {'connection': 'bad directive'},
         );
 
-        expect(Headers.connection[headers].valueOrNullIfInvalid, isNull);
+        expect(headers.tryGet(Headers.connection), isNull);
         expect(() => headers.connection, throwsInvalidHeader);
       });
     });

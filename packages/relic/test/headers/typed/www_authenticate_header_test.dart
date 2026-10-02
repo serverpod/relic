@@ -22,12 +22,12 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (final h) => h.wwwAuthenticate,
+            touchHeaders: (h) => h.wwwAuthenticate,
             headers: {'www-authenticate': ''},
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (final e) => e.message,
+              (e) => e.message,
               'message',
               contains('Value cannot be empty'),
             ),
@@ -52,7 +52,7 @@ void main() {
       test('with realm parameter should parse scheme correctly', () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.wwwAuthenticate,
+          touchHeaders: (h) => h.wwwAuthenticate,
           headers: {'www-authenticate': 'Basic realm="Protected Area"'},
         );
 
@@ -62,13 +62,13 @@ void main() {
       test('with realm parameter should parse realm correctly', () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.wwwAuthenticate,
+          touchHeaders: (h) => h.wwwAuthenticate,
           headers: {'www-authenticate': 'Basic realm="Protected Area"'},
         );
 
         expect(
           headers.wwwAuthenticate?.parameters
-              .firstWhere((final p) => p.key == 'realm')
+              .firstWhere((p) => p.key == 'realm')
               .value,
           equals('Protected Area'),
         );
@@ -101,7 +101,7 @@ void main() {
 
         expect(
           headers.wwwAuthenticate?.parameters
-              .firstWhere((final p) => p.key == 'realm')
+              .firstWhere((p) => p.key == 'realm')
               .value,
           equals('Protected Area'),
         );
@@ -119,7 +119,7 @@ void main() {
 
         expect(
           headers.wwwAuthenticate?.parameters
-              .firstWhere((final p) => p.key == 'qop')
+              .firstWhere((p) => p.key == 'qop')
               .value,
           equals('auth'),
         );
@@ -137,7 +137,7 @@ void main() {
 
         expect(
           headers.wwwAuthenticate?.parameters
-              .firstWhere((final p) => p.key == 'nonce')
+              .firstWhere((p) => p.key == 'nonce')
               .value,
           equals('dcd98b7102dd2f0e8b11d0f600bfb0c093'),
         );
@@ -155,7 +155,7 @@ void main() {
 
         expect(
           headers.wwwAuthenticate?.parameters
-              .firstWhere((final p) => p.key == 'opaque')
+              .firstWhere((p) => p.key == 'opaque')
               .value,
           equals('5ccc069c403ebaf9f0171e9517f40e41'),
         );
@@ -166,7 +166,7 @@ void main() {
       test('with realm parameter should parse scheme correctly', () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.wwwAuthenticate,
+          touchHeaders: (h) => h.wwwAuthenticate,
           headers: {'www-authenticate': 'Bearer realm="Protected API"'},
         );
 
@@ -185,7 +185,7 @@ void main() {
 
         expect(
           headers.wwwAuthenticate?.parameters
-              .firstWhere((final p) => p.key == 'error')
+              .firstWhere((p) => p.key == 'error')
               .value,
           equals('invalid_token'),
         );
@@ -197,7 +197,7 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.wwwAuthenticate,
+          touchHeaders: (h) => h.wwwAuthenticate,
           headers: {},
         );
 
@@ -224,7 +224,7 @@ void main() {
           headers: {'www-authenticate': 'InvalidHeader'},
         );
 
-        expect(Headers.wwwAuthenticate[headers].valueOrNullIfInvalid, isNull);
+        expect(headers.tryGet(Headers.wwwAuthenticate), isNull);
         expect(() => headers.wwwAuthenticate, throwsInvalidHeader);
       },
     );

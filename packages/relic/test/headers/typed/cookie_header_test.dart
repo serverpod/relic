@@ -21,12 +21,12 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (final h) => h.cookie,
+            touchHeaders: (h) => h.cookie,
             headers: {'cookie': ''},
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (final e) => e.message,
+              (e) => e.message,
               'message',
               contains('Value cannot be empty'),
             ),
@@ -45,16 +45,16 @@ void main() {
         // same header unreadable.
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.cookie,
+          touchHeaders: (h) => h.cookie,
           headers: {'cookie': 'sessionId=abc123; invalidCookie'},
         );
 
         expect(
-          headers.cookie?.cookies.map((final c) => c.name).toList(),
+          headers.cookie?.cookies.map((c) => c.name).toList(),
           equals(['sessionId']),
         );
         expect(
-          headers.cookie?.cookies.map((final c) => c.value).toList(),
+          headers.cookie?.cookies.map((c) => c.value).toList(),
           equals(['abc123']),
         );
       },
@@ -68,16 +68,16 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.cookie,
+          touchHeaders: (h) => h.cookie,
           headers: {'cookie': 'invalid name=abc123; userId=42'},
         );
 
         expect(
-          headers.cookie?.cookies.map((final c) => c.name).toList(),
+          headers.cookie?.cookies.map((c) => c.name).toList(),
           equals(['userId']),
         );
         expect(
-          headers.cookie?.cookies.map((final c) => c.value).toList(),
+          headers.cookie?.cookies.map((c) => c.value).toList(),
           equals(['42']),
         );
       },
@@ -91,16 +91,16 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.cookie,
+          touchHeaders: (h) => h.cookie,
           headers: {'cookie': 'sessionId=abc123; userId=42\x7F'},
         );
 
         expect(
-          headers.cookie?.cookies.map((final c) => c.name).toList(),
+          headers.cookie?.cookies.map((c) => c.name).toList(),
           equals(['sessionId']),
         );
         expect(
-          headers.cookie?.cookies.map((final c) => c.value).toList(),
+          headers.cookie?.cookies.map((c) => c.value).toList(),
           equals(['abc123']),
         );
       },
@@ -115,12 +115,12 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (final h) => h.cookie,
+            touchHeaders: (h) => h.cookie,
             headers: {'cookie': 'invalidCookie; another invalid'},
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (final e) => e.message,
+              (e) => e.message,
               'message',
               contains('No valid cookies in Cookie header'),
             ),
@@ -143,7 +143,7 @@ void main() {
         );
 
         expect(headers, isNotNull);
-        expect(Headers.cookie[headers].valueOrNullIfInvalid, isNull);
+        expect(headers.tryGet(Headers.cookie), isNull);
         expect(() => headers.cookie, throwsInvalidHeader);
       },
     );
@@ -156,16 +156,16 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.cookie,
+          touchHeaders: (h) => h.cookie,
           headers: {'cookie': '=abc123; userId=42'},
         );
 
         expect(
-          headers.cookie?.cookies.map((final c) => c.name).toList(),
+          headers.cookie?.cookies.map((c) => c.name).toList(),
           equals(['userId']),
         );
         expect(
-          headers.cookie?.cookies.map((final c) => c.value).toList(),
+          headers.cookie?.cookies.map((c) => c.value).toList(),
           equals(['42']),
         );
       },
@@ -177,16 +177,16 @@ void main() {
         'then the cookies are parsed in order', () async {
       final headers = await getServerRequestHeaders(
         server: server,
-        touchHeaders: (final h) => h.cookie,
+        touchHeaders: (h) => h.cookie,
         headers: {'cookie': 'sessionId=abc123; userId=42'},
       );
 
       expect(
-        headers.cookie?.cookies.map((final c) => c.name).toList(),
+        headers.cookie?.cookies.map((c) => c.name).toList(),
         equals(['sessionId', 'userId']),
       );
       expect(
-        headers.cookie?.cookies.map((final c) => c.value).toList(),
+        headers.cookie?.cookies.map((c) => c.value).toList(),
         equals(['abc123', '42']),
       );
     });
@@ -204,16 +204,16 @@ void main() {
           // server. The raw bytes round-trip through the parser unchanged.
           final headers = await getServerRequestHeaders(
             server: server,
-            touchHeaders: (final h) => h.cookie,
+            touchHeaders: (h) => h.cookie,
             headers: {'cookie': 'sessionId=abc%20123; userId=42'},
           );
 
           expect(
-            headers.cookie?.cookies.map((final c) => c.name).toList(),
+            headers.cookie?.cookies.map((c) => c.name).toList(),
             equals(['sessionId', 'userId']),
           );
           expect(
-            headers.cookie?.cookies.map((final c) => c.value).toList(),
+            headers.cookie?.cookies.map((c) => c.value).toList(),
             equals(['abc%20123', '42']),
           );
         },
@@ -231,16 +231,16 @@ void main() {
         // rather than silently deduping byte-identical segments.
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.cookie,
+          touchHeaders: (h) => h.cookie,
           headers: {'cookie': 'sessionId=abc123; userId=42; sessionId=abc123'},
         );
 
         expect(
-          headers.cookie?.cookies.map((final c) => c.name).toList(),
+          headers.cookie?.cookies.map((c) => c.name).toList(),
           equals(['sessionId', 'userId', 'sessionId']),
         );
         expect(
-          headers.cookie?.cookies.map((final c) => c.value).toList(),
+          headers.cookie?.cookies.map((c) => c.value).toList(),
           equals(['abc123', '42', 'abc123']),
         );
       },
@@ -258,16 +258,16 @@ void main() {
         // since rejecting it would make an otherwise valid cookie unreadable.
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.cookie,
+          touchHeaders: (h) => h.cookie,
           headers: {'cookie': 'sessionId=abc123; sessionId=xyz789'},
         );
 
         expect(
-          headers.cookie?.cookies.map((final c) => c.name).toList(),
+          headers.cookie?.cookies.map((c) => c.name).toList(),
           equals(['sessionId', 'sessionId']),
         );
         expect(
-          headers.cookie?.cookies.map((final c) => c.value).toList(),
+          headers.cookie?.cookies.map((c) => c.value).toList(),
           equals(['abc123', 'xyz789']),
         );
         expect(headers.cookie?.getCookie('sessionId')?.value, equals('abc123'));
@@ -280,16 +280,16 @@ void main() {
         'then the surrounding whitespace is trimmed', () async {
       final headers = await getServerRequestHeaders(
         server: server,
-        touchHeaders: (final h) => h.cookie,
+        touchHeaders: (h) => h.cookie,
         headers: {'cookie': ' sessionId=abc123 ; userId=42 '},
       );
 
       expect(
-        headers.cookie?.cookies.map((final c) => c.name).toList(),
+        headers.cookie?.cookies.map((c) => c.name).toList(),
         equals(['sessionId', 'userId']),
       );
       expect(
-        headers.cookie?.cookies.map((final c) => c.value).toList(),
+        headers.cookie?.cookies.map((c) => c.value).toList(),
         equals(['abc123', '42']),
       );
     });

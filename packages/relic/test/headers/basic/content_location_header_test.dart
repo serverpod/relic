@@ -25,11 +25,11 @@ void main() {
           getServerRequestHeaders(
             server: server,
             headers: {'content-location': ''},
-            touchHeaders: (final h) => h.contentLocation,
+            touchHeaders: (h) => h.contentLocation,
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (final e) => e.message,
+              (e) => e.message,
               'message',
               contains('Value cannot be empty'),
             ),
@@ -47,11 +47,11 @@ void main() {
           getServerRequestHeaders(
             server: server,
             headers: {'content-location': 'ht!tp://invalid-url'},
-            touchHeaders: (final h) => h.contentLocation,
+            touchHeaders: (h) => h.contentLocation,
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (final e) => e.message,
+              (e) => e.message,
               'message',
               contains('Invalid URI format'),
             ),
@@ -69,11 +69,11 @@ void main() {
           getServerRequestHeaders(
             server: server,
             headers: {'content-location': 'https://example.com:test'},
-            touchHeaders: (final h) => h.contentLocation,
+            touchHeaders: (h) => h.contentLocation,
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (final e) => e.message,
+              (e) => e.message,
               'message',
               contains('Invalid URI format'),
             ),
@@ -99,7 +99,7 @@ void main() {
       final headers = await getServerRequestHeaders(
         server: server,
         headers: {'content-location': 'https://example.com/resource'},
-        touchHeaders: (final h) => h.contentLocation,
+        touchHeaders: (h) => h.contentLocation,
       );
 
       expect(
@@ -115,7 +115,7 @@ void main() {
         final headers = await getServerRequestHeaders(
           server: server,
           headers: {'content-location': 'https://example.com:8080'},
-          touchHeaders: (final h) => h.contentLocation,
+          touchHeaders: (h) => h.contentLocation,
         );
 
         expect(headers.contentLocation?.port, equals(8080));
@@ -128,7 +128,7 @@ void main() {
         final headers = await getServerRequestHeaders(
           server: server,
           headers: {},
-          touchHeaders: (final h) => h.contentLocation,
+          touchHeaders: (h) => h.contentLocation,
         );
 
         expect(headers.contentLocation, isNull);
@@ -153,7 +153,7 @@ void main() {
           headers: {'content-location': 'ht!tp://invalid-url'},
         );
 
-        expect(Headers.contentLocation[headers].valueOrNullIfInvalid, isNull);
+        expect(headers.tryGet(Headers.contentLocation), isNull);
         expect(() => headers.contentLocation, throwsInvalidHeader);
       });
     });

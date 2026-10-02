@@ -53,3 +53,8 @@ extension StreamEx<T> on Stream<T> {
     cancelOnError: cancelOnError,
   );
 }
+
+/// Whether a response with [status] carries a body on the wire. 1xx, 204
+/// and 304 responses have none, and no Content-Length either.
+bool statusMayHaveBody(final int status) =>
+    status >= 200 && status != 204 && status != 304;

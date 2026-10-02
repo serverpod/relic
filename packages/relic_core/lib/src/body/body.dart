@@ -87,6 +87,12 @@ class Body {
   /// determined efficiently.
   final int? contentLength;
 
+  /// The whole body, when it was built from bytes or a string.
+  ///
+  /// An adapter writes this in one call instead of draining [read]. Null
+  /// for a streamed body. Reading it does not count as reading the body.
+  final Uint8List? bytes;
+
   /// The media type, charset and parameters of this body, or null if it has
   /// no media type.
   ///
@@ -106,15 +112,16 @@ class Body {
   Body._(
     this._stream,
     this.contentLength, {
-    final Encoding? encoding,
-    final MimeType? mimeType,
-    final Map<String, String> parameters = const {},
+    this.bytes,
+    Encoding? encoding,
+    MimeType? mimeType,
+    Map<String, String> parameters = const {},
   }) : bodyType = _bodyType(mimeType, encoding, parameters);
 
   static BodyType? _bodyType(
-    final MimeType? mimeType,
-    final Encoding? encoding,
-    final Map<String, String> parameters,
+    MimeType? mimeType,
+    Encoding? encoding,
+    Map<String, String> parameters,
   ) {
     if (mimeType == null) {
       if (parameters.isNotEmpty) {
@@ -168,8 +175,8 @@ class Body {
   /// );
   /// ```
   factory Body.fromString(
-    final String body, {
-    final Encoding encoding = utf8,
+    String body, {
+    Encoding encoding = utf8,
     MimeType? mimeType,
   }) {
     final Uint8List encoded = Uint8List.fromList(encoding.encode(body));
@@ -179,12 +186,13 @@ class Body {
     return Body._(
       Stream.value(encoded),
       encoded.length,
+      bytes: encoded,
       encoding: encoding,
       mimeType: mimeType,
     );
   }
 
-  static MimeType? _tryInferTextMimeTypeFrom(final String content) {
+  static MimeType? _tryInferTextMimeTypeFrom(String content) {
     var firstNonWhiteSpace = 0;
     final end = content.length;
     while (firstNonWhiteSpace < end &&
@@ -215,7 +223,7 @@ class Body {
   }
 
   /// Checks if a character is whitespace.
-  static bool _isWhitespace(final String char) {
+  static bool _isWhitespace(String char) {
     return char == ' ' || char == '\t' || char == '\n' || char == '\r';
   }
 
@@ -252,11 +260,11 @@ class Body {
   /// [encoding] sets. Throws [ArgumentError] if [parameters] has a `charset`,
   /// or is not empty while [mimeType] is null.
   factory Body.fromDataStream(
-    final Stream<Uint8List> body, {
-    final Encoding? encoding,
-    final MimeType? mimeType = MimeType.octetStream,
-    final Map<String, String> parameters = const {},
-    final int? contentLength,
+    Stream<Uint8List> body, {
+    Encoding? encoding,
+    MimeType? mimeType = MimeType.octetStream,
+    Map<String, String> parameters = const {},
+    int? contentLength,
   }) {
     return Body._(
       body,
@@ -297,10 +305,10 @@ class Body {
   /// [parameters] holds media type parameters other than `charset`, which
   /// [encoding] sets. Throws [ArgumentError] if [parameters] has a `charset`.
   factory Body.fromData(
-    final Uint8List body, {
-    final Encoding? encoding,
+    Uint8List body, {
+    Encoding? encoding,
     MimeType? mimeType,
-    final Map<String, String> parameters = const {},
+    Map<String, String> parameters = const {},
   }) {
     if (mimeType == null) {
       final mimeString = _resolver.lookup('', headerBytes: body);
@@ -309,10 +317,49 @@ class Body {
     return Body._(
       Stream.value(body),
       body.length,
+      bytes: body,
       encoding: encoding ?? (mimeType?.isText == true ? utf8 : null),
       mimeType: mimeType ?? MimeType.octetStream,
       parameters: parameters,
     );
+  }
+
+  /// Creates a body from [bytes] with the media type the sender declared.
+  ///
+  /// Unlike [Body.fromData], nothing is inferred when [mimeType] is null:
+  /// the body then has no type, as a request without a Content-Type has.
+  /// For an adapter handing over a request body.
+  factory Body.fromBytes(
+    Uint8List bytes, {
+    MimeType? mimeType,
+    Encoding? encoding,
+    Map<String, String> parameters = const {},
+  }) => Body._(
+    Stream.value(bytes),
+    bytes.length,
+    bytes: bytes,
+    encoding: encoding,
+    mimeType: mimeType,
+    parameters: parameters,
+  );
+
+  /// The whole body as one buffer. Synchronous when the body was built from
+  /// bytes or a string. Counts as reading the body, like [read].
+  FutureOr<Uint8List> readAll({int? maxLength}) {
+    final bytes = this.bytes;
+    if (bytes != null) {
+      read(maxLength: maxLength);
+      return bytes;
+    }
+    return _collect(read(maxLength: maxLength));
+  }
+
+  static Future<Uint8List> _collect(Stream<Uint8List> stream) async {
+    final builder = BytesBuilder(copy: false);
+    await for (final chunk in stream) {
+      builder.add(chunk);
+    }
+    return builder.takeBytes();
   }
 
   /// Returns a [Stream] representing the body.
@@ -360,7 +407,7 @@ class Body {
   ///   // Handle oversized body
   /// }
   /// ```
-  Stream<Uint8List> read({final int? maxLength}) {
+  Stream<Uint8List> read({int? maxLength}) {
     final stream = _stream;
     if (stream == null) {
       throw StateError(
@@ -385,8 +432,8 @@ class Body {
   }
 
   static Stream<Uint8List> _limitedStream(
-    final Stream<Uint8List> source,
-    final int maxLength,
+    Stream<Uint8List> source,
+    int maxLength,
   ) async* {
     var totalBytes = 0;
     await for (final chunk in source) {

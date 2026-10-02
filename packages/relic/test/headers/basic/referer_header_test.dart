@@ -23,11 +23,11 @@ void main() {
         getServerRequestHeaders(
           server: server,
           headers: {'referer': ''},
-          touchHeaders: (final h) => h.referer,
+          touchHeaders: (h) => h.referer,
         ),
         throwsA(
           isA<BadRequestException>().having(
-            (final e) => e.message,
+            (e) => e.message,
             'message',
             contains('Value cannot be empty'),
           ),
@@ -42,11 +42,11 @@ void main() {
         getServerRequestHeaders(
           server: server,
           headers: {'referer': 'ht!tp://invalid-url'},
-          touchHeaders: (final h) => h.referer,
+          touchHeaders: (h) => h.referer,
         ),
         throwsA(
           isA<BadRequestException>().having(
-            (final e) => e.message,
+            (e) => e.message,
             'message',
             contains('Invalid URI'),
           ),
@@ -61,11 +61,11 @@ void main() {
         getServerRequestHeaders(
           server: server,
           headers: {'referer': 'http://example.com:test'},
-          touchHeaders: (final h) => h.referer,
+          touchHeaders: (h) => h.referer,
         ),
         throwsA(
           isA<BadRequestException>().having(
-            (final e) => e.message,
+            (e) => e.message,
             'message',
             contains('Invalid URI format'),
           ),
@@ -92,7 +92,7 @@ void main() {
         final headers = await getServerRequestHeaders(
           server: server,
           headers: {'referer': 'https://example.com/page'},
-          touchHeaders: (final h) => h.referer,
+          touchHeaders: (h) => h.referer,
         );
 
         expect(headers.referer, equals(Uri.parse('https://example.com/page')));
@@ -106,7 +106,7 @@ void main() {
         final headers = await getServerRequestHeaders(
           server: server,
           headers: {'referer': 'https://example.com:8080'},
-          touchHeaders: (final h) => h.referer,
+          touchHeaders: (h) => h.referer,
         );
 
         expect(headers.referer?.port, equals(8080));
@@ -118,7 +118,7 @@ void main() {
       final headers = await getServerRequestHeaders(
         server: server,
         headers: {'referer': ' https://example.com '},
-        touchHeaders: (final h) => h.referer,
+        touchHeaders: (h) => h.referer,
       );
 
       expect(headers.referer, equals(Uri.parse('https://example.com')));
@@ -130,7 +130,7 @@ void main() {
         final headers = await getServerRequestHeaders(
           server: server,
           headers: {},
-          touchHeaders: (final h) => h.referer,
+          touchHeaders: (h) => h.referer,
         );
 
         expect(headers.referer, isNull);
@@ -155,7 +155,7 @@ void main() {
           headers: {'referer': 'ht!tp://invalid-url'},
         );
 
-        expect(Headers.referer[headers].valueOrNullIfInvalid, isNull);
+        expect(headers.tryGet(Headers.referer), isNull);
         expect(() => headers.referer, throwsInvalidHeader);
       });
     });

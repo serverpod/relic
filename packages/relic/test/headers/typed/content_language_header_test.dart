@@ -24,12 +24,12 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (final h) => h.contentLanguage,
+            touchHeaders: (h) => h.contentLanguage,
             headers: {'content-language': ''},
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (final e) => e.message,
+              (e) => e.message,
               'message',
               contains('Value cannot be empty'),
             ),
@@ -45,12 +45,12 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (final h) => h.contentLanguage,
+            touchHeaders: (h) => h.contentLanguage,
             headers: {'content-language': 'en_US'},
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (final e) => e.message,
+              (e) => e.message,
               'message',
               contains('Invalid language code'),
             ),
@@ -76,7 +76,7 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.contentLanguage,
+          touchHeaders: (h) => h.contentLanguage,
           headers: {'content-language': 'en'},
         );
 
@@ -88,7 +88,7 @@ void main() {
         'then they parse (full grammar, not a narrow regex)', () async {
       final headers = await getServerRequestHeaders(
         server: server,
-        touchHeaders: (final h) => h.contentLanguage,
+        touchHeaders: (h) => h.contentLanguage,
         headers: {'content-language': 'es-419, zh-Hant-TW, x-pig-latin'},
       );
 
@@ -102,7 +102,7 @@ void main() {
       test('then they should parse correctly', () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.contentLanguage,
+          touchHeaders: (h) => h.contentLanguage,
           headers: {'content-language': 'en, fr, de'},
         );
 
@@ -112,7 +112,7 @@ void main() {
       test('with extra whitespace then they should parse correctly', () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.contentLanguage,
+          touchHeaders: (h) => h.contentLanguage,
           headers: {'content-language': ' en , fr , de '},
         );
 
@@ -124,7 +124,7 @@ void main() {
         () async {
           final headers = await getServerRequestHeaders(
             server: server,
-            touchHeaders: (final h) => h.contentLanguage,
+            touchHeaders: (h) => h.contentLanguage,
             headers: {'content-language': 'en, fr, de, en'},
           );
 
@@ -141,7 +141,7 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.contentLanguage,
+          touchHeaders: (h) => h.contentLanguage,
           headers: {},
         );
 
@@ -167,7 +167,7 @@ void main() {
           headers: {'content-language': 'en_US'},
         );
 
-        expect(Headers.contentLanguage[headers].valueOrNullIfInvalid, isNull);
+        expect(headers.tryGet(Headers.contentLanguage), isNull);
         expect(() => headers.contentLanguage, throwsInvalidHeader);
       });
     });

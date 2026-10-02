@@ -357,12 +357,9 @@ Stream<Uint8List> _limitedFileStream(
 
 void _checkPartHeaderSize(final Headers headers, final FormLimits limits) {
   var size = 0;
-  for (final entry in headers.entries) {
-    size += utf8.encode(entry.key).length;
-    for (final value in entry.value) {
-      size += utf8.encode(value).length;
-    }
-  }
+  headers.forEach((final name, final value) {
+    size += utf8.encode(name.lower).length + utf8.encode(value).length;
+  });
   if (size > limits.maxPartHeaderSize) {
     throw const FormLimitExceededException(
       limit: FormLimit.maxPartHeaderSize,

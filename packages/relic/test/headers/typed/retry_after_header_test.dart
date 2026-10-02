@@ -24,12 +24,12 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (final h) => h.retryAfter,
+            touchHeaders: (h) => h.retryAfter,
             headers: {'retry-after': ''},
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (final e) => e.message,
+              (e) => e.message,
               'message',
               contains('Value cannot be empty'),
             ),
@@ -54,7 +54,7 @@ void main() {
       test('then it should parse a valid positive integer correctly', () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.retryAfter,
+          touchHeaders: (h) => h.retryAfter,
           headers: {'retry-after': '120'},
         );
 
@@ -64,7 +64,7 @@ void main() {
       test('then it should parse a value with whitespace correctly', () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.retryAfter,
+          touchHeaders: (h) => h.retryAfter,
           headers: {'retry-after': ' 120 '},
         );
 
@@ -75,12 +75,12 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (final h) => h.retryAfter,
+            touchHeaders: (h) => h.retryAfter,
             headers: {'retry-after': '-120'},
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (final e) => e.message,
+              (e) => e.message,
               'message',
               contains('Delay cannot be negative'),
             ),
@@ -92,7 +92,7 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (final h) => h.retryAfter,
+            touchHeaders: (h) => h.retryAfter,
             headers: {'retry-after': '+120'},
           ),
           throwsA(isA<BadRequestException>()),
@@ -103,12 +103,12 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (final h) => h.retryAfter,
+            touchHeaders: (h) => h.retryAfter,
             headers: {'retry-after': '120.5'},
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (final e) => e.message,
+              (e) => e.message,
               'message',
               contains('Invalid date format'),
             ),
@@ -121,7 +121,7 @@ void main() {
       test('then it should parse a valid date correctly', () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.retryAfter,
+          touchHeaders: (h) => h.retryAfter,
           headers: {'retry-after': 'Wed, 21 Oct 2015 07:28:00 GMT'},
         );
 
@@ -134,7 +134,7 @@ void main() {
       test('then it should parse a date with whitespace correctly', () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.retryAfter,
+          touchHeaders: (h) => h.retryAfter,
           headers: {'retry-after': ' Wed, 21 Oct 2015 07:28:00 GMT '},
         );
 
@@ -148,12 +148,12 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (final h) => h.retryAfter,
+            touchHeaders: (h) => h.retryAfter,
             headers: {'retry-after': '2015-10-21'},
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (final e) => e.message,
+              (e) => e.message,
               'message',
               contains('Invalid date format'),
             ),
@@ -167,7 +167,7 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.retryAfter,
+          touchHeaders: (h) => h.retryAfter,
           headers: {},
         );
 
@@ -194,7 +194,7 @@ void main() {
           headers: {'retry-after': 'invalid'},
         );
 
-        expect(Headers.retryAfter[headers].valueOrNullIfInvalid, isNull);
+        expect(headers.tryGet(Headers.retryAfter), isNull);
         expect(() => headers.retryAfter, throwsInvalidHeader);
       },
     );

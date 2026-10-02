@@ -24,11 +24,11 @@ void main() {
           getServerRequestHeaders(
             server: server,
             headers: {'age': ''},
-            touchHeaders: (final h) => h.age,
+            touchHeaders: (h) => h.age,
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (final e) => e.message,
+              (e) => e.message,
               'message',
               contains('Value cannot be empty'),
             ),
@@ -45,11 +45,11 @@ void main() {
           getServerRequestHeaders(
             server: server,
             headers: {'age': 'invalid'},
-            touchHeaders: (final h) => h.age,
+            touchHeaders: (h) => h.age,
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (final e) => e.message,
+              (e) => e.message,
               'message',
               contains('Invalid number'),
             ),
@@ -66,11 +66,11 @@ void main() {
           getServerRequestHeaders(
             server: server,
             headers: {'age': '-3600'},
-            touchHeaders: (final h) => h.age,
+            touchHeaders: (h) => h.age,
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (final e) => e.message,
+              (e) => e.message,
               'message',
               contains('Must be non-negative'),
             ),
@@ -87,11 +87,11 @@ void main() {
           getServerRequestHeaders(
             server: server,
             headers: {'age': '3.14'},
-            touchHeaders: (final h) => h.age,
+            touchHeaders: (h) => h.age,
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (final e) => e.message,
+              (e) => e.message,
               'message',
               contains('Must be an integer'),
             ),
@@ -118,7 +118,7 @@ void main() {
         final headers = await getServerRequestHeaders(
           server: server,
           headers: {'age': '3600'},
-          touchHeaders: (final h) => h.age,
+          touchHeaders: (h) => h.age,
         );
 
         expect(headers.age, equals(3600));
@@ -132,7 +132,7 @@ void main() {
         final headers = await getServerRequestHeaders(
           server: server,
           headers: {'age': ' 3600 '},
-          touchHeaders: (final h) => h.age,
+          touchHeaders: (h) => h.age,
         );
 
         expect(headers.age, equals(3600));
@@ -143,7 +143,7 @@ void main() {
       final headers = await getServerRequestHeaders(
         server: server,
         headers: {},
-        touchHeaders: (final h) => h.age,
+        touchHeaders: (h) => h.age,
       );
 
       expect(headers.age, isNull);
@@ -167,7 +167,7 @@ void main() {
           headers: {'age': ''},
         );
 
-        expect(Headers.age[headers].valueOrNullIfInvalid, isNull);
+        expect(headers.tryGet(Headers.age), isNull);
         expect(() => headers.age, throwsInvalidHeader);
       });
     });
@@ -180,7 +180,7 @@ void main() {
           headers: {'age': 'invalid'},
         );
 
-        expect(Headers.age[headers].valueOrNullIfInvalid, isNull);
+        expect(headers.tryGet(Headers.age), isNull);
         expect(() => headers.age, throwsInvalidHeader);
       });
     });

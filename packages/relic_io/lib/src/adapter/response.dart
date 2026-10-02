@@ -17,14 +17,20 @@ extension ResponseExIo on Response {
     httpResponse.applyHeaders(headers, body);
 
     // Date is the server's job, not the handler's (RFC 9110 6.6.1).
-    if (!headers.containsKey(Headers.dateHeader)) {
+    if (!headers.contains(HeaderName.date)) {
       httpResponse.headers.date = DateTime.now();
     }
 
     // Close connection if requested. A bit weird this is not handled by dart:io
     httpResponse.persistentConnection = !(headers.connection?.isClose ?? false);
 
-    await httpResponse.addStream(body.read());
+    final bytes = body.bytes;
+    if (bytes != null) {
+      body.read(); // a body is read once, buffered or not
+      httpResponse.add(bytes);
+    } else {
+      await httpResponse.addStream(body.read());
+    }
     await httpResponse.flush();
 
     await httpResponse.close();

@@ -23,12 +23,12 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (final h) => h.acceptRanges,
+            touchHeaders: (h) => h.acceptRanges,
             headers: {'accept-ranges': ''},
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (final e) => e.message,
+              (e) => e.message,
               'message',
               contains('Value cannot be empty'),
             ),
@@ -54,7 +54,7 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.acceptRanges,
+          touchHeaders: (h) => h.acceptRanges,
           headers: {'accept-ranges': 'bytes'},
         );
 
@@ -68,7 +68,7 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.acceptRanges,
+          touchHeaders: (h) => h.acceptRanges,
           headers: {'accept-ranges': 'bytes, custom-unit'},
         );
 
@@ -85,7 +85,7 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.acceptRanges,
+          touchHeaders: (h) => h.acceptRanges,
           headers: {'accept-ranges': 'none'},
         );
 
@@ -99,7 +99,7 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.acceptRanges,
+          touchHeaders: (h) => h.acceptRanges,
           headers: {},
         );
 
@@ -125,7 +125,7 @@ void main() {
           headers: {'accept-ranges': ''},
         );
 
-        expect(Headers.acceptRanges[headers].valueOrNullIfInvalid, isNull);
+        expect(headers.tryGet(Headers.acceptRanges), isNull);
         expect(() => headers.acceptRanges, throwsInvalidHeader);
       });
     });

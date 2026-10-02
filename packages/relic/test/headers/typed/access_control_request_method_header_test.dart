@@ -24,12 +24,12 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (final h) => h.accessControlRequestMethod,
+            touchHeaders: (h) => h.accessControlRequestMethod,
             headers: {'access-control-request-method': ''},
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (final e) => e.message,
+              (e) => e.message,
               'message',
               contains('Value cannot be empty'),
             ),
@@ -44,12 +44,12 @@ void main() {
       expect(
         getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.accessControlRequestMethod,
+          touchHeaders: (h) => h.accessControlRequestMethod,
           headers: {'access-control-request-method': 'CUSTOM'},
         ),
         throwsA(
           isA<BadRequestException>().having(
-            (final e) => e.message,
+            (e) => e.message,
             'message',
             contains('Invalid value'),
           ),
@@ -76,7 +76,7 @@ void main() {
         'should parse the method correctly', () async {
       final headers = await getServerRequestHeaders(
         server: server,
-        touchHeaders: (final h) => h.accessControlRequestMethod,
+        touchHeaders: (h) => h.accessControlRequestMethod,
         headers: {'access-control-request-method': 'POST'},
       );
 
@@ -89,7 +89,7 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.accessControlRequestMethod,
+          touchHeaders: (h) => h.accessControlRequestMethod,
           headers: {'access-control-request-method': ' POST '},
         );
 
@@ -104,7 +104,7 @@ void main() {
         final headers = await getServerRequestHeaders(
           server: server,
           headers: {},
-          touchHeaders: (final h) => h.accessControlRequestMethod,
+          touchHeaders: (h) => h.accessControlRequestMethod,
         );
 
         expect(headers.accessControlRequestMethod, isNull);
@@ -129,10 +129,7 @@ void main() {
           headers: {'access-control-request-method': ''},
         );
 
-        expect(
-          Headers.accessControlRequestMethod[headers].valueOrNullIfInvalid,
-          isNull,
-        );
+        expect(headers.tryGet(Headers.accessControlRequestMethod), isNull);
         expect(() => headers.accessControlRequestMethod, throwsInvalidHeader);
       });
     });

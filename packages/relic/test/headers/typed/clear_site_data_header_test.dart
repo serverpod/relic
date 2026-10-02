@@ -24,12 +24,12 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (final h) => h.clearSiteData,
+            touchHeaders: (h) => h.clearSiteData,
             headers: {'clear-site-data': ''},
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (final e) => e.message,
+              (e) => e.message,
               'message',
               contains('Value cannot be empty'),
             ),
@@ -46,12 +46,12 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (final h) => h.clearSiteData,
+            touchHeaders: (h) => h.clearSiteData,
             headers: {'clear-site-data': 'invalidValue'},
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (final e) => e.message,
+              (e) => e.message,
               'message',
               contains('Invalid value'),
             ),
@@ -68,12 +68,12 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (final h) => h.clearSiteData,
+            touchHeaders: (h) => h.clearSiteData,
             headers: {'clear-site-data': '"cache", "*", "cookies"'},
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (final e) => e.message,
+              (e) => e.message,
               'message',
               contains('Wildcard (*) cannot be used with other values'),
             ),
@@ -98,14 +98,14 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.clearSiteData,
+          touchHeaders: (h) => h.clearSiteData,
           headers: {'clear-site-data': '"cache", "cookies", "storage"'},
         );
 
         final dataTypes = headers.clearSiteData?.dataTypes;
         expect(dataTypes?.length, equals(3));
         expect(
-          dataTypes?.map((final dt) => dt.value).toList(),
+          dataTypes?.map((dt) => dt.value).toList(),
           containsAll(['cache', 'cookies', 'storage']),
         );
       },
@@ -116,7 +116,7 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.clearSiteData,
+          touchHeaders: (h) => h.clearSiteData,
           headers: {'clear-site-data': '*'},
         );
 
@@ -129,7 +129,7 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.clearSiteData,
+          touchHeaders: (h) => h.clearSiteData,
           headers: {},
         );
 
@@ -155,7 +155,7 @@ void main() {
           headers: {'clear-site-data': ''},
         );
 
-        expect(Headers.clearSiteData[headers].valueOrNullIfInvalid, isNull);
+        expect(headers.tryGet(Headers.clearSiteData), isNull);
         expect(() => headers.clearSiteData, throwsInvalidHeader);
       });
     });

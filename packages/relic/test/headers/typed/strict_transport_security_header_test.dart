@@ -23,12 +23,12 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (final h) => h.strictTransportSecurity,
+            touchHeaders: (h) => h.strictTransportSecurity,
             headers: {'strict-transport-security': ''},
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (final e) => e.message,
+              (e) => e.message,
               'message',
               contains('Value cannot be empty'),
             ),
@@ -45,12 +45,12 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (final h) => h.strictTransportSecurity,
+            touchHeaders: (h) => h.strictTransportSecurity,
             headers: {'strict-transport-security': 'max-age=abc'},
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (final e) => e.message,
+              (e) => e.message,
               'message',
               contains('Max-age directive is missing or invalid'),
             ),
@@ -67,12 +67,12 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (final h) => h.strictTransportSecurity,
+            touchHeaders: (h) => h.strictTransportSecurity,
             headers: {'strict-transport-security': 'includeSubDomains'},
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (final e) => e.message,
+              (e) => e.message,
               'message',
               contains('Max-age directive is missing or invalid'),
             ),
@@ -118,7 +118,7 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.strictTransportSecurity,
+          touchHeaders: (h) => h.strictTransportSecurity,
           headers: {'strict-transport-security': 'max-age=31536000'},
         );
 
@@ -133,7 +133,7 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.strictTransportSecurity,
+          touchHeaders: (h) => h.strictTransportSecurity,
           headers: {'strict-transport-security': 'max-age=31536000; preload'},
         );
 
@@ -148,7 +148,7 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.strictTransportSecurity,
+          touchHeaders: (h) => h.strictTransportSecurity,
           headers: {},
         );
 
@@ -174,10 +174,7 @@ void main() {
           headers: {'strict-transport-security': ''},
         );
 
-        expect(
-          Headers.strictTransportSecurity[headers].valueOrNullIfInvalid,
-          isNull,
-        );
+        expect(headers.tryGet(Headers.strictTransportSecurity), isNull);
         expect(() => headers.strictTransportSecurity, throwsInvalidHeader);
       });
     });

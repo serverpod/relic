@@ -22,12 +22,12 @@ void main() {
       expect(
         getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.te,
+          touchHeaders: (h) => h.te,
           headers: {'te': ''},
         ),
         throwsA(
           isA<BadRequestException>().having(
-            (final e) => e.message,
+            (e) => e.message,
             'message',
             contains('Value cannot be empty'),
           ),
@@ -39,12 +39,12 @@ void main() {
         'then the weight defaults to 1.0 instead of being rejected', () async {
       final headers = await getServerRequestHeaders(
         server: server,
-        touchHeaders: (final h) => h.te,
+        touchHeaders: (h) => h.te,
         headers: {'te': 'trailers;q=abc'},
       );
 
       expect(
-        headers.te?.encodings.map((final e) => e.quality).toList(),
+        headers.te?.encodings.map((e) => e.quality).toList(),
         equals([1.0]),
       );
     });
@@ -55,12 +55,12 @@ void main() {
       expect(
         getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.te,
+          touchHeaders: (h) => h.te,
           headers: {'te': ';q=1.0'},
         ),
         throwsA(
           isA<BadRequestException>().having(
-            (final e) => e.message,
+            (e) => e.message,
             'message',
             contains('Invalid encoding'),
           ),
@@ -84,12 +84,12 @@ void main() {
         'encoding correctly', () async {
       final headers = await getServerRequestHeaders(
         server: server,
-        touchHeaders: (final h) => h.te,
+        touchHeaders: (h) => h.te,
         headers: {'te': 'trailers'},
       );
 
       expect(
-        headers.te?.encodings.map((final e) => e.encoding).toList(),
+        headers.te?.encodings.map((e) => e.encoding).toList(),
         equals(['trailers']),
       );
     });
@@ -98,12 +98,12 @@ void main() {
         'default quality value should be set', () async {
       final headers = await getServerRequestHeaders(
         server: server,
-        touchHeaders: (final h) => h.te,
+        touchHeaders: (h) => h.te,
         headers: {'te': 'trailers'},
       );
 
       expect(
-        headers.te?.encodings.map((final e) => e.quality).toList(),
+        headers.te?.encodings.map((e) => e.quality).toList(),
         equals([1.0]),
       );
     });
@@ -111,7 +111,7 @@ void main() {
     test('when no TE header is passed then it should return null', () async {
       final headers = await getServerRequestHeaders(
         server: server,
-        touchHeaders: (final h) => h.te,
+        touchHeaders: (h) => h.te,
         headers: {},
       );
 
@@ -122,12 +122,12 @@ void main() {
       test('then they should parse the encodings correctly', () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.te,
+          touchHeaders: (h) => h.te,
           headers: {'te': 'trailers, deflate, gzip'},
         );
 
         expect(
-          headers.te?.encodings.map((final e) => e.encoding).toList(),
+          headers.te?.encodings.map((e) => e.encoding).toList(),
           equals(['trailers', 'deflate', 'gzip']),
         );
       });
@@ -137,12 +137,12 @@ void main() {
         () async {
           final headers = await getServerRequestHeaders(
             server: server,
-            touchHeaders: (final h) => h.te,
+            touchHeaders: (h) => h.te,
             headers: {'te': 'trailers;q=1.0, deflate;q=0.5, gzip;q=0.8'},
           );
 
           expect(
-            headers.te?.encodings.map((final e) => e.encoding).toList(),
+            headers.te?.encodings.map((e) => e.encoding).toList(),
             equals(['trailers', 'deflate', 'gzip']),
           );
         },
@@ -153,12 +153,12 @@ void main() {
         () async {
           final headers = await getServerRequestHeaders(
             server: server,
-            touchHeaders: (final h) => h.te,
+            touchHeaders: (h) => h.te,
             headers: {'te': 'trailers;q=1.0, deflate;q=0.5, gzip;q=0.8'},
           );
 
           expect(
-            headers.te?.encodings.map((final e) => e.quality).toList(),
+            headers.te?.encodings.map((e) => e.quality).toList(),
             equals([1.0, 0.5, 0.8]),
           );
         },
@@ -169,12 +169,12 @@ void main() {
         () async {
           final headers = await getServerRequestHeaders(
             server: server,
-            touchHeaders: (final h) => h.te,
+            touchHeaders: (h) => h.te,
             headers: {'te': ' trailers , deflate , gzip '},
           );
 
           expect(
-            headers.te?.encodings.map((final e) => e.encoding).toList(),
+            headers.te?.encodings.map((e) => e.encoding).toList(),
             equals(['trailers', 'deflate', 'gzip']),
           );
         },
@@ -199,7 +199,7 @@ void main() {
           headers: {'te': ''},
         );
 
-        expect(Headers.te[headers].valueOrNullIfInvalid, isNull);
+        expect(headers.tryGet(Headers.te), isNull);
         expect(() => headers.te, throwsInvalidHeader);
       });
     });
@@ -215,7 +215,7 @@ void main() {
           );
 
           expect(
-            headers.te?.encodings.map((final e) => e.quality).toList(),
+            headers.te?.encodings.map((e) => e.quality).toList(),
             equals([1.0, 1.0, 1.0]),
           );
         },

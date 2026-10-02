@@ -22,12 +22,12 @@ void main() {
       expect(
         getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.etag,
+          touchHeaders: (h) => h.etag,
           headers: {'etag': ''},
         ),
         throwsA(
           isA<BadRequestException>().having(
-            (final e) => e.message,
+            (e) => e.message,
             'message',
             contains('Value cannot be empty'),
           ),
@@ -42,12 +42,12 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (final h) => h.etag,
+            touchHeaders: (h) => h.etag,
             headers: {'etag': '123456'},
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (final e) => e.message,
+              (e) => e.message,
               'message',
               contains('Invalid format'),
             ),
@@ -73,7 +73,7 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.etag,
+          touchHeaders: (h) => h.etag,
           headers: {'etag': '"123456"'},
         );
 
@@ -87,7 +87,7 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.etag,
+          touchHeaders: (h) => h.etag,
           headers: {'etag': 'W/"123456"'},
         );
 
@@ -99,7 +99,7 @@ void main() {
     test('when no ETag header is passed then it should return null', () async {
       final headers = await getServerRequestHeaders(
         server: server,
-        touchHeaders: (final h) => h.etag,
+        touchHeaders: (h) => h.etag,
         headers: {},
       );
 
@@ -124,7 +124,7 @@ void main() {
           headers: {'etag': '123456'},
         );
 
-        expect(Headers.etag[headers].valueOrNullIfInvalid, isNull);
+        expect(headers.tryGet(Headers.etag), isNull);
         expect(() => headers.etag, throwsInvalidHeader);
       });
     });

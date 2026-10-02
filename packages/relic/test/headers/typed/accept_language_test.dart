@@ -24,12 +24,12 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (final h) => h.acceptLanguage,
+            touchHeaders: (h) => h.acceptLanguage,
             headers: {'accept-language': ''},
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (final e) => e.message,
+              (e) => e.message,
               'message',
               contains('Value cannot be empty'),
             ),
@@ -44,14 +44,12 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.acceptLanguage,
+          touchHeaders: (h) => h.acceptLanguage,
           headers: {'accept-language': 'en;q=abc'},
         );
 
         expect(
-          headers.acceptLanguage?.languages
-              .map((final e) => e.quality)
-              .toList(),
+          headers.acceptLanguage?.languages.map((e) => e.quality).toList(),
           equals([1.0]),
         );
       },
@@ -65,12 +63,12 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (final h) => h.acceptLanguage,
+            touchHeaders: (h) => h.acceptLanguage,
             headers: {'accept-language': '*, en'},
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (final e) => e.message,
+              (e) => e.message,
               'message',
               contains('Wildcard (*) cannot be used with other values'),
             ),
@@ -85,12 +83,12 @@ void main() {
       expect(
         getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.acceptLanguage,
+          touchHeaders: (h) => h.acceptLanguage,
           headers: {'accept-language': ';q=0.5'},
         ),
         throwsA(
           isA<BadRequestException>().having(
-            (final e) => e.message,
+            (e) => e.message,
             'message',
             contains('Invalid language'),
           ),
@@ -114,12 +112,12 @@ void main() {
         'language correctly', () async {
       final headers = await getServerRequestHeaders(
         server: server,
-        touchHeaders: (final h) => h.acceptLanguage,
+        touchHeaders: (h) => h.acceptLanguage,
         headers: {'accept-language': 'en'},
       );
 
       expect(
-        headers.acceptLanguage?.languages.map((final e) => e.language).toList(),
+        headers.acceptLanguage?.languages.map((e) => e.language).toList(),
         equals(['en']),
       );
     });
@@ -128,12 +126,12 @@ void main() {
         'default quality value should be set', () async {
       final headers = await getServerRequestHeaders(
         server: server,
-        touchHeaders: (final h) => h.acceptLanguage,
+        touchHeaders: (h) => h.acceptLanguage,
         headers: {'accept-language': 'en'},
       );
 
       expect(
-        headers.acceptLanguage?.languages.map((final e) => e.quality).toList(),
+        headers.acceptLanguage?.languages.map((e) => e.quality).toList(),
         equals([1.0]),
       );
     });
@@ -144,14 +142,12 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.acceptLanguage,
+          touchHeaders: (h) => h.acceptLanguage,
           headers: {'accept-language': 'En'},
         );
 
         expect(
-          headers.acceptLanguage?.languages
-              .map((final e) => e.language)
-              .toList(),
+          headers.acceptLanguage?.languages.map((e) => e.language).toList(),
           equals(['en']),
         );
       },
@@ -162,7 +158,7 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.acceptLanguage,
+          touchHeaders: (h) => h.acceptLanguage,
           headers: {},
         );
 
@@ -175,7 +171,7 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.acceptLanguage,
+          touchHeaders: (h) => h.acceptLanguage,
           headers: {'accept-language': '*'},
         );
 
@@ -190,20 +186,16 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.acceptLanguage,
+          touchHeaders: (h) => h.acceptLanguage,
           headers: {'accept-language': '*;q=0.5'},
         );
 
         expect(
-          headers.acceptLanguage?.languages
-              .map((final e) => e.language)
-              .toList(),
+          headers.acceptLanguage?.languages.map((e) => e.language).toList(),
           equals(['*']),
         );
         expect(
-          headers.acceptLanguage?.languages
-              .map((final e) => e.quality)
-              .toList(),
+          headers.acceptLanguage?.languages.map((e) => e.quality).toList(),
           equals([0.5]),
         );
       },
@@ -213,14 +205,12 @@ void main() {
       test('then they should parse the languages correctly', () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.acceptLanguage,
+          touchHeaders: (h) => h.acceptLanguage,
           headers: {'accept-language': 'en, fr, de'},
         );
 
         expect(
-          headers.acceptLanguage?.languages
-              .map((final e) => e.language)
-              .toList(),
+          headers.acceptLanguage?.languages.map((e) => e.language).toList(),
           equals(['en', 'fr', 'de']),
         );
       });
@@ -228,14 +218,12 @@ void main() {
       test('then they should parse the qualities correctly', () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.acceptLanguage,
+          touchHeaders: (h) => h.acceptLanguage,
           headers: {'accept-language': 'en, fr, de'},
         );
 
         expect(
-          headers.acceptLanguage?.languages
-              .map((final e) => e.quality)
-              .toList(),
+          headers.acceptLanguage?.languages.map((e) => e.quality).toList(),
           equals([1.0, 1.0, 1.0]),
         );
       });
@@ -245,14 +233,12 @@ void main() {
         () async {
           final headers = await getServerRequestHeaders(
             server: server,
-            touchHeaders: (final h) => h.acceptLanguage,
+            touchHeaders: (h) => h.acceptLanguage,
             headers: {'accept-language': 'en;q=1.0, fr;q=0.5, de;q=0.8'},
           );
 
           expect(
-            headers.acceptLanguage?.languages
-                .map((final e) => e.language)
-                .toList(),
+            headers.acceptLanguage?.languages.map((e) => e.language).toList(),
             equals(['en', 'fr', 'de']),
           );
         },
@@ -263,14 +249,12 @@ void main() {
         () async {
           final headers = await getServerRequestHeaders(
             server: server,
-            touchHeaders: (final h) => h.acceptLanguage,
+            touchHeaders: (h) => h.acceptLanguage,
             headers: {'accept-language': 'en;q=1.0, fr;q=0.5, de;q=0.8'},
           );
 
           expect(
-            headers.acceptLanguage?.languages
-                .map((final e) => e.quality)
-                .toList(),
+            headers.acceptLanguage?.languages.map((e) => e.quality).toList(),
             equals([1.0, 0.5, 0.8]),
           );
         },
@@ -281,14 +265,12 @@ void main() {
         () async {
           final headers = await getServerRequestHeaders(
             server: server,
-            touchHeaders: (final h) => h.acceptLanguage,
+            touchHeaders: (h) => h.acceptLanguage,
             headers: {'accept-language': 'en, en, fr, de'},
           );
 
           expect(
-            headers.acceptLanguage?.languages
-                .map((final e) => e.language)
-                .toList(),
+            headers.acceptLanguage?.languages.map((e) => e.language).toList(),
             equals(['en', 'fr', 'de']),
           );
         },
@@ -299,14 +281,12 @@ void main() {
         () async {
           final headers = await getServerRequestHeaders(
             server: server,
-            touchHeaders: (final h) => h.acceptLanguage,
+            touchHeaders: (h) => h.acceptLanguage,
             headers: {'accept-language': 'en, en, fr, de'},
           );
 
           expect(
-            headers.acceptLanguage?.languages
-                .map((final e) => e.quality)
-                .toList(),
+            headers.acceptLanguage?.languages.map((e) => e.quality).toList(),
             equals([1.0, 1.0, 1.0]),
           );
         },
@@ -317,14 +297,12 @@ void main() {
         () async {
           final headers = await getServerRequestHeaders(
             server: server,
-            touchHeaders: (final h) => h.acceptLanguage,
+            touchHeaders: (h) => h.acceptLanguage,
             headers: {'accept-language': ' en , fr , de '},
           );
 
           expect(
-            headers.acceptLanguage?.languages
-                .map((final e) => e.language)
-                .toList(),
+            headers.acceptLanguage?.languages.map((e) => e.language).toList(),
             equals(['en', 'fr', 'de']),
           );
         },
@@ -335,14 +313,12 @@ void main() {
         () async {
           final headers = await getServerRequestHeaders(
             server: server,
-            touchHeaders: (final h) => h.acceptLanguage,
+            touchHeaders: (h) => h.acceptLanguage,
             headers: {'accept-language': ' en , fr , de '},
           );
 
           expect(
-            headers.acceptLanguage?.languages
-                .map((final e) => e.quality)
-                .toList(),
+            headers.acceptLanguage?.languages.map((e) => e.quality).toList(),
             equals([1.0, 1.0, 1.0]),
           );
         },
@@ -367,7 +343,7 @@ void main() {
           headers: {'accept-language': ''},
         );
 
-        expect(Headers.acceptLanguage[headers].valueOrNullIfInvalid, isNull);
+        expect(headers.tryGet(Headers.acceptLanguage), isNull);
         expect(() => headers.acceptLanguage, throwsInvalidHeader);
       });
     });
@@ -385,9 +361,7 @@ void main() {
             );
 
             expect(
-              headers.acceptLanguage?.languages
-                  .map((final e) => e.quality)
-                  .toList(),
+              headers.acceptLanguage?.languages.map((e) => e.quality).toList(),
               equals([1.0, 1.0, 1.0]),
             );
           },

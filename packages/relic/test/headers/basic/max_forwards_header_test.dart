@@ -23,11 +23,11 @@ void main() {
         getServerRequestHeaders(
           server: server,
           headers: {'max-forwards': ''},
-          touchHeaders: (final h) => h.maxForwards,
+          touchHeaders: (h) => h.maxForwards,
         ),
         throwsA(
           isA<BadRequestException>().having(
-            (final e) => e.message,
+            (e) => e.message,
             'message',
             contains('Value cannot be empty'),
           ),
@@ -44,11 +44,11 @@ void main() {
           getServerRequestHeaders(
             server: server,
             headers: {'max-forwards': '-1'},
-            touchHeaders: (final h) => h.maxForwards,
+            touchHeaders: (h) => h.maxForwards,
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (final e) => e.message,
+              (e) => e.message,
               'message',
               contains('Must be non-negative'),
             ),
@@ -66,11 +66,11 @@ void main() {
           getServerRequestHeaders(
             server: server,
             headers: {'max-forwards': '5.5'},
-            touchHeaders: (final h) => h.maxForwards,
+            touchHeaders: (h) => h.maxForwards,
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (final e) => e.message,
+              (e) => e.message,
               'message',
               contains('Must be an integer'),
             ),
@@ -96,7 +96,7 @@ void main() {
       final headers = await getServerRequestHeaders(
         server: server,
         headers: {'max-forwards': '5'},
-        touchHeaders: (final h) => h.maxForwards,
+        touchHeaders: (h) => h.maxForwards,
       );
 
       expect(headers.maxForwards, equals(5));
@@ -108,7 +108,7 @@ void main() {
         final headers = await getServerRequestHeaders(
           server: server,
           headers: {'max-forwards': '0'},
-          touchHeaders: (final h) => h.maxForwards,
+          touchHeaders: (h) => h.maxForwards,
         );
 
         expect(headers.maxForwards, equals(0));
@@ -121,7 +121,7 @@ void main() {
         final headers = await getServerRequestHeaders(
           server: server,
           headers: {},
-          touchHeaders: (final h) => h.maxForwards,
+          touchHeaders: (h) => h.maxForwards,
         );
 
         expect(headers.maxForwards, isNull);
@@ -146,7 +146,7 @@ void main() {
           headers: {'max-forwards': 'invalid'},
         );
 
-        expect(Headers.maxForwards[headers].valueOrNullIfInvalid, isNull);
+        expect(headers.tryGet(Headers.maxForwards), isNull);
         expect(() => headers.maxForwards, throwsInvalidHeader);
       });
     });
