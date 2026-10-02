@@ -1,0 +1,81 @@
+name: Publish relic_native
+
+# The same tag trigger as publish.yaml. relic_native cannot go through the
+# reusable publish workflow: it must ship the prebuilt libraries in
+# binary/, built here first, and smoke-tested on each supported OS.
+on:
+  push:
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+*" # Matches tags like v1.2.3 and v1.2.3-pre.1
+
+jobs:
+  build:
+    name: Build prebuilt libraries
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: mlugg/setup-zig@v2
+        with:
+          version: 0.17.0
+      - uses: dart-lang/setup-dart@v1
+      - run: dart pub get
+      - run: dart run tool/build_binaries.dart
+        working-directory: packages/relic_native
+      - uses: actions/upload-artifact@v4
+        with:
+          name: relic-native-binary
+          path: packages/relic_native/binary/
+          if-no-files-found: error
+
+  # Loads the prebuilt library, not a source build, on each supported OS.
+  # windows-11-arm has no working zig build on the runner, so the prebuilt
+  # arm64 DLL is the only way that target is tested.
+  smoke_test:
+    name: Test prebuilt library (${{ matrix.os }})
+    needs: build
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - ubuntu-24.04-arm
+          - macos-latest
+          - macos-15-intel
+          - windows-latest
+          - windows-11-arm
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v4
+        with:
+          name: relic-native-binary
+          path: packages/relic_native/binary/
+      - uses: dart-lang/setup-dart@v1
+      - run: dart pub get
+      # Without the zig build files the hook cannot fall back to a source
+      # build, so a missing or broken prebuilt fails the tests.
+      - run: rm build.zig build.zig.zon
+        working-directory: packages/relic_native
+        shell: bash
+      - run: dart test
+        working-directory: packages/relic_native
+
+  publish:
+    name: Publish to pub.dev
+    needs: smoke_test
+    permissions:
+      id-token: write # Required for pub.dev automated publishing.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v4
+        with:
+          name: relic-native-binary
+          path: packages/relic_native/binary/
+      # Provisions the OIDC token dart pub publish uses.
+      - uses: dart-lang/setup-dart@v1
+      - run: dart pub get
+      - run: dart pub publish --dry-run
+        working-directory: packages/relic_native
+      - run: dart pub publish --force
+        working-directory: packages/relic_native
