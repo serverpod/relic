@@ -177,14 +177,12 @@ class IOAdapter implements Adapter {
 }
 
 /// One `dart:io` request and its response.
-final class IOExchange implements AdapterExchange {
+final class IOExchange with ExchangeEndState implements AdapterExchange {
   final IOAdapter _adapter;
   final io.HttpRequest _request;
 
-  /// How the exchange ended, once it has. The completers exist only for a
-  /// caller that asked before then.
-  ExchangeEnd? _end;
-  Completer<ExchangeEnd>? _done;
+  /// The [cancelled] future of a caller that asked before the peer went
+  /// away.
   Completer<void>? _cancelled;
 
   IOExchange._(this._adapter, this._request) {
@@ -222,8 +220,9 @@ final class IOExchange implements AdapterExchange {
     return StreamChannel<Uint8List>(socket, _SocketSink(socket));
   }
 
+  /// dart:io computes the accept key itself, so [acceptKey] goes unused.
   @override
-  Future<RelicWebSocket> upgradeWebSocket() async {
+  Future<RelicWebSocket> upgradeWebSocket(String acceptKey) async {
     final webSocket = await IORelicWebSocket.fromHttpRequest(_request);
     _adapter._trackWebSocket(webSocket);
     _finish(ExchangeEnd.upgraded);
@@ -232,7 +231,7 @@ final class IOExchange implements AdapterExchange {
 
   @override
   void abort() {
-    if (_end != null) return;
+    if (end != null) return;
     _finish(ExchangeEnd.aborted);
     unawaited(
       _request.response
@@ -244,21 +243,12 @@ final class IOExchange implements AdapterExchange {
   }
 
   @override
-  Future<void> get cancelled => _end == ExchangeEnd.cancelledByPeer
+  Future<void> get cancelled => end == ExchangeEnd.cancelledByPeer
       ? Future.value()
       : (_cancelled ??= Completer<void>()).future;
 
-  @override
-  Future<ExchangeEnd> get done {
-    final end = _end;
-    if (end != null) return Future.value(end);
-    return (_done ??= Completer<ExchangeEnd>()).future;
-  }
-
   void _finish(ExchangeEnd end) {
-    if (_end != null) return;
-    _end = end;
-    _done?.complete(end);
+    if (!completeEnd(end)) return;
     if (end == ExchangeEnd.cancelledByPeer) _cancelled?.complete();
   }
 }

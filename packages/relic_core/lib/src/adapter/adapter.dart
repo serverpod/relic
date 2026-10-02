@@ -88,15 +88,16 @@ abstract interface class Adapter {
   ///
   /// This method should release any resources held by the adapter, such as
   /// closing server sockets or stopping listening for incoming requests.
-  /// It ensures a clean termination of the adapter's operations.
   ///
-  /// If [force] is `false` (the default), the adapter will wait for all
-  /// in-flight requests to complete before closing. If [force] is `true`,
-  /// the adapter will immediately close and forcefully terminate any
-  /// remaining connections.
+  /// With [force] false, completes once every exchange handed to the sink
+  /// has ended, however long that takes. With [force] true, drops every
+  /// connection now, including the ones a handler took over as a raw
+  /// channel or a WebSocket.
   ///
-  /// For example, for an HTTP server adapter, this might close the underlying
-  /// server socket.
+  /// The server closes the channels and WebSockets it handed out and holds
+  /// the deadline. It calls this without [force], waits, then calls it with
+  /// [force] for whatever is left, so each call must be safe after the
+  /// other.
   Future<void> close({bool force = false});
 
   ConnectionsInfo get connectionsInfo;
@@ -139,8 +140,12 @@ abstract interface class AdapterExchange {
 
   /// Performs the WebSocket handshake and hands back the socket.
   ///
+  /// The core has checked that the request is an opening handshake it can
+  /// accept before it calls this. [acceptKey] is the Sec-WebSocket-Accept
+  /// it computed for the 101.
+  ///
   /// Throws [UnsupportedError] unless [AdapterCapabilities.webSocket].
-  FutureOr<RelicWebSocket> upgradeWebSocket();
+  FutureOr<RelicWebSocket> upgradeWebSocket(String acceptKey);
 
   /// Drops the exchange without a response.
   ///
@@ -159,6 +164,36 @@ abstract interface class AdapterExchange {
   /// Completes when the exchange has fully finished: body flushed, upgraded,
   /// hijacked, aborted, or cancelled by the peer.
   Future<ExchangeEnd> get done;
+}
+
+/// How an exchange ended, recorded once, with [done] for a caller that
+/// asked before then.
+///
+/// An adapter's exchange mixes this in and calls [completeEnd] from every
+/// path that ends the exchange.
+base mixin ExchangeEndState implements AdapterExchange {
+  ExchangeEnd? _end;
+  Completer<ExchangeEnd>? _done;
+
+  /// How the exchange ended, or null while it is in flight.
+  ExchangeEnd? get end => _end;
+
+  @override
+  Future<ExchangeEnd> get done {
+    final end = _end;
+    if (end != null) return Future.value(end);
+    return (_done ??= Completer<ExchangeEnd>()).future;
+  }
+
+  /// Records [end], unless the exchange already ended.
+  ///
+  /// Returns true when it was recorded.
+  bool completeEnd(ExchangeEnd end) {
+    if (_end != null) return false;
+    _end = end;
+    _done?.complete(end);
+    return true;
+  }
 }
 
 typedef ConnectionsInfo = ({int active, int closing, int idle});

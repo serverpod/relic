@@ -229,6 +229,25 @@ void serveTests(AdapterConformance conformance) {
     expect(response.stream.bytesToString(), completion('Hello from /'));
   });
 
+  test('Given a DELETE with content, when it is served, '
+      'then the body is readable and the connection serves on', () async {
+    await scheduleServer((req) async {
+      expect(req.method, Method.delete);
+      expect(req.body.contentLength, 9);
+      expect(await req.readAsString(), 'test body');
+      return syncHandler(req);
+    });
+    final client = http.Client();
+    addTearDown(client.close);
+    final url = Uri.http('localhost:${serverPort()}', '');
+
+    final first = await client.delete(url, body: 'test body');
+    final second = await client.delete(url, body: 'test body');
+
+    expect(first.body, 'Hello from /');
+    expect(second.body, 'Hello from /');
+  });
+
   test('Given a handler that hijacks, when a request is made, '
       'then the raw bytes written reach the client', () async {
     await scheduleServer((req) {

@@ -6,6 +6,7 @@ export 'src/adapter/connection_info.dart';
 export 'src/adapter/relic_web_socket.dart';
 export 'src/web_socket/framed_web_socket.dart';
 export 'src/web_socket/web_socket_frame.dart';
+export 'src/web_socket/web_socket_handshake.dart';
 export 'src/adapter/request_target.dart';
 export 'src/body/body.dart' show Body, MaxBodySizeExceeded;
 export 'src/body/types/body_type.dart' show BodyType;

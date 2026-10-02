@@ -91,6 +91,18 @@ class Request extends Message {
 
   RequestTarget? _target;
 
+  /// Completes when the peer went away before the response finished.
+  ///
+  /// A long-running handler can stop work it no longer has a reader for.
+  /// Whether an adapter can tell depends on the adapter: the dart:io one
+  /// only sees a peer that left once something was written.
+  Future<void> get cancelled => switch (_token) {
+    final AdapterExchange exchange => exchange.cancelled,
+    _ => _never,
+  };
+
+  static final _never = Completer<void>().future;
+
   /// The path and query as received. Decoded on first use.
   ///
   /// The adapter checks that a target decodes before the request reaches a

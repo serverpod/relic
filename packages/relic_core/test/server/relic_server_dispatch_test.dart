@@ -25,10 +25,10 @@ final class _FakeAdapter implements Adapter {
   ];
 
   @override
-  void start(ExchangeSink sink) => this.sink = sink;
+  void start(final ExchangeSink sink) => this.sink = sink;
 
   @override
-  Future<void> close({bool force = false}) async => closed = true;
+  Future<void> close({final bool force = false}) async => closed = true;
 
   @override
   ConnectionsInfo get connectionsInfo => (active: 0, closing: 0, idle: 0);
@@ -36,6 +36,17 @@ final class _FakeAdapter implements Adapter {
 
 /// What the fake exchange should do when the core calls back into it.
 enum _Respond { sync, async, throwSync, failAsync }
+
+/// The headers of an opening handshake (RFC 6455 4.2.1), from [origin]
+/// when there is one.
+Headers _handshake({final String? origin}) => Headers.build(
+  (final mh) => mh
+    ..['upgrade'] = ['websocket']
+    ..['connection'] = ['Upgrade']
+    ..['sec-websocket-version'] = ['13']
+    ..['sec-websocket-key'] = ['dGhlIHNhbXBsZSBub25jZQ==']
+    ..['origin'] = origin == null ? null : [origin],
+);
 
 final class _FakeExchange implements AdapterExchange {
   final _Respond respondMode;
@@ -51,8 +62,8 @@ final class _FakeExchange implements AdapterExchange {
 
   _FakeExchange({
     this.respondMode = _Respond.sync,
-    Uri? url,
-    Headers? headers,
+    final Uri? url,
+    final Headers? headers,
     this.toRequestThrows = false,
   }) : url = url ?? localhostUri,
        headers = headers ?? Headers.empty();
@@ -67,7 +78,7 @@ final class _FakeExchange implements AdapterExchange {
   }
 
   @override
-  FutureOr<void> respond(Response response) {
+  FutureOr<void> respond(final Response response) {
     responses.add(response);
     switch (respondMode) {
       case _Respond.sync:
@@ -93,7 +104,7 @@ final class _FakeExchange implements AdapterExchange {
   }
 
   @override
-  FutureOr<RelicWebSocket> upgradeWebSocket() {
+  FutureOr<RelicWebSocket> upgradeWebSocket(final String acceptKey) {
     upgraded = true;
     _finish(ExchangeEnd.upgraded);
     return _FakeWebSocket();
@@ -111,14 +122,14 @@ final class _FakeExchange implements AdapterExchange {
   @override
   Future<ExchangeEnd> get done => _done.future;
 
-  void _finish(ExchangeEnd end) {
+  void _finish(final ExchangeEnd end) {
     if (!_done.isCompleted) _done.complete(end);
   }
 }
 
 final class _FakeWebSocket extends Fake implements RelicWebSocket {}
 
-Future<(RelicServer, _FakeAdapter)> _serve(Handler handler) async {
+Future<(RelicServer, _FakeAdapter)> _serve(final Handler handler) async {
   final adapter = _FakeAdapter();
   final server = RelicServer(() => adapter);
   await server.mountAndStart(handler);
@@ -127,7 +138,7 @@ Future<(RelicServer, _FakeAdapter)> _serve(Handler handler) async {
 
 /// Pushes [exchange] through the sink and waits for whatever the core
 /// returned, so async paths have settled when the test inspects the fake.
-Future<void> _push(_FakeAdapter adapter, _FakeExchange exchange) {
+Future<void> _push(final _FakeAdapter adapter, final _FakeExchange exchange) {
   final pending = adapter.sink!(exchange);
   return pending is Future<void> ? pending : Future.value();
 }
@@ -140,7 +151,7 @@ void main() {
     'when an exchange is pushed, '
     'then the response is sent before the sink returns and no Future is made',
     () async {
-      final (_, adapter) = await _serve((_) => _ok());
+      final (_, adapter) = await _serve((final _) => _ok());
       final exchange = _FakeExchange();
 
       final result = adapter.sink!(exchange);
@@ -157,7 +168,7 @@ void main() {
   test('Given an async handler, '
       'when an exchange is pushed, '
       'then the response is sent once the handler completes', () async {
-    final (_, adapter) = await _serve((_) async => _ok());
+    final (_, adapter) = await _serve((final _) async => _ok());
     final exchange = _FakeExchange();
 
     await _push(adapter, exchange);
@@ -169,7 +180,7 @@ void main() {
   test('Given a handler that throws synchronously, '
       'when an exchange is pushed, '
       'then a 500 is sent', () async {
-    final (_, adapter) = await _serve((_) => throw StateError('oh no'));
+    final (_, adapter) = await _serve((final _) => throw StateError('oh no'));
     final exchange = _FakeExchange();
 
     await _push(adapter, exchange);
@@ -182,7 +193,7 @@ void main() {
       'when an exchange is pushed, '
       'then a 500 is sent', () async {
     final (_, adapter) = await _serve(
-      (_) => Future<Result>.error(StateError('oh no')),
+      (final _) => Future<Result>.error(StateError('oh no')),
     );
     final exchange = _FakeExchange();
 
@@ -195,7 +206,7 @@ void main() {
       'when it is pushed, '
       'then a 400 is sent and the handler never runs', () async {
     var handled = false;
-    final (_, adapter) = await _serve((_) {
+    final (_, adapter) = await _serve((final _) {
       handled = true;
       return _ok();
     });
@@ -231,7 +242,7 @@ void main() {
     test('Given a sync handler that throws $name, '
         'when an exchange is pushed, '
         'then the mapped $status is sent', () async {
-      final (_, adapter) = await _serve((_) => throw error);
+      final (_, adapter) = await _serve((final _) => throw error);
       final exchange = _FakeExchange();
 
       await _push(adapter, exchange);
@@ -242,7 +253,7 @@ void main() {
     test('Given an async handler that throws $name, '
         'when an exchange is pushed, '
         'then the mapped $status is sent', () async {
-      final (_, adapter) = await _serve((_) async => throw error);
+      final (_, adapter) = await _serve((final _) async => throw error);
       final exchange = _FakeExchange();
 
       await _push(adapter, exchange);
@@ -254,7 +265,9 @@ void main() {
   test('Given a handler that throws MaxBodySizeExceeded, '
       'when an exchange is pushed, '
       'then a 413 is sent', () async {
-    final (_, adapter) = await _serve((_) => throw MaxBodySizeExceeded(1));
+    final (_, adapter) = await _serve(
+      (final _) => throw MaxBodySizeExceeded(1),
+    );
     final exchange = _FakeExchange();
 
     await _push(adapter, exchange);
@@ -266,7 +279,7 @@ void main() {
       'when an exchange is pushed, '
       'then the response asks to close the connection', () async {
     final (_, adapter) = await _serve(
-      (_) => throw const MalformedFormDataException('bad'),
+      (final _) => throw const MalformedFormDataException('bad'),
     );
     final exchange = _FakeExchange();
 
@@ -278,7 +291,7 @@ void main() {
   test('Given an exchange whose respond throws synchronously, '
       'when a handler responds, '
       'then the exchange is aborted and the sink does not throw', () async {
-    final (_, adapter) = await _serve((_) => _ok());
+    final (_, adapter) = await _serve((final _) => _ok());
     final exchange = _FakeExchange(respondMode: _Respond.throwSync);
 
     await _push(adapter, exchange);
@@ -289,7 +302,7 @@ void main() {
   test('Given an exchange whose respond returns a failed Future, '
       'when a handler responds, '
       'then the exchange is aborted and the sink does not fail', () async {
-    final (_, adapter) = await _serve((_) => _ok());
+    final (_, adapter) = await _serve((final _) => _ok());
     final exchange = _FakeExchange(respondMode: _Respond.failAsync);
 
     await _push(adapter, exchange);
@@ -300,7 +313,7 @@ void main() {
   test('Given an exchange whose respond always fails, '
       'when the handler throws, '
       'then the 500 is attempted and the exchange is aborted', () async {
-    final (_, adapter) = await _serve((_) => throw StateError('oh no'));
+    final (_, adapter) = await _serve((final _) => throw StateError('oh no'));
     final exchange = _FakeExchange(respondMode: _Respond.failAsync);
 
     await _push(adapter, exchange);
@@ -312,7 +325,7 @@ void main() {
   test('Given a closed server, '
       'when an exchange is still pushed, '
       'then it is aborted without a response', () async {
-    final (server, adapter) = await _serve((_) => _ok());
+    final (server, adapter) = await _serve((final _) => _ok());
     await server.close();
     final exchange = _FakeExchange();
 
@@ -326,7 +339,9 @@ void main() {
       'when an exchange is pushed, '
       'then the callback receives the channel in the same call', () async {
     StreamChannel<Uint8List>? channel;
-    final (_, adapter) = await _serve((_) => Hijack((c) => channel = c));
+    final (_, adapter) = await _serve(
+      (final _) => Hijack((final c) => channel = c),
+    );
     final exchange = _FakeExchange();
 
     final result = adapter.sink!(exchange);
@@ -341,11 +356,11 @@ void main() {
       'then the adapter performs the upgrade', () async {
     RelicWebSocket? socket;
     final (_, adapter) = await _serve(
-      (_) => WebSocketUpgrade((ws) => socket = ws),
+      (final _) => WebSocketUpgrade((final ws) => socket = ws),
     );
     final exchange = _FakeExchange(
       url: Uri.parse('http://example.com/ws'),
-      headers: Headers.build((mh) => mh['origin'] = ['http://example.com']),
+      headers: _handshake(origin: 'http://example.com'),
     );
 
     await _push(adapter, exchange);
@@ -355,12 +370,28 @@ void main() {
   });
 
   test('Given a handler that upgrades to WebSocket, '
+      'when an exchange that is not an opening handshake is pushed, '
+      'then a 400 is sent and no upgrade happens', () async {
+    final (_, adapter) = await _serve(
+      (final _) => WebSocketUpgrade((final _) {}),
+    );
+    final exchange = _FakeExchange(url: Uri.parse('http://example.com/ws'));
+
+    await _push(adapter, exchange);
+
+    expect(exchange.upgraded, isFalse);
+    expect(exchange.responses.single.statusCode, 400);
+  });
+
+  test('Given a handler that upgrades to WebSocket, '
       'when a cross-origin exchange is pushed, '
       'then a 403 is sent and no upgrade happens', () async {
-    final (_, adapter) = await _serve((_) => WebSocketUpgrade((_) {}));
+    final (_, adapter) = await _serve(
+      (final _) => WebSocketUpgrade((final _) {}),
+    );
     final exchange = _FakeExchange(
       url: Uri.parse('http://example.com/ws'),
-      headers: Headers.build((mh) => mh['origin'] = ['http://evil.com']),
+      headers: Headers.build((final mh) => mh['origin'] = ['http://evil.com']),
     );
 
     await _push(adapter, exchange);
@@ -372,9 +403,9 @@ void main() {
   test('Given a mounted server, '
       'when a second handler is mounted, '
       'then the adapter is started once and the new handler serves', () async {
-    final (server, adapter) = await _serve((_) => Response.notFound());
+    final (server, adapter) = await _serve((final _) => Response.notFound());
     final firstSink = adapter.sink;
-    await server.mountAndStart((_) => _ok());
+    await server.mountAndStart((final _) => _ok());
     final exchange = _FakeExchange();
 
     await _push(adapter, exchange);
