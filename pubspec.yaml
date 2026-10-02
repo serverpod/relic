@@ -9,6 +9,7 @@ workspace:
   - packages/relic_core
   - packages/relic_headers
   - packages/relic_io
+  - packages/relic_native
   # Internal support packages (not published)
   - packages/benchmark
   - packages/examples
@@ -40,6 +41,7 @@ melos:
           --scope-output=relic_core
           --scope-output=relic_headers
           --scope-output=relic_io
+          --scope-output=relic_native
         concurrency: 1 # for saner output
       packageFilters:
         flutter: false

@@ -1,0 +1,9 @@
+.dart_tool/
+
+# Prebuilt native libraries. tool/build_binaries.dart fills this before
+# publishing. They ship on pub.dev and are not committed.
+/binary/
+
+/.zig-cache/
+/zig-out/
+/zig-pkg/

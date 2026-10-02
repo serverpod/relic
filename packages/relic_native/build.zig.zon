@@ -1,0 +1,19 @@
+.{
+    .name = .relic_native,
+    .version = "2.0.0-rc.2",
+    .fingerprint = 0x538fb26d0ce37fa8,
+    .minimum_zig_version = "0.17.0",
+    .dependencies = .{
+        // zio with the Executor.tick patch and io_uring_single_issuer, until
+        // they are upstream.
+        .zio = .{
+            .url = "git+https://github.com/nielsenko/zio#2ab13ca18026f241004a18cc0aa8bba3cbe4249b",
+            .hash = "zio-0.19.0-xHbVVKZfLAAnlYaYLrvvQi3XJ2oH6tMiWoen8VZcUF-H",
+        },
+    },
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "src",
+    },
+}
