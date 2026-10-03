@@ -44,11 +44,13 @@ void simTest(
   final int? seed,
   final Duration maxElapsed = const Duration(hours: 1),
   final Object? skip,
+  final Object? tags,
 }) {
   test(
     description,
     () => runSimulation(seed ?? defaultSeed, body, maxElapsed: maxElapsed),
     skip: skip,
+    tags: tags,
   );
 }
 

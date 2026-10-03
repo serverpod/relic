@@ -24,11 +24,15 @@ Future<(RelicServer, ContractAdapter, SimAdapter)> _serve(
 Workload _workload(
   final Simulation sim,
   final SimNetwork network,
-  final int port,
-) => Workload(
+  final int port, {
+  final int sessions = 16,
+  final int actionsPerSession = 4,
+}) => Workload(
   sim,
   network,
   port,
+  sessions: sessions,
+  actionsPerSession: actionsPerSession,
   headerTimeout: const Duration(seconds: 2),
   idleTimeout: const Duration(seconds: 10),
   maxInlineBody: 64 << 10,
@@ -62,36 +66,73 @@ Future<void> _expectSettled(
   );
 }
 
+/// Runs [sessions] random client sessions against a workload server on
+/// a network with [options], holds the server to its end state and closes it gracefully.
+/// Every checked answer matches, the contract holds and nothing is left
+/// pending.
+Future<void> _expectWorkloadSettles(
+  final Simulation sim, {
+  required final NetworkOptions options,
+  required final int sessions,
+  required final int actionsPerSession,
+}) async {
+  final network = SimNetwork(sim, options: options);
+  var cancelled = 0;
+  final (server, contract, adapter) = await _serve(
+    sim,
+    network,
+    onCancelled: () => cancelled++,
+  );
+  final workload = _workload(
+    sim,
+    network,
+    adapter.port,
+    sessions: sessions,
+    actionsPerSession: actionsPerSession,
+  );
+
+  await workload.run();
+  await sim.sleep(const Duration(seconds: 1));
+  await _expectSettled(server, contract, workload, cancelled);
+  final closing = sim.elapsed;
+  await server.close();
+  final closeTook = sim.elapsed - closing;
+  await sim.sleep(const Duration(seconds: 1));
+
+  expect(workload.checked, greaterThan(0));
+  expect(contract.violations, isEmpty);
+  expect(closeTook, Duration.zero, reason: 'nothing was left to drain');
+  expectQuiescent(sim);
+}
+
 void main() {
-  simProperty('Given a workload server on a fragmenting network, '
-      'when 16 random client sessions run and the server closes gracefully, '
-      'then every checked answer matched, the contract held and nothing is '
-      'left pending.', (final sim) async {
-    final network = SimNetwork(
+  simProperty(
+    'Given a workload server on a fragmenting network, '
+    'when 16 random client sessions run and the server closes gracefully, '
+    'then every checked answer matched, the contract held and nothing is '
+    'left pending.',
+    (final sim) => _expectWorkloadSettles(
       sim,
       options: const NetworkOptions(fragmentation: 0.5),
-    );
-    var cancelled = 0;
-    final (server, contract, adapter) = await _serve(
+      sessions: 16,
+      actionsPerSession: 4,
+    ),
+  );
+
+  simTest(
+    'Given a workload server on a fragmenting network, '
+    'when 1000 random client sessions of 8 actions run and the server '
+    'closes gracefully, '
+    'then every checked answer matched, the contract held and nothing is '
+    'left pending.',
+    (final sim) => _expectWorkloadSettles(
       sim,
-      network,
-      onCancelled: () => cancelled++,
-    );
-    final workload = _workload(sim, network, adapter.port);
-
-    await workload.run();
-    await sim.sleep(const Duration(seconds: 1));
-    await _expectSettled(server, contract, workload, cancelled);
-    final closing = sim.elapsed;
-    await server.close();
-    final closeTook = sim.elapsed - closing;
-    await sim.sleep(const Duration(seconds: 1));
-
-    expect(workload.checked, greaterThan(0));
-    expect(contract.violations, isEmpty);
-    expect(closeTook, Duration.zero, reason: 'nothing was left to drain');
-    expectQuiescent(sim);
-  });
+      options: const NetworkOptions(fragmentation: 0.5),
+      sessions: 1000,
+      actionsPerSession: 8,
+    ),
+    tags: 'soak',
+  );
 
   simProperty(
     'Given a workload server on a network that resets one delivery in a '

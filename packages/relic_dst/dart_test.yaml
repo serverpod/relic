@@ -1,0 +1,4 @@
+tags:
+  soak:
+    skip: "Run the soak with --run-skipped -t soak"
+    timeout: 2m
