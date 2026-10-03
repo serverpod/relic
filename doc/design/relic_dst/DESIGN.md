@@ -57,7 +57,26 @@ exchanges in a second.
    Body, Headers, framing    relic_core, unchanged
 ```
 
-## 5. Found while building it
+## 5. Soak properties
+
+The random workload checks each answer as it comes, and the test holds the
+server to an end state once every client is gone and the wire has settled.
+The end state is where a leak shows: a connection the adapter forgot, an
+exchange that never ended, a cancellation that never fired.
+
+| Property | Checked where |
+|----------|---------------|
+| An `/echo` answer carries the request method, the body length and the FNV-1a hash of the body bytes. | Per response, in `Workload` |
+| Every response the handler wrote has one Date, and a Content-Length or chunked coding, not both. | Per response |
+| No checked response takes longer than `responseBound` (5 s) in simulated time. | Per response |
+| An idle connection is closed by the server between `idleTimeout` and `idleTimeout` plus two latencies after it was accepted. | The `idleClose` action |
+| A `/wait` request the client resets reaches the handler as a cancellation, once. | `onCancelled` count against `abandonedWaits` |
+| After the clients are gone, `connectionsInfo` is all zeros and every exchange has ended. | `_expectSettled` |
+| Completed exchanges are bounded below by the responses the clients read and above by those plus the answers no client read (`abandon`, `stopReading`). | `_expectSettled` |
+| `close()` after that takes no simulated time. | The property |
+| No contract violation, and no timer or event pending after close. | The property |
+
+## 6. Found while building it
 
 - The first flood scenario exposed the silly window syndrome in the
   network model (D6).
@@ -69,3 +88,7 @@ exchanges in a second.
   core logs the stack trace of a handler that threw, and a stack trace
   names the line that started the run. The determinism tests start both
   runs from one call site.
+- The first idle timeout check measured from the client's `socket` getter,
+  which on a kept-alive connection returns at once while the server's
+  idle timer has run since the last response. The check uses a fresh
+  connection. The adapter was right.
