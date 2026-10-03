@@ -8,6 +8,7 @@ export 'src/adapter/connection_info.dart';
 export 'src/adapter/relic_web_socket.dart';
 export 'src/adapter/request_target.dart';
 export 'src/adapter/response_framing.dart';
+export 'src/adapter/response_head.dart';
 export 'src/body/body.dart' show Body, BodyConsume, MaxBodySizeExceeded;
 export 'src/body/types/body_type.dart' show BodyType;
 export 'src/body/types/mime_type.dart' show MimeType;

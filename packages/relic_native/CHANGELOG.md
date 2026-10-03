@@ -2,6 +2,7 @@
 - perf: The prebuilt libraries use hardware AES for TLS. They need AES-NI,
   PCLMULQDQ and AVX on x64, and the ARMv8 crypto extensions on Linux and
   Windows arm64
+- refactor: `ResponseHead` and `encodeResponseHead` live in `relic_core`
 
 ## 2.0.0-rc.2
 - Initial release: `NativeAdapter.bind`, `NativeExchange` and `serveNative`

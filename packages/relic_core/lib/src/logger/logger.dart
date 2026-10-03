@@ -1,3 +1,4 @@
+import 'package:clock/clock.dart';
 import 'package:stack_trace/stack_trace.dart';
 
 typedef Logger =
@@ -31,7 +32,7 @@ void logMessage(
   };
 
   // ignore: avoid_print
-  print('$prefix - ${DateTime.now()}');
+  print('$prefix - ${clock.now()}');
   // ignore: avoid_print
   print(message);
   if (type != LoggerType.info) {

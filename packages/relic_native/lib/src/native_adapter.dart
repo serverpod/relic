@@ -13,7 +13,6 @@ import 'package:stream_channel/stream_channel.dart';
 import 'package:web_socket/web_socket.dart';
 
 import 'bindings.dart' as native;
-import 'response_encoder.dart';
 
 part 'native_web_socket.dart';
 
