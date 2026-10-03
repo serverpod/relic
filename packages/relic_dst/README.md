@@ -87,6 +87,16 @@ holds the server to its end state before it is closed:
 - `close()` then takes no simulated time, since nothing is left to drain.
 - No contract violation, and no timer or event left in the simulation.
 
+## A long soak
+
+The test tagged `soak` in `test/workload_test.dart` runs the same scenario
+with 1000 client sessions of 8 actions in one simulation. It takes seconds
+rather than milliseconds, so `dart_test.yaml` skips it unless asked:
+
+```
+DST_SEED=7 dart test --run-skipped -t soak
+```
+
 ## Replaying a failure
 
 ```
