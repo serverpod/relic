@@ -1,3 +1,5 @@
+import 'package:clock/clock.dart';
+
 import '../../relic_core.dart';
 
 /// Middleware which prints the time of the request, the elapsed time for the
@@ -10,13 +12,13 @@ import '../../relic_core.dart';
 /// The `isError` parameter indicates whether the message is caused by an error.
 ///
 /// If [logger] is not passed, the message is just passed to [print].
-Middleware logRequests({final Logger? logger}) {
-  return (final next) {
+Middleware logRequests({Logger? logger}) {
+  return (next) {
     final localLogger = logger ?? logMessage;
 
-    return (final req) async {
-      final startTime = DateTime.now();
-      final watch = Stopwatch()..start();
+    return (req) async {
+      final startTime = clock.now();
+      final watch = clock.stopwatch()..start();
 
       try {
         final result = await next(req);
@@ -40,15 +42,15 @@ Middleware logRequests({final Logger? logger}) {
   };
 }
 
-String _formatQuery(final String query) {
+String _formatQuery(String query) {
   return query == '' ? '' : '?$query';
 }
 
 String _message(
-  final DateTime requestTime,
-  final Request request,
-  final Duration elapsedTime,
-  final String message,
+  DateTime requestTime,
+  Request request,
+  Duration elapsedTime,
+  String message,
 ) {
   final method = request.method.value;
   final url = request.url;
@@ -60,10 +62,10 @@ String _message(
 }
 
 String _errorMessage(
-  final DateTime requestTime,
-  final Request request,
-  final Duration elapsedTime,
-  final Object error,
+  DateTime requestTime,
+  Request request,
+  Duration elapsedTime,
+  Object error,
 ) {
   return _message(requestTime, request, elapsedTime, 'ERROR: $error');
 }

@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:relic_core/relic_core.dart';
-import 'package:relic_native/src/response_encoder.dart';
 import 'package:test/test.dart';
 
 /// The head as bytes of its own.

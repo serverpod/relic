@@ -1,7 +1,12 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
-import 'package:relic_core/relic_core.dart';
+import 'package:relic_headers/relic_headers.dart';
+
+import '../context/result.dart';
+import '../headers/headers.dart';
+import '../util/http_date.dart';
+import 'response_framing.dart';
 
 /// The status line and header block of a response, sized before it is
 /// written so the caller can put it straight into the buffer the native
@@ -26,7 +31,7 @@ final class ResponseHead {
   /// An upper bound on the bytes [writeTo] produces.
   final int bound;
 
-  factory ResponseHead(Response response, ResponseFraming framing) {
+  factory ResponseHead(final Response response, final ResponseFraming framing) {
     final headers = response.headers;
     final statusLine = _statusLineFor(response.statusCode);
     final transferEncoding = framing.transferEncoding?.join(', ');
@@ -47,8 +52,7 @@ final class ResponseHead {
     if (transferEncoding != null) {
       bound += 'transfer-encoding: '.length + transferEncoding.length + 2;
     }
-    // Up to 20 digits of content-length.
-    bound += 'content-length: '.length + 20 + 2;
+    bound += 'content-length: '.length + _maxContentLengthDigits + 2;
     // A handler that set Connection has said what it wants there.
     final announceClose =
         framing.closeAfter && !headers.contains(HeaderName.connection);
@@ -76,7 +80,7 @@ final class ResponseHead {
 
   /// Writes the head into [out], which holds at least [bound] bytes, and
   /// returns how many bytes it took.
-  int writeTo(Uint8List out) {
+  int writeTo(final Uint8List out) {
     out.setRange(0, _statusLine.length, _statusLine);
     var off = _statusLine.length;
     for (final name in _headers.names) {
@@ -107,7 +111,23 @@ final class ResponseHead {
   }
 }
 
-int _field(Uint8List out, int off, String name, String value) {
+/// The head of [response] as bytes, framed by [framing], for an adapter
+/// that writes it from its own buffer.
+Uint8List encodeResponseHead(
+  final Response response,
+  final ResponseFraming framing,
+) {
+  final head = ResponseHead(response, framing);
+  final out = Uint8List(head.bound);
+  return Uint8List.sublistView(out, 0, head.writeTo(out));
+}
+
+int _field(
+  final Uint8List out,
+  final int off,
+  final String name,
+  final String value,
+) {
   var at = _latin1(out, off, name);
   out[at++] = 0x3a;
   out[at++] = 0x20;
@@ -115,15 +135,15 @@ int _field(Uint8List out, int off, String name, String value) {
   return _crlf(out, at);
 }
 
-int _crlf(Uint8List out, int off) {
+int _crlf(final Uint8List out, final int off) {
   out[off] = 0x0d;
   out[off + 1] = 0x0a;
   return off + 2;
 }
 
-/// Writes [s] one byte per character, as the Latin-1 encoder does, and
-/// rejects anything beyond it the same way.
-int _latin1(Uint8List out, int off, String s) {
+/// One byte per character, as the Latin-1 encoder produces, and the same
+/// rejection of anything beyond it.
+int _latin1(final Uint8List out, final int off, final String s) {
   for (var i = 0; i < s.length; i++) {
     final c = s.codeUnitAt(i);
     if (c > 0xff) {
@@ -134,7 +154,7 @@ int _latin1(Uint8List out, int off, String s) {
   return off + s.length;
 }
 
-int _digits(Uint8List out, int off, int n) {
+int _digits(final Uint8List out, final int off, final int n) {
   if (n == 0) {
     out[off] = 0x30;
     return off + 1;
@@ -151,20 +171,23 @@ int _digits(Uint8List out, int off, int n) {
   return off + digits;
 }
 
+/// The digits of the largest content length, 2^63 - 1.
+const _maxContentLengthDigits = 19;
+
 /// The status lines by status, each built on first use.
 final _statusLines = List<Uint8List?>.filled(600, null);
 
-Uint8List _statusLineFor(int status) {
-  // Always HTTP/1.1, as dart:io answers. A 1.0 client understands it, and
-  // keep-alive follows the request, not this version.
+Uint8List _statusLineFor(final int status) {
+  // Always answered as HTTP/1.1, as dart:io does. A 1.0 client understands
+  // it, and keep-alive follows the request, not the version here.
   if (status < 100 || status >= 600) return _statusLine(status);
   return _statusLines[status] ??= _statusLine(status);
 }
 
-Uint8List _statusLine(int status) =>
+Uint8List _statusLine(final int status) =>
     latin1.encode('HTTP/1.1 $status ${_reason(status)}\r\n');
 
-String _reason(int status) => switch (status) {
+String _reason(final int status) => switch (status) {
   100 => 'Continue',
   101 => 'Switching Protocols',
   200 => 'OK',

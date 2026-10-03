@@ -4,6 +4,9 @@
   - The decoded-value cache is keyed by accessor, so a typed read hashes no header text, and the parsers hand their lists over without a copy
   - On relic_native with one isolate the headers route goes from 56k to 65k requests a second under the JIT and from 48k to 69k under AOT, and the browser route from 40k to 47k under the JIT and from 32k to 45k under AOT
 - fix: A 206 range response defaults its Content-Type to application/octet-stream when the MIME type is unknown
+- feat: Read time through `package:clock` and encode response heads in the core
+  - `httpDate`, `logMessage` and `logRequests` read `clock.now()` and `clock.stopwatch()`, so a test under `withClock` or a simulation sees its own dates and log times. The Date cache is per clock
+  - `ResponseHead` and `encodeResponseHead` move here from `relic_native`, next to `ResponseFraming`, so every adapter writes the same head bytes
 - feat!: Replace the request stream with an exchange-based `Adapter`
   - BREAKING: `Adapter` is an interface to implement, not a class to extend. It provides `listeners`, `capabilities` and `start(sink)`, and hands over `AdapterExchange` objects with `respond`, `hijack`, `upgradeWebSocket` and `abort`. `Adapter.requests`, `Adapter.port` and `AdapterRequest` are gone. The port is on `listeners` and on `RelicServer.port`
   - BREAKING: `IOAdapter` implements `Adapter`. `IOAdapter.port`, `requests`, `respond`, `hijack`, `connect` and `IOAdapterRequest` are gone, and `start` throws when called twice
