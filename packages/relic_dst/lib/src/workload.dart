@@ -69,9 +69,14 @@ Handler workloadHandler(
       throw StateError('the workload asked for an error');
     case '/ws':
       return WebSocketUpgrade((final socket) {
-        socket.events.listen((final event) {
-          if (event case TextDataReceived(:final text)) socket.sendText(text);
-        });
+        socket.events.listen(
+          (final event) {
+            if (event case TextDataReceived(:final text)) socket.sendText(text);
+          },
+          onError: (final _) {
+            // A peer that went away. The socket has closed itself.
+          },
+        );
       });
     case '/hijack':
       return Hijack((final channel) {
