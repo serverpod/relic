@@ -134,6 +134,7 @@ final class SimListener {
   final SimNetwork _network;
   final int port;
   void Function(SimSocket)? _onConnection;
+  Zone? _zone;
   final _backlog = Queue<SimSocket>();
   var _closed = false;
 
@@ -144,11 +145,15 @@ final class SimListener {
 
   bool get isClosed => _closed;
 
-  /// Hands every connection, queued or to come, to [onConnection].
+  /// Hands every connection, queued or to come, to [onConnection], in the
+  /// zone of this call, as a server socket's stream would. Whatever the
+  /// server does for the connection then runs in the server's zone, not
+  /// in the zone of the client that connected.
   void listen(final void Function(SimSocket) onConnection) {
     _onConnection = onConnection;
+    _zone = Zone.current;
     while (_backlog.isNotEmpty) {
-      onConnection(_backlog.removeFirst());
+      _accept(_backlog.removeFirst());
     }
   }
 
@@ -167,7 +172,7 @@ final class SimListener {
   void _accept(final SimSocket socket) {
     final onConnection = _onConnection;
     if (onConnection != null) {
-      onConnection(socket);
+      _zone!.runUnaryGuarded(onConnection, socket);
     } else {
       _backlog.add(socket);
     }

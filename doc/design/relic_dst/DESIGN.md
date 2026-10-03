@@ -88,6 +88,18 @@ exchange that never ended, a cancellation that never fired.
   core logs the stack trace of a handler that threw, and a stack trace
   names the line that started the run. The determinism tests start both
   runs from one call site.
+- A 1000 seed soak with network resets had one seed fail with a
+  `WebSocketException` reaching the test. Two things behind it. The soak's
+  WebSocket route listened to `events` without `onError`, so a peer's
+  reset was an unhandled stream error, which the core's
+  `catchTopLevelErrors` logs only when the server was started in the root
+  error zone, and under the test runner it was not. That is how a real
+  adapter behaves too, and the route now handles the error. Separately,
+  the simulated listener ran its accept callback in the zone of the client
+  that connected, so everything the server did for that connection ran in
+  the client's zone. `SimListener.listen` binds the zone of the call, as a
+  server socket's stream does, and a test pins which zone the error
+  reaches.
 - The first idle timeout check measured from the client's `socket` getter,
   which on a kept-alive connection returns at once while the server's
   idle timer has run since the last response. The check uses a fresh

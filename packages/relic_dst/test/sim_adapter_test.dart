@@ -615,6 +615,42 @@ void main() {
     await served.shutdown();
   });
 
+  simTest('Given a WebSocket handler that listens to events without an error '
+      'handler, '
+      'when a client started in another zone resets the connection, '
+      'then the error reaches the zone the server was started in, not the '
+      "client's.", (final sim) async {
+    final serverErrors = <Object>[];
+    final clientErrors = <Object>[];
+    late _Served served;
+    await runZonedGuarded(() async {
+      served = await _serve(
+        sim,
+        (final _) => WebSocketUpgrade((final socket) {
+          socket.events.listen((final _) {});
+        }),
+      );
+    }, (final error, final _) => serverErrors.add(error))!;
+
+    await runZonedGuarded(() async {
+      final ws = await served.client().upgrade('/ws');
+      ws.sendText('hello');
+      await sim.sleep(const Duration(milliseconds: 100));
+      ws.destroy();
+      await sim.sleep(const Duration(milliseconds: 100));
+    }, (final error, final _) => clientErrors.add(error))!;
+
+    expect(serverErrors, [
+      isA<WebSocketException>().having(
+        (final e) => e.message,
+        'message',
+        'Connection reset by peer',
+      ),
+    ]);
+    expect(clientErrors, isEmpty);
+    await served.shutdown();
+  });
+
   simTest('Given a handler that throws, '
       'when a client sends a request, '
       'then it gets 500 and the connection stays usable.', (final sim) async {
