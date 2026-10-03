@@ -10,6 +10,7 @@ workspace:
   - packages/relic_headers
   - packages/relic_io
   - packages/relic_native
+  - packages/relic_dst
   # Internal support packages (not published)
   - packages/benchmark
   - packages/examples
