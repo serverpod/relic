@@ -14,7 +14,8 @@ import 'simulation.dart';
 /// can predict, so the workload checks what came back and not only that
 /// something did.
 ///
-/// - `/echo` answers `METHOD n` with n the body length it read.
+/// - `/echo` answers `METHOD n h` with n the body length it read and h its
+///   [workloadHash].
 /// - `/slow?ms=n` answers `slow` after n milliseconds.
 /// - `/stream?n=k` streams k lines `chunk-i` with pauses, chunked.
 /// - `/large?n=k` answers k bytes of [workloadPattern].
@@ -22,15 +23,21 @@ import 'simulation.dart';
 /// - `/error` throws, for a 500.
 /// - `/ws` echoes WebSocket text messages.
 /// - `/hijack` echoes raw bytes until the peer closes.
-/// - `/wait` answers once the request is cancelled, which never arrives.
+/// - `/wait` answers once the request is cancelled, which never arrives,
+///   and calls [onCancelled].
 /// - Anything else is 404.
-Handler workloadHandler(final Simulation sim) => (final request) async {
+Handler workloadHandler(
+  final Simulation sim, {
+  final void Function()? onCancelled,
+}) => (final request) async {
   final query = request.url.queryParameters;
   switch (request.url.path) {
     case '/echo':
       final body = await request.body.readAll();
       return Response.ok(
-        body: Body.fromString('${request.method.value} ${body.length}'),
+        body: Body.fromString(
+          '${request.method.value} ${body.length} ${workloadHash(body)}',
+        ),
       );
     case '/slow':
       await sim.sleep(Duration(milliseconds: int.parse(query['ms'] ?? '0')));
@@ -76,6 +83,7 @@ Handler workloadHandler(final Simulation sim) => (final request) async {
       });
     case '/wait':
       await request.cancelled;
+      onCancelled?.call();
       return Response.ok();
     default:
       return Response.notFound(body: Body.fromString('no such route'));
@@ -85,6 +93,19 @@ Handler workloadHandler(final Simulation sim) => (final request) async {
 /// [n] bytes a client can check: byte i is `(i * 7) & 0xff`.
 Uint8List workloadPattern(final int n) =>
     Uint8List.fromList(List.generate(n, (final i) => (i * 7) & 0xff));
+
+/// FNV-1a over [bytes], 32 bits, as hex. What `/echo` says about a body.
+String workloadHash(final Uint8List bytes) {
+  var hash = 0x811c9dc5;
+  for (final byte in bytes) {
+    hash = ((hash ^ byte) * 0x01000193) & 0xffffffff;
+  }
+  return hash.toRadixString(16);
+}
+
+/// What `/echo` answers to [method] with [body].
+String workloadEcho(final Method method, final Uint8List body) =>
+    '${method.value} ${body.length} ${workloadHash(body)}';
 
 /// What one client session does to the server.
 enum WorkloadAction {
@@ -141,6 +162,12 @@ enum WorkloadAction {
 
   /// A declared body the client resets halfway through.
   resetMidBody,
+
+  /// A connection that sends nothing, closed by the server's idle timeout.
+  idleClose,
+
+  /// A request on `/wait`, reset by the client, for a cancellation.
+  abandonWait,
 }
 
 /// A check the workload made that failed. Carries what the client saw.
@@ -179,13 +206,41 @@ final class Workload {
 
   /// The adapter's limits, so the workload can cross them on purpose.
   final Duration headerTimeout;
+  final Duration idleTimeout;
   final int maxInlineBody;
+
+  /// No checked response may take longer than this from the first byte of
+  /// its request to the last of its body.
+  final Duration responseBound;
 
   /// Every action taken, in the order it was picked.
   final taken = <(int, WorkloadAction)>[];
 
   /// How many answers were checked against what the handler should say.
   var checked = 0;
+
+  /// How many responses the handler wrote reached a client and were read.
+  /// The adapter's own 400s and 408s are not among them.
+  var handlerResponses = 0;
+
+  /// The longest a checked response took.
+  var slowestResponse = Duration.zero;
+
+  /// How many times a client reset a `/wait` request, each of which the
+  /// handler must see as a cancellation.
+  int get abandonedWaits =>
+      taken.where((final t) => t.$2 == WorkloadAction.abandonWait).length;
+
+  /// Actions whose exchange may complete on the server although the
+  /// client read no response: a reset that lost the race with the answer,
+  /// or a client that never read.
+  int get unreadCompletions => taken
+      .where(
+        (final t) =>
+            t.$2 == WorkloadAction.abandon ||
+            t.$2 == WorkloadAction.stopReading,
+      )
+      .length;
 
   Workload(
     this.sim,
@@ -195,7 +250,9 @@ final class Workload {
     this.actionsPerSession = 4,
     this.actions = WorkloadAction.values,
     this.headerTimeout = const Duration(seconds: 10),
+    this.idleTimeout = const Duration(seconds: 60),
     this.maxInlineBody = 1 << 20,
+    this.responseBound = const Duration(seconds: 5),
   });
 
   /// Runs every session to its end.
@@ -233,15 +290,40 @@ final class Workload {
       checked++;
     }
 
+    /// A response the handler wrote, read within the bound, with a head
+    /// every response owes: one Date, and a length or a coding, not both.
+    Future<SimResponse> answered(
+      final Future<SimResponse> Function() read,
+    ) async {
+      final started = sim.elapsed;
+      final response = await read();
+      final took = sim.elapsed - started;
+      if (took > slowestResponse) slowestResponse = took;
+      check(took <= responseBound, 'the response took $took');
+      check(
+        response.headers['date']?.length == 1,
+        'Date appears ${response.headers['date']?.length ?? 0} times',
+      );
+      check(
+        !(response.head.contentLength != null && response.head.chunked),
+        'both Content-Length and chunked',
+      );
+      handlerResponses++;
+      return response;
+    }
+
+    final nothing = Uint8List(0);
     switch (action) {
       case WorkloadAction.plain:
         if (sim.random.nextBool()) {
-          final response = await client.get('/echo');
-          check(response.body == 'GET 0', 'got ${response.body}');
+          final response = await answered(() => client.get('/echo'));
+          final expected = workloadEcho(Method.get, nothing);
+          check(response.body == expected, 'got ${response.body}');
         } else {
-          final n = sim.random.nextInt(2000);
-          final response = await client.post('/echo', workloadPattern(n));
-          check(response.body == 'POST $n', 'got ${response.body}');
+          final body = workloadPattern(sim.random.nextInt(2000));
+          final response = await answered(() => client.post('/echo', body));
+          final expected = workloadEcho(Method.post, body);
+          check(response.body == expected, 'got ${response.body}');
         }
         return true;
       case WorkloadAction.pipelined:
@@ -249,55 +331,58 @@ final class Workload {
           await client.write(Method.get, '/echo?i=$i');
         }
         for (var i = 0; i < 3; i++) {
-          final response = await client.read();
-          check(response.body == 'GET 0', 'response $i was ${response.body}');
+          final response = await answered(client.read);
+          final expected = workloadEcho(Method.get, nothing);
+          check(response.body == expected, 'response $i was ${response.body}');
         }
         return true;
       case WorkloadAction.chunkedUpload:
-        final n = 1 + sim.random.nextInt(50000);
-        final response = await client.post(
-          '/echo',
-          workloadPattern(n),
-          chunked: true,
+        final body = workloadPattern(1 + sim.random.nextInt(50000));
+        final response = await answered(
+          () => client.post('/echo', body, chunked: true),
         );
-        check(response.body == 'POST $n', 'got ${response.body}');
+        final expected = workloadEcho(Method.post, body);
+        check(response.body == expected, 'got ${response.body}');
         return true;
       case WorkloadAction.largeUpload:
-        final n = maxInlineBody + 1 + sim.random.nextInt(maxInlineBody);
-        final response = await client.post('/echo', workloadPattern(n));
-        check(response.body == 'POST $n', 'got ${response.body}');
+        final body = workloadPattern(
+          maxInlineBody + 1 + sim.random.nextInt(maxInlineBody),
+        );
+        final response = await answered(() => client.post('/echo', body));
+        final expected = workloadEcho(Method.post, body);
+        check(response.body == expected, 'got ${response.body}');
         return true;
       case WorkloadAction.slow:
-        final response = await client.get(
-          '/slow?ms=${sim.random.nextInt(2000)}',
+        final response = await answered(
+          () => client.get('/slow?ms=${sim.random.nextInt(2000)}'),
         );
         check(response.body == 'slow', 'got ${response.body}');
         return true;
       case WorkloadAction.stream:
         final n = 1 + sim.random.nextInt(20);
-        final response = await client.get('/stream?n=$n');
+        final response = await answered(() => client.get('/stream?n=$n'));
         final expected = [for (var i = 0; i < n; i++) 'chunk-$i\n'].join();
         check(response.head.chunked, 'not chunked');
         check(response.body == expected, 'got ${response.body}');
         return true;
       case WorkloadAction.large:
         final n = sim.random.nextInt(1 << 20);
-        final response = await client.get('/large?n=$n');
+        final response = await answered(() => client.get('/large?n=$n'));
         check(
           _sameBytes(response.bodyBytes, workloadPattern(n)),
           'got ${response.bodyBytes.length} bytes for $n',
         );
         return true;
       case WorkloadAction.error:
-        final response = await client.get('/error');
+        final response = await answered(() => client.get('/error'));
         check(response.statusCode == 500, 'got ${response.statusCode}');
         return true;
       case WorkloadAction.notFound:
-        final response = await client.get('/missing');
+        final response = await answered(() => client.get('/missing'));
         check(response.statusCode == 404, 'got ${response.statusCode}');
         return true;
       case WorkloadAction.closeHeader:
-        final response = await client.get('/close');
+        final response = await answered(() => client.get('/close'));
         check(response.body == 'closing', 'got ${response.body}');
         check(!await client.reader.more(), 'the server kept the connection');
         return false;
@@ -332,8 +417,9 @@ final class Workload {
       case WorkloadAction.halfClose:
         await client.write(Method.get, '/echo');
         await client.close();
-        final response = await client.read();
-        check(response.body == 'GET 0', 'got ${response.body}');
+        final response = await answered(client.read);
+        final expected = workloadEcho(Method.get, nothing);
+        check(response.body == expected, 'got ${response.body}');
         check(!await client.reader.more(), 'the server kept the connection');
         return false;
       case WorkloadAction.webSocket:
@@ -390,6 +476,25 @@ final class Workload {
           workloadPattern(1000 + sim.random.nextInt(50000)),
         );
         await sim.sleep(Duration(milliseconds: sim.random.nextInt(200)));
+        return false;
+      case WorkloadAction.idleClose:
+        // On a fresh connection: a kept-alive one has been idle since its
+        // last response, and the server's timer runs from there.
+        final idle = client.isConnected ? SimHttpClient(network, port) : client;
+        await idle.socket;
+        final connected = sim.elapsed;
+        check(!await idle.reader.more(), 'the server sent bytes unasked');
+        final waited = sim.elapsed - connected;
+        check(
+          waited >= idleTimeout &&
+              waited <= idleTimeout + network.options.maxLatency * 2,
+          'the idle connection closed after $waited',
+        );
+        idle.destroy();
+        return false;
+      case WorkloadAction.abandonWait:
+        await client.write(Method.get, '/wait');
+        await sim.sleep(Duration(milliseconds: sim.random.nextInt(500)));
         return false;
     }
   }

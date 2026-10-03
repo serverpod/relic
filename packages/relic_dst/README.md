@@ -63,11 +63,29 @@ simTest(
   routes have predictable answers. Plain, pipelined, chunked and large
   uploads, slow and streamed responses, errors, garbage, slowloris,
   abandoned requests, half-close, WebSocket, hijack, a peer that stops
-  reading and a reset mid-body.
+  reading, a reset mid-body, an idle connection and a reset `/wait`.
+  Every response the handler wrote is checked for its body, by length and
+  hash, for one Date header, for a length or a coding and not both, and
+  against a response time bound.
 - `simTest`, `simProperty`: a test that runs inside a simulation, and one
   that runs its body once per seed. A failure prints the seed and the tail
   of the trace. `DST_SEED=n` replays one seed, `DST_SEEDS=n` sets how many
   a property runs.
+
+## What the soak asserts
+
+The workload property in `test/workload_test.dart` runs the sessions,
+waits a second of simulated time for the last bytes to land, and then
+holds the server to its end state before it is closed:
+
+- `connectionsInfo` is all zeros: every client is gone, so every
+  connection is.
+- Every exchange the contract saw has ended.
+- The handler saw exactly as many cancellations as clients reset a `/wait`.
+- The exchanges that completed are at least the responses the clients
+  read, and at most those plus the requests whose answer no client read.
+- `close()` then takes no simulated time, since nothing is left to drain.
+- No contract violation, and no timer or event left in the simulation.
 
 ## Replaying a failure
 
