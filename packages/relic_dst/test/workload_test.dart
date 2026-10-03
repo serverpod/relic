@@ -1,0 +1,116 @@
+import 'package:relic_core/relic_core.dart';
+import 'package:relic_dst/relic_dst.dart';
+import 'package:test/test.dart';
+
+/// A server running the workload handler, with the contract watched.
+Future<(RelicServer, ContractAdapter, SimAdapter)> _serve(
+  final Simulation sim,
+  final SimNetwork network,
+) async {
+  final adapter = SimAdapter.bind(
+    network,
+    idleTimeout: const Duration(seconds: 10),
+    headerTimeout: const Duration(seconds: 2),
+    drainTimeout: const Duration(seconds: 5),
+    maxInlineBody: 64 << 10,
+  );
+  final contract = ContractAdapter(adapter, sim);
+  final server = RelicServer(() => contract);
+  await server.mountAndStart(workloadHandler(sim));
+  return (server, contract, adapter);
+}
+
+Workload _workload(
+  final Simulation sim,
+  final SimNetwork network,
+  final int port,
+) => Workload(
+  sim,
+  network,
+  port,
+  headerTimeout: const Duration(seconds: 2),
+  maxInlineBody: 64 << 10,
+);
+
+void main() {
+  simProperty('Given a workload server on a fragmenting network, '
+      'when 16 random client sessions run and the server closes gracefully, '
+      'then every checked answer matched, the contract held and nothing is '
+      'left pending.', (final sim) async {
+    final network = SimNetwork(
+      sim,
+      options: const NetworkOptions(fragmentation: 0.5),
+    );
+    final (server, contract, adapter) = await _serve(sim, network);
+    final workload = _workload(sim, network, adapter.port);
+
+    await workload.run();
+    final closing = sim.elapsed;
+    await server.close();
+    final closeTook = sim.elapsed - closing;
+    await sim.sleep(const Duration(seconds: 1));
+
+    expect(workload.checked, greaterThan(0));
+    expect(contract.violations, isEmpty);
+    expect(closeTook, lessThanOrEqualTo(const Duration(seconds: 10)));
+    expectQuiescent(sim);
+  });
+
+  simProperty(
+    'Given a workload server on a network that resets one delivery in a '
+    'thousand, '
+    'when 16 random client sessions run and the server closes gracefully, '
+    'then the contract held and nothing is left pending.',
+    (final sim) async {
+      final network = SimNetwork(
+        sim,
+        options: const NetworkOptions(resetProbability: 0.001),
+      );
+      final (server, contract, adapter) = await _serve(sim, network);
+      final workload = _workload(sim, network, adapter.port);
+
+      try {
+        await workload.run();
+      } on WorkloadFailure {
+        // A reset in the middle of a checked exchange is the network's
+        // doing. The server's conduct is what this scenario is about.
+      } on SimConnectionReset {
+        // Likewise.
+      } on HttpParseException {
+        // Likewise, for a response cut short.
+      }
+      await server.close();
+      await sim.sleep(const Duration(seconds: 1));
+
+      expect(contract.violations, isEmpty);
+      expectQuiescent(sim);
+    },
+    seeds: 10,
+  );
+
+  test('Given the workload with seed 5, '
+      'when it runs twice, '
+      'then both runs take the same actions and leave the same trace.', () {
+    (List<(int, WorkloadAction)>, List<String>) run() {
+      final sim = Simulation(seed: 5);
+      late Workload workload;
+      sim.run(() async {
+        final network = SimNetwork(sim);
+        final (server, _, adapter) = await _serve(sim, network);
+        workload = _workload(sim, network, adapter.port);
+        await workload.run();
+        await server.close();
+        await sim.sleep(const Duration(seconds: 1));
+      });
+      return (workload.taken, [for (final e in sim.trace) e.toString()]);
+    }
+
+    // Both from one call site: the core logs stack traces, which name it.
+    final [(firstActions, firstTrace), (secondActions, secondTrace)] = [
+      for (var i = 0; i < 2; i++) run(),
+    ];
+
+    expect(secondActions, firstActions);
+    expect(secondTrace, firstTrace);
+  });
+}
