@@ -229,4 +229,92 @@ void main() {
     expect(framing.date, isNull);
     expect(framing.dateLine, isNull);
   });
+
+  test('Given a connection that closes after the response, when framed, '
+      'then the Connection option is close', () {
+    final framing = _frame(
+      Response.ok(body: Body.fromString('Relic')),
+      keepAlive: false,
+    );
+
+    expect(framing.connection, ConnectionHeaderType.close);
+  });
+
+  test('Given an HTTP/1.1 connection that stays open, when framed, '
+      'then there is no Connection option', () {
+    final framing = _frame(Response.ok(body: Body.fromString('Relic')));
+
+    expect(framing.connection, isNull);
+  });
+
+  test('Given an HTTP/1.0 connection that stays open, when framed, '
+      'then the Connection option is keep-alive', () {
+    final framing = _frame(
+      Response.ok(body: Body.fromString('Relic')),
+      protocol: HttpProtocol.http10,
+    );
+
+    expect(framing.closeAfter, isFalse);
+    expect(framing.connection, ConnectionHeaderType.keepAlive);
+  });
+
+  test('Given an HTTP/1.0 response whose length is unknown, when framed, '
+      'then the connection closes and the Connection option is close', () {
+    final framing = _frame(
+      Response.ok(body: _stream()),
+      protocol: HttpProtocol.http10,
+    );
+
+    expect(framing.closeAfter, isTrue);
+    expect(framing.connection, ConnectionHeaderType.close);
+  });
+
+  test(
+    'Given an HTTP/1.0 connection that stays open, '
+    'when the response sets a Connection value without keep-alive, '
+    'then the connection closes and there is no Connection option to add',
+    () {
+      final framing = _frame(
+        Response.ok(
+          body: Body.fromString('Relic'),
+          headers: Headers.build((mh) => mh['connection'] = ['x-trace']),
+        ),
+        protocol: HttpProtocol.http10,
+      );
+
+      expect(framing.closeAfter, isTrue);
+      expect(framing.connection, isNull);
+    },
+  );
+
+  test(
+    'Given an HTTP/1.0 connection that stays open, '
+    'when the response sets keep-alive itself, '
+    'then the connection stays open and there is no Connection option to add',
+    () {
+      final framing = _frame(
+        Response.ok(
+          body: Body.fromString('Relic'),
+          headers: Headers.build((mh) => mh['connection'] = ['keep-alive']),
+        ),
+        protocol: HttpProtocol.http10,
+      );
+
+      expect(framing.closeAfter, isFalse);
+      expect(framing.connection, isNull);
+    },
+  );
+
+  test('Given a response that sets Connection itself, when framed, '
+      'then there is no Connection option to add', () {
+    final framing = _frame(
+      Response.ok(
+        body: Body.fromString('Relic'),
+        headers: Headers.build((mh) => mh['connection'] = ['close']),
+      ),
+    );
+
+    expect(framing.closeAfter, isTrue);
+    expect(framing.connection, isNull);
+  });
 }

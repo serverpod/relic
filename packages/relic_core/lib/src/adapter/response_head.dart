@@ -1,8 +1,6 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
-import 'package:relic_headers/relic_headers.dart';
-
 import '../context/result.dart';
 import '../headers/headers.dart';
 import 'response_framing.dart';
@@ -13,14 +11,12 @@ import 'response_framing.dart';
 ///
 /// The response's headers go out except the ones a [ResponseFraming]
 /// decides. The framing's own follow: the type, the date, the length or
-/// the codings, and `Connection: close` when the connection closes after
-/// the response and the response does not say so itself (RFC 9112 9.6).
+/// the codings, and the Connection option the framing asks for.
 final class ResponseHead {
   final Uint8List _statusLine;
   final Headers _headers;
   final ResponseFraming _framing;
   final String? _transferEncoding;
-  final bool _announceClose;
 
   /// An upper bound on the bytes [writeTo] produces.
   final int bound;
@@ -49,16 +45,14 @@ final class ResponseHead {
       bound += 'transfer-encoding: '.length + transferEncoding.length + 2;
     }
     bound += 'content-length: '.length + _maxContentLengthDigits + 2;
-    // A handler that set Connection has said what it wants there.
-    final announceClose =
-        framing.closeAfter && !headers.contains(HeaderName.connection);
-    if (announceClose) bound += 'connection: close'.length + 2;
+    if (framing.connection case final connection?) {
+      bound += 'connection: '.length + connection.value.length + 2;
+    }
     return ResponseHead._(
       statusLine,
       headers,
       framing,
       transferEncoding,
-      announceClose,
       bound,
     );
   }
@@ -68,7 +62,6 @@ final class ResponseHead {
     this._headers,
     this._framing,
     this._transferEncoding,
-    this._announceClose,
     this.bound,
   );
 
@@ -102,7 +95,9 @@ final class ResponseHead {
     if (_transferEncoding case final transferEncoding?) {
       off = _field(out, off, 'transfer-encoding', transferEncoding);
     }
-    if (_announceClose) off = _field(out, off, 'connection', 'close');
+    if (_framing.connection case final connection?) {
+      off = _field(out, off, 'connection', connection.value);
+    }
     return _crlf(out, off);
   }
 }

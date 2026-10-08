@@ -192,6 +192,64 @@ void framingTests(AdapterConformance conformance) {
       expect(first.toLowerCase(), isNot(contains('connection: close')));
     });
 
+    test(
+      'when an HTTP/1.0 client asks to keep the connection alive, '
+      'then the response says Connection: keep-alive and the connection carries a second request',
+      () async {
+        await serve(ok);
+
+        // An HTTP/1.0 client takes the connection as closed unless the
+        // response says otherwise (RFC 9112 C.2.2).
+        final reply = await raw(
+          'GET / HTTP/1.0\r\nHost: x\r\nConnection: keep-alive\r\n\r\n'
+          'GET / HTTP/1.0\r\nHost: x\r\n\r\n',
+        );
+
+        // The version in the status line is the adapter's to choose.
+        final (head: first, body: rest) = splitHead(reply);
+        expect(first, matches(RegExp(r'^HTTP/1\.[01] 200')));
+        expect(first.toLowerCase(), contains('connection: keep-alive'));
+        expect(rest, matches(RegExp(r'^okHTTP/1\.[01] 200')));
+        expect(rest, endsWith('ok'));
+      },
+    );
+
+    test('when an HTTP/1.0 client asks to keep the connection alive and the '
+        'response sets a Connection value without keep-alive, '
+        'then the connection closes after the response', () async {
+      await serve(
+        (req) => Response.ok(
+          body: Body.fromString('ok'),
+          headers: Headers.build((mh) => mh['connection'] = ['x-trace']),
+        ),
+      );
+
+      final reply = await raw(
+        'GET / HTTP/1.0\r\nHost: x\r\nConnection: keep-alive\r\n\r\n'
+        'GET / HTTP/1.0\r\nHost: x\r\n\r\n',
+      );
+
+      final (head: first, body: rest) = splitHead(reply);
+      expect(first, matches(RegExp(r'^HTTP/1\.[01] 200')));
+      expect(first.toLowerCase(), isNot(contains('keep-alive')));
+      expect(rest, 'ok');
+    });
+
+    test('when an HTTP/1.0 client does not ask to keep the connection alive, '
+        'then the connection closes after the response', () async {
+      await serve(ok);
+
+      final reply = await raw(
+        'GET / HTTP/1.0\r\nHost: x\r\n\r\n'
+        'GET / HTTP/1.0\r\nHost: x\r\n\r\n',
+      );
+
+      final (head: first, body: rest) = splitHead(reply);
+      expect(first, matches(RegExp(r'^HTTP/1\.[01] 200')));
+      expect(first.toLowerCase(), isNot(contains('connection: keep-alive')));
+      expect(rest, 'ok');
+    });
+
     test('when an HTTP/1.0 client gets a body of unknown length, '
         'then it is not chunked and the connection closes after it', () async {
       await serve(
