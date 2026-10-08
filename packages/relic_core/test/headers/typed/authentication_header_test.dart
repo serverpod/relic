@@ -35,7 +35,7 @@ void main() {
         final encoded = encode(
           AuthenticationHeader(
             scheme: 'Basic',
-            parameters: [AuthenticationParameter('realm', attack)],
+            parameters: [const AuthenticationParameter('realm', attack)],
           ),
         );
 
@@ -72,7 +72,7 @@ void main() {
           () => encode(
             AuthenticationHeader(
               scheme: 'Basic',
-              parameters: [AuthenticationParameter('re alm', 'x')],
+              parameters: [const AuthenticationParameter('re alm', 'x')],
             ),
           ),
           throwsFormatException,
@@ -86,8 +86,8 @@ void main() {
         final header = AuthenticationHeader(
           scheme: 'Digest',
           parameters: [
-            AuthenticationParameter('realm', 'example zone'),
-            AuthenticationParameter('qop', 'auth'),
+            const AuthenticationParameter('realm', 'example zone'),
+            const AuthenticationParameter('qop', 'auth'),
           ],
         );
 
@@ -107,7 +107,7 @@ void main() {
           'then the opaque token round-trips as an unnamed parameter.', () {
         final header = AuthenticationHeader(
           scheme: 'Bearer',
-          parameters: [AuthenticationParameter('', 'abc123')],
+          parameters: [const AuthenticationParameter('', 'abc123')],
         );
 
         expect(encode(header), 'Bearer abc123');
@@ -140,7 +140,9 @@ void main() {
           () => encode(
             AuthenticationHeader(
               scheme: 'Basic',
-              parameters: [AuthenticationParameter('', 'x, Basic realm="y"')],
+              parameters: [
+                const AuthenticationParameter('', 'x, Basic realm="y"'),
+              ],
             ),
           ),
           throwsFormatException,

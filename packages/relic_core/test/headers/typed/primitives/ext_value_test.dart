@@ -1,5 +1,5 @@
-import 'package:relic_core/src/headers/typed/primitives/ext_value.dart';
 import 'package:relic_core/relic_core.dart';
+import 'package:relic_core/src/headers/typed/primitives/ext_value.dart';
 import 'package:test/test.dart';
 
 void main() {

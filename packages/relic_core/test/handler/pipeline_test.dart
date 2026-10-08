@@ -1,6 +1,6 @@
 import 'package:relic_core/relic_core.dart';
-import 'package:test_utils/test_utils.dart';
 import 'package:test/test.dart';
+import 'package:test_utils/test_utils.dart';
 
 void main() {
   var accessLocation = 0;
@@ -9,7 +9,7 @@ void main() {
     accessLocation = 0;
   });
 
-  Handler middlewareA(final Handler next) => (final request) {
+  Handler middlewareA(Handler next) => (request) {
     expect(accessLocation, 0);
     accessLocation = 1;
     final response = next(request);
@@ -18,7 +18,7 @@ void main() {
     return response;
   };
 
-  Handler middlewareB(final Handler next) => (final request) {
+  Handler middlewareB(Handler next) => (request) {
     expect(accessLocation, 1);
     accessLocation = 2;
     final response = next(request);
@@ -27,7 +27,7 @@ void main() {
     return response;
   };
 
-  Result next(final Request request) {
+  Result next(Request request) {
     expect(accessLocation, 2);
     accessLocation = 3;
     return syncHandler(request);

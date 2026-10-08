@@ -2,12 +2,12 @@ import 'package:relic_core/relic_core.dart';
 import 'package:test/test.dart';
 
 void main() {
-  group('AccessControlAllowOriginHeader equality and hashing', () {
+  group('AccessControlAllowOriginHeader equality and hashing,', () {
     group('Given the wildcard and the opaque-origin (null) values,', () {
       test('when their hashCodes are compared, '
           'then they differ (no bucket-0 collision).', () {
         const wildcard = AccessControlAllowOriginHeader.wildcard();
-        final opaque = AccessControlAllowOriginHeader.origin(
+        const opaque = AccessControlAllowOriginHeader.origin(
           origin: OpaqueOrigin.instance,
         );
 

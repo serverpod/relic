@@ -1,3 +1,4 @@
+// ignore_for_file: avoid_print
 import 'package:relic_core/relic_core.dart';
 
 /// Example demonstrating relic_core's platform-agnostic routing and handlers.
