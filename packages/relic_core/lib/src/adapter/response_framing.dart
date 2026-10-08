@@ -7,6 +7,7 @@ import '../body/types/mime_type.dart';
 import '../context/result.dart';
 import '../headers/exception/header_exception.dart';
 import '../headers/standard_headers_extensions.dart';
+import '../headers/typed/headers/connection_header.dart';
 import '../headers/typed/headers/transfer_encoding_header.dart';
 import '../util/http_date.dart';
 import '../util/util.dart';
@@ -49,6 +50,13 @@ final class ResponseFraming {
   /// else frames the body, so its end must.
   final bool closeAfter;
 
+  /// The Connection option to add, or null when the response sets the
+  /// header itself or needs none. [ConnectionHeaderType.close] when
+  /// [closeAfter] (RFC 9112 9.6). [ConnectionHeaderType.keepAlive] to an
+  /// HTTP/1.0 request whose connection stays open, which such a client
+  /// takes as closed unless told (RFC 9112 C.2.2).
+  final ConnectionHeaderType? connection;
+
   const ResponseFraming._({
     required this.sendBody,
     required this.contentLength,
@@ -57,6 +65,7 @@ final class ResponseFraming {
     required this.date,
     required this.dateLine,
     required this.closeAfter,
+    required this.connection,
   });
 
   /// The framing of [response] over [protocol], for a HEAD request when
@@ -98,10 +107,19 @@ final class ResponseFraming {
     }
     // Most responses set neither Connection nor Transfer-Encoding, so the
     // parse runs only when the header is there.
-    final connection = headers.contains(HeaderName.connection)
+    final setsConnection = headers.contains(HeaderName.connection);
+    final own = setsConnection
         ? _own(() => headers.connection, HeaderName.connection)
         : null;
-    var closeAfter = !keepAlive || (connection?.isClose ?? false);
+    // An HTTP/1.0 client keeps the connection only when the response says
+    // keep-alive, so a Connection value of the handler's without it ends
+    // the connection here too.
+    var closeAfter =
+        !keepAlive ||
+        (own?.isClose ?? false) ||
+        (setsConnection &&
+            protocol == HttpProtocol.http10 &&
+            !(own?.isKeepAlive ?? false));
 
     int? contentLength;
     List<String>? transferEncoding;
@@ -145,7 +163,16 @@ final class ResponseFraming {
       date: date,
       dateLine: dateLine,
       closeAfter: closeAfter,
+      connection: setsConnection ? null : _option(closeAfter, protocol),
     );
+  }
+
+  /// The Connection option for a response that sets no Connection value
+  /// of its own.
+  static ConnectionHeaderType? _option(bool closeAfter, HttpProtocol protocol) {
+    if (closeAfter) return ConnectionHeaderType.close;
+    if (protocol == HttpProtocol.http10) return ConnectionHeaderType.keepAlive;
+    return null;
   }
 
   /// A header of the response, read as typed.

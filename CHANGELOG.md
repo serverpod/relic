@@ -1,4 +1,5 @@
 ## Unreleased
+- fix: A response to an HTTP/1.0 request that keeps its connection open carries `Connection: keep-alive`, and a response with a Connection value of its own but no keep-alive closes such a connection. `ResponseFraming.connection` is the `ConnectionHeaderType` an adapter adds, `close` or `keepAlive`
 - fix: The dart:io adapter closes the connection after a request that lists `close` in its Connection field, also beside a later `keep-alive`, which won in dart:io's `persistentConnection`
 
 ## 2.0.0-rc.5
