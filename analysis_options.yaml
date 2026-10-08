@@ -1,6 +1,8 @@
 include: package:serverpod_lints/public.yaml
 
 analyzer:
+  exclude:
+    - doc/site/versioned_docs/**
   language:
     strict-raw-types: false
 
@@ -8,4 +10,8 @@ linter:
   rules:
     avoid_relative_lib_imports: true
     prefer_relative_imports: true
+    prefer_final_parameters: false
     public_member_api_docs: false # TODO: This is temporary until we get closer to release
+
+formatter:
+  trailing_commas: automate
