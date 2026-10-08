@@ -13,14 +13,14 @@ void main() {
         final request = _request(
           boundary: 'abc123',
           body: _multipartBody('abc123', [
-            _Part(
-              headers: const {
+            const _Part(
+              headers: {
                 Headers.contentDispositionHeader: 'form-data; name="text"',
               },
               body: 'hello',
             ),
-            _Part(
-              headers: const {
+            const _Part(
+              headers: {
                 Headers.contentDispositionHeader:
                     'form-data; name="upload"; filename="file.txt"',
                 Headers.contentTypeHeader: 'text/plain; charset=utf-8',
@@ -39,13 +39,13 @@ void main() {
 
         expect(parts, [
           isA<MultipartFieldPart>()
-              .having((final p) => p.name, 'name', 'text')
-              .having((final p) => p.body.bodyType, 'bodyType', isNull),
+              .having((p) => p.name, 'name', 'text')
+              .having((p) => p.body.bodyType, 'bodyType', isNull),
           isA<MultipartFilePart>()
-              .having((final p) => p.name, 'name', 'upload')
-              .having((final p) => p.filename, 'filename', 'file.txt')
+              .having((p) => p.name, 'name', 'upload')
+              .having((p) => p.filename, 'filename', 'file.txt')
               .having(
-                (final p) => p.body.bodyType?.mimeType,
+                (p) => p.body.bodyType?.mimeType,
                 'body.bodyType.mimeType',
                 MimeType.plainText,
               ),
@@ -60,14 +60,14 @@ void main() {
         final request = _request(
           boundary: 'dupes',
           body: _multipartBody('dupes', [
-            _Part(
-              headers: const {
+            const _Part(
+              headers: {
                 Headers.contentDispositionHeader: 'form-data; name="tag"',
               },
               body: 'one',
             ),
-            _Part(
-              headers: const {
+            const _Part(
+              headers: {
                 Headers.contentDispositionHeader: 'form-data; name="tag"',
               },
               body: 'two',
@@ -91,8 +91,8 @@ void main() {
       final request = _request(
         boundary: 'unnamed',
         body: _multipartBody('unnamed', [
-          _Part(
-            headers: const {
+          const _Part(
+            headers: {
               Headers.contentDispositionHeader:
                   'form-data; filename="file.txt"',
             },
@@ -113,15 +113,15 @@ void main() {
         final request = _request(
           boundary: 'filename-path',
           body: _multipartBody('filename-path', [
-            _Part(
-              headers: const {
+            const _Part(
+              headers: {
                 Headers.contentDispositionHeader:
                     'form-data; name="upload"; filename="..\\\\..\\\\evil.txt"',
               },
               body: 'file-body',
             ),
-            _Part(
-              headers: const {
+            const _Part(
+              headers: {
                 Headers.contentDispositionHeader:
                     'form-data; name="upload"; filename="../../other.txt"',
               },
@@ -149,8 +149,8 @@ void main() {
       final request = _request(
         boundary: 'extended-filename',
         body: _multipartBody('extended-filename', [
-          _Part(
-            headers: const {
+          const _Part(
+            headers: {
               Headers.contentDispositionHeader:
                   "form-data; name=\"upload\"; filename=\"plain.txt\"; filename*=UTF-8''extended%20name.txt",
             },
@@ -163,7 +163,7 @@ void main() {
         expect(
           part,
           isA<MultipartFilePart>().having(
-            (final p) => p.filename,
+            (p) => p.filename,
             'filename',
             'plain.txt',
           ),
@@ -181,8 +181,8 @@ void main() {
       final request = _request(
         boundary: 'latin1-extended-filename',
         body: _multipartBody('latin1-extended-filename', [
-          _Part(
-            headers: const {
+          const _Part(
+            headers: {
               Headers.contentDispositionHeader:
                   "form-data; name=\"upload\"; filename=\"plain.txt\"; filename*=ISO-8859-1''na%EFve.txt",
             },
@@ -195,7 +195,7 @@ void main() {
 
       expect(parts, [
         isA<MultipartFilePart>().having(
-          (final p) => p.filename,
+          (p) => p.filename,
           'filename',
           'plain.txt',
         ),
@@ -211,8 +211,8 @@ void main() {
       final request = _request(
         boundary: 'bad-escape-extended-filename',
         body: _multipartBody('bad-escape-extended-filename', [
-          _Part(
-            headers: const {
+          const _Part(
+            headers: {
               Headers.contentDispositionHeader:
                   "form-data; name=\"upload\"; filename=\"plain.txt\"; filename*=UTF-8''%zz.txt",
             },
@@ -225,7 +225,7 @@ void main() {
 
       expect(parts, [
         isA<MultipartFilePart>().having(
-          (final p) => p.filename,
+          (p) => p.filename,
           'filename',
           'plain.txt',
         ),
@@ -239,8 +239,8 @@ void main() {
     final request = _request(
       boundary: 'extended-only-filename',
       body: _multipartBody('extended-only-filename', [
-        _Part(
-          headers: const {
+        const _Part(
+          headers: {
             Headers.contentDispositionHeader:
                 "form-data; name=\"upload\"; filename*=UTF-8''extended%20name.txt",
           },
@@ -252,11 +252,7 @@ void main() {
     final parts = await request.multipart().toList();
 
     expect(parts, [
-      isA<MultipartFilePart>().having(
-        (final p) => p.filename,
-        'filename',
-        isNull,
-      ),
+      isA<MultipartFilePart>().having((p) => p.filename, 'filename', isNull),
     ]);
   });
 
@@ -266,8 +262,8 @@ void main() {
     final request = _request(
       boundary: 'extended-only-name',
       body: _multipartBody('extended-only-name', [
-        _Part(
-          headers: const {
+        const _Part(
+          headers: {
             Headers.contentDispositionHeader: "form-data; name*=UTF-8''x",
           },
           body: 'value',
@@ -288,8 +284,8 @@ void main() {
       final request = _request(
         boundary: 'utf8-filename',
         body: _multipartBody('utf8-filename', [
-          _Part(
-            headers: const {
+          const _Part(
+            headers: {
               Headers.contentDispositionHeader:
                   'form-data; name="upload"; filename="\u65e5\u672c \u{1F600}.pdf"',
             },
@@ -302,7 +298,7 @@ void main() {
 
       expect(parts, [
         isA<MultipartFilePart>().having(
-          (final p) => p.filename,
+          (p) => p.filename,
           'filename',
           '\u65e5\u672c \u{1F600}.pdf',
         ),
@@ -318,8 +314,8 @@ void main() {
       final request = _request(
         boundary: 'rtl-override-filename',
         body: _multipartBody('rtl-override-filename', [
-          _Part(
-            headers: const {
+          const _Part(
+            headers: {
               Headers.contentDispositionHeader:
                   'form-data; name="upload"; filename="invoice\u202Efdp.exe"',
             },
@@ -332,7 +328,7 @@ void main() {
 
       expect(parts, [
         isA<MultipartFilePart>().having(
-          (final p) => p.filename,
+          (p) => p.filename,
           'filename',
           'invoicefdp.exe',
         ),
@@ -346,8 +342,8 @@ void main() {
     final request = _request(
       boundary: 'line-separator-filename',
       body: _multipartBody('line-separator-filename', [
-        _Part(
-          headers: const {
+        const _Part(
+          headers: {
             Headers.contentDispositionHeader:
                 'form-data; name="upload"; filename="report\u2028.txt"',
           },
@@ -360,7 +356,7 @@ void main() {
 
     expect(parts, [
       isA<MultipartFilePart>().having(
-        (final p) => p.filename,
+        (p) => p.filename,
         'filename',
         'report.txt',
       ),
@@ -373,8 +369,8 @@ void main() {
     final request = _request(
       boundary: 'zero-width-space-filename',
       body: _multipartBody('zero-width-space-filename', [
-        _Part(
-          headers: const {
+        const _Part(
+          headers: {
             Headers.contentDispositionHeader:
                 'form-data; name="upload"; filename="in\u200Bvoice\uFEFF.pdf"',
           },
@@ -387,7 +383,7 @@ void main() {
 
     expect(parts, [
       isA<MultipartFilePart>().having(
-        (final p) => p.filename,
+        (p) => p.filename,
         'filename',
         'invoice.pdf',
       ),
@@ -400,8 +396,8 @@ void main() {
     final request = _request(
       boundary: 'arabic-letter-mark-filename',
       body: _multipartBody('arabic-letter-mark-filename', [
-        _Part(
-          headers: const {
+        const _Part(
+          headers: {
             Headers.contentDispositionHeader:
                 'form-data; name="upload"; filename="report\u061C.pdf"',
           },
@@ -414,7 +410,7 @@ void main() {
 
     expect(parts, [
       isA<MultipartFilePart>().having(
-        (final p) => p.filename,
+        (p) => p.filename,
         'filename',
         'report.pdf',
       ),
@@ -427,8 +423,8 @@ void main() {
     final request = _request(
       boundary: 'zero-width-joiner-filename',
       body: _multipartBody('zero-width-joiner-filename', [
-        _Part(
-          headers: const {
+        const _Part(
+          headers: {
             Headers.contentDispositionHeader:
                 'form-data; name="upload"; filename="\u{1F468}\u200D\u{1F4BB}.png"',
           },
@@ -441,7 +437,7 @@ void main() {
 
     expect(parts, [
       isA<MultipartFilePart>().having(
-        (final p) => p.filename,
+        (p) => p.filename,
         'filename',
         '\u{1F468}\u200D\u{1F4BB}.png',
       ),
@@ -454,8 +450,8 @@ void main() {
     final request = _request(
       boundary: 'utf8-name',
       body: _multipartBody('utf8-name', [
-        _Part(
-          headers: const {
+        const _Part(
+          headers: {
             Headers.contentDispositionHeader: 'form-data; name="\u540d\u524d"',
           },
           body: 'value',
@@ -466,11 +462,7 @@ void main() {
     final parts = await request.multipart().toList();
 
     expect(parts, [
-      isA<MultipartFieldPart>().having(
-        (final p) => p.name,
-        'name',
-        '\u540d\u524d',
-      ),
+      isA<MultipartFieldPart>().having((p) => p.name, 'name', '\u540d\u524d'),
     ]);
   });
 
@@ -480,8 +472,8 @@ void main() {
     final request = _request(
       boundary: 'no-charset',
       body: _multipartBody('no-charset', [
-        _Part(
-          headers: const {
+        const _Part(
+          headers: {
             Headers.contentDispositionHeader:
                 'form-data; name="upload"; filename="file.txt"',
             Headers.contentTypeHeader: 'text/plain',
@@ -502,8 +494,8 @@ void main() {
     final request = _request(
       boundary: 'empty-filename',
       body: _multipartBody('empty-filename', [
-        _Part(
-          headers: const {
+        const _Part(
+          headers: {
             Headers.contentDispositionHeader:
                 'form-data; name="upload"; filename=""',
           },
@@ -515,11 +507,7 @@ void main() {
     final parts = await request.multipart().toList();
 
     expect(parts, [
-      isA<MultipartFilePart>().having(
-        (final p) => p.filename,
-        'filename',
-        isNull,
-      ),
+      isA<MultipartFilePart>().having((p) => p.filename, 'filename', isNull),
     ]);
   });
 
@@ -529,8 +517,8 @@ void main() {
     final request = _request(
       boundary: 'empty-filename-flag',
       body: _multipartBody('empty-filename-flag', [
-        _Part(
-          headers: const {
+        const _Part(
+          headers: {
             Headers.contentDispositionHeader:
                 'form-data; name="upload"; filename=""',
           },
@@ -543,7 +531,7 @@ void main() {
 
     expect(parts, [
       isA<MultipartFilePart>().having(
-        (final p) => p.hasEmptyFilename,
+        (p) => p.hasEmptyFilename,
         'hasEmptyFilename',
         isTrue,
       ),
@@ -556,8 +544,8 @@ void main() {
     final request = _request(
       boundary: 'dotdot-filename-flag',
       body: _multipartBody('dotdot-filename-flag', [
-        _Part(
-          headers: const {
+        const _Part(
+          headers: {
             Headers.contentDispositionHeader:
                 'form-data; name="upload"; filename=".."',
           },
@@ -570,7 +558,7 @@ void main() {
 
     expect(parts, [
       isA<MultipartFilePart>().having(
-        (final p) => p.hasEmptyFilename,
+        (p) => p.hasEmptyFilename,
         'hasEmptyFilename',
         isFalse,
       ),
@@ -646,8 +634,8 @@ void main() {
         final request = _request(
           boundary: 'bad-disposition',
           body: _multipartBody('bad-disposition', [
-            _Part(
-              headers: const {
+            const _Part(
+              headers: {
                 Headers.contentDispositionHeader: 'form-data; name="a" evil',
               },
               body: 'value',
@@ -668,8 +656,8 @@ void main() {
         final request = _request(
           boundary: 'bad-content-type',
           body: _multipartBody('bad-content-type', [
-            _Part(
-              headers: const {
+            const _Part(
+              headers: {
                 Headers.contentDispositionHeader: 'form-data; name="a"',
                 Headers.contentTypeHeader: 'not-a-content-type',
               },
@@ -692,17 +680,17 @@ void main() {
       final request = _request(
         boundary: 'size',
         body: _multipartBody('size', [
-          _Part(
-            headers: const {
-              Headers.contentDispositionHeader: 'form-data; name="a"',
-            },
+          const _Part(
+            headers: {Headers.contentDispositionHeader: 'form-data; name="a"'},
             body: 'value',
           ),
         ]),
       );
 
       await expectLater(
-        request.multipart(limits: FormLimits(maxBodySize: 4)).drain<void>(),
+        request
+            .multipart(limits: const FormLimits(maxBodySize: 4))
+            .drain<void>(),
         throwsA(_limitExceeded(FormLimit.maxBodySize)),
       );
     });
@@ -714,11 +702,11 @@ void main() {
 
         await expectLater(
           request
-              .multipart(limits: FormLimits(maxBoundarySize: 3))
+              .multipart(limits: const FormLimits(maxBoundarySize: 3))
               .drain<void>(),
           throwsA(
             isA<FormLimitExceededException>().having(
-              (final error) => error.limit,
+              (error) => error.limit,
               'limit',
               FormLimit.maxBoundarySize,
             ),
@@ -733,14 +721,14 @@ void main() {
         final request = _request(
           boundary: 'parts',
           body: _multipartBody('parts', [
-            _Part(
-              headers: const {
+            const _Part(
+              headers: {
                 Headers.contentDispositionHeader: 'form-data; name="a"',
               },
               body: 'one',
             ),
-            _Part(
-              headers: const {
+            const _Part(
+              headers: {
                 Headers.contentDispositionHeader: 'form-data; name="b"',
               },
               body: 'two',
@@ -749,7 +737,7 @@ void main() {
         );
 
         final queue = StreamQueue(
-          request.multipart(limits: FormLimits(maxPartCount: 1)),
+          request.multipart(limits: const FormLimits(maxPartCount: 1)),
         );
 
         final first = await queue.next;
@@ -758,7 +746,7 @@ void main() {
           queue.next,
           throwsA(
             isA<FormLimitExceededException>().having(
-              (final error) => error.limit,
+              (error) => error.limit,
               'limit',
               FormLimit.maxPartCount,
             ),
@@ -773,8 +761,8 @@ void main() {
         final request = _request(
           boundary: 'headers',
           body: _multipartBody('headers', [
-            _Part(
-              headers: const {
+            const _Part(
+              headers: {
                 Headers.contentDispositionHeader: 'form-data; name="large"',
                 'x-large-header': '123456789',
               },
@@ -785,11 +773,11 @@ void main() {
 
         await expectLater(
           request
-              .multipart(limits: FormLimits(maxPartHeaderSize: 8))
+              .multipart(limits: const FormLimits(maxPartHeaderSize: 8))
               .drain<void>(),
           throwsA(
             isA<FormLimitExceededException>().having(
-              (final error) => error.limit,
+              (error) => error.limit,
               'limit',
               FormLimit.maxPartHeaderSize,
             ),
@@ -804,8 +792,8 @@ void main() {
         final request = _request(
           boundary: 'field-size',
           body: _multipartBody('field-size', [
-            _Part(
-              headers: const {
+            const _Part(
+              headers: {
                 Headers.contentDispositionHeader: 'form-data; name="a"',
               },
               body: 'abcdef',
@@ -828,10 +816,8 @@ void main() {
       final request = _request(
         boundary: 'single',
         body: _multipartBody('single', [
-          _Part(
-            headers: const {
-              Headers.contentDispositionHeader: 'form-data; name="a"',
-            },
+          const _Part(
+            headers: {Headers.contentDispositionHeader: 'form-data; name="a"'},
             body: 'value',
           ),
         ]),
@@ -849,10 +835,8 @@ void main() {
       final request = _request(
         boundary: 'request-body',
         body: _multipartBody('request-body', [
-          _Part(
-            headers: const {
-              Headers.contentDispositionHeader: 'form-data; name="a"',
-            },
+          const _Part(
+            headers: {Headers.contentDispositionHeader: 'form-data; name="a"'},
             body: 'value',
           ),
         ]),
@@ -945,11 +929,7 @@ void main() {
     final parts = await request.multipart().toList();
 
     expect(parts, [
-      isA<MultipartFilePart>().having(
-        (final p) => p.filename,
-        'filename',
-        isNull,
-      ),
+      isA<MultipartFilePart>().having((p) => p.filename, 'filename', isNull),
     ]);
   });
 
@@ -1088,23 +1068,23 @@ void main() {
   }, timeout: const Timeout(Duration(seconds: 5)));
 }
 
-Matcher _limitExceeded(final FormLimit limit) {
+Matcher _limitExceeded(FormLimit limit) {
   return isA<FormLimitExceededException>().having(
-    (final error) => error.limit,
+    (error) => error.limit,
     'limit',
     limit,
   );
 }
 
 Request _request({
-  required final String? boundary,
-  final String? body,
-  final Uint8List? bodyBytes,
+  required String? boundary,
+  String? body,
+  Uint8List? bodyBytes,
   ContentTypeHeader? contentType,
 }) {
   contentType ??= ContentTypeHeader(
     mimeType: MimeType.multipartFormData,
-    parameters: {if (boundary != null) 'boundary': boundary},
+    parameters: {'boundary': ?boundary},
   );
 
   return RequestInternal.create(
@@ -1118,10 +1098,7 @@ Request _request({
   );
 }
 
-Body _bodyFromContentType(
-  final Uint8List bytes,
-  final ContentTypeHeader contentType,
-) {
+Body _bodyFromContentType(Uint8List bytes, ContentTypeHeader contentType) {
   return Body.fromData(
     bytes,
     mimeType: contentType.mimeType,
@@ -1133,7 +1110,7 @@ Body _bodyFromContentType(
   );
 }
 
-String _multipartBody(final String boundary, final List<_Part> parts) {
+String _multipartBody(String boundary, List<_Part> parts) {
   return utf8.decode(
     _multipartBodyBytes(boundary, [
       for (final part in parts)
@@ -1142,10 +1119,7 @@ String _multipartBody(final String boundary, final List<_Part> parts) {
   );
 }
 
-Uint8List _multipartBodyBytes(
-  final String boundary,
-  final List<_PartBytes> parts,
-) {
+Uint8List _multipartBodyBytes(String boundary, List<_PartBytes> parts) {
   final bytes = BytesBuilder(copy: false);
   for (final part in parts) {
     bytes.add(utf8.encode('--$boundary\r\n'));

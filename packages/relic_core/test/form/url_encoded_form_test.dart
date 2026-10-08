@@ -124,7 +124,7 @@ void main() {
       final request = _request(body: 'name=Gustavo');
 
       await expectLater(
-        request.urlEncodedForm(limits: FormLimits(maxBodySize: 4)),
+        request.urlEncodedForm(limits: const FormLimits(maxBodySize: 4)),
         throwsA(_limitExceeded(FormLimit.maxBodySize)),
       );
     });
@@ -135,7 +135,7 @@ void main() {
         final request = _request(body: 'a=1&b=2');
 
         await expectLater(
-          request.urlEncodedForm(limits: FormLimits(maxFieldCount: 1)),
+          request.urlEncodedForm(limits: const FormLimits(maxFieldCount: 1)),
           throwsA(
             isA<FormLimitExceededException>().having(
               (error) => error.limit,
@@ -153,7 +153,7 @@ void main() {
         final request = _request(body: 'name=Gustavo');
 
         await expectLater(
-          request.urlEncodedForm(limits: FormLimits(maxFieldSize: 3)),
+          request.urlEncodedForm(limits: const FormLimits(maxFieldSize: 3)),
           throwsA(
             isA<FormLimitExceededException>().having(
               (error) => error.limit,
@@ -180,7 +180,7 @@ void main() {
     );
 
     await expectLater(
-      request.urlEncodedForm(limits: FormLimits(maxBodySize: 4)),
+      request.urlEncodedForm(limits: const FormLimits(maxBodySize: 4)),
       throwsA(_limitExceeded(FormLimit.maxBodySize)),
     );
   });

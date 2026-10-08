@@ -1,8 +1,9 @@
 import 'dart:async';
 import 'dart:io' as io;
 import 'dart:typed_data';
-import 'package:web_socket/web_socket.dart';
+
 import 'package:relic_core/relic_core.dart';
+import 'package:web_socket/web_socket.dart';
 
 /// A `dart-io`-based [RelicWebSocket] implementation.
 class IORelicWebSocket implements RelicWebSocket {

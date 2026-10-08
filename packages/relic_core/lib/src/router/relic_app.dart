@@ -119,6 +119,7 @@ final class RelicApp implements RelicRouter, _Reloadable {
     );
   }
 
+  @override
   Future<void> _reload() async {
     developerTools._onReload();
     await _rebuild();

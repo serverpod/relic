@@ -4,6 +4,9 @@ import 'dart:developer';
 import 'dart:io';
 import 'dart:math';
 
+import 'package:benchmark/src/completion_script_carapace.dart';
+import 'package:benchmark/src/dispatch_benchmark.dart';
+import 'package:benchmark/src/headers_benchmark.dart';
 import 'package:benchmark_harness/perf_benchmark_harness.dart';
 import 'package:cli_tools/cli_tools.dart';
 import 'package:config/config.dart';
@@ -12,10 +15,6 @@ import 'package:path/path.dart' as p;
 import 'package:relic/relic.dart';
 import 'package:routingkit/routingkit.dart' as routingkit;
 import 'package:spanner/spanner.dart' as spanner;
-
-import 'package:benchmark/src/completion_script_carapace.dart';
-import 'package:benchmark/src/dispatch_benchmark.dart';
-import 'package:benchmark/src/headers_benchmark.dart';
 
 late final List<int> indexes;
 late final List<String> staticRoutesToLookup;

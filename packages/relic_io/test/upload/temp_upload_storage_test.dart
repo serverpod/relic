@@ -162,8 +162,8 @@ void main() {
         final request = _multipartRequest(
           boundary: 'upload',
           body: _multipartBody('upload', [
-            _Part(
-              headers: const {
+            const _Part(
+              headers: {
                 Headers.contentDispositionHeader:
                     'form-data; name="file"; filename="hello.txt"',
                 Headers.contentTypeHeader: 'text/plain; charset=utf-8',

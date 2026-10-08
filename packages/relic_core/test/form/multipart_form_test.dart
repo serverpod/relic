@@ -28,8 +28,8 @@ void main() {
         final request = _multipartRequest(
           boundary: 'dispatch',
           body: _multipartBody('dispatch', [
-            _Part(
-              headers: const {
+            const _Part(
+              headers: {
                 Headers.contentDispositionHeader: 'form-data; name="name"',
               },
               body: 'Gustavo',
@@ -50,22 +50,22 @@ void main() {
         final request = _multipartRequest(
           boundary: 'aggregate',
           body: _multipartBody('aggregate', [
-            _Part(
-              headers: const {
+            const _Part(
+              headers: {
                 Headers.contentDispositionHeader: 'form-data; name="title"',
               },
               body: 'Report',
             ),
-            _Part(
-              headers: const {
+            const _Part(
+              headers: {
                 Headers.contentDispositionHeader:
                     'form-data; name="upload"; filename="report.txt"',
                 Headers.contentTypeHeader: 'text/plain; charset=utf-8',
               },
               body: 'file-body',
             ),
-            _Part(
-              headers: const {
+            const _Part(
+              headers: {
                 Headers.contentDispositionHeader: 'form-data; name="tag"',
               },
               body: 'draft',
@@ -97,15 +97,15 @@ void main() {
         final request = _multipartRequest(
           boundary: 'dupe-files',
           body: _multipartBody('dupe-files', [
-            _Part(
-              headers: const {
+            const _Part(
+              headers: {
                 Headers.contentDispositionHeader:
                     'form-data; name="photo"; filename="one.txt"',
               },
               body: 'one',
             ),
-            _Part(
-              headers: const {
+            const _Part(
+              headers: {
                 Headers.contentDispositionHeader:
                     'form-data; name="photo"; filename="two.txt"',
               },
@@ -129,15 +129,15 @@ void main() {
       final request = _multipartRequest(
         boundary: 'nameless',
         body: _multipartBody('nameless', [
-          _Part(
-            headers: const {
+          const _Part(
+            headers: {
               Headers.contentDispositionHeader:
                   'form-data; filename="ignored.txt"',
             },
             body: 'ignored',
           ),
-          _Part(
-            headers: const {
+          const _Part(
+            headers: {
               Headers.contentDispositionHeader: 'form-data; name="actual"',
             },
             body: 'value',
@@ -156,8 +156,8 @@ void main() {
       final request = _multipartRequest(
         boundary: 'not-form-data',
         body: _multipartBody('not-form-data', [
-          _Part(
-            headers: const {
+          const _Part(
+            headers: {
               Headers.contentDispositionHeader: 'attachment; name="ignored"',
             },
             body: 'ignored',
@@ -179,8 +179,8 @@ void main() {
         final request = _multipartRequest(
           boundary: 'basename',
           body: _multipartBody('basename', [
-            _Part(
-              headers: const {
+            const _Part(
+              headers: {
                 Headers.contentDispositionHeader:
                     'form-data; name="upload"; filename="../../report.txt"',
               },
@@ -221,8 +221,8 @@ void main() {
       final request = _multipartRequest(
         boundary: 'dispose',
         body: _multipartBody('dispose', [
-          _Part(
-            headers: const {
+          const _Part(
+            headers: {
               Headers.contentDispositionHeader:
                   'form-data; name="file"; filename="one.txt"',
             },
@@ -286,7 +286,7 @@ void main() {
       );
 
       await expectLater(
-        request.multipartForm(limits: FormLimits(maxBodySize: 4)),
+        request.multipartForm(limits: const FormLimits(maxBodySize: 4)),
         throwsA(_limitExceeded(FormLimit.maxBodySize)),
       );
     });
@@ -303,7 +303,7 @@ void main() {
         );
 
         await expectLater(
-          request.multipartForm(limits: FormLimits(maxPartCount: 1)),
+          request.multipartForm(limits: const FormLimits(maxPartCount: 1)),
           throwsA(_limitExceeded(FormLimit.maxPartCount)),
         );
       },
@@ -321,7 +321,7 @@ void main() {
         );
 
         await expectLater(
-          request.multipartForm(limits: FormLimits(maxFieldCount: 1)),
+          request.multipartForm(limits: const FormLimits(maxFieldCount: 1)),
           throwsA(_limitExceeded(FormLimit.maxFieldCount)),
         );
       },
@@ -339,7 +339,7 @@ void main() {
         );
 
         await expectLater(
-          request.multipartForm(limits: FormLimits(maxFileCount: 1)),
+          request.multipartForm(limits: const FormLimits(maxFileCount: 1)),
           throwsA(_limitExceeded(FormLimit.maxFileCount)),
         );
       },
@@ -354,7 +354,7 @@ void main() {
         );
 
         await expectLater(
-          request.multipartForm(limits: FormLimits(maxFieldSize: 3)),
+          request.multipartForm(limits: const FormLimits(maxFieldSize: 3)),
           throwsA(_limitExceeded(FormLimit.maxFieldSize)),
         );
       },
@@ -371,7 +371,7 @@ void main() {
         );
 
         await expectLater(
-          request.multipartForm(limits: FormLimits(maxFileSize: 3)),
+          request.multipartForm(limits: const FormLimits(maxFileSize: 3)),
           throwsA(_limitExceeded(FormLimit.maxFileSize)),
         );
       },
@@ -389,7 +389,7 @@ void main() {
         );
 
         await expectLater(
-          request.multipartForm(limits: FormLimits(maxTotalFileSize: 5)),
+          request.multipartForm(limits: const FormLimits(maxTotalFileSize: 5)),
           throwsA(_limitExceeded(FormLimit.maxTotalFileSize)),
         );
       },
@@ -411,7 +411,7 @@ void main() {
 
         await expectLater(
           request.multipartForm(
-            limits: FormLimits(maxFileCount: 1),
+            limits: const FormLimits(maxFileCount: 1),
             uploadStorage: storage,
           ),
           throwsA(_limitExceeded(FormLimit.maxFileCount)),
@@ -507,7 +507,7 @@ void main() {
       );
 
       final form = await request.multipartForm(
-        limits: FormLimits(maxFieldCount: 1),
+        limits: const FormLimits(maxFieldCount: 1),
       );
 
       expect(form.fields.raw['title'], 'Report');
@@ -565,7 +565,7 @@ void main() {
     );
 
     await expectLater(
-      request.multipartForm(limits: FormLimits(maxFileCount: 1)),
+      request.multipartForm(limits: const FormLimits(maxFileCount: 1)),
       completes,
     );
   });
@@ -730,7 +730,7 @@ void main() {
     );
 
     await expectLater(
-      request.multipartForm(limits: FormLimits(maxBodySize: 150)),
+      request.multipartForm(limits: const FormLimits(maxBodySize: 150)),
       throwsA(_limitExceeded(FormLimit.maxBodySize)),
     );
   }, timeout: const Timeout(Duration(seconds: 5)));

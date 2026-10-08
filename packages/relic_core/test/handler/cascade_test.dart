@@ -1,6 +1,6 @@
 import 'package:relic_core/relic_core.dart';
-import 'package:test_utils/test_utils.dart';
 import 'package:test/test.dart';
+import 'package:test_utils/test_utils.dart';
 
 void main() {
   group('Given a cascade with several handlers', () {
@@ -8,7 +8,7 @@ void main() {
     setUp(() {
       handler = Cascade()
           .add(
-            respondWith((final request) {
+            respondWith((request) {
               if (request.headers['one']?.first == 'false') {
                 return Response.notFound(body: Body.fromString('handler 1'));
               } else {
@@ -17,7 +17,7 @@ void main() {
             }),
           )
           .add(
-            respondWith((final request) {
+            respondWith((request) {
               if (request.headers['two']?.first == 'false') {
                 return Response.notFound(body: Body.fromString('handler 2'));
               } else {
@@ -26,7 +26,7 @@ void main() {
             }),
           )
           .add(
-            respondWith((final request) {
+            respondWith((request) {
               if (request.headers['three']?.first == 'false') {
                 return Response.notFound(body: Body.fromString('handler 3'));
               } else {
@@ -55,7 +55,7 @@ void main() {
             Method.get,
             localhostUri,
             null,
-            headers: Headers.build((final mh) => mh['one'] = ['false']),
+            headers: Headers.build((mh) => mh['one'] = ['false']),
           ),
         );
         expect(response.statusCode, equals(200));
@@ -72,7 +72,7 @@ void main() {
             Method.get,
             localhostUri,
             null,
-            headers: Headers.build((final mh) {
+            headers: Headers.build((mh) {
               mh['one'] = ['false'];
               mh['two'] = ['false'];
             }),
@@ -93,7 +93,7 @@ void main() {
             Method.get,
             localhostUri,
             null,
-            headers: Headers.build((final mh) {
+            headers: Headers.build((mh) {
               mh['one'] = ['false'];
               mh['two'] = ['false'];
               mh['three'] = ['false'];
@@ -172,7 +172,7 @@ void main() {
     'Given a cascade with shouldCascade when processed then it controls which responses cause cascading',
     () async {
       final handler =
-          Cascade(shouldCascade: (final response) => response.statusCode.isOdd)
+          Cascade(shouldCascade: (response) => response.statusCode.isOdd)
               .add(
                 respondWith((_) => Response.movedPermanently(Uri.parse('/'))),
               )
