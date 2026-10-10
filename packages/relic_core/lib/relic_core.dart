@@ -59,5 +59,6 @@ export 'src/router/router_handler_extension.dart';
 export 'src/util/http_date.dart';
 export 'src/util/util.dart';
 export 'src/web_socket/framed_web_socket.dart';
+export 'src/web_socket/relic_web_socket_base.dart';
 export 'src/web_socket/web_socket_frame.dart';
 export 'src/web_socket/web_socket_handshake.dart';
