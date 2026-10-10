@@ -50,7 +50,7 @@ Future<void> main(List<String> args) async {
         ? IOAdapter.bind(InternetAddress.loopbackIPv4)
         : NativeAdapter.bind(
             InternetAddress.loopbackIPv4,
-            maxInlineBody: _inlineLimit,
+            options: const NativeOptions(maxInlineBody: _inlineLimit),
           ),
   );
   await server.mountAndStart(_handler);

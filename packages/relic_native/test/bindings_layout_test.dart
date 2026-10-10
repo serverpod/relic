@@ -16,8 +16,8 @@ void main() {
     expect(sizeOf<HeaderSlot>(), 16);
   });
 
-  test('Given the ExchangeView struct, when sized, then it is 136 bytes.', () {
-    expect(sizeOf<ExchangeView>(), 136);
+  test('Given the ExchangeView struct, when sized, then it is 96 bytes.', () {
+    expect(sizeOf<ExchangeView>(), 96);
   });
 
   test('Given the Stats struct, when sized, then it is 12 bytes.', () {

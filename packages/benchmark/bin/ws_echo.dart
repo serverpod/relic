@@ -1,8 +1,8 @@
 // WebSocket echo round trips per second through one adapter, with
 // dart:io clients in isolates of their own (`--client-isolates`, 4 by
 // default). The dart:io adapter frames with dart:io's
-// WebSocketTransformer, the native one with relic_core's framer over a
-// hijacked connection, so the two runs compare the framers.
+// WebSocketTransformer, the native one on the native side, so the two
+// runs compare the framers.
 // `--adapter=shelf` is shelf_web_socket on dart:io, for comparison.
 //
 //   dart run bin/ws_echo.dart --adapter=native --connections=64 --seconds=10

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:collection';
+import 'dart:convert';
 import 'dart:ffi';
 import 'dart:io' as io;
 import 'dart:isolate';
@@ -8,9 +9,12 @@ import 'dart:typed_data';
 import 'package:ffi/ffi.dart';
 import 'package:relic_core/relic_core.dart';
 import 'package:stream_channel/stream_channel.dart';
+import 'package:web_socket/web_socket.dart';
 
 import 'bindings.dart' as native;
 import 'response_encoder.dart';
+
+part 'native_web_socket.dart';
 
 /// An [Adapter] backed by the Zig HTTP server in `src/relic_native.zig`.
 ///
@@ -23,6 +27,51 @@ import 'response_encoder.dart';
 /// Several isolates share one server by binding with the same [group].
 /// The first bind creates it, later binds attach to it, and the last
 /// [close] stops it. `serveNative` mints a group per call.
+/// The limits of a server [NativeAdapter.bind] starts, with the defaults
+/// a server gets when none are given.
+///
+/// A connection may wait [idleTimeout] for the first byte of a request,
+/// and the rest of the head must arrive within [headerTimeout] of that
+/// byte, which bounds a slowloris. [bodyTimeout] and [writeTimeout] are
+/// inactivity limits on reading a body and writing a response. A head or
+/// a body that times out answers 408 and closes, and the other timeouts
+/// close without a response. [Duration.zero] disables a limit.
+final class NativeOptions {
+  /// How many isolates may attach to the server.
+  final int reactorCapacity;
+
+  /// A body up to this many bytes is read before the request is handed
+  /// over. A larger or chunked one streams to the handler as it arrives.
+  final int maxInlineBody;
+
+  /// The listen backlog.
+  final int backlog;
+
+  /// The connections accepted at once, 0 for no cap.
+  final int maxConnections;
+
+  final Duration idleTimeout;
+  final Duration headerTimeout;
+  final Duration bodyTimeout;
+  final Duration writeTimeout;
+
+  /// A WebSocket message over this many bytes closes the connection with
+  /// 1009.
+  final int maxWebSocketMessage;
+
+  const NativeOptions({
+    this.reactorCapacity = 64,
+    this.maxInlineBody = 1 << 20,
+    this.backlog = 128,
+    this.maxConnections = 0,
+    this.idleTimeout = const Duration(seconds: 60),
+    this.headerTimeout = const Duration(seconds: 10),
+    this.bodyTimeout = const Duration(seconds: 30),
+    this.writeTimeout = const Duration(seconds: 30),
+    this.maxWebSocketMessage = FramedWebSocket.defaultMaxMessageSize,
+  });
+}
+
 final class NativeAdapter implements Adapter {
   final Pointer<Void> _server;
   final Pointer<Void> _reactor;
@@ -42,8 +91,9 @@ final class NativeAdapter implements Adapter {
   /// link of, so one comes and goes with a few field writes.
   final _inFlight = LinkedList<NativeExchange>();
 
-  /// Connections a handler took over as raw channels. They are no longer
-  /// exchanges the drain waits for, but still connections to close.
+  /// Connections a handler took over, as raw channels or WebSockets. They
+  /// are no longer exchanges the drain waits for, but still connections a
+  /// forced close drops.
   final _hijacked = <NativeExchange>{};
 
   /// Exchanges by the address of their native view, for the events the
@@ -54,7 +104,6 @@ final class NativeAdapter implements Adapter {
   var _closing = false;
   var _closed = false;
   Completer<void>? _drained;
-  Completer<void>? _released;
 
   /// Exchanges taken per poll.
   static const _batchSize = 64;
@@ -63,12 +112,16 @@ final class NativeAdapter implements Adapter {
   /// I/O get a turn while requests keep coming.
   static const _batchesPerTurn = 4;
 
-  /// How long a graceful close waits for in-flight exchanges before it
-  /// aborts them. The same ceiling as the dart:io adapter's.
-  static const _drainTimeout = Duration(seconds: 5);
+  /// The most bytes a WebSocket message from a peer may have.
+  final int _maxWebSocketMessage;
 
-  NativeAdapter._(this._server, this._reactor, this._wake, this.address)
-    : _port = native.serverPort(_server),
+  NativeAdapter._(
+    this._server,
+    this._reactor,
+    this._wake,
+    this.address,
+    this._maxWebSocketMessage,
+  ) : _port = native.serverPort(_server),
       _slot = native.reactorSlot(_reactor),
       _authority = _listenerAuthority(address, native.serverPort(_server));
 
@@ -76,29 +129,15 @@ final class NativeAdapter implements Adapter {
   /// the listener itself, bracketed when it is an IPv6 address.
   final String _authority;
 
-  static String _listenerAuthority(io.InternetAddress address, int port) {
-    final host = address.type == io.InternetAddressType.IPv6
-        ? '[${address.address}]'
-        : address.address;
-    return '$host:$port';
-  }
+  static String _listenerAuthority(io.InternetAddress address, int port) =>
+      Host(address.address, port).encode();
 
   /// Binds a server on [address] and [port], or joins the one another
   /// isolate created for [group].
   ///
   /// The adapter's reactor runs on this isolate's thread, in ticks the
-  /// adapter drives from its event loop. [reactorCapacity] is how many
-  /// isolates may attach. A body up to [maxInlineBody] bytes is read
-  /// before the request is handed over. A larger or chunked one streams
-  /// to the handler as it arrives.
-  ///
-  /// A connection may wait [idleTimeout] for the first byte of a request,
-  /// and the rest of the head must arrive within [headerTimeout] of that
-  /// byte, which bounds a slowloris. [bodyTimeout] and [writeTimeout] are
-  /// inactivity limits on reading a body and writing a response. A
-  /// head or a body that times out answers 408 and closes, and the other
-  /// timeouts close without a response. [Duration.zero] disables a limit.
-  /// [maxConnections] caps the connections accepted at once, 0 for none.
+  /// adapter drives from its event loop. [options] are the server's
+  /// limits, see [NativeOptions].
   ///
   /// Throws [UnsupportedError] on a platform without the native library,
   /// and [io.SocketException] when the port cannot be bound.
@@ -106,33 +145,31 @@ final class NativeAdapter implements Adapter {
     io.InternetAddress address, {
     int port = 0,
     String? group,
-    int reactorCapacity = 64,
-    int maxInlineBody = 1 << 20,
-    int backlog = 128,
-    int maxConnections = 0,
-    Duration idleTimeout = const Duration(seconds: 60),
-    Duration headerTimeout = const Duration(seconds: 10),
-    Duration bodyTimeout = const Duration(seconds: 30),
-    Duration writeTimeout = const Duration(seconds: 30),
+    NativeOptions options = const NativeOptions(),
   }) async {
     _initDartApi();
-    final options = calloc<native.Options>();
+    final nativeOptions = calloc<native.Options>();
     final ip = address.address.toNativeUtf8();
     final groupText = group?.toNativeUtf8() ?? nullptr;
     final Pointer<Void> server;
     try {
-      options.ref
-        ..reactorCapacity = reactorCapacity
-        ..backlog = backlog
-        ..maxConnections = maxConnections
-        ..maxInlineBody = maxInlineBody
-        ..idleTimeoutMs = idleTimeout.inMilliseconds
-        ..headerTimeoutMs = headerTimeout.inMilliseconds
-        ..bodyTimeoutMs = bodyTimeout.inMilliseconds
-        ..writeTimeoutMs = writeTimeout.inMilliseconds;
-      server = native.serverBind(groupText.cast(), ip.cast(), port, options);
+      nativeOptions.ref
+        ..reactorCapacity = options.reactorCapacity
+        ..backlog = options.backlog
+        ..maxConnections = options.maxConnections
+        ..maxInlineBody = options.maxInlineBody
+        ..idleTimeoutMs = options.idleTimeout.inMilliseconds
+        ..headerTimeoutMs = options.headerTimeout.inMilliseconds
+        ..bodyTimeoutMs = options.bodyTimeout.inMilliseconds
+        ..writeTimeoutMs = options.writeTimeout.inMilliseconds;
+      server = native.serverBind(
+        groupText.cast(),
+        ip.cast(),
+        port,
+        nativeOptions,
+      );
     } finally {
-      calloc.free(options);
+      calloc.free(nativeOptions);
       calloc.free(ip);
       if (groupText != nullptr) calloc.free(groupText);
     }
@@ -149,10 +186,16 @@ final class NativeAdapter implements Adapter {
       wake.close();
       throw StateError(
         'relic_native: every reactor slot of the server for group "$group" '
-        'is taken (reactorCapacity: $reactorCapacity)',
+        'is taken (reactorCapacity: ${options.reactorCapacity})',
       );
     }
-    return NativeAdapter._(server, reactor, wake, address);
+    return NativeAdapter._(
+      server,
+      reactor,
+      wake,
+      address,
+      options.maxWebSocketMessage,
+    );
   }
 
   static var _dartApiReady = false;
@@ -175,7 +218,7 @@ final class NativeAdapter implements Adapter {
 
   @override
   AdapterCapabilities get capabilities =>
-      const AdapterCapabilities(hijack: true);
+      const AdapterCapabilities(hijack: true, webSocket: true);
 
   @override
   List<Listener> get listeners => [
@@ -239,8 +282,7 @@ final class NativeAdapter implements Adapter {
       for (var batch = 0; batch < _batchesPerTurn; batch++) {
         _drainAgain = false;
         final n = native.reactorTick(_reactor, 0, _out, _batchSize);
-        if (_takeExchanges(n, sink)) handedOver = true;
-        if (_dispatchEvents()) handedOver = true;
+        if (_handOver(n, sink)) handedOver = true;
         if (n > 0 || _drainAgain || native.reactorPending(_reactor)) continue;
         // What this turn handed to Dart may answer from a microtask: an
         // async handler, or a stream listener such as the WebSocket
@@ -259,8 +301,7 @@ final class NativeAdapter implements Adapter {
           _out,
           _batchSize,
         );
-        if (_takeExchanges(m, sink)) handedOver = true;
-        if (_dispatchEvents()) handedOver = true;
+        if (_handOver(m, sink)) handedOver = true;
         if (m > 0 || _drainAgain || native.reactorPending(_reactor)) continue;
         native.reactorWait(_reactor);
         return;
@@ -276,6 +317,23 @@ final class NativeAdapter implements Adapter {
   /// The event loop is held for at most this long, which is what a timer
   /// or a handler's own I/O can be late by while the reactor is idle.
   static const _linger = Duration(milliseconds: 1);
+
+  /// Hands what a tick produced to Dart, the events before the [n] new
+  /// exchanges. True when a handler is still at work on one of them.
+  ///
+  /// The last event of a connection is posted by a frame the tick has
+  /// freed. A sync handler of a new exchange may hold that connection as
+  /// a WebSocket or a raw channel and write to it. The event moves the
+  /// connection on first, so the write finds it gone and not the frame.
+  ///
+  /// An event for an exchange of this same tick finds no listing yet and
+  /// is dropped. The body stream pulls what is queued when it is listened
+  /// to, and every later chunk posts an event of its own.
+  bool _handOver(int n, ExchangeSink sink) {
+    final events = _dispatchEvents();
+    final exchanges = _takeExchanges(n, sink);
+    return events || exchanges;
+  }
 
   /// Hands [n] new exchanges to [sink]. True when one of them is still
   /// being handled, by a handler that is async.
@@ -324,12 +382,11 @@ final class NativeAdapter implements Adapter {
     _hijacked.remove(exchange);
     if (exchange._expectsEvents) _byAddress.remove(exchange._address);
     if (_inFlight.isEmpty) _settle(_drained);
-    if (_hijacked.isEmpty) _settle(_released);
   }
 
   /// Completes a close-path waiter the first time its set empties. A
-  /// connection that ends later, while the close still waits on the
-  /// other set or aborts the rest, finds it completed.
+  /// connection that ends later, while the close aborts the rest, finds
+  /// it completed.
   static void _settle(Completer<void>? waiter) {
     if (waiter != null && !waiter.isCompleted) waiter.complete();
   }
@@ -344,37 +401,27 @@ final class NativeAdapter implements Adapter {
 
   @override
   Future<void> close({bool force = false}) async {
-    if (_closing) return _closedFuture.future;
-    _closing = true;
-    if (_inDrain) {
-      // A handler is closing its own server. The drain's batch still
-      // reads the buffers and ticks the reactor that are freed below.
-      final returned = _drainReturned = Completer<void>();
-      await returned.future;
+    if (!_closing) {
+      _closing = true;
+      if (_inDrain) {
+        // A handler is closing its own server. The drain's batch still
+        // reads the buffers and ticks the reactor that are freed below.
+        final returned = _drainReturned = Completer<void>();
+        await returned.future;
+      }
     }
     if (!force) {
-      if (_inFlight.isNotEmpty) {
-        final drained = _drained = Completer<void>();
-        await drained.future.timeout(_drainTimeout, onTimeout: () {});
-      }
-      if (_hijacked.isNotEmpty) {
-        // A hijacked connection closes once what its handler wrote is
-        // flushed. One whose peer stopped reading never gets there, and
-        // the abort below drops it.
-        final released = _released = Completer<void>();
-        for (final exchange in _hijacked.toList()) {
-          unawaited(exchange._rawSink?.close());
-        }
-        await released.future.timeout(_drainTimeout, onTimeout: () {});
-      }
+      if (_inFlight.isNotEmpty) await (_drained ??= Completer<void>()).future;
+      return;
     }
+    if (_closed) return _closedFuture.future;
+    _closed = true;
     for (final exchange in _inFlight.toList()) {
       exchange.abort();
     }
     for (final exchange in _hijacked.toList()) {
       exchange.abort();
     }
-    _closed = true;
     _wake.close();
     // Blocks while the connections unwind. The last reactor of a server
     // stops the server too, and waits for its thread.
@@ -415,25 +462,47 @@ final class NativeAdapter implements Adapter {
 /// the exchange is taken from the queue, so the [Request] built from it is
 /// plain Dart data with no lifetime tied to the connection. A streamed
 /// body is the exception: its chunks are pulled while the handler runs.
+/// Where an exchange is between its request and the native side freeing
+/// it. Every stage but [ended] has a live view.
+enum _Stage {
+  /// Not answered yet.
+  pending,
+
+  /// The head went out and the body streams from Dart.
+  streaming,
+
+  /// A raw channel after [NativeExchange.hijack].
+  raw,
+
+  /// The raw channel's sink was closed and the native side flushes.
+  /// Nothing is read from the view until its last event.
+  rawClosing,
+
+  /// A WebSocket after [NativeExchange.upgradeWebSocket].
+  webSocket,
+
+  /// Answered, aborted or gone. The view is null.
+  ended,
+}
+
 final class NativeExchange extends LinkedListEntry<NativeExchange>
+    with ExchangeEndState
     implements AdapterExchange {
   final NativeAdapter _adapter;
+
+  /// The native view, null once the native side has freed the exchange or
+  /// is about to, which is [_Stage.ended].
   Pointer<native.ExchangeView>? _view;
   final int _address;
+  var _stage = _Stage.pending;
 
-  /// The view while the connection is a raw channel, after [hijack].
-  Pointer<native.ExchangeView>? _rawView;
   _RawSink? _rawSink;
-
-  /// The sink was closed and the native side flushes. Nothing is read
-  /// from the view until its last event says the connection is gone.
-  var _rawClosing = false;
 
   /// The request body handed to the handler, to tell whether it read it.
   Body? _bodyObject;
 
-  /// How the exchange ended, once it has.
-  ExchangeEnd? _end;
+  NativeWebSocket? _webSocket;
+
   Completer<void>? _cancelled;
   final int _method;
   final int _version;
@@ -448,9 +517,6 @@ final class NativeExchange extends LinkedListEntry<NativeExchange>
   final Uint8List? _body;
   final bool _bodyStreamed;
   final int _bodyLen;
-
-  /// The completer behind [done], for a caller that asked before the end.
-  Completer<ExchangeEnd>? _done;
 
   /// The inbound body stream, while a streamed request body is being
   /// pulled.
@@ -636,8 +702,8 @@ final class NativeExchange extends LinkedListEntry<NativeExchange>
 
   void _pullInbound() {
     final controller = _inbound;
-    final view = _view ?? _streamView ?? _rawView;
     if (controller == null || controller.isClosed) return;
+    final view = _stage == _Stage.webSocket ? null : _view;
     if (view == null) {
       // Answered before the body was read. The native side drains the
       // rest or closes the connection (max_discard in relic_native.zig).
@@ -678,8 +744,8 @@ final class NativeExchange extends LinkedListEntry<NativeExchange>
   /// know. A second response to one that was answered is a bug.
   @override
   FutureOr<void> respond(Response response) {
-    if (_view == null) {
-      if (_end == ExchangeEnd.aborted || _end == ExchangeEnd.cancelledByPeer) {
+    if (_stage != _Stage.pending) {
+      if (end == ExchangeEnd.aborted || end == ExchangeEnd.cancelledByPeer) {
         return null;
       }
       throw StateError('The exchange was already answered');
@@ -705,24 +771,11 @@ final class NativeExchange extends LinkedListEntry<NativeExchange>
     return _stream(response, framing);
   }
 
-  /// The head encoded into native memory, with the view taken last: a
-  /// head that does not encode leaves the exchange open for the 500 the
-  /// core sends next.
-  (Pointer<native.ExchangeView>, Pointer<Uint8>, int) _encodeHead(
-    Response response,
-    ResponseFraming framing,
-  ) {
-    final (headBuffer, headLength) = _nativeHead(
-      ResponseHead(response, framing),
-    );
-    return (_takeView(), headBuffer, headLength);
-  }
-
   void _write(Response response, ResponseFraming framing, Uint8List bytes) {
     final head = ResponseHead(response, framing);
     if (_writeInline(head, framing, bytes)) return;
     final (headBuffer, headLength) = _nativeHead(head);
-    final view = _takeView();
+    final view = _takeView(_Stage.ended);
     var bodyBuffer = nullptr.cast<Uint8>();
     if (bytes.isNotEmpty) bodyBuffer = _nativeCopy(bytes);
     native.respond(
@@ -746,8 +799,12 @@ final class NativeExchange extends LinkedListEntry<NativeExchange>
     // Reads before the head goes out: a body that was already read throws
     // here, while the exchange is still open for the 500.
     final chunks = body.read();
-    final (view, headBuffer, headLength) = _encodeHead(response, framing);
-    _streamView = view;
+    // The view is taken last: a head that does not encode leaves the
+    // exchange open for the 500 the core sends next.
+    final (headBuffer, headLength) = _nativeHead(
+      ResponseHead(response, framing),
+    );
+    final view = _takeView(_Stage.streaming);
     _expectEvents();
     native.respondStream(
       view,
@@ -787,8 +844,6 @@ final class NativeExchange extends LinkedListEntry<NativeExchange>
     );
     return finished.future;
   }
-
-  Pointer<native.ExchangeView>? _streamView;
 
   /// The future [respond] returned for a streamed response, while the
   /// stream is being written.
@@ -832,8 +887,9 @@ final class NativeExchange extends LinkedListEntry<NativeExchange>
   ) {
     final pending = _view;
     if (pending == null) return false;
-    final scratch = pending.ref.scratch;
-    final capacity = pending.ref.scratchCap;
+    final ref = pending.ref;
+    final scratch = ref.scratch;
+    final capacity = ref.scratchCap;
     if (scratch == nullptr || head.bound + bytes.length > capacity) {
       return false;
     }
@@ -841,7 +897,7 @@ final class NativeExchange extends LinkedListEntry<NativeExchange>
     final headLength = head.writeTo(out);
     out.setRange(headLength, headLength + bytes.length, bytes);
     native.respondInline(
-      _takeView(),
+      _takeView(_Stage.ended),
       headLength + bytes.length,
       framing.closeAfter,
     );
@@ -887,13 +943,12 @@ final class NativeExchange extends LinkedListEntry<NativeExchange>
         'Read it before hijacking the connection',
       );
     }
-    final view = _takeView();
-    _rawView = view;
+    final view = _takeView(_Stage.raw);
     _expectEvents();
     native.hijack(view);
     _adapter._scheduleDrain();
     _adapter._tookOver(this);
-    _complete(ExchangeEnd.hijacked);
+    completeEnd(ExchangeEnd.hijacked);
     final unread = _body;
     final body = _bodyObject;
     final inbound = _inboundStream();
@@ -915,8 +970,8 @@ final class NativeExchange extends LinkedListEntry<NativeExchange>
   /// Hands [data] to the native writer. Nothing happens on a connection
   /// that is already gone, as with a destroyed socket.
   void _writeRaw(Uint8List data) {
-    final view = _rawView;
-    if (view == null || _rawClosing || data.isEmpty) return;
+    if (_stage != _Stage.raw || data.isEmpty) return;
+    final view = _view!;
     final buffer = _nativeCopy(data);
     _adapter._scheduleDrain();
     if (!native.writeChunk(view, buffer, data.length)) {
@@ -928,10 +983,9 @@ final class NativeExchange extends LinkedListEntry<NativeExchange>
   /// The sink was closed: the native side writes what is queued, closes
   /// the connection and posts one last event. Reading stops now.
   void _closeRaw() {
-    final view = _rawView;
-    if (view == null || _rawClosing) return;
-    _rawClosing = true;
-    native.finishStream(view, true);
+    if (_stage != _Stage.raw) return;
+    _stage = _Stage.rawClosing;
+    native.finishStream(_view!, true);
     _adapter._scheduleDrain();
     final inbound = _inbound;
     if (inbound != null && !inbound.isClosed) unawaited(inbound.close());
@@ -940,11 +994,11 @@ final class NativeExchange extends LinkedListEntry<NativeExchange>
   /// Drops a raw connection. The stream ends, with [error] when there is
   /// one, and the native side frees the connection.
   void _failRaw([Object? error]) {
-    final view = _rawView;
-    if (view == null) return;
-    _rawView = null;
-    if (!_rawClosing) native.abort(view);
-    _rawClosing = true;
+    final stage = _stage;
+    if (stage != _Stage.raw && stage != _Stage.rawClosing) return;
+    final view = _view!;
+    _release();
+    if (stage == _Stage.raw) native.abort(view);
     final inbound = _inbound;
     if (inbound != null && !inbound.isClosed) {
       if (error != null) inbound.addError(error);
@@ -956,56 +1010,138 @@ final class NativeExchange extends LinkedListEntry<NativeExchange>
 
   /// The native side is done with a raw connection whose sink was closed.
   void _rawGone() {
-    _rawView = null;
+    _release();
     _rawSink?._ended();
     _adapter._finished(this);
   }
 
+  /// Writes the 101 and leaves the connection with its task, which frames
+  /// it from then on.
   @override
-  FutureOr<RelicWebSocket> upgradeWebSocket(String acceptKey) =>
-      throw UnsupportedError('relic_native cannot upgrade to WebSocket yet');
+  RelicWebSocket upgradeWebSocket(String acceptKey) {
+    final head = webSocketHandshakeResponse(acceptKey);
+    final view = _takeView(_Stage.webSocket);
+    _expectEvents();
+    native.wsUpgrade(
+      view,
+      _nativeCopy(head),
+      head.length,
+      _adapter._maxWebSocketMessage,
+    );
+    _adapter._scheduleDrain();
+    _adapter._tookOver(this);
+    completeEnd(ExchangeEnd.upgraded);
+    return _webSocket = NativeWebSocket._(this);
+  }
+
+  /// Pongs the native side has counted, or null once the connection is
+  /// gone.
+  int? get _wsPongs => _stage == _Stage.webSocket ? _view!.ref.wsPongs : null;
+
+  /// Queues a frame for the peer. Nothing happens on a connection that is
+  /// gone.
+  void _wsSend(WebSocketOpcode opcode, Uint8List payload) {
+    if (_stage != _Stage.webSocket) return;
+    final view = _view!;
+    var buffer = nullptr.cast<Uint8>();
+    if (payload.isNotEmpty) buffer = _nativeCopy(payload);
+    _adapter._scheduleDrain();
+    if (!native.wsSend(view, buffer, payload.length, opcode.code)) {
+      if (buffer != nullptr) native.free(buffer);
+      // Out of memory. The connection is dropped.
+      abort();
+    }
+  }
+
+  /// Hands the socket the messages the native side queued.
+  void _pullWs() {
+    final socket = _webSocket;
+    if (_stage != _Stage.webSocket || socket == null) return;
+    final view = _view!;
+    final data = _adapter._chunkData;
+    final length = _adapter._chunkLength;
+    final kind = _adapter._chunkStatus;
+    try {
+      while (native.wsRead(view, data, length, kind) != 0) {
+        final pointer = data.value;
+        final bytes = pointer == nullptr
+            ? _noBytes
+            : pointer.asTypedList(length.value);
+        try {
+          socket._onMessage(_WsKind.of(kind.value), bytes);
+        } finally {
+          if (pointer != nullptr) native.free(pointer);
+        }
+      }
+    } finally {
+      // Credit went back to the reader, which the next tick acts on.
+      _adapter._scheduleDrain();
+    }
+  }
+
+  /// The native side is done with a WebSocket connection.
+  void _wsGone() {
+    _release();
+    _webSocket?._gone();
+    _adapter._finished(this);
+  }
 
   @override
   void abort() {
-    if (_rawView != null) {
-      _failRaw();
-      return;
+    switch (_stage) {
+      case _Stage.pending:
+        final view = _takeView(_Stage.ended);
+        native.abort(view);
+        _adapter._scheduleDrain();
+        _finish(ExchangeEnd.aborted);
+      case _Stage.streaming:
+        // The head went out. The body cannot be finished, so the last
+        // chunk says so and the connection drops.
+        if (_outbound != null) _failStream(_view!);
+      case _Stage.raw || _Stage.rawClosing:
+        _failRaw();
+      case _Stage.webSocket:
+        final view = _view!;
+        _release();
+        native.abort(view);
+        _adapter._scheduleDrain();
+        _webSocket?._gone();
+        _adapter._finished(this);
+      case _Stage.ended:
+        break;
     }
-    final streaming = _streamView;
-    if (streaming != null && _outbound != null) {
-      // The head went out. The body cannot be finished, so the last chunk
-      // says so and the connection drops.
-      _failStream(streaming);
-      return;
-    }
-    final view = _view;
-    if (view == null) return;
-    _view = null;
-    native.abort(view);
-    _adapter._scheduleDrain();
-    _finish(ExchangeEnd.aborted);
   }
 
   var _expectsEvents = false;
 
   /// Lists the exchange for the events the native side posts about it.
   /// It posts them for a streamed request body, a watched peer, a
-  /// streamed response and a hijacked connection, so an exchange is
-  /// listed before any of those starts. One that is answered from memory
-  /// is never listed.
+  /// streamed response, a hijacked connection and a WebSocket, so an
+  /// exchange is listed before any of those starts. One that is answered
+  /// from memory is never listed.
   void _expectEvents() {
     if (_expectsEvents) return;
     _expectsEvents = true;
     _adapter._byAddress[_address] = this;
   }
 
-  /// The native view, once. The native side frees the exchange after
-  /// respond or abort, so a second use would touch a dead frame.
-  Pointer<native.ExchangeView> _takeView() {
+  /// The native view, once, moving the exchange from [_Stage.pending] to
+  /// [next]. The native side frees the exchange after respond or abort,
+  /// so a second use would touch a dead frame.
+  Pointer<native.ExchangeView> _takeView(_Stage next) {
     final view = _view;
-    if (view == null) throw StateError('The exchange was already answered');
-    _view = null;
+    if (view == null || _stage != _Stage.pending) {
+      throw StateError('The exchange was already answered');
+    }
+    _stage = next;
+    if (next == _Stage.ended) _view = null;
     return view;
+  }
+
+  /// The native side has freed the exchange, or will on the next tick.
+  void _release() {
+    _stage = _Stage.ended;
+    _view = null;
   }
 
   /// Completes when the peer hangs up before the response. The first read
@@ -1016,10 +1152,9 @@ final class NativeExchange extends LinkedListEntry<NativeExchange>
     final cancelled = _cancelled;
     if (cancelled != null) return cancelled.future;
     final created = _cancelled = Completer<void>();
-    final view = _view;
-    if (view != null) {
+    if (_stage == _Stage.pending) {
       _expectEvents();
-      native.watch(view);
+      native.watch(_view!);
     }
     return created.future;
   }
@@ -1029,56 +1164,58 @@ final class NativeExchange extends LinkedListEntry<NativeExchange>
   /// about to die, so the view is not read.
   void _onEvent({required bool last}) {
     if (last) {
-      if (_rawView != null) _rawGone();
+      switch (_stage) {
+        case _Stage.raw || _Stage.rawClosing:
+          _rawGone();
+        case _Stage.webSocket:
+          _wsGone();
+        case _Stage.pending || _Stage.streaming || _Stage.ended:
+          break;
+      }
       return;
     }
-    // After the sink closed, what the peer still sends or its EOF is of
-    // no interest, and the view is read only up to the last event.
-    if (_rawClosing) return;
-    final view = _view ?? _streamView ?? _rawView;
-    if (view == null) return;
-    if (_rawView != null && view.ref.writeFailed != 0) {
+    switch (_stage) {
+      case _Stage.webSocket:
+        _pullWs();
+        return;
+      case _Stage.rawClosing || _Stage.ended:
+        // After the sink closed, what the peer still sends or its EOF is
+        // of no interest, and the view is read only up to the last event.
+        return;
+      case _Stage.pending || _Stage.streaming || _Stage.raw:
+        break;
+    }
+    final view = _view!;
+    final ref = view.ref;
+    final writeFailed = ref.writeFailed != 0;
+    if (_stage == _Stage.raw && writeFailed) {
       _failRaw(const io.SocketException('The peer stopped reading'));
       return;
     }
     // A failed write is the peer gone while the response streams, which
     // is the only way the task sees it then, as with dart:io.
-    if (view.ref.peerGone != 0 || view.ref.writeFailed != 0) {
+    if (ref.peerGone != 0 || writeFailed) {
       final cancelled = _cancelled;
       if (cancelled != null && !cancelled.isCompleted) cancelled.complete();
     }
     if (_inbound != null) _pullInbound();
     final outbound = _outbound;
     if (outbound != null) {
-      if (view.ref.writeFailed != 0) {
+      if (writeFailed) {
         _failStream(view);
       } else if (outbound.isPaused &&
-          _outSent - view.ref.chunksWritten < _outWindow) {
+          _outSent - ref.chunksWritten < _outWindow) {
         outbound.resume();
       }
     }
   }
 
-  @override
-  Future<ExchangeEnd> get done {
-    final end = _end;
-    if (end != null) return Future.value(end);
-    return (_done ??= Completer<ExchangeEnd>()).future;
-  }
-
   void _finish(ExchangeEnd end) {
-    _complete(end);
-    _streamView = null;
+    completeEnd(end);
+    _release();
     final inbound = _inbound;
     if (inbound != null && !inbound.isClosed) unawaited(inbound.close());
     _adapter._finished(this);
-  }
-
-  /// Records how the exchange ended, the first time it ends.
-  void _complete(ExchangeEnd end) {
-    if (_end != null) return;
-    _end = end;
-    _done?.complete(end);
   }
 }
 

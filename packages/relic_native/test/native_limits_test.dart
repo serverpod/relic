@@ -5,6 +5,7 @@ import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
 import 'package:relic_core/relic_core.dart';
+import 'package:relic_native/relic_native.dart';
 import 'package:test/test.dart';
 
 import 'native_test_helpers.dart';
@@ -29,7 +30,7 @@ void main() {
       'then it is closed without a response', () async {
     server = await serveNative(
       _ok,
-      idleTimeout: const Duration(milliseconds: 200),
+      options: const NativeOptions(idleTimeout: Duration(milliseconds: 200)),
     );
     final socket = await Socket.connect('127.0.0.1', server.port);
 
@@ -46,7 +47,7 @@ void main() {
       'then the server closes the connection', () async {
     server = await serveNative(
       (_) => Response.ok(body: Body.fromData(Uint8List(48 << 10))),
-      writeTimeout: const Duration(milliseconds: 300),
+      options: const NativeOptions(writeTimeout: Duration(milliseconds: 300)),
     );
     final socket = await Socket.connect('127.0.0.1', server.port);
     // Never listened to, so the responses back up in the socket buffers
@@ -70,7 +71,7 @@ void main() {
       'then the server closes the connection', () async {
     server = await serveNative(
       (_) => Response.ok(body: Body.fromData(Uint8List(64 << 20))),
-      writeTimeout: const Duration(milliseconds: 300),
+      options: const NativeOptions(writeTimeout: Duration(milliseconds: 300)),
     );
     final socket = await Socket.connect('127.0.0.1', server.port);
     // Never listened to, so the response backs up in the socket buffers.
@@ -93,7 +94,7 @@ void main() {
       'then it gets 408 and the connection closes', () async {
     server = await serveNative(
       _ok,
-      headerTimeout: const Duration(milliseconds: 300),
+      options: const NativeOptions(headerTimeout: Duration(milliseconds: 300)),
     );
     final socket = await Socket.connect('127.0.0.1', server.port);
     socket.write('GET / HTTP/1.1\r\nHost: x\r\n');
@@ -114,7 +115,7 @@ void main() {
       'then it gets 408 and the connection closes', () async {
     server = await serveNative(
       _ok,
-      bodyTimeout: const Duration(milliseconds: 200),
+      options: const NativeOptions(bodyTimeout: Duration(milliseconds: 200)),
     );
     final socket = await Socket.connect('127.0.0.1', server.port);
     socket.write('POST / HTTP/1.1\r\nHost: x\r\nContent-Length: 10\r\n\r\nabc');
@@ -131,7 +132,7 @@ void main() {
     server = await serveNative(
       (req) async =>
           Response.ok(body: Body.fromString(await req.readAsString())),
-      bodyTimeout: const Duration(seconds: 2),
+      options: const NativeOptions(bodyTimeout: Duration(seconds: 2)),
     );
 
     final response = await http.post(
@@ -148,7 +149,7 @@ void main() {
     server = await serveNative((req) async {
       if (req.url.path == '/hold') await first.future;
       return Response.ok(body: Body.fromString(req.url.path));
-    }, maxConnections: 1);
+    }, options: const NativeOptions(maxConnections: 1));
     final base = 'http://127.0.0.1:${server.port}';
 
     final held = http.get(Uri.parse('$base/hold'));

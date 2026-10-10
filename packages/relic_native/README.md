@@ -69,9 +69,10 @@ is the limit.
 
 HTTP/1.0 and HTTP/1.1 only, with `Content-Length` and chunked bodies
 both ways. No HTTP/2 or HTTP/3. No TLS in process, terminate it in
-front. A handler can hijack the connection as a raw byte channel, and
-WebSocket upgrades run on that channel with the framer in `relic_core`,
-so `capabilities.hijack` is true and `capabilities.webSocket` is false.
-A request head is at most 16 KiB with at most 128 fields, and a body
-over `maxInlineBody` streams to the handler instead of being read
+front. A handler can hijack the connection as a raw byte channel, and a
+WebSocket upgrade is framed by the native side, so `capabilities.hijack`
+and `capabilities.webSocket` are both true. A WebSocket message is at
+most `maxWebSocketMessage` bytes, 16 MiB unless `bind` is told
+otherwise. A request head is at most 16 KiB with at most 128 fields, and
+a body over `maxInlineBody` streams to the handler instead of being read
 first.

@@ -66,42 +66,28 @@ final class ExchangeView extends Struct {
   external Pointer<Uint8> body;
   @Uint64()
   external int bodyLen;
-  external Pointer<Uint8> respHead;
-  @Uint32()
-  external int respHeadLen;
-  @Uint8()
-  external int closeAfter;
-  @Uint8()
-  external int aborted;
+
+  /// Nonzero when the peer went away while the exchange was parked.
   @Uint8()
   external int peerGone;
   @Uint8()
   external int bodyStreamed;
-  external Pointer<Uint8> respBody;
-  @Uint64()
-  external int respBodyLen;
-  @Uint8()
-  external int respStreamed;
-  @Uint8()
-  external int respChunked;
+
+  /// Nonzero when a write of the streamed response failed.
   @Uint8()
   external int writeFailed;
-
-  /// Dart took the connection as a raw byte channel.
-  @Uint8()
-  external int hijacked;
   @Uint32()
   external int chunksWritten;
-  @Int32()
-  external int hostSlot;
 
   /// The connection's write buffer, while it is empty, for a response that
   /// fits in [scratchCap] bytes.
   external Pointer<Uint8> scratch;
   @Uint32()
   external int scratchCap;
+
+  /// The pong frames the native side has received.
   @Uint32()
-  external int respInlineLen;
+  external int wsPongs;
 }
 
 /// Mirrors `Stats` in src/relic_native.zig.
@@ -272,6 +258,48 @@ external void watch(Pointer<ExchangeView> view);
   isLeaf: true,
 )
 external void hijack(Pointer<ExchangeView> view);
+
+/// Answers with the 101 [head] and makes the connection a WebSocket. A
+/// message over [maxMessage] bytes closes it with 1009.
+@Native<Void Function(Pointer<ExchangeView>, Pointer<Uint8>, Uint32, Uint32)>(
+  symbol: 'relic_ws_upgrade',
+  isLeaf: true,
+)
+external void wsUpgrade(
+  Pointer<ExchangeView> view,
+  Pointer<Uint8> head,
+  int headLen,
+  int maxMessage,
+);
+
+/// Queues a frame for the peer, with [data] as its payload. False when
+/// the node could not be allocated, and [data] is then still Dart's.
+@Native<Bool Function(Pointer<ExchangeView>, Pointer<Uint8>, Size, Uint8)>(
+  symbol: 'relic_ws_send',
+  isLeaf: true,
+)
+external bool wsSend(
+  Pointer<ExchangeView> view,
+  Pointer<Uint8> data,
+  int length,
+  int opcode,
+);
+
+/// Takes the next message from the peer. Returns 0 when none is queued.
+@Native<
+  Uint8 Function(
+    Pointer<ExchangeView>,
+    Pointer<Pointer<Uint8>>,
+    Pointer<Size>,
+    Pointer<Uint8>,
+  )
+>(symbol: 'relic_ws_read', isLeaf: true)
+external int wsRead(
+  Pointer<ExchangeView> view,
+  Pointer<Pointer<Uint8>> data,
+  Pointer<Size> length,
+  Pointer<Uint8> kind,
+);
 
 @Native<Pointer<Uint8> Function(Size)>(symbol: 'relic_alloc', isLeaf: true)
 external Pointer<Uint8> alloc(int length);

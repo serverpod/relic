@@ -19,6 +19,6 @@ void main() {
         group: group,
       );
     },
-    capabilities: const AdapterCapabilities(hijack: true),
+    capabilities: const AdapterCapabilities(hijack: true, webSocket: true),
   );
 }
