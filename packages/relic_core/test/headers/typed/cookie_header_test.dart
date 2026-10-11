@@ -63,6 +63,72 @@ void main() {
     });
   });
 
+  group('CookieHeader grammar', () {
+    test('Given a value with a comma, when parsed, '
+        'then that cookie is skipped and the others kept', () {
+      final h = CookieHeader.parse(
+        'session=abc; consent=analytics,marketing; theme=dark',
+      );
+
+      expect(h.cookies.map((final c) => c.name), ['session', 'theme']);
+    });
+
+    test('Given tabs and spaces around names and values, when parsed, '
+        'then they are trimmed', () {
+      final h = CookieHeader.parse('\t sid = abc \t;theme= dark ');
+
+      expect(h.cookies.map((final c) => '${c.name}=${c.value}'), [
+        'sid=abc',
+        'theme=dark',
+      ]);
+    });
+
+    test('Given a quoted value, when parsed, then the quotes are kept', () {
+      final h = CookieHeader.parse('sid="abc"');
+
+      expect(h.cookies.single.value, '"abc"');
+    });
+
+    test('Given a value with = in it, when parsed, '
+        'then the value is everything after the first =', () {
+      final h = CookieHeader.parse('tok=a=b==');
+
+      expect(h.cookies.single.name, 'tok');
+      expect(h.cookies.single.value, 'a=b==');
+    });
+
+    test('Given an empty value, when parsed, '
+        'then the cookie is kept with an empty value', () {
+      final h = CookieHeader.parse('sid=; theme=dark');
+
+      expect(h.cookies.map((final c) => '${c.name}=${c.value}'), [
+        'sid=',
+        'theme=dark',
+      ]);
+    });
+
+    test('Given a name with a separator character, when parsed, '
+        'then that cookie is skipped', () {
+      final h = CookieHeader.parse('s:id=1; ok=2');
+
+      expect(h.cookies.map((final c) => c.name), ['ok']);
+    });
+
+    test('Given a value with a space in it, when parsed, '
+        'then that cookie is skipped', () {
+      final h = CookieHeader.parse('a=b c; ok=2');
+
+      expect(h.cookies.map((final c) => c.name), ['ok']);
+    });
+
+    test('Given only segments without =, when parsed, then it throws', () {
+      expect(
+        () => CookieHeader.parse('abc; def'),
+        throwsA(isA<FormatException>()),
+      );
+    });
+  });
+
   group('CookieHeader name case-sensitivity', () {
     group('Given two cookies whose names differ only in case,', () {
       test('when parsed, '
