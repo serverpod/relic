@@ -1,0 +1,16 @@
+[package]
+name = "relic_baseline_hyper"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+bytes = "1"
+http-body-util = "0.1"
+hyper = { version = "1", features = ["server", "http1"] }
+hyper-util = { version = "0.1", features = ["tokio"] }
+tokio = { version = "1", features = ["rt-multi-thread", "net", "macros"] }
+
+[profile.release]
+lto = true
+codegen-units = 1

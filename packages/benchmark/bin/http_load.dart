@@ -11,6 +11,7 @@
 // A target that is a URL is a server started elsewhere (Bun, for one)
 // that serves the same paths, and `name=URL` labels it in the table:
 //   --targets=io,bun=http://127.0.0.1:3000
+// `baselines/` has the same routes on bare hyper and on bare Deno.serve.
 
 import 'dart:convert';
 import 'dart:io';
@@ -169,9 +170,9 @@ enum LoadOption<V> implements OptionDefinition<V> {
   final ConfigOptionBase<V> option;
 }
 
-void _knownWorkloads(final List<String> names) {
+void _knownWorkloads(List<String> names) {
   for (final name in names) {
-    if (!_workloads.any((final w) => w.name == name)) {
+    if (!_workloads.any((w) => w.name == name)) {
       throw FormatException('Unknown workload: $name');
     }
   }
@@ -181,10 +182,10 @@ final class _DoubleParser extends ValueParser<double> {
   const _DoubleParser();
 
   @override
-  double parse(final String value) => double.parse(value);
+  double parse(String value) => double.parse(value);
 }
 
-Future<void> main(final List<String> args) async {
+Future<void> main(List<String> args) async {
   final config = resolveOptions(
     LoadOption.values,
     args,
@@ -198,7 +199,7 @@ Future<void> main(final List<String> args) async {
 
   final workloads = [
     for (final name in config.value(LoadOption.workloads))
-      _workloads.firstWhere((final w) => w.name == name),
+      _workloads.firstWhere((w) => w.name == name),
   ];
   final results = <Measurement>[];
   for (final spec in targets) {
@@ -257,14 +258,16 @@ Future<void> main(final List<String> args) async {
     File('${out.replaceAll(RegExp(r'\.md$'), '')}.json').writeAsStringSync(
       const JsonEncoder.withIndent(
         '  ',
-      ).convert(results.map((final m) => m.toJson()).toList()),
+      ).convert(results.map((m) => m.toJson()).toList()),
     );
   }
 }
 
+/// The target name and URL in [spec].
+///
 /// `io`, `native4` or `shelf` starts a server here. `http://host:port` is
 /// a server started elsewhere, and `name=http://host:port` labels it.
-(String, String?) _split(final String spec) {
+(String, String?) _split(String spec) {
   final at = spec.indexOf('=');
   if (at > 0) return (spec.substring(0, at), spec.substring(at + 1));
   if (spec.startsWith('http')) return (spec, spec);
@@ -273,7 +276,7 @@ Future<void> main(final List<String> args) async {
 
 /// A server for [target]: `io`, `native` or `shelf`, or one of them
 /// followed by an isolate count.
-Future<Server> _start(final String target) {
+Future<Server> _start(String target) {
   final match = RegExp(r'^(io|native|shelf)(\d*)$').firstMatch(target);
   if (match == null) throw ArgumentError.value(target, 'target');
   final kind = match.group(1)!;
@@ -294,11 +297,11 @@ Future<Server> _start(final String target) {
 /// A null [rate] is a closed loop at [connections] in flight, otherwise an
 /// open loop at that many requests per second.
 Future<OhaResult> _oha(
-  final String base,
-  final Workload workload,
-  final int connections,
-  final int seconds,
-  final int? rate,
+  String base,
+  Workload workload,
+  int connections,
+  int seconds,
+  int? rate,
 ) => runOha(
   '$base${workload.path}',
   connections: connections,
@@ -307,11 +310,7 @@ Future<OhaResult> _oha(
   headers: workload.headers,
 );
 
-String _markdown(
-  final List<Measurement> results,
-  final int connections,
-  final int seconds,
-) {
+String _markdown(List<Measurement> results, int connections, int seconds) {
   final buffer = StringBuffer()
     ..writeln('$connections connections, ${seconds}s per run, latency in ms.')
     ..writeln()
