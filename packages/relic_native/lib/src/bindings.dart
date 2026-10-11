@@ -27,8 +27,8 @@ final class Options extends Struct {
 final class HeaderSlot extends Struct {
   @Uint32()
   external int nameOff;
-  @Uint32()
-  external int nameLen;
+  @Int32()
+  external int nameId;
   @Uint32()
   external int valueOff;
   @Uint32()
@@ -122,6 +122,13 @@ external int serverPort(Pointer<Void> server);
   symbol: 'relic_reactor_create',
 )
 external Pointer<Void> reactorCreate(Pointer<Void> server, int port);
+
+/// Takes the reactor out of service. It accepts no new connections,
+/// closes the idle ones, and closes the rest after their current
+/// response. The listener closes with the last accepting reactor of the
+/// server.
+@Native<Void Function(Pointer<Void>)>(symbol: 'relic_reactor_stop')
+external void reactorStop(Pointer<Void> reactor);
 
 /// Cancels the reactor's connections and frees it. The last one of a
 /// server stops the server too. Blocks while the connections unwind.

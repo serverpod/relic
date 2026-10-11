@@ -5,8 +5,8 @@ package that reads or produces HTTP headers without wanting the rest of
 Relic.
 
 - `HeaderName` interns the standard header names. A known name has a stable
-  small id, so a store can index it without hashing strings. `lookupBytes`
-  finds a known name in a request head without allocating.
+  small id, so a store can index it without hashing strings, and the same
+  table is generated for the native parser, which hands the id over.
 - `HeaderStore` is what a server adapter hands the framework for a request.
   It is a base class with four abstract members, so it can grow without
   breaking implementers.

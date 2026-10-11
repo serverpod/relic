@@ -16,26 +16,15 @@ import 'response_encoder.dart';
 
 part 'native_web_socket.dart';
 
-/// An [Adapter] backed by the Zig HTTP server in `src/relic_native.zig`.
-///
-/// The native side accepts connections on a thread of its own, and parses
-/// requests and writes responses on this isolate's thread while [_drain]
-/// ticks it. Each request reaches this isolate as one [NativeExchange]
-/// through a queue, with one wake per idle-to-busy transition, and goes
-/// back as encoded bytes the native side writes.
-///
-/// Several isolates share one server by binding with the same [group].
-/// The first bind creates it, later binds attach to it, and the last
-/// [close] stops it. `serveNative` mints a group per call.
 /// The limits of a server [NativeAdapter.bind] starts, with the defaults
 /// a server gets when none are given.
 ///
-/// A connection may wait [idleTimeout] for the first byte of a request,
-/// and the rest of the head must arrive within [headerTimeout] of that
-/// byte, which bounds a slowloris. [bodyTimeout] and [writeTimeout] are
+/// A connection may wait [idleTimeout] for the first byte of a request.
+/// The rest of the head must arrive within [headerTimeout] of that byte,
+/// which bounds a slowloris. [bodyTimeout] and [writeTimeout] are
 /// inactivity limits on reading a body and writing a response. A head or
-/// a body that times out answers 408 and closes, and the other timeouts
-/// close without a response. [Duration.zero] disables a limit.
+/// a body that times out answers 408 and closes. The other timeouts close
+/// without a response. [Duration.zero] disables a limit.
 final class NativeOptions {
   /// How many isolates may attach to the server.
   final int reactorCapacity;
@@ -72,6 +61,17 @@ final class NativeOptions {
   });
 }
 
+/// An [Adapter] backed by the Zig HTTP server in `src/relic_native.zig`.
+///
+/// The native side accepts connections on a thread of its own. It parses
+/// requests and writes responses on this isolate's thread while [_drain]
+/// ticks it. Each request reaches this isolate as one [NativeExchange]
+/// through a queue, with one wake per idle-to-busy transition, and goes
+/// back as encoded bytes the native side writes.
+///
+/// Several isolates share one server by passing [bind] the same group.
+/// The first bind creates it, later binds attach to it, and the last
+/// [close] stops it. `serveNative` mints a group per call.
 final class NativeAdapter implements Adapter {
   final Pointer<Void> _server;
   final Pointer<Void> _reactor;
@@ -87,8 +87,8 @@ final class NativeAdapter implements Adapter {
   final _chunkLength = calloc<Size>();
   final _chunkStatus = calloc<Uint8>();
 
-  /// The exchanges a handler has not answered. A list each exchange is a
-  /// link of, so one comes and goes with a few field writes.
+  /// The exchanges a handler has not answered. Each exchange is its own
+  /// link, so one comes and goes with a few field writes.
   final _inFlight = LinkedList<NativeExchange>();
 
   /// Connections a handler took over, as raw channels or WebSockets. They
@@ -98,7 +98,7 @@ final class NativeAdapter implements Adapter {
 
   /// Exchanges by the address of their native view, for the events the
   /// native side posts about one exchange. Only those that can get one
-  /// are here: see [NativeExchange._expectEvents].
+  /// are listed, see [NativeExchange._expectEvents].
   final _byAddress = <int, NativeExchange>{};
   ExchangeSink? _sink;
   var _closing = false;
@@ -125,8 +125,8 @@ final class NativeAdapter implements Adapter {
       _slot = native.reactorSlot(_reactor),
       _authority = _listenerAuthority(address, native.serverPort(_server));
 
-  /// The authority of a request without a Host, which HTTP/1.0 allows:
-  /// the listener itself, bracketed when it is an IPv6 address.
+  /// The authority of a request without a Host, which HTTP/1.0 allows. It
+  /// is the listener itself, bracketed when IPv6.
   final String _authority;
 
   static String _listenerAuthority(io.InternetAddress address, int port) =>
@@ -232,11 +232,11 @@ final class NativeAdapter implements Adapter {
   void start(ExchangeSink sink) {
     if (_sink != null) throw StateError('start was already called');
     _sink = sink;
-    // 0 from the waiter thread, when the loop has events or a timer is
-    // due. 1 from this isolate, a drain it scheduled on itself. A raw
-    // port's handler runs in whatever zone is current when the message
-    // lands, so it is bound to the zone that started the server, which
-    // is where handlers expect to run, as dart:io's listen does.
+    // 0 comes from the waiter thread when the loop has events or a timer
+    // is due. 1 comes from this isolate, a drain it scheduled on itself.
+    // A raw port's handler runs in whatever zone is current when the
+    // message lands, so bind it to the zone that started the server. That
+    // is where handlers expect to run, as with dart:io's listen.
     final zone = Zone.current;
     _wake.handler = (_) => zone.runGuarded(_drain);
     _scheduleDrain();
@@ -250,13 +250,14 @@ final class NativeAdapter implements Adapter {
   /// completes on its way out.
   Completer<void>? _drainReturned;
 
-  /// A tick is due: something was handed to the native side that the
-  /// reactor acts on at its next pass. From inside the drain, a sync
-  /// handler answering for one, the drain itself takes it on its next
-  /// batch. From anywhere else it is a turn of the event loop away, as
-  /// a message to this isolate's own port. A zero Timer goes through
-  /// the dart:io event handler thread and back, 10 us on that thread
-  /// per hop, where the port message stays in this isolate.
+  /// Schedules a tick for something handed to the native side that the
+  /// reactor acts on at its next pass.
+  ///
+  /// Called from inside the drain, as by a sync handler answering, the
+  /// drain takes it on its next batch. From anywhere else it is a turn of
+  /// the event loop away, as a message to this isolate's own port. A zero
+  /// Timer would go through the dart:io event handler thread and back,
+  /// 10 us on that thread per hop. The port message stays in this isolate.
   void _scheduleDrain() {
     if (_closed) return;
     if (_inDrain) {
@@ -268,9 +269,10 @@ final class NativeAdapter implements Adapter {
     _wake.sendPort.send(1);
   }
 
-  /// Ticks the reactor until it has nothing left, then arms the waiter,
-  /// or hands back to the event loop once a handler has an answer
-  /// pending or after a few batches, so timers and the handlers' own I/O
+  /// Ticks the reactor until it has nothing left, then arms the waiter.
+  ///
+  /// It hands back to the event loop earlier once a handler has an answer
+  /// pending, or after a few batches, so timers and the handlers' own I/O
   /// get a turn.
   void _drain() {
     _drainScheduled = false;
@@ -284,16 +286,16 @@ final class NativeAdapter implements Adapter {
         final n = native.reactorTick(_reactor, 0, _out, _batchSize);
         if (_handOver(n, sink)) handedOver = true;
         if (n > 0 || _drainAgain || native.reactorPending(_reactor)) continue;
-        // What this turn handed to Dart may answer from a microtask: an
-        // async handler, or a stream listener such as the WebSocket
-        // framer. Those run when the drain returns, so the turn ends here
-        // and the next one picks their writes up. A sync handler has
-        // answered already and does not end the turn.
+        // What this turn handed to Dart may answer from a microtask, an
+        // async handler or a stream listener such as the WebSocket framer.
+        // Those run when the drain returns, so the turn ends here and the
+        // next one picks their writes up. A sync handler has answered
+        // already and does not end the turn.
         if (handedOver) break;
         // Nothing to do. One tick that waits in the kernel for a moment
-        // catches the next request without a thread handoff, which is
-        // what a busy reactor sees next. Only after that does the isolate
-        // park on the waiter and its port message.
+        // catches the next request without a thread handoff, which is what
+        // a busy reactor sees next. Only then does the isolate park on the
+        // waiter and its port message.
         _drainAgain = false;
         final m = native.reactorTick(
           _reactor,
@@ -318,12 +320,12 @@ final class NativeAdapter implements Adapter {
   /// or a handler's own I/O can be late by while the reactor is idle.
   static const _linger = Duration(milliseconds: 1);
 
-  /// Hands what a tick produced to Dart, the events before the [n] new
+  /// Hands what a tick produced to Dart, events first, then the [n] new
   /// exchanges. True when a handler is still at work on one of them.
   ///
-  /// The last event of a connection is posted by a frame the tick has
-  /// freed. A sync handler of a new exchange may hold that connection as
-  /// a WebSocket or a raw channel and write to it. The event moves the
+  /// A frame the tick has freed posts the last event of a connection. A
+  /// sync handler of a new exchange may hold that connection as a
+  /// WebSocket or a raw channel and write to it. The event moves the
   /// connection on first, so the write finds it gone and not the frame.
   ///
   /// An event for an exchange of this same tick finds no listing yet and
@@ -335,18 +337,11 @@ final class NativeAdapter implements Adapter {
     return events || exchanges;
   }
 
-  /// Hands [n] new exchanges to [sink]. True when one of them is still
-  /// being handled, by a handler that is async.
+  /// Hands [n] new exchanges to [sink]. True when an async handler is
+  /// still at work on one of them.
   bool _takeExchanges(int n, ExchangeSink sink) {
     var async = false;
     for (var i = 0; i < n; i++) {
-      if (_closing) {
-        // Whatever arrives while draining is dropped at once, so a client
-        // sees a closed connection and not a hang until the reactor is
-        // destroyed.
-        native.abort(_out[i]);
-        continue;
-      }
       final exchange = NativeExchange._(this, _out[i]);
       _inFlight.add(exchange);
       if (exchange._bodyStreamed) exchange._expectEvents();
@@ -359,10 +354,11 @@ final class NativeAdapter implements Adapter {
     return async;
   }
 
-  /// Hands the events the native side posted to their exchanges. An
-  /// event is the address of a view, with the low bit set for the last
-  /// event of a raw connection, whose view is about to die. True when
+  /// Hands the events the native side posted to their exchanges. True when
   /// there was at least one.
+  ///
+  /// An event is the address of a view, with the low bit set for the last
+  /// event of a raw connection, whose view is about to die.
   bool _dispatchEvents() {
     final events = _out.cast<Size>();
     var any = false;
@@ -391,8 +387,9 @@ final class NativeAdapter implements Adapter {
     if (waiter != null && !waiter.isCompleted) waiter.complete();
   }
 
-  /// The exchange became a raw channel: the drain no longer waits for it,
-  /// and the close path takes it down with the other connections.
+  /// Records that [exchange] became a raw channel. The drain no longer
+  /// waits for it, and the close path takes it down with the other
+  /// connections.
   void _tookOver(NativeExchange exchange) {
     _inFlight.remove(exchange);
     _hijacked.add(exchange);
@@ -409,6 +406,9 @@ final class NativeAdapter implements Adapter {
         final returned = _drainReturned = Completer<void>();
         await returned.future;
       }
+      native.reactorStop(_reactor);
+      // The idle connections unwind on a tick.
+      _scheduleDrain();
     }
     if (!force) {
       if (_inFlight.isNotEmpty) await (_drained ??= Completer<void>()).future;
@@ -423,8 +423,7 @@ final class NativeAdapter implements Adapter {
       exchange.abort();
     }
     _wake.close();
-    // Blocks while the connections unwind. The last reactor of a server
-    // stops the server too, and waits for its thread.
+    // Blocks while the connections unwind.
     native.reactorDestroy(_reactor);
     calloc.free(_out);
     calloc.free(_chunkData);
@@ -456,14 +455,10 @@ final class NativeAdapter implements Adapter {
   }
 }
 
-/// One request received by the native side and the response that goes back.
+/// The stage of an exchange between its request and the native side
+/// freeing it.
 ///
-/// Everything the request side needs is copied out of native memory when
-/// the exchange is taken from the queue, so the [Request] built from it is
-/// plain Dart data with no lifetime tied to the connection. A streamed
-/// body is the exception: its chunks are pulled while the handler runs.
-/// Where an exchange is between its request and the native side freeing
-/// it. Every stage but [ended] has a live view.
+/// Every stage but [ended] has a live view.
 enum _Stage {
   /// Not answered yet.
   pending,
@@ -485,6 +480,12 @@ enum _Stage {
   ended,
 }
 
+/// One request received by the native side and the response that goes back.
+///
+/// The constructor copies everything the request side needs out of native
+/// memory, so the [Request] built from it is plain Dart data with no
+/// lifetime tied to the connection. A streamed body is the exception. Its
+/// chunks are pulled while the handler runs.
 final class NativeExchange extends LinkedListEntry<NativeExchange>
     with ExchangeEndState
     implements AdapterExchange {
@@ -522,15 +523,15 @@ final class NativeExchange extends LinkedListEntry<NativeExchange>
   /// pulled.
   StreamController<Uint8List>? _inbound;
 
-  /// The streamed request body was pulled to its end.
+  /// Whether the streamed request body was pulled to its end.
   var _bodyRead = false;
 
   /// The outbound body subscription, while a streamed response goes out.
   StreamSubscription<Uint8List>? _outbound;
   var _outSent = 0;
 
-  /// Outbound chunks handed over and not yet written, before the stream
-  /// is paused until the native side catches up.
+  /// The outbound chunks handed over and not yet written at which the
+  /// stream pauses until the native side catches up.
   static const _outWindow = 8;
 
   static final _noBytes = Uint8List(0);
@@ -538,7 +539,7 @@ final class NativeExchange extends LinkedListEntry<NativeExchange>
   NativeExchange._(NativeAdapter adapter, Pointer<native.ExchangeView> view)
     : this._from(adapter, view, view.ref);
 
-  /// Reads the view once: every `ref` builds a struct view of its own.
+  /// Reads the view once, since every `ref` builds a struct view of its own.
   NativeExchange._from(
     this._adapter,
     Pointer<native.ExchangeView> view,
@@ -600,8 +601,6 @@ final class NativeExchange extends LinkedListEntry<NativeExchange>
       null,
       this,
       target: target..validate(),
-      // The Host header, or the listener for a request without one, which
-      // HTTP/1.0 allows.
       authority:
           authority ?? headers.value(HeaderName.host) ?? _adapter._authority,
       scheme: scheme ?? 'http',
@@ -627,12 +626,12 @@ final class NativeExchange extends LinkedListEntry<NativeExchange>
   );
 
   /// The target bytes as a [RequestTarget], split at the first `?`, with
-  /// the scheme and authority an absolute-form target carries: an origin
-  /// server uses those over the Host header (RFC 9112 3.2.2). The
-  /// fragment and decoding checks are the target's own.
+  /// the scheme and authority an absolute-form target carries.
   ///
-  /// The asterisk and authority forms are not served. They throw, and
-  /// the core answers 400, as the dart:io adapter does.
+  /// An origin server uses those over the Host header (RFC 9112 3.2.2).
+  /// The fragment and decoding checks are the target's own. The asterisk
+  /// and authority forms are not served. They throw, and the core answers
+  /// 400, as the dart:io adapter does.
   (RequestTarget, String?, String?) _parseTarget() {
     final end = _targetOff + _targetLen;
     var pathStart = _targetOff;
@@ -739,9 +738,9 @@ final class NativeExchange extends LinkedListEntry<NativeExchange>
     }
   }
 
-  /// A response to an exchange the adapter already aborted, or whose peer
-  /// hung up, goes nowhere and is not an error: the handler could not
-  /// know. A second response to one that was answered is a bug.
+  /// Sends [response]. One to an exchange the adapter already aborted, or
+  /// whose peer hung up, goes nowhere without error, since the handler
+  /// could not know. A second response to an answered exchange throws.
   @override
   FutureOr<void> respond(Response response) {
     if (_stage != _Stage.pending) {
@@ -791,15 +790,17 @@ final class NativeExchange extends LinkedListEntry<NativeExchange>
   }
 
   /// Sends the head now and the body as its stream produces it, chunked
-  /// on the wire when the length is unknown. Completes when the last chunk
-  /// was handed over, or fails when the body stream failed, in which case
-  /// the connection is dropped since the message cannot be finished.
+  /// on the wire when the length is unknown.
+  ///
+  /// Completes when the last chunk was handed over. Fails when the body
+  /// stream failed, and the connection drops then, since the message
+  /// cannot be finished.
   Future<void> _stream(Response response, ResponseFraming framing) {
     final body = response.body;
-    // Reads before the head goes out: a body that was already read throws
+    // Read before the head goes out. A body that was already read throws
     // here, while the exchange is still open for the 500.
     final chunks = body.read();
-    // The view is taken last: a head that does not encode leaves the
+    // The view is taken last. A head that does not encode leaves the
     // exchange open for the 500 the core sends next.
     final (headBuffer, headLength) = _nativeHead(
       ResponseHead(response, framing),
@@ -850,7 +851,7 @@ final class NativeExchange extends LinkedListEntry<NativeExchange>
   Completer<void>? _streamDone;
 
   /// Ends a streamed response that cannot be finished. The native side
-  /// drops the connection, and the respond that streamed it fails with
+  /// drops the connection. The respond that streamed it fails with
   /// [error], or with the dropped connection when the body itself was
   /// fine.
   void _failStream(
@@ -924,14 +925,15 @@ final class NativeExchange extends LinkedListEntry<NativeExchange>
     return buffer;
   }
 
-  /// Takes the connection over as a raw byte channel. Nothing has been
-  /// written to the peer, so the handler writes the whole response, or
-  /// whatever protocol it speaks instead. An inline request body the
-  /// handler did not read comes first on the stream, as the dart:io
-  /// adapter does it. Closing the sink closes the connection once what
-  /// was written is flushed.
+  /// Takes the connection over as a raw byte channel.
   ///
-  /// A streamed request body (chunked, or over the inline limit) must be
+  /// Nothing has been written to the peer, so the handler writes the whole
+  /// response, or whatever protocol it speaks instead. An inline request
+  /// body the handler did not read comes first on the stream, as the
+  /// dart:io adapter does it. Closing the sink closes the connection once
+  /// what was written is flushed.
+  ///
+  /// A streamed request body, chunked or over the inline limit, must be
   /// read to its end first. The native reader is past the head by the
   /// time the handler runs, and what it decoded cannot go back on the
   /// wire.
@@ -980,7 +982,7 @@ final class NativeExchange extends LinkedListEntry<NativeExchange>
     }
   }
 
-  /// The sink was closed: the native side writes what is queued, closes
+  /// Closes the raw channel. The native side writes what is queued, closes
   /// the connection and posts one last event. Reading stops now.
   void _closeRaw() {
     if (_stage != _Stage.raw) return;
@@ -1048,7 +1050,7 @@ final class NativeExchange extends LinkedListEntry<NativeExchange>
     _adapter._scheduleDrain();
     if (!native.wsSend(view, buffer, payload.length, opcode.code)) {
       if (buffer != nullptr) native.free(buffer);
-      // Out of memory. The connection is dropped.
+      // Out of memory.
       abort();
     }
   }
@@ -1115,19 +1117,22 @@ final class NativeExchange extends LinkedListEntry<NativeExchange>
   var _expectsEvents = false;
 
   /// Lists the exchange for the events the native side posts about it.
+  ///
   /// It posts them for a streamed request body, a watched peer, a
   /// streamed response, a hijacked connection and a WebSocket, so an
-  /// exchange is listed before any of those starts. One that is answered
-  /// from memory is never listed.
+  /// exchange is listed before any of those starts. One answered from
+  /// memory is never listed.
   void _expectEvents() {
     if (_expectsEvents) return;
     _expectsEvents = true;
     _adapter._byAddress[_address] = this;
   }
 
-  /// The native view, once, moving the exchange from [_Stage.pending] to
-  /// [next]. The native side frees the exchange after respond or abort,
-  /// so a second use would touch a dead frame.
+  /// Takes the native view and moves the exchange from [_Stage.pending]
+  /// to [next].
+  ///
+  /// The native side frees the exchange after respond or abort, so a
+  /// second take would touch a dead frame and throws instead.
   Pointer<native.ExchangeView> _takeView(_Stage next) {
     final view = _view;
     if (view == null || _stage != _Stage.pending) {
@@ -1144,9 +1149,10 @@ final class NativeExchange extends LinkedListEntry<NativeExchange>
     _view = null;
   }
 
-  /// Completes when the peer hangs up before the response. The first read
-  /// asks the native side to watch the connection, so the cost is paid
-  /// only by handlers that want to know.
+  /// A future that completes when the peer hangs up before the response.
+  ///
+  /// The first read asks the native side to watch the connection, so only
+  /// handlers that want to know pay for it.
   @override
   Future<void> get cancelled {
     final cancelled = _cancelled;
@@ -1159,9 +1165,9 @@ final class NativeExchange extends LinkedListEntry<NativeExchange>
     return created.future;
   }
 
-  /// An event about this exchange from the native side, while it is still
-  /// in flight. The [last] one of a raw connection is posted by a frame
-  /// about to die, so the view is not read.
+  /// Handles an event about this exchange from the native side while it is
+  /// in flight. A frame about to die posts the [last] one of a raw
+  /// connection, so that one does not read the view.
   void _onEvent({required bool last}) {
     if (last) {
       switch (_stage) {

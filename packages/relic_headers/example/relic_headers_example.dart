@@ -1,8 +1,6 @@
 // ignore_for_file: avoid_print
 // A package that depends on relic_headers alone can build a response store
 // and read any HeaderStore through the base class.
-import 'dart:typed_data';
-
 import 'package:relic_headers/relic_headers.dart';
 
 void main() {
@@ -18,10 +16,6 @@ void main() {
   // class without caring which one.
   describe(response);
   describe(_FixedStore());
-
-  // Known names are found in raw bytes without allocating.
-  final head = Uint8List.fromList('Content-Length: 12'.codeUnits);
-  print(HeaderName.lookupBytes(head, 0, 14)); // content-length
 }
 
 void describe(HeaderStore store) {

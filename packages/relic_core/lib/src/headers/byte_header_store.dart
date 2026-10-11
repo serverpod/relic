@@ -5,43 +5,44 @@ import 'package:relic_headers/relic_headers.dart';
 
 /// A [HeaderStore] over the bytes of a request head.
 ///
-/// The adapter copies the head once and indexes it: four slots per field
-/// give the offset and length of the name and of the value. Nothing is
-/// decoded until asked. A name is interned on first use, a value becomes a
-/// `String` on first read and is then cached per field, and [rawValue] is
-/// a view into the bytes.
+/// The adapter copies the head once and indexes it in [slots]. Nothing is
+/// decoded until asked. A known name is an index into [HeaderName.known],
+/// an unknown name is interned on first use, a value becomes a `String` on
+/// first read and is cached per field, and [rawValue] is a view into the
+/// bytes.
 ///
-/// Values are decoded as Latin-1 (RFC 9110 5.5). A byte at or above 0x80
+/// Values decode as Latin-1 (RFC 9110 5.5). A byte at or above 0x80
 /// becomes the code point of the same value, which is what
-/// `String.fromCharCodes` does for a byte list, and it is a single copy
-/// into a one-byte string.
-final class ByteHeaderStore extends HeaderStore {
+/// `String.fromCharCodes` does for a byte list, in one copy into a one-byte
+/// string.
+final class ByteHeaderStore extends HeaderStore implements ByteHeaderSource {
   /// The head. Dart-owned, so views into it outlive the exchange.
   final Uint8List bytes;
 
-  /// Four entries per field: name offset, name length, value offset, value
-  /// length, all into [bytes].
+  /// Four entries per field: name offset, name id or -1, value offset,
+  /// value length. Offsets are into [bytes], and the name of a field with
+  /// id -1 runs from its offset to the colon.
   final Int32List slots;
 
-  final List<HeaderName?> _fieldNames;
+  List<HeaderName?>? _fieldNames;
   List<String?>? _fieldValues;
   List<Uint8List?>? _fieldRaw;
   List<HeaderName>? _names;
   Map<HeaderName, List<String>>? _values;
 
   ByteHeaderStore(this.bytes, this.slots)
-    : _fieldNames = List.filled(slots.length ~/ 4, null) {
-    assert(slots.length % 4 == 0, 'four slots per field');
-  }
+    : assert(slots.length % 4 == 0, 'four slots per field');
 
   /// Encodes [fields] as Latin-1 head bytes and indexes them, the way an
-  /// adapter would. For tests and for stores built in Dart.
+  /// adapter would.
+  ///
+  /// For tests and for stores built in Dart.
   factory ByteHeaderStore.encode(final Iterable<(String, String)> fields) {
     final buffer = BytesBuilder(copy: false);
     final slots = <int>[];
     for (final (name, value) in fields) {
       slots.add(buffer.length);
-      slots.add(name.length);
+      slots.add(_idOf(name));
       buffer.add(latin1.encode(name));
       buffer.add(const [0x3a, 0x20]); // ': '
       slots.add(buffer.length);
@@ -52,8 +53,20 @@ final class ByteHeaderStore extends HeaderStore {
     return ByteHeaderStore(buffer.toBytes(), Int32List.fromList(slots));
   }
 
+  /// The id of [name], or -1 for an unknown name.
+  ///
+  /// A name that is not a token also gets -1, and [_nameAt] rejects it on
+  /// first read.
+  static int _idOf(final String name) {
+    try {
+      return HeaderName.lookup(name).id;
+    } on FormatException {
+      return -1;
+    }
+  }
+
   @override
-  int get fieldCount => _fieldNames.length;
+  int get fieldCount => slots.length ~/ 4;
 
   @override
   Iterable<HeaderName> get names {
@@ -69,7 +82,7 @@ final class ByteHeaderStore extends HeaderStore {
   @override
   String? value(final HeaderName name) {
     for (var i = 0; i < fieldCount; i++) {
-      if (_nameAt(i) == name) return _valueAt(i);
+      if (_matches(i, name)) return _valueAt(i);
     }
     return null;
   }
@@ -81,7 +94,7 @@ final class ByteHeaderStore extends HeaderStore {
     if (cached != null) return cached;
     final found = <String>[
       for (var i = 0; i < fieldCount; i++)
-        if (_nameAt(i) == name) _valueAt(i),
+        if (_matches(i, name)) _valueAt(i),
     ];
     if (found.isEmpty) return const [];
     return cache[name] = List.unmodifiable(found);
@@ -90,18 +103,15 @@ final class ByteHeaderStore extends HeaderStore {
   @override
   bool contains(final HeaderName name) {
     for (var i = 0; i < fieldCount; i++) {
-      if (_nameAt(i) == name) return true;
+      if (_matches(i, name)) return true;
     }
     return false;
   }
 
-  /// The wire bytes of the first value for [name], or null when [name] is
-  /// absent, so a typed header can parse without a `String` in between.
-  /// The same view comes back for the same field, so a caller may cache by
-  /// identity.
+  @override
   Uint8List? rawValue(final HeaderName name) {
     for (var i = 0; i < fieldCount; i++) {
-      if (_nameAt(i) == name) {
+      if (_matches(i, name)) {
         final raws = _fieldRaw ??= List.filled(fieldCount, null);
         if (raws[i] case final raw?) return raw;
         final offset = slots[i * 4 + 2];
@@ -115,14 +125,33 @@ final class ByteHeaderStore extends HeaderStore {
     return null;
   }
 
+  /// Whether field [i] is named [name].
+  ///
+  /// Two known names compare by id alone, so the walk to a known name reads
+  /// nothing but the slot table. A custom name may spell a known one, so it
+  /// compares by text.
+  bool _matches(final int i, final HeaderName name) {
+    final id = slots[i * 4 + 1];
+    if (id >= 0 && name.id >= 0) return id == name.id;
+    return _nameAt(i) == name;
+  }
+
   HeaderName _nameAt(final int i) {
-    if (_fieldNames[i] case final name?) return name;
+    final id = slots[i * 4 + 1];
+    if (id >= 0) return HeaderName.known[id];
+    final names = _fieldNames ??= List.filled(fieldCount, null);
+    if (names[i] case final name?) return name;
     final offset = slots[i * 4];
-    final end = offset + slots[i * 4 + 1];
-    final name =
-        HeaderName.lookupBytes(bytes, offset, end) ??
-        HeaderName.lookup(String.fromCharCodes(bytes, offset, end));
-    return _fieldNames[i] = name;
+    var end = offset;
+    while (end < bytes.length && bytes[end] != 0x3a) {
+      end++;
+    }
+    final name = HeaderName.lookup(String.fromCharCodes(bytes, offset, end));
+    assert(
+      name.id < 0,
+      'The slot of ${name.lower} came without the id of a known name',
+    );
+    return names[i] = name;
   }
 
   String _valueAt(final int i) {

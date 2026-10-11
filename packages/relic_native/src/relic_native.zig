@@ -16,7 +16,8 @@
 //!                    writes the response. relic_respond_inline() leaves
 //!                    the encoded head and body in the connection's write
 //!                    buffer when they fit. relic_respond() hands them
-//!                    back otherwise (malloc'd, ownership transferred)
+//!                    back otherwise, malloc'd, with ownership
+//!                    transferred
 //!   task:            writes, frees what relic_respond() handed back,
 //!                    loops for keep-alive.
 //! Sockets are only ever touched by tasks. Dart only touches Exchanges, and
@@ -41,12 +42,13 @@ const std = @import("std");
 const builtin = @import("builtin");
 const zio = @import("zio");
 const dart = @import("dart_dl");
+const header_names = @import("header_names.zig");
 
 const max_head = 16 * 1024;
 const max_headers = 128;
 /// How long an accept waits before the loop looks at the stop flag again.
-/// A stop pokes the acceptor awake (see pokeAcceptor), so this only bounds
-/// the wait when the poke's SYN was dropped.
+/// A stop pokes the acceptor awake (pokeAcceptor), so this only matters
+/// when the poke's SYN was dropped.
 const accept_timeout_ms = 1000;
 /// How long the acceptor waits after an accept failed for want of a
 /// descriptor or a buffer, before it tries again. nginx waits 500 ms.
@@ -58,10 +60,10 @@ var accept_shortages = std.atomic.Value(u32).init(0);
 const in_chunk_size = 64 * 1024;
 /// Chunks the task reads ahead of Dart on a streamed request body.
 const in_credit = 4;
-/// A body the handler answered without reading is drained up to this
-/// many bytes so the connection can be reused, or closed beyond it.
+/// The task drains an unread body up to this many bytes to keep the
+/// connection, and closes it beyond that.
 const max_discard = 4 << 20;
-/// The payload a WebSocket control frame may carry (RFC 6455 5.5).
+/// The largest payload of a WebSocket control frame (RFC 6455 5.5).
 const ws_control_max = 125;
 /// How long a close frame this side sent waits for the peer's answer
 /// before the connection ends anyway.
@@ -106,7 +108,9 @@ pub const Options = extern struct {
 
 pub const HeaderSlot = extern struct {
     name_off: u32,
-    name_len: u32,
+    /// The id of the name in header_names.zig, or -1 for a name outside
+    /// the table. The name runs from `name_off` to the colon.
+    name_id: i32,
     value_off: u32,
     value_len: u32,
 };
@@ -130,9 +134,8 @@ pub const ExchangeView = extern struct {
     /// Inline body length, or the declared length of a streamed body, or
     /// 0 for a chunked one.
     body_len: u64,
-    // What the task reports while the exchange is in flight.
-    /// Set when the connection reached EOF or a body read failed while
-    /// the exchange was parked, by the peer watcher or pumpRequestBody.
+    /// The peer watcher or pumpRequestBody sets this when the connection
+    /// reached EOF or a body read failed while the exchange was parked.
     /// Dart completes `cancelled` on it.
     peer_gone: u8 = 0,
     /// The body was not read inline. Dart pulls it with relic_read_chunk.
@@ -141,9 +144,9 @@ pub const ExchangeView = extern struct {
     write_failed: u8 = 0,
     /// Outbound chunks written so far, for Dart's flow control.
     chunks_written: u32 = 0,
-    /// The connection's write buffer, empty, for a response that fits:
-    /// Dart encodes the head and the body straight into it and answers
-    /// with relic_respond_inline. Null when the buffer holds bytes.
+    /// The connection's write buffer while it is empty. Dart encodes a
+    /// response that fits straight into it and answers with
+    /// relic_respond_inline. Null when the buffer holds bytes.
     scratch: ?[*]u8 = null,
     scratch_cap: u32 = 0,
     /// Pong frames received, for Dart's ping timer.
@@ -164,13 +167,12 @@ pub const Stats = extern struct {
 /// Returned in `Stats.first_attached` when no reactor is attached.
 pub const no_slot: u32 = std.math.maxInt(u32);
 
-// Intrusive MPSC queue (Vyukov), for what crosses from the acceptor
-// thread to a reactor. Producers on any thread, one consumer.
-
 const Node = struct {
     next: std.atomic.Value(?*Node) = .init(null),
 };
 
+/// Intrusive MPSC queue (Vyukov), for what crosses from the acceptor
+/// thread to a reactor. Producers on any thread, one consumer.
 const Mpsc = struct {
     head: std.atomic.Value(*Node), // producers swap here
     tail: *Node, // consumer only
@@ -234,8 +236,8 @@ const Fifo = struct {
 };
 
 /// One piece of a streamed body, in either direction. The data buffer is
-/// malloc'd: by Dart for outbound (ownership passes here), by the task
-/// for inbound (ownership passes to Dart, which frees with relic_free).
+/// malloc'd. Dart allocates an outbound one and hands it over. The task
+/// allocates an inbound one, and Dart frees it with relic_free.
 const Chunk = struct {
     node: Node = .{},
     ptr: ?[*]u8,
@@ -260,8 +262,8 @@ const Exchange = struct {
     view: ExchangeView,
     node: Node = .{},
     reactor: *Reactor,
-    // The answer, set by the relic_respond functions, relic_abort,
-    // relic_hijack and relic_ws_upgrade before `done`.
+    // The relic_respond functions, relic_abort, relic_hijack and
+    // relic_ws_upgrade set the answer before `done`.
     /// Status line, headers and CRLF, encoded by Dart. Owned here.
     resp_head: ?[*]u8 = null,
     resp_head_len: u32 = 0,
@@ -288,23 +290,24 @@ const Exchange = struct {
     /// Set by Dart when a handler asks for `cancelled`. The task then
     /// watches the socket for EOF while it waits.
     watch: zio.Event = .init,
-    /// Outbound chunks from Dart. Set after every push.
+    /// Outbound chunks from Dart, which sets `out_ready` after every push.
     out: Fifo = .{},
     out_ready: zio.Event = .init,
-    /// Inbound chunks for Dart. Credit is set by Dart after it consumed.
+    /// Inbound chunks for Dart, which sets `credit` after it takes one.
     in: Fifo = .{},
     in_pending: u32 = 0,
     credit: zio.Event = .init,
-    /// A hijacked connection ends: Dart closed its sink or aborted.
+    /// The hijacked or WebSocket connection is over. Dart closed its sink
+    /// or aborted, or the close handshake finished.
     closed: zio.Event = .init,
     /// Dart closed the sink of a hijacked connection. From then on the
     /// only event Dart gets is the last one, once the connection is gone.
     sink_closed: bool = false,
-    /// The peer has nothing more to say on a WebSocket: its close frame
+    /// The peer has nothing more to say on a WebSocket. Its close frame
     /// arrived, the connection ended, or it broke the protocol.
     peer_close: zio.Event = .init,
-    /// A close frame is queued or written on a WebSocket. No message is
-    /// handed to Dart or echoed after it.
+    /// A close frame is queued or written on a WebSocket. After it the
+    /// task hands Dart no message and answers no ping.
     ws_close_sent: bool = false,
 
     fn init(self: *Exchange, reactor: *Reactor, view: ExchangeView) void {
@@ -325,8 +328,7 @@ fn postLastEvent(ex: *Exchange) void {
     ex.reactor.events.append(ex.reactor.gpa, @intFromPtr(&ex.view) | 1) catch {};
 }
 
-// Reactor: one per isolate, on that isolate's thread.
-
+/// One per isolate, on that isolate's thread.
 pub const Reactor = struct {
     gpa: std.mem.Allocator,
     server: *Server,
@@ -343,8 +345,8 @@ pub const Reactor = struct {
     /// event of a hijacked connection tagged in the low bit.
     events: std.ArrayListUnmanaged(usize) = .empty,
     events_taken: usize = 0,
-    /// Ready tasks were left behind by the last tick, so the next one must
-    /// come without a wait.
+    /// The last tick left ready tasks behind, so the next one must come
+    /// without a wait.
     pending: bool = false,
     waiter: std.Thread = undefined,
     waiter_arm: zio.os.ResetEvent = .init(),
@@ -356,6 +358,9 @@ pub const Reactor = struct {
     waiter_until: std.atomic.Value(i64) = .init(std.math.maxInt(i64)),
     /// Shared with the acceptor thread, which balances on it.
     connections: std.atomic.Value(u32) = .init(0),
+    /// Shared with the acceptor thread, which passes over a reactor that
+    /// stopped.
+    accepting: std.atomic.Value(bool) = .init(true),
     active: std.atomic.Value(u32) = .init(0),
     idle: std.atomic.Value(u32) = .init(0),
     stop: bool = false,
@@ -379,7 +384,7 @@ pub const Reactor = struct {
     }
 
     /// Spawns a connection task for every socket the acceptor handed over.
-    /// Called after a tick, which bound the executor to this thread.
+    /// Assumes a tick has bound the executor to this thread.
     fn drainIncoming(self: *Reactor) void {
         while (self.incoming.pop()) |node| {
             const inc: *Incoming = @fieldParentPtr("node", node);
@@ -395,9 +400,8 @@ pub const Reactor = struct {
     }
 };
 
-/// What ends the waiter's wait before its deadline: to stop it, or to
-/// re-arm it with an earlier deadline than the one it waits with, which
-/// it cannot learn of otherwise. A pipe, polled alongside the loop's
+/// Ends the waiter's wait before its deadline, to stop it or to re-arm
+/// it with an earlier deadline. A pipe, polled alongside the loop's
 /// handle where the loop has one. On Windows the loop has none, so a
 /// futex word stands in and the wait is bounded, which keeps an idle
 /// loop looked at.
@@ -443,7 +447,7 @@ const Poke = if (builtin.os.tag == .windows) struct {
 
     /// Polls the pipe and `host` until one is readable or `timeout_ms`
     /// passes. No handle to wait on means a short wait, so the loop is
-    /// still looked at. A negative fd is ignored by poll.
+    /// still looked at. poll ignores a negative fd.
     fn wait(self: *Poke, host: anytype, timeout_ms: i32) void {
         var fds = [_]std.posix.pollfd{
             .{ .fd = self.pipe[0], .events = std.posix.POLL.IN, .revents = 0 },
@@ -479,9 +483,8 @@ fn waiterThread(r: *Reactor) void {
     }
 }
 
-// Server: the acceptor, one per group, shared by the isolates of the
-// group. The last reactor to detach stops it.
-
+/// The acceptor, one per group, shared by the isolates of the group. The
+/// last reactor to detach stops it.
 pub const Server = struct {
     gpa: std.mem.Allocator,
     reactors: []?*Reactor,
@@ -491,7 +494,7 @@ pub const Server = struct {
     group: ?[]u8,
     thread: std.Thread = undefined,
     stop: std.atomic.Value(bool) = .init(false),
-    /// Signalled once the listener is bound (or binding failed).
+    /// Set once the listener is bound or binding failed.
     bound: zio.os.ResetEvent = .init(),
     bound_port: std.atomic.Value(u16) = .init(0),
     bind_failed: std.atomic.Value(bool) = .init(false),
@@ -525,6 +528,7 @@ pub const Server = struct {
         var best_load: u32 = std.math.maxInt(u32);
         for (0..n) |k| {
             const r = self.reactors[(start + k) % n] orelse continue;
+            if (!r.accepting.load(.acquire)) continue;
             const load = r.connections.load(.monotonic);
             if (best == null or load < best_load) {
                 best = r;
@@ -537,7 +541,7 @@ pub const Server = struct {
         _ = r.connections.fetchAdd(1, .monotonic);
         r.incoming.push(&inc.node);
         // The isolate learns of it through the waiter's pipe, not a wake
-        // of the loop: Loop.wake coalesces on a flag that only a real poll
+        // of the loop. Loop.wake coalesces on a flag that only a real poll
         // clears, and a loop with nothing in flight returns from poll
         // before that, so a wake posted to an idle loop can be the last
         // one that reaches the kernel.
@@ -578,8 +582,8 @@ pub const Server = struct {
             }) catch |err| switch (err) {
                 error.Timeout => continue,
                 error.ProcessFdQuotaExceeded, error.SystemFdQuotaExceeded, error.SystemResources => {
-                    // A connection ending frees what accept needs. The
-                    // listener is fine, so the server stays up. Linux
+                    // A connection ending frees what accept needs, and
+                    // the listener is fine, so the server stays up. Linux
                     // keeps the connection the failed accept was for,
                     // XNU drops it.
                     std.log.warn("relic_native: accept failed with {t}", .{err});
@@ -620,10 +624,10 @@ const Task = @typeInfo(@FieldType(@FieldType(zio.Runtime, "main_executor"), "cur
 ///
 /// The waits on the hot path carry no timeout of their own: the wait for
 /// the next request, the read of its head, and the write of a small
-/// response held in memory. A zio timeout puts a timer and a race group around
-/// every receive and send. One deadline per connection and one sweep per
-/// interval costs a store per phase instead. Body reads, streamed
-/// responses and the lingering close keep their zio timeouts.
+/// response held in memory. A zio timeout puts a timer and a race group
+/// around every receive and send. One deadline per connection and one
+/// sweep per interval costs a store per phase instead. Body reads,
+/// streamed responses and the lingering close keep their zio timeouts.
 const Conn = struct {
     node: std.DoublyLinkedList.Node = .{},
     task: Task,
@@ -632,6 +636,8 @@ const Conn = struct {
     deadline: i64 = 0,
     /// The sweeper found the deadline passed and cancelled the task.
     timed_out: bool = false,
+    /// Waiting for the first byte of a request.
+    idle: bool = false,
 
     /// Starts a phase that must end within `ms`, or without a limit for 0.
     fn arm(self: *Conn, ms: u32) void {
@@ -645,7 +651,7 @@ const Conn = struct {
         self.settle();
     }
 
-    /// Whether the wait that just failed was ended by the sweeper.
+    /// Whether the sweeper ended the wait that just failed.
     fn expired(self: *Conn) bool {
         const was = self.timed_out;
         self.timed_out = false;
@@ -654,7 +660,7 @@ const Conn = struct {
 
     /// Takes back a cancel the sweeper sent for a wait that completed
     /// anyway. zio hands such a cancel to the task's next wait, which
-    /// must not be the park: Dart holds the frame until it answers.
+    /// must not be the park. Dart holds the frame until it answers.
     fn settle(self: *Conn) void {
         if (!self.timed_out) return;
         self.timed_out = false;
@@ -667,14 +673,13 @@ const Conn = struct {
 const body_store_keep = 64 * 1024;
 
 /// The largest response body written under the sweeper's deadline. The
-/// write timeout is an inactivity limit, which one deadline for the
-/// whole response only stands in for while the response is small enough
-/// that a live peer takes it in one go. A larger one keeps the timeout
-/// on each send.
+/// write timeout is an inactivity limit. One deadline for the whole
+/// response stands in for it only while a live peer takes the response
+/// in one go. A larger one keeps the timeout on each send.
 const swept_write_max = 64 * 1024;
 
-/// How often the sweeper looks, in milliseconds: a quarter of the
-/// shortest timeout it enforces, within 10 ms and a second. 0 when it
+/// How often the sweeper looks, in milliseconds. A quarter of the
+/// shortest timeout it enforces, within 10 ms and a second, or 0 when it
 /// enforces none.
 fn sweepInterval(options: Options) u32 {
     var shortest: u32 = std.math.maxInt(u32);
@@ -728,11 +733,11 @@ fn sleepMs(ms: u32) void {
 const lingering_close_ms = 1000;
 
 /// Answers with a status, then closes the way nginx's lingering close
-/// does: the send side first, then the peer's remaining bytes are read
-/// and dropped until it sees the FIN and hangs up, or the deadline
-/// passes. A plain close with unread input resets the connection, and a
-/// peer that was still sending, which is what these statuses answer, can
-/// then lose the status from its receive buffer.
+/// does. The send side goes first. Then it reads and drops the peer's
+/// remaining bytes until the peer sees the FIN and hangs up, or the
+/// deadline passes. A plain close with unread input resets the
+/// connection, and a peer that was still sending, which is what these
+/// statuses answer, can then lose the status from its receive buffer.
 fn writeStatusAndClose(
     stream: zio.net.Stream,
     reader: *zio.net.Stream.Reader,
@@ -786,10 +791,12 @@ fn handleConnInner(r: *Reactor, stream: zio.net.Stream) !void {
         // sweeper holds the connection to both.
         reader.setTimeout(.none);
         conn.arm(options.idle_timeout_ms);
+        conn.idle = true;
         reader.interface.fill(1) catch |err| switch (err) {
             error.EndOfStream => return,
             error.ReadFailed => return reader.err orelse err,
         };
+        conn.idle = false;
         conn.arm(options.header_timeout_ms);
         const head = http.reader.receiveHead() catch |err| switch (err) {
             error.HttpHeadersOversize => return writeStatusAndClose(stream, &reader, w, "431 Request Header Fields Too Large"),
@@ -870,10 +877,10 @@ fn handleConnInner(r: *Reactor, stream: zio.net.Stream) !void {
 
         if (r.stop) return writeStatusAndClose(stream, &reader, w, "503 Service Unavailable");
 
-        // A streamed body is pumped to Dart by a task of its own, so it
-        // keeps flowing while the handler runs and while the response is
-        // written: a handler may pipe the body into its response. The
-        // pump holds this frame, so it is stopped before any return.
+        // A task of its own pumps a streamed body to Dart, so it keeps
+        // flowing while the handler runs and while the response goes out.
+        // A handler may pipe the body into its response. The pump holds
+        // this frame, so it is stopped before any return.
         var pump: ?zio.JoinHandle(bool) = null;
         defer if (pump) |*p| p.cancel();
         if (body_reader) |br| {
@@ -949,7 +956,7 @@ fn handleConnInner(r: *Reactor, stream: zio.net.Stream) !void {
         // A body Dart did not finish reading is still on the wire. A modest
         // one is drained so the connection can carry the next request, and
         // so the client is not reset while still sending. A big one is not
-        // worth the bandwidth: close.
+        // worth the bandwidth, so close.
         if (body_unread) {
             const left = if (content_length) |len| len else max_discard + 1;
             if (left > max_discard) return;
@@ -968,9 +975,8 @@ fn pushInbound(ex: *Exchange, chunk: *Chunk) void {
 
 /// Reads a streamed request body chunk by chunk into Dart's inbound queue,
 /// at most `in_credit` chunks ahead of Dart. Returns true when the body
-/// was read to its end, false when it was stopped first, by a cancel once
-/// the response went out or by an abort, with the rest of the body
-/// unread, or when the read failed.
+/// was read to its end. Returns false when the read failed, or when a
+/// cancel or an abort stopped it with the rest of the body unread.
 ///
 /// It reads the socket while the exchange is parked, so it also reports
 /// a peer that hung up, as the peer watcher does for a request without a
@@ -1063,10 +1069,10 @@ fn pumpResponseBody(ex: *Exchange, w: *std.Io.Writer) bool {
     }
 }
 
-/// A hijacked connection: bytes both ways between the socket and Dart's
-/// chunk queues, with no framing. A reader task and a writer task do
-/// the blocking parts, and this one waits for Dart to close its sink or
-/// abort, then cancels both so a blocked read or write never holds the
+/// A hijacked connection, bytes both ways between the socket and Dart's
+/// chunk queues with no framing. A reader task and a writer task do the
+/// blocking parts. This one waits for Dart to close its sink or abort,
+/// then cancels both so a blocked read or write never holds the
 /// connection. The socket closes when this returns.
 fn pumpRaw(reader: *zio.net.Stream.Reader, w: *std.Io.Writer, ex: *Exchange) void {
     reader.setTimeout(.none);
@@ -1085,7 +1091,7 @@ fn pumpRaw(reader: *zio.net.Stream.Reader, w: *std.Io.Writer, ex: *Exchange) voi
 }
 
 /// Pushes what the socket has, as it comes, at most `in_credit` chunks
-/// ahead of Dart. A last chunk marks EOF (clean) or a read error.
+/// ahead of Dart. A last chunk marks a clean EOF or a read error.
 fn rawReader(reader: *zio.net.Stream.Reader, ex: *Exchange) void {
     const rd = &reader.interface;
     while (true) {
@@ -1143,10 +1149,6 @@ fn rawWriter(w: *std.Io.Writer, ex: *Exchange) void {
     }
 }
 
-// WebSocket (RFC 6455) after relic_ws_upgrade. The connection's task
-// frames, unmasks and checks on this thread, and Dart sends and receives
-// messages through the chunk queues.
-
 const WsOpcode = enum(u4) {
     continuation = 0,
     text = 1,
@@ -1166,11 +1168,11 @@ const WsOpcode = enum(u4) {
 const WsKind = enum(u8) {
     text = 1,
     binary = 2,
-    /// The peer's close frame, echoed already: two bytes of code and the
+    /// The peer's close frame, echoed already. Two bytes of code and the
     /// reason, or nothing when it carried no code.
     close = 3,
-    /// The peer broke the protocol and was sent a close frame: its code
-    /// and reason.
+    /// The peer broke the protocol and got a close frame. Its code and
+    /// reason.
     failed = 4,
     /// The connection ended without a close frame.
     dropped = 5,
@@ -1183,8 +1185,8 @@ const FrameHead = struct {
     mask: [4]u8,
 };
 
-/// A frame the peer should not have sent, and the close code it is
-/// answered with: 1002 for a protocol error, 1009 for one too big.
+/// A frame the peer should not have sent, and the close code that answers
+/// it. 1002 for a protocol error, 1009 for one too big.
 const WsViolation = struct { code: u16, reason: []const u8 };
 
 const FrameHeadResult = union(enum) { head: FrameHead, violation: WsViolation };
@@ -1240,8 +1242,8 @@ fn unmask(data: []u8, mask: [4]u8) void {
     for (data[i..], i..) |*b, k| b.* ^= mask[k & 3];
 }
 
-/// Writes a server frame: never masked (RFC 6455 5.1), the length in the
-/// fewest bytes that hold it.
+/// Writes a server frame. Never masked (RFC 6455 5.1), with the length in
+/// the fewest bytes that hold it.
 fn writeFrame(w: *std.Io.Writer, opcode: WsOpcode, payload: []const u8) !void {
     var head: [10]u8 = undefined;
     head[0] = 0x80 | @as(u8, @backingInt(opcode));
@@ -1267,8 +1269,8 @@ fn isValidCloseCode(code: u16) bool {
     return (code >= 1000 and code <= 1003) or (code >= 1007 and code <= 1014) or (code >= 3000 and code <= 4999);
 }
 
-/// A WebSocket connection: a reader task and a writer task between the
-/// socket and Dart's chunk queues, until the close handshake is over,
+/// A WebSocket connection. A reader task and a writer task run between
+/// the socket and Dart's chunk queues until the close handshake is over,
 /// the peer is gone, or Dart aborts. The socket closes when this returns.
 fn pumpWebSocket(reader: *zio.net.Stream.Reader, w: *std.Io.Writer, ex: *Exchange) void {
     reader.setTimeout(.none);
@@ -1293,7 +1295,7 @@ fn pumpWebSocket(reader: *zio.net.Stream.Reader, w: *std.Io.Writer, ex: *Exchang
     postLastEvent(ex);
 }
 
-/// Reads the peer's frames: answers pings, counts pongs, assembles
+/// Reads the peer's frames. Answers pings, counts pongs, assembles
 /// messages, checks text, and hands each message to Dart. Stops at the
 /// peer's close frame, which it echoes, at the end of the connection, or
 /// at a violation, which it answers with a close frame. The writer learns
@@ -1389,7 +1391,7 @@ fn wsPeerClose(ex: *Exchange, payload: []const u8) void {
 }
 
 /// Answers a violation with a close frame carrying `code`, tells Dart,
-/// and stops reading: the peer's answer is not waited for.
+/// and stops reading. It does not wait for the peer's answer.
 fn wsFail(ex: *Exchange, code: u16, reason: []const u8) void {
     if (ex.ws_close_sent) return;
     ex.ws_close_sent = true;
@@ -1438,8 +1440,8 @@ fn pushWsInboundCopy(ex: *Exchange, kind: WsKind, payload: []const u8) void {
 }
 
 /// Writes what is queued for the peer: Dart's messages and pings, the
-/// pongs, and a close frame, which is the last. After it the peer's own
-/// close frame is waited for, ws_close_wait_ms at most, and the
+/// pongs, and a close frame, which is the last. After it the writer waits
+/// ws_close_wait_ms at most for the peer's own close frame, and the
 /// connection ends.
 fn wsWriter(w: *std.Io.Writer, ex: *Exchange) void {
     while (true) {
@@ -1465,7 +1467,7 @@ fn wsWriter(w: *std.Io.Writer, ex: *Exchange) void {
     }
 }
 
-/// A write failed: the peer stopped reading. The connection ends, and
+/// A write failed, so the peer stopped reading. The connection ends, and
 /// Dart hears 1006 at the last event.
 fn wsWriteFailed(ex: *Exchange) void {
     ex.view.write_failed = 1;
@@ -1565,7 +1567,7 @@ const ParseHeadError = error{ TooManyHeaders, MalformedHead };
 
 const Head = std.http.Server.Request.Head;
 
-/// What the head says: the request line and the fields that frame the
+/// What the head says. The request line, the fields that frame the
 /// message, and where every header field sits.
 const ParsedHead = struct { head: Head, count: u32, host_slot: i32 };
 
@@ -1588,7 +1590,7 @@ const ParsedHead = struct { head: Head, count: u32, host_slot: i32 };
 ///
 /// The request line and the framing fields read as
 /// `std.http.Server.Request.Head.parse` reads them, which a test holds
-/// this to. That parser is not used: it splits the head with a two-byte
+/// this to. That parser is not used. It splits the head with a two-byte
 /// sequence search and compares every field name against six names,
 /// which sampled at four percent of the isolate.
 fn parseHead(bytes: []const u8, head_copy: []u8, slots: []HeaderSlot) ParseHeadError!ParsedHead {
@@ -1596,6 +1598,7 @@ fn parseHead(bytes: []const u8, head_copy: []u8, slots: []HeaderSlot) ParseHeadE
     var head: Head = undefined;
     var n: u32 = 0;
     var host_slot: i32 = -1;
+    var transfer_encoded = false;
     var line_start: usize = 0;
     while (std.mem.findScalarPos(u8, bytes, line_start, '\n')) |lf| : (line_start = lf + 1) {
         if (lf == 0 or bytes[lf - 1] != '\r') return error.MalformedHead;
@@ -1611,41 +1614,38 @@ fn parseHead(bytes: []const u8, head_copy: []u8, slots: []HeaderSlot) ParseHeadE
         if (!isToken(name) or hasControl(line[colon + 1 ..])) return error.MalformedHead;
         if (n == slots.len) return error.TooManyHeaders;
         const value = std.mem.trim(u8, line[colon + 1 ..], " \t");
+        const id = header_names.lookup(name);
         slots[n] = .{
             .name_off = @intCast(line_start),
-            .name_len = @intCast(name.len),
+            .name_id = id,
             .value_off = @intCast(line_start + colon + 1 + (value.ptr - line[colon + 1 ..].ptr)),
             .value_len = @intCast(value.len),
         };
-        // The names that matter here have seven lengths between them, so
-        // most fields are passed over on their length alone.
-        switch (name.len) {
-            4 => if (std.ascii.eqlIgnoreCase(name, "host")) {
-                // A second Host is answered 400 (RFC 9112 3.2): a proxy in
+        switch (id) {
+            header_names.host => {
+                // A second Host gets a 400 (RFC 9112 3.2). A proxy in
                 // front and this server could otherwise route on
                 // different ones.
                 if (host_slot >= 0) return error.MalformedHead;
                 host_slot = @intCast(n);
             },
-            6 => if (std.ascii.eqlIgnoreCase(name, "expect")) {
-                head.expect = value;
+            header_names.expect => head.expect = value,
+            header_names.connection => head.keep_alive = switch (head.version) {
+                .@"HTTP/1.1" => !connectionHas(value, "close"),
+                .@"HTTP/1.0" => connectionHas(value, "keep-alive"),
             },
-            10 => if (std.ascii.eqlIgnoreCase(name, "connection")) {
-                head.keep_alive = !std.ascii.eqlIgnoreCase(value, "close");
-            },
-            12 => if (std.ascii.eqlIgnoreCase(name, "content-type")) {
-                head.content_type = value;
-            },
-            14 => if (std.ascii.eqlIgnoreCase(name, "content-length")) {
+            header_names.content_type => head.content_type = value,
+            header_names.content_length => {
                 if (head.content_length != null) return error.MalformedHead;
                 head.content_length = parseContentLength(value) orelse return error.MalformedHead;
             },
-            16 => if (std.ascii.eqlIgnoreCase(name, "content-encoding")) {
+            header_names.content_encoding => {
                 if (head.transfer_compression != .identity) return error.MalformedHead;
                 head.transfer_compression = std.http.ContentEncoding.fromString(std.mem.trim(u8, value, " ")) orelse
                     return error.MalformedHead;
             },
-            17 => if (std.ascii.eqlIgnoreCase(name, "transfer-encoding")) {
+            header_names.transfer_encoding => {
+                transfer_encoded = true;
                 try parseTransferEncoding(&head, value);
             },
             else => {},
@@ -1655,6 +1655,10 @@ fn parseHead(bytes: []const u8, head_copy: []u8, slots: []HeaderSlot) ParseHeadE
     // HTTP/1.1 requires Host (RFC 9112 3.2). An HTTP/1.0 request without
     // one resolves to the listener address on the Dart side.
     if (head.version == .@"HTTP/1.1" and host_slot < 0) return error.MalformedHead;
+    // Transfer-Encoding beside Content-Length gets a 400 (RFC 9112 6.3).
+    // A proxy in front and this server could otherwise frame the body
+    // differently, which is request smuggling.
+    if (transfer_encoded and head.content_length != null) return error.MalformedHead;
     @memcpy(head_copy[0..bytes.len], bytes);
     return .{ .head = head, .count = n, .host_slot = host_slot };
 }
@@ -1727,6 +1731,18 @@ fn parseTransferEncoding(head: *Head, value: []const u8) ParseHeadError!void {
     if (codings.next() != null) return error.MalformedHead;
 }
 
+/// Whether `token` is among the comma-separated tokens of a Connection
+/// field (RFC 9110 7.6.1), compared ASCII case-insensitively. std.http
+/// reads the field as one token, so `close, TE` keeps its connection
+/// alive there and not here.
+fn connectionHas(value: []const u8, token: []const u8) bool {
+    var tokens = std.mem.splitScalar(u8, value, ',');
+    while (tokens.next()) |candidate| {
+        if (std.ascii.eqlIgnoreCase(std.mem.trim(u8, candidate, " \t"), token)) return true;
+    }
+    return false;
+}
+
 /// The tchar set of RFC 9110 5.6.2.
 const token_chars = blk: {
     var table: [256]bool = @splat(false);
@@ -1742,9 +1758,7 @@ fn isToken(name: []const u8) bool {
     return true;
 }
 
-/// Whether `bytes` holds a control character other than a tab: anything
-/// below a space, or DEL.
-/// A Content-Length value: 1*DIGIT (RFC 9110 8.6). std.fmt.parseInt
+/// A Content-Length value, 1*DIGIT (RFC 9110 8.6). std.fmt.parseInt
 /// would also take a sign and `_` separators, which a proxy in front
 /// reads as another length or not at all.
 fn parseContentLength(value: []const u8) ?u64 {
@@ -1759,8 +1773,9 @@ fn parseContentLength(value: []const u8) ?u64 {
 }
 
 /// A request target is at least one byte, all of them visible ASCII
-/// (RFC 9112 3 over RFC 3986). The request line is split on its first and
-/// last space, so a space in between would otherwise end up in here.
+/// (RFC 9112 3 over RFC 3986). parseRequestLine splits the line on its
+/// first and last space, so a space in between would otherwise end up in
+/// here.
 fn isTarget(bytes: []const u8) bool {
     if (bytes.len == 0) return false;
     const Bytes16 = @Vector(16, u8);
@@ -1777,6 +1792,8 @@ fn isTarget(bytes: []const u8) bool {
     return true;
 }
 
+/// Whether `bytes` holds a control character other than a tab: anything
+/// below a space, or DEL.
 fn hasControl(bytes: []const u8) bool {
     const Bytes16 = @Vector(16, u8);
     var i: usize = 0;
@@ -1804,12 +1821,11 @@ fn openBody(req: *std.http.Server.Request, buffer: []u8) std.http.Server.Request
     return req.server.reader.bodyReader(buffer, req.head.transfer_encoding, req.head.content_length);
 }
 
-// Registry: one Server per group, shared by the isolates that attach.
-
 var registry_lock: zio.os.Mutex = .{};
+/// One Server per group, shared by the isolates that attach.
 var registry: std.StringHashMapUnmanaged(*Server) = .empty;
 
-/// Every failure is an error, so the errdefers run: they do not on a
+/// Every failure is an error, so the errdefers run. They do not on a
 /// `return null`.
 fn createServer(group: ?[]const u8, ip: []const u8, port: u16, options: Options) !*Server {
     const gpa = std.heap.c_allocator;
@@ -1862,8 +1878,8 @@ fn pokeAcceptor(srv: *Server) void {
     _ = libc.connect(fd, &target.any, len);
 }
 
-/// Stops accepting, joins the thread and frees the server. Every reactor
-/// has detached by now.
+/// Stops accepting, joins the thread and frees the server. Assumes every
+/// reactor has detached.
 fn destroyServer(srv: *Server) void {
     srv.stop.store(true, .release);
     pokeAcceptor(srv);
@@ -1873,8 +1889,6 @@ fn destroyServer(srv: *Server) void {
     gpa.free(srv.reactors);
     gpa.destroy(srv);
 }
-
-// C ABI for Dart
 
 export fn relic_init_dart_api(data: ?*anyopaque) isize {
     // Every isolate that binds calls this. Dart_InitializeApiDL fills the
@@ -1918,7 +1932,7 @@ export fn relic_reactor_create(srv: *Server, port: dart.Dart_Port_DL) ?*Reactor 
     return createReactor(srv, port) catch null;
 }
 
-/// Every failure is an error, so the errdefers run: they do not on a
+/// Every failure is an error, so the errdefers run. They do not on a
 /// `return null`.
 fn createReactor(srv: *Server, port: dart.Dart_Port_DL) !*Reactor {
     const gpa = std.heap.c_allocator;
@@ -1949,10 +1963,33 @@ fn createReactor(srv: *Server, port: dart.Dart_Port_DL) !*Reactor {
     return error.ServerFull;
 }
 
-/// Detaches the reactor, cancels its connections and frees it. Dart has
-/// aborted every exchange it still held. The last detach stops the
-/// server, which blocks until its thread has joined, and frees it. Both
-/// pointers are dead afterwards.
+/// Takes the reactor out of service ahead of destroy. The acceptor passes
+/// it over, its idle connections close, and its other connections close
+/// after their current response, with a 503 for a request that arrives
+/// after this. The listener closes with the last accepting reactor.
+export fn relic_reactor_stop(r: *Reactor) void {
+    r.stop = true;
+    r.accepting.store(false, .release);
+    var next = r.conns.first;
+    while (next) |node| : (next = node.next) {
+        const conn: *Conn = @fieldParentPtr("node", node);
+        if (conn.idle) conn.task.cancel();
+    }
+    const srv = r.server;
+    srv.attach_lock.lock();
+    defer srv.attach_lock.unlock();
+    for (srv.reactors) |maybe| {
+        const other = maybe orelse continue;
+        if (other.accepting.load(.acquire)) return;
+    }
+    srv.stop.store(true, .release);
+    pokeAcceptor(srv);
+}
+
+/// Detaches the reactor, cancels its connections and frees it. Assumes
+/// Dart has aborted every exchange it still held. The last detach stops
+/// the server, which blocks until its thread has joined, and frees it.
+/// Both pointers are dead afterwards.
 export fn relic_reactor_destroy(r: *Reactor) void {
     const srv = r.server;
     var last = false;
@@ -2033,9 +2070,9 @@ export fn relic_reactor_events(r: *Reactor, out: [*]usize, max: u32) u32 {
     return n;
 }
 
-/// Arms the waiter: one message to the isolate's port once the loop has
-/// events or its next timer is due. Called when a tick left nothing to
-/// do.
+/// Arms the waiter, which posts one message to the isolate's port once
+/// the loop has events or its next timer is due. Called when a tick left
+/// nothing to do.
 export fn relic_reactor_wait(r: *Reactor) void {
     const loop = &r.rt.main_executor.loop;
     var until: i64 = std.math.maxInt(i64);
@@ -2064,7 +2101,7 @@ export fn relic_reactor_slot(r: *Reactor) u32 {
     return r.slot;
 }
 
-/// Ownership of `head`/`body` (malloc'd by Dart) passes to native.
+/// Ownership of `head` and `body`, malloc'd by Dart, passes to native.
 export fn relic_respond(
     v: *ExchangeView,
     head: [*]u8,
@@ -2110,8 +2147,8 @@ export fn relic_respond_stream(
     ex.done.set();
 }
 
-/// Hands over one chunk of a streamed response. Ownership of `data`
-/// (malloc'd by Dart) passes to native. Returns false when the node could
+/// Hands over one chunk of a streamed response. Ownership of `data`,
+/// malloc'd by Dart, passes to native. Returns false when the node could
 /// not be allocated, in which case `data` still belongs to Dart.
 export fn relic_write_chunk(v: *ExchangeView, data: [*]u8, len: usize) bool {
     const ex: *Exchange = @fieldParentPtr("view", v);
@@ -2181,7 +2218,7 @@ export fn relic_hijack(v: *ExchangeView) void {
 }
 
 /// Answers with the 101 head Dart encoded, ownership of which passes to
-/// native, and makes the connection a WebSocket: the peer's messages come
+/// native, and makes the connection a WebSocket. The peer's messages come
 /// through relic_ws_read and frames go out through relic_ws_send. A
 /// message over `max_message` bytes closes the connection with 1009.
 export fn relic_ws_upgrade(v: *ExchangeView, head: [*]u8, head_len: u32, max_message: u32) void {
@@ -2195,7 +2232,7 @@ export fn relic_ws_upgrade(v: *ExchangeView, head: [*]u8, head_len: u32, max_mes
 
 /// Queues a frame for the peer: `opcode` 1 for text, 2 for binary, 9 for
 /// a ping, 8 for a close with the code and reason as its payload, after
-/// which nothing else goes out. Ownership of `data` (malloc'd by Dart)
+/// which nothing else goes out. Ownership of `data`, malloc'd by Dart,
 /// passes to native. Returns false when the node could not be allocated,
 /// in which case `data` still belongs to Dart.
 export fn relic_ws_send(v: *ExchangeView, data: ?[*]u8, len: usize, opcode: u8) bool {
@@ -2251,8 +2288,6 @@ export fn relic_server_stats(srv: *Server, out: *Stats) void {
         .first_attached = first,
     };
 }
-
-// Tests
 
 test "MPSC queue under contention from several producer threads" {
     var q: Mpsc = undefined;
@@ -2316,7 +2351,7 @@ test "registry: a group binds once on port 0 and the last detach stops it" {
     // Still registered while one reactor is attached.
     try std.testing.expect(relic_server_bind("test-group", "127.0.0.1", 0, &test_options) == a);
     relic_reactor_destroy(rb);
-    // Gone: a new bind creates a new server.
+    // Gone, so a new bind creates a new server.
     const c = relic_server_bind("test-group", "127.0.0.1", 0, &test_options) orelse return error.BindFailed;
     try std.testing.expect(c != a or relic_server_port(c) != 0);
     const rc = relic_reactor_create(c, 3) orelse return error.AttachFailed;
@@ -2394,7 +2429,7 @@ test "accept: a descriptor shortage stalls the acceptor and does not end it" {
     try std.testing.expectEqual(@as(isize, request.len), libc.write(client, request, request.len));
 
     // The accept fails. How long the shortage lasts is the kernel's
-    // business: io_uring allots a descriptor past the limit on the retry.
+    // business. io_uring allots a descriptor past the limit on the retry.
     var out: [4]*ExchangeView = undefined;
     var rounds: usize = 0;
     while (accept_shortages.load(.monotonic) == shortages_before and rounds < 300) : (rounds += 1) {
@@ -2426,6 +2461,49 @@ test "accept: a descriptor shortage stalls the acceptor and does not end it" {
         sleepMs(10);
     }
     try std.testing.expect(served_second);
+}
+
+test "stop: a stopped reactor sheds its idle connections and the last one closes the listener" {
+    if (builtin.os.tag == .windows) return error.SkipZigTest;
+    const srv = relic_server_bind(null, "127.0.0.1", 0, &test_options) orelse return error.BindFailed;
+    const r = relic_reactor_create(srv, 1) orelse return error.AttachFailed;
+    defer relic_reactor_destroy(r);
+    const address: std.c.sockaddr.in = .{
+        .port = std.mem.nativeToBig(u16, relic_server_port(srv)),
+        .addr = std.mem.nativeToBig(u32, 0x7f000001),
+    };
+
+    const idle = libc.socket(std.c.AF.INET, std.c.SOCK.STREAM, 0);
+    try std.testing.expect(idle >= 0);
+    defer _ = libc.close(idle);
+    try std.testing.expectEqual(0, libc.connect(idle, @ptrCast(&address), @sizeOf(std.c.sockaddr.in)));
+    var out: [4]*ExchangeView = undefined;
+    var rounds: usize = 0;
+    while (r.idle.load(.monotonic) == 0 and rounds < 200) : (rounds += 1) {
+        _ = relic_reactor_tick(r, 0, &out, out.len);
+        sleepMs(5);
+    }
+    try std.testing.expectEqual(1, r.connections.load(.monotonic));
+
+    relic_reactor_stop(r);
+
+    rounds = 0;
+    while (r.connections.load(.monotonic) != 0 and rounds < 200) : (rounds += 1) {
+        _ = relic_reactor_tick(r, 0, &out, out.len);
+        sleepMs(5);
+    }
+    try std.testing.expectEqual(0, r.connections.load(.monotonic));
+    // The acceptor closes the listener on its way out, a moment after the stop.
+    var refused = false;
+    rounds = 0;
+    while (!refused and rounds < 200) : (rounds += 1) {
+        const probe = libc.socket(std.c.AF.INET, std.c.SOCK.STREAM, 0);
+        try std.testing.expect(probe >= 0);
+        defer _ = libc.close(probe);
+        refused = libc.connect(probe, @ptrCast(&address), @sizeOf(std.c.sockaddr.in)) != 0;
+        if (!refused) sleepMs(5);
+    }
+    try std.testing.expect(refused);
 }
 
 test "attach: a refused attach leaks no file descriptors" {
@@ -2509,15 +2587,15 @@ test "tick: a request reaches the ready list on the caller's thread and the resp
     try std.testing.expectEqual(0, r.connections.load(.monotonic));
 }
 
-/// A corpus entry for std.testing.Smith.slice: a little-endian length
+/// A corpus entry for std.testing.Smith.slice, a little-endian length
 /// then the bytes.
 fn corpus(comptime request: []const u8) []const u8 {
     return std.mem.toBytes(std.mem.nativeToLittle(u32, request.len)) ++ request;
 }
 
 /// One connection's worth of bytes through parseHead, as handleConnInner
-/// runs it, with no socket and no Dart. The claims: no
-/// panic, and every offset handed to Dart stays inside the head copy.
+/// runs it, with no socket and no Dart. It claims no panic, and that
+/// every offset handed to Dart stays inside the head copy.
 fn checkRequestBytes(bytes: []const u8) !void {
     var in: std.Io.Reader = .fixed(bytes);
     var sink: std.Io.Writer.Discarding = .init(&.{});
@@ -2530,14 +2608,25 @@ fn checkRequestBytes(bytes: []const u8) !void {
         const reference = Head.parse(head);
         const index = parseHead(head, &head_copy, &slots) catch return;
         // Stricter than std.http's parser and never looser, and the same
-        // reading of whatever both accept.
-        const expected = try reference;
+        // reading of whatever both accept, except Connection. std reads
+        // the value as one token, and keeps an HTTP/1.0 connection alive
+        // on any token but close.
+        var expected = try reference;
+        for (slots[0..index.count]) |slot| {
+            const colon = std.mem.findScalarPos(u8, head, slot.name_off, ':').?;
+            try std.testing.expect(colon < slot.value_off);
+            try std.testing.expect(slot.value_off + slot.value_len <= head.len);
+            try std.testing.expectEqual(header_names.lookup(head[slot.name_off..colon]), slot.name_id);
+            const value = head[slot.value_off..][0..slot.value_len];
+            if (slot.name_id == header_names.connection) {
+                expected.keep_alive = switch (expected.version) {
+                    .@"HTTP/1.1" => !connectionHas(value, "close"),
+                    .@"HTTP/1.0" => connectionHas(value, "keep-alive"),
+                };
+            }
+        }
         try std.testing.expectEqualDeep(expected, index.head);
         var req: std.http.Server.Request = .{ .server = &http, .head_buffer = head, .head = index.head };
-        for (slots[0..index.count]) |slot| {
-            try std.testing.expect(slot.name_off + slot.name_len <= head.len);
-            try std.testing.expect(slot.value_off + slot.value_len <= head.len);
-        }
         try std.testing.expect(index.host_slot < @as(i32, @intCast(index.count)));
         try std.testing.expect(off(head, req.head.target) + req.head.target.len <= head.len);
         if (req.head.transfer_encoding == .chunked or req.head.content_length != null) {
@@ -2634,6 +2723,35 @@ test "head: HTTP/1.1 needs one Host and HTTP/1.0 may have none" {
     try std.testing.expectError(error.MalformedHead, parseHead("GET / HTTP/1.0\r\nHost: a\r\nhost: a\r\n\r\n", &head_copy, &slots));
 }
 
+test "head: the Connection tokens decide keep-alive by version" {
+    var head_copy: [max_head]u8 = undefined;
+    var slots: [max_headers]HeaderSlot = undefined;
+    const list = try parseHead("GET / HTTP/1.1\r\nHost: x\r\nConnection: TE, close\r\n\r\n", &head_copy, &slots);
+    try std.testing.expect(!list.head.keep_alive);
+    const first = try parseHead("GET / HTTP/1.1\r\nHost: x\r\nConnection: Close ,TE\r\n\r\n", &head_copy, &slots);
+    try std.testing.expect(!first.head.keep_alive);
+    const other = try parseHead("GET / HTTP/1.1\r\nHost: x\r\nConnection: TE, closer\r\n\r\n", &head_copy, &slots);
+    try std.testing.expect(other.head.keep_alive);
+    const alive = try parseHead("GET / HTTP/1.0\r\nConnection: keep-alive\r\n\r\n", &head_copy, &slots);
+    try std.testing.expect(alive.head.keep_alive);
+    const listed = try parseHead("GET / HTTP/1.0\r\nConnection: TE, Keep-Alive\r\n\r\n", &head_copy, &slots);
+    try std.testing.expect(listed.head.keep_alive);
+    const te = try parseHead("GET / HTTP/1.0\r\nConnection: TE\r\n\r\n", &head_copy, &slots);
+    try std.testing.expect(!te.head.keep_alive);
+    const none = try parseHead("GET / HTTP/1.0\r\n\r\n", &head_copy, &slots);
+    try std.testing.expect(!none.head.keep_alive);
+}
+
+test "head: Transfer-Encoding beside Content-Length is refused" {
+    var head_copy: [max_head]u8 = undefined;
+    var slots: [max_headers]HeaderSlot = undefined;
+    const chunked = try parseHead("POST / HTTP/1.1\r\nHost: x\r\nTransfer-Encoding: chunked\r\n\r\n", &head_copy, &slots);
+    try std.testing.expectEqual(.chunked, chunked.head.transfer_encoding);
+    try std.testing.expectError(error.MalformedHead, parseHead("POST / HTTP/1.1\r\nHost: x\r\nTransfer-Encoding: chunked\r\nContent-Length: 5\r\n\r\n", &head_copy, &slots));
+    try std.testing.expectError(error.MalformedHead, parseHead("POST / HTTP/1.1\r\nHost: x\r\nContent-Length: 5\r\nTransfer-Encoding: chunked\r\n\r\n", &head_copy, &slots));
+    try std.testing.expectError(error.MalformedHead, parseHead("POST / HTTP/1.1\r\nHost: x\r\nContent-Length: 5\r\nTransfer-Encoding: gzip\r\n\r\n", &head_copy, &slots));
+}
+
 test "fuzz: the request parse path panics on nothing and indexes within the head" {
     try std.testing.fuzz({}, fuzzRequestPath, .{ .corpus = &request_corpus });
 }
@@ -2648,7 +2766,7 @@ const request_tokens = [_][]const u8{
 };
 
 // Zig 0.17.0 does not link the tests in fuzz mode on macOS, so the suite
-// carries its own sweep: seeded mutations of the corpus, with no coverage
+// carries its own sweep, seeded mutations of the corpus with no coverage
 // guidance. `zig build test --fuzz` takes over once the toolchain builds.
 test "fuzz: a seeded mutation sweep over the request corpus" {
     var prng = std.Random.DefaultPrng.init(0x7e11c);

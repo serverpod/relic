@@ -1,5 +1,3 @@
-import 'dart:typed_data';
-
 import 'package:relic_headers/relic_headers.dart';
 import 'package:test/test.dart';
 
@@ -19,20 +17,6 @@ void main() {
   });
 
   for (final variant in ['lower', 'UPPER', 'Mixed']) {
-    test('Given every known name spelled $variant, when looked up as bytes, '
-        'then the known name is returned', () {
-      for (final known in HeaderName.known) {
-        final spelled = switch (variant) {
-          'UPPER' => known.lower.toUpperCase(),
-          'Mixed' => _mixedCase(known.lower),
-          _ => known.lower,
-        };
-        final bytes = Uint8List.fromList('xx$spelled: v'.codeUnits);
-        final found = HeaderName.lookupBytes(bytes, 2, 2 + spelled.length);
-        expect(found, same(known), reason: spelled);
-      }
-    });
-
     test('Given every known name spelled $variant, when looked up as text, '
         'then the known name is returned', () {
       for (final known in HeaderName.known) {
@@ -46,25 +30,16 @@ void main() {
     });
   }
 
-  test(
-    'Given bytes of an unknown name, when looked up, then null is returned',
-    () {
-      final bytes = Uint8List.fromList('x-custom-header'.codeUnits);
-      expect(HeaderName.lookupBytes(bytes, 0, bytes.length), isNull);
-    },
-  );
-
-  test('Given bytes that differ from a known name by one byte, '
-      'when looked up, then null is returned', () {
-    final bytes = Uint8List.fromList('content-typo'.codeUnits);
-    expect(HeaderName.lookupBytes(bytes, 0, bytes.length), isNull);
+  test('Given a name that differs from a known one by one character, '
+      'when looked up, then it is unknown', () {
+    expect(HeaderName.lookup('content-typo').id, -1);
   });
 
-  test('Given a byte that only folds to a known letter, when looked up, '
+  test('Given a character that only folds to a known letter, when looked up, '
       'then it does not match', () {
-    // 0x03 | 0x20 is 0x23, not a letter. Control bytes must not match.
-    final bytes = Uint8List.fromList([0x03, ...'ost'.codeUnits]);
-    expect(HeaderName.lookupBytes(bytes, 0, 4), isNull);
+    // 0x03 | 0x20 is 0x23, not a letter. A control character is not a
+    // token character either, so the lookup throws instead of matching.
+    expect(() => HeaderName.lookup('\x03ost'), throwsFormatException);
   });
 
   test(
@@ -72,8 +47,6 @@ void main() {
     'when looked up, '
     'then it does not match',
     () {
-      final hyphen = Uint8List.fromList('content\rtype'.codeUnits);
-      expect(HeaderName.lookupBytes(hyphen, 0, hyphen.length), isNull);
       expect(() => HeaderName.lookup('content\rtype'), throwsFormatException);
       expect(() => HeaderName.lookup('content-md\x15'), throwsFormatException);
     },
@@ -97,9 +70,26 @@ void main() {
     expect(() => HeaderName.lookup('bad\r\nname'), throwsFormatException);
   });
 
-  test('Given a known name and an unknown name with the same text, '
-      'when compared, then they are not equal', () {
-    expect(const HeaderName.custom('host'), isNot(HeaderName.host));
+  test(
+    'Given a custom name that spells a known name, '
+    'when compared with the known name, then they are equal and hash alike',
+    () {
+      const custom = HeaderName.custom('host');
+
+      expect(custom, HeaderName.host);
+      expect(HeaderName.host, custom);
+      expect(custom.hashCode, HeaderName.host.hashCode);
+    },
+  );
+
+  test('Given two custom names, when compared, '
+      'then they are equal only with the same text', () {
+    expect(const HeaderName.custom('x-a'), const HeaderName.custom('x-a'));
+    expect(
+      const HeaderName.custom('x-a'),
+      isNot(const HeaderName.custom('x-b')),
+    );
+    expect(const HeaderName.custom('x-a'), isNot(HeaderName.host));
   });
 
   test('Given a known name, when converted to a string, '

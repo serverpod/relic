@@ -97,6 +97,16 @@ void main() {
     expect(reply, startsWith('HTTP/1.1 400'));
   });
 
+  test('Given a Content-Length beside a Transfer-Encoding, when it is sent, '
+      'then the server answers 400 and closes', () async {
+    final reply = await send(
+      'POST / HTTP/1.1\r\nHost: x\r\nTransfer-Encoding: chunked\r\n'
+      'Content-Length: 5\r\n\r\n5\r\nhello\r\n0\r\n\r\n',
+    );
+
+    expect(reply, startsWith('HTTP/1.1 400'));
+  });
+
   test('Given a Content-Length of digits, when it is sent, '
       'then the request is served', () async {
     final reply = await send(
@@ -105,6 +115,26 @@ void main() {
     );
 
     expect(reply, startsWith('HTTP/1.1 200'));
+  });
+
+  test('Given close among the Connection tokens, when it is sent, '
+      'then the server answers and closes', () async {
+    final reply = await send(
+      'GET / HTTP/1.1\r\nHost: x\r\nConnection: TE, close\r\n\r\n',
+    );
+
+    expect(reply, startsWith('HTTP/1.1 200'));
+    expect(reply, contains('\r\nconnection: close\r\n'));
+  });
+
+  test('Given an HTTP/1.0 request whose Connection names another token, '
+      'when it is sent, then the server answers and closes', () async {
+    final reply = await send(
+      'GET / HTTP/1.0\r\nHost: x\r\nConnection: TE\r\n\r\n',
+    );
+
+    expect(reply, startsWith('HTTP/1.'));
+    expect(reply, contains('\r\nconnection: close\r\n'));
   });
 
   test('Given a CRLF framed head, when it is sent, '

@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'dart:typed_data';
 
 import 'package:relic_core/relic_core.dart';
 import 'package:test/test.dart';
@@ -118,11 +119,43 @@ void main() {
     expect(store.value(HeaderName.lookup('x-name')), 'café ÿ');
   });
 
+  test('Given encoded fields, when the slots are read, '
+      'then a known name carries its id and an unknown one -1', () {
+    final store = ByteHeaderStore.encode(const [
+      ('Content-Type', 'text/plain'),
+      ('X-Custom', 'one'),
+    ]);
+    expect(store.slots[1], HeaderName.contentType.id);
+    expect(store.slots[5], -1);
+  });
+
+  test('Given a slot table from an adapter, when a known name is read, '
+      'then the name comes from the id and not from the bytes', () {
+    // The bytes spell x-custom where the slot says content-type, as a
+    // parser that has already matched the name would leave them.
+    final encoded = ByteHeaderStore.encode(const [('x-custom', 'one')]);
+    final slots = Int32List.fromList(encoded.slots)
+      ..[1] = HeaderName.contentType.id;
+    final store = ByteHeaderStore(encoded.bytes, slots);
+    expect(store.names, [HeaderName.contentType]);
+    expect(store.value(HeaderName.contentType), 'one');
+    expect(store.value(HeaderName.lookup('x-custom')), isNull);
+  });
+
   test('Given an empty head, when read, then there is nothing', () {
     final store = ByteHeaderStore.encode(const []);
     expect(store.fieldCount, 0);
     expect(store.names, isEmpty);
     expect(store.value(HeaderName.host), isNull);
     expect(store.values(HeaderName.host), isEmpty);
+  });
+
+  test('Given a byte store with a known header, '
+      'when it is read by a custom name that spells it, '
+      'then the value is found', () {
+    final store = ByteHeaderStore.encode([('Host', 'example.com')]);
+
+    expect(store.value(const HeaderName.custom('host')), 'example.com');
+    expect(store.contains(const HeaderName.custom('host')), isTrue);
   });
 }

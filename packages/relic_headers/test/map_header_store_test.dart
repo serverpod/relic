@@ -140,4 +140,13 @@ void main() {
     final store = MapHeaderStore()..set(_custom, ['a\tb é']);
     expect(store.value(_custom), 'a\tb é');
   });
+
+  test('Given a map store with a known header, '
+      'when it is read by a custom name that spells it, '
+      'then the value is found', () {
+    final store = MapHeaderStore()..set(HeaderName.host, ['example.com']);
+
+    expect(store.value(const HeaderName.custom('host')), 'example.com');
+    expect(store.contains(const HeaderName.custom('host')), isTrue);
+  });
 }
