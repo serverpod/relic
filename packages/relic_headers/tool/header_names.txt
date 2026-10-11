@@ -113,3 +113,17 @@ x-real-ip
 x-request-id
 x-requested-with
 x-xss-protection
+sec-fetch-user
+sec-fetch-storage-access
+sec-purpose
+purpose
+sec-ch-ua-arch
+sec-ch-ua-bitness
+sec-ch-ua-full-version
+sec-ch-ua-full-version-list
+sec-ch-ua-model
+sec-ch-ua-platform-version
+sec-ch-ua-wow64
+sec-ch-prefers-color-scheme
+sec-ch-prefers-reduced-motion
+accept-ch

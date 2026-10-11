@@ -79,6 +79,7 @@ final class HeaderName {
         if (_eqBytes(bytes, start, 'alt-svc')) return altSvc;
         if (_eqBytes(bytes, start, 'sec-gpc')) return secGpc;
         if (_eqBytes(bytes, start, 'warning')) return warning;
+        if (_eqBytes(bytes, start, 'purpose')) return purpose;
       case 8:
         if (_eqBytes(bytes, start, 'if-match')) return ifMatch;
         if (_eqBytes(bytes, start, 'if-range')) return ifRange;
@@ -92,6 +93,7 @@ final class HeaderName {
         if (_eqBytes(bytes, start, 'save-data')) return saveData;
         if (_eqBytes(bytes, start, 'sec-ch-ua')) return secChUa;
         if (_eqBytes(bytes, start, 'x-real-ip')) return xRealIp;
+        if (_eqBytes(bytes, start, 'accept-ch')) return acceptCh;
       case 10:
         if (_eqBytes(bytes, start, 'user-agent')) return userAgent;
         if (_eqBytes(bytes, start, 'connection')) return connection;
@@ -102,6 +104,7 @@ final class HeaderName {
         if (_eqBytes(bytes, start, 'retry-after')) return retryAfter;
         if (_eqBytes(bytes, start, 'accept-post')) return acceptPost;
         if (_eqBytes(bytes, start, 'content-md5')) return contentMd5;
+        if (_eqBytes(bytes, start, 'sec-purpose')) return secPurpose;
       case 12:
         if (_eqBytes(bytes, start, 'content-type')) return contentType;
         if (_eqBytes(bytes, start, 'max-forwards')) return maxForwards;
@@ -123,6 +126,8 @@ final class HeaderName {
         if (_eqBytes(bytes, start, 'sec-fetch-mode')) return secFetchMode;
         if (_eqBytes(bytes, start, 'sec-fetch-site')) return secFetchSite;
         if (_eqBytes(bytes, start, 'accept-charset')) return acceptCharset;
+        if (_eqBytes(bytes, start, 'sec-fetch-user')) return secFetchUser;
+        if (_eqBytes(bytes, start, 'sec-ch-ua-arch')) return secChUaArch;
       case 15:
         if (_eqBytes(bytes, start, 'accept-encoding')) return acceptEncoding;
         if (_eqBytes(bytes, start, 'accept-language')) return acceptLanguage;
@@ -130,6 +135,8 @@ final class HeaderName {
         if (_eqBytes(bytes, start, 'referrer-policy')) return referrerPolicy;
         if (_eqBytes(bytes, start, 'clear-site-data')) return clearSiteData;
         if (_eqBytes(bytes, start, 'x-frame-options')) return xFrameOptions;
+        if (_eqBytes(bytes, start, 'sec-ch-ua-model')) return secChUaModel;
+        if (_eqBytes(bytes, start, 'sec-ch-ua-wow64')) return secChUaWow64;
       case 16:
         if (_eqBytes(bytes, start, 'content-encoding')) return contentEncoding;
         if (_eqBytes(bytes, start, 'content-language')) return contentLanguage;
@@ -148,6 +155,7 @@ final class HeaderName {
         }
         if (_eqBytes(bytes, start, 'sec-websocket-key')) return secWebsocketKey;
         if (_eqBytes(bytes, start, 'x-forwarded-proto')) return xForwardedProto;
+        if (_eqBytes(bytes, start, 'sec-ch-ua-bitness')) return secChUaBitness;
       case 18:
         if (_eqBytes(bytes, start, 'proxy-authenticate')) {
           return proxyAuthenticate;
@@ -195,6 +203,9 @@ final class HeaderName {
         if (_eqBytes(bytes, start, 'x-dns-prefetch-control')) {
           return xDnsPrefetchControl;
         }
+        if (_eqBytes(bytes, start, 'sec-ch-ua-full-version')) {
+          return secChUaFullVersion;
+        }
       case 23:
         if (_eqBytes(bytes, start, 'content-security-policy')) {
           return contentSecurityPolicy;
@@ -202,6 +213,9 @@ final class HeaderName {
       case 24:
         if (_eqBytes(bytes, start, 'sec-websocket-extensions')) {
           return secWebsocketExtensions;
+        }
+        if (_eqBytes(bytes, start, 'sec-fetch-storage-access')) {
+          return secFetchStorageAccess;
         }
       case 25:
         if (_eqBytes(bytes, start, 'strict-transport-security')) {
@@ -214,9 +228,18 @@ final class HeaderName {
         if (_eqBytes(bytes, start, 'cross-origin-opener-policy')) {
           return crossOriginOpenerPolicy;
         }
+        if (_eqBytes(bytes, start, 'sec-ch-ua-platform-version')) {
+          return secChUaPlatformVersion;
+        }
       case 27:
         if (_eqBytes(bytes, start, 'access-control-allow-origin')) {
           return accessControlAllowOrigin;
+        }
+        if (_eqBytes(bytes, start, 'sec-ch-ua-full-version-list')) {
+          return secChUaFullVersionList;
+        }
+        if (_eqBytes(bytes, start, 'sec-ch-prefers-color-scheme')) {
+          return secChPrefersColorScheme;
         }
       case 28:
         if (_eqBytes(bytes, start, 'access-control-allow-methods')) {
@@ -237,6 +260,9 @@ final class HeaderName {
         }
         if (_eqBytes(bytes, start, 'access-control-expose-headers')) {
           return accessControlExposeHeaders;
+        }
+        if (_eqBytes(bytes, start, 'sec-ch-prefers-reduced-motion')) {
+          return secChPrefersReducedMotion;
         }
       case 30:
         if (_eqBytes(bytes, start, 'access-control-request-headers')) {
@@ -368,6 +394,20 @@ final class HeaderName {
     xRequestId,
     xRequestedWith,
     xXssProtection,
+    secFetchUser,
+    secFetchStorageAccess,
+    secPurpose,
+    purpose,
+    secChUaArch,
+    secChUaBitness,
+    secChUaFullVersion,
+    secChUaFullVersionList,
+    secChUaModel,
+    secChUaPlatformVersion,
+    secChUaWow64,
+    secChPrefersColorScheme,
+    secChPrefersReducedMotion,
+    acceptCh,
   ];
 
   /// True if [s] is a non-empty HTTP token (RFC 9110 5.6.2).
@@ -783,6 +823,63 @@ final class HeaderName {
   /// `x-xss-protection`
   static const xXssProtection = HeaderName._(111, 'x-xss-protection');
 
+  /// `sec-fetch-user`
+  static const secFetchUser = HeaderName._(112, 'sec-fetch-user');
+
+  /// `sec-fetch-storage-access`
+  static const secFetchStorageAccess = HeaderName._(
+    113,
+    'sec-fetch-storage-access',
+  );
+
+  /// `sec-purpose`
+  static const secPurpose = HeaderName._(114, 'sec-purpose');
+
+  /// `purpose`
+  static const purpose = HeaderName._(115, 'purpose');
+
+  /// `sec-ch-ua-arch`
+  static const secChUaArch = HeaderName._(116, 'sec-ch-ua-arch');
+
+  /// `sec-ch-ua-bitness`
+  static const secChUaBitness = HeaderName._(117, 'sec-ch-ua-bitness');
+
+  /// `sec-ch-ua-full-version`
+  static const secChUaFullVersion = HeaderName._(118, 'sec-ch-ua-full-version');
+
+  /// `sec-ch-ua-full-version-list`
+  static const secChUaFullVersionList = HeaderName._(
+    119,
+    'sec-ch-ua-full-version-list',
+  );
+
+  /// `sec-ch-ua-model`
+  static const secChUaModel = HeaderName._(120, 'sec-ch-ua-model');
+
+  /// `sec-ch-ua-platform-version`
+  static const secChUaPlatformVersion = HeaderName._(
+    121,
+    'sec-ch-ua-platform-version',
+  );
+
+  /// `sec-ch-ua-wow64`
+  static const secChUaWow64 = HeaderName._(122, 'sec-ch-ua-wow64');
+
+  /// `sec-ch-prefers-color-scheme`
+  static const secChPrefersColorScheme = HeaderName._(
+    123,
+    'sec-ch-prefers-color-scheme',
+  );
+
+  /// `sec-ch-prefers-reduced-motion`
+  static const secChPrefersReducedMotion = HeaderName._(
+    124,
+    'sec-ch-prefers-reduced-motion',
+  );
+
+  /// `accept-ch`
+  static const acceptCh = HeaderName._(125, 'accept-ch');
+
   static HeaderName? _lookupUnits(String name) {
     switch (name.length) {
       case 2:
@@ -817,6 +914,7 @@ final class HeaderName {
         if (_eqUnits(name, 'alt-svc')) return altSvc;
         if (_eqUnits(name, 'sec-gpc')) return secGpc;
         if (_eqUnits(name, 'warning')) return warning;
+        if (_eqUnits(name, 'purpose')) return purpose;
       case 8:
         if (_eqUnits(name, 'if-match')) return ifMatch;
         if (_eqUnits(name, 'if-range')) return ifRange;
@@ -830,6 +928,7 @@ final class HeaderName {
         if (_eqUnits(name, 'save-data')) return saveData;
         if (_eqUnits(name, 'sec-ch-ua')) return secChUa;
         if (_eqUnits(name, 'x-real-ip')) return xRealIp;
+        if (_eqUnits(name, 'accept-ch')) return acceptCh;
       case 10:
         if (_eqUnits(name, 'user-agent')) return userAgent;
         if (_eqUnits(name, 'connection')) return connection;
@@ -840,6 +939,7 @@ final class HeaderName {
         if (_eqUnits(name, 'retry-after')) return retryAfter;
         if (_eqUnits(name, 'accept-post')) return acceptPost;
         if (_eqUnits(name, 'content-md5')) return contentMd5;
+        if (_eqUnits(name, 'sec-purpose')) return secPurpose;
       case 12:
         if (_eqUnits(name, 'content-type')) return contentType;
         if (_eqUnits(name, 'max-forwards')) return maxForwards;
@@ -861,6 +961,8 @@ final class HeaderName {
         if (_eqUnits(name, 'sec-fetch-mode')) return secFetchMode;
         if (_eqUnits(name, 'sec-fetch-site')) return secFetchSite;
         if (_eqUnits(name, 'accept-charset')) return acceptCharset;
+        if (_eqUnits(name, 'sec-fetch-user')) return secFetchUser;
+        if (_eqUnits(name, 'sec-ch-ua-arch')) return secChUaArch;
       case 15:
         if (_eqUnits(name, 'accept-encoding')) return acceptEncoding;
         if (_eqUnits(name, 'accept-language')) return acceptLanguage;
@@ -868,6 +970,8 @@ final class HeaderName {
         if (_eqUnits(name, 'referrer-policy')) return referrerPolicy;
         if (_eqUnits(name, 'clear-site-data')) return clearSiteData;
         if (_eqUnits(name, 'x-frame-options')) return xFrameOptions;
+        if (_eqUnits(name, 'sec-ch-ua-model')) return secChUaModel;
+        if (_eqUnits(name, 'sec-ch-ua-wow64')) return secChUaWow64;
       case 16:
         if (_eqUnits(name, 'content-encoding')) return contentEncoding;
         if (_eqUnits(name, 'content-language')) return contentLanguage;
@@ -884,6 +988,7 @@ final class HeaderName {
         if (_eqUnits(name, 'transfer-encoding')) return transferEncoding;
         if (_eqUnits(name, 'sec-websocket-key')) return secWebsocketKey;
         if (_eqUnits(name, 'x-forwarded-proto')) return xForwardedProto;
+        if (_eqUnits(name, 'sec-ch-ua-bitness')) return secChUaBitness;
       case 18:
         if (_eqUnits(name, 'proxy-authenticate')) return proxyAuthenticate;
         if (_eqUnits(name, 'permissions-policy')) return permissionsPolicy;
@@ -911,6 +1016,7 @@ final class HeaderName {
         if (_eqUnits(name, 'x-dns-prefetch-control')) {
           return xDnsPrefetchControl;
         }
+        if (_eqUnits(name, 'sec-ch-ua-full-version')) return secChUaFullVersion;
       case 23:
         if (_eqUnits(name, 'content-security-policy')) {
           return contentSecurityPolicy;
@@ -918,6 +1024,9 @@ final class HeaderName {
       case 24:
         if (_eqUnits(name, 'sec-websocket-extensions')) {
           return secWebsocketExtensions;
+        }
+        if (_eqUnits(name, 'sec-fetch-storage-access')) {
+          return secFetchStorageAccess;
         }
       case 25:
         if (_eqUnits(name, 'strict-transport-security')) {
@@ -930,9 +1039,18 @@ final class HeaderName {
         if (_eqUnits(name, 'cross-origin-opener-policy')) {
           return crossOriginOpenerPolicy;
         }
+        if (_eqUnits(name, 'sec-ch-ua-platform-version')) {
+          return secChUaPlatformVersion;
+        }
       case 27:
         if (_eqUnits(name, 'access-control-allow-origin')) {
           return accessControlAllowOrigin;
+        }
+        if (_eqUnits(name, 'sec-ch-ua-full-version-list')) {
+          return secChUaFullVersionList;
+        }
+        if (_eqUnits(name, 'sec-ch-prefers-color-scheme')) {
+          return secChPrefersColorScheme;
         }
       case 28:
         if (_eqUnits(name, 'access-control-allow-methods')) {
@@ -953,6 +1071,9 @@ final class HeaderName {
         }
         if (_eqUnits(name, 'access-control-expose-headers')) {
           return accessControlExposeHeaders;
+        }
+        if (_eqUnits(name, 'sec-ch-prefers-reduced-motion')) {
+          return secChPrefersReducedMotion;
         }
       case 30:
         if (_eqUnits(name, 'access-control-request-headers')) {
