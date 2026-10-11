@@ -4,21 +4,23 @@
 // latency percentiles. Needs `oha` on the PATH.
 //
 //   dart run bin/http_load.dart --targets=io,native,native4,shelf \
-//       --workloads=plaintext,json,headers,alloc,mixed \
+//       --workloads=plaintext,json,headers,browser,alloc,mixed \
 //       --connections=64 --seconds=5 --loads=0.5,0.75,1.0 --out=load.md
 //
 // A `shelf` target is a shelf server on dart:io with the same routes.
 // A target that is a URL is a server started elsewhere (Bun, for one)
-// that serves the same paths: --targets=io,http://127.0.0.1:3000
+// that serves the same paths, and `name=URL` labels it in the table:
+//   --targets=io,bun=http://127.0.0.1:3000
 
-import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
 import 'package:benchmark/src/load_app.dart';
+import 'package:benchmark/src/oha.dart';
+import 'package:benchmark/src/options.dart';
+import 'package:benchmark/src/serve.dart';
 import 'package:benchmark/src/shelf_server.dart';
-import 'package:relic/relic.dart';
-import 'package:relic_native/relic_native.dart';
+import 'package:config/config.dart';
 
 /// What a browser sends, Cookie included, for the headers workload.
 const _browserHeaders = [
@@ -58,6 +60,10 @@ const _workloads = [
   Workload('plaintext', '/plaintext'),
   Workload('json', '/json'),
   Workload('headers', '/headers', _browserHeaders),
+  Workload('browser', '/browser', [
+    ..._browserHeaders,
+    'If-None-Match: "33a64df551425fcc55e4d42a148795d9f25f89d4"',
+  ]),
   Workload('alloc', '/alloc'),
   Workload('mixed', '/mixed'),
 ];
@@ -101,30 +107,104 @@ final class Measurement {
   };
 }
 
-Future<void> main(List<String> args) async {
-  final targets = _arg(args, 'targets', 'io,native,native4').split(',');
-  final workloadNames = _arg(
+enum LoadOption<V> implements OptionDefinition<V> {
+  targets(
+    MultiStringOption(
+      argName: 'targets',
+      helpText:
+          'io, native or shelf, each with an optional isolate count, or '
+          'name=URL for a server started elsewhere',
+      defaultsTo: ['io', 'native', 'native4'],
+    ),
+  ),
+
+  workloads(
+    MultiStringOption(
+      argName: 'workloads',
+      helpText: 'The workloads to run, in order',
+      defaultsTo: ['plaintext', 'json', 'headers', 'browser', 'alloc', 'mixed'],
+      customValidator: _knownWorkloads,
+    ),
+  ),
+
+  connections(
+    IntOption(
+      argName: 'connections',
+      helpText: 'Connections oha keeps open',
+      defaultsTo: 64,
+      min: 1,
+    ),
+  ),
+
+  seconds(
+    IntOption(
+      argName: 'seconds',
+      helpText: 'Seconds per run',
+      defaultsTo: 5,
+      min: 1,
+    ),
+  ),
+
+  loads(
+    MultiOption<double>(
+      multiParser: MultiParser(_DoubleParser()),
+      argName: 'loads',
+      helpText: 'Fractions of the saturation rate to offer',
+      defaultsTo: [0.5, 0.75, 1.0],
+    ),
+  ),
+
+  out(
+    StringOption(
+      argName: 'out',
+      helpText:
+          'The file to write the table to. The measurements go beside it '
+          'as JSON.',
+    ),
+  );
+
+  const LoadOption(this.option);
+
+  @override
+  final ConfigOptionBase<V> option;
+}
+
+void _knownWorkloads(final List<String> names) {
+  for (final name in names) {
+    if (!_workloads.any((final w) => w.name == name)) {
+      throw FormatException('Unknown workload: $name');
+    }
+  }
+}
+
+final class _DoubleParser extends ValueParser<double> {
+  const _DoubleParser();
+
+  @override
+  double parse(final String value) => double.parse(value);
+}
+
+Future<void> main(final List<String> args) async {
+  final config = resolveOptions(
+    LoadOption.values,
     args,
-    'workloads',
-    'plaintext,json,headers,alloc,mixed',
-  ).split(',');
-  final connections = int.parse(_arg(args, 'connections', '64'));
-  final seconds = int.parse(_arg(args, 'seconds', '5'));
-  final loads = _arg(
-    args,
-    'loads',
-    '0.5,0.75,1.0',
-  ).split(',').map(double.parse);
-  final out = _arg(args, 'out', '');
+    synopsis: 'usage: dart run bin/http_load.dart [options]',
+  );
+  final targets = config.value(LoadOption.targets);
+  final connections = config.value(LoadOption.connections);
+  final seconds = config.value(LoadOption.seconds);
+  final loads = config.value(LoadOption.loads);
+  final out = config.optionalValue(LoadOption.out);
 
   final workloads = [
-    for (final name in workloadNames)
-      _workloads.firstWhere((w) => w.name == name),
+    for (final name in config.value(LoadOption.workloads))
+      _workloads.firstWhere((final w) => w.name == name),
   ];
   final results = <Measurement>[];
-  for (final target in targets) {
-    final server = target.startsWith('http') ? null : await _start(target);
-    final base = server == null ? target : 'http://127.0.0.1:${server.port}';
+  for (final spec in targets) {
+    final (target, url) = _split(spec);
+    final server = url == null ? await _start(target) : null;
+    final base = url ?? 'http://127.0.0.1:${server!.port}';
     stderr.writeln('$target at $base');
     try {
       // One warm-up so JIT and caches are settled before the first number.
@@ -152,7 +232,7 @@ Future<void> main(List<String> args) async {
               p50: run.p50,
               p99: run.p99,
               p999: run.p999,
-              errors: run.errors,
+              errors: run.failed,
               nonOk: run.nonOk,
             ),
           );
@@ -161,7 +241,7 @@ Future<void> main(List<String> args) async {
             '${run.rps.round()} rps, p50 ${run.p50.toStringAsFixed(2)} ms, '
             'p99 ${run.p99.toStringAsFixed(2)} ms, '
             'p99.9 ${run.p999.toStringAsFixed(2)} ms'
-            '${run.errors > 0 ? ', ${run.errors} errors' : ''}',
+            '${run.failed > 0 ? ', ${run.failed} errors' : ''}',
           );
         }
       }
@@ -172,108 +252,66 @@ Future<void> main(List<String> args) async {
 
   final table = _markdown(results, connections, seconds);
   stdout.write(table);
-  if (out.isNotEmpty) {
+  if (out != null) {
     File(out).writeAsStringSync(table);
     File('${out.replaceAll(RegExp(r'\.md$'), '')}.json').writeAsStringSync(
       const JsonEncoder.withIndent(
         '  ',
-      ).convert(results.map((m) => m.toJson()).toList()),
+      ).convert(results.map((final m) => m.toJson()).toList()),
     );
   }
 }
 
-/// A started server: where it listens and how to stop it.
-typedef _Server = ({int port, Future<void> Function() close});
+/// `io`, `native4` or `shelf` starts a server here. `http://host:port` is
+/// a server started elsewhere, and `name=http://host:port` labels it.
+(String, String?) _split(final String spec) {
+  final at = spec.indexOf('=');
+  if (at > 0) return (spec.substring(0, at), spec.substring(at + 1));
+  if (spec.startsWith('http')) return (spec, spec);
+  return (spec, null);
+}
 
 /// A server for [target]: `io`, `native` or `shelf`, or one of them
 /// followed by an isolate count.
-Future<_Server> _start(String target) async {
+Future<Server> _start(final String target) {
   final match = RegExp(r'^(io|native|shelf)(\d*)$').firstMatch(target);
   if (match == null) throw ArgumentError.value(target, 'target');
+  final kind = match.group(1)!;
   final isolates = int.tryParse(match.group(2)!) ?? 1;
   // Port 0 with several dart:io isolates gives each its own port and
   // the server reports the first one, so the dart:io targets take a fixed
   // port.
-  if (match.group(1) == 'shelf') {
-    final server = await ShelfServer.start(
-      shelfLoad,
-      port: 18080,
-      isolates: isolates,
-    );
-    return (port: server.port, close: () => server.close(force: true));
-  }
-  final app = loadApp();
-  final server = match.group(1) == 'io'
-      ? await app.serve(port: 18080, noOfIsolates: isolates)
-      : await app.serveNative(port: 0, noOfIsolates: isolates);
-  return (port: server.port, close: () => server.close(force: true));
-}
-
-final class _OhaResult {
-  final double rps;
-  final double p50;
-  final double p99;
-  final double p999;
-  final int errors;
-  final int nonOk;
-  _OhaResult(this.rps, this.p50, this.p99, this.p999, this.errors, this.nonOk);
-}
-
-/// One oha run. [rate] null is closed loop at [connections] in flight,
-/// otherwise open loop at that many requests per second.
-///
-/// No `--latency-correction`. oha 1.16.0 charges pauses of about 300 ms in
-/// its own scheduler to every request due during them, on any server and
-/// at any rate, and a probe client beside it sees none of it. A server
-/// that falls behind the offered rate shows in `rps` against `offeredRps`.
-Future<_OhaResult> _oha(
-  String base,
-  Workload workload,
-  int connections,
-  int seconds,
-  int? rate,
-) async {
-  final result = await Process.run('oha', [
-    '--no-tui',
-    '--output-format',
-    'json',
-    '-c',
-    '$connections',
-    '-z',
-    '${seconds}s',
-    if (rate != null) ...['-q', '$rate'],
-    for (final header in workload.headers) ...['-H', header],
-    '$base${workload.path}',
-  ]);
-  if (result.exitCode != 0) {
-    throw ProcessException('oha', const [], result.stderr as String);
-  }
-  final json = jsonDecode(result.stdout as String) as Map<String, dynamic>;
-  final summary = json['summary'] as Map<String, dynamic>;
-  final percentiles = json['latencyPercentiles'] as Map<String, dynamic>;
-  final statuses = json['statusCodeDistribution'] as Map<String, dynamic>;
-  final errors = json['errorDistribution'] as Map<String, dynamic>;
-  double ms(String key) => (percentiles[key] as num) * 1000;
-  var nonOk = 0;
-  for (final MapEntry(:key, :value) in statuses.entries) {
-    if (key != '200') nonOk += value as int;
-  }
-  var failed = 0;
-  for (final MapEntry(:key, :value) in errors.entries) {
-    // The deadline cuts off whatever is in flight. That is not a failure.
-    if (!key.contains('deadline')) failed += value as int;
-  }
-  return _OhaResult(
-    (summary['requestsPerSec'] as num).toDouble(),
-    ms('p50'),
-    ms('p99'),
-    ms('p99.9'),
-    failed,
-    nonOk,
+  return startServer(
+    kind,
+    Served.app(loadApp(), shelfLoad),
+    port: kind == 'native' ? 0 : 18080,
+    isolates: isolates,
   );
 }
 
-String _markdown(List<Measurement> results, int connections, int seconds) {
+/// One oha run of [workload] against [base].
+///
+/// A null [rate] is a closed loop at [connections] in flight, otherwise an
+/// open loop at that many requests per second.
+Future<OhaResult> _oha(
+  final String base,
+  final Workload workload,
+  final int connections,
+  final int seconds,
+  final int? rate,
+) => runOha(
+  '$base${workload.path}',
+  connections: connections,
+  seconds: seconds,
+  rate: rate,
+  headers: workload.headers,
+);
+
+String _markdown(
+  final List<Measurement> results,
+  final int connections,
+  final int seconds,
+) {
   final buffer = StringBuffer()
     ..writeln('$connections connections, ${seconds}s per run, latency in ms.')
     ..writeln()
@@ -294,11 +332,4 @@ String _markdown(List<Measurement> results, int connections, int seconds) {
     );
   }
   return buffer.toString();
-}
-
-String _arg(List<String> args, String name, String fallback) {
-  for (final arg in args) {
-    if (arg.startsWith('--$name=')) return arg.substring(name.length + 3);
-  }
-  return fallback;
 }
