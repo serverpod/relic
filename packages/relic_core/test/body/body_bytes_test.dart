@@ -15,6 +15,69 @@ void main() {
     expect(body.read, returnsNormally);
   });
 
+  test('Given an ASCII string, when a body is made from it, '
+      'then its bytes are the UTF-8 encoding.', () {
+    final text = '{"host":"localhost","items":[1,2,3]}' * 40;
+    final body = Body.fromString(text);
+
+    expect(body.bytes, utf8.encode(text));
+    expect(body.contentLength, text.length);
+  });
+
+  test(
+    'Given a string that leaves ASCII after a kilobyte, '
+    'when a body is made from it, then its bytes are the UTF-8 encoding.',
+    () {
+      final text = '${'a' * 1024}\u00e6\u{1F600}z';
+      final body = Body.fromString(text);
+
+      expect(body.bytes, utf8.encode(text));
+      expect(body.contentLength, utf8.encode(text).length);
+    },
+  );
+
+  test(
+    'Given a string whose last character is non-ASCII, '
+    'when a body is made from it, then its bytes are the UTF-8 encoding.',
+    () {
+      final text = '${'a' * 1024}\u00e6';
+      final body = Body.fromString(text);
+
+      expect(body.bytes, utf8.encode(text));
+      expect(body.contentLength, 1026);
+    },
+  );
+
+  test(
+    'Given a string whose first character is non-ASCII, '
+    'when a body is made from it, then its bytes are the UTF-8 encoding.',
+    () {
+      final text = '\u{1F600}${'a' * 100}';
+      final body = Body.fromString(text);
+
+      expect(body.bytes, utf8.encode(text));
+      expect(body.contentLength, 104);
+    },
+  );
+
+  test('Given a string with an unpaired surrogate after ASCII, '
+      'when a body is made from it, '
+      'then its bytes match utf8.encode including the replacement.', () {
+    final text = '${'a' * 20}\uD83D';
+    final body = Body.fromString(text);
+
+    expect(body.bytes, utf8.encode(text));
+    expect(body.bytes!.sublist(20), [0xEF, 0xBF, 0xBD]);
+  });
+
+  test('Given a Latin-1 encoding, when a body is made from a string, '
+      'then its bytes are the Latin-1 encoding.', () {
+    final body = Body.fromString('h\u00e9llo', encoding: latin1);
+
+    expect(body.bytes, latin1.encode('h\u00e9llo'));
+    expect(body.contentLength, 5);
+  });
+
   test('Given a body from data, when its bytes are read, '
       'then they are the same object.', () {
     final data = Uint8List.fromList([1, 2, 3]);

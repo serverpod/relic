@@ -86,13 +86,16 @@ import 'types/mime_type.dart';
 /// }
 /// ```
 class Body {
-  /// The stream [read] hands out, or null for a body built from [bytes],
-  /// whose stream is made when it is read, and not at all when an
-  /// adapter writes the bytes instead.
+  /// The stream [read] hands out.
+  ///
+  /// Null for a body built from [bytes]. [read] makes that stream on
+  /// demand, and an adapter that writes the bytes itself never asks for it.
   Stream<Uint8List>? _stream;
   var _isRead = false;
 
-  /// Whether [read] has handed the stream over. A body is read once.
+  /// Whether the body was read, by [read] or [BodyConsume.consume].
+  ///
+  /// A body is read once.
   bool get isRead => _isRead;
 
   /// The length of the stream returned by [read], or `null` if that can't be
@@ -153,9 +156,9 @@ class Body {
       );
     }
     // A BodyType is immutable and builds its header value once, so the
-    // common pairs are shared. Keyed by identity: the MIME types and
-    // encodings in use are constants. The cap keeps a caller that makes a
-    // MIME type per request from growing it without bound.
+    // common pairs are shared. The map is keyed by identity, since the MIME
+    // types and encodings in use are constants. The cap stops a caller that
+    // makes a MIME type per request from growing it without bound.
     var byEncoding = _sharedBodyTypes[mimeType];
     if (byEncoding == null) {
       if (_sharedBodyTypes.length >= _sharedBodyTypesLimit) {
@@ -212,7 +215,9 @@ class Body {
     final Encoding encoding = utf8,
     MimeType? mimeType,
   }) {
-    final Uint8List encoded = Uint8List.fromList(encoding.encode(body));
+    final encoded = encoding is Utf8Codec
+        ? _encodeUtf8(body)
+        : Uint8List.fromList(encoding.encode(body));
 
     mimeType ??= _tryInferTextMimeTypeFrom(body) ?? MimeType.plainText;
 
@@ -359,8 +364,8 @@ class Body {
 
   /// Creates a body from [bytes] with the media type the sender declared.
   ///
-  /// Unlike [Body.fromData], nothing is inferred when [mimeType] is null:
-  /// the body then has no type, as a request without a Content-Type has.
+  /// Unlike [Body.fromData], nothing is inferred when [mimeType] is null.
+  /// The body then has no type, as a request without a Content-Type has.
   /// For an adapter handing over a request body.
   factory Body.fromBytes(
     final Uint8List bytes, {
@@ -378,11 +383,11 @@ class Body {
 
   /// The body of a request, typed by its Content-Type, for an adapter.
   ///
-  /// [bytes] when the adapter read the body already, [stream] when it
-  /// arrives as the handler reads, with [contentLength] when declared,
-  /// and neither for a request without a body. A Content-Type that does
-  /// not parse counts as none, and a parameter relic could not write back
-  /// is dropped.
+  /// Pass [bytes] when the adapter has read the body, [stream] when it
+  /// arrives as the handler reads, with [contentLength] when declared, and
+  /// neither for a request without a body. A Content-Type that does not
+  /// parse counts as none. A parameter relic could not write back is
+  /// dropped.
   factory Body.ofRequest(
     final Headers headers, {
     final Uint8List? bytes,
@@ -435,8 +440,10 @@ class Body {
     }
   }
 
-  /// The whole body as one buffer. Synchronous when the body was built from
-  /// bytes or a string. Counts as reading the body, like [read].
+  /// The whole body as one buffer.
+  ///
+  /// Synchronous when the body was built from bytes or a string. Counts as
+  /// reading the body, like [read].
   FutureOr<Uint8List> readAll({final int? maxLength}) {
     final bytes = this.bytes;
     if (bytes != null) {
@@ -544,8 +551,8 @@ extension BodyConsume on Body {
   /// Marks the body as read, as [Body.read] does, without the stream.
   ///
   /// An adapter that sends [Body.bytes] itself, or sends no body at all,
-  /// has no use for the stream, and for a body held as bytes [Body.read]
-  /// creates one on every call.
+  /// has no use for the stream, and [Body.read] would allocate one for a
+  /// body held as bytes.
   ///
   /// Throws a [StateError] when the body was already read.
   void consume() {
@@ -580,4 +587,31 @@ class MaxBodySizeExceeded implements Exception {
 
   @override
   String toString() => 'MaxBodySizeExceeded: Body exceeded $maxLength bytes';
+}
+
+/// The UTF-8 bytes of [text].
+///
+/// `utf8.encode` takes 3.7 us over a 1.3 KB ASCII string and this loop
+/// 1.6 us, so the encoder only runs from the first non-ASCII code unit on.
+Uint8List _encodeUtf8(final String text) {
+  final out = Uint8List(text.length);
+  for (var i = 0; i < text.length; i++) {
+    final unit = text.codeUnitAt(i);
+    if (unit >= 0x80) return _encodeUtf8Tail(text, out, i);
+    out[i] = unit;
+  }
+  return out;
+}
+
+/// The UTF-8 bytes of [text], given [prefix] holds its first [from] code
+/// units, all ASCII.
+Uint8List _encodeUtf8Tail(
+  final String text,
+  final Uint8List prefix,
+  final int from,
+) {
+  final rest = utf8.encoder.convert(text, from);
+  return Uint8List(from + rest.length)
+    ..setRange(0, from, prefix)
+    ..setRange(from, from + rest.length, rest);
 }
