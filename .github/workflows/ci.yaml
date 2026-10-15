@@ -115,7 +115,10 @@ jobs:
       fail-fast: false
       matrix:
         os: [windows-latest, ubuntu-latest, macos-latest]
-        dart_sdk: ["3.10.0", stable, beta] # env context not available for strategy
+        # beta returns once https://github.com/blaugold/cli_launcher/issues/28
+        # ships: on Dart 3.14 the nested "dart run melos:melos exec" that melos
+        # spawns for exec scripts cannot find its own installation.
+        dart_sdk: ["3.10.0", stable] # env context not available for strategy
         deps: [downgrade, upgrade]
     steps:
       - name: Checkout Code
