@@ -1,21 +1,35 @@
 ## Unreleased
 - feat!: Replace the request stream with an exchange-based `Adapter`
-  - BREAKING: An `Adapter` provides `listeners`, `capabilities` and `start(sink)`, and hands over `AdapterExchange` objects with `respond`, `hijack`, `upgradeWebSocket` and `abort`. `Adapter.requests` and `AdapterRequest` are gone, `Adapter.port` is deprecated
+  - BREAKING: `Adapter` is an interface to implement, not a class to extend. It provides `listeners`, `capabilities` and `start(sink)`, and hands over `AdapterExchange` objects with `respond`, `hijack`, `upgradeWebSocket` and `abort`. `Adapter.requests`, `Adapter.port` and `AdapterRequest` are gone. The port is on `listeners` and on `RelicServer.port`
+  - BREAKING: `IOAdapter` implements `Adapter`. `IOAdapter.port`, `requests`, `respond`, `hijack`, `connect` and `IOAdapterRequest` are gone, and `start` throws when called twice
+  - BREAKING: `IOAdapter.close()` waits for the exchanges in flight and leaves hijacked sockets and WebSockets to the server. An `IOAdapter` driven without a `RelicServer` closes those itself
+  - BREAKING: `HttpResponseExtension.applyHeaders(headers, body)` is `applyFraming(headers, framing)`, with the framing from `ResponseFraming.of`
   - BREAKING: `HijackCallback` receives a `StreamChannel<Uint8List>`
+  - BREAKING: `hijack` throws when the request body is chunked and not read to its end. Read the body before hijacking
   - BREAKING: `Request.protocolVersion` is `Request.protocol`, an `HttpProtocol`
   - BREAKING: `RelicWebSocket` implementers provide `done` and `closeGoingAway`. The server sends 1001 to every socket on `close()`
+  - BREAKING: `RelicServer.close()` waits for the exchanges in flight, the going-away closes and the hijacked channels with no deadline. Bound it with `close().timeout(grace, onTimeout: () => close(force: true))`. A forced close ends a graceful one that is still waiting
   - The adapter conformance suite in `test_utils` runs against any adapter
 - feat!: Rebase `Headers` on `HeaderStore`
   - BREAKING: `Headers` is no longer a `Map`. Read with `headers[name]`, `headers(accessor)`, `get` or `tryGet`, write with `Headers.build`, `transform` and `MutableHeaders.assign`. The `Headers.x[headers]` form and the `Header` extension type are gone
+  - BREAKING: `MutableHeaders` is no longer a `Map` either. `addAll`, `putIfAbsent`, `update`, `removeWhere` and `keys` are gone, `remove` returns nothing, and `names`, `set`, `add` and `forEach` take their place. `HeadersBase` is gone, and `Headers` and `MutableHeaders` are final
+  - BREAKING: `Headers.fromMap` throws `FormatException` for a name that is not a token and for a value with CR, LF or NUL
   - BREAKING: `HeaderAccessor` takes a `HeaderName`
+  - BREAKING: `ReadOnlyAccessor(key)` has an abstract `decode`. An accessor built from a function extends `FunctionAccessor`
   - BREAKING: `Request.target` holds the path and query as a `RequestTarget`, which the constructor no longer decodes. An adapter answers 400 to a malformed one
   - New package `relic_headers`: `HeaderName`, `HeaderStore`, `MutableHeaderStore` and `MapHeaderStore`, re-exported by relic_core
-- feat: `ResponseFraming.of` frames every response in the core and `Body.ofRequest` types every request body. A request without a body is `Body.empty()`, and an HTTP/1.0 client gets no chunked coding
+- feat!: `ResponseFraming.of` frames every response in the core and `Body.of` types every request body
+  - `BodyType.fromContentType` types a body from a `ContentTypeHeader`, and `Headers.contentType` is a public accessor
+  - BREAKING: The `Body` decides `Content-Length`, `Content-Type` and the chunked coding, and those three set on the response headers are dropped. A proxy puts the upstream length and type on the `Body`, not on the headers
+  - A HEAD request gets the same `Response` as GET. The adapter sends the body's length and type and drops the body without reading it
+  - A request without a body is `Body.empty()`, and an HTTP/1.0 client gets no chunked coding
 - feat: `FramedWebSocket` frames RFC 6455 over any `StreamChannel<Uint8List>`. The server uses the adapter's own upgrade when `capabilities.webSocket` is set, frames over `hijack` otherwise, and answers 501 with neither
 - feat: New package `relic_native`, a Relic adapter on a Zig HTTP server
-- feat: `Body.bytes`, `Body.readAll()`, `Body.consume`, `holdHttpDate` and `releaseHttpDate`
+- feat: `Body.bytes`, `Body.readAll()`, `Body.consume`, `httpDate()` and `httpDateLine()`
 - fix: A response head carries `Connection: close` when the connection closes after it (RFC 9112 9.6)
-- perf: `Request.url`, the routing pipeline, `BodyType` values and `ContextProperty` slots are built once or on first read, and a sync response reaches the adapter without a Future
+- perf!: `Request.url`, the routing pipeline, `BodyType` values and `ContextProperty` slots are built once or on first read, and a sync response reaches the adapter without a Future
+  - BREAKING: The routing handler and `respondWith` return a sync handler's `Response` as is, and a handler that throws before its first `await` throws to the caller instead of failing a Future
+  - BREAKING: A `ContextProperty` holds its slot for the life of the isolate. Create each one once, as a global, never per request or per handler
 
 ## 2.0.0-rc.2
 - feat!: Add HTML form and multipart parsing ([#380](https://github.com/serverpod/relic/pull/380)) - closes [#379](https://github.com/serverpod/relic/issues/379)
