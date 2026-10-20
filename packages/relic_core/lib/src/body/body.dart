@@ -294,6 +294,10 @@ class Body {
   /// [parameters] holds media type parameters other than `charset`, which
   /// [encoding] sets. Throws [ArgumentError] if [parameters] has a `charset`,
   /// or is not empty while [mimeType] is null.
+  ///
+  /// The framing takes Content-Length from [contentLength], and a HEAD
+  /// response never reads the stream. A handler answering HEAD with a known
+  /// length and no stream passes `const Stream.empty()` with that length.
   factory Body.fromDataStream(
     final Stream<Uint8List> body, {
     final Encoding? encoding,
