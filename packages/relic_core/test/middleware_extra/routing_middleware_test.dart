@@ -451,7 +451,7 @@ void main() {
 
     test('Given a router with GET and POST routes for the same path, '
         'when a PUT request is made to that path, '
-        'then the Allow header contains both GET and POST', () async {
+        'then the Allow header lists GET, HEAD and POST', () async {
       router.add(Method.get, '/users', respondWith((_) => Response(200)));
       router.add(Method.post, '/users', respondWith((_) => Response(201)));
 
@@ -464,7 +464,10 @@ void main() {
       final response = (resultingCtx as Response);
       expect(response.statusCode, 405);
       final allowedMethods = response.headers.allow;
-      expect(allowedMethods, unorderedEquals([Method.get, Method.post]));
+      expect(
+        allowedMethods,
+        unorderedEquals([Method.get, Method.head, Method.post]),
+      );
     });
 
     test('Given a router with multiple HTTP methods for a parameterized route, '
@@ -486,7 +489,10 @@ void main() {
       final response = (resultingCtx as Response);
       expect(response.statusCode, 405);
       final allowedMethods = response.headers.allow;
-      expect(allowedMethods, unorderedEquals([Method.get, Method.delete]));
+      expect(
+        allowedMethods,
+        unorderedEquals([Method.get, Method.head, Method.delete]),
+      );
     });
 
     test('Given a router with routes that do not match the requested path, '

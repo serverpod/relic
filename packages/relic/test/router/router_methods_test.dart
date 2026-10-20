@@ -241,5 +241,125 @@ void main() {
         expect(result, isA<MethodMiss>());
       });
     });
+
+    group('HEAD falls back to GET', () {
+      test('Given a GET route and no HEAD route for a path, '
+          'when looking up HEAD for that path, '
+          'then returns the GET route', () {
+        router.get('/report', 'get_report');
+        final result = router.lookup(Method.head, '/report');
+        expectLookupResult(result, 'get_report');
+      });
+
+      test('Given a GET route and then a HEAD route for a path, '
+          'when looking up HEAD for that path, '
+          'then returns the HEAD route', () {
+        router
+          ..get('/report', 'get_report')
+          ..head('/report', 'head_report');
+        final result = router.lookup(Method.head, '/report');
+        expectLookupResult(result, 'head_report');
+      });
+
+      test('Given a HEAD route and then a GET route for a path, '
+          'when looking up HEAD for that path, '
+          'then returns the HEAD route', () {
+        router
+          ..head('/report', 'head_report')
+          ..get('/report', 'get_report');
+        final result = router.lookup(Method.head, '/report');
+        expectLookupResult(result, 'head_report');
+      });
+
+      test('Given a GET route for a parameterized path /users/:id, '
+          'when looking up HEAD for a matching path, '
+          'then returns the GET route and its parameters', () {
+        router.get('/users/:id', 'get_user');
+        final result = router.lookup(Method.head, '/users/42');
+        expectLookupResult(result, 'get_user', {#id: '42'});
+      });
+
+      test('Given a GET route in a group, '
+          'when looking up HEAD for the grouped path, '
+          'then returns the GET route', () {
+        router.group('/api').get('/report', 'get_report');
+        final result = router.lookup(Method.head, '/api/report');
+        expectLookupResult(result, 'get_report');
+      });
+
+      test('Given a GET route under a use mapping, '
+          'when looking up HEAD for that path, '
+          'then returns the mapped GET route', () {
+        router
+          ..get('/api/report', 'get_report')
+          ..use('/api', (final value) => 'mapped $value');
+        final result = router.lookup(Method.head, '/api/report');
+        expectLookupResult(result, 'mapped get_report');
+      });
+
+      test('Given a POST route only for a path, '
+          'when looking up HEAD for that path, '
+          'then returns a MethodMiss that allows only POST', () {
+        router.post('/submit', 'post_submit');
+        final result = router.lookup(Method.head, '/submit');
+        expect(
+          result,
+          isA<MethodMiss<String>>().having(
+            (final miss) => miss.allowed,
+            'allowed',
+            {Method.post},
+          ),
+        );
+      });
+
+      test('Given a GET route and no HEAD route for a path, '
+          'when looking up HEAD for that path, '
+          'then the match is marked as a HEAD fallback', () {
+        router.get('/report', 'get_report');
+        final result = router.lookup(Method.head, '/report');
+        expect(
+          result,
+          isA<RouterMatch<String>>().having(
+            (final match) => match.headFallback,
+            'headFallback',
+            isTrue,
+          ),
+        );
+      });
+
+      test('Given GET and HEAD routes for a path, '
+          'when looking up HEAD or GET for that path, '
+          'then neither match is marked as a HEAD fallback', () {
+        router
+          ..get('/report', 'get_report')
+          ..head('/report', 'head_report');
+        for (final method in [Method.head, Method.get]) {
+          final result = router.lookup(method, '/report');
+          expect(
+            result,
+            isA<RouterMatch<String>>().having(
+              (final match) => match.headFallback,
+              'headFallback',
+              isFalse,
+            ),
+          );
+        }
+      });
+
+      test('Given a GET route for a path, '
+          'when looking up POST for that path, '
+          'then returns a MethodMiss that allows GET and HEAD', () {
+        router.get('/report', 'get_report');
+        final result = router.lookup(Method.post, '/report');
+        expect(
+          result,
+          isA<MethodMiss<String>>().having(
+            (final miss) => miss.allowed,
+            'allowed',
+            {Method.get, Method.head},
+          ),
+        );
+      });
+    });
   });
 }

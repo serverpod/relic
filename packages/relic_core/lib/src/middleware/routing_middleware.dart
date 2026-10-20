@@ -21,6 +21,7 @@ final _routingContext =
         Parameters parameters,
         NormalizedPath matched,
         NormalizedPath remaining,
+        bool headFallback,
       })
     >();
 
@@ -142,6 +143,7 @@ class _RoutingMiddlewareBuilder<T extends Object> {
             parameters: match.parameters,
             matched: match.matched,
             remaining: match.remaining,
+            headFallback: match.headFallback,
           );
           if (_routesHandlers) {
             _routerProperty[req] = _router as RelicRouter;
@@ -201,6 +203,13 @@ extension RoutingRequestEx on Request {
   /// was not routed through a router, this returns the full request path.
   NormalizedPath get remainingPath =>
       _routingContext[this]?.remaining ?? NormalizedPath.fromUri(url);
+
+  /// Whether this HEAD request matched the GET route of its path (RFC
+  /// 9110 9.1), for lack of a HEAD route.
+  ///
+  /// The server answers 405 instead of running a [Hijack] built on such a
+  /// match, since a hijacked channel bypasses the stripping of the body.
+  bool get isHeadFallback => _routingContext[this]?.headFallback ?? false;
 
   /// The [RelicRouter] that routed this request, if available.
   ///

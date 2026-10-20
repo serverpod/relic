@@ -39,6 +39,22 @@ The convenience methods `.get()`, `.post()`, `.anyOf()`, and `.any()` call `add(
 - `.anyOf({Method.get, Method.post}, path, handler)` → calls `.add()` for each method in the set.
 - `.any(path, handler)` → calls `.anyOf()` with all HTTP methods.
 
+## HEAD requests
+
+A HEAD request to a path that has a GET route and no HEAD route runs the GET handler. The client gets the status and headers that GET would get, including `Content-Length` and `Content-Type`, and no body. The adapter cancels the body's stream without reading it, and a body built with `Body.lazy` never makes its stream at all. The handler sees `Method.head` on `request.method`, which lets it skip work that only the body needs.
+
+A HEAD route of its own takes precedence, whichever order the routes are added in:
+
+```dart
+final app = RelicApp()
+  ..get('/report', renderReport)
+  ..head('/report', reportHeaders);
+```
+
+A `405 Method Not Allowed` for a path with a GET route lists `HEAD` in its `Allow` header.
+
+The fallback does not extend to a GET handler that answers with a `Hijack` or a `WebSocketUpgrade`. The server cannot strip a body from bytes written to a hijacked channel, so such a HEAD gets `405`. A hijacking handler that answers HEAD itself, writing the response head alone, takes a HEAD route of its own.
+
 ## Breaking down the routes
 
 The following examples break down each route from the complete example above.
