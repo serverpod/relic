@@ -8,12 +8,7 @@ import 'dart:typed_data';
 import 'package:async/async.dart';
 import 'package:mime/mime.dart';
 
-import '../headers/exception/header_exception.dart';
-import '../headers/headers.dart';
-import '../headers/standard_headers_extensions.dart';
 import '../headers/typed/headers/content_type_header.dart';
-import '../headers/typed/primitives/parameter_value.dart';
-import '../headers/typed/primitives/token.dart';
 import 'types/body_type.dart';
 import 'types/mime_type.dart';
 
@@ -132,6 +127,8 @@ class Body {
     final MimeType? mimeType,
     final Map<String, String> parameters = const {},
   }) : bodyType = _bodyType(mimeType, encoding, parameters);
+
+  Body._typed(this._stream, this.contentLength, {this.bytes, this.bodyType});
 
   static BodyType? _bodyType(
     final MimeType? mimeType,
@@ -381,63 +378,28 @@ class Body {
     parameters: parameters,
   );
 
-  /// The body of a request, typed by its Content-Type, for an adapter.
+  /// The body an adapter hands over, typed by [contentType].
   ///
   /// Pass [bytes] when the adapter has read the body, [stream] when it
   /// arrives as the handler reads, with [contentLength] when declared, and
-  /// neither for a request without a body. A Content-Type that does not
-  /// parse counts as none. A parameter relic could not write back is
-  /// dropped.
-  factory Body.ofRequest(
-    final Headers headers, {
+  /// neither for a message without a body. [BodyType.fromContentType] does
+  /// the typing, so a request's Content-Type and an upstream response's
+  /// work alike. Read the header with `tryGet`, so one that does not parse
+  /// counts as none.
+  factory Body.of(
+    final ContentTypeHeader? contentType, {
     final Uint8List? bytes,
     final Stream<Uint8List>? stream,
     final int? contentLength,
   }) {
     if (bytes == null && stream == null) return Body.empty();
-    ContentTypeHeader? contentType;
-    try {
-      contentType = headers.contentType;
-    } on HeaderException {
-      // No type.
-    }
-    final mimeType = contentType?.mimeType;
-    final encoding =
-        Encoding.getByName(contentType?.charset) ??
-        (mimeType?.isText == true ? utf8 : null);
-    final given = contentType?.parameters;
-    final parameters = given == null || given.isEmpty
-        ? const <String, String>{}
-        : <String, String>{
-            for (final MapEntry(:key, :value) in given.entries)
-              if (key != 'charset' && _isWritableParameter(key, value))
-                key: value,
-          };
+    final bodyType = contentType == null
+        ? null
+        : BodyType.fromContentType(contentType);
     if (bytes != null) {
-      return Body.fromBytes(
-        bytes,
-        mimeType: mimeType,
-        encoding: encoding,
-        parameters: parameters,
-      );
+      return Body._typed(null, bytes.length, bytes: bytes, bodyType: bodyType);
     }
-    return Body._(
-      stream!,
-      contentLength,
-      encoding: encoding,
-      mimeType: mimeType,
-      parameters: parameters,
-    );
-  }
-
-  static bool _isWritableParameter(final String name, final String value) {
-    if (!Token.isValid(name)) return false;
-    try {
-      ParameterValue(value);
-      return true;
-    } on FormatException {
-      return false;
-    }
+    return Body._typed(stream, contentLength, bodyType: bodyType);
   }
 
   /// The whole body as one buffer.

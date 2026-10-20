@@ -1,10 +1,7 @@
 import 'dart:collection';
 
-import 'package:relic_headers/relic_headers.dart';
-
 import '../body/body.dart';
 import '../router/method.dart';
-import 'header_accessor.dart';
 import 'headers.dart';
 import 'typed/typed_headers.dart';
 
@@ -35,7 +32,7 @@ extension HeadersEx on HeaderValues {
   /// Set Content-Type through the body, such as with the `mimeType` argument
   /// of [Body.fromString]. On a request, read [Body.bodyType] instead. It
   /// changes with `copyWith(body: ...)`, and this header does not.
-  ContentTypeHeader? get contentType => this(_contentType);
+  ContentTypeHeader? get contentType => this(Headers.contentType);
 
   ExpectHeader? get expect => this(Headers.expect);
   IfMatchHeader? get ifMatch => this(Headers.ifMatch);
@@ -242,7 +239,7 @@ extension MutableHeadersEx on MutableHeaders {
   /// `mimeType` argument of [Body.fromString]. On a request, read
   /// [Body.bodyType] instead. It changes with `copyWith(body: ...)`, and this
   /// header does not.
-  ContentTypeHeader? get contentType => this(_contentType);
+  ContentTypeHeader? get contentType => this(Headers.contentType);
 
   ExpectHeader? get expect => this(Headers.expect);
   IfMatchHeader? get ifMatch => this(Headers.ifMatch);
@@ -310,8 +307,3 @@ extension MutableHeadersEx on MutableHeaders {
   ForwardedHeader? get forwarded => this(Headers.forwarded);
   XForwardedForHeader? get xForwardedFor => this(Headers.xForwardedFor);
 }
-
-const _contentType = HeaderAccessor(
-  HeaderName.contentType,
-  ContentTypeHeader.codec,
-);

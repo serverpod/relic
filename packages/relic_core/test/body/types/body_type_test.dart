@@ -143,4 +143,62 @@ void main() {
       throwsArgumentError,
     );
   });
+
+  test('Given a Content-Type with a charset, '
+      'when BodyType.fromContentType is called, '
+      'then the charset is the encoding and not a parameter', () {
+    final contentType = ContentTypeHeader.parse(
+      'text/plain; charset=iso-8859-1',
+    );
+
+    final bodyType = BodyType.fromContentType(contentType);
+
+    expect(bodyType.mimeType, MimeType.plainText);
+    expect(bodyType.encoding, latin1);
+    expect(bodyType.parameters, isEmpty);
+  });
+
+  test('Given a text Content-Type without a charset, '
+      'when BodyType.fromContentType is called, '
+      'then the encoding is UTF-8', () {
+    final bodyType = BodyType.fromContentType(
+      ContentTypeHeader.parse('text/html'),
+    );
+
+    expect(bodyType.encoding, utf8);
+  });
+
+  test('Given a binary Content-Type without a charset, '
+      'when BodyType.fromContentType is called, '
+      'then there is no encoding', () {
+    final bodyType = BodyType.fromContentType(
+      ContentTypeHeader.parse('application/octet-stream'),
+    );
+
+    expect(bodyType.encoding, isNull);
+  });
+
+  test('Given a Content-Type with a boundary, '
+      'when BodyType.fromContentType is called, '
+      'then the boundary is kept and round-trips to the header value', () {
+    final bodyType = BodyType.fromContentType(
+      ContentTypeHeader.parse('multipart/form-data; boundary=abc123'),
+    );
+
+    expect(bodyType.parameters, {'boundary': 'abc123'});
+    expect(bodyType.toHeaderValue(), 'multipart/form-data; boundary=abc123');
+  });
+
+  test('Given a Content-Type with a parameter value that cannot be written, '
+      'when BodyType.fromContentType is called, '
+      'then that parameter is dropped', () {
+    final contentType = ContentTypeHeader(
+      mimeType: MimeType.plainText,
+      parameters: {'title': 'bad\x01value', 'kept': 'fine'},
+    );
+
+    final bodyType = BodyType.fromContentType(contentType);
+
+    expect(bodyType.parameters, {'kept': 'fine'});
+  });
 }

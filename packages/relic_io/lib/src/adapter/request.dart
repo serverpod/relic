@@ -57,10 +57,10 @@ Headers headersFromHttpRequest(io.HttpRequest request) {
 Body bodyFromHttpRequest(io.HttpRequest request, Headers headers) {
   final length = request.contentLength;
   if (length < 0 && !request.headers.chunkedTransferEncoding) {
-    return Body.ofRequest(headers);
+    return Body.empty();
   }
-  return Body.ofRequest(
-    headers,
+  return Body.of(
+    headers.tryGet(Headers.contentType),
     stream: request,
     contentLength: length < 0 ? null : length,
   );

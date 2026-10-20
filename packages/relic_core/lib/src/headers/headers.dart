@@ -181,6 +181,11 @@ final class Headers extends HeaderStore
     intHeaderCodec,
   );
 
+  static const contentType = HeaderAccessor(
+    HeaderName.contentType,
+    ContentTypeHeader.codec,
+  );
+
   static const expect = HeaderAccessor(HeaderName.expect, ExpectHeader.codec);
 
   static const ifMatch = HeaderAccessor(

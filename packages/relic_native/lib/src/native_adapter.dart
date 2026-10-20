@@ -607,8 +607,8 @@ final class NativeExchange extends LinkedListEntry<NativeExchange>
       scheme: scheme ?? 'http',
       protocol: protocol,
       headers: headers,
-      body: _bodyObject = Body.ofRequest(
-        headers,
+      body: _bodyObject = Body.of(
+        headers.tryGet(Headers.contentType),
         bytes: _body,
         stream: _bodyStreamed ? _inboundStream() : null,
         // A chunked body has no declared length.
