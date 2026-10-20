@@ -7,8 +7,8 @@
         // zio with the Executor.tick patch and io_uring_single_issuer, until
         // they are upstream.
         .zio = .{
-            .url = "git+https://github.com/nielsenko/zio#2ab13ca18026f241004a18cc0aa8bba3cbe4249b",
-            .hash = "zio-0.19.0-xHbVVKZfLAAnlYaYLrvvQi3XJ2oH6tMiWoen8VZcUF-H",
+            .url = "git+https://github.com/nielsenko/zio#e6726fb0e26aed90185726a22f40ea2ad9ebee0b",
+            .hash = "zio-0.19.0-xHbVVIyCLQCizEpbPUPuXEJW9WVoof9HR0uHLZGi0MqA",
         },
     },
     .paths = .{
