@@ -50,24 +50,23 @@ void main() {
     },
   );
 
-  test(
-    'Given a HEAD request when made then it returns the correct headers without body',
-    () async {
-      final handler = StaticHandler.directory(
-        Directory(d.sandbox),
-        cacheControl: (_, _) => null,
-      ).asHandler;
+  test('Given a HEAD request when made then it returns the length and type of '
+      'GET and leaves the body for the adapter to drop', () async {
+    final handler = StaticHandler.directory(
+      Directory(d.sandbox),
+      cacheControl: (_, _) => null,
+    ).asHandler;
 
-      final response = await makeRequest(
-        handler,
-        '/root.txt',
-        method: Method.head,
-      );
-      expect(response.statusCode, HttpStatus.ok);
-      expect(response.body.contentLength, 8);
-      expect(await response.readAsString(), isEmpty);
-    },
-  );
+    final response = await makeRequest(
+      handler,
+      '/root.txt',
+      method: Method.head,
+    );
+    expect(response.statusCode, HttpStatus.ok);
+    expect(response.body.contentLength, 8);
+    expect(response.body.bodyType?.mimeType, MimeType.plainText);
+    expect(await response.readAsString(), 'root txt');
+  });
 
   test(
     'Given a root file with space when accessed then it returns the file content',
