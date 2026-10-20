@@ -28,10 +28,19 @@ sealed class RelicServer {
 
   /// Shuts down the server.
   ///
-  /// If [force] is `false` (the default), the server will wait for all
-  /// in-flight requests to complete before closing. If [force] is `true`,
-  /// the server will immediately close and forcefully terminate any
-  /// remaining connections.
+  /// A graceful close, the default, stops accepting, tells every WebSocket
+  /// peer the server is going away, and waits for the exchanges in flight,
+  /// the hijacked channels and those close handshakes to end. The handshakes
+  /// are bounded by their protocol implementations, the rest is the
+  /// handlers' own work, so the wait has no deadline of its own. Bound it
+  /// with a timeout and a forced close:
+  ///
+  /// ```dart
+  /// await server.close().timeout(grace, onTimeout: () => server.close(force: true));
+  /// ```
+  ///
+  /// A forced close drops every connection at once and ends a graceful
+  /// close that is still waiting.
   Future<void> close({final bool force = false});
 
   /// Returns information about the current connections.
@@ -75,11 +84,6 @@ final class _RelicServer implements RelicServer {
   /// The raw channels handed to handlers, to close on shutdown.
   final _channels = <StreamChannel<Uint8List>>{};
 
-  /// How long a graceful close waits for the in-flight exchanges, the
-  /// going-away closes and the flush of every hijacked channel before the
-  /// adapter drops what is left.
-  static const _drainTimeout = Duration(seconds: 5);
-
   /// Creates a server with the given parameters.
   _RelicServer(final Factory<Adapter> adapterFactory)
     : _pendingAdapter = adapterFactory();
@@ -118,16 +122,16 @@ final class _RelicServer implements RelicServer {
     ];
     // A graceful close waits for the peers' answers to the going-away
     // close, for every hijacked channel to flush what its handler wrote,
-    // and for the exchanges in flight, under one deadline. A forced close
-    // queues the frames and drops the channels at once, so a frame reaches
-    // a peer only when its adapter flushes before it drops.
+    // and for the exchanges in flight. A forced close queues the frames and
+    // drops the channels at once, so a frame reaches a peer only when its
+    // adapter flushes before it drops.
     if (!force) {
       closing.addAll([
         for (final channel in _channels.toList())
           Future.sync(channel.sink.close),
         adapter.close(),
       ]);
-      await _settled(closing).timeout(_drainTimeout, onTimeout: () {});
+      await _settled(closing);
     }
     await adapter.close(force: true);
   }

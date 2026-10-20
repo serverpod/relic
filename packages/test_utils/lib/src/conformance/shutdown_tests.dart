@@ -190,6 +190,30 @@ void shutdownTests(AdapterConformance conformance) {
       }
     });
 
+    test(
+      'when server.close(force: true) is called while a graceful close waits, '
+      'then both complete and the in-flight requests fail',
+      () async {
+        final (:responseFutures, :canComplete) = await _startInFlightRequests(
+          server,
+        );
+
+        final graceful = server.close();
+        final forced = server.close(force: true);
+
+        await (graceful, forced).wait.timeout(const Duration(seconds: 5));
+
+        await expectLater(
+          responseFutures.wait,
+          throwsA(
+            isA<ParallelWaitError<List<http.Response?>, List<AsyncError?>>>(),
+          ),
+        );
+
+        canComplete.complete();
+      },
+    );
+
     test('when server.close(force: true) is called with in-flight requests, '
         'then all requests are terminated immediately', () async {
       final (:responseFutures, :canComplete) = await _startInFlightRequests(

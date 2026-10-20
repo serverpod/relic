@@ -108,12 +108,14 @@ class IOAdapter implements Adapter {
   /// Without [force], dart:io stops accepting and closes idle connections.
   ///
   /// The returned future completes once the exchanges in flight have ended.
-  /// Detached connections are the server's to close before that.
+  /// Detached connections are the server's to close before that. A forced
+  /// close completes a graceful one that is still waiting.
   @override
   Future<void> close({bool force = false}) async {
     if (force) {
       await _server.close(force: true);
       _destroyDetached();
+      _settleDrained();
       return;
     }
     await _server.close();
@@ -122,10 +124,12 @@ class IOAdapter implements Adapter {
 
   void _finished() {
     _inFlight--;
+    if (_inFlight == 0) _settleDrained();
+  }
+
+  void _settleDrained() {
     final drained = _drained;
-    if (_inFlight == 0 && drained != null && !drained.isCompleted) {
-      drained.complete();
-    }
+    if (drained != null && !drained.isCompleted) drained.complete();
   }
 
   /// Drops whatever is left without waiting for the peer.

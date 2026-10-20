@@ -400,13 +400,14 @@ final class NativeAdapter implements Adapter {
   Future<void> close({bool force = false}) async {
     if (!_closing) {
       _closing = true;
+      // The stop goes first, so the rest of a drain turn accepts nothing.
+      native.reactorStop(_reactor);
       if (_inDrain) {
         // A handler is closing its own server. The drain's batch still
-        // reads the buffers and ticks the reactor that are freed below.
+        // reads the buffers that a forced close frees below.
         final returned = _drainReturned = Completer<void>();
         await returned.future;
       }
-      native.reactorStop(_reactor);
       // The idle connections unwind on a tick.
       _scheduleDrain();
     }

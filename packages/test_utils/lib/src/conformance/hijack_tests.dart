@@ -170,12 +170,26 @@ void hijackTests(AdapterConformance conformance) {
         await server.close(force: true);
       });
 
-      test('when the server is closed gracefully, '
-          'then the drain deadline still drops the connection.', () async {
+      test('when the server is closed gracefully and then forcefully, '
+          'then the graceful close waits and the forced close drops the '
+          'connection.', () async {
         final drained = stream!.drain<void>();
 
-        await server.close();
+        final graceful = server.close();
 
+        await expectLater(
+          graceful.timeout(const Duration(milliseconds: 500)),
+          throwsA(isA<TimeoutException>()),
+          reason: 'A graceful close waits for a hijacked channel to flush',
+        );
+
+        await server.close(force: true);
+
+        await expectLater(
+          graceful.timeout(const Duration(seconds: 2)),
+          completes,
+          reason: 'A forced close must end the graceful one',
+        );
         await expectLater(
           drained.timeout(const Duration(seconds: 2)),
           completes,
