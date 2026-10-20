@@ -22,6 +22,14 @@ sealed class Result {}
 /// This is useful for implementing custom protocols or handling raw socket
 /// communication.
 ///
+/// Read the request body to its end before returning a [Hijack] if the
+/// client may send it chunked. An adapter cannot hand back the raw bytes of
+/// a body it decoded off the wire, so it refuses the hijack. [callback] then
+/// never runs, and the client gets a 500. Every adapter refuses an unread
+/// chunked body, and an adapter may refuse other streamed bodies too. The
+/// native adapter refuses one over its inline limit. An unread body that the
+/// adapter accepts comes first on the channel's stream.
+///
 /// ```dart
 /// Hijack customProtocolHandler(Request req) {
 ///   return Hijack((channel) {

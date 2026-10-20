@@ -74,6 +74,32 @@ void hijackTests(AdapterConformance conformance) {
     expect(echoed, 'ping');
   }, skip: conformance.skipHijack ?? conformance.skipPipelined);
 
+  test('Given a request body with a Content-Length, '
+      'when the handler hijacks without reading it, '
+      'then the body comes first on the channel', () async {
+    server = await conformance.serve(
+      (req) => Hijack((channel) {
+        channel.stream.listen(channel.sink.add, onDone: channel.sink.close);
+      }),
+    );
+    addTearDown(() => server.close(force: true));
+
+    final socket = await io.Socket.connect(
+      io.InternetAddress.loopbackIPv4,
+      server.port,
+    );
+    socket.write(
+      'POST / HTTP/1.1\r\nHost: x\r\nContent-Length: 5\r\n\r\nhello',
+    );
+    await socket.flush();
+    final echoed = utf8.decode(
+      await socket.first.timeout(const Duration(seconds: 5)),
+    );
+    socket.destroy();
+
+    expect(echoed, 'hello');
+  }, skip: conformance.skipHijack);
+
   group('Given a hijacked connection', () {
     late Completer<void> hijacked;
     Stream<List<int>>? hijackedStream;
