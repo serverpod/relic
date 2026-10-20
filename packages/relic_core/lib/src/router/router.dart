@@ -32,11 +32,21 @@ extension type _RouterEntry<T extends Object>._(List<T?> _routeByVerb)
     _routeByVerb[idx] = route;
   }
 
+  /// The route registered for [method], without fallback.
   @pragma('vm:prefer-inline')
   T? find(final Method method) => _routeByVerb[method.index];
 
+  /// The route a [method] request takes.
+  ///
+  /// A HEAD request takes the GET route when there is no HEAD route (RFC
+  /// 9110 9.1).
+  @pragma('vm:prefer-inline')
+  T? match(final Method method) =>
+      find(method) ?? (method == Method.head ? find(Method.get) : null);
+
+  /// The methods [match] finds a route for.
   Set<Method> get allowed =>
-      Method.values.where((final method) => find(method) != null).toSet();
+      Method.values.where((final method) => match(method) != null).toSet();
 }
 
 extension<T extends Object> on _RouterEntry<T>? {
@@ -157,6 +167,8 @@ final class Router<T extends Object> {
   /// parameters if a match is found. Returns [PathMiss] if no matching route
   /// exists, or [MethodMiss] if a route exists for the path, but the method
   /// don't match.
+  ///
+  /// A HEAD lookup on a path without a HEAD route matches its GET route.
   LookupResult<T> lookup(
     final Method method,
     final String path, {
@@ -166,7 +178,7 @@ final class Router<T extends Object> {
   /// Looks up a route matching an already normalized [normalizedPath].
   ///
   /// Use when the caller already holds a normalized path (e.g. a routing key
-  /// assembled from host and path). Walks the trie directly; results are not
+  /// assembled from host and path). Walks the trie directly. Results are not
   /// cached.
   LookupResult<T> lookupPath(
     final Method method,
@@ -176,10 +188,16 @@ final class Router<T extends Object> {
     final entry = _allRoutes.lookup(normalizedPath, backtrack: backtrack);
     if (entry == null) return PathMiss(normalizedPath);
 
-    final route = entry.value.find(method);
+    final route = entry.value.match(method);
     if (route == null) return MethodMiss(entry.value.allowed);
 
-    return RouterMatch(route, entry.parameters, entry.matched, entry.remaining);
+    return RouterMatch(
+      route,
+      entry.parameters,
+      entry.matched,
+      entry.remaining,
+      headFallback: method == Method.head && entry.value.find(method) == null,
+    );
   }
 
   /// Looks up a route for the [Uri] of a request.
@@ -209,7 +227,8 @@ final class Router<T extends Object> {
 extension RouteEx<T extends Object> on Router<T> {
   /// Adds a route definition for the GET HTTP method.
   ///
-  /// Equivalent to calling `add(Method.get, path, value)`.
+  /// Equivalent to calling `add(Method.get, path, value)`. A HEAD request
+  /// to [path] takes this route too, unless [path] has a HEAD route.
   void get(final String path, final T value) => add(Method.get, path, value);
 
   /// Adds a route definition for the HEAD HTTP method.

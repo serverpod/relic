@@ -15,6 +15,7 @@ import 'headers/standard_headers_extensions.dart';
 import 'headers/typed/headers/connection_header.dart';
 import 'isolated_object.dart';
 import 'logger/logger.dart';
+import 'middleware/routing_middleware.dart';
 import 'router/method.dart';
 import 'util/util.dart';
 import 'web_socket/framed_web_socket.dart';
@@ -233,6 +234,17 @@ final class _RelicServer implements RelicServer {
       case final Response response:
         return exchange.respond(response);
       case final Hijack hijack:
+        // A hijacked channel bypasses the server, which then cannot hold
+        // the no-content rule for HEAD (RFC 9110 9.3.2). A HEAD route of
+        // its own may hijack.
+        if (request.isHeadFallback) {
+          return exchange.respond(
+            Response(
+              405,
+              headers: Headers.build((final mh) => mh.allow = {Method.get}),
+            ),
+          );
+        }
         return _withChannel(exchange, (final channel) {
           _keep(channel);
           return hijack.callback(channel);

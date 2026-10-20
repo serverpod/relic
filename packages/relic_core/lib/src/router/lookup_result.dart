@@ -44,7 +44,17 @@ final class MethodMiss<T> extends Miss<T> {
 
 /// A successful route match containing the handler value and extracted parameters.
 final class RouterMatch<T> extends TrieMatch<T> implements LookupResult<T> {
-  RouterMatch(super.value, super.parameters, super.matched, super.remaining);
+  /// Whether a HEAD request matched the GET route of its path (RFC 9110
+  /// 9.1), for lack of a HEAD route.
+  final bool headFallback;
+
+  RouterMatch(
+    super.value,
+    super.parameters,
+    super.matched,
+    super.remaining, {
+    this.headFallback = false,
+  });
 }
 
 /// Extension providing convenient type casting for [LookupResult] instances.

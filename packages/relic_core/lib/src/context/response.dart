@@ -35,6 +35,9 @@ part of 'result.dart';
 ///
 /// A plain `Body.empty()` sends `Content-Length: 0`.
 ///
+/// A router answers HEAD by itself: a HEAD request to a path without a
+/// HEAD route runs its GET route.
+///
 /// ## Redirect Responses
 ///
 /// ```dart

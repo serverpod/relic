@@ -30,6 +30,11 @@ sealed class Result {}
 /// native adapter refuses one over its inline limit. An unread body that the
 /// adapter accepts comes first on the channel's stream.
 ///
+/// The server cannot strip a body from bytes written to the channel, so
+/// a HEAD request served by a GET route gets 405 instead of the hijack.
+/// Register a HEAD route to answer HEAD, and write only the response
+/// head when `request.method` is HEAD.
+///
 /// ```dart
 /// Hijack customProtocolHandler(Request req) {
 ///   return Hijack((channel) {

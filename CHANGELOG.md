@@ -27,6 +27,10 @@
 - feat: New package `relic_native`, a Relic adapter on a Zig HTTP server
 - feat: `Body.bytes`, `Body.readAll()`, `Body.consume`, `httpDate()` and `httpDateLine()`
 - feat: `Body.lazy` makes its stream when the body is read, so a body that is not sent never opens it
+- fix!: A HEAD request to a path without a HEAD route runs its GET route (RFC 9110 9.1)
+  - BREAKING: `Router.lookup(Method.head, ...)` returns the GET route of a path without a HEAD route, and `MethodMiss.allowed` lists HEAD beside GET. A GET handler that must not run on HEAD checks `request.method`, or the path gets a HEAD route of its own
+  - A `Hijack` or `WebSocketUpgrade` answering such a HEAD gets 405, since the server cannot strip a body from a hijacked channel. A HEAD route of its own may hijack
+  - `RouterMatch.headFallback` and `Request.isHeadFallback` mark such a match
 - fix: A response head carries `Connection: close` when the connection closes after it (RFC 9112 9.6)
 - fix: A `WebSocketUpgrade` answers a request other than GET with 405 and `Allow: GET`
 - perf!: `Request.url`, the routing pipeline, `BodyType` values and `ContextProperty` slots are built once or on first read, and a sync response reaches the adapter without a Future

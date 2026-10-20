@@ -1,13 +1,16 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
 import 'dart:isolate';
 import 'dart:math';
+import 'dart:typed_data';
 
 import 'package:mockito/mockito.dart';
 import 'package:relic/relic.dart';
 
 import 'package:test/test.dart';
+import 'package:test_utils/adapter_conformance.dart';
 import 'package:vm_service/vm_service_io.dart' as vmi;
 
 void main() {
@@ -65,6 +68,100 @@ void main() {
         ),
         isA<PathMiss<Handler>>(),
       );
+    });
+
+    test(
+      'Given a RelicApp with only a GET route that answers with a lazy body, '
+      'when a HEAD request is sent to that path, '
+      "then the GET route's status and headers go out without the body",
+      () async {
+        var listened = false;
+        Stream<Uint8List> report() async* {
+          listened = true;
+          yield Uint8List.fromList(utf8.encode('hello'));
+        }
+
+        final app = RelicApp()
+          ..get(
+            '/report',
+            (_) => Response(
+              203,
+              headers: Headers.build(
+                (final mh) => mh.add(HeaderName.lookup('x-route'), 'get'),
+              ),
+              body: Body.lazy(
+                report,
+                contentLength: 5,
+                mimeType: MimeType.plainText,
+              ),
+            ),
+          );
+        final server = await app.serve(port: 0);
+        addTearDown(() => app.close());
+
+        final reply = await rawExchange(
+          server.port,
+          'HEAD /report HTTP/1.1\r\nHost: x\r\nConnection: close\r\n\r\n',
+        );
+
+        final (head: head, body: body) = splitHead(reply);
+        expect(head, startsWith('HTTP/1.1 203'));
+        expect(head.toLowerCase(), contains('x-route: get\r\n'));
+        expect(head.toLowerCase(), contains('content-length: 5\r\n'));
+        expect(
+          head.toLowerCase(),
+          contains('content-type: text/plain; charset=utf-8\r\n'),
+        );
+        expect(body, isEmpty);
+        expect(listened, isFalse);
+      },
+    );
+
+    test('Given a RelicApp with only a GET route that answers with a Hijack, '
+        'when a HEAD request is sent to that path, '
+        'then it gets 405 with GET as the allowed method', () async {
+      var hijacked = false;
+      final app = RelicApp()
+        ..get(
+          '/sse',
+          (_) => Hijack((final channel) {
+            hijacked = true;
+            channel.sink.close();
+          }),
+        );
+      final server = await app.serve(port: 0);
+      addTearDown(() => app.close());
+
+      final reply = await rawExchange(
+        server.port,
+        'HEAD /sse HTTP/1.1\r\nHost: x\r\nConnection: close\r\n\r\n',
+      );
+
+      final (head: head, body: _) = splitHead(reply);
+      expect(head, startsWith('HTTP/1.1 405'));
+      expect(head.toLowerCase(), contains('allow: get\r\n'));
+      expect(hijacked, isFalse);
+    });
+
+    test('Given a RelicApp with GET and HEAD routes that answer with a Hijack, '
+        'when a HEAD request is sent to that path, '
+        'then the hijack answers it', () async {
+      Hijack sse(final Request req) => Hijack((final channel) async {
+        channel.sink.add(utf8.encode('HTTP/1.1 204 No Content\r\n\r\n'));
+        await channel.sink.close();
+      });
+      final app = RelicApp()
+        ..get('/sse', sse)
+        ..head('/sse', sse);
+      final server = await app.serve(port: 0);
+      addTearDown(() => app.close());
+
+      final reply = await rawExchange(
+        server.port,
+        'HEAD /sse HTTP/1.1\r\nHost: x\r\nConnection: close\r\n\r\n',
+      );
+
+      expect(reply, startsWith('HTTP/1.1 204'));
     });
 
     test('Given a RelicApp, '
