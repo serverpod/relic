@@ -13,6 +13,9 @@
 //   --targets=io,bun=http://127.0.0.1:3000
 // `baselines/` has the same routes on bare hyper, on bare Deno.serve and
 // on dusty, a Zig server on the zio relic_native runs on.
+//
+// `--tls` serves the io and native targets over TLS with relic_native's
+// test certificates. oha does not verify an https URL.
 
 import 'dart:convert';
 import 'dart:io';
@@ -156,6 +159,17 @@ enum LoadOption<V> implements OptionDefinition<V> {
     ),
   ),
 
+  tls(
+    FlagOption(
+      argName: 'tls',
+      helpText:
+          'Serve the io and native targets over TLS with the test '
+          'certificates',
+      defaultsTo: false,
+      negatable: false,
+    ),
+  ),
+
   out(
     StringOption(
       argName: 'out',
@@ -196,6 +210,7 @@ Future<void> main(List<String> args) async {
   final connections = config.value(LoadOption.connections);
   final seconds = config.value(LoadOption.seconds);
   final loads = config.value(LoadOption.loads);
+  final tls = config.value(LoadOption.tls);
   final out = config.optionalValue(LoadOption.out);
 
   final workloads = [
@@ -205,8 +220,8 @@ Future<void> main(List<String> args) async {
   final results = <Measurement>[];
   for (final spec in targets) {
     final (target, url) = _split(spec);
-    final server = url == null ? await _start(target) : null;
-    final base = url ?? 'http://127.0.0.1:${server!.port}';
+    final server = url == null ? await _start(target, tls: tls) : null;
+    final base = url ?? '${tls ? 'https' : 'http'}://127.0.0.1:${server!.port}';
     stderr.writeln('$target at $base');
     try {
       // One warm-up so JIT and caches are settled before the first number.
@@ -277,7 +292,7 @@ Future<void> main(List<String> args) async {
 
 /// A server for [target]: `io`, `native` or `shelf`, or one of them
 /// followed by an isolate count.
-Future<Server> _start(String target) {
+Future<Server> _start(String target, {required bool tls}) {
   final match = RegExp(r'^(io|native|shelf)(\d*)$').firstMatch(target);
   if (match == null) throw ArgumentError.value(target, 'target');
   final kind = match.group(1)!;
@@ -290,6 +305,7 @@ Future<Server> _start(String target) {
     Served.app(loadApp(), shelfLoad),
     port: kind == 'native' ? 0 : 18080,
     isolates: isolates,
+    tls: tls,
   );
 }
 

@@ -9,7 +9,6 @@ pub fn build(b: *std.Build) void {
     const dusty = b.dependency("dusty", .{
         .target = target,
         .optimize = optimize,
-        .use_tls = false,
         .use_zlib = false,
     });
     // dusty's deadlines cancel the connection task on zio, and fall back to

@@ -34,7 +34,8 @@ final class OhaResult {
 ///
 /// A null [rate] is a closed loop at [connections] in flight, otherwise an
 /// open loop at that many requests per second. Each of [headers] is a
-/// `Name: value` line. Needs `oha` on the PATH.
+/// `Name: value` line. An https [url] goes unverified, since the servers
+/// here present test certificates. Needs `oha` on the PATH.
 ///
 /// No `--latency-correction`. oha 1.16.0 charges pauses of about 300 ms in
 /// its own scheduler to every request due during them, on any server and
@@ -57,6 +58,7 @@ Future<OhaResult> runOha(
     '-z',
     '${seconds}s',
     if (rate != null) ...['-q', '$rate'],
+    if (url.startsWith('https:')) '--insecure',
     for (final header in headers) ...['-H', header],
     url,
   ]);

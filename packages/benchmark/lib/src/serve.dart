@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:isolate';
 
 import 'package:relic/relic.dart';
 import 'package:relic_native/relic_native.dart';
@@ -33,8 +34,23 @@ final class Served {
 
 var _serveCount = 0;
 
+/// The certificate chain and key a TLS server here presents, the test
+/// certificates of relic_native. A client skips verification, or trusts
+/// `ca_cert.pem` beside them.
+({String chain, String key}) get testCertificates {
+  final library = Isolate.resolvePackageUriSync(
+    Uri.parse('package:relic_native/relic_native.dart'),
+  )!;
+  final certs = library.resolve('../test/certs/');
+  return (
+    chain: certs.resolve('localhost_cert.pem').toFilePath(),
+    key: certs.resolve('localhost_key.pem').toFilePath(),
+  );
+}
+
 /// Starts [served] on [kind], `io`, `native` or `shelf`, at [port] on the
-/// IPv4 loopback with [isolates] isolates.
+/// IPv4 loopback with [isolates] isolates, over TLS with
+/// [testCertificates] when [tls] is set.
 ///
 /// Port 0 picks a free port.
 Future<Server> startServer(
@@ -42,10 +58,13 @@ Future<Server> startServer(
   final Served served, {
   required final int port,
   final int isolates = 1,
+  final bool tls = false,
 }) async {
   final address = InternetAddress.loopbackIPv4;
+  final certs = testCertificates;
   switch (kind) {
     case 'shelf':
+      if (tls) throw ArgumentError.value(kind, 'kind', 'No TLS on shelf');
       final server = await ShelfServer.start(
         served.shelf,
         port: port,
@@ -53,8 +72,18 @@ Future<Server> startServer(
       );
       return (port: server.port, close: () => server.close(force: true));
     case 'io':
+      // A SecurityContext cannot cross isolates, so each makes its own.
       final server = await served.relic(
-        () => IOAdapter.bind(address, port: port, shared: isolates > 1),
+        () => IOAdapter.bind(
+          address,
+          port: port,
+          shared: isolates > 1,
+          context: tls
+              ? (SecurityContext()
+                  ..useCertificateChain(certs.chain)
+                  ..usePrivateKey(certs.key))
+              : null,
+        ),
         isolates,
       );
       return (port: server.port, close: () => server.close(force: true));
@@ -63,7 +92,17 @@ Future<Server> startServer(
       // does, so port 0 works with several of them.
       final group = 'benchmark/$pid/${_serveCount++}';
       final server = await served.relic(
-        () => NativeAdapter.bind(address, port: port, group: group),
+        () => NativeAdapter.bind(
+          address,
+          port: port,
+          group: group,
+          tls: tls
+              ? NativeTls.fromFiles(
+                  certificateChain: certs.chain,
+                  privateKey: certs.key,
+                )
+              : null,
+        ),
         isolates,
       );
       return (port: server.port, close: () => server.close(force: true));
