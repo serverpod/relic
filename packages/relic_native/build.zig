@@ -24,6 +24,7 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
         .io_uring_single_issuer = false,
     });
+    const tls = b.dependency("tls", .{ .target = target, .optimize = optimize });
 
     // The Dart DL API header, translated once and imported as a module by
     // the library and the tests. @cImport is gone from the language as of
@@ -44,6 +45,7 @@ pub fn build(b: *std.Build) void {
         .link_libc = true,
     });
     module.addImport("zio", zio.module("zio"));
+    module.addImport("tls", tls.module("tls"));
     module.addImport("dart_dl", dart_dl_module);
     module.addIncludePath(b.path("src/dart-dl"));
     module.addCSourceFile(.{ .file = b.path("src/dart-dl/dart_api_dl.c"), .flags = &.{} });
@@ -71,9 +73,22 @@ pub fn build(b: *std.Build) void {
         .sanitize_thread = sanitize_thread,
     });
     test_module.addImport("zio", zio.module("zio"));
+    test_module.addImport("tls", tls.module("tls"));
     test_module.addImport("dart_dl", dart_dl_module);
     test_module.addIncludePath(b.path("src/dart-dl"));
     test_module.addCSourceFile(.{ .file = b.path("src/dart-dl/dart_api_dl.c"), .flags = &.{} });
+    // The TLS material in test/certs, which @embedFile cannot reach from
+    // src.
+    const test_certs = b.addWriteFiles();
+    _ = test_certs.addCopyDirectory(b.path("test/certs"), "", .{ .include_extensions = &.{".pem"} });
+    test_module.addAnonymousImport("test_certs", .{
+        .root_source_file = test_certs.add("test_certs.zig",
+            \\pub const ca = @embedFile("ca_cert.pem");
+            \\pub const chain = @embedFile("localhost_cert.pem");
+            \\pub const key = @embedFile("localhost_key.pem");
+            \\
+        ),
+    });
     const tests = b.addTest(.{ .root_module = test_module });
     b.step("test", "Run the native unit tests").dependOn(&b.addRunArtifact(tests).step);
 

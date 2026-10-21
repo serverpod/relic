@@ -41,6 +41,7 @@
 const std = @import("std");
 const builtin = @import("builtin");
 const zio = @import("zio");
+const tls = @import("tls");
 const dart = @import("dart_dl");
 const header_names = @import("header_names.zig");
 
@@ -104,6 +105,29 @@ pub const Options = extern struct {
     body_timeout_ms: u32,
     /// Inactivity while writing a response. 0 = none.
     write_timeout_ms: u32,
+};
+
+/// PEM text for an HTTPS server, read during relic_server_bind and not
+/// kept.
+pub const TlsPem = extern struct {
+    certificate_chain: [*]const u8,
+    certificate_chain_len: usize,
+    private_key: [*]const u8,
+    private_key_len: usize,
+};
+
+/// Why relic_server_bind returned null. Mirrored by `_BindFailure` in
+/// lib/src/native_adapter.dart.
+pub const BindFailure = enum(u8) {
+    none = 0,
+    /// The address could not be bound, or the server could not start.
+    bind = 1,
+    /// The chain has no certificate, or one that is expired, unreadable or
+    /// shares a subject with another. tls.zig would drop such a certificate
+    /// and send the rest.
+    certificate_chain = 2,
+    /// Not an unencrypted PKCS#8 or SEC 1 key of a kind tls.zig signs with.
+    private_key = 3,
 };
 
 pub const HeaderSlot = extern struct {
@@ -490,6 +514,9 @@ pub const Server = struct {
     reactors: []?*Reactor,
     address: zio.net.IpAddress,
     options: Options,
+    /// The certificate chain and key of an HTTPS server, owned. Every
+    /// connection starts with a TLS handshake when it is set.
+    tls_auth: ?*tls.config.CertKeyPair = null,
     /// Registry key, owned. Null for a server outside the registry.
     group: ?[]u8,
     thread: std.Thread = undefined,
@@ -727,16 +754,30 @@ fn sleepMs(ms: u32) void {
 
 /// One connection's byte streams. HTTP is read from `reader` and written
 /// to `writer`. The socket's own reader and writer under them hold the
-/// timeouts and record why a read or write failed.
+/// timeouts and record why a read or write failed. On an HTTPS server a
+/// TLS layer sits between the two.
 ///
 /// `reader` and `writer` point into the link, so it must not move after
-/// `init`.
+/// `init` or `initTls`.
 const Link = struct {
     stream: zio.net.Stream,
     socket_reader: zio.net.Stream.Reader,
     socket_writer: zio.net.Stream.Writer,
     reader: *std.Io.Reader,
     writer: *std.Io.Writer,
+    secure: ?*Secure = null,
+
+    /// tls.zig supports one reader and one writer at a time, which is what
+    /// a body pump, a WebSocket and a hijacked connection run.
+    const Secure = struct {
+        /// Null until the handshake is done.
+        conn: ?tls.Connection = null,
+        reader: tls.Connection.Reader = undefined,
+        writer: tls.Connection.Writer = undefined,
+        /// The socket's buffers. A TLS record has to fit whole.
+        ciphertext_in: [tls.input_buffer_len]u8 = undefined,
+        ciphertext_out: [tls.output_buffer_len]u8 = undefined,
+    };
 
     fn init(self: *Link, stream: zio.net.Stream, read_buffer: []u8, write_buffer: []u8) void {
         self.* = .{
@@ -750,8 +791,58 @@ const Link = struct {
         self.writer = &self.socket_writer.interface;
     }
 
-    /// Why the last read failed, or null when it ended at EOF.
+    /// A link whose socket buffers fit TLS records, before the handshake.
+    /// Until `handshake`, `reader` and `writer` are the socket's.
+    fn initTls(self: *Link, gpa: std.mem.Allocator, stream: zio.net.Stream) !void {
+        const secure = try gpa.create(Secure);
+        secure.* = .{};
+        self.init(stream, &secure.ciphertext_in, &secure.ciphertext_out);
+        self.secure = secure;
+    }
+
+    /// Runs the server side of the TLS handshake. HTTP then reads and
+    /// writes cleartext through `read_buffer` and `write_buffer`.
+    fn handshake(self: *Link, auth: *tls.config.CertKeyPair, read_buffer: []u8, write_buffer: []u8) !void {
+        const secure = self.secure.?;
+        secure.conn = try tls.server(&self.socket_reader.interface, &self.socket_writer.interface, .{
+            .rng = tls_random,
+            .auth = auth,
+            // Only read to check a client certificate, which is never
+            // asked for.
+            .now = .zero,
+        });
+        const conn = &secure.conn.?;
+        secure.reader = conn.reader(read_buffer);
+        secure.writer = conn.writer(write_buffer);
+        self.reader = &secure.reader.interface;
+        self.writer = &secure.writer.interface;
+    }
+
+    /// Sends close_notify, or the alert a failed read queued, and frees the
+    /// TLS layer. Nothing for a plain link.
+    fn deinit(self: *Link, gpa: std.mem.Allocator) void {
+        const secure = self.secure orelse return;
+        if (secure.conn) |*conn| conn.close() catch {};
+        gpa.destroy(secure);
+        self.secure = null;
+    }
+
+    /// Ends this side of the connection, with close_notify first under TLS.
+    fn shutdownSend(self: *Link) !void {
+        if (self.secure) |secure| {
+            if (secure.conn) |*conn| conn.close() catch {};
+        }
+        try self.stream.shutdown(.send);
+    }
+
+    /// Why the last read failed, or null when it ended at EOF. The TLS
+    /// layer records ReadFailed when the socket under it failed.
     fn readError(self: *const Link) ?anyerror {
+        if (self.secure) |secure| {
+            if (secure.conn != null) {
+                if (secure.reader.err) |e| if (e != error.ReadFailed) return e;
+            }
+        }
         return self.socket_reader.err;
     }
 
@@ -787,7 +878,7 @@ fn writeStatusAndClose(link: *Link, status: []const u8) !void {
     try w.writeAll(status);
     try w.writeAll("\r\nconnection: close\r\ncontent-length: 0\r\n\r\n");
     try w.flush();
-    link.stream.shutdown(.send) catch return;
+    link.shutdownSend() catch return;
     link.setReadTimeout(deadline(lingering_close_ms));
     _ = link.socket_reader.interface.discard(.unlimited) catch {};
 }
@@ -797,11 +888,6 @@ fn handleConnInner(r: *Reactor, stream: zio.net.Stream) !void {
 
     var rbuf: [max_head]u8 = undefined;
     var wbuf: [16 * 1024]u8 = undefined;
-    var link: Link = undefined;
-    link.init(stream, &rbuf, &wbuf);
-    var http = std.http.Server.init(link.reader, link.writer);
-    const w = link.writer;
-
     // Per-connection scratch, reused across keep-alive requests.
     var head_copy: [max_head]u8 = undefined;
     var slots: [max_headers]HeaderSlot = undefined;
@@ -811,7 +897,6 @@ fn handleConnInner(r: *Reactor, stream: zio.net.Stream) !void {
     const peer = stream.socket.address.ip;
     const local_port = r.server.bound_port.load(.acquire);
     const options = r.server.options;
-    link.setWriteTimeout(inactivity(options.write_timeout_ms));
 
     // Holds an inline request body, and is kept across requests while it
     // stays small.
@@ -821,6 +906,32 @@ fn handleConnInner(r: *Reactor, stream: zio.net.Stream) !void {
     var conn: Conn = .{ .task = r.rt.main_executor.current_task.? };
     r.addConn(&conn);
     defer r.conns.remove(&conn.node);
+
+    var link: Link = undefined;
+    if (r.server.tls_auth != null) {
+        try link.initTls(r.gpa, stream);
+    } else {
+        link.init(stream, &rbuf, &wbuf);
+    }
+    defer link.deinit(r.gpa);
+    link.setWriteTimeout(inactivity(options.write_timeout_ms));
+    if (r.server.tls_auth) |auth| {
+        // The handshake runs under the header deadline, as the head that
+        // follows it does.
+        conn.arm(options.header_timeout_ms);
+        const first = link.reader.peekByte() catch |err| switch (err) {
+            error.EndOfStream => return,
+            error.ReadFailed => return link.readError() orelse err,
+        };
+        // A TLS record opens with its content type, a byte under 32.
+        // Anything else is plain HTTP, or nothing a handshake would
+        // answer, which gets a plain 400, as Go's server answers it.
+        if (first >= 32) return writeStatusAndClose(&link, "400 Bad Request");
+        try link.handshake(auth, &rbuf, &wbuf);
+        conn.disarm();
+    }
+    var http = std.http.Server.init(link.reader, link.writer);
+    const w = link.writer;
 
     while (true) {
         if (r.stop) return;
@@ -1864,10 +1975,12 @@ var registry: std.StringHashMapUnmanaged(*Server) = .empty;
 
 /// Every failure is an error, so the errdefers run. They do not on a
 /// `return null`.
-fn createServer(group: ?[]const u8, ip: []const u8, port: u16, options: Options) !*Server {
+fn createServer(group: ?[]const u8, ip: []const u8, port: u16, options: Options, pem: ?*const TlsPem) !*Server {
     const gpa = std.heap.c_allocator;
     const capacity = @max(options.reactor_capacity, 1);
     const address = try zio.net.IpAddress.parseIp(ip, port);
+    const tls_auth = if (pem) |p| try loadCertKeyPair(gpa, p) else null;
+    errdefer if (tls_auth) |auth| freeCertKeyPair(gpa, auth);
     const srv = try gpa.create(Server);
     errdefer gpa.destroy(srv);
     const reactors = try gpa.alloc(?*Reactor, capacity);
@@ -1879,6 +1992,7 @@ fn createServer(group: ?[]const u8, ip: []const u8, port: u16, options: Options)
         .gpa = gpa,
         .reactors = reactors,
         .options = options,
+        .tls_auth = tls_auth,
         .group = owned_group,
         .address = address,
     };
@@ -1889,6 +2003,48 @@ fn createServer(group: ?[]const u8, ip: []const u8, port: u16, options: Options)
         return error.BindFailed;
     }
     return srv;
+}
+
+/// Reads a server's certificate chain and private key, once per server.
+fn loadCertKeyPair(gpa: std.mem.Allocator, pem: *const TlsPem) !*tls.config.CertKeyPair {
+    const chain = pem.certificate_chain[0..pem.certificate_chain_len];
+    const key = pem.private_key[0..pem.private_key_len];
+    const pair = try gpa.create(tls.config.CertKeyPair);
+    errdefer gpa.destroy(pair);
+    // The bundle reads the clock to drop expired certificates.
+    const io = std.Io.Threaded.global_single_threaded.io();
+    pair.* = tls.config.CertKeyPair.fromSlice(gpa, io, chain, key) catch |err| switch (err) {
+        error.OutOfMemory => return error.OutOfMemory,
+        // fromSlice parses the key, then the chain, then derives the ECDSA
+        // key pair, which only it can. The key is parsed again on its own
+        // to tell its failure from the chain's.
+        else => {
+            _ = tls.config.PrivateKey.parsePem(key) catch return error.PrivateKey;
+            return switch (err) {
+                error.InvalidEncoding, error.IdentityElement => error.PrivateKey,
+                else => error.CertificateChain,
+            };
+        },
+    };
+    const pem_count = std.mem.count(u8, chain, "-----BEGIN CERTIFICATE-----");
+    if (pem_count == 0 or pair.bundle.map.count() != pem_count) {
+        pair.deinit(gpa);
+        return error.CertificateChain;
+    }
+    return pair;
+}
+
+fn freeCertKeyPair(gpa: std.mem.Allocator, pair: *tls.config.CertKeyPair) void {
+    pair.deinit(gpa);
+    gpa.destroy(pair);
+}
+
+/// tls.zig's randomness, from zio's per-executor CSPRNG, which the OS
+/// seeds. The same source std.Io's random gives a std.Io server.
+const tls_random: std.Random = .{ .ptr = undefined, .fillFn = fillRandom };
+
+fn fillRandom(_: *anyopaque, buffer: []u8) void {
+    zio.random(buffer);
 }
 
 const ipv6_loopback = [16]u8{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 };
@@ -1922,6 +2078,7 @@ fn destroyServer(srv: *Server) void {
     pokeAcceptor(srv);
     srv.thread.join();
     const gpa = srv.gpa;
+    if (srv.tls_auth) |auth| freeCertKeyPair(gpa, auth);
     if (srv.group) |g| gpa.free(g);
     gpa.free(srv.reactors);
     gpa.destroy(srv);
@@ -1933,25 +2090,38 @@ export fn relic_init_dart_api(data: ?*anyopaque) isize {
     return dart.Dart_InitializeApiDL(data);
 }
 
-/// Creates the server for `group`, or returns the one that exists. With a
-/// null group the server is not registered and belongs to the caller
-/// alone. Blocks until the listener is bound. Null when binding failed.
+/// Creates the server for `group`, or returns the one that exists, as it
+/// was bound, `pem` included. With a null group the server is not
+/// registered and belongs to the caller alone. Blocks until the listener
+/// is bound. Null with the reason in `failure` when binding failed. A
+/// null `pem` serves plain HTTP.
 export fn relic_server_bind(
     group: ?[*:0]const u8,
     ip: [*:0]const u8,
     port: u16,
     options: *const Options,
+    pem: ?*const TlsPem,
+    failure: *BindFailure,
 ) ?*Server {
+    failure.* = .none;
     const key: ?[]const u8 = if (group) |g| std.mem.span(g) else null;
     registry_lock.lock();
     defer registry_lock.unlock();
     if (key) |k| {
         if (registry.get(k)) |existing| return existing;
     }
-    const srv = createServer(key, std.mem.span(ip), port, options.*) catch return null;
+    const srv = createServer(key, std.mem.span(ip), port, options.*, pem) catch |err| {
+        failure.* = switch (err) {
+            error.CertificateChain => .certificate_chain,
+            error.PrivateKey => .private_key,
+            else => .bind,
+        };
+        return null;
+    };
     if (srv.group) |g| {
         registry.put(std.heap.c_allocator, g, srv) catch {
             destroyServer(srv);
+            failure.* = .bind;
             return null;
         };
     }
@@ -1960,6 +2130,11 @@ export fn relic_server_bind(
 
 export fn relic_server_port(srv: *Server) u16 {
     return srv.bound_port.load(.acquire);
+}
+
+/// Whether the server speaks TLS, which a joining isolate learns here.
+export fn relic_server_secure(srv: *Server) bool {
+    return srv.tls_auth != null;
 }
 
 /// Creates the reactor for the calling isolate, on the calling thread,
@@ -2364,8 +2539,14 @@ const test_options: Options = .{
     .write_timeout_ms = 0,
 };
 
+/// A plain server on a free loopback port, as most tests bind one.
+fn testBind(group: ?[*:0]const u8) ?*Server {
+    var failure: BindFailure = undefined;
+    return relic_server_bind(group, "127.0.0.1", 0, &test_options, null, &failure);
+}
+
 test "registry: the last detach returns without waiting out an accept" {
-    const srv = relic_server_bind("poke-group", "127.0.0.1", 0, &test_options) orelse return error.BindFailed;
+    const srv = testBind("poke-group") orelse return error.BindFailed;
     const r = relic_reactor_create(srv, 1) orelse return error.CreateFailed;
     const start = zio.Timestamp.now(.monotonic);
     relic_reactor_destroy(r);
@@ -2375,8 +2556,8 @@ test "registry: the last detach returns without waiting out an accept" {
 }
 
 test "registry: a group binds once on port 0 and the last detach stops it" {
-    const a = relic_server_bind("test-group", "127.0.0.1", 0, &test_options) orelse return error.BindFailed;
-    const b = relic_server_bind("test-group", "127.0.0.1", 0, &test_options) orelse return error.BindFailed;
+    const a = testBind("test-group") orelse return error.BindFailed;
+    const b = testBind("test-group") orelse return error.BindFailed;
     try std.testing.expect(a == b);
     try std.testing.expect(relic_server_port(a) != 0);
 
@@ -2386,19 +2567,19 @@ test "registry: a group binds once on port 0 and the last detach stops it" {
 
     relic_reactor_destroy(ra);
     // Still registered while one reactor is attached.
-    try std.testing.expect(relic_server_bind("test-group", "127.0.0.1", 0, &test_options) == a);
+    try std.testing.expect(testBind("test-group") == a);
     relic_reactor_destroy(rb);
     // Gone, so a new bind creates a new server.
-    const c = relic_server_bind("test-group", "127.0.0.1", 0, &test_options) orelse return error.BindFailed;
+    const c = testBind("test-group") orelse return error.BindFailed;
     try std.testing.expect(c != a or relic_server_port(c) != 0);
     const rc = relic_reactor_create(c, 3) orelse return error.AttachFailed;
     relic_reactor_destroy(rc);
 }
 
 test "registry: different groups and no group are separate servers" {
-    const a = relic_server_bind("group-a", "127.0.0.1", 0, &test_options) orelse return error.BindFailed;
-    const b = relic_server_bind("group-b", "127.0.0.1", 0, &test_options) orelse return error.BindFailed;
-    const c = relic_server_bind(null, "127.0.0.1", 0, &test_options) orelse return error.BindFailed;
+    const a = testBind("group-a") orelse return error.BindFailed;
+    const b = testBind("group-b") orelse return error.BindFailed;
+    const c = testBind(null) orelse return error.BindFailed;
     try std.testing.expect(a != b and b != c and a != c);
     try std.testing.expect(relic_server_port(a) != relic_server_port(b));
     for ([_]*Server{ a, b, c }) |srv| {
@@ -2408,7 +2589,7 @@ test "registry: different groups and no group are separate servers" {
 }
 
 test "attach: a full server refuses" {
-    const srv = relic_server_bind(null, "127.0.0.1", 0, &test_options) orelse return error.BindFailed;
+    const srv = testBind(null) orelse return error.BindFailed;
     var reactors: [4]*Reactor = undefined;
     for (&reactors, 0..) |*r, i| {
         r.* = relic_reactor_create(srv, @intCast(i + 1)) orelse return error.AttachFailed;
@@ -2430,7 +2611,7 @@ fn openFdCount() u32 {
 
 test "accept: a descriptor shortage stalls the acceptor and does not end it" {
     if (builtin.os.tag == .windows) return error.SkipZigTest;
-    const srv = relic_server_bind(null, "127.0.0.1", 0, &test_options) orelse return error.BindFailed;
+    const srv = testBind(null) orelse return error.BindFailed;
     const r = relic_reactor_create(srv, 1) orelse return error.AttachFailed;
     defer relic_reactor_destroy(r);
 
@@ -2502,7 +2683,7 @@ test "accept: a descriptor shortage stalls the acceptor and does not end it" {
 
 test "stop: a stopped reactor sheds its idle connections and the last one closes the listener" {
     if (builtin.os.tag == .windows) return error.SkipZigTest;
-    const srv = relic_server_bind(null, "127.0.0.1", 0, &test_options) orelse return error.BindFailed;
+    const srv = testBind(null) orelse return error.BindFailed;
     const r = relic_reactor_create(srv, 1) orelse return error.AttachFailed;
     defer relic_reactor_destroy(r);
     const address: std.c.sockaddr.in = .{
@@ -2545,7 +2726,7 @@ test "stop: a stopped reactor sheds its idle connections and the last one closes
 
 test "attach: a refused attach leaks no file descriptors" {
     if (builtin.os.tag == .windows) return error.SkipZigTest;
-    const srv = relic_server_bind(null, "127.0.0.1", 0, &test_options) orelse return error.BindFailed;
+    const srv = testBind(null) orelse return error.BindFailed;
     var reactors: [4]*Reactor = undefined;
     for (&reactors, 0..) |*r, i| {
         r.* = relic_reactor_create(srv, @intCast(i + 1)) orelse return error.AttachFailed;
@@ -2562,7 +2743,7 @@ test "tick: a request reaches the ready list on the caller's thread and the resp
     // The client side is libc sockets and poll, which Windows spells
     // differently. The Dart tests cover this path there.
     if (builtin.os.tag == .windows) return error.SkipZigTest;
-    const srv = relic_server_bind(null, "127.0.0.1", 0, &test_options) orelse return error.BindFailed;
+    const srv = testBind(null) orelse return error.BindFailed;
     const r = relic_reactor_create(srv, 1) orelse return error.AttachFailed;
     defer relic_reactor_destroy(r);
 
@@ -2622,6 +2803,109 @@ test "tick: a request reaches the ready list on the caller's thread and the resp
     }
     try std.testing.expectEqual(0, r.idle.load(.monotonic));
     try std.testing.expectEqual(0, r.connections.load(.monotonic));
+}
+
+const test_ca = @import("test_certs").ca;
+const test_chain = @import("test_certs").chain;
+const test_key = @import("test_certs").key;
+
+fn testPem(chain: []const u8, key: []const u8) TlsPem {
+    return .{
+        .certificate_chain = chain.ptr,
+        .certificate_chain_len = chain.len,
+        .private_key = key.ptr,
+        .private_key_len = key.len,
+    };
+}
+
+test "tls: a bind names the half of the PEM it cannot use" {
+    var failure: BindFailure = undefined;
+    const cases = [_]struct { pem: TlsPem, failure: BindFailure }{
+        .{ .pem = testPem(test_chain, test_chain), .failure = .private_key },
+        .{ .pem = testPem(test_key, test_key), .failure = .certificate_chain },
+        // The bundle keeps one certificate per subject.
+        .{ .pem = testPem(test_chain ++ test_chain, test_key), .failure = .certificate_chain },
+    };
+    for (cases) |case| {
+        try std.testing.expect(relic_server_bind(null, "127.0.0.1", 0, &test_options, &case.pem, &failure) == null);
+        try std.testing.expectEqual(case.failure, failure);
+    }
+}
+
+/// A client on its own thread that trusts the test CA, sends one request
+/// over TLS and reads until the server closes.
+const TestTlsClient = struct {
+    port: u16,
+    reply: [512]u8 = undefined,
+    reply_len: usize = 0,
+    err: ?anyerror = null,
+    done: std.atomic.Value(bool) = .init(false),
+
+    fn run(self: *TestTlsClient) void {
+        defer self.done.store(true, .release);
+        self.exchange() catch |err| {
+            self.err = err;
+        };
+    }
+
+    fn exchange(self: *TestTlsClient) !void {
+        const io = std.testing.io;
+        const gpa = std.heap.c_allocator;
+        const address = try std.Io.net.IpAddress.parse("127.0.0.1", self.port);
+        const stream = try address.connect(io, .{ .mode = .stream });
+        defer stream.close(io);
+        var in: [tls.input_buffer_len]u8 = undefined;
+        var out: [tls.output_buffer_len]u8 = undefined;
+        var stream_reader = stream.reader(io, &in);
+        var stream_writer = stream.writer(io, &out);
+        var root_ca = try tls.config.cert.fromSlice(gpa, io, test_ca);
+        defer root_ca.deinit(gpa);
+        const rng: std.Random.IoSource = .{ .io = io };
+        var conn = try tls.client(&stream_reader.interface, &stream_writer.interface, .{
+            .rng = rng.interface(),
+            .now = std.Io.Clock.real.now(io),
+            .host = "localhost",
+            .root_ca = root_ca,
+            // An EOF without close_notify fails the read.
+            .strict_close_notify = true,
+        });
+        try conn.writeAll("GET /x HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n");
+        self.reply_len = try conn.readAll(&self.reply);
+    }
+};
+
+test "tls: a request over TLS reaches the ready list and the response goes back encrypted" {
+    if (builtin.os.tag == .windows) return error.SkipZigTest;
+    const pem = testPem(test_chain, test_key);
+    var failure: BindFailure = undefined;
+    const srv = relic_server_bind(null, "127.0.0.1", 0, &test_options, &pem, &failure) orelse return error.BindFailed;
+    const r = relic_reactor_create(srv, 1) orelse return error.AttachFailed;
+    defer relic_reactor_destroy(r);
+
+    var client: TestTlsClient = .{ .port = relic_server_port(srv) };
+    const thread = try std.Thread.spawn(.{}, TestTlsClient.run, .{&client});
+    defer thread.join();
+
+    var out: [4]*ExchangeView = undefined;
+    var n: u32 = 0;
+    var rounds: usize = 0;
+    while (n == 0 and !client.done.load(.acquire) and rounds < 500) : (rounds += 1) {
+        n = relic_reactor_tick(r, 10, &out, out.len);
+    }
+    try std.testing.expectEqual(1, n);
+    const v = out[0];
+    try std.testing.expectEqualStrings("/x", v.head[v.target_off .. v.target_off + v.target_len]);
+
+    const head = "HTTP/1.1 204 No Content\r\nconnection: close\r\ncontent-length: 0\r\n\r\n";
+    const buf = relic_alloc(head.len).?;
+    @memcpy(buf[0..head.len], head);
+    relic_respond(v, buf, head.len, null, 0, true);
+    rounds = 0;
+    while (!client.done.load(.acquire) and rounds < 500) : (rounds += 1) {
+        _ = relic_reactor_tick(r, 10, &out, out.len);
+    }
+    if (client.err) |err| return err;
+    try std.testing.expectEqualStrings(head, client.reply[0..client.reply_len]);
 }
 
 /// A corpus entry for std.testing.Smith.slice, a little-endian length

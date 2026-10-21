@@ -12,3 +12,5 @@
 - `hijack` hands the connection over as a raw byte channel
 - WebSocket upgrades are framed on the native side. `capabilities.webSocket`
   is true, and `maxWebSocketMessage` on `bind` bounds a message
+- HTTPS through tls.zig. `tls` on `bind` and `serveNative` takes a
+  `NativeTls` with a PEM certificate chain and private key. TLS 1.3 only

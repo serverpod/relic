@@ -14,13 +14,15 @@ extension RelicAppNativeServeEx on RelicApp {
   /// bound once. Each call mints its own group, so two calls never share a
   /// server and port 0 works with several isolates.
   ///
-  /// [address] defaults to [InternetAddress.loopbackIPv4]. [options] go to
-  /// [NativeAdapter.bind].
+  /// [address] defaults to [InternetAddress.loopbackIPv4]. [options] and
+  /// [tls] go to [NativeAdapter.bind], and with [tls] the server speaks
+  /// HTTPS.
   Future<RelicServer> serveNative({
     InternetAddress? address,
     int port = 8080,
     int noOfIsolates = 1,
     NativeOptions options = const NativeOptions(),
+    NativeTls? tls,
   }) {
     final group = 'relic_native/$pid/${_serveCount++}';
     return run(
@@ -29,6 +31,7 @@ extension RelicAppNativeServeEx on RelicApp {
         port: port,
         group: group,
         options: options,
+        tls: tls,
       ),
       noOfIsolates: noOfIsolates,
     );

@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'dart:ffi';
 import 'dart:io' as io;
 import 'dart:isolate';
+import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:ffi/ffi.dart';
@@ -60,6 +61,31 @@ final class NativeOptions {
     this.maxWebSocketMessage = FramedWebSocket.defaultMaxMessageSize,
   });
 }
+
+/// The certificate chain and private key of an HTTPS server, as PEM.
+///
+/// [certificateChain] has the server's certificate first and any
+/// intermediates after it. [privateKey] is an unencrypted PKCS#8 or SEC 1
+/// key, ECDSA, RSA or Ed25519. The server speaks TLS 1.3 only, through
+/// tls.zig.
+final class NativeTls {
+  final List<int> certificateChain;
+  final List<int> privateKey;
+
+  const NativeTls({required this.certificateChain, required this.privateKey});
+
+  /// Reads both from PEM files.
+  NativeTls.fromFiles({
+    required final String certificateChain,
+    required final String privateKey,
+  }) : this(
+         certificateChain: io.File(certificateChain).readAsBytesSync(),
+         privateKey: io.File(privateKey).readAsBytesSync(),
+       );
+}
+
+/// Mirrors `BindFailure` in src/relic_native.zig.
+enum _BindFailure { none, bind, certificateChain, privateKey }
 
 /// An [Adapter] backed by the Zig HTTP server in `src/relic_native.zig`.
 ///
@@ -123,7 +149,11 @@ final class NativeAdapter implements Adapter {
     this._maxWebSocketMessage,
   ) : _port = native.serverPort(_server),
       _slot = native.reactorSlot(_reactor),
+      _scheme = native.serverSecure(_server) ? 'https' : 'http',
       _authority = _listenerAuthority(address, native.serverPort(_server));
+
+  /// The scheme of a request whose target names none.
+  final String _scheme;
 
   /// The authority of a request without a Host, which HTTP/1.0 allows. It
   /// is the listener itself, bracketed when IPv6.
@@ -137,22 +167,39 @@ final class NativeAdapter implements Adapter {
   ///
   /// The adapter's reactor runs on this isolate's thread, in ticks the
   /// adapter drives from its event loop. [options] are the server's
-  /// limits, see [NativeOptions].
+  /// limits, see [NativeOptions]. With [tls] the server speaks HTTPS, see
+  /// [NativeTls]. An isolate that joins a group gets the server as the
+  /// first bind made it, and must pass [tls] as that bind did.
   ///
   /// Throws [UnsupportedError] on a platform without the native library,
-  /// and [io.SocketException] when the port cannot be bound.
+  /// [io.TlsException] when [tls] cannot be used, [io.SocketException]
+  /// when the port cannot be bound, and [StateError] when the joined
+  /// server differs from [tls] in speaking HTTPS.
   static Future<NativeAdapter> bind(
     io.InternetAddress address, {
     int port = 0,
     String? group,
     NativeOptions options = const NativeOptions(),
+    NativeTls? tls,
   }) async {
     _initDartApi();
     final nativeOptions = calloc<native.Options>();
     final ip = address.address.toNativeUtf8();
     final groupText = group?.toNativeUtf8() ?? nullptr;
+    final pem = tls == null ? nullptr : calloc<native.TlsPem>();
+    final chain = _nativeCopy(tls?.certificateChain);
+    final key = _nativeCopy(tls?.privateKey);
+    final failure = calloc<Uint8>();
     final Pointer<Void> server;
+    final _BindFailure why;
     try {
+      if (tls != null) {
+        pem.ref
+          ..certificateChain = chain
+          ..certificateChainLen = tls.certificateChain.length
+          ..privateKey = key
+          ..privateKeyLen = tls.privateKey.length;
+      }
       nativeOptions.ref
         ..reactorCapacity = options.reactorCapacity
         ..backlog = options.backlog
@@ -167,17 +214,40 @@ final class NativeAdapter implements Adapter {
         ip.cast(),
         port,
         nativeOptions,
+        pem,
+        failure,
       );
+      why = _BindFailure.values[failure.value];
     } finally {
       calloc.free(nativeOptions);
       calloc.free(ip);
       if (groupText != nullptr) calloc.free(groupText);
+      if (pem != nullptr) calloc.free(pem);
+      if (chain != nullptr) calloc.free(chain);
+      if (key != nullptr) calloc.free(key);
+      calloc.free(failure);
     }
     if (server == nullptr) {
-      throw io.SocketException(
-        'relic_native could not bind',
-        address: address,
-        port: port,
+      throw switch (why) {
+        _BindFailure.certificateChain => const io.TlsException(
+          'relic_native: the certificate chain has no certificate, or one '
+          'that is expired, unreadable or repeats a subject',
+        ),
+        _BindFailure.privateKey => const io.TlsException(
+          'relic_native: the private key is not an unencrypted PKCS#8 or '
+          'SEC 1 key of a kind tls.zig signs with',
+        ),
+        _BindFailure.none || _BindFailure.bind => io.SocketException(
+          'relic_native could not bind',
+          address: address,
+          port: port,
+        ),
+      };
+    }
+    if (native.serverSecure(server) != (tls != null)) {
+      throw StateError(
+        'relic_native: the server for group "$group" was bound '
+        '${tls == null ? 'with' : 'without'} TLS',
       );
     }
     final wake = RawReceivePort(null, 'relic_native');
@@ -196,6 +266,16 @@ final class NativeAdapter implements Adapter {
       address,
       options.maxWebSocketMessage,
     );
+  }
+
+  /// [bytes] in native memory the caller frees, or null for null. Never
+  /// null for an empty list, since the native side takes a non-null
+  /// pointer with the length.
+  static Pointer<Uint8> _nativeCopy(List<int>? bytes) {
+    if (bytes == null) return nullptr;
+    final copy = calloc<Uint8>(max(bytes.length, 1));
+    copy.asTypedList(bytes.length).setAll(0, bytes);
+    return copy;
   }
 
   static var _dartApiReady = false;
@@ -603,7 +683,7 @@ final class NativeExchange extends LinkedListEntry<NativeExchange>
       target: target..validate(),
       authority:
           authority ?? headers.value(HeaderName.host) ?? _adapter._authority,
-      scheme: scheme ?? 'http',
+      scheme: scheme ?? _adapter._scheme,
       headers: headers,
       body: _bodyObject = Body.of(
         headers.tryGet(Headers.contentType),

@@ -23,6 +23,16 @@ final class Options extends Struct {
   external int writeTimeoutMs;
 }
 
+/// Mirrors `TlsPem` in src/relic_native.zig.
+final class TlsPem extends Struct {
+  external Pointer<Uint8> certificateChain;
+  @Size()
+  external int certificateChainLen;
+  external Pointer<Uint8> privateKey;
+  @Size()
+  external int privateKeyLen;
+}
+
 /// Mirrors `HeaderSlot` in src/relic_native.zig.
 final class HeaderSlot extends Struct {
   @Uint32()
@@ -103,18 +113,33 @@ final class Stats extends Struct {
 @Native<IntPtr Function(Pointer<Void>)>(symbol: 'relic_init_dart_api')
 external int initDartApi(Pointer<Void> data);
 
+/// The server for [group], bound now or by another isolate before. Null
+/// with the reason in [failure], a `BindFailure`, when binding fails.
+/// [pem] is null for plain HTTP.
 @Native<
-  Pointer<Void> Function(Pointer<Char>, Pointer<Char>, Uint16, Pointer<Options>)
+  Pointer<Void> Function(
+    Pointer<Char>,
+    Pointer<Char>,
+    Uint16,
+    Pointer<Options>,
+    Pointer<TlsPem>,
+    Pointer<Uint8>,
+  )
 >(symbol: 'relic_server_bind')
 external Pointer<Void> serverBind(
   Pointer<Char> group,
   Pointer<Char> ip,
   int port,
   Pointer<Options> options,
+  Pointer<TlsPem> pem,
+  Pointer<Uint8> failure,
 );
 
 @Native<Uint16 Function(Pointer<Void>)>(symbol: 'relic_server_port')
 external int serverPort(Pointer<Void> server);
+
+@Native<Bool Function(Pointer<Void>)>(symbol: 'relic_server_secure')
+external bool serverSecure(Pointer<Void> server);
 
 /// The reactor for this isolate, on the calling thread. [port] receives
 /// the wake messages. Null when every slot is taken.

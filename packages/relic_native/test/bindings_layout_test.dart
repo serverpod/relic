@@ -12,6 +12,10 @@ void main() {
     expect(sizeOf<Options>(), 40);
   });
 
+  test('Given the TlsPem struct, when sized, then it is 32 bytes.', () {
+    expect(sizeOf<TlsPem>(), 32);
+  });
+
   test('Given the HeaderSlot struct, when sized, then it is 16 bytes.', () {
     expect(sizeOf<HeaderSlot>(), 16);
   });

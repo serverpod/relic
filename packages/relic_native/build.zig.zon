@@ -10,6 +10,11 @@
             .url = "git+https://github.com/nielsenko/zio#e6726fb0e26aed90185726a22f40ea2ad9ebee0b",
             .hash = "zio-0.19.0-xHbVVIyCLQCizEpbPUPuXEJW9WVoof9HR0uHLZGi0MqA",
         },
+        // lalinsky's fork of tls.zig, the one dusty uses.
+        .tls = .{
+            .url = "git+https://github.com/lalinsky/tls.zig#60d0ced283fc710f25ce43ab400ce91d1f75c05a",
+            .hash = "tls-0.1.0-ER2e0u7RBgA4_C1wk8zHY4fKNVC-Vc8qWec_hEgpQen4",
+        },
     },
     .paths = .{
         "build.zig",
