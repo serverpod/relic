@@ -59,6 +59,18 @@ void webSocketOriginTests(AdapterConformance conformance) {
       expect(await handshakeStatus(null), 101);
     });
 
+    test('when a client sends a HEAD, '
+        'then it gets 405 with GET as the allowed method', () async {
+      final reply = await rawExchange(
+        server.url.port,
+        'HEAD / HTTP/1.1\r\nHost: x\r\nConnection: close\r\n\r\n',
+      );
+
+      final (head: head, body: _) = splitHead(reply);
+      expect(head, startsWith('HTTP/1.1 405'));
+      expect(head.toLowerCase(), contains('allow: get\r\n'));
+    });
+
     test('when the Origin cannot be parsed, '
         'then the upgrade is refused.', () async {
       expect(await handshakeStatus('not a url'), 403);

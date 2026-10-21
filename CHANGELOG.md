@@ -28,6 +28,7 @@
 - feat: `Body.bytes`, `Body.readAll()`, `Body.consume`, `httpDate()` and `httpDateLine()`
 - feat: `Body.lazy` makes its stream when the body is read, so a body that is not sent never opens it
 - fix: A response head carries `Connection: close` when the connection closes after it (RFC 9112 9.6)
+- fix: A `WebSocketUpgrade` answers a request other than GET with 405 and `Allow: GET`
 - perf!: `Request.url`, the routing pipeline, `BodyType` values and `ContextProperty` slots are built once or on first read, and a sync response reaches the adapter without a Future
   - BREAKING: The routing handler and `respondWith` return a sync handler's `Response` as is, and a handler that throws before its first `await` throws to the caller instead of failing a Future
   - BREAKING: A `ContextProperty` holds its slot for the life of the isolate. Create each one once, as a global, never per request or per handler
