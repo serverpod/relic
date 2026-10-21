@@ -142,7 +142,8 @@ Future<List<int>> _processTree(final int pid) async {
 }
 
 Future<void> _waitForServer(final String url) async {
-  for (var i = 0; i < 600; i++) {
+  final waited = Stopwatch()..start();
+  while (waited.elapsed < const Duration(seconds: 60)) {
     if (await _answers(url)) return;
     await Future<void>.delayed(const Duration(milliseconds: 100));
   }
@@ -151,16 +152,21 @@ Future<void> _waitForServer(final String url) async {
 
 /// Whether a GET of [url] gets a response.
 ///
-/// Refused, or closed while a server is still starting, is a no.
+/// Refused, or closed while a server is still starting, is a no. So is no
+/// answer within two seconds, which is what a plain server gives an https
+/// URL. A server's certificate goes unchecked, as oha leaves it.
 Future<bool> _answers(final String url) async {
-  final client = HttpClient();
+  final client = HttpClient()..badCertificateCallback = (_, _, _) => true;
   try {
-    final response = await client.getUrl(Uri.parse(url)).then((final r) {
-      return r.close();
-    });
+    final response = await client
+        .getUrl(Uri.parse(url))
+        .then((final r) => r.close())
+        .timeout(const Duration(seconds: 2));
     await response.drain<void>();
     return true;
   } on IOException {
+    return false;
+  } on TimeoutException {
     return false;
   } finally {
     client.close(force: true);
