@@ -26,13 +26,28 @@ Response myApiResponseHandler(final Request req) {
 // doctag<handler-hijack-sse>
 Hijack mySseHandler(final Request req) {
   return Hijack((final channel) async {
-    // Send Server-Sent Events.
-    channel.sink.add(utf8.encode('data: Connected'));
+    channel.sink.add(
+      utf8.encode(
+        'HTTP/1.1 200 OK\r\n'
+        'Content-Type: text/event-stream\r\n'
+        'Cache-Control: no-cache\r\n'
+        'Connection: close\r\n'
+        '\r\n',
+      ),
+    );
+    // The HEAD route below lands here too, and gets the head alone.
+    if (req.method == Method.head) {
+      await channel.sink.close();
+      return;
+    }
+
+    // Send Server-Sent Events, each ended by a blank line.
+    channel.sink.add(utf8.encode('data: Connected\n\n'));
 
     // Send periodic updates.
     final timer = Timer.periodic(
       const Duration(seconds: 1),
-      (_) => channel.sink.add(utf8.encode('data: ${DateTime.now()}')),
+      (_) => channel.sink.add(utf8.encode('data: ${DateTime.now()}\n\n')),
     );
 
     // Wait for client disconnect, then cleanup.
@@ -82,6 +97,7 @@ Future<void> main() async {
     ..get('/hello', myHelloWorldHandler)
     ..get('/api', myApiResponseHandler)
     ..get('/sse', mySseHandler)
+    ..head('/sse', mySseHandler)
     ..get('/sync', mySyncHandler)
     ..get('/async', myAsyncHandler)
     ..get('/context', myContextInfoHandler)
