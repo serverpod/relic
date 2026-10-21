@@ -21,7 +21,7 @@
 - feat!: `ResponseFraming.of` frames every response in the core and `Body.of` types every request body
   - `BodyType.fromContentType` types a body from a `ContentTypeHeader`, and `Headers.contentType` is a public accessor
   - BREAKING: The `Body` decides `Content-Length`, `Content-Type` and the chunked coding, and those three set on the response headers are dropped. A proxy puts the upstream length and type on the `Body`, not on the headers
-  - A HEAD request gets the same `Response` as GET. The adapter sends the body's length and type and drops the body without reading it
+  - A HEAD request gets the same `Response` as GET. The adapter sends the body's length and type and cancels the body's stream without reading it
   - A request without a body is `Body.empty()`, and an HTTP/1.0 client gets no chunked coding
 - feat: `FramedWebSocket` frames RFC 6455 over any `StreamChannel<Uint8List>`. The server uses the adapter's own upgrade when `capabilities.webSocket` is set, frames over `hijack` otherwise, and answers 501 with neither
 - feat: New package `relic_native`, a Relic adapter on a Zig HTTP server
