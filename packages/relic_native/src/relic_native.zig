@@ -710,10 +710,6 @@ fn sweep(r: *Reactor) void {
     }
 }
 
-fn timedOut(reader: *const zio.net.Stream.Reader) bool {
-    return if (reader.err) |e| e == error.Timeout else false;
-}
-
 /// A per-operation timeout of `ms`, or none for 0.
 fn inactivity(ms: u32) zio.Timeout {
     return if (ms == 0) .none else .fromMilliseconds(ms);
@@ -729,6 +725,53 @@ fn sleepMs(ms: u32) void {
     zio.os.time.sleep(.fromMilliseconds(ms));
 }
 
+/// One connection's byte streams. HTTP is read from `reader` and written
+/// to `writer`. The socket's own reader and writer under them hold the
+/// timeouts and record why a read or write failed.
+///
+/// `reader` and `writer` point into the link, so it must not move after
+/// `init`.
+const Link = struct {
+    stream: zio.net.Stream,
+    socket_reader: zio.net.Stream.Reader,
+    socket_writer: zio.net.Stream.Writer,
+    reader: *std.Io.Reader,
+    writer: *std.Io.Writer,
+
+    fn init(self: *Link, stream: zio.net.Stream, read_buffer: []u8, write_buffer: []u8) void {
+        self.* = .{
+            .stream = stream,
+            .socket_reader = stream.reader(read_buffer),
+            .socket_writer = stream.writer(write_buffer),
+            .reader = undefined,
+            .writer = undefined,
+        };
+        self.reader = &self.socket_reader.interface;
+        self.writer = &self.socket_writer.interface;
+    }
+
+    /// Why the last read failed, or null when it ended at EOF.
+    fn readError(self: *const Link) ?anyerror {
+        return self.socket_reader.err;
+    }
+
+    fn timedOut(self: *const Link) bool {
+        return if (self.socket_reader.err) |e| e == error.Timeout else false;
+    }
+
+    fn readCanceled(self: *const Link) bool {
+        return if (self.socket_reader.err) |e| e == error.Canceled else false;
+    }
+
+    fn setReadTimeout(self: *Link, timeout: zio.Timeout) void {
+        self.socket_reader.setTimeout(timeout);
+    }
+
+    fn setWriteTimeout(self: *Link, timeout: zio.Timeout) void {
+        self.socket_writer.setTimeout(timeout);
+    }
+};
+
 /// How long a lingering close reads and drops what the peer still sends.
 const lingering_close_ms = 1000;
 
@@ -738,19 +781,15 @@ const lingering_close_ms = 1000;
 /// deadline passes. A plain close with unread input resets the
 /// connection, and a peer that was still sending, which is what these
 /// statuses answer, can then lose the status from its receive buffer.
-fn writeStatusAndClose(
-    stream: zio.net.Stream,
-    reader: *zio.net.Stream.Reader,
-    w: *std.Io.Writer,
-    status: []const u8,
-) !void {
+fn writeStatusAndClose(link: *Link, status: []const u8) !void {
+    const w = link.writer;
     try w.writeAll("HTTP/1.1 ");
     try w.writeAll(status);
     try w.writeAll("\r\nconnection: close\r\ncontent-length: 0\r\n\r\n");
     try w.flush();
-    stream.shutdown(.send) catch return;
-    reader.setTimeout(deadline(lingering_close_ms));
-    _ = reader.interface.discard(.unlimited) catch {};
+    link.stream.shutdown(.send) catch return;
+    link.setReadTimeout(deadline(lingering_close_ms));
+    _ = link.socket_reader.interface.discard(.unlimited) catch {};
 }
 
 fn handleConnInner(r: *Reactor, stream: zio.net.Stream) !void {
@@ -758,10 +797,10 @@ fn handleConnInner(r: *Reactor, stream: zio.net.Stream) !void {
 
     var rbuf: [max_head]u8 = undefined;
     var wbuf: [16 * 1024]u8 = undefined;
-    var reader = stream.reader(&rbuf);
-    var writer = stream.writer(&wbuf);
-    var http = std.http.Server.init(&reader.interface, &writer.interface);
-    const w = &writer.interface;
+    var link: Link = undefined;
+    link.init(stream, &rbuf, &wbuf);
+    var http = std.http.Server.init(link.reader, link.writer);
+    const w = link.writer;
 
     // Per-connection scratch, reused across keep-alive requests.
     var head_copy: [max_head]u8 = undefined;
@@ -772,7 +811,7 @@ fn handleConnInner(r: *Reactor, stream: zio.net.Stream) !void {
     const peer = stream.socket.address.ip;
     const local_port = r.server.bound_port.load(.acquire);
     const options = r.server.options;
-    writer.setTimeout(inactivity(options.write_timeout_ms));
+    link.setWriteTimeout(inactivity(options.write_timeout_ms));
 
     // Holds an inline request body, and is kept across requests while it
     // stays small.
@@ -789,19 +828,19 @@ fn handleConnInner(r: *Reactor, stream: zio.net.Stream) !void {
         // on a keep-alive connection. Once it has, the rest of the head
         // has the header deadline, which is what bounds a slowloris. The
         // sweeper holds the connection to both.
-        reader.setTimeout(.none);
+        link.setReadTimeout(.none);
         conn.arm(options.idle_timeout_ms);
         conn.idle = true;
-        reader.interface.fill(1) catch |err| switch (err) {
+        link.reader.fill(1) catch |err| switch (err) {
             error.EndOfStream => return,
-            error.ReadFailed => return reader.err orelse err,
+            error.ReadFailed => return link.readError() orelse err,
         };
         conn.idle = false;
         conn.arm(options.header_timeout_ms);
         const head = http.reader.receiveHead() catch |err| switch (err) {
-            error.HttpHeadersOversize => return writeStatusAndClose(stream, &reader, w, "431 Request Header Fields Too Large"),
+            error.HttpHeadersOversize => return writeStatusAndClose(&link, "431 Request Header Fields Too Large"),
             error.ReadFailed => {
-                if (conn.expired()) return writeStatusAndClose(stream, &reader, w, "408 Request Timeout");
+                if (conn.expired()) return writeStatusAndClose(&link, "408 Request Timeout");
                 return err;
             },
             else => return err,
@@ -815,8 +854,8 @@ fn handleConnInner(r: *Reactor, stream: zio.net.Stream) !void {
         }
 
         const index = parseHead(head, &head_copy, &slots) catch |err| switch (err) {
-            error.TooManyHeaders => return writeStatusAndClose(stream, &reader, w, "431 Request Header Fields Too Large"),
-            error.MalformedHead => return writeStatusAndClose(stream, &reader, w, "400 Bad Request"),
+            error.TooManyHeaders => return writeStatusAndClose(&link, "431 Request Header Fields Too Large"),
+            error.MalformedHead => return writeStatusAndClose(&link, "400 Bad Request"),
         };
         var req: std.http.Server.Request = .{ .server = &http, .head_buffer = head, .head = index.head };
         const target_off = off(head, req.head.target);
@@ -834,15 +873,15 @@ fn handleConnInner(r: *Reactor, stream: zio.net.Stream) !void {
         defer if (body_store.capacity > body_store_keep) body_store.clearAndFree(r.gpa);
         var body_reader: ?*std.Io.Reader = null;
         if (stream_body or content_length != null) {
-            const br = openBody(&req, &tbuf) catch return writeStatusAndClose(stream, &reader, w, "417 Expectation Failed");
-            reader.setTimeout(inactivity(options.body_timeout_ms));
+            const br = openBody(&req, &tbuf) catch return writeStatusAndClose(&link, "417 Expectation Failed");
+            link.setReadTimeout(inactivity(options.body_timeout_ms));
             if (stream_body) {
                 body_reader = br;
             } else {
                 body_store.clearRetainingCapacity();
                 const into = try body_store.addManyAsSlice(r.gpa, @intCast(content_length.?));
                 br.readSliceAll(into) catch |err| {
-                    if (timedOut(&reader)) return writeStatusAndClose(stream, &reader, w, "408 Request Timeout");
+                    if (link.timedOut()) return writeStatusAndClose(&link, "408 Request Timeout");
                     return err;
                 };
                 body = into;
@@ -875,7 +914,7 @@ fn handleConnInner(r: *Reactor, stream: zio.net.Stream) !void {
             .scratch_cap = @intCast(w.buffer.len),
         });
 
-        if (r.stop) return writeStatusAndClose(stream, &reader, w, "503 Service Unavailable");
+        if (r.stop) return writeStatusAndClose(&link, "503 Service Unavailable");
 
         // A task of its own pumps a streamed body to Dart, so it keeps
         // flowing while the handler runs and while the response goes out.
@@ -884,11 +923,11 @@ fn handleConnInner(r: *Reactor, stream: zio.net.Stream) !void {
         var pump: ?zio.JoinHandle(bool) = null;
         defer if (pump) |*p| p.cancel();
         if (body_reader) |br| {
-            pump = zio.spawn(pumpRequestBody, .{ br, &reader, &ex, content_length }) catch return;
+            pump = zio.spawn(pumpRequestBody, .{ br, &link, &ex, content_length }) catch return;
         }
         r.ready.push(&ex.node);
 
-        try park(&reader, &ex, pump != null);
+        try park(&link, &ex, pump != null);
 
         defer {
             if (pump) |*p| p.cancel();
@@ -901,14 +940,14 @@ fn handleConnInner(r: *Reactor, stream: zio.net.Stream) !void {
             pump = null;
             if (ex.resp_head) |p| try w.writeAll(p[0..ex.resp_head_len]);
             try w.flush();
-            pumpWebSocket(&reader, w, &ex);
+            pumpWebSocket(&link, &ex);
             return;
         }
         if (ex.hijacked) {
             // The raw reader takes the socket over from the pump.
             if (pump) |*p| p.cancel();
             pump = null;
-            pumpRaw(&reader, w, &ex);
+            pumpRaw(&link, &ex);
             return;
         }
         if (ex.aborted) {
@@ -922,12 +961,12 @@ fn handleConnInner(r: *Reactor, stream: zio.net.Stream) !void {
         } else if (ex.resp_inline_len != 0) {
             // Dart wrote the whole response into the write buffer, so it
             // goes out as it lies there, under the sweeper's deadline.
-            writer.setTimeout(.none);
+            link.setWriteTimeout(.none);
             conn.arm(options.write_timeout_ms);
             w.end = ex.resp_inline_len;
             try w.flush();
             conn.disarm();
-            writer.setTimeout(inactivity(options.write_timeout_ms));
+            link.setWriteTimeout(inactivity(options.write_timeout_ms));
         } else if (ex.resp_body_len > swept_write_max) {
             if (ex.resp_head) |p| try w.writeAll(p[0..ex.resp_head_len]);
             if (ex.resp_body) |p| try w.writeAll(p[0..@intCast(ex.resp_body_len)]);
@@ -935,13 +974,13 @@ fn handleConnInner(r: *Reactor, stream: zio.net.Stream) !void {
         } else {
             // A small response goes out under one deadline the sweeper
             // holds, in place of a timeout on every send.
-            writer.setTimeout(.none);
+            link.setWriteTimeout(.none);
             conn.arm(options.write_timeout_ms);
             if (ex.resp_head) |p| try w.writeAll(p[0..ex.resp_head_len]);
             if (ex.resp_body) |p| try w.writeAll(p[0..@intCast(ex.resp_body_len)]);
             try w.flush();
             conn.disarm();
-            writer.setTimeout(inactivity(options.write_timeout_ms));
+            link.setWriteTimeout(inactivity(options.write_timeout_ms));
         }
         // The response is out. A pump still waiting on credit has a body
         // Dart did not finish reading.
@@ -961,7 +1000,7 @@ fn handleConnInner(r: *Reactor, stream: zio.net.Stream) !void {
             const left = if (content_length) |len| len else max_discard + 1;
             if (left > max_discard) return;
             const br = body_reader orelse return;
-            reader.setTimeout(inactivity(options.body_timeout_ms));
+            link.setReadTimeout(inactivity(options.body_timeout_ms));
             _ = br.discardRemaining() catch return;
         }
     }
@@ -981,7 +1020,7 @@ fn pushInbound(ex: *Exchange, chunk: *Chunk) void {
 /// It reads the socket while the exchange is parked, so it also reports
 /// a peer that hung up, as the peer watcher does for a request without a
 /// streamed body.
-fn pumpRequestBody(br: *std.Io.Reader, reader: *zio.net.Stream.Reader, ex: *Exchange, content_length: ?u64) bool {
+fn pumpRequestBody(br: *std.Io.Reader, link: *Link, ex: *Exchange, content_length: ?u64) bool {
     const gpa = std.heap.c_allocator;
     var remaining: ?u64 = content_length;
     while (true) {
@@ -995,9 +1034,8 @@ fn pumpRequestBody(br: *std.Io.Reader, reader: *zio.net.Stream.Reader, ex: *Exch
         const got = br.readSliceShort(data[0..in_chunk_size]) catch {
             std.c.free(buf);
             gpa.destroy(chunk);
-            const cancelled = if (reader.err) |e| e == error.Canceled else false;
-            if (cancelled) return false;
-            if (reader.err != null) ex.view.peer_gone = 1;
+            if (link.readCanceled()) return false;
+            if (link.readError() != null) ex.view.peer_gone = 1;
             pushLastInbound(ex, false);
             return false;
         };
@@ -1074,10 +1112,10 @@ fn pumpResponseBody(ex: *Exchange, w: *std.Io.Writer) bool {
 /// blocking parts. This one waits for Dart to close its sink or abort,
 /// then cancels both so a blocked read or write never holds the
 /// connection. The socket closes when this returns.
-fn pumpRaw(reader: *zio.net.Stream.Reader, w: *std.Io.Writer, ex: *Exchange) void {
-    reader.setTimeout(.none);
-    var rd = zio.spawn(rawReader, .{ reader, ex }) catch return;
-    var wr = zio.spawn(rawWriter, .{ w, ex }) catch {
+fn pumpRaw(link: *Link, ex: *Exchange) void {
+    link.setReadTimeout(.none);
+    var rd = zio.spawn(rawReader, .{ link, ex }) catch return;
+    var wr = zio.spawn(rawWriter, .{ link.writer, ex }) catch {
         rd.cancel();
         return;
     };
@@ -1092,14 +1130,13 @@ fn pumpRaw(reader: *zio.net.Stream.Reader, w: *std.Io.Writer, ex: *Exchange) voi
 
 /// Pushes what the socket has, as it comes, at most `in_credit` chunks
 /// ahead of Dart. A last chunk marks a clean EOF or a read error.
-fn rawReader(reader: *zio.net.Stream.Reader, ex: *Exchange) void {
-    const rd = &reader.interface;
+fn rawReader(link: *Link, ex: *Exchange) void {
+    const rd = link.reader;
     while (true) {
         if (!waitCredit(ex, &ex.closed)) return;
         if (rd.bufferedLen() == 0) {
             rd.fillMore() catch |err| {
-                const cancelled = if (reader.err) |e| e == error.Canceled else false;
-                if (!cancelled) pushLastInbound(ex, err == error.EndOfStream);
+                if (!link.readCanceled()) pushLastInbound(ex, err == error.EndOfStream);
                 return;
             };
         }
@@ -1272,10 +1309,10 @@ fn isValidCloseCode(code: u16) bool {
 /// A WebSocket connection. A reader task and a writer task run between
 /// the socket and Dart's chunk queues until the close handshake is over,
 /// the peer is gone, or Dart aborts. The socket closes when this returns.
-fn pumpWebSocket(reader: *zio.net.Stream.Reader, w: *std.Io.Writer, ex: *Exchange) void {
-    reader.setTimeout(.none);
-    var rd = zio.spawn(wsReader, .{ reader, ex }) catch return;
-    var wr = zio.spawn(wsWriter, .{ w, ex }) catch {
+fn pumpWebSocket(link: *Link, ex: *Exchange) void {
+    link.setReadTimeout(.none);
+    var rd = zio.spawn(wsReader, .{ link, ex }) catch return;
+    var wr = zio.spawn(wsWriter, .{ link.writer, ex }) catch {
         rd.cancel();
         return;
     };
@@ -1300,9 +1337,9 @@ fn pumpWebSocket(reader: *zio.net.Stream.Reader, w: *std.Io.Writer, ex: *Exchang
 /// peer's close frame, which it echoes, at the end of the connection, or
 /// at a violation, which it answers with a close frame. The writer learns
 /// through `peer_close` that nothing more comes.
-fn wsReader(reader: *zio.net.Stream.Reader, ex: *Exchange) void {
+fn wsReader(link: *Link, ex: *Exchange) void {
     defer ex.peer_close.set();
-    const rd = &reader.interface;
+    const rd = link.reader;
     // Plain malloc for a byte list, so Dart frees a message with relic_free.
     const gpa = std.heap.c_allocator;
     var message: std.ArrayListUnmanaged(u8) = .empty;
@@ -1310,7 +1347,7 @@ fn wsReader(reader: *zio.net.Stream.Reader, ex: *Exchange) void {
     var message_opcode: ?WsOpcode = null;
     const max: u64 = ex.ws_max_message;
     while (true) {
-        const result = readFrameHead(rd, message_opcode != null, max) catch return wsReadEnded(reader, ex);
+        const result = readFrameHead(rd, message_opcode != null, max) catch return wsReadEnded(link, ex);
         const head = switch (result) {
             .head => |h| h,
             .violation => |v| return wsFail(ex, v.code, v.reason),
@@ -1318,7 +1355,7 @@ fn wsReader(reader: *zio.net.Stream.Reader, ex: *Exchange) void {
         if (head.opcode.isControl()) {
             var buf: [ws_control_max]u8 = undefined;
             const payload = buf[0..@intCast(head.len)];
-            rd.readSliceAll(payload) catch return wsReadEnded(reader, ex);
+            rd.readSliceAll(payload) catch return wsReadEnded(link, ex);
             unmask(payload, head.mask);
             switch (head.opcode) {
                 .ping => if (!ex.ws_close_sent) pushOutbound(ex, .pong, payload),
@@ -1334,7 +1371,7 @@ fn wsReader(reader: *zio.net.Stream.Reader, ex: *Exchange) void {
         const len: usize = @intCast(head.len);
         message.ensureUnusedCapacity(gpa, len) catch return wsFail(ex, 1011, "Out of memory");
         const slot = message.unusedCapacitySlice()[0..len];
-        rd.readSliceAll(slot) catch return wsReadEnded(reader, ex);
+        rd.readSliceAll(slot) catch return wsReadEnded(link, ex);
         unmask(slot, head.mask);
         message.items.len += len;
         if (!head.fin) continue;
@@ -1356,8 +1393,8 @@ fn wsReader(reader: *zio.net.Stream.Reader, ex: *Exchange) void {
 }
 
 /// The connection ended, or the read was cancelled, inside a frame.
-fn wsReadEnded(reader: *zio.net.Stream.Reader, ex: *Exchange) void {
-    if (reader.err) |e| if (e == error.Canceled) return;
+fn wsReadEnded(link: *Link, ex: *Exchange) void {
+    if (link.readCanceled()) return;
     wsDropped(ex);
 }
 
@@ -1521,7 +1558,7 @@ fn freeChunks(queue: *Fifo) void {
 /// on a watcher task reads the socket, so a peer that hangs up is noticed
 /// and reported while the handler still runs. Nothing is spent on
 /// requests whose handler never asks.
-fn park(reader: *zio.net.Stream.Reader, ex: *Exchange, pumping: bool) !void {
+fn park(link: *Link, ex: *Exchange, pumping: bool) !void {
     if (ex.done.isSet()) return;
     // A body pump reads the socket already, and reports the peer going
     // away itself.
@@ -1530,8 +1567,8 @@ fn park(reader: *zio.net.Stream.Reader, ex: *Exchange, pumping: bool) !void {
     switch (first) {
         .done => {},
         .watch => {
-            reader.setTimeout(.none);
-            var watcher: ?zio.JoinHandle(void) = zio.spawn(peerWatcher, .{ reader, ex }) catch null;
+            link.setReadTimeout(.none);
+            var watcher: ?zio.JoinHandle(void) = zio.spawn(peerWatcher, .{ link, ex }) catch null;
             defer if (watcher) |*wt| wt.cancel();
             try ex.done.wait();
         },
@@ -1541,8 +1578,8 @@ fn park(reader: *zio.net.Stream.Reader, ex: *Exchange, pumping: bool) !void {
 /// Reads into the connection's buffer while the task is parked. EOF means
 /// the peer hung up. Data means a pipelined request, which stays buffered
 /// for the next receiveHead. A cancel from the task ends it either way.
-fn peerWatcher(reader: *zio.net.Stream.Reader, ex: *Exchange) void {
-    reader.interface.fillMore() catch |err| {
+fn peerWatcher(link: *Link, ex: *Exchange) void {
+    link.reader.fillMore() catch |err| {
         if (err == error.EndOfStream) {
             ex.view.peer_gone = 1;
             postExchangeEvent(ex);
