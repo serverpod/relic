@@ -83,9 +83,13 @@ import 'types/mime_type.dart';
 class Body {
   /// The stream [read] hands out.
   ///
-  /// Null for a body built from [bytes]. [read] makes that stream on
-  /// demand, and an adapter that writes the bytes itself never asks for it.
+  /// Null for a body built from [bytes], or one that [_open] makes. [read]
+  /// makes that stream on demand, and an adapter that writes the bytes
+  /// itself, or sends no body, never asks for it.
   Stream<Uint8List>? _stream;
+
+  /// What makes the stream on [read], for a body built without one.
+  Stream<Uint8List> Function()? _open;
   var _isRead = false;
 
   /// Whether the body was read, by [read] or [BodyConsume.consume].
@@ -314,6 +318,37 @@ class Body {
     );
   }
 
+  /// Creates a body whose stream [open] makes when the body is read.
+  ///
+  /// A body that is not sent, such as the answer to a HEAD request, is
+  /// never read, so [open] never runs and a file or connection behind the
+  /// stream is never opened. [open] runs at most once.
+  ///
+  /// ```dart
+  /// final fileBody = Body.lazy(
+  ///   () => file.openRead().cast(),
+  ///   mimeType: MimeType.pdf,
+  ///   contentLength: fileSize,
+  /// );
+  /// ```
+  ///
+  /// The other parameters are those of [Body.fromDataStream].
+  factory Body.lazy(
+    final Stream<Uint8List> Function() open, {
+    final Encoding? encoding,
+    final MimeType? mimeType = MimeType.octetStream,
+    final Map<String, String> parameters = const {},
+    final int? contentLength,
+  }) {
+    return Body._(
+      null,
+      contentLength,
+      encoding: encoding ?? (mimeType?.isText == true ? utf8 : null),
+      mimeType: mimeType,
+      parameters: parameters,
+    ).._open = open;
+  }
+
   static final _resolver = MimeTypeResolver();
 
   /// Creates a body from a [Uint8List].
@@ -469,8 +504,9 @@ class Body {
   /// ```
   Stream<Uint8List> read({final int? maxLength}) {
     _markRead();
-    final stream = _stream ?? Stream.value(bytes!);
+    final stream = _stream ?? _open?.call() ?? Stream.value(bytes!);
     _stream = null;
+    _open = null;
 
     if (maxLength == null) {
       return stream;
@@ -524,6 +560,7 @@ extension BodyConsume on Body {
   void consume() {
     _markRead();
     _stream = null;
+    _open = null;
   }
 
   void _markRead() {

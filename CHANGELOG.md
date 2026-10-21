@@ -26,6 +26,7 @@
 - feat: `FramedWebSocket` frames RFC 6455 over any `StreamChannel<Uint8List>`. The server uses the adapter's own upgrade when `capabilities.webSocket` is set, frames over `hijack` otherwise, and answers 501 with neither
 - feat: New package `relic_native`, a Relic adapter on a Zig HTTP server
 - feat: `Body.bytes`, `Body.readAll()`, `Body.consume`, `httpDate()` and `httpDateLine()`
+- feat: `Body.lazy` makes its stream when the body is read, so a body that is not sent never opens it
 - fix: A response head carries `Connection: close` when the connection closes after it (RFC 9112 9.6)
 - perf!: `Request.url`, the routing pipeline, `BodyType` values and `ContextProperty` slots are built once or on first read, and a sync response reaches the adapter without a Future
   - BREAKING: The routing handler and `respondWith` return a sync handler's `Response` as is, and a handler that throws before its first `await` throws to the caller instead of failing a Future
