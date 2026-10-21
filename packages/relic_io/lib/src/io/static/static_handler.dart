@@ -284,7 +284,7 @@ Future<Response> _serveFile(
   }
 
   // Serve full file
-  return _serveFullFile(fileInfo, headers, method);
+  return _serveFullFile(fileInfo, headers);
 }
 
 /// Checks if the HTTP method is allowed for file serving.
@@ -393,7 +393,7 @@ Future<Response> _handleRangeRequest(
 ) async {
   // Check If-Range header
   if (!_isRangeRequestValid(req, fileInfo)) {
-    return _serveFullFile(fileInfo, headers, req.method);
+    return _serveFullFile(fileInfo, headers);
   }
 
   final ranges = rangeHeader.ranges;
@@ -401,7 +401,7 @@ Future<Response> _handleRangeRequest(
     return Response(HttpStatus.requestedRangeNotSatisfiable, headers: headers);
   }
   return switch (ranges.length) {
-    0 => _serveFullFile(fileInfo, headers, req.method),
+    0 => _serveFullFile(fileInfo, headers),
     1 => _serveSingleRange(fileInfo, headers, ranges.first),
     _ => _serveMultipleRanges(fileInfo, headers, ranges),
   };
@@ -436,11 +436,7 @@ bool _isRangeRequestValid(final Request req, final FileInfo fileInfo) {
 }
 
 /// Serves the complete file without ranges.
-Response _serveFullFile(
-  final FileInfo fileInfo,
-  final Headers headers,
-  final Method method,
-) {
+Response _serveFullFile(final FileInfo fileInfo, final Headers headers) {
   return Response.ok(headers: headers, body: _createFileBody(fileInfo));
 }
 
@@ -497,8 +493,8 @@ Response _serveMultipleRanges(
   return Response(
     HttpStatus.partialContent,
     headers: headers,
-    body: Body.fromDataStream(
-      _multipartSections(fileInfo, boundary, bounds, footer),
+    body: Body.lazy(
+      () => _multipartSections(fileInfo, boundary, bounds, footer),
       contentLength: totalLength,
       mimeType: MimeType.multipartByteranges,
       parameters: {'boundary': boundary},
@@ -572,11 +568,9 @@ Uint8List _multipartSectionHeader(
 }
 
 /// Creates a Body for the full file.
-///
-/// The stream opens the file on listen, so a HEAD response never reads it.
 Body _createFileBody(final FileInfo fileInfo) {
-  return Body.fromDataStream(
-    fileInfo.file.openRead().cast(),
+  return Body.lazy(
+    () => fileInfo.file.openRead().cast(),
     contentLength: fileInfo.stat.size,
     mimeType: fileInfo.mimeType ?? MimeType.octetStream,
     encoding: fileInfo.mimeType?.isText == true ? utf8 : null,
@@ -585,8 +579,8 @@ Body _createFileBody(final FileInfo fileInfo) {
 
 /// Creates a Body for a specific range of the file.
 Body _createRangeBody(final FileInfo fileInfo, final int start, final int end) {
-  return Body.fromDataStream(
-    fileInfo.file.openRead(start, end).cast(),
+  return Body.lazy(
+    () => fileInfo.file.openRead(start, end).cast(),
     contentLength: end - start,
     mimeType: fileInfo.mimeType,
     encoding: fileInfo.mimeType?.isText == true ? utf8 : null,
