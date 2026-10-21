@@ -146,6 +146,42 @@ void streamingTests(AdapterConformance conformance) {
     expect(response.bodyBytes, isEmpty);
   });
 
+  test('Given a lazy body of known length, '
+      'when a HEAD is answered with it, '
+      'then the head carries the length without opening the body', () async {
+    var opened = false;
+    await serve(
+      (req) => Response.ok(
+        body: Body.lazy(() {
+          opened = true;
+          return _patternStream(_bigLength, 64 * 1024);
+        }, contentLength: _bigLength),
+      ),
+    );
+
+    final response = await http.head(server!.url);
+
+    expect(response.headers['content-length'], '$_bigLength');
+    expect(opened, isFalse);
+  });
+
+  test('Given a lazy body of known length, '
+      'when a GET is answered with it, '
+      'then the stream it makes goes out', () async {
+    await serve(
+      (req) => Response.ok(
+        body: Body.lazy(
+          () => _patternStream(_bigLength, 64 * 1024),
+          contentLength: _bigLength,
+        ),
+      ),
+    );
+
+    final response = await http.get(server!.url);
+
+    expect(response.bodyBytes, _pattern(_bigLength));
+  });
+
   test(
     'Given a streamed response, when the peer resets mid-body, '
     'then the body stream is cancelled and the next request is served',
