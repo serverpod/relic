@@ -23,12 +23,12 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (final h) => h.vary,
+            touchHeaders: (h) => h.vary,
             headers: {'vary': ''},
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (final e) => e.message,
+              (e) => e.message,
               'message',
               contains('Value cannot be empty'),
             ),
@@ -45,12 +45,12 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (final h) => h.vary,
+            touchHeaders: (h) => h.vary,
             headers: {'vary': '* , User-Agent'},
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (final e) => e.message,
+              (e) => e.message,
               'message',
               contains('Wildcard (*) cannot be used with other values'),
             ),
@@ -76,7 +76,7 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.vary,
+          touchHeaders: (h) => h.vary,
           headers: {'vary': 'Accept-Encoding, User-Agent'},
         );
 
@@ -89,7 +89,7 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.vary,
+          touchHeaders: (h) => h.vary,
           headers: {'vary': ' Accept-Encoding , User-Agent '},
         );
 
@@ -116,7 +116,7 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.vary,
+          touchHeaders: (h) => h.vary,
           headers: {'vary': '*'},
         );
 
@@ -128,7 +128,7 @@ void main() {
     test('when no Vary header is passed then it should return null', () async {
       final headers = await getServerRequestHeaders(
         server: server,
-        touchHeaders: (final h) => h.vary,
+        touchHeaders: (h) => h.vary,
         headers: {},
       );
 
@@ -153,7 +153,7 @@ void main() {
           headers: {'vary': ''},
         );
 
-        expect(Headers.vary[headers].valueOrNullIfInvalid, isNull);
+        expect(headers.tryGet(Headers.vary), isNull);
         expect(() => headers.vary, throwsInvalidHeader);
       });
     });

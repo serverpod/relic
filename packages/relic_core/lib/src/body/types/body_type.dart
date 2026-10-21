@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import '../../headers/typed/headers/content_type_header.dart';
 import '../../headers/typed/primitives/parameter_value.dart';
 import '../../headers/typed/primitives/token.dart';
 import 'mime_type.dart';
@@ -49,7 +50,31 @@ class BodyType {
     required this.mimeType,
     this.encoding,
     final Map<String, String> parameters = const {},
-  }) : parameters = Map.unmodifiable(_normalizeParameters(parameters));
+  }) : parameters = parameters.isEmpty
+           ? const {}
+           : Map.unmodifiable(_normalizeParameters(parameters));
+
+  /// The type of a body sent with [contentType].
+  ///
+  /// The `charset` parameter is the [encoding], and a text type without one
+  /// is UTF-8. A parameter relic could not write back is dropped. For a
+  /// request's Content-Type and an upstream response's alike.
+  factory BodyType.fromContentType(final ContentTypeHeader contentType) {
+    final mimeType = contentType.mimeType;
+    final given = contentType.parameters;
+    return BodyType(
+      mimeType: mimeType,
+      encoding:
+          Encoding.getByName(contentType.charset) ??
+          (mimeType.isText ? utf8 : null),
+      parameters: given.isEmpty
+          ? const {}
+          : {
+              for (final MapEntry(:key, :value) in given.entries)
+                if (key != 'charset' && _isWritable(key, value)) key: value,
+            },
+    );
+  }
 
   /// Returns the value of the parameter [name], matched case-insensitively.
   String? parameter(final String name) => parameters[name.toLowerCase()];
@@ -59,6 +84,9 @@ class BodyType {
   ///
   /// Throws [FormatException] if one does not.
   void validate() {
+    // Building the header value runs the same checks and keeps the value,
+    // so a type that has one has passed them.
+    if (_headerValue != null) return;
     mimeType.validate();
     for (final MapEntry(:key, :value) in parameters.entries) {
       Token.validate(key);
@@ -66,10 +94,13 @@ class BodyType {
     }
   }
 
-  /// Returns the value to use for the Content-Type header.
+  String? _headerValue;
+
+  /// The value to use for the Content-Type header, built once per instance.
   ///
   /// Writes [encoding] as the `charset` parameter, then each entry of
-  /// [parameters]. Throws [FormatException] where [validate] would.
+  /// [parameters], separated by `; `. Throws [FormatException] where
+  /// [validate] would.
   ///
   /// Examples:
   /// ```dart
@@ -79,8 +110,14 @@ class BodyType {
   /// final binaryType = BodyType(mimeType: MimeType.octetStream);
   /// print(binaryType.toHeaderValue()); // "application/octet-stream"
   /// ```
-  String toHeaderValue() {
+  String toHeaderValue() => _headerValue ??= _buildHeaderValue();
+
+  String _buildHeaderValue() {
     final charset = encoding;
+    if (parameters.isEmpty) {
+      final type = mimeType.toHeaderValue();
+      return charset == null ? type : '$type; charset=${charset.name}';
+    }
     return [
       mimeType.toHeaderValue(),
       if (charset != null) 'charset=${charset.name}',
@@ -93,6 +130,16 @@ class BodyType {
   String toString() =>
       'BodyType(mimeType: $mimeType, encoding: $encoding, '
       'parameters: $parameters)';
+}
+
+bool _isWritable(final String name, final String value) {
+  if (!Token.isValid(name)) return false;
+  try {
+    ParameterValue(value);
+    return true;
+  } on FormatException {
+    return false;
+  }
 }
 
 Map<String, String> _normalizeParameters(final Map<String, String> parameters) {

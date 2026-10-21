@@ -25,11 +25,11 @@ void main() {
           getServerRequestHeaders(
             server: server,
             headers: {'access-control-max-age': ''},
-            touchHeaders: (final h) => h.accessControlMaxAge,
+            touchHeaders: (h) => h.accessControlMaxAge,
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (final e) => e.message,
+              (e) => e.message,
               'message',
               contains('Value cannot be empty'),
             ),
@@ -46,11 +46,11 @@ void main() {
           getServerRequestHeaders(
             server: server,
             headers: {'access-control-max-age': 'invalid'},
-            touchHeaders: (final h) => h.accessControlMaxAge,
+            touchHeaders: (h) => h.accessControlMaxAge,
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (final e) => e.message,
+              (e) => e.message,
               'message',
               contains('Invalid number'),
             ),
@@ -77,7 +77,7 @@ void main() {
         final headers = await getServerRequestHeaders(
           server: server,
           headers: {'access-control-max-age': '600'},
-          touchHeaders: (final h) => h.accessControlMaxAge,
+          touchHeaders: (h) => h.accessControlMaxAge,
         );
 
         expect(headers.accessControlMaxAge, equals(600));
@@ -90,7 +90,7 @@ void main() {
         final headers = await getServerRequestHeaders(
           server: server,
           headers: {'access-control-max-age': ' 600 '},
-          touchHeaders: (final h) => h.accessControlMaxAge,
+          touchHeaders: (h) => h.accessControlMaxAge,
         );
 
         expect(headers.accessControlMaxAge, equals(600));
@@ -103,7 +103,7 @@ void main() {
         final headers = await getServerRequestHeaders(
           server: server,
           headers: {},
-          touchHeaders: (final h) => h.accessControlMaxAge,
+          touchHeaders: (h) => h.accessControlMaxAge,
         );
 
         expect(headers.accessControlMaxAge, isNull);
@@ -113,15 +113,17 @@ void main() {
 
   group('Given an Access-Control-Max-Age header '
       'when an invalid raw header is passed', () {
-    final header =
-        Headers.accessControlMaxAge[Headers.fromMap({
-          'access-control-max-age': ['invalid'],
-        })];
+    final headers = Headers.fromMap({
+      'access-control-max-age': ['invalid'],
+    });
 
-    test('then valueOrNullIfInvalid should return null', () {
-      expect(header.valueOrNullIfInvalid, isNull);
-      expect(() => header.valueOrNull, throwsInvalidHeader);
-      expect(() => header.value, throwsInvalidHeader);
+    test('then tryGet returns null and call and get throw', () {
+      expect(headers.tryGet(Headers.accessControlMaxAge), isNull);
+      expect(() => headers(Headers.accessControlMaxAge), throwsInvalidHeader);
+      expect(
+        () => headers.get(Headers.accessControlMaxAge),
+        throwsInvalidHeader,
+      );
     });
   });
 }

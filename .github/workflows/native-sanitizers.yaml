@@ -1,0 +1,26 @@
+name: Native Sanitizers
+
+# The relic_native Zig unit tests under ThreadSanitizer, nightly. Only the
+# Zig tests: a sanitizer runtime has to be in the process from the start,
+# and the Dart VM dlopens the library long after that.
+on:
+  schedule:
+    - cron: "0 3 * * *" # every day at 03:00 UTC
+  workflow_dispatch:
+
+jobs:
+  tsan:
+    name: Zig tests under ThreadSanitizer
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v7
+
+      - name: Setup Zig
+        uses: mlugg/setup-zig@v2
+        with:
+          version: 0.17.0
+
+      - name: Run Zig Tests Under TSan
+        working-directory: packages/relic_native
+        run: zig build test -Dsanitize-thread --summary all

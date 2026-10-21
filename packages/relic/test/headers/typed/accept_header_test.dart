@@ -23,12 +23,12 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (final h) => h.accept,
+            touchHeaders: (h) => h.accept,
             headers: {'accept': ''},
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (final e) => e.message,
+              (e) => e.message,
               'message',
               contains('Value cannot be empty'),
             ),
@@ -41,7 +41,7 @@ void main() {
         'then the weight defaults to 1.0 instead of being rejected', () async {
       final headers = await getServerRequestHeaders(
         server: server,
-        touchHeaders: (final h) => h.accept,
+        touchHeaders: (h) => h.accept,
         headers: {'accept': 'text/html;q=abc'},
       );
 
@@ -67,7 +67,7 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.accept,
+          touchHeaders: (h) => h.accept,
           headers: {'accept': 'text/html'},
         );
 
@@ -82,7 +82,7 @@ void main() {
         'quality value should set to default of 1.0', () async {
       final headers = await getServerRequestHeaders(
         server: server,
-        touchHeaders: (final h) => h.accept,
+        touchHeaders: (h) => h.accept,
         headers: {'accept': 'text/html'},
       );
 
@@ -96,7 +96,7 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.accept,
+          touchHeaders: (h) => h.accept,
           headers: {'accept': 'text/html;q=0.8'},
         );
 
@@ -111,7 +111,7 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.accept,
+          touchHeaders: (h) => h.accept,
           headers: {'accept': '*/*'},
         );
 
@@ -127,7 +127,7 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.accept,
+          touchHeaders: (h) => h.accept,
           headers: {},
         );
 
@@ -142,7 +142,7 @@ void main() {
         () async {
           final headers = await getServerRequestHeaders(
             server: server,
-            touchHeaders: (final h) => h.accept,
+            touchHeaders: (h) => h.accept,
             headers: {
               'accept': 'text/html;q=test, application/json;q=abc, */*;q=0.5',
             },
@@ -160,7 +160,7 @@ void main() {
         () async {
           final headers = await getServerRequestHeaders(
             server: server,
-            touchHeaders: (final h) => h.accept,
+            touchHeaders: (h) => h.accept,
             headers: {
               'accept': 'text/html;q=0.8, application/json;q=0.9, */*;q=0.5',
             },
@@ -182,7 +182,7 @@ void main() {
         () async {
           final headers = await getServerRequestHeaders(
             server: server,
-            touchHeaders: (final h) => h.accept,
+            touchHeaders: (h) => h.accept,
             headers: {
               'accept': 'text/html;q=0.8, application/json;q=0.9, */*;q=0.5',
             },
@@ -215,7 +215,7 @@ void main() {
           headers: {'accept': 'invalid'},
         );
 
-        expect(Headers.accept[headers].valueOrNullIfInvalid, isNull);
+        expect(headers.tryGet(Headers.accept), isNull);
         expect(() => headers.accept, throwsInvalidHeader);
       });
     });

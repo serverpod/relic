@@ -6,9 +6,19 @@ Request _request(
   final String path, {
   final String host = 'localhost',
   final Method method = Method.get,
-}) => RequestInternal.create(method, Uri.http(host, path), Object());
+}) => RequestInternal.create(method, Uri.http(host, path), null);
 
 void main() {
+  test('Given a route whose handler answers synchronously, '
+      'when the routing middleware is called, '
+      'then the response comes back without a Future', () {
+    final router = RelicRouter()..get('/', (final _) => Response(200));
+    final result = routeWith(router)(respondWith((_) => Response(404)))(
+      _request('/'),
+    );
+    expect(result, isA<Response>());
+  });
+
   group('RoutingMiddleware', () {
     late RelicRouter router;
     late Middleware middleware;
@@ -499,7 +509,7 @@ void main() {
   });
 
   group('Virtual hosting', () {
-    Handler _createHandler(
+    Handler createHandler(
       final Router<int> router, {
       final bool useHostWhenRouting = true,
     }) {
@@ -515,7 +525,7 @@ void main() {
     }
 
     // Router with host-specific route (1), and global route (2) for wildcard
-    Router<int> _createVirtualHostRouter() {
+    Router<int> createVirtualHostRouter() {
       final globalRouter = Router<int>()..get('/bar', 2);
       return Router<int>()
         ..get('www.example.org/foo', 1)
@@ -526,7 +536,7 @@ void main() {
     test('Given virtual hosting enabled, '
         'when a request matches a host-specific route, '
         'then the correct handler is invoked', () async {
-      final handler = _createHandler(_createVirtualHostRouter());
+      final handler = createHandler(createVirtualHostRouter());
 
       final request = _request('/foo', host: 'www.example.org');
       final result = await handler(request);
@@ -540,7 +550,7 @@ void main() {
     test('Given virtual hosting enabled with attached global router, '
         'when a request matches a global route on the configured host, '
         'then the global handler is invoked', () async {
-      final handler = _createHandler(_createVirtualHostRouter());
+      final handler = createHandler(createVirtualHostRouter());
 
       final request = _request('/bar', host: 'www.example.org');
       final result = await handler(request);
@@ -554,7 +564,7 @@ void main() {
     test('Given virtual hosting enabled with wildcard fallback, '
         'when a request from an unknown host matches a global route, '
         'then the global handler is invoked via wildcard', () async {
-      final handler = _createHandler(_createVirtualHostRouter());
+      final handler = createHandler(createVirtualHostRouter());
 
       final request = _request('/bar', host: 'other.example.com');
       final result = await handler(request);
@@ -568,7 +578,7 @@ void main() {
     test('Given virtual hosting enabled, '
         'when a request from an unknown host does not match any route, '
         'then the fallback handler is invoked', () async {
-      final handler = _createHandler(_createVirtualHostRouter());
+      final handler = createHandler(createVirtualHostRouter());
 
       final request = _request('/unknown', host: 'other.example.com');
       final result = await handler(request);
@@ -582,7 +592,7 @@ void main() {
         'when a request is made, '
         'then routing ignores the host header', () async {
       final router = Router<int>()..get('/foo', 1);
-      final handler = _createHandler(router, useHostWhenRouting: false);
+      final handler = createHandler(router, useHostWhenRouting: false);
 
       final request = _request('/foo', host: 'any.host.com');
       final result = await handler(request);
@@ -597,7 +607,7 @@ void main() {
         'when host header has different case, '
         'then routing normalizes to lowercase (per RFC 3986)', () async {
       final router = Router<int>()..get('www.example.org/foo', 1);
-      final handler = _createHandler(router);
+      final handler = createHandler(router);
 
       final request = _request('/foo', host: 'WWW.EXAMPLE.ORG');
       final result = await handler(request);
@@ -614,7 +624,7 @@ void main() {
       'then port is stripped from routing path (Uri.host behavior)',
       () async {
         final router = Router<int>()..get('example.com/foo', 1);
-        final handler = _createHandler(router);
+        final handler = createHandler(router);
 
         // Host with port - port is stripped by Uri.host
         final requestWithPort = _request('/foo', host: 'example.com:8080');
@@ -826,7 +836,7 @@ void main() {
       final request = RequestInternal.create(
         Method.get,
         Uri.parse('http://public.example.com$rawPath'),
-        Object(),
+        null,
       );
       final result = await handlerFor(vhostRouter())(request);
       return (result as Response).statusCode;
@@ -873,7 +883,7 @@ void main() {
       final request = RequestInternal.create(
         Method.get,
         Uri.parse('http://localhost$rawPath'),
-        Object(),
+        null,
       );
       final result = await handlerFor(aclRouter())(request) as Response;
       if (result.statusCode != 200) return 'none';

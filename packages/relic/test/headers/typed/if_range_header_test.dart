@@ -23,12 +23,12 @@ void main() {
       expect(
         getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.ifRange,
+          touchHeaders: (h) => h.ifRange,
           headers: {'if-range': ''},
         ),
         throwsA(
           isA<BadRequestException>().having(
-            (final e) => e.message,
+            (e) => e.message,
             'message',
             contains('Value cannot be empty'),
           ),
@@ -43,12 +43,12 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (final h) => h.ifRange,
+            touchHeaders: (h) => h.ifRange,
             headers: {'if-range': 'invalid-etag'},
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (final e) => e.message,
+              (e) => e.message,
               'message',
               contains('Invalid format'),
             ),
@@ -74,7 +74,7 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.ifRange,
+          touchHeaders: (h) => h.ifRange,
           headers: {'if-range': '"123456"'},
         );
 
@@ -88,7 +88,7 @@ void main() {
         'then it is accepted (a consumer treats it as a no-match)', () async {
       final headers = await getServerRequestHeaders(
         server: server,
-        touchHeaders: (final h) => h.ifRange,
+        touchHeaders: (h) => h.ifRange,
         headers: {'if-range': 'W/"123456"'},
       );
 
@@ -100,7 +100,7 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.ifRange,
+          touchHeaders: (h) => h.ifRange,
           headers: {'if-range': 'Wed, 21 Oct 2015 07:28:00 GMT'},
         );
 
@@ -117,7 +117,7 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.ifRange,
+          touchHeaders: (h) => h.ifRange,
           headers: {},
         );
 
@@ -143,7 +143,7 @@ void main() {
           headers: {'if-range': 'invalid-value'},
         );
 
-        expect(Headers.ifRange[headers].valueOrNullIfInvalid, isNull);
+        expect(headers.tryGet(Headers.ifRange), isNull);
         expect(() => headers.ifRange, throwsInvalidHeader);
       });
     });

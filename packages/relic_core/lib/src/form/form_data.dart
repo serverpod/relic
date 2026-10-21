@@ -1,10 +1,12 @@
 import 'dart:async';
 import 'dart:typed_data';
 
+import 'package:async/async.dart';
+
 import '../accessor/accessor.dart';
 import '../body/body.dart';
-import '../headers/headers.dart';
 import '../body/types/body_type.dart';
+import '../headers/headers.dart';
 
 /// Limits used while parsing HTML forms and multipart uploads.
 final class FormLimits {
@@ -53,15 +55,15 @@ final class FormLimits {
 
   /// Returns a copy with the given limits replaced.
   FormLimits copyWith({
-    final int? maxBodySize,
-    final int? maxFieldCount,
-    final int? maxFileCount,
-    final int? maxPartCount,
-    final int? maxFieldSize,
-    final int? maxFileSize,
-    final int? maxTotalFileSize,
-    final int? maxPartHeaderSize,
-    final int? maxBoundarySize,
+    int? maxBodySize,
+    int? maxFieldCount,
+    int? maxFileCount,
+    int? maxPartCount,
+    int? maxFieldSize,
+    int? maxFileSize,
+    int? maxTotalFileSize,
+    int? maxPartHeaderSize,
+    int? maxBoundarySize,
   }) {
     return FormLimits(
       maxBodySize: maxBodySize ?? this.maxBodySize,
@@ -232,7 +234,7 @@ final class MultipartFormData implements FormData {
   MultipartFormData({
     required this.fields,
     required this.files,
-    required final Iterable<FormEntry> entries,
+    required Iterable<FormEntry> entries,
   }) : entries = List.unmodifiable(entries);
 
   /// Disposes all uploaded files associated with this form.
@@ -261,7 +263,7 @@ final class FormFieldEntry implements FormEntry {
   const FormFieldEntry({required this.name, required this.value});
 
   @override
-  bool operator ==(final Object other) =>
+  bool operator ==(Object other) =>
       identical(this, other) ||
       other is FormFieldEntry && name == other.name && value == other.value;
 
@@ -296,28 +298,28 @@ final class FileFieldEntry implements FormEntry {
 /// [FormFields] reports as [InvalidFormFieldException]. An [Error] propagates
 /// unchanged. Catch the [ArgumentError] from a decoder such as
 /// `Enum.values.byName` and throw a [FormatException] instead.
-class FormField<T extends Object> extends ReadOnlyAccessor<T, String, String> {
+class FormField<T extends Object> extends FunctionAccessor<T, String, String> {
   const FormField(super.key, super.decode);
 }
 
 /// A form field accessor that returns the value as is.
 final class StringFormField extends FormField<String> {
-  const StringFormField(final String key) : super(key, _identity);
+  const StringFormField(String key) : super(key, _identity);
 }
 
 /// A form field accessor that parses values as [num].
 final class NumFormField extends FormField<num> {
-  const NumFormField(final String key) : super(key, num.parse);
+  const NumFormField(String key) : super(key, num.parse);
 }
 
 /// A form field accessor that parses values as [int].
 final class IntFormField extends FormField<int> {
-  const IntFormField(final String key) : super(key, int.parse);
+  const IntFormField(String key) : super(key, int.parse);
 }
 
 /// A form field accessor that parses values as [double].
 final class DoubleFormField extends FormField<double> {
-  const DoubleFormField(final String key) : super(key, double.parse);
+  const DoubleFormField(String key) : super(key, double.parse);
 }
 
 /// Text form fields, read through [FormField] accessors.
@@ -329,7 +331,7 @@ final class FormFields extends AccessorState<String, String> {
   final List<FormFieldEntry> entries;
 
   /// Creates form fields from [entries].
-  factory FormFields(final Iterable<FormFieldEntry> entries) =>
+  factory FormFields(Iterable<FormFieldEntry> entries) =>
       FormFields._(List.unmodifiable(entries));
 
   FormFields._(this.entries)
@@ -344,16 +346,14 @@ final class FormFields extends AccessorState<String, String> {
   /// Throws [MissingFormFieldException] if the field is absent, and
   /// [InvalidFormFieldException] if the value does not decode.
   @override
-  T get<T extends Object>(final ReadOnlyAccessor<T, String, String> accessor) =>
+  T get<T extends Object>(ReadOnlyAccessor<T, String, String> accessor) =>
       call(accessor) ?? (throw MissingFormFieldException(accessor.key));
 
   /// Returns the decoded first value for [accessor], or null if absent.
   ///
   /// Throws [InvalidFormFieldException] if the value does not decode.
   @override
-  T? call<T extends Object>(
-    final ReadOnlyAccessor<T, String, String> accessor,
-  ) {
+  T? call<T extends Object>(ReadOnlyAccessor<T, String, String> accessor) {
     try {
       return super.call(accessor);
     } on Exception catch (error) {
@@ -365,7 +365,7 @@ final class FormFields extends AccessorState<String, String> {
   ///
   /// Throws [InvalidFormFieldException] if a value does not decode.
   List<T> getAll<T extends Object>(
-    final ReadOnlyAccessor<T, String, String> accessor,
+    ReadOnlyAccessor<T, String, String> accessor,
   ) {
     return [
       for (final entry in entries)
@@ -375,8 +375,8 @@ final class FormFields extends AccessorState<String, String> {
 }
 
 T _decode<T extends Object>(
-  final ReadOnlyAccessor<T, String, String> accessor,
-  final String value,
+  ReadOnlyAccessor<T, String, String> accessor,
+  String value,
 ) {
   try {
     return accessor.decode(value);
@@ -385,7 +385,7 @@ T _decode<T extends Object>(
   }
 }
 
-String _identity(final String value) => value;
+String _identity(String value) => value;
 
 /// A read-only accessor for an uploaded file.
 ///
@@ -394,11 +394,11 @@ String _identity(final String value) => value;
 /// final avatar = form.files.get(avatarFile);
 /// ```
 final class FormFile
-    extends ReadOnlyAccessor<UploadedFile, String, UploadedFile> {
-  const FormFile(final String key) : super(key, _identityFile);
+    extends FunctionAccessor<UploadedFile, String, UploadedFile> {
+  const FormFile(String key) : super(key, _identityFile);
 }
 
-UploadedFile _identityFile(final UploadedFile file) => file;
+UploadedFile _identityFile(UploadedFile file) => file;
 
 /// Uploaded files, read through [FormFile] accessors.
 ///
@@ -409,7 +409,7 @@ final class UploadedFiles extends AccessorState<String, UploadedFile> {
   final List<FileFieldEntry> entries;
 
   /// Creates uploaded files from [entries].
-  factory UploadedFiles(final Iterable<FileFieldEntry> entries) =>
+  factory UploadedFiles(Iterable<FileFieldEntry> entries) =>
       UploadedFiles._(List.unmodifiable(entries));
 
   UploadedFiles._(this.entries)
@@ -424,12 +424,11 @@ final class UploadedFiles extends AccessorState<String, UploadedFile> {
   /// Throws [MissingFormFieldException] if the form has no file for
   /// [accessor].
   @override
-  T get<T extends Object>(
-    final ReadOnlyAccessor<T, String, UploadedFile> accessor,
-  ) => call(accessor) ?? (throw MissingFormFieldException(accessor.key));
+  T get<T extends Object>(ReadOnlyAccessor<T, String, UploadedFile> accessor) =>
+      call(accessor) ?? (throw MissingFormFieldException(accessor.key));
 
   /// Returns every file for [accessor] in form order.
-  List<UploadedFile> getAll(final FormFile accessor) => [
+  List<UploadedFile> getAll(FormFile accessor) => [
     for (final entry in entries)
       if (entry.name == accessor.key) entry.file,
   ];
@@ -480,21 +479,17 @@ final class MemoryUploadStorage implements UploadStorage {
 
   @override
   Future<UploadedFile> store({
-    required final String fieldName,
-    required final String? filename,
-    required final BodyType? bodyType,
-    required final Headers headers,
-    required final Stream<Uint8List> content,
+    required String fieldName,
+    required String? filename,
+    required BodyType? bodyType,
+    required Headers headers,
+    required Stream<Uint8List> content,
   }) async {
-    final builder = BytesBuilder(copy: false);
-    await for (final chunk in content) {
-      builder.add(chunk);
-    }
     return MemoryUploadedFile(
       filename: filename,
       bodyType: bodyType,
       headers: headers,
-      bytes: builder.takeBytes(),
+      bytes: await collectBytes(content),
       copy: false,
     );
   }
@@ -521,8 +516,8 @@ final class MemoryUploadedFile implements UploadedFile {
     required this.filename,
     required this.bodyType,
     required this.headers,
-    required final Uint8List bytes,
-    final bool copy = true,
+    required Uint8List bytes,
+    bool copy = true,
   }) : _bytes = copy ? Uint8List.fromList(bytes) : bytes;
 
   @override

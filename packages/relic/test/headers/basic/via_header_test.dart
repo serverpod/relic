@@ -23,11 +23,11 @@ void main() {
         getServerRequestHeaders(
           server: server,
           headers: {'via': ''},
-          touchHeaders: (final h) => h.via,
+          touchHeaders: (h) => h.via,
         ),
         throwsA(
           isA<BadRequestException>().having(
-            (final e) => e.message,
+            (e) => e.message,
             'message',
             contains('Value cannot be empty'),
           ),
@@ -53,7 +53,7 @@ void main() {
         final headers = await getServerRequestHeaders(
           server: server,
           headers: {'via': '1.1 example.com, 1.0 another.com'},
-          touchHeaders: (final h) => h.via,
+          touchHeaders: (h) => h.via,
         );
 
         expect(headers.via, equals(['1.1 example.com', '1.0 another.com']));
@@ -66,7 +66,7 @@ void main() {
         final headers = await getServerRequestHeaders(
           server: server,
           headers: {'via': ' 1.1 example.com , 1.0 another.com '},
-          touchHeaders: (final h) => h.via,
+          touchHeaders: (h) => h.via,
         );
 
         expect(headers.via, equals(['1.1 example.com', '1.0 another.com']));
@@ -80,7 +80,7 @@ void main() {
         final headers = await getServerRequestHeaders(
           server: server,
           headers: {'via': '1.1 example.com, 1.0 another.com, 1.0 another.com'},
-          touchHeaders: (final h) => h.via,
+          touchHeaders: (h) => h.via,
         );
 
         expect(headers.via, equals(['1.1 example.com', '1.0 another.com']));
@@ -91,7 +91,7 @@ void main() {
       final headers = await getServerRequestHeaders(
         server: server,
         headers: {},
-        touchHeaders: (final h) => h.via,
+        touchHeaders: (h) => h.via,
       );
 
       expect(headers.via, isNull);
@@ -115,7 +115,7 @@ void main() {
           headers: {'via': ''},
         );
 
-        expect(Headers.via[headers].valueOrNullIfInvalid, isNull);
+        expect(headers.tryGet(Headers.via), isNull);
         expect(() => headers.via, throwsInvalidHeader);
       });
     });

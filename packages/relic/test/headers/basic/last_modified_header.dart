@@ -26,11 +26,11 @@ void main() {
           getServerRequestHeaders(
             server: server,
             headers: {'last-modified': ''},
-            touchHeaders: (final h) => h.lastModified,
+            touchHeaders: (h) => h.lastModified,
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (final e) => e.message,
+              (e) => e.message,
               'message',
               contains('Value cannot be empty'),
             ),
@@ -46,11 +46,11 @@ void main() {
         getServerRequestHeaders(
           server: server,
           headers: {'last-modified': 'invalid-date-format'},
-          touchHeaders: (final h) => h.lastModified,
+          touchHeaders: (h) => h.lastModified,
         ),
         throwsA(
           isA<BadRequestException>().having(
-            (final e) => e.message,
+            (e) => e.message,
             'message',
             contains('Invalid date format'),
           ),
@@ -75,7 +75,7 @@ void main() {
       final headers = await getServerRequestHeaders(
         server: server,
         headers: {'last-modified': 'Wed, 21 Oct 2015 07:28:00 GMT'},
-        touchHeaders: (final h) => h.lastModified,
+        touchHeaders: (h) => h.lastModified,
       );
 
       expect(
@@ -90,7 +90,7 @@ void main() {
         final headers = await getServerRequestHeaders(
           server: server,
           headers: {'last-modified': ' Wed, 21 Oct 2015 07:28:00 GMT '},
-          touchHeaders: (final h) => h.lastModified,
+          touchHeaders: (h) => h.lastModified,
         );
 
         expect(
@@ -106,7 +106,7 @@ void main() {
         final headers = await getServerRequestHeaders(
           server: server,
           headers: {},
-          touchHeaders: (final h) => h.lastModified,
+          touchHeaders: (h) => h.lastModified,
         );
 
         expect(headers.lastModified, isNull);
@@ -131,7 +131,7 @@ void main() {
           headers: {'last-modified': ''},
         );
 
-        expect(Headers.lastModified[headers].valueOrNullIfInvalid, isNull);
+        expect(headers.tryGet(Headers.lastModified), isNull);
         expect(() => headers.lastModified, throwsInvalidHeader);
       });
     });
@@ -144,7 +144,7 @@ void main() {
           headers: {'last-modified': 'invalid-date-format'},
         );
 
-        expect(Headers.lastModified[headers].valueOrNullIfInvalid, isNull);
+        expect(headers.tryGet(Headers.lastModified), isNull);
         expect(() => headers.lastModified, throwsInvalidHeader);
       });
     });

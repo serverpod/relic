@@ -92,6 +92,10 @@ class _RoutingMiddlewareBuilder<T extends Object> {
   final bool useHostWhenRouting;
   late final Handler Function(T) _toHandler;
 
+  /// Whether the routed values are handlers, so the router itself is
+  /// exposed to them. Decided once: the check allocates.
+  final bool _routesHandlers = _isSubtype<T, Handler>();
+
   _RoutingMiddlewareBuilder(
     this._router, {
     this.backtrack = true,
@@ -100,7 +104,7 @@ class _RoutingMiddlewareBuilder<T extends Object> {
   }) {
     if (toHandler != null) {
       _toHandler = toHandler;
-    } else if (_isSubtype<T, Handler>()) {
+    } else if (_routesHandlers) {
       _toHandler = (final x) => x as Handler;
     }
     ArgumentError.checkNotNull(_toHandler, 'toHandler');
@@ -108,17 +112,23 @@ class _RoutingMiddlewareBuilder<T extends Object> {
 
   Middleware get asMiddleware => call;
 
+  /// Passes a sync handler's response through without a Future, so a
+  /// route that answers synchronously reaches the adapter without a
+  /// microtask hop.
   Handler call(final Handler next) {
-    return (final req) async {
+    return (final req) {
       final result = useHostWhenRouting
           ? _router.lookupPath(
               req.method,
               NormalizedPath.fromSegments([
                 req.url.host,
-                ...NormalizedPath.fromUri(req.url).segments,
+                ...req.target.pathSegments,
               ]),
             )
-          : _router.lookupUri(req.method, req.url);
+          : _router.lookupPath(
+              req.method,
+              NormalizedPath.fromPathSegments(req.target.pathSegments),
+            );
       switch (result) {
         case MethodMiss():
           return Response(
@@ -126,18 +136,18 @@ class _RoutingMiddlewareBuilder<T extends Object> {
             headers: Headers.build((final mh) => mh.allow = result.allowed),
           );
         case PathMiss():
-          return await next(req);
+          return next(req);
         case final RouterMatch<T> match:
           _routingContext[req] = (
             parameters: match.parameters,
             matched: match.matched,
             remaining: match.remaining,
           );
-          if (_isSubtype<T, Handler>()) {
+          if (_routesHandlers) {
             _routerProperty[req] = _router as RelicRouter;
           }
           final handler = _toHandler(match.value);
-          return await handler(req);
+          return handler(req);
       }
     };
   }

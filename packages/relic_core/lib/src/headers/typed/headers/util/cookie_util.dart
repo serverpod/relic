@@ -1,89 +1,122 @@
+import 'dart:typed_data';
+
 /// Validates the cookie name and returns a string representation of the cookie name.
 String validateCookieName(final String name) {
-  // Allow empty names
-  if (name.isEmpty) return name;
-
-  // Disallowed characters (separators)
-  const separators = {
-    '(',
-    ')',
-    '<',
-    '>',
-    '@',
-    ',',
-    ';',
-    ':',
-    r'\',
-    '"',
-    '/',
-    '[',
-    ']',
-    '?',
-    '=',
-    '{',
-    '}',
-  };
-
   for (int i = 0; i < name.length; i++) {
-    final int codeUnit = name.codeUnitAt(i);
-
-    // Disallow control characters, non-ASCII characters, and reserved separators
-    if (
-    // Disallows ASCII control characters (code points 0-32), including spaces, tabs, and other non-printable characters
-    codeUnit <= 32 ||
-        // Disallows non-ASCII characters (code points 127 and above), ensuring only standard ASCII is used
-        codeUnit >= 127 ||
-        // Disallows reserved separator characters [separators], based on RFC 6265
-        separators.contains(name[i])) {
+    if (!isCookieNameChar(name.codeUnitAt(i))) {
       throw const FormatException('Invalid cookie name');
     }
   }
-
   return name;
+}
+
+/// Whether [codeUnit] may appear in a cookie name.
+///
+/// A token character of RFC 6265 4.1.1, visible ASCII less the separators.
+bool isCookieNameChar(final int codeUnit) =>
+    codeUnit < 0x80 && _asciiClasses[codeUnit] & _nameChar != 0;
+
+/// Whether [codeUnit] is a cookie-octet of RFC 6265 4.1.1, visible ASCII
+/// less double quote, comma, semicolon and backslash.
+bool isCookieOctet(final int codeUnit) =>
+    codeUnit < 0x80 && _asciiClasses[codeUnit] & _octet != 0;
+
+const _octet = 1;
+const _nameChar = 2;
+
+/// The class bits of every ASCII code unit.
+///
+/// A scan over a header value then does one load per character instead of
+/// the range checks below that define the classes.
+final Uint8List _asciiClasses = Uint8List.fromList([
+  for (var c = 0; c < 0x80; c++)
+    (_isCookieOctet(c) ? _octet : 0) | (_isCookieNameChar(c) ? _nameChar : 0),
+]);
+
+bool _isCookieNameChar(final int codeUnit) {
+  if (codeUnit <= 0x20 || codeUnit >= 0x7F) return false;
+  return switch (codeUnit) {
+    0x28 || // (
+    0x29 || // )
+    0x3C || // <
+    0x3E || // >
+    0x40 || // @
+    0x2C || // ,
+    0x3B || // ;
+    0x3A || // :
+    0x5C || // backslash
+    0x22 || // "
+    0x2F || // /
+    0x5B || // [
+    0x5D || // ]
+    0x3F || // ?
+    0x3D || // =
+    0x7B || // {
+    0x7D => false, // }
+    _ => true,
+  };
 }
 
 /// Validates the cookie value and returns a string representation of the cookie value.
 String validateCookieValue(final String value) {
-  // Allow empty values
-  if (value.isEmpty) return value;
-
-  // Check for quoted strings
-  int start = 0;
-  int end = value.length;
-
-  if (value.length >= 2 &&
-      // Starting with '"'
-      value.codeUnitAt(start) == 0x22 &&
-      // Ending with '"'
-      value.codeUnitAt(end - 1) == 0x22) {
-    start++;
-    end--;
+  if (!isCookieValue(value, 0, value.length)) {
+    throw const FormatException('Invalid cookie value');
   }
-
-  // Validate characters inside the string
-  for (int i = start; i < end; i++) {
-    final int codeUnit = value.codeUnitAt(i);
-
-    if (!(
-    // '!' (ASCII 33) is allowed
-    codeUnit == 0x21 ||
-        // '#' (35) to '+' (43) are allowed, including symbols like '#', '$', '%', '&', and '+'
-        (codeUnit >= 0x23 && codeUnit <= 0x2B) ||
-        // '-' (45) to ':' (58) are allowed, covering '-', '.', '/', '0-9', and ':'
-        (codeUnit >= 0x2D && codeUnit <= 0x3A) ||
-        // '<' (60) to '[' (91) are allowed, covering '<', '=', '>', '?', '@', 'A-Z', and '['
-        (codeUnit >= 0x3C && codeUnit <= 0x5B) ||
-        // ']' (93) to '~' (126) are allowed, covering ']', '^', '_', '`', 'a-z', '{', '|', '}', and '~'
-        (codeUnit >= 0x5D && codeUnit <= 0x7E))) {
-      throw const FormatException('Invalid cookie value');
-    }
-  }
-
   // Cookie values are an opaque octet string per RFC 6265; servers MUST NOT
   // percent-decode them. Any URL encoding is an application-level convention
   // and should be applied/reversed by the application, not the parser.
   return value;
 }
+
+/// Whether `text[start..end)` is a cookie-value of RFC 6265 4.1.1,
+/// cookie-octets optionally inside one pair of double quotes.
+bool isCookieValue(final String text, int start, int end) {
+  if (end - start >= 2 &&
+      text.codeUnitAt(start) == 0x22 &&
+      text.codeUnitAt(end - 1) == 0x22) {
+    start++;
+    end--;
+  }
+  final classes = _asciiClasses;
+  for (int i = start; i < end; i++) {
+    final codeUnit = text.codeUnitAt(i);
+    if (codeUnit >= 0x80 || classes[codeUnit] & _octet == 0) return false;
+  }
+  return true;
+}
+
+/// Whether `text[start..end)` is a non-empty cookie-name of RFC 6265 4.1.1.
+bool isCookieName(final String text, final int start, final int end) {
+  if (start >= end) return false;
+  final classes = _asciiClasses;
+  for (int i = start; i < end; i++) {
+    final codeUnit = text.codeUnitAt(i);
+    if (codeUnit >= 0x80 || classes[codeUnit] & _nameChar == 0) return false;
+  }
+  return true;
+}
+
+bool _isCookieOctet(final int codeUnit) =>
+    codeUnit == 0x21 ||
+    (codeUnit >= 0x23 && codeUnit <= 0x2B) ||
+    (codeUnit >= 0x2D && codeUnit <= 0x3A) ||
+    (codeUnit >= 0x3C && codeUnit <= 0x5B) ||
+    (codeUnit >= 0x5D && codeUnit <= 0x7E);
+
+/// Whether [codeUnit] is one of the characters `String.trim` strips.
+bool isTrimWhitespace(final int codeUnit) =>
+    codeUnit == 0x20 ||
+    (codeUnit >= 0x09 && codeUnit <= 0x0D) ||
+    codeUnit == 0x85 ||
+    codeUnit == 0xA0 ||
+    codeUnit == 0x1680 ||
+    (codeUnit >= 0x2000 && codeUnit <= 0x200A) ||
+    codeUnit == 0x2028 ||
+    codeUnit == 0x2029 ||
+    codeUnit == 0x202F ||
+    codeUnit == 0x205F ||
+    codeUnit == 0x3000 ||
+    codeUnit == 0xFEFF;
 
 /// Validates a Set-Cookie `Path` (or `Domain` path-style) attribute value and
 /// returns it unchanged.

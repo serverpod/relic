@@ -73,11 +73,7 @@ typedef Responder = FutureOr<Response> Function(Request);
 ///   ),
 /// );
 /// ```
-Handler respondWith(final Responder responder) {
-  return (final req) async {
-    return await responder(req);
-  };
-}
+Handler respondWith(Responder responder) => responder;
 
 /// An abstract base class for classes that behave like [Handler]s.
 ///
@@ -92,10 +88,10 @@ abstract class HandlerObject implements RouterInjectable {
   /// Adds this handler to the given [router] with [Method.get] and path '/'
   /// Override to add differently.
   @override
-  void injectIn(final RelicRouter router) => router.get('/', call);
+  void injectIn(RelicRouter router) => router.get('/', call);
 
   /// The implementation of this [HandlerObject]
-  FutureOr<Result> call(final Request req);
+  FutureOr<Result> call(Request req);
 
   /// Returns this [HandlerObject] as a [Handler].
   Handler get asHandler => call;

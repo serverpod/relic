@@ -16,7 +16,7 @@ typedef RawPathParam = String;
 /// });
 /// ```
 class PathParam<T extends Object>
-    extends ReadOnlyAccessor<T, Symbol, RawPathParam> {
+    extends FunctionAccessor<T, Symbol, RawPathParam> {
   const PathParam(super.key, super.decode);
 }
 

@@ -1,9 +1,10 @@
 import 'dart:async';
 import 'dart:io' as io;
-
-import 'package:stream_channel/stream_channel.dart';
+import 'dart:typed_data';
 
 import 'package:relic_core/relic_core.dart';
+import 'package:stream_channel/stream_channel.dart';
+
 import 'bind_http_server.dart';
 import 'io_relic_web_socket.dart';
 import 'request.dart';
@@ -14,29 +15,29 @@ import 'response.dart';
 /// This adapter bridges Relic with a standard Dart HTTP server, allowing
 /// Relic applications to handle HTTP requests and responses, as well as
 /// WebSocket connections.
-class IOAdapter extends Adapter {
+class IOAdapter implements Adapter {
   final io.HttpServer _server;
+  StreamSubscription<io.HttpRequest>? _subscription;
 
   /// Connections that have been detached from [_server].
   ///
   /// Hijacking and upgrading both take the connection out of the underlying
   /// server's bookkeeping, so from that point on nothing else knows they
-  /// exist. They are tracked here so shutdown can close them and
-  /// [connectionsInfo] can report them.
+  /// exist. This set lets a forced close drop the hijacked ones and lets
+  /// [connectionsInfo] report both kinds.
   final _hijackedSockets = <io.Socket>{};
   final _webSockets = <IORelicWebSocket>{};
 
-  /// How long a graceful shutdown waits for a detached connection to finish
-  /// on its own before it is closed anyway.
+  /// Exchanges handed to the sink that have not ended.
   ///
-  /// Without a ceiling a peer that never answers would keep the shutdown
-  /// pending forever.
-  static const _drainTimeout = Duration(seconds: 5);
+  /// dart:io's own close does not wait for them.
+  var _inFlight = 0;
+  Completer<void>? _drained;
 
   /// Creates an [IOAdapter] that wraps the provided [io.HttpServer].
   ///
-  /// The adapter will listen for incoming requests from the [_server] and
-  /// expose them through the [requests] stream.
+  /// The adapter listens for requests from [_server] once [start] is
+  /// called.
   IOAdapter(this._server);
 
   /// Binds an HTTP server to the given [address] and [port].
@@ -58,12 +59,12 @@ class IOAdapter extends Adapter {
   ///
   /// Returns a [Future] that completes with the bound [io.HttpServer].
   static Future<IOAdapter> bind(
-    final io.InternetAddress address, {
-    final int port = 0,
-    final io.SecurityContext? context,
-    final int backlog = 0,
-    final bool v6Only = false,
-    final bool shared = false,
+    io.InternetAddress address, {
+    int port = 0,
+    io.SecurityContext? context,
+    int backlog = 0,
+    bool v6Only = false,
+    bool shared = false,
   }) async {
     return IOAdapter(
       await bindHttpServer(
@@ -81,90 +82,65 @@ class IOAdapter extends Adapter {
   io.InternetAddress get address => _server.address;
 
   @override
-  int get port => _server.port;
+  AdapterCapabilities get capabilities =>
+      const AdapterCapabilities(hijack: true, webSocket: true);
 
   @override
-  Stream<AdapterRequest> get requests => _server.map(IOAdapterRequest.new);
+  List<Listener> get listeners => [
+    Listener(Transport.tcp, _server.address.address, _server.port, const {
+      HttpProtocol.http10,
+      HttpProtocol.http11,
+    }),
+  ];
 
   @override
-  Future<void> respond(
-    covariant final IOAdapterRequest request,
-    final Response response,
-  ) async {
-    final httpResponse = request._httpRequest.response;
-    await response.writeHttpResponse(httpResponse);
+  void start(ExchangeSink sink) {
+    if (_subscription != null) throw StateError('start was already called');
+    _subscription = _server.listen((request) {
+      _inFlight++;
+      final pending = sink(IOExchange._(this, request));
+      // The sink never fails by contract. An error here is a bug in the
+      // core, and the zone around `start` reports it.
+      if (pending is Future<void>) unawaited(pending);
+    });
   }
 
+  /// Without [force], dart:io stops accepting and closes idle connections.
+  ///
+  /// The returned future completes once the exchanges in flight have ended.
+  /// Detached connections are the server's to close before that. A forced
+  /// close completes a graceful one that is still waiting.
   @override
-  Future<void> hijack(
-    covariant final IOAdapterRequest request,
-    final HijackCallback callback,
-  ) async {
-    final socket = await request._httpRequest.response.detachSocket(
-      writeHeaders: false,
-    );
-    _hijackedSockets.add(socket);
-    unawaited(
-      socket.done
-          .catchError((final _) {})
-          .whenComplete(() => _hijackedSockets.remove(socket)),
-    );
-    callback(StreamChannel(socket, socket));
-  }
-
-  @override
-  Future<void> connect(
-    covariant final IOAdapterRequest request,
-    final WebSocketCallback callback,
-  ) async {
-    final webSocket = await IORelicWebSocket.fromHttpRequest(
-      request._httpRequest,
-    );
-    _webSockets
-      ..removeWhere((final ws) => ws.isClosed)
-      ..add(webSocket);
-    callback(webSocket);
-  }
-
-  @override
-  Future<void> close({final bool force = false}) async {
+  Future<void> close({bool force = false}) async {
     if (force) {
       await _server.close(force: true);
       _destroyDetached();
+      _settleDrained();
       return;
     }
     await _server.close();
-    await _closeDetached().timeout(_drainTimeout, onTimeout: _destroyDetached);
-    _destroyDetached();
+    if (_inFlight > 0) await (_drained ??= Completer<void>()).future;
   }
 
-  /// Asks every detached connection to close, telling WebSocket peers that
-  /// the server is going away (RFC 6455 1001).
-  ///
-  /// The tracking sets are deliberately left alone: a hijacked socket removes
-  /// itself when it completes, so whatever is still tracked when the drain
-  /// deadline passes is exactly what [_destroyDetached] must drop.
-  Future<void> _closeDetached() async {
-    await Future.wait([
-      for (final ws in _webSockets.toList()) ws.closeGoingAway(),
-      for (final socket in _hijackedSockets.toList()) socket.close(),
-    ], eagerError: false).catchError((final _) => const <Object?>[]);
+  void _finished() {
+    _inFlight--;
+    if (_inFlight == 0) _settleDrained();
+  }
+
+  void _settleDrained() {
+    final drained = _drained;
+    if (drained != null && !drained.isCompleted) drained.complete();
   }
 
   /// Drops whatever is left without waiting for the peer.
   ///
-  /// Hijacked sockets are destroyed outright. WebSockets get a fire-and-forget
-  /// [IORelicWebSocket.closeGoingAway] instead: `dart:io` exposes no hard
-  /// teardown for an upgraded socket, but bounds internally how long a peer
-  /// can stall the close handshake.
+  /// dart:io exposes no hard teardown for an upgraded socket. It does bound
+  /// the close handshake the server started itself.
   void _destroyDetached() {
     for (final socket in _hijackedSockets.toList()) {
       socket.destroy();
     }
     _hijackedSockets.clear();
-    for (final ws in _webSockets.toList()) {
-      unawaited(ws.closeGoingAway());
-    }
     _webSockets.clear();
   }
 
@@ -173,19 +149,164 @@ class IOAdapter extends Adapter {
     final info = _server.connectionsInfo();
     final detached =
         _hijackedSockets.length +
-        _webSockets.where((final ws) => !ws.isClosed).length;
+        _webSockets.where((ws) => !ws.isClosed).length;
     return (
       active: info.active + detached,
       closing: info.closing,
       idle: info.idle,
     );
   }
+
+  void _trackHijacked(io.Socket socket) {
+    _hijackedSockets.add(socket);
+    unawaited(
+      socket.done
+          .catchError((_) {})
+          .whenComplete(() => _hijackedSockets.remove(socket)),
+    );
+  }
+
+  void _trackWebSocket(IORelicWebSocket webSocket) {
+    _webSockets.add(webSocket);
+    unawaited(webSocket.done.whenComplete(() => _webSockets.remove(webSocket)));
+  }
 }
 
-class IOAdapterRequest extends AdapterRequest {
-  final io.HttpRequest _httpRequest;
-  IOAdapterRequest(this._httpRequest);
+/// One `dart:io` request and its response.
+final class IOExchange with ExchangeEndState implements AdapterExchange {
+  final IOAdapter _adapter;
+  final io.HttpRequest _request;
+
+  /// The [cancelled] future of a caller that asked before the peer went
+  /// away.
+  Completer<void>? _cancelled;
+
+  /// The request body handed to the handler, so [hijack] can tell whether
+  /// the handler read it.
+  Body? _body;
+
+  IOExchange._(this._adapter, this._request) {
+    // dart:io reports a peer that went away as an error on `done`. That is
+    // its only signal, and it fires only once something was written, so
+    // `cancelled` is best effort on this adapter.
+    _request.response.done.then(
+      (_) {},
+      onError: (Object _) => _finish(ExchangeEnd.cancelledByPeer),
+    );
+  }
 
   @override
-  Request toRequest() => fromHttpRequest(_httpRequest);
+  HttpProtocol get protocol => httpProtocolOf(_request);
+
+  @override
+  Request toRequest() {
+    final request = fromHttpRequest(_request, this);
+    _body = request.body;
+    return request;
+  }
+
+  /// A write that fails leaves the exchange open.
+  ///
+  /// The core then answers with an error response, or calls [abort] when
+  /// that fails too. Either one ends the exchange.
+  @override
+  Future<void> respond(Response response) async {
+    await response.writeHttpResponse(
+      _request.response,
+      head: _request.method == 'HEAD',
+      protocol: httpProtocolOf(_request),
+      keepAlive: _request.persistentConnection,
+    );
+    _finish(ExchangeEnd.completed);
+  }
+
+  /// Refuses a chunked request body that the handler has not read.
+  ///
+  /// Such a body arrives decoded by dart:io's parser, not as the peer sent
+  /// it. A body with a length is the peer's bytes as they are.
+  @override
+  Future<StreamChannel<Uint8List>> hijack() async {
+    final body = _body;
+    if (body != null && body.contentLength == null && !body.isRead) {
+      throw StateError(
+        'The request body is chunked and was not read to its end. '
+        'Read it before hijacking the connection',
+      );
+    }
+    final socket = await _request.response.detachSocket(writeHeaders: false);
+    _adapter._trackHijacked(socket);
+    _finish(ExchangeEnd.hijacked);
+    return StreamChannel<Uint8List>(socket, _SocketSink(socket));
+  }
+
+  /// dart:io computes the accept key itself, so [acceptKey] goes unused.
+  @override
+  Future<RelicWebSocket> upgradeWebSocket(String acceptKey) async {
+    final webSocket = await IORelicWebSocket.fromHttpRequest(_request);
+    _adapter._trackWebSocket(webSocket);
+    _finish(ExchangeEnd.upgraded);
+    return webSocket;
+  }
+
+  @override
+  void abort() {
+    if (end != null) return;
+    _finish(ExchangeEnd.aborted);
+    final response = _request.response;
+    try {
+      unawaited(
+        response
+            .detachSocket(writeHeaders: false)
+            .then((socket) => socket.destroy())
+            .catchError((_) {}),
+      );
+    } on StateError {
+      // The head went out, and dart:io will not detach such a response. It
+      // does destroy the connection of a response that ends in an error. A
+      // body that failed on the socket has already ended it that way.
+      try {
+        response.addError(const io.SocketException('aborted'));
+      } on StateError {
+        // The failed body is still bound to the response.
+      }
+    }
+  }
+
+  @override
+  Future<void> get cancelled => end == ExchangeEnd.cancelledByPeer
+      ? Future.value()
+      : (_cancelled ??= Completer<void>()).future;
+
+  void _finish(ExchangeEnd end) {
+    if (!completeEnd(end)) return;
+    if (end == ExchangeEnd.cancelledByPeer) _cancelled?.complete();
+    _adapter._finished();
+  }
+}
+
+/// The socket's sink, narrowed to [Uint8List].
+///
+/// `StreamChannel.cast` would pipe a controller into the socket instead,
+/// which binds the socket sink to a stream, and a later `socket.close()`
+/// from shutdown then throws.
+final class _SocketSink implements StreamSink<Uint8List> {
+  final io.Socket _socket;
+
+  _SocketSink(this._socket);
+
+  @override
+  void add(Uint8List data) => _socket.add(data);
+
+  @override
+  void addError(Object error, [StackTrace? stackTrace]) =>
+      _socket.addError(error, stackTrace);
+
+  @override
+  Future<void> addStream(Stream<Uint8List> stream) => _socket.addStream(stream);
+
+  @override
+  Future<void> close() => _socket.close();
+
+  @override
+  Future<void> get done => _socket.done;
 }

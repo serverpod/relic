@@ -7,26 +7,23 @@ import 'package:test/test.dart';
 import 'package:test_utils/test_utils.dart';
 
 class _TestMessage extends Message {
-  _TestMessage(
-    final Headers? headers,
-    final Map<String, Object>? context, {
-    final Body? body,
-  }) : super(headers: headers ?? Headers.empty(), body: body ?? Body.empty());
+  _TestMessage(Headers? headers, Map<String, Object>? context, {Body? body})
+    : super(headers: headers ?? Headers.empty(), body: body ?? Body.empty());
 
   @override
   Message copyWith({
-    final Headers? headers,
-    final Map<String, Object>? context,
-    final Body? body,
+    Headers? headers,
+    Map<String, Object>? context,
+    Body? body,
   }) {
     throw UnimplementedError();
   }
 }
 
 Message _createMessage({
-  final Headers? headers,
-  final Map<String, Object>? context,
-  final Body? body,
+  Headers? headers,
+  Map<String, Object>? context,
+  Body? body,
 }) {
   return _TestMessage(headers, context, body: body);
 }
@@ -35,32 +32,34 @@ void main() {
   group('Given message headers', () {
     test('when accessed then they are case insensitive', () {
       final message = _createMessage(
-        headers: Headers.build((final mh) => mh['foo'] = ['bar']),
+        headers: Headers.build((mh) => mh['foo'] = ['bar']),
       );
 
-      expect(message.headers, containsPair('foo', ['bar']));
-      expect(message.headers, containsPair('Foo', ['bar']));
-      expect(message.headers, containsPair('FOO', ['bar']));
+      expect(message.headers['foo'], ['bar']);
+      expect(message.headers['Foo'], ['bar']);
+      expect(message.headers['FOO'], ['bar']);
     });
 
     test('when modified then they are immutable', () {
       final message = _createMessage(
-        headers: Headers.build((final mh) => mh['foo'] = ['bar']),
+        headers: Headers.build((mh) => mh['foo'] = ['bar']),
       );
-      expect(() => message.headers['h1'] = ['value1'], throwsUnsupportedError);
-      expect(() => message.headers['h1'] = ['value2'], throwsUnsupportedError);
-      expect(() => message.headers['h2'] = ['value2'], throwsUnsupportedError);
+      // Headers has no []= at all, so the only way to try is dynamically.
+      final dynamic headers = message.headers;
+      // ignore: avoid_dynamic_calls
+      expect(() => headers['h1'] = ['value1'], throwsNoSuchMethodError);
+      expect(message.headers, isNot(isA<MutableHeaders>()));
     });
 
     test('when containing multiple values then they are handled correctly', () {
       final message = _createMessage(
-        headers: Headers.build((final mh) {
+        headers: Headers.build((mh) {
           mh['a'] = ['A'];
           mh['b'] = ['B1', 'B2'];
         }),
       );
 
-      expect(message.headers, {
+      expect(message.headers.toMap(), {
         'a': ['A'],
         'b': ['B1', 'B2'],
       });
@@ -191,7 +190,7 @@ void main() {
       final request = _createMessage(
         body: Body.fromString('1\r\na0\r\n\r\n'),
         headers: Headers.build(
-          (final mh) => mh.transferEncoding = TransferEncodingHeader.encodings([
+          (mh) => mh.transferEncoding = TransferEncodingHeader.encodings([
             TransferEncoding.identity,
           ]),
         ),

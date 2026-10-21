@@ -1,11 +1,14 @@
 import 'dart:async';
+import 'dart:collection';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
 
+import 'package:async/async.dart';
 import 'package:mime/mime.dart';
 
+import '../headers/typed/headers/content_type_header.dart';
 import 'types/body_type.dart';
 import 'types/mime_type.dart';
 
@@ -78,14 +81,27 @@ import 'types/mime_type.dart';
 /// }
 /// ```
 class Body {
-  /// The contents of the message body.
+  /// The stream [read] hands out.
   ///
-  /// This will be `null` after [read] is called.
+  /// Null for a body built from [bytes]. [read] makes that stream on
+  /// demand, and an adapter that writes the bytes itself never asks for it.
   Stream<Uint8List>? _stream;
+  var _isRead = false;
+
+  /// Whether the body was read, by [read] or [BodyConsume.consume].
+  ///
+  /// A body is read once.
+  bool get isRead => _isRead;
 
   /// The length of the stream returned by [read], or `null` if that can't be
   /// determined efficiently.
   final int? contentLength;
+
+  /// The whole body, when it was built from bytes or a string.
+  ///
+  /// An adapter writes this in one call instead of draining [read]. Null
+  /// for a streamed body. Reading it does not count as reading the body.
+  final Uint8List? bytes;
 
   /// The media type, charset and parameters of this body, or null if it has
   /// no media type.
@@ -106,10 +122,13 @@ class Body {
   Body._(
     this._stream,
     this.contentLength, {
+    this.bytes,
     final Encoding? encoding,
     final MimeType? mimeType,
     final Map<String, String> parameters = const {},
   }) : bodyType = _bodyType(mimeType, encoding, parameters);
+
+  Body._typed(this._stream, this.contentLength, {this.bytes, this.bodyType});
 
   static BodyType? _bodyType(
     final MimeType? mimeType,
@@ -126,12 +145,33 @@ class Body {
       }
       return null;
     }
-    return BodyType(
+    if (parameters.isNotEmpty) {
+      return BodyType(
+        mimeType: mimeType,
+        encoding: encoding,
+        parameters: parameters,
+      );
+    }
+    // A BodyType is immutable and builds its header value once, so the
+    // common pairs are shared. The map is keyed by identity, since the MIME
+    // types and encodings in use are constants. The cap stops a caller that
+    // makes a MIME type per request from growing it without bound.
+    var byEncoding = _sharedBodyTypes[mimeType];
+    if (byEncoding == null) {
+      if (_sharedBodyTypes.length >= _sharedBodyTypesLimit) {
+        return BodyType(mimeType: mimeType, encoding: encoding);
+      }
+      byEncoding = _sharedBodyTypes[mimeType] = HashMap.identity();
+    }
+    return byEncoding[encoding] ??= BodyType(
       mimeType: mimeType,
       encoding: encoding,
-      parameters: parameters,
     );
   }
+
+  static final _sharedBodyTypes =
+      HashMap<MimeType, Map<Encoding?, BodyType>>.identity();
+  static const _sharedBodyTypesLimit = 256;
 
   /// Creates an empty body.
   ///
@@ -172,13 +212,16 @@ class Body {
     final Encoding encoding = utf8,
     MimeType? mimeType,
   }) {
-    final Uint8List encoded = Uint8List.fromList(encoding.encode(body));
+    final encoded = encoding is Utf8Codec
+        ? _encodeUtf8(body)
+        : Uint8List.fromList(encoding.encode(body));
 
     mimeType ??= _tryInferTextMimeTypeFrom(body) ?? MimeType.plainText;
 
     return Body._(
-      Stream.value(encoded),
+      null,
       encoded.length,
+      bytes: encoded,
       encoding: encoding,
       mimeType: mimeType,
     );
@@ -251,6 +294,10 @@ class Body {
   /// [parameters] holds media type parameters other than `charset`, which
   /// [encoding] sets. Throws [ArgumentError] if [parameters] has a `charset`,
   /// or is not empty while [mimeType] is null.
+  ///
+  /// The framing takes Content-Length from [contentLength], and a HEAD
+  /// response never reads the stream. A handler answering HEAD with a known
+  /// length and no stream passes `const Stream.empty()` with that length.
   factory Body.fromDataStream(
     final Stream<Uint8List> body, {
     final Encoding? encoding,
@@ -307,12 +354,72 @@ class Body {
       mimeType = mimeString == null ? null : MimeType.parse(mimeString);
     }
     return Body._(
-      Stream.value(body),
+      null,
       body.length,
+      bytes: body,
       encoding: encoding ?? (mimeType?.isText == true ? utf8 : null),
       mimeType: mimeType ?? MimeType.octetStream,
       parameters: parameters,
     );
+  }
+
+  /// Creates a body from [bytes] with the media type the sender declared.
+  ///
+  /// Unlike [Body.fromData], nothing is inferred when [mimeType] is null.
+  /// The body then has no type, as a request without a Content-Type has.
+  /// For an adapter handing over a request body.
+  factory Body.fromBytes(
+    final Uint8List bytes, {
+    final MimeType? mimeType,
+    final Encoding? encoding,
+    final Map<String, String> parameters = const {},
+  }) => Body._(
+    null,
+    bytes.length,
+    bytes: bytes,
+    encoding: encoding,
+    mimeType: mimeType,
+    parameters: parameters,
+  );
+
+  /// The body an adapter hands over, typed by [contentType].
+  ///
+  /// Pass [bytes] when the adapter has read the body, [stream] when it
+  /// arrives as the handler reads, with [contentLength] when declared, and
+  /// neither for a message without a body. [BodyType.fromContentType] does
+  /// the typing, so a request's Content-Type and an upstream response's
+  /// work alike. Read the header with `tryGet`, so one that does not parse
+  /// counts as none.
+  factory Body.of(
+    final ContentTypeHeader? contentType, {
+    final Uint8List? bytes,
+    final Stream<Uint8List>? stream,
+    final int? contentLength,
+  }) {
+    if (bytes == null && stream == null) return Body.empty();
+    final bodyType = contentType == null
+        ? null
+        : BodyType.fromContentType(contentType);
+    if (bytes != null) {
+      return Body._typed(null, bytes.length, bytes: bytes, bodyType: bodyType);
+    }
+    return Body._typed(stream, contentLength, bodyType: bodyType);
+  }
+
+  /// The whole body as one buffer.
+  ///
+  /// Synchronous when the body was built from bytes or a string. Counts as
+  /// reading the body, like [read].
+  FutureOr<Uint8List> readAll({final int? maxLength}) {
+    final bytes = this.bytes;
+    if (bytes != null) {
+      consume();
+      if (maxLength != null && bytes.length > maxLength) {
+        throw MaxBodySizeExceeded(maxLength);
+      }
+      return bytes;
+    }
+    return collectBytes(read(maxLength: maxLength));
   }
 
   /// Returns a [Stream] representing the body.
@@ -361,13 +468,8 @@ class Body {
   /// }
   /// ```
   Stream<Uint8List> read({final int? maxLength}) {
-    final stream = _stream;
-    if (stream == null) {
-      throw StateError(
-        "The 'read' method can only be called once on a "
-        'Request/Response object.',
-      );
-    }
+    _markRead();
+    final stream = _stream ?? Stream.value(bytes!);
     _stream = null;
 
     if (maxLength == null) {
@@ -410,6 +512,31 @@ class Body {
   }
 }
 
+/// What an adapter does with a body it does not stream.
+extension BodyConsume on Body {
+  /// Marks the body as read, as [Body.read] does, without the stream.
+  ///
+  /// An adapter that sends [Body.bytes] itself, or sends no body at all,
+  /// has no use for the stream, and [Body.read] would allocate one for a
+  /// body held as bytes.
+  ///
+  /// Throws a [StateError] when the body was already read.
+  void consume() {
+    _markRead();
+    _stream = null;
+  }
+
+  void _markRead() {
+    if (_isRead) {
+      throw StateError(
+        "The 'read' method can only be called once on a "
+        'Request/Response object.',
+      );
+    }
+    _isRead = true;
+  }
+}
+
 /// Internal extension methods for [Body], not exported from relic_core.dart.
 extension BodyInternal on Body {
   /// The private `Body._` constructor.
@@ -426,4 +553,31 @@ class MaxBodySizeExceeded implements Exception {
 
   @override
   String toString() => 'MaxBodySizeExceeded: Body exceeded $maxLength bytes';
+}
+
+/// The UTF-8 bytes of [text].
+///
+/// `utf8.encode` takes 3.7 us over a 1.3 KB ASCII string and this loop
+/// 1.6 us, so the encoder only runs from the first non-ASCII code unit on.
+Uint8List _encodeUtf8(final String text) {
+  final out = Uint8List(text.length);
+  for (var i = 0; i < text.length; i++) {
+    final unit = text.codeUnitAt(i);
+    if (unit >= 0x80) return _encodeUtf8Tail(text, out, i);
+    out[i] = unit;
+  }
+  return out;
+}
+
+/// The UTF-8 bytes of [text], given [prefix] holds its first [from] code
+/// units, all ASCII.
+Uint8List _encodeUtf8Tail(
+  final String text,
+  final Uint8List prefix,
+  final int from,
+) {
+  final rest = utf8.encoder.convert(text, from);
+  return Uint8List(from + rest.length)
+    ..setRange(0, from, prefix)
+    ..setRange(from, from + rest.length, rest);
 }

@@ -22,12 +22,12 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (final h) => h.proxyAuthenticate,
+            touchHeaders: (h) => h.proxyAuthenticate,
             headers: {'proxy-authenticate': ''},
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (final e) => e.message,
+              (e) => e.message,
               'message',
               contains('Value cannot be empty'),
             ),
@@ -52,7 +52,7 @@ void main() {
       test('with realm parameter should parse scheme correctly', () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.proxyAuthenticate,
+          touchHeaders: (h) => h.proxyAuthenticate,
           headers: {'proxy-authenticate': 'Basic realm="Proxy Realm"'},
         );
 
@@ -62,13 +62,13 @@ void main() {
       test('with realm parameter should parse realm correctly', () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.proxyAuthenticate,
+          touchHeaders: (h) => h.proxyAuthenticate,
           headers: {'proxy-authenticate': 'Basic realm="Proxy Realm"'},
         );
 
         expect(
           headers.proxyAuthenticate?.parameters
-              .firstWhere((final p) => p.key == 'realm')
+              .firstWhere((p) => p.key == 'realm')
               .value,
           equals('Proxy Realm'),
         );
@@ -101,7 +101,7 @@ void main() {
 
         expect(
           headers.proxyAuthenticate?.parameters
-              .firstWhere((final p) => p.key == 'realm')
+              .firstWhere((p) => p.key == 'realm')
               .value,
           equals('Proxy Authentication Required'),
         );
@@ -119,7 +119,7 @@ void main() {
 
         expect(
           headers.proxyAuthenticate?.parameters
-              .firstWhere((final p) => p.key == 'qop')
+              .firstWhere((p) => p.key == 'qop')
               .value,
           equals('auth'),
         );
@@ -137,7 +137,7 @@ void main() {
 
         expect(
           headers.proxyAuthenticate?.parameters
-              .firstWhere((final p) => p.key == 'nonce')
+              .firstWhere((p) => p.key == 'nonce')
               .value,
           equals('dcd98b7102dd2f0e8b11d0f600bfb0c093'),
         );
@@ -155,7 +155,7 @@ void main() {
 
         expect(
           headers.proxyAuthenticate?.parameters
-              .firstWhere((final p) => p.key == 'opaque')
+              .firstWhere((p) => p.key == 'opaque')
               .value,
           equals('5ccc069c403ebaf9f0171e9517f40e41'),
         );
@@ -167,7 +167,7 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.proxyAuthenticate,
+          touchHeaders: (h) => h.proxyAuthenticate,
           headers: {},
         );
 
@@ -194,7 +194,7 @@ void main() {
           headers: {'proxy-authenticate': 'InvalidHeader'},
         );
 
-        expect(Headers.proxyAuthenticate[headers].valueOrNullIfInvalid, isNull);
+        expect(headers.tryGet(Headers.proxyAuthenticate), isNull);
         expect(() => headers.proxyAuthenticate, throwsInvalidHeader);
       },
     );

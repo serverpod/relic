@@ -24,11 +24,11 @@ void main() {
         getServerRequestHeaders(
           server: server,
           headers: {'date': ''},
-          touchHeaders: (final h) => h.date,
+          touchHeaders: (h) => h.date,
         ),
         throwsA(
           isA<BadRequestException>().having(
-            (final e) => e.message,
+            (e) => e.message,
             'message',
             contains('Value cannot be empty'),
           ),
@@ -43,11 +43,11 @@ void main() {
         getServerRequestHeaders(
           server: server,
           headers: {'date': 'invalid-date-format'},
-          touchHeaders: (final h) => h.date,
+          touchHeaders: (h) => h.date,
         ),
         throwsA(
           isA<BadRequestException>().having(
-            (final e) => e.message,
+            (e) => e.message,
             'message',
             contains('Invalid date format'),
           ),
@@ -73,7 +73,7 @@ void main() {
         final headers = await getServerRequestHeaders(
           server: server,
           headers: {'date': 'Wed, 21 Oct 2015 07:28:00 GMT'},
-          touchHeaders: (final h) => h.date,
+          touchHeaders: (h) => h.date,
         );
 
         expect(
@@ -89,7 +89,7 @@ void main() {
         final headers = await getServerRequestHeaders(
           server: server,
           headers: {'date': ' Wed, 21 Oct 2015 07:28:00 GMT '},
-          touchHeaders: (final h) => h.date,
+          touchHeaders: (h) => h.date,
         );
 
         expect(
@@ -103,7 +103,7 @@ void main() {
       final headers = await getServerRequestHeaders(
         server: server,
         headers: {},
-        touchHeaders: (final h) => h.date,
+        touchHeaders: (h) => h.date,
       );
 
       expect(headers.date, isNull);
@@ -127,7 +127,7 @@ void main() {
           headers: {'date': ''},
         );
 
-        expect(Headers.date[headers].valueOrNullIfInvalid, isNull);
+        expect(headers.tryGet(Headers.date), isNull);
         expect(() => headers.date, throwsInvalidHeader);
       });
     });
@@ -140,7 +140,7 @@ void main() {
           headers: {'date': 'invalid-date-format'},
         );
 
-        expect(Headers.date[headers].valueOrNullIfInvalid, isNull);
+        expect(headers.tryGet(Headers.date), isNull);
         expect(() => headers.date, throwsInvalidHeader);
       });
     });

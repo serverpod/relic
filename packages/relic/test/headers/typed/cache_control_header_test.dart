@@ -24,12 +24,12 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (final h) => h.cacheControl,
+            touchHeaders: (h) => h.cacheControl,
             headers: {'cache-control': ''},
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (final e) => e.message,
+              (e) => e.message,
               'message',
               contains('Directives cannot be empty'),
             ),
@@ -42,7 +42,7 @@ void main() {
         'then it is ignored (RFC 9111 5.2 extension directives)', () async {
       final headers = await getServerRequestHeaders(
         server: server,
-        touchHeaders: (final h) => h.cacheControl,
+        touchHeaders: (h) => h.cacheControl,
         headers: {'cache-control': 'invalid-directive'},
       );
 
@@ -54,7 +54,7 @@ void main() {
         'then the known one is kept and the unknown one is ignored', () async {
       final headers = await getServerRequestHeaders(
         server: server,
-        touchHeaders: (final h) => h.cacheControl,
+        touchHeaders: (h) => h.cacheControl,
         headers: {'cache-control': 'public, invalid-directive'},
       );
 
@@ -68,12 +68,12 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (final h) => h.cacheControl,
+            touchHeaders: (h) => h.cacheControl,
             headers: {'cache-control': 'public, private'},
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (final e) => e.message,
+              (e) => e.message,
               'message',
               contains('Cannot be both public and private'),
             ),
@@ -88,7 +88,7 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.cacheControl,
+          touchHeaders: (h) => h.cacheControl,
           headers: {
             'cache-control': 'max-age=3600, stale-while-revalidate=300',
           },
@@ -103,7 +103,7 @@ void main() {
         'then the directive is ignored (max-age is null)', () async {
       final headers = await getServerRequestHeaders(
         server: server,
-        touchHeaders: (final h) => h.cacheControl,
+        touchHeaders: (h) => h.cacheControl,
         headers: {'cache-control': 'max-age=-5'},
       );
 
@@ -116,7 +116,7 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.cacheControl,
+          touchHeaders: (h) => h.cacheControl,
           headers: {'cache-control': 'max-age-extended=5'},
         );
 
@@ -141,7 +141,7 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.cacheControl,
+          touchHeaders: (h) => h.cacheControl,
           headers: {'cache-control': 'no-cache, no-store, must-revalidate'},
         );
 
@@ -156,7 +156,7 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.cacheControl,
+          touchHeaders: (h) => h.cacheControl,
           headers: {'cache-control': 'max-age=3600'},
         );
 
@@ -169,7 +169,7 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.cacheControl,
+          touchHeaders: (h) => h.cacheControl,
           headers: {'cache-control': 's-maxage=7200'},
         );
 
@@ -182,7 +182,7 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.cacheControl,
+          touchHeaders: (h) => h.cacheControl,
           headers: {'cache-control': 'stale-while-revalidate=300'},
         );
 
@@ -195,7 +195,7 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.cacheControl,
+          touchHeaders: (h) => h.cacheControl,
           headers: {'cache-control': 'stale-if-error=600'},
         );
 
@@ -208,7 +208,7 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.cacheControl,
+          touchHeaders: (h) => h.cacheControl,
           headers: {'cache-control': 'max-stale=100'},
         );
 
@@ -221,7 +221,7 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.cacheControl,
+          touchHeaders: (h) => h.cacheControl,
           headers: {'cache-control': 'min-fresh=200'},
         );
 
@@ -234,7 +234,7 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.cacheControl,
+          touchHeaders: (h) => h.cacheControl,
           headers: {'cache-control': 'public'},
         );
 
@@ -247,7 +247,7 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.cacheControl,
+          touchHeaders: (h) => h.cacheControl,
           headers: {'cache-control': 'private'},
         );
 
@@ -260,7 +260,7 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.cacheControl,
+          touchHeaders: (h) => h.cacheControl,
           headers: {'cache-control': 'no-transform'},
         );
 
@@ -273,7 +273,7 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.cacheControl,
+          touchHeaders: (h) => h.cacheControl,
           headers: {'cache-control': 'only-if-cached'},
         );
 
@@ -286,7 +286,7 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.cacheControl,
+          touchHeaders: (h) => h.cacheControl,
           headers: {'cache-control': 'immutable'},
         );
 
@@ -299,7 +299,7 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.cacheControl,
+          touchHeaders: (h) => h.cacheControl,
           headers: {'cache-control': 'must-understand'},
         );
 
@@ -312,7 +312,7 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.cacheControl,
+          touchHeaders: (h) => h.cacheControl,
           headers: {},
         );
 
@@ -338,87 +338,63 @@ void main() {
           headers: {'cache-control': 'public, private'},
         );
 
-        expect(Headers.cacheControl[headers].valueOrNullIfInvalid, isNull);
+        expect(headers.tryGet(Headers.cacheControl), isNull);
         expect(() => headers.cacheControl, throwsInvalidHeader);
       });
     });
   });
 
   group('Given CacheControlHeader.parseStrict', () {
-    test(
-      'when a valid Cache-Control value is passed '
-      'then it parses the directives like the lenient parser',
-      () {
-        final header = CacheControlHeader.parseStrict(['public, max-age=3600']);
+    test('when a valid Cache-Control value is passed '
+        'then it parses the directives like the lenient parser', () {
+      final header = CacheControlHeader.parseStrict(['public, max-age=3600']);
 
-        expect(header.publicCache, isTrue);
-        expect(header.maxAge, 3600);
-      },
-    );
+      expect(header.publicCache, isTrue);
+      expect(header.maxAge, 3600);
+    });
 
-    test(
-      'when an unrecognized directive is passed '
-      'then a FormatException is thrown',
-      () {
-        expect(
-          () => CacheControlHeader.parseStrict(['invalid-directive']),
-          throwsFormatException,
-        );
-      },
-    );
+    test('when an unrecognized directive is passed '
+        'then a FormatException is thrown', () {
+      expect(
+        () => CacheControlHeader.parseStrict(['invalid-directive']),
+        throwsFormatException,
+      );
+    });
 
-    test(
-      'when a known and an unrecognized directive are mixed '
-      'then a FormatException is thrown',
-      () {
-        expect(
-          () => CacheControlHeader.parseStrict(['public, invalid-directive']),
-          throwsFormatException,
-        );
-      },
-    );
+    test('when a known and an unrecognized directive are mixed '
+        'then a FormatException is thrown', () {
+      expect(
+        () => CacheControlHeader.parseStrict(['public, invalid-directive']),
+        throwsFormatException,
+      );
+    });
 
-    test(
-      'when a delta-seconds directive has a non-numeric value '
-      'then a FormatException is thrown',
-      () {
-        expect(
-          () => CacheControlHeader.parseStrict(['max-age=abc']),
-          throwsFormatException,
-        );
-      },
-    );
+    test('when a delta-seconds directive has a non-numeric value '
+        'then a FormatException is thrown', () {
+      expect(
+        () => CacheControlHeader.parseStrict(['max-age=abc']),
+        throwsFormatException,
+      );
+    });
 
-    test(
-      'when a delta-seconds directive has a negative value '
-      'then a FormatException is thrown',
-      () {
-        expect(
-          () => CacheControlHeader.parseStrict(['max-age=-1']),
-          throwsFormatException,
-        );
-      },
-    );
+    test('when a delta-seconds directive has a negative value '
+        'then a FormatException is thrown', () {
+      expect(
+        () => CacheControlHeader.parseStrict(['max-age=-1']),
+        throwsFormatException,
+      );
+    });
 
-    test(
-      'when a delta-seconds directive is missing its value '
-      'then a FormatException is thrown',
-      () {
-        expect(
-          () => CacheControlHeader.parseStrict(['max-age']),
-          throwsFormatException,
-        );
-      },
-    );
+    test('when a delta-seconds directive is missing its value '
+        'then a FormatException is thrown', () {
+      expect(
+        () => CacheControlHeader.parseStrict(['max-age']),
+        throwsFormatException,
+      );
+    });
 
-    test(
-      'when an empty value is passed then a FormatException is thrown',
-      () {
-        expect(
-          () => CacheControlHeader.parseStrict(['']),
-          throwsFormatException,
-        );
-      },
-    );
+    test('when an empty value is passed then a FormatException is thrown', () {
+      expect(() => CacheControlHeader.parseStrict(['']), throwsFormatException);
+    });
   });
 }

@@ -9,12 +9,12 @@ void main() {
       final middlewareObject = _TestMiddlewareObject();
       final router = Router<Handler>();
       router.use('/', middlewareObject.call);
-      router.get('/test', (final req) => Response.ok());
+      router.get('/test', (req) => Response.ok());
 
       final request = RequestInternal.create(
         Method.get,
         Uri.parse('http://localhost/test'),
-        Object(),
+        null,
       );
       final req = request;
       final result = await router.asHandler(req) as Response;
@@ -34,12 +34,12 @@ void main() {
 
       final router = Router<Handler>();
       router.use('/', middleware);
-      router.get('/test', (final req) => Response.ok());
+      router.get('/test', (req) => Response.ok());
 
       final request = RequestInternal.create(
         Method.get,
         Uri.parse('http://localhost/test'),
-        Object(),
+        null,
       );
       final req = request;
       final result = await router.asHandler(req) as Response;
@@ -56,7 +56,7 @@ void main() {
       router.use('/', middlewareObject.call);
 
       String? capturedHeader;
-      router.get('/test', (final req) {
+      router.get('/test', (req) {
         capturedHeader = req.headers['X-Added']?.first;
         return Response.ok();
       });
@@ -64,7 +64,7 @@ void main() {
       final request = RequestInternal.create(
         Method.get,
         Uri.parse('http://localhost/test'),
-        Object(),
+        null,
       );
       final req = request;
       await router.asHandler(req);
@@ -80,7 +80,7 @@ void main() {
       router.use('/', middlewareObject.call);
 
       var nextCalled = false;
-      router.get('/test', (final req) {
+      router.get('/test', (req) {
         nextCalled = true;
         return Response.ok();
       });
@@ -88,7 +88,7 @@ void main() {
       final request = RequestInternal.create(
         Method.get,
         Uri.parse('http://localhost/test'),
-        Object(),
+        null,
       );
       final req = request;
       final result = await router.asHandler(req) as Response;
@@ -103,13 +103,13 @@ void main() {
 // Test implementations
 class _TestMiddlewareObject extends MiddlewareObject {
   @override
-  Handler call(final Handler next) {
-    return (final req) async {
+  Handler call(Handler next) {
+    return (req) async {
       final result = await next(req);
       if (result is! Response) return result;
       return result.copyWith(
         headers: result.headers.transform(
-          (final h) => h['X-Middleware'] = ['applied'],
+          (h) => h['X-Middleware'] = ['applied'],
         ),
       );
     };
@@ -118,13 +118,11 @@ class _TestMiddlewareObject extends MiddlewareObject {
 
 class _RequestModifyingMiddleware extends MiddlewareObject {
   @override
-  Handler call(final Handler next) {
-    return (final req) async {
+  Handler call(Handler next) {
+    return (req) async {
       // Modify the request by adding a header
       final modifiedRequest = req.copyWith(
-        headers: req.headers.transform(
-          (final h) => h['X-Added'] = ['by-middleware'],
-        ),
+        headers: req.headers.transform((h) => h['X-Added'] = ['by-middleware']),
       );
       return next(modifiedRequest);
     };
@@ -133,8 +131,8 @@ class _RequestModifyingMiddleware extends MiddlewareObject {
 
 class _ShortCircuitMiddleware extends MiddlewareObject {
   @override
-  Handler call(final Handler next) {
-    return (final req) async {
+  Handler call(Handler next) {
+    return (req) async {
       // Short-circuit without calling next
       return Response.forbidden(body: Body.fromString('Forbidden'));
     };

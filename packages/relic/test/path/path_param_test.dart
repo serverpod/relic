@@ -64,10 +64,10 @@ void main() {
 
   group('Given a path parameter with a valid numeric value,', () {
     parameterizedTest(
-      (final v) =>
+      (v) =>
           'when decoded with ${v.name}, '
           'then it returns ${v.expected}',
-      (final v) async {
+      (v) async {
         final request = await _routeRequest(
           '/v/:value',
           'http://localhost/v/${v.input}',
@@ -102,10 +102,10 @@ void main() {
 
   group('Given a path parameter with an invalid numeric value,', () {
     parameterizedTest(
-      (final v) =>
+      (v) =>
           'when decoded with ${v.name}, '
           'then it throws FormatException',
-      (final v) async {
+      (v) async {
         final request = await _routeRequest(
           '/v/:value',
           'http://localhost/v/${v.input}',
@@ -142,25 +142,23 @@ void main() {
 }
 
 /// Routes a request through a router and returns the captured request.
-Future<Request> _routeRequest(final String pattern, final String url) async {
+Future<Request> _routeRequest(String pattern, String url) async {
   final router = RelicRouter();
   late Request captured;
-  router.get(pattern, (final req) {
+  router.get(pattern, (req) {
     captured = req;
     return Response.ok();
   });
 
-  final req = RequestInternal.create(Method.get, Uri.parse(url), Object());
+  final req = RequestInternal.create(Method.get, Uri.parse(url), null);
   await router.asHandler(req);
   return captured;
 }
 
-String _identity(final String value) => value;
+String _identity(String value) => value;
 
-String _toTitleCase(final String s) => s
-    .split('-')
-    .map((final w) => w[0].toUpperCase() + w.substring(1))
-    .join(' ');
+String _toTitleCase(String s) =>
+    s.split('-').map((w) => w[0].toUpperCase() + w.substring(1)).join(' ');
 
 class _ParamTestCase {
   final String name;

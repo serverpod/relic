@@ -127,7 +127,7 @@ Request _request(final String? query) {
   final url = query != null
       ? 'http://localhost/test?$query'
       : 'http://localhost/test';
-  return RequestInternal.create(Method.get, Uri.parse(url), Object());
+  return RequestInternal.create(Method.get, Uri.parse(url), null);
 }
 
 String _identity(final String value) => value;

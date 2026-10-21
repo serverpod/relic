@@ -39,12 +39,24 @@ jobs:
       - name: Fetch Existing Benchmark Data
         run: git fetch origin refs/notes/benchmarks:refs/notes/benchmarks
 
+      # The benchmark package depends on relic_native, whose build hook
+      # compiles the Zig library on a source checkout. The version comes
+      # from packages/relic_native/build.zig.zon.
+      - name: Setup Zig
+        uses: mlugg/setup-zig@v2
+        with:
+          version: 0.17.0
+
+      - name: Install Dependencies
+        run: dart pub get
+
+      # `dart compile exe` refuses a package graph with build hooks.
       - name: Run Benchmark
         id: run-benchmark
         working-directory: packages/benchmark
         run: |
-          dart compile exe bin/benchmark.dart
-          ./bin/benchmark.exe run --store-in-git-notes --verbose
+          dart build cli --target bin/benchmark.dart
+          ./build/cli/linux_x64/bundle/bin/benchmark run --store-in-git-notes --verbose
 
       - name: Push Benchmark Data
         # This step runs only if the pull request is NOT from a fork.

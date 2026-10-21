@@ -93,25 +93,32 @@ void main() {
     });
   });
 
-  group('Construction from segments', () {
+  group('Construction from segments,', () {
     test('Given pre-split segments with ".", "..", and empty entries, '
         'when constructed with fromSegments, '
-        'then they are dropped and resolved as for a path string', () {
-      final path = NormalizedPath.fromSegments(['a', '.', '', 'b', '..', 'c']);
+        'then they are dropped and resolved as for a path string.', () {
+      final path = NormalizedPath.fromSegments(const [
+        'a',
+        '.',
+        '',
+        'b',
+        '..',
+        'c',
+      ]);
       expect(path.segments, equals(['a', 'c']));
     });
 
     test('Given a ".." segment with nothing left to remove, '
         'when constructed with fromSegments, '
-        'then it is dropped instead of escaping the root', () {
-      final path = NormalizedPath.fromSegments(['..', '..', 'a']);
+        'then it is dropped instead of escaping the root.', () {
+      final path = NormalizedPath.fromSegments(const ['..', '..', 'a']);
       expect(path.segments, equals(['a']));
     });
 
     test('Given a segment containing a separator, '
         'when constructed with fromSegments, '
-        'then it stays a single segment', () {
-      final path = NormalizedPath.fromSegments(['a/b', 'c']);
+        'then it stays a single segment.', () {
+      final path = NormalizedPath.fromSegments(const ['a/b', 'c']);
       expect(path.segments, equals(['a/b', 'c']));
     });
 

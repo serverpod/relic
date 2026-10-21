@@ -23,11 +23,11 @@ void main() {
         getServerRequestHeaders(
           server: server,
           headers: {'origin': ''},
-          touchHeaders: (final h) => h.origin,
+          touchHeaders: (h) => h.origin,
         ),
         throwsA(
           isA<BadRequestException>().having(
-            (final e) => e.message,
+            (e) => e.message,
             'message',
             contains('Value cannot be empty'),
           ),
@@ -42,11 +42,11 @@ void main() {
         getServerRequestHeaders(
           server: server,
           headers: {'origin': 'h@ttp://example.com'},
-          touchHeaders: (final h) => h.origin,
+          touchHeaders: (h) => h.origin,
         ),
         throwsA(
           isA<BadRequestException>().having(
-            (final e) => e.message,
+            (e) => e.message,
             'message',
             contains('Invalid URI format'),
           ),
@@ -61,11 +61,11 @@ void main() {
         getServerRequestHeaders(
           server: server,
           headers: {'origin': 'http://example.com:test'},
-          touchHeaders: (final h) => h.origin,
+          touchHeaders: (h) => h.origin,
         ),
         throwsA(
           isA<BadRequestException>().having(
-            (final e) => e.message,
+            (e) => e.message,
             'message',
             contains('Invalid URI format'),
           ),
@@ -91,7 +91,7 @@ void main() {
         final headers = await getServerRequestHeaders(
           server: server,
           headers: {'origin': 'https://example.com'},
-          touchHeaders: (final h) => h.origin,
+          touchHeaders: (h) => h.origin,
         );
 
         expect(headers.origin, equals(Uri.parse('https://example.com')));
@@ -104,7 +104,7 @@ void main() {
         final headers = await getServerRequestHeaders(
           server: server,
           headers: {'origin': 'https://example.com:8080'},
-          touchHeaders: (final h) => h.origin,
+          touchHeaders: (h) => h.origin,
         );
 
         expect(headers.origin?.port, equals(8080));
@@ -117,7 +117,7 @@ void main() {
         final headers = await getServerRequestHeaders(
           server: server,
           headers: {'origin': ' https://example.com '},
-          touchHeaders: (final h) => h.origin,
+          touchHeaders: (h) => h.origin,
         );
 
         expect(headers.origin, equals(Uri.parse('https://example.com')));
@@ -130,7 +130,7 @@ void main() {
         final headers = await getServerRequestHeaders(
           server: server,
           headers: {},
-          touchHeaders: (final h) => h.origin,
+          touchHeaders: (h) => h.origin,
         );
 
         expect(headers.origin, isNull);
@@ -153,7 +153,7 @@ void main() {
           touchHeaders: (_) {},
           headers: {'origin': ''},
         );
-        expect(Headers.origin[headers].valueOrNullIfInvalid, isNull);
+        expect(headers.tryGet(Headers.origin), isNull);
         expect(() => headers.origin, throwsInvalidHeader);
       });
     });
@@ -166,7 +166,7 @@ void main() {
           headers: {'origin': 'h@ttp://example.com'},
         );
 
-        expect(Headers.origin[headers].valueOrNullIfInvalid, isNull);
+        expect(headers.tryGet(Headers.origin), isNull);
         expect(() => headers.origin, throwsInvalidHeader);
       });
     });

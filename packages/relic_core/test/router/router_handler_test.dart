@@ -5,7 +5,7 @@ Request _request(
   final String path, {
   final String host = 'localhost',
   final Method method = Method.get,
-}) => RequestInternal.create(method, Uri.http(host, path), Object());
+}) => RequestInternal.create(method, Uri.http(host, path), null);
 
 void main() {
   test('Given a router with a GET route, '

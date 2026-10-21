@@ -23,7 +23,7 @@ void main() {
       var headers = Headers.fromMap({
         'X-Custom-Header': ['value'],
       });
-      headers = headers.transform((final mh) => mh.remove('X-Custom-Header'));
+      headers = headers.transform((mh) => mh.remove('X-Custom-Header'));
       expect(headers['x-custom-header'], isNull);
     });
 
@@ -41,7 +41,7 @@ void main() {
         final headers = Headers.fromMap({
           'Initial-Header': ['initial'],
         });
-        final copiedHeaders = headers.transform((final mh) {
+        final copiedHeaders = headers.transform((mh) {
           mh.remove('Initial-Header');
           mh['Copied-Header'] = ['copied'];
         });
@@ -53,7 +53,7 @@ void main() {
     test(
       'when headers are applied to a Response then they are set correctly',
       () {
-        final headers = Headers.build((final mh) {
+        final headers = Headers.build((mh) {
           mh['Response-Header'] = ['response-value'];
         });
         final response = Response.ok(headers: headers);
@@ -64,53 +64,47 @@ void main() {
 
     test('when handling large headers then they are processed correctly', () {
       final largeValue = List.filled(10000, 'a').join();
-      final headers = Headers.build((final mh) {
+      final headers = Headers.build((mh) {
         mh['Large-Header'] = [largeValue];
       });
       expect(headers['large-header']?.first.length, equals(10000));
     });
 
     test('when a managed header is removed then it is no longer present', () {
-      var headers = Headers.build(
-        (final mh) => mh.date = DateTime.utc(2025, 9, 23),
-      );
-      headers = headers.transform((final mh) => mh.date = null);
+      var headers = Headers.build((mh) => mh.date = DateTime.utc(2025, 9, 23));
+      headers = headers.transform((mh) => mh.date = null);
       expect(headers.date, isNull);
     });
 
     test('when a managed header is updated then it is correctly replaced', () {
-      var headers = Headers.build(
-        (final mh) => mh.date = DateTime.utc(2025, 9, 23),
-      );
+      var headers = Headers.build((mh) => mh.date = DateTime.utc(2025, 9, 23));
       final newDate = DateTime.utc(2025, 9, 23)
           .add(const Duration(days: 1))
           .toUtc()
           .copyWith(microsecond: 0, millisecond: 0);
-      headers = headers.transform((final mh) => mh.date = newDate);
+      headers = headers.transform((mh) => mh.date = newDate);
       expect(headers.date, equals(newDate));
     });
   });
 
   parameterizedGroup(
-    (final v) => 'Given a "${v.key}" header when calling Headers.build',
-    (final v) {
-      Headers.build((final mh) {
-        final header = v[mh];
-        singleTest('then raw value not set', mh, isNot(contains(v.key)));
-        singleTest('then not isSet', header.isSet, isFalse);
+    (v) => 'Given a "${v.key}" header when calling Headers.build',
+    (v) {
+      Headers.build((mh) {
+        singleTest('then raw value not set', mh.contains(v.key), isFalse);
         singleTest(
-          'then set fails if type of value wrong',
-          () => header.set(Object()),
+          'then assign fails if type of value wrong',
+          () => mh.assign(v, Object()),
           throwsA(isA<TypeError>()),
         );
         singleTest(
-          'then set to null succeeds',
-          () => header.set(null),
+          'then assign to null succeeds',
+          () => mh.assign(v, null),
           returnsNormally,
         );
         singleTest(
-          'then set succeeds if value is correct type',
-          () => header.set(header.valueOrNull),
+          'then assign succeeds if value is correct type',
+          () => mh.assign(v, mh(v)),
           returnsNormally,
         );
       });
@@ -118,68 +112,41 @@ void main() {
     variants: Headers.all,
   );
 
-  parameterizedGroup(
-    (final v) => 'Given a "${v.key}" header with no raw value',
-    (final v) {
-      late final headers = Headers.empty();
-      late final header = v[headers];
+  parameterizedGroup((v) => 'Given a "${v.key}" header with no raw value', (v) {
+    late final headers = Headers.empty();
 
-      singleTest('then raw value not set', headers, isNot(contains(v.key)));
-      singleTest('then isSet is false', header.isSet, isFalse);
-      singleTest('then isValid is false', header.isValid, isFalse);
-      singleTest('then valueOrNull is null', header.valueOrNull, isNull);
-      singleTest(
-        'then valueOrNullIfInvalid is null',
-        header.valueOrNullIfInvalid,
-        isNull,
-      );
-      singleTest('then value throws', () => header.value, throwsMissingHeader);
-    },
-    variants: Headers.all,
-  );
+    singleTest('then raw value not set', headers.contains(v.key), isFalse);
+    singleTest('then call is null', headers(v), isNull);
+    singleTest('then tryGet is null', headers.tryGet(v), isNull);
+    singleTest('then get throws', () => headers.get(v), throwsMissingHeader);
+  }, variants: Headers.all);
 
   parameterizedGroup(
-    (final v) => 'Given a "${v.key}" header with an empty raw value',
-    (final v) {
+    (v) => 'Given a "${v.key}" header with an empty raw value',
+    (v) {
       late final headers = Headers.fromMap({
-        v.key: [''],
+        v.key.lower: [''],
       });
-      late final header = v[headers];
 
-      singleTest('then raw value set', headers, contains(v.key));
-      singleTest('then isSet is true', header.isSet, isTrue);
-      singleTest('then isValid is false', header.isValid, isFalse);
-      singleTest(
-        'then valueOrNull throws',
-        () => header.valueOrNull,
-        throwsInvalidHeader,
-      );
-      singleTest(
-        'then valueOrNullIfInvalid is null',
-        header.valueOrNullIfInvalid,
-        isNull,
-      );
-      singleTest('then value throws', () => header.value, throwsInvalidHeader);
+      singleTest('then raw value set', headers.contains(v.key), isTrue);
+      singleTest('then call throws', () => headers(v), throwsInvalidHeader);
+      singleTest('then tryGet is null', headers.tryGet(v), isNull);
+      singleTest('then get throws', () => headers.get(v), throwsInvalidHeader);
     },
     variants: Headers.all,
   );
 
   parameterizedGroup(
-    (final v) => 'Given a "${v.key}" header with an invalid raw value',
-    (final v) {
-      late final header =
-          v[Headers.fromMap({
-            v.key: ['invalid'],
-          })];
+    (v) => 'Given a "${v.key}" header with an invalid raw value',
+    (v) {
+      late final headers = Headers.fromMap({
+        v.key.lower: ['invalid'],
+      });
 
-      singleTest('then isSet is true', header.isSet, isTrue);
-      singleTest('then isValid is false', header.isValid, isFalse);
-      singleTest(
-        'then valueOrNull throws',
-        () => header.valueOrNull,
-        throwsInvalidHeader,
-      );
-      singleTest('then value throws', () => header.value, throwsInvalidHeader);
+      singleTest('then raw value set', headers.contains(v.key), isTrue);
+      singleTest('then call throws', () => headers(v), throwsInvalidHeader);
+      singleTest('then tryGet is null', headers.tryGet(v), isNull);
+      singleTest('then get throws', () => headers.get(v), throwsInvalidHeader);
     },
     variants: Headers.all.difference({
       // TODO(nielsenko): Go over these exceptions and find out if they are correct. Not all are for sure!
@@ -218,278 +185,261 @@ void main() {
   );
 
   parameterizedTest(
-    (final v) =>
+    (v) =>
         'Given a "${v.key.key}" header '
         'when using the named extension property on an empty Headers instance '
         'then reading it succeeds and returns null',
-    (final v) {
+    (v) {
       expect(() => v.value(Headers.empty()), returnsNormally);
       expect(v.value(Headers.empty()), isNull);
     },
     variants: <HeaderAccessor, dynamic Function(Headers)>{
-      Headers.accept: (final h) => h.accept,
-      Headers.acceptEncoding: (final h) => h.acceptEncoding,
-      Headers.acceptLanguage: (final h) => h.acceptLanguage,
-      Headers.acceptRanges: (final h) => h.acceptRanges,
-      Headers.accessControlAllowCredentials: (final h) =>
+      Headers.accept: (h) => h.accept,
+      Headers.acceptEncoding: (h) => h.acceptEncoding,
+      Headers.acceptLanguage: (h) => h.acceptLanguage,
+      Headers.acceptRanges: (h) => h.acceptRanges,
+      Headers.accessControlAllowCredentials: (h) =>
           h.accessControlAllowCredentials,
-      Headers.accessControlAllowHeaders: (final h) =>
-          h.accessControlAllowHeaders,
-      Headers.accessControlAllowMethods: (final h) =>
-          h.accessControlAllowMethods,
-      Headers.accessControlAllowOrigin: (final h) => h.accessControlAllowOrigin,
-      Headers.accessControlExposeHeaders: (final h) =>
-          h.accessControlExposeHeaders,
-      Headers.accessControlMaxAge: (final h) => h.accessControlMaxAge,
-      Headers.accessControlRequestHeaders: (final h) =>
-          h.accessControlRequestHeaders,
-      Headers.accessControlRequestMethod: (final h) =>
-          h.accessControlRequestMethod,
-      Headers.age: (final h) => h.age,
-      Headers.allow: (final h) => h.allow,
-      Headers.authorization: (final h) => h.authorization,
-      Headers.cacheControl: (final h) => h.cacheControl,
-      Headers.clearSiteData: (final h) => h.clearSiteData,
-      Headers.connection: (final h) => h.connection,
-      Headers.contentDisposition: (final h) => h.contentDisposition,
-      Headers.contentEncoding: (final h) => h.contentEncoding,
-      Headers.contentLanguage: (final h) => h.contentLanguage,
-      Headers.contentLength: (final h) => h.contentLength,
-      Headers.contentLocation: (final h) => h.contentLocation,
-      Headers.contentRange: (final h) => h.contentRange,
-      Headers.contentSecurityPolicy: (final h) => h.contentSecurityPolicy,
-      Headers.cookie: (final h) => h.cookie,
-      Headers.crossOriginEmbedderPolicy: (final h) =>
-          h.crossOriginEmbedderPolicy,
-      Headers.crossOriginOpenerPolicy: (final h) => h.crossOriginOpenerPolicy,
-      Headers.crossOriginResourcePolicy: (final h) =>
-          h.crossOriginResourcePolicy,
-      Headers.date: (final h) => h.date,
-      Headers.etag: (final h) => h.etag,
-      Headers.expect: (final h) => h.expect,
-      Headers.expires: (final h) => h.expires,
-      Headers.from: (final h) => h.from,
-      Headers.host: (final h) => h.host,
-      Headers.ifMatch: (final h) => h.ifMatch,
-      Headers.ifModifiedSince: (final h) => h.ifModifiedSince,
-      Headers.ifNoneMatch: (final h) => h.ifNoneMatch,
-      Headers.ifRange: (final h) => h.ifRange,
-      Headers.ifUnmodifiedSince: (final h) => h.ifUnmodifiedSince,
-      Headers.lastModified: (final h) => h.lastModified,
-      Headers.location: (final h) => h.location,
-      Headers.maxForwards: (final h) => h.maxForwards,
-      Headers.origin: (final h) => h.origin,
-      Headers.permissionsPolicy: (final h) => h.permissionsPolicy,
-      Headers.proxyAuthenticate: (final h) => h.proxyAuthenticate,
-      Headers.proxyAuthorization: (final h) => h.proxyAuthorization,
-      Headers.range: (final h) => h.range,
-      Headers.referer: (final h) => h.referer,
-      Headers.referrerPolicy: (final h) => h.referrerPolicy,
-      Headers.retryAfter: (final h) => h.retryAfter,
-      Headers.secFetchDest: (final h) => h.secFetchDest,
-      Headers.secFetchMode: (final h) => h.secFetchMode,
-      Headers.secFetchSite: (final h) => h.secFetchSite,
-      Headers.server: (final h) => h.server,
-      Headers.setCookie: (final h) => h.setCookie,
-      Headers.strictTransportSecurity: (final h) => h.strictTransportSecurity,
-      Headers.te: (final h) => h.te,
-      Headers.trailer: (final h) => h.trailer,
-      Headers.transferEncoding: (final h) => h.transferEncoding,
-      Headers.upgrade: (final h) => h.upgrade,
-      Headers.userAgent: (final h) => h.userAgent,
-      Headers.vary: (final h) => h.vary,
-      Headers.via: (final h) => h.via,
-      Headers.wwwAuthenticate: (final h) => h.wwwAuthenticate,
-      Headers.xPoweredBy: (final h) => h.xPoweredBy,
-      Headers.forwarded: (final h) => h.forwarded,
-      Headers.xForwardedFor: (final h) => h.xForwardedFor,
+      Headers.accessControlAllowHeaders: (h) => h.accessControlAllowHeaders,
+      Headers.accessControlAllowMethods: (h) => h.accessControlAllowMethods,
+      Headers.accessControlAllowOrigin: (h) => h.accessControlAllowOrigin,
+      Headers.accessControlExposeHeaders: (h) => h.accessControlExposeHeaders,
+      Headers.accessControlMaxAge: (h) => h.accessControlMaxAge,
+      Headers.accessControlRequestHeaders: (h) => h.accessControlRequestHeaders,
+      Headers.accessControlRequestMethod: (h) => h.accessControlRequestMethod,
+      Headers.age: (h) => h.age,
+      Headers.allow: (h) => h.allow,
+      Headers.authorization: (h) => h.authorization,
+      Headers.cacheControl: (h) => h.cacheControl,
+      Headers.clearSiteData: (h) => h.clearSiteData,
+      Headers.connection: (h) => h.connection,
+      Headers.contentDisposition: (h) => h.contentDisposition,
+      Headers.contentEncoding: (h) => h.contentEncoding,
+      Headers.contentLanguage: (h) => h.contentLanguage,
+      Headers.contentLength: (h) => h.contentLength,
+      Headers.contentLocation: (h) => h.contentLocation,
+      Headers.contentRange: (h) => h.contentRange,
+      Headers.contentSecurityPolicy: (h) => h.contentSecurityPolicy,
+      Headers.cookie: (h) => h.cookie,
+      Headers.crossOriginEmbedderPolicy: (h) => h.crossOriginEmbedderPolicy,
+      Headers.crossOriginOpenerPolicy: (h) => h.crossOriginOpenerPolicy,
+      Headers.crossOriginResourcePolicy: (h) => h.crossOriginResourcePolicy,
+      Headers.date: (h) => h.date,
+      Headers.etag: (h) => h.etag,
+      Headers.expect: (h) => h.expect,
+      Headers.expires: (h) => h.expires,
+      Headers.from: (h) => h.from,
+      Headers.host: (h) => h.host,
+      Headers.ifMatch: (h) => h.ifMatch,
+      Headers.ifModifiedSince: (h) => h.ifModifiedSince,
+      Headers.ifNoneMatch: (h) => h.ifNoneMatch,
+      Headers.ifRange: (h) => h.ifRange,
+      Headers.ifUnmodifiedSince: (h) => h.ifUnmodifiedSince,
+      Headers.lastModified: (h) => h.lastModified,
+      Headers.location: (h) => h.location,
+      Headers.maxForwards: (h) => h.maxForwards,
+      Headers.origin: (h) => h.origin,
+      Headers.permissionsPolicy: (h) => h.permissionsPolicy,
+      Headers.proxyAuthenticate: (h) => h.proxyAuthenticate,
+      Headers.proxyAuthorization: (h) => h.proxyAuthorization,
+      Headers.range: (h) => h.range,
+      Headers.referer: (h) => h.referer,
+      Headers.referrerPolicy: (h) => h.referrerPolicy,
+      Headers.retryAfter: (h) => h.retryAfter,
+      Headers.secFetchDest: (h) => h.secFetchDest,
+      Headers.secFetchMode: (h) => h.secFetchMode,
+      Headers.secFetchSite: (h) => h.secFetchSite,
+      Headers.server: (h) => h.server,
+      Headers.setCookie: (h) => h.setCookie,
+      Headers.strictTransportSecurity: (h) => h.strictTransportSecurity,
+      Headers.te: (h) => h.te,
+      Headers.trailer: (h) => h.trailer,
+      Headers.transferEncoding: (h) => h.transferEncoding,
+      Headers.upgrade: (h) => h.upgrade,
+      Headers.userAgent: (h) => h.userAgent,
+      Headers.vary: (h) => h.vary,
+      Headers.via: (h) => h.via,
+      Headers.wwwAuthenticate: (h) => h.wwwAuthenticate,
+      Headers.xPoweredBy: (h) => h.xPoweredBy,
+      Headers.forwarded: (h) => h.forwarded,
+      Headers.xForwardedFor: (h) => h.xForwardedFor,
     }.entries,
   );
 
   parameterizedTest(
-    (final v) =>
+    (v) =>
         'Given a "${v.key.key}" header '
         'when using the named extension property on an empty MutableHeaders instance '
         'then reading it succeeds and returns null',
-    (final v) {
-      expect(() => Headers.build((final mh) => v.value(mh)), returnsNormally);
-      Headers.build((final mh) => expect(v.value(mh), isNull));
+    (v) {
+      expect(() => Headers.build((mh) => v.value(mh)), returnsNormally);
+      Headers.build((mh) => expect(v.value(mh), isNull));
     },
     variants: <HeaderAccessor, dynamic Function(MutableHeaders)>{
-      Headers.accept: (final h) => h.accept,
-      Headers.acceptEncoding: (final h) => h.acceptEncoding,
-      Headers.acceptLanguage: (final h) => h.acceptLanguage,
-      Headers.acceptRanges: (final h) => h.acceptRanges,
-      Headers.accessControlAllowCredentials: (final h) =>
+      Headers.accept: (h) => h.accept,
+      Headers.acceptEncoding: (h) => h.acceptEncoding,
+      Headers.acceptLanguage: (h) => h.acceptLanguage,
+      Headers.acceptRanges: (h) => h.acceptRanges,
+      Headers.accessControlAllowCredentials: (h) =>
           h.accessControlAllowCredentials,
-      Headers.accessControlAllowHeaders: (final h) =>
-          h.accessControlAllowHeaders,
-      Headers.accessControlAllowMethods: (final h) =>
-          h.accessControlAllowMethods,
-      Headers.accessControlAllowOrigin: (final h) => h.accessControlAllowOrigin,
-      Headers.accessControlExposeHeaders: (final h) =>
-          h.accessControlExposeHeaders,
-      Headers.accessControlMaxAge: (final h) => h.accessControlMaxAge,
-      Headers.accessControlRequestHeaders: (final h) =>
-          h.accessControlRequestHeaders,
-      Headers.accessControlRequestMethod: (final h) =>
-          h.accessControlRequestMethod,
-      Headers.age: (final h) => h.age,
-      Headers.allow: (final h) => h.allow,
-      Headers.authorization: (final h) => h.authorization,
-      Headers.cacheControl: (final h) => h.cacheControl,
-      Headers.clearSiteData: (final h) => h.clearSiteData,
-      Headers.connection: (final h) => h.connection,
-      Headers.contentDisposition: (final h) => h.contentDisposition,
-      Headers.contentEncoding: (final h) => h.contentEncoding,
-      Headers.contentLanguage: (final h) => h.contentLanguage,
-      Headers.contentLength: (final h) => h.contentLength,
-      Headers.contentLocation: (final h) => h.contentLocation,
-      Headers.contentRange: (final h) => h.contentRange,
-      Headers.contentSecurityPolicy: (final h) => h.contentSecurityPolicy,
-      Headers.cookie: (final h) => h.cookie,
-      Headers.crossOriginEmbedderPolicy: (final h) =>
-          h.crossOriginEmbedderPolicy,
-      Headers.crossOriginOpenerPolicy: (final h) => h.crossOriginOpenerPolicy,
-      Headers.crossOriginResourcePolicy: (final h) =>
-          h.crossOriginResourcePolicy,
-      Headers.date: (final h) => h.date,
-      Headers.etag: (final h) => h.etag,
-      Headers.expect: (final h) => h.expect,
-      Headers.expires: (final h) => h.expires,
-      Headers.from: (final h) => h.from,
-      Headers.host: (final h) => h.host,
-      Headers.ifMatch: (final h) => h.ifMatch,
-      Headers.ifModifiedSince: (final h) => h.ifModifiedSince,
-      Headers.ifNoneMatch: (final h) => h.ifNoneMatch,
-      Headers.ifRange: (final h) => h.ifRange,
-      Headers.ifUnmodifiedSince: (final h) => h.ifUnmodifiedSince,
-      Headers.lastModified: (final h) => h.lastModified,
-      Headers.location: (final h) => h.location,
-      Headers.maxForwards: (final h) => h.maxForwards,
-      Headers.origin: (final h) => h.origin,
-      Headers.permissionsPolicy: (final h) => h.permissionsPolicy,
-      Headers.proxyAuthenticate: (final h) => h.proxyAuthenticate,
-      Headers.proxyAuthorization: (final h) => h.proxyAuthorization,
-      Headers.range: (final h) => h.range,
-      Headers.referer: (final h) => h.referer,
-      Headers.referrerPolicy: (final h) => h.referrerPolicy,
-      Headers.retryAfter: (final h) => h.retryAfter,
-      Headers.secFetchDest: (final h) => h.secFetchDest,
-      Headers.secFetchMode: (final h) => h.secFetchMode,
-      Headers.secFetchSite: (final h) => h.secFetchSite,
-      Headers.server: (final h) => h.server,
-      Headers.setCookie: (final h) => h.setCookie,
-      Headers.strictTransportSecurity: (final h) => h.strictTransportSecurity,
-      Headers.te: (final h) => h.te,
-      Headers.trailer: (final h) => h.trailer,
-      Headers.transferEncoding: (final h) => h.transferEncoding,
-      Headers.upgrade: (final h) => h.upgrade,
-      Headers.userAgent: (final h) => h.userAgent,
-      Headers.vary: (final h) => h.vary,
-      Headers.via: (final h) => h.via,
-      Headers.wwwAuthenticate: (final h) => h.wwwAuthenticate,
-      Headers.xPoweredBy: (final h) => h.xPoweredBy,
-      Headers.forwarded: (final h) => h.forwarded,
-      Headers.xForwardedFor: (final h) => h.xForwardedFor,
+      Headers.accessControlAllowHeaders: (h) => h.accessControlAllowHeaders,
+      Headers.accessControlAllowMethods: (h) => h.accessControlAllowMethods,
+      Headers.accessControlAllowOrigin: (h) => h.accessControlAllowOrigin,
+      Headers.accessControlExposeHeaders: (h) => h.accessControlExposeHeaders,
+      Headers.accessControlMaxAge: (h) => h.accessControlMaxAge,
+      Headers.accessControlRequestHeaders: (h) => h.accessControlRequestHeaders,
+      Headers.accessControlRequestMethod: (h) => h.accessControlRequestMethod,
+      Headers.age: (h) => h.age,
+      Headers.allow: (h) => h.allow,
+      Headers.authorization: (h) => h.authorization,
+      Headers.cacheControl: (h) => h.cacheControl,
+      Headers.clearSiteData: (h) => h.clearSiteData,
+      Headers.connection: (h) => h.connection,
+      Headers.contentDisposition: (h) => h.contentDisposition,
+      Headers.contentEncoding: (h) => h.contentEncoding,
+      Headers.contentLanguage: (h) => h.contentLanguage,
+      Headers.contentLength: (h) => h.contentLength,
+      Headers.contentLocation: (h) => h.contentLocation,
+      Headers.contentRange: (h) => h.contentRange,
+      Headers.contentSecurityPolicy: (h) => h.contentSecurityPolicy,
+      Headers.cookie: (h) => h.cookie,
+      Headers.crossOriginEmbedderPolicy: (h) => h.crossOriginEmbedderPolicy,
+      Headers.crossOriginOpenerPolicy: (h) => h.crossOriginOpenerPolicy,
+      Headers.crossOriginResourcePolicy: (h) => h.crossOriginResourcePolicy,
+      Headers.date: (h) => h.date,
+      Headers.etag: (h) => h.etag,
+      Headers.expect: (h) => h.expect,
+      Headers.expires: (h) => h.expires,
+      Headers.from: (h) => h.from,
+      Headers.host: (h) => h.host,
+      Headers.ifMatch: (h) => h.ifMatch,
+      Headers.ifModifiedSince: (h) => h.ifModifiedSince,
+      Headers.ifNoneMatch: (h) => h.ifNoneMatch,
+      Headers.ifRange: (h) => h.ifRange,
+      Headers.ifUnmodifiedSince: (h) => h.ifUnmodifiedSince,
+      Headers.lastModified: (h) => h.lastModified,
+      Headers.location: (h) => h.location,
+      Headers.maxForwards: (h) => h.maxForwards,
+      Headers.origin: (h) => h.origin,
+      Headers.permissionsPolicy: (h) => h.permissionsPolicy,
+      Headers.proxyAuthenticate: (h) => h.proxyAuthenticate,
+      Headers.proxyAuthorization: (h) => h.proxyAuthorization,
+      Headers.range: (h) => h.range,
+      Headers.referer: (h) => h.referer,
+      Headers.referrerPolicy: (h) => h.referrerPolicy,
+      Headers.retryAfter: (h) => h.retryAfter,
+      Headers.secFetchDest: (h) => h.secFetchDest,
+      Headers.secFetchMode: (h) => h.secFetchMode,
+      Headers.secFetchSite: (h) => h.secFetchSite,
+      Headers.server: (h) => h.server,
+      Headers.setCookie: (h) => h.setCookie,
+      Headers.strictTransportSecurity: (h) => h.strictTransportSecurity,
+      Headers.te: (h) => h.te,
+      Headers.trailer: (h) => h.trailer,
+      Headers.transferEncoding: (h) => h.transferEncoding,
+      Headers.upgrade: (h) => h.upgrade,
+      Headers.userAgent: (h) => h.userAgent,
+      Headers.vary: (h) => h.vary,
+      Headers.via: (h) => h.via,
+      Headers.wwwAuthenticate: (h) => h.wwwAuthenticate,
+      Headers.xPoweredBy: (h) => h.xPoweredBy,
+      Headers.forwarded: (h) => h.forwarded,
+      Headers.xForwardedFor: (h) => h.xForwardedFor,
     }.entries,
   );
 
   parameterizedTest(
-    (final v) =>
+    (v) =>
         'Given a "${v.key.key}" header '
         'when using the named extension property on an empty MutableHeaders instance '
         'then setting to null succeeds',
-    (final v) {
-      expect(() => Headers.build((final mh) => v.value(mh)), returnsNormally);
+    (v) {
+      expect(() => Headers.build((mh) => v.value(mh)), returnsNormally);
     },
     variants: <HeaderAccessor, dynamic Function(MutableHeaders)>{
-      Headers.accept: (final h) => h.accept = null,
-      Headers.acceptEncoding: (final h) => h.acceptEncoding = null,
-      Headers.acceptLanguage: (final h) => h.acceptLanguage = null,
-      Headers.acceptRanges: (final h) => h.acceptRanges = null,
-      Headers.accessControlAllowCredentials: (final h) =>
+      Headers.accept: (h) => h.accept = null,
+      Headers.acceptEncoding: (h) => h.acceptEncoding = null,
+      Headers.acceptLanguage: (h) => h.acceptLanguage = null,
+      Headers.acceptRanges: (h) => h.acceptRanges = null,
+      Headers.accessControlAllowCredentials: (h) =>
           h.accessControlAllowCredentials = null,
-      Headers.accessControlAllowHeaders: (final h) =>
+      Headers.accessControlAllowHeaders: (h) =>
           h.accessControlAllowHeaders = null,
-      Headers.accessControlAllowMethods: (final h) =>
+      Headers.accessControlAllowMethods: (h) =>
           h.accessControlAllowMethods = null,
-      Headers.accessControlAllowOrigin: (final h) =>
+      Headers.accessControlAllowOrigin: (h) =>
           h.accessControlAllowOrigin = null,
-      Headers.accessControlExposeHeaders: (final h) =>
+      Headers.accessControlExposeHeaders: (h) =>
           h.accessControlExposeHeaders = null,
-      Headers.accessControlMaxAge: (final h) => h.accessControlMaxAge = null,
-      Headers.accessControlRequestHeaders: (final h) =>
+      Headers.accessControlMaxAge: (h) => h.accessControlMaxAge = null,
+      Headers.accessControlRequestHeaders: (h) =>
           h.accessControlRequestHeaders = null,
-      Headers.accessControlRequestMethod: (final h) =>
+      Headers.accessControlRequestMethod: (h) =>
           h.accessControlRequestMethod = null,
-      Headers.age: (final h) => h.age = null,
-      Headers.allow: (final h) => h.allow = null,
-      Headers.authorization: (final h) => h.authorization = null,
-      Headers.cacheControl: (final h) => h.cacheControl = null,
-      Headers.clearSiteData: (final h) => h.clearSiteData = null,
-      Headers.connection: (final h) => h.connection = null,
-      Headers.contentDisposition: (final h) => h.contentDisposition = null,
-      Headers.contentEncoding: (final h) => h.contentEncoding = null,
-      Headers.contentLanguage: (final h) => h.contentLanguage = null,
-      Headers.contentLength: (final h) => h.contentLength = null,
-      Headers.contentLocation: (final h) => h.contentLocation = null,
-      Headers.contentRange: (final h) => h.contentRange = null,
-      Headers.contentSecurityPolicy: (final h) =>
-          h.contentSecurityPolicy = null,
-      Headers.cookie: (final h) => h.cookie = null,
-      Headers.crossOriginEmbedderPolicy: (final h) =>
+      Headers.age: (h) => h.age = null,
+      Headers.allow: (h) => h.allow = null,
+      Headers.authorization: (h) => h.authorization = null,
+      Headers.cacheControl: (h) => h.cacheControl = null,
+      Headers.clearSiteData: (h) => h.clearSiteData = null,
+      Headers.connection: (h) => h.connection = null,
+      Headers.contentDisposition: (h) => h.contentDisposition = null,
+      Headers.contentEncoding: (h) => h.contentEncoding = null,
+      Headers.contentLanguage: (h) => h.contentLanguage = null,
+      Headers.contentLength: (h) => h.contentLength = null,
+      Headers.contentLocation: (h) => h.contentLocation = null,
+      Headers.contentRange: (h) => h.contentRange = null,
+      Headers.contentSecurityPolicy: (h) => h.contentSecurityPolicy = null,
+      Headers.cookie: (h) => h.cookie = null,
+      Headers.crossOriginEmbedderPolicy: (h) =>
           h.crossOriginEmbedderPolicy = null,
-      Headers.crossOriginOpenerPolicy: (final h) =>
-          h.crossOriginOpenerPolicy = null,
-      Headers.crossOriginResourcePolicy: (final h) =>
+      Headers.crossOriginOpenerPolicy: (h) => h.crossOriginOpenerPolicy = null,
+      Headers.crossOriginResourcePolicy: (h) =>
           h.crossOriginResourcePolicy = null,
-      Headers.date: (final h) => h.date = null,
-      Headers.etag: (final h) => h.etag = null,
-      Headers.expect: (final h) => h.expect = null,
-      Headers.expires: (final h) => h.expires = null,
-      Headers.from: (final h) => h.from = null,
-      Headers.host: (final h) => h.host = null,
-      Headers.ifMatch: (final h) => h.ifMatch = null,
-      Headers.ifModifiedSince: (final h) => h.ifModifiedSince = null,
-      Headers.ifNoneMatch: (final h) => h.ifNoneMatch = null,
-      Headers.ifRange: (final h) => h.ifRange = null,
-      Headers.ifUnmodifiedSince: (final h) => h.ifUnmodifiedSince = null,
-      Headers.lastModified: (final h) => h.lastModified = null,
-      Headers.location: (final h) => h.location = null,
-      Headers.maxForwards: (final h) => h.maxForwards = null,
-      Headers.origin: (final h) => h.origin = null,
-      Headers.permissionsPolicy: (final h) => h.permissionsPolicy = null,
-      Headers.proxyAuthenticate: (final h) => h.proxyAuthenticate = null,
-      Headers.proxyAuthorization: (final h) => h.proxyAuthorization = null,
-      Headers.range: (final h) => h.range = null,
-      Headers.referer: (final h) => h.referer = null,
-      Headers.referrerPolicy: (final h) => h.referrerPolicy = null,
-      Headers.retryAfter: (final h) => h.retryAfter = null,
-      Headers.secFetchDest: (final h) => h.secFetchDest = null,
-      Headers.secFetchMode: (final h) => h.secFetchMode = null,
-      Headers.secFetchSite: (final h) => h.secFetchSite = null,
-      Headers.server: (final h) => h.server = null,
-      Headers.setCookie: (final h) => h.setCookie = null,
-      Headers.strictTransportSecurity: (final h) =>
-          h.strictTransportSecurity = null,
-      Headers.te: (final h) => h.te = null,
-      Headers.trailer: (final h) => h.trailer = null,
-      Headers.transferEncoding: (final h) => h.transferEncoding = null,
-      Headers.upgrade: (final h) => h.upgrade = null,
-      Headers.userAgent: (final h) => h.userAgent = null,
-      Headers.vary: (final h) => h.vary = null,
-      Headers.via: (final h) => h.via = null,
-      Headers.wwwAuthenticate: (final h) => h.wwwAuthenticate = null,
-      Headers.xPoweredBy: (final h) => h.xPoweredBy = null,
-      Headers.forwarded: (final h) => h.forwarded = null,
-      Headers.xForwardedFor: (final h) => h.xForwardedFor = null,
+      Headers.date: (h) => h.date = null,
+      Headers.etag: (h) => h.etag = null,
+      Headers.expect: (h) => h.expect = null,
+      Headers.expires: (h) => h.expires = null,
+      Headers.from: (h) => h.from = null,
+      Headers.host: (h) => h.host = null,
+      Headers.ifMatch: (h) => h.ifMatch = null,
+      Headers.ifModifiedSince: (h) => h.ifModifiedSince = null,
+      Headers.ifNoneMatch: (h) => h.ifNoneMatch = null,
+      Headers.ifRange: (h) => h.ifRange = null,
+      Headers.ifUnmodifiedSince: (h) => h.ifUnmodifiedSince = null,
+      Headers.lastModified: (h) => h.lastModified = null,
+      Headers.location: (h) => h.location = null,
+      Headers.maxForwards: (h) => h.maxForwards = null,
+      Headers.origin: (h) => h.origin = null,
+      Headers.permissionsPolicy: (h) => h.permissionsPolicy = null,
+      Headers.proxyAuthenticate: (h) => h.proxyAuthenticate = null,
+      Headers.proxyAuthorization: (h) => h.proxyAuthorization = null,
+      Headers.range: (h) => h.range = null,
+      Headers.referer: (h) => h.referer = null,
+      Headers.referrerPolicy: (h) => h.referrerPolicy = null,
+      Headers.retryAfter: (h) => h.retryAfter = null,
+      Headers.secFetchDest: (h) => h.secFetchDest = null,
+      Headers.secFetchMode: (h) => h.secFetchMode = null,
+      Headers.secFetchSite: (h) => h.secFetchSite = null,
+      Headers.server: (h) => h.server = null,
+      Headers.setCookie: (h) => h.setCookie = null,
+      Headers.strictTransportSecurity: (h) => h.strictTransportSecurity = null,
+      Headers.te: (h) => h.te = null,
+      Headers.trailer: (h) => h.trailer = null,
+      Headers.transferEncoding: (h) => h.transferEncoding = null,
+      Headers.upgrade: (h) => h.upgrade = null,
+      Headers.userAgent: (h) => h.userAgent = null,
+      Headers.vary: (h) => h.vary = null,
+      Headers.via: (h) => h.via = null,
+      Headers.wwwAuthenticate: (h) => h.wwwAuthenticate = null,
+      Headers.xPoweredBy: (h) => h.xPoweredBy = null,
+      Headers.forwarded: (h) => h.forwarded = null,
+      Headers.xForwardedFor: (h) => h.xForwardedFor = null,
     }.entries,
   );
 
   parameterizedGroup(
-    (final v) => 'Given a "${v.accessor.key}" header ',
-    (final v) {
+    (v) => 'Given a "${v.accessor.key}" header ',
+    (v) {
       test(
         'when using the named extension property on an empty MutableHeaders instance '
         'then setting to value succeeds',
@@ -500,7 +450,7 @@ void main() {
 
       test('when round-tripping', () {
         final headers1 = Headers.build(v.mutator);
-        final header1 = v.accessor.getValueFrom(headers1);
+        final header1 = headers1(v.accessor);
 
         final raw = v.accessor.codec.encode(header1!);
         final header3 = v.accessor.codec.decode(raw);
@@ -516,8 +466,8 @@ void main() {
         final headers2 = Headers.build(v.mutator);
         expect(identical(headers1, headers2), isFalse);
 
-        final header1 = v.accessor.getValueFrom(headers1);
-        final header2 = v.accessor.getValueFrom(headers2);
+        final header1 = headers1(v.accessor);
+        final header2 = headers2(v.accessor);
         expect(header1, isNotNull);
         expect(header2, isNotNull);
 
@@ -539,10 +489,10 @@ void main() {
           expect(header1, equals(header3));
           expect(header1.hashCode, equals(header3.hashCode));
         }
-        final headers4 = Headers.build((final mh) => mh[v.accessor.key] = raw);
-        expect(v.accessor.isSetIn(headers4), isTrue);
-        expect(v.accessor.isValidIn(headers4), isTrue);
-        final header4 = v.accessor.getValueFrom(headers4);
+        final headers4 = Headers.build((mh) => mh[v.accessor.key] = raw);
+        expect(headers4.contains(v.accessor.key), isTrue);
+        expect(headers4.tryGet(v.accessor), isNotNull);
+        final header4 = headers4(v.accessor);
         if (header1 is! List && header1 is! Set) {
           // We don't control hashCode for pure List and Set.
           expect(header1, equals(header4));
@@ -553,95 +503,91 @@ void main() {
     variants: <(HeaderAccessor, void Function(MutableHeaders))>[
       (
         Headers.accept,
-        (final h) =>
+        (h) =>
             h.accept = AcceptHeader.parse(['application/vnd.example.api+json']),
       ),
       (
         Headers.acceptEncoding,
-        (final h) => h.acceptEncoding = const AcceptEncodingHeader.wildcard(),
+        (h) => h.acceptEncoding = const AcceptEncodingHeader.wildcard(),
       ),
       (
         Headers.acceptEncoding,
-        (final h) => h.acceptEncoding = AcceptEncodingHeader.encodings([
+        (h) => h.acceptEncoding = AcceptEncodingHeader.encodings([
           EncodingQuality('jpeg', 0.5),
         ]),
       ),
       (
         Headers.acceptLanguage,
-        (final h) => h.acceptLanguage = const AcceptLanguageHeader.wildcard(),
+        (h) => h.acceptLanguage = const AcceptLanguageHeader.wildcard(),
       ),
       (
         Headers.acceptLanguage,
-        (final h) => h.acceptLanguage = AcceptLanguageHeader.languages([
+        (h) => h.acceptLanguage = AcceptLanguageHeader.languages([
           const LanguageQuality('en', 1.0),
         ]),
       ),
-      (
-        Headers.acceptRanges,
-        (final h) => h.acceptRanges = AcceptRangesHeader.none(),
-      ),
+      (Headers.acceptRanges, (h) => h.acceptRanges = AcceptRangesHeader.none()),
       (
         Headers.accessControlAllowCredentials,
-        (final h) => h.accessControlAllowCredentials = true,
+        (h) => h.accessControlAllowCredentials = true,
       ),
       (
         Headers.accessControlAllowHeaders,
-        (final h) => h.accessControlAllowHeaders =
+        (h) => h.accessControlAllowHeaders =
             const AccessControlAllowHeadersHeader.wildcard(),
       ),
       (
         Headers.accessControlAllowHeaders,
-        (final h) => h.accessControlAllowHeaders =
+        (h) => h.accessControlAllowHeaders =
             AccessControlAllowHeadersHeader.headers(['foo']),
       ),
       (
         Headers.accessControlAllowMethods,
-        (final h) => h.accessControlAllowMethods =
+        (h) => h.accessControlAllowMethods =
             const AccessControlAllowMethodsHeader.wildcard(),
       ),
       (
         Headers.accessControlAllowMethods,
-        (final h) => h.accessControlAllowMethods =
+        (h) => h.accessControlAllowMethods =
             AccessControlAllowMethodsHeader.methods(Method.values),
       ),
       (
         Headers.accessControlAllowOrigin,
-        (final h) =>
+        (h) =>
             h.accessControlAllowOrigin = AccessControlAllowOriginHeader.origin(
               origin: Origin.parse('https://example.com'),
             ),
       ),
       (
         Headers.accessControlExposeHeaders,
-        (final h) => h.accessControlExposeHeaders =
+        (h) => h.accessControlExposeHeaders =
             AccessControlExposeHeadersHeader.headers(['foo']),
       ),
-      (Headers.accessControlMaxAge, (final h) => h.accessControlMaxAge = 42),
+      (Headers.accessControlMaxAge, (h) => h.accessControlMaxAge = 42),
       (
         Headers.accessControlRequestHeaders,
-        (final h) => h.accessControlRequestHeaders = ['foo'],
+        (h) => h.accessControlRequestHeaders = ['foo'],
       ),
       (
         Headers.accessControlRequestMethod,
-        (final h) => h.accessControlRequestMethod = Method.get,
+        (h) => h.accessControlRequestMethod = Method.get,
       ),
-      (Headers.age, (final h) => h.age = 42),
-      (Headers.allow, (final h) => h.allow = {Method.get}),
+      (Headers.age, (h) => h.age = 42),
+      (Headers.allow, (h) => h.allow = {Method.get}),
       (
         Headers.authorization,
-        (final h) =>
-            h.authorization = BearerAuthorizationHeader(token: 'foobar'),
+        (h) => h.authorization = BearerAuthorizationHeader(token: 'foobar'),
       ),
       (
         Headers.authorization,
-        (final h) => h.authorization = BasicAuthorizationHeader(
+        (h) => h.authorization = BasicAuthorizationHeader(
           username: 'foo',
           password: 'bar',
         ),
       ),
       (
         Headers.authorization,
-        (final h) => h.authorization = DigestAuthorizationHeader(
+        (h) => h.authorization = DigestAuthorizationHeader(
           username: 'foo',
           realm: 'bar',
           nonce: 'random',
@@ -651,34 +597,33 @@ void main() {
       ),
       (
         Headers.cacheControl,
-        (final h) =>
-            h.cacheControl = CacheControlHeader.parse(['max-age=3600']),
+        (h) => h.cacheControl = CacheControlHeader.parse(['max-age=3600']),
       ),
       (
         Headers.clearSiteData,
-        (final h) => h.clearSiteData = const ClearSiteDataHeader.wildcard(),
+        (h) => h.clearSiteData = const ClearSiteDataHeader.wildcard(),
       ),
       (
         Headers.clearSiteData,
-        (final h) => h.clearSiteData = ClearSiteDataHeader.dataTypes([
+        (h) => h.clearSiteData = ClearSiteDataHeader.dataTypes([
           ClearSiteDataType.cache,
         ]),
       ),
       (
         Headers.connection,
-        (final h) => h.connection = const ConnectionHeader.directives([
+        (h) => h.connection = const ConnectionHeader.directives([
           ConnectionHeaderType.keepAlive,
         ]),
       ),
       (
         Headers.contentDisposition,
-        (final h) => h.contentDisposition = ContentDispositionHeader.parse(
+        (h) => h.contentDisposition = ContentDispositionHeader.parse(
           'attachment; filename="report.pdf"',
         ),
       ),
       (
         Headers.contentDisposition,
-        (final h) {
+        (h) {
           h.contentDisposition = const ContentDispositionHeader(
             type: 'attachment',
             parameters: [
@@ -693,188 +638,156 @@ void main() {
       ),
       (
         Headers.contentEncoding,
-        (final h) => h.contentEncoding = ContentEncodingHeader.encodings([
+        (h) => h.contentEncoding = ContentEncodingHeader.encodings([
           ContentEncoding.gzip,
         ]),
       ),
       (
         Headers.contentLanguage,
-        (final h) =>
-            h.contentLanguage = ContentLanguageHeader.languages(['en']),
+        (h) => h.contentLanguage = ContentLanguageHeader.languages(['en']),
       ),
-      (Headers.contentLength, (final h) => h.contentLength = 1202),
+      (Headers.contentLength, (h) => h.contentLength = 1202),
       (
         Headers.contentLocation,
-        (final h) => h.contentLocation = Uri.parse('https://example.com'),
+        (h) => h.contentLocation = Uri.parse('https://example.com'),
       ),
       (
         Headers.contentRange,
-        (final h) => h.contentRange = ContentRangeHeader(size: 1234),
+        (h) => h.contentRange = ContentRangeHeader(size: 1234),
       ),
       (
         Headers.contentSecurityPolicy,
-        (final h) =>
-            h.contentSecurityPolicy = ContentSecurityPolicyHeader.directives([
-              ContentSecurityPolicyDirective(name: 'foo', values: []),
-            ]),
+        (h) => h.contentSecurityPolicy = ContentSecurityPolicyHeader.directives(
+          [ContentSecurityPolicyDirective(name: 'foo', values: [])],
+        ),
       ),
       (
         Headers.cookie,
-        (final h) => h.cookie = CookieHeader.cookies([
+        (h) => h.cookie = CookieHeader.cookies([
           Cookie(name: 'foo', value: 'bar'),
         ]),
       ),
       (
         Headers.crossOriginEmbedderPolicy,
-        (final h) => h.crossOriginEmbedderPolicy =
+        (h) => h.crossOriginEmbedderPolicy =
             CrossOriginEmbedderPolicyHeader.unsafeNone,
       ),
       (
         Headers.crossOriginOpenerPolicy,
-        (final h) => h.crossOriginOpenerPolicy =
+        (h) => h.crossOriginOpenerPolicy =
             CrossOriginOpenerPolicyHeader.unsafeNone,
       ),
       (
         Headers.crossOriginResourcePolicy,
-        (final h) => h.crossOriginResourcePolicy =
+        (h) => h.crossOriginResourcePolicy =
             CrossOriginResourcePolicyHeader.sameSite,
       ),
-      (Headers.date, (final h) => h.date = DateTime.utc(2025, 9, 23)),
-      (Headers.etag, (final h) => h.etag = const ETagHeader(value: '')),
-      (Headers.expect, (final h) => h.expect = ExpectHeader.continue100),
-      (Headers.expires, (final h) => h.expires = DateTime.utc(2025, 9, 23)),
-      (
-        Headers.from,
-        (final h) => h.from = const FromHeader('info@serverpod.com'),
-      ),
-      (Headers.host, (final h) => h.host = HostHeader('www.example.com', 80)),
+      (Headers.date, (h) => h.date = DateTime.utc(2025, 9, 23)),
+      (Headers.etag, (h) => h.etag = const ETagHeader(value: '')),
+      (Headers.expect, (h) => h.expect = ExpectHeader.continue100),
+      (Headers.expires, (h) => h.expires = DateTime.utc(2025, 9, 23)),
+      (Headers.from, (h) => h.from = const FromHeader('info@serverpod.com')),
+      (Headers.host, (h) => h.host = HostHeader('www.example.com', 80)),
+      (Headers.ifMatch, (h) => h.ifMatch = const IfMatchHeader.wildcard()),
       (
         Headers.ifMatch,
-        (final h) => h.ifMatch = const IfMatchHeader.wildcard(),
-      ),
-      (
-        Headers.ifMatch,
-        (final h) => h.ifMatch = IfMatchHeader.etags([
+        (h) => h.ifMatch = IfMatchHeader.etags([
           const ETagHeader(value: 'foobar'),
         ]),
       ),
       (
         Headers.ifModifiedSince,
-        (final h) => h.ifModifiedSince = DateTime.utc(2025, 9, 23),
+        (h) => h.ifModifiedSince = DateTime.utc(2025, 9, 23),
       ),
       (
         Headers.ifNoneMatch,
-        (final h) => h.ifNoneMatch = const IfNoneMatchHeader.wildcard(),
+        (h) => h.ifNoneMatch = const IfNoneMatchHeader.wildcard(),
       ),
       (
         Headers.ifRange,
-        (final h) =>
+        (h) =>
             h.ifRange = IfRangeHeader(lastModified: DateTime.utc(2025, 9, 23)),
       ),
       (
         Headers.ifUnmodifiedSince,
-        (final h) => h.ifUnmodifiedSince = DateTime.utc(2025, 9, 23),
+        (h) => h.ifUnmodifiedSince = DateTime.utc(2025, 9, 23),
       ),
-      (
-        Headers.lastModified,
-        (final h) => h.lastModified = DateTime.utc(2025, 9, 23),
-      ),
-      (
-        Headers.location,
-        (final h) => h.location = Uri.parse('https://example.com'),
-      ),
-      (Headers.maxForwards, (final h) => h.maxForwards = 42),
-      (
-        Headers.origin,
-        (final h) => h.origin = Uri.parse('https://example.com'),
-      ),
+      (Headers.lastModified, (h) => h.lastModified = DateTime.utc(2025, 9, 23)),
+      (Headers.location, (h) => h.location = Uri.parse('https://example.com')),
+      (Headers.maxForwards, (h) => h.maxForwards = 42),
+      (Headers.origin, (h) => h.origin = Uri.parse('https://example.com')),
       (
         Headers.permissionsPolicy,
-        (final h) => h.permissionsPolicy = PermissionsPolicyHeader.directives([
+        (h) => h.permissionsPolicy = PermissionsPolicyHeader.directives([
           const PermissionsPolicyDirective(name: 'foo', values: []),
         ]),
       ),
       (
         Headers.proxyAuthenticate,
-        (final h) => h.proxyAuthenticate = AuthenticationHeader(
+        (h) => h.proxyAuthenticate = AuthenticationHeader(
           scheme: 'Bearer',
           parameters: [const AuthenticationParameter('foo', 'bar')],
         ),
       ),
       (
         Headers.proxyAuthorization,
-        (final h) =>
+        (h) =>
             h.proxyAuthorization = BearerAuthorizationHeader(token: 'foobar'),
       ),
-      (
-        Headers.range,
-        (final h) => h.range = RangeHeader(ranges: [Range(start: 1)]),
-      ),
-      (
-        Headers.referer,
-        (final h) => h.referer = Uri.parse('https://example.com'),
-      ),
+      (Headers.range, (h) => h.range = RangeHeader(ranges: [Range(start: 1)])),
+      (Headers.referer, (h) => h.referer = Uri.parse('https://example.com')),
       (
         Headers.referrerPolicy,
-        (final h) => h.referrerPolicy = ReferrerPolicyHeader.origin,
+        (h) => h.referrerPolicy = ReferrerPolicyHeader.origin,
       ),
-      (
-        Headers.retryAfter,
-        (final h) => h.retryAfter = RetryAfterHeader(delay: 1),
-      ),
-      (
-        Headers.secFetchDest,
-        (final h) => h.secFetchDest = SecFetchDestHeader.audio,
-      ),
-      (
-        Headers.secFetchMode,
-        (final h) => h.secFetchMode = SecFetchModeHeader.cors,
-      ),
+      (Headers.retryAfter, (h) => h.retryAfter = RetryAfterHeader(delay: 1)),
+      (Headers.secFetchDest, (h) => h.secFetchDest = SecFetchDestHeader.audio),
+      (Headers.secFetchMode, (h) => h.secFetchMode = SecFetchModeHeader.cors),
       (
         Headers.secFetchSite,
-        (final h) => h.secFetchSite = SecFetchSiteHeader.crossSite,
+        (h) => h.secFetchSite = SecFetchSiteHeader.crossSite,
       ),
-      (Headers.server, (final h) => h.server = 'localhost'),
+      (Headers.server, (h) => h.server = 'localhost'),
       (
         Headers.setCookie,
-        (final h) => h.setCookie = SetCookieHeader([
+        (h) => h.setCookie = SetCookieHeader([
           SetCookie(name: 'foo', value: 'bar'),
         ]),
       ),
       (
         Headers.strictTransportSecurity,
-        (final h) => h.strictTransportSecurity = StrictTransportSecurityHeader(
+        (h) => h.strictTransportSecurity = StrictTransportSecurityHeader(
           maxAge: 42,
         ),
       ),
-      (Headers.te, (final h) => h.te = TEHeader.encodings([TeQuality('foo')])),
-      (Headers.trailer, (final h) => h.trailer = ['foo']),
+      (Headers.te, (h) => h.te = TEHeader.encodings([TeQuality('foo')])),
+      (Headers.trailer, (h) => h.trailer = ['foo']),
       (
         Headers.transferEncoding,
-        (final h) => h.transferEncoding = TransferEncodingHeader.encodings([
+        (h) => h.transferEncoding = TransferEncodingHeader.encodings([
           TransferEncoding.gzip,
         ]),
       ),
       (
         Headers.upgrade,
-        (final h) => h.upgrade = UpgradeHeader.protocols([
+        (h) => h.upgrade = UpgradeHeader.protocols([
           UpgradeProtocol(protocol: 'foo'),
         ]),
       ),
-      (Headers.userAgent, (final h) => h.userAgent = 'null'),
-      (Headers.vary, (final h) => h.vary = VaryHeader.wildcard()),
-      (Headers.via, (final h) => h.via = ['foo']),
+      (Headers.userAgent, (h) => h.userAgent = 'null'),
+      (Headers.vary, (h) => h.vary = VaryHeader.wildcard()),
+      (Headers.via, (h) => h.via = ['foo']),
       (
         Headers.wwwAuthenticate,
-        (final h) => h.wwwAuthenticate = AuthenticationHeader(
+        (h) => h.wwwAuthenticate = AuthenticationHeader(
           scheme: 'Bearer',
           parameters: [const AuthenticationParameter('foo', 'bar')],
         ),
       ),
-      (Headers.xPoweredBy, (final h) => h.xPoweredBy = 'null'),
+      (Headers.xPoweredBy, (h) => h.xPoweredBy = 'null'),
       (
         Headers.forwarded,
-        (final h) => h.forwarded = ForwardedHeader([
+        (h) => h.forwarded = ForwardedHeader([
           ForwardedElement(
             forwardedFor: const ForwardedIdentifier('192.1.0.1'),
           ),
@@ -882,8 +795,8 @@ void main() {
       ),
       (
         Headers.xForwardedFor,
-        (final h) => h.xForwardedFor = XForwardedForHeader(['192.1.0.1']),
+        (h) => h.xForwardedFor = XForwardedForHeader(['192.1.0.1']),
       ),
-    ].map((final r) => (accessor: r.$1, mutator: r.$2)),
+    ].map((r) => (accessor: r.$1, mutator: r.$2)),
   );
 }

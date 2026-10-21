@@ -28,8 +28,7 @@ void main() {
         final storage = TempUploadStorage(directory: tempDir);
         final bodyType = BodyType(mimeType: MimeType.plainText, encoding: utf8);
         final headers = Headers.build(
-          (final mh) =>
-              mh[Headers.contentTypeHeader] = [bodyType.toHeaderValue()],
+          (mh) => mh[Headers.contentTypeHeader] = [bodyType.toHeaderValue()],
         );
 
         final uploaded = await storage.store(
@@ -115,7 +114,7 @@ void main() {
     test('when two uploads are stored concurrently, '
         'then each file lands in its own directory.', () async {
       final storage = TempUploadStorage(prefix: 'relic_io_race_test_');
-      Future<TempUploadedFile> store(final String filename) async {
+      Future<TempUploadedFile> store(String filename) async {
         return await storage.store(
               fieldName: 'upload',
               filename: filename,
@@ -163,8 +162,8 @@ void main() {
         final request = _multipartRequest(
           boundary: 'upload',
           body: _multipartBody('upload', [
-            _Part(
-              headers: const {
+            const _Part(
+              headers: {
                 Headers.contentDispositionHeader:
                     'form-data; name="file"; filename="hello.txt"',
                 Headers.contentTypeHeader: 'text/plain; charset=utf-8',
@@ -256,7 +255,7 @@ void main() {
     final leftovers = await Directory.systemTemp
         .list()
         .where(
-          (final entity) =>
+          (entity) =>
               p.basename(entity.path).startsWith('relic_io_cleanup_test_'),
         )
         .toList();
@@ -264,14 +263,11 @@ void main() {
   });
 }
 
-Request _multipartRequest({
-  required final String boundary,
-  required final String body,
-}) {
+Request _multipartRequest({required String boundary, required String body}) {
   return RequestInternal.create(
     Method.post,
     Uri.parse('http://localhost/form'),
-    Object(),
+    null,
     body: Body.fromData(
       Uint8List.fromList(utf8.encode(body)),
       mimeType: MimeType.multipartFormData,
@@ -280,7 +276,7 @@ Request _multipartRequest({
   );
 }
 
-String _multipartBody(final String boundary, final List<_Part> parts) {
+String _multipartBody(String boundary, List<_Part> parts) {
   final buffer = StringBuffer();
   for (final part in parts) {
     buffer.write('--$boundary\r\n');

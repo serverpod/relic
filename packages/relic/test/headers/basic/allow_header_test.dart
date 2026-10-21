@@ -23,11 +23,11 @@ void main() {
         getServerRequestHeaders(
           server: server,
           headers: {'allow': ''},
-          touchHeaders: (final h) => h.allow,
+          touchHeaders: (h) => h.allow,
         ),
         throwsA(
           isA<BadRequestException>().having(
-            (final e) => e.message,
+            (e) => e.message,
             'message',
             contains('Value cannot be empty'),
           ),
@@ -42,11 +42,11 @@ void main() {
         getServerRequestHeaders(
           server: server,
           headers: {'allow': 'CUSTOM'},
-          touchHeaders: (final h) => h.allow,
+          touchHeaders: (h) => h.allow,
         ),
         throwsA(
           isA<BadRequestException>().having(
-            (final e) => e.message,
+            (e) => e.message,
             'message',
             contains('Invalid value'),
           ),
@@ -72,11 +72,11 @@ void main() {
         final headers = await getServerRequestHeaders(
           server: server,
           headers: {'allow': 'GET, POST, DELETE'},
-          touchHeaders: (final h) => h.allow,
+          touchHeaders: (h) => h.allow,
         );
 
         expect(
-          headers.allow?.map((final method) => method.value).toList(),
+          headers.allow?.map((method) => method.value).toList(),
           equals(['GET', 'POST', 'DELETE']),
         );
       },
@@ -87,11 +87,11 @@ void main() {
       final headers = await getServerRequestHeaders(
         server: server,
         headers: {'allow': 'GET, POST, GET'},
-        touchHeaders: (final h) => h.allow,
+        touchHeaders: (h) => h.allow,
       );
 
       expect(
-        headers.allow?.map((final method) => method.value).toList(),
+        headers.allow?.map((method) => method.value).toList(),
         equals(['GET', 'POST']),
       );
     });
@@ -101,11 +101,11 @@ void main() {
       final headers = await getServerRequestHeaders(
         server: server,
         headers: {'allow': ' GET , POST , DELETE '},
-        touchHeaders: (final h) => h.allow,
+        touchHeaders: (h) => h.allow,
       );
 
       expect(
-        headers.allow?.map((final method) => method.value).toList(),
+        headers.allow?.map((method) => method.value).toList(),
         equals(['GET', 'POST', 'DELETE']),
       );
     });
@@ -128,7 +128,7 @@ void main() {
           headers: {'allow': ''},
         );
 
-        expect(Headers.allow[headers].valueOrNullIfInvalid, isNull);
+        expect(headers.tryGet(Headers.allow), isNull);
       });
     });
   });

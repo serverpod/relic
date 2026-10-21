@@ -1,113 +1,80 @@
-import 'dart:collection';
+import 'dart:typed_data';
 
+import 'package:relic_headers/relic_headers.dart';
+
+import '../accessor/accessor.dart';
 import 'exception/header_exception.dart';
-import 'headers.dart';
 
-/// Flyweight accessor class for headers. It should always be const constructed.
+/// A typed header, the [HeaderName] and the [HeaderCodec] that reads and
+/// writes it.
 ///
-/// The externalized state is stored in the Headers external, and to avoid repeated
-/// parsing of the raw value the value is cached with an [Expando].
-final class HeaderAccessor<T extends Object> {
-  /// Static map that stores the cache [Expando] for each [HeaderAccessor] instance.
-  /// Using an identity map ensures each accessor gets its own unique cache.
-  ///
-  /// As this is static container and we only ever add to it, each added Expando will
-  /// live until process terminates. However there should only be a finite number of
-  /// const constructed [HeaderAccessor] objects, so this is fine.
-  ///
-  /// Note that the cached values stored in the [Expando]s follows the lifetime of the
-  /// [Headers] objects that are expanded.
-  static final _caches = LinkedHashMap<HeaderAccessor, Expando>.identity();
-
-  /// Returns the [Expando] cache for this accessor instance.
-  ///
-  /// Each accessor has its own unique cache to store parsed header values,
-  /// avoiding repeated parsing of the same raw header value.
-  ///
-  /// This is used internally by [getValueFrom] to implement the caching mechanism.
-  Expando<T> get _cache =>
-      _caches.putIfAbsent(this, Expando<T>.new) as Expando<T>;
-
-  /// The [key] is the name of the HTTP header.
-  final String key;
-
-  /// The [decode] function converts the raw header value into a typed value of type [T].
+/// Always const constructed. Read one through a [Headers] like any other
+/// accessor:
+///
+/// ```dart
+/// final length = headers(Headers.contentLength);   // int?
+/// final host = headers.get(Headers.host);           // throws if absent
+/// ```
+///
+/// The headers cache decoded values by accessor and raw value, so a header
+/// is parsed once per message.
+final class HeaderAccessor<T extends Object>
+    extends ReadOnlyAccessor<T, HeaderName, Iterable<String>> {
   final HeaderCodec<T> codec;
 
-  /// Creates a new header accessor.
-  ///
-  /// - [key]: The name of the HTTP header
-  /// - [decode]: Function that parses the raw header value into type [T]
-  ///
-  /// Each accessor instance maintains its own cache to avoid repeated parsing
-  /// of the same raw header value.
-  const HeaderAccessor(this.key, this.codec);
+  const HeaderAccessor(super.key, this.codec);
 
-  /// Retrieves the typed value of this header from the given [external] headers.
+  /// Decodes [raw].
   ///
-  /// This method gets the raw header value from [external], decodes it into type [T],
-  /// and caches the result to avoid re-parsing the same value in future calls.
-  ///
-  /// Parameters:
-  /// - [external]: The headers container from which to retrieve the header value
-  /// - [orElse]: Optional function to handle exceptions during header parsing
-  ///
-  /// Returns:
-  /// - The parsed header value of type [T]
-  /// - `null` if the header is not present
-  /// - The result of [orElse] if parsing fails and [orElse] is provided
-  ///
-  /// Throws:
-  /// - [InvalidHeaderException] if parsing fails and no [orElse] is provided
-  T? getValueFrom(
-    final HeadersBase external, {
-    final T? Function(Exception)? orElse,
-  }) {
-    final raw = external[key];
-    if (raw == null) return null; // nothing to decode
-
-    var result = _cache[raw];
-    if (result != null) return result; // found in cache
-
+  /// Wraps any exception the codec throws in an [InvalidHeaderException].
+  @override
+  T decode(final Iterable<String> raw) {
     try {
-      result = codec.decode(raw);
-      _cache[raw] = result;
-      return result;
+      return codec.decode(raw);
     } on Exception catch (e) {
-      if (orElse == null) _throwException(e, key: key, raw: raw);
-      return orElse(e);
+      throw toInvalidHeaderException(e, key: key.lower, raw: raw);
     }
   }
 
-  /// Checks if the header is set in the given [external] headers.
-  bool isSetIn(final HeadersBase external) => external[key] != null;
+  Iterable<String> encode(final T value) => codec.encode(value);
 
-  /// Checks if the header is valid in the given [external] headers.
-  bool isValidIn(final HeadersBase external) =>
-      getValueFrom(external, orElse: _returnNull) != null;
-
-  /// Creates a new [Header] instance for the given [external] headers.
-  Header<T> operator [](final HeadersBase external) =>
-      Header((accessor: this, headers: external));
-
-  /// If [value] is [null] it implies removing the header
-  void setValueOn(final MutableHeaders external, final T? value) {
-    if (value != null) {
-      final raw = codec.encode(value);
-      external[key] = raw;
-      // prime cache immediately (not needed, but avoids a decode)
-      _cache[raw] = value;
-    } else {
-      external.remove(key);
-      // no need to touch _cache. Lifetime of cached value handled by Expando
+  /// Decodes [bytes], the wire bytes of the first value, or returns null
+  /// for the caller to decode the text instead.
+  ///
+  /// Wraps any exception the codec throws in an [InvalidHeaderException].
+  T? decodeBytes(final Uint8List bytes) {
+    final decoder = codec.decodeBytes;
+    if (decoder == null) return null;
+    try {
+      return decoder(bytes);
+    } on Exception catch (e) {
+      throw toInvalidHeaderException(
+        e,
+        key: key.lower,
+        raw: [String.fromCharCodes(bytes)],
+      );
     }
   }
-
-  /// Removes the header from the given [external] headers.
-  void removeFrom(final MutableHeaders external) => external.remove(key);
 }
 
-Null _returnNull(final Exception ex) => null;
+/// Wraps [exception] as an [InvalidHeaderException] for [key], unless it
+/// already is one.
+InvalidHeaderException toInvalidHeaderException(
+  final Object exception, {
+  required final String key,
+  required final Iterable<String> raw,
+}) {
+  if (exception is InvalidHeaderException) return exception;
+  return InvalidHeaderException(
+    switch (exception) {
+      final FormatException f => f.message,
+      final ArgumentError e => e.message.toString(),
+      _ => '$exception',
+    },
+    headerType: key,
+    raw: raw,
+  );
+}
 
 /// An interface defining a bidirectional conversion between types [T] and [StorageT].
 ///
@@ -139,7 +106,18 @@ sealed class HeaderCodec<T extends Object>
     implements _Codec<T, Iterable<String>> {
   final Iterable<String> Function(T decoded) _encode;
 
-  const HeaderCodec._(this._encode);
+  /// A decoder over the wire bytes of the first value, with no `String` in
+  /// between.
+  ///
+  /// It returns null for an input it does not handle, and [decode] then
+  /// runs on the text. [decode] stays the reference. Only a codec that
+  /// reads a single value has one.
+  final T? Function(Uint8List bytes)? decodeBytes;
+
+  const HeaderCodec._(this._encode, this.decodeBytes);
+
+  /// Whether [decode] reads only the first value.
+  bool get isSingle => this is _SingleDecodeHeaderCodec<T>;
 
   @override
   Iterable<String> encode(final T value) => _encode(value);
@@ -162,8 +140,9 @@ sealed class HeaderCodec<T extends Object>
   /// value in a collection of header values.
   const factory HeaderCodec.single(
     final T Function(String) singleDecode,
-    final Iterable<String> Function(T) encode,
-  ) = _SingleDecodeHeaderCodec<T>;
+    final Iterable<String> Function(T) encode, {
+    final T? Function(Uint8List bytes)? decodeBytes,
+  }) = _SingleDecodeHeaderCodec<T>;
 }
 
 final class _MultiDecodeHeaderCodec<T extends Object> extends HeaderCodec<T> {
@@ -172,7 +151,7 @@ final class _MultiDecodeHeaderCodec<T extends Object> extends HeaderCodec<T> {
   const _MultiDecodeHeaderCodec(
     this._decode,
     final Iterable<String> Function(T) encode,
-  ) : super._(encode);
+  ) : super._(encode, null);
 
   @override
   T decode(final Iterable<String> encoded) => _decode(encoded);
@@ -183,75 +162,10 @@ final class _SingleDecodeHeaderCodec<T extends Object> extends HeaderCodec<T> {
 
   const _SingleDecodeHeaderCodec(
     this.singleDecode,
-    final Iterable<String> Function(T) encode,
-  ) : super._(encode);
+    final Iterable<String> Function(T) encode, {
+    final T? Function(Uint8List bytes)? decodeBytes,
+  }) : super._(encode, decodeBytes);
 
   @override
   T decode(final Iterable<String> encoded) => singleDecode(encoded.first);
-}
-
-/// A "class" representing a typed header.
-///
-/// Instances are intended to be short-lived. They are typically used as
-/// temporary objects during header processing.
-///
-/// This is implemented as an extension type over a record type
-/// to keep runtime cost low.
-extension type const Header<T extends Object>(HeaderTuple<T> tuple) {
-  HeadersBase get _headers => tuple.headers;
-  HeaderAccessor<T> get _accessor => tuple.accessor;
-
-  String get key => _accessor.key;
-  Iterable<String>? get raw => _headers[_accessor.key];
-
-  bool get isSet => _accessor.isSetIn(_headers);
-  bool get isValid => _accessor.isValidIn(_headers);
-
-  T? call() => _accessor.getValueFrom(_headers);
-
-  T? get valueOrNullIfInvalid =>
-      _accessor.getValueFrom(_headers, orElse: _returnNull);
-  T? get valueOrNull => this();
-  T get value =>
-      _accessor.getValueFrom(_headers) ??
-      (throw MissingHeaderException('', headerType: key));
-
-  void set(final T? value) =>
-      _accessor.setValueOn(_headers as MutableHeaders, value);
-}
-
-/// Internal record for bundling an [accessor] with its externalized state [headers].
-typedef HeaderTuple<T extends Object> = ({
-  HeaderAccessor<T> accessor,
-  HeadersBase headers,
-});
-
-/// Throws an [InvalidHeaderException] with the appropriate message based on
-/// the type of the given [exception].
-///
-/// This function extracts the message from the given [exception] and throws
-/// an [InvalidHeaderException] with the extracted message and the specified
-/// [key] as the header type.
-///
-/// - [exception]: The exception object from which to extract the message.
-/// - [key]: The header type associated with the exception.
-///
-/// Throws:
-/// - [InvalidHeaderException]: Always thrown with the extracted message and
-/// the specified header type.
-Never _throwException(
-  final Object exception, {
-  required final String key,
-  required final Iterable<String> raw,
-}) {
-  if (exception is InvalidHeaderException) throw exception;
-  throw InvalidHeaderException(
-    switch (exception) {
-      final FormatException f => f.message,
-      final ArgumentError e => e.message.toString(),
-      _ => '$exception',
-    },
-    headerType: key,
-    raw: raw,
-  );
 }

@@ -70,32 +70,34 @@ void main() {
         ),
         (description: 'foo', hostValue: '::1'),
       ],
-      (final testCase) =>
+      (testCase) =>
           '${testCase.description} then the server responds with a bad request',
-      (final testCase) async {
+      (testCase) async {
         expect(
           getServerRequestHeaders(
             server: server,
             headers: {'host': testCase.hostValue},
-            touchHeaders: (final h) => h.host,
+            touchHeaders: (h) => h.host,
           ),
           throwsA(isA<BadRequestException>()),
         );
       },
     );
 
-    test('when a Host header with an invalid value is passed '
-        'then the server does not respond with a bad request if the headers '
-        'is not actually used', () async {
-      final headers = await getServerRequestHeaders(
-        server: server,
-        touchHeaders: (_) {}, // server don't use the header
-        headers: {'host': 'http://example.com'}, // sch eme not allowed!
-      );
+    test(
+      'when a Host header with an invalid value is passed '
+      'then the server does not respond with a bad request if the headers is not actually used',
+      () async {
+        final headers = await getServerRequestHeaders(
+          server: server,
+          touchHeaders: (_) {}, // server don't use the header
+          headers: {'host': 'http://example.com'}, // sch eme not allowed!
+        );
 
-      expect(Headers.host[headers].valueOrNullIfInvalid, isNull);
-      expect(() => headers.host, throwsInvalidHeader);
-    });
+        expect(headers.tryGet(Headers.host), isNull);
+        expect(() => headers.host, throwsInvalidHeader);
+      },
+    );
 
     // Basic host parsing tests
     parameterizedTest<
@@ -318,12 +320,12 @@ void main() {
           expectedHost: HostHeader('[64:ff9b::192.0.2.80]', 80),
         ),
       ],
-      (final testCase) => testCase.description,
-      (final testCase) async {
+      (testCase) => testCase.description,
+      (testCase) async {
         final headers = await getServerRequestHeaders(
           server: server,
           headers: {'host': testCase.hostValue},
-          touchHeaders: (final h) => h.host,
+          touchHeaders: (h) => h.host,
         );
 
         expect(headers.host, equals(testCase.expectedHost));

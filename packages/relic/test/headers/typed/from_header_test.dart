@@ -23,12 +23,12 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (final h) => h.from,
+            touchHeaders: (h) => h.from,
             headers: {'from': ''},
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (final e) => e.message,
+              (e) => e.message,
               'message',
               contains('Value cannot be empty'),
             ),
@@ -41,7 +41,7 @@ void main() {
         'then it is parsed as the mailbox', () async {
       final headers = await getServerRequestHeaders(
         server: server,
-        touchHeaders: (final h) => h.from,
+        touchHeaders: (h) => h.from,
         headers: {'from': 'user@example.com'},
       );
 
@@ -52,7 +52,7 @@ void main() {
         'then it is preserved verbatim', () async {
       final headers = await getServerRequestHeaders(
         server: server,
-        touchHeaders: (final h) => h.from,
+        touchHeaders: (h) => h.from,
         headers: {'from': 'Webmaster <webmaster@example.org>'},
       );
 
@@ -68,7 +68,7 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.from,
+          touchHeaders: (h) => h.from,
           headers: {'from': 'invalid-email-format'},
         );
 
@@ -80,7 +80,7 @@ void main() {
         'then the mailbox is trimmed', () async {
       final headers = await getServerRequestHeaders(
         server: server,
-        touchHeaders: (final h) => h.from,
+        touchHeaders: (h) => h.from,
         headers: {'from': ' user@example.com '},
       );
 
@@ -104,7 +104,7 @@ void main() {
     test('when no From header is passed then it should return null', () async {
       final headers = await getServerRequestHeaders(
         server: server,
-        touchHeaders: (final h) => h.from,
+        touchHeaders: (h) => h.from,
         headers: {},
       );
 
@@ -129,7 +129,7 @@ void main() {
           headers: {'from': ''},
         );
 
-        expect(Headers.from[headers].valueOrNullIfInvalid, isNull);
+        expect(headers.tryGet(Headers.from), isNull);
         expect(() => headers.from, throwsInvalidHeader);
       });
     });

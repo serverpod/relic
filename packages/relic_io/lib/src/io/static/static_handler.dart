@@ -441,10 +441,7 @@ Response _serveFullFile(
   final Headers headers,
   final Method method,
 ) {
-  return Response.ok(
-    headers: headers,
-    body: _createFileBody(fileInfo, isHeadRequest: method == Method.head),
-  );
+  return Response.ok(headers: headers, body: _createFileBody(fileInfo));
 }
 
 /// Serves a single range of the file.
@@ -575,12 +572,11 @@ Uint8List _multipartSectionHeader(
 }
 
 /// Creates a Body for the full file.
-Body _createFileBody(
-  final FileInfo fileInfo, {
-  final bool isHeadRequest = false,
-}) {
+///
+/// The stream opens the file on listen, so a HEAD response never reads it.
+Body _createFileBody(final FileInfo fileInfo) {
   return Body.fromDataStream(
-    isHeadRequest ? const Stream.empty() : fileInfo.file.openRead().cast(),
+    fileInfo.file.openRead().cast(),
     contentLength: fileInfo.stat.size,
     mimeType: fileInfo.mimeType ?? MimeType.octetStream,
     encoding: fileInfo.mimeType?.isText == true ? utf8 : null,

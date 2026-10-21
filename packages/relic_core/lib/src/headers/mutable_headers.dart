@@ -1,68 +1,77 @@
 part of 'headers.dart';
 
-class MutableHeaders extends HeadersBase
-    with MapMixin<String, Iterable<String>> {
-  MutableHeaders._(super.backing) : super._();
-
-  MutableHeaders() : this._(_BackingStore());
-
-  MutableHeaders._from(final Headers headers)
-    : this._(_BackingStore.from(headers._backing));
-
-  Headers _freeze() {
-    // TODO:
-    // Would be nice if we could decouple _backing from this MutableHeaders object
-    // at this point to prevent caller to hold on to the mutable headers after freezing
-    //
-    // Will require a change to MapView or
-    return Headers._(_backing);
-  }
-
+/// The builder side of [Headers], a [MutableHeaderStore] with typed reads
+/// and writes.
+///
+/// Write a typed header with its setter or with [assign], and any header
+/// by name with `[]=`. Every write rejects a value with CR, LF or NUL, so
+/// nothing reaches the wire that would end the field.
+final class MutableHeaders extends MutableHeaderStore
+    with AccessorStateMixin<HeaderName, Iterable<String>>, _StoreReads {
   @override
-  Iterable<String>? operator [](final Object? key) => _backing[key];
+  final MutableHeaderStore _store;
 
-  @override
-  void operator []=(final String key, final Iterable<String>? value) {
+  MutableHeaders._(this._store);
+
+  MutableHeaders() : this._(MapHeaderStore());
+
+  /// Sets [accessor] to [value], or removes it when [value] is null.
+  void assign<T extends Object>(
+    final HeaderAccessor<T> accessor,
+    final T? value,
+  ) {
     if (value == null) {
-      _backing.remove(key);
-    } else {
-      if (!Token.isValid(key)) {
-        throw FormatException('Invalid header name', key);
-      }
-      for (final v in value) {
-        _validateFieldValue(key, v);
-      }
-      _backing[key] = value;
+      remove(accessor.key);
+      return;
     }
+    set(accessor.key, accessor.encode(value));
+    // A value that encodes to no field, such as an empty list, removed the
+    // header. Otherwise key the cache the way call() reads, by the first
+    // value for a single value codec and by the value list otherwise.
+    final stored = lookup(accessor.key);
+    if (stored == null) return;
+    prime(accessor, accessor.codec.isSingle ? stored.first : stored, value);
   }
 
-  /// Rejects the characters that would end a header field or the header block
-  /// itself, handing the rest of the message to whoever supplied [value].
+  /// Sets the header called [key], a [HeaderName] or a name as text, or
+  /// removes it when [values] is null.
   ///
-  /// Deliberately narrower than RFC 9110 `field-value`: the rest of the
-  /// grammar is checked by the typed accessors, which report a malformed
-  /// header as a bad request, and only when that header is actually read. A
-  /// stricter check here would turn any odd inbound header into a failure to
-  /// construct the request at all.
-  static void _validateFieldValue(final String name, final String value) {
-    for (var i = 0; i < value.length; i++) {
-      final c = value.codeUnitAt(i);
-      if (c == 0x0D || c == 0x0A || c == 0x00) {
-        throw FormatException(
-          'Header "$name" value must not contain CR, LF or NUL',
-          value,
-          i,
-        );
-      }
+  /// Throws [FormatException] for a name that is not an HTTP token or a
+  /// value with CR, LF or NUL.
+  void operator []=(final Object key, final Iterable<String>? values) {
+    final name = switch (key) {
+      final HeaderName name => name,
+      final String text => HeaderName.lookup(text),
+      _ => throw ArgumentError.value(key, 'key', 'Not a header name'),
+    };
+    if (values == null) {
+      remove(name);
+    } else {
+      set(name, values);
     }
   }
 
   @override
-  void clear() => _backing.clear();
+  void set(final HeaderName name, final Iterable<String> values) =>
+      _store.set(name, values);
 
   @override
-  Iterable<String> get keys => _backing.keys;
+  void add(final HeaderName name, final String value) =>
+      _store.add(name, value);
+
+  /// Removes the header called [key], which may be a [HeaderName], a name
+  /// as text, or an accessor.
+  @override
+  void remove(final Object key) => _store.remove(switch (key) {
+    final HeaderName name => name,
+    final ReadOnlyAccessor<dynamic, HeaderName, Iterable<String>> a => a.key,
+    final String text => HeaderName.lookup(text),
+    _ => throw ArgumentError.value(key, 'key', 'Not a header name'),
+  });
 
   @override
-  Iterable<String>? remove(final Object? key) => _backing.remove(key);
+  void clear() => _store.clear();
+
+  @override
+  String toString() => 'MutableHeaders(${toMap()})';
 }

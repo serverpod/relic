@@ -15,6 +15,25 @@ part of 'result.dart';
 /// Response.noContent()
 /// ```
 ///
+/// ## HEAD Requests
+///
+/// Answer a HEAD request with the response GET would get. The adapter sends
+/// the body's length and type and drops the body without reading it, so a
+/// lazy stream such as a file is never opened. A handler that knows the
+/// length but has no stream to offer declares it on an empty stream:
+///
+/// ```dart
+/// Response.ok(
+///   body: Body.fromDataStream(
+///     const Stream.empty(),
+///     contentLength: size,
+///     mimeType: MimeType.pdf,
+///   ),
+/// )
+/// ```
+///
+/// A plain `Body.empty()` sends `Content-Length: 0`.
+///
 /// ## Redirect Responses
 ///
 /// ```dart

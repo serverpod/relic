@@ -22,12 +22,12 @@ void main() {
       expect(
         getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.expect,
+          touchHeaders: (h) => h.expect,
           headers: {'expect': ''},
         ),
         throwsA(
           isA<BadRequestException>().having(
-            (final e) => e.message,
+            (e) => e.message,
             'message',
             contains('Value cannot be empty'),
           ),
@@ -39,7 +39,7 @@ void main() {
         'then it is preserved so the server can respond with 417', () async {
       final headers = await getServerRequestHeaders(
         server: server,
-        touchHeaders: (final h) => h.expect,
+        touchHeaders: (h) => h.expect,
         headers: {'expect': 'custom-directive'},
       );
 
@@ -63,7 +63,7 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.expect,
+          touchHeaders: (h) => h.expect,
           headers: {'expect': '100-continue'},
         );
 
@@ -89,7 +89,7 @@ void main() {
           headers: {'expect': ''},
         );
 
-        expect(Headers.expect[headers].valueOrNullIfInvalid, isNull);
+        expect(headers.tryGet(Headers.expect), isNull);
         expect(() => headers.expect, throwsInvalidHeader);
       });
     });

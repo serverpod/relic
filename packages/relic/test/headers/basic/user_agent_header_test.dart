@@ -23,11 +23,11 @@ void main() {
         getServerRequestHeaders(
           server: server,
           headers: {'user-agent': ''},
-          touchHeaders: (final h) => h.userAgent,
+          touchHeaders: (h) => h.userAgent,
         ),
         throwsA(
           isA<BadRequestException>().having(
-            (final e) => e.message,
+            (e) => e.message,
             'message',
             contains('Value cannot be empty'),
           ),
@@ -53,7 +53,7 @@ void main() {
         final headers = await getServerRequestHeaders(
           server: server,
           headers: {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'},
-          touchHeaders: (final h) => h.userAgent,
+          touchHeaders: (h) => h.userAgent,
         );
 
         expect(
@@ -69,7 +69,7 @@ void main() {
         final headers = await getServerRequestHeaders(
           server: server,
           headers: {},
-          touchHeaders: (final h) => h.userAgent,
+          touchHeaders: (h) => h.userAgent,
         );
 
         expect(headers.userAgent, isNotNull);
@@ -94,7 +94,7 @@ void main() {
           headers: {'user-agent': ''},
         );
 
-        expect(Headers.userAgent[headers].valueOrNullIfInvalid, isNull);
+        expect(headers.tryGet(Headers.userAgent), isNull);
         expect(() => headers.userAgent, throwsInvalidHeader);
       });
     });

@@ -15,7 +15,7 @@ void main() {
           .addHandler(
             createSyncHandler(
               headers: Headers.build(
-                (final mh) => mh.from = FromHeader('next@serverpod.dev'),
+                (mh) => mh.from = const FromHeader('next@serverpod.dev'),
               ),
             ),
           );
@@ -30,7 +30,7 @@ void main() {
       'when sync null response is returned then it forwards to inner handler',
       () async {
         final handler = const Pipeline()
-            .addMiddleware(createMiddleware(onRequest: (final request) => null))
+            .addMiddleware(createMiddleware(onRequest: (request) => null))
             .addHandler(syncHandler);
 
         final response = await makeSimpleRequest(handler);
@@ -43,9 +43,7 @@ void main() {
       () async {
         final handler = const Pipeline()
             .addMiddleware(
-              createMiddleware(
-                onRequest: (final request) => Future.value(null),
-              ),
+              createMiddleware(onRequest: (request) => Future.value(null)),
             )
             .addHandler(syncHandler);
 
@@ -57,7 +55,7 @@ void main() {
     test('when sync response is returned then it is used', () async {
       final handler = const Pipeline()
           .addMiddleware(
-            createMiddleware(onRequest: (final request) => _middlewareResponse),
+            createMiddleware(onRequest: (request) => _middlewareResponse),
           )
           .addHandler(respondWith(_failHandler));
 
@@ -72,7 +70,7 @@ void main() {
       final handler = const Pipeline()
           .addMiddleware(
             createMiddleware(
-              onRequest: (final request) => Future.value(_middlewareResponse),
+              onRequest: (request) => Future.value(_middlewareResponse),
             ),
           )
           .addHandler(respondWith(_failHandler));
@@ -89,8 +87,8 @@ void main() {
         'when sync result is returned then responseHandler is not called',
         () async {
           final middleware = createMiddleware(
-            onRequest: (final request) => _middlewareResponse,
-            onResponse: (final response) => fail('should not be called'),
+            onRequest: (request) => _middlewareResponse,
+            onResponse: (response) => fail('should not be called'),
           );
 
           final handler = const Pipeline()
@@ -109,8 +107,8 @@ void main() {
         'when async result is returned then responseHandler is not called',
         () async {
           final middleware = createMiddleware(
-            onRequest: (final request) => Future.value(_middlewareResponse),
-            onResponse: (final response) => fail('should not be called'),
+            onRequest: (request) => Future.value(_middlewareResponse),
+            onResponse: (response) => fail('should not be called'),
           );
           final handler = const Pipeline()
               .addMiddleware(middleware)
@@ -133,7 +131,7 @@ void main() {
         final handler = const Pipeline()
             .addMiddleware(
               createMiddleware(
-                onResponse: (final response) {
+                onResponse: (response) {
                   expect(
                     response.headers.from?.mailbox,
                     contains('handler@serverpod.dev'),
@@ -145,7 +143,7 @@ void main() {
             .addHandler(
               createSyncHandler(
                 headers: Headers.build(
-                  (final mh) => mh.from = FromHeader('handler@serverpod.dev'),
+                  (mh) => mh.from = const FromHeader('handler@serverpod.dev'),
                 ),
               ),
             );
@@ -164,7 +162,7 @@ void main() {
         final handler = const Pipeline()
             .addMiddleware(
               createMiddleware(
-                onResponse: (final response) {
+                onResponse: (response) {
                   expect(
                     response.headers.from?.mailbox,
                     contains('handler@serverpod.dev'),
@@ -173,11 +171,11 @@ void main() {
                 },
               ),
             )
-            .addHandler(((final req) {
+            .addHandler(((req) {
               return Future(
                 () => createSyncHandler(
                   headers: Headers.build(
-                    (final mh) => mh.from = FromHeader('handler@serverpod.dev'),
+                    (mh) => mh.from = const FromHeader('handler@serverpod.dev'),
                   ),
                 )(req),
               );
@@ -199,7 +197,7 @@ void main() {
         final handler = const Pipeline()
             .addMiddleware(
               createMiddleware(
-                onRequest: (final request) => throw 'middleware error',
+                onRequest: (request) => throw 'middleware error',
               ),
             )
             .addHandler(respondWith(_failHandler));
@@ -214,7 +212,7 @@ void main() {
         final handler = const Pipeline()
             .addMiddleware(
               createMiddleware(
-                onRequest: (final request) => Future.error('middleware error'),
+                onRequest: (request) => Future.error('middleware error'),
               ),
             )
             .addHandler(respondWith(_failHandler));
@@ -227,10 +225,10 @@ void main() {
       'when throw from responseHandler then it does not hit error handler',
       () {
         final middleware = createMiddleware(
-          onResponse: (final response) {
+          onResponse: (response) {
             throw 'middleware error';
           },
-          onError: (final e, final s) => fail('should never get here'),
+          onError: (e, s) => fail('should never get here'),
         );
 
         final handler = const Pipeline()
@@ -243,10 +241,10 @@ void main() {
 
     test('when requestHandler throw then it does not hit errorHandlers', () {
       final middleware = createMiddleware(
-        onRequest: (final request) {
+        onRequest: (request) {
           throw 'middleware error';
         },
-        onError: (final e, final s) => fail('should never get here'),
+        onError: (e, s) => fail('should never get here'),
       );
 
       final handler = const Pipeline()
@@ -260,7 +258,7 @@ void main() {
       'when inner handler throws then it is caught by errorHandler with response',
       () async {
         final middleware = createMiddleware(
-          onError: (final error, final stack) {
+          onError: (error, stack) {
             expect(error, 'bad handler');
             return _middlewareResponse;
           },
@@ -269,7 +267,7 @@ void main() {
         final handler = const Pipeline()
             .addMiddleware(middleware)
             .addHandler(
-              respondWith((final request) {
+              respondWith((request) {
                 throw 'bad handler';
               }),
             );
@@ -286,7 +284,7 @@ void main() {
       'when inner handler throws then it is caught by errorHandler and rethrown',
       () {
         final middleware = createMiddleware(
-          onError: (final Object error, final stack) {
+          onError: (Object error, stack) {
             expect(error, 'bad handler');
             throw error;
           },
@@ -295,7 +293,7 @@ void main() {
         final handler = const Pipeline()
             .addMiddleware(middleware)
             .addHandler(
-              respondWith((final request) {
+              respondWith((request) {
                 throw 'bad handler';
               }),
             );
@@ -312,7 +310,7 @@ void main() {
         final handler = const Pipeline()
             .addMiddleware(middleware)
             .addHandler(
-              respondWith((final request) {
+              respondWith((request) {
                 throw 'bad handler';
               }),
             );
@@ -323,11 +321,11 @@ void main() {
   });
 }
 
-Response _failHandler(final Request request) => fail('should never get here');
+Response _failHandler(Request request) => fail('should never get here');
 
 final Response _middlewareResponse = Response.ok(
   body: Body.fromString('middleware content'),
   headers: Headers.build(
-    (final mh) => mh.from = FromHeader('middleware@serverpod.dev'),
+    (mh) => mh.from = const FromHeader('middleware@serverpod.dev'),
   ),
 );

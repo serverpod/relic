@@ -23,12 +23,12 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (final h) => h.referrerPolicy,
+            touchHeaders: (h) => h.referrerPolicy,
             headers: {'referrer-policy': ''},
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (final e) => e.message,
+              (e) => e.message,
               'message',
               contains('Value cannot be empty'),
             ),
@@ -44,7 +44,7 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (final h) => h.referrerPolicy,
+            touchHeaders: (h) => h.referrerPolicy,
             headers: {'referrer-policy': 'invalid-value'},
           ),
           throwsA(isA<BadRequestException>()),
@@ -56,7 +56,7 @@ void main() {
         'token wins and unknown tokens are ignored', () async {
       final headers = await getServerRequestHeaders(
         server: server,
-        touchHeaders: (final h) => h.referrerPolicy,
+        touchHeaders: (h) => h.referrerPolicy,
         headers: {
           'referrer-policy':
               'no-referrer, made-up, strict-origin-when-cross-origin',
@@ -86,7 +86,7 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.referrerPolicy,
+          touchHeaders: (h) => h.referrerPolicy,
           headers: {'referrer-policy': 'no-referrer'},
         );
 
@@ -99,7 +99,7 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.referrerPolicy,
+          touchHeaders: (h) => h.referrerPolicy,
           headers: {},
         );
 
@@ -125,7 +125,7 @@ void main() {
           headers: {'referrer-policy': ''},
         );
 
-        expect(Headers.referrerPolicy[headers].valueOrNullIfInvalid, isNull);
+        expect(headers.tryGet(Headers.referrerPolicy), isNull);
         expect(() => headers.referrerPolicy, throwsInvalidHeader);
       });
     });

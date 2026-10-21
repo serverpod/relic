@@ -27,7 +27,7 @@ The `Request` object exposes several important properties:
 - **`url`** - The complete original URI that was requested.
 - **`headers`** - Type-safe access to HTTP headers.
 - **`body`** - The request body wrapped in a `Body` helper. Use `await request.readAsString()` for text, or `request.read()` to access the byte stream. Both are single-read.
-- **`protocolVersion`** - The HTTP protocol version (typically `1.1`).
+- **`protocol`** - The HTTP protocol the request arrived with, an `HttpProtocol` value such as `http11`.
 - **`router`** - The `RelicRouter` that routed this request (available after routing, `null` otherwise).
 - **`copyWith()`** - Create a modified copy of the request with a different `url`, `headers`, or `body`.
 

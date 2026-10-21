@@ -1,6 +1,10 @@
 import 'dart:async';
+import 'dart:typed_data';
+
+import 'package:stream_channel/stream_channel.dart';
 
 import 'adapter/adapter.dart';
+import 'adapter/relic_web_socket.dart';
 import 'body/body.dart';
 import 'context/result.dart';
 import 'form/form_data.dart';
@@ -12,6 +16,8 @@ import 'headers/typed/headers/connection_header.dart';
 import 'isolated_object.dart';
 import 'logger/logger.dart';
 import 'util/util.dart';
+import 'web_socket/framed_web_socket.dart';
+import 'web_socket/web_socket_handshake.dart';
 
 sealed class RelicServer {
   /// Mounts a [handler] to the server and starts listening for requests.
@@ -22,10 +28,19 @@ sealed class RelicServer {
 
   /// Shuts down the server.
   ///
-  /// If [force] is `false` (the default), the server will wait for all
-  /// in-flight requests to complete before closing. If [force] is `true`,
-  /// the server will immediately close and forcefully terminate any
-  /// remaining connections.
+  /// A graceful close, the default, stops accepting, tells every WebSocket
+  /// peer the server is going away, and waits for the exchanges in flight,
+  /// the hijacked channels and those close handshakes to end. The handshakes
+  /// are bounded by their protocol implementations, the rest is the
+  /// handlers' own work, so the wait has no deadline of its own. Bound it
+  /// with a timeout and a forced close:
+  ///
+  /// ```dart
+  /// await server.close().timeout(grace, onTimeout: () => server.close(force: true));
+  /// ```
+  ///
+  /// A forced close drops every connection at once and ends a graceful
+  /// close that is still waiting.
   Future<void> close({final bool force = false});
 
   /// Returns information about the current connections.
@@ -54,101 +69,309 @@ sealed class RelicServer {
 
 /// A server that uses a [Adapter] to handle HTTP requests.
 final class _RelicServer implements RelicServer {
-  final FutureOr<Adapter> _adapter;
+  final FutureOr<Adapter> _pendingAdapter;
+
+  /// Resolved once, in [mountAndStart]. Every request after that reads the
+  /// field, so the dispatch path never awaits the adapter.
+  Adapter? _adapter;
   Handler? _handler;
-  StreamSubscription<AdapterRequest>? _subscription;
+  bool _started = false;
+
+  /// The WebSockets handed to handlers, framed here or by the adapter.
+  /// The going-away close on shutdown is this server's job for all of them.
+  final _sockets = <RelicWebSocket>{};
+
+  /// The raw channels handed to handlers, to close on shutdown.
+  final _channels = <StreamChannel<Uint8List>>{};
 
   /// Creates a server with the given parameters.
   _RelicServer(final Factory<Adapter> adapterFactory)
-    : _adapter = adapterFactory();
+    : _pendingAdapter = adapterFactory();
 
   /// Mounts a handler to the server and starts listening for requests.
   ///
   /// Only one handler can be mounted at a time.
   @override
   Future<void> mountAndStart(final Handler handler) async {
-    _port ??= (await _adapter).port;
-    _handler = _wrapHandlerWithMiddleware(handler);
-    if (_subscription == null) await _startListening();
+    final adapter = _adapter ??= await _pendingAdapter;
+    _handler = handler;
+    if (_started) return;
+    _started = true;
+    // One guarded zone for the errors that escape from `unawaited` work in
+    // handlers. Per-request zones would put every dispatch through a zone
+    // hop, and the sync path must stay free of that.
+    catchTopLevelErrors(() => adapter.start(_handle), (
+      final error,
+      final stackTrace,
+    ) {
+      logMessage(
+        'Asynchronous error\n$error',
+        stackTrace: stackTrace,
+        type: LoggerType.error,
+      );
+    });
   }
 
   @override
   Future<void> close({final bool force = false}) async {
-    await _stopListening();
-    await (await _adapter).close(force: force);
-    _port = null;
+    _handler = null;
+    final adapter = _adapter ?? await _pendingAdapter;
+    final closing = [
+      for (final socket in _sockets.toList())
+        if (!socket.isClosed) socket.closeGoingAway(),
+    ];
+    // A graceful close waits for the peers' answers to the going-away
+    // close, for every hijacked channel to flush what its handler wrote,
+    // and for the exchanges in flight. A forced close queues the frames and
+    // drops the channels at once, so a frame reaches a peer only when its
+    // adapter flushes before it drops.
+    if (!force) {
+      closing.addAll([
+        for (final channel in _channels.toList())
+          Future.sync(channel.sink.close),
+        adapter.close(),
+      ]);
+      await _settled(closing);
+    }
+    await adapter.close(force: true);
+  }
+
+  /// Completes when every future in [futures] has, however it did.
+  static Future<void> _settled(final List<Future<void>> futures) async {
+    await Future.wait([
+      for (final future in futures) future.then((_) {}, onError: (_) {}),
+    ]);
   }
 
   @override
   Future<ConnectionsInfo> connectionsInfo() async {
-    final adapter = await _adapter;
+    final adapter = _adapter ?? await _pendingAdapter;
     return adapter.connectionsInfo;
   }
 
-  int? _port;
   @override
-  int get port => _port ?? (throw StateError('Not bound'));
+  int get port =>
+      _adapter?.listeners.first.port ?? (throw StateError('Not bound'));
 
-  Future<void> _stopListening() async {
-    await _subscription?.cancel();
-    _handler = null;
-  }
-
-  /// Starts listening for requests.
-  Future<void> _startListening() async {
-    final adapter = await _adapter;
-    catchTopLevelErrors(
-      () {
-        _subscription = adapter.requests.listen(_handleRequest);
-      },
-      (final error, final stackTrace) {
-        logMessage(
-          'Asynchronous error\n$error',
-          stackTrace: stackTrace,
-          type: LoggerType.error,
-        );
-      },
-    );
-  }
-
-  Future<void> _handleRequest(final AdapterRequest adapterRequest) async {
+  /// Never throws synchronously and never returns a failed Future. The
+  /// caller is the adapter, and for a native adapter that is an FFI-driven
+  /// drain loop with nowhere to put an exception.
+  ///
+  /// A sync handler with a sync `respond` completes without a single
+  /// await. `await` always suspends, even on a non-Future, so the sync path
+  /// branches on `is Future` instead.
+  FutureOr<void> _handle(final AdapterExchange exchange) {
     final handler = _handler;
-    if (handler == null) return; // if close has been called
+    if (handler == null) {
+      // Closing. The adapter stops calling once its own close completes.
+      exchange.abort();
+      return null;
+    }
 
-    final adapter = await _adapter;
-
-    // Wrap the handler with our middleware
-    late Request request;
+    final Request request;
     try {
-      request = adapterRequest.toRequest();
+      request = exchange.toRequest();
     } catch (error, stackTrace) {
       logMessage(
         'Error reading request.\n$error',
         stackTrace: stackTrace,
         type: LoggerType.error,
       );
-      await adapter.respond(adapterRequest, Response.badRequest());
-      return;
+      return _respondOrAbort(exchange, Response.badRequest());
     }
 
+    final FutureOr<Result> result;
     try {
-      final result = await handler(request);
-      return await switch (result) {
-        final Response rc => adapter.respond(adapterRequest, rc),
-        final Hijack hc => adapter.hijack(adapterRequest, hc.callback),
-        final WebSocketUpgrade cc =>
-          _isOriginAllowed(request, cc)
-              ? adapter.connect(adapterRequest, cc.callback)
-              : adapter.respond(adapterRequest, Response.forbidden()),
-      };
+      result = handler(request);
     } catch (error, stackTrace) {
-      _logError(
-        request,
-        'Unhandled error in mounted handler.\n$error',
-        stackTrace,
+      return _fail(exchange, request, error, stackTrace);
+    }
+    if (result is Future<Result>) {
+      return _handleAsync(exchange, request, result);
+    }
+    try {
+      return _guard(exchange, request, _dispatch(exchange, request, result));
+    } catch (error, stackTrace) {
+      return _fail(exchange, request, error, stackTrace);
+    }
+  }
+
+  Future<void> _handleAsync(
+    final AdapterExchange exchange,
+    final Request request,
+    final Future<Result> pending,
+  ) async {
+    try {
+      await _dispatch(exchange, request, await pending);
+    } catch (error, stackTrace) {
+      await _fail(exchange, request, error, stackTrace);
+    }
+  }
+
+  /// Routes a failure from a Future returned by `_dispatch` into `_fail`.
+  FutureOr<void> _guard(
+    final AdapterExchange exchange,
+    final Request request,
+    final FutureOr<void> pending,
+  ) {
+    if (pending is Future<void>) {
+      return pending.catchError(
+        (final Object error, final StackTrace stackTrace) =>
+            _fail(exchange, request, error, stackTrace),
       );
-      await adapter.respond(adapterRequest, Response.internalServerError());
-      return;
+    }
+    return pending;
+  }
+
+  FutureOr<void> _dispatch(
+    final AdapterExchange exchange,
+    final Request request,
+    final Result result,
+  ) {
+    switch (result) {
+      case final Response response:
+        return exchange.respond(response);
+      case final Hijack hijack:
+        return _withChannel(exchange, (final channel) {
+          _keep(channel);
+          return hijack.callback(channel);
+        });
+      case final WebSocketUpgrade upgrade:
+        if (!_isOriginAllowed(request, upgrade)) {
+          return exchange.respond(Response.forbidden());
+        }
+        // A request that is not a valid opening handshake (RFC 6455 4.2.1)
+        // gets 400 here, so an adapter's upgradeWebSocket never sees one.
+        final acceptKey = webSocketAcceptKey(request);
+        if (acceptKey == null) {
+          return exchange.respond(
+            Response.badRequest(
+              body: Body.fromString('Not a WebSocket upgrade request'),
+            ),
+          );
+        }
+        final capabilities = _adapter!.capabilities;
+        if (capabilities.webSocket) {
+          final socket = exchange.upgradeWebSocket(acceptKey);
+          if (socket is Future<RelicWebSocket>) {
+            return socket.then((final socket) => _handOver(socket, upgrade));
+          }
+          _handOver(socket, upgrade);
+          return null;
+        }
+        if (!capabilities.hijack) {
+          return exchange.respond(Response.notImplemented());
+        }
+        // The RFC 6455 opening handshake on a raw channel, for an adapter
+        // with no framer of its own.
+        return _withChannel(
+          exchange,
+          (final channel) => _frame(channel, acceptKey, upgrade),
+        );
+    }
+  }
+
+  /// Hijacks the connection and hands the channel to [use], now or when
+  /// the adapter has it.
+  static FutureOr<void> _withChannel(
+    final AdapterExchange exchange,
+    final FutureOr<void> Function(StreamChannel<Uint8List>) use,
+  ) {
+    final channel = exchange.hijack();
+    if (channel is Future<StreamChannel<Uint8List>>) return channel.then(use);
+    use(channel);
+    return null;
+  }
+
+  void _frame(
+    final StreamChannel<Uint8List> channel,
+    final String acceptKey,
+    final WebSocketUpgrade upgrade,
+  ) {
+    channel.sink.add(webSocketHandshakeResponse(acceptKey));
+    _handOver(FramedWebSocket(channel), upgrade);
+  }
+
+  /// Keeps [channel] for the close on shutdown until its sink is done.
+  void _keep(final StreamChannel<Uint8List> channel) {
+    _channels.add(channel);
+    unawaited(
+      channel.sink.done
+          .then((_) {}, onError: (_) {})
+          .whenComplete(() => _channels.remove(channel)),
+    );
+  }
+
+  /// Keeps [socket] for the going-away close until it is done, and gives
+  /// it to the handler.
+  void _handOver(final RelicWebSocket socket, final WebSocketUpgrade upgrade) {
+    _sockets.add(socket);
+    unawaited(socket.done.whenComplete(() => _sockets.remove(socket)));
+    upgrade.callback(socket);
+  }
+
+  /// The last line of defence. Maps the exceptions handlers are allowed to
+  /// let through to their status, logs the rest as a 500, and falls back to
+  /// [AdapterExchange.abort] when even the error response cannot be sent,
+  /// for example because a streaming response already sent its headers.
+  /// Must not throw.
+  FutureOr<void> _fail(
+    final AdapterExchange exchange,
+    final Request request,
+    final Object error,
+    final StackTrace stackTrace,
+  ) {
+    final Response response;
+    switch (error) {
+      case final HeaderException e:
+        _logError(request, 'Error parsing request headers.\n$e', stackTrace);
+        response = Response.badRequest(
+          body: Body.fromString(e.httpResponseBody),
+        );
+      case final FormException e:
+        _logError(request, 'Error handling form data.\n$e', stackTrace);
+        response = Response(
+          e.statusCode,
+          headers: switch (e) {
+            UnsupportedFormMediaTypeException() ||
+            MalformedFormDataException() ||
+            FormLimitExceededException() => Headers.build(
+              (final mh) => mh.connection = const ConnectionHeader.directives([
+                ConnectionHeaderType.close,
+              ]),
+            ),
+            // Form accessors throw these after parsing has read the whole body.
+            MissingFormFieldException() || InvalidFormFieldException() => null,
+          },
+          body: Body.fromString(e.message),
+        );
+      case final MaxBodySizeExceeded e:
+        _logError(request, 'Error handling request.\n$e', stackTrace);
+        response = Response.contentTooLarge();
+      default:
+        _logError(
+          request,
+          'Unhandled error in mounted handler.\n$error',
+          stackTrace,
+        );
+        response = Response.internalServerError();
+    }
+    return _respondOrAbort(exchange, response);
+  }
+
+  static FutureOr<void> _respondOrAbort(
+    final AdapterExchange exchange,
+    final Response response,
+  ) {
+    try {
+      final pending = exchange.respond(response);
+      if (pending is Future<void>) {
+        return pending.catchError((final Object _) => exchange.abort());
+      }
+      return pending;
+    } catch (_) {
+      exchange.abort();
+      return null;
     }
   }
 
@@ -174,52 +397,6 @@ final class _RelicServer implements RelicServer {
     }
     if (origin == null) return true;
     return origin.host.toLowerCase() == request.url.host.toLowerCase();
-  }
-
-  /// Wraps a handler with middleware for error handling, header normalization, etc.
-  Handler _wrapHandlerWithMiddleware(final Handler handler) {
-    return (final req) async {
-      try {
-        final result = await handler(req);
-        return switch (result) {
-          final Response rc =>
-            // If the response doesn't have a date header, add the default one
-            rc.copyWith(
-              headers: rc.headers.transform((final mh) {
-                mh.date ??= DateTime.now();
-              }),
-            ),
-          _ => result,
-        };
-      } on HeaderException catch (error, stackTrace) {
-        // If the request headers are invalid, respond with a 400 Bad Request status.
-        _logError(req, 'Error parsing request headers.\n$error', stackTrace);
-        return Response.badRequest(
-          body: Body.fromString(error.httpResponseBody),
-        );
-      } on FormException catch (error, stackTrace) {
-        _logError(req, 'Error handling form data.\n$error', stackTrace);
-        return Response(
-          error.statusCode,
-          headers: switch (error) {
-            UnsupportedFormMediaTypeException() ||
-            MalformedFormDataException() ||
-            FormLimitExceededException() => Headers.build(
-              (final mh) => mh.connection = const ConnectionHeader.directives([
-                ConnectionHeaderType.close,
-              ]),
-            ),
-            // Form accessors throw these after parsing has read the whole body.
-            MissingFormFieldException() || InvalidFormFieldException() => null,
-          },
-          body: Body.fromString(error.message),
-        );
-      } on MaxBodySizeExceeded catch (error, stackTrace) {
-        // If the request body is too large, respond with a 413 Payload Too Large status.
-        _logError(req, 'Error handling request.\n$error', stackTrace);
-        return Response.contentTooLarge();
-      }
-    };
   }
 }
 

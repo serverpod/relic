@@ -150,7 +150,7 @@ void main() {
 
     test('when created, '
         'then files are empty and entries mirror fields', () {
-      final field = const FormFieldEntry(name: 'name', value: 'Gustavo');
+      const field = FormFieldEntry(name: 'name', value: 'Gustavo');
       final form = UrlEncodedFormData(fields: FormFields([field]));
 
       expect(form.fields.raw['name'], 'Gustavo');
@@ -191,7 +191,7 @@ void main() {
   group('Given MultipartFormData', () {
     test('when created, '
         'then it preserves mixed entry order', () {
-      final field = const FormFieldEntry(name: 'title', value: 'Report');
+      const field = FormFieldEntry(name: 'title', value: 'Report');
       final file = _file(filename: 'report.txt', bytes: 'file-body');
       final fileEntry = FileFieldEntry(name: 'upload', file: file);
       final form = MultipartFormData(

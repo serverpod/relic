@@ -1,25 +1,37 @@
-import 'dart:convert';
 import 'dart:io' as io;
 
 import 'package:relic_core/relic_core.dart';
 
-/// Creates a new [Request] from an [io.HttpRequest].
-Request fromHttpRequest(final io.HttpRequest request) {
+/// Creates a new [Request] from an [io.HttpRequest], on [exchange].
+///
+/// Throws [FormatException] for a target that does not decode. The core
+/// answers that with 400 before any handler runs.
+Request fromHttpRequest(io.HttpRequest request, AdapterExchange exchange) {
+  final url = request.requestedUri;
+  final target = RequestTarget.fromUri(url)..validate();
+  final headers = headersFromHttpRequest(request);
   return RequestInternal.create(
     Method.parse(request.method),
-    request.requestedUri,
-    request,
-    protocolVersion: request.protocolVersion,
-    headers: headersFromHttpRequest(request),
-    body: bodyFromHttpRequest(request),
-    connectionInfo: connectionInfoFromHttpConnectionInfo(
-      request.connectionInfo,
-    ),
+    url,
+    exchange,
+    target: target,
+    protocol: httpProtocolOf(request),
+    headers: headers,
+    body: bodyFromHttpRequest(request, headers),
+    lazyConnectionInfo: () =>
+        connectionInfoFromHttpConnectionInfo(request.connectionInfo),
   );
 }
 
+/// The HTTP version [request] arrived with.
+HttpProtocol httpProtocolOf(io.HttpRequest request) =>
+    switch (request.protocolVersion) {
+      '1.0' => HttpProtocol.http10,
+      _ => HttpProtocol.http11,
+    };
+
 ConnectionInfo connectionInfoFromHttpConnectionInfo(
-  final io.HttpConnectionInfo? info,
+  io.HttpConnectionInfo? info,
 ) {
   if (info == null) return ConnectionInfo.empty;
   return ConnectionInfo(
@@ -31,38 +43,27 @@ ConnectionInfo connectionInfoFromHttpConnectionInfo(
   );
 }
 
-Headers headersFromHttpRequest(final io.HttpRequest request) {
-  return Headers.build((final mh) {
-    request.headers.forEach((final k, final v) => mh[k] = v);
-  });
-}
-
-/// Creates a body from a [HttpRequest].
-Body bodyFromHttpRequest(final io.HttpRequest request) {
-  final contentType = request.headers.contentType;
-  return Body.fromDataStream(
-    request,
-    contentLength: request.contentLength <= 0 ? null : request.contentLength,
-    encoding: Encoding.getByName(contentType?.charset),
-    mimeType: contentType?.toMimeType,
-    parameters: {
-      if (contentType != null)
-        for (final MapEntry(:key, :value) in contentType.parameters.entries)
-          if (key != 'charset' && value != null && _isWritable(key, value))
-            key: value,
-    },
+Headers headersFromHttpRequest(io.HttpRequest request) {
+  final store = MapHeaderStore();
+  request.headers.forEach(
+    (name, values) => store.set(HeaderName.lookup(name), values),
   );
+  return Headers.fromStore(store);
 }
 
-/// Whether relic can write a Content-Type parameter back to a header.
-bool _isWritable(final String name, final String value) {
-  if (!Token.isValid(name)) return false;
-  try {
-    ParameterValue(value);
-    return true;
-  } on FormatException {
-    return false;
+/// The body of [request], typed by [headers].
+///
+/// A request that declares no length and is not chunked has none.
+Body bodyFromHttpRequest(io.HttpRequest request, Headers headers) {
+  final length = request.contentLength;
+  if (length < 0 && !request.headers.chunkedTransferEncoding) {
+    return Body.empty();
   }
+  return Body.of(
+    headers.tryGet(Headers.contentType),
+    stream: request,
+    contentLength: length < 0 ? null : length,
+  );
 }
 
 /// Extension to convert a [ContentType] to a [MimeType].

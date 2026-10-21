@@ -24,12 +24,12 @@ void main() {
       expect(
         getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.proxyAuthorization,
+          touchHeaders: (h) => h.proxyAuthorization,
           headers: {'proxy-authorization': ''},
         ),
         throwsA(
           isA<BadRequestException>().having(
-            (final e) => e.message,
+            (e) => e.message,
             'message',
             contains('Value cannot be empty'),
           ),
@@ -55,7 +55,7 @@ void main() {
         final headers = await getServerRequestHeaders(
           server: server,
           headers: {},
-          touchHeaders: (final h) => h.proxyAuthorization,
+          touchHeaders: (h) => h.proxyAuthorization,
         );
 
         expect(headers.proxyAuthorization, isNull);
@@ -70,12 +70,12 @@ void main() {
           expect(
             getServerRequestHeaders(
               server: server,
-              touchHeaders: (final h) => h.proxyAuthorization,
+              touchHeaders: (h) => h.proxyAuthorization,
               headers: {'proxy-authorization': 'Bearer'},
             ),
             throwsA(
               isA<BadRequestException>().having(
-                (final e) => e.message,
+                (e) => e.message,
                 'message',
                 contains('Invalid Bearer prefix'),
               ),
@@ -89,13 +89,13 @@ void main() {
         () async {
           final headers = await getServerRequestHeaders(
             server: server,
-            touchHeaders: (final h) => h.proxyAuthorization,
+            touchHeaders: (h) => h.proxyAuthorization,
             headers: {'proxy-authorization': 'Bearer validToken123'},
           );
           expect(
             headers.proxyAuthorization,
             isA<BearerAuthorizationHeader>().having(
-              (final auth) => auth.token,
+              (auth) => auth.token,
               'token',
               'validToken123',
             ),
@@ -112,12 +112,12 @@ void main() {
           expect(
             getServerRequestHeaders(
               server: server,
-              touchHeaders: (final h) => h.proxyAuthorization,
+              touchHeaders: (h) => h.proxyAuthorization,
               headers: {'proxy-authorization': 'Basic invalidBase64'},
             ),
             throwsA(
               isA<BadRequestException>().having(
-                (final e) => e.message,
+                (e) => e.message,
                 'message',
                 contains('Invalid basic token format'),
               ),
@@ -131,14 +131,14 @@ void main() {
         final credentials = base64Encode(utf8.encode('user:pass'));
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.proxyAuthorization,
+          touchHeaders: (h) => h.proxyAuthorization,
           headers: {'proxy-authorization': 'Basic $credentials'},
         );
         expect(
           headers.proxyAuthorization,
           isA<BasicAuthorizationHeader>()
-              .having((final auth) => auth.username, 'username', 'user')
-              .having((final auth) => auth.password, 'password', 'pass'),
+              .having((auth) => auth.username, 'username', 'user')
+              .having((auth) => auth.password, 'password', 'pass'),
         );
       });
     });
@@ -151,12 +151,12 @@ void main() {
           expect(
             getServerRequestHeaders(
               server: server,
-              touchHeaders: (final h) => h.proxyAuthorization,
+              touchHeaders: (h) => h.proxyAuthorization,
               headers: {'proxy-authorization': 'Digest invalidFormat'},
             ),
             throwsA(
               isA<BadRequestException>().having(
-                (final e) => e.message,
+                (e) => e.message,
                 'message',
                 contains('Invalid digest token format'),
               ),
@@ -174,12 +174,12 @@ void main() {
           expect(
             getServerRequestHeaders(
               server: server,
-              touchHeaders: (final h) => h.proxyAuthorization,
+              touchHeaders: (h) => h.proxyAuthorization,
               headers: {'proxy-authorization': 'Digest $digestValue'},
             ),
             throwsA(
               isA<BadRequestException>().having(
-                (final e) => e.message,
+                (e) => e.message,
                 'message',
                 contains('Username is required and cannot be empty'),
               ),
@@ -194,12 +194,12 @@ void main() {
           expect(
             getServerRequestHeaders(
               server: server,
-              touchHeaders: (final h) => h.proxyAuthorization,
+              touchHeaders: (h) => h.proxyAuthorization,
               headers: {'proxy-authorization': 'Digest $digestValue'},
             ),
             throwsA(
               isA<BadRequestException>().having(
-                (final e) => e.message,
+                (e) => e.message,
                 'message',
                 contains('Realm is required and cannot be empty'),
               ),
@@ -215,12 +215,12 @@ void main() {
           expect(
             getServerRequestHeaders(
               server: server,
-              touchHeaders: (final h) => h.proxyAuthorization,
+              touchHeaders: (h) => h.proxyAuthorization,
               headers: {'proxy-authorization': 'Digest $digestValue'},
             ),
             throwsA(
               isA<BadRequestException>().having(
-                (final e) => e.message,
+                (e) => e.message,
                 'message',
                 contains('Nonce is required and cannot be empty'),
               ),
@@ -236,12 +236,12 @@ void main() {
           expect(
             getServerRequestHeaders(
               server: server,
-              touchHeaders: (final h) => h.proxyAuthorization,
+              touchHeaders: (h) => h.proxyAuthorization,
               headers: {'proxy-authorization': 'Digest $digestValue'},
             ),
             throwsA(
               isA<BadRequestException>().having(
-                (final e) => e.message,
+                (e) => e.message,
                 'message',
                 contains('URI is required and cannot be empty'),
               ),
@@ -257,12 +257,12 @@ void main() {
           expect(
             getServerRequestHeaders(
               server: server,
-              touchHeaders: (final h) => h.proxyAuthorization,
+              touchHeaders: (h) => h.proxyAuthorization,
               headers: {'proxy-authorization': 'Digest $digestValue'},
             ),
             throwsA(
               isA<BadRequestException>().having(
-                (final e) => e.message,
+                (e) => e.message,
                 'message',
                 contains('Response is required and cannot be empty'),
               ),
@@ -280,12 +280,12 @@ void main() {
           expect(
             getServerRequestHeaders(
               server: server,
-              touchHeaders: (final h) => h.proxyAuthorization,
+              touchHeaders: (h) => h.proxyAuthorization,
               headers: {'proxy-authorization': 'Digest $digestValue'},
             ),
             throwsA(
               isA<BadRequestException>().having(
-                (final e) => e.message,
+                (e) => e.message,
                 'message',
                 contains('Username is required and cannot be empty'),
               ),
@@ -300,12 +300,12 @@ void main() {
           expect(
             getServerRequestHeaders(
               server: server,
-              touchHeaders: (final h) => h.proxyAuthorization,
+              touchHeaders: (h) => h.proxyAuthorization,
               headers: {'proxy-authorization': 'Digest $digestValue'},
             ),
             throwsA(
               isA<BadRequestException>().having(
-                (final e) => e.message,
+                (e) => e.message,
                 'message',
                 contains('Realm is required and cannot be empty'),
               ),
@@ -321,12 +321,12 @@ void main() {
           expect(
             getServerRequestHeaders(
               server: server,
-              touchHeaders: (final h) => h.proxyAuthorization,
+              touchHeaders: (h) => h.proxyAuthorization,
               headers: {'proxy-authorization': 'Digest $digestValue'},
             ),
             throwsA(
               isA<BadRequestException>().having(
-                (final e) => e.message,
+                (e) => e.message,
                 'message',
                 contains('Nonce is required and cannot be empty'),
               ),
@@ -342,12 +342,12 @@ void main() {
           expect(
             getServerRequestHeaders(
               server: server,
-              touchHeaders: (final h) => h.proxyAuthorization,
+              touchHeaders: (h) => h.proxyAuthorization,
               headers: {'proxy-authorization': 'Digest $digestValue'},
             ),
             throwsA(
               isA<BadRequestException>().having(
-                (final e) => e.message,
+                (e) => e.message,
                 'message',
                 contains('URI is required and cannot be empty'),
               ),
@@ -363,12 +363,12 @@ void main() {
           expect(
             getServerRequestHeaders(
               server: server,
-              touchHeaders: (final h) => h.proxyAuthorization,
+              touchHeaders: (h) => h.proxyAuthorization,
               headers: {'proxy-authorization': 'Digest $digestValue'},
             ),
             throwsA(
               isA<BadRequestException>().having(
-                (final e) => e.message,
+                (e) => e.message,
                 'message',
                 contains('Response is required and cannot be empty'),
               ),
@@ -383,17 +383,17 @@ void main() {
             'username="user", realm="realm", nonce="nonce", uri="/", response="response"';
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.proxyAuthorization,
+          touchHeaders: (h) => h.proxyAuthorization,
           headers: {'proxy-authorization': 'Digest $digestValue'},
         );
         expect(
           headers.proxyAuthorization,
           isA<DigestAuthorizationHeader>()
-              .having((final auth) => auth.username, 'username', 'user')
-              .having((final auth) => auth.realm, 'realm', 'realm')
-              .having((final auth) => auth.nonce, 'nonce', 'nonce')
-              .having((final auth) => auth.uri, 'uri', '/')
-              .having((final auth) => auth.response, 'response', 'response'),
+              .having((auth) => auth.username, 'username', 'user')
+              .having((auth) => auth.realm, 'realm', 'realm')
+              .having((auth) => auth.nonce, 'nonce', 'nonce')
+              .having((auth) => auth.uri, 'uri', '/')
+              .having((auth) => auth.response, 'response', 'response'),
         );
       });
 
@@ -404,22 +404,22 @@ void main() {
               'username="user", realm="realm", nonce="nonce", uri="/", response="response", algorithm="MD5", qop="auth", nc="00000001", cnonce="cnonce", opaque="opaque"';
           final headers = await getServerRequestHeaders(
             server: server,
-            touchHeaders: (final h) => h.proxyAuthorization,
+            touchHeaders: (h) => h.proxyAuthorization,
             headers: {'proxy-authorization': 'Digest $digestValue'},
           );
           expect(
             headers.proxyAuthorization,
             isA<DigestAuthorizationHeader>()
-                .having((final auth) => auth.username, 'username', 'user')
-                .having((final auth) => auth.realm, 'realm', 'realm')
-                .having((final auth) => auth.nonce, 'nonce', 'nonce')
-                .having((final auth) => auth.uri, 'uri', '/')
-                .having((final auth) => auth.response, 'response', 'response')
-                .having((final auth) => auth.algorithm, 'algorithm', 'MD5')
-                .having((final auth) => auth.qop, 'qop', 'auth')
-                .having((final auth) => auth.nc, 'nc', '00000001')
-                .having((final auth) => auth.cnonce, 'cnonce', 'cnonce')
-                .having((final auth) => auth.opaque, 'opaque', 'opaque'),
+                .having((auth) => auth.username, 'username', 'user')
+                .having((auth) => auth.realm, 'realm', 'realm')
+                .having((auth) => auth.nonce, 'nonce', 'nonce')
+                .having((auth) => auth.uri, 'uri', '/')
+                .having((auth) => auth.response, 'response', 'response')
+                .having((auth) => auth.algorithm, 'algorithm', 'MD5')
+                .having((auth) => auth.qop, 'qop', 'auth')
+                .having((auth) => auth.nc, 'nc', '00000001')
+                .having((auth) => auth.cnonce, 'cnonce', 'cnonce')
+                .having((auth) => auth.opaque, 'opaque', 'opaque'),
           );
         },
       );
@@ -442,10 +442,7 @@ void main() {
           touchHeaders: (_) {},
           headers: {'proxy-authorization': ''},
         );
-        expect(
-          Headers.proxyAuthorization[headers].valueOrNullIfInvalid,
-          isNull,
-        );
+        expect(headers.tryGet(Headers.proxyAuthorization), isNull);
         expect(() => headers.proxyAuthorization, throwsInvalidHeader);
       });
     });
@@ -458,10 +455,7 @@ void main() {
           headers: {'proxy-authorization': 'InvalidFormat'},
         );
 
-        expect(
-          Headers.proxyAuthorization[headers].valueOrNullIfInvalid,
-          isNull,
-        );
+        expect(headers.tryGet(Headers.proxyAuthorization), isNull);
         expect(() => headers.proxyAuthorization, throwsInvalidHeader);
       });
     });

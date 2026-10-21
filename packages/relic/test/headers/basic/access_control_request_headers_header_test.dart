@@ -25,11 +25,11 @@ void main() {
           getServerRequestHeaders(
             server: server,
             headers: {'access-control-request-headers': ''},
-            touchHeaders: (final h) => h.accessControlRequestHeaders,
+            touchHeaders: (h) => h.accessControlRequestHeaders,
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (final e) => e.message,
+              (e) => e.message,
               'message',
               contains('Value cannot be empty'),
             ),
@@ -57,7 +57,7 @@ void main() {
         headers: {
           'access-control-request-headers': 'X-Custom-Header, X-Another-Header',
         },
-        touchHeaders: (final h) => h.accessControlRequestHeaders,
+        touchHeaders: (h) => h.accessControlRequestHeaders,
       );
 
       expect(
@@ -76,7 +76,7 @@ void main() {
             'access-control-request-headers':
                 ' X-Custom-Header , X-Another-Header ',
           },
-          touchHeaders: (final h) => h.accessControlRequestHeaders,
+          touchHeaders: (h) => h.accessControlRequestHeaders,
         );
 
         expect(
@@ -96,7 +96,7 @@ void main() {
             'access-control-request-headers':
                 'X-Custom-Header, X-Another-Header, X-Custom-Header',
           },
-          touchHeaders: (final h) => h.accessControlRequestHeaders,
+          touchHeaders: (h) => h.accessControlRequestHeaders,
         );
 
         expect(
@@ -113,7 +113,7 @@ void main() {
         final headers = await getServerRequestHeaders(
           server: server,
           headers: {},
-          touchHeaders: (final h) => h.accessControlRequestHeaders,
+          touchHeaders: (h) => h.accessControlRequestHeaders,
         );
 
         expect(headers.accessControlRequestHeaders, isNull);
@@ -142,10 +142,7 @@ void main() {
               headers: {'access-control-request-headers': ''},
             );
 
-            expect(
-              Headers.accessControlRequestHeaders[headers].valueOrNullIfInvalid,
-              isNull,
-            );
+            expect(headers.tryGet(Headers.accessControlRequestHeaders), isNull);
             expect(
               () => headers.accessControlRequestHeaders,
               throwsInvalidHeader,

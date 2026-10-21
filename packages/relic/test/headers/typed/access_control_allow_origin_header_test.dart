@@ -24,12 +24,12 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (final h) => h.accessControlAllowOrigin,
+            touchHeaders: (h) => h.accessControlAllowOrigin,
             headers: {'access-control-allow-origin': ''},
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (final e) => e.message,
+              (e) => e.message,
               'message',
               contains('Value cannot be empty'),
             ),
@@ -45,7 +45,7 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (final h) => h.accessControlAllowOrigin,
+            touchHeaders: (h) => h.accessControlAllowOrigin,
             headers: {'access-control-allow-origin': 'ht!tp://invalid-url'},
           ),
           throwsA(isA<BadRequestException>()),
@@ -60,7 +60,7 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (final h) => h.accessControlAllowOrigin,
+            touchHeaders: (h) => h.accessControlAllowOrigin,
             headers: {
               'access-control-allow-origin': 'https://example.com:test',
             },
@@ -76,12 +76,12 @@ void main() {
       expect(
         getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.accessControlAllowOrigin,
+          touchHeaders: (h) => h.accessControlAllowOrigin,
           headers: {'access-control-allow-origin': 'https://example.com/'},
         ),
         throwsA(
           isA<BadRequestException>().having(
-            (final e) => e.message,
+            (e) => e.message,
             'message',
             contains('origin must not include path'),
           ),
@@ -110,7 +110,7 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.accessControlAllowOrigin,
+          touchHeaders: (h) => h.accessControlAllowOrigin,
           headers: {'access-control-allow-origin': 'https://example.com'},
         );
 
@@ -127,7 +127,7 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.accessControlAllowOrigin,
+          touchHeaders: (h) => h.accessControlAllowOrigin,
           headers: {'access-control-allow-origin': 'https://example.com:8080'},
         );
 
@@ -141,7 +141,7 @@ void main() {
         'spaces is passed then it should parse correctly', () async {
       final headers = await getServerRequestHeaders(
         server: server,
-        touchHeaders: (final h) => h.accessControlAllowOrigin,
+        touchHeaders: (h) => h.accessControlAllowOrigin,
         headers: {'access-control-allow-origin': ' https://example.com '},
       );
 
@@ -157,7 +157,7 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.accessControlAllowOrigin,
+          touchHeaders: (h) => h.accessControlAllowOrigin,
           headers: {'access-control-allow-origin': '*'},
         );
 
@@ -170,7 +170,7 @@ void main() {
         'then it parses as the opaque-origin sentinel', () async {
       final headers = await getServerRequestHeaders(
         server: server,
-        touchHeaders: (final h) => h.accessControlAllowOrigin,
+        touchHeaders: (h) => h.accessControlAllowOrigin,
         headers: {'access-control-allow-origin': 'null'},
       );
 
@@ -185,7 +185,7 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.accessControlAllowOrigin,
+          touchHeaders: (h) => h.accessControlAllowOrigin,
           headers: {},
         );
 
@@ -211,10 +211,7 @@ void main() {
           headers: {'access-control-allow-origin': 'ht!tp://invalid-url'},
         );
 
-        expect(
-          Headers.accessControlAllowOrigin[headers].valueOrNullIfInvalid,
-          isNull,
-        );
+        expect(headers.tryGet(Headers.accessControlAllowOrigin), isNull);
         expect(() => headers.accessControlAllowOrigin, throwsInvalidHeader);
       });
     });

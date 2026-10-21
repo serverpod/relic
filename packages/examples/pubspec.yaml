@@ -9,3 +9,7 @@ resolution: workspace
 
 dependencies:
   relic: ^2.0.0-rc.2
+
+dev_dependencies:
+  http: any
+  web_socket: any

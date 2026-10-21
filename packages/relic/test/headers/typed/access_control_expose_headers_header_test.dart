@@ -24,12 +24,12 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (final h) => h.accessControlExposeHeaders,
+            touchHeaders: (h) => h.accessControlExposeHeaders,
             headers: {'access-control-expose-headers': ''},
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (final e) => e.message,
+              (e) => e.message,
               'message',
               contains('Value cannot be empty'),
             ),
@@ -47,12 +47,12 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (final h) => h.accessControlExposeHeaders,
+            touchHeaders: (h) => h.accessControlExposeHeaders,
             headers: {'access-control-expose-headers': '*, X-Custom-Header'},
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (final e) => e.message,
+              (e) => e.message,
               'message',
               contains('Wildcard (*) cannot be used with other values'),
             ),
@@ -82,7 +82,7 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.accessControlExposeHeaders,
+          touchHeaders: (h) => h.accessControlExposeHeaders,
           headers: {'access-control-expose-headers': 'X-Custom-Header'},
         );
 
@@ -98,7 +98,7 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.accessControlExposeHeaders,
+          touchHeaders: (h) => h.accessControlExposeHeaders,
           headers: {'access-control-expose-headers': '*'},
         );
 
@@ -112,7 +112,7 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.accessControlExposeHeaders,
+          touchHeaders: (h) => h.accessControlExposeHeaders,
           headers: {},
         );
 
@@ -172,10 +172,7 @@ void main() {
           headers: {'access-control-expose-headers': ''},
         );
 
-        expect(
-          Headers.accessControlExposeHeaders[headers].valueOrNullIfInvalid,
-          isNull,
-        );
+        expect(headers.tryGet(Headers.accessControlExposeHeaders), isNull);
         expect(() => headers.accessControlExposeHeaders, throwsInvalidHeader);
       });
     });

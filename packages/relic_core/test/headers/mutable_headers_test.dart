@@ -13,7 +13,7 @@ void main() {
     test('when assigning null to a key '
         'then the value disappear', () {
       expect(mutable['1'], isNotNull);
-      expect(mutable..remove('1'), {
+      expect((mutable..remove('1')).toMap(), {
         '2': ['b'],
         '3': ['c'],
       });
@@ -21,25 +21,25 @@ void main() {
     test('when removing a key '
         'then the value is removed', () {
       expect(() => mutable['2'] = null, returnsNormally);
-      expect(mutable, {
+      expect(mutable.toMap(), {
         '1': ['a'],
         '3': ['c'],
       });
     });
     test('when accessing keys '
         'then all keys are returned', () {
-      expect(mutable.keys, ['1', '2', '3']);
+      expect(mutable.names.map((n) => n.lower), ['1', '2', '3']);
     });
     test('when clearing '
         'then all values is removed', () {
       expect(() => mutable.clear(), returnsNormally);
-      expect(mutable, MutableHeaders());
+      expect(mutable.toMap(), isEmpty);
     });
   });
 
   test('When assigning a value during Headers.build '
       'then its present in the returned headers collection', () {
-    final headers = Headers.build((final mh) {
+    final headers = Headers.build((mh) {
       mh['foo'] = ['bar'];
     });
     expect(headers['foo'], ['bar']);
@@ -82,5 +82,25 @@ void main() {
         );
       }
     });
+  });
+
+  test('Given a typed list header, when an empty list is assigned, '
+      'then the header is cleared', () {
+    final mutable = MutableHeaders()..via = ['1.1 proxy'];
+
+    mutable.via = [];
+
+    expect(mutable.via, isNull);
+    expect(mutable.contains(HeaderName.via), isFalse);
+  });
+
+  test('Given a typed set header, when an empty set is assigned, '
+      'then the header is cleared', () {
+    final mutable = MutableHeaders()..allow = {Method.get};
+
+    mutable.allow = {};
+
+    expect(mutable.allow, isNull);
+    expect(mutable.contains(HeaderName.allow), isFalse);
   });
 }

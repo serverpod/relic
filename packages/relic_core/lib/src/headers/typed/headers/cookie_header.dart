@@ -1,6 +1,5 @@
 import 'package:collection/collection.dart';
 import '../../../../relic_core.dart';
-import '../../extension/string_list_extensions.dart';
 import 'util/cookie_util.dart';
 
 /// A class representing the HTTP Cookie header.
@@ -26,14 +25,12 @@ final class CookieHeader {
       throw const FormatException('Value cannot be empty');
     }
 
-    final splitValues = value.splitAndTrim(separator: ';');
-
-    // Parse each cookie independently and skip the malformed ones rather than
-    // rejecting the entire header. The Cookie header is a single line carrying
-    // every cookie the user agent decided to send; one invalid cookie (fx. a
-    // stray third-party cookie that does not meet RFC 6265's grammar) must not
-    // make the other, well-formed cookies - including a session or auth cookie
-    // - unreadable.
+    // The parser reads each segment on its own and skips a malformed one
+    // rather than failing the header. The Cookie header is a single line
+    // carrying every cookie the user agent decided to send. One invalid
+    // cookie, say a stray third-party cookie outside RFC 6265's grammar,
+    // must not make the well-formed ones unreadable, a session or auth
+    // cookie among them.
     //
     // RFC 6265 5.4 also allows a Cookie header to carry several cookies with
     // the same name (a host-only cookie plus a Domain-scoped one, or
@@ -47,17 +44,16 @@ final class CookieHeader {
     // Cookie names are case-sensitive per RFC 6265 4.2.2/5.4, so `Sid` and
     // `sid` stay distinct.
     final cookies = <Cookie>[];
-    for (final cookie in splitValues) {
-      try {
-        final parsed = Cookie.parse(cookie);
-        // A nameless segment like `=value` (or a bare `=`) is not a cookie the
-        // client meaningfully set; skip it so such junk does not survive as an
-        // empty-named entry and slip past the "no valid cookies" guard below.
-        if (parsed.name.isEmpty) continue;
-        cookies.add(parsed);
-      } on FormatException {
-        // Skip this malformed cookie; keep the rest.
+    final length = value.length;
+    var start = 0;
+    while (start <= length) {
+      var end = start;
+      while (end < length && value.codeUnitAt(end) != 0x3B) {
+        end++;
       }
+      final cookie = Cookie._scan(value, start, end);
+      if (cookie != null) cookies.add(cookie);
+      start = end + 1;
     }
 
     // The header is only treated as invalid when nothing in it is a usable
@@ -117,6 +113,44 @@ class Cookie {
   Cookie({required final String name, required final String value})
     : name = validateCookieName(name),
       value = validateCookieValue(value);
+
+  const Cookie._(this.name, this.value);
+
+  /// The cookie in `text[start..end)`, one segment of a Cookie header, or
+  /// null when the segment is not one.
+  ///
+  /// A segment is not a cookie without an `=`, or with a character outside
+  /// the grammar. Nor is a nameless `=value` or a bare `=`, which no client
+  /// meaningfully set. Whitespace is trimmed as `String.trim` trims it.
+  static Cookie? _scan(final String text, int start, int end) {
+    while (start < end && isTrimWhitespace(text.codeUnitAt(start))) {
+      start++;
+    }
+    while (end > start && isTrimWhitespace(text.codeUnitAt(end - 1))) {
+      end--;
+    }
+    // Split on the first '=' only. RFC 6265 cookie-octets permit '=' inside
+    // the value, as in base64 padding.
+    var eq = start;
+    while (eq < end && text.codeUnitAt(eq) != 0x3D) {
+      eq++;
+    }
+    if (eq == end) return null;
+    var nameEnd = eq;
+    while (nameEnd > start && isTrimWhitespace(text.codeUnitAt(nameEnd - 1))) {
+      nameEnd--;
+    }
+    if (!isCookieName(text, start, nameEnd)) return null;
+    var valueStart = eq + 1;
+    while (valueStart < end && isTrimWhitespace(text.codeUnitAt(valueStart))) {
+      valueStart++;
+    }
+    if (!isCookieValue(text, valueStart, end)) return null;
+    return Cookie._(
+      text.substring(start, nameEnd),
+      text.substring(valueStart, end),
+    );
+  }
 
   factory Cookie.parse(final String value) {
     // Split on the FIRST '=' only; RFC 6265 cookie-octets permit '=' to

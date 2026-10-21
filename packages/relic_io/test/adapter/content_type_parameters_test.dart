@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:relic_core/relic_core.dart';
 import 'package:relic_io/relic_io.dart';
 import 'package:test/test.dart';
+import 'package:test_utils/adapter_conformance.dart';
 
 import '../util/test_util.dart';
 
@@ -50,7 +51,7 @@ void main() {
       'when the handler reads the request body type, '
       'then the boundary is a body type parameter.', () async {
     String? boundary;
-    server = await testServe((final req) async {
+    server = await testServe((req) async {
       boundary = req.body.bodyType?.parameter('boundary');
       await req.read().drain<void>();
       return Response.ok();
@@ -72,7 +73,7 @@ void main() {
     'when the handler echoes the request body, '
     'then the response succeeds without that parameter.',
     () async {
-      server = await testServe((final req) => Response.ok(body: req.body));
+      server = await testServe((req) => Response.ok(body: req.body));
 
       final request = await client.postUrl(server.url);
       request.headers.set(HttpHeaders.contentTypeHeader, 'text/plain; a@b=c');
@@ -89,7 +90,7 @@ void main() {
       'when the response is written, '
       'then the client receives the boundary in Content-Type.', () async {
     server = await testServe(
-      (final req) async => Response.ok(
+      (req) async => Response.ok(
         body: Body.fromData(
           Uint8List.fromList('--abc123--\r\n'.codeUnits),
           mimeType: const MimeType('multipart', 'mixed'),

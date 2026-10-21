@@ -1,4 +1,5 @@
 import 'package:meta/meta.dart';
+import 'package:relic_headers/relic_headers.dart';
 
 /// An HTTP `token` value per [RFC 9110 section 5.6.2][rfc-token].
 ///
@@ -27,16 +28,10 @@ abstract interface class Token {
 
   /// True if [s] is a syntactically valid token: non-empty and composed only
   /// of `tchar` characters.
-  static bool isValid(final String s) {
-    if (s.isEmpty) return false;
-    for (var i = 0; i < s.length; i++) {
-      if (!isTchar(s.codeUnitAt(i))) return false;
-    }
-    return true;
-  }
+  static bool isValid(final String s) => HeaderName.isToken(s);
 
   /// True if [c] is a single `tchar` code unit per RFC 9110 5.6.2.
-  static bool isTchar(final int c) => _isTchar(c);
+  static bool isTchar(final int c) => HeaderName.isTchar(c);
 
   /// Returns [s] unchanged if it is a valid token, otherwise throws
   /// [FormatException].
@@ -86,34 +81,6 @@ final class TokenValue implements Token {
 
   @override
   String toString() => value;
-}
-
-bool _isTchar(final int c) {
-  // ALPHA
-  if (c >= 0x41 && c <= 0x5A) return true; // A-Z
-  if (c >= 0x61 && c <= 0x7A) return true; // a-z
-  // DIGIT
-  if (c >= 0x30 && c <= 0x39) return true; // 0-9
-  // tchar specials: ! # $ % & ' * + - . ^ _ ` | ~
-  switch (c) {
-    case 0x21:
-    case 0x23:
-    case 0x24:
-    case 0x25:
-    case 0x26:
-    case 0x27:
-    case 0x2A:
-    case 0x2B:
-    case 0x2D:
-    case 0x2E:
-    case 0x5E:
-    case 0x5F:
-    case 0x60:
-    case 0x7C:
-    case 0x7E:
-      return true;
-  }
-  return false;
 }
 
 bool _ciEquals(final String a, final String b) {

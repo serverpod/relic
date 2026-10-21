@@ -15,11 +15,11 @@ typedef SyncHandler = Result Function(Request);
 /// By default, replies with a status code 200, empty headers, and
 /// `Hello from ${req.url.path}`.
 SyncHandler createSyncHandler({
-  final int statusCode = 200,
-  final Headers? headers,
-  final Body? body,
+  int statusCode = 200,
+  Headers? headers,
+  Body? body,
 }) {
-  return (final Request req) {
+  return (Request req) {
     return Response(
       statusCode,
       headers: headers ?? Headers.empty(),
@@ -31,30 +31,23 @@ SyncHandler createSyncHandler({
 final SyncHandler syncHandler = createSyncHandler();
 
 /// Calls [createSyncHandler] and wraps the response in a [Future].
-Future<Result> asyncHandler(final Request req) async {
+Future<Result> asyncHandler(Request req) async {
   return syncHandler(req);
 }
 
 /// Makes a simple GET request to [handler] and returns the result.
-Future<Response> makeSimpleRequest(
-  final Handler handler, [
-  final Request? request,
-]) async {
+Future<Response> makeSimpleRequest(Handler handler, [Request? request]) async {
   final newCtx = await handler((request ?? _defaultRequest));
   if (newCtx is! Response) throw ArgumentError(newCtx);
   return newCtx;
 }
 
-final _defaultRequest = RequestInternal.create(
-  Method.get,
-  localhostUri,
-  Object(),
-);
+final _defaultRequest = RequestInternal.create(Method.get, localhostUri, null);
 
 final localhostUri = Uri.parse('http://localhost/');
 
 final isOhNoStateError = isA<StateError>().having(
-  (final e) => e.message,
+  (e) => e.message,
   'message',
   'oh no',
 );
@@ -84,9 +77,9 @@ final isOhNoStateError = isA<StateError>().having(
 /// ```
 @isTestGroup
 void parameterizedGroup<T>(
-  final String Function(T) descriptionBuilder,
-  final void Function(T) body, {
-  required final Iterable<T> variants,
+  String Function(T) descriptionBuilder,
+  void Function(T) body, {
+  required Iterable<T> variants,
 }) {
   for (final v in variants) {
     group(descriptionBuilder(v), () => body(v));
@@ -115,9 +108,9 @@ void parameterizedGroup<T>(
 /// ```
 @isTest
 void parameterizedTest<T>(
-  final String Function(T) descriptionBuilder,
-  final void Function(T) body, {
-  required final Iterable<T> variants,
+  String Function(T) descriptionBuilder,
+  void Function(T) body, {
+  required Iterable<T> variants,
 }) {
   for (final v in variants) {
     test(descriptionBuilder(v), () => body(v));
@@ -134,11 +127,7 @@ void parameterizedTest<T>(
 /// singleTest('1 + 1 equals 2', 1 + 1, 2);
 /// ```
 @isTest
-void singleTest(
-  final String description,
-  final dynamic actual,
-  final dynamic expected,
-) {
+void singleTest(String description, dynamic actual, dynamic expected) {
   test(description, () {
     expect(actual, expected);
   });

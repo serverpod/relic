@@ -23,12 +23,12 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (final h) => h.contentSecurityPolicy,
+            touchHeaders: (h) => h.contentSecurityPolicy,
             headers: {'content-security-policy': ''},
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (final e) => e.message,
+              (e) => e.message,
               'message',
               contains('Value cannot be empty'),
             ),
@@ -73,7 +73,7 @@ void main() {
         'lowercase', () async {
       final headers = await getServerRequestHeaders(
         server: server,
-        touchHeaders: (final h) => h.contentSecurityPolicy,
+        touchHeaders: (h) => h.contentSecurityPolicy,
         headers: {'content-security-policy': "DEFAULT-SRC 'self'"},
       );
 
@@ -111,7 +111,7 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.contentSecurityPolicy,
+          touchHeaders: (h) => h.contentSecurityPolicy,
           headers: {},
         );
 
@@ -137,10 +137,7 @@ void main() {
           headers: {'content-security-policy': ''},
         );
 
-        expect(
-          Headers.contentSecurityPolicy[headers].valueOrNullIfInvalid,
-          isNull,
-        );
+        expect(headers.tryGet(Headers.contentSecurityPolicy), isNull);
         expect(() => headers.contentSecurityPolicy, throwsInvalidHeader);
       });
     });
