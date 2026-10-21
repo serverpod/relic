@@ -15,6 +15,7 @@ import 'headers/standard_headers_extensions.dart';
 import 'headers/typed/headers/connection_header.dart';
 import 'isolated_object.dart';
 import 'logger/logger.dart';
+import 'router/method.dart';
 import 'util/util.dart';
 import 'web_socket/framed_web_socket.dart';
 import 'web_socket/web_socket_handshake.dart';
@@ -237,6 +238,15 @@ final class _RelicServer implements RelicServer {
           return hijack.callback(channel);
         });
       case final WebSocketUpgrade upgrade:
+        // The opening handshake is a GET (RFC 6455 4.1).
+        if (request.method != Method.get) {
+          return exchange.respond(
+            Response(
+              405,
+              headers: Headers.build((final mh) => mh.allow = {Method.get}),
+            ),
+          );
+        }
         if (!_isOriginAllowed(request, upgrade)) {
           return exchange.respond(Response.forbidden());
         }
