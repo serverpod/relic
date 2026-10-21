@@ -20,6 +20,31 @@ Future<void> main() async {
 }
 ```
 
+## HTTPS
+
+Pass a `NativeTls` with the certificate chain and private key as PEM, and
+the server speaks HTTPS. [tls.zig](https://github.com/lalinsky/tls.zig)
+runs the handshake and the records in native code, on the same thread
+as the rest of the connection.
+
+```dart
+await app.serveNative(
+  port: 8443,
+  tls: NativeTls.fromFiles(
+    certificateChain: 'cert.pem',
+    privateKey: 'key.pem',
+  ),
+);
+```
+
+The chain holds the server's certificate first, then any intermediates.
+The key is an unencrypted PKCS#8 or SEC 1 key, ECDSA, RSA or Ed25519.
+`bind` throws a `TlsException` for a key it cannot use, and for a chain
+with no certificate or one that is expired, unreadable or repeats a
+subject. The server speaks TLS 1.3 only, asks for no client certificate
+and offers no ALPN. A client that sends plain HTTP to the port gets a
+plain 400.
+
 ## Platforms
 
 Linux (x64, arm64), macOS (arm64, x64) and Windows (x64, arm64). On
@@ -53,26 +78,26 @@ and router, and both pass the same conformance suite. The differences:
   isolate, and its p99 under load is lower, since parsing and keep-alive
   run on native threads while the isolate is busy. The numbers are in
   `doc/design/relic_native/NOTES.md`.
-- TLS. `relic_io` terminates TLS itself. `relic_native` does not, so put
-  a proxy in front or stay with `relic_io`.
+- TLS. Both terminate it. `relic_io` uses a `SecurityContext` and speaks
+  TLS 1.2 and 1.3. `relic_native` takes PEM through `NativeTls` and speaks
+  TLS 1.3 only.
 - Platforms. `relic_io` runs wherever Dart does. `relic_native` runs on
   Linux, macOS and Windows.
 - Dependencies. `relic_io` is pure Dart. `relic_native` ships prebuilt
   libraries and needs Zig only for a source checkout.
 
 Stay with `relic_io` unless you have measured the dart:io adapter as the
-bottleneck and run behind a proxy. `relic_native` is newer code with a
-native library in the process, and the gain only matters once the server
-is the limit.
+bottleneck. `relic_native` is newer code with a native library in the
+process, and the gain only matters once the server is the limit.
 
 ## Limits
 
 HTTP/1.0 and HTTP/1.1 only, with `Content-Length` and chunked bodies
-both ways. No HTTP/2 or HTTP/3. No TLS in process, terminate it in
-front. A handler can hijack the connection as a raw byte channel, and a
-WebSocket upgrade is framed by the native side, so `capabilities.hijack`
-and `capabilities.webSocket` are both true. A WebSocket message is at
-most `maxWebSocketMessage` bytes, 16 MiB unless `bind` is told
-otherwise. A request head is at most 16 KiB with at most 128 fields, and
-a body over `maxInlineBody` streams to the handler instead of being read
-first.
+both ways. No HTTP/2 or HTTP/3. TLS 1.3 only, see above. A handler
+can hijack the connection as a raw byte channel, and a WebSocket upgrade
+is framed by the native side, so `capabilities.hijack` and
+`capabilities.webSocket` are both true. A WebSocket message is at most
+`maxWebSocketMessage` bytes, 16 MiB unless `bind` is told otherwise. A
+request head is at most 16 KiB with at most 128 fields, and a body over
+`maxInlineBody` streams to the handler instead of being read first. Under
+TLS a connection holds about 33 KiB more, the buffers a record needs.

@@ -12,6 +12,10 @@ topics:
 environment:
   sdk: ^3.10.0
 
+# Test material, see test/certs/generate.sh.
+false_secrets:
+  - /test/certs/*_key.pem
+
 resolution: workspace
 
 dependencies:

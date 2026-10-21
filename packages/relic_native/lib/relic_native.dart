@@ -3,5 +3,5 @@
 library;
 
 export 'src/native_adapter.dart'
-    show NativeAdapter, NativeExchange, NativeOptions;
+    show NativeAdapter, NativeExchange, NativeOptions, NativeTls;
 export 'src/native_serve.dart';
