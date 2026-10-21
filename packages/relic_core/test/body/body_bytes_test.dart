@@ -151,6 +151,24 @@ void main() {
     expect(body.read, throwsStateError);
   });
 
+  test('Given a streamed body, when it is consumed, '
+      'then its stream is cancelled.', () async {
+    final cancelled = Completer<void>();
+    final source = StreamController<Uint8List>(onCancel: cancelled.complete);
+    final body = Body.fromDataStream(source.stream);
+
+    body.consume();
+
+    await expectLater(cancelled.future, completes);
+  });
+
+  test('Given an empty body, when it is read, '
+      'then it yields no bytes.', () async {
+    final body = Body.empty();
+
+    expect(await body.read().toList(), isEmpty);
+  });
+
   test('Given a body that was read, when it is consumed, '
       'then it fails with a StateError.', () {
     final body = Body.fromData(Uint8List.fromList([1, 2, 3]));

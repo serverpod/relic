@@ -184,7 +184,9 @@ class Body {
   /// final emptyBody = Body.empty();
   /// print(emptyBody.contentLength); // 0
   /// ```
-  factory Body.empty() => Body._(const Stream.empty(), 0);
+  factory Body.empty() => Body._(null, 0).._open = _openEmpty;
+
+  static Stream<Uint8List> _openEmpty() => const Stream.empty();
 
   /// Creates a body from a string.
   ///
@@ -299,9 +301,10 @@ class Body {
   /// [encoding] sets. Throws [ArgumentError] if [parameters] has a `charset`,
   /// or is not empty while [mimeType] is null.
   ///
-  /// The framing takes Content-Length from [contentLength], and a HEAD
-  /// response never reads the stream. A handler answering HEAD with a known
-  /// length and no stream passes `const Stream.empty()` with that length.
+  /// The framing takes Content-Length from [contentLength]. A response that
+  /// sends no body, such as the answer to a HEAD request, cancels the stream
+  /// without reading it. Use [Body.lazy] for a stream that opens a file or a
+  /// connection when listened to.
   factory Body.fromDataStream(
     final Stream<Uint8List> body, {
     final Encoding? encoding,
@@ -550,15 +553,18 @@ class Body {
 
 /// What an adapter does with a body it does not stream.
 extension BodyConsume on Body {
-  /// Marks the body as read, as [Body.read] does, without the stream.
+  /// Marks the body as read, as [Body.read] does, and cancels its stream
+  /// without reading it.
   ///
   /// An adapter that sends [Body.bytes] itself, or sends no body at all,
   /// has no use for the stream, and [Body.read] would allocate one for a
-  /// body held as bytes.
+  /// body held as bytes. The cancel lets the producer of the stream release
+  /// what it holds. A body from [Body.lazy] has no stream until it is read.
   ///
   /// Throws a [StateError] when the body was already read.
   void consume() {
     _markRead();
+    _stream?.listen(null).cancel().ignore();
     _stream = null;
     _open = null;
   }

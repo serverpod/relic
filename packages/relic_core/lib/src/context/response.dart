@@ -17,15 +17,16 @@ part of 'result.dart';
 ///
 /// ## HEAD Requests
 ///
-/// Answer a HEAD request with the response GET would get. The adapter sends
-/// the body's length and type and drops the body without reading it, so a
-/// lazy stream such as a file is never opened. A handler that knows the
-/// length but has no stream to offer declares it on an empty stream:
+/// Answer a HEAD request with the response GET would get. The adapter
+/// sends the body's length and type, and cancels the body's stream without
+/// reading it. Cancelling a stream listens to it first, so a stream from
+/// `File.openRead` opens and closes its file. A [Body.lazy] makes its
+/// stream only when it is read, which a HEAD response never does:
 ///
 /// ```dart
 /// Response.ok(
-///   body: Body.fromDataStream(
-///     const Stream.empty(),
+///   body: Body.lazy(
+///     () => file.openRead().cast(),
 ///     contentLength: size,
 ///     mimeType: MimeType.pdf,
 ///   ),

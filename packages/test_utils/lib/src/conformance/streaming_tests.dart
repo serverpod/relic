@@ -146,6 +146,19 @@ void streamingTests(AdapterConformance conformance) {
     expect(response.bodyBytes, isEmpty);
   });
 
+  test('Given a streamed response, when a HEAD is answered with it, '
+      'then the body stream is cancelled', () async {
+    final cancelled = Completer<void>();
+    await serve((req) {
+      final source = StreamController<Uint8List>(onCancel: cancelled.complete);
+      return Response.ok(body: Body.fromDataStream(source.stream));
+    });
+
+    await http.head(server!.url);
+
+    await cancelled.future.timeout(const Duration(seconds: 5));
+  });
+
   test('Given a lazy body of known length, '
       'when a HEAD is answered with it, '
       'then the head carries the length without opening the body', () async {
