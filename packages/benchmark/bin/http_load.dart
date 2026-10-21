@@ -11,7 +11,8 @@
 // A target that is a URL is a server started elsewhere (Bun, for one)
 // that serves the same paths, and `name=URL` labels it in the table:
 //   --targets=io,bun=http://127.0.0.1:3000
-// `baselines/` has the same routes on bare hyper and on bare Deno.serve.
+// `baselines/` has the same routes on bare hyper, on bare Deno.serve and
+// on dusty, a Zig server on the zio relic_native runs on.
 
 import 'dart:convert';
 import 'dart:io';
