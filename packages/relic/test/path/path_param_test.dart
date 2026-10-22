@@ -150,7 +150,7 @@ Future<Request> _routeRequest(String pattern, String url) async {
     return Response.ok();
   });
 
-  final req = RequestInternal.create(Method.get, Uri.parse(url), null);
+  final req = testRequest(Uri.parse(url));
   await router.asHandler(req);
   return captured;
 }

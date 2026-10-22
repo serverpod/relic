@@ -7,6 +7,7 @@ import 'package:path/path.dart' as p;
 import 'package:relic_core/relic_core.dart';
 import 'package:relic_io/relic_io.dart';
 import 'package:test/test.dart';
+import 'package:test_utils/test_utils.dart';
 
 void main() {
   late Directory tempDir;
@@ -264,10 +265,9 @@ void main() {
 }
 
 Request _multipartRequest({required String boundary, required String body}) {
-  return RequestInternal.create(
-    Method.post,
+  return testRequest(
     Uri.parse('http://localhost/form'),
-    null,
+    method: Method.post,
     body: Body.fromData(
       Uint8List.fromList(utf8.encode(body)),
       mimeType: MimeType.multipartFormData,
