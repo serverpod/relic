@@ -2,6 +2,8 @@ import 'dart:convert';
 
 import 'package:meta/meta.dart';
 import 'package:relic_core/relic_core.dart';
+// ignore: implementation_imports, invalid_use_of_internal_member
+import 'package:relic_core/src/context/result.dart' show RequestInternal;
 import 'package:test/test.dart';
 
 final helloBytes = utf8.encode('hello,');
@@ -50,7 +52,9 @@ Request testRequest(
   Method method = Method.get,
   Headers? headers,
   Body? body,
-}) => RequestInternal.create(method, url, null, headers: headers, body: body);
+}) =>
+    // ignore: invalid_use_of_internal_member
+    RequestInternal.create(method, url, null, headers: headers, body: body);
 
 final localhostUri = Uri.parse('http://localhost/');
 

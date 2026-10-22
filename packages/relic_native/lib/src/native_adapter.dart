@@ -594,18 +594,16 @@ final class NativeExchange extends LinkedListEntry<NativeExchange>
   ];
 
   @override
-  Request toRequest() {
+  Request toRequest(RequestFactory create) {
     final headers = Headers.fromStore(ByteHeaderStore(_head, _slots));
     final (target, scheme, authority) = _parseTarget();
-    return RequestInternal.create(
+    return create(
       method,
-      null,
       this,
       target: target..validate(),
       authority:
           authority ?? headers.value(HeaderName.host) ?? _adapter._authority,
       scheme: scheme ?? 'http',
-      protocol: protocol,
       headers: headers,
       body: _bodyObject = Body.of(
         headers.tryGet(Headers.contentType),

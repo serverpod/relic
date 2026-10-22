@@ -172,7 +172,7 @@ final class _RelicServer implements RelicServer {
 
     final Request request;
     try {
-      request = exchange.toRequest();
+      request = exchange.toRequest(requestFactory);
     } catch (error, stackTrace) {
       logMessage(
         'Error reading request.\n$error',

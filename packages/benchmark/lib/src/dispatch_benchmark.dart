@@ -43,8 +43,8 @@ final class BenchmarkExchange implements AdapterExchange {
   HttpProtocol get protocol => HttpProtocol.http11;
 
   @override
-  Request toRequest() =>
-      RequestInternal.create(Method.get, _url, this, headers: _headers);
+  Request toRequest(RequestFactory create) =>
+      create(Method.get, this, url: _url, headers: _headers);
 
   @override
   FutureOr<void> respond(final Response response) {

@@ -2,20 +2,24 @@ import 'dart:io' as io;
 
 import 'package:relic_core/relic_core.dart';
 
-/// Creates a new [Request] from an [io.HttpRequest], on [exchange].
+/// Creates a new [Request] from an [io.HttpRequest], on [exchange], with
+/// [create].
 ///
 /// Throws [FormatException] for a target that does not decode. The core
 /// answers that with 400 before any handler runs.
-Request fromHttpRequest(io.HttpRequest request, AdapterExchange exchange) {
+Request fromHttpRequest(
+  io.HttpRequest request,
+  AdapterExchange exchange,
+  RequestFactory create,
+) {
   final url = request.requestedUri;
   final target = RequestTarget.fromUri(url)..validate();
   final headers = headersFromHttpRequest(request);
-  return RequestInternal.create(
+  return create(
     Method.parse(request.method),
-    url,
     exchange,
+    url: url,
     target: target,
-    protocol: httpProtocolOf(request),
     headers: headers,
     body: bodyFromHttpRequest(request, headers),
     lazyConnectionInfo: () =>

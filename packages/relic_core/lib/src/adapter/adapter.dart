@@ -113,11 +113,11 @@ abstract interface class Adapter {
 abstract interface class AdapterExchange {
   HttpProtocol get protocol;
 
-  /// Converts the adapter's request into a [Request].
+  /// Converts the adapter's request into a [Request] built with [create].
   ///
   /// May throw, for example on a malformed target. The core answers that
   /// with 400.
-  Request toRequest();
+  Request toRequest(RequestFactory create);
 
   /// Sends [response].
   ///
