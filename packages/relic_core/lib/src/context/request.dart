@@ -183,16 +183,63 @@ class Request extends Message {
   final List<Object?> _properties;
 }
 
-/// Internal extension methods for [Request].
-/// This is hidden in barrel file (relic.dart)
+/// Builds the [Request] for an [AdapterExchange].
+///
+/// The core hands its one instance to [AdapterExchange.toRequest]. Code
+/// outside an adapter has no way to get one. See #392.
+final class RequestFactory {
+  const RequestFactory._();
+
+  /// The [Request] that arrived on [exchange].
+  ///
+  /// Pass [url], or a [target] and an [authority]. From the latter, the
+  /// first read of [Request.url] builds the URL with [scheme]. The request
+  /// takes the protocol of [exchange]. Throws on a URL that is not absolute
+  /// or has a fragment, and on an [authority] that does not parse.
+  Request call(
+    Method method,
+    AdapterExchange exchange, {
+    Uri? url,
+    RequestTarget? target,
+    String? authority,
+    String scheme = 'http',
+    Headers? headers,
+    Body? body,
+    ConnectionInfo Function()? lazyConnectionInfo,
+  }) => Request._(
+    method,
+    url,
+    exchange,
+    target: target,
+    authority: authority,
+    scheme: scheme,
+    protocol: exchange.protocol,
+    headers: headers,
+    body: body,
+    lazyConnectionInfo: lazyConnectionInfo,
+  );
+}
+
+/// The [RequestFactory] the core hands to [AdapterExchange.toRequest].
+@internal
+const requestFactory = RequestFactory._();
+
+/// Members of [Request] for relic_core and its tests, not for applications.
+///
+/// Adapters build a [Request] with the [RequestFactory] that
+/// [AdapterExchange.toRequest] receives.
+@internal
 extension RequestInternal on Request {
-  /// Expose private constructor internally
+  /// The private [Request] constructor.
+  @internal
   static const create = Request._;
 
   /// The exchange the request came in on, when an adapter made it.
+  @internal
   AdapterExchange? get exchange => _exchange;
 
   /// The [ContextProperty] slots, indexed by the property.
+  @internal
   List<Object?> get properties => _properties;
 }
 

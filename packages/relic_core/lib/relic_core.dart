@@ -11,7 +11,7 @@ export 'src/adapter/response_framing.dart';
 export 'src/body/body.dart' show Body, BodyConsume, MaxBodySizeExceeded;
 export 'src/body/types/body_type.dart' show BodyType;
 export 'src/body/types/mime_type.dart' show MimeType;
-export 'src/context/result.dart';
+export 'src/context/result.dart' hide RequestInternal, requestFactory;
 export 'src/form/form_data.dart';
 export 'src/form/multipart_part.dart';
 export 'src/form/request_form_extensions.dart';

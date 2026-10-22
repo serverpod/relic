@@ -72,9 +72,9 @@ final class _FakeExchange implements AdapterExchange {
   HttpProtocol get protocol => HttpProtocol.http11;
 
   @override
-  Request toRequest() {
+  Request toRequest(RequestFactory create) {
     if (toRequestThrows) throw const FormatException('bad target');
-    return RequestInternal.create(Method.get, url, this, headers: headers);
+    return create(Method.get, this, url: url, headers: headers);
   }
 
   @override

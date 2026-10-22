@@ -199,8 +199,8 @@ final class IOExchange with ExchangeEndState implements AdapterExchange {
   HttpProtocol get protocol => httpProtocolOf(_request);
 
   @override
-  Request toRequest() {
-    final request = fromHttpRequest(_request, this);
+  Request toRequest(RequestFactory create) {
+    final request = fromHttpRequest(_request, this, create);
     _body = request.body;
     return request;
   }
