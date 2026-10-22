@@ -42,7 +42,15 @@ Future<Response> makeSimpleRequest(Handler handler, [Request? request]) async {
   return newCtx;
 }
 
-final _defaultRequest = RequestInternal.create(Method.get, localhostUri, null);
+final _defaultRequest = testRequest(localhostUri);
+
+/// A [Request] for [url], built without an adapter.
+Request testRequest(
+  Uri url, {
+  Method method = Method.get,
+  Headers? headers,
+  Body? body,
+}) => RequestInternal.create(method, url, null, headers: headers, body: body);
 
 final localhostUri = Uri.parse('http://localhost/');
 

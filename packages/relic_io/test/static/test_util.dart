@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:relic_core/relic_core.dart';
 import 'package:relic_io/relic_io.dart';
 import 'package:test/test.dart';
+import 'package:test_utils/test_utils.dart';
 
 /// Makes a simple GET request to [handler] and returns the result.
 Future<Response> makeRequest(
@@ -18,10 +19,9 @@ Future<Response> makeRequest(
 }
 
 Request _fromPath(String path, Headers? headers, {required Method method}) =>
-    RequestInternal.create(
-      method,
+    testRequest(
       Uri.parse('http://localhost$path'),
-      null,
+      method: method,
       headers: headers,
     );
 
