@@ -35,7 +35,7 @@
   - A `Hijack` or `WebSocketUpgrade` answering such a HEAD gets 405, since the server cannot strip a body from a hijacked channel. `Allow` lists the methods the path has a route for. A HEAD route of its own may hijack
   - `RouterMatch.headFallback` and `Request.isHeadFallback` mark such a match, and `RouterMatch.registered` and `Request.registeredMethods` list the methods the path has a route for
 - fix: A response head carries `Connection: close` when the connection closes after it (RFC 9112 9.6)
-- fix: A `WebSocketUpgrade` answers a request other than GET with 405. `Allow` lists the methods its path has a route for, or GET alone when no router matched the request
+- fix: A `WebSocketUpgrade` answers a request other than GET with 405. `Allow` lists the methods its path has a route for other than the request's, or GET alone when no router matched it
 - fix: `RelicApp.run(backtrack: false)` and `routeWith(backtrack: false)` look routes up without backtracking
 - fix: `Request.forwardTo` routes the forwarded request with the `backtrack` and `useHostWhenRouting` options of the original, instead of the defaults
 - perf!: `Request.url`, the routing pipeline, `BodyType` values and `ContextProperty` slots are built once or on first read, and a sync response reaches the adapter without a Future
