@@ -283,15 +283,24 @@ final class _RelicServer implements RelicServer {
     }
   }
 
-  /// A 405 whose `Allow` lists the methods routed on the request's path,
-  /// or GET alone for a request no router matched.
+  /// A 405 whose `Allow` lists the methods routed on the request's path
+  /// other than its own, or GET alone for a request no router matched.
   static Response _methodNotAllowed(final Request request) {
     final routed = request.registeredMethods;
+    final allowed = routed.isEmpty
+        ? const {Method.get}
+        : routed.difference({request.method});
     return Response(
       405,
-      headers: Headers.build(
-        (final mh) => mh.allow = routed.isEmpty ? {Method.get} : routed,
-      ),
+      headers: Headers.build((final mh) {
+        if (allowed.isEmpty) {
+          // An empty set drops the field, and a 405 carries an Allow even
+          // when no method is allowed (RFC 9110 10.2.1).
+          mh[Headers.allow.key] = const [''];
+        } else {
+          mh.allow = allowed;
+        }
+      }),
     );
   }
 
