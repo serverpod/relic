@@ -29,10 +29,11 @@
 - feat: `Body.lazy` makes its stream when the body is read, so a body that is not sent never opens it
 - fix!: A HEAD request to a path without a HEAD route runs its GET route (RFC 9110 9.1)
   - BREAKING: `Router.lookup(Method.head, ...)` returns the GET route of a path without a HEAD route, and `MethodMiss.allowed` lists HEAD beside GET. A GET handler that must not run on HEAD checks `request.method`, or the path gets a HEAD route of its own
-  - A `Hijack` or `WebSocketUpgrade` answering such a HEAD gets 405, since the server cannot strip a body from a hijacked channel. A HEAD route of its own may hijack
-  - `RouterMatch.headFallback` and `Request.isHeadFallback` mark such a match
+  - BREAKING: `RouterMatch` has no public constructor. Get one from `Router.lookup`. `LookupResult` and its subclasses take `T extends Object`
+  - A `Hijack` or `WebSocketUpgrade` answering such a HEAD gets 405, since the server cannot strip a body from a hijacked channel. `Allow` lists the methods the path has a route for. A HEAD route of its own may hijack
+  - `RouterMatch.headFallback` and `Request.isHeadFallback` mark such a match, and `RouterMatch.registered` and `Request.registeredMethods` list the methods the path has a route for
 - fix: A response head carries `Connection: close` when the connection closes after it (RFC 9112 9.6)
-- fix: A `WebSocketUpgrade` answers a request other than GET with 405 and `Allow: GET`
+- fix: A `WebSocketUpgrade` answers a request other than GET with 405. `Allow` lists the methods its path has a route for, or GET alone when no router matched the request
 - perf!: `Request.url`, the routing pipeline, `BodyType` values and `ContextProperty` slots are built once or on first read, and a sync response reaches the adapter without a Future
   - BREAKING: The routing handler and `respondWith` return a sync handler's `Response` as is, and a handler that throws before its first `await` throws to the caller instead of failing a Future
   - BREAKING: A `ContextProperty` holds its slot for the life of the isolate. Create each one once, as a global, never per request or per handler

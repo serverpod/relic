@@ -2,7 +2,7 @@ import 'package:relic_core/relic_core.dart';
 import 'package:test/test.dart';
 
 void main() {
-  void expectLookupResult<T>(
+  void expectLookupResult<T extends Object>(
     final LookupResult actual,
     final T expectedValue, [
     final Map<Symbol, String> expectedParams = const {},

@@ -5,9 +5,8 @@ import '../context/result.dart';
 import '../handler/handler.dart';
 import '../headers/headers.dart';
 import '../headers/standard_headers_extensions.dart';
-import '../router/lookup_result.dart';
+import '../router/method.dart';
 import '../router/normalized_path.dart';
-import '../router/path_trie.dart';
 import '../router/router.dart';
 import '../router/router_handler_extension.dart';
 import 'context_property.dart';
@@ -15,15 +14,7 @@ import 'middleware.dart';
 
 part 'path_params.dart';
 
-final _routingContext =
-    ContextProperty<
-      ({
-        Parameters parameters,
-        NormalizedPath matched,
-        NormalizedPath remaining,
-        bool headFallback,
-      })
-    >();
+final _routingContext = ContextProperty<RouterMatch<Object>>();
 
 final _routerProperty = ContextProperty<RelicRouter>('router');
 
@@ -139,12 +130,7 @@ class _RoutingMiddlewareBuilder<T extends Object> {
         case PathMiss():
           return next(req);
         case final RouterMatch<T> match:
-          _routingContext[req] = (
-            parameters: match.parameters,
-            matched: match.matched,
-            remaining: match.remaining,
-            headFallback: match.headFallback,
-          );
+          _routingContext[req] = match;
           if (_routesHandlers) {
             _routerProperty[req] = _router as RelicRouter;
           }
@@ -210,6 +196,11 @@ extension RoutingRequestEx on Request {
   /// The server answers 405 instead of running a [Hijack] built on such a
   /// match, since a hijacked channel bypasses the stripping of the body.
   bool get isHeadFallback => _routingContext[this]?.headFallback ?? false;
+
+  /// The methods with a route on this request's path, for the `Allow`
+  /// header of a 405. Empty when no router matched the request.
+  Set<Method> get registeredMethods =>
+      _routingContext[this]?.registered ?? const <Method>{};
 
   /// The [RelicRouter] that routed this request, if available.
   ///

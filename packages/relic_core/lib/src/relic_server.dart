@@ -238,12 +238,7 @@ final class _RelicServer implements RelicServer {
         // the no-content rule for HEAD (RFC 9110 9.3.2). A HEAD route of
         // its own may hijack.
         if (request.isHeadFallback) {
-          return exchange.respond(
-            Response(
-              405,
-              headers: Headers.build((final mh) => mh.allow = {Method.get}),
-            ),
-          );
+          return exchange.respond(_methodNotAllowed(request));
         }
         return _withChannel(exchange, (final channel) {
           _keep(channel);
@@ -252,12 +247,7 @@ final class _RelicServer implements RelicServer {
       case final WebSocketUpgrade upgrade:
         // The opening handshake is a GET (RFC 6455 4.1).
         if (request.method != Method.get) {
-          return exchange.respond(
-            Response(
-              405,
-              headers: Headers.build((final mh) => mh.allow = {Method.get}),
-            ),
-          );
+          return exchange.respond(_methodNotAllowed(request));
         }
         if (!_isOriginAllowed(request, upgrade)) {
           return exchange.respond(Response.forbidden());
@@ -291,6 +281,18 @@ final class _RelicServer implements RelicServer {
           (final channel) => _frame(channel, acceptKey, upgrade),
         );
     }
+  }
+
+  /// A 405 whose `Allow` lists the methods routed on the request's path,
+  /// or GET alone for a request no router matched.
+  static Response _methodNotAllowed(final Request request) {
+    final routed = request.registeredMethods;
+    return Response(
+      405,
+      headers: Headers.build(
+        (final mh) => mh.allow = routed.isEmpty ? {Method.get} : routed,
+      ),
+    );
   }
 
   /// Hijacks the connection and hands the channel to [use], now or when

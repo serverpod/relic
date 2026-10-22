@@ -143,6 +143,44 @@ void main() {
       expect(hijacked, isFalse);
     });
 
+    test('Given a RelicApp with GET and POST routes where GET answers with '
+        'a Hijack, when a HEAD request is sent to that path, '
+        'then it gets 405 with GET and POST as the allowed methods', () async {
+      final app = RelicApp()
+        ..get('/sse', (_) => Hijack((final channel) => channel.sink.close()))
+        ..post('/sse', (_) => Response(201));
+      final server = await app.serve(port: 0);
+      addTearDown(() => app.close());
+
+      final reply = await rawExchange(
+        server.port,
+        'HEAD /sse HTTP/1.1\r\nHost: x\r\nConnection: close\r\n\r\n',
+      );
+
+      final (head: head, body: _) = splitHead(reply);
+      expect(head, startsWith('HTTP/1.1 405'));
+      expect(head.toLowerCase(), contains('allow: get, post\r\n'));
+    });
+
+    test('Given a RelicApp with GET and POST routes where GET answers with '
+        'a WebSocketUpgrade, when a HEAD request is sent to that path, '
+        'then it gets 405 with GET and POST as the allowed methods', () async {
+      final app = RelicApp()
+        ..get('/ws', (_) => WebSocketUpgrade((final socket) {}))
+        ..post('/ws', (_) => Response(201));
+      final server = await app.serve(port: 0);
+      addTearDown(() => app.close());
+
+      final reply = await rawExchange(
+        server.port,
+        'HEAD /ws HTTP/1.1\r\nHost: x\r\nConnection: close\r\n\r\n',
+      );
+
+      final (head: head, body: _) = splitHead(reply);
+      expect(head, startsWith('HTTP/1.1 405'));
+      expect(head.toLowerCase(), contains('allow: get, post\r\n'));
+    });
+
     test('Given a RelicApp with GET and HEAD routes that answer with a Hijack, '
         'when a HEAD request is sent to that path, '
         'then the hijack answers it', () async {
