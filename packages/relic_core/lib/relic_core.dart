@@ -48,7 +48,6 @@ export 'src/middleware/routing_middleware.dart';
 export 'src/query/query_param.dart';
 export 'src/relic_server.dart';
 export 'src/router/cache.dart';
-export 'src/router/lookup_result.dart';
 export 'src/router/lru_cache.dart';
 export 'src/router/method.dart';
 export 'src/router/no_cache.dart';

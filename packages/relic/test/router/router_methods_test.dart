@@ -10,7 +10,7 @@ void main() {
       router = Router<String>();
     });
 
-    void expectLookupResult<T>(
+    void expectLookupResult<T extends Object>(
       final LookupResult actual,
       final T expectedValue, [
       final Map<Symbol, String> expectedParams = const {},
@@ -357,6 +357,23 @@ void main() {
             (final miss) => miss.allowed,
             'allowed',
             {Method.get, Method.head},
+          ),
+        );
+      });
+
+      test('Given GET and POST routes for a path, '
+          'when looking up HEAD for that path, '
+          'then the match lists GET and POST as registered', () {
+        router
+          ..get('/report', 'get_report')
+          ..post('/report', 'post_report');
+        final result = router.lookup(Method.head, '/report');
+        expect(
+          result,
+          isA<RouterMatch<String>>().having(
+            (final match) => match.registered,
+            'registered',
+            {Method.get, Method.post},
           ),
         );
       });

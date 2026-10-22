@@ -913,4 +913,31 @@ void main() {
       expect(await routeFor('/public/a/b'), 'public');
     });
   });
+
+  test(
+    'Given a router with GET and POST routes for a path, '
+    'when a HEAD request is routed to that path, '
+    'then the request lists GET and POST as its registered methods',
+    () async {
+      Set<Method>? registered;
+      final router = RelicRouter()
+        ..get('/report', (final req) {
+          registered = req.registeredMethods;
+          return Response(200);
+        })
+        ..post('/report', (_) => Response(201));
+
+      await routeWith(router)(respondWith((_) => Response(404)))(
+        _request('/report', method: Method.head),
+      );
+
+      expect(registered, {Method.get, Method.post});
+    },
+  );
+
+  test('Given a request that no router matched, '
+      'when its registered methods are read, '
+      'then they are empty', () {
+    expect(_request('/report').registeredMethods, isEmpty);
+  });
 }

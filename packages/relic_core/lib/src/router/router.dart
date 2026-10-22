@@ -6,6 +6,7 @@ import 'package:vm_service/vm_service_io.dart' as vmi;
 
 import '../../relic_core.dart';
 
+part 'lookup_result.dart';
 part 'relic_app.dart';
 
 /// A wrapper around a fixed-length list used for mapping between method and value
@@ -43,6 +44,10 @@ extension type _RouterEntry<T extends Object>._(List<T?> _routeByVerb)
   @pragma('vm:prefer-inline')
   T? match(final Method method) =>
       find(method) ?? (method == Method.head ? find(Method.get) : null);
+
+  /// The methods with a route of their own.
+  Set<Method> get registered =>
+      Method.values.where((final method) => find(method) != null).toSet();
 
   /// The methods [match] finds a route for.
   Set<Method> get allowed =>
@@ -185,19 +190,13 @@ final class Router<T extends Object> {
     final NormalizedPath normalizedPath, {
     final bool backtrack = true,
   }) {
-    final entry = _allRoutes.lookup(normalizedPath, backtrack: backtrack);
-    if (entry == null) return PathMiss(normalizedPath);
+    final match = _allRoutes.lookup(normalizedPath, backtrack: backtrack);
+    if (match == null) return PathMiss(normalizedPath);
 
-    final route = entry.value.match(method);
-    if (route == null) return MethodMiss(entry.value.allowed);
+    final route = match.value.match(method);
+    if (route == null) return MethodMiss(match.value.allowed);
 
-    return RouterMatch(
-      route,
-      entry.parameters,
-      entry.matched,
-      entry.remaining,
-      headFallback: method == Method.head && entry.value.find(method) == null,
-    );
+    return RouterMatch._(match, method, route);
   }
 
   /// Looks up a route for the [Uri] of a request.
