@@ -32,9 +32,13 @@ The first request is slow because the Dart VM compiles the code the first time i
 
 A middleware can do work before it calls `next`, as `timed` starts its stopwatch, and after `next` returns, as `timed` prints the time. It can also decide not to call `next` at all. This middleware checks an API key, and when the key is wrong it answers 401 itself, so the handler never runs:
 
-GITHUB_CODE_BLOCK lang="dart" file="../_example/middleware/auth.dart" doctag="middleware-auth-basic" title="An API key check"
+GITHUB_CODE_BLOCK lang="dart" file="../_example/middleware/auth.dart" doctag="middleware-auth-function" title="An API key check"
 
-The auth example applies it with `use('/protected', authMiddleware())`. A request without the key gets the middleware's answer:
+Like `timed`, it is a plain function from a handler to a handler, so you give `use` the function itself, without calling it:
+
+GITHUB_CODE_BLOCK lang="dart" file="../_example/middleware/auth.dart" doctag="middleware-auth-function-use" title="Protecting one route"
+
+A request for `/protected` without the key gets the middleware's answer:
 
 ```bash
 curl -i http://localhost:8080/protected
@@ -43,8 +47,8 @@ curl -i http://localhost:8080/protected
 ```text
 HTTP/1.1 401 Unauthorized
 content-type: text/plain; charset=utf-8
-date: Fri, 23 Oct 2026 11:22:21 GMT
-content-length: 15
+date: Fri, 23 Oct 2026 11:40:22 GMT
+content-length: 16
 
 Invalid API key
 ```
@@ -58,8 +62,8 @@ curl -i -H 'X-API-Key: secret123' http://localhost:8080/protected
 ```text
 HTTP/1.1 200 OK
 content-type: text/plain; charset=utf-8
-date: Fri, 23 Oct 2026 11:22:21 GMT
-content-length: 18
+date: Fri, 23 Oct 2026 11:40:22 GMT
+content-length: 19
 
 This is protected!
 ```
@@ -67,6 +71,38 @@ This is protected!
 After `next` returns, a middleware can also change the result before passing it on. The CORS middleware near the end of this page adds a header to every response that way.
 
 A middleware can even pass `next` a different request from the one it received, made with `request.copyWith`. By then the routing has already happened, though. A new URL does not send the request to another route, and `pathParameters` still describe the original match. To route a request again, use `request.forwardTo`, described under [Forwarding requests](./04-requests.md#forwarding-requests). To hand data to the handler, such as the user an auth middleware found, set a [context property](./02-context.md) on the request instead.
+
+## Middleware with settings
+
+The key in `requireApiKey` is written into the code. To choose the key where you register the middleware, write a function that takes the key and returns the middleware:
+
+GITHUB_CODE_BLOCK lang="dart" file="../_example/middleware/auth_factory.dart" doctag="middleware-auth-factory" title="An API key check with a setting"
+
+There are now three nested functions, and the call site changes with them. The plain `requireApiKey` was the middleware. This `requireApiKey('secret123')` returns one:
+
+GITHUB_CODE_BLOCK lang="dart" file="../_example/middleware/auth_factory.dart" doctag="middleware-auth-factory-use" title="Passing the key"
+
+The outer function also gives the middleware a place to keep state between requests, because Relic runs the three functions at different times. The outer one runs once, when `main` builds the route list. The middle one, which receives `next`, runs again for every request, since the router wraps the handler in its middleware each time it looks up a route. The inner one runs for every request too. A variable in the outer function is therefore shared by every request that passes through, and this middleware counts them:
+
+GITHUB_CODE_BLOCK lang="dart" file="../_example/middleware/counting.dart" doctag="middleware-counting" title="Counting requests"
+
+Two requests in a row get these headers among the others:
+
+```text
+x-request-count: 1
+```
+
+```text
+x-request-count: 2
+```
+
+Move `var count = 0;` into the middle function and every response says 1.
+
+### Which form to choose
+
+Write middleware as a plain function when it needs nothing but `next`, as `timed` and the first `requireApiKey` do. It is the shorter form, you register it without parentheses, and hot reload picks up changes to it, because the router holds the function itself.
+
+Write a function that returns middleware when the middleware takes settings, like the API key here or the logger that `logRequests` accepts, or when it keeps state across requests. The price is that `main` calls the outer function at startup, and hot reload leaves the closures it returned as they were. Restart the server after changing one, or register it inside a `RouterInjectable`, whose `injectIn` runs again on every reload, as the [Hot reload](./09-hot-reload.md) page explains.
 
 ## Which requests middleware sees
 
@@ -110,7 +146,7 @@ Two rules produce that order. Middleware on a shorter path wraps middleware on a
 
 ## Logging requests
 
-Relic comes with one middleware ready to use. `logRequests` prints the time, the duration, the method, the status code and the path of every request it sees. The [Hello world](../01-getting-started/02-hello-world-example.md) page shows it at work.
+Relic comes with one middleware ready to use. `logRequests` prints the time, the duration, the method, the status code and the path of every request it sees. It is a function that returns middleware, so you call it, `use('/', logRequests())`, and it takes an optional `logger` to send the lines somewhere other than the console. The [Hello world](../01-getting-started/02-hello-world-example.md) page shows it at work.
 
 ## CORS
 
@@ -133,7 +169,9 @@ Before `use`, middleware was composed with the `Pipeline` class, which wraps a s
 - **[Timing example](https://github.com/serverpod/relic/blob/main/packages/examples/middleware/timing.dart)** - The timing middleware from the start of this page.
 - **[Order example](https://github.com/serverpod/relic/blob/main/packages/examples/middleware/order.dart)** - Traces the order of three middleware.
 - **[Every request example](https://github.com/serverpod/relic/blob/main/packages/examples/middleware/every_request.dart)** - Logs the requests that match no route too.
-- **[Auth example](https://github.com/serverpod/relic/blob/main/packages/examples/middleware/auth.dart)** - API key authentication.
+- **[Auth example](https://github.com/serverpod/relic/blob/main/packages/examples/middleware/auth.dart)** - API key authentication as a plain function.
+- **[Auth with a setting](https://github.com/serverpod/relic/blob/main/packages/examples/middleware/auth_factory.dart)** - The same check as a function that takes the key and returns middleware.
+- **[Counting example](https://github.com/serverpod/relic/blob/main/packages/examples/middleware/counting.dart)** - State shared across requests.
 - **[CORS example](https://github.com/serverpod/relic/blob/main/packages/examples/middleware/cors.dart)** - CORS handling.
 - **[Pipeline example](https://github.com/serverpod/relic/blob/main/packages/examples/middleware/pipeline.dart)** - Pipeline and router side by side.
 

@@ -1,45 +1,29 @@
-import 'dart:developer';
 import 'package:relic/relic.dart';
 
-/// Middleware that validates API keys for authentication.
-// doctag<middleware-auth-basic>
-Middleware authMiddleware() {
-  return (Handler next) {
-    return (Request req) async {
-      // Extract API key from the X-API-Key header.
-      final apiKey = req.headers['X-API-Key']?.first;
-
-      if (apiKey != 'secret123') {
-        return Response.unauthorized(body: Body.fromString('Invalid API key'));
-      }
-
-      log('User authenticated with API key');
-      return await next(req);
-    };
+// doctag<middleware-auth-function>
+Handler requireApiKey(Handler next) {
+  return (req) {
+    if (req.headers['X-API-Key']?.first != 'secret123') {
+      return Response.unauthorized(body: Body.fromString('Invalid API key\n'));
+    }
+    return next(req);
   };
 }
-// end:doctag<middleware-auth-basic>
+// end:doctag<middleware-auth-function>
 
-/// Handler for public endpoints that don't require authentication.
-Future<Response> publicHandler(Request req) async {
-  return Response.ok(body: Body.fromString('This is public!'));
-}
+Response publicHandler(Request req) =>
+    Response.ok(body: Body.fromString('This is public!\n'));
 
-/// Handler for protected endpoints that require authentication.
-Future<Response> protectedHandler(Request req) async {
-  return Response.ok(body: Body.fromString('This is protected!'));
-}
+Response protectedHandler(Request req) =>
+    Response.ok(body: Body.fromString('This is protected!\n'));
 
-/// Demonstrates API key authentication with protected routes.
-void main() async {
-  final router = RelicApp()
-    // Routes accessible without authentication.
+Future<void> main() async {
+  // doctag<middleware-auth-function-use>
+  final app = RelicApp()
     ..get('/public', publicHandler)
-    // Routes that require authentication via middleware.
-    ..use('/protected', authMiddleware())
+    ..use('/protected', requireApiKey)
     ..get('/protected', protectedHandler);
+  // end:doctag<middleware-auth-function-use>
 
-  await router.serve(port: 8080);
-  log('Auth example running on http://localhost:8080');
-  log('Try: curl -H "X-API-Key: secret123" http://localhost:8080/protected');
+  await app.serve();
 }
