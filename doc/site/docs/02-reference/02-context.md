@@ -4,79 +4,98 @@ sidebar_position: 2
 
 # Context properties
 
-Context properties provide **type-safe, request-scoped data storage** in Relic applications. Where Shelf keeps such data in a `Map<String, Object>` on the request, Relic attaches it to the `Request` through typed properties.
+The [Middleware](./07-middleware.md) page has an API key check that answers 401 to callers it doesn't know. Once a middleware like that has decided who is calling, the handler usually wants to know too. But a handler receives nothing except the `Request`, so whatever the middleware learned has to travel on the request. A context property is a typed slot on every request, made for exactly that.
 
-**Common use cases:**
+## A property for the current user
 
-- Store request IDs for logging and tracing.
-- Cache computed values within a request (like parsed authentication tokens).
-- Pass data between middleware and handlers.
-- Track request-specific state (like the authenticated user or request timing).
+Define the property once, at the top level, with the type of the value it holds:
 
-## Creating context properties
+GITHUB_CODE_BLOCK lang="dart" file="../_example/context/context_property.dart" doctag="context-prop-define" title="A property that holds a User"
 
-Create each context property once, as a top-level or static `final`. It then attaches values to `Request` objects:
+The middleware looks up the API key, and when it knows the caller, it stores a `User` in the property:
 
-```dart
-// Define each property once, as a global.
-final requestIdProperty = ContextProperty<String>('requestId');
-final userProperty = ContextProperty<User>('user');
-final timingProperty = ContextProperty<Stopwatch>('timing');
+GITHUB_CODE_BLOCK lang="dart" file="../_example/context/context_property.dart" doctag="context-prop-set" title="Setting the property"
+
+`userProperty[req] = User(name)` sets the value for this request alone. The handler reads it back with `get`:
+
+GITHUB_CODE_BLOCK lang="dart" file="../_example/context/context_property.dart" doctag="context-prop-get" title="Reading the property"
+
+`get` returns a `User`, not a `User?` or an `Object`. The type of the property carries through, so the handler needs no cast and no null check. The program puts the middleware on `/api`:
+
+GITHUB_CODE_BLOCK lang="dart" file="../_example/context/context_property.dart" doctag="context-prop-app" title="The routes"
+
+Two keys get two answers:
+
+```bash
+curl -H 'X-API-Key: key-alice' http://localhost:8080/api/me
+curl -H 'X-API-Key: key-bob' http://localhost:8080/api/me
 ```
 
-:::warning Create properties once
-Each `ContextProperty` holds a slot for the life of the isolate. Never create one per request or per handler. Debug builds assert after 1024 properties.
-:::
+```text
+You are Alice
+You are Bob
+```
 
-:::tip Property naming
-The optional name only appears in the error `get` throws when no value is set, so pick one that says what is missing.
-:::
+Requests can be in flight at the same time, and each one sees its own user. That is why the value lives on the request rather than in a global variable, which a second request could overwrite before the first one had read it.
 
-## Property API
+## When no value was set
 
-Context properties provide the following methods:
+The program also registers `whoAmI` on `/me`, outside `/api`, where the middleware does not run. Nothing sets the property for that request, and `get` throws:
 
-| Method | Description | Returns |
-| ------ | ----------- | ------- |
-| `property[req] = value` | Set value for request, or clear it with `null` | `void` |
-| `property[req]` | Read value from request | `T?` (nullable) |
-| `property.get(req)` | Read value or throw if missing | `T` (non-null) |
+```bash
+curl -i http://localhost:8080/me
+```
 
-### Adding properties
+```text
+HTTP/1.1 500 Internal Server Error
+content-type: text/plain; charset=utf-8
+date: Fri, 23 Oct 2026 11:54:45 GMT
+content-length: 21
 
-Set values in middleware or handlers using the `[]` operator:
+Internal Server Error
+```
 
-GITHUB_CODE_BLOCK lang="dart" file="../_example/context/context_property.dart" doctag="context-prop-request-id" title="Add request ID to context"
+The server log names the property that was missing:
 
-### Reading properties
+```text
+Bad state: ContextProperty value not found. Property: user. Ensure middleware has set this value for the request.
+```
 
-Read values with `property[req]` (returns null if missing) or `property.get(req)` (throws if missing):
+That name is the string passed when the property was created. Without one, the message names the type instead, `User`, which says just as much until two properties hold the same type.
 
-GITHUB_CODE_BLOCK lang="dart" file="../_example/context/context_property.dart" doctag="context-prop-use-request-id" title="Use request ID from context"
+When a missing value is normal, read the property with the index operator, which returns null instead of throwing. A small extension on `Request` makes such reads look like any other request field:
 
-:::info Property lifetime
-Context properties exist **only for the duration of the request**. Once the response is sent, they're automatically cleaned up. Values are scoped to each request and do not leak between requests. A copy made with `copyWith` shares its properties with the original, so a value set on either shows on both.
-:::
+GITHUB_CODE_BLOCK lang="dart" file="../_example/context/context_property.dart" doctag="context-prop-extension" title="An optional user"
 
-## Built-in context properties
+`/hello` is outside `/api` too, and gets the default:
 
-Relic uses context properties internally to expose routing data on `Request` objects. These work exactly like user-defined properties. The routing middleware sets the raw path parameters, the router and the matched path, and the typed parameter accessors are built on first read:
+```text
+Hello, stranger
+```
 
-- **`request.rawPathParameters`** - Path parameters extracted from the matched route (e.g., `:id`), as strings.
-- **`request.pathParameters`** - Typed path parameter accessors over `rawPathParameters`.
-- **`request.queryParameters`** - Typed query parameter accessors over the URL's query.
-- **`request.router`** - The `RelicRouter` that routed the request (used by `forwardTo`).
-- **`request.matchedPath`** / **`request.remainingPath`** - The portions of the path consumed and remaining after route matching.
+## Rules for properties
 
-This demonstrates the power of context properties: they provide a consistent, type-safe mechanism for attaching request-scoped data, whether from the framework or your own middleware.
+Create each property once, as a top-level or static `final`, as `userProperty` is here. A property claims a slot on every request for the life of the isolate. One created inside a handler would claim a new slot on every request, and debug builds stop that with an assertion after 1024 properties.
+
+A value lives as long as its request. Assigning `null` removes it. A copy of the request made with `copyWith` shares its properties with the original, so a value set on either one is visible on both.
+
+## Properties that Relic sets
+
+Relic uses the same mechanism for what routing learns about a request. The routing middleware sets the raw path parameters, the router and the matched path, and the typed parameter accessors are built from them on first read:
+
+- `request.rawPathParameters` - the path parameters of the matched route, as strings.
+- `request.pathParameters` - typed accessors over `rawPathParameters`.
+- `request.queryParameters` - typed accessors over the query of the URL.
+- `request.router` - the `RelicRouter` that routed the request, which `forwardTo` uses.
+- `request.matchedPath` and `request.remainingPath` - the part of the path the route matched, and the rest.
 
 ## Examples & further reading
 
 ### Examples
 
-- **[Context Property Example](https://github.com/serverpod/relic/blob/main/packages/examples/context/context_property.dart)** - Shows how to use context properties for request IDs and user authentication.
+- **[Context property example](https://github.com/serverpod/relic/blob/main/packages/examples/context/context_property.dart)** - The program behind this page.
 
 ### API documentation
 
-- [ContextProperty class](https://pub.dev/documentation/relic/latest/relic/ContextProperty-class.html) - Type-safe request-scoped data storage.
+- [ContextProperty class](https://pub.dev/documentation/relic/latest/relic/ContextProperty-class.html) - Typed request-scoped data.
 - [Request class](https://pub.dev/documentation/relic/latest/relic/Request-class.html) - HTTP request object that holds context properties.
