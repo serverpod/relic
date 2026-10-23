@@ -255,6 +255,8 @@ Relic has WebSockets built-in without the need for a separate package:
 
 GITHUB_CODE_BLOCK lang="dart" file="../_example/basic/relic_shelf.dart" doctag="websocket-relic"
 
+`webSocketHandler` accepts a browser connection from any origin unless you pass `allowedOrigins`. Relic refuses an upgrade from a page on another origin with 403. Set `allowAnyOrigin: true` on the `WebSocketUpgrade` only for an endpoint meant to be opened by other sites, and that does not authenticate with cookies.
+
 ## Example comparison
 
 Here is a complete example showing the differences between Shelf and Relic.
