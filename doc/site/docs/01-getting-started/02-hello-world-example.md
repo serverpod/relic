@@ -12,7 +12,7 @@ Once you have Dart installed, it only takes a few lines of code to set up your R
 First, you need to create a new Dart package for your Relic server.
 
 ```bash
-dart create -t console-full hello_world
+dart create hello_world
 ```
 
 ## Add the Relic dependency
@@ -32,8 +32,8 @@ GITHUB_CODE_BLOCK lang="dart" doctag="hello-world-app" file="../_example/example
 
 **What this code does:**
 
-1. **Router and route**: `RelicApp()` configures routing and registers a `/user` route.
-2. **Middleware**: `use('/', logRequests())` logs each request for all paths under `/`.
+1. **Router and route**: `RelicApp()` configures routing and registers a `/user/:name/age/:age` route with two path parameters.
+2. **Middleware**: `use('/', logRequests())` logs each request that matches a route under `/`. Unmatched requests go to the fallback without it.
 3. **Server and fallback**: `app.serve()` starts on port 8080; `fallback` handles unmatched routes and returns a 404 (not found).
 
 The result is a server that responds with a personalized greeting when you send a GET request matching `/user/:name/age/:age`.
@@ -49,13 +49,13 @@ dart bin/hello_world.dart
 Then, open your browser and visit `http://localhost:8080/user/Nova/age/27`, or use curl:
 
 ```bash
-curl http://localhost:8080/user/Nova/age/37
+curl http://localhost:8080/user/Nova/age/27
 ```
 
 You should see:
 
-```bash
-Hello Nova! To think you are 27 years old.
+```text
+Hello, Nova! To think you are 27 years old.
 ```
 
 Congratulations! You just ran your first Relic server.
