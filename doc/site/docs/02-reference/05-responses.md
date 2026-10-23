@@ -4,125 +4,157 @@ sidebar_position: 5
 
 # Responses
 
-A `Response` object represents the HTTP response your server sends back to the client. It encapsulates the status code, headers, and body content that together form the complete answer to a client's request.
+A handler that answers in the ordinary way returns a `Response`. Before looking at the class, it helps to look at what a response becomes on the wire. This handler:
 
-In Relic, handlers return a `Response` as part of the `Result` type. The response tells the client whether the request succeeded, failed, or requires further action, and provides any requested data or error information.
+GITHUB_CODE_BLOCK lang="dart" file="../_example/routing/response.dart" doctag="responses-hello" title="A handler that says hello"
 
-## Understanding HTTP responses
+sends these bytes in answer to a request for `/hello`:
 
-An HTTP response consists of three main parts:
+```bash
+curl -i http://localhost:8080/hello
+```
 
-1. **Status Code** - A three-digit number indicating the outcome (e.g., 200 for success, 404 for not found)
-2. **Headers** - Metadata about the response (content type, caching rules, cookies, etc.)
-3. **Body** - The actual content being sent (HTML, JSON, files, or empty)
+```text
+HTTP/1.1 200 OK
+content-type: text/plain; charset=utf-8
+date: Fri, 23 Oct 2026 12:01:43 GMT
+content-length: 7
 
-## Response convenience constructors
+Hello!
+```
 
-Relic's `Response` class provides named constructors for common HTTP status codes, making it easy to create appropriate responses without memorizing numeric codes. Instead of writing `Response(400)`, you can simply use `Response.badRequest()`.
+A response has three parts, and all three are visible here. The first line is the status line, with the version of HTTP, the status code 200 and its reason phrase, `OK`. The headers follow, one to a line, up to an empty line. Then comes the body, the seven bytes of `Hello!` and its newline. `Response.ok` chose the status code. `Body.fromString` produced the body, and with it the `content-type` and `content-length` headers. Relic added the `date` header itself. The rest of this page goes through the three parts in that order.
 
-## Creating responses
+## The status code
 
-### Success responses
+`Response.ok` is one of a set of named constructors, one for each common status code, so that a handler says `Response.notFound()` rather than `Response(404)`. The error constructors fill in a short body when you give them none:
 
-Success responses (2xx status codes) indicate that the request was received, understood, and processed successfully.
+GITHUB_CODE_BLOCK lang="dart" file="../_example/routing/response.dart" doctag="responses-errors" title="A response for a missing user"
 
-The most common response indicates the request succeeded and returns the requested data:
+```bash
+curl -i http://localhost:8080/users/2
+```
 
-GITHUB_CODE_BLOCK lang="dart" file="../_example/routing/request_response.dart" doctag="basic-request-response" title="200 OK text response"
+```text
+HTTP/1.1 404 Not Found
+content-type: text/plain; charset=utf-8
+date: Fri, 23 Oct 2026 12:01:43 GMT
+content-length: 9
 
-### Error responses
+Not Found
+```
 
-Error responses (4xx, 5xx status codes) indicate that the request was invalid or cannot be fulfilled due to server or client side issues.
+The constructors cover the codes that most handlers need. `ok`, `noContent` and `notModified` report success. `movedPermanently`, `found` and `seeOther` redirect. `badRequest`, `unauthorized`, `forbidden`, `notFound`, `contentTooLarge`, `internalServerError` and `notImplemented` report errors. For any other code, call the `Response` constructor with the number:
 
-#### 400 Bad Request
+GITHUB_CODE_BLOCK lang="dart" file="../_example/routing/response.dart" doctag="responses-status" title="A status code without a constructor"
 
-The request is malformed or contains invalid data:
+```text
+HTTP/1.1 418 Status 418
+content-type: text/plain; charset=utf-8
+date: Fri, 23 Oct 2026 12:01:43 GMT
+content-length: 24
 
-GITHUB_CODE_BLOCK lang="dart" file="../_example/routing/request_response.dart" doctag="json-api-complete" title="400 Bad Request JSON error"
+I refuse to brew coffee
+```
 
-### Custom status codes
+The reason phrase is `Status 418`, because the server knows no name for that code. Clients go by the number, so the phrase does no harm.
 
-For status codes without a dedicated constructor, use the general `Response` constructor:
+### Redirects
 
-GITHUB_CODE_BLOCK lang="dart" file="../_example/routing/request_response.dart" doctag="custom-status" title="Custom status code"
+A redirect is a status code, and a `location` header that says where to go instead. The redirect constructors take that location:
 
-:::tip
-For a comprehensive list of HTTP status codes, check out [Mozilla's HTTP Status Codes documentation](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status).
+GITHUB_CODE_BLOCK lang="dart" file="../_example/routing/response.dart" doctag="responses-redirect" title="A permanent redirect"
 
-To ensure consistency and avoid memorizing numeric codes, use Relic's convenient response constructors like `Response.ok()`, `Response.badRequest()`, and `Response.notFound()` etc.
-:::
+```text
+HTTP/1.1 301 Moved Permanently
+location: /hello
+date: Fri, 23 Oct 2026 12:01:44 GMT
+content-length: 0
+```
 
-## Working with response bodies
+With `-L`, curl follows the redirect, and prints what `/hello` answers, `Hello!`. `movedPermanently`, a 301, tells clients to use the new address from now on. `found`, a 302, says that the move is temporary. `seeOther`, a 303, says to fetch the new address with GET, which suits the answer to a form that was posted.
 
-The response body contains the actual data you're sending to the client. Relic's `Body` class provides a unified way to handle different content types.
+### No content
 
-### Text responses
+Some responses have nothing to say beyond their status. A successful DELETE is a typical case, and `Response.noContent()` answers it with 204:
 
-For plain text responses, use `Body.fromString()`:
+GITHUB_CODE_BLOCK lang="dart" file="../_example/routing/response.dart" doctag="responses-empty" title="An answer without a body"
 
-GITHUB_CODE_BLOCK lang="dart" file="../_example/routing/request_response.dart" doctag="basic-request-response" title="Text response"
+```bash
+curl -s -o /dev/null -w '%{http_code}\n' -X DELETE http://localhost:8080/users/1
+```
 
-By default, Relic infers the MIME type from the content. For plain text, it sets `text/plain`.
+```text
+204
+```
 
-### HTML responses
+A 204 response never has a body. For a 200 with an empty body, give `Response.ok` a `Body.empty()`, or no body at all.
 
-To serve HTML content, specify the MIME type explicitly:
+## The body
 
-GITHUB_CODE_BLOCK lang="dart" file="../_example/routing/request_response.dart" doctag="html-response" title="HTML response"
+The body can be text, HTML, JSON, raw bytes or a stream. `Body.fromString` takes a `mimeType` when the text is not plain text:
 
-### JSON responses
+GITHUB_CODE_BLOCK lang="dart" file="../_example/routing/response.dart" doctag="responses-kinds" title="HTML and JSON"
 
-For JSON APIs, encode your data and specify the JSON MIME type:
+The two handlers answer with these types and bodies:
 
-GITHUB_CODE_BLOCK lang="dart" file="../_example/routing/request_response.dart" doctag="path-params-complete" title="JSON response"
+```text
+content-type: text/html; charset=utf-8
 
-### Binary data
+<h1>Hello</h1>
+```
 
-For images, PDFs, or other binary content, use `Body.fromData()`:
+```text
+content-type: application/json; charset=utf-8
 
-GITHUB_CODE_BLOCK lang="dart" file="../_example/routing/request_response.dart" doctag="binary-response" title="Binary response"
+{"name":"Nova","age":27}
+```
 
-Relic automatically infers the MIME type from the binary data when possible.
+The `Body` decides the `content-type` and `content-length` headers. The [Body](./06-body.md) page covers the rest of it, bytes, streams and files, and how Relic detects the type when you give none.
 
-### Streaming responses
+## Headers
 
-For large files or generated content, stream the data instead of loading it all into memory:
+Any other header goes in the `headers` of the response. `Headers.build` hands you a set of headers to fill in, with typed setters for the common headers and plain names for the rest:
 
-GITHUB_CODE_BLOCK lang="dart" file="../_example/routing/request_response.dart" doctag="streaming-response" title="Streaming response"
+GITHUB_CODE_BLOCK lang="dart" file="../_example/routing/response.dart" doctag="responses-headers" title="A response with headers of its own"
 
-### Empty responses
+```text
+HTTP/1.1 200 OK
+x-served-by: relic
+content-type: text/plain; charset=utf-8
+cache-control: public, max-age=3600
+date: Fri, 23 Oct 2026 12:01:44 GMT
+content-length: 20
 
-Some responses don't need a body. Use `Body.empty()`, or omit the body parameter of `Response.ok()` or `Response(status)`. The error constructors, such as `Response.badRequest()`, fill in a short text body like "Bad Request" when you omit it:
+Keep me for an hour
+```
 
-GITHUB_CODE_BLOCK lang="dart" file="../_example/routing/request_response.dart" doctag="empty-responses" title="Empty responses"
+The typed `cacheControl` setter took a `CacheControlHeader` and wrote `public, max-age=3600`, so a misspelled directive cannot reach the client. Relic writes header names in lowercase, and HTTP treats names the same whatever their case.
 
-## Setting response headers
+Three headers are not yours to set. The `Body` decides `content-type`, `content-length` and the chunked transfer coding, and Relic drops those three when a handler puts them in the headers:
 
-Headers provide metadata about your response. Use the `Headers` class to build type-safe headers:
+GITHUB_CODE_BLOCK lang="dart" file="../_example/routing/response.dart" doctag="responses-dropped-header" title="A Content-Type that has no effect"
 
-GITHUB_CODE_BLOCK lang="dart" file="../_example/routing/request_response.dart" doctag="response-headers" title="Set response headers"
+```text
+HTTP/1.1 200 OK
+content-type: text/plain; charset=utf-8
+date: Fri, 23 Oct 2026 12:01:44 GMT
+content-length: 21
 
-:::note
-The `Body` decides `Content-Type`, `Content-Length` and the chunked transfer coding. Relic drops those three when they are set on the response headers. Set the type with `mimeType:` on the `Body`, and a stream's length with `contentLength:` on `Body.fromDataStream`.
-:::
+Plain text after all
+```
 
-:::tip
-For a comprehensive list of HTTP headers, check out [Mozilla's HTTP Headers documentation](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers).
-:::
+The `application/json` from the headers is gone. Set the type with `mimeType:` on the `Body`, and the length of a stream with `contentLength:` on `Body.fromDataStream`.
 
-## Final tips
+## Answering HEAD
 
-Effective HTTP responses are the foundation of reliable web applications. Beyond just sending data back to clients, responses communicate the outcome of operations, guide client behavior, and provide crucial feedback for debugging and user experience.
-
-Choose status codes that accurately reflect what happened - success codes for completed operations, client error codes for invalid requests, and server error codes for unexpected failures.
-
-The key principle is that every handler must return a response. Make those responses meaningful, consistent, and helpful as they represent your API's contract with the world.
+A HEAD request gets the same status line and headers as GET, and no body. Relic sends a GET route's response to a HEAD request without its body, so a handler rarely has to think about HEAD at all. The [Routing](./03-routing.md#head-requests) page has the details.
 
 ## Examples & further reading
 
 ### Examples
 
-- **[Responses example](https://github.com/serverpod/relic/blob/main/packages/examples/routing/request_response.dart)** - Comprehensive example covering complete request-response cycles.
+- **[Responses example](https://github.com/serverpod/relic/blob/main/packages/examples/routing/response.dart)** - The program behind this page.
 
 ### API documentation
 
