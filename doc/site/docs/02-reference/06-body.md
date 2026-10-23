@@ -231,12 +231,12 @@ final body = Body.fromDataStream(
 );
 ```
 
-If the size is unknown, Relic will use chunked transfer encoding so that data can start flowing immediately. This is ideal for generated content or pipelines that produce output over time:
+If the size is unknown, Relic sends an HTTP/1.1 client the body with chunked transfer encoding, so that data can start flowing immediately. An HTTP/1.0 client gets the body ended by closing the connection. This is ideal for generated content or pipelines that produce output over time:
 
 ```dart
 final body = Body.fromDataStream(
   dynamicStream,
-  contentLength: null, // Will use chunked encoding
+  contentLength: null, // Chunked for an HTTP/1.1 client
 );
 ```
 
