@@ -4,7 +4,7 @@ import 'package:relic/relic.dart';
 
 /// Demonstrates various static file serving patterns and caching strategies.
 Future<void> main() async {
-  final staticDir = Directory('example/_static_files');
+  final staticDir = Directory('_static_files');
   final app = RelicApp();
 
   // Serve all files from a directory with basic caching.
@@ -27,7 +27,7 @@ Future<void> main() async {
   app.get(
     '/logo.svg',
     StaticHandler.file(
-      File('example/_static_files/logo.svg'),
+      File('_static_files/logo.svg'),
       cacheControl: (final req, final fileInfo) =>
           CacheControlHeader(maxAge: 3600),
     ).asHandler,

@@ -21,8 +21,8 @@ GITHUB_CODE_BLOCK lang="dart" file="../_example/basic/static_files.dart" doctag=
 
 This serves all files from the `_static_files` directory under `/basic/` URLs with 1-day caching. For example:
 
-- `static_files/hello.txt` -> `http://localhost:8080/basic/hello.txt`
-- `static_files/logo.svg` -> `http://localhost:8080/basic/logo.svg`
+- `_static_files/hello.txt` -> `http://localhost:8080/basic/hello.txt`
+- `_static_files/logo.svg` -> `http://localhost:8080/basic/logo.svg`
 
 ## Single file serving
 

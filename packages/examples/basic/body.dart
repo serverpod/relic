@@ -45,7 +45,7 @@ Future<void> main() async {
     {Method.get, Method.head},
     '/static/**',
     StaticHandler.directory(
-      Directory('example/_static_files'),
+      Directory('_static_files'),
       cacheControl: (_, _) => CacheControlHeader(maxAge: 3600),
     ).asHandler,
   );
@@ -54,7 +54,7 @@ Future<void> main() async {
   app.get(
     '/logo',
     StaticHandler.file(
-      File('example/_static_files/logo.svg'),
+      File('_static_files/logo.svg'),
       cacheControl: (_, _) => CacheControlHeader(maxAge: 86400),
     ).asHandler,
   );
@@ -171,7 +171,7 @@ Future<Response> uploadHandler(final Request req) async {
 /// Serves images with proper content-type headers.
 // doctag<body-image-auto-format>
 Future<Response> imageHandler(final Request req) async {
-  final file = File('example/_static_files/logo.svg');
+  final file = File('_static_files/logo.svg');
   final imageBytes = await file.readAsBytes();
 
   return Response.ok(
