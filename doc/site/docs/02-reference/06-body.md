@@ -169,7 +169,7 @@ Text encodings are handled automatically with sensible defaults, which simplifie
 
 ```dart
 final body = Body.fromString('Hello 🌍');
-print(body.bodyType?.encoding); // utf8
+print(body.bodyType?.encoding?.name); // utf-8
 ```
 
 If you must use a different character set, set the encoding explicitly. This keeps your intent clear and ensures the Content-Type header reflects the actual encoding used:
@@ -263,13 +263,11 @@ if (length != null) {
 
 ## Stream-based bodies
 
-A streamed body makes it practical to handle large payloads without exhausting memory, since data is processed incrementally. This pattern is especially helpful for uploads and transformations that work chunk by chunk.
-
-GITHUB_CODE_BLOCK lang="dart" file="../_example/basic/body.dart" doctag="body-upload-validate-size" title="Validate upload size"
+A streamed body makes it practical to handle large payloads without exhausting memory, since data is processed incrementally. This pattern is especially helpful for uploads and transformations that work chunk by chunk. The [file upload handler](#file-upload-handler) below streams an upload to disk this way.
 
 ### One-time read constraint
 
-To keep processing predictable and avoid subtle bugs, bodies enforce a one-time read rule. Once a body's stream has been consumed, subsequent reads throw an error, which makes improper use immediately visible during development.
+To keep processing predictable and avoid subtle bugs, bodies enforce a one-time read rule. Once `read` or `readAll` has been called, another read throws a `StateError`, even when nothing listened to the first stream. This makes improper use immediately visible during development.
 
 Middleware that needs to inspect the body reads it, then puts a new body with the same bytes on `request.body` before passing the request on. The original stream cannot be rewound. Build the new body with `Body.fromBytes` and the old `bodyType`, so it keeps the type the client sent, including a multipart `boundary`, and form parsing further down still works:
 
@@ -295,7 +293,7 @@ final stream1 = body.read();
 try {
   final stream2 = body.read(); // ❌ Error!
 } catch (e) {
-  print(e); // "The 'read' method can only be called once"
+  print(e); // Bad state: The 'read' method can only be called once ...
 }
 ```
 
@@ -309,7 +307,7 @@ GITHUB_CODE_BLOCK lang="dart" file="../_example/basic/body.dart" doctag="body-js
 
 ### File upload handler
 
-This handler validates the upload size before reading the stream, then writes the content directly to disk. Streaming avoids buffering the entire file in memory and keeps the server responsive under heavy load:
+This handler caps the upload at 10 MB with `read(maxLength:)` and writes the stream straight to disk. When the request declares a Content-Length over the cap, `read` throws before any data is read. Otherwise the stream fails once the cap is passed. Streaming avoids buffering the entire file in memory and keeps the server responsive under heavy load:
 
 GITHUB_CODE_BLOCK lang="dart" file="../_example/basic/body.dart" doctag="body-upload-validate-size" title="File upload handler"
 
