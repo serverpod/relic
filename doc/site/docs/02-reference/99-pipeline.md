@@ -40,6 +40,8 @@ GITHUB_CODE_BLOCK lang="dart" file="../_example/middleware/pipeline.dart" doctag
 
 The new approach is more concise, provides better path-specific middleware control, and integrates more naturally with Relic's routing system.
 
+Unlike a `Pipeline`, middleware attached with `router.use()` only runs for requests that match a route. A 404 or a 405 skips it, so a logger moved from a `Pipeline` to `router.use()` stops logging those. Keep a `Pipeline` around the router for middleware that must see every request. See [Middleware](./middleware) for details.
+
 ## Examples & further reading
 
 ### Examples
