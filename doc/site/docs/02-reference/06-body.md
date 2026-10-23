@@ -76,7 +76,7 @@ For large files or data that arrives incrementally, prefer streaming to avoid ex
 
 ```dart
 final file = File('large-file.dat');
-final fileStream = file.openRead();
+final fileStream = file.openRead().cast<Uint8List>();
 final fileSize = await file.length();
 
 final streamBody = Body.fromDataStream(
@@ -112,7 +112,7 @@ final String content = await req.readAsString();
 If a specific character encoding is required, pass it explicitly to the read method. This gives you full control when interacting with systems that do not use UTF-8:
 
 ```dart
-final String content = await req.readAsString(latin1);
+final String content = await req.readAsString(encoding: latin1);
 ```
 
 ## Body types and encoding
@@ -217,7 +217,7 @@ When streaming, the total size may not be known before transmission begins. If y
 
 ```dart
 final file = File('large-file.dat');
-final fileStream = file.openRead();
+final fileStream = file.openRead().cast<Uint8List>();
 final fileSize = await file.length();
 
 final body = Body.fromDataStream(
