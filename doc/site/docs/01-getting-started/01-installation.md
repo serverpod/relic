@@ -8,7 +8,7 @@ sidebar_label: 📦 Installation
 To use Relic, you must have the Dart SDK installed on your machine.
 
 :::note
-Relic requires Dart SDK 3.7 or later.
+Relic requires Dart SDK 3.10 or later.
 :::
 
 If Dart is not installed, follow the official guide: [Install Dart](https://dart.dev/get-dart).
