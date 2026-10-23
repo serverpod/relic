@@ -1,4 +1,5 @@
 ## Unreleased
+- fix: A 206 range response defaults its Content-Type to application/octet-stream when the MIME type is unknown
 - feat!: Replace the request stream with an exchange-based `Adapter`
   - BREAKING: `Adapter` is an interface to implement, not a class to extend. It provides `listeners`, `capabilities` and `start(sink)`, and hands over `AdapterExchange` objects with `respond`, `hijack`, `upgradeWebSocket` and `abort`. `Adapter.requests`, `Adapter.port` and `AdapterRequest` are gone. The port is on `listeners` and on `RelicServer.port`
   - BREAKING: `IOAdapter` implements `Adapter`. `IOAdapter.port`, `requests`, `respond`, `hijack`, `connect` and `IOAdapterRequest` are gone, and `start` throws when called twice
