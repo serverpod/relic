@@ -6,7 +6,7 @@ import 'package:relic/relic.dart';
 // doctag<custom-query-param-specialization>
 /// A reusable query parameter accessor for [DateTime] values.
 final class DateTimeQueryParam extends QueryParam<DateTime> {
-  const DateTimeQueryParam(final String key) : super(key, DateTime.parse);
+  const DateTimeQueryParam(String key) : super(key, DateTime.parse);
 }
 
 // Usage:
@@ -27,7 +27,7 @@ enum SortOrder {
   asc,
   desc;
 
-  static SortOrder parse(final String value) => SortOrder.values.byName(value);
+  static SortOrder parse(String value) => SortOrder.values.byName(value);
 }
 
 // Consolidated examples from requests.md and responses.md.
@@ -37,7 +37,7 @@ Future<void> main() async {
 
   // Demonstrate accessing HTTP method information.
   // doctag<basic-request-response>
-  app.get('/info', (final req) {
+  app.get('/info', (req) {
     final method = req.method; // Method.get
     return Response.ok(
       body: Body.fromString('Received a ${method.name} request'),
@@ -47,7 +47,7 @@ Future<void> main() async {
 
   // Extract and use path parameters from URLs.
   // doctag<path-params-complete>
-  app.get('/users/:id', (final req) {
+  app.get('/users/:id', (req) {
     final id = req.pathParameters.raw[#id]!;
     final matchedPath = req.matchedPath;
     final fullUri = req.url;
@@ -70,7 +70,7 @@ Future<void> main() async {
 
   // Handle single-value query parameters with validation.
   // doctag<query-params-complete>
-  app.get('/search', (final req) {
+  app.get('/search', (req) {
     final query = req.queryParameters.raw['query'];
     final page = req.queryParameters.raw['page'];
 
@@ -99,7 +99,7 @@ Future<void> main() async {
   const limitParam = IntQueryParam('limit');
   const priceParam = DoubleQueryParam('price');
 
-  app.get('/products', (final req) {
+  app.get('/products', (req) {
     // Automatically parsed as int (throws if missing or invalid)
     final page = req.queryParameters.get(pageParam);
     final limit = req.queryParameters.get(limitParam);
@@ -121,7 +121,7 @@ Future<void> main() async {
   // end:doctag<typed-query-params>
 
   // doctag<typed-query-params-nullable>
-  app.get('/search-optional', (final req) {
+  app.get('/search-optional', (req) {
     final page = req.queryParameters(pageParam); // int? - null if missing
     return Response.ok(body: Body.fromString('Page: $page'));
   });
@@ -129,13 +129,11 @@ Future<void> main() async {
 
   // Process multiple values for the same query parameter.
   // doctag<query-multi-complete>
-  app.get('/filter', (final req) {
+  app.get('/filter', (req) {
     final tags = req.url.queryParametersAll['tag'] ?? [];
     final results = {
       'tags': tags,
-      'filtered_items': tags
-          .map((final tag) => 'Item tagged with $tag')
-          .toList(),
+      'filtered_items': tags.map((tag) => 'Item tagged with $tag').toList(),
     };
 
     return Response.ok(
@@ -146,7 +144,7 @@ Future<void> main() async {
 
   // Access headers using type-safe methods.
   // doctag<headers-complete>
-  app.get('/headers-info', (final req) {
+  app.get('/headers-info', (req) {
     final request = req;
 
     // Get typed header values.
@@ -168,7 +166,7 @@ Future<void> main() async {
 
   // Handle different types of authorization headers.
   // doctag<auth-complete>
-  app.get('/protected', (final req) {
+  app.get('/protected', (req) {
     final auth = req.headers.authorization;
 
     if (auth is BearerAuthorizationHeader) {
@@ -200,7 +198,7 @@ Future<void> main() async {
 
   // Read and process request body content.
   // doctag<body-handling-complete>
-  app.post('/submit', (final req) async {
+  app.post('/submit', (req) async {
     final bodyText = await req.readAsString();
     return Response.ok(
       body: Body.fromString(
@@ -213,7 +211,7 @@ Future<void> main() async {
 
   // Parse and validate JSON request bodies.
   // doctag<json-api-complete>
-  app.post('/api/users', (final req) async {
+  app.post('/api/users', (req) async {
     try {
       final bodyText = await req.readAsString();
       final data = jsonDecode(bodyText) as Map<String, dynamic>;
@@ -257,7 +255,7 @@ Future<void> main() async {
 
   // Process request body as a streaming byte sequence.
   // doctag<upload-complete>
-  app.post('/upload', (final req) async {
+  app.post('/upload', (req) async {
     if (req.isEmpty) {
       return Response.badRequest(
         body: Body.fromString(
@@ -289,7 +287,7 @@ Future<void> main() async {
 
   // Generate and return HTML content.
   // doctag<html-response>
-  app.get('/page', (final req) {
+  app.get('/page', (req) {
     final pageNum = req.queryParameters.raw['page'];
 
     if (pageNum != null) {
@@ -319,7 +317,7 @@ Future<void> main() async {
 
   // Return responses with custom HTTP status codes.
   // doctag<custom-status>
-  app.get('/teapot', (final req) {
+  app.get('/teapot', (req) {
     return Response(
       418, // I'm a teapot
       body: Body.fromString('I refuse to brew coffee'),
@@ -329,7 +327,7 @@ Future<void> main() async {
 
   // Serve binary data with appropriate content types.
   // doctag<binary-response>
-  app.get('/image.png', (final req) {
+  app.get('/image.png', (req) {
     final imageBytes = Uint8List.fromList([1, 2, 3, 4]); // Mock image data.
     return Response.ok(body: Body.fromData(imageBytes));
   });
@@ -337,7 +335,7 @@ Future<void> main() async {
 
   // Stream data using chunked transfer encoding.
   // doctag<streaming-response>
-  app.get('/large-file', (final req) {
+  app.get('/large-file', (req) {
     final dataStream = Stream.fromIterable([
       Uint8List.fromList([1, 2, 3]),
       Uint8List.fromList([4, 5, 6]),
@@ -355,12 +353,12 @@ Future<void> main() async {
 
   // Return empty responses using different methods.
   // doctag<empty-responses>
-  app.get('/empty1', (final req) {
+  app.get('/empty1', (req) {
     // Return an explicitly empty response body.
     return Response.ok(body: Body.empty());
   });
 
-  app.get('/empty2', (final req) {
+  app.get('/empty2', (req) {
     // Use noContent() for a 204 status with no body.
     return Response.noContent();
   });
@@ -368,8 +366,8 @@ Future<void> main() async {
 
   // Add custom headers to responses.
   // doctag<response-headers>
-  app.get('/api/data', (final req) {
-    final headers = Headers.build((final h) {
+  app.get('/api/data', (req) {
+    final headers = Headers.build((h) {
       // Configure cache control headers.
       h.cacheControl = CacheControlHeader(maxAge: 3600, publicCache: true);
 

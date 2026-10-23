@@ -11,8 +11,8 @@ extension on Request {
 final _requestIdProperty = ContextProperty<String>('requestId');
 
 // Middleware that generates and stores a unique ID for each request.
-Handler requestIdMiddleware(final Handler next) {
-  return (final req) async {
+Handler requestIdMiddleware(Handler next) {
+  return (req) async {
     // Generate a timestamp-based unique ID for this request.
     _requestIdProperty[req] = 'req_${DateTime.now().millisecondsSinceEpoch}';
 
@@ -24,7 +24,7 @@ Handler requestIdMiddleware(final Handler next) {
 
 // doctag<context-prop-use-request-id>
 // Handler that retrieves and displays the request ID.
-Future<Response> handler(final Request req) async {
+Future<Response> handler(Request req) async {
   // Access the request ID (set by the middleware) using the extension method.
   final requestId = req.requestId;
 

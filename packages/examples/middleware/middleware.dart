@@ -6,8 +6,8 @@ import 'package:relic/relic.dart';
 /// Template middleware showing the basic structure.
 // doctag<simple-middleware>
 Middleware myMiddleware() {
-  return (final Handler innerHandler) {
-    return (final Request ctx) async {
+  return (Handler innerHandler) {
+    return (Request ctx) async {
       // Add logic here to run before the request is processed.
 
       final result = await innerHandler(ctx);
@@ -23,14 +23,14 @@ Middleware myMiddleware() {
 /// Middleware that adds a custom header to all responses.
 // doctag<middleware-add-custom-header>
 Middleware addHeaderMiddleware() {
-  return (final Handler next) {
-    return (final Request req) async {
+  return (Handler next) {
+    return (Request req) async {
       final result = await next(req);
 
       if (result is Response) {
         final newResponse = result.copyWith(
           headers: result.headers.transform(
-            (final mh) => mh['X-Custom-Header'] = ['Hello from middleware!'],
+            (mh) => mh['X-Custom-Header'] = ['Hello from middleware!'],
           ),
         );
         return newResponse;
@@ -44,8 +44,8 @@ Middleware addHeaderMiddleware() {
 
 /// Middleware that logs request processing time.
 Middleware timingMiddleware() {
-  return (final Handler next) {
-    return (final Request req) async {
+  return (Handler next) {
+    return (Request req) async {
       final stopwatch = Stopwatch()..start();
 
       final result = await next(req);
@@ -60,8 +60,8 @@ Middleware timingMiddleware() {
 
 /// Middleware that catches and handles errors gracefully.
 Middleware errorHandlingMiddleware() {
-  return (final Handler next) {
-    return (final Request req) async {
+  return (Handler next) {
+    return (Request req) async {
       try {
         return await next(req);
       } catch (error) {
@@ -74,12 +74,12 @@ Middleware errorHandlingMiddleware() {
 }
 
 /// Basic request handlers for demonstration.
-Future<Response> homeHandler(final Request req) async {
+Future<Response> homeHandler(Request req) async {
   return Response.ok(body: Body.fromString('Hello from home page!'));
 }
 
 /// Returns a simple JSON API response.
-Future<Response> apiHandler(final Request req) async {
+Future<Response> apiHandler(Request req) async {
   final data = {'message': 'Hello from API!'};
 
   return Response.ok(body: Body.fromString(jsonEncode(data)));

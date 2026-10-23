@@ -8,7 +8,7 @@ import 'package:relic/relic.dart';
 Future<void> main() async {
   final app = RelicApp()
     ..use('/', logRequests())
-    ..get('/users/:id', (final Request request) {
+    ..get('/users/:id', (Request request) {
       final id = request.rawPathParameters[#id];
       final name = request.url.queryParameters['name'] ?? 'Unknown';
       return Response.ok(body: Body.fromString('User $id: $name'));
@@ -20,9 +20,9 @@ Future<void> main() async {
 
 /// Handles WebSocket connections with event logging.
 // doctag<websocket-relic>
-WebSocketUpgrade websocketHandler(final Request request) {
-  return WebSocketUpgrade((final ws) async {
-    ws.events.listen((final event) {
+WebSocketUpgrade websocketHandler(Request request) {
+  return WebSocketUpgrade((ws) async {
+    ws.events.listen((event) {
       log('Received: $event');
     });
 

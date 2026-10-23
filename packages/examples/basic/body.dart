@@ -9,7 +9,7 @@ import 'package:relic/relic.dart';
 /// strings, files, and streams.
 Future<void> main() async {
   final app = RelicApp()
-    ..fallback = (final req) {
+    ..fallback = (req) {
       return Response.ok(body: Body.fromString('Body Example'));
     };
 
@@ -76,12 +76,12 @@ Future<void> main() async {
 }
 
 /// Returns a simple text response.
-Response helloHandler(final Request req) {
+Response helloHandler(Request req) {
   return Response.ok(body: Body.fromString('Hello, World!'));
 }
 
 /// Returns JSON with automatic content-type detection.
-Response dataHandler(final Request req) {
+Response dataHandler(Request req) {
   return Response.ok(
     body: Body.fromString('{"message": "Hello"}'),
     // Content-type is automatically detected as application/json.
@@ -89,7 +89,7 @@ Response dataHandler(final Request req) {
 }
 
 /// Serves small files by loading them entirely into memory.
-Future<Response> smallFileHandler(final Request req) async {
+Future<Response> smallFileHandler(Request req) async {
   final file = File('example.txt');
 
   if (!await file.exists()) {
@@ -102,7 +102,7 @@ Future<Response> smallFileHandler(final Request req) async {
 }
 
 /// Streams large files to avoid memory issues.
-Future<Response> largeFileHandler(final Request req) async {
+Future<Response> largeFileHandler(Request req) async {
   final file = File('large-file.dat');
 
   if (!await file.exists()) {
@@ -113,7 +113,7 @@ Future<Response> largeFileHandler(final Request req) async {
     await sink.close();
   }
 
-  final fileStream = file.openRead().map((final e) => Uint8List.fromList(e));
+  final fileStream = file.openRead().map((e) => Uint8List.fromList(e));
   final fileSize = await file.length();
 
   return Response.ok(
@@ -122,7 +122,7 @@ Future<Response> largeFileHandler(final Request req) async {
 }
 
 /// Echoes the request body back as a response.
-Future<Response> echoHandler(final Request req) async {
+Future<Response> echoHandler(Request req) async {
   final content = await req.readAsString();
 
   return Response.ok(body: Body.fromString('You sent: $content'));
@@ -130,7 +130,7 @@ Future<Response> echoHandler(final Request req) async {
 
 /// Processes JSON requests and returns structured responses.
 // doctag<body-json-api-handler>
-Future<Response> apiDataHandler(final Request req) async {
+Future<Response> apiDataHandler(Request req) async {
   final jsonData = await req.readAsString();
   final data = jsonDecode(jsonData);
 
@@ -147,7 +147,7 @@ Future<Response> apiDataHandler(final Request req) async {
 
 /// Handles file uploads with size validation and streaming.
 // doctag<body-upload-validate-size>
-Future<Response> uploadHandler(final Request req) async {
+Future<Response> uploadHandler(Request req) async {
   // Limit uploads to 10 MB.
   const maxFileSize = 10 * 1024 * 1024;
 
@@ -170,7 +170,7 @@ Future<Response> uploadHandler(final Request req) async {
 
 /// Serves images with proper content-type headers.
 // doctag<body-image-auto-format>
-Future<Response> imageHandler(final Request req) async {
+Future<Response> imageHandler(Request req) async {
   final file = File('_static_files/logo.svg');
   final imageBytes = await file.readAsBytes();
 
@@ -182,7 +182,7 @@ Future<Response> imageHandler(final Request req) async {
 
 /// Demonstrates streaming responses with chunked encoding.
 // doctag<body-streaming-chunked>
-Future<Response> streamHandler(final Request req) async {
+Future<Response> streamHandler(Request req) async {
   Stream<Uint8List> generateLargeDataset() async* {
     for (var i = 0; i < 100; i++) {
       await Future<void>.delayed(const Duration(milliseconds: 50));

@@ -23,28 +23,28 @@ Future<void> main() async {
   // Convenience methods that wrap the core .add() method for common HTTP verbs.
   // Handle GET requests to the root path.
   // doctag<routing-get-root>
-  app.get('/', (final req) {
+  app.get('/', (req) {
     return Response.ok(body: Body.fromString('Hello World!'));
   });
   // end:doctag<routing-get-root>
 
   // Handle POST requests to the root path.
   // doctag<routing-post-root>
-  app.post('/', (final req) {
+  app.post('/', (req) {
     return Response.ok(body: Body.fromString('Got a POST request'));
   });
   // end:doctag<routing-post-root>
 
   // Handle PUT requests to the /user path.
   // doctag<routing-put-user>
-  app.put('/user', (final req) {
+  app.put('/user', (req) {
     return Response.ok(body: Body.fromString('Got a PUT request at /user'));
   });
   // end:doctag<routing-put-user>
 
   // Handle DELETE requests to the /user path.
   // doctag<routing-delete-user>
-  app.delete('/user', (final req) {
+  app.delete('/user', (req) {
     return Response.ok(body: Body.fromString('Got a DELETE request at /user'));
   });
   // end:doctag<routing-delete-user>
@@ -52,21 +52,21 @@ Future<void> main() async {
   // Use the core .add method directly for more control.
   // This demonstrates the underlying method that convenience methods use.
   // doctag<routing-patch-api>
-  app.add(Method.patch, '/api', (final req) {
+  app.add(Method.patch, '/api', (req) {
     return Response.ok(body: Body.fromString('Got a PATCH request at /api'));
   });
   // end:doctag<routing-patch-api>
 
   // Use .anyOf to handle multiple HTTP methods with a single handler.
   // doctag<routing-anyof-admin>
-  app.anyOf({Method.get, Method.post}, '/admin', (final req) {
+  app.anyOf({Method.get, Method.post}, '/admin', (req) {
     final method = req.method.name.toUpperCase();
     return Response.ok(body: Body.fromString('Admin page - $method request'));
   });
   // end:doctag<routing-anyof-admin>
 
   // Set up a fallback handler for routes that don't match any defined routes.
-  app.fallback = respondWith((final _) => Response.notFound());
+  app.fallback = respondWith((_) => Response.notFound());
 
   await app.serve();
   log('Server running on http://localhost:8080');

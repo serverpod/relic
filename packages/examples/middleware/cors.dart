@@ -6,12 +6,12 @@ import 'package:relic/relic.dart';
 /// Middleware that handles Cross-Origin Resource Sharing (CORS).
 // doctag<middleware-cors-basic>
 Middleware corsMiddleware() {
-  return (final Handler next) {
-    return (final Request req) async {
+  return (Handler next) {
+    return (Request req) async {
       // Respond to CORS preflight OPTIONS requests.
       if (req.method == Method.options) {
         return Response.ok(
-          headers: Headers.build((final mh) {
+          headers: Headers.build((mh) {
             mh['Access-Control-Allow-Origin'] = ['*'];
             mh['Access-Control-Allow-Methods'] = ['GET, POST, OPTIONS'];
             mh['Access-Control-Allow-Headers'] = ['Content-Type'];
@@ -26,7 +26,7 @@ Middleware corsMiddleware() {
       if (result is Response) {
         final newResponse = result.copyWith(
           headers: result.headers.transform(
-            (final mh) => mh['Access-Control-Allow-Origin'] = ['*'],
+            (mh) => mh['Access-Control-Allow-Origin'] = ['*'],
           ),
         );
         return newResponse;
@@ -39,7 +39,7 @@ Middleware corsMiddleware() {
 // end:doctag<middleware-cors-basic>
 
 /// Simple API handler that returns JSON data.
-Future<Response> apiHandler(final Request req) async {
+Future<Response> apiHandler(Request req) async {
   final data = {'message': 'Hello from CORS API!'};
 
   return Response.ok(body: Body.fromString(jsonEncode(data)));

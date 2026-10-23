@@ -5,15 +5,15 @@ import 'package:test/test.dart';
 import 'in_process_server.dart';
 
 /// Answers 401 to a request without the right x-api-key.
-Middleware requireApiKey(final String key) =>
-    (final next) => (final req) {
+Middleware requireApiKey(String key) =>
+    (next) => (req) {
       if (req.headers['x-api-key']?.single != key) {
         return Response.unauthorized();
       }
       return next(req);
     };
 
-Response _ok(final Request req) => Response.ok();
+Response _ok(Request req) => Response.ok();
 
 final _url = Uri.parse('http://localhost/registry');
 
@@ -30,12 +30,12 @@ void main() {
   });
 
   test('Given the middleware, when a request has the API key, '
-      'then the inner handler answers', () async {
+      'then the inner handler answers.', () async {
     final response = await handle(
       requireApiKey('secret')(_ok),
       Method.get,
       _url,
-      headers: Headers.build((final mh) => mh['x-api-key'] = ['secret']),
+      headers: Headers.build((mh) => mh['x-api-key'] = ['secret']),
     );
 
     expect(response.statusCode, 200);

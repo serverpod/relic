@@ -3,8 +3,9 @@ import 'package:http/http.dart' as http;
 import 'package:relic/relic.dart';
 import 'package:test/test.dart';
 
-RelicApp buildApp() => RelicApp()
-  ..get('/hello', (final req) => Response.ok(body: Body.fromString('Hello!')));
+RelicApp buildApp() =>
+    RelicApp()
+      ..get('/hello', (req) => Response.ok(body: Body.fromString('Hello!')));
 
 void main() {
   group('Given the app served on a free port', () {

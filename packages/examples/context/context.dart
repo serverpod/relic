@@ -34,7 +34,7 @@ String _htmlHomePage() {
 }
 
 /// Serves the main HTML page with links to all examples.
-Future<Response> homeHandler(final Request req) async {
+Future<Response> homeHandler(Request req) async {
   return Response.ok(
     body: Body.fromString(
       _htmlHomePage(),
@@ -46,7 +46,7 @@ Future<Response> homeHandler(final Request req) async {
 // end:doctag<context-html-homepage>
 
 // doctag<context-api-json>
-Future<Response> apiHandler(final Request req) async {
+Future<Response> apiHandler(Request req) async {
   final data = {
     'message': 'Hello from Relic API!',
     'timestamp': DateTime.now().toIso8601String(),
@@ -60,7 +60,7 @@ Future<Response> apiHandler(final Request req) async {
 // end:doctag<context-api-json>
 
 /// Returns user information based on the provided ID parameter.
-Future<Response> userHandler(final Request req) async {
+Future<Response> userHandler(Request req) async {
   final userId = req.rawPathParameters[#id];
   final data = {
     'userId': userId,
@@ -74,8 +74,8 @@ Future<Response> userHandler(final Request req) async {
 }
 
 // doctag<context-websocket-echo>
-WebSocketUpgrade webSocketHandler(final Request req) {
-  return WebSocketUpgrade((final webSocket) async {
+WebSocketUpgrade webSocketHandler(Request req) {
+  return WebSocketUpgrade((webSocket) async {
     log('WebSocket connection established');
 
     // Send initial greeting to the connected client.
@@ -100,8 +100,8 @@ WebSocketUpgrade webSocketHandler(final Request req) {
 // end:doctag<context-websocket-echo>
 
 /// Demonstrates connection hijacking for custom protocols.
-Hijack customProtocolHandler(final Request req) {
-  return Hijack((final channel) {
+Hijack customProtocolHandler(Request req) {
+  return Hijack((channel) {
     log('Connection hijacked for custom protocol');
 
     // Manually craft and send a raw HTTP response.
@@ -118,7 +118,7 @@ Hijack customProtocolHandler(final Request req) {
 }
 
 // doctag<context-request-inspect>
-Future<Response> dataHandler(final Request req) async {
+Future<Response> dataHandler(Request req) async {
   // Extract common request information for processing.
   final method = req.method; // 'GET', 'POST', etc.
   final path = req.matchedPath; // '/api/users'
@@ -165,8 +165,7 @@ void main() async {
     ..get('/custom', customProtocolHandler) // Custom protocol
     ..post('/data', dataHandler) // Data handler
     ..fallback = respondWith(
-      (final request) =>
-          Response.notFound(body: Body.fromString('Page not found')),
+      (request) => Response.notFound(body: Body.fromString('Page not found')),
     );
 
   // Start the server.

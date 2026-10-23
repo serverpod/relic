@@ -5,18 +5,16 @@ import 'package:relic/relic.dart';
 
 // Basic handler that returns a simple greeting.
 // doctag<handler-foundational>
-Response myHelloWorldHandler(final Request req) {
+Response myHelloWorldHandler(Request req) {
   return Response.ok(body: Body.fromString('Hello from Relic!'));
 }
 // end:doctag<handler-foundational>
 
 // Handler that demonstrates custom headers and JSON response.
 // doctag<handler-response>
-Response myApiResponseHandler(final Request req) {
+Response myApiResponseHandler(Request req) {
   return Response.ok(
-    headers: Headers.build(
-      (final MutableHeaders mh) => mh.xPoweredBy = 'Relic',
-    ),
+    headers: Headers.build((MutableHeaders mh) => mh.xPoweredBy = 'Relic'),
     body: Body.fromString('{"status": "success"}'),
   );
 }
@@ -24,8 +22,8 @@ Response myApiResponseHandler(final Request req) {
 
 // Handler that hijacks the connection for Server-Sent Events (SSE) streaming.
 // doctag<handler-hijack-sse>
-Hijack mySseHandler(final Request req) {
-  return Hijack((final channel) async {
+Hijack mySseHandler(Request req) {
+  return Hijack((channel) async {
     channel.sink.add(
       utf8.encode(
         'HTTP/1.1 200 OK\r\n'
@@ -59,14 +57,14 @@ Hijack mySseHandler(final Request req) {
 
 // Simple synchronous handler that returns immediately.
 // doctag<handler-sync>
-Response mySyncHandler(final Request req) {
+Response mySyncHandler(Request req) {
   return Response.ok(body: Body.fromString('Fast response'));
 }
 // end:doctag<handler-sync>
 
 // Asynchronous handler that simulates delayed processing.
 // doctag<handler-async>
-Future<Response> myAsyncHandler(final Request req) async {
+Future<Response> myAsyncHandler(Request req) async {
   final data = await Future<String>.delayed(
     const Duration(milliseconds: 250),
     () => 'Hello from Relic!',
@@ -78,7 +76,7 @@ Future<Response> myAsyncHandler(final Request req) async {
 
 // Handler that demonstrates accessing request context information.
 // doctag<handler-context>
-Response myContextInfoHandler(final Request req) {
+Response myContextInfoHandler(Request req) {
   final method = req.method;
   final url = req.url;
   final userAgent = req.headers.userAgent;
@@ -102,7 +100,7 @@ Future<void> main() async {
     ..get('/async', myAsyncHandler)
     ..get('/context', myContextInfoHandler)
     ..fallback = respondWith(
-      (final req) => Response.notFound(body: Body.fromString('Not Found')),
+      (req) => Response.notFound(body: Body.fromString('Not Found')),
     );
 
   await app.serve();

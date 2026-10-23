@@ -4,8 +4,8 @@ import 'package:relic/relic.dart';
 /// Middleware that validates API keys for authentication.
 // doctag<middleware-auth-basic>
 Middleware authMiddleware() {
-  return (final Handler next) {
-    return (final Request req) async {
+  return (Handler next) {
+    return (Request req) async {
       // Extract API key from the X-API-Key header.
       final apiKey = req.headers['X-API-Key']?.first;
 
@@ -21,12 +21,12 @@ Middleware authMiddleware() {
 // end:doctag<middleware-auth-basic>
 
 /// Handler for public endpoints that don't require authentication.
-Future<Response> publicHandler(final Request req) async {
+Future<Response> publicHandler(Request req) async {
   return Response.ok(body: Body.fromString('This is public!'));
 }
 
 /// Handler for protected endpoints that require authentication.
-Future<Response> protectedHandler(final Request req) async {
+Future<Response> protectedHandler(Request req) async {
   return Response.ok(body: Body.fromString('This is protected!'));
 }
 

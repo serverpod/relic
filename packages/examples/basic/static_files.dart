@@ -15,8 +15,7 @@ Future<void> main() async {
     '/basic/**',
     StaticHandler.directory(
       staticDir,
-      cacheControl: (final req, final fileInfo) =>
-          CacheControlHeader(maxAge: 86400),
+      cacheControl: (req, fileInfo) => CacheControlHeader(maxAge: 86400),
     ).asHandler,
   );
   // end:doctag<static-files-dir-serve>
@@ -28,8 +27,7 @@ Future<void> main() async {
     '/logo.svg',
     StaticHandler.file(
       File('_static_files/logo.svg'),
-      cacheControl: (final req, final fileInfo) =>
-          CacheControlHeader(maxAge: 3600),
+      cacheControl: (req, fileInfo) => CacheControlHeader(maxAge: 3600),
     ).asHandler,
   );
   // end:doctag<static-files-single-file>
@@ -42,7 +40,7 @@ Future<void> main() async {
     '/short-cache/**',
     StaticHandler.directory(
       staticDir,
-      cacheControl: (final req, final fileInfo) => CacheControlHeader(
+      cacheControl: (req, fileInfo) => CacheControlHeader(
         // Cache for 1 hour.
         maxAge: 3600,
         // Enable CDN and proxy caching.
@@ -60,7 +58,7 @@ Future<void> main() async {
     '/long-cache/**',
     StaticHandler.directory(
       staticDir,
-      cacheControl: (final req, final fileInfo) => CacheControlHeader(
+      cacheControl: (req, fileInfo) => CacheControlHeader(
         // Cache for 1 year.
         maxAge: 31536000,
         publicCache: true,
@@ -82,7 +80,7 @@ Future<void> main() async {
   // Create an index page that demonstrates cache-busted URLs.
   app.get(
     '/',
-    respondWith((final _) async {
+    respondWith((_) async {
       final helloUrl = await buster.assetPath('/static/hello.txt');
       final logoUrl = await buster.assetPath('/static/logo.svg');
       final html =
@@ -103,7 +101,7 @@ Future<void> main() async {
     '/static/**',
     StaticHandler.directory(
       staticDir,
-      cacheControl: (final req, final fileInfo) => CacheControlHeader(
+      cacheControl: (req, fileInfo) => CacheControlHeader(
         // Safe to cache long term with versioning.
         maxAge: 31536000,
         publicCache: true,

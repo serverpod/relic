@@ -3,7 +3,7 @@ import 'package:relic/relic.dart';
 // doctag<routing-custom-path-param>
 /// A reusable path parameter accessor for [DateTime] values.
 final class DateTimePathParam extends PathParam<DateTime> {
-  const DateTimePathParam(final Symbol key) : super(key, DateTime.parse);
+  const DateTimePathParam(Symbol key) : super(key, DateTime.parse);
 }
 
 // Usage:
@@ -24,7 +24,7 @@ enum Status {
   active,
   inactive;
 
-  static Status parse(final String value) => Status.values.byName(value);
+  static Status parse(String value) => Status.values.byName(value);
 }
 
 /// Examples demonstrating how Relic handles dynamic path segments.
@@ -33,7 +33,7 @@ Future<void> main() async {
 
   // Capture a named path parameter and read it from the request.
   // doctag<routing-path-params-id>
-  app.get('/users/:id', (final req) {
+  app.get('/users/:id', (req) {
     final userId = req.pathParameters.raw[#id];
 
     return Response.ok(body: Body.fromString('User $userId'));
@@ -47,13 +47,13 @@ Future<void> main() async {
   const latParam = DoublePathParam(#lat);
   const lonParam = DoublePathParam(#lon);
 
-  app.get('/users/:id', (final Request request) {
+  app.get('/users/:id', (Request request) {
     // Automatically parsed as int (throws if missing or invalid)
     final userId = request.pathParameters.get(idParam);
     return Response.ok(body: Body.fromString('User $userId'));
   });
 
-  app.get('/location/:lat/:lon', (final Request request) {
+  app.get('/location/:lat/:lon', (Request request) {
     // Automatically parsed as double (throws if missing or invalid)
     final lat = request.pathParameters.get(latParam);
     final lon = request.pathParameters.get(lonParam);
@@ -62,7 +62,7 @@ Future<void> main() async {
   // end:doctag<routing-typed-path-params>
 
   // doctag<routing-typed-path-params-nullable>
-  app.get('/optional/:id', (final Request request) {
+  app.get('/optional/:id', (Request request) {
     final userId = request.pathParameters(idParam); // int? - null if missing
     return Response.ok(body: Body.fromString('User: $userId'));
   });
@@ -70,14 +70,14 @@ Future<void> main() async {
 
   // Match any single path segment when the actual value does not matter.
   // doctag<routing-wildcard-download>
-  app.get('/files/*/download', (final req) {
+  app.get('/files/*/download', (req) {
     return Response.ok(body: Body.fromString('Downloading file...'));
   });
   // end:doctag<routing-wildcard-download>
 
   // Capture the remaining path after the matched prefix.
   // doctag<routing-tail-segment>
-  app.get('/static/**', (final req) {
+  app.get('/static/**', (req) {
     final relativeAssetPath = req.remainingPath.toString();
 
     return Response.ok(body: Body.fromString('Serve $relativeAssetPath'));

@@ -12,8 +12,7 @@ Future<void> main() async {
       // This handler responds to all HTTP methods and paths.
       .addHandler(
         respondWith(
-          (final request) =>
-              Response.ok(body: Body.fromString('Hello, Relic!')),
+          (request) => Response.ok(body: Body.fromString('Hello, Relic!')),
         ),
       );
 

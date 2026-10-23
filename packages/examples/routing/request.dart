@@ -8,7 +8,7 @@ Future<void> main() async {
 
   // Demonstrate accessing HTTP method information.
   // doctag<requests-method-and-url>
-  app.get('/info', (final req) {
+  app.get('/info', (req) {
     final method = req.method; // Method.get
 
     return Response.ok(
@@ -19,7 +19,7 @@ Future<void> main() async {
 
   // Extract and use path parameters from URLs.
   // doctag<requests-path-params-id>
-  app.get('/users/:id', (final req) {
+  app.get('/users/:id', (req) {
     final id = req.rawPathParameters[#id]!;
     final matchedPath = req.matchedPath;
     final fullUri = req.url;
@@ -33,7 +33,7 @@ Future<void> main() async {
 
   // Handle single-value query parameters with validation.
   // doctag<requests-query-single>
-  app.get('/search', (final req) {
+  app.get('/search', (req) {
     final query = req.url.queryParameters['query'];
     final page = req.url.queryParameters['page'];
 
@@ -51,7 +51,7 @@ Future<void> main() async {
 
   // Process multiple values for the same query parameter.
   // doctag<requests-query-multi>
-  app.get('/filter', (final req) {
+  app.get('/filter', (req) {
     final tags = req.url.queryParametersAll['tag'] ?? [];
 
     return Response.ok(
@@ -62,7 +62,7 @@ Future<void> main() async {
 
   // Access headers using type-safe methods.
   // doctag<requests-headers-type-safe>
-  app.get('/headers-info', (final req) {
+  app.get('/headers-info', (req) {
     // Get typed header values.
     final mimeType = req.mimeType; // MimeType? (from Content-Type)
     final userAgent = req.headers.userAgent; // String?
@@ -80,7 +80,7 @@ Future<void> main() async {
 
   // Handle different types of authorization headers.
   // doctag<requests-authorization-header>
-  app.get('/protected', (final req) {
+  app.get('/protected', (req) {
     final auth = req.headers.authorization;
 
     if (auth is BearerAuthorizationHeader) {
@@ -104,7 +104,7 @@ Future<void> main() async {
 
   // Read and process request body content as String values.
   // doctag<requests-body-as-string>
-  app.post('/submit', (final req) async {
+  app.post('/submit', (req) async {
     final bodyText = await req.readAsString();
     return Response.ok(body: Body.fromString('Received: $bodyText'));
   });
@@ -112,7 +112,7 @@ Future<void> main() async {
 
   // Parse and validate JSON request bodies.
   // doctag<requests-json-parse>
-  app.post('/api/users', (final req) async {
+  app.post('/api/users', (req) async {
     try {
       final bodyText = await req.readAsString();
       final data = jsonDecode(bodyText) as Map<String, dynamic>;
@@ -137,7 +137,7 @@ Future<void> main() async {
 
   // Process request body as a streaming byte sequence.
   // doctag<requests-body-byte-stream>
-  app.post('/upload', (final req) async {
+  app.post('/upload', (req) async {
     final stream = req.read(); // Stream<Uint8List>
 
     int totalBytes = 0;
@@ -152,7 +152,7 @@ Future<void> main() async {
 
   // Validate that request body is not empty.
   // doctag<requests-body-empty-check>
-  app.post('/data', (final req) {
+  app.post('/data', (req) {
     if (req.isEmpty) {
       return Response.badRequest(
         body: Body.fromString('Request body is required'),
@@ -166,7 +166,7 @@ Future<void> main() async {
 
   // Implement query parameter validation and parsing.
   // doctag<requests-query-validate-page>
-  app.get('/page', (final req) {
+  app.get('/page', (req) {
     final pageStr = req.url.queryParameters['page'];
 
     if (pageStr == null) {
@@ -187,7 +187,7 @@ Future<void> main() async {
 
   // Gracefully handle missing headers.
   // doctag<requests-headers-user-agent>
-  app.get('/info', (final req) {
+  app.get('/info', (req) {
     final userAgent = req.headers.userAgent;
 
     final message = userAgent != null

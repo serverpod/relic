@@ -4,13 +4,13 @@ import 'package:relic/relic.dart';
 /// Middleware that adds a 'Server' header to responses.
 // doctag<middleware-add-server-header>
 Middleware addServerHeader() {
-  return (final Handler next) {
-    return (final Request req) async {
+  return (Handler next) {
+    return (Request req) async {
       final result = await next(req);
 
       if (result is Response) {
         final newResponse = result.copyWith(
-          headers: result.headers.transform((final mh) => mh.server = 'Relic'),
+          headers: result.headers.transform((mh) => mh.server = 'Relic'),
         );
         return newResponse;
       }
@@ -22,7 +22,7 @@ Middleware addServerHeader() {
 // end:doctag<middleware-add-server-header>
 
 /// Basic handler that returns a greeting message.
-Future<Response> simpleHandler(final Request req) async {
+Future<Response> simpleHandler(Request req) async {
   return Response.ok(body: Body.fromString('Hello from the shared handler!'));
 }
 

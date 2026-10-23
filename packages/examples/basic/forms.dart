@@ -13,8 +13,8 @@ Future<void> main() async {
     ..post('/simple', _simpleForm)
     ..post('/signup', _signup)
     ..post('/multiple-values', _multipleValues)
-    ..post('/upload', (final req) => _upload(req, uploadDir))
-    ..post('/limited-upload', (final req) => _limitedUpload(req, uploadDir))
+    ..post('/upload', (req) => _upload(req, uploadDir))
+    ..post('/limited-upload', (req) => _limitedUpload(req, uploadDir))
     ..post('/stream-upload', _streamUpload);
 
   final server = await app.serve();
@@ -22,11 +22,11 @@ Future<void> main() async {
   stdout.writeln('Temp upload directory: ${uploadDir.path}');
 }
 
-Response _home(final Request req) {
+Response _home(Request req) {
   return _page(title: 'Relic form example');
 }
 
-Future<Response> _simpleForm(final Request req) async {
+Future<Response> _simpleForm(Request req) async {
   try {
     final form = await req.urlEncodedForm();
     return _resultPage(req, _formResult(form));
@@ -40,7 +40,7 @@ const nameField = StringFormField('name');
 const ageField = IntFormField('age');
 const colorField = StringFormField('color');
 
-Future<Response> _signup(final Request req) async {
+Future<Response> _signup(Request req) async {
   final form = await req.formData();
   final name = form.fields.get(nameField); // String, throws when absent
   final age = form.fields(ageField); // int?, null when absent
@@ -51,7 +51,7 @@ Future<Response> _signup(final Request req) async {
 }
 // end:doctag<forms-typed-fields>
 
-Future<Response> _multipleValues(final Request req) async {
+Future<Response> _multipleValues(Request req) async {
   try {
     final form = await req.formData();
     return _resultPage(req, _formResult(form));
@@ -61,7 +61,7 @@ Future<Response> _multipleValues(final Request req) async {
 }
 
 // doctag<forms-upload>
-Future<Response> _upload(final Request req, final Directory uploadDir) async {
+Future<Response> _upload(Request req, Directory uploadDir) async {
   MultipartFormData? form;
   try {
     form = await req.multipartForm(
@@ -77,10 +77,7 @@ Future<Response> _upload(final Request req, final Directory uploadDir) async {
 // end:doctag<forms-upload>
 
 // doctag<forms-limits>
-Future<Response> _limitedUpload(
-  final Request req,
-  final Directory uploadDir,
-) async {
+Future<Response> _limitedUpload(Request req, Directory uploadDir) async {
   MultipartFormData? form;
   try {
     form = await req.multipartForm(
@@ -105,7 +102,7 @@ Future<Response> _limitedUpload(
 // end:doctag<forms-limits>
 
 // doctag<forms-stream>
-Future<Response> _streamUpload(final Request req) async {
+Future<Response> _streamUpload(Request req) async {
   try {
     final lines = <String>[];
 
@@ -136,7 +133,7 @@ Future<Response> _streamUpload(final Request req) async {
 }
 // end:doctag<forms-stream>
 
-Response _formError(final Request req, final FormException error) {
+Response _formError(Request req, FormException error) {
   return _resultPage(
     req,
     'FormException\nstatus: ${error.statusCode}\nmessage: ${error.message}',
@@ -144,11 +141,7 @@ Response _formError(final Request req, final FormException error) {
   );
 }
 
-Response _resultPage(
-  final Request req,
-  final String body, {
-  final int statusCode = 200,
-}) {
+Response _resultPage(Request req, String body, {int statusCode = 200}) {
   final text =
       '''
 method: ${req.method.name}
@@ -161,9 +154,9 @@ $body
 }
 
 Response _page({
-  required final String title,
-  final String result = '',
-  final int statusCode = 200,
+  required String title,
+  String result = '',
+  int statusCode = 200,
 }) {
   return Response(
     statusCode,
@@ -250,7 +243,7 @@ String _forms() {
 ''';
 }
 
-String _formResult(final FormData form) {
+String _formResult(FormData form) {
   final lines = <String>[];
   for (final entry in form.entries) {
     switch (entry) {
@@ -268,7 +261,7 @@ String _formResult(final FormData form) {
   return lines.isEmpty ? '(no fields or files)' : lines.join('\n');
 }
 
-String _escape(final Object? value) {
+String _escape(Object? value) {
   return const HtmlEscape().convert(value?.toString() ?? '');
 }
 

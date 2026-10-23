@@ -10,7 +10,7 @@ Future<void> main() async {
     ..any(
       '/**',
       respondWith(
-        (final request) => Response.ok(body: Body.fromString('Hello, Relic!')),
+        (request) => Response.ok(body: Body.fromString('Hello, Relic!')),
       ),
     );
 
