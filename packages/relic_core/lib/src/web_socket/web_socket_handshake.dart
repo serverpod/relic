@@ -19,6 +19,9 @@ const _guid = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11';
 ///
 /// That is a GET with `Upgrade: websocket`, `Connection: Upgrade`, version
 /// 13 and a key of 16 base64 bytes.
+///
+/// `RelicServer` answers a non-GET upgrade with 405 before calling this, so
+/// the method check here serves direct callers.
 String? webSocketAcceptKey(final Request request) {
   if (request.method != Method.get) return null;
   final headers = request.headers;
