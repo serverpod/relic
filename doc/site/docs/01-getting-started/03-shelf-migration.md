@@ -127,10 +127,10 @@ Shelf accepts strings directly and manages headers separately:
 
 ```dart
 // Shelf - the body can be a plain string.
-final response = Response.ok('Hello, World!');
+final textResponse = Response.ok('Hello, World!');
 
 // Content-Type is set separately in headers.
-final response = Response.ok(
+final htmlResponse = Response.ok(
   '<html>...</html>',
   headers: {'content-type': 'text/html'},
 );
@@ -140,13 +140,13 @@ Relic uses an explicit body type that unifies content, encoding, and MIME type:
 
 ```dart
 // Relic - explicit Body object is required.
-final response = Response.ok(
+final textResponse = Response.ok(
   body: Body.fromString('Hello, World!'),
 );
 
 // Content-Length is automatically calculated and Content-Type and
 // encoding are part of the Body.
-final response = Response.ok(
+final htmlResponse = Response.ok(
   body: Body.fromString('<html>...</html>', mimeType: MimeType.html),
 );
 ```
