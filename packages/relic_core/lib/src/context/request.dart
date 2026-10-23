@@ -187,6 +187,9 @@ class Request extends Message {
 ///
 /// The core hands its one instance to [AdapterExchange.toRequest]. Code
 /// outside an adapter has no way to get one. See #392.
+///
+/// To get a [Request] in a test, see
+/// https://docs.dartrelic.dev/reference/testing.
 final class RequestFactory {
   const RequestFactory._();
 
