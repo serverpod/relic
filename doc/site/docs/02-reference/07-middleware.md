@@ -13,7 +13,7 @@ They work by wrapping handlers with additional functionality. Think of it as a s
 A `Middleware` is a function that takes a handler and returns a new handler with enhanced functionality. This pattern allows you to compose multiple pieces of functionality together, creating a processing pipeline where each middleware layer adds its own behavior.
 
 ```dart
-typedef Middleware = Handler Function(Handler innerHandler);
+typedef Middleware = Handler Function(Handler next);
 ```
 
 ### Handler wrapping
@@ -30,11 +30,11 @@ Here's a simple example of a middleware function; it outlines the signature and 
 
 ```dart
 Middleware myMiddleware() {
-  return (final Handler innerHandler) {
-    return (final Request ctx) async {
+  return (final Handler next) {
+    return (final Request req) async {
       // Before request processing
 
-      final result = await innerHandler(ctx);
+      final result = await next(req);
 
       // After request processing
 
@@ -173,7 +173,7 @@ Middleware layers wrap each other like an onion. Each layer may:
 - Rewrite parts of the request before calling `next(newRequest)`.
 - Prefer attaching derived/computed data to the context via `ContextProperty` rather than rewriting the request.
 
-GITHUB_CODE_BLOCK lang="dart" file="../_example/middleware/auth.dart" doctag="middleware-auth-basic" title="Basic auth middleware"
+GITHUB_CODE_BLOCK lang="dart" file="../_example/middleware/auth.dart" doctag="middleware-auth-basic" title="API key auth middleware"
 
 :::warning Changing `request.url` in middleware does not re-route.
 When middleware is attached with `router.use(...)`, the request has already been routed. Changing `request.url` via `copyWith` will not re-route the request or update `request.pathParameters` and other routing metadata.
