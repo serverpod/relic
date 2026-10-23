@@ -10,8 +10,7 @@ Future<void> main() async {
   // Serve all files from a directory with basic caching.
 
   // doctag<static-files-dir-serve>
-  app.anyOf(
-    {Method.get, Method.head},
+  app.get(
     '/basic/**',
     StaticHandler.directory(
       staticDir,
@@ -35,8 +34,7 @@ Future<void> main() async {
   // Configure short-term caching for frequently updated content.
 
   // doctag<static-files-cache-short>
-  app.anyOf(
-    {Method.get, Method.head},
+  app.get(
     '/short-cache/**',
     StaticHandler.directory(
       staticDir,
@@ -53,8 +51,7 @@ Future<void> main() async {
   // Configure long-term caching for immutable assets.
 
   // doctag<static-files-cache-long-immutable>
-  app.anyOf(
-    {Method.get, Method.head},
+  app.get(
     '/long-cache/**',
     StaticHandler.directory(
       staticDir,
@@ -96,8 +93,7 @@ Future<void> main() async {
   );
 
   // Serve static files with automatic cache busting.
-  app.anyOf(
-    {Method.get, Method.head},
+  app.get(
     '/static/**',
     StaticHandler.directory(
       staticDir,
