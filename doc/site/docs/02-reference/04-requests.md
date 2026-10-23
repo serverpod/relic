@@ -25,9 +25,12 @@ The `Request` object exposes several important properties:
 
 - **`method`** - The HTTP method (GET, POST, PUT, DELETE, etc.) as a `Method` enum value.
 - **`url`** - The complete original URI that was requested.
+- **`target`** - The path and query as received, a `RequestTarget`.
 - **`headers`** - Type-safe access to HTTP headers.
 - **`body`** - The request body wrapped in a `Body` helper. Use `await request.readAsString()` for text, or `request.read()` to access the byte stream. Both are single-read.
 - **`protocol`** - The HTTP protocol the request arrived with, an `HttpProtocol` value such as `http11`.
+- **`connectionInfo`** - The IP connection carrying the request, which ends at the nearest proxy or load balancer.
+- **`cancelled`** - A future that completes when the client goes away before the response finishes.
 - **`router`** - The `RelicRouter` that routed this request (available after routing, `null` otherwise).
 - **`copyWith()`** - Create a modified copy of the request with a different `url`, `headers`, or `body`.
 
@@ -53,7 +56,7 @@ Query parameters are key-value pairs appended to the URL after a question mark (
 
 ### Single value parameters
 
-You can access individual query parameter values through the `queryParameters` map. Each parameter is returned as a string, or null if not present.
+You can access individual query parameter values through `req.queryParameters.raw`, a map from name to value. Each parameter is returned as a string, or null if not present.
 
 GITHUB_CODE_BLOCK lang="dart" file="../_example/routing/request_response.dart" doctag="query-params-complete" title="Query parameters"
 
@@ -67,7 +70,7 @@ Define a parameter accessor once, then use it to extract typed values:
 
 GITHUB_CODE_BLOCK lang="dart" file="../_example/routing/request_response.dart" doctag="typed-query-params" title="Typed query parameters"
 
-You can also use the nullable variant by calling the accessor directly:
+For the nullable variant, call `req.queryParameters` with the accessor. It returns null when the parameter is absent:
 
 GITHUB_CODE_BLOCK lang="dart" file="../_example/routing/request_response.dart" doctag="typed-query-params-nullable" title="Nullable typed query parameter"
 
@@ -94,7 +97,7 @@ Typed parameter accessors are defined as `const` values, which means they can be
 
 ### Multiple values
 
-Some query parameters can appear multiple times in a URL to represent lists or arrays. The `queryParametersAll` map provides access to all values for each parameter name.
+Some query parameters can appear multiple times in a URL to represent lists or arrays. `req.url.queryParametersAll` provides access to all values for each parameter name.
 
 GITHUB_CODE_BLOCK lang="dart" file="../_example/routing/request_response.dart" doctag="query-multi-complete" title="Multiple query values"
 
@@ -178,7 +181,7 @@ This check doesn't consume the body stream, so you can still read the body after
 
 ## Modifying requests
 
-Since `Request` objects are immutable, Relic provides `copyWith` to create modified copies. This is useful in middleware for modifying headers or body, and in handlers for URL rewriting and request forwarding.
+A request's `url` and `headers` are final, so Relic provides `copyWith` to create modified copies. This is useful in middleware for modifying headers or body, and in handlers for URL rewriting and request forwarding.
 
 ### Creating modified copies
 
@@ -190,10 +193,10 @@ final rewritten = request.copyWith(
   url: request.url.replace(path: '/new-path'),
 );
 
-// Change URL and headers
+// Change the URL and add a header
 final modified = request.copyWith(
   url: request.url.replace(path: '/other'),
-  headers: Headers.build((h) => h['X-Custom'] = ['value']),
+  headers: request.headers.transform((h) => h['X-Custom'] = ['value']),
 );
 ```
 
