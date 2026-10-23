@@ -16,9 +16,9 @@ An HTTP response consists of three main parts:
 2. **Headers** - Metadata about the response (content type, caching rules, cookies, etc.)
 3. **Body** - The actual content being sent (HTML, JSON, files, or empty)
 
-## Response convenience methods
+## Response convenience constructors
 
-Relic's `Response` class provides static convenience methods for common HTTP status codes, making it easy to create appropriate responses without memorizing numeric codes. Instead of writing `Response(400)`, you can simply use `Response.badRequest()`.
+Relic's `Response` class provides named constructors for common HTTP status codes, making it easy to create appropriate responses without memorizing numeric codes. Instead of writing `Response(400)`, you can simply use `Response.badRequest()`.
 
 ## Creating responses
 
@@ -92,7 +92,7 @@ GITHUB_CODE_BLOCK lang="dart" file="../_example/routing/request_response.dart" d
 
 ### Empty responses
 
-Some responses don't need a body. Use `Body.empty()` or simply omit the body parameter:
+Some responses don't need a body. Use `Body.empty()`, or omit the body parameter of `Response.ok()` or `Response(status)`. The error constructors, such as `Response.badRequest()`, fill in a short text body like "Bad Request" when you omit it:
 
 GITHUB_CODE_BLOCK lang="dart" file="../_example/routing/request_response.dart" doctag="empty-responses" title="Empty responses"
 
