@@ -506,6 +506,13 @@ class Body {
   /// }
   /// ```
   Stream<Uint8List> read({final int? maxLength}) {
+    // A known length over maxLength fails before the stream is made. A lazy
+    // open then never runs, and consume() cancels a stream the body holds.
+    final knownLength = contentLength;
+    if (maxLength != null && knownLength != null && knownLength > maxLength) {
+      consume();
+      throw MaxBodySizeExceeded(maxLength);
+    }
     _markRead();
     final stream = _stream ?? _open?.call() ?? Stream.value(bytes!);
     _stream = null;
@@ -513,12 +520,6 @@ class Body {
 
     if (maxLength == null) {
       return stream;
-    }
-
-    // If content length is known and exceeds limit, fail immediately.
-    final knownLength = contentLength;
-    if (knownLength != null && knownLength > maxLength) {
-      throw MaxBodySizeExceeded(maxLength);
     }
 
     // Wrap stream to track cumulative size.

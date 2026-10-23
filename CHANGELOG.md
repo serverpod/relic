@@ -27,6 +27,7 @@
 - feat: New package `relic_native`, a Relic adapter on a Zig HTTP server
 - feat: `Body.bytes`, `Body.readAll()`, `Body.consume`, `httpDate()` and `httpDateLine()`
 - feat: `Body.lazy` makes its stream when the body is read, so a body that is not sent never opens it
+  - `read(maxLength:)` rejects a known oversize `contentLength` without making the stream. A lazy open never runs, and a stream the body already holds is cancelled
 - fix!: A HEAD request to a path without a HEAD route runs its GET route (RFC 9110 9.1)
   - BREAKING: `Router.lookup(Method.head, ...)` returns the GET route of a path without a HEAD route, and `MethodMiss.allowed` lists HEAD beside GET. A GET handler that must not run on HEAD checks `request.method`, or the path gets a HEAD route of its own
   - BREAKING: `RouterMatch` has no public constructor. Get one from `Router.lookup`. `LookupResult` and its subclasses take `T extends Object`

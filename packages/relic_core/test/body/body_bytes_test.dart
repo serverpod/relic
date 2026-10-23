@@ -141,6 +141,22 @@ void main() {
     );
   });
 
+  test(
+    'Given a streamed body longer than maxLength, when it is read, '
+    'then it throws MaxBodySizeExceeded and its stream is cancelled.',
+    () async {
+      final cancelled = Completer<void>();
+      final source = StreamController<Uint8List>(onCancel: cancelled.complete);
+      final body = Body.fromDataStream(source.stream, contentLength: 10);
+
+      expect(
+        () => body.read(maxLength: 5),
+        throwsA(isA<MaxBodySizeExceeded>()),
+      );
+      await expectLater(cancelled.future, completes);
+    },
+  );
+
   test('Given an unread body, when it is consumed, '
       'then it counts as read and a read fails.', () {
     final body = Body.fromData(Uint8List.fromList([1, 2, 3]));
