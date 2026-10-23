@@ -12,4 +12,5 @@ dependencies:
 
 dev_dependencies:
   http: any
+  test: ^1.25.13
   web_socket: any
