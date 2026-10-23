@@ -61,7 +61,7 @@ Future<Server> startServer(
   final bool tls = false,
 }) async {
   final address = InternetAddress.loopbackIPv4;
-  final certs = testCertificates;
+  final certs = tls ? testCertificates : null;
   switch (kind) {
     case 'shelf':
       if (tls) throw ArgumentError.value(kind, 'kind', 'No TLS on shelf');
@@ -78,11 +78,11 @@ Future<Server> startServer(
           address,
           port: port,
           shared: isolates > 1,
-          context: tls
-              ? (SecurityContext()
+          context: certs == null
+              ? null
+              : (SecurityContext()
                   ..useCertificateChain(certs.chain)
-                  ..usePrivateKey(certs.key))
-              : null,
+                  ..usePrivateKey(certs.key)),
         ),
         isolates,
       );
@@ -96,12 +96,12 @@ Future<Server> startServer(
           address,
           port: port,
           group: group,
-          tls: tls
-              ? NativeTls.fromFiles(
+          tls: certs == null
+              ? null
+              : NativeTls.fromFiles(
                   certificateChain: certs.chain,
                   privateKey: certs.key,
-                )
-              : null,
+                ),
         ),
         isolates,
       );
