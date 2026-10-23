@@ -167,4 +167,22 @@ void main() {
       },
     );
   });
+
+  test('Given a file with no extension, '
+      'when a byte range is requested, '
+      'then the 206 has Content-Type application/octet-stream', () async {
+    await d.file('no_extension', fileContent).create();
+    final headers = Headers.build(
+      (final mh) => mh.range = RangeHeader(ranges: [Range(start: 0, end: 4)]),
+    );
+
+    final response = await makeRequest(
+      handler,
+      '/no_extension',
+      headers: headers,
+    );
+
+    expect(response.statusCode, HttpStatus.partialContent);
+    expect(response.body.bodyType!.mimeType, MimeType.octetStream);
+  });
 }

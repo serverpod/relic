@@ -582,7 +582,7 @@ Body _createRangeBody(final FileInfo fileInfo, final int start, final int end) {
   return Body.lazy(
     () => fileInfo.file.openRead(start, end).cast(),
     contentLength: end - start,
-    mimeType: fileInfo.mimeType,
+    mimeType: fileInfo.mimeType ?? MimeType.octetStream,
     encoding: fileInfo.mimeType?.isText == true ? utf8 : null,
   );
 }
