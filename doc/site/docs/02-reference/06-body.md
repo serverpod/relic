@@ -10,7 +10,7 @@ The `Body` class represents the content of HTTP messages, designed to handle bot
 
 ## Key features
 
-- Stream-based architecture: All body content is handled as `Stream<Uint8List>` for memory efficiency, allowing you to process large files without loading them entirely into memory.
+- Bytes or a stream: A body built from a string or bytes keeps them in memory, and a streamed body is handled as `Stream<Uint8List>`, so large files never have to be loaded into memory.
 - One-time read constraint: Bodies can only be read once to prevent accidental double-consumption.
 - Automatic type detection: Intelligent MIME type inference for JSON, HTML, XML, and binary file types.
 - Encoding support: Handles text encoding (UTF-8, Latin-1, etc.) automatically with manual override options.
@@ -101,6 +101,12 @@ If you need direct access to the bytes, read the underlying stream and process c
 
 ```dart
 final Stream<Uint8List> stream = body.read();
+```
+
+To get the whole body as one buffer, use `readAll`. For a body built from a string or bytes it returns them at once, and for a streamed body it collects the stream. Pass `maxLength` to cap how much it reads. It throws `MaxBodySizeExceeded` past that:
+
+```dart
+final Uint8List bytes = await body.readAll(maxLength: 1024 * 1024);
 ```
 
 When working with request or response bodies that contain text, read the content as a string to get a decoded value. This method handles common cases where payloads are JSON or plain text.
@@ -260,7 +266,7 @@ if (length != null) {
 
 ## Stream-based bodies
 
-Relic's stream-based approach makes it practical to handle large payloads without exhausting memory, since data is processed incrementally. This pattern is especially helpful for uploads and transformations that work chunk by chunk.
+A streamed body makes it practical to handle large payloads without exhausting memory, since data is processed incrementally. This pattern is especially helpful for uploads and transformations that work chunk by chunk.
 
 GITHUB_CODE_BLOCK lang="dart" file="../_example/basic/body.dart" doctag="body-upload-validate-size" title="Validate upload size"
 
