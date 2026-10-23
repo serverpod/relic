@@ -179,6 +179,47 @@ GITHUB_CODE_BLOCK lang="dart" file="../_example/routing/request_response.dart" d
 
 This check doesn't consume the body stream, so you can still read the body afterward.
 
+## Reading form data
+
+Relic parses the two HTML form encodings, `application/x-www-form-urlencoded` and `multipart/form-data`. Each parser reads the request body, so call one of them once per request:
+
+- `req.urlEncodedForm()` parses a urlencoded body.
+- `req.multipartForm()` parses a multipart body, uploads included.
+- `req.formData()` picks one of the two from the request's Content-Type.
+- `req.multipart()` streams the parts of a multipart body one at a time, without collecting them.
+
+### Typed fields
+
+Read fields through accessors, the way typed query parameters work. `StringFormField`, `IntFormField`, `DoubleFormField` and `NumFormField` cover the common types, and `FormField<T>` takes your own decoder:
+
+GITHUB_CODE_BLOCK lang="dart" file="../_example/basic/forms.dart" doctag="forms-typed-fields" title="Typed form fields"
+
+`fields.get` throws `MissingFormFieldException` when the field is absent. Calling `fields` with the accessor returns null instead. Both throw `InvalidFormFieldException` for a value that does not decode, and `getAll` returns every value of a repeated field.
+
+### Uploads
+
+`multipartForm` keeps uploads in memory unless you pass an `uploadStorage`. `TempUploadStorage` writes each upload to its own temporary directory. Call `dispose` on the form when you are done, so the storage can delete them:
+
+GITHUB_CODE_BLOCK lang="dart" file="../_example/basic/forms.dart" doctag="forms-upload" title="Multipart upload"
+
+Each `UploadedFile` has the client's `filename`, its `bodyType`, its `size` and `read()` for its bytes.
+
+### Limits
+
+Every parser takes `FormLimits`, which caps the body size, the number of fields, files and parts, and the size of each field and file. `FormLimits.defaults` allows a 10 MB body, 100 fields and 8 files. A form over a limit throws `FormLimitExceededException`:
+
+GITHUB_CODE_BLOCK lang="dart" file="../_example/basic/forms.dart" doctag="forms-limits" title="Form limits"
+
+### Streaming parts
+
+`multipart()` hands over each part as it arrives, as a `MultipartFieldPart`, a `MultipartFilePart` or a `MultipartOtherPart`. Read each part's body, or `discard()` it, as the example does:
+
+GITHUB_CODE_BLOCK lang="dart" file="../_example/basic/forms.dart" doctag="forms-stream" title="Streaming multipart parts"
+
+### Form errors
+
+Every form error is a `FormException` with a `statusCode`. A body that is not a form gets 415, a malformed one or a missing or invalid field 400, and a form over a limit 413. A handler that lets the exception through gets that status from the server. For a body that is not a form, is malformed or is over a limit, the server also closes the connection, since part of the body may be unread. Catch `FormException` to answer differently, as the upload examples do.
+
 ## Modifying requests
 
 A request's `url` and `headers` are final, so Relic provides `copyWith` to create modified copies. This is useful in middleware for modifying headers or body, and in handlers for URL rewriting and request forwarding.
@@ -250,6 +291,7 @@ Always validate all incoming data since query parameters, headers, and body cont
 ### Examples
 
 - **[Requests example](https://github.com/serverpod/relic/blob/main/packages/examples/routing/request_response.dart)** - Comprehensive example covering complete request-response cycles.
+- **[Forms example](https://github.com/serverpod/relic/blob/main/packages/examples/basic/forms.dart)** - HTML forms, uploads, limits and streamed parts.
 
 ### API documentation
 

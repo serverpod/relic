@@ -11,6 +11,7 @@ Future<void> main() async {
   final app = RelicApp()
     ..get('/', _home)
     ..post('/simple', _simpleForm)
+    ..post('/signup', _signup)
     ..post('/multiple-values', _multipleValues)
     ..post('/upload', (final req) => _upload(req, uploadDir))
     ..post('/limited-upload', (final req) => _limitedUpload(req, uploadDir))
@@ -34,6 +35,22 @@ Future<Response> _simpleForm(final Request req) async {
   }
 }
 
+// doctag<forms-typed-fields>
+const nameField = StringFormField('name');
+const ageField = IntFormField('age');
+const colorField = StringFormField('color');
+
+Future<Response> _signup(final Request req) async {
+  final form = await req.formData();
+  final name = form.fields.get(nameField); // String, throws when absent
+  final age = form.fields(ageField); // int?, null when absent
+  final colors = form.fields.getAll(colorField); // every value, in order
+  return Response.ok(
+    body: Body.fromString('$name, age ${age ?? 'unknown'}, likes $colors\n'),
+  );
+}
+// end:doctag<forms-typed-fields>
+
 Future<Response> _multipleValues(final Request req) async {
   try {
     final form = await req.formData();
@@ -43,6 +60,7 @@ Future<Response> _multipleValues(final Request req) async {
   }
 }
 
+// doctag<forms-upload>
 Future<Response> _upload(final Request req, final Directory uploadDir) async {
   MultipartFormData? form;
   try {
@@ -56,7 +74,9 @@ Future<Response> _upload(final Request req, final Directory uploadDir) async {
     await form?.dispose();
   }
 }
+// end:doctag<forms-upload>
 
+// doctag<forms-limits>
 Future<Response> _limitedUpload(
   final Request req,
   final Directory uploadDir,
@@ -82,7 +102,9 @@ Future<Response> _limitedUpload(
     await form?.dispose();
   }
 }
+// end:doctag<forms-limits>
 
+// doctag<forms-stream>
 Future<Response> _streamUpload(final Request req) async {
   try {
     final lines = <String>[];
@@ -112,6 +134,7 @@ Future<Response> _streamUpload(final Request req) async {
     return _formError(req, error);
   }
 }
+// end:doctag<forms-stream>
 
 Response _formError(final Request req, final FormException error) {
   return _resultPage(
@@ -171,6 +194,16 @@ String _forms() {
     <label>Email <input type="email" name="email" value="nova@example.com"></label>
     <label>Message <textarea name="message">Hello from a normal HTML form.</textarea></label>
     <button>Submit simple form</button>
+  </form>
+
+  <form method="post" action="/signup">
+    <h2>Typed fields</h2>
+    <p>Uses <code>form.fields.get(nameField)</code>, <code>form.fields(ageField)</code> and <code>form.fields.getAll(colorField)</code>.</p>
+    <label>Name <input name="name" value="Nova"></label>
+    <label>Age <input name="age" value="27"></label>
+    <label><input type="checkbox" name="color" value="red" checked> Red</label>
+    <label><input type="checkbox" name="color" value="blue" checked> Blue</label>
+    <button>Sign up</button>
   </form>
 
   <form method="post" action="/multiple-values">
