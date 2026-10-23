@@ -111,7 +111,7 @@ Future<FileInfo> getStaticFileInfo(
 ///
 /// These protections are automatically applied and cannot be disabled.
 ///
-/// They confine serving to the directory; they do not filter what within it is
+/// They confine serving to the directory. They do not filter what within it is
 /// served. There is no hidden file rule, so a dot file such as `.env`, or the
 /// contents of `.git`, is served like any other. Point the handler at a
 /// directory of public assets rather than at a project or build root.
