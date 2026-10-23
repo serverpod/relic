@@ -25,7 +25,6 @@ WebSocketUpgrade websocketHandler(final Request request) {
       log('Received: $event');
     });
 
-    ws.trySendText('Hello!');
     ws.sendText('Hello!');
   });
 }
