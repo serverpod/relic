@@ -388,6 +388,8 @@ pub const Reactor = struct {
     active: std.atomic.Value(u32) = .init(0),
     idle: std.atomic.Value(u32) = .init(0),
     stop: bool = false,
+    /// Destroy is cancelling the connections on the isolate's thread.
+    destroying: bool = false,
     /// The open connections, for the sweeper to walk.
     conns: std.DoublyLinkedList = .{},
     sweeping: bool = false,
@@ -818,11 +820,19 @@ const Link = struct {
         self.writer = &secure.writer.interface;
     }
 
-    /// Sends close_notify, or the alert a failed read queued, and frees the
-    /// TLS layer. Nothing for a plain link.
-    fn deinit(self: *Link, gpa: std.mem.Allocator) void {
+    /// Frees the TLS layer, after close_notify, or the alert a failed read
+    /// queued, when `notify` is set. Nothing for a plain link. The send runs
+    /// under the lingering close's deadline. The task's cancel is spent by
+    /// now, and a peer that stopped reading must not hold the task past it.
+    /// Destroy sends nothing. It unwinds the tasks on the isolate's thread.
+    fn deinit(self: *Link, gpa: std.mem.Allocator, notify: bool) void {
         const secure = self.secure orelse return;
-        if (secure.conn) |*conn| conn.close() catch {};
+        if (notify) {
+            if (secure.conn) |*conn| {
+                self.setWriteTimeout(deadline(lingering_close_ms));
+                conn.close() catch {};
+            }
+        }
         gpa.destroy(secure);
         self.secure = null;
     }
@@ -923,7 +933,7 @@ fn handleConnInner(r: *Reactor, stream: zio.net.Stream) !void {
     } else {
         link.init(stream, &rbuf, &wbuf);
     }
-    defer link.deinit(r.gpa);
+    defer link.deinit(r.gpa, !r.destroying);
     link.setWriteTimeout(inactivity(options.write_timeout_ms));
     if (r.server.tls_auth) |auth| {
         // The wait for the first byte is idle, as the wait for a request
@@ -2239,6 +2249,7 @@ export fn relic_reactor_destroy(r: *Reactor) void {
         last = srv.attached_count == 0;
     }
     r.stop = true;
+    r.destroying = true;
     r.waiter_stop.store(true, .release);
     r.waiter_arm.set();
     r.pokeWaiter();
