@@ -926,13 +926,26 @@ fn handleConnInner(r: *Reactor, stream: zio.net.Stream) !void {
     defer link.deinit(r.gpa);
     link.setWriteTimeout(inactivity(options.write_timeout_ms));
     if (r.server.tls_auth) |auth| {
-        // The handshake runs under the header deadline, as the head that
-        // follows it does.
-        conn.arm(options.header_timeout_ms);
+        // The wait for the first byte is idle, as the wait for a request
+        // is, and the handshake runs under the header deadline, as the head
+        // that follows it does.
+        if (r.stop) return;
+        conn.arm(options.idle_timeout_ms);
+        conn.idle = true;
         const first = link.reader.peekByte() catch |err| switch (err) {
             error.EndOfStream => return,
             error.ReadFailed => return link.readError() orelse err,
         };
+        conn.idle = false;
+        conn.arm(options.header_timeout_ms);
+        // The handshake is work, which the stats count as active, as they
+        // do a head.
+        _ = r.idle.fetchSub(1, .monotonic);
+        _ = r.active.fetchAdd(1, .monotonic);
+        defer {
+            _ = r.active.fetchSub(1, .monotonic);
+            _ = r.idle.fetchAdd(1, .monotonic);
+        }
         // A TLS record opens with its content type, a byte under 32.
         // Anything else is plain HTTP, or nothing a handshake would
         // answer, which gets a plain 400, as Go's server answers it.
@@ -2697,6 +2710,12 @@ test "accept: a descriptor shortage stalls the acceptor and does not end it" {
 test "stop: a stopped reactor sheds its idle connections and the last one closes the listener" {
     if (builtin.os.tag == .windows) return error.SkipZigTest;
     const srv = testBind(null) orelse return error.BindFailed;
+    try checkStopShedsIdle(srv);
+}
+
+/// Connects one client that sends nothing, stops the reactor, and claims
+/// the connection goes and the listener closes.
+fn checkStopShedsIdle(srv: *Server) !void {
     const r = relic_reactor_create(srv, 1) orelse return error.AttachFailed;
     defer relic_reactor_destroy(r);
     const address: std.c.sockaddr.in = .{
@@ -2919,6 +2938,14 @@ test "tls: a request over TLS reaches the ready list and the response goes back 
     }
     if (client.err) |err| return err;
     try std.testing.expectEqualStrings(head, client.reply[0..client.reply_len]);
+}
+
+test "tls: a stopped reactor sheds a connection that has not sent its first byte" {
+    if (builtin.os.tag == .windows) return error.SkipZigTest;
+    const pem = testPem(test_chain, test_key);
+    var failure: BindFailure = undefined;
+    const srv = relic_server_bind(null, "127.0.0.1", 0, &test_options, &pem, &failure) orelse return error.BindFailed;
+    try checkStopShedsIdle(srv);
 }
 
 /// A corpus entry for std.testing.Smith.slice, a little-endian length

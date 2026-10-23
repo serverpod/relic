@@ -220,8 +220,29 @@ void main() {
     expect(reply, startsWith('HTTP/1.1 400 Bad Request\r\n'));
   });
 
+  test('Given an HTTPS server with an idle timeout, '
+      'when a client connects and never sends a byte, '
+      'then the server closes the connection', () async {
+    server = await serveNative(
+      _echoUrl,
+      options: const NativeOptions(idleTimeout: Duration(milliseconds: 200)),
+      tls: _tls('localhost'),
+    );
+    final socket = await Socket.connect(
+      InternetAddress.loopbackIPv4,
+      server!.port,
+    );
+
+    final reply = await socket
+        .fold<List<int>>([], (all, chunk) => all..addAll(chunk))
+        .timeout(const Duration(seconds: 5));
+
+    expect(reply, isEmpty);
+    socket.destroy();
+  });
+
   test('Given an HTTPS server with a header timeout, '
-      'when a client connects and never starts the handshake, '
+      'when a client sends one byte and stalls the handshake, '
       'then the server closes the connection', () async {
     server = await serveNative(
       _echoUrl,
@@ -233,6 +254,9 @@ void main() {
       server!.port,
     );
 
+    // The content type of a handshake record, and nothing after it.
+    socket.add(const [0x16]);
+    await socket.flush();
     final reply = await socket
         .fold<List<int>>([], (all, chunk) => all..addAll(chunk))
         .timeout(const Duration(seconds: 5));
