@@ -4,28 +4,35 @@ title: 🎯 Introduction
 ---
 
 # Introduction
+
 Relic is a web server framework for Dart, built by the [Serverpod](https://serverpod.dev) team. It grew out of [Shelf](https://pub.dev/packages/shelf), and it keeps Shelf's model of handlers that turn requests into responses and middleware that wraps handlers.
 
-#### Why Relic?
+A Relic server is an ordinary Dart program. This one answers a GET request for `/` with a greeting:
 
-Serverpod needed typed headers, a router that stays fast as routes are added, and WebSockets in the core. Those changes reach into the request and response types themselves, so Relic became a framework of its own rather than a set of packages on top of Shelf.
+GITHUB_CODE_BLOCK lang="dart" doctag="hello-step-1" file="./_example/getting_started/hello.dart" title="A complete Relic server"
+
+Run it, ask it for `http://localhost:8080/`, and it answers `Hello, world!`. The [Hello world](./01-getting-started/02-hello-world-example.md) page builds on this program one step at a time.
+
+## The pieces
+
+The program above already shows most of what Relic is made of, and the reference pages take the pieces in turn.
+
+A [handler](./02-reference/01-handlers.md) is a function that receives a `Request` and returns a result. Usually the result is a `Response`, but it can also upgrade the connection to a WebSocket, or take the connection over entirely. The [router](./02-reference/03-routing.md) picks a handler by the method and the path of the request, and a path can hold parameters, wildcards and tails. [Middleware](./02-reference/07-middleware.md) wraps the handlers below a path, to log, check credentials or change responses, and [context properties](./02-reference/02-context.md) carry what it learns to the handler. The [request](./02-reference/04-requests.md) gives a handler typed access to the URL, the query, the headers, the body and forms, and the [response](./02-reference/05-responses.md) and its [body](./02-reference/06-body.md) decide what goes back on the wire. [Static files](./02-reference/08-static-files.md) are served by a ready-made handler, and [hot reload](./02-reference/09-hot-reload.md) applies most changes without a restart.
 
 ## Features
-Relic aims to be a comprehensive web server framework for Dart. It provides a wide range of features out of the box and allows you to extend it with middleware. Here are some of the key features:
 
 import DocFeatureCards from '@site/src/components/DocFeatureCards';
 
 <DocFeatureCards
   features={[
-    { icon: '🔒', title: 'Type Safe', description: 'Strongly typed APIs with validated HTTP headers.' },
-    { icon: '⚡', title: 'Fast', description: 'High performance through trie-based routing, with headers and URLs parsed on first read.' },
-    { icon: '🔌', title: 'WebSockets', description: 'Built-in WebSocket support for real time communication.' },
-    { icon: '🔧', title: 'Middleware', description: 'Composable middleware pipeline with router integration.' },
-    { icon: '👨‍💻', title: 'Dev Ready', description: 'Great IDE support, clear errors, and full documentation.' },
-    { icon: '🚀', title: 'Production', description: 'Production-ready with high test coverage (3,000+ tests).' },
+    { icon: '🔒', title: 'Typed', description: 'Headers and path and query parameters are read as typed values, and a header that does not parse gets a 400.' },
+    { icon: '⚡', title: 'Fast', description: 'A trie-based router, with headers and URLs parsed only when they are read.' },
+    { icon: '🔌', title: 'WebSockets', description: 'A handler upgrades a connection by returning a WebSocketUpgrade.' },
+    { icon: '🔧', title: 'Middleware', description: 'Middleware attaches to a path in the router and wraps every route below it.' },
+    { icon: '👨‍💻', title: 'Hot reload', description: 'The router is rebuilt on every hot reload, so changed handlers apply without a restart.' },
+    { icon: '🚀', title: 'Tested', description: 'More than 3,000 tests, run on Linux, macOS and Windows.' },
   ]}
 />
-
 
 ## How Relic differs from Shelf
 
@@ -41,3 +48,5 @@ If you know Shelf, most of Relic will look familiar. These are the places where 
 | Hijacking | A thrown `HijackException` | A returned `Hijack` or `WebSocketUpgrade` result |
 | Request state | A `Map<String, Object>` context | Typed context properties |
 | Body | Content and encoding set separately | One `Body` that carries content, type and encoding |
+
+The [Migration from Shelf](./01-getting-started/03-shelf-migration.md) page goes through each of these with code.
