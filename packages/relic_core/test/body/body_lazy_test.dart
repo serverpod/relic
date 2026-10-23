@@ -78,4 +78,16 @@ void main() {
 
     expect(opened, 0);
   });
+
+  test('Given a lazy body longer than maxLength, when it is read, '
+      'then it throws MaxBodySizeExceeded and its stream is never made.', () {
+    var opened = 0;
+    final body = Body.lazy(() {
+      opened++;
+      return Stream.value(Uint8List(10));
+    }, contentLength: 10);
+
+    expect(() => body.read(maxLength: 5), throwsA(isA<MaxBodySizeExceeded>()));
+    expect(opened, 0);
+  });
 }
