@@ -29,7 +29,7 @@ Use this quick plan to get your app running on Relic. The detailed sections belo
 
 7. Replace middleware and scoping: Replace `Pipeline().addMiddleware(...)` with `router.use(...)` and attach handlers under that path.
 
-8. Replace `request.context` usage: Replace `request.change(...)` and manual casts with `ContextProperty<T>()`\s .`set` or `get` methods on the context.
+8. Replace `request.context` usage: Replace `request.change(context: ...)` and manual casts with a global `ContextProperty<T>`. Set a value with `property[request] = value` and read it with `property.get(request)`, or `property[request]` when it may be absent.
 
 9. Update WebSockets: Replace `webSocketHandler` and use `RelicWebSocket` for handling events and sending data.
 
@@ -215,17 +215,21 @@ final user = request.context['user'] as User?;  // Manual casting
 Relic:
 
 ```dart
-// Relic - Type-safe.
+// Relic - Type-safe. Create each property once, as a global.
 final userProperty = ContextProperty<User>();
 final sessionProperty = ContextProperty<Session>();
 
-// Add an extension method for convenient access.
+// Set the values, for example in an auth middleware.
+userProperty[request] = currentUser;
+sessionProperty[request] = sessionData;
+
+// Add an extension for convenient access.
 extension AuthContext on Request {
-  User get currentUser => userProperty[this];
-  Session get session => sessionProperty[this];
+  User get currentUser => userProperty.get(this);
+  Session get session => sessionProperty.get(this);
 }
 
-// Get values in a type-safe way.
+// Later...
 final user = request.currentUser;
 final session = request.session;
 ```
