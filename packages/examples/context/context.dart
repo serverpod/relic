@@ -73,32 +73,6 @@ Future<Response> userHandler(Request req) async {
   );
 }
 
-// doctag<context-websocket-echo>
-WebSocketUpgrade webSocketHandler(Request req) {
-  return WebSocketUpgrade((webSocket) async {
-    log('WebSocket connection established');
-
-    // Send initial greeting to the connected client.
-    webSocket.sendText('Welcome to Relic WebSocket!');
-
-    // Listen for messages and echo them back to the client.
-    await for (final event in webSocket.events) {
-      switch (event) {
-        case TextDataReceived(text: final message):
-          log('Received: $message');
-          webSocket.sendText('Echo: $message');
-        case CloseReceived():
-          log('WebSocket connection closed');
-          break;
-        default:
-          // Handle binary data, ping/pong, and other WebSocket events.
-          break;
-      }
-    }
-  });
-}
-// end:doctag<context-websocket-echo>
-
 /// Demonstrates connection hijacking for custom protocols.
 Hijack customProtocolHandler(Request req) {
   return Hijack((channel) {
@@ -153,6 +127,19 @@ Future<Response> dataHandler(Request req) async {
   return Response.badRequest(body: Body.fromString('Invalid Request'));
 }
 // end:doctag<context-request-inspect>
+
+/// Echoes every text message back over the WebSocket.
+WebSocketUpgrade webSocketHandler(Request req) {
+  return WebSocketUpgrade((webSocket) async {
+    webSocket.sendText('Welcome to Relic WebSocket!');
+
+    await for (final event in webSocket.events) {
+      if (event is TextDataReceived) {
+        webSocket.sendText('Echo: ${event.text}');
+      }
+    }
+  });
+}
 
 /// Demonstrates the four main context types in Relic with examples.
 void main() async {
