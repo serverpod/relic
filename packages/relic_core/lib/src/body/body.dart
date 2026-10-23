@@ -562,6 +562,8 @@ extension BodyConsume on Body {
   /// body held as bytes. The cancel lets the producer of the stream release
   /// what it holds. A body from [Body.lazy] has no stream until it is read.
   ///
+  /// Errors the stream delivers are discarded.
+  ///
   /// Throws a [StateError] when the body was already read.
   void consume() {
     _markRead();

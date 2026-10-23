@@ -178,6 +178,22 @@ void main() {
     await expectLater(cancelled.future, completes);
   });
 
+  test('Given a streamed body whose stream errors when listened to, '
+      'when it is consumed, then no unhandled error surfaces.', () async {
+    final errors = <Object>[];
+    await runZonedGuarded(() async {
+      final source = StreamController<Uint8List>(sync: true);
+      source.onListen = () => source.addError(StateError('boom'));
+      final body = Body.fromDataStream(source.stream);
+
+      body.consume();
+
+      await pumpEventQueue();
+    }, (final error, final _) => errors.add(error));
+
+    expect(errors, isEmpty);
+  });
+
   test('Given an empty body, when it is read, '
       'then it yields no bytes.', () async {
     final body = Body.empty();
