@@ -5,11 +5,7 @@ sidebar_label: ✈️ Migration from Shelf
 
 # Migration from Shelf
 
-This guide helps you migrate from [Shelf](https://github.com/dart-lang/shelf) to Relic. While the core concepts remain similar (handlers, middleware, requests, and responses), Relic introduces improvements in type safety and developer experience that require some changes to your code.
-
-### Why migrate?
-
-Relic was developed to meet the needs of [Serverpod](https://serverpod.dev) for a more modern web server foundation with stronger type safety. Shelf has been an excellent foundation for Dart web servers, but architectural decisions made years ago limit its ability to take advantage of modern Dart features.
+This guide helps you move a server from [Shelf](https://github.com/dart-lang/shelf) to Relic. The two share their core concepts, handlers, middleware, requests and responses, so most of the work is changing types and names. The steps below go through the changes one at a time.
 
 ## Migration overview
 
@@ -288,5 +284,5 @@ void main() async {
 GITHUB_CODE_BLOCK lang="dart" file="../_example/basic/relic_shelf.dart" doctag="complete-relic"
 
 :::info Difference from Shelf's pipeline
-Unlike Shelf's `Pipeline().addMiddleware()`, which runs for _all_ requests (including 404s), Relic's `.use('/', ...)` only executes middleware for requests that match a route. Unmatched requests (404s) bypass middleware and go directly to the fallback handler.
+Shelf's `Pipeline().addMiddleware()` runs middleware for every request, 404s included. Relic's `.use('/', ...)` runs it only for requests that match a route, and unmatched requests go straight to the fallback handler. The [Middleware](../02-reference/07-middleware.md#which-requests-middleware-sees) page shows how to reach every request.
 :::

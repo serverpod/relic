@@ -4,11 +4,11 @@ title: 🎯 Introduction
 ---
 
 # Introduction
-Relic is a modern, high-performance web server framework inspired by [Shelf](https://pub.dev/packages/shelf) and built by the [Serverpod](https://serverpod.dev) team to meet the demanding requirements of modern web applications. Relic provides a robust, type-safe, and efficient foundation for building scalable web services.
+Relic is a web server framework for Dart, built by the [Serverpod](https://serverpod.dev) team. It grew out of [Shelf](https://pub.dev/packages/shelf), and it keeps Shelf's model of handlers that turn requests into responses and middleware that wraps handlers.
 
 #### Why Relic?
 
-While Shelf has been a solid foundation for Dart web applications, several areas for improvement were identified. Rather than work around these limitations, Relic was created as a next-generation framework that maintains Shelf's familiar structure while delivering significant enhancements.
+Serverpod needed typed headers, a router that stays fast as routes are added, and WebSockets in the core. Those changes reach into the request and response types themselves, so Relic became a framework of its own rather than a set of packages on top of Shelf.
 
 ## Features
 Relic aims to be a comprehensive web server framework for Dart. It provides a wide range of features out of the box and allows you to extend it with middleware. Here are some of the key features:
@@ -27,18 +27,17 @@ import DocFeatureCards from '@site/src/components/DocFeatureCards';
 />
 
 
-## Comparison with Shelf
+## How Relic differs from Shelf
 
-Relic started out as a clone of Shelf, but has since diverged. Here is a comparison of some of the key differences:
+If you know Shelf, most of Relic will look familiar. These are the places where it works differently:
 
-| Feature | Shelf | Relic |
-|---------|-------|-------|
-| Type Safety | ❌ Uses dynamic types | ✅ Strongly typed APIs with validated HTTP headers|
-| Routing | ❌ Linear scan over routes | ✅ Built-in trie-based router |
-| WebSockets | ❌ External packages | ✅ Built-in support |
-| Performance | ✅ Good | ✅ Optimized (trie routing, parsing on first read) |
-| Path Parameters | ❌ String-based | ✅ Symbol-based |
-| Static Files | ❌ Limited | ✅ Includes cache busting & etag support |
-| Control Flow | ❌ Exceptions for control flow | ✅ Handlers return a typed `Result` |
-| Request State | ❌ Untyped context bag | ✅ Context properties with IDE discoverability |
-| Body Model | ❌ Body and encoding are separate | ✅ Unified |
+| Area | Shelf | Relic |
+|------|-------|-------|
+| Headers | Strings in a map | Typed accessors that validate values |
+| Routing | `shelf_router`, which tries routes in order | A built-in router on a trie, matched segment by segment |
+| WebSockets | The `shelf_web_socket` package | Built in |
+| Path parameters | Strings, passed as extra handler arguments | Read from the request by symbol, with typed accessors |
+| Static files | The `shelf_static` package | `StaticHandler`, with cache busting and ETags |
+| Hijacking | A thrown `HijackException` | A returned `Hijack` or `WebSocketUpgrade` result |
+| Request state | A `Map<String, Object>` context | Typed context properties |
+| Body | Content and encoding set separately | One `Body` that carries content, type and encoding |

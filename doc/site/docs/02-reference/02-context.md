@@ -4,7 +4,7 @@ sidebar_position: 2
 
 # Context properties
 
-Context properties provide **type-safe, request-scoped data storage** in Relic applications. They replace Shelf's `Map<String, Object>` context with a more robust system that attaches custom data directly to `Request` objects.
+Context properties provide **type-safe, request-scoped data storage** in Relic applications. Where Shelf keeps such data in a `Map<String, Object>` on the request, Relic attaches it to the `Request` through typed properties.
 
 **Common use cases:**
 
