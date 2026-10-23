@@ -271,7 +271,19 @@ GITHUB_CODE_BLOCK lang="dart" file="../_example/basic/body.dart" doctag="body-up
 
 To keep processing predictable and avoid subtle bugs, bodies enforce a one-time read rule. Once a body's stream has been consumed, subsequent reads throw an error, which makes improper use immediately visible during development.
 
-Middleware that needs to inspect the body can replace `request.body` with a freshly constructed instance (typically `Body.fromString()`) before forwarding to the next handler. What you cannot do is rewind the original stream; once it's read, recreating an equivalent body is the only way to pass the data along.
+Middleware that needs to inspect the body reads it, then puts a new body with the same bytes on `request.body` before passing the request on. The original stream cannot be rewound. Build the new body with `Body.fromBytes` and the old `bodyType`, so it keeps the type the client sent, including a multipart `boundary`, and form parsing further down still works:
+
+```dart
+final type = request.body.bodyType;
+final bytes = await request.body.readAll();
+// Inspect the bytes...
+request.body = Body.fromBytes(
+  bytes,
+  mimeType: type?.mimeType,
+  encoding: type?.encoding,
+  parameters: type?.parameters ?? const {},
+);
+```
 
 ```dart
 final body = Body.fromString('test');
