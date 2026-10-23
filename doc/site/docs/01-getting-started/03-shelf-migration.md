@@ -5,35 +5,23 @@ sidebar_label: ✈️ Migration from Shelf
 
 # Migration from Shelf
 
-This guide helps you move a server from [Shelf](https://github.com/dart-lang/shelf) to Relic. The two share their core concepts, handlers, middleware, requests and responses, so most of the work is changing types and names. The steps below go through the changes one at a time.
+This guide helps you move a server from [Shelf](https://github.com/dart-lang/shelf) to Relic. The two share their core concepts, handlers, middleware, requests and responses, so most of the work is changing types and names. The steps below go through the changes one at a time, each with the Shelf code first and the Relic code after it.
 
-## Migration overview
+## The steps at a glance
 
-Use this quick plan to get your app running on Relic. The detailed sections below show code for each step.
+1. Replace the `shelf`, `shelf_router` and `shelf_web_socket` dependencies with `relic`.
+2. Serve the app with `RelicApp().serve()` instead of `shelf_io.serve()`.
+3. Keep handlers as functions from a `Request` to a `Response`.
+4. Register routes on a `RelicApp`, with `:id` parameters in place of `<id>`.
+5. Give each response a `Body`, and set its type there rather than in the headers.
+6. Read headers through typed accessors instead of strings.
+7. Attach middleware to paths with `use` instead of composing a `Pipeline`.
+8. Replace the request context map with typed context properties.
+9. Return a `WebSocketUpgrade` instead of using `shelf_web_socket`.
 
-1. Update dependencies: Remove `shelf`, `shelf_router`, `shelf_web_socket`. Add `relic` to the dependencies.
+## 1. Update dependencies
 
-2. Bootstrap the server: Replace `shelf_io.serve()` with `RelicApp().serve()` if using the io adapter, or integrate RelicApp into your hosting environment as needed.
-
-3. Keep handlers as `Response handler(Request request)`. Handlers in Relic receive a `Request` and return a `Result` (usually a `Response` subclass).
-
-4. Switch to Relic routing: Replace Router from shelf_router with `RelicApp`'s `get`, `post`, `put`, or `delete` methods. Replace `<id>` path parameters with `:id` and read them via `request.pathParameters.raw[#id]`.
-
-5. Create responses with `Body`: Replace `Response.ok('text')` with `Response.ok(body:...)`. Let Relic manage `content-length` and `content-type` through the `Body` class. Relic drops those two when they are set on the response headers.
-
-6. Replace header access: Replace string lookups like `request.headers['cookie']` with typed accessors such as `request.headers.cookie`.
-
-7. Replace middleware and scoping: Replace `Pipeline().addMiddleware(...)` with `router.use(...)` and attach handlers under that path.
-
-8. Replace `request.context` usage: Replace `request.change(context: ...)` and manual casts with a global `ContextProperty<T>`. Set a value with `property[request] = value` and read it with `property.get(request)`, or `property[request]` when it may be absent.
-
-9. Update WebSockets: Replace `webSocketHandler` and use `RelicWebSocket` for handling events and sending data.
-
-## Detailed migration steps
-
-### 1. Update dependencies
-
-In your `pubspec.yaml`, remove Shelf packages and add Relic:
+In `pubspec.yaml`, remove the Shelf packages and add Relic.
 
 Shelf:
 
@@ -51,7 +39,9 @@ dependencies:
   relic: <latest_version>
 ```
 
-### 2. Bootstrap the server
+One package replaces three, since routing and WebSockets are part of Relic. The [Installation](./01-installation.md) page says which version to pick.
+
+## 2. Bootstrap the server
 
 Shelf:
 
@@ -69,9 +59,11 @@ void main() async {
 
 Relic:
 
-GITHUB_CODE_BLOCK lang="dart" file="../_example/basic/relic_shelf.dart" doctag="complete-relic"
+GITHUB_CODE_BLOCK lang="dart" file="../_example/basic/relic_shelf.dart" doctag="complete-relic" title="A Relic server with one route"
 
-### 3. Update handler signatures
+`RelicApp` is the router and the application in one, and `serve` starts it, here on port 8080 of the loopback address, which is also where it listens when given no arguments. This program already has a route and logging, which the steps below explain.
+
+## 3. Update handler signatures
 
 Shelf:
 
@@ -85,13 +77,11 @@ Response handler(Request request) {
 
 Relic:
 
-```dart
-Response handler(Request request) {
-  return Response.ok(body: Body.fromString('Hello from Relic!'));
-}
-```
+GITHUB_CODE_BLOCK lang="dart" file="../_example/basic/relic_shelf.dart" doctag="shelf-relic-handler" title="The same handler in Relic"
 
-### 4. Switch to Relic routing
+The signature stays the same, a function from a `Request` to a `Response`. What changes is the body of the response, which step 5 covers. A Relic handler may also return the other kinds of `Result`, which the [Handlers](../02-reference/01-handlers.md) page describes, but a handler that returns a `Response` needs nothing more.
+
+## 4. Switch to Relic routing
 
 Shelf:
 
@@ -107,17 +97,11 @@ final router = Router()
 
 Relic:
 
-```dart
-import 'package:relic/relic.dart';
+GITHUB_CODE_BLOCK lang="dart" file="../_example/basic/relic_shelf.dart" doctag="shelf-relic-routing" title="A route with a parameter"
 
-final router = RelicApp()
-  ..get('/users/:id', (Request request) {
-    final id = request.pathParameters.raw[#id];
-    return Response.ok(body: Body.fromString('User $id'));
-  });
-```
+A parameter is written `:id` instead of `<id>`. Its value no longer arrives as an extra argument to the handler. The handler reads it from the request, by the parameter's name as a Dart symbol, `#id`. Typed accessors can also parse it into a number or any other type, as the [Routing](../02-reference/03-routing.md#path-parameters) page shows.
 
-### 5. Create responses with Body
+## 5. Create responses with Body
 
 Shelf accepts strings directly and manages headers separately:
 
@@ -132,24 +116,13 @@ final htmlResponse = Response.ok(
 );
 ```
 
-Relic uses an explicit body type that unifies content, encoding, and MIME type:
+Relic puts the content, its encoding and its type together in a `Body`:
 
-```dart
-// Relic - explicit Body object is required.
-final textResponse = Response.ok(
-  body: Body.fromString('Hello, World!'),
-);
+GITHUB_CODE_BLOCK lang="dart" file="../_example/basic/relic_shelf.dart" doctag="shelf-relic-responses" title="Responses with a Body"
 
-// Content-Length is automatically calculated and Content-Type and
-// encoding are part of the Body.
-final htmlResponse = Response.ok(
-  body: Body.fromString('<html>...</html>', mimeType: MimeType.html),
-);
-```
+A `content-type` or `content-length` that Shelf code puts in the response headers has no effect in Relic, because the body decides both. Move them to the `Body`. The [Body](../02-reference/06-body.md) page shows what each kind of body decides.
 
-A `content-type` or `content-length` that Shelf code puts in the response headers has no effect in Relic, so move it to the `Body`.
-
-### 6. Replace header access
+## 6. Replace header access
 
 Shelf uses string-based headers with manual parsing:
 
@@ -159,15 +132,13 @@ final cookies = request.headers['cookie']; // String?
 final date = request.headers['date']; // String?
 ```
 
-Relic provides type-safe headers with automatic validation:
+Relic has a typed accessor for each common header:
 
-```dart
-final contentType = request.body.bodyType?.mimeType; // MimeType?
-final cookies = request.headers.cookie; // CookieHeader?
-final date = request.headers.date; // DateTime?
-```
+GITHUB_CODE_BLOCK lang="dart" file="../_example/basic/relic_shelf.dart" doctag="shelf-relic-headers" title="Typed headers"
 
-### 7. Replace middleware and scoping
+Each accessor parses its header into a value of the right type. When a header does not parse, reading it throws, and Relic answers the request with 400. A header without an accessor is still there by name, as `request.headers['x-custom']`.
+
+## 7. Replace middleware and scoping
 
 Shelf:
 
@@ -179,23 +150,17 @@ final app = Router()
 
 final handler = Pipeline()
   .addMiddleware(logRequests())
-  .addMiddleware(authentication()) 
+  .addMiddleware(authentication())
   .addHandler(app);
-
 ```
 
 Relic:
 
-```dart
-final app = RelicApp()
-  ..use('/', logRequests())
-  ..use('/api', authentication())
-  ..get('/api/users', (Request request) async {
-    return Response.ok(body: Body.fromString('User data'));
-  });
-```
+GITHUB_CODE_BLOCK lang="dart" file="../_example/basic/relic_shelf.dart" doctag="shelf-relic-middleware" title="Middleware attached to paths"
 
-### 8. Replace `request.context` usage
+`use` attaches middleware to a path in the router, so authentication can cover `/api` while logging covers everything. One difference matters for a logger. Shelf's `Pipeline().addMiddleware()` runs middleware for every request, 404s included, while Relic's `use` runs it only for requests that match a route. The [Middleware](../02-reference/07-middleware.md#which-requests-middleware-sees) page shows how to reach every request, and Relic also has a `Pipeline` of its own, described on the [Pipeline](../02-reference/99-pipeline.md) page.
+
+## 8. Replace `request.context` usage
 
 Shelf:
 
@@ -212,27 +177,11 @@ final user = request.context['user'] as User?;  // Manual casting
 
 Relic:
 
-```dart
-// Relic - Type-safe. Create each property once, as a global.
-final userProperty = ContextProperty<User>();
-final sessionProperty = ContextProperty<Session>();
+GITHUB_CODE_BLOCK lang="dart" file="../_example/basic/relic_shelf.dart" doctag="shelf-relic-context" title="Typed context properties"
 
-// Set the values, for example in an auth middleware.
-userProperty[request] = currentUser;
-sessionProperty[request] = sessionData;
+A `ContextProperty` is a typed slot on every request. A middleware sets it with `property[request] = value`, and a handler reads it with `property.get(request)`, or with `property[request]` when the value may be absent. No new request is made and no cast is needed. The [Context properties](../02-reference/02-context.md) page explains why each property is created once, as a global.
 
-// Add an extension for convenient access.
-extension AuthContext on Request {
-  User get currentUser => userProperty.get(this);
-  Session get session => sessionProperty.get(this);
-}
-
-// Later...
-final user = request.currentUser;
-final session = request.session;
-```
-
-### 9. Update WebSockets
+## 9. Update WebSockets
 
 Shelf requires a separate package:
 
@@ -247,17 +196,15 @@ var handler = webSocketHandler((webSocket) {
 });
 ```
 
-Relic has WebSockets built-in without the need for a separate package:
+In Relic, a handler returns a `WebSocketUpgrade`:
 
-GITHUB_CODE_BLOCK lang="dart" file="../_example/basic/relic_shelf.dart" doctag="websocket-relic"
+GITHUB_CODE_BLOCK lang="dart" file="../_example/basic/relic_shelf.dart" doctag="websocket-relic" title="A WebSocket handler"
 
 `webSocketHandler` accepts a browser connection from any origin unless you pass `allowedOrigins`. Relic refuses an upgrade from a page on another origin with 403. Set `allowAnyOrigin: true` on the `WebSocketUpgrade` only for an endpoint meant to be opened by other sites, and that does not authenticate with cookies.
 
-## Example comparison
+## A complete example
 
-Here is a complete example showing the differences between Shelf and Relic.
-
-### Shelf version
+Here is a small server in Shelf, with one route, a query parameter and logging:
 
 ```dart
 import 'package:shelf/shelf.dart';
@@ -279,10 +226,25 @@ void main() async {
 }
 ```
 
-### Relic version
+And here it is in Relic:
 
-GITHUB_CODE_BLOCK lang="dart" file="../_example/basic/relic_shelf.dart" doctag="complete-relic"
+GITHUB_CODE_BLOCK lang="dart" file="../_example/basic/relic_shelf.dart" doctag="complete-relic" title="The same server in Relic"
 
-:::info Difference from Shelf's pipeline
-Shelf's `Pipeline().addMiddleware()` runs middleware for every request, 404s included. Relic's `.use('/', ...)` runs it only for requests that match a route, and unmatched requests go straight to the fallback handler. The [Middleware](../02-reference/07-middleware.md#which-requests-middleware-sees) page shows how to reach every request.
-:::
+It answers the same way:
+
+```bash
+curl 'http://localhost:8080/users/42?name=Nova'
+curl http://localhost:8080/users/7
+```
+
+```text
+User 42: Nova
+User 7: Unknown
+```
+
+and it logs each request:
+
+```text
+2026-10-23T14:21:16.388161  0:00:00.007249 GET     [200] /users/42?name=Nova
+2026-10-23T14:21:16.446968  0:00:00.001342 GET     [200] /users/7
+```
