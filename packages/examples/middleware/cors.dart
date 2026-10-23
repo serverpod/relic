@@ -47,11 +47,13 @@ Future<Response> apiHandler(final Request req) async {
 
 /// Demonstrates CORS middleware for cross-origin requests.
 void main() async {
+  // doctag<middleware-cors-routes>
   final app = RelicApp()
     // Enable CORS for all application routes.
     ..use('/', corsMiddleware())
-    // Define the main API endpoint.
-    ..get('/api', apiHandler);
+    // Route preflight OPTIONS requests too, so the middleware sees them.
+    ..anyOf({Method.get, Method.options}, '/api', apiHandler);
+  // end:doctag<middleware-cors-routes>
 
   await app.serve();
   log('Simple CORS example running on http://localhost:8080');

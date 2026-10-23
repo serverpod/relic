@@ -189,6 +189,10 @@ In Relic you can create a CORS middleware that handles preflight requests and ad
 
 GITHUB_CODE_BLOCK lang="dart" file="../_example/middleware/cors.dart" doctag="middleware-cors-basic" title="CORS middleware"
 
+Middleware attached with `router.use` only runs for a request that matched a route. A preflight `OPTIONS` request to a route that only has GET gets 405 from the router, and never reaches the middleware. Register `Method.options` on each route that takes cross-origin requests:
+
+GITHUB_CODE_BLOCK lang="dart" file="../_example/middleware/cors.dart" doctag="middleware-cors-routes" title="Routes for the CORS middleware"
+
 ## Pipeline (legacy)
 
 The `Pipeline` class provides a legacy approach to composing middleware. While `router.use()` is now preferred for most applications, `Pipeline` is still useful in certain scenarios.
