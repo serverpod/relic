@@ -43,7 +43,7 @@ Common methods include `Method.get`, `Method.post`, `Method.put`, `Method.delete
 
 ### Request url and path
 
-The `url` property provides the relative path and query parameters from the current handler's perspective. This is particularly useful when your handler is mounted at a specific path prefix.
+The `url` property is the absolute URI the client requested, with scheme, host, path and query. For the path relative to the route, use `matchedPath`, the part of the path the route matched, and `remainingPath`, what is left after it. A tail route such as `/files/**` reads the file name from `remainingPath`.
 
 GITHUB_CODE_BLOCK lang="dart" file="../_example/routing/request_response.dart" doctag="path-params-complete" title="Path parameters and URL"
 
