@@ -43,7 +43,7 @@ GITHUB_CODE_BLOCK lang="dart" doctag="handler-async" file="../_example/basic/han
 
 ### Using request data
 
-Handlers receive request information including method, URL, headers, and query parameters:
+Handlers receive request information including the method, URL and headers:
 
 GITHUB_CODE_BLOCK lang="dart" doctag="handler-context" file="../_example/basic/handler.dart" title="Using request data"
 
@@ -53,11 +53,17 @@ For real-time bidirectional communication, you can upgrade connections to WebSoc
 
 GITHUB_CODE_BLOCK lang="dart" doctag="context-websocket-echo" file="../_example/context/context.dart" title="WebSocket example"
 
+The event types, such as `TextDataReceived` and `CloseReceived`, come from `package:web_socket`. Add it as a dependency and import it next to `package:relic`.
+
+A request that is not a valid opening handshake gets 400. An upgrade from a page on another origin gets 403, unless the `WebSocketUpgrade` sets `allowAnyOrigin: true`. Set that only for an endpoint meant to be opened by other sites, and that does not authenticate with cookies. An adapter that supports neither WebSockets nor hijacking answers 501.
+
 ### Hijacking connections
 
 For advanced use cases like Server-Sent Events (SSE) or custom protocols, you can hijack the connection:
 
 GITHUB_CODE_BLOCK lang="dart" doctag="handler-hijack-sse" file="../_example/basic/handler.dart" title="Connection hijacking example"
+
+The handler writes everything on the channel itself, starting with the status line and headers. Read the request body to its end before returning a `Hijack` when the client may send it chunked. An adapter cannot hand back the raw bytes of a body it decoded, so it refuses the hijack. The callback then never runs, and the client gets 500.
 
 ## Examples & further reading
 
