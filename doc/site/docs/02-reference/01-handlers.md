@@ -68,7 +68,7 @@ GITHUB_CODE_BLOCK lang="dart" doctag="handler-hijack-sse" file="../_example/basi
 ### API documentation
 
 - [Handler typedef](https://pub.dev/documentation/relic/latest/relic/Handler.html) - Core handler function signature.
-- [Result class](https://pub.dev/documentation/relic/latest/relic/Result.html) - Base class for handler return values.
-- [Response class](https://pub.dev/documentation/relic/latest/relic/Response.html) - HTTP response result.
-- [WebSocketUpgrade class](https://pub.dev/documentation/relic/latest/relic/WebSocketUpgrade.html) - WebSocket upgrade result.
-- [Hijack class](https://pub.dev/documentation/relic/latest/relic/Hijack.html) - Connection hijacking result.
+- [Result class](https://pub.dev/documentation/relic/latest/relic/Result-class.html) - Base class for handler return values.
+- [Response class](https://pub.dev/documentation/relic/latest/relic/Response-class.html) - HTTP response result.
+- [WebSocketUpgrade class](https://pub.dev/documentation/relic/latest/relic/WebSocketUpgrade-class.html) - WebSocket upgrade result.
+- [Hijack class](https://pub.dev/documentation/relic/latest/relic/Hijack-class.html) - Connection hijacking result.
