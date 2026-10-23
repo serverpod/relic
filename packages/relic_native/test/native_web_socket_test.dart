@@ -231,6 +231,28 @@ void main() {
     await socket.done;
   });
 
+  test('Given a keep-alive connection whose first handler read cancelled, '
+      'when the client upgrades on it and drops the connection, '
+      'then the handler sees 1006', () async {
+    upgraded = Completer<RelicWebSocket>();
+    server = await serveNative((request) {
+      if (request.url.path == '/plain') {
+        unawaited(request.cancelled);
+        return Response.ok();
+      }
+      return WebSocketUpgrade(upgraded.complete);
+    });
+    final client = await _Client.connect(server.port, reused: true);
+    final socket = await upgraded.future;
+
+    client.destroy();
+
+    await expectLater(
+      socket.events,
+      emitsInOrder([CloseReceived(1006, ''), emitsDone]),
+    );
+  });
+
   test('Given an upgraded connection, '
       'when the handler closes with 1000 and the client answers, '
       'then the client got the frame and done completes at once', () async {
@@ -315,9 +337,16 @@ final class _Client {
 
   _Client._(this._socket) : _chunks = StreamIterator(_socket);
 
-  static Future<_Client> connect(int port) async {
+  /// Upgrades a fresh connection, after one plain request on it when
+  /// [reused] is set.
+  static Future<_Client> connect(int port, {bool reused = false}) async {
     final socket = await Socket.connect(InternetAddress.loopbackIPv4, port);
     final client = _Client._(socket);
+    if (reused) {
+      socket.write('GET /plain HTTP/1.1\r\nHost: localhost\r\n\r\n');
+      await socket.flush();
+      expect(await client._head(), startsWith('HTTP/1.1 200 '));
+    }
     socket.write(
       'GET / HTTP/1.1\r\nHost: localhost\r\nUpgrade: websocket\r\n'
       'Connection: Upgrade\r\nSec-WebSocket-Version: 13\r\n'
@@ -347,7 +376,7 @@ final class _Client {
         _buffer = _buffer.sublist(end + 4);
         return text.substring(0, end + 4);
       }
-      if (!await _more()) fail('The connection closed before the 101');
+      if (!await _more()) fail('The connection closed before the head');
     }
   }
 

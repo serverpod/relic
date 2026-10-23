@@ -74,6 +74,22 @@ void main() {
     expect(second.connectionInfo!.localPort, first.connectionInfo!.localPort);
   });
 
+  test('Given an HTTPS server whose handler watches cancelled, '
+      'when a client sends a second request on the same connection, '
+      'then the second answer arrives', () async {
+    server = await serveNative((request) {
+      unawaited(request.cancelled);
+      return Response.ok(body: Body.fromString('hello'));
+    }, tls: _tls('localhost'));
+
+    final first = await get('/a');
+    expect(await _readString(first), 'hello');
+    final second = await get('/b');
+    expect(await _readString(second), 'hello');
+
+    expect(second.connectionInfo!.localPort, first.connectionInfo!.localPort);
+  });
+
   test('Given an HTTPS server with an RSA key, '
       'when a client sends a request, '
       'then the answer arrives', () async {

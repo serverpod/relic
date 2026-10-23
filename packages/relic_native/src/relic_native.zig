@@ -847,11 +847,21 @@ const Link = struct {
     }
 
     fn timedOut(self: *const Link) bool {
-        return if (self.socket_reader.err) |e| e == error.Timeout else false;
+        return if (self.readError()) |e| e == error.Timeout else false;
     }
 
     fn readCanceled(self: *const Link) bool {
-        return if (self.socket_reader.err) |e| e == error.Canceled else false;
+        return if (self.readError()) |e| e == error.Canceled else false;
+    }
+
+    /// Forgets why the last read failed. A cancelled watcher or body pump
+    /// leaves its Canceled in the shared readers, where the next phase
+    /// would read it as a cancel of its own EOF or TLS failure.
+    fn clearReadError(self: *Link) void {
+        self.socket_reader.err = null;
+        if (self.secure) |secure| {
+            if (secure.conn != null) secure.reader.err = null;
+        }
     }
 
     fn setReadTimeout(self: *Link, timeout: zio.Timeout) void {
@@ -940,6 +950,7 @@ fn handleConnInner(r: *Reactor, stream: zio.net.Stream) !void {
         // has the header deadline, which is what bounds a slowloris. The
         // sweeper holds the connection to both.
         link.setReadTimeout(.none);
+        link.clearReadError();
         conn.arm(options.idle_timeout_ms);
         conn.idle = true;
         link.reader.fill(1) catch |err| switch (err) {
@@ -1225,6 +1236,7 @@ fn pumpResponseBody(ex: *Exchange, w: *std.Io.Writer) bool {
 /// connection. The socket closes when this returns.
 fn pumpRaw(link: *Link, ex: *Exchange) void {
     link.setReadTimeout(.none);
+    link.clearReadError();
     var rd = zio.spawn(rawReader, .{ link, ex }) catch return;
     var wr = zio.spawn(rawWriter, .{ link.writer, ex }) catch {
         rd.cancel();
@@ -1422,6 +1434,7 @@ fn isValidCloseCode(code: u16) bool {
 /// the peer is gone, or Dart aborts. The socket closes when this returns.
 fn pumpWebSocket(link: *Link, ex: *Exchange) void {
     link.setReadTimeout(.none);
+    link.clearReadError();
     var rd = zio.spawn(wsReader, .{ link, ex }) catch return;
     var wr = zio.spawn(wsWriter, .{ link.writer, ex }) catch {
         rd.cancel();
