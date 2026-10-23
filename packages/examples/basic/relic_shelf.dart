@@ -7,6 +7,7 @@ import 'package:relic/relic.dart';
 
 Future<void> main() async {
   final app = RelicApp()
+    ..use('/', logRequests())
     ..get('/users/:id', (final Request request) {
       final id = request.rawPathParameters[#id];
       final name = request.url.queryParameters['name'] ?? 'Unknown';
