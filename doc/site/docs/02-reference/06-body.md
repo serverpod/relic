@@ -189,6 +189,8 @@ print(binaryBody.bodyType?.encoding); // null
 
 Relic calculates and tracks content length when it is known, which helps clients make efficient decisions about buffering and progress reporting. Providing accurate sizes improves performance and can reduce latency for some clients.
 
+The body is the only source of `Content-Length` and `Content-Type` on a response. Relic drops those headers when a handler sets them on the response's `Headers`.
+
 For string content, the reported length reflects the number of encoded bytes rather than characters. This distinction matters for non-ASCII text and ensures the header value matches the transmitted payload:
 
 ```dart

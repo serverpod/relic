@@ -102,6 +102,10 @@ Headers provide metadata about your response. Use the `Headers` class to build t
 
 GITHUB_CODE_BLOCK lang="dart" file="../_example/routing/request_response.dart" doctag="response-headers" title="Set response headers"
 
+:::note
+The `Body` decides `Content-Type`, `Content-Length` and the chunked transfer coding. Relic drops those three when they are set on the response headers. Set the type with `mimeType:` on the `Body`, and a stream's length with `contentLength:` on `Body.fromDataStream`.
+:::
+
 :::tip
 For a comprehensive list of HTTP headers, check out [Mozilla's HTTP Headers documentation](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers).
 :::

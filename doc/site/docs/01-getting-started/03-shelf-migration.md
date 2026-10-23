@@ -23,7 +23,7 @@ Use this quick plan to get your app running on Relic. The detailed sections belo
 
 4. Switch to Relic routing: Replace Router from shelf_router with `RelicApp`'s `get`, `post`, `put`, or `delete` methods. Replace `<id>` path parameters with `:id` and read them via `request.pathParameters.raw[#id]`.
 
-5. Create responses with `Body`: Replace `Response.ok('text')` with `Response.ok(body:...)`. Let Relic manage `content-length` and `content-type` through the `Body` class.
+5. Create responses with `Body`: Replace `Response.ok('text')` with `Response.ok(body:...)`. Let Relic manage `content-length` and `content-type` through the `Body` class. Relic drops those two when they are set on the response headers.
 
 6. Replace header access: Replace string lookups like `request.headers['cookie']` with typed accessors such as `request.headers.cookie`.
 
@@ -150,6 +150,8 @@ final response = Response.ok(
   body: Body.fromString('<html>...</html>', mimeType: MimeType.html),
 );
 ```
+
+A `content-type` or `content-length` that Shelf code puts in the response headers has no effect in Relic, so move it to the `Body`.
 
 ### 6. Replace header access
 
