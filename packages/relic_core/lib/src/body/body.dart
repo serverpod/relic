@@ -315,7 +315,7 @@ class Body {
     return Body._(
       body,
       contentLength,
-      encoding: encoding ?? (mimeType?.isText == true ? utf8 : null),
+      encoding: _charsetFor(encoding, mimeType),
       mimeType: mimeType,
       parameters: parameters,
     );
@@ -346,11 +346,18 @@ class Body {
     return Body._(
       null,
       contentLength,
-      encoding: encoding ?? (mimeType?.isText == true ? utf8 : null),
+      encoding: _charsetFor(encoding, mimeType),
       mimeType: mimeType,
       parameters: parameters,
     ).._open = open;
   }
+
+  /// The charset of a body with [mimeType] when [encoding] does not name
+  /// one. A text type defaults to utf8, any other to none.
+  static Encoding? _charsetFor(
+    final Encoding? encoding,
+    final MimeType? mimeType,
+  ) => encoding ?? (mimeType?.isText == true ? utf8 : null);
 
   static final _resolver = MimeTypeResolver();
 
@@ -395,7 +402,7 @@ class Body {
       null,
       body.length,
       bytes: body,
-      encoding: encoding ?? (mimeType?.isText == true ? utf8 : null),
+      encoding: _charsetFor(encoding, mimeType),
       mimeType: mimeType ?? MimeType.octetStream,
       parameters: parameters,
     );

@@ -573,7 +573,6 @@ Body _createFileBody(final FileInfo fileInfo) {
     () => fileInfo.file.openRead().cast(),
     contentLength: fileInfo.stat.size,
     mimeType: fileInfo.mimeType ?? MimeType.octetStream,
-    encoding: fileInfo.mimeType?.isText == true ? utf8 : null,
   );
 }
 
@@ -583,7 +582,6 @@ Body _createRangeBody(final FileInfo fileInfo, final int start, final int end) {
     () => fileInfo.file.openRead(start, end).cast(),
     contentLength: end - start,
     mimeType: fileInfo.mimeType ?? MimeType.octetStream,
-    encoding: fileInfo.mimeType?.isText == true ? utf8 : null,
   );
 }
 
