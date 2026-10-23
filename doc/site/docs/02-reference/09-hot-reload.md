@@ -8,7 +8,7 @@ Relic supports hot reloading of route handlers when running with the VM service 
 
 ## Enabling hot reload in your IDE
 
-Open the settings for the Dart plugin in your IDE and and make sure that _Hot Reload On Save_ is enabled. Typically, this is set to _manual_ which will trigger hot reload when you save your file.
+Open the settings for the Dart plugin in your IDE and make sure that _Hot Reload On Save_ is enabled. Typically, this is set to _manual_ which will trigger hot reload when you save your file.
 
 ![Hot reload on save](/img/hot-reload/plugin-settings.png)
 
@@ -32,6 +32,9 @@ Now, start the server in _Debug_ mode from your IDE. This will enable the VM ser
 
 ## How it works
 
-- When a hot reload is triggered, `RelicApp` automatically reconfigures its internal router with the latest route definitions.
-- This works for changes to route handlers and route configurations.
+When a hot reload is triggered, `RelicApp` rebuilds its router by replaying how it was set up. `main()` does not run again, so what applies depends on where the code lives:
+
+- Changes inside a named handler function, such as `Response hello(Request req)`, apply on reload.
+- Routes registered inside a `RouterInjectable` or a `HandlerObject` are registered again through its `injectIn`. Adding, removing or changing routes there applies, inline handlers included.
+- Routes and inline handler closures written directly in `main()` stay as they were at startup. Restart the server after changing those.
 - Changes to server state or global variables may still require a full restart.
