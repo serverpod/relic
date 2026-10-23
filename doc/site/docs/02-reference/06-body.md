@@ -123,22 +123,19 @@ final String content = await req.readAsString(encoding: latin1);
 
 ## Body types and encoding
 
-The `BodyType` class combines MIME type and encoding information to produce the Content-Type header value. By centralizing this logic, Relic keeps handlers clean and avoids duplicated header formatting throughout your code:
+The `BodyType` class combines a MIME type, an optional encoding and any other Content-Type parameters, such as a multipart `boundary`. Its `toHeaderValue()` produces the Content-Type header value. A body gets its `BodyType` from the `mimeType`, `encoding` and `parameters` arguments of `Body.fromString`, `Body.fromData` and `Body.fromDataStream`:
 
 ```dart
-class BodyType {
-  final MimeType mimeType;
-  final Encoding? encoding;
-
-  // Generates Content-Type header value
-  String toHeaderValue() {
-    if (encoding != null) {
-      return '${mimeType.toHeaderValue()}; charset=${encoding!.name}';
-    }
-    return mimeType.toHeaderValue();
-  }
-}
+final body = Body.fromDataStream(
+  parts,
+  mimeType: MimeType.multipartFormData,
+  parameters: {'boundary': boundary},
+);
+print(body.bodyType?.toHeaderValue());
+// multipart/form-data; boundary=...
 ```
+
+`BodyType.fromContentType` builds one from a parsed `Content-Type` header, such as `request.headers.contentType`.
 
 ## MIME type detection
 
