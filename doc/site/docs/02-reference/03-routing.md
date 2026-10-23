@@ -32,10 +32,10 @@ At the core of routing is the `add` method:
 router.add(Method.get, '/', handler);
 ```
 
-The convenience methods `.get()`, `.post()`, `.anyOf()`, and `.any()` call `add()` for you:
+There is one convenience method per HTTP method, `.get()`, `.head()`, `.post()`, `.put()`, `.delete()`, `.patch()`, `.options()`, `.trace()` and `.connect()`, plus `.anyOf()` and `.any()`. They call `add()` for you:
 
 - `.get(path, handler)` → `.add(Method.get, path, handler)`
-- `.post(path, handler)` → `.add(Method.post, path, handler)`
+- `.post(path, handler)` → `.add(Method.post, path, handler)`, and likewise for the other methods.
 - `.anyOf({Method.get, Method.post}, path, handler)` → calls `.add()` for each method in the set.
 - `.any(path, handler)` → calls `.anyOf()` with all HTTP methods.
 
@@ -57,7 +57,7 @@ The fallback does not extend to a GET handler that answers with a `Hijack` or a 
 
 ## Breaking down the routes
 
-The following examples break down each route from the complete example above.
+The following examples break down each route from the [basic routing example](https://github.com/serverpod/relic/blob/main/packages/examples/routing/basic_routing.dart).
 
 ### Convenience methods
 
