@@ -127,7 +127,7 @@ The example registers the handler for HEAD as well as GET, and writes only the h
 
 A hijack also needs the request body out of the way. When the client may send the body chunked, read it to its end before returning a `Hijack`. An adapter cannot hand back the raw bytes of a body it has already decoded, so it refuses the hijack, the callback never runs, and the client gets 500.
 
-For a stream of events like this one, a hijack is not the only way. A `Response` whose body comes from `Body.fromDataStream` streams too, and lets Relic write the head. Reach for a hijack when the handler needs the connection itself.
+A `Response` whose body comes from `Body.fromDataStream` also streams, and lets Relic write the head. The dart:io adapter buffers a streamed body, though, so small pieces like these events can wait until more data follows or the stream ends. A hijacked channel writes straight to the socket, and each event above arrived the moment the handler wrote it, which is why this example hijacks.
 
 ## Examples & further reading
 
