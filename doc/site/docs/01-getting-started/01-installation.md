@@ -5,44 +5,35 @@ sidebar_label: 📦 Installation
 
 # Installation
 
-To use Relic, you must have the Dart SDK installed on your machine.
-
-:::note
-Relic requires Dart SDK 3.10 or later.
-:::
-
-If Dart is not installed, follow the official guide: [Install Dart](https://dart.dev/get-dart).
-
-### Verify Dart installation
-
-You can verify your Dart installation by running the following command:
+Relic is a Dart package, so all it needs is the Dart SDK, version 3.10 or later. If you do not have Dart yet, follow the official guide, [Get the Dart SDK](https://dart.dev/get-dart). Then check which version you have:
 
 ```bash
 dart --version
 ```
 
-You should see a version compatible with the requirement above.
+```text
+Dart SDK version: 3.13.5 (stable) (Tue Sep 29 01:00:52 2026 -0700) on "macos_x64"
+```
 
-## Add Relic to your project
+Any version from 3.10 on will do.
 
-To add Relic to your project, run the following command:
+## Adding Relic to a project
+
+In the directory of your Dart project, add the package:
 
 ```bash
 dart pub add relic
 ```
 
-Alternatively, add it manually to your `pubspec.yaml` file:
+That adds the latest stable release to the `dependencies` in `pubspec.yaml`, and fetches it. You can also add the line to `pubspec.yaml` yourself, and run `dart pub get`.
 
-```yaml
-dependencies:
-  relic: <latest_version>
-```
-
-Then run:
+These pages describe the coming release of Relic, 2.0, and a few of the features they show are not in a published version yet. To try the latest prerelease instead of the stable release, give the version explicitly:
 
 ```bash
-dart pub get
+dart pub add 'relic:^2.0.0-rc.2'
 ```
+
+The [Hello world](./02-hello-world-example.md) page continues from here, with a new project and a first server.
 
 ## Related reading
 
