@@ -18,19 +18,17 @@ NativeTls _tls(String leaf) => NativeTls.fromFiles(
   privateKey: 'test/certs/${leaf}_key.pem',
 );
 
+/// A context that trusts the test CA and nothing else.
+SecurityContext _trustTestCa() =>
+    SecurityContext(withTrustedRoots: false)
+      ..setTrustedCertificates('test/certs/ca_cert.pem');
+
 /// A client that trusts the test CA and nothing else.
-HttpClient _client() => HttpClient(
-  context: SecurityContext(withTrustedRoots: false)
-    ..setTrustedCertificates('test/certs/ca_cert.pem'),
-);
+HttpClient _client() => HttpClient(context: _trustTestCa());
 
 /// A raw TLS connection to [port] that trusts the test CA.
-Future<SecureSocket> _secureConnect(int port) => SecureSocket.connect(
-  'localhost',
-  port,
-  context: SecurityContext(withTrustedRoots: false)
-    ..setTrustedCertificates('test/certs/ca_cert.pem'),
-);
+Future<SecureSocket> _secureConnect(int port) =>
+    SecureSocket.connect('localhost', port, context: _trustTestCa());
 
 /// Answers with the URL the request was addressed to.
 Response _echoUrl(Request request) =>
