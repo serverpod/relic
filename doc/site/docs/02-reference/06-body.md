@@ -80,7 +80,7 @@ Serving a file as a stream means opening it. But not every response is sent. A H
 
 GITHUB_CODE_BLOCK lang="dart" file="../_example/basic/body.dart" doctag="body-lazy-file" title="A file that opens when read"
 
-The function prints a line when it opens the file. A GET for `/greeting` reads the body, so the server prints:
+The path is relative to the working directory, so run the program from `packages/examples`, where `_static_files` is. The function prints a line when it opens the file. A GET for `/greeting` reads the body, so the server prints:
 
 ```text
 opening _static_files/hello.txt

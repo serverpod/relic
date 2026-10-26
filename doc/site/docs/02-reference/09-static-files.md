@@ -8,7 +8,7 @@ Most web apps send some files exactly as they are on disk: images, style sheets,
 
 GITHUB_CODE_BLOCK lang="dart" file="../_example/basic/static_files.dart" doctag="static-files-dir-serve" title="Serving a directory"
 
-The tail segment `/basic/**` matches any path below `/basic`, and the handler looks up the rest of the path, its `remainingPath`, in the directory. A GET route is enough, since it answers HEAD requests too. The example directory, `_static_files`, holds a text file and an image, so `/basic/hello.txt` and `/basic/logo.svg` both exist. Ask for the text file:
+The tail segment `/basic/**` matches any path below `/basic`, and the handler looks up the rest of the path, its `remainingPath`, in the directory. A GET route is enough, since it answers HEAD requests too. The example directory, `_static_files`, holds a text file and an image, so `/basic/hello.txt` and `/basic/logo.svg` both exist. Its path is relative to the working directory, so run the program from `packages/examples`. Ask for the text file:
 
 ```bash
 curl -i http://localhost:8080/basic/hello.txt
