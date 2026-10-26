@@ -33,6 +33,15 @@ These pages describe the coming release of Relic, 2.0, and a few of the features
 dart pub add 'relic:^2.0.0-rc.2'
 ```
 
+## Reading the code on these pages
+
+Every code block on these pages is cut from a complete program in the [examples](https://github.com/serverpod/relic/tree/main/packages/examples) directory of the Relic repository, and each page links the program behind it under Related reading. A few things hold for all of them:
+
+- Most blocks show a part of a program without its imports. Each program imports `package:relic/relic.dart`, and `dart:io` or `dart:convert` where it uses them.
+- The programs start their server with `app.serve()` and no arguments, so they listen on port 8080. The output shown after a block is what `curl -i http://localhost:8080/...` printed.
+- The code uses dot shorthands, which Dart 3.10 added. A leading dot stands for the type expected in that position, so in a handler declared to return `Response`, `.ok(body: .fromString('pong\n'))` means `Response.ok(body: Body.fromString('pong\n'))`. A project whose `pubspec.yaml` declares `sdk: ^3.10.0` or later can use them.
+- A few programs read files from the directory they live in, and their pages say where to run them from.
+
 The [Hello world](./02-hello-world-example.md) page continues from here, with a new project and a first server.
 
 ## Related reading
