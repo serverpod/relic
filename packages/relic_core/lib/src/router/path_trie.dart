@@ -499,8 +499,9 @@ final class PathTrie<T extends Object> {
     return (final v) => outer(inner(v));
   }
 
-  // coverage:ignore-start
-  // ignore: unused_element
+  /// A single descent with no backtracking: a literal child is taken over
+  /// a dynamic segment at every step, and a dead end is a miss even when a
+  /// dynamic branch higher up would have matched.
   TrieMatch<T>? _lookupIterative(final NormalizedPath normalizedPath) {
     final segments = normalizedPath.segments;
     final parameters = <Symbol, String>{};
@@ -557,7 +558,6 @@ final class PathTrie<T extends Object> {
     value = currentMap?.call(value) ?? value;
     return TrieMatch(value, parameters, matchedPath, remainingPath);
   }
-  // coverage:ignore-end
 
   /// Returns true if the path trie has no routes.
   bool get isEmpty => _root.isEmpty;
