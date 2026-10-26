@@ -86,11 +86,17 @@ class StaticAddBenchmark extends RouterBenchmark {
   }
 }
 
-// Benchmark for looking up static routes
+// Benchmark for looking up static routes, with and without backtracking
 class StaticLookupBenchmark extends RouterBenchmark {
-  StaticLookupBenchmark(Emitter emitter)
-    : super(['Lookup', 'Static', 'x$routeCount', 'Router'], emitter);
+  StaticLookupBenchmark(Emitter emitter, {this.backtrack = true})
+    : super([
+        'Lookup',
+        'Static',
+        'x$routeCount',
+        backtrack ? 'Router' : 'RouterNoBacktrack',
+      ], emitter);
 
+  final bool backtrack;
   late final Router<int> router;
 
   @override
@@ -105,7 +111,7 @@ class StaticLookupBenchmark extends RouterBenchmark {
   void run() {
     for (final route in staticRoutesToLookup) {
       // Access value to ensure lookup isn't optimized away
-      router.lookup(Method.get, route).asMatch.value;
+      router.lookup(Method.get, route, backtrack: backtrack).asMatch.value;
     }
   }
 }
@@ -124,11 +130,17 @@ class DynamicAddBenchmark extends RouterBenchmark {
   }
 }
 
-// Benchmark for looking up dynamic routes
+// Benchmark for looking up dynamic routes, with and without backtracking
 class DynamicLookupBenchmark extends RouterBenchmark {
-  DynamicLookupBenchmark(Emitter emitter)
-    : super(['Lookup', 'Dynamic', 'x$routeCount', 'Router'], emitter);
+  DynamicLookupBenchmark(Emitter emitter, {this.backtrack = true})
+    : super([
+        'Lookup',
+        'Dynamic',
+        'x$routeCount',
+        backtrack ? 'Router' : 'RouterNoBacktrack',
+      ], emitter);
 
+  final bool backtrack;
   late final Router<int> router;
 
   @override
@@ -144,7 +156,7 @@ class DynamicLookupBenchmark extends RouterBenchmark {
   void run() {
     for (final route in dynamicRoutesToLookup) {
       // Access value to ensure lookup isn't optimized away
-      router.lookup(Method.get, route).asMatch.value;
+      router.lookup(Method.get, route, backtrack: backtrack).asMatch.value;
     }
   }
 }
@@ -561,12 +573,14 @@ Future<bool> driver(Emitter emitter) async {
     StaticLookupRoutingkitBenchmark(emitter),
     StaticLookupSpannerBenchmark(emitter),
     StaticLookupBenchmark(emitter),
+    StaticLookupBenchmark(emitter, backtrack: false),
     DynamicAddRoutingkitBenchmark(emitter),
     DynamicAddSpannerBenchmark(emitter),
     DynamicAddBenchmark(emitter),
     DynamicLookupRoutingkitBenchmark(emitter),
     DynamicLookupSpannerBenchmark(emitter),
     DynamicLookupBenchmark(emitter),
+    DynamicLookupBenchmark(emitter, backtrack: false),
   ]) {
     benchmark.report();
     // TODO(kasper): This hangs on CI
