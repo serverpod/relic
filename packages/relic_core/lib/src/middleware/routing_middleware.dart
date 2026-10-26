@@ -18,6 +18,10 @@ final _routingContext = ContextProperty<RouterMatch<Object>>();
 
 final _routerProperty = ContextProperty<RelicRouter>('router');
 
+/// The routing middleware that routed the request, kept for [forwardTo] so
+/// a forwarded request is routed with the same options as the original.
+final _routingProperty = ContextProperty<_RoutingMiddlewareBuilder<Handler>>();
+
 /// Creates middleware that routes requests using the provided [router].
 ///
 /// This function converts a [Router] into middleware that can be used in a
@@ -104,6 +108,15 @@ class _RoutingMiddlewareBuilder<T extends Object> {
 
   Middleware get asMiddleware => call;
 
+  /// Routes [req] as a [RelicRouter.asHandler] would, with this
+  /// middleware's options, answering a miss with the router's fallback.
+  FutureOr<Result> forward(final Request req) {
+    final fallback = (_router as RelicRouter).fallback;
+    return call(fallback ?? _notFound)(req);
+  }
+
+  static Result _notFound(final Request _) => Response.notFound();
+
   /// Passes a sync handler's response through without a Future, so a
   /// route that answers synchronously reaches the adapter without a
   /// microtask hop.
@@ -135,6 +148,7 @@ class _RoutingMiddlewareBuilder<T extends Object> {
           _routingContext[req] = match;
           if (_routesHandlers) {
             _routerProperty[req] = _router as RelicRouter;
+            _routingProperty[req] = this as _RoutingMiddlewareBuilder<Handler>;
           }
           final handler = _toHandler(match.value);
           return handler(req);
@@ -215,7 +229,8 @@ extension ForwardingRequestEx on Request {
   /// Forwards [request] through the [RelicRouter] that routed this request.
   ///
   /// This re-routes [request] through the same router that handled
-  /// the current request, enabling URL rewriting and internal redirects.
+  /// the current request, with the same routing options (`backtrack` and
+  /// `useHostWhenRouting`), enabling URL rewriting and internal redirects.
   ///
   /// Typically used with [Request.copyWith] to change the URL:
   /// ```dart
@@ -230,13 +245,13 @@ extension ForwardingRequestEx on Request {
   /// Throws a [StateError] if this request was not routed through a
   /// [RelicRouter].
   FutureOr<Result> forwardTo(final Request request) {
-    final r = router;
-    if (r == null) {
+    final routing = _routingProperty[this];
+    if (routing == null) {
       throw StateError(
         'Cannot forward: no RelicRouter found. '
         'Ensure this request was routed through a RelicRouter.',
       );
     }
-    return r.asHandler(request);
+    return routing.forward(request);
   }
 }
