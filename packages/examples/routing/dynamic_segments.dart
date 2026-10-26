@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:relic/relic.dart';
 
 Response say(String text) => Response.ok(body: Body.fromString('$text\n'));
@@ -37,7 +39,7 @@ Response showEvents(Request req) {
   return say('Events in month ${date.month} of ${date.year}');
 }
 
-Future<void> main() async {
+Future<void> main(List<String> args) async {
   final app = RelicApp()
     // doctag<routing-raw-param>
     ..get('/users/:id', (req) {
@@ -69,5 +71,11 @@ Future<void> main() async {
     ..get('/shop/:id/profile', (req) => say('A shop profile'));
   // end:doctag<routing-backtracking>
 
-  await app.serve();
+  // doctag<routing-no-backtrack>
+  final backtrack = !args.contains('--no-backtrack');
+  await app.run(
+    () => IOAdapter.bind(InternetAddress.loopbackIPv4, port: 8080),
+    backtrack: backtrack,
+  );
+  // end:doctag<routing-no-backtrack>
 }

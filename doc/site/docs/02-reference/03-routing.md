@@ -148,7 +148,11 @@ The program registers both `/static/**` and `/static/special/report`. A request 
 /static/special/other    Serving /special/other
 ```
 
-The router walks the path one segment at a time, and tries a literal segment before a parameter, a wildcard or a tail. When the literal path leads to a dead end, it backs up and tries the alternatives. The last two routes of the program show that backtracking at work:
+The router walks the path one segment at a time, and tries a literal segment before a parameter, a wildcard or a tail. When the literal path leads to a dead end, it backs up and tries the alternatives.
+
+## Backtracking
+
+The last two routes of the program show that backing up at work:
 
 GITHUB_CODE_BLOCK lang="dart" file="../_example/routing/dynamic_segments.dart" doctag="routing-backtracking" title="Two routes that need backtracking"
 
@@ -161,7 +165,28 @@ A request for `/shop/789/profile` follows the literal `shop` all the way to the 
 
 Without backtracking, the request for `/shop/789` would have committed to the literal `shop` and failed. Because of these rules, the order you register routes in does not change which route wins, so routers built in separate modules combine without surprises.
 
-The routes live in a trie, a tree with one level per path segment. A lookup takes time in proportion to the number of segments in the path, not the number of routes. Backtracking visits each node at most once, so even the worst lookup does no more work than trying every route in turn.
+The routes live in a trie, a tree with one level per path segment. Without backtracking, a lookup visits one node per segment, so its cost depends on the length of the path and not on the number of routes. With backtracking, a lookup can leave a literal branch and try a parameter in its place, which visits more nodes, but never the same node twice. Even the worst lookup does no more work than trying every route in turn, and a path that never needs to back up still costs one node per segment.
+
+Backtracking is on by default, and `run` takes a `backtrack` argument to turn it off. The program passes it through from its command line:
+
+GITHUB_CODE_BLOCK lang="dart" file="../_example/routing/dynamic_segments.dart" doctag="routing-no-backtrack" title="Starting without backtracking"
+
+Started with `--no-backtrack`, the router commits to the literal `shop` and never tries `:entity`:
+
+```bash
+curl -i http://localhost:8080/shop/789
+```
+
+```text
+HTTP/1.1 404 Not Found
+content-type: text/plain; charset=utf-8
+date: Mon, 26 Oct 2026 08:21:34 GMT
+content-length: 9
+
+Not Found
+```
+
+The same happens to `/static/special/other`, which commits to the literal `special` and never reaches `/static/**`. Every lookup then costs one node per segment. That is worth having only for a route table in which no literal and no parameter share a prefix, where nothing can need to back up anyway. `routeWith`, which routes for a router placed in a `Pipeline`, takes the same argument.
 
 ## Forwarding a request
 
