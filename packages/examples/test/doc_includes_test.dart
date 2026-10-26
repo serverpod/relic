@@ -6,6 +6,9 @@ import 'package:test/test.dart';
 /// reads it.
 final _parameter = RegExp(r'([a-z]+)="([^"]+)"');
 
+/// The opening of a fenced code block: three or more backticks or tildes.
+final _fence = RegExp(r'^(`{3,}|~{3,})');
+
 void main() {
   test(
     'Given the docs pages, '
@@ -27,8 +30,24 @@ void main() {
           .where((f) => f.path.endsWith('.md') || f.path.endsWith('.mdx'));
       for (final page in pages) {
         final lines = page.readAsLinesSync();
+        // A line inside a fenced code block is shown, not included.
+        String? fence;
         for (var i = 0; i < lines.length; i++) {
-          if (!lines[i].startsWith('GITHUB_CODE_BLOCK')) continue;
+          final line = lines[i].trimLeft();
+          if (fence == null) {
+            final open = _fence.firstMatch(line);
+            if (open != null) {
+              fence = open[1];
+              continue;
+            }
+          } else {
+            if (line.startsWith(fence) &&
+                line.substring(fence.length).trim().isEmpty) {
+              fence = null;
+            }
+            continue;
+          }
+          if (!line.startsWith('GITHUB_CODE_BLOCK')) continue;
           includes++;
           final where = '${page.uri.path.substring(root.path.length)}:${i + 1}';
           final parameters = {
