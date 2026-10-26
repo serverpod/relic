@@ -5,7 +5,7 @@ sidebar_label: Pipeline (legacy)
 
 # Pipeline (legacy)
 
-Before routers had `use`, middleware went around a handler by way of a `Pipeline`. Relic keeps the class, because code that comes from Shelf is written with it, and because it is the most direct way to wrap one handler in several middleware. For new code, the `use` method described on the [Middleware](./07-middleware.md) page is usually the better fit.
+Before routers had `use`, middleware went around a handler by way of a `Pipeline`. Relic keeps the class, because code that comes from Shelf is written with it, and because it is the most direct way to wrap one handler in several middleware. For new code, the `use` method described on the [Middleware](./08-middleware.md) page is usually the better fit.
 
 ## Building a pipeline
 
@@ -56,7 +56,7 @@ and each request leaves one line in the log:
 
 ## Pipeline or use
 
-The difference lies in what the middleware are attached to. A pipeline wraps one handler, and its middleware run for every request that reaches that handler. With `use`, middleware belong to a path in a router, apply to every route below it, and run only for a request that matches one of those routes. A 404 or a 405 skips them. That is why moving a request logger from a pipeline in Shelf to `use` in Relic stops it from logging those two. The [Middleware](./07-middleware.md#which-requests-middleware-sees) page shows how to put middleware in front of every request.
+The difference lies in what the middleware are attached to. A pipeline wraps one handler, and its middleware run for every request that reaches that handler. With `use`, middleware belong to a path in a router, apply to every route below it, and run only for a request that matches one of those routes. A 404 or a 405 skips them. That is why moving a request logger from a pipeline in Shelf to `use` in Relic stops it from logging those two. The [Middleware](./08-middleware.md#which-requests-middleware-sees) page shows how to put middleware in front of every request.
 
 ## Examples & further reading
 

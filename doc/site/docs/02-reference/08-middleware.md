@@ -1,5 +1,5 @@
 ---
-sidebar_position: 7
+sidebar_position: 8
 ---
 
 # Middleware
@@ -102,7 +102,7 @@ Move `var count = 0;` into the middle function and every response says 1.
 
 Write middleware as a plain function when it needs nothing but `next`, as `timed` and the first `requireApiKey` do. It is the shorter form, you register it without parentheses, and hot reload picks up changes to it, because the router holds the function itself.
 
-Write a function that returns middleware when the middleware takes settings, like the API key here or the logger that `logRequests` accepts, or when it keeps state across requests. The price is that `main` calls the outer function at startup, and hot reload leaves the closures it returned as they were. Restart the server after changing one, or register it inside a `RouterInjectable`, whose `injectIn` runs again on every reload, as the [Hot reload](./09-hot-reload.md) page explains.
+Write a function that returns middleware when the middleware takes settings, like the API key here or the logger that `logRequests` accepts, or when it keeps state across requests. The price is that `main` calls the outer function at startup, and hot reload leaves the closures it returned as they were. Restart the server after changing one, or register it inside a `RouterInjectable`, whose `injectIn` runs again on every reload, as the [Hot reload](./10-hot-reload.md) page explains.
 
 ## Which requests middleware sees
 

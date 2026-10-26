@@ -128,7 +128,7 @@ INFO - 2026-10-23 13:17:28.158932
 2026-10-23T13:17:28.158804  0:00:00.000070 GET     [200] /user/Nova/age/27
 ```
 
-The first line says when the message was printed. The second gives the time the request arrived, how long the handler took, the method, the status code and the path. Now request `/nothing` again. This time nothing is printed, because middleware added with `use` only runs for requests that match a route. The [Middleware](../02-reference/07-middleware.md) page explains how to reach the others too.
+The first line says when the message was printed. The second gives the time the request arrived, how long the handler took, the method, the status code and the path. Now request `/nothing` again. This time nothing is printed, because middleware added with `use` only runs for requests that match a route. The [Middleware](../02-reference/08-middleware.md) page explains how to reach the others too.
 
 ## Answering everything else
 
@@ -155,4 +155,4 @@ Restarting after every change gets old quickly. Start the server with the Dart V
 dart run --enable-vm-service bin/hello_world.dart
 ```
 
-You can also start it in debug mode from your IDE, with _Hot Reload On Save_ enabled in the Dart settings. Change the text in `helloHandler`, save, and send the request for Nova again. The new text comes back without a restart. Changes to the route list in `main` are another matter, because `main` does not run again on a reload. The [Hot reload](../02-reference/09-hot-reload.md) page has the details.
+You can also start it in debug mode from your IDE, with _Hot Reload On Save_ enabled in the Dart settings. Change the text in `helloHandler`, save, and send the request for Nova again. The new text comes back without a restart. Changes to the route list in `main` are another matter, because `main` does not run again on a reload. The [Hot reload](../02-reference/10-hot-reload.md) page has the details.

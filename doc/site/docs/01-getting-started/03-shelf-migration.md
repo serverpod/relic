@@ -158,7 +158,7 @@ Relic:
 
 GITHUB_CODE_BLOCK lang="dart" file="../_example/basic/relic_shelf.dart" doctag="shelf-relic-middleware" title="Middleware attached to paths"
 
-`use` attaches middleware to a path in the router, so authentication can cover `/api` while logging covers everything. One difference matters for a logger. Shelf's `Pipeline().addMiddleware()` runs middleware for every request, 404s included, while Relic's `use` runs it only for requests that match a route. The [Middleware](../02-reference/07-middleware.md#which-requests-middleware-sees) page shows how to reach every request, and Relic also has a `Pipeline` of its own, described on the [Pipeline](../02-reference/99-pipeline.md) page.
+`use` attaches middleware to a path in the router, so authentication can cover `/api` while logging covers everything. One difference matters for a logger. Shelf's `Pipeline().addMiddleware()` runs middleware for every request, 404s included, while Relic's `use` runs it only for requests that match a route. The [Middleware](../02-reference/08-middleware.md#which-requests-middleware-sees) page shows how to reach every request, and Relic also has a `Pipeline` of its own, described on the [Pipeline](../02-reference/99-pipeline.md) page.
 
 ## 8. Replace `request.context` usage
 

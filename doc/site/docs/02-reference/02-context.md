@@ -4,7 +4,7 @@ sidebar_position: 2
 
 # Context properties
 
-The [Middleware](./07-middleware.md) page has an API key check that answers 401 to callers it doesn't know. Once a middleware like that has decided who is calling, the handler usually wants to know too. But a handler receives nothing except the `Request`, so whatever the middleware learned has to travel on the request. A context property is a typed slot on every request, made for exactly that.
+The [Middleware](./08-middleware.md) page has an API key check that answers 401 to callers it doesn't know. Once a middleware like that has decided who is calling, the handler usually wants to know too. But a handler receives nothing except the `Request`, so whatever the middleware learned has to travel on the request. A context property is a typed slot on every request, made for exactly that.
 
 ## A property for the current user
 

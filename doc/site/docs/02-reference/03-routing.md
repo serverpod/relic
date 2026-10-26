@@ -137,7 +137,7 @@ curl http://localhost:8080/static/css/site.css
 Serving /css/site.css
 ```
 
-This is how a handler for a whole directory learns which file was asked for, and the [Static files](./08-static-files.md) page relies on it.
+This is how a handler for a whole directory learns which file was asked for, and the [Static files](./09-static-files.md) page relies on it.
 
 ## Which route wins
 

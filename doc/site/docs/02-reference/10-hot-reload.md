@@ -1,5 +1,5 @@
 ---
-sidebar_position: 9
+sidebar_position: 10
 ---
 
 # Hot reload
@@ -60,7 +60,7 @@ Now edit the program. Change every `version 1` to `version 2`, add a route for `
 
 Each line has its own explanation. `hello` is a named function, the router holds the function itself, and the reload replaced its code. The inline handler for `/inline` is a closure that was created when `main` ran, and the router still holds that closure. Whether a reload changes the code of a closure that already exists is up to the Dart VM, and in this run, on Dart 3.13, it did not, so the handler still says version 1. Do not count on that one way or the other. `RelicApp` keeps the `ApiRoutes` object and calls its `injectIn` again on every reload, so the new code there ran, with its changed handler and its new route. The route for `/new` was added in `main`, which did not run again, so the router never heard of it.
 
-That suggests how to arrange a program you are working on. Put handler code in named functions, and put routes you are still changing inside a `RouterInjectable`, registered with `inject`. A `HandlerObject` is a `RouterInjectable` too, which registers itself. Restart the server after changing the route list in `main`, after changing middleware that a factory function built at startup, as the [Middleware](./07-middleware.md#which-form-to-choose) page describes, and after changing global state.
+That suggests how to arrange a program you are working on. Put handler code in named functions, and put routes you are still changing inside a `RouterInjectable`, registered with `inject`. A `HandlerObject` is a `RouterInjectable` too, which registers itself. Restart the server after changing the route list in `main`, after changing middleware that a factory function built at startup, as the [Middleware](./08-middleware.md#which-form-to-choose) page describes, and after changing global state.
 
 ## Examples & further reading
 

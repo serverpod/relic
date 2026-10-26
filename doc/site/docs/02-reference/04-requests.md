@@ -94,7 +94,7 @@ content-length: 58
 Invalid 'authorization' header: Invalid basic token format
 ```
 
-For a header without an accessor, index the headers by name, `request.headers['X-Seen-By']`. That returns every value of the header, or null when it is absent.
+For a header without an accessor, index the headers by name, `request.headers['X-Seen-By']`. That returns every value of the header, or null when it is absent. The [Headers](./07-headers.md) page covers the accessors, what a header that does not parse gets, and how to declare an accessor of your own.
 
 ## The body
 

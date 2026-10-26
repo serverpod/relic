@@ -144,7 +144,7 @@ content-length: 21
 Plain text after all
 ```
 
-The `application/json` from the headers is gone. Set the type with `mimeType:` on the `Body`, and the length of a stream with `contentLength:` on `Body.fromDataStream`.
+The `application/json` from the headers is gone. Set the type with `mimeType:` on the `Body`, and the length of a stream with `contentLength:` on `Body.fromDataStream`. The [Headers](./07-headers.md) page has the rest of the headers API, the values a write refuses included.
 
 ## Answering HEAD
 
