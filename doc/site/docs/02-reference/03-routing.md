@@ -4,7 +4,7 @@ sidebar_position: 3
 
 # Routing
 
-A handler answers a request. Routing decides which handler, by looking at two things in the request, its method and its path. This page builds up the routes of two small programs, and shows what each request gets back.
+A handler answers a request. Routing decides which handler, by looking at two things in the request, its method and its path. This page builds up the routes of three small programs, and shows what each request gets back.
 
 ## Methods and paths
 
@@ -188,6 +188,48 @@ Not Found
 
 The same happens to `/static/special/other`, which commits to the literal `special` and never reaches `/static/**`. Every lookup then costs one node per segment. That is worth having only for a route table in which no literal and no parameter share a prefix, where nothing can need to back up anyway. `routeWith`, which routes for a router placed in a `Pipeline`, takes the same argument.
 
+## Virtual hosts
+
+One server can answer for several host names. The `Host` header says which one the client asked for, and with `useHostWhenRouting` the router reads it too. The third program registers a route for each of two hosts:
+
+GITHUB_CODE_BLOCK lang="dart" file="../_example/routing/virtual_hosts.dart" doctag="routing-virtual-hosts" title="Routes with a host"
+
+The host is the first segment of each route. curl sends the host it connected to, so to ask for another one, set the header by hand:
+
+```bash
+curl -H 'Host: www.example.com' http://localhost:8080/
+curl -H 'Host: api.example.com' http://localhost:8080/users
+curl -H 'Host: api.example.com' http://localhost:8080/
+```
+
+```text
+Welcome to example.com
+The users, over the API
+Not Found
+```
+
+The third request asks `api.example.com` for `/`, which only `www.example.com` has a route for, and gets 404. So does a plain `curl http://localhost:8080/`, since its host is `localhost`. A port in the header makes no difference, and `Host: www.example.com:8080` gets the welcome too.
+
+The router treats the host as one more segment of the path, and nothing else changes, so the rules of this page apply to it. A literal host matches that host alone, `*` matches any host, and a parameter captures the host for the handler. The program uses that for a dashboard that every tenant reaches on a host of its own:
+
+GITHUB_CODE_BLOCK lang="dart" file="../_example/routing/virtual_hosts.dart" doctag="routing-host-parameter-route" title="A route that captures the host"
+
+GITHUB_CODE_BLOCK lang="dart" file="../_example/routing/virtual_hosts.dart" doctag="routing-host-parameter" title="Its handler"
+
+```bash
+curl -H 'Host: acme.example.com' http://localhost:8080/dashboard
+curl -H 'Host: globex.example.com' http://localhost:8080/dashboard
+```
+
+```text
+The dashboard of acme.example.com
+The dashboard of globex.example.com
+```
+
+One handler serves every tenant, and the literal hosts above still win for their own paths. A level of the trie holds a wildcard or a parameter, not both, so `*/health` and `:tenant/dashboard` cannot be registered together. Pick one, and read the value or ignore it.
+
+`routeWith`, for a pipeline built by hand, takes `useHostWhenRouting` as well.
+
 ## Forwarding a request
 
 Sometimes a handler wants another route to answer, without sending the client a redirect. It makes a copy of the request with a new URL, and forwards the copy through the same router:
@@ -210,6 +252,7 @@ The users, from /v2/users
 
 - **[Basic routing example](https://github.com/serverpod/relic/blob/main/packages/examples/routing/basic_routing.dart)** - Routes by method and path, and forwarding.
 - **[Dynamic segments example](https://github.com/serverpod/relic/blob/main/packages/examples/routing/dynamic_segments.dart)** - Path parameters, wildcards, tails and backtracking.
+- **[Virtual hosts example](https://github.com/serverpod/relic/blob/main/packages/examples/routing/virtual_hosts.dart)** - Routes with a host, and a parameter that captures it.
 
 ### API documentation
 
