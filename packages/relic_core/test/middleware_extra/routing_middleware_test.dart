@@ -20,6 +20,22 @@ void main() {
     expect(result, isA<Response>());
   });
 
+  test('Given a literal route and a parameter route that share a prefix, '
+      'when a request that only the parameter route matches is routed '
+      'without backtracking, '
+      'then it falls through to the next handler', () async {
+    final router = RelicRouter()
+      ..get('/shop/:id/profile', (final _) => Response(200))
+      ..get('/:entity/:id', (final _) => Response(200));
+    final handler = routeWith(router, backtrack: false)(
+      respondWith((_) => Response(404)),
+    );
+
+    final result = await handler(_request('/shop/789')) as Response;
+
+    expect(result.statusCode, 404);
+  });
+
   group('RoutingMiddleware', () {
     late RelicRouter router;
     late Middleware middleware;

@@ -34,6 +34,7 @@
   - `RouterMatch.headFallback` and `Request.isHeadFallback` mark such a match, and `RouterMatch.registered` and `Request.registeredMethods` list the methods the path has a route for
 - fix: A response head carries `Connection: close` when the connection closes after it (RFC 9112 9.6)
 - fix: A `WebSocketUpgrade` answers a request other than GET with 405. `Allow` lists the methods its path has a route for, or GET alone when no router matched the request
+- fix: `RelicApp.run(backtrack: false)` and `routeWith(backtrack: false)` look routes up without backtracking
 - perf!: `Request.url`, the routing pipeline, `BodyType` values and `ContextProperty` slots are built once or on first read, and a sync response reaches the adapter without a Future
   - BREAKING: The routing handler and `respondWith` return a sync handler's `Response` as is, and a handler that throws before its first `await` throws to the caller instead of failing a Future
   - BREAKING: A `ContextProperty` holds its slot for the life of the isolate. Create each one once, as a global, never per request or per handler
