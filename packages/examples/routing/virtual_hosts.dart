@@ -1,19 +1,23 @@
 import 'package:relic/relic.dart';
 
-Response say(String text) => Response.ok(body: Body.fromString('$text\n'));
-
 // doctag<routing-host-parameter>
 Response showDashboard(Request req) {
   final tenant = req.rawPathParameters[#tenant];
-  return say('The dashboard of $tenant');
+  return .ok(body: .fromString('The dashboard of $tenant\n'));
 }
 // end:doctag<routing-host-parameter>
 
 Future<void> main() async {
   // doctag<routing-virtual-hosts>
   final app = RelicApp(useHostWhenRouting: true)
-    ..get('www.example.com/', (req) => say('Welcome to example.com'))
-    ..get('api.example.com/users', (req) => say('The users, over the API'));
+    ..get(
+      'www.example.com/',
+      (req) => Response.ok(body: .fromString('Welcome to example.com\n')),
+    )
+    ..get(
+      'api.example.com/users',
+      (req) => Response.ok(body: .fromString('The users, over the API\n')),
+    );
   // end:doctag<routing-virtual-hosts>
 
   // doctag<routing-host-parameter-route>

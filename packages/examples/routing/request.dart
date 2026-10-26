@@ -2,8 +2,6 @@ import 'dart:convert';
 
 import 'package:relic/relic.dart';
 
-Response say(String text) => Response.ok(body: Body.fromString('$text\n'));
-
 // doctag<requests-inspect>
 Response inspect(Request req) {
   final lines = [
@@ -16,7 +14,7 @@ Response inspect(Request req) {
     'from:       ${req.connectionInfo.remote.display}',
     'body:       ${req.body.contentLength} bytes',
   ];
-  return say(lines.join('\n'));
+  return .ok(body: .fromString('${lines.join('\n')}\n'));
 }
 // end:doctag<requests-inspect>
 
@@ -26,11 +24,13 @@ const pageParam = IntQueryParam('page');
 Response search(Request req) {
   final query = req.queryParameters.raw['q'];
   if (query == null) {
-    return Response.badRequest(body: Body.fromString('Add ?q= to search\n'));
+    return Response.badRequest(body: .fromString('Add ?q= to search\n'));
   }
   final page = req.queryParameters(pageParam) ?? 1;
   final tags = req.url.queryParametersAll['tag'] ?? const [];
-  return say('Searching for "$query", page $page, tags $tags');
+  return .ok(
+    body: .fromString('Searching for "$query", page $page, tags $tags\n'),
+  );
 }
 // end:doctag<requests-search>
 
@@ -42,14 +42,14 @@ Response credentials(Request req) {
     null => 'No credentials',
     _ => 'Credentials in another scheme',
   };
-  return say(text);
+  return .ok(body: .fromString('$text\n'));
 }
 // end:doctag<requests-credentials>
 
 // doctag<requests-text-body>
 Future<Response> shout(Request req) async {
   final text = await req.readAsString();
-  return say(text.toUpperCase());
+  return .ok(body: .fromString('${text.toUpperCase()}\n'));
 }
 // end:doctag<requests-text-body>
 
@@ -59,12 +59,12 @@ Future<Response> createUser(Request req) async {
   try {
     data = jsonDecode(await req.readAsString());
   } on FormatException {
-    return Response.badRequest(body: Body.fromString('Not JSON\n'));
+    return Response.badRequest(body: .fromString('Not JSON\n'));
   }
   if (data is! Map || data['name'] is! String) {
-    return Response.badRequest(body: Body.fromString('Expected a name\n'));
+    return Response.badRequest(body: .fromString('Expected a name\n'));
   }
-  return say('Created ${data['name']}');
+  return .ok(body: .fromString('Created ${data['name']}\n'));
 }
 // end:doctag<requests-json-body>
 
@@ -78,7 +78,8 @@ Handler tagRequest(Handler next) {
   };
 }
 
-Response seenBy(Request req) => say('Seen by ${req.headers['X-Seen-By']}');
+Response seenBy(Request req) =>
+    .ok(body: .fromString('Seen by ${req.headers['X-Seen-By']}\n'));
 // end:doctag<requests-copy>
 
 Future<void> main() async {

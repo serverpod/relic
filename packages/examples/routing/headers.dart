@@ -1,7 +1,5 @@
 import 'package:relic/relic.dart';
 
-Response say(String text) => Response.ok(body: Body.fromString('$text\n'));
-
 // doctag<headers-raw-and-typed>
 Response describeAccept(Request req) {
   final raw = req.headers['accept'];
@@ -9,16 +7,16 @@ Response describeAccept(Request req) {
   final ranges = typed?.mediaRanges
       .map((r) => '${r.type}/${r.subtype} at ${r.quality}')
       .join(', ');
-  return say('raw:   $raw\ntyped: $ranges');
+  return .ok(body: .fromString('raw:   $raw\ntyped: $ranges\n'));
 }
 // end:doctag<headers-raw-and-typed>
 
 // doctag<headers-range>
 Response describeRange(Request req) {
   final range = req.headers.range;
-  if (range == null) return say('The whole file');
+  if (range == null) return .ok(body: .fromString('The whole file\n'));
   final parts = range.ranges.map((r) => '${r.start ?? ''}-${r.end ?? ''}');
-  return say('${range.unit} ${parts.join(', ')}');
+  return .ok(body: .fromString('${range.unit} ${parts.join(', ')}\n'));
 }
 // end:doctag<headers-range>
 
@@ -28,19 +26,19 @@ Response compareETags(Request req) {
   final tags = condition.etags.map(
     (e) => e.isWeak ? 'weak ${e.value}' : e.value,
   );
-  return say('Compare against ${tags.join(', ')}');
+  return .ok(body: .fromString('Compare against ${tags.join(', ')}\n'));
 }
 // end:doctag<headers-get>
 
 // doctag<headers-build>
 Response cachedForAnHour(Request req) {
-  return Response.ok(
+  return .ok(
     headers: Headers.build((h) {
       h.cacheControl = CacheControlHeader(publicCache: true, maxAge: 3600);
       h.etag = const ETagHeader(value: 'v1');
       h['X-Request-Id'] = ['7f3a'];
     }),
-    body: Body.fromString('Keep me for an hour\n'),
+    body: .fromString('Keep me for an hour\n'),
   );
 }
 // end:doctag<headers-build>
@@ -48,9 +46,9 @@ Response cachedForAnHour(Request req) {
 // doctag<headers-echo>
 Response echoHeader(Request req) {
   final value = req.url.queryParameters['v'] ?? '';
-  return Response.ok(
+  return .ok(
     headers: Headers.build((h) => h['X-Echo'] = [value]),
-    body: Body.fromString('Echoed $value\n'),
+    body: .fromString('Echoed $value\n'),
   );
 }
 // end:doctag<headers-echo>
@@ -98,7 +96,7 @@ Future<void> main() async {
     ..get('/cached', cachedForAnHour)
     ..get('/echo', echoHeader)
     ..use('/api', rateLimit(2))
-    ..get('/api/ping', (req) => say('pong'));
+    ..get('/api/ping', (req) => Response.ok(body: .fromString('pong\n')));
   // end:doctag<headers-routes>
 
   await app.serve();

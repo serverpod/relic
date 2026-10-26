@@ -1,17 +1,19 @@
 import 'package:relic/relic.dart';
 
-Response say(String text) => Response.ok(body: Body.fromString('$text\n'));
-
 Future<void> main() async {
   // doctag<routing-methods>
   final app = RelicApp()
-    ..get('/', (req) => say('You asked for /'))
-    ..post('/', (req) => say('You posted to /'))
-    ..put('/user', (req) => say('User replaced'))
-    ..delete('/user', (req) => say('User deleted'))
-    ..add(Method.patch, '/user', (req) => say('User updated'))
+    ..get('/', (req) => Response.ok(body: .fromString('You asked for /\n')))
+    ..post('/', (req) => Response.ok(body: .fromString('You posted to /\n')))
+    ..put('/user', (req) => Response.ok(body: .fromString('User replaced\n')))
+    ..delete('/user', (req) => Response.ok(body: .fromString('User deleted\n')))
+    ..add(
+      Method.patch,
+      '/user',
+      (req) => Response.ok(body: .fromString('User updated\n')),
+    )
     ..anyOf({Method.get, Method.post}, '/admin', (req) {
-      return say('Admin, by ${req.method.value}');
+      return Response.ok(body: .fromString('Admin, by ${req.method.value}\n'));
     });
   // end:doctag<routing-methods>
 
@@ -21,7 +23,11 @@ Future<void> main() async {
       final moved = req.copyWith(url: req.url.replace(path: '/v2/users'));
       return req.forwardTo(moved);
     })
-    ..get('/v2/users', (req) => say('The users, from ${req.url.path}'));
+    ..get(
+      '/v2/users',
+      (req) =>
+          Response.ok(body: .fromString('The users, from ${req.url.path}\n')),
+    );
   // end:doctag<routing-forward>
 
   await app.serve();

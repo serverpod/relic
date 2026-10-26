@@ -2,14 +2,12 @@ import 'dart:io';
 
 import 'package:relic/relic.dart';
 
-Response say(String text) => Response.ok(body: Body.fromString('$text\n'));
-
 // doctag<routing-typed-param>
 const orderIdParam = IntPathParam(#id);
 
 Response showOrder(Request req) {
   final id = req.pathParameters.get(orderIdParam);
-  return say('Order $id, and the next one is ${id + 1}');
+  return .ok(body: .fromString('Order $id, and the next one is ${id + 1}\n'));
 }
 // end:doctag<routing-typed-param>
 
@@ -18,7 +16,7 @@ const pageParam = IntPathParam(#page);
 
 Response listPosts(Request req) {
   final page = req.pathParameters(pageParam) ?? 1;
-  return say('Posts, page $page');
+  return .ok(body: .fromString('Posts, page $page\n'));
 }
 // end:doctag<routing-optional-param>
 
@@ -36,7 +34,9 @@ const dateParam = DateTimePathParam(#date);
 
 Response showEvents(Request req) {
   final date = req.pathParameters.get(dateParam);
-  return say('Events in month ${date.month} of ${date.year}');
+  return .ok(
+    body: .fromString('Events in month ${date.month} of ${date.year}\n'),
+  );
 }
 
 Future<void> main(List<String> args) async {
@@ -44,7 +44,7 @@ Future<void> main(List<String> args) async {
     // doctag<routing-raw-param>
     ..get('/users/:id', (req) {
       final id = req.pathParameters.raw[#id];
-      return say('User $id');
+      return Response.ok(body: .fromString('User $id\n'));
     })
     // end:doctag<routing-raw-param>
     // doctag<routing-typed-param-route>
@@ -56,19 +56,31 @@ Future<void> main(List<String> args) async {
     // end:doctag<routing-optional-param-routes>
     ..get('/events/:date', showEvents)
     // doctag<routing-wildcard>
-    ..get('/files/*/download', (req) => say('Downloading a file'))
+    ..get(
+      '/files/*/download',
+      (req) => Response.ok(body: .fromString('Downloading a file\n')),
+    )
     // end:doctag<routing-wildcard>
     // doctag<routing-tail>
-    ..get('/static/**', (req) => say('Serving ${req.remainingPath}'))
-    ..get('/static/special/report', (req) => say('The special report'))
+    ..get(
+      '/static/**',
+      (req) => Response.ok(body: .fromString('Serving ${req.remainingPath}\n')),
+    )
+    ..get(
+      '/static/special/report',
+      (req) => Response.ok(body: .fromString('The special report\n')),
+    )
     // end:doctag<routing-tail>
     // doctag<routing-backtracking>
     ..get('/:entity/:id', (req) {
       final entity = req.rawPathParameters[#entity];
       final id = req.rawPathParameters[#id];
-      return say('A $entity with id $id');
+      return Response.ok(body: .fromString('A $entity with id $id\n'));
     })
-    ..get('/shop/:id/profile', (req) => say('A shop profile'));
+    ..get(
+      '/shop/:id/profile',
+      (req) => Response.ok(body: .fromString('A shop profile\n')),
+    );
   // end:doctag<routing-backtracking>
 
   // doctag<routing-no-backtrack>
