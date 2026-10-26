@@ -728,6 +728,46 @@ void main() {
   });
 
   group('forwardTo', () {
+    test('Given a router routed by host, '
+        'when a handler forwards to a path on the same host, '
+        'then the forwarded request is routed by host too', () async {
+      final router = RelicRouter()
+        ..get('www.example.com/v2', (final _) => Response.ok())
+        ..get('www.example.com/v1', (final req) {
+          return req.forwardTo(
+            req.copyWith(url: Uri.http('www.example.com', '/v2')),
+          );
+        });
+      final handler = routeWith(router, useHostWhenRouting: true)(
+        respondWith((_) => Response(404)),
+      );
+
+      final result =
+          await handler(_request('/v1', host: 'www.example.com')) as Response;
+
+      expect(result.statusCode, 200);
+    });
+
+    test('Given a router routed without backtracking, '
+        'when a handler forwards to a path only backtracking would match, '
+        'then the forwarded request misses', () async {
+      final router = RelicRouter()
+        ..get('/shop/:id/profile', (final _) => Response.ok())
+        ..get('/:entity/:id', (final _) => Response.ok())
+        ..get('/go', (final req) {
+          return req.forwardTo(
+            req.copyWith(url: Uri.http('localhost', '/shop/789')),
+          );
+        });
+      final handler = routeWith(router, backtrack: false)(
+        respondWith((_) => Response(500)),
+      );
+
+      final result = await handler(_request('/go')) as Response;
+
+      expect(result.statusCode, 404);
+    });
+
     test('Given a router with two routes, '
         'when a handler forwards to a different path, '
         'then the forwarded route handler is invoked', () async {
