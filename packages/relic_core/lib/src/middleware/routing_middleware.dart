@@ -116,10 +116,12 @@ class _RoutingMiddlewareBuilder<T extends Object> {
                 req.url.host,
                 ...req.target.pathSegments,
               ]),
+              backtrack: backtrack,
             )
           : _router.lookupPath(
               req.method,
               NormalizedPath.fromPathSegments(req.target.pathSegments),
+              backtrack: backtrack,
             );
       switch (result) {
         case MethodMiss():
