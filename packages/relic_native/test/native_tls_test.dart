@@ -37,6 +37,34 @@ Response _echoUrl(Request request) =>
 Future<String> _readString(HttpClientResponse response) =>
     response.cast<List<int>>().transform(utf8.decoder).join();
 
+/// Writes [request] through `openssl s_client`, trusting the test CA, and
+/// returns everything the server answers until it closes the connection.
+Future<String> _opensslExchange(int port, String request) async {
+  final client = await Process.start('openssl', [
+    's_client',
+    '-connect',
+    'localhost:$port',
+    '-CAfile',
+    'test/certs/ca_cert.pem',
+    '-verify_return_error',
+    '-quiet',
+    '-ign_eof',
+  ]);
+  client.stdin.write(request);
+  await client.stdin.flush();
+  final reply = await utf8
+      .decodeStream(client.stdout)
+      .timeout(
+        const Duration(seconds: 5),
+        onTimeout: () {
+          client.kill();
+          return '';
+        },
+      );
+  await client.exitCode;
+  return reply;
+}
+
 void main() {
   RelicServer? server;
   late HttpClient client;
@@ -100,6 +128,66 @@ void main() {
 
     expect(response.statusCode, 200);
     expect(await _readString(response), 'hello');
+  });
+
+  test('Given an HTTPS server with an EC key in SEC 1 form, '
+      'when a client sends a request, '
+      'then the answer arrives.', () async {
+    server = await serveNative(
+      (_) => Response.ok(body: Body.fromString('hello')),
+      tls: NativeTls.fromFiles(
+        certificateChain: 'test/certs/localhost_cert.pem',
+        privateKey: 'test/certs/localhost_sec1_key.pem',
+      ),
+    );
+
+    final response = await get('/');
+
+    expect(response.statusCode, 200);
+    expect(await _readString(response), 'hello');
+  });
+
+  test('Given an HTTPS server with an Ed25519 key, '
+      'when openssl sends a request, '
+      'then the answer arrives.', () async {
+    // Dart's client offers no ed25519 signature scheme, so openssl is the
+    // client here.
+    if ((await Process.run('openssl', ['version'])).exitCode != 0) {
+      markTestSkipped('no openssl on the path');
+      return;
+    }
+    server = await serveNative(
+      (_) => Response.ok(body: Body.fromString('hello')),
+      tls: _tls('localhost_ed25519'),
+    );
+
+    final reply = await _opensslExchange(
+      server!.port,
+      'GET / HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n',
+    );
+
+    expect(reply, startsWith('HTTP/1.1 200 OK\r\n'));
+    expect(reply, endsWith('\r\n\r\nhello'));
+  });
+
+  test('Given an encrypted private key file, '
+      'when a server binds with it, '
+      'then the bind throws a TlsException.', () async {
+    final tls = NativeTls.fromFiles(
+      certificateChain: 'test/certs/localhost_cert.pem',
+      privateKey: 'test/certs/localhost_encrypted_key.pem',
+    );
+
+    await expectLater(
+      NativeAdapter.bind(InternetAddress.loopbackIPv4, tls: tls),
+      throwsA(
+        isA<TlsException>().having(
+          (e) => e.message,
+          'message',
+          contains('private key'),
+        ),
+      ),
+    );
   });
 
   test('Given an HTTPS server, '
