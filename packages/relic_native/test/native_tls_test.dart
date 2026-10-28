@@ -149,6 +149,27 @@ void main() {
     expect(await _readString(response), 'hello');
   });
 
+  test('Given an HTTPS server with PEM held in memory, '
+      'when a client sends a request, '
+      'then the answer arrives.', () async {
+    server = await serveNative(
+      (_) => Response.ok(body: Body.fromString('hello')),
+      tls: NativeTls(
+        certificateChain: utf8.encode(
+          File('test/certs/localhost_cert.pem').readAsStringSync(),
+        ),
+        privateKey: utf8.encode(
+          File('test/certs/localhost_key.pem').readAsStringSync(),
+        ),
+      ),
+    );
+
+    final response = await get('/');
+
+    expect(response.statusCode, 200);
+    expect(await _readString(response), 'hello');
+  });
+
   test('Given an HTTPS server whose chain runs through an intermediate, '
       'when a client that trusts only the root sends a request, '
       'then the answer arrives.', () async {
@@ -496,6 +517,46 @@ void main() {
           (e) => e.message,
           'message',
           contains('certificate chain'),
+        ),
+      ),
+    );
+  });
+
+  test('Given an empty certificate chain, '
+      'when a server binds with it, '
+      'then the bind throws a TlsException.', () async {
+    final tls = NativeTls(
+      certificateChain: const [],
+      privateKey: File('test/certs/localhost_key.pem').readAsBytesSync(),
+    );
+
+    await expectLater(
+      NativeAdapter.bind(InternetAddress.loopbackIPv4, tls: tls),
+      throwsA(
+        isA<TlsException>().having(
+          (e) => e.message,
+          'message',
+          contains('certificate chain'),
+        ),
+      ),
+    );
+  });
+
+  test('Given an empty private key, '
+      'when a server binds with it, '
+      'then the bind throws a TlsException.', () async {
+    final tls = NativeTls(
+      certificateChain: File('test/certs/localhost_cert.pem').readAsBytesSync(),
+      privateKey: const [],
+    );
+
+    await expectLater(
+      NativeAdapter.bind(InternetAddress.loopbackIPv4, tls: tls),
+      throwsA(
+        isA<TlsException>().having(
+          (e) => e.message,
+          'message',
+          contains('private key'),
         ),
       ),
     );
