@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:collection/collection.dart';
 import '../../../../relic_core.dart';
 import 'util/cookie_util.dart';
@@ -6,7 +8,11 @@ import 'util/cookie_util.dart';
 ///
 /// This class manages the parsing and representation of cookies.
 final class CookieHeader {
-  static const codec = HeaderCodec.single(CookieHeader.parse, __encode);
+  static const codec = HeaderCodec.single(
+    CookieHeader.parse,
+    __encode,
+    decodeBytes: _parseBytes,
+  );
   static List<String> __encode(final CookieHeader value) => [value._encode()];
 
   /// The list of cookies.
@@ -16,6 +22,9 @@ final class CookieHeader {
   CookieHeader.cookies(final List<Cookie> cookies)
     : assert(cookies.isNotEmpty),
       cookies = List.unmodifiable(cookies);
+
+  /// Takes [cookies], a list the parser built, as its own.
+  const CookieHeader._(this.cookies);
 
   /// Parses the Cookie header value and returns a [CookieHeader] instance.
   ///
@@ -63,7 +72,33 @@ final class CookieHeader {
       throw const FormatException('No valid cookies in Cookie header');
     }
 
-    return CookieHeader.cookies(cookies);
+    return CookieHeader._(cookies);
+  }
+
+  /// [parse] over the wire bytes of the value.
+  ///
+  /// The text path reads the value as Latin-1, so a byte and its code unit
+  /// are the same number and the two paths read the same cookies.
+  static CookieHeader _parseBytes(final Uint8List bytes) {
+    if (bytes.isEmpty) {
+      throw const FormatException('Value cannot be empty');
+    }
+    final cookies = <Cookie>[];
+    final length = bytes.length;
+    var start = 0;
+    while (start <= length) {
+      var end = start;
+      while (end < length && bytes[end] != 0x3B) {
+        end++;
+      }
+      final cookie = Cookie._scanBytes(bytes, start, end);
+      if (cookie != null) cookies.add(cookie);
+      start = end + 1;
+    }
+    if (cookies.isEmpty) {
+      throw const FormatException('No valid cookies in Cookie header');
+    }
+    return CookieHeader._(cookies);
   }
 
   /// Returns the first cookie named [name], or `null` if absent.
@@ -149,6 +184,35 @@ class Cookie {
     return Cookie._(
       text.substring(start, nameEnd),
       text.substring(valueStart, end),
+    );
+  }
+
+  /// [_scan] over bytes.
+  static Cookie? _scanBytes(final Uint8List bytes, int start, int end) {
+    while (start < end && isTrimWhitespace(bytes[start])) {
+      start++;
+    }
+    while (end > start && isTrimWhitespace(bytes[end - 1])) {
+      end--;
+    }
+    var eq = start;
+    while (eq < end && bytes[eq] != 0x3D) {
+      eq++;
+    }
+    if (eq == end) return null;
+    var nameEnd = eq;
+    while (nameEnd > start && isTrimWhitespace(bytes[nameEnd - 1])) {
+      nameEnd--;
+    }
+    if (!isCookieNameBytes(bytes, start, nameEnd)) return null;
+    var valueStart = eq + 1;
+    while (valueStart < end && isTrimWhitespace(bytes[valueStart])) {
+      valueStart++;
+    }
+    if (!isCookieValueBytes(bytes, valueStart, end)) return null;
+    return Cookie._(
+      String.fromCharCodes(bytes, start, nameEnd),
+      String.fromCharCodes(bytes, valueStart, end),
     );
   }
 

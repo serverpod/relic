@@ -85,6 +85,31 @@ bool isCookieValue(final String text, int start, int end) {
   return true;
 }
 
+/// [isCookieValue] over bytes.
+bool isCookieValueBytes(final Uint8List bytes, int start, int end) {
+  if (end - start >= 2 && bytes[start] == 0x22 && bytes[end - 1] == 0x22) {
+    start++;
+    end--;
+  }
+  final classes = _asciiClasses;
+  for (int i = start; i < end; i++) {
+    final byte = bytes[i];
+    if (byte >= 0x80 || classes[byte] & _octet == 0) return false;
+  }
+  return true;
+}
+
+/// [isCookieName] over bytes.
+bool isCookieNameBytes(final Uint8List bytes, final int start, final int end) {
+  if (start >= end) return false;
+  final classes = _asciiClasses;
+  for (int i = start; i < end; i++) {
+    final byte = bytes[i];
+    if (byte >= 0x80 || classes[byte] & _nameChar == 0) return false;
+  }
+  return true;
+}
+
 /// Whether `text[start..end)` is a non-empty cookie-name of RFC 6265 4.1.1.
 bool isCookieName(final String text, final int start, final int end) {
   if (start >= end) return false;

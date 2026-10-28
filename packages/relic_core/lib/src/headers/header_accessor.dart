@@ -106,12 +106,14 @@ sealed class HeaderCodec<T extends Object>
     implements _Codec<T, Iterable<String>> {
   final Iterable<String> Function(T decoded) _encode;
 
-  /// A decoder over the wire bytes of the first value, with no `String` in
+  /// A decoder over the wire bytes of the value, with no `String` in
   /// between.
   ///
   /// It returns null for an input it does not handle, and [decode] then
-  /// runs on the text. [decode] stays the reference. Only a codec that
-  /// reads a single value has one.
+  /// runs on the text. [decode] stays the reference. A codec that reads a
+  /// single value gets the bytes of the first field. One that joins its
+  /// fields gets them only when there is exactly one field, since the text
+  /// path reads them all.
   final T? Function(Uint8List bytes)? decodeBytes;
 
   const HeaderCodec._(this._encode, this.decodeBytes);
@@ -128,8 +130,9 @@ sealed class HeaderCodec<T extends Object>
   /// - [encode]: Function to convert type [T] back to header values
   const factory HeaderCodec(
     final T Function(Iterable<String> encoded) decode,
-    final Iterable<String> Function(T decoded) encode,
-  ) = _MultiDecodeHeaderCodec<T>;
+    final Iterable<String> Function(T decoded) encode, {
+    final T? Function(Uint8List bytes)? decodeBytes,
+  }) = _MultiDecodeHeaderCodec<T>;
 
   /// Factory constructor for creating a [HeaderCodec] that processes a single value.
   ///
@@ -150,8 +153,9 @@ final class _MultiDecodeHeaderCodec<T extends Object> extends HeaderCodec<T> {
 
   const _MultiDecodeHeaderCodec(
     this._decode,
-    final Iterable<String> Function(T) encode,
-  ) : super._(encode, null);
+    final Iterable<String> Function(T) encode, {
+    final T? Function(Uint8List bytes)? decodeBytes,
+  }) : super._(encode, decodeBytes);
 
   @override
   T decode(final Iterable<String> encoded) => _decode(encoded);
