@@ -9,11 +9,22 @@ import 'package:relic_core/relic_core.dart';
 /// several isolates will each call the returned factory to serve one port.
 typedef AdapterFactoryBuilder = Factory<Adapter> Function({bool shared});
 
+/// Opens a client connection to the server on [port].
+typedef SocketConnector = Future<Socket> Function(int port);
+
+/// A plain connection to [port] on the IPv4 loopback.
+Future<Socket> plainConnect(int port) =>
+    Socket.connect(InternetAddress.loopbackIPv4, port);
+
 /// The adapter under test and the servers the suite starts on it.
 final class AdapterConformance {
   final String name;
   final AdapterFactoryBuilder bind;
   final AdapterCapabilities capabilities;
+
+  /// How a raw client reaches a server, [plainConnect] unless the server
+  /// speaks TLS.
+  final SocketConnector connect;
 
   /// Whether the transport reports a peer that went away before anything
   /// was written, and one that goes away while a response body streams.
@@ -37,6 +48,7 @@ final class AdapterConformance {
     this.name, {
     required this.bind,
     required this.capabilities,
+    this.connect = plainConnect,
     this.seesPeerGone = true,
     this.failsRespondMidStream = true,
     this.keepsPipelinedBytes = true,
@@ -99,17 +111,18 @@ extension ConformanceServerUrl on RelicServer {
 /// the server answers until it closes the connection.
 ///
 /// The request has to make the server close, with `Connection: close` or
-/// by being refused, or the read runs into [timeout].
+/// by being refused, or the read runs into [timeout]. [connect] opens the
+/// connection, to [address] on the loopback without it.
 Future<String> rawExchange(
   int port,
   String request, {
   Duration timeout = const Duration(seconds: 5),
   InternetAddress? address,
+  SocketConnector? connect,
 }) async {
-  final socket = await Socket.connect(
-    address ?? InternetAddress.loopbackIPv4,
-    port,
-  );
+  final socket = await (connect != null
+      ? connect(port)
+      : Socket.connect(address ?? InternetAddress.loopbackIPv4, port));
   socket.write(request);
   await socket.flush();
   final reply = await utf8.decodeStream(socket).timeout(timeout);

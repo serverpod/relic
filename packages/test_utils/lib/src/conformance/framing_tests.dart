@@ -16,7 +16,8 @@ void framingTests(AdapterConformance conformance) {
     server = null;
   });
 
-  Future<String> raw(String request) => rawExchange(server!.port, request);
+  Future<String> raw(String request) =>
+      rawExchange(server!.port, request, connect: conformance.connect);
 
   Future<void> serve(Handler handler) async {
     server = await conformance.serve(handler);
