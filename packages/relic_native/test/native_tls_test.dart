@@ -430,6 +430,31 @@ void main() {
     expect(await _readString(response), 'https://localhost:${server!.port}/p');
   });
 
+  test('Given an HTTPS server, '
+      'when a client sends an oversized request head, '
+      'then it gets 431 over TLS and the connection closes cleanly.', () async {
+    server = await serveNative(_echoUrl, tls: _tls('localhost'));
+    final socket = await _secureConnect(server!.port);
+
+    // Just over the 16 KiB head limit. Dart's client drops the reply when
+    // the server's close_notify arrives while it still has bytes to
+    // write, which a far larger head would make it do.
+    socket.write(
+      'GET / HTTP/1.1\r\nHost: localhost\r\nX: ${'x' * 20480}\r\n\r\n',
+    );
+    await socket.flush();
+    final reply = await utf8
+        .decodeStream(socket)
+        .timeout(const Duration(seconds: 5));
+    socket.destroy();
+
+    expect(
+      reply,
+      'HTTP/1.1 431 Request Header Fields Too Large\r\n'
+      'connection: close\r\ncontent-length: 0\r\n\r\n',
+    );
+  });
+
   test('Given an HTTPS server with an idle timeout, '
       'when a client connects and never sends a byte, '
       'then the server closes the connection', () async {
