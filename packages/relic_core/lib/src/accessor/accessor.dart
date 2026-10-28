@@ -43,11 +43,13 @@ abstract class FunctionAccessor<T extends Object, K, R>
 /// read the same way. [call] gives the value or null, [get] throws when it
 /// is absent, and [tryGet] gives null for a value that does not decode.
 mixin AccessorStateMixin<K, R> {
-  /// Decoded values by (accessor, raw) pair.
+  /// Decoded values by accessor, each with the raw it was decoded from.
   ///
-  /// The raw key is the raw value, or whatever else the value was decoded
-  /// from, such as a byte view. Accessors compare by identity.
-  Map<(ReadOnlyAccessor<dynamic, K, R>, Object), Object?>? _cache;
+  /// The raw is the raw value, or whatever else the value was decoded
+  /// from, such as a byte view. Accessors compare by identity, so the
+  /// lookup hashes no header text. A read with another raw for the same
+  /// accessor decodes again and replaces the entry.
+  Map<ReadOnlyAccessor<dynamic, K, R>, _Decoded>? _cache;
 
   /// The raw value for [key], or null when absent.
   R? lookup(K key);
@@ -79,7 +81,16 @@ mixin AccessorStateMixin<K, R> {
     ReadOnlyAccessor<T, K, R> accessor,
     Object raw,
     T Function() decode,
-  ) => ((_cache ??= {})[(accessor, raw)] ??= decode()) as T;
+  ) {
+    final cache = _cache ??= Map.identity();
+    final entry = cache[accessor];
+    if (entry != null && (identical(entry.raw, raw) || entry.raw == raw)) {
+      return entry.value as T;
+    }
+    final value = decode();
+    cache[accessor] = _Decoded(raw, value);
+    return value;
+  }
 
   /// Returns the decoded value for the given [accessor], or `null` if missing
   /// or if decoding fails.
@@ -99,7 +110,7 @@ mixin AccessorStateMixin<K, R> {
   void adoptCache(AccessorStateMixin<K, R> other) {
     final adopted = other._cache;
     if (adopted == null || adopted.isEmpty) return;
-    (_cache ??= {}).addAll(adopted);
+    (_cache ??= Map.identity()).addAll(adopted);
   }
 
   /// Records [value] as the decoded form of [raw] for [accessor].
@@ -112,7 +123,7 @@ mixin AccessorStateMixin<K, R> {
     Object raw,
     T value,
   ) {
-    (_cache ??= {})[(accessor, raw)] = value;
+    (_cache ??= Map.identity())[accessor] = _Decoded(raw, value);
   }
 }
 
@@ -134,4 +145,12 @@ extension RawEx<K, R> on Map<K, R> {
   /// Throws a [StateError] if the value is missing.
   R get(K key) =>
       this[key] ?? (throw StateError('Missing value for key: $key'));
+}
+
+/// A decoded value and the raw it came from.
+final class _Decoded {
+  final Object raw;
+  final Object value;
+
+  const _Decoded(this.raw, this.value);
 }

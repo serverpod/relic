@@ -627,14 +627,17 @@ base mixin _StoreReads on HeaderStore, HeaderValues {
       // implement ByteHeaderSource, a store that keeps its bytes does.
       final Object store = _store;
       if (codec.decodeBytes != null && store is ByteHeaderSource) {
-        final bytes = store.rawValue(accessor.key);
+        final bytes = codec.isSingle
+            ? store.rawValue(accessor.key)
+            : store.soleRawValue(accessor.key);
         if (bytes != null) {
-          final value = decodeCached<Object>(
+          // The text decode of a declined value is cached under the bytes
+          // too, so the decline is remembered with the value.
+          return decodeCached(
             accessor,
             bytes,
-            () => accessor.decodeBytes(bytes) ?? _undecoded,
+            () => accessor.decodeBytes(bytes) ?? _decodeText(accessor),
           );
-          if (!identical(value, _undecoded)) return value as T;
         }
       }
       if (codec.isSingle) {
@@ -646,6 +649,14 @@ base mixin _StoreReads on HeaderStore, HeaderValues {
       }
     }
     return super.call(accessor);
+  }
+
+  /// [accessor] decoded from the text of a header that is present.
+  T _decodeText<T extends Object>(final HeaderAccessor<T> accessor) {
+    if (accessor.codec.isSingle) {
+      return accessor.decode([_store.value(accessor.key)!]);
+    }
+    return accessor.decode(lookup(accessor.key)!);
   }
 
   /// The decoded value for [accessor].
@@ -694,7 +705,3 @@ Iterable<String>? _lookupAny(final HeaderValues headers, final Object key) {
 }
 
 final _emptyHeaders = Headers._(MapHeaderStore());
-
-/// The cached result of a byte decode the codec declined, so the text path
-/// runs and the decline is remembered.
-final _undecoded = Object();
