@@ -144,4 +144,53 @@ void main() {
     );
     expect(head, contains('content-length: 1234567890123\r\n'));
   });
+
+  test('Given a response without a Date, '
+      'when the head is encoded for an adapter that stamps the date, '
+      'then the Date value is the stand-in at dateOffset', () {
+    final response = Response.ok(body: Body.fromString('Hello'));
+    final framing = ResponseFraming.of(
+      response,
+      head: false,
+      protocol: HttpProtocol.http11,
+      keepAlive: true,
+      stampDate: true,
+    );
+    final head = ResponseHead(response, framing);
+    final out = Uint8List(head.bound);
+    final length = head.writeTo(out);
+
+    final at = head.dateOffset;
+    expect(at, greaterThan(0));
+    expect(
+      latin1.decode(out.sublist(at, at + stampedDate.length)),
+      stampedDate,
+    );
+    expect(latin1.decode(out.sublist(0, length)), contains('\r\ndate: '));
+  });
+
+  test('Given a response with its own Date, '
+      'when the head is encoded for an adapter that stamps the date, '
+      'then dateOffset is -1 and the head keeps that Date', () {
+    final response = Response.ok(
+      headers: Headers.build((h) => h.date = DateTime.utc(2024, 2, 29)),
+      body: Body.fromString('Hello'),
+    );
+    final framing = ResponseFraming.of(
+      response,
+      head: false,
+      protocol: HttpProtocol.http11,
+      keepAlive: true,
+      stampDate: true,
+    );
+    final head = ResponseHead(response, framing);
+    final out = Uint8List(head.bound);
+    final length = head.writeTo(out);
+
+    expect(head.dateOffset, -1);
+    expect(
+      latin1.decode(out.sublist(0, length)),
+      contains('date: Thu, 29 Feb 2024 00:00:00 GMT\r\n'),
+    );
+  });
 }

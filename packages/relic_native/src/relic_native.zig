@@ -176,7 +176,20 @@ pub const ExchangeView = extern struct {
     scratch_cap: u32 = 0,
     /// Pong frames received, for Dart's ping timer.
     ws_pongs: u32 = 0,
+    /// Offset in the response head of the 29-byte Date value Dart left
+    /// for this side to stamp at send time, 0 when the response carries
+    /// its own Date.
+    date_off: u32 = 0,
 };
+
+/// The bytes of an IMF-fixdate (RFC 9110 5.6.7).
+const http_date_len = 29;
+
+// test/bindings_layout_test.dart records the same size for the Dart
+// struct, so a field added on one side alone fails there or here.
+test "ExchangeView: the size the Dart binding records" {
+    try std.testing.expectEqual(104, @sizeOf(ExchangeView));
+}
 
 pub const Stats = extern struct {
     /// Connections with a request in flight.
@@ -394,6 +407,18 @@ pub const Reactor = struct {
     /// The open connections, for the sweeper to walk.
     conns: std.DoublyLinkedList = .{},
     sweeping: bool = false,
+    /// The Date stamped on responses, and the loop time at which it is a
+    /// second old. A tick refreshes it, so a stamp is a copy.
+    date: [http_date_len]u8 = undefined,
+    date_until_ms: i64 = 0,
+
+    fn refreshDate(self: *Reactor) void {
+        const now = nowMs();
+        if (now < self.date_until_ms) return;
+        const wall = @divFloor(@as(i64, @intCast(zio.Timestamp.now(.real).toNanoseconds())), std.time.ns_per_ms);
+        formatHttpDate(@divFloor(wall, 1000), &self.date);
+        self.date_until_ms = now + 1000 - @mod(wall, 1000);
+    }
 
     fn pokeWaiter(self: *Reactor) void {
         self.poke.poke();
@@ -1100,6 +1125,7 @@ fn handleConnInner(r: *Reactor, stream: zio.net.Stream) !void {
             drainOutbound(&ex);
             return;
         }
+        stampDate(r, &ex, w);
         if (ex.resp_streamed) {
             if (ex.resp_head) |p| try w.writeAll(p[0..ex.resp_head_len]);
             const finished = pumpResponseBody(&ex, w);
@@ -2397,6 +2423,7 @@ export fn relic_reactor_destroy(r: *Reactor) void {
 /// up to `max` exchanges that are ready for a handler. Afterwards
 /// relic_reactor_pending says whether to call again at once.
 export fn relic_reactor_tick(r: *Reactor, wait_ms: u32, out: [*]*ExchangeView, max: u32) u32 {
+    r.refreshDate();
     r.pending = r.rt.main_executor.tick(.fromMilliseconds(wait_ms)) catch false;
     r.drainIncoming();
     var n: u32 = 0;
@@ -2450,6 +2477,53 @@ export fn relic_reactor_wait(r: *Reactor) void {
     r.waiter_until.store(until, .release);
     r.waiter_armed.store(true, .release);
     r.waiter_arm.set();
+}
+
+/// Writes `secs` since the epoch as an IMF-fixdate, `Sun, 06 Nov 1994
+/// 08:49:37 GMT`.
+fn formatHttpDate(secs: i64, out: *[http_date_len]u8) void {
+    const epoch: std.time.epoch.EpochSeconds = .{ .secs = @intCast(secs) };
+    const day = epoch.getEpochDay();
+    const year_day = day.calculateYearDay();
+    const month_day = year_day.calculateMonthDay();
+    const clock = epoch.getDaySeconds();
+    // 1970-01-01 was a Thursday.
+    const weekday = @mod(day.day + 4, 7);
+    const days = [_][]const u8{ "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };
+    const months = [_][]const u8{ "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
+    _ = std.fmt.bufPrint(out, "{s}, {d:0>2} {s} {d:0>4} {d:0>2}:{d:0>2}:{d:0>2} GMT", .{
+        days[weekday],
+        month_day.day_index + 1,
+        months[month_day.month.numeric() - 1],
+        year_day.year,
+        clock.getHoursIntoDay(),
+        clock.getMinutesIntoHour(),
+        clock.getSecondsIntoMinute(),
+    }) catch unreachable;
+}
+
+/// Copies the reactor's Date over the value Dart left in the response
+/// head, in the write buffer for an inline response or in `resp_head`.
+fn stampDate(r: *Reactor, ex: *Exchange, w: *std.Io.Writer) void {
+    const at = ex.view.date_off;
+    if (at == 0) return;
+    const end = at + http_date_len;
+    if (ex.resp_inline_len != 0) {
+        if (end <= ex.resp_inline_len) @memcpy(w.buffer[at..end], &r.date);
+    } else if (ex.resp_head) |head| {
+        if (end <= ex.resp_head_len) @memcpy(head[at..end], &r.date);
+    }
+}
+
+test "formatHttpDate: the epoch and a leap day" {
+    var out: [http_date_len]u8 = undefined;
+    formatHttpDate(0, &out);
+    try std.testing.expectEqualStrings("Thu, 01 Jan 1970 00:00:00 GMT", &out);
+    // RFC 9110 5.6.7's example.
+    formatHttpDate(784111777, &out);
+    try std.testing.expectEqualStrings("Sun, 06 Nov 1994 08:49:37 GMT", &out);
+    formatHttpDate(1709164800 + 86399, &out);
+    try std.testing.expectEqualStrings("Thu, 29 Feb 2024 23:59:59 GMT", &out);
 }
 
 /// Loop time in milliseconds, the clock the waiter's deadline is on.

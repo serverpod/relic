@@ -10,6 +10,11 @@ var _refreshAtMs = -1;
 var _value = '';
 var _line = Uint8List(0);
 
+/// A stand-in for an IMF-fixdate that an adapter overwrites on the wire,
+/// at send time. It has the 29 bytes every IMF-fixdate has, so the head
+/// keeps its length, and it is a real date in case it ever gets out.
+const stampedDate = 'Thu, 01 Jan 1970 00:00:00 GMT';
+
 /// The Date header value for now, an RFC 9110 5.6.7 IMF-fixdate.
 ///
 /// A stopwatch decides when to read the wall clock, once per second at the

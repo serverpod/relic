@@ -832,6 +832,7 @@ final class NativeExchange extends LinkedListEntry<NativeExchange>
       head: method == Method.head,
       protocol: protocol,
       keepAlive: _keepAlive,
+      stampDate: true,
     );
     final body = response.body;
     final bytes = body.bytes;
@@ -853,6 +854,7 @@ final class NativeExchange extends LinkedListEntry<NativeExchange>
     if (_writeInline(head, framing, bytes)) return;
     final (headBuffer, headLength) = _nativeHead(head);
     final view = _takeView(_Stage.ended);
+    view.ref.dateOff = _dateOff(head);
     var bodyBuffer = nullptr.cast<Uint8>();
     if (bytes.isNotEmpty) bodyBuffer = _nativeCopy(bytes);
     native.respond(
@@ -880,10 +882,10 @@ final class NativeExchange extends LinkedListEntry<NativeExchange>
     final chunks = body.read();
     // The view is taken last. A head that does not encode leaves the
     // exchange open for the 500 the core sends next.
-    final (headBuffer, headLength) = _nativeHead(
-      ResponseHead(response, framing),
-    );
+    final head = ResponseHead(response, framing);
+    final (headBuffer, headLength) = _nativeHead(head);
     final view = _takeView(_Stage.streaming);
+    view.ref.dateOff = _dateOff(head);
     _expectEvents();
     native.respondStream(
       view,
@@ -975,6 +977,7 @@ final class NativeExchange extends LinkedListEntry<NativeExchange>
     final out = scratch.asTypedList(capacity);
     final headLength = head.writeTo(out);
     out.setRange(headLength, headLength + bytes.length, bytes);
+    ref.dateOff = _dateOff(head);
     native.respondInline(
       _takeView(_Stage.ended),
       headLength + bytes.length,
@@ -984,6 +987,11 @@ final class NativeExchange extends LinkedListEntry<NativeExchange>
     _finish(ExchangeEnd.completed);
     return true;
   }
+
+  /// The view's `date_off` for [head]: where the native side stamps the
+  /// date at send time, or 0 when the response carries its own.
+  static int _dateOff(ResponseHead head) =>
+      head.dateOffset < 0 ? 0 : head.dateOffset;
 
   /// The head written into the buffer the native side takes over, and
   /// its length.
