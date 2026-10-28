@@ -1,4 +1,8 @@
 ## Unreleased
+- perf: Typed headers decode from the wire bytes
+  - Every typed header in relic parses the bytes of its field, with no `String` in between. `HeaderCodec.bytes` takes a parser over one field, `HeaderCodec.fields` over every field, and `ByteHeaderSource.rawValues` hands a store's field bytes over. A text value is Latin-1 encoded and read by the same parser, and the `HeaderCodec.single` and `HeaderCodec` text constructors stay for headers defined outside relic
+  - The decoded-value cache is keyed by accessor, so a typed read hashes no header text, and the parsers hand their lists over without a copy
+  - On relic_native with one isolate the headers route goes from 56k to 65k requests a second under the JIT and from 48k to 69k under AOT, and the browser route from 40k to 47k under the JIT and from 32k to 45k under AOT
 - fix: A 206 range response defaults its Content-Type to application/octet-stream when the MIME type is unknown
 - feat!: Replace the request stream with an exchange-based `Adapter`
   - BREAKING: `Adapter` is an interface to implement, not a class to extend. It provides `listeners`, `capabilities` and `start(sink)`, and hands over `AdapterExchange` objects with `respond`, `hijack`, `upgradeWebSocket` and `abort`. `Adapter.requests`, `Adapter.port` and `AdapterRequest` are gone. The port is on `listeners` and on `RelicServer.port`
