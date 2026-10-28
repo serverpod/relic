@@ -77,11 +77,12 @@ abstract interface class ByteHeaderSource {
   /// identity.
   Uint8List? rawValue(HeaderName name);
 
-  /// The wire bytes of the value for [name] when it has exactly one field,
-  /// else null.
+  /// The wire bytes of every field named [name], in order, empty when
+  /// absent.
   ///
-  /// For a header that joins its fields, which has to read every one.
-  Uint8List? soleRawValue(HeaderName name);
+  /// The same list comes back for the same name, so a caller may cache by
+  /// identity.
+  List<Uint8List> rawValues(HeaderName name);
 }
 
 /// A [HeaderStore] that can be written.

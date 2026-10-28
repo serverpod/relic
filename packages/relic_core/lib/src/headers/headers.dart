@@ -626,17 +626,25 @@ base mixin _StoreReads on HeaderStore, HeaderValues {
       // Typed as Object so the is-test promotes. HeaderStore does not
       // implement ByteHeaderSource, a store that keeps its bytes does.
       final Object store = _store;
-      if (codec.decodeBytes != null && store is ByteHeaderSource) {
-        final bytes = codec.isSingle
-            ? store.rawValue(accessor.key)
-            : store.soleRawValue(accessor.key);
-        if (bytes != null) {
+      if (store is ByteHeaderSource) {
+        if (codec.decodeBytes != null) {
+          final bytes = store.rawValue(accessor.key);
+          if (bytes == null) return null;
           // The text decode of a declined value is cached under the bytes
           // too, so the decline is remembered with the value.
           return decodeCached(
             accessor,
             bytes,
             () => accessor.decodeBytes(bytes) ?? _decodeText(accessor),
+          );
+        }
+        if (codec.decodeFields != null) {
+          final fields = store.rawValues(accessor.key);
+          if (fields.isEmpty) return null;
+          return decodeCached(
+            accessor,
+            fields,
+            () => accessor.decodeFields(fields),
           );
         }
       }

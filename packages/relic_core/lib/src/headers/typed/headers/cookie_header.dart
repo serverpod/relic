@@ -2,17 +2,14 @@ import 'dart:typed_data';
 
 import 'package:collection/collection.dart';
 import '../../../../relic_core.dart';
+import '../primitives/byte_scanner.dart' show latin1Bytes;
 import 'util/cookie_util.dart';
 
 /// A class representing the HTTP Cookie header.
 ///
 /// This class manages the parsing and representation of cookies.
 final class CookieHeader {
-  static const codec = HeaderCodec.single(
-    CookieHeader.parse,
-    __encode,
-    decodeBytes: _parseBytes,
-  );
+  static const codec = HeaderCodec.bytes(_parseBytes, __encode);
   static List<String> __encode(final CookieHeader value) => [value._encode()];
 
   /// The list of cookies.
@@ -29,56 +26,25 @@ final class CookieHeader {
   /// Parses the Cookie header value and returns a [CookieHeader] instance.
   ///
   /// This method processes the header value, extracting the cookies into a list.
-  factory CookieHeader.parse(final String value) {
-    if (value.isEmpty) {
-      throw const FormatException('Value cannot be empty');
-    }
+  factory CookieHeader.parse(final String value) =>
+      _parseBytes(latin1Bytes(value));
 
-    // The parser reads each segment on its own and skips a malformed one
-    // rather than failing the header. The Cookie header is a single line
-    // carrying every cookie the user agent decided to send. One invalid
-    // cookie, say a stray third-party cookie outside RFC 6265's grammar,
-    // must not make the well-formed ones unreadable, a session or auth
-    // cookie among them.
-    //
-    // RFC 6265 5.4 also allows a Cookie header to carry several cookies with
-    // the same name (a host-only cookie plus a Domain-scoped one, or
-    // path-scoped duplicates).
-    //
-    // The server cannot tell them apart from the header alone, so keep every
-    // segment - including byte-identical duplicates - rather than collapsing
-    // them, so [getCookies] reports the true count. [getCookie] returns the
-    // first match.
-    //
-    // Cookie names are case-sensitive per RFC 6265 4.2.2/5.4, so `Sid` and
-    // `sid` stay distinct.
-    final cookies = <Cookie>[];
-    final length = value.length;
-    var start = 0;
-    while (start <= length) {
-      var end = start;
-      while (end < length && value.codeUnitAt(end) != 0x3B) {
-        end++;
-      }
-      final cookie = Cookie._scan(value, start, end);
-      if (cookie != null) cookies.add(cookie);
-      start = end + 1;
-    }
-
-    // The header is only treated as invalid when nothing in it is a usable
-    // cookie (an empty value is already rejected above). Consumers that want a
-    // tolerant read of a possibly-absent header can use `valueOrNullIfInvalid`.
-    if (cookies.isEmpty) {
-      throw const FormatException('No valid cookies in Cookie header');
-    }
-
-    return CookieHeader._(cookies);
-  }
-
-  /// [parse] over the wire bytes of the value.
+  /// The header from the wire [bytes] of its value.
   ///
-  /// The text path reads the value as Latin-1, so a byte and its code unit
-  /// are the same number and the two paths read the same cookies.
+  /// The parser reads each segment on its own and skips a malformed one
+  /// rather than failing the header. The Cookie header is a single line
+  /// carrying every cookie the user agent decided to send. One invalid
+  /// cookie, say a stray third-party cookie outside RFC 6265's grammar,
+  /// must not make the well-formed ones unreadable, a session or auth
+  /// cookie among them.
+  ///
+  /// RFC 6265 5.4 also allows a Cookie header to carry several cookies with
+  /// the same name (a host-only cookie plus a Domain-scoped one, or
+  /// path-scoped duplicates). The server cannot tell them apart from the
+  /// header alone, so every segment is kept, byte-identical duplicates
+  /// included, so [getCookies] reports the true count. [getCookie] returns
+  /// the first match. Cookie names are case-sensitive per RFC 6265
+  /// 4.2.2/5.4, so `Sid` and `sid` stay distinct.
   static CookieHeader _parseBytes(final Uint8List bytes) {
     if (bytes.isEmpty) {
       throw const FormatException('Value cannot be empty');
@@ -151,43 +117,12 @@ class Cookie {
 
   const Cookie._(this.name, this.value);
 
-  /// The cookie in `text[start..end)`, one segment of a Cookie header, or
+  /// The cookie in `bytes[start..end)`, one segment of a Cookie header, or
   /// null when the segment is not one.
   ///
   /// A segment is not a cookie without an `=`, or with a character outside
   /// the grammar. Nor is a nameless `=value` or a bare `=`, which no client
   /// meaningfully set. Whitespace is trimmed as `String.trim` trims it.
-  static Cookie? _scan(final String text, int start, int end) {
-    while (start < end && isTrimWhitespace(text.codeUnitAt(start))) {
-      start++;
-    }
-    while (end > start && isTrimWhitespace(text.codeUnitAt(end - 1))) {
-      end--;
-    }
-    // Split on the first '=' only. RFC 6265 cookie-octets permit '=' inside
-    // the value, as in base64 padding.
-    var eq = start;
-    while (eq < end && text.codeUnitAt(eq) != 0x3D) {
-      eq++;
-    }
-    if (eq == end) return null;
-    var nameEnd = eq;
-    while (nameEnd > start && isTrimWhitespace(text.codeUnitAt(nameEnd - 1))) {
-      nameEnd--;
-    }
-    if (!isCookieName(text, start, nameEnd)) return null;
-    var valueStart = eq + 1;
-    while (valueStart < end && isTrimWhitespace(text.codeUnitAt(valueStart))) {
-      valueStart++;
-    }
-    if (!isCookieValue(text, valueStart, end)) return null;
-    return Cookie._(
-      text.substring(start, nameEnd),
-      text.substring(valueStart, end),
-    );
-  }
-
-  /// [_scan] over bytes.
   static Cookie? _scanBytes(final Uint8List bytes, int start, int end) {
     while (start < end && isTrimWhitespace(bytes[start])) {
       start++;

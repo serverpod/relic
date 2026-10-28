@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
 import '../../../../relic_core.dart';
+import '../primitives/byte_scanner.dart' show latin1Bytes;
 import 'util/cookie_util.dart' show isTrimWhitespace;
 import 'util/qvalue.dart';
 import 'wildcard_list_header.dart';
@@ -9,7 +10,7 @@ import 'wildcard_list_header.dart';
 ///
 /// This header specifies the natural languages that are preferred in the response.
 final class AcceptLanguageHeader extends WildcardListHeader<LanguageQuality> {
-  static const codec = HeaderCodec(_parse, _encode, decodeBytes: _parseBytes);
+  static const codec = HeaderCodec.fields(_parseFields, _encode);
 
   /// Constructs an instance with the given languages
   AcceptLanguageHeader.languages(super.languages);
@@ -19,65 +20,56 @@ final class AcceptLanguageHeader extends WildcardListHeader<LanguageQuality> {
 
   AcceptLanguageHeader._owned(super.languages) : super.owned();
 
-  /// Parses the Accept-Language header value and returns an [AcceptLanguageHeader] instance
-  factory AcceptLanguageHeader.parse(final Iterable<String> values) {
-    return _parse(values);
-  }
+  /// Parses the Accept-Language header [values] and returns an
+  /// [AcceptLanguageHeader] instance.
+  factory AcceptLanguageHeader.parse(final Iterable<String> values) =>
+      _parseFields([for (final value in values) latin1Bytes(value)]);
 
   /// The list of languages that are accepted
   List<LanguageQuality> get languages => values;
 
-  static AcceptLanguageHeader _parse(final Iterable<String> values) {
-    final parsed = WildcardListHeader.parse(values, LanguageQuality.parse);
-
-    if (parsed.isWildcard) {
-      return const AcceptLanguageHeader.wildcard();
-    } else {
-      return AcceptLanguageHeader._owned(parsed.values);
-    }
-  }
-
-  /// [_parse] over the wire bytes of a single field.
+  /// The header from the wire bytes of its [fields].
   ///
-  /// Declines a byte at or above 0x80, where lower-casing is more than
-  /// ASCII, so the text path reads the value as Latin-1 the way it always
-  /// did. Elements are split on commas, trimmed, dropped when empty and
-  /// kept once each, as the text path does.
-  static AcceptLanguageHeader? _parseBytes(final Uint8List bytes) {
-    final length = bytes.length;
-    for (var i = 0; i < length; i++) {
-      if (bytes[i] >= 0x80) return null;
-    }
-    // Each kept element as start and end, in order.
+  /// Elements are split on commas across every field, trimmed, dropped
+  /// when empty and kept once each. One element that is `*` is the
+  /// wildcard, and `*` beside a language is an error.
+  static AcceptLanguageHeader _parseFields(final List<Uint8List> fields) {
+    // Each kept element as field index, start and end, in order.
     final elements = <int>[];
-    var start = 0;
-    while (start <= length) {
-      var end = start;
-      while (end < length && bytes[end] != 0x2C) {
-        end++;
+    for (var f = 0; f < fields.length; f++) {
+      final bytes = fields[f];
+      final length = bytes.length;
+      var start = 0;
+      while (start <= length) {
+        var end = start;
+        while (end < length && bytes[end] != 0x2C) {
+          end++;
+        }
+        final next = end + 1;
+        while (start < end && isTrimWhitespace(bytes[start])) {
+          start++;
+        }
+        while (end > start && isTrimWhitespace(bytes[end - 1])) {
+          end--;
+        }
+        if (start < end && !_seen(fields, elements, f, start, end)) {
+          elements
+            ..add(f)
+            ..add(start)
+            ..add(end);
+        }
+        start = next;
       }
-      final next = end + 1;
-      while (start < end && isTrimWhitespace(bytes[start])) {
-        start++;
-      }
-      while (end > start && isTrimWhitespace(bytes[end - 1])) {
-        end--;
-      }
-      if (start < end && !_seen(bytes, elements, start, end)) {
-        elements
-          ..add(start)
-          ..add(end);
-      }
-      start = next;
     }
-    final count = elements.length ~/ 2;
+    final count = elements.length ~/ 3;
     if (count == 0) {
       throw const FormatException('Value cannot be empty');
     }
     var wildcards = 0;
     for (var i = 0; i < count; i++) {
-      if (elements[i * 2 + 1] - elements[i * 2] == 1 &&
-          bytes[elements[i * 2]] == 0x2A) {
+      final start = elements[i * 3 + 1];
+      if (elements[i * 3 + 2] - start == 1 &&
+          fields[elements[i * 3]][start] == 0x2A) {
         wildcards++;
       }
     }
@@ -90,29 +82,33 @@ final class AcceptLanguageHeader extends WildcardListHeader<LanguageQuality> {
     final languages = List<LanguageQuality>.generate(
       count,
       (final i) => LanguageQuality._parseBytes(
-        bytes,
-        elements[i * 2],
-        elements[i * 2 + 1],
+        fields[elements[i * 3]],
+        elements[i * 3 + 1],
+        elements[i * 3 + 2],
       ),
       growable: false,
     );
     return AcceptLanguageHeader._owned(languages);
   }
 
-  /// Whether `bytes[start..end)` equals an element already in [elements].
+  /// Whether `fields[f][start..end)` equals an element already in
+  /// [elements].
   static bool _seen(
-    final Uint8List bytes,
+    final List<Uint8List> fields,
     final List<int> elements,
+    final int f,
     final int start,
     final int end,
   ) {
+    final bytes = fields[f];
     final length = end - start;
-    for (var e = 0; e < elements.length; e += 2) {
-      final at = elements[e];
-      if (elements[e + 1] - at != length) continue;
+    for (var e = 0; e < elements.length; e += 3) {
+      final other = fields[elements[e]];
+      final at = elements[e + 1];
+      if (elements[e + 2] - at != length) continue;
       var same = true;
       for (var i = 0; i < length; i++) {
-        if (bytes[at + i] != bytes[start + i]) {
+        if (other[at + i] != bytes[start + i]) {
           same = false;
           break;
         }
@@ -148,33 +144,11 @@ class LanguageQuality {
   /// The weight is recognized as the parameter named `q` (RFC 9110 12.4.2),
   /// case-insensitive, tolerating OWS around the surrounding `;` and `=`.
   factory LanguageQuality.parse(final String value) {
-    final parts = value.split(';');
-    final language = parts[0].trim().toLowerCase();
-    if (language.isEmpty) {
-      throw const FormatException('Invalid language');
-    }
-
-    double? quality;
-    for (var i = 1; i < parts.length; i++) {
-      final eq = parts[i].indexOf('=');
-      if (eq < 0) continue;
-      final name = parts[i].substring(0, eq).trim();
-      if (name.toLowerCase() != 'q') continue;
-      final parsed = double.tryParse(parts[i].substring(eq + 1).trim());
-      // A malformed or out-of-range weight is treated as absent (defaulting to
-      // 1.0) rather than rejecting the whole header: the client did list this
-      // entry, so it is acceptable; only the unparseable preference is dropped
-      // (RFC 9110 12.4.2; robustness on received headers).
-      if (parsed != null && parsed >= 0 && parsed <= 1) {
-        quality = parsed;
-      }
-      break;
-    }
-
-    return LanguageQuality(language, quality);
+    final bytes = latin1Bytes(value);
+    return LanguageQuality._parseBytes(bytes, 0, bytes.length);
   }
 
-  /// [parse] over `bytes[start..end)`, ASCII only.
+  /// [parse] over `bytes[start..end)`.
   static LanguageQuality _parseBytes(
     final Uint8List bytes,
     final int start,
@@ -184,7 +158,7 @@ class LanguageQuality {
     while (semi < end && bytes[semi] != 0x3B) {
       semi++;
     }
-    final language = _lowerAscii(bytes, start, _trimEnd(bytes, start, semi));
+    final language = _lowerLatin1(bytes, start, _trimEnd(bytes, start, semi));
     if (language.isEmpty) {
       throw const FormatException('Invalid language');
     }
@@ -239,24 +213,31 @@ class LanguageQuality {
     return end;
   }
 
-  /// `bytes[start..end)` as a string with ASCII letters in lower case.
-  static String _lowerAscii(
+  /// `bytes[start..end)` as a string in lower case, the way
+  /// `String.toLowerCase` lowers Latin-1 text.
+  static String _lowerLatin1(
     final Uint8List bytes,
     final int start,
     final int end,
   ) {
     var i = start;
-    while (i < end && (bytes[i] < 0x41 || bytes[i] > 0x5A)) {
+    while (i < end && !_isUpper(bytes[i])) {
       i++;
     }
     if (i == end) return String.fromCharCodes(bytes, start, end);
     final lowered = Uint8List(end - start);
     for (var j = 0; j < lowered.length; j++) {
       final b = bytes[start + j];
-      lowered[j] = b >= 0x41 && b <= 0x5A ? b | 0x20 : b;
+      lowered[j] = _isUpper(b) ? b + 0x20 : b;
     }
     return String.fromCharCodes(lowered);
   }
+
+  /// Whether [b] is an upper-case Latin-1 letter with a lower-case form
+  /// 0x20 above it: A-Z and the accented capitals, less the multiplication
+  /// sign in their midst.
+  static bool _isUpper(final int b) =>
+      (b >= 0x41 && b <= 0x5A) || (b >= 0xC0 && b <= 0xDE && b != 0xD7);
 
   /// Encodes this [LanguageQuality] into a string representation suitable for
   /// HTTP headers. The q-value is rendered with at most 3 fractional digits
