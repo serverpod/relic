@@ -5,7 +5,7 @@ import 'package:relic_native/relic_native.dart';
 import 'package:test/test.dart';
 import 'package:test_utils/adapter_conformance.dart';
 
-/// The framing conformance tests over TLS, so the bytes the core frames
+/// The conformance tests that write raw requests, over TLS, so the bytes
 /// go through tls.zig's records.
 void main() {
   final tls = NativeTls.fromFiles(
@@ -34,5 +34,8 @@ void main() {
         SecureSocket.connect('localhost', port, context: trustTestCa),
   );
 
-  group('NativeAdapter over TLS.', () => framingTests(conformance));
+  group('NativeAdapter over TLS.', () {
+    framingTests(conformance);
+    headerWireTests(conformance);
+  });
 }
