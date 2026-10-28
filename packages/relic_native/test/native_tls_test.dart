@@ -39,6 +39,21 @@ Response _echoUrl(Request request) =>
 Future<String> _readString(HttpClientResponse response) =>
     response.cast<List<int>>().transform(utf8.decoder).join();
 
+/// The connection counts of [server] once [settled] holds for them, or
+/// the last counts seen within three seconds.
+Future<ConnectionsInfo> _connectionsWhen(
+  RelicServer server,
+  bool Function(ConnectionsInfo info) settled,
+) async {
+  final stopwatch = Stopwatch()..start();
+  var info = await server.connectionsInfo();
+  while (!settled(info) && stopwatch.elapsed < const Duration(seconds: 3)) {
+    await Future<void>.delayed(const Duration(milliseconds: 20));
+    info = await server.connectionsInfo();
+  }
+  return info;
+}
+
 /// Writes [request] through `openssl s_client`, trusting the test CA, and
 /// returns everything the server answers until it closes the connection.
 Future<String> _opensslExchange(int port, String request) async {
@@ -453,6 +468,58 @@ void main() {
       'HTTP/1.1 431 Request Header Fields Too Large\r\n'
       'connection: close\r\ncontent-length: 0\r\n\r\n',
     );
+  });
+
+  test('Given an HTTPS server, '
+      'when a client has sent the first byte of a handshake, '
+      'then the connection counts as active.', () async {
+    server = await serveNative(_echoUrl, tls: _tls('localhost'));
+    final socket = await Socket.connect(
+      InternetAddress.loopbackIPv4,
+      server!.port,
+    );
+    socket.add(const [0x16]);
+    await socket.flush();
+
+    final info = await _connectionsWhen(server!, (info) => info.active == 1);
+
+    expect((info.active, info.idle), (1, 0));
+    socket.destroy();
+  });
+
+  test('Given an HTTPS server, '
+      'when a client has completed the handshake and sent no request, '
+      'then the connection counts as idle.', () async {
+    server = await serveNative(_echoUrl, tls: _tls('localhost'));
+    final socket = await _secureConnect(server!.port);
+
+    final info = await _connectionsWhen(server!, (info) => info.idle == 1);
+
+    expect((info.active, info.idle), (0, 1));
+    socket.destroy();
+  });
+
+  test('Given an HTTPS server, '
+      'when a client sends a handshake record followed by garbage, '
+      'then the connection leaves the counts.', () async {
+    server = await serveNative(_echoUrl, tls: _tls('localhost'));
+    final socket = await Socket.connect(
+      InternetAddress.loopbackIPv4,
+      server!.port,
+    );
+    socket.add([0x16, ...List.filled(64, 0xff)]);
+    await socket.flush();
+    await socket
+        .fold<List<int>>([], (all, chunk) => all..addAll(chunk))
+        .timeout(const Duration(seconds: 5));
+    socket.destroy();
+
+    final info = await _connectionsWhen(
+      server!,
+      (info) => info.active + info.idle == 0,
+    );
+
+    expect((info.active, info.idle), (0, 0));
   });
 
   test('Given an HTTPS server with an idle timeout, '
