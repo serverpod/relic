@@ -51,6 +51,14 @@ Linux (x64, arm64), macOS (arm64, x64) and Windows (x64, arm64). On
 another platform the package builds no native library, and
 `NativeAdapter.bind` throws. Use `relic_io` there.
 
+The prebuilt libraries are compiled for CPUs with hardware AES, which
+TLS needs to run at speed. On x64 that is AES-NI, PCLMULQDQ and AVX,
+which server and desktop CPUs of the last decade have, apart from some
+low-end Atom, Celeron and Pentium models. On Linux and Windows arm64 it
+is the ARMv8 crypto extensions, which the Raspberry Pi 4 lacks. On such
+a CPU the library stops with an illegal instruction. Use `relic_io`
+there too.
+
 ## Building from source
 
 The published package ships prebuilt libraries. A source checkout compiles
