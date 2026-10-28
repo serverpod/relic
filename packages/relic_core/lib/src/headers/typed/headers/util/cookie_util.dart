@@ -110,17 +110,6 @@ bool isCookieNameBytes(final Uint8List bytes, final int start, final int end) {
   return true;
 }
 
-/// Whether `text[start..end)` is a non-empty cookie-name of RFC 6265 4.1.1.
-bool isCookieName(final String text, final int start, final int end) {
-  if (start >= end) return false;
-  final classes = _asciiClasses;
-  for (int i = start; i < end; i++) {
-    final codeUnit = text.codeUnitAt(i);
-    if (codeUnit >= 0x80 || classes[codeUnit] & _nameChar == 0) return false;
-  }
-  return true;
-}
-
 bool _isCookieOctet(final int codeUnit) =>
     codeUnit == 0x21 ||
     (codeUnit >= 0x23 && codeUnit <= 0x2B) ||

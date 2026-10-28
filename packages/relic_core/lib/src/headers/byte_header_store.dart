@@ -30,6 +30,7 @@ final class ByteHeaderStore extends HeaderStore implements ByteHeaderSource {
   List<Uint8List?>? _fieldRaw;
   List<HeaderName>? _names;
   Map<HeaderName, UnmodifiableListView<String>>? _values;
+  Map<HeaderName, List<Uint8List>>? _rawValues;
 
   ByteHeaderStore(this.bytes, this.slots)
     : assert(slots.length % 4 == 0, 'four slots per field');
@@ -113,30 +114,33 @@ final class ByteHeaderStore extends HeaderStore implements ByteHeaderSource {
   @override
   Uint8List? rawValue(final HeaderName name) {
     for (var i = 0; i < fieldCount; i++) {
-      if (_matches(i, name)) {
-        final raws = _fieldRaw ??= List.filled(fieldCount, null);
-        if (raws[i] case final raw?) return raw;
-        final offset = slots[i * 4 + 2];
-        return raws[i] = Uint8List.sublistView(
-          bytes,
-          offset,
-          offset + slots[i * 4 + 3],
-        );
-      }
+      if (_matches(i, name)) return _rawAt(i);
     }
     return null;
   }
 
   @override
-  Uint8List? soleRawValue(final HeaderName name) {
-    var found = -1;
-    for (var i = 0; i < fieldCount; i++) {
-      if (_matches(i, name)) {
-        if (found >= 0) return null;
-        found = i;
-      }
-    }
-    return found < 0 ? null : rawValue(name);
+  List<Uint8List> rawValues(final HeaderName name) {
+    final cache = _rawValues ??= {};
+    final cached = cache[name];
+    if (cached != null) return cached;
+    final found = <Uint8List>[
+      for (var i = 0; i < fieldCount; i++)
+        if (_matches(i, name)) _rawAt(i),
+    ];
+    if (found.isEmpty) return const [];
+    return cache[name] = found;
+  }
+
+  Uint8List _rawAt(final int i) {
+    final raws = _fieldRaw ??= List.filled(fieldCount, null);
+    if (raws[i] case final raw?) return raw;
+    final offset = slots[i * 4 + 2];
+    return raws[i] = Uint8List.sublistView(
+      bytes,
+      offset,
+      offset + slots[i * 4 + 3],
+    );
   }
 
   /// Whether field [i] is named [name].
