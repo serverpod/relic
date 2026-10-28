@@ -11,8 +11,12 @@ import 'conformance.dart';
 /// the same way on every adapter.
 void requestBodyTests(AdapterConformance conformance) {
   RelicServer? server;
+  late http.Client client;
+
+  setUp(() => client = conformance.newClient());
 
   tearDown(() async {
+    client.close();
     await server?.close(force: true);
     server = null;
   });
@@ -31,7 +35,7 @@ void requestBodyTests(AdapterConformance conformance) {
         ),
       );
 
-      final response = await http.get(server!.url);
+      final response = await client.get(conformance.url(server!));
 
       expect(response.body, 'true 0 null');
     });
@@ -49,8 +53,8 @@ void requestBodyTests(AdapterConformance conformance) {
         );
       });
 
-      final response = await http.post(
-        server!.url,
+      final response = await client.post(
+        conformance.url(server!),
         headers: {'content-type': 'text/plain; charset=utf-8; foo=bar'},
         body: 'hi',
       );
@@ -72,6 +76,7 @@ void requestBodyTests(AdapterConformance conformance) {
         server!.port,
         'POST / HTTP/1.1\r\nHost: x\r\nContent-Type: ;;;\r\n'
         'Content-Length: 2\r\nConnection: close\r\n\r\nhi',
+        connect: conformance.connect,
       );
 
       expect(reply, endsWith('\r\n\r\nnull hi'));
@@ -85,12 +90,12 @@ void requestBodyTests(AdapterConformance conformance) {
 
       // No length, so the request goes out chunked and streams to the
       // handler on every adapter, whatever its inline limit.
-      final request = http.StreamedRequest('POST', server!.url);
+      final request = http.StreamedRequest('POST', conformance.url(server!));
       request.sink.add(utf8.encode('hello'));
       request.sink.add(utf8.encode(' world'));
       unawaited(request.sink.close());
       final response = await http.Response.fromStream(
-        await request.send(),
+        await client.send(request),
       ).timeout(const Duration(seconds: 5));
 
       expect(response.statusCode, 200);
