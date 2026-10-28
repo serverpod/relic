@@ -41,6 +41,7 @@ import 'src/conformance/web_socket_tests.dart';
 
 export 'src/conformance/conformance.dart';
 export 'src/conformance/framing_tests.dart';
+export 'src/conformance/header_wire_tests.dart';
 
 /// Declares the whole suite for one adapter.
 ///

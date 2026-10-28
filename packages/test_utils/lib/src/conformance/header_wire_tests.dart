@@ -1,6 +1,4 @@
 import 'dart:convert';
-import 'dart:io' as io;
-
 import 'package:relic_core/relic_core.dart';
 import 'package:test/test.dart';
 
@@ -35,10 +33,7 @@ void headerWireTests(AdapterConformance conformance) {
     /// Everything the server writes back for a GET with [fieldLines] in
     /// its head.
     Future<String> send(List<int> fieldLines) async {
-      final socket = await io.Socket.connect(
-        io.InternetAddress.loopbackIPv4,
-        server.port,
-      );
+      final socket = await conformance.connect(server.port);
       socket.add(ascii.encode('GET / HTTP/1.1\r\nHost: localhost\r\n'));
       socket.add(fieldLines);
       socket.add(ascii.encode('Connection: close\r\n\r\n'));
