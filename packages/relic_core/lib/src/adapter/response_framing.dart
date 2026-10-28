@@ -54,6 +54,9 @@ final class ResponseFraming {
   /// The framing of [response] over [protocol], for a HEAD request when
   /// [head], on a connection kept alive when [keepAlive].
   ///
+  /// With [stampDate] the Date is [stampedDate], for an adapter that
+  /// writes the date itself at send time, at [ResponseHead.dateOffset].
+  ///
   /// Throws [FormatException] when the body's type does not validate or a
   /// response header the framing reads does not parse, so a response that
   /// cannot be written fails before anything goes out.
@@ -62,6 +65,7 @@ final class ResponseFraming {
     required bool head,
     required HttpProtocol protocol,
     required bool keepAlive,
+    bool stampDate = false,
   }) {
     final headers = response.headers;
     final body = response.body;
@@ -73,7 +77,11 @@ final class ResponseFraming {
       bodyType.validate();
       contentType = bodyType.toHeaderValue();
     }
-    final date = headers.contains(HeaderName.date) ? null : httpDate();
+    final date = headers.contains(HeaderName.date)
+        ? null
+        : stampDate
+        ? stampedDate
+        : httpDate();
     // Most responses set neither Connection nor Transfer-Encoding, so the
     // parse runs only when the header is there.
     final connection = headers.contains(HeaderName.connection)

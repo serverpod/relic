@@ -98,6 +98,11 @@ final class ExchangeView extends Struct {
   /// The pong frames the native side has received.
   @Uint32()
   external int wsPongs;
+
+  /// Where in the response head the native side stamps the Date value at
+  /// send time, 0 when the response carries its own.
+  @Uint32()
+  external int dateOff;
 }
 
 /// Mirrors `Stats` in src/relic_native.zig.

@@ -1,7 +1,7 @@
 import 'dart:convert';
 
-import 'package:http_parser/http_parser.dart' as parser;
 import 'package:clock/clock.dart';
+import 'package:http_parser/http_parser.dart' as parser;
 import 'package:relic_core/relic_core.dart';
 import 'package:test/test.dart';
 

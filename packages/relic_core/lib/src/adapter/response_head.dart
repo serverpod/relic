@@ -31,6 +31,10 @@ final class ResponseHead {
   /// An upper bound on the bytes [writeTo] produces.
   final int bound;
 
+  /// Where [writeTo] last put the Date value, for an adapter that stamps
+  /// the date on the wire. -1 when the head has no Date.
+  int dateOffset = -1;
+
   factory ResponseHead(final Response response, final ResponseFraming framing) {
     final headers = response.headers;
     final statusLine = _statusLineFor(response.statusCode);
@@ -46,7 +50,10 @@ final class ResponseHead {
     }
     Uint8List? dateLine;
     if (framing.date case final date?) {
-      if (identical(date, httpDate())) dateLine = httpDateLine();
+      // A stand-in the adapter stamps costs no clock read here either.
+      if (!identical(date, stampedDate) && identical(date, httpDate())) {
+        dateLine = httpDateLine();
+      }
       bound += 'date: '.length + date.length + 2;
     }
     if (transferEncoding != null) {
@@ -93,9 +100,11 @@ final class ResponseHead {
       off = _field(out, off, 'content-type', contentType);
     }
     if (_dateLine case final dateLine?) {
+      dateOffset = off + _dateName.length;
       out.setRange(off, off + dateLine.length, dateLine);
       off += dateLine.length;
     } else if (_framing.date case final date?) {
+      dateOffset = off + _dateName.length;
       off = _field(out, off, 'date', date);
     }
     if (_framing.contentLength case final contentLength?) {
@@ -110,6 +119,9 @@ final class ResponseHead {
     return _crlf(out, off);
   }
 }
+
+/// What precedes the value on a Date line.
+const _dateName = 'date: ';
 
 /// The head of [response] as bytes, framed by [framing], for an adapter
 /// that writes it from its own buffer.
