@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:developer';
 import 'dart:io';
+import 'dart:isolate';
 import 'dart:typed_data';
 
 import 'package:relic_core/relic_core.dart';
@@ -389,6 +391,57 @@ void main() {
         ),
       ),
     );
+  });
+
+  test('Given a plain HTTP server in a group, '
+      'when a bind joins the group with tls, '
+      'then the bind throws a StateError.', () async {
+    final group = 'relic_native/$pid/plain_mismatch';
+    final plain = await NativeAdapter.bind(
+      InternetAddress.loopbackIPv4,
+      group: group,
+    );
+    addTearDown(plain.close);
+
+    await expectLater(
+      NativeAdapter.bind(
+        InternetAddress.loopbackIPv4,
+        group: group,
+        tls: _tls('localhost'),
+      ),
+      throwsA(
+        isA<StateError>().having(
+          (e) => e.message,
+          'message',
+          contains('without TLS'),
+        ),
+      ),
+    );
+  });
+
+  test('Given an HTTPS server on two isolates, '
+      'when a client opens twenty connections, '
+      'then both isolates answer.', () async {
+    server = await serveNative(
+      (_) => Response.ok(
+        body: Body.fromString(Service.getIsolateId(Isolate.current)!),
+      ),
+      tls: _tls('localhost'),
+      noOfIsolates: 2,
+    );
+
+    final isolates = <String>{};
+    for (var i = 0; i < 20; i++) {
+      final request = await client.getUrl(
+        Uri.https('localhost:${server!.port}', '/'),
+      );
+      request.headers.set(HttpHeaders.connectionHeader, 'close');
+      final response = await request.close();
+      expect(response.statusCode, 200);
+      isolates.add(await _readString(response));
+    }
+
+    expect(isolates, hasLength(2));
   });
 
   test('Given a private key file that holds a certificate, '
