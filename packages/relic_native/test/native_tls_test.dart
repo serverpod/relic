@@ -257,6 +257,35 @@ void main() {
     expect(reply, endsWith('https://127.0.0.1:${server!.port}/p'));
   });
 
+  test(
+    'Given an HTTPS server, '
+    'when a client offers h2 and http/1.1 in ALPN, '
+    'then no protocol is selected and the request is served as HTTP/1.1.',
+    () async {
+      server = await serveNative(_echoUrl, tls: _tls('localhost'));
+      final socket = await SecureSocket.connect(
+        'localhost',
+        server!.port,
+        context: _trustTestCa(),
+        supportedProtocols: ['h2', 'http/1.1'],
+      );
+
+      socket.write(
+        'GET /p HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n',
+      );
+      await socket.flush();
+      final selected = socket.selectedProtocol;
+      final reply = await utf8
+          .decodeStream(socket)
+          .timeout(const Duration(seconds: 5));
+      socket.destroy();
+
+      expect(selected, isNull);
+      expect(reply, startsWith('HTTP/1.1 200 OK\r\n'));
+      expect(reply, endsWith('\r\n\r\nhttps://localhost/p'));
+    },
+  );
+
   test('Given an HTTPS server that pipes the request body into the response, '
       'when a client posts a body far over the inline limit, '
       'then the same bytes come back', () async {
