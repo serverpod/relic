@@ -76,6 +76,12 @@ abstract interface class ByteHeaderSource {
   /// The same view comes back for the same field, so a caller may cache by
   /// identity.
   Uint8List? rawValue(HeaderName name);
+
+  /// The wire bytes of the value for [name] when it has exactly one field,
+  /// else null.
+  ///
+  /// For a header that joins its fields, which has to read every one.
+  Uint8List? soleRawValue(HeaderName name);
 }
 
 /// A [HeaderStore] that can be written.

@@ -1,3 +1,5 @@
+import 'package:meta/meta.dart';
+
 import '../../extension/string_list_extensions.dart';
 
 /// A generic class representing HTTP headers that accept a list of values with optional wildcards.
@@ -28,6 +30,12 @@ class WildcardListHeader<T> {
   /// Constructs an instance with a wildcard
   const WildcardListHeader.wildcard() : values = const [];
 
+  /// Takes [values] as its own, with no copy.
+  ///
+  /// For a parser that built the list and hands it over. Not empty.
+  @protected
+  WildcardListHeader.owned(this.values) : assert(values.isNotEmpty);
+
   /// Parses header values and returns a WildcardListHeader instance
   factory WildcardListHeader.parse(
     final Iterable<String> headerValues,
@@ -49,8 +57,8 @@ class WildcardListHeader<T> {
       );
     }
 
-    final parsedValues = splitValues.map(parseElement).toList();
-    return WildcardListHeader(parsedValues);
+    final parsedValues = splitValues.map(parseElement).toList(growable: false);
+    return WildcardListHeader.owned(parsedValues);
   }
 
   /// Converts the header instance into a string representation suitable for HTTP headers

@@ -1,3 +1,4 @@
+import 'dart:collection';
 import 'dart:convert';
 import 'dart:typed_data';
 
@@ -28,7 +29,7 @@ final class ByteHeaderStore extends HeaderStore implements ByteHeaderSource {
   List<String?>? _fieldValues;
   List<Uint8List?>? _fieldRaw;
   List<HeaderName>? _names;
-  Map<HeaderName, List<String>>? _values;
+  Map<HeaderName, UnmodifiableListView<String>>? _values;
 
   ByteHeaderStore(this.bytes, this.slots)
     : assert(slots.length % 4 == 0, 'four slots per field');
@@ -97,7 +98,8 @@ final class ByteHeaderStore extends HeaderStore implements ByteHeaderSource {
         if (_matches(i, name)) _valueAt(i),
     ];
     if (found.isEmpty) return const [];
-    return cache[name] = List.unmodifiable(found);
+    // A view, not a copy: the list is this store's own and never changes.
+    return cache[name] = UnmodifiableListView(found);
   }
 
   @override
@@ -123,6 +125,18 @@ final class ByteHeaderStore extends HeaderStore implements ByteHeaderSource {
       }
     }
     return null;
+  }
+
+  @override
+  Uint8List? soleRawValue(final HeaderName name) {
+    var found = -1;
+    for (var i = 0; i < fieldCount; i++) {
+      if (_matches(i, name)) {
+        if (found >= 0) return null;
+        found = i;
+      }
+    }
+    return found < 0 ? null : rawValue(name);
   }
 
   /// Whether field [i] is named [name].
