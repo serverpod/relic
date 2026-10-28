@@ -363,6 +363,44 @@ void main() {
     expect(reply, startsWith('HTTP/1.1 400 Bad Request\r\n'));
   });
 
+  test('Given an HTTPS server, '
+      'when a client sends a handshake record followed by garbage, '
+      'then the next connection is still answered.', () async {
+    server = await serveNative(_echoUrl, tls: _tls('localhost'));
+    final socket = await Socket.connect(
+      InternetAddress.loopbackIPv4,
+      server!.port,
+    );
+    socket.add([0x16, ...List.filled(64, 0xff)]);
+    await socket.flush();
+    await socket
+        .fold<List<int>>([], (all, chunk) => all..addAll(chunk))
+        .timeout(const Duration(seconds: 5));
+    socket.destroy();
+
+    final response = await get('/p');
+
+    expect(await _readString(response), 'https://localhost:${server!.port}/p');
+  });
+
+  test('Given an HTTPS server, '
+      'when a client that trusts no CA fails the handshake, '
+      'then the next connection is still answered.', () async {
+    server = await serveNative(_echoUrl, tls: _tls('localhost'));
+
+    await expectLater(
+      SecureSocket.connect(
+        'localhost',
+        server!.port,
+        context: SecurityContext(withTrustedRoots: false),
+      ),
+      throwsA(isA<HandshakeException>()),
+    );
+    final response = await get('/p');
+
+    expect(await _readString(response), 'https://localhost:${server!.port}/p');
+  });
+
   test('Given an HTTPS server with an idle timeout, '
       'when a client connects and never sends a byte, '
       'then the server closes the connection', () async {
