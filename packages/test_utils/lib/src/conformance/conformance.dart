@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:http/http.dart' as http;
 import 'package:relic_core/relic_core.dart';
 
 /// Returns a fresh adapter factory.
@@ -34,6 +35,13 @@ final class AdapterConformance {
   /// speaks TLS.
   final SocketConnector connect;
 
+  /// The scheme a server is addressed by, `http` unless it speaks TLS.
+  final String scheme;
+
+  /// A fresh HTTP client for a server, one that trusts the server's
+  /// certificate when it speaks TLS.
+  final http.Client Function() newClient;
+
   /// Whether the transport reports a peer that went away before anything
   /// was written, and one that goes away while a response body streams.
   ///
@@ -57,6 +65,8 @@ final class AdapterConformance {
     required this.bind,
     required this.capabilities,
     this.connect = plainConnect,
+    this.scheme = 'http',
+    this.newClient = http.Client.new,
     this.seesPeerGone = true,
     this.failsRespondMidStream = true,
     this.keepsPipelinedBytes = true,
@@ -128,6 +138,10 @@ final class AdapterConformance {
     await server.mountAndStart(handler);
     return server;
   }
+
+  /// The URL a local client reaches [server] on, with [scheme].
+  Uri url(RelicServer server) =>
+      Uri(scheme: scheme, host: 'localhost', port: server.port);
 }
 
 extension ConformanceServerUrl on RelicServer {
