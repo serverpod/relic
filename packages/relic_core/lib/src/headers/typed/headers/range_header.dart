@@ -1,6 +1,10 @@
+import 'dart:typed_data';
+
 import 'package:collection/collection.dart';
 
 import '../../../../relic_core.dart';
+import '../primitives/byte_fields.dart';
+import '../primitives/byte_scanner.dart' show latin1Bytes;
 
 /// A class representing the HTTP Range header.
 ///
@@ -10,7 +14,7 @@ import '../../../../relic_core.dart';
 /// parse and generate range header values for different range units like
 /// bytes or custom units.
 final class RangeHeader {
-  static const codec = HeaderCodec.single(RangeHeader.parse, __encode);
+  static const codec = HeaderCodec.bytes(_parseBytes, __encode);
   static List<String> __encode(final RangeHeader value) => [value._encode()];
 
   /// The unit of the range (e.g., "bytes").
@@ -28,46 +32,71 @@ final class RangeHeader {
   ///
   /// This method processes the range header and extracts the unit and
   /// multiple range values.
-  factory RangeHeader.parse(final String value) {
-    final trimmed = value.trim();
-    if (trimmed.isEmpty) {
+  factory RangeHeader.parse(final String value) =>
+      _parseBytes(latin1Bytes(value));
+
+  /// [parse] over the wire bytes: `unit "=" ranges`, each range
+  /// `[first] "-" [last]` with at least one side.
+  static RangeHeader _parseBytes(final Uint8List bytes) {
+    final value = trimmed(bytes);
+    if (value.isEmpty) {
       throw const FormatException('Value cannot be empty');
     }
-
-    final regex = RegExp(r'^\s*(\w+)\s*=\s*(.*)$');
-    final match = regex.firstMatch(trimmed);
-
-    if (match == null) {
+    final length = value.length;
+    var i = 0;
+    while (i < length && _isWordByte(value[i])) {
+      i++;
+    }
+    if (i == 0) {
       throw const FormatException('Invalid Range header: invalid format');
     }
-
-    final unit = match.group(1) ?? 'bytes';
-    final rangesPart = match.group(2);
-
-    if (rangesPart == null) {
-      throw const FormatException('Invalid Range header: missing ranges');
+    final unit = textOf(value, 0, i);
+    i = trimStart(value, i, length);
+    if (i >= length || value[i] != 0x3D) {
+      throw const FormatException('Invalid Range header: invalid format');
     }
-
-    final rangeStrings = rangesPart.split(',');
-    final ranges = rangeStrings.map((final rangeStr) {
-      final trimmedRange = rangeStr.trim();
-      final rangeMatch = RegExp(r'^(\d*)-(\d*)$').firstMatch(trimmedRange);
-      if (rangeMatch == null) {
+    final rangesStart = trimStart(value, i + 1, length);
+    final ranges = <Range>[];
+    var start = rangesStart;
+    while (start <= length) {
+      var end = indexOfByte(value, 0x2C, start, length);
+      final next = end < 0 ? length + 1 : end + 1;
+      if (end < 0) end = length;
+      final s = trimStart(value, start, end);
+      final e = trimEnd(value, s, end);
+      final dash = indexOfByte(value, 0x2D, s, e);
+      if (dash < 0 ||
+          _digitsEnd(value, s) != dash ||
+          _digitsEnd(value, dash + 1) != e) {
         throw const FormatException('Invalid range');
       }
-
-      final start = int.tryParse(rangeMatch.group(1) ?? '');
-      final end = int.tryParse(rangeMatch.group(2) ?? '');
-
-      if (start == null && end == null) {
+      final first = dash == s ? null : int.tryParse(textOf(value, s, dash));
+      final last = dash + 1 == e
+          ? null
+          : int.tryParse(textOf(value, dash + 1, e));
+      if (first == null && last == null) {
         throw const FormatException('Both start and end cannot be empty');
       }
-
-      return Range(start: start, end: end);
-    }).toList();
-
+      ranges.add(Range(start: first, end: last));
+      start = next;
+    }
     return RangeHeader(unit: unit, ranges: ranges);
   }
+
+  /// The end of the run of ASCII digits at [from], up to [bytes] length.
+  static int _digitsEnd(final Uint8List bytes, int from) {
+    while (from < bytes.length && bytes[from] >= 0x30 && bytes[from] <= 0x39) {
+      from++;
+    }
+    return from;
+  }
+
+  /// A letter, digit or underscore, what `\w` matches.
+  static bool _isWordByte(final int b) =>
+      (b >= 0x30 && b <= 0x39) ||
+      (b >= 0x41 && b <= 0x5A) ||
+      (b >= 0x61 && b <= 0x7A) ||
+      b == 0x5F;
 
   /// Converts the [RangeHeader] instance into a string representation
   /// suitable for HTTP headers.

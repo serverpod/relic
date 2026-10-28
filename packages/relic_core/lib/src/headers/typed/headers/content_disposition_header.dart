@@ -1,8 +1,12 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
 import 'package:collection/collection.dart';
 
 import '../../../../relic_core.dart';
+import '../primitives/byte_fields.dart';
+import '../primitives/byte_scanner.dart';
 import '../primitives/ext_value.dart';
-import '../primitives/header_scanner.dart';
 
 /// A class representing the HTTP Content-Disposition header.
 ///
@@ -11,10 +15,7 @@ import '../primitives/header_scanner.dart';
 /// `filename*`. It provides functionality to parse the header value and
 /// construct the appropriate header string.
 final class ContentDispositionHeader {
-  static const codec = HeaderCodec.single(
-    ContentDispositionHeader.parse,
-    __encode,
-  );
+  static const codec = HeaderCodec.bytes(_parseBytes, __encode);
   static List<String> __encode(final ContentDispositionHeader value) => [
     value._encode(),
   ];
@@ -41,27 +42,29 @@ final class ContentDispositionHeader {
   /// Splitting is quote-aware, so a `;` inside a quoted parameter value is
   /// part of that value rather than a separator.
   factory ContentDispositionHeader.parse(final String value) =>
-      ContentDispositionHeader._parse(value, HeaderScanner.new);
+      _parseBytes(latin1Bytes(value));
+
+  /// [parse] over the wire bytes.
+  static ContentDispositionHeader _parseBytes(final Uint8List bytes) =>
+      ContentDispositionHeader._parse(bytes, ByteScanner.new);
 
   factory ContentDispositionHeader._parse(
-    final String value,
-    final HeaderScanner Function(String) createScanner, {
+    final Uint8List value,
+    final ByteScanner Function(Uint8List) createScanner, {
     final bool decodeExtended = true,
   }) {
-    final splitValues = createScanner(
-      value,
-    ).splitTopLevel(_semicolon).where((final e) => e.isNotEmpty).toList();
-
-    if (splitValues.isEmpty) {
+    final parts = createScanner(value)
+        .splitTopLevel(_semicolon)
+        .where((final e) => e.source.isNotEmpty)
+        .toList();
+    if (parts.isEmpty) {
       throw const FormatException('Value cannot be empty');
     }
-
-    final type = splitValues.first;
-    if (type.isEmpty || type.contains('=')) {
+    final type = parts.first.source;
+    if (type.isEmpty || indexOfByte(type, 0x3D) >= 0) {
       throw const FormatException('Type cannot be empty or a parameter');
     }
-
-    final parameters = splitValues
+    final parameters = parts
         .skip(1)
         .map(
           (final part) => ContentDispositionParameter._parse(
@@ -71,8 +74,10 @@ final class ContentDispositionHeader {
           ),
         )
         .toList();
-
-    return ContentDispositionHeader(type: type, parameters: parameters);
+    return ContentDispositionHeader(
+      type: parts.first.rest,
+      parameters: parameters,
+    );
   }
 
   /// Converts the [ContentDispositionHeader] instance into a string
@@ -137,30 +142,34 @@ class ContentDispositionParameter {
   ///
   /// [rfc8187]: https://datatracker.ietf.org/doc/html/rfc8187#section-3.2
   factory ContentDispositionParameter.parse(final String part) =>
-      ContentDispositionParameter._parse(part, HeaderScanner.new);
+      ContentDispositionParameter._parse(
+        ByteScanner.text(part),
+        ByteScanner.new,
+      );
 
   factory ContentDispositionParameter._parse(
-    final String part,
-    final HeaderScanner Function(String) createScanner, {
+    final ByteScanner part,
+    final ByteScanner Function(Uint8List) createScanner, {
     final bool decodeExtended = true,
   }) {
-    final equals = part.indexOf('=');
+    final source = part.source;
+    final equals = indexOfByte(source, 0x3D);
     if (equals < 0) {
       throw const FormatException('Invalid parameter format');
     }
-
-    final name = part.substring(0, equals).trim();
-    final rawValue = part.substring(equals + 1).trim();
+    final name = part.text(0, trimEnd(source, 0, equals));
+    final rawValue = trimmed(source, equals + 1, source.length);
     if (name.isEmpty) {
       throw const FormatException('Invalid parameter format');
     }
-
     if (name.endsWith('*') && !decodeExtended) {
-      return ContentDispositionParameter(name: name, value: rawValue);
+      return ContentDispositionParameter(
+        name: name,
+        value: createScanner(rawValue).rest,
+      );
     }
-
     if (name.endsWith('*')) {
-      final extValue = ExtValue.parse(rawValue);
+      final extValue = ExtValue.parseBytes(rawValue);
       return ContentDispositionParameter(
         name: name.replaceAll('*', ''),
         value: extValue.value,
@@ -168,10 +177,9 @@ class ContentDispositionParameter {
         language: extValue.language,
       );
     }
-
     return ContentDispositionParameter(
       name: name.replaceAll('*', ''),
-      value: _readParameterValue(rawValue, createScanner),
+      value: _readParameterValue(createScanner(rawValue)),
     );
   }
 
@@ -207,17 +215,13 @@ class ContentDispositionParameter {
 const int _semicolon = 0x3B;
 
 /// Reads an ordinary parameter value, which is `token / quoted-string`.
-String _readParameterValue(
-  final String raw,
-  final HeaderScanner Function(String) createScanner,
-) {
-  final scanner = createScanner(raw);
+String _readParameterValue(final ByteScanner scanner) {
   final value = scanner.readTokenOrQuotedString();
   scanner.skipOws();
   if (!scanner.atEnd) {
     throw FormatException(
       'unexpected characters after parameter value',
-      raw,
+      scanner.text(0, scanner.source.length),
       scanner.position,
     );
   }
@@ -234,8 +238,8 @@ extension ContentDispositionHeaderInternal on ContentDispositionHeader {
   /// the `*` in their name. RFC 7578 section 4.2 forbids them in form data.
   static ContentDispositionHeader parseFormData(final String value) =>
       ContentDispositionHeader._parse(
-        value,
-        HeaderScannerInternal.utf8,
+        utf8.encode(value),
+        ByteScanner.utf8,
         decodeExtended: false,
       );
 }

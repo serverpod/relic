@@ -1,8 +1,9 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
-import 'package:collection/collection.dart';
 import 'package:meta/meta.dart';
 
+import 'byte_fields.dart';
 import 'language_tag.dart';
 
 /// An extended parameter value per [RFC 8187 section 3.2][rfc8187], such as
@@ -38,27 +39,35 @@ final class ExtValue {
   /// names a charset other than `UTF-8`, or percent-decodes to bytes that are
   /// not valid UTF-8.
   factory ExtValue.parse(final String source) {
-    final charsetEnd = source.indexOf("'");
-    if (charsetEnd < 0) {
-      throw FormatException("expected \"'\" after charset", source);
+    final bytes = Uint8List(source.length);
+    for (var i = 0; i < source.length; i++) {
+      final c = source.codeUnitAt(i);
+      // A code unit no byte can be is not an attr-char, so it fails below.
+      bytes[i] = c > 0xFF ? 0x7F : c;
     }
-    final languageEnd = source.indexOf("'", charsetEnd + 1);
+    return ExtValue.parseBytes(bytes);
+  }
+
+  /// [parse] over the wire bytes.
+  factory ExtValue.parseBytes(final Uint8List source) {
+    final charsetEnd = indexOfByte(source, 0x27);
+    if (charsetEnd < 0) {
+      throw FormatException("expected \"'\" after charset", textOf(source));
+    }
+    final languageEnd = indexOfByte(source, 0x27, charsetEnd + 1);
     if (languageEnd < 0) {
       throw FormatException(
         "expected \"'\" after language",
-        source,
+        textOf(source),
         charsetEnd + 1,
       );
     }
-
-    if (!equalsIgnoreAsciiCase(source.substring(0, charsetEnd), 'UTF-8')) {
-      throw FormatException('charset must be UTF-8', source, 0);
+    if (!equalsIgnoreAsciiCase(source, 0, charsetEnd, 'UTF-8')) {
+      throw FormatException('charset must be UTF-8', textOf(source), 0);
     }
-
     final language = languageEnd == charsetEnd + 1
         ? null
-        : LanguageTag.parse(source.substring(charsetEnd + 1, languageEnd));
-
+        : LanguageTag.parse(textOf(source, charsetEnd + 1, languageEnd));
     return ExtValue(
       utf8.decode(_decodeValueChars(source, languageEnd + 1)),
       language: language,
@@ -97,19 +106,19 @@ final class ExtValue {
 
 const int _percent = 0x25;
 
-List<int> _decodeValueChars(final String source, final int start) {
+List<int> _decodeValueChars(final Uint8List source, final int start) {
   final bytes = <int>[];
   var i = start;
   while (i < source.length) {
-    final c = source.codeUnitAt(i);
+    final c = source[i];
     if (c == _percent) {
       if (i + 2 >= source.length) {
-        throw FormatException('truncated percent escape', source, i);
+        throw FormatException('truncated percent escape', textOf(source), i);
       }
-      final high = _hexValue(source.codeUnitAt(i + 1));
-      final low = _hexValue(source.codeUnitAt(i + 2));
+      final high = _hexValue(source[i + 1]);
+      final low = _hexValue(source[i + 2]);
       if (high < 0 || low < 0) {
-        throw FormatException('invalid percent escape', source, i);
+        throw FormatException('invalid percent escape', textOf(source), i);
       }
       bytes.add(high << 4 | low);
       i += 3;
@@ -117,7 +126,11 @@ List<int> _decodeValueChars(final String source, final int start) {
       bytes.add(c);
       i++;
     } else {
-      throw FormatException('character not allowed in value-chars', source, i);
+      throw FormatException(
+        'character not allowed in value-chars',
+        textOf(source),
+        i,
+      );
     }
   }
   return bytes;

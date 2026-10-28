@@ -1,5 +1,6 @@
 import 'package:meta/meta.dart';
 
+import 'byte_scanner.dart';
 import 'header_scanner.dart';
 import 'token.dart';
 
@@ -41,6 +42,11 @@ final class ParameterValue {
   /// Equivalent to [HeaderScanner.readTokenOrQuotedString] but returns a
   /// [ParameterValue] wrapper.
   factory ParameterValue.read(final HeaderScanner scanner) {
+    return ParameterValue(scanner.readTokenOrQuotedString());
+  }
+
+  /// Reads a parameter value from [scanner]'s current position.
+  factory ParameterValue.readBytes(final ByteScanner scanner) {
     return ParameterValue(scanner.readTokenOrQuotedString());
   }
 

@@ -1,11 +1,15 @@
+import 'dart:typed_data';
+
 import '../../../../relic_core.dart';
+import '../primitives/byte_fields.dart';
+import '../primitives/byte_scanner.dart' show latin1Bytes;
 
 /// A class representing an HTTP Content-Range header for byte ranges.
 ///
 /// This class is used to manage byte ranges in HTTP requests or responses,
 /// including cases for unsatisfiable range requests.
 final class ContentRangeHeader {
-  static const codec = HeaderCodec.single(ContentRangeHeader.parse, __encode);
+  static const codec = HeaderCodec.bytes(_parseBytes, __encode);
   static List<String> __encode(final ContentRangeHeader value) => [
     value._encode(),
   ];
@@ -50,39 +54,86 @@ final class ContentRangeHeader {
   }
 
   /// Factory constructor to create a [ContentRangeHeader] from the header string.
-  factory ContentRangeHeader.parse(final String value) {
-    final trimmed = value.trim();
-    if (trimmed.isEmpty) {
+  factory ContentRangeHeader.parse(final String value) =>
+      _parseBytes(latin1Bytes(value));
+
+  /// [parse] over the wire bytes: `unit SP ( first "-" last / "*" ) "/"
+  /// ( complete-length / "*" )`, with nothing before or after, so
+  /// trailing garbage is rejected rather than dropped.
+  static ContentRangeHeader _parseBytes(final Uint8List bytes) {
+    final value = trimmed(bytes);
+    if (value.isEmpty) {
       throw const FormatException('Value cannot be empty');
     }
-
-    // Anchored so trailing (or leading) garbage is rejected rather than
-    // silently dropped by firstMatch extracting a partial prefix.
-    final regex = RegExp(r'^(\w+) (?:(\d+)-(\d+)|\*)/(\*|\d+)$');
-    final match = regex.firstMatch(trimmed);
-
-    if (match == null) {
+    final length = value.length;
+    var i = 0;
+    while (i < length && _isWordByte(value[i])) {
+      i++;
+    }
+    if (i == 0 || i >= length || value[i] != 0x20) {
       throw const FormatException('Invalid format');
     }
-
-    final unit = match.group(1)!;
-    // The regex guarantees these groups are all digits; parse them with a
-    // guard so an overflowing run throws a FormatException instead of
-    // int.tryParse silently yielding null (which would turn a specified range
-    // into an unsatisfied one) or int.parse throwing an unrelated error.
-    final start = _parseField(match.group(2));
-    final end = _parseField(match.group(3));
+    final unit = textOf(value, 0, i);
+    i++;
+    int? start;
+    int? end;
+    if (i < length && value[i] == 0x2A) {
+      i++;
+    } else {
+      final startEnd = _digitsEnd(value, i);
+      if (startEnd == i || startEnd >= length || value[startEnd] != 0x2D) {
+        throw const FormatException('Invalid format');
+      }
+      final lastEnd = _digitsEnd(value, startEnd + 1);
+      if (lastEnd == startEnd + 1) {
+        throw const FormatException('Invalid format');
+      }
+      start = _parseField(textOf(value, i, startEnd));
+      end = _parseField(textOf(value, startEnd + 1, lastEnd));
+      i = lastEnd;
+    }
+    if (i >= length || value[i] != 0x2F) {
+      throw const FormatException('Invalid format');
+    }
+    i++;
+    int? size;
+    if (i < length && value[i] == 0x2A) {
+      i++;
+    } else {
+      final sizeEnd = _digitsEnd(value, i);
+      if (sizeEnd == i) {
+        throw const FormatException('Invalid format');
+      }
+      size = _parseField(textOf(value, i, sizeEnd));
+      i = sizeEnd;
+    }
+    if (i != length) {
+      throw const FormatException('Invalid format');
+    }
     if (start != null && end != null && start > end) {
       throw const FormatException('Invalid range');
     }
-    final sizeGroup = match.group(4)!;
-    final size = sizeGroup == '*' ? null : _parseField(sizeGroup);
-
     return ContentRangeHeader(unit: unit, start: start, end: end, size: size);
   }
 
-  static int? _parseField(final String? digits) {
-    if (digits == null) return null;
+  /// The end of the run of ASCII digits at [from].
+  static int _digitsEnd(final Uint8List bytes, int from) {
+    while (from < bytes.length && bytes[from] >= 0x30 && bytes[from] <= 0x39) {
+      from++;
+    }
+    return from;
+  }
+
+  /// A letter, digit or underscore, what `\w` matches.
+  static bool _isWordByte(final int b) =>
+      (b >= 0x30 && b <= 0x39) ||
+      (b >= 0x41 && b <= 0x5A) ||
+      (b >= 0x61 && b <= 0x7A) ||
+      b == 0x5F;
+
+  /// The digits as an int, or a [FormatException] for a run that
+  /// overflows, so a specified range never turns into an unsatisfied one.
+  static int _parseField(final String digits) {
     final n = int.tryParse(digits);
     if (n == null) {
       throw FormatException('Content-Range value out of range', digits);

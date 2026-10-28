@@ -1,8 +1,11 @@
-import 'package:collection/collection.dart';
+import 'dart:typed_data';
+
+import 'package:collection/collection.dart' hide equalsIgnoreAsciiCase;
 import 'package:http_parser/http_parser.dart';
 import '../../../../relic_core.dart';
 
-import '../../extension/string_list_extensions.dart';
+import '../primitives/byte_fields.dart';
+import '../primitives/byte_scanner.dart' show latin1Bytes;
 import 'util/cookie_util.dart';
 
 /// A single HTTP `Set-Cookie` cookie: a name/value pair plus its attributes.
@@ -110,25 +113,39 @@ final class SetCookie {
   // non-positive value expires the cookie). The generic numeric parser would
   // also accept hex (`0xFF`) and other forms, silently reinterpreting the
   // lifetime, so validate the decimal grammar before parsing.
-  static int _parseMaxAge(final String value) {
-    if (!RegExp(r'^-?\d+$').hasMatch(value)) {
+  static int _parseMaxAge(final Uint8List value) {
+    final digits = value.isNotEmpty && value[0] == 0x2D ? 1 : 0;
+    if (digits == value.length || digitsOf(value, digits) == null) {
       throw const FormatException('Invalid Max-Age attribute');
     }
-    return int.parse(value);
+    return int.parse(textOf(value));
   }
 
   /// Parses a single `Set-Cookie` line (without the header name) into a
   /// [SetCookie].
-  factory SetCookie.parse(final String value) {
-    final splitValue = value.splitAndTrim(separator: ';');
-    if (splitValue.isEmpty) {
+  factory SetCookie.parse(final String value) =>
+      SetCookie._parseBytes(latin1Bytes(value));
+
+  /// [parse] over the wire bytes of one field.
+  ///
+  /// RFC 6265 5.2: the first `;`-delimited token is the cookie-pair, every
+  /// later one a cookie attribute (cookie-av). An unrecognized attribute,
+  /// say a future `Partitioned` or `Priority`, is ignored rather than
+  /// failing the parse.
+  static SetCookie _parseBytes(final Uint8List bytes) {
+    final parts = splitAll(bytes, 0x3B);
+    if (parts.isEmpty) {
       throw const FormatException('Value cannot be empty');
     }
-
-    // RFC 6265 5.2: the first ';'-delimited token is the cookie-pair; every
-    // subsequent token is a cookie attribute (cookie-av).
-    final pair = Cookie.parse(splitValue.first);
-
+    final pair = parts.first;
+    // The pair splits on the first `=` only, since a cookie-octet may be
+    // `=`, as in base64 padding.
+    final pairEq = indexOfByte(pair, 0x3D);
+    if (pairEq < 0) {
+      throw const FormatException('Invalid cookie format');
+    }
+    final name = textOf(trimmed(pair, 0, pairEq));
+    final value = textOf(trimmed(pair, pairEq + 1, pair.length));
     bool secure = false;
     bool httpOnly = false;
     SameSite? sameSite;
@@ -136,13 +153,11 @@ final class SetCookie {
     int? maxAge;
     Host? domain;
     String? path;
-
-    for (final av in splitValue.skip(1)) {
-      final eq = av.indexOf('=');
-      final attrName = (eq < 0 ? av : av.substring(0, eq)).trim();
-      final attrValue = eq < 0 ? '' : av.substring(eq + 1).trim();
-
-      switch (attrName.toLowerCase()) {
+    for (final av in parts.skip(1)) {
+      final eq = indexOfByte(av, 0x3D);
+      final attrEnd = trimEnd(av, 0, eq < 0 ? av.length : eq);
+      final attrValue = eq < 0 ? Uint8List(0) : trimmed(av, eq + 1, av.length);
+      switch (lowerTextOf(av, 0, attrEnd)) {
         case 'samesite':
           if (sameSite != null) {
             throw const FormatException(
@@ -150,7 +165,8 @@ final class SetCookie {
             );
           }
           sameSite = SameSite.values.firstWhere(
-            (final s) => s.name.toLowerCase() == attrValue.toLowerCase(),
+            (final s) =>
+                equalsIgnoreAsciiCase(attrValue, 0, attrValue.length, s.name),
             orElse: () =>
                 throw const FormatException('Invalid SameSite attribute'),
           );
@@ -158,12 +174,12 @@ final class SetCookie {
           if (path != null) {
             throw const FormatException('Supplied multiple Path attributes');
           }
-          path = attrValue;
+          path = textOf(attrValue);
         case 'domain':
           if (domain != null) {
             throw const FormatException('Supplied multiple Domain attributes');
           }
-          domain = Host.parse(attrValue);
+          domain = Host.parse(textOf(attrValue));
         case 'max-age':
           if (maxAge != null) {
             throw const FormatException('Supplied multiple Max-Age attributes');
@@ -173,20 +189,17 @@ final class SetCookie {
           if (expires != null) {
             throw const FormatException('Supplied multiple Expires attributes');
           }
-          expires = parseDate(attrValue);
+          expires = parseDateBytes(attrValue);
         case 'secure':
           secure = true;
         case 'httponly':
           httpOnly = true;
         default:
-        // RFC 6265 5.2: ignore unrecognized attributes (e.g. future tokens
-        // like `Partitioned`, `Priority`) rather than failing the parse.
       }
     }
-
     return SetCookie(
-      name: pair.name,
-      value: pair.value,
+      name: name,
+      value: value,
       secure: secure,
       httpOnly: httpOnly,
       sameSite: sameSite,
@@ -275,7 +288,7 @@ final class SetCookie {
 /// mh.setCookie = (mh.setCookie ?? const SetCookieHeader.empty()).add(cookie);
 /// ```
 final class SetCookieHeader {
-  static const codec = HeaderCodec(SetCookieHeader.parse, _encode);
+  static const codec = HeaderCodec.fields(_parseFields, _encode);
 
   /// The cookies this header sets, in order.
   final List<SetCookie> cookies;
@@ -295,7 +308,20 @@ final class SetCookieHeader {
   /// malformed cookie sent by an untrusted client -- `Set-Cookie` is produced
   /// by the server itself, so there is no lenient-skip rationale.
   factory SetCookieHeader.parse(final Iterable<String> values) =>
-      SetCookieHeader(values.map(SetCookie.parse).toList());
+      _parseFields([for (final value in values) latin1Bytes(value)]);
+
+  /// Takes [cookies], a list the parser built, as its own.
+  const SetCookieHeader._(this.cookies);
+
+  /// [parse] over the wire bytes of every field, one cookie each.
+  static SetCookieHeader _parseFields(final List<Uint8List> fields) =>
+      SetCookieHeader._(
+        List.generate(
+          fields.length,
+          (final i) => SetCookie._parseBytes(fields[i]),
+          growable: false,
+        ),
+      );
 
   /// Returns a new collection with [cookie] appended.
   SetCookieHeader add(final SetCookie cookie) =>

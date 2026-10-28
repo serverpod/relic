@@ -1,4 +1,8 @@
+import 'dart:typed_data';
+
 import '../../../../relic_core.dart';
+import '../primitives/byte_fields.dart';
+import '../primitives/byte_scanner.dart';
 import 'util/report_to.dart';
 
 const int _semicolon = 0x3B;
@@ -7,10 +11,7 @@ const int _semicolon = 0x3B;
 ///
 /// This header specifies the policy for embedding cross-origin resources.
 final class CrossOriginEmbedderPolicyHeader {
-  static const codec = HeaderCodec.single(
-    CrossOriginEmbedderPolicyHeader.parse,
-    __encode,
-  );
+  static const codec = HeaderCodec.bytes(_parseBytes, __encode);
   static List<String> __encode(final CrossOriginEmbedderPolicyHeader value) => [
     value._encode(),
   ];
@@ -42,14 +43,19 @@ final class CrossOriginEmbedderPolicyHeader {
   /// The value is the policy token optionally followed by parameters, e.g.
   /// `require-corp; report-to="endpoint"`. The `report-to` parameter is
   /// captured; an unknown policy token is rejected.
-  factory CrossOriginEmbedderPolicyHeader.parse(final String value) {
-    if (value.trim().isEmpty) {
+  factory CrossOriginEmbedderPolicyHeader.parse(final String value) =>
+      _parseBytes(latin1Bytes(value));
+
+  /// [parse] over the wire bytes.
+  ///
+  /// Parameters split at top-level `;` only, so a `;` inside a quoted
+  /// report-to value does not split the value.
+  static CrossOriginEmbedderPolicyHeader _parseBytes(final Uint8List bytes) {
+    if (trimmed(bytes).isEmpty) {
       throw const FormatException('Value cannot be empty');
     }
-    // Split parameters at top-level ';' only, so a ';' inside a quoted
-    // report-to value does not split the value.
-    final parts = HeaderScanner(value).splitTopLevel(_semicolon).toList();
-    final token = parts.first.trim().toLowerCase();
+    final parts = ByteScanner(bytes).splitTopLevel(_semicolon).toList();
+    final token = lowerTextOf(trimmed(parts.first.source));
     if (!_known.contains(token)) {
       throw const FormatException('Invalid value');
     }

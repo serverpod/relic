@@ -1,6 +1,9 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
 import '../../../../relic_core.dart';
+import '../primitives/byte_fields.dart';
+import '../primitives/byte_scanner.dart' show latin1Bytes;
 import 'util/auth_params.dart';
 
 /// An abstract base class representing an HTTP Authorization header.
@@ -9,7 +12,7 @@ import 'util/auth_params.dart';
 /// such as Bearer and Basic, by defining a method to return the header value.
 /// The concrete subclasses handle specific header formats.
 abstract class AuthorizationHeader {
-  static const codec = HeaderCodec.single(AuthorizationHeader.parse, __encode);
+  static const codec = HeaderCodec.bytes(_parseBytes, __encode);
   static List<String> __encode(final AuthorizationHeader value) => [
     value._encode(),
   ];
@@ -29,44 +32,50 @@ abstract class AuthorizationHeader {
   /// or Basic authorization type and returns the corresponding header object.
   ///
   /// Throws a [FormatException] if the header value is invalid or unrecognized.
-  static AuthorizationHeader parse(final String value) {
-    if (value.isEmpty) {
+  static AuthorizationHeader parse(final String value) =>
+      _parseBytes(latin1Bytes(value));
+
+  /// [parse] over the wire bytes. The auth-scheme is case-insensitive
+  /// (RFC 9110 11.1).
+  static AuthorizationHeader _parseBytes(final Uint8List bytes) {
+    if (bytes.isEmpty) {
       throw const FormatException('Value cannot be empty');
     }
-
-    // The auth-scheme is case-insensitive (RFC 9110 11.1).
-    final sp = value.indexOf(' ');
-    final scheme = (sp < 0 ? value : value.substring(0, sp)).toLowerCase();
-    switch (scheme) {
-      case 'bearer':
-        return BearerAuthorizationHeader.parse(value);
-      case 'basic':
-        return BasicAuthorizationHeader.parse(value);
-      case 'digest':
-        return DigestAuthorizationHeader.parse(value);
-      default:
-        throw const FormatException('Invalid header format');
+    var sp = indexOfByte(bytes, 0x20);
+    if (sp < 0) sp = bytes.length;
+    if (equalsIgnoreAsciiCase(bytes, 0, sp, 'bearer')) {
+      return BearerAuthorizationHeader._parseBytes(bytes);
     }
+    if (equalsIgnoreAsciiCase(bytes, 0, sp, 'basic')) {
+      return BasicAuthorizationHeader._parseBytes(bytes);
+    }
+    if (equalsIgnoreAsciiCase(bytes, 0, sp, 'digest')) {
+      return DigestAuthorizationHeader._parseBytes(bytes);
+    }
+    throw const FormatException('Invalid header format');
   }
 }
 
 /// Strips a case-insensitive auth-scheme [prefix] from [value] if present,
 /// returning the trimmed remainder, or [value] itself when absent.
-String _stripOptionalScheme(final String value, final String prefix) {
+/// [value] after [prefix], compared without regard to case, trimmed, or
+/// [value] itself when it does not start with [prefix].
+Uint8List _stripOptionalScheme(final Uint8List value, final String prefix) {
   if (value.length < prefix.length ||
-      value.substring(0, prefix.length).toLowerCase() != prefix.toLowerCase()) {
+      !equalsIgnoreAsciiCase(value, 0, prefix.length, prefix)) {
     return value;
   }
-  return value.substring(prefix.length).trim();
+  return trimmed(value, prefix.length, value.length);
 }
 
 /// Strips a case-insensitive auth-scheme [prefix] (e.g. `"Bearer "`) from
 /// [value], returning the trimmed remainder. Throws [FormatException] if
 /// [value] does not start with [prefix].
-String _stripScheme(final String value, final String prefix) {
+/// [_stripOptionalScheme], or a [FormatException] when [prefix] is absent.
+Uint8List _stripScheme(final Uint8List value, final String prefix) {
   final result = _stripOptionalScheme(value, prefix);
   if (identical(result, value)) {
-    throw FormatException('Invalid ${prefix.trim()} prefix', value);
+    throw FormatException('Invalid ${prefix.trim()} prefix', textOf(value));
   }
   return result;
 }
@@ -95,17 +104,19 @@ final class BearerAuthorizationHeader extends AuthorizationHeader {
   ///
   /// If the token starts with the "Bearer " prefix, the prefix is stripped
   /// from the token value. Otherwise, it throws a [FormatException].
-  factory BearerAuthorizationHeader.parse(final String value) {
+  factory BearerAuthorizationHeader.parse(final String value) =>
+      BearerAuthorizationHeader._parseBytes(latin1Bytes(value));
+
+  /// [parse] over the wire bytes.
+  static BearerAuthorizationHeader _parseBytes(final Uint8List value) {
     if (value.isEmpty) {
       throw const FormatException('Bearer token cannot be empty.');
     }
-
     final token = _stripScheme(value, prefix);
     if (token.isEmpty) {
       throw const FormatException('Bearer token cannot be empty.');
     }
-
-    return BearerAuthorizationHeader(token: token);
+    return BearerAuthorizationHeader(token: textOf(token));
   }
 
   /// Returns the full authorization string, including the "Bearer " prefix.
@@ -179,15 +190,17 @@ final class BasicAuthorizationHeader extends AuthorizationHeader {
   /// The token should start with the "Basic " prefix, followed by Base64-encoded
   /// credentials. This method validates the Base64 format and splits the decoded
   /// string into username and password. If the token is invalid, it throws a [FormatException].
-  factory BasicAuthorizationHeader.parse(final String value) {
+  factory BasicAuthorizationHeader.parse(final String value) =>
+      BasicAuthorizationHeader._parseBytes(latin1Bytes(value));
+
+  /// [parse] over the wire bytes.
+  static BasicAuthorizationHeader _parseBytes(final Uint8List value) {
     if (value.isEmpty) {
       throw const FormatException('Basic token cannot be empty.');
     }
-
     final base64Part = _stripScheme(value, prefix);
-
     try {
-      final decoded = utf8.decode(base64Decode(base64Part));
+      final decoded = utf8.decode(base64Decode(textOf(base64Part)));
       final split = decoded.indexOf(':');
       return BasicAuthorizationHeader(
         username: decoded.substring(0, split),
@@ -325,7 +338,11 @@ final class DigestAuthorizationHeader extends AuthorizationHeader {
   /// already split it off pass the bare auth-param list.
   ///
   /// Throws a [FormatException] if the header value is invalid or unrecognized.
-  factory DigestAuthorizationHeader.parse(final String value) {
+  factory DigestAuthorizationHeader.parse(final String value) =>
+      DigestAuthorizationHeader._parseBytes(latin1Bytes(value));
+
+  /// [parse] over the wire bytes.
+  static DigestAuthorizationHeader _parseBytes(final Uint8List value) {
     if (value.isEmpty) {
       throw const FormatException('Digest token cannot be empty.');
     }

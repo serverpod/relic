@@ -1,5 +1,8 @@
+import 'dart:typed_data';
+
 import '../../../../relic_core.dart';
-import '../../extension/string_list_extensions.dart';
+import '../primitives/byte_fields.dart';
+import '../primitives/byte_scanner.dart' show latin1Bytes;
 
 /// A class representing the HTTP Cache-Control header.
 ///
@@ -7,7 +10,7 @@ import '../../extension/string_list_extensions.dart';
 /// `must-revalidate`, etc. It supports parsing header values and generating
 /// the appropriate header string.
 final class CacheControlHeader {
-  static const codec = HeaderCodec(CacheControlHeader.parse, __encode);
+  static const codec = HeaderCodec.fields(_parseLenient, __encode);
   static List<String> __encode(final CacheControlHeader value) => [
     value._encode(),
   ];
@@ -160,7 +163,9 @@ final class CacheControlHeader {
   /// Unrecognized directives and malformed values are ignored (RFC 9111 5.2);
   /// use [parseStrict] to reject them instead.
   factory CacheControlHeader.parse(final Iterable<String> values) =>
-      CacheControlHeader._parse(values, strict: false);
+      CacheControlHeader._parseFields([
+        for (final value in values) latin1Bytes(value),
+      ], strict: false);
 
   /// Like [parse], but throws a [FormatException] for an unrecognized
   /// directive or a malformed delta-seconds value instead of ignoring it.
@@ -168,13 +173,19 @@ final class CacheControlHeader {
   /// Intended for values under the sender's own control, such as server
   /// configuration, where a typo should fail fast.
   factory CacheControlHeader.parseStrict(final Iterable<String> values) =>
-      CacheControlHeader._parse(values, strict: true);
+      CacheControlHeader._parseFields([
+        for (final value in values) latin1Bytes(value),
+      ], strict: true);
 
-  factory CacheControlHeader._parse(
-    final Iterable<String> values, {
+  /// [parse] over the wire bytes of every field.
+  static CacheControlHeader _parseLenient(final List<Uint8List> fields) =>
+      CacheControlHeader._parseFields(fields, strict: false);
+
+  factory CacheControlHeader._parseFields(
+    final List<Uint8List> fields, {
     required final bool strict,
   }) {
-    final directives = values.splitTrimAndFilterUnique();
+    final directives = splitFieldsUnique(fields);
 
     if (directives.isEmpty) {
       throw const FormatException('Directives cannot be empty');
@@ -202,11 +213,13 @@ final class CacheControlHeader {
       // mistaken for `max-age`) and case-insensitively (RFC 9111 5.2). The
       // optional `="..."` argument is split off here; `no-cache`/`private`
       // are recognized even when carrying a field-list.
-      final eq = directive.indexOf('=');
-      final name = (eq < 0 ? directive : directive.substring(0, eq))
-          .trim()
-          .toLowerCase();
-      final rawValue = eq < 0 ? null : directive.substring(eq + 1).trim();
+      final eq = indexOfByte(directive, 0x3D);
+      final name = lowerTextOf(
+        trimmed(directive, 0, eq < 0 ? directive.length : eq),
+      );
+      final rawValue = eq < 0
+          ? null
+          : textOf(trimmed(directive, eq + 1, directive.length));
 
       // RFC 9111 5.2: a recipient MUST ignore cache directives it does not
       // recognize (the directive set is extensible), rather than rejecting the

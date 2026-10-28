@@ -1,6 +1,10 @@
+import 'dart:typed_data';
+
 import 'package:collection/collection.dart';
 
 import '../../../../relic_core.dart';
+import '../primitives/byte_fields.dart';
+import '../primitives/byte_scanner.dart';
 
 const int _comma = 0x2C;
 const int _space = 0x20;
@@ -10,10 +14,7 @@ const int _space = 0x20;
 /// This class manages Permissions-Policy directives, providing functionality to parse,
 /// add, remove, and generate Permissions-Policy header values.
 final class PermissionsPolicyHeader {
-  static const codec = HeaderCodec.single(
-    PermissionsPolicyHeader.parse,
-    __encode,
-  );
+  static const codec = HeaderCodec.bytes(_parseBytes, __encode);
   static List<String> __encode(final PermissionsPolicyHeader value) => [
     value._encode(),
   ];
@@ -48,21 +49,28 @@ final class PermissionsPolicyHeader {
   ///
   /// This method splits the header value by commas, trims each directive,
   /// and processes the directive and its values.
-  factory PermissionsPolicyHeader.parse(final String value) {
-    if (value.trim().isEmpty) {
+  factory PermissionsPolicyHeader.parse(final String value) =>
+      _parseBytes(latin1Bytes(value));
+
+  /// [parse] over the wire bytes.
+  ///
+  /// Directives split at top-level commas only, so a comma inside an
+  /// sf-string value does not split a directive (RFC 8941 dictionary).
+  /// The first `=` separates the feature name from its inner-list value,
+  /// since an sf-string in the value may itself contain `=`.
+  static PermissionsPolicyHeader _parseBytes(final Uint8List bytes) {
+    if (trimmed(bytes).isEmpty) {
       throw const FormatException('Value cannot be empty');
     }
-
     final directives = <PermissionsPolicyDirective>[];
-    // Split directives at top-level commas only, so a comma inside an
-    // sf-string value does not split a directive (RFC 8941 dictionary).
-    for (final part in HeaderScanner(value).splitTopLevel(_comma)) {
-      if (part.isEmpty) continue;
-      // The first '=' separates the feature name from its inner-list value;
-      // an sf-string in the value may itself contain '=' (e.g. a URL query).
-      final eq = part.indexOf('=');
-      final name = (eq < 0 ? part : part.substring(0, eq)).trim();
-      final rawList = eq < 0 ? '' : part.substring(eq + 1).trim();
+    for (final part in ByteScanner(bytes).splitTopLevel(_comma)) {
+      final source = part.source;
+      if (source.isEmpty) continue;
+      final eq = indexOfByte(source, 0x3D);
+      final name = textOf(trimmed(source, 0, eq < 0 ? source.length : eq));
+      final rawList = eq < 0
+          ? Uint8List(0)
+          : trimmed(source, eq + 1, source.length);
       directives.add(
         PermissionsPolicyDirective(
           name: name,
@@ -70,7 +78,6 @@ final class PermissionsPolicyHeader {
         ),
       );
     }
-
     // The non-empty invariant is enforced by the .directives() constructor.
     return PermissionsPolicyHeader.directives(directives);
   }
@@ -78,24 +85,26 @@ final class PermissionsPolicyHeader {
   /// Parses an inner-list value `(item item ...)` (or a bare single item)
   /// into its component sf-tokens / sf-strings, splitting on top-level
   /// whitespace so an sf-string containing a space stays intact.
-  static List<String> _parseInnerList(final String raw) {
+  static List<String> _parseInnerList(final Uint8List raw) {
     var inner = raw;
-    final hasOpen = inner.startsWith('(');
-    final hasClose = inner.endsWith(')');
+    final hasOpen = inner.isNotEmpty && inner[0] == 0x28;
+    final hasClose = inner.isNotEmpty && inner[inner.length - 1] == 0x29;
     if (hasOpen && hasClose) {
-      inner = inner.substring(1, inner.length - 1);
+      inner = Uint8List.sublistView(inner, 1, inner.length - 1);
     } else if (hasOpen || hasClose) {
       // An inner-list parenthesis is unbalanced; reject rather than keep the
       // stray paren as part of a token value.
-      throw FormatException('unbalanced Permissions-Policy inner-list', raw);
+      throw FormatException(
+        'unbalanced Permissions-Policy inner-list',
+        textOf(raw),
+      );
     }
-    inner = inner.trim();
+    inner = trimmed(inner);
     if (inner.isEmpty) return const [];
-    return HeaderScanner(inner)
-        .splitTopLevel(_space)
-        .where((final s) => s.isNotEmpty)
-        .map(_unquote)
-        .toList();
+    return [
+      for (final item in ByteScanner(inner).splitTopLevel(_space))
+        if (item.source.isNotEmpty) _unquote(item.source),
+    ];
   }
 
   /// Converts the [PermissionsPolicyHeader] instance into a string
@@ -124,14 +133,15 @@ final class PermissionsPolicyHeader {
   }
 }
 
-String _unquote(final String s) {
-  if (s.length >= 2 && s.startsWith('"') && s.endsWith('"')) {
-    return s
-        .substring(1, s.length - 1)
-        .replaceAll(r'\"', '"')
-        .replaceAll(r'\\', r'\');
+String _unquote(final Uint8List s) {
+  if (s.length >= 2 && s[0] == 0x22 && s[s.length - 1] == 0x22) {
+    return textOf(
+      s,
+      1,
+      s.length - 1,
+    ).replaceAll(r'\"', '"').replaceAll(r'\\', r'\');
   }
-  return s;
+  return textOf(s);
 }
 
 /// A class representing a single Permissions-Policy directive.

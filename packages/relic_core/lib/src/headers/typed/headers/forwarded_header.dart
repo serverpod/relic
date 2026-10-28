@@ -1,7 +1,10 @@
+import 'dart:typed_data';
+
 import 'package:collection/collection.dart';
 import 'package:http_parser/http_parser.dart';
 import '../../../../relic_core.dart';
-import '../../extension/string_list_extensions.dart';
+import '../primitives/byte_fields.dart';
+import '../primitives/byte_scanner.dart' show latin1Bytes;
 
 // RFC 7230: HTTP/1.1 Message Syntax
 // token = 1*tchar
@@ -11,16 +14,22 @@ import '../../extension/string_list_extensions.dart';
 final _isTokenRegExp = RegExp(r"^[a-zA-Z0-9!#$%&'*+-.^_`|~]+$");
 bool _isToken(final String s) => _isTokenRegExp.hasMatch(s);
 
-String _unquote(final String value) {
-  if (value.length >= 2 && value.startsWith('"') && value.endsWith('"')) {
-    final inner = value.substring(1, value.length - 1);
-    // Minimal unescaping for relevant characters in quoted-string:
-    // quoted-pair = "\" ( DQUOTE / "\" )
-    // This is a simplified unescaper. A full one handles all qdtext/quoted-pair.
-    // Fx. r'\t', r'\n', etc
-    return inner.replaceAll(r'\\', r'\').replaceAll(r'\"', '"');
+/// The text of [value], a trimmed parameter value, with the quotes of a
+/// quoted-string removed and `\\` and `\"` unescaped.
+///
+/// A minimal unescaper: quoted-pair = "\" ( DQUOTE / "\" ). A full one
+/// handles every qdtext and quoted-pair.
+String _unquote(final Uint8List value) {
+  if (value.length >= 2 &&
+      value[0] == 0x22 &&
+      value[value.length - 1] == 0x22) {
+    return textOf(
+      value,
+      1,
+      value.length - 1,
+    ).replaceAll(r'\\', r'\').replaceAll(r'\"', '"');
   }
-  return value;
+  return textOf(value);
 }
 
 String _quote(final String rawValue) {
@@ -47,8 +56,12 @@ final class ForwardedIdentifier {
 
   /// Parses a string value (which should be unquoted if it was a quoted-string)
   /// into a [ForwardedIdentifier].
-  factory ForwardedIdentifier.parse(String value) {
-    value = value.trim();
+  factory ForwardedIdentifier.parse(final String value) =>
+      ForwardedIdentifier._parseBytes(trimmed(latin1Bytes(value)));
+
+  /// [parse] over the wire bytes of a trimmed value.
+  static ForwardedIdentifier _parseBytes(final Uint8List bytes) {
+    final value = textOf(bytes);
     if (value.startsWith('[')) {
       if (value.endsWith(']')) {
         // Case 1: IPv6 address like "[2001:db8::1]" (no port)
@@ -177,7 +190,7 @@ final class ForwardedElement {
 // forwarded-pair = token "=" value
 // value          = token / quoted-string
 final class ForwardedHeader {
-  static const codec = HeaderCodec(ForwardedHeader.parse, __encode);
+  static const codec = HeaderCodec.fields(_parseFields, __encode);
   static List<String> __encode(final ForwardedHeader value) =>
       value.toStrings().toList();
 
@@ -187,57 +200,60 @@ final class ForwardedHeader {
     : assert(elements.isNotEmpty),
       elements = List.unmodifiable(elements);
 
-  factory ForwardedHeader.parse(final Iterable<String> values) {
-    final splitValues = values.splitTrimAndFilterUnique();
+  factory ForwardedHeader.parse(final Iterable<String> values) =>
+      _parseFields([for (final value in values) latin1Bytes(value)]);
 
-    if (splitValues.isEmpty) {
+  /// Takes [elements], a list the parser built, as its own.
+  const ForwardedHeader._(this.elements);
+
+  /// [parse] over the wire bytes of every field.
+  ///
+  /// Elements split on commas, their pairs on `;`, which fails for a
+  /// quoted-string containing the delimiter, see
+  /// https://github.com/serverpod/relic/issues/102.
+  static ForwardedHeader _parseFields(final List<Uint8List> fields) {
+    final elements = splitFieldsUnique(fields);
+    if (elements.isEmpty) {
       throw const FormatException('Value cannot be empty');
     }
-
     final allElements = <ForwardedElement>[];
-    for (final elementStr in splitValues) {
-      if (elementStr.isEmpty) continue;
-
+    for (final element in elements) {
       ForwardedIdentifier? byNode;
       ForwardedIdentifier? forNode;
       String? hostStr;
       String? protoStr;
       final extensionsMap = <String, String>{};
-
-      // TODO: Simple split. Fails for quoted strings containing the delimiter.
-      // see https://github.com/serverpod/relic/issues/102
-      final pairStrings = elementStr.split(';');
-
-      for (final pairStr in pairStrings) {
-        final parts = pairStr.split('=');
-        if (parts.length != 2) continue;
-        if (parts[0].isEmpty) continue;
-        if (parts[1].isEmpty) continue;
-
-        final key = parts[0]
-            .trim()
-            .toLowerCase(); // Parameter names are case-insensitive
-        String value = parts[1].trim();
-        value = _unquote(value); // Unquote if it's a quoted-string
-
+      var pairStart = 0;
+      while (pairStart <= element.length) {
+        var pairEnd = indexOfByte(element, 0x3B, pairStart);
+        final next = pairEnd < 0 ? element.length + 1 : pairEnd + 1;
+        if (pairEnd < 0) pairEnd = element.length;
+        // A pair is `token "=" value` with exactly one `=` and something
+        // on both sides of it.
+        final eq = indexOfByte(element, 0x3D, pairStart, pairEnd);
+        if (eq < 0 ||
+            eq == pairStart ||
+            eq + 1 == pairEnd ||
+            indexOfByte(element, 0x3D, eq + 1, pairEnd) >= 0) {
+          pairStart = next;
+          continue;
+        }
+        // Parameter names are case-insensitive.
+        final key = lowerTextOf(trimmed(element, pairStart, eq));
+        final value = _unquote(trimmed(element, eq + 1, pairEnd));
         switch (key) {
           case 'by':
             byNode = ForwardedIdentifier.parse(value);
-            break;
           case 'for':
             forNode = ForwardedIdentifier.parse(value);
-            break;
           case 'host':
             hostStr = value;
-            break;
           case 'proto':
             protoStr = value;
-            break;
           default:
-            // Store as an extension parameter
             extensionsMap[key] = value;
-            break;
         }
+        pairStart = next;
       }
       if (forNode != null ||
           byNode != null ||
@@ -255,10 +271,8 @@ final class ForwardedHeader {
         );
       }
     }
-
     if (allElements.isEmpty) throw const FormatException('');
-
-    return ForwardedHeader(allElements);
+    return ForwardedHeader._(allElements);
   }
 
   Iterable<String> toStrings() {

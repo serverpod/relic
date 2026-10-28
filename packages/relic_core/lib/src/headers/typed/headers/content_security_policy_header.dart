@@ -1,17 +1,17 @@
+import 'dart:typed_data';
+
 import 'package:collection/collection.dart';
 
 import '../../../../relic_core.dart';
-import '../../extension/string_list_extensions.dart';
+import '../primitives/byte_fields.dart';
+import '../primitives/byte_scanner.dart' show latin1Bytes;
 
 /// A class representing the HTTP Content-Security-Policy (CSP) header.
 ///
 /// This class manages CSP directives, providing functionality to parse, add,
 /// remove, and generate CSP header values.
 final class ContentSecurityPolicyHeader {
-  static const codec = HeaderCodec.single(
-    ContentSecurityPolicyHeader.parse,
-    __encode,
-  );
+  static const codec = HeaderCodec.bytes(_parseBytes, __encode);
   static List<String> __encode(final ContentSecurityPolicyHeader value) => [
     value._encode(),
   ];
@@ -31,23 +31,44 @@ final class ContentSecurityPolicyHeader {
   ///
   /// This method splits the header value by semicolons, trims each directive,
   /// and processes the directive and its values.
-  factory ContentSecurityPolicyHeader.parse(final String value) {
-    final splitValues = value.splitTrimAndFilterUnique(separator: ';');
-    if (splitValues.isEmpty) {
+  factory ContentSecurityPolicyHeader.parse(final String value) =>
+      _parseBytes(latin1Bytes(value));
+
+  /// Takes [directives], a list the parser built, as its own.
+  const ContentSecurityPolicyHeader._(this.directives);
+
+  /// [parse] over the wire bytes: `;`-separated directives, each a name
+  /// and whitespace-separated values.
+  static ContentSecurityPolicyHeader _parseBytes(final Uint8List bytes) {
+    final parts = splitUnique(bytes, 0x3B);
+    if (parts.isEmpty) {
       throw const FormatException('Value cannot be empty');
     }
+    return ContentSecurityPolicyHeader._(
+      List.generate(parts.length, (final i) {
+        final words = _words(parts[i]);
+        return ContentSecurityPolicyDirective(
+          name: words.first,
+          values: words.sublist(1),
+        );
+      }, growable: false),
+    );
+  }
 
-    final directiveSeparator = RegExp(r'\s+');
-    final directives = splitValues.map<ContentSecurityPolicyDirective>((
-      final part,
-    ) {
-      final directiveParts = part.split(directiveSeparator);
-      final name = directiveParts.first;
-      final values = directiveParts.skip(1).toList();
-      return ContentSecurityPolicyDirective(name: name, values: values);
-    }).toList();
-
-    return ContentSecurityPolicyHeader.directives(directives);
+  /// [part] split on runs of whitespace. A trimmed part starts with a
+  /// word, so the first element is the name.
+  static List<String> _words(final Uint8List part) {
+    final words = <String>[];
+    var start = 0;
+    while (start < part.length) {
+      var end = start;
+      while (end < part.length && !isTrimByte(part[end])) {
+        end++;
+      }
+      words.add(textOf(part, start, end));
+      start = trimStart(part, end, part.length);
+    }
+    return words;
   }
 
   /// Converts the [ContentSecurityPolicyHeader] instance into a string
