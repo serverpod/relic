@@ -7,6 +7,8 @@ library;
 
 import 'dart:typed_data';
 
+import 'package:relic_headers/relic_headers.dart' show HeaderName;
+
 /// The text of `bytes[start..end)`.
 String textOf(final Uint8List bytes, [final int start = 0, int? end]) =>
     String.fromCharCodes(bytes, start, end ?? bytes.length);
@@ -120,6 +122,28 @@ List<Uint8List> splitUnique(
   return elements;
 }
 
+/// The trimmed, non-empty elements of [bytes] split on [separator], as
+/// views in order, repeats kept.
+///
+/// What `splitAndTrim` does on text.
+List<Uint8List> splitAll(final Uint8List bytes, [final int separator = 0x2C]) {
+  final elements = <Uint8List>[];
+  _splitInto(bytes, separator, elements, unique: false);
+  return elements;
+}
+
+/// [splitAll] over every field.
+List<Uint8List> splitFieldsAll(
+  final List<Uint8List> fields, [
+  final int separator = 0x2C,
+]) {
+  final elements = <Uint8List>[];
+  for (final field in fields) {
+    _splitInto(field, separator, elements, unique: false);
+  }
+  return elements;
+}
+
 /// [splitUnique] over every field, elements kept once across all of them.
 List<Uint8List> splitFieldsUnique(
   final List<Uint8List> fields, [
@@ -136,8 +160,9 @@ List<Uint8List> splitFieldsUnique(
 void _splitInto(
   final Uint8List bytes,
   final int separator,
-  final List<Uint8List> elements,
-) {
+  final List<Uint8List> elements, {
+  final bool unique = true,
+}) {
   final length = bytes.length;
   var start = 0;
   while (start <= length) {
@@ -149,16 +174,41 @@ void _splitInto(
     if (s < e) {
       final element = Uint8List.sublistView(bytes, s, e);
       var seen = false;
-      for (final other in elements) {
-        if (bytesEqual(other, element)) {
-          seen = true;
-          break;
+      if (unique) {
+        for (final other in elements) {
+          if (bytesEqual(other, element)) {
+            seen = true;
+            break;
+          }
         }
       }
       if (!seen) elements.add(element);
     }
     start = next;
   }
+}
+
+/// Whether every byte of `bytes[start..end)` is a `tchar` (RFC 9110
+/// 5.6.2) and there is at least one.
+bool isToken(final Uint8List bytes, [final int start = 0, int? end]) {
+  end ??= bytes.length;
+  if (start >= end) return false;
+  for (var i = start; i < end; i++) {
+    if (!HeaderName.isTchar(bytes[i])) return false;
+  }
+  return true;
+}
+
+/// The text of [bytes] when it is a `token`, else a [FormatException] the
+/// way `Token.validate` throws it.
+String tokenText(final Uint8List bytes) {
+  if (!isToken(bytes)) {
+    throw FormatException(
+      'Not a valid HTTP token (RFC 9110 5.6.2)',
+      textOf(bytes),
+    );
+  }
+  return textOf(bytes);
 }
 
 /// Whether [element] is the single byte `*`.

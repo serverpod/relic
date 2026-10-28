@@ -1,11 +1,15 @@
+import 'dart:typed_data';
+
 import '../../../../relic_core.dart';
+import '../primitives/byte_fields.dart';
+import '../primitives/byte_scanner.dart' show latin1Bytes;
 
 /// A class representing the HTTP Referrer-Policy header.
 ///
 /// This class manages the referrer policy, providing functionality to parse
 /// and generate referrer policy header values.
 final class ReferrerPolicyHeader {
-  static const codec = HeaderCodec.single(ReferrerPolicyHeader.parse, __encode);
+  static const codec = HeaderCodec.bytes(_parseBytes, __encode);
   static List<String> __encode(final ReferrerPolicyHeader value) => [
     value._encode(),
   ];
@@ -59,17 +63,19 @@ final class ReferrerPolicyHeader {
   /// agent recognizes (so a deployment can list `no-referrer, strict-origin`
   /// as a fallback for older agents). Unknown tokens are ignored, and the
   /// match is case-insensitive.
-  factory ReferrerPolicyHeader.parse(final String value) {
-    if (value.trim().isEmpty) {
+  factory ReferrerPolicyHeader.parse(final String value) =>
+      _parseBytes(latin1Bytes(value));
+
+  /// [parse] over the wire bytes. The last known policy wins.
+  static ReferrerPolicyHeader _parseBytes(final Uint8List bytes) {
+    if (trimmed(bytes).isEmpty) {
       throw const FormatException('Value cannot be empty');
     }
-
     ReferrerPolicyHeader? lastValid;
-    for (final token in value.split(',')) {
-      final policy = _byName[token.trim().toLowerCase()];
+    for (final token in splitAll(bytes)) {
+      final policy = _byName[lowerTextOf(token)];
       if (policy != null) lastValid = policy;
     }
-
     if (lastValid == null) {
       throw const FormatException('No valid referrer policy directive');
     }

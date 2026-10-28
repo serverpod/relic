@@ -1,4 +1,8 @@
+import 'dart:typed_data';
+
 import '../../../../relic_core.dart';
+import '../primitives/byte_fields.dart';
+import '../primitives/byte_scanner.dart' show latin1Bytes;
 import 'wildcard_list_header.dart';
 
 /// A class representing the HTTP Access-Control-Allow-Headers header.
@@ -6,7 +10,7 @@ import 'wildcard_list_header.dart';
 /// This header specifies which HTTP headers can be used during the actual request
 /// by listing them explicitly or using a wildcard (`*`) to allow all headers.
 final class AccessControlAllowHeadersHeader extends WildcardListHeader<String> {
-  static const codec = HeaderCodec(_parse, _encode);
+  static const codec = HeaderCodec.fields(_parseFields, _encode);
 
   /// Constructs an instance allowing specific headers to be allowed.
   ///
@@ -18,26 +22,25 @@ final class AccessControlAllowHeadersHeader extends WildcardListHeader<String> {
   /// Constructs an instance allowing all headers to be allowed (`*`).
   const AccessControlAllowHeadersHeader.wildcard() : super.wildcard();
 
-  /// Parses the Access-Control-Allow-Headers header value and returns an
-  /// [AccessControlAllowHeadersHeader] instance.
-  factory AccessControlAllowHeadersHeader.parse(final Iterable<String> values) {
-    return _parse(values);
-  }
+  /// Parses the header [values].
+  factory AccessControlAllowHeadersHeader.parse(
+    final Iterable<String> values,
+  ) => _parseFields([for (final value in values) latin1Bytes(value)]);
+
+  AccessControlAllowHeadersHeader._owned(super.headers) : super.owned();
 
   /// The list of headers that are allowed
   List<String> get headers => values;
 
-  static AccessControlAllowHeadersHeader _parse(final Iterable<String> values) {
-    final parsed = WildcardListHeader.parse(
-      values,
-      (final String value) => value.toLowerCase(),
-    );
-
+  /// The header from the wire bytes of its [fields].
+  static AccessControlAllowHeadersHeader _parseFields(
+    final List<Uint8List> fields,
+  ) {
+    final parsed = WildcardListHeader.parseFields(fields, lowerTextOf);
     if (parsed.isWildcard) {
       return const AccessControlAllowHeadersHeader.wildcard();
-    } else {
-      return AccessControlAllowHeadersHeader.headers(parsed.values);
     }
+    return AccessControlAllowHeadersHeader._owned(parsed.values);
   }
 
   static List<String> encodeHeader(

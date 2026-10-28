@@ -1,4 +1,7 @@
+import 'dart:typed_data';
+
 import '../../../../relic_core.dart';
+import '../primitives/byte_scanner.dart' show latin1Bytes;
 import 'wildcard_list_header.dart';
 
 /// A class representing the HTTP Access-Control-Allow-Methods header.
@@ -6,7 +9,7 @@ import 'wildcard_list_header.dart';
 /// This header specifies which methods are allowed when accessing the resource
 /// in response to a preflight request.
 final class AccessControlAllowMethodsHeader extends WildcardListHeader<Method> {
-  static const codec = HeaderCodec(_parse, _encode);
+  static const codec = HeaderCodec.fields(_parseFields, _encode);
 
   /// Constructs an instance allowing specific methods to be allowed.
   AccessControlAllowMethodsHeader.methods(super.methods);
@@ -16,21 +19,24 @@ final class AccessControlAllowMethodsHeader extends WildcardListHeader<Method> {
 
   /// Parses the Access-Control-Allow-Methods header value and returns an
   /// [AccessControlAllowMethodsHeader] instance.
-  factory AccessControlAllowMethodsHeader.parse(final Iterable<String> values) {
-    return _parse(values);
-  }
+  factory AccessControlAllowMethodsHeader.parse(
+    final Iterable<String> values,
+  ) => _parseFields([for (final value in values) latin1Bytes(value)]);
+
+  AccessControlAllowMethodsHeader._owned(super.methods) : super.owned();
 
   /// The list of methods that are allowed
   List<Method> get methods => values;
 
-  static AccessControlAllowMethodsHeader _parse(final Iterable<String> values) {
-    final parsed = WildcardListHeader.parse(values, Method.parse);
-
+  /// The header from the wire bytes of its [fields].
+  static AccessControlAllowMethodsHeader _parseFields(
+    final List<Uint8List> fields,
+  ) {
+    final parsed = WildcardListHeader.parseFields(fields, parseMethodBytes);
     if (parsed.isWildcard) {
       return const AccessControlAllowMethodsHeader.wildcard();
-    } else {
-      return AccessControlAllowMethodsHeader.methods(parsed.values);
     }
+    return AccessControlAllowMethodsHeader._owned(parsed.values);
   }
 
   static List<String> encodeHeader(

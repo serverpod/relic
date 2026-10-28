@@ -1,13 +1,16 @@
+import 'dart:typed_data';
+
 import 'package:collection/collection.dart';
 import '../../../../relic_core.dart';
-import '../../extension/string_list_extensions.dart';
+import '../primitives/byte_fields.dart';
+import '../primitives/byte_scanner.dart' show latin1Bytes;
 
 /// A class representing the HTTP Transfer-Encoding header.
 ///
 /// This class manages transfer encodings such as `chunked`, `compress`, `deflate`, and `gzip`.
 /// It provides functionality to parse and generate transfer encoding header values.
 final class TransferEncodingHeader {
-  static const codec = HeaderCodec(TransferEncodingHeader.parse, __encode);
+  static const codec = HeaderCodec.fields(_parseFields, __encode);
   static List<String> __encode(final TransferEncodingHeader value) => [
     value._encode(),
   ];
@@ -39,25 +42,23 @@ final class TransferEncodingHeader {
   /// Parses the Transfer-Encoding header value and returns a [TransferEncodingHeader] instance.
   ///
   /// This method splits the value by commas and trims each encoding.
-  factory TransferEncodingHeader.parse(final Iterable<String> values) {
-    final splitValues = values.splitTrimAndFilterUnique();
-    if (splitValues.isEmpty) {
+  factory TransferEncodingHeader.parse(final Iterable<String> values) =>
+      _parseFields([for (final value in values) latin1Bytes(value)]);
+
+  /// The header from the wire bytes of its [fields].
+  ///
+  /// Codings repeat by name without regard to case, so `chunked, CHUNKED`
+  /// is one coding and passes the chunked-must-be-last check.
+  static TransferEncodingHeader _parseFields(final List<Uint8List> fields) {
+    final elements = splitFieldsUnique(fields);
+    if (elements.isEmpty) {
       throw const FormatException('Value cannot be empty');
     }
-
-    // Deduplicate by canonical (case-insensitive) coding name, since
-    // splitTrimAndFilterUnique only removes exact-string duplicates. Without
-    // this, `chunked, CHUNKED` would keep both and then fail the
-    // chunked-must-be-last check even though they are the same coding.
     final encodings = <TransferEncoding>[];
-    final seen = <String>{};
-    for (final raw in splitValues) {
-      final encoding = TransferEncoding.parse(raw);
-      if (seen.add(encoding.name)) {
-        encodings.add(encoding);
-      }
+    for (final element in elements) {
+      final encoding = TransferEncoding._parseBytes(element);
+      if (!encodings.contains(encoding)) encodings.add(encoding);
     }
-
     return TransferEncodingHeader.encodings(encodings);
   }
 
@@ -109,12 +110,15 @@ class TransferEncoding {
   ///
   /// Transfer-codings are case-insensitive (RFC 9112 7), so the name is
   /// matched case-insensitively against the registered codings.
-  factory TransferEncoding.parse(final String name) {
-    final trimmed = name.trim();
-    if (trimmed.isEmpty) {
+  factory TransferEncoding.parse(final String name) =>
+      TransferEncoding._parseBytes(trimmed(latin1Bytes(name)));
+
+  /// [parse] over the wire bytes of one trimmed element.
+  static TransferEncoding _parseBytes(final Uint8List element) {
+    if (element.isEmpty) {
       throw const FormatException('Name cannot be empty');
     }
-    switch (trimmed.toLowerCase()) {
+    switch (lowerTextOf(element)) {
       case _identity:
         return identity;
       case _chunked:

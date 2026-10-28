@@ -1,11 +1,15 @@
+import 'dart:typed_data';
+
 import '../../../../relic_core.dart';
+import '../primitives/byte_fields.dart';
+import '../primitives/byte_scanner.dart' show latin1Bytes;
 
 /// A class representing the HTTP Sec-Fetch-Site header.
 ///
 /// This header indicates the relationship between the origin of the request
 /// initiator and the origin of the requested resource.
 final class SecFetchSiteHeader {
-  static const codec = HeaderCodec.single(SecFetchSiteHeader.parse, __encode);
+  static const codec = HeaderCodec.bytes(_parseBytes, __encode);
   static List<String> __encode(final SecFetchSiteHeader value) => [
     value._encode(),
   ];
@@ -30,13 +34,16 @@ final class SecFetchSiteHeader {
   /// Parses a [value] into a [SecFetchSiteHeader]. A value outside the
   /// predefined set is rejected; new Fetch values are adopted by updating the
   /// set in a relic release rather than accepted ad hoc.
-  factory SecFetchSiteHeader.parse(final String value) {
-    final trimmed = value.trim();
-    if (trimmed.isEmpty) {
+  factory SecFetchSiteHeader.parse(final String value) =>
+      _parseBytes(latin1Bytes(value));
+
+  /// [parse] over the wire bytes.
+  static SecFetchSiteHeader _parseBytes(final Uint8List bytes) {
+    final value = trimmed(bytes);
+    if (value.isEmpty) {
       throw const FormatException('Value cannot be empty');
     }
-
-    switch (trimmed) {
+    switch (textOf(value)) {
       case _sameOrigin:
         return sameOrigin;
       case _sameSite:

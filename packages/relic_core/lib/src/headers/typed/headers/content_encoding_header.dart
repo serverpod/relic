@@ -1,7 +1,10 @@
+import 'dart:typed_data';
+
 import 'package:collection/collection.dart';
 
 import '../../../../relic_core.dart';
-import '../../extension/string_list_extensions.dart';
+import '../primitives/byte_fields.dart';
+import '../primitives/byte_scanner.dart' show latin1Bytes;
 
 /// A class representing the HTTP Content-Encoding header.
 ///
@@ -9,7 +12,7 @@ import '../../extension/string_list_extensions.dart';
 /// `br`, and `identity`. It provides functionality to parse and generate
 /// content encoding header values.
 final class ContentEncodingHeader {
-  static const codec = HeaderCodec(ContentEncodingHeader.parse, __encode);
+  static const codec = HeaderCodec.fields(_parseFields, __encode);
   static List<String> __encode(final ContentEncodingHeader value) => [
     value._encode(),
   ];
@@ -27,17 +30,25 @@ final class ContentEncodingHeader {
   /// [ContentEncodingHeader] instance.
   ///
   /// This method splits the value by commas and trims each encoding.
-  factory ContentEncodingHeader.parse(final Iterable<String> values) {
-    final splitValues = values.splitTrimAndFilterUnique();
-    if (splitValues.isEmpty) {
+  factory ContentEncodingHeader.parse(final Iterable<String> values) =>
+      _parseFields([for (final value in values) latin1Bytes(value)]);
+
+  /// Takes [encodings], a list the parser built, as its own.
+  const ContentEncodingHeader._(this.encodings);
+
+  /// The header from the wire bytes of its [fields].
+  static ContentEncodingHeader _parseFields(final List<Uint8List> fields) {
+    final elements = splitFieldsUnique(fields);
+    if (elements.isEmpty) {
       throw const FormatException('Value cannot be empty');
     }
-
-    final parsedEncodings = splitValues
-        .map((final e) => ContentEncoding.parse(e))
-        .toList();
-
-    return ContentEncodingHeader.encodings(parsedEncodings);
+    return ContentEncodingHeader._(
+      List.generate(
+        elements.length,
+        (final i) => ContentEncoding._parseBytes(elements[i]),
+        growable: false,
+      ),
+    );
   }
 
   /// Checks if the Content-Encoding contains a specific encoding.
@@ -96,12 +107,15 @@ class ContentEncoding {
   /// any valid `token` is accepted rather than only the predefined ones; this
   /// lets recipients pass through unknown codings instead of failing. Codings
   /// are case-insensitive, so the name is canonicalized to lowercase.
-  factory ContentEncoding.parse(final String name) {
-    final trimmed = name.trim();
-    if (trimmed.isEmpty) {
+  factory ContentEncoding.parse(final String name) =>
+      ContentEncoding._parseBytes(trimmed(latin1Bytes(name)));
+
+  /// [parse] over the wire bytes of one trimmed element.
+  static ContentEncoding _parseBytes(final Uint8List element) {
+    if (element.isEmpty) {
       throw const FormatException('Name cannot be empty');
     }
-    return ContentEncoding._(Token.validate(trimmed).toLowerCase());
+    return ContentEncoding._(tokenText(element).toLowerCase());
   }
 
   @override

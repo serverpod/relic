@@ -1,4 +1,8 @@
+import 'dart:typed_data';
+
 import '../../../../relic_core.dart';
+import '../primitives/byte_fields.dart';
+import '../primitives/byte_scanner.dart' show latin1Bytes;
 
 /// A class representing the HTTP `From` header.
 ///
@@ -9,7 +13,7 @@ import '../../../../relic_core.dart';
 /// may even contain a comma), so the value is preserved verbatim rather than
 /// split or format-validated.
 final class FromHeader {
-  static const codec = HeaderCodec.single(FromHeader.parse, __encode);
+  static const codec = HeaderCodec.bytes(_parseBytes, __encode);
   static List<String> __encode(final FromHeader value) => [value.mailbox];
 
   /// The single mailbox value (RFC 9110 10.1.2 `From = mailbox`).
@@ -23,12 +27,16 @@ final class FromHeader {
   /// The value is a single mailbox; it is not split on `,` (a `display-name`
   /// may legitimately contain one) and is kept as-is, since an unparseable
   /// mailbox must not fail the request.
-  factory FromHeader.parse(final String value) {
-    final mailbox = value.trim();
+  factory FromHeader.parse(final String value) =>
+      _parseBytes(latin1Bytes(value));
+
+  /// [parse] over the wire bytes.
+  static FromHeader _parseBytes(final Uint8List bytes) {
+    final mailbox = trimmed(bytes);
     if (mailbox.isEmpty) {
       throw const FormatException('Value cannot be empty');
     }
-    return FromHeader(mailbox);
+    return FromHeader(textOf(mailbox));
   }
 
   @override

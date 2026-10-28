@@ -1,13 +1,13 @@
+import 'dart:typed_data';
+
 import '../../../../relic_core.dart';
-import '../../extension/string_list_extensions.dart';
+import '../primitives/byte_fields.dart';
+import '../primitives/byte_scanner.dart' show latin1Bytes;
 
 /// Represents the HTTP Strict-Transport-Security (HSTS) header for managing
 /// HSTS settings.
 final class StrictTransportSecurityHeader {
-  static const codec = HeaderCodec.single(
-    StrictTransportSecurityHeader.parse,
-    __encode,
-  );
+  static const codec = HeaderCodec.bytes(_parseBytes, __encode);
   static List<String> __encode(final StrictTransportSecurityHeader value) => [
     value._encode(),
   ];
@@ -39,48 +39,57 @@ final class StrictTransportSecurityHeader {
   /// Parses the Strict-Transport-Security header value into a [StrictTransportSecurityHeader] instance.
   ///
   /// Throws a [FormatException] if the max-age directive is missing or invalid.
-  factory StrictTransportSecurityHeader.parse(final String value) {
-    final splitValues = value.splitTrimAndFilterUnique(separator: ';');
-    if (splitValues.isEmpty) {
+  factory StrictTransportSecurityHeader.parse(final String value) =>
+      _parseBytes(latin1Bytes(value));
+
+  /// [parse] over the wire bytes.
+  ///
+  /// RFC 6797 6.1: directive names are case-insensitive, and `max-age` is
+  /// a non-negative integer that may come as a quoted-string. The name is
+  /// split from its optional value on the first `=`, with OWS allowed
+  /// around it (`max-age = 31536000`), and unknown directives are ignored.
+  static StrictTransportSecurityHeader _parseBytes(final Uint8List bytes) {
+    final directives = splitUnique(bytes, 0x3B);
+    if (directives.isEmpty) {
       throw const FormatException('Value cannot be empty');
     }
-
     int? maxAge;
     bool includeSubDomains = false;
     bool preload = false;
-
-    // RFC 6797 6.1: directive names are case-insensitive; `max-age` is a
-    // non-negative integer that may be supplied as a quoted-string. Split the
-    // name from its optional value on the first `=`, tolerating OWS around it
-    // (e.g. `max-age = 31536000`), and ignore unknown directives.
-    for (final directive in splitValues) {
-      final eq = directive.indexOf('=');
-      final name = (eq < 0 ? directive : directive.substring(0, eq))
-          .trim()
-          .toLowerCase();
-      if (name == _maxAgeName) {
-        var v = eq < 0 ? '' : directive.substring(eq + 1).trim();
-        if (v.length >= 2 && v.startsWith('"') && v.endsWith('"')) {
-          v = v.substring(1, v.length - 1);
+    for (final directive in directives) {
+      final eq = indexOfByte(directive, 0x3D);
+      final length = directive.length;
+      final nameEnd = trimEnd(directive, 0, eq < 0 ? length : eq);
+      if (equalsIgnoreAsciiCase(directive, 0, nameEnd, _maxAgeName)) {
+        var start = eq < 0 ? length : trimStart(directive, eq + 1, length);
+        var end = trimEnd(directive, start, length);
+        if (end - start >= 2 &&
+            directive[start] == 0x22 &&
+            directive[end - 1] == 0x22) {
+          start++;
+          end--;
         }
         try {
-          maxAge = DeltaSeconds.parse(v).seconds;
+          maxAge = DeltaSeconds.parse(textOf(directive, start, end)).seconds;
         } on FormatException {
           throw const FormatException(
             'Max-age directive is missing or invalid',
           );
         }
-      } else if (name == _includeSubDomains.toLowerCase()) {
+      } else if (equalsIgnoreAsciiCase(
+        directive,
+        0,
+        nameEnd,
+        _includeSubDomains,
+      )) {
         includeSubDomains = true;
-      } else if (name == _preload.toLowerCase()) {
+      } else if (equalsIgnoreAsciiCase(directive, 0, nameEnd, _preload)) {
         preload = true;
       }
     }
-
     if (maxAge == null) {
       throw const FormatException('Max-age directive is missing or invalid');
     }
-
     return StrictTransportSecurityHeader(
       maxAge: maxAge,
       includeSubDomains: includeSubDomains,

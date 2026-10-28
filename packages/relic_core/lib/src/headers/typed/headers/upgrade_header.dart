@@ -1,14 +1,17 @@
+import 'dart:typed_data';
+
 import 'package:collection/collection.dart';
 
 import '../../../../relic_core.dart';
-import '../../extension/string_list_extensions.dart';
+import '../primitives/byte_fields.dart';
+import '../primitives/byte_scanner.dart' show latin1Bytes;
 
 /// A class representing the HTTP Upgrade header.
 ///
 /// This class manages the protocols that the client supports for upgrading the
 /// connection.
 final class UpgradeHeader {
-  static const codec = HeaderCodec(UpgradeHeader.parse, __encode);
+  static const codec = HeaderCodec.fields(_parseFields, __encode);
   static List<String> __encode(final UpgradeHeader value) => [value._encode()];
 
   /// The list of protocols that the client supports.
@@ -22,17 +25,25 @@ final class UpgradeHeader {
   /// Parses the Upgrade header value and returns an [UpgradeHeader] instance.
   ///
   /// This method processes the header value, extracting the list of protocols.
-  factory UpgradeHeader.parse(final Iterable<String> values) {
-    final splitValues = values.splitTrimAndFilterUnique(separator: ',');
-    if (splitValues.isEmpty) {
+  factory UpgradeHeader.parse(final Iterable<String> values) =>
+      _parseFields([for (final value in values) latin1Bytes(value)]);
+
+  /// Takes [protocols], a list the parser built, as its own.
+  const UpgradeHeader._(this.protocols);
+
+  /// The header from the wire bytes of its [fields].
+  static UpgradeHeader _parseFields(final List<Uint8List> fields) {
+    final elements = splitFieldsUnique(fields);
+    if (elements.isEmpty) {
       throw const FormatException('Value cannot be empty');
     }
-
-    final protocols = splitValues
-        .map((final protocol) => UpgradeProtocol.parse(protocol))
-        .toList();
-
-    return UpgradeHeader.protocols(protocols);
+    return UpgradeHeader._(
+      List.generate(
+        elements.length,
+        (final i) => UpgradeProtocol._parseBytes(elements[i]),
+        growable: false,
+      ),
+    );
   }
 
   /// Converts the [UpgradeHeader] instance into a string representation
@@ -83,28 +94,28 @@ class UpgradeProtocol {
       version = version == null ? null : Token.validate(version);
 
   /// Parses a protocol string and returns an [UpgradeProtocol] instance.
-  factory UpgradeProtocol.parse(final String value) {
-    final trimmed = value.trim();
-    if (trimmed.isEmpty) {
+  factory UpgradeProtocol.parse(final String value) =>
+      UpgradeProtocol._parseBytes(trimmed(latin1Bytes(value)));
+
+  /// [parse] over the wire bytes of one trimmed element.
+  static UpgradeProtocol _parseBytes(final Uint8List element) {
+    if (element.isEmpty) {
       throw const FormatException('Protocol cannot be empty');
     }
-
-    final slash = trimmed.indexOf('/');
+    final slash = indexOfByte(element, 0x2F);
     if (slash < 0) {
-      return UpgradeProtocol(protocol: trimmed);
+      return UpgradeProtocol(protocol: textOf(element));
     }
-
-    final protocol = trimmed.substring(0, slash);
-    if (protocol.isEmpty) {
+    if (slash == 0) {
       throw const FormatException('Protocol cannot be empty');
     }
-
-    final version = trimmed.substring(slash + 1);
-    if (version.isEmpty) {
+    if (slash == element.length - 1) {
       throw const FormatException('Version cannot be empty');
     }
-
-    return UpgradeProtocol(protocol: protocol, version: version);
+    return UpgradeProtocol(
+      protocol: textOf(element, 0, slash),
+      version: textOf(element, slash + 1),
+    );
   }
 
   /// Converts the [UpgradeProtocol] instance into a string representation.

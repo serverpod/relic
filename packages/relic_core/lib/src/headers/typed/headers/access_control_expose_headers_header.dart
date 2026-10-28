@@ -1,4 +1,8 @@
+import 'dart:typed_data';
+
 import '../../../../relic_core.dart';
+import '../primitives/byte_fields.dart';
+import '../primitives/byte_scanner.dart' show latin1Bytes;
 import 'wildcard_list_header.dart';
 
 /// A class representing the HTTP Access-Control-Expose-Headers header.
@@ -7,7 +11,7 @@ import 'wildcard_list_header.dart';
 /// by listing them explicitly or using a wildcard (`*`) to expose all headers.
 final class AccessControlExposeHeadersHeader
     extends WildcardListHeader<String> {
-  static const codec = HeaderCodec(_parse, _encode);
+  static const codec = HeaderCodec.fields(_parseFields, _encode);
 
   /// Constructs an instance allowing specific headers to be exposed.
   ///
@@ -19,30 +23,25 @@ final class AccessControlExposeHeadersHeader
   /// Constructs an instance allowing all headers to be exposed (`*`).
   const AccessControlExposeHeadersHeader.wildcard() : super.wildcard();
 
-  /// Parses the Access-Control-Expose-Headers header value and returns an
-  /// [AccessControlExposeHeadersHeader] instance.
+  /// Parses the header [values].
   factory AccessControlExposeHeadersHeader.parse(
     final Iterable<String> values,
-  ) {
-    return _parse(values);
-  }
+  ) => _parseFields([for (final value in values) latin1Bytes(value)]);
+
+  AccessControlExposeHeadersHeader._owned(super.headers) : super.owned();
 
   /// The list of headers that can be exposed
   List<String> get headers => values;
 
-  static AccessControlExposeHeadersHeader _parse(
-    final Iterable<String> values,
+  /// The header from the wire bytes of its [fields].
+  static AccessControlExposeHeadersHeader _parseFields(
+    final List<Uint8List> fields,
   ) {
-    final parsed = WildcardListHeader.parse(
-      values,
-      (final String value) => value.toLowerCase(),
-    );
-
+    final parsed = WildcardListHeader.parseFields(fields, lowerTextOf);
     if (parsed.isWildcard) {
       return const AccessControlExposeHeadersHeader.wildcard();
-    } else {
-      return AccessControlExposeHeadersHeader.headers(parsed.values);
     }
+    return AccessControlExposeHeadersHeader._owned(parsed.values);
   }
 
   static List<String> encodeHeader(

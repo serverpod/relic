@@ -1,11 +1,15 @@
+import 'dart:typed_data';
+
 import '../../../../relic_core.dart';
+import '../primitives/byte_fields.dart';
+import '../primitives/byte_scanner.dart' show latin1Bytes;
 
 /// A class representing the HTTP Expect header.
 ///
 /// This class manages the directive for the Expect header, such as `100-continue`.
 /// It provides functionality to parse and generate Expect header values.
 final class ExpectHeader {
-  static const codec = HeaderCodec.single(ExpectHeader.parse, __encode);
+  static const codec = HeaderCodec.bytes(_parseBytes, __encode);
   static List<String> __encode(final ExpectHeader value) => [value._encode()];
 
   /// The string representation of the expectation directive.
@@ -26,25 +30,29 @@ final class ExpectHeader {
   /// expectations so a server can respond with `417 Expectation Failed`
   /// rather than failing at the parse step. The matching of the known
   /// `100-continue` token is case-insensitive.
-  factory ExpectHeader.parse(final String value) {
-    final trimmed = value.trim();
-    if (trimmed.isEmpty) {
+  factory ExpectHeader.parse(final String value) =>
+      _parseBytes(latin1Bytes(value));
+
+  /// [parse] over the wire bytes.
+  ///
+  /// Unknown expectations are preserved (so a server can answer 417), but
+  /// control characters are rejected so a CR/LF cannot be injected into the
+  /// header when the value is later re-emitted. HTAB (0x09) is legal OWS
+  /// in a field value and is allowed.
+  static ExpectHeader _parseBytes(final Uint8List bytes) {
+    final value = trimmed(bytes);
+    if (value.isEmpty) {
       throw const FormatException('Value cannot be empty');
     }
-    if (trimmed.toLowerCase() == _continue100) {
+    if (equalsIgnoreAsciiCase(value, 0, value.length, _continue100)) {
       return continue100;
     }
-    // Unknown expectations are preserved (so a server can answer 417), but
-    // control characters are rejected so a CR/LF cannot be injected into the
-    // header when the value is later re-emitted. HTAB (0x09) is legal OWS in a
-    // field value and is allowed.
-    for (var i = 0; i < trimmed.length; i++) {
-      final c = trimmed.codeUnitAt(i);
+    for (final c in value) {
       if ((c <= 0x1F && c != 0x09) || c == 0x7F) {
         throw const FormatException('Invalid value');
       }
     }
-    return ExpectHeader._(trimmed);
+    return ExpectHeader._(textOf(value));
   }
 
   /// Converts the [ExpectHeader] instance into a string representation
