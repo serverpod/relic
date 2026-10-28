@@ -8,7 +8,12 @@ import 'package:code_assets/code_assets.dart';
 /// being built, and `tool/build_binaries.dart`, which builds all of them
 /// before publishing.
 final class NativeTarget {
-  const NativeTarget._(this.os, this.architecture, this.zigTriple);
+  const NativeTarget._(
+    this.os,
+    this.architecture,
+    this.zigTriple, {
+    this.zigCpu,
+  });
 
   final OS os;
   final Architecture architecture;
@@ -17,15 +22,51 @@ final class NativeTarget {
   /// OS version.
   final String zigTriple;
 
+  /// The `-Dcpu` passed to `zig build`, or null for the triple's default.
+  /// Zig's crypto picks hardware AES at compile time, and the default
+  /// x86_64 and generic aarch64 CPUs lack it, so TLS would run in software.
+  final String? zigCpu;
+
+  /// AES-NI, PCLMULQDQ and AVX, which Zig's hardware AES-GCM needs.
+  static const _x64Cpu = 'x86_64_v2+aes+pclmul+avx';
+
+  /// The ARMv8 crypto extensions, for AES-GCM and SHA-256.
+  static const _arm64Cpu = 'generic+aes+sha2';
+
   /// Every target with a prebuilt library. On any other target the hook
   /// emits no asset.
   static const all = [
     NativeTarget._(OS.macOS, Architecture.arm64, 'aarch64-macos.11.0'),
-    NativeTarget._(OS.macOS, Architecture.x64, 'x86_64-macos.10.15'),
-    NativeTarget._(OS.linux, Architecture.x64, 'x86_64-linux-gnu'),
-    NativeTarget._(OS.linux, Architecture.arm64, 'aarch64-linux-gnu'),
-    NativeTarget._(OS.windows, Architecture.x64, 'x86_64-windows-gnu'),
-    NativeTarget._(OS.windows, Architecture.arm64, 'aarch64-windows-gnu'),
+    NativeTarget._(
+      OS.macOS,
+      Architecture.x64,
+      'x86_64-macos.10.15',
+      zigCpu: _x64Cpu,
+    ),
+    NativeTarget._(
+      OS.linux,
+      Architecture.x64,
+      'x86_64-linux-gnu',
+      zigCpu: _x64Cpu,
+    ),
+    NativeTarget._(
+      OS.linux,
+      Architecture.arm64,
+      'aarch64-linux-gnu',
+      zigCpu: _arm64Cpu,
+    ),
+    NativeTarget._(
+      OS.windows,
+      Architecture.x64,
+      'x86_64-windows-gnu',
+      zigCpu: _x64Cpu,
+    ),
+    NativeTarget._(
+      OS.windows,
+      Architecture.arm64,
+      'aarch64-windows-gnu',
+      zigCpu: _arm64Cpu,
+    ),
   ];
 
   /// The target matching [code], or null when none is supported.
@@ -63,6 +104,7 @@ final class NativeTarget {
     await zigBuild(
       packageRoot: packageRoot,
       zigTriple: zigTriple,
+      zigCpu: zigCpu,
       prefix: prefix,
       cacheRoot: cacheDirectory,
     );
@@ -76,7 +118,8 @@ final class NativeTarget {
   }
 }
 
-/// Runs `zig build` for [zigTriple] and installs into [prefix].
+/// Runs `zig build` for [zigTriple], and [zigCpu] when set, and installs
+/// into [prefix].
 ///
 /// [cacheRoot], when set, holds zig's local cache. The global cache stays
 /// where zig keeps it. `zig build` takes no flag for it as of 0.17, and
@@ -86,6 +129,7 @@ final class NativeTarget {
 Future<void> zigBuild({
   required Uri packageRoot,
   required String zigTriple,
+  String? zigCpu,
   required Uri prefix,
   Uri? cacheRoot,
 }) async {
@@ -93,6 +137,7 @@ Future<void> zigBuild({
   final args = [
     'build',
     '-Dtarget=$zigTriple',
+    if (zigCpu != null) '-Dcpu=$zigCpu',
     '--release=fast',
     '-Dstrip=true',
     '-p',

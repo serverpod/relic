@@ -1,3 +1,8 @@
+## Unreleased
+- perf: The prebuilt libraries use hardware AES for TLS. They need AES-NI,
+  PCLMULQDQ and AVX on x64, and the ARMv8 crypto extensions on Linux and
+  Windows arm64
+
 ## 2.0.0-rc.2
 - Initial release: `NativeAdapter.bind`, `NativeExchange` and `serveNative`
   on zio and `std.http.Server`. HTTP/1.0 and HTTP/1.1, keep-alive, several
