@@ -18,7 +18,11 @@ final class _Counting {
       encodeInt,
       decodeBytes: (final raw) {
         bytes++;
-        return parseIntBytes(raw);
+        // Digits alone, else decline to the text path.
+        if (raw.isEmpty || raw.any((final b) => b < 0x30 || b > 0x39)) {
+          return null;
+        }
+        return int.parse(String.fromCharCodes(raw));
       },
     ),
   );
@@ -87,14 +91,31 @@ void main() {
       expect(parseIntBytes(bytes('123456789012345678')), 123456789012345678);
     });
 
-    test('when the bytes are not plain digits, then it declines', () {
-      expect(parseIntBytes(bytes('')), isNull);
-      expect(parseIntBytes(bytes('-1')), isNull);
-      expect(parseIntBytes(bytes('+1')), isNull);
-      expect(parseIntBytes(bytes(' 1')), isNull);
-      expect(parseIntBytes(bytes('1e3')), isNull);
-      expect(parseIntBytes(bytes('0x10')), isNull);
-      expect(parseIntBytes(bytes('1234567890123456789')), isNull);
+    test('when the bytes are not plain digits, '
+        'then it reads them as parseInt reads the text', () {
+      for (final text in [
+        '',
+        '-1',
+        '+1',
+        ' 1',
+        '1e3',
+        '0x10',
+        '1234567890123456789',
+      ]) {
+        Object? fromBytes;
+        Object? fromText;
+        try {
+          fromBytes = parseIntBytes(bytes(text));
+        } on FormatException catch (e) {
+          fromBytes = e.message;
+        }
+        try {
+          fromText = parseInt(text);
+        } on FormatException catch (e) {
+          fromText = e.message;
+        }
+        expect(fromBytes, fromText, reason: '"$text"');
+      }
     });
   });
 }

@@ -1,6 +1,9 @@
+import 'dart:typed_data';
+
 import 'package:meta/meta.dart';
 
 import '../../extension/string_list_extensions.dart';
+import '../primitives/byte_fields.dart';
 
 /// A generic class representing HTTP headers that accept a list of values with optional wildcards.
 ///
@@ -59,6 +62,37 @@ class WildcardListHeader<T> {
 
     final parsedValues = splitValues.map(parseElement).toList(growable: false);
     return WildcardListHeader.owned(parsedValues);
+  }
+
+  /// Parses the wire bytes of every field: the comma-separated elements
+  /// across [fields], trimmed, dropped when empty and kept once each, as
+  /// [parseElement] reads them. One element that is `*` is the wildcard,
+  /// and `*` beside a value is an error.
+  factory WildcardListHeader.parseFields(
+    final List<Uint8List> fields,
+    final T Function(Uint8List element) parseElement,
+  ) {
+    final elements = splitFieldsUnique(fields);
+    if (elements.isEmpty) {
+      throw const FormatException('Value cannot be empty');
+    }
+    var wildcards = 0;
+    for (final element in elements) {
+      if (isWildcardElement(element)) wildcards++;
+    }
+    if (wildcards > 0) {
+      if (elements.length == 1) return const WildcardListHeader.wildcard();
+      throw const FormatException(
+        'Wildcard (*) cannot be used with other values',
+      );
+    }
+    return WildcardListHeader.owned(
+      List.generate(
+        elements.length,
+        (final i) => parseElement(elements[i]),
+        growable: false,
+      ),
+    );
   }
 
   /// Converts the header instance into a string representation suitable for HTTP headers

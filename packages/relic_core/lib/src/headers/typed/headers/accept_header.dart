@@ -1,14 +1,17 @@
+import 'dart:typed_data';
+
 import 'package:collection/collection.dart';
 
 import '../../../../relic_core.dart';
-import '../../extension/string_list_extensions.dart';
+import '../primitives/byte_fields.dart';
+import '../primitives/byte_scanner.dart' show latin1Bytes;
 import 'util/qvalue.dart';
 
 /// A class representing the HTTP Accept header.
 ///
 /// This class manages media ranges and their associated quality values.
 final class AcceptHeader {
-  static const codec = HeaderCodec(AcceptHeader.parse, __encode);
+  static const codec = HeaderCodec.fields(_parseFields, __encode);
   static List<String> __encode(final AcceptHeader value) => [value._encode()];
 
   /// The list of media ranges accepted by the client.
@@ -19,19 +22,27 @@ final class AcceptHeader {
     : assert(mediaRanges.isNotEmpty),
       mediaRanges = List.unmodifiable(mediaRanges);
 
-  /// Parses the Accept header value and returns an [AcceptHeader] instance.
-  ///
-  /// This method processes the header value, extracting media types and
-  /// their quality values.
-  factory AcceptHeader.parse(final Iterable<String> values) {
-    final splitValues = values.splitTrimAndFilterUnique();
-    if (splitValues.isEmpty) {
+  /// Takes [mediaRanges], a list the parser built, as its own.
+  const AcceptHeader._(this.mediaRanges);
+
+  /// Parses the Accept header [values] and returns an [AcceptHeader]
+  /// instance, with the media types and their quality values.
+  factory AcceptHeader.parse(final Iterable<String> values) =>
+      _parseFields([for (final value in values) latin1Bytes(value)]);
+
+  /// The header from the wire bytes of its [fields].
+  static AcceptHeader _parseFields(final List<Uint8List> fields) {
+    final elements = splitFieldsUnique(fields);
+    if (elements.isEmpty) {
       throw const FormatException('Value cannot be empty');
     }
-
-    final mediaRanges = splitValues.map(MediaRange.parse).toList();
-
-    return AcceptHeader.mediaRanges(mediaRanges);
+    return AcceptHeader._(
+      List.generate(
+        elements.length,
+        (final i) => MediaRange._parseBytes(elements[i]),
+        growable: false,
+      ),
+    );
   }
 
   /// Converts the [AcceptHeader] instance into a string representation suitable for HTTP headers.
@@ -76,34 +87,31 @@ class MediaRange {
   /// surrounded by OWS) per RFC 9110 12.4.2 - not by a literal `q=`
   /// substring, which silently misparses any input with whitespace around
   /// the semicolon.
-  factory MediaRange.parse(final String value) {
-    final parts = value.splitTrimAndFilterUnique(separator: ';').toList();
-    final typeSubtype = parts.first.split('/');
-    if (typeSubtype.length != 2) {
+  factory MediaRange.parse(final String value) =>
+      MediaRange._parseBytes(latin1Bytes(value));
+
+  /// [parse] over the wire bytes of one element.
+  static MediaRange _parseBytes(final Uint8List element) {
+    // The first non-empty `;` part is the range, the rest its parameters.
+    final parts = splitUnique(element, 0x3B);
+    if (parts.isEmpty) {
       throw const FormatException('Invalid media range');
     }
-
-    final type = typeSubtype[0].trim();
-    final subtype = typeSubtype[1].trim();
-
-    double? quality;
-    for (var i = 1; i < parts.length; i++) {
-      final eq = parts[i].indexOf('=');
-      if (eq < 0) continue;
-      final name = parts[i].substring(0, eq).trim();
-      if (name.toLowerCase() != 'q') continue;
-      final parsed = double.tryParse(parts[i].substring(eq + 1).trim());
-      // A malformed or out-of-range weight is treated as absent (defaulting to
-      // 1.0) rather than rejecting the whole header: the client did list this
-      // entry, so it is acceptable; only the unparseable preference is dropped
-      // (RFC 9110 12.4.2; robustness on received headers).
-      if (parsed != null && parsed >= 0 && parsed <= 1) {
-        quality = parsed;
-      }
-      break;
+    final range = parts.first;
+    final slash = indexOfByte(range, 0x2F);
+    if (slash < 0 || indexOfByte(range, 0x2F, slash + 1) >= 0) {
+      throw const FormatException('Invalid media range');
     }
-
-    return MediaRange(type, subtype, quality: quality);
+    final type = textOf(range, 0, trimEnd(range, 0, slash));
+    final subtype = textOf(range, trimStart(range, slash + 1, range.length));
+    // The parameters as the text path saw them: after the range, with
+    // empty and repeated parts dropped.
+    final after = indexOfByte(element, 0x3B);
+    return MediaRange(
+      type,
+      subtype,
+      quality: after < 0 ? null : qualityParameter(element, after + 1),
+    );
   }
 
   /// Converts the [MediaRange] instance into a string representation suitable

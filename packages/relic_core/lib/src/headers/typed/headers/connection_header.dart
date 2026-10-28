@@ -1,7 +1,10 @@
+import 'dart:typed_data';
+
 import 'package:collection/collection.dart';
 
 import '../../../../relic_core.dart';
-import '../../extension/string_list_extensions.dart';
+import '../primitives/byte_fields.dart';
+import '../primitives/byte_scanner.dart' show latin1Bytes;
 
 /// A class representing the HTTP Connection header.
 ///
@@ -9,7 +12,7 @@ import '../../extension/string_list_extensions.dart';
 /// directives (e.g., `upgrade, keep-alive`). It provides functionality to parse and generate
 /// connection header values.
 final class ConnectionHeader {
-  static const codec = HeaderCodec(ConnectionHeader.parse, __encode);
+  static const codec = HeaderCodec.fields(_parseFields, __encode);
   static List<String> __encode(final ConnectionHeader value) => [
     value._encode(),
   ];
@@ -20,19 +23,26 @@ final class ConnectionHeader {
   /// Constructs a [ConnectionHeader] instance with the specified connection directives.
   const ConnectionHeader.directives(this.directives);
 
-  /// Parses the Connection header value and returns a [ConnectionHeader] instance.
+  /// Parses the Connection header [values] and returns a [ConnectionHeader]
+  /// instance.
   ///
-  /// This method splits the value by commas and trims each directive.
-  factory ConnectionHeader.parse(final Iterable<String> values) {
-    final splitValues = values.splitTrimAndFilterUnique();
+  /// The value is split on commas, and each directive trimmed.
+  factory ConnectionHeader.parse(final Iterable<String> values) =>
+      _parseFields([for (final value in values) latin1Bytes(value)]);
 
-    if (splitValues.isEmpty) {
+  /// The header from the wire bytes of its [fields].
+  static ConnectionHeader _parseFields(final List<Uint8List> fields) {
+    final elements = splitFieldsUnique(fields);
+    if (elements.isEmpty) {
       throw const FormatException('Value cannot be empty');
     }
-
-    final directives = splitValues.map(ConnectionHeaderType.parse).toList();
-
-    return ConnectionHeader.directives(directives);
+    return ConnectionHeader.directives(
+      List.generate(
+        elements.length,
+        (final i) => ConnectionHeaderType._parseBytes(elements[i]),
+        growable: false,
+      ),
+    );
   }
 
   /// Checks if the connection is marked as `keep-alive`.
@@ -93,12 +103,20 @@ class ConnectionHeaderType {
   /// 7.6.1), so any valid token is accepted (e.g. `TE`, `Trailer`, custom
   /// hop-by-hop headers), not only the predefined ones. Options are
   /// case-insensitive and canonicalized to lowercase.
-  factory ConnectionHeaderType.parse(final String value) {
-    final trimmed = value.trim();
-    if (trimmed.isEmpty) {
+  factory ConnectionHeaderType.parse(final String value) =>
+      ConnectionHeaderType._parseBytes(trimmed(latin1Bytes(value)));
+
+  /// [parse] over the wire bytes of one trimmed element.
+  static ConnectionHeaderType _parseBytes(final Uint8List element) {
+    if (element.isEmpty) {
       throw const FormatException('Value cannot be empty');
     }
-    return ConnectionHeaderType._(Token.validate(trimmed).toLowerCase());
+    for (final b in element) {
+      if (!Token.isTchar(b)) {
+        throw FormatException('Invalid token', textOf(element));
+      }
+    }
+    return ConnectionHeaderType._(lowerTextOf(element));
   }
 
   @override

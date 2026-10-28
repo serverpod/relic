@@ -4,7 +4,8 @@ import 'dart:typed_data';
 import 'package:http_parser/http_parser.dart';
 
 import '../../../relic_core.dart';
-import '../extension/string_list_extensions.dart';
+import '../typed/primitives/byte_fields.dart';
+import '../typed/primitives/byte_scanner.dart' show latin1Bytes;
 
 /// Parses a URI from the given [value] and returns it as a `Uri`.
 ///
@@ -21,10 +22,14 @@ Uri parseUri(String value) {
   }
 }
 
+/// [parseUri] over the wire bytes. `Uri.parse` reads text, so the bytes
+/// become a Latin-1 string first.
+Uri parseUriBytes(Uint8List bytes) => parseUri(textOf(bytes));
+
 /// Encode a Uri to a iterable of string.
 Iterable<String> encodeUri(Uri uri) => [uri.toString()];
 
-const uriHeaderCodec = HeaderCodec.single(parseUri, encodeUri);
+const uriHeaderCodec = HeaderCodec.bytes(parseUriBytes, encodeUri);
 
 /// Parses a date from the given [value] and returns it as a `DateTime`.
 ///
@@ -40,10 +45,14 @@ DateTime parseDate(String value) {
   }
 }
 
+/// [parseDate] over the wire bytes. `parseHttpDate` reads text, so the
+/// bytes become a Latin-1 string first.
+DateTime parseDateBytes(Uint8List bytes) => parseDate(textOf(bytes));
+
 /// Encodes a DateTime to a iterable of string in HTTP date format.
 Iterable<String> encodeDate(DateTime d) => [formatHttpDate(d)];
 
-const dateTimeHeaderCodec = HeaderCodec.single(parseDate, encodeDate);
+const dateTimeHeaderCodec = HeaderCodec.bytes(parseDateBytes, encodeDate);
 
 /// Parses an integer from the given [value] and returns it as an `int`.
 ///
@@ -70,23 +79,12 @@ int parseInt(String value) {
 /// Encode an integer to a iterable of string.
 Iterable<String> encodeInt(int i) => [i.toString()];
 
-/// Parses a run of ASCII digits, or returns null for anything else so the
-/// text parser decides. Up to 18 digits, which always fits an int.
-int? parseIntBytes(Uint8List bytes) {
-  if (bytes.isEmpty || bytes.length > 18) return null;
-  var value = 0;
-  for (final b in bytes) {
-    if (b < 0x30 || b > 0x39) return null;
-    value = value * 10 + (b - 0x30);
-  }
-  return value;
-}
+/// [parseInt] over the wire bytes: a run of ASCII digits, up to 18, is
+/// the int, and anything else is read as text.
+int parseIntBytes(Uint8List bytes) =>
+    digitsOf(bytes) ?? parseInt(textOf(bytes));
 
-const intHeaderCodec = HeaderCodec.single(
-  parseInt,
-  encodeInt,
-  decodeBytes: parseIntBytes,
-);
+const intHeaderCodec = HeaderCodec.bytes(parseIntBytes, encodeInt);
 
 /// Parses a positive integer from the given [value] and returns it as an `int`.
 ///
@@ -103,10 +101,13 @@ int parsePositiveInt(String value) {
 Iterable<String> encodePositiveInt(int i) =>
     i < 0 ? throw ArgumentError() : [i.toString()];
 
-const positiveIntHeaderCodec = HeaderCodec.single(
-  parsePositiveInt,
+/// [parsePositiveInt] over the wire bytes.
+int parsePositiveIntBytes(Uint8List bytes) =>
+    digitsOf(bytes) ?? parsePositiveInt(textOf(bytes));
+
+const positiveIntHeaderCodec = HeaderCodec.bytes(
+  parsePositiveIntBytes,
   encodePositiveInt,
-  decodeBytes: parseIntBytes,
 );
 
 /// Parses a boolean from the given [value] and returns it as a `bool`.
@@ -137,8 +138,12 @@ bool parsePositiveBool(String value) {
 /// Encode a boolean to a iterable of string, if true.
 Iterable<String> encodePositiveBool(bool b) => [if (b) b.toString()];
 
-const positiveBoolHeaderCodec = HeaderCodec.single(
-  parsePositiveBool,
+/// [parsePositiveBool] over the wire bytes.
+bool parsePositiveBoolBytes(Uint8List bytes) =>
+    parsePositiveBool(textOf(bytes));
+
+const positiveBoolHeaderCodec = HeaderCodec.bytes(
+  parsePositiveBoolBytes,
   encodePositiveBool,
 );
 
@@ -152,42 +157,72 @@ String parseString(String value) {
   return value.trim();
 }
 
+/// [parseString] over the wire bytes: the trimmed text.
+String parseStringBytes(Uint8List bytes) {
+  if (bytes.isEmpty) {
+    throw const FormatException('Value cannot be empty');
+  }
+  return textOf(trimmed(bytes));
+}
+
 /// Encode a string to a iterable of string.
 Iterable<String> encodeString(String s) => [s];
 
-const stringHeaderCodec = HeaderCodec.single(parseString, encodeString);
+const stringHeaderCodec = HeaderCodec.bytes(parseStringBytes, encodeString);
 
 /// Parses a list of strings from the given [values] and returns it as a `List<String>`.
 ///
 /// - Throws a [FormatException] if the resulting list is empty.
-List<String> parseStringList(Iterable<String> values) {
-  final tempValues = values.splitTrimAndFilterUnique();
-  if (tempValues.isEmpty) {
+List<String> parseStringList(Iterable<String> values) =>
+    parseStringListFields([for (final value in values) latin1Bytes(value)]);
+
+/// [parseStringList] over the wire bytes of every field: the comma-separated
+/// elements, trimmed, dropped when empty and kept once each.
+List<String> parseStringListFields(List<Uint8List> fields) {
+  final elements = splitFieldsUnique(fields);
+  if (elements.isEmpty) {
     throw const FormatException('Value cannot be empty');
   }
-  return tempValues.toList();
+  return List.generate(
+    elements.length,
+    (final i) => textOf(elements[i]),
+    growable: false,
+  );
 }
 
 /// Encode a list of strings to a iterable of string.
 Iterable<String> encodeStringList(List<String> i) => i;
 
-const stringListCodec = HeaderCodec(parseStringList, encodeStringList);
+const stringListCodec = HeaderCodec.fields(
+  parseStringListFields,
+  encodeStringList,
+);
+
+/// [Method.parse] over the wire bytes.
+Method parseMethodBytes(Uint8List bytes) => Method.parse(textOf(bytes));
 
 Iterable<String> encodeMethod(Method m) => [m.value];
-const methodCodec = HeaderCodec.single(Method.parse, encodeMethod);
+const methodCodec = HeaderCodec.bytes(parseMethodBytes, encodeMethod);
 
 /// Parses a list of methods from the given [values] and returns it as a `List<Method>`.
 ///
 /// - Throws a [FormatException] if the resulting list is empty.
-SplayTreeSet<Method> parseMethodSet(Iterable<String> values) {
-  final tempValues = values.splitTrimAndFilterUnique();
-  if (tempValues.isEmpty) {
+SplayTreeSet<Method> parseMethodSet(Iterable<String> values) =>
+    parseMethodSetFields([for (final value in values) latin1Bytes(value)]);
+
+/// [parseMethodSet] over the wire bytes of every field.
+SplayTreeSet<Method> parseMethodSetFields(List<Uint8List> fields) {
+  final elements = splitFieldsUnique(fields);
+  if (elements.isEmpty) {
     throw const FormatException('Value cannot be empty');
   }
-  return SplayTreeSet.of(tempValues.map(Method.parse), Enum.compareByIndex);
+  return SplayTreeSet.of(elements.map(parseMethodBytes), Enum.compareByIndex);
 }
 
 /// Encode a list of methods to a iterable of string.
 Iterable<String> encodeMethodList(Iterable<Method> l) => l.map((r) => r.value);
 
-const methodListCodec = HeaderCodec(parseMethodSet, encodeMethodList);
+const methodListCodec = HeaderCodec.fields(
+  parseMethodSetFields,
+  encodeMethodList,
+);

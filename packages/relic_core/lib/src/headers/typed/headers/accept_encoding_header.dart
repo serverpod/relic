@@ -1,4 +1,8 @@
+import 'dart:typed_data';
+
 import '../../../../relic_core.dart';
+import '../primitives/byte_fields.dart';
+import '../primitives/byte_scanner.dart' show latin1Bytes;
 import 'util/qvalue.dart';
 import 'wildcard_list_header.dart';
 
@@ -6,7 +10,7 @@ import 'wildcard_list_header.dart';
 ///
 /// This header specifies the content encoding that the client can understand.
 final class AcceptEncodingHeader extends WildcardListHeader<EncodingQuality> {
-  static const codec = HeaderCodec(_parse, _encode);
+  static const codec = HeaderCodec.fields(_parseFields, _encode);
 
   /// Constructs an instance with the given encodings
   AcceptEncodingHeader.encodings(super.encodings);
@@ -14,22 +18,24 @@ final class AcceptEncodingHeader extends WildcardListHeader<EncodingQuality> {
   /// Constructs an instance with a wildcard encoding
   const AcceptEncodingHeader.wildcard() : super.wildcard();
 
-  /// Parses the Accept-Encoding header value and returns an [AcceptEncodingHeader] instance
-  factory AcceptEncodingHeader.parse(final Iterable<String> values) {
-    return _parse(values);
-  }
+  /// Parses the Accept-Encoding header [values] and returns an
+  /// [AcceptEncodingHeader] instance.
+  factory AcceptEncodingHeader.parse(final Iterable<String> values) =>
+      _parseFields([for (final value in values) latin1Bytes(value)]);
+
+  AcceptEncodingHeader._owned(super.encodings) : super.owned();
 
   /// The list of encodings that are accepted
   List<EncodingQuality> get encodings => values;
 
-  static AcceptEncodingHeader _parse(final Iterable<String> values) {
-    final parsed = WildcardListHeader.parse(values, EncodingQuality.parse);
-
-    if (parsed.isWildcard) {
-      return const AcceptEncodingHeader.wildcard();
-    } else {
-      return AcceptEncodingHeader.encodings(parsed.values);
-    }
+  /// The header from the wire bytes of its [fields].
+  static AcceptEncodingHeader _parseFields(final List<Uint8List> fields) {
+    final parsed = WildcardListHeader.parseFields(
+      fields,
+      EncodingQuality._parseBytes,
+    );
+    if (parsed.isWildcard) return const AcceptEncodingHeader.wildcard();
+    return AcceptEncodingHeader._owned(parsed.values);
   }
 
   static List<String> encodeHeader(final AcceptEncodingHeader header) {
@@ -57,31 +63,18 @@ class EncodingQuality {
   ///
   /// The weight is recognized as the parameter named `q` (RFC 9110 12.4.2),
   /// case-insensitive, tolerating OWS around the surrounding `;` and `=`.
-  factory EncodingQuality.parse(final String value) {
-    final parts = value.split(';');
-    final encoding = parts[0].trim().toLowerCase();
+  factory EncodingQuality.parse(final String value) =>
+      EncodingQuality._parseBytes(latin1Bytes(value));
+
+  /// [parse] over the wire bytes of one element.
+  static EncodingQuality _parseBytes(final Uint8List element) {
+    var semi = indexOfByte(element, 0x3B);
+    if (semi < 0) semi = element.length;
+    final encoding = lowerTextOf(element, 0, trimEnd(element, 0, semi));
     if (encoding.isEmpty) {
       throw const FormatException('Invalid encoding');
     }
-
-    double? quality;
-    for (var i = 1; i < parts.length; i++) {
-      final eq = parts[i].indexOf('=');
-      if (eq < 0) continue;
-      final name = parts[i].substring(0, eq).trim();
-      if (name.toLowerCase() != 'q') continue;
-      final parsed = double.tryParse(parts[i].substring(eq + 1).trim());
-      // A malformed or out-of-range weight is treated as absent (defaulting to
-      // 1.0) rather than rejecting the whole header: the client did list this
-      // entry, so it is acceptable; only the unparseable preference is dropped
-      // (RFC 9110 12.4.2; robustness on received headers).
-      if (parsed != null && parsed >= 0 && parsed <= 1) {
-        quality = parsed;
-      }
-      break;
-    }
-
-    return EncodingQuality(encoding, quality);
+    return EncodingQuality(encoding, qualityParameter(element, semi + 1));
   }
 
   /// Encodes this [EncodingQuality] into a string representation suitable for
