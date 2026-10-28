@@ -1,8 +1,11 @@
+import 'dart:typed_data';
+
 import '../../../../relic_core.dart';
+import '../primitives/byte_fields.dart';
 
 /// Wanna-be RFC3986 compliant 'Host' header.
 final class HostHeader {
-  static const codec = HeaderCodec.single(HostHeader.parse, __encode);
+  static const codec = HeaderCodec.bytes(_parseBytes, __encode);
   static List<String> __encode(final HostHeader value) => [value._encode()];
 
   final String host;
@@ -19,6 +22,11 @@ final class HostHeader {
     }
     return HostHeader._(trimmed.toLowerCase(), port);
   }
+
+  /// [parse] over the wire bytes. `Uri` does the parsing and reads text,
+  /// so the bytes become a Latin-1 string first.
+  static HostHeader _parseBytes(final Uint8List bytes) =>
+      HostHeader.parse(textOf(bytes));
 
   factory HostHeader.parse(String value) {
     value = value.trim();

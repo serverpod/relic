@@ -1,4 +1,8 @@
+import 'dart:typed_data';
+
 import '../../../../relic_core.dart';
+import '../primitives/byte_fields.dart';
+import '../primitives/byte_scanner.dart' show latin1Bytes;
 
 /// A class representing the HTTP ETag header.
 ///
@@ -6,7 +10,7 @@ import '../../../../relic_core.dart';
 /// It provides functionality to parse the header value and construct the
 /// appropriate header string.
 final class ETagHeader {
-  static const codec = HeaderCodec.single(ETagHeader.parse, __encode);
+  static const codec = HeaderCodec.bytes(_parseBytes, __encode);
   static List<String> __encode(final ETagHeader value) => [value._encode()];
 
   /// The opaque-tag value, without the surrounding quotes.
@@ -45,18 +49,31 @@ final class ETagHeader {
   /// (RFC 9110 8.8.3): the opaque-tag is taken from between the quotes without
   /// stripping interior quotes, an interior `"` or CTL is rejected, and no
   /// whitespace is allowed between `W/` and the opening quote.
-  factory ETagHeader.parse(final String value) {
-    final trimmed = value.trim();
-    if (trimmed.isEmpty) {
+  factory ETagHeader.parse(final String value) =>
+      _parseBytes(latin1Bytes(value));
+
+  /// [parse] over the wire bytes.
+  static ETagHeader _parseBytes(final Uint8List bytes) {
+    final value = trimmed(bytes);
+    if (value.isEmpty) {
       throw const FormatException('Value cannot be empty');
     }
     final ETagValue etag;
     try {
-      etag = ETagValue.parse(trimmed);
+      etag = ETagValue.parseBytes(value);
     } on FormatException {
       throw const FormatException('Invalid format');
     }
     return ETagHeader(value: etag.value, isWeak: etag.isWeak);
+  }
+
+  /// [_parseBytes] of one element of a list of entity-tags.
+  static ETagHeader parseElement(final Uint8List element) {
+    try {
+      return _parseBytes(element);
+    } on FormatException {
+      throw const FormatException('Invalid ETag format');
+    }
   }
 
   /// Converts the [ETagHeader] instance into a string representation suitable

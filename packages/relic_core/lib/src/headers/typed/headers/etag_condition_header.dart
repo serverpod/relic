@@ -1,4 +1,7 @@
+import 'dart:typed_data';
+
 import '../../../../relic_core.dart';
+import '../primitives/byte_scanner.dart' show latin1Bytes;
 import 'etag_header.dart' show InternalEx;
 import 'wildcard_list_header.dart';
 
@@ -6,6 +9,8 @@ import 'wildcard_list_header.dart';
 sealed class ETagConditionHeader extends WildcardListHeader<ETagHeader> {
   /// Creates an [ETagConditionHeader] with specific ETags.
   ETagConditionHeader.etags(super.etags);
+
+  ETagConditionHeader._owned(super.etags) : super.owned();
 
   /// Creates an [ETagConditionHeader] with wildcard matching.
   const ETagConditionHeader.wildcard() : super.wildcard();
@@ -16,7 +21,7 @@ sealed class ETagConditionHeader extends WildcardListHeader<ETagHeader> {
 
 /// A class representing the HTTP If-Match header.
 final class IfMatchHeader extends ETagConditionHeader {
-  static const codec = HeaderCodec(_parse, _encode);
+  static const codec = HeaderCodec.fields(_parseFields, _encode);
 
   /// Creates an [IfMatchHeader] with specific ETags.
   IfMatchHeader.etags(super.etags) : super.etags();
@@ -24,24 +29,20 @@ final class IfMatchHeader extends ETagConditionHeader {
   /// Creates an [IfMatchHeader] with wildcard matching.
   const IfMatchHeader.wildcard() : super.wildcard();
 
-  /// Parses the If-Match header value.
-  factory IfMatchHeader.parse(final Iterable<String> values) {
-    return _parse(values);
-  }
+  IfMatchHeader._owned(super.etags) : super._owned();
 
-  static IfMatchHeader _parse(final Iterable<String> values) {
-    final parsed = WildcardListHeader.parse(values, (final String value) {
-      if (!ETagHeader.isValidETag(value)) {
-        throw const FormatException('Invalid ETag format');
-      }
-      return ETagHeader.parse(value);
-    });
+  /// Parses the If-Match header [values].
+  factory IfMatchHeader.parse(final Iterable<String> values) =>
+      _parseFields([for (final value in values) latin1Bytes(value)]);
 
-    if (parsed.isWildcard) {
-      return const IfMatchHeader.wildcard();
-    } else {
-      return IfMatchHeader.etags(parsed.values);
-    }
+  /// The header from the wire bytes of its [fields].
+  static IfMatchHeader _parseFields(final List<Uint8List> fields) {
+    final parsed = WildcardListHeader.parseFields(
+      fields,
+      ETagHeader.parseElement,
+    );
+    if (parsed.isWildcard) return const IfMatchHeader.wildcard();
+    return IfMatchHeader._owned(parsed.values);
   }
 
   static List<String> encodeHeader(final IfMatchHeader header) {
@@ -55,7 +56,7 @@ final class IfMatchHeader extends ETagConditionHeader {
 
 /// A class representing the HTTP If-None-Match header.
 final class IfNoneMatchHeader extends ETagConditionHeader {
-  static const codec = HeaderCodec(_parse, _encode);
+  static const codec = HeaderCodec.fields(_parseFields, _encode);
 
   /// Creates an [IfNoneMatchHeader] with specific ETags.
   IfNoneMatchHeader.etags(super.etags) : super.etags();
@@ -63,24 +64,20 @@ final class IfNoneMatchHeader extends ETagConditionHeader {
   /// Creates an [IfNoneMatchHeader] with wildcard matching.
   const IfNoneMatchHeader.wildcard() : super.wildcard();
 
-  /// Parses the If-None-Match header value.
-  factory IfNoneMatchHeader.parse(final Iterable<String> values) {
-    return _parse(values);
-  }
+  IfNoneMatchHeader._owned(super.etags) : super._owned();
 
-  static IfNoneMatchHeader _parse(final Iterable<String> values) {
-    final parsed = WildcardListHeader.parse(values, (final String value) {
-      if (!ETagHeader.isValidETag(value)) {
-        throw const FormatException('Invalid ETag format');
-      }
-      return ETagHeader.parse(value);
-    });
+  /// Parses the If-None-Match header [values].
+  factory IfNoneMatchHeader.parse(final Iterable<String> values) =>
+      _parseFields([for (final value in values) latin1Bytes(value)]);
 
-    if (parsed.isWildcard) {
-      return const IfNoneMatchHeader.wildcard();
-    } else {
-      return IfNoneMatchHeader.etags(parsed.values);
-    }
+  /// The header from the wire bytes of its [fields].
+  static IfNoneMatchHeader _parseFields(final List<Uint8List> fields) {
+    final parsed = WildcardListHeader.parseFields(
+      fields,
+      ETagHeader.parseElement,
+    );
+    if (parsed.isWildcard) return const IfNoneMatchHeader.wildcard();
+    return IfNoneMatchHeader._owned(parsed.values);
   }
 
   static List<String> encodeHeader(final IfNoneMatchHeader header) {

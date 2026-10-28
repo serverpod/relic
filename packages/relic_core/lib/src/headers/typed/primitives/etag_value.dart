@@ -1,4 +1,8 @@
+import 'dart:typed_data';
+
 import 'package:meta/meta.dart';
+
+import 'byte_fields.dart';
 
 /// An HTTP entity-tag per [RFC 9110 section 8.8.3][rfc-etag].
 ///
@@ -45,24 +49,32 @@ final class ETagValue {
   /// quoted; surrounding whitespace is not allowed (callers should strip it
   /// at the field level).
   factory ETagValue.parse(final String source) {
+    final bytes = Uint8List(source.length);
+    for (var i = 0; i < source.length; i++) {
+      final c = source.codeUnitAt(i);
+      // A code unit no byte can be fails the etagc check below, as it did.
+      bytes[i] = c > 0xFF ? 0x7F : c;
+    }
+    return ETagValue.parseBytes(bytes);
+  }
+
+  /// [parse] over the wire bytes.
+  factory ETagValue.parseBytes(final Uint8List source) {
     var i = 0;
     var weak = false;
-    if (source.length >= 2 &&
-        source.codeUnitAt(0) == 0x57 && // W
-        source.codeUnitAt(1) == 0x2F) {
-      // /
+    if (source.length >= 2 && source[0] == 0x57 && source[1] == 0x2F) {
+      // W/
       weak = true;
       i = 2;
     }
-    if (i >= source.length || source.codeUnitAt(i) != _dquote) {
-      throw FormatException('expected opening DQUOTE', source, i);
+    if (i >= source.length || source[i] != _dquote) {
+      throw FormatException('expected opening DQUOTE', textOf(source), i);
     }
-    if (source.length - i < 2 ||
-        source.codeUnitAt(source.length - 1) != _dquote) {
-      throw FormatException('unterminated opaque-tag', source);
+    if (source.length - i < 2 || source[source.length - 1] != _dquote) {
+      throw FormatException('unterminated opaque-tag', textOf(source));
     }
     return ETagValue(
-      value: source.substring(i + 1, source.length - 1),
+      value: textOf(source, i + 1, source.length - 1),
       isWeak: weak,
     );
   }
