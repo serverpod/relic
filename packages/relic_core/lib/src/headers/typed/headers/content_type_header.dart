@@ -1,11 +1,14 @@
+import 'dart:typed_data';
+
 import 'package:collection/collection.dart';
 import 'package:http_parser/http_parser.dart' as http_parser;
 
 import '../../../../relic_core.dart';
+import '../primitives/byte_fields.dart';
 
 /// A class representing the HTTP Content-Type header.
 final class ContentTypeHeader {
-  static const codec = HeaderCodec.single(ContentTypeHeader.parse, __encode);
+  static const codec = HeaderCodec.bytes(_parseBytes, __encode);
   static List<String> __encode(final ContentTypeHeader value) => [
     value._encode(),
   ];
@@ -24,6 +27,11 @@ final class ContentTypeHeader {
   }) : parameters = Map.unmodifiable(_normalizeParameters(parameters));
 
   /// Parses the Content-Type header value and returns a [ContentTypeHeader].
+  /// [parse] over the wire bytes. `MediaType.parse` reads text, so the
+  /// bytes become a Latin-1 string first.
+  static ContentTypeHeader _parseBytes(final Uint8List bytes) =>
+      ContentTypeHeader.parse(textOf(bytes));
+
   factory ContentTypeHeader.parse(final String value) {
     final mediaType = http_parser.MediaType.parse(value);
     return ContentTypeHeader(

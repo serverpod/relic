@@ -1,27 +1,29 @@
-import '../../primitives/header_scanner.dart';
+import '../../primitives/byte_fields.dart';
+import '../../primitives/byte_scanner.dart';
 
 /// Extracts the `report-to` parameter value from already-split (top-level,
 /// quote-aware) `;` parameter segments (e.g. for COEP/COOP). Returns `null` if
 /// absent. A quoted value is decoded as an RFC 9110 `quoted-string`, with its
 /// `quoted-pair` escapes removed. The parameter name is matched
 /// case-insensitively.
-String? parseReportToParam(final Iterable<String> params) {
-  for (final raw in params) {
-    final p = raw.trim();
-    final eq = p.indexOf('=');
+String? parseReportToParam(final Iterable<ByteScanner> params) {
+  for (final param in params) {
+    final p = trimmed(param.source);
+    final eq = indexOfByte(p, 0x3D);
     if (eq < 0) continue;
-    if (p.substring(0, eq).trim().toLowerCase() != 'report-to') continue;
-    final rest = p.substring(eq + 1).trim();
-    if (!rest.startsWith('"')) return rest;
+    final nameEnd = trimEnd(p, 0, eq);
+    if (!equalsIgnoreAsciiCase(p, 0, nameEnd, 'report-to')) continue;
+    final rest = trimmed(p, eq + 1, p.length);
+    if (rest.isEmpty || rest[0] != 0x22) return textOf(rest);
     // Decode through the canonical reader so quoted-pair escapes are handled
     // exactly as elsewhere, rather than a divergent hand-rolled unescape.
-    final scanner = HeaderScanner(rest);
+    final scanner = ByteScanner(rest);
     final value = scanner.readQuotedString();
     scanner.skipOws();
     if (!scanner.atEnd) {
       throw FormatException(
         'unexpected characters after report-to value',
-        rest,
+        textOf(rest),
       );
     }
     return value;

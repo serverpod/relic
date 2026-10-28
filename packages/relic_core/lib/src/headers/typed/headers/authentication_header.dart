@@ -1,11 +1,15 @@
+import 'dart:typed_data';
+
 import 'package:collection/collection.dart';
 
 import '../../../../relic_core.dart';
+import '../primitives/byte_fields.dart';
+import '../primitives/byte_scanner.dart' show latin1Bytes;
 import 'util/auth_params.dart';
 
 /// A class representing the HTTP Authentication header.
 final class AuthenticationHeader {
-  static const codec = HeaderCodec.single(AuthenticationHeader.parse, __encode);
+  static const codec = HeaderCodec.bytes(_parseBytes, __encode);
   static List<String> __encode(final AuthenticationHeader value) => [
     value._encode(),
   ];
@@ -28,38 +32,38 @@ final class AuthenticationHeader {
   }) : parameters = List.unmodifiable(parameters);
 
   /// Parses the Authentication header value and returns an [AuthenticationHeader] instance.
-  factory AuthenticationHeader.parse(final String value) {
-    final trimmed = value.trim();
-    if (trimmed.isEmpty) {
+  factory AuthenticationHeader.parse(final String value) =>
+      _parseBytes(latin1Bytes(value));
+
+  /// [parse] over the wire bytes: the scheme, a space, then auth-params,
+  /// or a token68 when the rest is not a parameter list.
+  static AuthenticationHeader _parseBytes(final Uint8List bytes) {
+    final value = trimmed(bytes);
+    if (value.isEmpty) {
       throw const FormatException('Value cannot be empty');
     }
-
-    // Split into scheme and parameters part
-    final firstSpace = trimmed.indexOf(' ');
-    if (firstSpace == -1) {
+    final firstSpace = indexOfByte(value, 0x20);
+    if (firstSpace < 0) {
       throw const FormatException('Missing scheme or parameters');
     }
-
-    final scheme = trimmed.substring(0, firstSpace).trim();
-    final paramsString = trimmed.substring(firstSpace + 1).trim();
+    final scheme = textOf(trimmed(value, 0, firstSpace));
+    final params = trimmed(value, firstSpace + 1, value.length);
     final parameters = <AuthenticationParameter>[];
-
-    if (paramsString.isNotEmpty) {
-      final authParams = _tryParseAuthParams(paramsString);
+    if (params.isNotEmpty) {
+      final authParams = _tryParseAuthParams(params);
       if (authParams == null) {
-        parameters.add(AuthenticationParameter('', paramsString));
+        parameters.add(AuthenticationParameter('', textOf(params)));
       } else {
         parameters.addAll(authParams);
       }
     }
-
     return AuthenticationHeader._(scheme: scheme, parameters: parameters);
   }
 
   /// Parses [value] as an `#auth-param` list, returning `null` if it is not
   /// one so the caller can fall back to the `token68` form.
   static List<AuthenticationParameter>? _tryParseAuthParams(
-    final String value,
+    final Uint8List value,
   ) {
     final List<(String, String)> params;
     try {

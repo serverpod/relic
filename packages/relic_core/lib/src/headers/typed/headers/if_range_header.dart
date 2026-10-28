@@ -1,5 +1,9 @@
+import 'dart:typed_data';
+
 import 'package:http_parser/http_parser.dart';
 import '../../../../relic_core.dart';
+import '../primitives/byte_fields.dart';
+import '../primitives/byte_scanner.dart' show latin1Bytes;
 
 import 'etag_header.dart';
 
@@ -7,7 +11,7 @@ import 'etag_header.dart';
 ///
 /// The `If-Range` header can contain either an HTTP date or an ETag.
 final class IfRangeHeader {
-  static const codec = HeaderCodec.single(IfRangeHeader.parse, __encode);
+  static const codec = HeaderCodec.bytes(_parseBytes, __encode);
   static List<String> __encode(final IfRangeHeader value) => [value._encode()];
 
   /// The HTTP date if the `If-Range` header contains a date.
@@ -31,19 +35,28 @@ final class IfRangeHeader {
   /// Parses the `If-Range` header value and returns an [IfRangeHeader] instance.
   ///
   /// Determines if the value is an ETag or a date and creates the appropriate instance.
-  factory IfRangeHeader.parse(final String value) {
-    final trimmed = value.trim();
-    if (trimmed.isEmpty) {
+  factory IfRangeHeader.parse(final String value) =>
+      _parseBytes(latin1Bytes(value));
+
+  /// [parse] over the wire bytes: an entity-tag, else an HTTP-date.
+  static IfRangeHeader _parseBytes(final Uint8List bytes) {
+    final value = trimmed(bytes);
+    if (value.isEmpty) {
       throw const FormatException('Value cannot be empty');
     }
-
-    if (ETagHeader.isValidETag(trimmed)) {
-      return IfRangeHeader(etag: ETagHeader.parse(trimmed));
-    }
-
+    ETagValue? etag;
     try {
-      final parsedDate = parseHttpDate(trimmed);
-      return IfRangeHeader(lastModified: parsedDate);
+      etag = ETagValue.parseBytes(value);
+    } on FormatException {
+      etag = null;
+    }
+    if (etag != null) {
+      return IfRangeHeader(
+        etag: ETagHeader(value: etag.value, isWeak: etag.isWeak),
+      );
+    }
+    try {
+      return IfRangeHeader(lastModified: parseHttpDate(textOf(value)));
     } catch (_) {
       throw const FormatException('Invalid format');
     }

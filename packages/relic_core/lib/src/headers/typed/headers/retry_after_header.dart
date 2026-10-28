@@ -1,5 +1,9 @@
+import 'dart:typed_data';
+
 import 'package:http_parser/http_parser.dart';
 import '../../../../relic_core.dart';
+import '../primitives/byte_fields.dart';
+import '../primitives/byte_scanner.dart' show latin1Bytes;
 
 /// A class representing the HTTP Retry-After header.
 ///
@@ -7,7 +11,7 @@ import '../../../../relic_core.dart';
 /// The Retry-After header can contain either an HTTP date or a delay in seconds
 /// indicating when the client should retry the request.
 final class RetryAfterHeader {
-  static const codec = HeaderCodec.single(RetryAfterHeader.parse, __encode);
+  static const codec = HeaderCodec.bytes(_parseBytes, __encode);
   static List<String> __encode(final RetryAfterHeader value) => [
     value._encode(),
   ];
@@ -33,23 +37,34 @@ final class RetryAfterHeader {
   /// Parses the Retry-After header value and returns a [RetryAfterHeader] instance.
   ///
   /// This method checks if the value is an integer (for delay) or a date string.
-  factory RetryAfterHeader.parse(final String value) {
-    final trimmed = value.trim();
-    if (trimmed.isEmpty) {
+  factory RetryAfterHeader.parse(final String value) =>
+      _parseBytes(latin1Bytes(value));
+
+  /// [parse] over the wire bytes.
+  ///
+  /// A numeric value is a delay (`delta-seconds = 1*DIGIT`). A leading
+  /// sign is rejected: `-120` is negative and `+120` is not a valid
+  /// delta-seconds.
+  static RetryAfterHeader _parseBytes(final Uint8List bytes) {
+    final value = trimmed(bytes);
+    if (value.isEmpty) {
       throw const FormatException('Value cannot be empty');
     }
-
-    // A numeric value is a delay (delta-seconds = 1*DIGIT). Reject a leading
-    // sign: `-120` is negative and `+120` is not a valid delta-seconds.
-    if (RegExp(r'^[+-]?[0-9]+$').hasMatch(trimmed)) {
-      if (trimmed.startsWith('-')) {
+    final signed = value[0] == 0x2B || value[0] == 0x2D;
+    var digits = signed ? 1 : 0;
+    while (digits < value.length &&
+        value[digits] >= 0x30 &&
+        value[digits] <= 0x39) {
+      digits++;
+    }
+    if (digits == value.length && digits > (signed ? 1 : 0)) {
+      if (value[0] == 0x2D) {
         throw const FormatException('Delay cannot be negative');
       }
-      return RetryAfterHeader(delay: DeltaSeconds.parse(trimmed).seconds);
+      return RetryAfterHeader(delay: DeltaSeconds.parse(textOf(value)).seconds);
     }
     try {
-      final date = parseHttpDate(trimmed);
-      return RetryAfterHeader(date: date);
+      return RetryAfterHeader(date: parseHttpDate(textOf(value)));
     } catch (e) {
       throw const FormatException('Invalid date format');
     }
