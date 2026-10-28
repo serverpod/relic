@@ -37,11 +37,13 @@ import 'src/conformance/web_socket_origin_tests.dart';
 import 'src/conformance/web_socket_tests.dart';
 
 export 'src/conformance/conformance.dart';
+export 'src/conformance/framing_tests.dart';
 
 /// Declares the whole suite for one adapter.
 ///
 /// [bind] returns a fresh adapter factory each time it is called. `shared`
 /// is true when several isolates will call the factory for one server.
+/// [connect] opens a raw client connection, see [AdapterConformance].
 /// The three flags name what a transport may be unable to do, see
 /// [AdapterConformance]. The suite skips the tests that need it, with the
 /// reason.
@@ -49,6 +51,7 @@ void adapterConformance(
   String name, {
   required AdapterFactoryBuilder bind,
   required AdapterCapabilities capabilities,
+  SocketConnector connect = plainConnect,
   bool seesPeerGone = true,
   bool failsRespondMidStream = true,
   bool keepsPipelinedBytes = true,
@@ -57,6 +60,7 @@ void adapterConformance(
     name,
     bind: bind,
     capabilities: capabilities,
+    connect: connect,
     seesPeerGone: seesPeerGone,
     failsRespondMidStream: failsRespondMidStream,
     keepsPipelinedBytes: keepsPipelinedBytes,
