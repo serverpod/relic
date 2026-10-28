@@ -1,10 +1,14 @@
+import 'dart:typed_data';
+
 import '../../../../relic_core.dart';
+import '../primitives/byte_fields.dart';
+import '../primitives/byte_scanner.dart' show latin1Bytes;
 
 /// A class representing the HTTP Sec-Fetch-Mode header.
 ///
 /// This header indicates the mode of the request.
 final class SecFetchModeHeader {
-  static const codec = HeaderCodec.single(SecFetchModeHeader.parse, __encode);
+  static const codec = HeaderCodec.bytes(_parseBytes, __encode);
   static List<String> __encode(final SecFetchModeHeader value) => [
     value._encode(),
   ];
@@ -34,13 +38,16 @@ final class SecFetchModeHeader {
   /// Parses a [value] into a [SecFetchModeHeader]. A value outside the
   /// predefined set is rejected; new Fetch values are adopted by updating the
   /// set in a relic release rather than accepted ad hoc.
-  factory SecFetchModeHeader.parse(final String value) {
-    final trimmed = value.trim();
-    if (trimmed.isEmpty) {
+  factory SecFetchModeHeader.parse(final String value) =>
+      _parseBytes(latin1Bytes(value));
+
+  /// [parse] over the wire bytes.
+  static SecFetchModeHeader _parseBytes(final Uint8List bytes) {
+    final value = trimmed(bytes);
+    if (value.isEmpty) {
       throw const FormatException('Value cannot be empty');
     }
-
-    switch (trimmed) {
+    switch (textOf(value)) {
       case _cors:
         return cors;
       case _noCors:

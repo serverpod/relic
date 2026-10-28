@@ -1,6 +1,10 @@
+import 'dart:typed_data';
+
 import 'package:collection/collection.dart';
 
 import '../../../../relic_core.dart';
+import '../primitives/byte_fields.dart';
+import '../primitives/byte_scanner.dart' show latin1Bytes;
 
 /// A class representing the HTTP Accept-Ranges header.
 ///
@@ -8,7 +12,7 @@ import '../../../../relic_core.dart';
 /// `acceptable-ranges = 1#range-unit` (a comma-separated list). The legacy
 /// value `none` indicates the server does not support range requests.
 final class AcceptRangesHeader {
-  static const codec = HeaderCodec.single(AcceptRangesHeader.parse, __encode);
+  static const codec = HeaderCodec.bytes(_parseBytes, __encode);
   static List<String> __encode(final AcceptRangesHeader value) => [
     value._encode(),
   ];
@@ -26,13 +30,16 @@ final class AcceptRangesHeader {
   factory AcceptRangesHeader.bytes() => const AcceptRangesHeader._(['bytes']);
 
   /// Parses the Accept-Ranges header value as `1#range-unit`.
-  factory AcceptRangesHeader.parse(final String value) {
-    final units = value
-        .split(',')
-        .map((final u) => u.trim())
-        .where((final u) => u.isNotEmpty)
-        .map((final u) => Token.validate(u).toLowerCase())
-        .toList();
+  factory AcceptRangesHeader.parse(final String value) =>
+      _parseBytes(latin1Bytes(value));
+
+  /// [parse] over the wire bytes.
+  static AcceptRangesHeader _parseBytes(final Uint8List bytes) {
+    final elements = splitAll(bytes);
+    final units = List<String>.generate(
+      elements.length,
+      (final i) => tokenText(elements[i]).toLowerCase(),
+    );
     if (units.isEmpty) {
       throw const FormatException('Value cannot be empty');
     }

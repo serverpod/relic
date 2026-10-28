@@ -1,6 +1,9 @@
+import 'dart:typed_data';
+
 import 'package:collection/collection.dart';
 import '../../../../relic_core.dart';
-import '../../extension/string_list_extensions.dart';
+import '../primitives/byte_fields.dart';
+import '../primitives/byte_scanner.dart' show latin1Bytes;
 
 /// Typed representation of the `X-Forwarded-For` (XFF) HTTP header.
 ///
@@ -27,17 +30,31 @@ final class XForwardedForHeader {
   }
 
   /// Parses the `X-Forwarded-For` header values into an [XForwardedForHeader].
-  factory XForwardedForHeader.parse(final Iterable<String> values) {
-    final parsedAddresses = values.splitAndTrim(); // 'unknown' may repeat
-    if (parsedAddresses.isEmpty) {
+  factory XForwardedForHeader.parse(final Iterable<String> values) =>
+      _parseFields([for (final value in values) latin1Bytes(value)]);
+
+  /// Takes [addresses], a list the parser built, as its own.
+  const XForwardedForHeader._(this.addresses);
+
+  /// The header from the wire bytes of its [fields]. `unknown` may repeat,
+  /// so every element is kept.
+  static XForwardedForHeader _parseFields(final List<Uint8List> fields) {
+    final elements = splitFieldsAll(fields);
+    if (elements.isEmpty) {
       throw const FormatException('Value cannot be empty');
     }
-    return XForwardedForHeader(parsedAddresses);
+    return XForwardedForHeader._(
+      List.generate(
+        elements.length,
+        (final i) => textOf(elements[i]),
+        growable: false,
+      ),
+    );
   }
 
   /// The [HeaderCodec] for [XForwardedForHeader].
-  static const codec = HeaderCodec<XForwardedForHeader>(
-    XForwardedForHeader.parse,
+  static const codec = HeaderCodec<XForwardedForHeader>.fields(
+    _parseFields,
     __encode,
   );
 

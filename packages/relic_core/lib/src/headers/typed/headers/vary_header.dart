@@ -1,7 +1,10 @@
+import 'dart:typed_data';
+
 import 'package:collection/collection.dart';
 
 import '../../../../relic_core.dart';
-import '../../extension/string_list_extensions.dart';
+import '../primitives/byte_fields.dart';
+import '../primitives/byte_scanner.dart' show latin1Bytes;
 
 /// A class representing the HTTP Vary header.
 ///
@@ -9,7 +12,7 @@ import '../../extension/string_list_extensions.dart';
 /// and can also handle the wildcard value "*", which indicates that the
 /// response varies on all request headers.
 final class VaryHeader {
-  static const codec = HeaderCodec(VaryHeader.parse, ___encode);
+  static const codec = HeaderCodec.fields(_parseFields, ___encode);
 
   /// A list of headers that the response varies on.
   /// If the list contains only "*", it means all headers are varied on.
@@ -34,24 +37,35 @@ final class VaryHeader {
   /// Parses the Vary header value and returns a [VaryHeader] instance.
   ///
   /// This method handles the wildcard value "*" or splits the value by commas and trims each field.
-  factory VaryHeader.parse(final Iterable<String> values) {
-    final splitValues = values.splitTrimAndFilterUnique();
+  factory VaryHeader.parse(final Iterable<String> values) =>
+      _parseFields([for (final value in values) latin1Bytes(value)]);
 
-    if (splitValues.isEmpty) {
+  /// Takes [fields], a list the parser built, as its own.
+  VaryHeader._(this.fields) : isWildcard = false;
+
+  /// The header from the wire bytes of its [fields].
+  static VaryHeader _parseFields(final List<Uint8List> fields) {
+    final elements = splitFieldsUnique(fields);
+    if (elements.isEmpty) {
       throw const FormatException('Value cannot be empty');
     }
-
-    if (splitValues.length == 1 && splitValues.first == '*') {
-      return VaryHeader.wildcard();
+    var wildcards = 0;
+    for (final element in elements) {
+      if (isWildcardElement(element)) wildcards++;
     }
-
-    if (splitValues.length > 1 && splitValues.contains('*')) {
+    if (wildcards > 0) {
+      if (elements.length == 1) return VaryHeader.wildcard();
       throw const FormatException(
         'Wildcard (*) cannot be used with other values',
       );
     }
-
-    return VaryHeader.headers(fields: splitValues);
+    return VaryHeader._(
+      List.generate(
+        elements.length,
+        (final i) => lowerTextOf(elements[i]),
+        growable: false,
+      ),
+    );
   }
 
   /// Constructs an instance allowing all headers to vary (`*`).

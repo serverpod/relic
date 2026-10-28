@@ -1,13 +1,16 @@
+import 'dart:typed_data';
+
 import 'package:collection/collection.dart';
 
 import '../../../../relic_core.dart';
-import '../../extension/string_list_extensions.dart';
+import '../primitives/byte_fields.dart';
+import '../primitives/byte_scanner.dart' show latin1Bytes;
 
 /// A class representing the HTTP Content-Language header.
 ///
 /// This class manages the language codes specified in the Content-Language header.
 final class ContentLanguageHeader {
-  static const codec = HeaderCodec(ContentLanguageHeader.parse, __encode);
+  static const codec = HeaderCodec.fields(_parseFields, __encode);
   static List<String> __encode(final ContentLanguageHeader value) => [
     value._encode(),
   ];
@@ -23,25 +26,31 @@ final class ContentLanguageHeader {
   /// Parses the Content-Language header value and returns a [ContentLanguageHeader] instance.
   ///
   /// This method splits the header value by commas and trims each language code.
-  factory ContentLanguageHeader.parse(final Iterable<String> values) {
-    final splitValues = values.splitTrimAndFilterUnique();
-    if (splitValues.isEmpty) {
+  factory ContentLanguageHeader.parse(final Iterable<String> values) =>
+      _parseFields([for (final value in values) latin1Bytes(value)]);
+
+  /// Takes [languages], a list the parser built, as its own.
+  const ContentLanguageHeader._(this.languages);
+
+  /// The header from the wire bytes of its [fields].
+  ///
+  /// Each tag is checked against the full BCP 47 grammar (RFC 5646), so
+  /// `es-419`, `zh-Hant-TW` and `x-foo` pass, and kept in canonical case
+  /// so equality and hashing ignore case (`en-US` == `EN-us`).
+  static ContentLanguageHeader _parseFields(final List<Uint8List> fields) {
+    final elements = splitFieldsUnique(fields);
+    if (elements.isEmpty) {
       throw const FormatException('Value cannot be empty');
     }
-
-    final languages = splitValues.map((final language) {
-      // Validate against the full BCP 47 grammar (RFC 5646) rather than a
-      // narrow regex, so tags like `es-419`, `zh-Hant-TW`, and `x-foo` are
-      // accepted, and store the canonical-cased form so equality and hashing
-      // are case-insensitive (`en-US` == `EN-us`).
-      try {
-        return LanguageTag.parse(language).encode();
-      } on FormatException {
-        throw const FormatException('Invalid language code');
-      }
-    }).toList();
-
-    return ContentLanguageHeader.languages(languages);
+    return ContentLanguageHeader._(
+      List.generate(elements.length, (final i) {
+        try {
+          return LanguageTag.parse(textOf(elements[i])).encode();
+        } on FormatException {
+          throw const FormatException('Invalid language code');
+        }
+      }, growable: false),
+    );
   }
 
   /// Converts the [ContentLanguageHeader] instance into a string representation

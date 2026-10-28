@@ -1,4 +1,8 @@
+import 'dart:typed_data';
+
 import '../../../../relic_core.dart';
+import '../primitives/byte_fields.dart';
+import '../primitives/byte_scanner.dart' show latin1Bytes;
 
 /// The HTTP `Access-Control-Allow-Origin` response header.
 ///
@@ -12,10 +16,7 @@ import '../../../../relic_core.dart';
 /// behave in the wild. Trailing slashes, paths, queries, and fragments are
 /// also rejected.
 final class AccessControlAllowOriginHeader {
-  static const codec = HeaderCodec.single(
-    AccessControlAllowOriginHeader.parse,
-    __encode,
-  );
+  static const codec = HeaderCodec.bytes(_parseBytes, __encode);
   static List<String> __encode(final AccessControlAllowOriginHeader value) => [
     value._encode(),
   ];
@@ -41,15 +42,21 @@ final class AccessControlAllowOriginHeader {
   ///
   /// Throws [FormatException] if [value] is empty or is not a valid origin
   /// per [Origin.parse].
-  factory AccessControlAllowOriginHeader.parse(final String value) {
-    final trimmed = value.trim();
-    if (trimmed.isEmpty) {
+  factory AccessControlAllowOriginHeader.parse(final String value) =>
+      _parseBytes(latin1Bytes(value));
+
+  /// [parse] over the wire bytes. `Origin.parse` reads text.
+  static AccessControlAllowOriginHeader _parseBytes(final Uint8List bytes) {
+    final value = trimmed(bytes);
+    if (value.isEmpty) {
       throw const FormatException('Value cannot be empty');
     }
-    if (trimmed == '*') {
+    if (isWildcardElement(value)) {
       return const AccessControlAllowOriginHeader.wildcard();
     }
-    return AccessControlAllowOriginHeader.origin(origin: Origin.parse(trimmed));
+    return AccessControlAllowOriginHeader.origin(
+      origin: Origin.parse(textOf(value)),
+    );
   }
 
   String _encode() => origin?.encode() ?? '*';
