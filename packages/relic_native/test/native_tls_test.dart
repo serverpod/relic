@@ -147,6 +147,23 @@ void main() {
     expect(await _readString(response), 'hello');
   });
 
+  test('Given an HTTPS server whose chain runs through an intermediate, '
+      'when a client that trusts only the root sends a request, '
+      'then the answer arrives.', () async {
+    server = await serveNative(
+      (_) => Response.ok(body: Body.fromString('hello')),
+      tls: NativeTls.fromFiles(
+        certificateChain: 'test/certs/localhost_chain_cert.pem',
+        privateKey: 'test/certs/localhost_key.pem',
+      ),
+    );
+
+    final response = await get('/');
+
+    expect(response.statusCode, 200);
+    expect(await _readString(response), 'hello');
+  });
+
   test('Given an HTTPS server with an Ed25519 key, '
       'when openssl sends a request, '
       'then the answer arrives.', () async {
@@ -389,6 +406,26 @@ void main() {
           (e) => e.message,
           'message',
           contains('private key'),
+        ),
+      ),
+    );
+  });
+
+  test('Given a certificate chain whose certificate has expired, '
+      'when a server binds with it, '
+      'then the bind throws a TlsException.', () async {
+    final tls = NativeTls.fromFiles(
+      certificateChain: 'test/certs/localhost_expired_cert.pem',
+      privateKey: 'test/certs/localhost_key.pem',
+    );
+
+    await expectLater(
+      NativeAdapter.bind(InternetAddress.loopbackIPv4, tls: tls),
+      throwsA(
+        isA<TlsException>().having(
+          (e) => e.message,
+          'message',
+          contains('certificate chain'),
         ),
       ),
     );
