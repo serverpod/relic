@@ -17,7 +17,10 @@ var _line = Uint8List(0);
 /// a format.
 ///
 /// Time comes from `package:clock`, so a test or a simulation that runs
-/// under `withClock` gets its own dates. The cache is per clock.
+/// under `withClock` gets its own dates. The cache is per clock. The system
+/// clock gets a dart:core [Stopwatch], a monotonic counter read. A
+/// substituted clock gets its own stopwatch, which reads that clock's
+/// `now` on every elapsed read, so the cache follows the clock it is told.
 String httpDate() {
   _refresh();
   return _value;
@@ -36,7 +39,10 @@ void _refresh() {
   final source = clock;
   if (!identical(source, _source)) {
     _source = source;
-    _elapsed = source.stopwatch()..start();
+    _elapsed = identical(source, const Clock())
+        ? Stopwatch()
+        : source.stopwatch();
+    _elapsed.start();
     _refreshAtMs = -1;
   }
   final ms = _elapsed.elapsedMilliseconds;
