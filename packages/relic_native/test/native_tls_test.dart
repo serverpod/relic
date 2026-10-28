@@ -219,6 +219,23 @@ void main() {
     expect(await _readString(response), 'https://localhost:${server!.port}/p');
   });
 
+  test('Given an HTTPS server, '
+      'when an HTTP/1.0 request without a Host header arrives, '
+      'then the handler sees an https URL on the listener.', () async {
+    server = await serveNative(_echoUrl, tls: _tls('localhost'));
+    final socket = await _secureConnect(server!.port);
+
+    socket.write('GET /p HTTP/1.0\r\n\r\n');
+    await socket.flush();
+    final reply = await utf8
+        .decodeStream(socket)
+        .timeout(const Duration(seconds: 5));
+    socket.destroy();
+
+    expect(reply, startsWith('HTTP/1.1 200 OK\r\n'));
+    expect(reply, endsWith('https://127.0.0.1:${server!.port}/p'));
+  });
+
   test('Given an HTTPS server that pipes the request body into the response, '
       'when a client posts a body far over the inline limit, '
       'then the same bytes come back', () async {
