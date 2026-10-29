@@ -50,16 +50,78 @@ final class CookieHeader {
       throw const FormatException('Value cannot be empty');
     }
     final cookies = <Cookie>[];
+    final classes = cookieByteClasses;
     final length = bytes.length;
-    var start = 0;
-    while (start <= length) {
-      var end = start;
-      while (end < length && bytes[end] != 0x3B) {
-        end++;
+    var i = 0;
+    // One pass per segment: the name up to `=`, then the value up to `;`,
+    // each byte classified once. The segment is a cookie when the name is
+    // one run of name characters and the value one run of cookie-octets,
+    // inside one pair of double quotes or not, whitespace around both
+    // trimmed as `String.trim` trims it.
+    while (i <= length) {
+      while (i < length && classes[bytes[i]] & cookieWhitespace != 0) {
+        i++;
       }
-      final cookie = Cookie._scanBytes(bytes, start, end);
-      if (cookie != null) cookies.add(cookie);
-      start = end + 1;
+      final nameStart = i;
+      var nameEnd = i;
+      var ok = true;
+      var b = 0;
+      while (i < length) {
+        b = bytes[i];
+        if (b == 0x3D || b == 0x3B) break;
+        final c = classes[b];
+        if (c & cookieNameChar != 0) {
+          if (nameEnd != i && nameEnd != nameStart) ok = false;
+          nameEnd = i + 1;
+        } else if (c & cookieWhitespace == 0) {
+          ok = false;
+        }
+        i++;
+      }
+      if (i == length || b == 0x3B) {
+        // No `=`: not a cookie.
+        i++;
+        continue;
+      }
+      i++;
+      while (i < length && classes[bytes[i]] & cookieWhitespace != 0) {
+        i++;
+      }
+      final valueStart = i;
+      var valueEnd = i;
+      var quotes = 0;
+      var lastQuote = -1;
+      while (i < length) {
+        b = bytes[i];
+        if (b == 0x3B) break;
+        final c = classes[b];
+        if (c & cookieWhitespace != 0) {
+          i++;
+          continue;
+        }
+        if (valueEnd != i && valueEnd != valueStart) ok = false;
+        if (b == 0x22) {
+          if (quotes == 0 && i != valueStart) ok = false;
+          quotes++;
+          lastQuote = i;
+        } else if (c & cookieOctet == 0) {
+          ok = false;
+        }
+        valueEnd = i + 1;
+        i++;
+      }
+      i++;
+      if (quotes != 0 && (quotes != 2 || lastQuote != valueEnd - 1)) {
+        ok = false;
+      }
+      if (ok && nameEnd > nameStart) {
+        cookies.add(
+          Cookie._(
+            String.fromCharCodes(bytes, nameStart, nameEnd),
+            String.fromCharCodes(bytes, valueStart, valueEnd),
+          ),
+        );
+      }
     }
     if (cookies.isEmpty) {
       throw const FormatException('No valid cookies in Cookie header');
@@ -116,40 +178,6 @@ class Cookie {
       value = validateCookieValue(value);
 
   const Cookie._(this.name, this.value);
-
-  /// The cookie in `bytes[start..end)`, one segment of a Cookie header, or
-  /// null when the segment is not one.
-  ///
-  /// A segment is not a cookie without an `=`, or with a character outside
-  /// the grammar. Nor is a nameless `=value` or a bare `=`, which no client
-  /// meaningfully set. Whitespace is trimmed as `String.trim` trims it.
-  static Cookie? _scanBytes(final Uint8List bytes, int start, int end) {
-    while (start < end && isTrimWhitespace(bytes[start])) {
-      start++;
-    }
-    while (end > start && isTrimWhitespace(bytes[end - 1])) {
-      end--;
-    }
-    var eq = start;
-    while (eq < end && bytes[eq] != 0x3D) {
-      eq++;
-    }
-    if (eq == end) return null;
-    var nameEnd = eq;
-    while (nameEnd > start && isTrimWhitespace(bytes[nameEnd - 1])) {
-      nameEnd--;
-    }
-    if (!isCookieNameBytes(bytes, start, nameEnd)) return null;
-    var valueStart = eq + 1;
-    while (valueStart < end && isTrimWhitespace(bytes[valueStart])) {
-      valueStart++;
-    }
-    if (!isCookieValueBytes(bytes, valueStart, end)) return null;
-    return Cookie._(
-      String.fromCharCodes(bytes, start, nameEnd),
-      String.fromCharCodes(bytes, valueStart, end),
-    );
-  }
 
   factory Cookie.parse(final String value) {
     // Split on the FIRST '=' only; RFC 6265 cookie-octets permit '=' to
