@@ -44,6 +44,7 @@ const zio = @import("zio");
 const tls = @import("tls");
 const dart = @import("dart_dl");
 const header_names = @import("header_names.zig");
+const name_lookup = @import("name_lookup.zig");
 
 const max_head = 16 * 1024;
 const max_headers = 128;
@@ -1779,30 +1780,35 @@ const ParsedHead = struct { head: Head, count: u32, host_slot: i32 };
 /// which sampled at four percent of the isolate.
 fn parseHead(bytes: []const u8, head_copy: []u8, slots: []HeaderSlot) ParseHeadError!ParsedHead {
     if (!std.mem.endsWith(u8, bytes, "\r\n\r\n")) return error.MalformedHead;
+    var lines: [max_headers + 2]Line = undefined;
+    const count = try scanHead(bytes, &lines);
     var head: Head = undefined;
     var n: u32 = 0;
     var host_slot: i32 = -1;
     var transfer_encoded = false;
-    var line_start: usize = 0;
-    while (std.mem.findScalarPos(u8, bytes, line_start, '\n')) |lf| : (line_start = lf + 1) {
-        if (lf == 0 or bytes[lf - 1] != '\r') return error.MalformedHead;
-        const line = bytes[line_start .. lf - 1];
-        if (line_start == 0) {
+    for (lines[0..count], 0..) |ln, li| {
+        const line_start: usize = ln.start;
+        const line = bytes[ln.start..ln.end];
+        if (li == 0) {
             head = try parseRequestLine(line);
             continue;
         }
         if (line.len == 0) continue;
         if (line[0] == ' ' or line[0] == '\t') return error.MalformedHead;
-        const colon = std.mem.findScalar(u8, line, ':') orelse return error.MalformedHead;
-        const name = line[0..colon];
-        if (!isToken(name) or hasControl(line[colon + 1 ..])) return error.MalformedHead;
+        if (ln.colon == Line.no_colon) return error.MalformedHead;
+        const colon: usize = ln.colon - ln.start;
         if (n == slots.len) return error.TooManyHeaders;
-        const value = std.mem.trim(u8, line[colon + 1 ..], " \t");
-        const id = header_names.lookup(name);
+        const id = lookupName(bytes, line_start, colon) orelse return error.MalformedHead;
+        // OWS around the value is SP / HTAB (RFC 9112 5).
+        var value_start = colon + 1;
+        while (value_start < line.len and (line[value_start] == ' ' or line[value_start] == '\t')) value_start += 1;
+        var value_end = line.len;
+        while (value_end > value_start and (line[value_end - 1] == ' ' or line[value_end - 1] == '\t')) value_end -= 1;
+        const value = line[value_start..value_end];
         slots[n] = .{
             .name_off = @intCast(line_start),
             .name_id = id,
-            .value_off = @intCast(line_start + colon + 1 + (value.ptr - line[colon + 1 ..].ptr)),
+            .value_off = @intCast(line_start + value_start),
             .value_len = @intCast(value.len),
         };
         switch (id) {
@@ -1866,6 +1872,112 @@ fn dartMethod(method: std.http.Method) ?u8 {
 
 /// `METHOD target HTTP/1.x`, with the target taken as everything between
 /// the first space and the last.
+/// A line of the head: `bytes[start..end)` without its CR LF, and the
+/// offset of its first colon, or `no_colon`.
+const Line = struct {
+    start: u32,
+    colon: u32,
+    end: u32,
+
+    const no_colon = std.math.maxInt(u32);
+};
+
+/// Splits the head into `lines` and checks it in one pass, sixteen bytes
+/// at a time: no control character but HTAB and the CR LF pairs, so a
+/// bare LF, a stray CR and DEL are MalformedHead, and more lines than
+/// `lines` holds is TooManyHeaders. Returns the line count.
+fn scanHead(bytes: []const u8, lines: []Line) ParseHeadError!usize {
+    const Bytes16 = @Vector(16, u8);
+    // The previous byte was a CR, so this one must be the LF.
+    var after_cr = false;
+    var count: usize = 0;
+    var line_start: u32 = 0;
+    var colon: u32 = Line.no_colon;
+    var i: usize = 0;
+    while (i + 16 <= bytes.len) : (i += 16) {
+        const block: Bytes16 = bytes[i..][0..16].*;
+        const low: u16 = @bitCast(block < @as(Bytes16, @splat(' ')));
+        const tab: u16 = @bitCast(block == @as(Bytes16, @splat('\t')));
+        const del: u16 = @bitCast(block == @as(Bytes16, @splat(0x7f)));
+        const cr: u16 = @bitCast(block == @as(Bytes16, @splat('\r')));
+        const lf: u16 = @bitCast(block == @as(Bytes16, @splat('\n')));
+        const col: u16 = @bitCast(block == @as(Bytes16, @splat(':')));
+        if (del != 0 or (low & ~tab) != (cr | lf)) return error.MalformedHead;
+        // Bit i of cr wants bit i + 1 of lf, and only those.
+        if (((cr << 1) | @as(u16, @intFromBool(after_cr))) != lf) return error.MalformedHead;
+        after_cr = cr >> 15 != 0;
+        var events = lf | col;
+        while (events != 0) : (events &= events - 1) {
+            const bit: u4 = @intCast(@ctz(events));
+            const at: u32 = @intCast(i + bit);
+            if (lf >> bit & 1 != 0) {
+                if (count == lines.len) return error.TooManyHeaders;
+                lines[count] = .{ .start = line_start, .colon = colon, .end = at - 1 };
+                count += 1;
+                line_start = at + 1;
+                colon = Line.no_colon;
+            } else if (colon == Line.no_colon) {
+                colon = at;
+            }
+        }
+    }
+    for (bytes[i..], i..) |c, at| {
+        const is_cr = c == '\r';
+        const is_lf = c == '\n';
+        if (c == 0x7f or (c < ' ' and c != '\t' and !is_cr and !is_lf)) return error.MalformedHead;
+        if (after_cr != is_lf) return error.MalformedHead;
+        after_cr = is_cr;
+        if (is_lf) {
+            if (count == lines.len) return error.TooManyHeaders;
+            lines[count] = .{ .start = line_start, .colon = colon, .end = @intCast(at - 1) };
+            count += 1;
+            line_start = @intCast(at + 1);
+            colon = Line.no_colon;
+        } else if (c == ':' and colon == Line.no_colon) {
+            colon = @intCast(at);
+        }
+    }
+    if (after_cr) return error.MalformedHead;
+    return count;
+}
+
+/// The id of the header name `bytes[start..][0..len]`, -1 for a token
+/// the table does not know, or null when it is not a token. The name is
+/// lower-cased sixteen bytes at a time, read straight from the head
+/// where sixteen bytes are there, for one hashed lookup; a known name
+/// is a token by construction, so only a stranger is checked byte by
+/// byte.
+fn lookupName(bytes: []const u8, start: usize, len: usize) ?i32 {
+    if (len == 0) return null;
+    const name = bytes[start..][0..len];
+    if (len <= name_lookup.max_len) {
+        const Bytes16 = @Vector(16, u8);
+        const zero: Bytes16 = @splat(0);
+        var lower: [name_lookup.max_len]u8 = undefined;
+        var i: usize = 0;
+        while (i < len) : (i += 16) {
+            var v: Bytes16 = undefined;
+            if (start + i + 16 <= bytes.len) {
+                v = bytes[start + i ..][0..16].*;
+            } else {
+                var block: [16]u8 = @splat(0);
+                const take = len - i;
+                @memcpy(block[0..take], name[i..][0..take]);
+                v = block;
+            }
+            // Zeros past the name, as the table's names are padded.
+            const keep = std.simd.iota(u8, 16) < @as(Bytes16, @splat(@intCast(@min(16, len - i))));
+            v = @select(u8, keep, v, zero);
+            const upper = (v >= @as(Bytes16, @splat('A'))) & (v <= @as(Bytes16, @splat('Z')));
+            lower[i..][0..16].* = v | @select(u8, upper, @as(Bytes16, @splat(0x20)), zero);
+        }
+        const id = name_lookup.lookupPadded(&lower, len);
+        if (id >= 0) return id;
+    }
+    if (!isToken(name)) return null;
+    return -1;
+}
+
 fn parseRequestLine(line: []const u8) ParseHeadError!Head {
     if (line.len < 10) return error.MalformedHead;
     const method_end = std.mem.findScalar(u8, line, ' ') orelse return error.MalformedHead;
@@ -3081,6 +3193,53 @@ test "head: a request target is visible ASCII and nothing else" {
     try std.testing.expect(isTarget("/0123456789abcdef0123456789abcdef/end"));
     try std.testing.expect(!isTarget("/0123456789abcdef0123456 89abcdef"));
     try std.testing.expect(!isTarget("/0123456789abcdef0123456789abcdef\x80"));
+}
+
+test {
+    _ = name_lookup;
+}
+
+test "head: scanHead splits lines at CR LF and takes HTAB, nothing else below space" {
+    var lines: [8]Line = undefined;
+    try std.testing.expectEqual(@as(usize, 4), try scanHead("GET / HTTP/1.1\r\nHost: a\r\nX: b\tc:d\r\n\r\n", &lines));
+    try std.testing.expectEqual(Line{ .start = 0, .colon = Line.no_colon, .end = 14 }, lines[0]);
+    try std.testing.expectEqual(Line{ .start = 16, .colon = 20, .end = 23 }, lines[1]);
+    try std.testing.expectEqual(Line{ .start = 25, .colon = 26, .end = 33 }, lines[2]);
+    try std.testing.expectEqual(Line{ .start = 35, .colon = Line.no_colon, .end = 35 }, lines[3]);
+    try std.testing.expectEqual(@as(usize, 0), try scanHead("", &lines));
+    try std.testing.expectError(error.MalformedHead, scanHead("GET / HTTP/1.1\nHost: a\r\n\r\n", &lines));
+    try std.testing.expectError(error.MalformedHead, scanHead("GET / HTTP/1.1\r\nHost: a\rb\r\n\r\n", &lines));
+    try std.testing.expectError(error.MalformedHead, scanHead("GET / HTTP/1.1\r\nHost: a\x7f\r\n\r\n", &lines));
+    try std.testing.expectError(error.MalformedHead, scanHead("GET / HTTP/1.1\r\nHost: a\x00\r\n\r\n", &lines));
+    try std.testing.expectError(error.MalformedHead, scanHead("0123456789abcde\r\n0123456789abcd\x01\r\n", &lines));
+    // A CR LF pair across a sixteen byte boundary.
+    try std.testing.expectEqual(@as(usize, 2), try scanHead("0123456789abcde\r\n0123456789abcde\r\n", &lines));
+    try std.testing.expectError(error.MalformedHead, scanHead("0123456789abcde\r\r\n", &lines));
+    try std.testing.expectError(error.MalformedHead, scanHead("a\r", &lines));
+    var two: [2]Line = undefined;
+    try std.testing.expectError(error.TooManyHeaders, scanHead("a\r\nb\r\nc\r\n", &two));
+}
+
+test "head: lookupName knows a name in any case and tells a token from a stranger" {
+    const name = struct {
+        fn of(text: []const u8) ?i32 {
+            return lookupName(text, 0, text.len);
+        }
+    }.of;
+    try std.testing.expectEqual(@as(?i32, header_names.host), name("Host"));
+    try std.testing.expectEqual(@as(?i32, header_names.host), name("HOST"));
+    try std.testing.expectEqual(@as(?i32, header_names.host), lookupName("Host: example.com\r\n", 0, 4));
+    try std.testing.expectEqual(@as(?i32, header_names.content_security_policy_report_only), name("Content-Security-Policy-Report-Only"));
+    try std.testing.expectEqual(@as(?i32, header_names.cookie), lookupName("x\r\nCookie: a=b\r\n", 3, 6));
+    try std.testing.expectEqual(@as(?i32, -1), name("X-Custom_1"));
+    try std.testing.expectEqual(@as(?i32, -1), name("Hosts"));
+    try std.testing.expectEqual(@as(?i32, null), name(""));
+    try std.testing.expectEqual(@as(?i32, null), name("Bad Name"));
+    try std.testing.expectEqual(@as(?i32, null), name("Host\x80"));
+    var long: [70]u8 = @splat('x');
+    try std.testing.expectEqual(@as(?i32, -1), name(&long));
+    long[65] = '(';
+    try std.testing.expectEqual(@as(?i32, null), name(long[0..66]));
 }
 
 test "head: HTTP/1.1 needs one Host and HTTP/1.0 may have none" {
