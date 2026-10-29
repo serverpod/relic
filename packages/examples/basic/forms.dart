@@ -11,9 +11,10 @@ Future<void> main() async {
   final app = RelicApp()
     ..get('/', _home)
     ..post('/simple', _simpleForm)
+    ..post('/signup', _signup)
     ..post('/multiple-values', _multipleValues)
-    ..post('/upload', (final req) => _upload(req, uploadDir))
-    ..post('/limited-upload', (final req) => _limitedUpload(req, uploadDir))
+    ..post('/upload', (req) => _upload(req, uploadDir))
+    ..post('/limited-upload', (req) => _limitedUpload(req, uploadDir))
     ..post('/stream-upload', _streamUpload);
 
   final server = await app.serve();
@@ -21,11 +22,11 @@ Future<void> main() async {
   stdout.writeln('Temp upload directory: ${uploadDir.path}');
 }
 
-Response _home(final Request req) {
+Response _home(Request req) {
   return _page(title: 'Relic form example');
 }
 
-Future<Response> _simpleForm(final Request req) async {
+Future<Response> _simpleForm(Request req) async {
   try {
     final form = await req.urlEncodedForm();
     return _resultPage(req, _formResult(form));
@@ -34,7 +35,23 @@ Future<Response> _simpleForm(final Request req) async {
   }
 }
 
-Future<Response> _multipleValues(final Request req) async {
+// doctag<forms-typed-fields>
+const nameField = StringFormField('name');
+const ageField = IntFormField('age');
+const colorField = StringFormField('color');
+
+Future<Response> _signup(Request req) async {
+  final form = await req.formData();
+  final name = form.fields.get(nameField); // String, throws when absent
+  final age = form.fields(ageField); // int?, null when absent
+  final colors = form.fields.getAll(colorField); // every value, in order
+  return Response.ok(
+    body: Body.fromString('$name, age ${age ?? 'unknown'}, likes $colors\n'),
+  );
+}
+// end:doctag<forms-typed-fields>
+
+Future<Response> _multipleValues(Request req) async {
   try {
     final form = await req.formData();
     return _resultPage(req, _formResult(form));
@@ -43,7 +60,8 @@ Future<Response> _multipleValues(final Request req) async {
   }
 }
 
-Future<Response> _upload(final Request req, final Directory uploadDir) async {
+// doctag<forms-upload>
+Future<Response> _upload(Request req, Directory uploadDir) async {
   MultipartFormData? form;
   try {
     form = await req.multipartForm(
@@ -56,11 +74,10 @@ Future<Response> _upload(final Request req, final Directory uploadDir) async {
     await form?.dispose();
   }
 }
+// end:doctag<forms-upload>
 
-Future<Response> _limitedUpload(
-  final Request req,
-  final Directory uploadDir,
-) async {
+// doctag<forms-limits>
+Future<Response> _limitedUpload(Request req, Directory uploadDir) async {
   MultipartFormData? form;
   try {
     form = await req.multipartForm(
@@ -82,8 +99,10 @@ Future<Response> _limitedUpload(
     await form?.dispose();
   }
 }
+// end:doctag<forms-limits>
 
-Future<Response> _streamUpload(final Request req) async {
+// doctag<forms-stream>
+Future<Response> _streamUpload(Request req) async {
   try {
     final lines = <String>[];
 
@@ -112,8 +131,9 @@ Future<Response> _streamUpload(final Request req) async {
     return _formError(req, error);
   }
 }
+// end:doctag<forms-stream>
 
-Response _formError(final Request req, final FormException error) {
+Response _formError(Request req, FormException error) {
   return _resultPage(
     req,
     'FormException\nstatus: ${error.statusCode}\nmessage: ${error.message}',
@@ -121,11 +141,7 @@ Response _formError(final Request req, final FormException error) {
   );
 }
 
-Response _resultPage(
-  final Request req,
-  final String body, {
-  final int statusCode = 200,
-}) {
+Response _resultPage(Request req, String body, {int statusCode = 200}) {
   final text =
       '''
 method: ${req.method.name}
@@ -138,9 +154,9 @@ $body
 }
 
 Response _page({
-  required final String title,
-  final String result = '',
-  final int statusCode = 200,
+  required String title,
+  String result = '',
+  int statusCode = 200,
 }) {
   return Response(
     statusCode,
@@ -171,6 +187,16 @@ String _forms() {
     <label>Email <input type="email" name="email" value="nova@example.com"></label>
     <label>Message <textarea name="message">Hello from a normal HTML form.</textarea></label>
     <button>Submit simple form</button>
+  </form>
+
+  <form method="post" action="/signup">
+    <h2>Typed fields</h2>
+    <p>Uses <code>form.fields.get(nameField)</code>, <code>form.fields(ageField)</code> and <code>form.fields.getAll(colorField)</code>.</p>
+    <label>Name <input name="name" value="Nova"></label>
+    <label>Age <input name="age" value="27"></label>
+    <label><input type="checkbox" name="color" value="red" checked> Red</label>
+    <label><input type="checkbox" name="color" value="blue" checked> Blue</label>
+    <button>Sign up</button>
   </form>
 
   <form method="post" action="/multiple-values">
@@ -217,7 +243,7 @@ String _forms() {
 ''';
 }
 
-String _formResult(final FormData form) {
+String _formResult(FormData form) {
   final lines = <String>[];
   for (final entry in form.entries) {
     switch (entry) {
@@ -235,7 +261,7 @@ String _formResult(final FormData form) {
   return lines.isEmpty ? '(no fields or files)' : lines.join('\n');
 }
 
-String _escape(final Object? value) {
+String _escape(Object? value) {
   return const HtmlEscape().convert(value?.toString() ?? '');
 }
 

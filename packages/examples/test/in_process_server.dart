@@ -16,10 +16,10 @@ final class InProcessAdapter extends Fake implements Adapter {
   List<Listener> get listeners => const [];
 
   @override
-  void start(final ExchangeSink sink) => _sink = sink;
+  void start(ExchangeSink sink) => _sink = sink;
 
   @override
-  Future<void> close({final bool force = false}) async {}
+  Future<void> close({bool force = false}) async {}
 }
 
 /// One request, and the response the server answers it with.
@@ -33,13 +33,9 @@ final class InProcessExchange extends Fake implements AdapterExchange {
   final _done = Completer<ExchangeEnd>();
   final _cancelled = Completer<void>();
 
-  InProcessExchange(
-    this.method,
-    this.url, {
-    final Headers? headers,
-    final Body? body,
-  }) : headers = headers ?? Headers.empty(),
-       body = body ?? Body.empty();
+  InProcessExchange(this.method, this.url, {Headers? headers, Body? body})
+    : headers = headers ?? Headers.empty(),
+      body = body ?? Body.empty();
 
   /// The response the server sent.
   Future<Response> get response => _response.future;
@@ -48,11 +44,11 @@ final class InProcessExchange extends Fake implements AdapterExchange {
   HttpProtocol get protocol => HttpProtocol.http11;
 
   @override
-  Request toRequest(final RequestFactory create) =>
+  Request toRequest(RequestFactory create) =>
       create(method, this, url: url, headers: headers, body: body);
 
   @override
-  FutureOr<void> respond(final Response response) {
+  FutureOr<void> respond(Response response) {
     _response.complete(response);
     _done.complete(ExchangeEnd.completed);
   }
@@ -72,11 +68,11 @@ final class InProcessExchange extends Fake implements AdapterExchange {
 
 /// Runs [handler] in a [RelicServer] and answers one request with it.
 Future<Response> handle(
-  final Handler handler,
-  final Method method,
-  final Uri url, {
-  final Headers? headers,
-  final Body? body,
+  Handler handler,
+  Method method,
+  Uri url, {
+  Headers? headers,
+  Body? body,
 }) async {
   final adapter = InProcessAdapter();
   final server = RelicServer(() => adapter);
@@ -97,14 +93,10 @@ Future<Response> handle(
 
 /// The [Request] the server builds for a request, for code that takes a
 /// [Request] directly.
-Future<Request> requestFor(
-  final Method method,
-  final Uri url, {
-  final Headers? headers,
-}) async {
+Future<Request> requestFor(Method method, Uri url, {Headers? headers}) async {
   late Request captured;
   await handle(
-    (final req) {
+    (req) {
       captured = req;
       return Response.ok();
     },

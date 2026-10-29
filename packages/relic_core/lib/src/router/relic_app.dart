@@ -25,13 +25,14 @@ part of 'router.dart';
 /// ## Hot Reload Support
 ///
 /// When running with `--enable-vm-service`, [RelicApp] automatically listens for
-/// hot-reload requests. When a hot reload is triggered, it will re-configure
-/// the internal router with the latest route definitions.
+/// hot-reload requests. When a hot reload is triggered, it rebuilds the
+/// internal router by replaying the registrations made at startup, calling
+/// [RouterInjectable.injectIn] again for each injected object.
 ///
-/// This allows you to modify your route handlers and see the changes immediately
-/// without restarting the server. Note that this only works for changes to the
-/// route configuration and handlers - changes to server state or global variables
-/// may require a full restart.
+/// Changes inside named handler functions and inside `injectIn` apply
+/// without a restart. Routes and closures registered directly in `main` stay
+/// as they were, since `main` does not run again. Changes to server state or
+/// global variables may require a full restart.
 abstract interface class _Reloadable {
   Future<void> _reload();
 }
@@ -71,9 +72,9 @@ final class RelicApp implements RelicRouter, _Reloadable {
   ///
   /// Returns a [Future] that completes with the running [RelicServer] instance.
   ///
-  /// [RelicApp] instances supports hot-reload. They will re-configure the internal
-  /// router on hot-reload. This allows adding and removing routes despite `main`
-  /// not being re-run.
+  /// [RelicApp] instances support hot-reload. They rebuild the internal router
+  /// on hot-reload, so routes registered inside a [RouterInjectable] can be
+  /// added and removed even though `main` is not re-run.
   ///
   /// Example:
   /// ```dart

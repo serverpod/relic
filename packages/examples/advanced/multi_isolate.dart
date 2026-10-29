@@ -13,16 +13,12 @@ void main() async {
   log('Starting $isolateCount isolates');
   final isolates = await List.generate(
     isolateCount,
-    (final index) =>
-        Isolate.spawn((final _) => _serve(), null, debugName: '$index'),
+    (index) => Isolate.spawn((_) => _serve(), null, debugName: '$index'),
   ).wait;
 
   // Wait for SIGINT (Ctrl-C) or SIGTERM signal before shutting down.
   await Future.any(
-    [
-      ProcessSignal.sigterm,
-      ProcessSignal.sigint,
-    ].map((final s) => s.watch().first),
+    [ProcessSignal.sigterm, ProcessSignal.sigint].map((s) => s.watch().first),
   );
 
   // Gracefully terminate all spawned isolates.
@@ -45,7 +41,7 @@ Future<void> _serve() async {
 }
 
 /// Echoes the request path and shows which isolate handled it.
-Response _echoRequest(final Request req) {
+Response _echoRequest(Request req) {
   // Simulate slow processing to demonstrate load balancing.
   sleep(const Duration(seconds: 1));
   return Response.ok(

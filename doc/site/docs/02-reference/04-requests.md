@@ -4,249 +4,211 @@ sidebar_position: 4
 
 # Requests
 
-The `Request` object represents an incoming HTTP request to your Relic server. It provides access to all information about the client's request, including the HTTP method, URL, headers, query parameters, and body content.
+A handler learns everything it knows about a request from the `Request` it receives. The quickest way to see what is in one is to print it. This handler does that for the request it answers:
 
-Every handler in Relic receives a `Request` object as a parameter, allowing you to inspect and process the incoming data before generating a response.
+GITHUB_CODE_BLOCK lang="dart" file="../_example/routing/request.dart" doctag="requests-inspect" title="A handler that describes its request"
 
-## Understanding the request object
+The program on this page registers it, and the other handlers below, like this:
 
-When a client makes a request to your server, Relic creates a `Request` object that encapsulates all the details of that request. This object provides type-safe access to request data.
+GITHUB_CODE_BLOCK lang="dart" file="../_example/routing/request.dart" doctag="requests-routes" title="The routes of the request example"
 
-Note on mutability:
+Send it a POST with a query and a small body:
 
-- `Request.headers` is immutable.
-- `Request.body` is a `Body` wrapper and is mutable (handlers or middleware may replace it). The underlying body stream can be read only once.
-
-The request flows through your middleware pipeline and reaches your handler, where you can extract the information you need to process the request and generate an appropriate response.
-
-### Key request properties
-
-The `Request` object exposes several important properties:
-
-- **`method`** - The HTTP method (GET, POST, PUT, DELETE, etc.) as a `Method` enum value.
-- **`url`** - The complete original URI that was requested.
-- **`headers`** - Type-safe access to HTTP headers.
-- **`body`** - The request body wrapped in a `Body` helper. Use `await request.readAsString()` for text, or `request.read()` to access the byte stream. Both are single-read.
-- **`protocol`** - The HTTP protocol the request arrived with, an `HttpProtocol` value such as `http11`.
-- **`router`** - The `RelicRouter` that routed this request (available after routing, `null` otherwise).
-- **`copyWith()`** - Create a modified copy of the request with a different `url`, `headers`, or `body`.
-
-## Accessing request data
-
-### HTTP method
-
-The request method indicates what action the client wants to perform. Relic uses a type-safe `Method` enum rather than strings, which prevents typos and provides better IDE support.
-
-GITHUB_CODE_BLOCK lang="dart" file="../_example/routing/request_response.dart" doctag="basic-request-response" title="HTTP method"
-
-Common methods include `Method.get`, `Method.post`, `Method.put`, `Method.delete`, `Method.patch`, and `Method.options`.
-
-### Request url and path
-
-The `url` property provides the relative path and query parameters from the current handler's perspective. This is particularly useful when your handler is mounted at a specific path prefix.
-
-GITHUB_CODE_BLOCK lang="dart" file="../_example/routing/request_response.dart" doctag="path-params-complete" title="Path parameters and URL"
-
-## Working with query parameters
-
-Query parameters are key-value pairs appended to the URL after a question mark (`?`). They're commonly used to pass optional data, filters, or pagination information to your endpoints.
-
-### Single value parameters
-
-You can access individual query parameter values through the `queryParameters` map. Each parameter is returned as a string, or null if not present.
-
-GITHUB_CODE_BLOCK lang="dart" file="../_example/routing/request_response.dart" doctag="query-params-complete" title="Query parameters"
-
-When a client requests `/search?query=relic&page=2`, the query variable will contain `"relic"` and the page variable will contain `"2"`. Both values are strings, so you'll need to parse them if you need other types like integers.
-
-### Typed query parameters
-
-Manually parsing query parameters can be tedious and error-prone. Relic provides typed parameter accessors that handle parsing automatically and give you compile-time type safety.
-
-Define a parameter accessor once, then use it to extract typed values:
-
-GITHUB_CODE_BLOCK lang="dart" file="../_example/routing/request_response.dart" doctag="typed-query-params" title="Typed query parameters"
-
-You can also use the nullable variant by calling the accessor directly:
-
-GITHUB_CODE_BLOCK lang="dart" file="../_example/routing/request_response.dart" doctag="typed-query-params-nullable" title="Nullable typed query parameter"
-
-Relic provides these built-in typed query parameter accessors:
-
-| Accessor | Type | Description |
-| -------- | ---- | ----------- |
-| `IntQueryParam` | `int` | Integer values (page numbers, limits) |
-| `DoubleQueryParam` | `double` | Decimal values (prices, percentages) |
-| `NumQueryParam` | `num` | Any numeric value |
-| `QueryParam<T>` | Custom | Create your own with a custom parser |
-
-For custom types, use `QueryParam<T>` with your own parsing function:
-
-GITHUB_CODE_BLOCK lang="dart" file="../_example/routing/request_response.dart" doctag="custom-query-param-inline" title="Custom type query parameters"
-
-To create a reusable accessor like the built-in ones, extend `QueryParam<T>` with a fixed decoder. The decoder must be a static function with signature `T Function(String)`:
-
-GITHUB_CODE_BLOCK lang="dart" file="../_example/routing/request_response.dart" doctag="custom-query-param-specialization" title="Custom QueryParam specialization"
-
-:::tip
-Typed parameter accessors are defined as `const` values, which means they can be defined once at the top level and reused across multiple handlers. This promotes consistency and reduces boilerplate.
-:::
-
-### Multiple values
-
-Some query parameters can appear multiple times in a URL to represent lists or arrays. The `queryParametersAll` map provides access to all values for each parameter name.
-
-GITHUB_CODE_BLOCK lang="dart" file="../_example/routing/request_response.dart" doctag="query-multi-complete" title="Multiple query values"
-
-For a request to `/filter?tag=dart&tag=server&tag=web`, the tags variable will be a list containing `["dart", "server", "web"]`. This allows you to handle multiple selections or filters cleanly.
-
-## Reading headers
-
-HTTP headers carry metadata about the request, such as content type, authentication credentials, and client information. Relic provides type-safe access to common headers, automatically parsing them into appropriate Dart types.
-
-### Type-safe header access
-
-Instead of working with raw string values, Relic's type-safe headers give you properly typed objects. This eliminates parsing errors and provides better code completion in your IDE.
-
-GITHUB_CODE_BLOCK lang="dart" file="../_example/routing/request_response.dart" doctag="headers-complete" title="Type-safe headers"
-
-In this example, the `mimeType` is automatically parsed into a `MimeType` object, and `contentLength` is parsed into an integer rather than a string. This type safety helps catch errors at compile time.
-
-### Authorization headers
-
-The `authorization` header receives special handling in Relic to distinguish between different authentication schemes like Bearer tokens and Basic authentication.
-
-GITHUB_CODE_BLOCK lang="dart" file="../_example/routing/request_response.dart" doctag="auth-complete" title="Authorization header parsing"
-
-Relic automatically parses the authorization header and creates the appropriate header object type, making it easy to handle different authentication schemes in a type-safe manner.
-
-## Reading the request body
-
-The request body contains data sent by the client, typically in POST, PUT, or PATCH requests. Relic provides multiple ways to read body content depending on your needs.
-
-:::warning Single read limitation
-
-**The request body can only be read once.** This is because the body is a stream that gets consumed as it's read. Attempting to read the body multiple times will result in a `StateError`.
-
-:::
-
-```dart
-// ❌ WRONG - This will throw an error
-final first = await request.readAsString();
-final second = await request.readAsString(); // StateError!
-
-// ✅ CORRECT - Read once and store the result
-final body = await request.readAsString();
-// Use 'body' as many times as needed
+```bash
+curl -X POST 'http://localhost:8080/inspect?name=Nova&tag=a' -d 'hello'
 ```
 
-### Reading as string
+```text
+method:     POST
+url:        http://localhost:8080/inspect?name=Nova&tag=a
+path:       /inspect
+query:      name=Nova&tag=a
+protocol:   http11
+user-agent: curl/8.7.1
+from:       127.0.0.1:55826
+body:       5 bytes
+```
 
-The most common way to read the body is as a string, which works well for JSON, XML, or plain text data. The `readAsString` method automatically handles character encoding based on the Content-Type header.
+`method` is a value of the `Method` enum, and `value` is its name as HTTP writes it. `url` is the whole address the client asked for, scheme and host included, as a Dart `Uri`, and its `path` and `query` are the parts you will use most. `protocol` says which version of HTTP the request came in on. `headers` holds the headers, here read through the typed `userAgent` accessor. `connectionInfo` describes the network connection, and its `remote` address is the client, or the nearest proxy in front of the server. `body` is the five bytes curl sent, not yet read.
 
-GITHUB_CODE_BLOCK lang="dart" file="../_example/routing/request_response.dart" doctag="body-handling-complete" title="Read body as string"
+A request has a few more members that the sections below come back to. `target` is the path and query exactly as the client sent them. `cancelled` is a future that completes if the client goes away before the response is finished. `router` is the `RelicRouter` that routed the request. Within a route, `matchedPath` is the part of the path the route matched and `remainingPath` what is left after it, which the [Routing](./03-routing.md) page shows with tail segments.
 
-The method defaults to UTF-8 encoding if no encoding is specified in the request headers.
+## Query parameters
 
-### Parsing JSON data
+The query is the part of the URL after the question mark, name and value pairs joined by `&`. A search handler is the classic use:
 
-For JSON APIs, you'll typically read the body as a string and then decode it using Dart's `jsonDecode` function. This two-step process gives you control over error handling.
+GITHUB_CODE_BLOCK lang="dart" file="../_example/routing/request.dart" doctag="requests-search" title="Reading the query"
 
-GITHUB_CODE_BLOCK lang="dart" file="../_example/routing/request_response.dart" doctag="json-api-complete" title="Parse JSON body with validation"
+```bash
+curl 'http://localhost:8080/search?q=relic&page=2&tag=dart&tag=web'
+curl 'http://localhost:8080/search?q=relic'
+```
 
-This example shows proper validation of both the JSON structure and the required fields, providing clear error messages when something is wrong.
+```text
+Searching for "relic", page 2, tags [dart, web]
+Searching for "relic", page 1, tags []
+```
 
-### Reading as a byte stream
+The handler reads the query three ways. `queryParameters.raw` is a map from each name to its value, always a string, and null for a name that is not there. A typed accessor parses the value for you. `IntQueryParam('page')` declares that `page` is an integer, and calling `queryParameters` with it returns an `int?`, null when the page is absent. `queryParameters.get(pageParam)` would return a plain `int` and throw when the page is absent. Both throw for a value that does not parse, so `?page=two` gets a 500. `DoubleQueryParam` and `NumQueryParam` cover the other numbers, and `QueryParam<T>` takes a parser for any type, the same way `PathParam<T>` does for path parameters.
 
-For large files or binary data, you can read the body as a stream of bytes to avoid loading everything into memory at once. This is essential for handling file uploads or large payloads efficiently.
+A name can appear more than once in a query, as `tag` does here. `raw` keeps the last value, and `url.queryParametersAll` has them all, as a list.
 
-GITHUB_CODE_BLOCK lang="dart" file="../_example/routing/request_response.dart" doctag="upload-complete" title="Read body as byte stream"
+Without `q`, the handler answers 400 itself:
 
-By processing the data in chunks, your server can handle large uploads without running out of memory.
+```text
+HTTP/1.1 400 Bad Request
+...
+Add ?q= to search
+```
 
-### Checking if body is empty
+## Headers
 
-Before attempting to read the body, you can check if it's empty using the `isEmpty` property. This is useful when you want to require a body for certain requests.
+`request.headers` holds the request headers. Each common header has a typed accessor that parses its value, so you read a `userAgent` as a `String?`, a `contentLength` as an `int?`, and the `Authorization` header as an object that knows its scheme:
 
-:::warning
-`isEmpty` is based on the known content length when available. For requests using chunked transfer encoding (unknown length up front), `isEmpty` may return `false` even if no data is ultimately sent. Prefer defensive reads for streaming uploads.
-:::
+GITHUB_CODE_BLOCK lang="dart" file="../_example/routing/request.dart" doctag="requests-credentials" title="Reading the Authorization header"
 
-GITHUB_CODE_BLOCK lang="dart" file="../_example/routing/request_response.dart" doctag="upload-complete" title="Body empty check"
+```bash
+curl http://localhost:8080/credentials
+curl -H 'Authorization: Bearer abc123' http://localhost:8080/credentials
+curl -u nova:secret http://localhost:8080/credentials
+```
 
-This check doesn't consume the body stream, so you can still read the body afterward.
+```text
+No credentials
+A bearer token: abc123
+User nova, by password
+```
+
+curl's `-u` option sends Basic credentials, the user name and password encoded in base64, and `BasicAuthorizationHeader` decodes them again. When a header does not parse, reading its accessor throws, and Relic answers 400 with a message that says what was wrong:
+
+```bash
+curl -i -H 'Authorization: Basic !!!' http://localhost:8080/credentials
+```
+
+```text
+HTTP/1.1 400 Bad Request
+content-type: text/plain; charset=utf-8
+date: Fri, 23 Oct 2026 11:59:32 GMT
+content-length: 58
+
+Invalid 'authorization' header: Invalid basic token format
+```
+
+For a header without an accessor, index the headers by name, `request.headers['X-Seen-By']`. That returns every value of the header, or null when it is absent. The [Headers](./07-headers.md) page covers the accessors, what a header that does not parse gets, and how to declare an accessor of your own.
+
+## The body
+
+The body is whatever the client sent after the headers, usually with a POST, PUT or PATCH. The simplest way to read it is as text:
+
+GITHUB_CODE_BLOCK lang="dart" file="../_example/routing/request.dart" doctag="requests-text-body" title="Reading the body as text"
+
+```bash
+curl -X POST http://localhost:8080/shout -d 'hello, relic'
+```
+
+```text
+HELLO, RELIC
+```
+
+`readAsString` decodes with the charset the request declares in its `Content-Type`, and with UTF-8 when it declares none. For JSON, decode that string yourself, and turn the ways it can go wrong into answers the client can act on:
+
+GITHUB_CODE_BLOCK lang="dart" file="../_example/routing/request.dart" doctag="requests-json-body" title="Reading a JSON body"
+
+```bash
+curl -X POST http://localhost:8080/users -d '{"name":"Nova"}'
+curl -X POST http://localhost:8080/users -d 'nope'
+curl -X POST http://localhost:8080/users -d '{"age":3}'
+```
+
+```text
+Created Nova
+Not JSON
+Expected a name
+```
+
+A body can be read only once. It may still be arriving from the network while the handler reads it, so there is nothing to rewind, and a second `readAsString` or `read` throws a `StateError`. Read it once and keep the result. For a large upload, read it as a stream of bytes with `read`, and pass `maxLength` to cap it. The [Body](./06-body.md) page covers streams, limits and the other ways to read.
+
+`request.isEmpty` tells you whether a body has any bytes without reading it. It goes by the declared length, so a chunked body, whose length is not known in advance, is not empty by this test even if no bytes follow.
+
+## Reading form data
+
+Relic parses the two HTML form encodings, `application/x-www-form-urlencoded` and `multipart/form-data`. Each parser reads the request body, so call one of them once per request:
+
+- `req.urlEncodedForm()` parses a urlencoded body.
+- `req.multipartForm()` parses a multipart body, uploads included.
+- `req.formData()` picks one of the two from the request's Content-Type.
+- `req.multipart()` streams the parts of a multipart body one at a time, without collecting them.
+
+### Typed fields
+
+Read fields through accessors, the way typed query parameters work. `StringFormField`, `IntFormField`, `DoubleFormField` and `NumFormField` cover the common types, and `FormField<T>` takes your own decoder:
+
+GITHUB_CODE_BLOCK lang="dart" file="../_example/basic/forms.dart" doctag="forms-typed-fields" title="Typed form fields"
+
+The forms example serves this handler at `/signup`. curl's `-d` option sends a urlencoded form:
+
+```bash
+curl -d 'name=Nova&age=27&color=red&color=blue' http://localhost:8080/signup
+curl -d 'name=Nova' http://localhost:8080/signup
+```
+
+```text
+Nova, age 27, likes [red, blue]
+Nova, age unknown, likes []
+```
+
+`fields.get` throws `MissingFormFieldException` when the field is absent, so a form without a name gets 400. Calling `fields` with the accessor returns null instead, which is how the age is optional. Both throw `InvalidFormFieldException` for a value that does not decode, so `age=old` gets 400 too, and `getAll` returns every value of a repeated field.
+
+### Uploads
+
+`multipartForm` keeps uploads in memory unless you pass an `uploadStorage`. `TempUploadStorage` writes each upload to its own temporary directory. Call `dispose` on the form when you are done, so the storage can delete them:
+
+GITHUB_CODE_BLOCK lang="dart" file="../_example/basic/forms.dart" doctag="forms-upload" title="Multipart upload"
+
+Each `UploadedFile` has the client's `filename`, its `bodyType`, its `size` and `read()` for its bytes.
+
+### Limits
+
+Every parser takes `FormLimits`, which caps the body size, the number of fields, files and parts, and the size of each field and file. `FormLimits.defaults` allows a 10 MB body, 100 fields and 8 files. A form over a limit throws `FormLimitExceededException`:
+
+GITHUB_CODE_BLOCK lang="dart" file="../_example/basic/forms.dart" doctag="forms-limits" title="Form limits"
+
+### Streaming parts
+
+`multipart()` hands over each part as it arrives, as a `MultipartFieldPart`, a `MultipartFilePart` or a `MultipartOtherPart`. Read each part's body, or `discard()` it, as the example does:
+
+GITHUB_CODE_BLOCK lang="dart" file="../_example/basic/forms.dart" doctag="forms-stream" title="Streaming multipart parts"
+
+### Form errors
+
+Every form error is a `FormException` with a `statusCode`. A body that is not a form gets 415, a malformed one or a missing or invalid field 400, and a form over a limit 413. A handler that lets the exception through gets that status from the server. For a body that is not a form, is malformed or is over a limit, the server also closes the connection, since part of the body may be unread. Catch `FormException` to answer differently, as the upload examples do.
 
 ## Modifying requests
 
-Since `Request` objects are immutable, Relic provides `copyWith` to create modified copies. This is useful in middleware for modifying headers or body, and in handlers for URL rewriting and request forwarding.
+A request's `url` and `headers` are final. To pass on a request with something changed, a middleware makes a copy with `copyWith`, which carries over every field it is not given:
 
-### Creating modified copies
+GITHUB_CODE_BLOCK lang="dart" file="../_example/routing/request.dart" doctag="requests-copy" title="Passing on a copy with an extra header"
 
-Use `copyWith` to create a new request with different values. Any field you don't specify is carried over from the original:
-
-```dart
-// Change just the URL
-final rewritten = request.copyWith(
-  url: request.url.replace(path: '/new-path'),
-);
-
-// Change URL and headers
-final modified = request.copyWith(
-  url: request.url.replace(path: '/other'),
-  headers: Headers.build((h) => h['X-Custom'] = ['value']),
-);
+```bash
+curl http://localhost:8080/seen
 ```
 
-The new URL must be absolute and must not contain a fragment, just like the original request URL.
+```text
+Seen by [tagRequest]
+```
+
+`headers.transform` starts from the headers the request already has, so the copy keeps them all and adds one. `copyWith` also takes a new `url`, which must be absolute and without a fragment, and a new `body`.
 
 ### Forwarding requests
 
-When you need to internally redirect a request to a different route, use `copyWith` to change the URL and `forwardTo` to re-route it through the same router:
-
-```dart
-final app = RelicApp()
-  ..get('/old-path', (req) {
-    final newReq = req.copyWith(url: req.url.replace(path: '/new-path'));
-    return req.forwardTo(newReq);
-  })
-  ..get('/new-path', (req) {
-    return Response.ok(body: Body.fromString('You arrived!'));
-  });
-```
-
-`forwardTo` sends the new request through the full routing pipeline of the router that handled the current request, including any middleware applied via `router.use()`. This means path parameters and routing metadata are correctly updated for the forwarded request.
-
-:::info
-`forwardTo` throws a `StateError` if the request was not routed through a `RelicRouter`. This can happen when using `Pipeline` directly without a router, or with a generic `Router<T>` where `T` is not `Handler`.
-:::
-
-### Accessing the router
-
-The `router` property gives you access to the `RelicRouter` that routed the current request:
-
-```dart
-router.get('/info', (req) {
-  final currentRouter = req.router; // RelicRouter?
-  // null if not routed through a RelicRouter
-  return Response.ok();
-});
-```
-
-This is primarily used internally by `forwardTo`, but can be useful for advanced patterns like conditional routing or router introspection.
-
-## Final tips
-
-The `Request` object is your gateway to understanding what clients are asking for. By leveraging Relic's type-safe API, you can build secure, reliable handlers that properly validate and process client input.
-
-Key principles for working with requests include accessing data through the `Request` parameter, using type-safe properties for methods and headers, reading query parameters safely, and handling request bodies appropriately. Remember that request bodies can only be read once, so design your handlers to consume the body early in the processing pipeline.
-
-Always validate all incoming data since query parameters, headers, and body content come from untrusted sources. Use try-catch blocks for JSON parsing and validation to provide meaningful error responses. By following these patterns, you'll create handlers that are both secure and user-friendly.
+A copy with a new URL does not reach another route by itself, because the routing has already happened. To route it again, pass it to `request.forwardTo`, which sends it through the same router, middleware included. The [Routing](./03-routing.md#forwarding-a-request) page shows an example, and what to keep in mind about path parameters. `forwardTo` throws a `StateError` for a request that no `RelicRouter` routed, such as one handled by a bare `Pipeline`.
 
 ## Examples & further reading
 
 ### Examples
 
-- **[Requests example](https://github.com/serverpod/relic/blob/main/packages/examples/routing/request_response.dart)** - Comprehensive example covering complete request-response cycles.
+- **[Requests example](https://github.com/serverpod/relic/blob/main/packages/examples/routing/request.dart)** - The program behind this page.
+- **[Forms example](https://github.com/serverpod/relic/blob/main/packages/examples/basic/forms.dart)** - HTML forms, uploads, limits and streamed parts.
 
 ### API documentation
 

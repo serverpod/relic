@@ -15,23 +15,22 @@
     "lint": "markdownlint './doc/site/**/*.md'"
   },
   "dependencies": {
-    "@docusaurus/core": "3.9.2",
-    "@docusaurus/plugin-client-redirects": "3.9.2",
-    "@docusaurus/plugin-google-gtag": "^3.9.2",
-    "@docusaurus/preset-classic": "3.9.2",
-    "@docusaurus/theme-mermaid": "^3.9.1",
-    "@mdx-js/react": "^3.1.0",
+    "@docusaurus/core": "3.10.2",
+    "@docusaurus/plugin-client-redirects": "3.10.2",
+    "@docusaurus/plugin-google-gtag": "3.10.2",
+    "@docusaurus/preset-classic": "3.10.2",
+    "@docusaurus/theme-mermaid": "3.10.2",
+    "@mdx-js/react": "^3.1.1",
     "blended-include-code-plugin": "github:serverpod/docusaurus-code-plugin#main",
     "clsx": "^2.1.1",
     "docusaurus-theme-github-codeblock": "^2.0.2",
     "node-fetch": "^3.3.2",
     "prism-react-renderer": "^2.4.1",
-    "react": "^19.2.0",
-    "react-dom": "^19.2.0",
-    "react-player": "^2.16.0"
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
   },
   "engines": {
-    "node": ">=18.0"
+    "node": ">=22.0"
   },
   "browserslist": {
     "production": [
@@ -44,5 +43,14 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "overrides": {
+    "tinypool": "^2.1.2",
+    "serialize-javascript": "^7.0.5",
+    "postcss-selector-parser": "^7.1.6",
+    "qs": "^6.16.0",
+    "sockjs": {
+      "uuid": "^11.1.1"
+    }
   }
 }

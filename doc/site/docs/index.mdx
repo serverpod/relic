@@ -4,41 +4,49 @@ title: 🎯 Introduction
 ---
 
 # Introduction
-Relic is a modern, high-performance web server framework inspired by [Shelf](https://pub.dev/packages/shelf) and built by the [Serverpod](https://serverpod.dev) team to meet the demanding requirements of modern web applications. Relic provides a robust, type-safe, and efficient foundation for building scalable web services.
 
-#### Why Relic?
+Relic is a web server framework for Dart, built by the [Serverpod](https://serverpod.dev) team. It grew out of [Shelf](https://pub.dev/packages/shelf), and it keeps Shelf's model of handlers that turn requests into responses and middleware that wraps handlers.
 
-While Shelf has been a solid foundation for Dart web applications, several areas for improvement were identified. Rather than work around these limitations, Relic was created as a next-generation framework that maintains Shelf's familiar structure while delivering significant enhancements.
+A Relic server is an ordinary Dart program. This one answers a GET request for `/` with a greeting:
+
+GITHUB_CODE_BLOCK lang="dart" doctag="hello-step-1" file="./_example/getting_started/hello.dart" title="A complete Relic server"
+
+Run it, ask it for `http://localhost:8080/`, and it answers `Hello, world!`. The [Hello world](./01-getting-started/02-hello-world-example.md) page builds on this program one step at a time.
+
+## The pieces
+
+The program above already shows most of what Relic is made of, and the reference pages take the pieces in turn.
+
+A [handler](./02-reference/01-handlers.md) is a function that receives a `Request` and returns a result. Usually the result is a `Response`, but it can also upgrade the connection to a WebSocket, or take the connection over entirely. The [router](./02-reference/03-routing.md) picks a handler by the method and the path of the request, and a path can hold parameters, wildcards and tails. [Middleware](./02-reference/08-middleware.md) wraps the handlers below a path, to log, check credentials or change responses, and [context properties](./02-reference/02-context.md) carry what it learns to the handler. The [request](./02-reference/04-requests.md) gives a handler typed access to the URL, the query, the headers, the body and forms, and the [response](./02-reference/05-responses.md) and its [body](./02-reference/06-body.md) decide what goes back on the wire. [Headers](./02-reference/07-headers.md) are read and written through typed accessors, and a program can declare its own. [Static files](./02-reference/09-static-files.md) are served by a ready-made handler, [hot reload](./02-reference/10-hot-reload.md) applies most changes without a restart, and [serving](./02-reference/12-serving.md) is where the address, the isolates and the adapter are chosen.
 
 ## Features
-Relic aims to be a comprehensive web server framework for Dart. It provides a wide range of features out of the box and allows you to extend it with middleware. Here are some of the key features:
 
 import DocFeatureCards from '@site/src/components/DocFeatureCards';
 
 <DocFeatureCards
   features={[
-    { icon: '🔒', title: 'Type Safe', description: 'Strongly typed APIs with validated HTTP headers.' },
-    { icon: '⚡', title: 'Fast', description: 'High performance through trie-based routing and LRU caching.' },
-    { icon: '🔌', title: 'WebSockets', description: 'Built-in WebSocket support for real time communication.' },
-    { icon: '🔧', title: 'Middleware', description: 'Composable middleware pipeline with router integration.' },
-    { icon: '👨‍💻', title: 'Dev Ready', description: 'Great IDE support, clear errors, and full documentation.' },
-    { icon: '🚀', title: 'Production', description: 'Production-ready with high test coverage (3,000+ tests).' },
+    { icon: '🔒', title: 'Typed', description: 'Headers and path and query parameters are read as typed values, and a header that does not parse gets a 400.' },
+    { icon: '⚡', title: 'Fast', description: 'A trie-based router, with headers and URLs parsed only when they are read.' },
+    { icon: '🔌', title: 'WebSockets', description: 'A handler upgrades a connection by returning a WebSocketUpgrade.' },
+    { icon: '🔧', title: 'Middleware', description: 'Middleware attaches to a path in the router and wraps every route below it.' },
+    { icon: '👨‍💻', title: 'Hot reload', description: 'The router is rebuilt on every hot reload, so changed handlers apply without a restart.' },
+    { icon: '🚀', title: 'Tested', description: 'More than 3,000 tests, run on Linux, macOS and Windows.' },
   ]}
 />
 
+## How Relic differs from Shelf
 
-## Comparison with Shelf
+If you know Shelf, most of Relic will look familiar. These are the places where it works differently:
 
-Relic started out as a clone of Shelf, but has since diverged. An adapter is being built so that you can use Shelf middleware with Relic. Here is a comparison of some of the key differences:
+| Area | Shelf | Relic |
+|------|-------|-------|
+| Headers | Strings in a map | Typed accessors that validate values |
+| Routing | `shelf_router`, which tries routes in order | A built-in router on a trie, matched segment by segment |
+| WebSockets | The `shelf_web_socket` package | Built in |
+| Path parameters | Strings, passed as extra handler arguments | Read from the request by symbol, with typed accessors |
+| Static files | The `shelf_static` package | `StaticHandler`, with cache busting and ETags |
+| Hijacking | A thrown `HijackException` | A returned `Hijack` or `WebSocketUpgrade` result |
+| Request state | A `Map<String, Object>` context | Typed context properties |
+| Body | Content and encoding set separately | One `Body` that carries content, type and encoding |
 
-| Feature | Shelf | Relic |
-|---------|-------|-------|
-| Type Safety | ❌ Uses dynamic types | ✅ Strongly typed APIs with validated HTTP headers|
-| Routing | ❌ Linear scan over routes | ✅ Built-in trie-based router |
-| WebSockets | ❌ External packages | ✅ Built-in support |
-| Performance | ✅ Good | ✅ Optimized (trie routing, LRU cache) |
-| Path Parameters | ❌ String-based | ✅ Symbol-based |
-| Static Files | ❌ Limited | ✅ Includes cache busting & etag support |
-| Control Flow | ❌ Exceptions for control flow | ✅ Explicit state machine |
-| Request State | ❌ Untyped context bag | ✅ Context properties with IDE discoverability |
-| Body Model | ❌ Body and encoding are separate | ✅ Unified |
+The [Migration from Shelf](./01-getting-started/03-shelf-migration.md) page goes through each of these with code.

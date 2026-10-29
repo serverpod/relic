@@ -1,88 +1,93 @@
+import 'dart:io';
+
 import 'package:relic/relic.dart';
 
-// doctag<routing-custom-path-param>
-/// A reusable path parameter accessor for [DateTime] values.
+// doctag<routing-typed-param>
+const orderIdParam = IntPathParam(#id);
+
+Response showOrder(Request req) {
+  final id = req.pathParameters.get(orderIdParam);
+  return .ok(body: .fromString('Order $id, and the next one is ${id + 1}\n'));
+}
+// end:doctag<routing-typed-param>
+
+// doctag<routing-optional-param>
+const pageParam = IntPathParam(#page);
+
+Response listPosts(Request req) {
+  final page = req.pathParameters(pageParam) ?? 1;
+  return .ok(body: .fromString('Posts, page $page\n'));
+}
+// end:doctag<routing-optional-param>
+
+// doctag<routing-custom-param-inline>
+const eventDateParam = PathParam<DateTime>(#date, DateTime.parse);
+// end:doctag<routing-custom-param-inline>
+
+// doctag<routing-custom-param-class>
 final class DateTimePathParam extends PathParam<DateTime> {
-  const DateTimePathParam(final Symbol key) : super(key, DateTime.parse);
+  const DateTimePathParam(Symbol key) : super(key, DateTime.parse);
 }
 
-// Usage:
 const dateParam = DateTimePathParam(#date);
-// In a handler: request.pathParameters.get(dateParam) returns DateTime
-// end:doctag<routing-custom-path-param>
+// end:doctag<routing-custom-param-class>
 
-// doctag<routing-custom-path-param-inline>
-// Custom enum parameter
-const statusParam = PathParam<Status>(#status, Status.parse);
-
-// Custom object parameter
-const createdParam = PathParam<DateTime>(#date, DateTime.parse);
-// end:doctag<routing-custom-path-param-inline>
-
-// Dummy Status class for documentation purposes.
-enum Status {
-  active,
-  inactive;
-
-  static Status parse(final String value) => Status.values.byName(value);
+Response showEvents(Request req) {
+  final date = req.pathParameters.get(dateParam);
+  return .ok(
+    body: .fromString('Events in month ${date.month} of ${date.year}\n'),
+  );
 }
 
-/// Examples demonstrating how Relic handles dynamic path segments.
-Future<void> main() async {
-  final app = RelicApp();
+Future<void> main(List<String> args) async {
+  final app = RelicApp()
+    // doctag<routing-raw-param>
+    ..get('/users/:id', (req) {
+      final id = req.pathParameters.raw[#id];
+      return Response.ok(body: .fromString('User $id\n'));
+    })
+    // end:doctag<routing-raw-param>
+    // doctag<routing-typed-param-route>
+    ..get('/orders/:id', showOrder)
+    // end:doctag<routing-typed-param-route>
+    // doctag<routing-optional-param-routes>
+    ..get('/posts', listPosts)
+    ..get('/posts/:page', listPosts)
+    // end:doctag<routing-optional-param-routes>
+    ..get('/events/:date', showEvents)
+    // doctag<routing-wildcard>
+    ..get(
+      '/files/*/download',
+      (req) => Response.ok(body: .fromString('Downloading a file\n')),
+    )
+    // end:doctag<routing-wildcard>
+    // doctag<routing-tail>
+    ..get(
+      '/static/**',
+      (req) => Response.ok(body: .fromString('Serving ${req.remainingPath}\n')),
+    )
+    ..get(
+      '/static/special/report',
+      (req) => Response.ok(body: .fromString('The special report\n')),
+    )
+    // end:doctag<routing-tail>
+    // doctag<routing-backtracking>
+    ..get('/:entity/:id', (req) {
+      final entity = req.rawPathParameters[#entity];
+      final id = req.rawPathParameters[#id];
+      return Response.ok(body: .fromString('A $entity with id $id\n'));
+    })
+    ..get(
+      '/shop/:id/profile',
+      (req) => Response.ok(body: .fromString('A shop profile\n')),
+    );
+  // end:doctag<routing-backtracking>
 
-  // Capture a named path parameter and read it from the request.
-  // doctag<routing-path-params-id>
-  app.get('/users/:id', (final req) {
-    final userId = req.pathParameters.raw[#id];
-
-    return Response.ok(body: Body.fromString('User $userId'));
-  });
-  // end:doctag<routing-path-params-id>
-
-  // Use typed path parameters for automatic parsing.
-  // doctag<routing-typed-path-params>
-  // Define typed parameter accessors
-  const idParam = IntPathParam(#id);
-  const latParam = DoublePathParam(#lat);
-  const lonParam = DoublePathParam(#lon);
-
-  app.get('/users/:id', (final Request request) {
-    // Automatically parsed as int (throws if missing or invalid)
-    final userId = request.pathParameters.get(idParam);
-    return Response.ok(body: Body.fromString('User $userId'));
-  });
-
-  app.get('/location/:lat/:lon', (final Request request) {
-    // Automatically parsed as double (throws if missing or invalid)
-    final lat = request.pathParameters.get(latParam);
-    final lon = request.pathParameters.get(lonParam);
-    return Response.ok(body: Body.fromString('Location: $lat, $lon'));
-  });
-  // end:doctag<routing-typed-path-params>
-
-  // doctag<routing-typed-path-params-nullable>
-  app.get('/optional/:id', (final Request request) {
-    final userId = request.pathParameters(idParam); // int? - null if missing
-    return Response.ok(body: Body.fromString('User: $userId'));
-  });
-  // end:doctag<routing-typed-path-params-nullable>
-
-  // Match any single path segment when the actual value does not matter.
-  // doctag<routing-wildcard-download>
-  app.get('/files/*/download', (final req) {
-    return Response.ok(body: Body.fromString('Downloading file...'));
-  });
-  // end:doctag<routing-wildcard-download>
-
-  // Capture the remaining path after the matched prefix.
-  // doctag<routing-tail-segment>
-  app.get('/static/**', (final req) {
-    final relativeAssetPath = req.remainingPath.toString();
-
-    return Response.ok(body: Body.fromString('Serve $relativeAssetPath'));
-  });
-  // end:doctag<routing-tail-segment>
-
-  await app.serve();
+  // doctag<routing-no-backtrack>
+  final backtrack = !args.contains('--no-backtrack');
+  await app.run(
+    () => IOAdapter.bind(InternetAddress.loopbackIPv4, port: 8080),
+    backtrack: backtrack,
+  );
+  // end:doctag<routing-no-backtrack>
 }

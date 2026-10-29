@@ -3,6 +3,7 @@ include: package:serverpod_lints/public.yaml
 analyzer:
   exclude:
     - doc/site/versioned_docs/**
+    - doc/site/docs/_example/**
   language:
     strict-raw-types: false
 

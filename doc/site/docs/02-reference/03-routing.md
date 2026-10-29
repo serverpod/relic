@@ -4,247 +4,255 @@ sidebar_position: 3
 
 # Routing
 
-_Routing_ maps each incoming request to a handler based on its path (URI) and HTTP method.
+A handler answers a request. Routing decides which handler, by looking at two things in the request, its method and its path. This page builds up the routes of three small programs, and shows what each request gets back.
 
-Each route maps a request to a single handler.
+## Methods and paths
 
-Route definitions are added via `RelicRouter.add(...)` (or convenience methods on `RelicRouter`/`RelicApp`):
+The first program registers a handful of routes, each with a method, a path and the handler that answers:
 
-```dart
-router.add(Method.get, '/my/path', myHandler);
+GITHUB_CODE_BLOCK lang="dart" file="../_example/routing/basic_routing.dart" doctag="routing-methods" title="Routes by method and path"
 
-// Or, with a convenience method:
-router.get('/my/path', myHandler);
+`get`, `post`, `put` and `delete` are shortcuts for `add` with the matching `Method`, as the `patch` route shows by calling `add` itself. There is a shortcut for every method Relic knows, `get`, `head`, `post`, `put`, `delete`, `patch`, `options`, `trace` and `connect`. `anyOf` registers one handler for a set of methods, and `any` registers it for all of them.
+
+The method picks the handler as much as the path does:
+
+```bash
+curl http://localhost:8080/
+curl -X POST http://localhost:8080/
 ```
 
-Where:
-
-- `router` is an instance of `RelicRouter` or `RelicApp` (which implements `RelicRouter`).
-- `Method` is the `Method` enum (e.g. `Method.get`, `Method.post`).
-- `/my/path` is a path on the server.
-- `myHandler` is a `Handler` that executes when the route is matched.
-
-## The `add` method and its shortcuts
-
-At the core of routing is the `add` method:
-
-```dart
-router.add(Method.get, '/', handler);
+```text
+You asked for /
+You posted to /
 ```
 
-The convenience methods `.get()`, `.post()`, `.anyOf()`, and `.any()` call `add()` for you:
+For a method that the path has no route for, the router answers 405 and lists the methods it does have in the `allow` header:
 
-- `.get(path, handler)` → `.add(Method.get, path, handler)`
-- `.post(path, handler)` → `.add(Method.post, path, handler)`
-- `.anyOf({Method.get, Method.post}, path, handler)` → calls `.add()` for each method in the set.
-- `.any(path, handler)` → calls `.anyOf()` with all HTTP methods.
+```bash
+curl -i -X DELETE http://localhost:8080/
+```
+
+```text
+HTTP/1.1 405 Method Not Allowed
+date: Fri, 23 Oct 2026 11:56:48 GMT
+content-length: 0
+allow: GET, HEAD, POST
+```
+
+A path with no route at all gets 404. The [Hello world](../01-getting-started/02-hello-world-example.md) page shows both, and how to answer unmatched requests yourself with a `fallback`.
 
 ## HEAD requests
 
-A HEAD request to a path that has a GET route and no HEAD route runs the GET handler. The client gets the status and headers that GET would get, including `Content-Length` and `Content-Type`, and no body. The adapter cancels the body's stream without reading it, and a body built with `Body.lazy` never makes its stream at all. The handler sees `Method.head` on `request.method`, which lets it skip work that only the body needs.
+HEAD is in that `allow` list, although the program registers no HEAD route. A HEAD request asks for the headers that a GET would get, without the body. When a path has a GET route and no HEAD route, the GET handler answers it:
 
-A HEAD route of its own takes precedence, whichever order the routes are added in:
-
-```dart
-final app = RelicApp()
-  ..get('/report', renderReport)
-  ..head('/report', reportHeaders);
+```bash
+curl -I http://localhost:8080/
 ```
 
-A `405 Method Not Allowed` for a path with a GET route lists `HEAD` in its `Allow` header.
-
-The fallback does not extend to a GET handler that answers with a `Hijack` or a `WebSocketUpgrade`. The server cannot strip a body from bytes written to a hijacked channel, so such a HEAD gets `405`. A hijacking handler that answers HEAD itself, writing the response head alone, takes a HEAD route of its own.
-
-## Breaking down the routes
-
-The following examples break down each route from the complete example above.
-
-### Convenience methods
-
-These are convenience methods for the core `.add()` method:
-
-**Respond with `Hello World!` on the homepage:**
-
-GITHUB_CODE_BLOCK lang="dart" title="GET /" file="../_example/routing/basic_routing.dart" doctag="routing-get-root"
-
-**Respond to a POST request on the root route:**
-
-GITHUB_CODE_BLOCK lang="dart" title="POST /" file="../_example/routing/basic_routing.dart" doctag="routing-post-root"
-
-**Respond to a PUT request to the `/user` route:**
-
-GITHUB_CODE_BLOCK lang="dart" title="PUT /user" file="../_example/routing/basic_routing.dart" doctag="routing-put-user"
-
-**Respond to a DELETE request to the `/user` route:**
-
-GITHUB_CODE_BLOCK lang="dart" title="DELETE /user" file="../_example/routing/basic_routing.dart" doctag="routing-delete-user"
-
-### Using the `add` method
-
-This is what the convenience methods call internally:
-
-**Respond to a PATCH request using the core `.add()` method:**
-
-GITHUB_CODE_BLOCK lang="dart" title="PATCH /api" file="../_example/routing/basic_routing.dart" doctag="routing-patch-api"
-
-### Using `anyOf` for multiple methods
-
-Handle multiple HTTP methods with the same handler:
-
-**Handle both GET and POST requests to `/admin`:**
-
-GITHUB_CODE_BLOCK lang="dart" title="GET|POST /admin" file="../_example/routing/basic_routing.dart" doctag="routing-anyof-admin"
-
-## Path parameters, wildcards, and tail segments
-
-Relic's router supports three types of variable path segments:
-
-- **Path parameters (`:id`)** capture named segments and are available via `request.pathParameters.raw`.
-- **Wildcards (`*`)** match any single path segment but do not capture a value.
-- **Tail segments (`/**`)** capture the rest of the path and expose it through `request.remainingPath`.
-
-### Path parameters (`:id`)
-
-Use a colon-prefixed name to capture a segment. Access the value with the `Symbol`-based key that matches the parameter name.
-
-```dart
-final app = RelicApp()
-  ..get('/users/:id', (final Request request) {
-    final userId = request.pathParameters.raw[#id];
-    return Response.ok(
-      body: Body.fromString('User $userId'),
-    );
-  });
+```text
+HTTP/1.1 200 OK
+content-type: text/plain; charset=utf-8
+date: Fri, 23 Oct 2026 11:56:48 GMT
+content-length: 16
 ```
 
-#### Typed path parameters
+The 16 is the length of `You asked for /` and its newline, although no body was sent. The adapter cancels the body's stream without reading it, and a body built with `Body.lazy` never makes its stream at all. The handler sees `Method.head` on `request.method`, so it can skip work that only the body needs.
 
-Raw path parameters are always strings, which means you need to parse them manually. Relic provides typed parameter accessors that handle parsing automatically and give you compile-time type safety.
+A path can still have a HEAD route of its own, and that route takes precedence, whatever order the routes are added in. The one exception to the fallback is a GET handler that returns a `Hijack` or a `WebSocketUpgrade`. Relic cannot strip a body from bytes that the handler writes itself, so a HEAD request to such a route gets 405. The [Handlers](./01-handlers.md#taking-over-the-connection) page shows a hijacking handler with a HEAD route of its own.
 
-Define a parameter accessor once, then use it to extract typed values:
+## Path parameters
 
-GITHUB_CODE_BLOCK lang="dart" file="../_example/routing/dynamic_segments.dart" doctag="routing-typed-path-params" title="Typed path parameters"
+Fixed paths only go so far. A route segment that starts with a colon is a parameter, which matches any value and remembers it. The second program starts with one:
 
-You can also use the nullable variant by calling the accessor directly:
+GITHUB_CODE_BLOCK lang="dart" file="../_example/routing/dynamic_segments.dart" doctag="routing-raw-param" title="A path parameter"
 
-GITHUB_CODE_BLOCK lang="dart" file="../_example/routing/dynamic_segments.dart" doctag="routing-typed-path-params-nullable" title="Nullable typed path parameter"
-
-Relic provides these built-in typed parameter accessors:
-
-| Accessor | Type | Description |
-| -------- | ---- | ----------- |
-| `IntPathParam` | `int` | Integer values (IDs, counts) |
-| `DoublePathParam` | `double` | Decimal values (coordinates, measurements) |
-| `NumPathParam` | `num` | Any numeric value |
-| `PathParam<T>` | Custom | Create your own with a custom parser |
-
-For custom types, use `PathParam<T>` with your own parsing function:
-
-GITHUB_CODE_BLOCK lang="dart" file="../_example/routing/dynamic_segments.dart" doctag="routing-custom-path-param-inline" title="Custom type path parameters"
-
-To create a reusable accessor like the built-in ones, extend `PathParam<T>` with a fixed decoder. The decoder must be a static function with signature `T Function(String)`:
-
-GITHUB_CODE_BLOCK lang="dart" file="../_example/routing/dynamic_segments.dart" doctag="routing-custom-path-param" title="Custom PathParam specialization"
-
-### Wildcards (`*`)
-
-Use `*` to match any single segment without naming it. This is useful when the value does not matter, such as matching `/files/<anything>/download`.
-
-GITHUB_CODE_BLOCK lang="dart" file="../_example/routing/dynamic_segments.dart" doctag="routing-wildcard-download" title="Wildcard path segment"
-
-### Tail segments (`/**`)
-
-Use `/**` at the end of a pattern to match the entire remaining path. The unmatched portion is available via `request.remainingPath`.
-
-GITHUB_CODE_BLOCK lang="dart" file="../_example/routing/dynamic_segments.dart" doctag="routing-tail-segment" title="Tail segment"
-
-Tail segments are required when serving directories so that the handler knows which file the client requested. A route like `/static` without `/**` would not expose the requested child path.
-
-## Route matching and priority
-
-When multiple routes could potentially match a request, Relic uses these rules:
-
-1. **Literal segments take priority over dynamic segments** - A route with
-   `/users/admin` is tried before `/users/:id` when matching `/users/admin`.
-
-2. **Backtracking ensures the best match** - If a literal path leads to a dead
-   end (no matching route), the router backtracks and tries dynamic
-   alternatives.
-
-This means you can freely combine:
-
-- Specific routes (`/files/special/report`) with catch-all routes
-  (`/files/**`)
-- Literal and parameterized segments (`/api/v1/users` and
-  `/api/:version/items`)
-
-Route registration order does not affect matching, which makes it easy to
-compose routers from separate modules without worrying about ordering.
-
-The router uses a trie data structure to provide efficient matching. Typical
-lookups run in _O(segments)_ time regardless of how many routes are registered.
-Since each trie node is visited at most once during lookup, the worst case is
-still bounded by the total number of paths registered. Hence it is never worse
-than a linear scan.
-
-### How backtracking works
-
-Consider these routes:
-
-```dart
-router.get('/:entity/:id', entityHandler);      // Route 1
-router.get('/users/:id/profile', profileHandler); // Route 2
+```bash
+curl http://localhost:8080/users/42
 ```
 
-When a request comes in for `/users/789`:
-
-1. The router first tries the literal `users` segment (from Route 2)
-2. Route 2 requires a third segment `/profile`, but the path ends at `789`
-3. The router backtracks and tries the parameter `:entity` instead
-4. Route 1 matches with `entity=users` and `id=789`
-
-Without backtracking, the request would fail because the router would commit to the literal `users` path and never consider Route 1.
-
-### Backtracking with tail segments
-
-Tail segments (`/**`) act as catch-alls and benefit from backtracking:
-
-```dart
-router.get('/files/**', catchAllHandler);           // Route 1
-router.get('/files/special/report', reportHandler); // Route 2
+```text
+User 42
 ```
 
-- `/files/special/report` → matches Route 2 (exact match)
-- `/files/special/other` → backtracks to Route 1 (catch-all)
+`pathParameters.raw` maps the name of each parameter, as a Dart symbol, to the segment it matched, and the value is always a string. To get a number, declare a typed accessor for the parameter and read the value through it:
 
-This allows you to define specific routes alongside catch-all routes, with the
-specific routes taking priority when they fully match.
+GITHUB_CODE_BLOCK lang="dart" file="../_example/routing/dynamic_segments.dart" doctag="routing-typed-param" title="A typed path parameter"
 
-## Request forwarding
+GITHUB_CODE_BLOCK lang="dart" file="../_example/routing/dynamic_segments.dart" doctag="routing-typed-param-route" title="Its route"
 
-Sometimes a handler needs to internally redirect a request to a different route. Relic supports this through `copyWith` and `forwardTo`:
-
-```dart
-final app = RelicApp()
-  // Redirect old endpoint to new one
-  ..get('/v1/users', (req) {
-    final newReq = req.copyWith(url: req.url.replace(path: '/v2/users'));
-    return req.forwardTo(newReq);
-  })
-  ..get('/v2/users', (req) {
-    return Response.ok(body: Body.fromString('Users list'));
-  });
+```bash
+curl http://localhost:8080/orders/42
 ```
 
-`forwardTo` re-routes the new request through the same router, so route matching, path parameters, and middleware all work correctly on the forwarded request. This is different from simply calling another handler directly, which would bypass routing entirely. The host in the URL is typically irrelevant since `forwardTo` uses the router's path-based matching.
+```text
+Order 42, and the next one is 43
+```
 
-For more details on `copyWith` and `forwardTo`, see [Modifying requests](./requests#modifying-requests).
+`get` parses the segment and returns an `int`, so `id + 1` is arithmetic rather than string concatenation. When the segment does not parse, `get` throws a `FormatException`, and a request for `/orders/abc` gets a 500. Besides `IntPathParam`, there are `DoublePathParam` and `NumPathParam` for numbers.
+
+Calling `pathParameters` with the accessor, instead of calling `get`, returns null when the route has no such parameter. That lets one handler serve a route with the parameter and a route without it:
+
+GITHUB_CODE_BLOCK lang="dart" file="../_example/routing/dynamic_segments.dart" doctag="routing-optional-param" title="An optional parameter"
+
+GITHUB_CODE_BLOCK lang="dart" file="../_example/routing/dynamic_segments.dart" doctag="routing-optional-param-routes" title="Its two routes"
+
+Requests for `/posts` and `/posts/3` get:
+
+```text
+Posts, page 1
+Posts, page 3
+```
+
+For any other type, give `PathParam` the function that parses it:
+
+GITHUB_CODE_BLOCK lang="dart" file="../_example/routing/dynamic_segments.dart" doctag="routing-custom-param-inline" title="A parameter of your own type"
+
+To reuse an accessor like that, make it a class with the parser built in, the way `IntPathParam` is made:
+
+GITHUB_CODE_BLOCK lang="dart" file="../_example/routing/dynamic_segments.dart" doctag="routing-custom-param-class" title="A reusable accessor"
+
+The program reads the date of `/events/:date` with it, and a request for `/events/2026-10-23` gets:
+
+```text
+Events in month 10 of 2026
+```
+
+## Wildcards and tails
+
+A `*` segment matches any value, as a parameter does, but keeps none, for when the value does not matter:
+
+GITHUB_CODE_BLOCK lang="dart" file="../_example/routing/dynamic_segments.dart" doctag="routing-wildcard" title="A wildcard segment"
+
+A request for `/files/report.pdf/download` gets `Downloading a file`.
+
+A `**` at the end of a route matches the rest of the path, however many segments that is. The part it matched is the request's `remainingPath`:
+
+GITHUB_CODE_BLOCK lang="dart" file="../_example/routing/dynamic_segments.dart" doctag="routing-tail" title="A tail segment"
+
+```bash
+curl http://localhost:8080/static/css/site.css
+```
+
+```text
+Serving /css/site.css
+```
+
+This is how a handler for a whole directory learns which file was asked for, and the [Static files](./09-static-files.md) page relies on it.
+
+## Which route wins
+
+The program registers both `/static/**` and `/static/special/report`. A request for the report matches both routes, and gets the more specific one:
+
+```text
+/static/special/report   The special report
+/static/special/other    Serving /special/other
+```
+
+The router walks the path one segment at a time, and tries a literal segment before a parameter, a wildcard or a tail. When the literal path leads to a dead end, it backs up and tries the alternatives.
+
+## Backtracking
+
+The last two routes of the program show that backing up at work:
+
+GITHUB_CODE_BLOCK lang="dart" file="../_example/routing/dynamic_segments.dart" doctag="routing-backtracking" title="Two routes that need backtracking"
+
+A request for `/shop/789/profile` follows the literal `shop` all the way to the end. A request for `/shop/789` starts down the same literal `shop`, and `789` matches `:id`, but that route needs a third segment, `profile`, and the path has ended. So the router backs up to the first segment, tries `:entity` instead, and `/:entity/:id` matches:
+
+```text
+/shop/789           A shop with id 789
+/shop/789/profile   A shop profile
+```
+
+Without backtracking, the request for `/shop/789` would have committed to the literal `shop` and failed. Because of these rules, the order you register routes in does not change which route wins, so routers built in separate modules combine without surprises.
+
+The routes live in a trie, a tree with one level per path segment. Without backtracking, a lookup visits one node per segment, so its cost depends on the length of the path and not on the number of routes. With backtracking, a lookup can leave a literal branch and try a parameter in its place, which visits more nodes, but never the same node twice. Even the worst lookup does no more work than trying every route in turn, and a path that never needs to back up still costs one node per segment.
+
+Backtracking is on by default, and `run` takes a `backtrack` argument to turn it off. The program passes it through from its command line:
+
+GITHUB_CODE_BLOCK lang="dart" file="../_example/routing/dynamic_segments.dart" doctag="routing-no-backtrack" title="Starting without backtracking"
+
+Started with `--no-backtrack`, the router commits to the literal `shop` and never tries `:entity`:
+
+```bash
+curl -i http://localhost:8080/shop/789
+```
+
+```text
+HTTP/1.1 404 Not Found
+content-type: text/plain; charset=utf-8
+date: Mon, 26 Oct 2026 08:21:34 GMT
+content-length: 9
+
+Not Found
+```
+
+The same happens to `/static/special/other`, which commits to the literal `special` and never reaches `/static/**`. Every lookup then costs one node per segment. That is worth having only for a route table in which no literal and no parameter share a prefix, where nothing can need to back up anyway. `routeWith`, which routes for a router placed in a `Pipeline`, takes the same argument.
+
+## Virtual hosts
+
+One server can answer for several host names. The `Host` header says which one the client asked for, and with `useHostWhenRouting` the router reads it too. The third program registers a route for each of two hosts:
+
+GITHUB_CODE_BLOCK lang="dart" file="../_example/routing/virtual_hosts.dart" doctag="routing-virtual-hosts" title="Routes with a host"
+
+The host is the first segment of each route. curl sends the host it connected to, so to ask for another one, set the header by hand:
+
+```bash
+curl -H 'Host: www.example.com' http://localhost:8080/
+curl -H 'Host: api.example.com' http://localhost:8080/users
+curl -H 'Host: api.example.com' http://localhost:8080/
+```
+
+```text
+Welcome to example.com
+The users, over the API
+Not Found
+```
+
+The third request asks `api.example.com` for `/`, which only `www.example.com` has a route for, and gets 404. So does a plain `curl http://localhost:8080/`, since its host is `localhost`. A port in the header makes no difference, and `Host: www.example.com:8080` gets the welcome too.
+
+The router treats the host as one more segment of the path, and nothing else changes, so the rules of this page apply to it. A literal host matches that host alone, `*` matches any host, and a parameter captures the host for the handler. The program uses that for a dashboard that every tenant reaches on a host of its own:
+
+GITHUB_CODE_BLOCK lang="dart" file="../_example/routing/virtual_hosts.dart" doctag="routing-host-parameter-route" title="A route that captures the host"
+
+GITHUB_CODE_BLOCK lang="dart" file="../_example/routing/virtual_hosts.dart" doctag="routing-host-parameter" title="Its handler"
+
+```bash
+curl -H 'Host: acme.example.com' http://localhost:8080/dashboard
+curl -H 'Host: globex.example.com' http://localhost:8080/dashboard
+```
+
+```text
+The dashboard of acme.example.com
+The dashboard of globex.example.com
+```
+
+One handler serves every tenant, and the literal hosts above still win for their own paths. A level of the trie holds a wildcard or a parameter, not both, so `*/health` and `:tenant/dashboard` cannot be registered together. Pick one, and read the value or ignore it.
+
+`routeWith`, for a pipeline built by hand, takes `useHostWhenRouting` as well.
+
+## Forwarding a request
+
+Sometimes a handler wants another route to answer, without sending the client a redirect. It makes a copy of the request with a new URL, and forwards the copy through the same router:
+
+GITHUB_CODE_BLOCK lang="dart" file="../_example/routing/basic_routing.dart" doctag="routing-forward" title="Forwarding an old path to a new one"
+
+```bash
+curl http://localhost:8080/v1/users
+```
+
+```text
+The users, from /v2/users
+```
+
+`forwardTo` sends the copy through all of the routing of the router that handled the original, middleware included, which calling the other handler directly would skip. Read the forwarded request's parameters with `rawPathParameters`. The copy shares its context properties with the original, so `pathParameters` and `queryParameters` that were read before forwarding keep their old values. The [Requests](./04-requests.md#modifying-requests) page has more on `copyWith` and `forwardTo`.
 
 ## Examples & further reading
 
 ### Examples
 
-- **[Basic routing example](https://github.com/serverpod/relic/blob/main/packages/examples/routing/basic_routing.dart)** - The complete working example from this guide.
+- **[Basic routing example](https://github.com/serverpod/relic/blob/main/packages/examples/routing/basic_routing.dart)** - Routes by method and path, and forwarding.
+- **[Dynamic segments example](https://github.com/serverpod/relic/blob/main/packages/examples/routing/dynamic_segments.dart)** - Path parameters, wildcards, tails and backtracking.
+- **[Virtual hosts example](https://github.com/serverpod/relic/blob/main/packages/examples/routing/virtual_hosts.dart)** - Routes with a host, and a parameter that captures it.
 
 ### API documentation
 

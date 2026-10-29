@@ -14,7 +14,7 @@ Future<void> main() async {
       ..use('/api', AuthMiddleware().asMiddleware)
       ..get(
         '/api/user/info',
-        (final req) => Response.ok(body: Body.fromString('${req.user}')),
+        (req) => Response.ok(body: Body.fromString('${req.user}')),
       );
 
     await app.serve();
@@ -47,11 +47,11 @@ extension on Request {
 /// Simple authentication middleware for demonstration purposes.
 class AuthMiddleware {
   // Simplified validation for demo.
-  bool _validate(final String token) => true;
-  User _extractUser(final String token) => int.parse(token);
+  bool _validate(String token) => true;
+  User _extractUser(String token) => int.parse(token);
 
-  Handler call(final Handler next) {
-    return (final req) {
+  Handler call(Handler next) {
+    return (req) {
       final bearer = req.headers.authorization as BearerAuthorizationHeader?;
       if (bearer == null || !_validate(bearer.token)) {
         return Response.unauthorized();

@@ -4,19 +4,17 @@ import 'package:relic/relic.dart';
 
 /// Demonstrates various static file serving patterns and caching strategies.
 Future<void> main() async {
-  final staticDir = Directory('example/_static_files');
+  final staticDir = Directory('_static_files');
   final app = RelicApp();
 
   // Serve all files from a directory with basic caching.
 
   // doctag<static-files-dir-serve>
-  app.anyOf(
-    {Method.get, Method.head},
+  app.get(
     '/basic/**',
     StaticHandler.directory(
       staticDir,
-      cacheControl: (final req, final fileInfo) =>
-          CacheControlHeader(maxAge: 86400),
+      cacheControl: (req, fileInfo) => CacheControlHeader(maxAge: 86400),
     ).asHandler,
   );
   // end:doctag<static-files-dir-serve>
@@ -27,9 +25,8 @@ Future<void> main() async {
   app.get(
     '/logo.svg',
     StaticHandler.file(
-      File('example/_static_files/logo.svg'),
-      cacheControl: (final req, final fileInfo) =>
-          CacheControlHeader(maxAge: 3600),
+      File('_static_files/logo.svg'),
+      cacheControl: (req, fileInfo) => CacheControlHeader(maxAge: 3600),
     ).asHandler,
   );
   // end:doctag<static-files-single-file>
@@ -37,12 +34,11 @@ Future<void> main() async {
   // Configure short-term caching for frequently updated content.
 
   // doctag<static-files-cache-short>
-  app.anyOf(
-    {Method.get, Method.head},
+  app.get(
     '/short-cache/**',
     StaticHandler.directory(
       staticDir,
-      cacheControl: (final req, final fileInfo) => CacheControlHeader(
+      cacheControl: (req, fileInfo) => CacheControlHeader(
         // Cache for 1 hour.
         maxAge: 3600,
         // Enable CDN and proxy caching.
@@ -55,12 +51,11 @@ Future<void> main() async {
   // Configure long-term caching for immutable assets.
 
   // doctag<static-files-cache-long-immutable>
-  app.anyOf(
-    {Method.get, Method.head},
+  app.get(
     '/long-cache/**',
     StaticHandler.directory(
       staticDir,
-      cacheControl: (final req, final fileInfo) => CacheControlHeader(
+      cacheControl: (req, fileInfo) => CacheControlHeader(
         // Cache for 1 year.
         maxAge: 31536000,
         publicCache: true,
@@ -82,7 +77,7 @@ Future<void> main() async {
   // Create an index page that demonstrates cache-busted URLs.
   app.get(
     '/',
-    respondWith((final _) async {
+    respondWith((_) async {
       final helloUrl = await buster.assetPath('/static/hello.txt');
       final logoUrl = await buster.assetPath('/static/logo.svg');
       final html =
@@ -98,12 +93,11 @@ Future<void> main() async {
   );
 
   // Serve static files with automatic cache busting.
-  app.anyOf(
-    {Method.get, Method.head},
+  app.get(
     '/static/**',
     StaticHandler.directory(
       staticDir,
-      cacheControl: (final req, final fileInfo) => CacheControlHeader(
+      cacheControl: (req, fileInfo) => CacheControlHeader(
         // Safe to cache long term with versioning.
         maxAge: 31536000,
         publicCache: true,
