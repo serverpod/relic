@@ -23,10 +23,37 @@ final class HostHeader {
     return HostHeader._(trimmed.toLowerCase(), port);
   }
 
-  /// [parse] over the wire bytes. `Uri` does the parsing and reads text,
-  /// so the bytes become a Latin-1 string first.
-  static HostHeader _parseBytes(final Uint8List bytes) =>
-      HostHeader.parse(textOf(bytes));
+  /// [parse] over the wire bytes.
+  ///
+  /// A plain `reg-name [ ":" port ]` of letters, digits, `.` and `-` is
+  /// read here, which is what a browser sends. Anything else, an IP
+  /// literal or an escape among them, goes through `Uri` as text.
+  static HostHeader _parseBytes(final Uint8List bytes) {
+    final start = trimStart(bytes, 0, bytes.length);
+    final end = trimEnd(bytes, start, bytes.length);
+    var colon = -1;
+    for (var i = start; i < end; i++) {
+      final b = bytes[i];
+      if (b == 0x3A) {
+        if (colon >= 0) return HostHeader.parse(textOf(bytes));
+        colon = i;
+        continue;
+      }
+      final letter = (b | 0x20) >= 0x61 && (b | 0x20) <= 0x7A;
+      final digit = b >= 0x30 && b <= 0x39;
+      if (!letter && !digit && b != 0x2E && b != 0x2D) {
+        return HostHeader.parse(textOf(bytes));
+      }
+      if (colon >= 0 && !digit) return HostHeader.parse(textOf(bytes));
+    }
+    final hostEnd = colon < 0 ? end : colon;
+    if (hostEnd == start) return HostHeader.parse(textOf(bytes));
+    final port = colon < 0 ? null : digitsOf(bytes, colon + 1, end);
+    if (colon >= 0 && (port == null || port > 65535)) {
+      return HostHeader.parse(textOf(bytes));
+    }
+    return HostHeader._(lowerTextOf(bytes, start, hostEnd), port);
+  }
 
   factory HostHeader.parse(String value) {
     value = value.trim();
