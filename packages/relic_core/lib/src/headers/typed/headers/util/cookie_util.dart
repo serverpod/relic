@@ -33,6 +33,24 @@ final Uint8List _asciiClasses = Uint8List.fromList([
     (_isCookieOctet(c) ? _octet : 0) | (_isCookieNameChar(c) ? _nameChar : 0),
 ]);
 
+/// The class bits of every byte: [cookieOctet], [cookieNameChar] and
+/// [cookieWhitespace], the trimmed characters a byte can be.
+final Uint8List cookieByteClasses = Uint8List.fromList([
+  for (var c = 0; c < 0x100; c++)
+    (c < 0x80 ? _asciiClasses[c] : 0) | (isTrimWhitespace(c) ? _ws : 0),
+]);
+
+/// The [cookieByteClasses] bit of a cookie-octet.
+const cookieOctet = _octet;
+
+/// The [cookieByteClasses] bit of a cookie name character.
+const cookieNameChar = _nameChar;
+
+/// The [cookieByteClasses] bit of a character `String.trim` strips.
+const cookieWhitespace = _ws;
+
+const _ws = 4;
+
 bool _isCookieNameChar(final int codeUnit) {
   if (codeUnit <= 0x20 || codeUnit >= 0x7F) return false;
   return switch (codeUnit) {
