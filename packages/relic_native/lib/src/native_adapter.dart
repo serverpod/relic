@@ -1093,14 +1093,14 @@ final class NativeExchange extends LinkedListEntry<NativeExchange>
       if (error != null) inbound.addError(error);
       unawaited(inbound.close());
     }
-    _rawSink?._ended();
+    _rawSink?._end();
     _adapter._finished(this);
   }
 
   /// The native side is done with a raw connection whose sink was closed.
   void _rawGone() {
     _release();
-    _rawSink?._ended();
+    _rawSink?._end();
     _adapter._finished(this);
   }
 
@@ -1314,22 +1314,28 @@ final class NativeExchange extends LinkedListEntry<NativeExchange>
 
 /// The sink of a hijacked connection. Bytes go to the native writer as
 /// they are added, and closing it closes the connection after the flush.
+///
+/// A write after the connection is gone is dropped, as on a destroyed
+/// socket. A write after the handler closed the sink is an error.
 final class _RawSink implements StreamSink<Uint8List> {
   final NativeExchange _exchange;
   final _done = Completer<void>();
   var _closed = false;
+  var _ended = false;
 
   _RawSink(this._exchange);
 
   @override
   void add(Uint8List data) {
     if (_closed) throw StateError('The channel sink is closed');
+    if (_ended) return;
     _exchange._writeRaw(data);
   }
 
   @override
   void addError(Object error, [StackTrace? stackTrace]) {
     if (_closed) throw StateError('The channel sink is closed');
+    if (_ended) return;
     _exchange._failRaw(error);
   }
 
@@ -1345,8 +1351,8 @@ final class _RawSink implements StreamSink<Uint8List> {
     return _done.future;
   }
 
-  void _ended() {
-    _closed = true;
+  void _end() {
+    _ended = true;
     if (!_done.isCompleted) _done.complete();
   }
 
