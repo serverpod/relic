@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:relic_headers/relic_headers.dart';
 
 import '../body/types/body_type.dart';
@@ -36,6 +38,11 @@ final class ResponseFraming {
   /// The Date to add, or null when the response has one.
   final String? date;
 
+  /// The Date field line, `date: <value>\r\n`, as bytes for a head writer
+  /// to copy, or null when [date] is null or the stand-in an adapter
+  /// stamps.
+  final Uint8List? dateLine;
+
   /// Whether the connection closes after this response.
   ///
   /// True when the request or the response asked for it, or when nothing
@@ -48,6 +55,7 @@ final class ResponseFraming {
     required this.transferEncoding,
     required this.contentType,
     required this.date,
+    required this.dateLine,
     required this.closeAfter,
   });
 
@@ -77,11 +85,17 @@ final class ResponseFraming {
       bodyType.validate();
       contentType = bodyType.toHeaderValue();
     }
-    final date = headers.contains(HeaderName.date)
-        ? null
-        : stampDate
-        ? stampedDate
-        : httpDate();
+    String? date;
+    Uint8List? dateLine;
+    if (!headers.contains(HeaderName.date)) {
+      if (stampDate) {
+        date = stampedDate;
+      } else {
+        // The value and its line come from one cache refresh.
+        date = httpDate();
+        dateLine = httpDateLineOf(date);
+      }
+    }
     // Most responses set neither Connection nor Transfer-Encoding, so the
     // parse runs only when the header is there.
     final connection = headers.contains(HeaderName.connection)
@@ -129,6 +143,7 @@ final class ResponseFraming {
       transferEncoding: transferEncoding,
       contentType: contentType,
       date: date,
+      dateLine: dateLine,
       closeAfter: closeAfter,
     );
   }

@@ -16,14 +16,6 @@ void main() {
     expect(date.difference(before).inSeconds.abs(), lessThanOrEqualTo(1));
   });
 
-  test('Given the current time, when the date line is read, '
-      'then it is the date field with the same value.', () {
-    final value = httpDate();
-    final line = latin1.decode(httpDateLine());
-
-    expect(line, 'date: $value\r\n');
-  });
-
   test('Given a substituted clock, '
       'when it advances past the second, '
       'then the date follows that clock', () {
@@ -33,5 +25,13 @@ void main() {
       now = now.add(const Duration(seconds: 2));
       expect(httpDate(), 'Thu, 01 Jan 2026 00:00:02 GMT');
     });
+  });
+
+  test('Given the current date value, when its line is asked for, '
+      'then it is the date field, and null for any other string', () {
+    final value = httpDate();
+
+    expect(latin1.decode(httpDateLineOf(value)!), 'date: $value\r\n');
+    expect(httpDateLineOf(String.fromCharCodes(value.codeUnits)), isNull);
   });
 }

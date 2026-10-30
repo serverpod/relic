@@ -31,14 +31,11 @@ String httpDate() {
   return _value;
 }
 
-/// The whole Date field line for now, `date: <value>\r\n`, as bytes.
-///
-/// Refreshed together with [httpDate]. The caller copies it and does not
-/// write into it.
-Uint8List httpDateLine() {
-  _refresh();
-  return _line;
-}
+/// The field line of [value], `date: <value>\r\n`, when [value] is what
+/// [httpDate] last returned, else null. No clock read. The caller copies
+/// the line and does not write into it.
+Uint8List? httpDateLineOf(final String value) =>
+    identical(value, _value) ? _line : null;
 
 void _refresh() {
   final source = clock;
