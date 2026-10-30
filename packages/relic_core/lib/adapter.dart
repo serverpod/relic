@@ -10,7 +10,7 @@ library;
 export 'src/adapter/adapter.dart' show ExchangeEndState;
 export 'src/adapter/response_framing.dart';
 export 'src/adapter/response_head.dart';
-export 'src/util/http_date.dart' show httpDateLine, stampedDate;
+export 'src/util/http_date.dart' show httpDateLineOf, stampedDate;
 export 'src/util/util.dart' show statusMayHaveBody;
 export 'src/web_socket/framed_web_socket.dart';
 export 'src/web_socket/relic_web_socket_base.dart';

@@ -5,7 +5,6 @@ import 'package:relic_headers/relic_headers.dart';
 
 import '../context/result.dart';
 import '../headers/headers.dart';
-import '../util/http_date.dart';
 import 'response_framing.dart';
 
 /// The status line and header block of a response, sized before it is
@@ -21,11 +20,6 @@ final class ResponseHead {
   final Headers _headers;
   final ResponseFraming _framing;
   final String? _transferEncoding;
-
-  /// The cached `date: <value>\r\n` line when the framing's date is the
-  /// cached value. Null otherwise, and [writeTo] encodes the date from its
-  /// string.
-  final Uint8List? _dateLine;
   final bool _announceClose;
 
   /// An upper bound on the bytes [writeTo] produces.
@@ -48,12 +42,7 @@ final class ResponseHead {
     if (framing.contentType case final contentType?) {
       bound += 'content-type: '.length + contentType.length + 2;
     }
-    Uint8List? dateLine;
     if (framing.date case final date?) {
-      // A stand-in the adapter stamps costs no clock read here either.
-      if (!identical(date, stampedDate) && identical(date, httpDate())) {
-        dateLine = httpDateLine();
-      }
       bound += 'date: '.length + date.length + 2;
     }
     if (transferEncoding != null) {
@@ -69,7 +58,6 @@ final class ResponseHead {
       headers,
       framing,
       transferEncoding,
-      dateLine,
       announceClose,
       bound,
     );
@@ -80,7 +68,6 @@ final class ResponseHead {
     this._headers,
     this._framing,
     this._transferEncoding,
-    this._dateLine,
     this._announceClose,
     this.bound,
   );
@@ -99,7 +86,7 @@ final class ResponseHead {
     if (_framing.contentType case final contentType?) {
       off = _field(out, off, 'content-type', contentType);
     }
-    if (_dateLine case final dateLine?) {
+    if (_framing.dateLine case final dateLine?) {
       dateOffset = off + _dateName.length;
       out.setRange(off, off + dateLine.length, dateLine);
       off += dateLine.length;

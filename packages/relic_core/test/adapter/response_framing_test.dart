@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:relic_core/adapter.dart';
@@ -201,5 +202,37 @@ void main() {
     expect(byHeader.closeAfter, isTrue);
     expect(byRequest.closeAfter, isTrue);
     expect(_frame(Response.ok()).closeAfter, isFalse);
+  });
+
+  test('Given a response without a Date, when framed, '
+      'then dateLine is the field line of date', () {
+    final framing = _frame(Response.ok());
+
+    expect(latin1.decode(framing.dateLine!), 'date: ${framing.date}\r\n');
+  });
+
+  test('Given a response without a Date, '
+      'when framed for an adapter that stamps the date, '
+      'then date is the stand-in and dateLine is null', () {
+    final framing = ResponseFraming.of(
+      Response.ok(),
+      head: false,
+      protocol: HttpProtocol.http11,
+      keepAlive: true,
+      stampDate: true,
+    );
+
+    expect(framing.date, stampedDate);
+    expect(framing.dateLine, isNull);
+  });
+
+  test('Given a response with its own Date, when framed, '
+      'then date and dateLine are null', () {
+    final framing = _frame(
+      Response.ok(headers: Headers.build((h) => h.date = DateTime.utc(2026))),
+    );
+
+    expect(framing.date, isNull);
+    expect(framing.dateLine, isNull);
   });
 }
