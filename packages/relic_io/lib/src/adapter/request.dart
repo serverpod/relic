@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'dart:io' as io;
+import 'dart:typed_data';
 
 import 'package:relic_core/relic_core.dart';
 
@@ -10,8 +12,9 @@ import 'package:relic_core/relic_core.dart';
 Request fromHttpRequest(
   io.HttpRequest request,
   AdapterExchange exchange,
-  RequestFactory create,
-) {
+  RequestFactory create, {
+  void Function()? onBodyEnd,
+}) {
   final url = request.requestedUri;
   final target = RequestTarget.fromUri(url)..validate();
   final headers = headersFromHttpRequest(request);
@@ -21,7 +24,7 @@ Request fromHttpRequest(
     url: url,
     target: target,
     headers: headers,
-    body: bodyFromHttpRequest(request, headers),
+    body: bodyFromHttpRequest(request, headers, onBodyEnd: onBodyEnd),
     lazyConnectionInfo: () =>
         connectionInfoFromHttpConnectionInfo(request.connectionInfo),
   );
@@ -60,20 +63,36 @@ Headers headersFromHttpRequest(io.HttpRequest request) {
 /// A request that declares no length and is not chunked has none. The
 /// request goes in lazily: a body rejected unread is then never listened to,
 /// and dart:io drains it after the response instead of resetting the client.
-Body bodyFromHttpRequest(io.HttpRequest request, Headers headers) {
+/// [onBodyEnd] runs when a chunked body has been read to its end.
+Body bodyFromHttpRequest(
+  io.HttpRequest request,
+  Headers headers, {
+  void Function()? onBodyEnd,
+}) {
   final length = request.contentLength;
   if (length < 0 && !request.headers.chunkedTransferEncoding) {
     return Body.empty();
   }
+  final chunked = length < 0;
   final contentType = headers.tryGet(Headers.contentType);
   return Body(
-    open: () => request,
-    contentLength: length < 0 ? null : length,
+    open: () => chunked && onBodyEnd != null
+        ? request.transform(_endingWith(onBodyEnd))
+        : request,
+    contentLength: chunked ? null : length,
     bodyType: contentType == null
         ? null
         : BodyType.fromContentType(contentType),
   );
 }
+
+StreamTransformer<Uint8List, Uint8List> _endingWith(void Function() onDone) =>
+    StreamTransformer.fromHandlers(
+      handleDone: (sink) {
+        onDone();
+        sink.close();
+      },
+    );
 
 /// Extension to convert a [ContentType] to a [MimeType].
 extension ContentTypeExtension on io.ContentType {
