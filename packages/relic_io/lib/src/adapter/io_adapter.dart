@@ -179,9 +179,10 @@ final class _IOExchange with ExchangeEndState implements AdapterExchange {
   /// away.
   Completer<void>? _cancelled;
 
-  /// The request body handed to the handler, so [hijack] can tell whether
-  /// the handler read it.
+  /// The request body handed to the handler, and whether a chunked one
+  /// was read to its end, so [hijack] can tell.
   Body? _body;
+  var _bodyRead = false;
 
   _IOExchange._(this._adapter, this._request) {
     // dart:io reports a peer that went away as an error on `done`. That is
@@ -198,7 +199,12 @@ final class _IOExchange with ExchangeEndState implements AdapterExchange {
 
   @override
   Request toRequest(RequestFactory create) {
-    final request = fromHttpRequest(_request, this, create);
+    final request = fromHttpRequest(
+      _request,
+      this,
+      create,
+      onBodyEnd: () => _bodyRead = true,
+    );
     _body = request.body;
     return request;
   }
@@ -218,14 +224,15 @@ final class _IOExchange with ExchangeEndState implements AdapterExchange {
     _finish(ExchangeEnd.completed);
   }
 
-  /// Refuses a chunked request body that the handler has not read.
+  /// Refuses a chunked request body that the handler has not read to its
+  /// end.
   ///
   /// Such a body arrives decoded by dart:io's parser, not as the peer sent
   /// it. A body with a length is the peer's bytes as they are.
   @override
   Future<StreamChannel<Uint8List>> hijack() async {
     final body = _body;
-    if (body != null && body.contentLength == null && !body.isRead) {
+    if (body != null && body.contentLength == null && !_bodyRead) {
       throw const HijackRefused(
         'The request body is chunked and was not read to its end. '
         'Read it before hijacking the connection',
