@@ -19,14 +19,18 @@ final class _FakeAdapter implements Adapter {
   /// Whether a graceful close never completes, as one waiting on a handler.
   var hangs = false;
 
+  _FakeAdapter({
+    this.listeners = const [
+      Listener(address: '127.0.0.1', port: 1, protocols: {HttpProtocol.http11}),
+    ],
+  });
+
   @override
   AdapterCapabilities get capabilities =>
       const AdapterCapabilities(hijack: true, webSocket: true);
 
   @override
-  List<Listener> get listeners => const [
-    Listener(address: '127.0.0.1', port: 1, protocols: {HttpProtocol.http11}),
-  ];
+  final List<Listener> listeners;
 
   @override
   void start(final ExchangeSink sink) => this.sink = sink;
@@ -480,6 +484,21 @@ void main() {
 
     expect(adapter.sink, same(firstSink));
     expect(exchange.responses.single.statusCode, 200);
+  });
+
+  test('Given a mounted server whose adapter binds no listener, '
+      'when its port is read, '
+      'then it throws as not bound', () async {
+    final server = RelicServer(() => _FakeAdapter(listeners: const []));
+    await server.mountAndStart((req) => _ok());
+    addTearDown(server.close);
+
+    expect(
+      () => server.port,
+      throwsA(
+        isA<StateError>().having((e) => e.message, 'message', 'Not bound'),
+      ),
+    );
   });
 
   test('Given a handler that reads cancelled, '

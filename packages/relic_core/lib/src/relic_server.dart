@@ -47,7 +47,8 @@ sealed class RelicServer {
 
   /// The port this server is bound to.
   ///
-  /// This will throw a [LateInitializationError], if called before [mountAndStart].
+  /// Throws a [StateError] before [mountAndStart], and for an adapter that
+  /// binds no listener.
   int get port;
 
   factory RelicServer(
