@@ -164,4 +164,22 @@ void main() {
       throwsFormatException,
     );
   });
+
+  test('Given a parameter with whitespace around its name, '
+      'when it is parsed on its own, '
+      'then the name is trimmed on both ends', () {
+    final parameter = ContentDispositionParameter.parse(' filename = a.txt');
+
+    expect(parameter.name, 'filename');
+    expect(parameter.value, 'a.txt');
+  });
+
+  test('Given a parameter whose name is only whitespace, '
+      'when it is parsed on its own, '
+      'then it is a FormatException', () {
+    expect(
+      () => ContentDispositionParameter.parse(' =a'),
+      throwsFormatException,
+    );
+  });
 }

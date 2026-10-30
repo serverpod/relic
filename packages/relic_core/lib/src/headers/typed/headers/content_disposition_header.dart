@@ -157,7 +157,8 @@ class ContentDispositionParameter {
     if (equals < 0) {
       throw const FormatException('Invalid parameter format');
     }
-    final name = part.text(0, trimEnd(source, 0, equals));
+    final nameStart = trimStart(source, 0, equals);
+    final name = part.text(nameStart, trimEnd(source, nameStart, equals));
     final rawValue = trimmed(source, equals + 1, source.length);
     if (name.isEmpty) {
       throw const FormatException('Invalid parameter format');
