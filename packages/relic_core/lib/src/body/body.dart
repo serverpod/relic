@@ -178,9 +178,14 @@ class Body {
       );
     }
     // A BodyType is immutable and builds its header value once, so the
-    // common pairs are shared. The map is keyed by identity, since the MIME
-    // types and encodings in use are constants. The cap stops a caller that
-    // makes a MIME type per request from growing it without bound.
+    // pairs of a MIME type and a known encoding are shared. The map is
+    // keyed by identity, since the MIME types in use are constants. The cap
+    // stops a caller that makes a MIME type per request from growing it
+    // without bound. Any other encoding instance is the one a reader of the
+    // body gets, so a type with one is not shared.
+    if (encoding != null && !_isSharedEncoding(encoding)) {
+      return BodyType(mimeType: mimeType, encoding: encoding);
+    }
     var byEncoding = _sharedBodyTypes[mimeType];
     if (byEncoding == null) {
       if (_sharedBodyTypes.length >= _sharedBodyTypesLimit) {
@@ -197,6 +202,11 @@ class Body {
   static final _sharedBodyTypes =
       HashMap<MimeType, Map<Encoding?, BodyType>>.identity();
   static const _sharedBodyTypesLimit = 256;
+
+  static bool _isSharedEncoding(final Encoding encoding) =>
+      identical(encoding, utf8) ||
+      identical(encoding, latin1) ||
+      identical(encoding, ascii);
 
   /// Creates an empty body.
   ///

@@ -201,4 +201,36 @@ void main() {
 
     expect(bodyType.parameters, {'kept': 'fine'});
   });
+
+  test('Given two bodies in the utf8 encoding, '
+      'when their types are read, '
+      'then the BodyType is shared', () {
+    final a = Body.fromString('a', mimeType: MimeType.plainText);
+    final b = Body.fromString('b', mimeType: MimeType.plainText);
+
+    expect(identical(a.bodyType, b.bodyType), isTrue);
+  });
+
+  test('Given two bodies with an encoding instance each, '
+      'when their types are read, '
+      'then each type carries its own encoding', () {
+    // Two instances on purpose, so neither is the shared constant.
+    // ignore: prefer_const_constructors
+    final first = Utf8Codec(allowMalformed: true);
+    // ignore: prefer_const_constructors
+    final second = Utf8Codec(allowMalformed: true);
+    final a = Body.fromString(
+      'a',
+      mimeType: MimeType.plainText,
+      encoding: first,
+    );
+    final b = Body.fromString(
+      'b',
+      mimeType: MimeType.plainText,
+      encoding: second,
+    );
+
+    expect(identical(a.bodyType!.encoding, first), isTrue);
+    expect(identical(b.bodyType!.encoding, second), isTrue);
+  });
 }
