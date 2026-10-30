@@ -44,6 +44,39 @@ void main() {
     raw.destroy();
   });
 
+  test('Given a hijacked connection whose peer went away, '
+      'when the handler keeps writing to the sink, '
+      'then the writes after done are dropped without an error', () async {
+    final writing = Completer<void>();
+    final written = Completer<void>();
+    server = await serveNative(
+      (req) => Hijack((channel) async {
+        final payload = Uint8List(64 * 1024);
+        var gone = false;
+        unawaited(channel.sink.done.then((_) => gone = true));
+        channel.sink.add(payload);
+        writing.complete();
+        while (!gone) {
+          channel.sink.add(payload);
+          await Future<void>.delayed(const Duration(milliseconds: 10));
+        }
+        channel.sink.add(payload);
+        written.complete();
+      }),
+    );
+
+    final raw = await Socket.connect('127.0.0.1', server.port);
+    raw.write('GET /raw HTTP/1.1\r\nHost: x\r\n\r\n');
+    await raw.flush();
+    await writing.future;
+    raw.destroy();
+
+    await expectLater(
+      written.future.timeout(const Duration(seconds: 10)),
+      completes,
+    );
+  });
+
   test(
     'Given a hijacked connection whose sink was closed with bytes still to flush, '
     'when the peer half-closes meanwhile, '
