@@ -225,8 +225,11 @@ void main() {
         final response1 = await makeRequest(handler, '/root.txt');
         final originalModificationDate = response1.headers.lastModified!;
 
-        await Future<void>.delayed(const Duration(seconds: 2));
-        File(rootPath).writeAsStringSync('updated root txt');
+        File(rootPath)
+          ..writeAsStringSync('updated root txt')
+          ..setLastModifiedSync(
+            originalModificationDate.add(const Duration(seconds: 2)),
+          );
 
         final headers = Headers.build(
           (mh) => mh.ifModifiedSince = originalModificationDate,

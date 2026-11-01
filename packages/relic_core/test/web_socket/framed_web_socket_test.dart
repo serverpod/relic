@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:fake_async/fake_async.dart';
 import 'package:relic_core/adapter.dart';
 import 'package:relic_core/src/adapter/relic_web_socket.dart'
     show RelicWebSocketInternal;
@@ -323,37 +324,48 @@ void main() {
     },
   );
 
-  test(
-    'Given a framed socket, when the server goes away, '
-    'then the peer gets 1001 and done completes without its answer',
-    () async {
-      final gone = h.socket.closeGoingAway();
+  test('Given a framed socket, when the server goes away, '
+      'then the peer gets 1001 and done completes without its answer', () {
+    fakeAsync((async) {
+      final h = _Harness();
+      var gone = false;
+      unawaited(h.socket.closeGoingAway().then((_) => gone = true));
+      WebSocketFrame? close;
+      unawaited(h.next.then((frame) => close = frame));
+      async.flushMicrotasks();
 
-      final close = await h.next;
-      expect(close.opcode, WebSocketOpcode.close);
-      expect(close.payload.sublist(0, 2), [0x03, 0xe9]);
+      expect(close!.opcode, WebSocketOpcode.close);
+      expect(close!.payload.sublist(0, 2), [0x03, 0xe9]);
       expect(h.socket.isClosed, isTrue);
-      await expectLater(
-        gone.timeout(FramedWebSocket.closeTimeout * 2),
-        completes,
+
+      async.elapse(
+        FramedWebSocket.closeTimeout - const Duration(milliseconds: 1),
       );
-    },
-  );
+      expect(gone, isFalse);
+      async.elapse(const Duration(milliseconds: 1));
+      expect(gone, isTrue);
+    });
+  });
 
   test('Given a peer whose connection never flushes, '
       'when the server goes away and the peer answers the close, '
-      'then done still completes', () async {
-    h = _Harness(flushes: false);
-    final gone = h.socket.closeGoingAway();
-    final close = await h.next;
-    expect(close.opcode, WebSocketOpcode.close);
+      'then done still completes', () {
+    fakeAsync((async) {
+      final h = _Harness(flushes: false);
+      var gone = false;
+      unawaited(h.socket.closeGoingAway().then((_) => gone = true));
+      async.flushMicrotasks();
 
-    h.send(WebSocketOpcode.close, [0x03, 0xe9]);
+      h.send(WebSocketOpcode.close, [0x03, 0xe9]);
+      async.flushMicrotasks();
 
-    await expectLater(
-      gone.timeout(FramedWebSocket.closeTimeout * 2),
-      completes,
-    );
+      async.elapse(
+        FramedWebSocket.closeTimeout - const Duration(milliseconds: 1),
+      );
+      expect(gone, isFalse);
+      async.elapse(const Duration(milliseconds: 1));
+      expect(gone, isTrue);
+    });
   });
 
   test('Given a framed socket, '

@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:isolate';
 
 import 'package:http/http.dart' as http;
 import 'package:relic_core/relic_core.dart';
@@ -7,12 +7,14 @@ import 'package:test/test.dart';
 import '../test_utils_base.dart';
 import 'conformance.dart';
 
-/// Holds every request well past the point where the test counts
-/// connections, so none has been answered and closed by then.
-Handler _delayedHandler() {
+/// Holds every request until the test sends to the port it gets on
+/// [arrived], so none has been answered and closed while it counts
+/// connections.
+Handler _heldHandler(SendPort arrived) {
   return (req) async {
-    final delay = Platform.environment['CI'] != null ? 2000 : 500;
-    await Future<void>.delayed(Duration(milliseconds: delay));
+    final release = ReceivePort();
+    arrived.send(release.sendPort);
+    await release.first;
     return Response.ok();
   };
 }
@@ -25,13 +27,18 @@ void connectionsTests(AdapterConformance conformance) {
     (i) => 'Given a server with $i isolates',
     (i) {
       late RelicServer server;
+      late ReceivePort arrived;
 
       setUp(() async {
+        arrived = ReceivePort();
         server = conformance.create(noOfIsolates: i);
-        await server.mountAndStart(_delayedHandler());
+        await server.mountAndStart(_heldHandler(arrived.sendPort));
       });
 
-      tearDown(() => server.close());
+      tearDown(() async {
+        await server.close();
+        arrived.close();
+      });
 
       parameterizedTest(
         variants: List.generate(maxRequests, (j) => j + 1),
@@ -44,8 +51,7 @@ void connectionsTests(AdapterConformance conformance) {
             requests.add(http.get(Uri.http('localhost:${server.port}')));
           }
 
-          // Give requests time to reach the server and start processing.
-          await Future<void>.delayed(const Duration(milliseconds: 100));
+          final held = await arrived.take(j).cast<SendPort>().toList();
 
           await expectLater(
             server.connectionsInfo(),
@@ -58,6 +64,9 @@ void connectionsTests(AdapterConformance conformance) {
             ),
           );
 
+          for (final request in held) {
+            request.send(null);
+          }
           await Future.wait(requests);
         },
       );

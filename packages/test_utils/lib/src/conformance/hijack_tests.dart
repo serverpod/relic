@@ -12,23 +12,22 @@ import 'conformance.dart';
 void hijackTests(AdapterConformance conformance) {
   late RelicServer server;
 
-  test('Given a handler that hijacks and never writes, '
+  test('Given a handler that hijacks and closes without writing, '
       'when a request is made, '
-      'then the client times out waiting for a response', () async {
-    server = await conformance.serve((req) {
-      final result = Hijack((_) {});
-      expect(result, isA<Hijack>());
-      return result;
-    });
+      'then the client receives no bytes', () async {
+    server = await conformance.serve(
+      (req) => Hijack((channel) => channel.sink.close()),
+    );
     addTearDown(
       () => server.close(force: true).timeout(const Duration(seconds: 5)),
     );
 
-    final request = http.Request(Method.get.value, server.url);
-    await expectLater(
-      request.send().timeout(const Duration(seconds: 1)),
-      throwsA(isA<TimeoutException>()),
+    final reply = await rawExchange(
+      server.port,
+      'GET / HTTP/1.1\r\nHost: x\r\n\r\n',
     );
+
+    expect(reply, isEmpty);
   }, skip: conformance.skipHijack);
 
   test('Given a chunked request body, '
