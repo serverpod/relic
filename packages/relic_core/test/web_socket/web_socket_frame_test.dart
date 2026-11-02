@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
-import 'package:relic_core/relic_core.dart';
+import 'package:relic_core/adapter.dart';
 import 'package:test/test.dart';
 
 /// A client frame: masked, with the given header bits, as a client sends

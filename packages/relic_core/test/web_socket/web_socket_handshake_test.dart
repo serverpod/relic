@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:relic_core/adapter.dart';
 import 'package:relic_core/relic_core.dart';
 import 'package:relic_core/src/context/result.dart' show RequestInternal;
 import 'package:test/test.dart';
