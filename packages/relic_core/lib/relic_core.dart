@@ -19,7 +19,6 @@ export 'src/form/request_form_extensions.dart';
 export 'src/handler/cascade.dart' show Cascade;
 export 'src/handler/handler.dart';
 export 'src/handler/pipeline.dart' show Pipeline;
-export 'src/headers/byte_header_store.dart';
 export 'src/headers/codecs/common_types_codecs.dart'
     hide parseDateBytes, parseIntBytes, parseMethodBytes;
 export 'src/headers/exception/header_exception.dart'
