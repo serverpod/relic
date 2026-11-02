@@ -1,5 +1,7 @@
 import 'package:relic_core/relic_core.dart';
 import 'package:relic_core/src/context/result.dart' show RequestInternal;
+import 'package:relic_core/src/middleware/routing_middleware.dart'
+    show RoutingRequestInternal;
 import 'package:test/test.dart';
 import 'package:test_utils/test_utils.dart';
 
