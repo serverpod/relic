@@ -24,6 +24,20 @@ typedef HijackCallback = void Function(StreamChannel<Uint8List>);
 /// exchange fully. The sink never throws and never returns a failed Future.
 typedef ExchangeSink = FutureOr<void> Function(AdapterExchange exchange);
 
+/// What [AdapterExchange.hijack] throws for a request body the adapter
+/// decoded off the wire and the handler did not read to its end.
+///
+/// The decoded bytes cannot go back on the channel, so the handler reads
+/// the body before it hijacks. The core answers the request with 500.
+final class HijackRefused implements Exception {
+  final String message;
+
+  const HijackRefused(this.message);
+
+  @override
+  String toString() => 'HijackRefused: $message';
+}
+
 /// The HTTP version an exchange was received with.
 enum HttpProtocol { http10, http11, http2, http3 }
 
@@ -138,7 +152,7 @@ abstract interface class AdapterExchange {
   /// the request on.
   ///
   /// Throws [UnsupportedError] unless [AdapterCapabilities.hijack]. Throws
-  /// [StateError] when a request body the adapter decoded off the wire, a
+  /// [HijackRefused] when a request body the adapter decoded off the wire, a
   /// chunked one at the least, was not read to its end, since the decoded
   /// bytes cannot go back. The core answers the latter with 500.
   FutureOr<StreamChannel<Uint8List>> hijack();

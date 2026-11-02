@@ -225,7 +225,7 @@ final class _IOExchange with ExchangeEndState implements AdapterExchange {
   Future<StreamChannel<Uint8List>> hijack() async {
     final body = _body;
     if (body != null && body.contentLength == null && !body.isRead) {
-      throw StateError(
+      throw const HijackRefused(
         'The request body is chunked and was not read to its end. '
         'Read it before hijacking the connection',
       );

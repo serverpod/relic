@@ -1026,7 +1026,7 @@ final class NativeExchange extends LinkedListEntry<NativeExchange>
   @override
   StreamChannel<Uint8List> hijack() {
     if (_bodyStreamed && !_bodyRead) {
-      throw StateError(
+      throw const HijackRefused(
         'The request body streams and was not read to its end. '
         'Read it before hijacking the connection',
       );
