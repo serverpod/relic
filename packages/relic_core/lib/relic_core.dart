@@ -5,7 +5,7 @@ export 'package:relic_headers/relic_headers.dart';
 export 'src/accessor/accessor.dart';
 export 'src/adapter/adapter.dart' hide ExchangeEndState;
 export 'src/adapter/connection_info.dart';
-export 'src/adapter/relic_web_socket.dart';
+export 'src/adapter/relic_web_socket.dart' hide RelicWebSocketInternal;
 export 'src/adapter/request_target.dart';
 export 'src/body/body.dart' show Body, MaxBodySizeExceeded;
 export 'src/body/types/body_type.dart' show BodyType;

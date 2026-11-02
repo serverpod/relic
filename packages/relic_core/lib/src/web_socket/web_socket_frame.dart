@@ -90,11 +90,14 @@ bool isValidCloseCode(int code) =>
     (code >= 3000 && code <= 4999);
 
 /// Throws [ArgumentError] unless [code] is one this side may close with:
-/// none, 1000, or 3000 to 4999.
+/// none, 1000, 1001, or 3000 to 4999.
 void checkCloseCode(int? code) {
-  if (code != null && code != 1000 && !(code >= 3000 && code <= 4999)) {
+  if (code != null &&
+      code != 1000 &&
+      code != 1001 &&
+      !(code >= 3000 && code <= 4999)) {
     throw ArgumentError(
-      'Invalid argument: $code, close code must be 1000 or '
+      'Invalid argument: $code, close code must be 1000, 1001 or '
       'in the range 3000-4999',
     );
   }
