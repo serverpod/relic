@@ -332,6 +332,9 @@ const Exchange = struct {
     in: Fifo = .{},
     in_pending: u32 = 0,
     credit: zio.Event = .init,
+    /// The response went out on a connection that stays. The body pump
+    /// reads and drops the rest of the body, and hands Dart nothing more.
+    discard: zio.Event = .init,
     /// The hijacked or WebSocket connection is over. Dart closed its sink
     /// or aborted, or the close handshake finished.
     closed: zio.Event = .init,
@@ -1173,25 +1176,20 @@ fn handleConnInner(r: *Reactor, stream: zio.net.Stream) !void {
             conn.disarm();
             link.setWriteTimeout(inactivity(options.write_timeout_ms));
         }
-        // The response is out. A pump still waiting on credit has a body
-        // Dart did not finish reading.
+        // The response is out. On a connection that stays, the pump reads
+        // and drops what Dart left of the body itself. A cancel could stop
+        // std.http's chunkedReadEndless between a chunk head and its data,
+        // and the decoder would lose its place. On one that ends, the pump
+        // stops and a lingering close drops the rest.
+        const closing = !keep_alive or ex.close_after or r.stop;
         var body_unread = false;
         if (pump) |*p| {
-            p.cancel();
+            if (closing) p.cancel() else ex.discard.set();
             body_unread = !p.join();
             pump = null;
         }
-
-        // A body Dart did not finish reading is still on the wire. It is
-        // read and dropped, so the client is not reset while still sending.
-        // Read to its end, it leaves the connection to carry the next
-        // request.
-        const closing = !keep_alive or ex.close_after or r.stop;
-        if (body_unread) {
-            if (closing) return lingeringClose(&link);
-            if (!discardLingering(&link, body_reader.?)) return;
-        }
-        if (closing) return;
+        if (body_unread and closing) lingeringClose(&link);
+        if (body_unread or closing) return;
     }
 }
 
@@ -1202,9 +1200,10 @@ fn pushInbound(ex: *Exchange, chunk: *Chunk) void {
 }
 
 /// Reads a streamed request body chunk by chunk into Dart's inbound queue,
-/// at most `in_credit` chunks ahead of Dart. Returns true when the body
-/// was read to its end. Returns false when the read failed, or when a
-/// cancel or an abort stopped it with the rest of the body unread.
+/// at most `in_credit` chunks ahead of Dart. After `discard` it reads and
+/// drops the rest under the linger limits. Returns true when the body was
+/// read to its end. Returns false when the read failed, or when a cancel
+/// or an abort stopped it with the rest of the body unread.
 ///
 /// It reads the socket while the exchange is parked, so it also reports
 /// a peer that hung up, as the peer watcher does for a request without a
@@ -1213,7 +1212,7 @@ fn pumpRequestBody(br: *std.Io.Reader, link: *Link, ex: *Exchange, content_lengt
     const gpa = std.heap.c_allocator;
     var remaining: ?u64 = content_length;
     while (true) {
-        if (!waitCredit(ex, &ex.closed)) return false;
+        if (!waitCredit(ex, &ex.discard)) return ex.discard.isSet() and discardLingering(link, br);
         const chunk = gpa.create(Chunk) catch return false;
         const buf = std.c.malloc(in_chunk_size) orelse {
             gpa.destroy(chunk);
@@ -1238,6 +1237,11 @@ fn pumpRequestBody(br: *std.Io.Reader, link: *Link, ex: *Exchange, content_lengt
             if (!complete) ex.view.peer_gone = 1;
             pushLastInbound(ex, complete);
             return complete;
+        }
+        if (ex.discard.isSet()) {
+            std.c.free(buf);
+            gpa.destroy(chunk);
+            return discardLingering(link, br);
         }
         if (remaining) |left| remaining = left - @min(left, got);
         chunk.* = .{ .ptr = data, .len = got };
