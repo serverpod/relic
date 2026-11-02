@@ -143,20 +143,17 @@ void main() {
 
   test(
     'Given a streamed body longer than maxLength, when it is read, '
-    'then it throws MaxBodySizeExceeded and its stream is never listened to.',
+    'then it throws MaxBodySizeExceeded and its stream is cancelled.',
     () async {
-      var listened = false;
-      final source = StreamController<Uint8List>(
-        onListen: () => listened = true,
-      );
+      final cancelled = Completer<void>();
+      final source = StreamController<Uint8List>(onCancel: cancelled.complete);
       final body = Body.fromDataStream(source.stream, contentLength: 10);
 
       expect(
         () => body.read(maxLength: 5),
         throwsA(isA<MaxBodySizeExceeded>()),
       );
-      await pumpEventQueue();
-      expect(listened, isFalse);
+      await expectLater(cancelled.future, completes);
     },
   );
 

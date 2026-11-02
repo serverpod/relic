@@ -430,25 +430,31 @@ class Body {
   /// The body an adapter hands over, typed by [contentType].
   ///
   /// Pass [bytes] when the adapter has read the body, [stream] when it
-  /// arrives as the handler reads, with [contentLength] when declared, and
-  /// neither for a message without a body. [BodyType.fromContentType] does
-  /// the typing, so a request's Content-Type and an upstream response's
-  /// work alike. Read the header with `tryGet`, so one that does not parse
-  /// counts as none.
+  /// arrives as the handler reads, [open] when the adapter can only make
+  /// that stream once the handler reads, with [contentLength] when
+  /// declared, and none of the three for a message without a body.
+  /// [BodyType.fromContentType] does the typing, so a request's
+  /// Content-Type and an upstream response's work alike. Read the header
+  /// with `tryGet`, so one that does not parse counts as none.
+  ///
+  /// A body rejected unread cancels [stream] and never runs [open]. An
+  /// upstream response goes in as [stream], so the cancel frees its
+  /// connection; a `dart:io` request as [open], since a cancel resets it.
   factory Body.of(
     final ContentTypeHeader? contentType, {
     final Uint8List? bytes,
     final Stream<Uint8List>? stream,
+    final Stream<Uint8List> Function()? open,
     final int? contentLength,
   }) {
-    if (bytes == null && stream == null) return Body.empty();
+    if (bytes == null && stream == null && open == null) return Body.empty();
     final bodyType = contentType == null
         ? null
         : BodyType.fromContentType(contentType);
     if (bytes != null) {
       return Body._typed(null, bytes.length, bytes: bytes, bodyType: bodyType);
     }
-    return Body._typed(stream, contentLength, bodyType: bodyType);
+    return Body._typed(stream, contentLength, bodyType: bodyType).._open = open;
   }
 
   /// The whole body as one buffer.
@@ -514,14 +520,10 @@ class Body {
   /// ```
   Stream<Uint8List> read({final int? maxLength}) {
     // A known length over maxLength fails before the stream is made. A lazy
-    // open then never runs. A stream the body holds is dropped without a
-    // listen, since dart:io resets the connection when its request stream is
-    // cancelled, and a client still sending loses the response.
+    // open then never runs, and consume() cancels a stream the body holds.
     final knownLength = contentLength;
     if (maxLength != null && knownLength != null && knownLength > maxLength) {
-      _markRead();
-      _stream = null;
-      _open = null;
+      consume();
       throw MaxBodySizeExceeded(maxLength);
     }
     _markRead();
