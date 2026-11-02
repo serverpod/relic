@@ -25,7 +25,7 @@ typedef HijackCallback = void Function(StreamChannel<Uint8List>);
 typedef ExchangeSink = FutureOr<void> Function(AdapterExchange exchange);
 
 /// The HTTP version an exchange was received with.
-enum HttpProtocol { http10, http11, h2, h3 }
+enum HttpProtocol { http10, http11, http2, http3 }
 
 /// The transport a [Listener] accepts connections on.
 enum Transport { tcp, udp, unix }
