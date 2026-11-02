@@ -120,27 +120,6 @@ class IORelicWebSocket implements RelicWebSocket {
     }
   }
 
-  /// Sends a going-away close (RFC 6455 1001) and waits for the handshake.
-  ///
-  /// [tryClose] cannot send it. It follows `package:web_socket`'s
-  /// application close-code restriction (1000 or 3000-4999), which excludes
-  /// the protocol-level 1001 a shutting-down server should send.
-  ///
-  /// dart:io exposes no hard teardown for an upgraded socket, but bounds
-  /// internally how long a peer can stall the handshake. This swallows
-  /// close errors, since teardown must not throw, least of all into an
-  /// unawaited future.
-  @override
-  Future<void> closeGoingAway() async {
-    if (isClosed) return;
-    unawaited(_events.close());
-    try {
-      await _webSocket.close(1001, 'Server shutting down');
-    } catch (_) {
-      // Nothing to salvage during teardown.
-    }
-  }
-
   @override
   bool trySendBytes(Uint8List b) => _trySend(b);
 

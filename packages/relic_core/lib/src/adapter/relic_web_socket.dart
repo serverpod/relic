@@ -46,18 +46,31 @@ abstract interface class RelicWebSocket implements WebSocket {
   /// [code] is set then the peer will see a 1005 status code. If no [reason]
   /// is set then the peer will not receive a reason string.
   ///
-  /// Throws an [ArgumentError] if [code] is not 1000 or in the range 3000-4999.
+  /// Throws an [ArgumentError] if [code] is not 1000, 1001 or in the range
+  /// 3000-4999. A server sends 1001 when it is going away.
   ///
   /// Throws an [ArgumentError] if [reason] is longer than 123 bytes when
   /// encoded as UTF-8
   Future<bool> tryClose([int? code, String? reason]);
+}
 
-  /// Tells the peer the server is going away (RFC 6455 1001) and waits,
-  /// within a bound, for the connection to end.
+/// What the server does to a socket on shutdown, not exported from
+/// relic_core.dart.
+extension RelicWebSocketInternal on RelicWebSocket {
+  /// Tells the peer the server is going away (RFC 6455 1001) and waits for
+  /// the connection to end.
   ///
-  /// For the server on shutdown. Does nothing on a closed socket. Never
-  /// throws.
-  Future<void> closeGoingAway();
+  /// Does nothing on a closed socket. Never throws, since teardown must
+  /// not, least of all into an unawaited future.
+  Future<void> closeGoingAway() async {
+    if (isClosed) return;
+    try {
+      await tryClose(1001, 'Server shutting down');
+    } catch (_) {
+      // Nothing to salvage during teardown.
+    }
+    await done;
+  }
 }
 
 /// A callback function invoked when a [socket] connection is established.

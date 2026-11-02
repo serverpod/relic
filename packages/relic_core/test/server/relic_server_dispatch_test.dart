@@ -162,7 +162,12 @@ final class _FakeWebSocket extends Fake implements RelicWebSocket {
   bool get isClosed => _done.isCompleted;
 
   @override
-  Future<void> closeGoingAway() async => toldToGoAway = true;
+  Future<bool> tryClose([int? code, String? reason]) async {
+    if (isClosed) return false;
+    toldToGoAway = code == 1001;
+    _done.complete();
+    return true;
+  }
 }
 
 Future<(RelicServer, _FakeAdapter)> _serve(Handler handler) async {

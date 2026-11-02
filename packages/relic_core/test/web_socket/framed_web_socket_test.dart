@@ -3,6 +3,8 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:relic_core/adapter.dart';
+import 'package:relic_core/src/adapter/relic_web_socket.dart'
+    show RelicWebSocketInternal;
 import 'package:stream_channel/stream_channel.dart';
 import 'package:test/test.dart';
 import 'package:web_socket/web_socket.dart';
@@ -225,9 +227,9 @@ void main() {
   });
 
   test('Given a framed socket, '
-      'when close gets a code outside 1000 and 3000-4999, '
+      'when close gets a code outside 1000, 1001 and 3000-4999, '
       'then it is an ArgumentError', () {
-    expect(() => h.socket.close(1001), throwsArgumentError);
+    expect(() => h.socket.close(1002), throwsArgumentError);
     expect(() => h.socket.close(1000, 'x' * 124), throwsArgumentError);
   });
 

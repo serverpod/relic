@@ -95,15 +95,6 @@ abstract base class RelicWebSocketBase implements RelicWebSocket {
     return true;
   }
 
-  @override
-  Future<void> closeGoingAway() {
-    if (!isClosed) {
-      closeEvents();
-      sendClose(1001, 'Server shutting down');
-    }
-    return _done.future;
-  }
-
   /// Sends one frame to the peer.
   ///
   /// Does nothing on a transport that is gone.
