@@ -24,12 +24,12 @@ Uri parseUri(String value) {
 
 /// [parseUri] over the wire bytes. `Uri.parse` reads text, so the bytes
 /// become a Latin-1 string first.
-Uri parseUriBytes(Uint8List bytes) => parseUri(textOf(bytes));
+Uri _parseUriBytes(Uint8List bytes) => parseUri(textOf(bytes));
 
 /// Encode a Uri to a iterable of string.
 Iterable<String> encodeUri(Uri uri) => [uri.toString()];
 
-const uriHeaderCodec = HeaderCodec.bytes(parseUriBytes, encodeUri);
+const uriHeaderCodec = HeaderCodec.bytes(_parseUriBytes, encodeUri);
 
 /// Parses a date from the given [value] and returns it as a `DateTime`.
 ///
@@ -102,11 +102,11 @@ Iterable<String> encodePositiveInt(int i) =>
     i < 0 ? throw ArgumentError() : [i.toString()];
 
 /// [parsePositiveInt] over the wire bytes.
-int parsePositiveIntBytes(Uint8List bytes) =>
+int _parsePositiveIntBytes(Uint8List bytes) =>
     digitsOf(bytes) ?? parsePositiveInt(textOf(bytes));
 
 const positiveIntHeaderCodec = HeaderCodec.bytes(
-  parsePositiveIntBytes,
+  _parsePositiveIntBytes,
   encodePositiveInt,
 );
 
@@ -139,11 +139,11 @@ bool parsePositiveBool(String value) {
 Iterable<String> encodePositiveBool(bool b) => [if (b) b.toString()];
 
 /// [parsePositiveBool] over the wire bytes.
-bool parsePositiveBoolBytes(Uint8List bytes) =>
+bool _parsePositiveBoolBytes(Uint8List bytes) =>
     parsePositiveBool(textOf(bytes));
 
 const positiveBoolHeaderCodec = HeaderCodec.bytes(
-  parsePositiveBoolBytes,
+  _parsePositiveBoolBytes,
   encodePositiveBool,
 );
 
@@ -158,7 +158,7 @@ String parseString(String value) {
 }
 
 /// [parseString] over the wire bytes: the trimmed text.
-String parseStringBytes(Uint8List bytes) {
+String _parseStringBytes(Uint8List bytes) {
   if (bytes.isEmpty) {
     throw const FormatException('Value cannot be empty');
   }
@@ -168,17 +168,17 @@ String parseStringBytes(Uint8List bytes) {
 /// Encode a string to a iterable of string.
 Iterable<String> encodeString(String s) => [s];
 
-const stringHeaderCodec = HeaderCodec.bytes(parseStringBytes, encodeString);
+const stringHeaderCodec = HeaderCodec.bytes(_parseStringBytes, encodeString);
 
 /// Parses a list of strings from the given [values] and returns it as a `List<String>`.
 ///
 /// - Throws a [FormatException] if the resulting list is empty.
 List<String> parseStringList(Iterable<String> values) =>
-    parseStringListFields([for (final value in values) latin1Bytes(value)]);
+    _parseStringListFields([for (final value in values) latin1Bytes(value)]);
 
 /// [parseStringList] over the wire bytes of every field: the comma-separated
 /// elements, trimmed, dropped when empty and kept once each.
-List<String> parseStringListFields(List<Uint8List> fields) {
+List<String> _parseStringListFields(List<Uint8List> fields) {
   final elements = splitFieldsUnique(fields);
   if (elements.isEmpty) {
     throw const FormatException('Value cannot be empty');
@@ -194,7 +194,7 @@ List<String> parseStringListFields(List<Uint8List> fields) {
 Iterable<String> encodeStringList(List<String> i) => i;
 
 const stringListCodec = HeaderCodec.fields(
-  parseStringListFields,
+  _parseStringListFields,
   encodeStringList,
 );
 

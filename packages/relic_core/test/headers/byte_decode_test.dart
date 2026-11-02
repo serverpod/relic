@@ -1,6 +1,8 @@
 import 'dart:typed_data';
 
 import 'package:relic_core/relic_core.dart';
+import 'package:relic_core/src/headers/codecs/common_types_codecs.dart'
+    show parseIntBytes;
 import 'package:test/test.dart';
 
 /// Counts which path decoded.

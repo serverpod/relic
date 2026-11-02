@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
 import '../../../../relic_core.dart';
+import '../../codecs/common_types_codecs.dart' show parseMethodBytes;
 import '../primitives/byte_scanner.dart' show latin1Bytes;
 import 'wildcard_list_header.dart';
 

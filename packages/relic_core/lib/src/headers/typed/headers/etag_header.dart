@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import '../../../../relic_core.dart';
 import '../primitives/byte_fields.dart';
 import '../primitives/byte_scanner.dart' show latin1Bytes;
+import '../primitives/etag_value.dart' show ETagValueInternal;
 
 /// A class representing the HTTP ETag header.
 ///
@@ -60,7 +61,7 @@ final class ETagHeader {
     }
     final ETagValue etag;
     try {
-      etag = ETagValue.parseBytes(value);
+      etag = ETagValueInternal.parseBytes(value);
     } on FormatException {
       throw const FormatException('Invalid format');
     }
@@ -68,7 +69,7 @@ final class ETagHeader {
   }
 
   /// [_parseBytes] of one element of a list of entity-tags.
-  static ETagHeader parseElement(final Uint8List element) {
+  static ETagHeader _parseElement(final Uint8List element) {
     try {
       return _parseBytes(element);
     } on FormatException {
@@ -97,7 +98,11 @@ final class ETagHeader {
   }
 }
 
-// This class should be hidden on public export
-extension InternalEx on ETagHeader {
+/// Internal parsing for [ETagHeader], not exported from relic_core.dart.
+extension ETagHeaderInternal on ETagHeader {
   String encode() => _encode();
+
+  /// One element of a list of entity-tags, from its wire bytes.
+  static ETagHeader parseElement(final Uint8List element) =>
+      ETagHeader._parseElement(element);
 }

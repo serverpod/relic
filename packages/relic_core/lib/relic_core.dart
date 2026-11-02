@@ -20,7 +20,8 @@ export 'src/handler/cascade.dart' show Cascade;
 export 'src/handler/handler.dart';
 export 'src/handler/pipeline.dart' show Pipeline;
 export 'src/headers/byte_header_store.dart';
-export 'src/headers/codecs/common_types_codecs.dart';
+export 'src/headers/codecs/common_types_codecs.dart'
+    hide parseDateBytes, parseIntBytes, parseMethodBytes;
 export 'src/headers/exception/header_exception.dart'
     show HeaderException, InvalidHeaderException, MissingHeaderException;
 export 'src/headers/header_accessor.dart';

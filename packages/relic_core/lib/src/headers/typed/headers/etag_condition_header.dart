@@ -2,7 +2,7 @@ import 'dart:typed_data';
 
 import '../../../../relic_core.dart';
 import '../primitives/byte_scanner.dart' show latin1Bytes;
-import 'etag_header.dart' show InternalEx;
+import 'etag_header.dart' show ETagHeaderInternal;
 import 'wildcard_list_header.dart';
 
 /// Base class for ETag-based conditional headers (If-Match and If-None-Match).
@@ -39,7 +39,7 @@ final class IfMatchHeader extends ETagConditionHeader {
   static IfMatchHeader _parseFields(final List<Uint8List> fields) {
     final parsed = WildcardListHeader.parseFields(
       fields,
-      ETagHeader.parseElement,
+      ETagHeaderInternal.parseElement,
     );
     if (parsed.isWildcard) return const IfMatchHeader.wildcard();
     return IfMatchHeader._owned(parsed.values);
@@ -74,7 +74,7 @@ final class IfNoneMatchHeader extends ETagConditionHeader {
   static IfNoneMatchHeader _parseFields(final List<Uint8List> fields) {
     final parsed = WildcardListHeader.parseFields(
       fields,
-      ETagHeader.parseElement,
+      ETagHeaderInternal.parseElement,
     );
     if (parsed.isWildcard) return const IfNoneMatchHeader.wildcard();
     return IfNoneMatchHeader._owned(parsed.values);
