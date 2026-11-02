@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:relic_core/adapter.dart';
 import 'package:relic_core/relic_core.dart';
 import 'package:relic_native/relic_native.dart';
 import 'package:test/test.dart';

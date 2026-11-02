@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:math';
 import 'dart:typed_data';
 
+import 'package:relic_core/adapter.dart';
 import 'package:relic_core/relic_core.dart';
 
 /// A message the receiver will not take, with the status that answers it.

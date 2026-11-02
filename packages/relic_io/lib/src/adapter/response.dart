@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:relic_core/adapter.dart';
 import 'package:relic_core/relic_core.dart';
 
 import 'http_response_extension.dart';

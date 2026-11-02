@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:crypto/crypto.dart';
+import 'package:relic_core/adapter.dart';
 import 'package:relic_core/relic_core.dart';
 
 import 'http1.dart';

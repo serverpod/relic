@@ -1,5 +1,6 @@
 import 'dart:io' as io;
 
+import 'package:relic_core/adapter.dart';
 import 'package:relic_core/relic_core.dart';
 
 /// Extension for [io.HttpResponse] to write the head from a framing.

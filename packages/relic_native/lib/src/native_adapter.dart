@@ -8,6 +8,7 @@ import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:ffi/ffi.dart';
+import 'package:relic_core/adapter.dart';
 import 'package:relic_core/relic_core.dart';
 import 'package:stream_channel/stream_channel.dart';
 import 'package:web_socket/web_socket.dart';

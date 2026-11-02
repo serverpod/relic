@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io' as io;
 import 'dart:typed_data';
 
+import 'package:relic_core/adapter.dart';
 import 'package:relic_core/relic_core.dart';
 import 'package:web_socket/web_socket.dart';
 
