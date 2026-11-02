@@ -28,7 +28,7 @@ Future<void> main(List<String> args) async {
   stdout.writeln('Listening on port ${server.port} with $isolates isolate(s)');
 
   await ProcessSignal.sigint.watch().first;
-  await app.close();
+  await app.close(grace: const Duration(seconds: 5));
   stdout.writeln('Closed');
   // end:doctag<serving-serve>
 }

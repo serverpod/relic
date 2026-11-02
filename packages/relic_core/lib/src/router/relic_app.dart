@@ -104,9 +104,11 @@ final class RelicApp implements RelicRouter, _Reloadable {
     return _server!;
   }
 
-  Future<void> close() async {
+  /// Closes the server, as [RelicServer.close] does with [force] and
+  /// [grace].
+  Future<void> close({bool force = false, Duration? grace}) async {
     await developerTools._dispose();
-    await _server?.close();
+    await _server?.close(force: force, grace: grace);
     _server = null;
   }
 

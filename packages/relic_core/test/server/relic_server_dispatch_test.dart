@@ -14,6 +14,10 @@ import 'package:test_utils/test_utils.dart';
 final class _FakeAdapter implements Adapter {
   ExchangeSink? sink;
   var closed = false;
+  var forced = false;
+
+  /// Whether a graceful close never completes, as one waiting on a handler.
+  var hangs = false;
 
   @override
   AdapterCapabilities get capabilities =>
@@ -28,7 +32,12 @@ final class _FakeAdapter implements Adapter {
   void start(final ExchangeSink sink) => this.sink = sink;
 
   @override
-  Future<void> close({final bool force = false}) async => closed = true;
+  Future<void> close({final bool force = false}) {
+    closed = true;
+    if (force) forced = true;
+    if (hangs && !force) return Completer<void>().future;
+    return Future.value();
+  }
 
   @override
   ConnectionsInfo get connectionsInfo => (active: 0, closing: 0, idle: 0);
@@ -343,6 +352,17 @@ void main() {
 
     expect(exchange.responses.single.statusCode, 500);
     expect(exchange.aborted, isTrue);
+  });
+
+  test('Given an adapter whose graceful close hangs, '
+      'when the server closes with a grace period, '
+      'then a forced close follows once it is up', () async {
+    final (server, adapter) = await _serve((final _) => _ok());
+    adapter.hangs = true;
+
+    await server.close(grace: const Duration(milliseconds: 20));
+
+    expect(adapter.forced, isTrue);
   });
 
   test('Given a closed server, '
