@@ -395,7 +395,7 @@ _storeMemoryUpload() async {
   const storage = MemoryUploadStorage();
   final bodyType = BodyType(mimeType: MimeType.plainText, encoding: utf8);
   final headers = Headers.build(
-    (final mh) => mh[Headers.contentTypeHeader] = [bodyType.toHeaderValue()],
+    (final mh) => mh[HeaderName.contentType] = [bodyType.toHeaderValue()],
   );
 
   final file = await storage.store(

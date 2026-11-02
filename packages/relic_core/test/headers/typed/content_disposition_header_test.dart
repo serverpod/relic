@@ -11,7 +11,7 @@ void main() {
         ],
       ),
     );
-    return headers[Headers.contentDispositionHeader]!.first;
+    return headers[HeaderName.contentDisposition]!.first;
   }
 
   group('Given a filename containing a quote', () {
@@ -98,7 +98,7 @@ void main() {
         (final mh) => mh.contentDisposition = header,
       );
       expect(
-        headers[Headers.contentDispositionHeader]!.first,
+        headers[HeaderName.contentDisposition]!.first,
         "attachment; filename*=UTF-8'en'a%20b.txt",
       );
     });
@@ -120,7 +120,7 @@ void main() {
 
     final headers = Headers.build((final mh) => mh.contentDisposition = header);
     expect(
-      headers[Headers.contentDispositionHeader]!.first,
+      headers[HeaderName.contentDisposition]!.first,
       "attachment; filename*=UTF-8''it%27s%20%281%29%20caf%C3%A9.txt",
     );
   });

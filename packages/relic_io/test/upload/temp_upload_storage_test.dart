@@ -29,7 +29,7 @@ void main() {
         final storage = TempUploadStorage(directory: tempDir);
         final bodyType = BodyType(mimeType: MimeType.plainText, encoding: utf8);
         final headers = Headers.build(
-          (mh) => mh[Headers.contentTypeHeader] = [bodyType.toHeaderValue()],
+          (mh) => mh[HeaderName.contentType] = [bodyType.toHeaderValue()],
         );
 
         final uploaded = await storage.store(
@@ -165,9 +165,9 @@ void main() {
           body: _multipartBody('upload', [
             const _Part(
               headers: {
-                Headers.contentDispositionHeader:
+                'content-disposition':
                     'form-data; name="file"; filename="hello.txt"',
-                Headers.contentTypeHeader: 'text/plain; charset=utf-8',
+                'content-type': 'text/plain; charset=utf-8',
               },
               body: 'hello',
             ),

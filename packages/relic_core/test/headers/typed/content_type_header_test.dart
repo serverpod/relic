@@ -32,9 +32,8 @@ void main() {
       'when contentType is read, '
       'then it returns the MIME type and boundary.', () {
     final headers = Headers.build(
-      (final mh) => mh[Headers.contentTypeHeader] = [
-        'multipart/form-data; boundary=abc123',
-      ],
+      (final mh) =>
+          mh[HeaderName.contentType] = ['multipart/form-data; boundary=abc123'],
     );
 
     expect(headers.contentType?.mimeType, MimeType.multipartFormData);
@@ -45,7 +44,7 @@ void main() {
       'when contentType is read, '
       'then it throws InvalidHeaderException.', () {
     final headers = Headers.build(
-      (final mh) => mh[Headers.contentTypeHeader] = ['not-a-content-type'],
+      (final mh) => mh[HeaderName.contentType] = ['not-a-content-type'],
     );
 
     expect(() => headers.contentType, throwsA(isA<InvalidHeaderException>()));
