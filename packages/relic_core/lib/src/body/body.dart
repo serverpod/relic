@@ -397,18 +397,6 @@ class Body {
     );
   }
 
-  /// Creates a body from [bytes] with the media type the sender declared.
-  ///
-  /// Unlike [Body.fromData], nothing is inferred when [mimeType] is null.
-  /// The body then has no type, as a request without a Content-Type has.
-  /// For an adapter handing over a request body.
-  factory Body.fromBytes(
-    final Uint8List bytes, {
-    final MimeType? mimeType,
-    final Encoding? encoding,
-    final Map<String, String> parameters = const {},
-  }) => Body(bytes: bytes, bodyType: _bodyType(mimeType, encoding, parameters));
-
   /// The whole body as one buffer.
   ///
   /// Synchronous when the body was built from bytes or a string. Counts as

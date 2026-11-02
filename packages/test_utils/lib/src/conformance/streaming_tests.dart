@@ -243,7 +243,7 @@ void streamingTests(AdapterConformance conformance) {
   test('Given a buffered response, '
       'when the peer resets while it is being written, '
       'then the next request is served', () async {
-    await serve((req) => Response.ok(body: Body.fromBytes(_pattern(8 << 20))));
+    await serve((req) => Response.ok(body: Body(bytes: _pattern(8 << 20))));
 
     final socket = await connect();
     socket.write('GET / HTTP/1.1\r\nHost: x\r\n\r\n');

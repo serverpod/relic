@@ -142,7 +142,7 @@ Since a body can be read only once, a middleware that reads it must put a body b
 
 GITHUB_CODE_BLOCK lang="dart" file="../_example/basic/body.dart" doctag="body-inspect-middleware" title="Reading a body and putting it back"
 
-`Body.fromBytes` takes the type as given, without guessing, and keeps its parameters. That matters for a multipart form, whose type carries the `boundary` that separates its parts. The program puts this middleware in front of a handler that parses a form, and both kinds of form survive the trip:
+The `Body` constructor takes the type as given, without guessing, and keeps its parameters. That matters for a multipart form, whose type carries the `boundary` that separates its parts. The program puts this middleware in front of a handler that parses a form, and both kinds of form survive the trip:
 
 ```bash
 curl -d 'name=Nova' http://localhost:8080/signup
