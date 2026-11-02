@@ -116,7 +116,7 @@ class Response extends Message implements Result {
   /// [headers] must contain values that are either `String` or `List<String>`.
   /// An empty list will cause the header to be omitted.
   /// {@endtemplate}
-  Response.ok({final Body? body, final Headers? headers})
+  Response.ok({Body? body, Headers? headers})
     : this(
         200,
         body: body ?? Body.empty(),
@@ -130,11 +130,8 @@ class Response extends Message implements Result {
   /// automatically set as the Location header in [headers].
   ///
   /// {@macro relic_response_body_and_encoding_param}
-  Response.movedPermanently(
-    final Uri location, {
-    final Body? body,
-    final Headers? headers,
-  }) : this._redirect(301, location, body, headers);
+  Response.movedPermanently(Uri location, {Body? body, Headers? headers})
+    : this._redirect(301, location, body, headers);
 
   /// Constructs a 302 Found response.
   ///
@@ -143,7 +140,7 @@ class Response extends Message implements Result {
   /// automatically set as the Location header in [headers].
   ///
   /// {@macro relic_response_body_and_encoding_param}
-  Response.found(final Uri location, {final Body? body, final Headers? headers})
+  Response.found(Uri location, {Body? body, Headers? headers})
     : this._redirect(302, location, body, headers);
 
   /// Constructs a 303 See Other response.
@@ -154,23 +151,16 @@ class Response extends Message implements Result {
   /// [headers].
   ///
   /// {@macro relic_response_body_and_encoding_param}
-  Response.seeOther(
-    final Uri location, {
-    final Body? body,
-    final Headers? headers,
-  }) : this._redirect(303, location, body, headers);
+  Response.seeOther(Uri location, {Body? body, Headers? headers})
+    : this._redirect(303, location, body, headers);
 
   /// A helper constructor for redirect responses.
-  Response._redirect(
-    final int statusCode,
-    final Uri location,
-    final Body? body,
-    final Headers? headers,
-  ) : this(
+  Response._redirect(int statusCode, Uri location, Body? body, Headers? headers)
+    : this(
         statusCode,
         body: body ?? Body.empty(),
         headers: (headers ?? Headers.empty()).transform(
-          (final mh) => mh.location = location,
+          (mh) => mh.location = location,
         ),
       );
 
@@ -180,7 +170,7 @@ class Response extends Message implements Result {
   /// further information to send in the response body.
   ///
   /// {@macro relic_response_body_and_encoding_param}
-  Response.noContent({final Headers? headers})
+  Response.noContent({Headers? headers})
     : this(204, body: Body.empty(), headers: headers ?? Headers.empty());
 
   /// Constructs a 304 Not Modified response.
@@ -194,7 +184,7 @@ class Response extends Message implements Result {
   /// An empty list will cause the header to be omitted.
   ///
   /// If [headers] contains a value for `content-length` it will be removed.
-  Response.notModified({final Headers? headers})
+  Response.notModified({Headers? headers})
     : this(304, body: Body.empty(), headers: headers ?? Headers.empty());
 
   /// Constructs a 400 Bad Request response.
@@ -202,7 +192,7 @@ class Response extends Message implements Result {
   /// This indicates that the server has received a malformed request.
   ///
   /// {@macro relic_response_body_and_encoding_param}
-  Response.badRequest({final Body? body, final Headers? headers})
+  Response.badRequest({Body? body, Headers? headers})
     : this(
         400,
         headers: headers ?? Headers.empty(),
@@ -215,7 +205,7 @@ class Response extends Message implements Result {
   /// because it lacks valid authentication credentials.
   ///
   /// {@macro relic_response_body_and_encoding_param}
-  Response.unauthorized({final Body? body, final Headers? headers})
+  Response.unauthorized({Body? body, Headers? headers})
     : this(
         401,
         headers: headers ?? Headers.empty(),
@@ -227,7 +217,7 @@ class Response extends Message implements Result {
   /// This indicates that the server is refusing to fulfill the request.
   ///
   /// {@macro relic_response_body_and_encoding_param}
-  Response.forbidden({final Body? body, final Headers? headers})
+  Response.forbidden({Body? body, Headers? headers})
     : this(
         403,
         headers: headers ?? Headers.empty(),
@@ -240,7 +230,7 @@ class Response extends Message implements Result {
   /// requested URI.
   ///
   /// {@macro relic_response_body_and_encoding_param}
-  Response.notFound({final Body? body, final Headers? headers})
+  Response.notFound({Body? body, Headers? headers})
     : this(
         404,
         headers: headers ?? Headers.empty(),
@@ -253,7 +243,7 @@ class Response extends Message implements Result {
   /// from fulfilling the request.
   ///
   /// {@macro relic_response_body_and_encoding_param}
-  Response.internalServerError({final Body? body, final Headers? headers})
+  Response.internalServerError({Body? body, Headers? headers})
     : this(
         500,
         headers: headers ?? Headers.empty(),
@@ -266,7 +256,7 @@ class Response extends Message implements Result {
   /// to fulfill the request.
   ///
   /// {@macro relic_response_body_and_encoding_param}
-  Response.notImplemented({final Body? body, final Headers? headers})
+  Response.notImplemented({Body? body, Headers? headers})
     : this(
         501,
         headers: headers ?? Headers.empty(),
@@ -279,11 +269,11 @@ class Response extends Message implements Result {
   /// or able to process.
   ///
   /// {@macro relic_response_body_and_encoding_param}
-  Response.contentTooLarge({final Body? body, final Headers? headers})
+  Response.contentTooLarge({Body? body, Headers? headers})
     : this(
         413,
         headers: (headers ?? Headers.empty()).transform(
-          (final mh) => mh.connection = const ConnectionHeader.directives([
+          (mh) => mh.connection = const ConnectionHeader.directives([
             ConnectionHeaderType.close,
           ]),
         ),
@@ -295,7 +285,7 @@ class Response extends Message implements Result {
   /// [statusCode] must be greater than or equal to 100.
   ///
   /// {@macro relic_response_body_and_encoding_param}
-  Response(this.statusCode, {final Body? body, final Headers? headers})
+  Response(this.statusCode, {Body? body, Headers? headers})
     : super(body: body ?? Body.empty(), headers: headers ?? Headers.empty()) {
     if (statusCode < 100) {
       throw ArgumentError('Invalid status code: $statusCode.');
@@ -308,7 +298,7 @@ class Response extends Message implements Result {
   /// [body] is the response body. It may be either a [String], a [List<int>], a
   /// [Stream<List<int>>], or `<int>[]` (empty list) to indicate no body.
   @override
-  Response copyWith({final Headers? headers, final Body? body}) {
+  Response copyWith({Headers? headers, Body? body}) {
     return Response(
       statusCode,
       body: body ?? this.body,

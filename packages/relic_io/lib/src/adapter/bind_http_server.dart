@@ -20,12 +20,12 @@ import 'dart:io' as io;
 ///
 /// Returns a [Future] that completes with the bound [io.HttpServer].
 Future<io.HttpServer> bindHttpServer(
-  final io.InternetAddress address, {
-  final int port = 0,
-  final io.SecurityContext? context,
-  final int backlog = 0,
-  final bool v6Only = false,
-  final bool shared = false,
+  io.InternetAddress address, {
+  int port = 0,
+  io.SecurityContext? context,
+  int backlog = 0,
+  bool v6Only = false,
+  bool shared = false,
 }) async {
   if (context == null) {
     return await io.HttpServer.bind(

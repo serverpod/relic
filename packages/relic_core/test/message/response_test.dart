@@ -123,7 +123,7 @@ void main() {
           Response.ok(
             body: Body.fromString('okay!'),
             headers: Headers.build(
-              (final mh) =>
+              (mh) =>
                   mh.expires = parseHttpDate('Sun, 06 Nov 1994 08:49:37 GMT'),
             ),
           ).headers.expires,
@@ -151,7 +151,7 @@ void main() {
           Response.ok(
             body: Body.fromString('okay!'),
             headers: Headers.build(
-              (final mh) => mh.lastModified = parseHttpDate(
+              (mh) => mh.lastModified = parseHttpDate(
                 'Sun, 06 Nov 1994 08:49:37 GMT',
               ),
             ),
@@ -171,9 +171,7 @@ void main() {
         final response = Response(
           345,
           body: Body.fromString('hèllo, world', encoding: latin1),
-          headers: Headers.build(
-            (final mh) => mh['header1'] = ['header value 1'],
-          ),
+          headers: Headers.build((mh) => mh['header1'] = ['header value 1']),
         );
 
         final copy = response.copyWith();

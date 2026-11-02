@@ -31,7 +31,7 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.transferEncoding,
+          touchHeaders: (h) => h.transferEncoding,
           headers: {},
         );
 

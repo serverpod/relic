@@ -61,7 +61,7 @@ void main() {
     setUp(() {
       handler = StaticHandler.directory(
         Directory(d.sandbox),
-        cacheControl: (_, final fileInfo) =>
+        cacheControl: (_, fileInfo) =>
             fileInfo.file.path.endsWith('jpg') ? cacheControl : null,
       ).asHandler;
     });

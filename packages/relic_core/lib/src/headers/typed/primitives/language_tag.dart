@@ -26,7 +26,7 @@ final class LanguageTag {
   ///
   /// Throws [FormatException] when [source] is empty, contains an empty
   /// subtag, or does not match the grammar above.
-  factory LanguageTag.parse(final String source) {
+  factory LanguageTag.parse(String source) {
     if (source.isEmpty) {
       throw const FormatException('language-tag cannot be empty');
     }
@@ -169,7 +169,7 @@ final class LanguageTag {
   String encode() => subtags.join('-');
 
   @override
-  bool operator ==(final Object other) =>
+  bool operator ==(Object other) =>
       identical(this, other) ||
       (other is LanguageTag && _listEqual(subtags, other.subtags));
 
@@ -180,35 +180,34 @@ final class LanguageTag {
   String toString() => encode();
 }
 
-bool _isAlpha(final int c) =>
-    (c >= 0x41 && c <= 0x5A) || (c >= 0x61 && c <= 0x7A);
+bool _isAlpha(int c) => (c >= 0x41 && c <= 0x5A) || (c >= 0x61 && c <= 0x7A);
 
-bool _isDigit(final int c) => c >= 0x30 && c <= 0x39;
+bool _isDigit(int c) => c >= 0x30 && c <= 0x39;
 
-bool _isAlphaNum(final int c) => _isAlpha(c) || _isDigit(c);
+bool _isAlphaNum(int c) => _isAlpha(c) || _isDigit(c);
 
-bool _isAllAlpha(final String s) {
+bool _isAllAlpha(String s) {
   for (var i = 0; i < s.length; i++) {
     if (!_isAlpha(s.codeUnitAt(i))) return false;
   }
   return true;
 }
 
-bool _isAllDigit(final String s) {
+bool _isAllDigit(String s) {
   for (var i = 0; i < s.length; i++) {
     if (!_isDigit(s.codeUnitAt(i))) return false;
   }
   return true;
 }
 
-bool _isAllAlphaNum(final String s) {
+bool _isAllAlphaNum(String s) {
   for (var i = 0; i < s.length; i++) {
     if (!_isAlphaNum(s.codeUnitAt(i))) return false;
   }
   return true;
 }
 
-bool _isVariant(final String s) {
+bool _isVariant(String s) {
   if (s.length == 4 && _isDigit(s.codeUnitAt(0))) {
     for (var i = 1; i < s.length; i++) {
       if (!_isAlphaNum(s.codeUnitAt(i))) return false;
@@ -219,7 +218,7 @@ bool _isVariant(final String s) {
   return false;
 }
 
-bool _isExtensionSingleton(final int c) {
+bool _isExtensionSingleton(int c) {
   // singleton = DIGIT / A-W / Y-Z / a-w / y-z (excluding 'x'/'X', which is
   // reserved for private-use).
   if (_isDigit(c)) return true;
@@ -230,7 +229,7 @@ bool _isExtensionSingleton(final int c) {
   return false;
 }
 
-String _lower(final String s) {
+String _lower(String s) {
   final buf = StringBuffer();
   for (var i = 0; i < s.length; i++) {
     final c = s.codeUnitAt(i);
@@ -239,7 +238,7 @@ String _lower(final String s) {
   return buf.toString();
 }
 
-String _upper(final String s) {
+String _upper(String s) {
   final buf = StringBuffer();
   for (var i = 0; i < s.length; i++) {
     final c = s.codeUnitAt(i);
@@ -248,7 +247,7 @@ String _upper(final String s) {
   return buf.toString();
 }
 
-String _titleCase(final String s) {
+String _titleCase(String s) {
   if (s.isEmpty) return s;
   final buf = StringBuffer();
   final c0 = s.codeUnitAt(0);
@@ -260,7 +259,7 @@ String _titleCase(final String s) {
   return buf.toString();
 }
 
-bool _listEqual(final List<String> a, final List<String> b) {
+bool _listEqual(List<String> a, List<String> b) {
   if (identical(a, b)) return true;
   if (a.length != b.length) return false;
   for (var i = 0; i < a.length; i++) {

@@ -23,12 +23,12 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (final h) => h.crossOriginEmbedderPolicy,
+            touchHeaders: (h) => h.crossOriginEmbedderPolicy,
             headers: {'cross-origin-embedder-policy': ''},
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (final e) => e.message,
+              (e) => e.message,
               'message',
               contains('Value cannot be empty'),
             ),
@@ -44,12 +44,12 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (final h) => h.crossOriginEmbedderPolicy,
+            touchHeaders: (h) => h.crossOriginEmbedderPolicy,
             headers: {'cross-origin-embedder-policy': 'custom-policy'},
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (final e) => e.message,
+              (e) => e.message,
               'message',
               contains('Invalid value'),
             ),
@@ -77,7 +77,7 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.crossOriginEmbedderPolicy,
+          touchHeaders: (h) => h.crossOriginEmbedderPolicy,
           headers: {'cross-origin-embedder-policy': 'require-corp'},
         );
 
@@ -93,7 +93,7 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.crossOriginEmbedderPolicy,
+          touchHeaders: (h) => h.crossOriginEmbedderPolicy,
           headers: {},
         );
 

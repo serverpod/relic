@@ -4,7 +4,7 @@
 ///
 /// Trailing zeros are stripped (`0.500` -> `0.5`), and the bounds render as
 /// `0` and `1`.
-String formatQValue(final double q) {
+String formatQValue(double q) {
   if (q <= 0) return '0';
   if (q >= 1) return '1';
   // Truncate toward zero to 3 fractional digits. Computing the millis with

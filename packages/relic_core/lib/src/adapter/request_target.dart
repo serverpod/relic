@@ -34,16 +34,14 @@ final class RequestTarget {
   /// The path and query of [uri].
   ///
   /// Its scheme, authority and fragment are ignored.
-  factory RequestTarget.fromUri(final Uri uri) =>
+  factory RequestTarget.fromUri(Uri uri) =>
       RequestTarget._(uri, null, null, false);
 
   /// The percent-encoded [path] and [query] bytes of an origin-form target.
   ///
   /// [query] excludes the `?` and is null when the target has none.
-  factory RequestTarget.fromBytes(
-    final Uint8List path, [
-    final Uint8List? query,
-  ]) => RequestTarget._(null, path, query, true);
+  factory RequestTarget.fromBytes(Uint8List path, [Uint8List? query]) =>
+      RequestTarget._(null, path, query, true);
 
   /// The percent-encoded path bytes.
   Uint8List get pathBytes => _pathBytes ??= ascii.encode(_uri!.path);
@@ -84,7 +82,7 @@ final class RequestTarget {
   /// separator, goes through [Uri] so both origins decode alike. [Uri]
   /// removes dot segments. A path split here keeps them for the router's
   /// [NormalizedPath] to remove.
-  static List<String> _splitPath(final String path) {
+  static List<String> _splitPath(String path) {
     if (path.contains('%') || path.contains(r'\')) {
       return Uri(path: path).pathSegments;
     }
@@ -115,14 +113,14 @@ final class RequestTarget {
     if (_uri != null || query.contains('%')) queryParametersAll;
   }
 
-  static bool _hasByte(final Uint8List? bytes, final int byte) =>
+  static bool _hasByte(Uint8List? bytes, int byte) =>
       bytes != null && bytes.contains(byte);
 
   /// The encoded path, then `?` and the query when there is one.
   String get originForm => _hasQuery ? '$path?$query' : path;
 
   /// An absolute URL for this target under [scheme] and [authority].
-  Uri toUri({required final String scheme, required final String authority}) =>
+  Uri toUri({required String scheme, required String authority}) =>
       Uri.parse('$scheme://$authority$originForm');
 
   @override

@@ -16,7 +16,7 @@ import '../primitives/ext_value.dart';
 /// construct the appropriate header string.
 final class ContentDispositionHeader {
   static const codec = HeaderCodec.bytes(_parseBytes, __encode);
-  static List<String> __encode(final ContentDispositionHeader value) => [
+  static List<String> __encode(ContentDispositionHeader value) => [
     value._encode(),
   ];
 
@@ -41,22 +41,21 @@ final class ContentDispositionHeader {
   ///
   /// Splitting is quote-aware, so a `;` inside a quoted parameter value is
   /// part of that value rather than a separator.
-  factory ContentDispositionHeader.parse(final String value) =>
+  factory ContentDispositionHeader.parse(String value) =>
       _parseBytes(latin1Bytes(value));
 
   /// [parse] over the wire bytes.
-  static ContentDispositionHeader _parseBytes(final Uint8List bytes) =>
+  static ContentDispositionHeader _parseBytes(Uint8List bytes) =>
       ContentDispositionHeader._parse(bytes, ByteScanner.new);
 
   factory ContentDispositionHeader._parse(
-    final Uint8List value,
-    final ByteScanner Function(Uint8List) createScanner, {
-    final bool decodeExtended = true,
+    Uint8List value,
+    ByteScanner Function(Uint8List) createScanner, {
+    bool decodeExtended = true,
   }) {
-    final parts = createScanner(value)
-        .splitTopLevel(_semicolon)
-        .where((final e) => e.source.isNotEmpty)
-        .toList();
+    final parts = createScanner(
+      value,
+    ).splitTopLevel(_semicolon).where((e) => e.source.isNotEmpty).toList();
     if (parts.isEmpty) {
       throw const FormatException('Value cannot be empty');
     }
@@ -67,7 +66,7 @@ final class ContentDispositionHeader {
     final parameters = parts
         .skip(1)
         .map(
-          (final part) => ContentDispositionParameter._parse(
+          (part) => ContentDispositionParameter._parse(
             part,
             createScanner,
             decodeExtended: decodeExtended,
@@ -84,12 +83,12 @@ final class ContentDispositionHeader {
   /// representation suitable for HTTP headers.
   String _encode() {
     final List<String> parts = [type];
-    parts.addAll(parameters.map((final p) => p._encode()));
+    parts.addAll(parameters.map((p) => p._encode()));
     return parts.join('; ');
   }
 
   @override
-  bool operator ==(final Object other) =>
+  bool operator ==(Object other) =>
       identical(this, other) ||
       other is ContentDispositionHeader &&
           type == other.type &&
@@ -141,16 +140,16 @@ class ContentDispositionParameter {
   /// extended value that is not a UTF-8 [RFC 8187][rfc8187] `ext-value`.
   ///
   /// [rfc8187]: https://datatracker.ietf.org/doc/html/rfc8187#section-3.2
-  factory ContentDispositionParameter.parse(final String part) =>
+  factory ContentDispositionParameter.parse(String part) =>
       ContentDispositionParameter._parse(
         ByteScanner.text(part),
         ByteScanner.new,
       );
 
   factory ContentDispositionParameter._parse(
-    final ByteScanner part,
-    final ByteScanner Function(Uint8List) createScanner, {
-    final bool decodeExtended = true,
+    ByteScanner part,
+    ByteScanner Function(Uint8List) createScanner, {
+    bool decodeExtended = true,
   }) {
     final source = part.source;
     final equals = indexOfByte(source, 0x3D);
@@ -195,7 +194,7 @@ class ContentDispositionParameter {
   }
 
   @override
-  bool operator ==(final Object other) =>
+  bool operator ==(Object other) =>
       identical(this, other) ||
       other is ContentDispositionParameter &&
           name == other.name &&
@@ -216,7 +215,7 @@ class ContentDispositionParameter {
 const int _semicolon = 0x3B;
 
 /// Reads an ordinary parameter value, which is `token / quoted-string`.
-String _readParameterValue(final ByteScanner scanner) {
+String _readParameterValue(ByteScanner scanner) {
   final value = scanner.readTokenOrQuotedString();
   scanner.skipOws();
   if (!scanner.atEnd) {
@@ -237,7 +236,7 @@ extension ContentDispositionHeaderInternal on ContentDispositionHeader {
   ///
   /// It leaves parameters with a `*`, such as `filename*`, undecoded and keeps
   /// the `*` in their name. RFC 7578 section 4.2 forbids them in form data.
-  static ContentDispositionHeader parseFormData(final String value) =>
+  static ContentDispositionHeader parseFormData(String value) =>
       ContentDispositionHeader._parse(
         utf8.encode(value),
         ByteScanner.utf8,

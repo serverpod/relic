@@ -15,7 +15,7 @@ const int _space = 0x20;
 /// add, remove, and generate Permissions-Policy header values.
 final class PermissionsPolicyHeader {
   static const codec = HeaderCodec.bytes(_parseBytes, __encode);
-  static List<String> __encode(final PermissionsPolicyHeader value) => [
+  static List<String> __encode(PermissionsPolicyHeader value) => [
     value._encode(),
   ];
 
@@ -28,7 +28,7 @@ final class PermissionsPolicyHeader {
   /// would encode to a malformed `=()` that no conforming user agent (nor
   /// [PermissionsPolicyHeader.parse]) accepts.
   PermissionsPolicyHeader.directives(
-    final List<PermissionsPolicyDirective> directives,
+    List<PermissionsPolicyDirective> directives,
   ) : directives = List.unmodifiable(directives) {
     if (this.directives.isEmpty) {
       throw const FormatException(
@@ -49,7 +49,7 @@ final class PermissionsPolicyHeader {
   ///
   /// This method splits the header value by commas, trims each directive,
   /// and processes the directive and its values.
-  factory PermissionsPolicyHeader.parse(final String value) =>
+  factory PermissionsPolicyHeader.parse(String value) =>
       _parseBytes(latin1Bytes(value));
 
   /// [parse] over the wire bytes.
@@ -58,7 +58,7 @@ final class PermissionsPolicyHeader {
   /// sf-string value does not split a directive (RFC 8941 dictionary).
   /// The first `=` separates the feature name from its inner-list value,
   /// since an sf-string in the value may itself contain `=`.
-  static PermissionsPolicyHeader _parseBytes(final Uint8List bytes) {
+  static PermissionsPolicyHeader _parseBytes(Uint8List bytes) {
     if (trimmed(bytes).isEmpty) {
       throw const FormatException('Value cannot be empty');
     }
@@ -85,7 +85,7 @@ final class PermissionsPolicyHeader {
   /// Parses an inner-list value `(item item ...)` (or a bare single item)
   /// into its component sf-tokens / sf-strings, splitting on top-level
   /// whitespace so an sf-string containing a space stays intact.
-  static List<String> _parseInnerList(final Uint8List raw) {
+  static List<String> _parseInnerList(Uint8List raw) {
     var inner = raw;
     final hasOpen = inner.isNotEmpty && inner[0] == 0x28;
     final hasClose = inner.isNotEmpty && inner[inner.length - 1] == 0x29;
@@ -111,11 +111,11 @@ final class PermissionsPolicyHeader {
   /// representation suitable for HTTP headers.
 
   String _encode() {
-    return directives.map((final directive) => directive._encode()).join(', ');
+    return directives.map((directive) => directive._encode()).join(', ');
   }
 
   @override
-  bool operator ==(final Object other) =>
+  bool operator ==(Object other) =>
       identical(this, other) ||
       other is PermissionsPolicyHeader &&
           const ListEquality<PermissionsPolicyDirective>().equals(
@@ -133,7 +133,7 @@ final class PermissionsPolicyHeader {
   }
 }
 
-String _unquote(final Uint8List s) {
+String _unquote(Uint8List s) {
   if (s.length >= 2 && s[0] == 0x22 && s[s.length - 1] == 0x22) {
     return textOf(
       s,
@@ -170,7 +170,7 @@ class PermissionsPolicyDirective {
     return '$name=$valuesStr';
   }
 
-  static String _renderItem(final String v) {
+  static String _renderItem(String v) {
     for (var i = 0; i < v.length; i++) {
       final c = v.codeUnitAt(i);
       // Reject CTLs so a value built from untrusted input cannot inject a
@@ -186,7 +186,7 @@ class PermissionsPolicyDirective {
   }
 
   @override
-  bool operator ==(final Object other) =>
+  bool operator ==(Object other) =>
       identical(this, other) ||
       other is PermissionsPolicyDirective &&
           name == other.name &&

@@ -11,7 +11,7 @@ import '../primitives/byte_scanner.dart' show latin1Bytes;
 /// It provides functionality to parse and generate transfer encoding header values.
 final class TransferEncodingHeader {
   static const codec = HeaderCodec.fields(_parseFields, __encode);
-  static List<String> __encode(final TransferEncodingHeader value) => [
+  static List<String> __encode(TransferEncodingHeader value) => [
     value._encode(),
   ];
 
@@ -24,13 +24,13 @@ final class TransferEncodingHeader {
   /// final coding. A list with `chunked` in any other position is rejected
   /// rather than silently reordered (which would misrepresent the actual body
   /// framing and hide caller bugs).
-  TransferEncodingHeader.encodings(final List<TransferEncoding> encodings)
+  TransferEncodingHeader.encodings(List<TransferEncoding> encodings)
     : encodings = List.unmodifiable(encodings) {
     if (encodings.isEmpty) {
       throw ArgumentError.value(encodings, 'encodings', 'cannot be empty');
     }
     final chunkedIndex = encodings.indexWhere(
-      (final e) => e.name == TransferEncoding.chunked.name,
+      (e) => e.name == TransferEncoding.chunked.name,
     );
     if (chunkedIndex >= 0 && chunkedIndex != encodings.length - 1) {
       throw const FormatException(
@@ -42,14 +42,14 @@ final class TransferEncodingHeader {
   /// Parses the Transfer-Encoding header value and returns a [TransferEncodingHeader] instance.
   ///
   /// This method splits the value by commas and trims each encoding.
-  factory TransferEncodingHeader.parse(final Iterable<String> values) =>
+  factory TransferEncodingHeader.parse(Iterable<String> values) =>
       _parseFields([for (final value in values) latin1Bytes(value)]);
 
   /// The header from the wire bytes of its [fields].
   ///
   /// Codings repeat by name without regard to case, so `chunked, CHUNKED`
   /// is one coding and passes the chunked-must-be-last check.
-  static TransferEncodingHeader _parseFields(final List<Uint8List> fields) {
+  static TransferEncodingHeader _parseFields(List<Uint8List> fields) {
     final elements = splitFieldsUnique(fields);
     if (elements.isEmpty) {
       throw const FormatException('Value cannot be empty');
@@ -64,10 +64,10 @@ final class TransferEncodingHeader {
 
   /// Converts the [TransferEncodingHeader] instance into a string
   /// representation suitable for HTTP headers.
-  String _encode() => encodings.map((final e) => e.name).join(', ');
+  String _encode() => encodings.map((e) => e.name).join(', ');
 
   @override
-  bool operator ==(final Object other) {
+  bool operator ==(Object other) {
     if (identical(this, other)) return true;
     if (other is! TransferEncodingHeader) return false;
     return const ListEquality<TransferEncoding>().equals(
@@ -110,11 +110,11 @@ class TransferEncoding {
   ///
   /// Transfer-codings are case-insensitive (RFC 9112 7), so the name is
   /// matched case-insensitively against the registered codings.
-  factory TransferEncoding.parse(final String name) =>
+  factory TransferEncoding.parse(String name) =>
       TransferEncoding._parseBytes(trimmed(latin1Bytes(name)));
 
   /// [parse] over the wire bytes of one trimmed element.
-  static TransferEncoding _parseBytes(final Uint8List element) {
+  static TransferEncoding _parseBytes(Uint8List element) {
     if (element.isEmpty) {
       throw const FormatException('Name cannot be empty');
     }

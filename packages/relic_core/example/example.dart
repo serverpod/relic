@@ -6,7 +6,7 @@ void main() {
   // Create a router with handlers
   final router = Router<Handler>()
     ..get('/hello', (_) => Response.ok(body: Body.fromString('Hello!')))
-    ..get('/users/:id', (final req) {
+    ..get('/users/:id', (req) {
       final id = req.rawPathParameters[#id];
       return Response.ok(body: Body.fromString('User: $id'));
     });

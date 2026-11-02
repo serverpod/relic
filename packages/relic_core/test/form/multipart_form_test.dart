@@ -78,7 +78,7 @@ void main() {
         expect(file.bodyType?.mimeType, MimeType.plainText);
         expect(file.size, 9);
         expect(await utf8.decodeStream(file.read()), 'file-body');
-        expect(form.entries.map((final entry) => entry.name), [
+        expect(form.entries.map((entry) => entry.name), [
           'title',
           'upload',
           'tag',
@@ -114,7 +114,7 @@ void main() {
         expect(
           form.files
               .getAll(const FormFile('photo'))
-              .map((final file) => file.filename),
+              .map((file) => file.filename),
           ['one.txt', 'two.txt'],
         );
       },
@@ -141,7 +141,7 @@ void main() {
 
       expect(form.fields.raw['actual'], 'value');
       expect(form.files.entries, isEmpty);
-      expect(form.entries.map((final entry) => entry.name), ['actual']);
+      expect(form.entries.map((entry) => entry.name), ['actual']);
     });
 
     test('when a part is not form-data, then it is ignored', () async {
@@ -160,7 +160,7 @@ void main() {
 
       expect(form.fields.raw['actual'], 'value');
       expect(form.fields.raw.containsKey('ignored'), isFalse);
-      expect(form.entries.map((final entry) => entry.name), ['actual']);
+      expect(form.entries.map((entry) => entry.name), ['actual']);
     });
 
     test(
@@ -735,7 +735,7 @@ void main() {
   }, timeout: const Timeout(Duration(seconds: 5)));
 }
 
-Request _urlEncodedRequest(final String body) {
+Request _urlEncodedRequest(String body) {
   return RequestInternal.create(
     Method.post,
     Uri.parse('http://localhost/form'),
@@ -744,10 +744,7 @@ Request _urlEncodedRequest(final String body) {
   );
 }
 
-Request _multipartRequest({
-  required final String boundary,
-  required final String body,
-}) {
+Request _multipartRequest({required String boundary, required String body}) {
   return _multipartRequestBytes(
     boundary: boundary,
     bodyBytes: Uint8List.fromList(utf8.encode(body)),
@@ -755,8 +752,8 @@ Request _multipartRequest({
 }
 
 Request _multipartRequestBytes({
-  required final String boundary,
-  required final Uint8List bodyBytes,
+  required String boundary,
+  required Uint8List bodyBytes,
 }) {
   return RequestInternal.create(
     Method.post,
@@ -772,8 +769,8 @@ Request _multipartRequestBytes({
 
 /// A request whose body arrives in small chunks with no known length.
 Request _streamedMultipartRequest({
-  required final String boundary,
-  required final String body,
+  required String boundary,
+  required String body,
 }) {
   final bytes = utf8.encode(body);
   return RequestInternal.create(
@@ -791,7 +788,7 @@ Request _streamedMultipartRequest({
   );
 }
 
-String _multipartBody(final String boundary, final List<_Part> parts) {
+String _multipartBody(String boundary, List<_Part> parts) {
   return utf8.decode(
     _multipartBodyBytes(boundary, [
       for (final part in parts)
@@ -800,10 +797,7 @@ String _multipartBody(final String boundary, final List<_Part> parts) {
   );
 }
 
-Uint8List _multipartBodyBytes(
-  final String boundary,
-  final List<_PartBytes> parts,
-) {
+Uint8List _multipartBodyBytes(String boundary, List<_PartBytes> parts) {
   final bytes = BytesBuilder(copy: false);
   for (final part in parts) {
     bytes.add(utf8.encode('--$boundary\r\n'));
@@ -818,14 +812,14 @@ Uint8List _multipartBodyBytes(
   return bytes.takeBytes();
 }
 
-_Part _field(final String name, final String value) {
+_Part _field(String name, String value) {
   return _Part(
     headers: {'content-disposition': 'form-data; name="$name"'},
     body: value,
   );
 }
 
-_Part _file(final String name, final String filename, final String content) {
+_Part _file(String name, String filename, String content) {
   return _Part(
     headers: {
       'content-disposition': 'form-data; name="$name"; filename="$filename"',
@@ -834,9 +828,9 @@ _Part _file(final String name, final String filename, final String content) {
   );
 }
 
-Matcher _limitExceeded(final FormLimit limit) {
+Matcher _limitExceeded(FormLimit limit) {
   return isA<FormLimitExceededException>().having(
-    (final error) => error.limit,
+    (error) => error.limit,
     'limit',
     limit,
   );
@@ -861,11 +855,11 @@ final class _RecordingUploadStorage implements UploadStorage {
 
   @override
   Future<UploadedFile> store({
-    required final String fieldName,
-    required final String? filename,
-    required final BodyType? bodyType,
-    required final Headers headers,
-    required final Stream<Uint8List> content,
+    required String fieldName,
+    required String? filename,
+    required BodyType? bodyType,
+    required Headers headers,
+    required Stream<Uint8List> content,
   }) async {
     final bytes = BytesBuilder(copy: false);
     await for (final chunk in content) {

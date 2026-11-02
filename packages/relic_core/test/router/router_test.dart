@@ -4,9 +4,9 @@ import 'package:test/test.dart';
 void main() {
   // Helper to check LookupResult - remains the same
   void expectLookupResult<T extends Object>(
-    final LookupResult actual,
-    final T expectedValue, [
-    final Map<Symbol, String> expectedParams = const {},
+    LookupResult actual,
+    T expectedValue, [
+    Map<Symbol, String> expectedParams = const {},
   ]) {
     expect(actual, isA<RouterMatch<T>>());
     if (actual is! RouterMatch<T>) throw AssertionError();

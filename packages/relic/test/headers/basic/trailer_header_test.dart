@@ -24,11 +24,11 @@ void main() {
           getServerRequestHeaders(
             server: server,
             headers: {'trailer': ''},
-            touchHeaders: (final h) => h.trailer,
+            touchHeaders: (h) => h.trailer,
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (final e) => e.message,
+              (e) => e.message,
               'message',
               contains('Value cannot be empty'),
             ),
@@ -55,7 +55,7 @@ void main() {
         final headers = await getServerRequestHeaders(
           server: server,
           headers: {'trailer': 'Expires, Content-MD5, Content-Language'},
-          touchHeaders: (final h) => h.trailer,
+          touchHeaders: (h) => h.trailer,
         );
 
         expect(
@@ -71,7 +71,7 @@ void main() {
         final headers = await getServerRequestHeaders(
           server: server,
           headers: {'trailer': ' Expires , Content-MD5 , Content-Language '},
-          touchHeaders: (final h) => h.trailer,
+          touchHeaders: (h) => h.trailer,
         );
 
         expect(
@@ -87,7 +87,7 @@ void main() {
         final headers = await getServerRequestHeaders(
           server: server,
           headers: {'trailer': 'custom-header, AnotherHeader'},
-          touchHeaders: (final h) => h.trailer,
+          touchHeaders: (h) => h.trailer,
         );
 
         expect(headers.trailer, equals(['custom-header', 'AnotherHeader']));
@@ -100,7 +100,7 @@ void main() {
         final headers = await getServerRequestHeaders(
           server: server,
           headers: {},
-          touchHeaders: (final h) => h.lastModified,
+          touchHeaders: (h) => h.lastModified,
         );
 
         expect(headers.trailer, isNull);

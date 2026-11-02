@@ -25,7 +25,7 @@ void main() {
     final initialResponse = await makeRequest(handler, '/test_file.txt');
     final etag = initialResponse.headers.etag!.value;
     final headers = Headers.build(
-      (final mh) =>
+      (mh) =>
           mh.ifNoneMatch = IfNoneMatchHeader.etags([ETagHeader(value: etag)]),
     );
 
@@ -45,7 +45,7 @@ void main() {
       'then a 200 OK status is returned with the full body', () async {
     const nonMatchingEtag = ETagHeader(value: 'non-existent-etag');
     final headers = Headers.build(
-      (final mh) => mh.ifNoneMatch = IfNoneMatchHeader.etags([nonMatchingEtag]),
+      (mh) => mh.ifNoneMatch = IfNoneMatchHeader.etags([nonMatchingEtag]),
     );
 
     final response = await makeRequest(
@@ -67,7 +67,7 @@ void main() {
       final initialResponse = await makeRequest(handler, '/test_file.txt');
       final etag = initialResponse.headers.etag!.value;
       final headers = Headers.build(
-        (final mh) => mh.ifNoneMatch = IfNoneMatchHeader.etags([
+        (mh) => mh.ifNoneMatch = IfNoneMatchHeader.etags([
           const ETagHeader(value: 'first-non-matching'),
           ETagHeader(value: etag), // correct value
           const ETagHeader(value: 'second-non-matching'),
@@ -103,7 +103,7 @@ void main() {
         handler,
         '/changing',
         headers: Headers.build(
-          (final mh) => mh.ifNoneMatch = IfNoneMatchHeader.etags([etag]),
+          (mh) => mh.ifNoneMatch = IfNoneMatchHeader.etags([etag]),
         ),
       );
 
@@ -116,7 +116,7 @@ void main() {
         handler,
         '/changing',
         headers: Headers.build(
-          (final mh) => mh.ifNoneMatch = IfNoneMatchHeader.etags([etag]),
+          (mh) => mh.ifNoneMatch = IfNoneMatchHeader.etags([etag]),
         ),
       );
       expect(thirdResponse.statusCode, 200);
@@ -128,7 +128,7 @@ void main() {
       'when a request is made for the file, '
       'then a 304 Not Modified status is returned with no body', () async {
     final headers = Headers.build(
-      (final mh) => mh.ifNoneMatch = const IfNoneMatchHeader.wildcard(),
+      (mh) => mh.ifNoneMatch = const IfNoneMatchHeader.wildcard(),
     );
     final response = await makeRequest(
       handler,

@@ -7,10 +7,10 @@ final class NoCache<K, V> implements Cache<K, V> {
   const NoCache();
 
   @override
-  V? operator [](final K key) => null;
+  V? operator [](K key) => null;
 
   @override
-  void operator []=(final K key, final V value) {}
+  void operator []=(K key, V value) {}
 
   @override
   int get length => 0;

@@ -34,7 +34,7 @@ String httpDate() {
 /// The field line of [value], `date: <value>\r\n`, when [value] is what
 /// [httpDate] last returned, else null. No clock read. The caller copies
 /// the line and does not write into it.
-Uint8List? httpDateLineOf(final String value) =>
+Uint8List? httpDateLineOf(String value) =>
     identical(value, _value) ? _line : null;
 
 void _refresh() {

@@ -148,7 +148,7 @@ void main() {
       await server.close();
     });
 
-    Future<int?> statusOrNullIfTornDown(final HttpClientRequest request) async {
+    Future<int?> statusOrNullIfTornDown(HttpClientRequest request) async {
       try {
         final response = await request.close();
         await response.drain<void>();
@@ -165,7 +165,7 @@ void main() {
 
       server = RelicServer(() => IOAdapter.bind(InternetAddress.loopbackIPv4));
 
-      await server.mountAndStart((final req) async {
+      await server.mountAndStart((req) async {
         requestCount++;
         final body = await req.readAsString(maxLength: maxLength);
         return Response.ok(body: Body.fromString('Received: $body'));
@@ -197,7 +197,7 @@ void main() {
 
       server = RelicServer(() => IOAdapter.bind(InternetAddress.loopbackIPv4));
 
-      await server.mountAndStart((final req) async {
+      await server.mountAndStart((req) async {
         requestCount++;
         final body = await req.readAsString(maxLength: maxLength);
         return Response.ok(body: Body.fromString('Received: $body'));

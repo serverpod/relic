@@ -29,7 +29,7 @@ final class HeaderAccessor<T extends Object>
   ///
   /// Wraps any exception the codec throws in an [InvalidHeaderException].
   @override
-  T decode(final Iterable<String> raw) {
+  T decode(Iterable<String> raw) {
     try {
       return codec.decode(raw);
     } on Exception catch (e) {
@@ -37,12 +37,12 @@ final class HeaderAccessor<T extends Object>
     }
   }
 
-  Iterable<String> encode(final T value) => codec.encode(value);
+  Iterable<String> encode(T value) => codec.encode(value);
 
   /// [decoder] over [bytes], the wire bytes of the first field.
   ///
   /// Wraps any exception the codec throws in an [InvalidHeaderException].
-  T decodeBytes(final T Function(Uint8List) decoder, final Uint8List bytes) {
+  T decodeBytes(T Function(Uint8List) decoder, Uint8List bytes) {
     try {
       return decoder(bytes);
     } on Exception catch (e) {
@@ -57,10 +57,7 @@ final class HeaderAccessor<T extends Object>
   /// [decoder] over [fields], the wire bytes of every field.
   ///
   /// Wraps any exception the codec throws in an [InvalidHeaderException].
-  T decodeFields(
-    final T Function(List<Uint8List>) decoder,
-    final List<Uint8List> fields,
-  ) {
+  T decodeFields(T Function(List<Uint8List>) decoder, List<Uint8List> fields) {
     try {
       return decoder(fields);
     } on Exception catch (e) {
@@ -76,9 +73,9 @@ final class HeaderAccessor<T extends Object>
 /// Wraps [exception] as an [InvalidHeaderException] for [key], unless it
 /// already is one.
 InvalidHeaderException _toInvalidHeaderException(
-  final Object exception, {
-  required final String key,
-  required final Iterable<String> raw,
+  Object exception, {
+  required String key,
+  required Iterable<String> raw,
 }) {
   if (exception is InvalidHeaderException) return exception;
   return InvalidHeaderException(
@@ -98,10 +95,10 @@ InvalidHeaderException _toInvalidHeaderException(
 /// in converting between header values and their string representations.
 abstract interface class _Codec<T, StorageT> {
   /// Converts from the storage type [StorageT] to the target type [T]
-  T decode(final StorageT encoded);
+  T decode(StorageT encoded);
 
   /// Converts from the target type [T] to the storage type [StorageT]
-  StorageT encode(final T value);
+  StorageT encode(T value);
 }
 
 /// A specialized codec for HTTP headers that defines conversion between a typed
@@ -133,27 +130,27 @@ sealed class HeaderCodec<T extends Object>
   const HeaderCodec._(this._encode);
 
   @override
-  Iterable<String> encode(final T value) => _encode(value);
+  Iterable<String> encode(T value) => _encode(value);
 
   /// A codec that parses the text of every field.
   ///
   /// - [decode]: Function that converts a collection of header values to type [T]
   /// - [encode]: Function to convert type [T] back to header values
   const factory HeaderCodec(
-    final T Function(Iterable<String> encoded) decode,
-    final Iterable<String> Function(T decoded) encode,
+    T Function(Iterable<String> encoded) decode,
+    Iterable<String> Function(T decoded) encode,
   ) = MultiHeaderCodec<T>;
 
   /// A codec that parses the wire bytes of the first field.
   const factory HeaderCodec.bytes(
-    final T Function(Uint8List bytes) decode,
-    final Iterable<String> Function(T decoded) encode,
+    T Function(Uint8List bytes) decode,
+    Iterable<String> Function(T decoded) encode,
   ) = BytesHeaderCodec<T>;
 
   /// A codec that parses the wire bytes of every field.
   const factory HeaderCodec.fields(
-    final T Function(List<Uint8List> fields) decode,
-    final Iterable<String> Function(T decoded) encode,
+    T Function(List<Uint8List> fields) decode,
+    Iterable<String> Function(T decoded) encode,
   ) = FieldsHeaderCodec<T>;
 
   /// A codec that parses the text of the first field.
@@ -161,8 +158,8 @@ sealed class HeaderCodec<T extends Object>
   /// - [singleDecode]: Function that converts a single header value to type [T]
   /// - [encode]: Function to convert type [T] back to header values
   const factory HeaderCodec.single(
-    final T Function(String) singleDecode,
-    final Iterable<String> Function(T) encode,
+    T Function(String) singleDecode,
+    Iterable<String> Function(T) encode,
   ) = SingleHeaderCodec<T>;
 }
 
@@ -179,26 +176,22 @@ extension HeaderCodecInternal<T extends Object> on HeaderCodec<T> {
 final class MultiHeaderCodec<T extends Object> extends HeaderCodec<T> {
   final T Function(Iterable<String>) _decode;
 
-  const MultiHeaderCodec(
-    this._decode,
-    final Iterable<String> Function(T) encode,
-  ) : super._(encode);
+  const MultiHeaderCodec(this._decode, Iterable<String> Function(T) encode)
+    : super._(encode);
 
   @override
-  T decode(final Iterable<String> encoded) => _decode(encoded);
+  T decode(Iterable<String> encoded) => _decode(encoded);
 }
 
 /// [HeaderCodec.single]: the text of the first field.
 final class SingleHeaderCodec<T extends Object> extends HeaderCodec<T> {
   final T Function(String) _decode;
 
-  const SingleHeaderCodec(
-    this._decode,
-    final Iterable<String> Function(T) encode,
-  ) : super._(encode);
+  const SingleHeaderCodec(this._decode, Iterable<String> Function(T) encode)
+    : super._(encode);
 
   @override
-  T decode(final Iterable<String> encoded) => _decode(encoded.first);
+  T decode(Iterable<String> encoded) => _decode(encoded.first);
 }
 
 /// [HeaderCodec.bytes]: the wire bytes of the first field.
@@ -206,14 +199,11 @@ final class BytesHeaderCodec<T extends Object> extends HeaderCodec<T> {
   /// The decoder over the wire bytes of the first field.
   final T Function(Uint8List bytes) decodeBytes;
 
-  const BytesHeaderCodec(
-    this.decodeBytes,
-    final Iterable<String> Function(T) encode,
-  ) : super._(encode);
+  const BytesHeaderCodec(this.decodeBytes, Iterable<String> Function(T) encode)
+    : super._(encode);
 
   @override
-  T decode(final Iterable<String> encoded) =>
-      decodeBytes(latin1Bytes(encoded.first));
+  T decode(Iterable<String> encoded) => decodeBytes(latin1Bytes(encoded.first));
 }
 
 /// [HeaderCodec.fields]: the wire bytes of every field.
@@ -223,10 +213,10 @@ final class FieldsHeaderCodec<T extends Object> extends HeaderCodec<T> {
 
   const FieldsHeaderCodec(
     this.decodeFields,
-    final Iterable<String> Function(T) encode,
+    Iterable<String> Function(T) encode,
   ) : super._(encode);
 
   @override
-  T decode(final Iterable<String> encoded) =>
+  T decode(Iterable<String> encoded) =>
       decodeFields([for (final value in encoded) latin1Bytes(value)]);
 }

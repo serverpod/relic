@@ -18,7 +18,7 @@ void main() {
     test(
       'when setting a valid X-Powered-By value then it should be accessible',
       () {
-        final headers = Headers.build((final h) {
+        final headers = Headers.build((h) {
           h.xPoweredBy = 'Express';
         });
 
@@ -27,7 +27,7 @@ void main() {
     );
 
     test('when setting X-Powered-By to null then it should be null', () {
-      final headers = Headers.build((final h) {
+      final headers = Headers.build((h) {
         h.xPoweredBy = null;
       });
 
@@ -38,7 +38,7 @@ void main() {
       'when creating response with X-Powered-By header then it should be preserved',
       () {
         final response = Response.ok(
-          headers: Headers.build((final h) {
+          headers: Headers.build((h) {
             h.xPoweredBy = 'Custom Framework';
           }),
         );

@@ -13,16 +13,16 @@ enum LoggerType { error, warn, info }
 ///
 /// If [type] is not passed, it defaults to [LoggerType.info].
 void logMessage(
-  final String message, {
-  final StackTrace? stackTrace,
-  final LoggerType type = LoggerType.info,
+  String message, {
+  StackTrace? stackTrace,
+  LoggerType type = LoggerType.info,
 }) {
   var chain = Chain.current();
 
   if (stackTrace != null) {
-    chain = Chain.forTrace(stackTrace)
-        .foldFrames((final frame) => frame.isCore || frame.package == 'relic')
-        .terse;
+    chain = Chain.forTrace(
+      stackTrace,
+    ).foldFrames((frame) => frame.isCore || frame.package == 'relic').terse;
   }
 
   final prefix = switch (type) {

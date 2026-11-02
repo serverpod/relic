@@ -61,7 +61,7 @@ enum CpuBenchOption<V> implements OptionDefinition<V> {
 const _synopsis =
     'usage: dart run bin/cpu_bench.dart [options] -- <server command>';
 
-Future<void> main(final List<String> args) async {
+Future<void> main(List<String> args) async {
   final split = args.indexOf('--');
   if (split < 0 || split == args.length - 1) {
     usageError(
@@ -130,7 +130,7 @@ Future<void> main(final List<String> args) async {
 ///
 /// A `dart` shim or a cluster primary has the process that serves one or
 /// more forks below it.
-Future<List<int>> _processTree(final int pid) async {
+Future<List<int>> _processTree(int pid) async {
   final tree = [pid];
   for (var i = 0; i < tree.length; i++) {
     final children = await Process.run('pgrep', ['-P', '${tree[i]}']);
@@ -141,7 +141,7 @@ Future<List<int>> _processTree(final int pid) async {
   return tree;
 }
 
-Future<void> _waitForServer(final String url) async {
+Future<void> _waitForServer(String url) async {
   final waited = Stopwatch()..start();
   while (waited.elapsed < const Duration(seconds: 60)) {
     if (await _answers(url)) return;
@@ -155,12 +155,12 @@ Future<void> _waitForServer(final String url) async {
 /// Refused, or closed while a server is still starting, is a no. So is no
 /// answer within two seconds, which is what a plain server gives an https
 /// URL. A server's certificate goes unchecked, as oha leaves it.
-Future<bool> _answers(final String url) async {
+Future<bool> _answers(String url) async {
   final client = HttpClient()..badCertificateCallback = (_, _, _) => true;
   try {
     final response = await client
         .getUrl(Uri.parse(url))
-        .then((final r) => r.close())
+        .then((r) => r.close())
         .timeout(const Duration(seconds: 2));
     await response.drain<void>();
     return true;
@@ -174,7 +174,7 @@ Future<bool> _answers(final String url) async {
 }
 
 /// User and system CPU time in nanoseconds, summed over [pids].
-Future<({int user, int system})> _cpuTime(final List<int> pids) async {
+Future<({int user, int system})> _cpuTime(List<int> pids) async {
   var user = 0;
   var system = 0;
   for (final pid in pids) {
@@ -193,7 +193,7 @@ typedef _ProcPidRusage = int Function(int, int, Pointer<Uint8>);
 ///
 /// The struct is a 16 byte uuid, then the user and system times in Mach
 /// absolute time units, nanoseconds on Intel and scaled on Apple silicon.
-({int user, int system}) _rusageMacOS(final int pid) {
+({int user, int system}) _rusageMacOS(int pid) {
   final rusage = DynamicLibrary.process()
       .lookupFunction<_ProcPidRusageC, _ProcPidRusage>('proc_pid_rusage');
   final buffer = calloc<Uint8>(256);
@@ -233,7 +233,7 @@ double _machTimebase() {
 
 /// The user and system times of [pid], fields 14 and 15 of
 /// `/proc/<pid>/stat`, converted from clock ticks to nanoseconds.
-Future<({int user, int system})> _statLinux(final int pid) async {
+Future<({int user, int system})> _statLinux(int pid) async {
   final stat = await File('/proc/$pid/stat').readAsString();
   // The command name is in parentheses and may hold spaces.
   final fields = stat.substring(stat.lastIndexOf(')') + 2).split(' ');

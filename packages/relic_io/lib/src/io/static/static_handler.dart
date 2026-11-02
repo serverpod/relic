@@ -22,7 +22,7 @@ class FileInfo {
   final FileStat stat;
   final String etag;
 
-  bool isStale(final FileStat freshStat) {
+  bool isStale(FileStat freshStat) {
     return stat.size != freshStat.size ||
         stat.changed.isBefore(freshStat.changed);
   }
@@ -41,8 +41,8 @@ final _fileInfoCache = LruCache<String, FileInfo>(10000);
 /// Uses the same logic as the internal cache/population used by the static
 /// file handler and respects MIME type detection.
 Future<FileInfo> getStaticFileInfo(
-  final File file, {
-  final MimeTypeResolver? mimeResolver,
+  File file, {
+  MimeTypeResolver? mimeResolver,
 }) async => _getFileInfo(file, mimeResolver ?? _defaultMimeTypeResolver);
 
 /// A [HandlerObject] that serves static files from a directory or a single file.
@@ -124,7 +124,7 @@ class StaticHandler extends HandlerObject {
   final Future<void>? _indexFuture;
 
   @override
-  void injectIn(final RelicRouter router) {
+  void injectIn(RelicRouter router) {
     final path = entity is Directory ? '/**' : '/';
     router.anyOf({Method.get, Method.head}, path, call);
   }
@@ -140,11 +140,11 @@ class StaticHandler extends HandlerObject {
 
   /// Creates a [StaticHandler] for serving files from a [Directory].
   factory StaticHandler.directory(
-    final Directory directory, {
-    final Handler? defaultHandler,
-    final MimeTypeResolver? mimeResolver,
-    required final CacheControlFactory cacheControl,
-    final CacheBustingConfig? cacheBustingConfig,
+    Directory directory, {
+    Handler? defaultHandler,
+    MimeTypeResolver? mimeResolver,
+    required CacheControlFactory cacheControl,
+    CacheBustingConfig? cacheBustingConfig,
   }) {
     if (!directory.existsSync()) {
       throw ArgumentError('Directory "${directory.path}" does not exist');
@@ -166,9 +166,9 @@ class StaticHandler extends HandlerObject {
   /// For cache-busted URLs with single files, use query parameters or router
   /// path parameters instead.
   factory StaticHandler.file(
-    final File file, {
-    final MimeTypeResolver? mimeResolver,
-    required final CacheControlFactory cacheControl,
+    File file, {
+    MimeTypeResolver? mimeResolver,
+    required CacheControlFactory cacheControl,
   }) {
     if (!file.existsSync()) {
       throw ArgumentError('File "${file.path}" does not exist');
@@ -181,7 +181,7 @@ class StaticHandler extends HandlerObject {
   }
 
   @override
-  FutureOr<Result> call(final Request req) async {
+  FutureOr<Result> call(Request req) async {
     final indexFuture = _indexFuture;
     if (indexFuture != null) await indexFuture;
 
@@ -193,31 +193,27 @@ class StaticHandler extends HandlerObject {
     };
   }
 
-  Future<Result> _handleDirectory(
-    final Request req,
-    final Directory directory,
-  ) async {
+  Future<Result> _handleDirectory(Request req, Directory directory) async {
     final resolvedRootPath = directory.resolveSymbolicLinksSync();
     final fallbackHandler =
         defaultHandler ?? respondWith((_) => Response.notFound());
 
     final resolveFilePath = switch (cacheBustingConfig) {
       null =>
-        (final String resolvedRootPath, final List<String> requestSegments) =>
+        (String resolvedRootPath, List<String> requestSegments) =>
             p.joinAll([resolvedRootPath, ...requestSegments]),
-      final cfg =>
-        (final String resolvedRootPath, final List<String> requestSegments) {
-          if (requestSegments.isEmpty) {
-            return resolvedRootPath;
-          }
+      final cfg => (String resolvedRootPath, List<String> requestSegments) {
+        if (requestSegments.isEmpty) {
+          return resolvedRootPath;
+        }
 
-          final fileName = cfg.tryStripHashFromFilename(requestSegments.last);
-          return p.joinAll([
-            resolvedRootPath,
-            ...requestSegments.sublist(0, requestSegments.length - 1),
-            fileName,
-          ]);
-        },
+        final fileName = cfg.tryStripHashFromFilename(requestSegments.last);
+        return p.joinAll([
+          resolvedRootPath,
+          ...requestSegments.sublist(0, requestSegments.length - 1),
+          fileName,
+        ]);
+      },
     };
 
     final filePath = resolveFilePath(
@@ -248,7 +244,7 @@ class StaticHandler extends HandlerObject {
     );
   }
 
-  Future<Result> _handleFile(final Request req, final File file) async {
+  Future<Result> _handleFile(Request req, File file) async {
     return await _serveFile(
       file,
       mimeResolver ?? _defaultMimeTypeResolver,
@@ -260,10 +256,10 @@ class StaticHandler extends HandlerObject {
 
 /// Serves a file with full HTTP semantics including conditional requests and ranges.
 Future<Response> _serveFile(
-  final File file,
-  final MimeTypeResolver mimeResolver,
-  final CacheControlFactory cacheControl,
-  final Request req,
+  File file,
+  MimeTypeResolver mimeResolver,
+  CacheControlFactory cacheControl,
+  Request req,
 ) async {
   // Validate HTTP method
   final method = req.method;
@@ -288,7 +284,7 @@ Future<Response> _serveFile(
 }
 
 /// Checks if the HTTP method is allowed for file serving.
-bool _isMethodAllowed(final Method method) {
+bool _isMethodAllowed(Method method) {
   return method == Method.get || method == Method.head;
 }
 
@@ -296,15 +292,12 @@ bool _isMethodAllowed(final Method method) {
 Response _methodNotAllowedResponse() {
   return Response(
     HttpStatus.methodNotAllowed,
-    headers: Headers.build((final mh) => mh.allow = {Method.get, Method.head}),
+    headers: Headers.build((mh) => mh.allow = {Method.get, Method.head}),
   );
 }
 
 /// Gets file information from cache or creates new cache entry.
-Future<FileInfo> _getFileInfo(
-  final File file,
-  final MimeTypeResolver mimeResolver,
-) async {
+Future<FileInfo> _getFileInfo(File file, MimeTypeResolver mimeResolver) async {
   final cachedInfo = _fileInfoCache[file.path];
 
   final stat = await file.stat();
@@ -323,15 +316,15 @@ Future<FileInfo> _getFileInfo(
 }
 
 /// Generates an ETag for the file using SHA-1 hash.
-Future<String> _generateETag(final File file) async {
+Future<String> _generateETag(File file) async {
   final hash = await sha1.bind(file.openRead()).last;
   return hash.toString();
 }
 
 /// Detects MIME type using file path and content magic numbers.
 Future<MimeType?> _detectMimeType(
-  final File file,
-  final MimeTypeResolver mimeResolver,
+  File file,
+  MimeTypeResolver mimeResolver,
 ) async {
   final headerBytes = await file
       .openRead(0, mimeResolver.magicNumbersMaxLength)
@@ -343,12 +336,9 @@ Future<MimeType?> _detectMimeType(
 }
 
 /// Builds base response headers common to all responses.
-Headers _buildBaseHeaders(
-  final FileInfo fileInfo,
-  final CacheControlHeader? cacheControl,
-) {
+Headers _buildBaseHeaders(FileInfo fileInfo, CacheControlHeader? cacheControl) {
   return Headers.build(
-    (final mh) => mh
+    (mh) => mh
       ..acceptRanges = AcceptRangesHeader.bytes()
       ..etag = ETagHeader(value: fileInfo.etag)
       ..lastModified = fileInfo.stat.modified
@@ -358,9 +348,9 @@ Headers _buildBaseHeaders(
 
 /// Checks conditional request headers and returns 304 response if appropriate.
 Response? _checkConditionalHeaders(
-  final Request req,
-  final FileInfo fileInfo,
-  final Headers headers,
+  Request req,
+  FileInfo fileInfo,
+  Headers headers,
 ) {
   // Handle If-None-Match
   final ifNoneMatch = req.headers.ifNoneMatch;
@@ -386,10 +376,10 @@ Response? _checkConditionalHeaders(
 
 /// Handles HTTP range requests for partial content.
 Future<Response> _handleRangeRequest(
-  final Request req,
-  final FileInfo fileInfo,
-  final Headers headers,
-  final RangeHeader rangeHeader,
+  Request req,
+  FileInfo fileInfo,
+  Headers headers,
+  RangeHeader rangeHeader,
 ) async {
   // Check If-Range header
   if (!_isRangeRequestValid(req, fileInfo)) {
@@ -415,7 +405,7 @@ Future<Response> _handleRangeRequest(
 const _maxRanges = 16;
 
 /// Validates If-Range header for range requests.
-bool _isRangeRequestValid(final Request req, final FileInfo fileInfo) {
+bool _isRangeRequestValid(Request req, FileInfo fileInfo) {
   final ifRange = req.headers.ifRange;
   if (ifRange == null) return true;
 
@@ -436,16 +426,12 @@ bool _isRangeRequestValid(final Request req, final FileInfo fileInfo) {
 }
 
 /// Serves the complete file without ranges.
-Response _serveFullFile(final FileInfo fileInfo, final Headers headers) {
+Response _serveFullFile(FileInfo fileInfo, Headers headers) {
   return Response.ok(headers: headers, body: _createFileBody(fileInfo));
 }
 
 /// Serves a single range of the file.
-Response _serveSingleRange(
-  final FileInfo fileInfo,
-  final Headers headers,
-  final Range range,
-) {
+Response _serveSingleRange(FileInfo fileInfo, Headers headers, Range range) {
   final (start, end) = _calculateRangeBounds(range, fileInfo.stat.size);
 
   // If range is invalid
@@ -456,7 +442,7 @@ Response _serveSingleRange(
   return Response(
     HttpStatus.partialContent,
     headers: headers.transform(
-      (final mh) => mh
+      (mh) => mh
         ..contentRange = ContentRangeHeader(
           start: start,
           end: end - 1,
@@ -472,9 +458,9 @@ Response _serveSingleRange(
 /// Sections are produced as the body is consumed, so only the chunk in flight
 /// is held in memory rather than the whole response.
 Response _serveMultipleRanges(
-  final FileInfo fileInfo,
-  final Headers headers,
-  final List<Range> ranges,
+  FileInfo fileInfo,
+  Headers headers,
+  List<Range> ranges,
 ) {
   final boundary = 'RelicMultipartBoundary-${_boundaryToken()}';
   final bounds = [
@@ -513,17 +499,17 @@ String _boundaryToken() {
   final random = Random.secure();
   return List.generate(
     4,
-    (final _) => random.nextInt(1 << 16).toRadixString(16).padLeft(4, '0'),
+    (_) => random.nextInt(1 << 16).toRadixString(16).padLeft(4, '0'),
   ).join();
 }
 
 /// Emits the multipart sections for [bounds], reading each range from disk
 /// only when the consumer asks for it.
 Stream<Uint8List> _multipartSections(
-  final FileInfo fileInfo,
-  final String boundary,
-  final List<(int start, int end)> bounds,
-  final Uint8List footer,
+  FileInfo fileInfo,
+  String boundary,
+  List<(int start, int end)> bounds,
+  Uint8List footer,
 ) async* {
   for (final (start, end) in bounds) {
     yield _multipartSectionHeader(fileInfo, boundary, start, end);
@@ -534,10 +520,10 @@ Stream<Uint8List> _multipartSections(
 
 /// Builds the header bytes introducing one multipart section.
 Uint8List _multipartSectionHeader(
-  final FileInfo fileInfo,
-  final String boundary,
-  final int start,
-  final int end,
+  FileInfo fileInfo,
+  String boundary,
+  int start,
+  int end,
 ) {
   final mimeType = fileInfo.mimeType ?? MimeType.octetStream;
   return utf8.encode(
@@ -550,10 +536,7 @@ Uint8List _multipartSectionHeader(
 /// Calculates actual start and end positions for a range.
 /// Returns the original range bounds (not clamped to file size) for Content-Range headers,
 /// but file.openRead() will naturally clamp the actual reading.
-(int start, int end) _calculateRangeBounds(
-  final Range range,
-  final int fileSize,
-) {
+(int start, int end) _calculateRangeBounds(Range range, int fileSize) {
   int start;
   int end;
   if (range.start != null) {
@@ -570,7 +553,7 @@ Uint8List _multipartSectionHeader(
 }
 
 /// Creates a Body for the full file.
-Body _createFileBody(final FileInfo fileInfo) {
+Body _createFileBody(FileInfo fileInfo) {
   return Body(
     open: () => fileInfo.file.openRead().cast(),
     contentLength: fileInfo.stat.size,
@@ -579,7 +562,7 @@ Body _createFileBody(final FileInfo fileInfo) {
 }
 
 /// Creates a Body for a specific range of the file.
-Body _createRangeBody(final FileInfo fileInfo, final int start, final int end) {
+Body _createRangeBody(FileInfo fileInfo, int start, int end) {
   return Body(
     open: () => fileInfo.file.openRead(start, end).cast(),
     contentLength: end - start,
@@ -588,7 +571,7 @@ Body _createRangeBody(final FileInfo fileInfo, final int start, final int end) {
 }
 
 /// The type of a file body: its MIME type, utf-8 for a text type.
-BodyType _fileBodyType(final FileInfo fileInfo) {
+BodyType _fileBodyType(FileInfo fileInfo) {
   final mimeType = fileInfo.mimeType ?? MimeType.octetStream;
   return BodyType(mimeType: mimeType, encoding: mimeType.isText ? utf8 : null);
 }

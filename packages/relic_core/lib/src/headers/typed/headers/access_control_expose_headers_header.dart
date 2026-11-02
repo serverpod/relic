@@ -17,16 +17,15 @@ final class AccessControlExposeHeadersHeader
   ///
   /// Header names are case-insensitive (RFC 9110 5.1), so they are
   /// canonicalized to lowercase for case-insensitive equality and membership.
-  AccessControlExposeHeadersHeader.headers(final Iterable<String> headers)
-    : super(List.from(headers.map((final h) => h.toLowerCase())));
+  AccessControlExposeHeadersHeader.headers(Iterable<String> headers)
+    : super(List.from(headers.map((h) => h.toLowerCase())));
 
   /// Constructs an instance allowing all headers to be exposed (`*`).
   const AccessControlExposeHeadersHeader.wildcard() : super.wildcard();
 
   /// Parses the header [values].
-  factory AccessControlExposeHeadersHeader.parse(
-    final Iterable<String> values,
-  ) => _parseFields([for (final value in values) latin1Bytes(value)]);
+  factory AccessControlExposeHeadersHeader.parse(Iterable<String> values) =>
+      _parseFields([for (final value in values) latin1Bytes(value)]);
 
   AccessControlExposeHeadersHeader._owned(super.headers) : super.owned();
 
@@ -34,9 +33,7 @@ final class AccessControlExposeHeadersHeader
   List<String> get headers => values;
 
   /// The header from the wire bytes of its [fields].
-  static AccessControlExposeHeadersHeader _parseFields(
-    final List<Uint8List> fields,
-  ) {
+  static AccessControlExposeHeadersHeader _parseFields(List<Uint8List> fields) {
     final parsed = WildcardListHeader.parseFields(fields, lowerTextOf);
     if (parsed.isWildcard) {
       return const AccessControlExposeHeadersHeader.wildcard();
@@ -44,13 +41,11 @@ final class AccessControlExposeHeadersHeader
     return AccessControlExposeHeadersHeader._owned(parsed.values);
   }
 
-  static List<String> encodeHeader(
-    final AccessControlExposeHeadersHeader header,
-  ) {
-    return header.encode((final String str) => str).toList();
+  static List<String> encodeHeader(AccessControlExposeHeadersHeader header) {
+    return header.encode((String str) => str).toList();
   }
 
-  static List<String> _encode(final AccessControlExposeHeadersHeader header) {
+  static List<String> _encode(AccessControlExposeHeadersHeader header) {
     return encodeHeader(header);
   }
 }

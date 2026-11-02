@@ -10,13 +10,13 @@ import 'form_data.dart';
 /// decodes, so an error from [chunks], even a [FormatException], passes
 /// through unchanged.
 Future<String> decodeFormText(
-  final Stream<Uint8List> chunks,
-  final Encoding encoding,
-  final String context,
+  Stream<Uint8List> chunks,
+  Encoding encoding,
+  String context,
 ) async {
   final bytes = await chunks.fold(
     BytesBuilder(copy: false),
-    (final builder, final chunk) => builder..add(chunk),
+    (builder, chunk) => builder..add(chunk),
   );
   try {
     return encoding.decode(bytes.takeBytes());

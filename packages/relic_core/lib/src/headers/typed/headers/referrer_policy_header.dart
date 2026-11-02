@@ -10,9 +10,7 @@ import '../primitives/byte_scanner.dart' show latin1Bytes;
 /// and generate referrer policy header values.
 final class ReferrerPolicyHeader {
   static const codec = HeaderCodec.bytes(_parseBytes, __encode);
-  static List<String> __encode(final ReferrerPolicyHeader value) => [
-    value._encode(),
-  ];
+  static List<String> __encode(ReferrerPolicyHeader value) => [value._encode()];
 
   /// The string representation of the referrer policy directive.
   final String directive;
@@ -63,11 +61,11 @@ final class ReferrerPolicyHeader {
   /// agent recognizes (so a deployment can list `no-referrer, strict-origin`
   /// as a fallback for older agents). Unknown tokens are ignored, and the
   /// match is case-insensitive.
-  factory ReferrerPolicyHeader.parse(final String value) =>
+  factory ReferrerPolicyHeader.parse(String value) =>
       _parseBytes(latin1Bytes(value));
 
   /// [parse] over the wire bytes. The last known policy wins.
-  static ReferrerPolicyHeader _parseBytes(final Uint8List bytes) {
+  static ReferrerPolicyHeader _parseBytes(Uint8List bytes) {
     if (trimmed(bytes).isEmpty) {
       throw const FormatException('Value cannot be empty');
     }
@@ -88,7 +86,7 @@ final class ReferrerPolicyHeader {
   String _encode() => directive;
 
   @override
-  bool operator ==(final Object other) =>
+  bool operator ==(Object other) =>
       identical(this, other) ||
       other is ReferrerPolicyHeader && directive == other.directive;
 

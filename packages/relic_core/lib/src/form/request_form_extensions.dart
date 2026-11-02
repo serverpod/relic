@@ -18,7 +18,7 @@ extension FormRequestExtension on Request {
   ///
   /// This consumes the request body. It should only be called once for a request.
   Future<UrlEncodedFormData> urlEncodedForm({
-    final FormLimits limits = FormLimits.defaults,
+    FormLimits limits = FormLimits.defaults,
   }) async {
     final bodyType = body.bodyType;
     if (bodyType?.mimeType != MimeType.urlEncoded) {
@@ -44,8 +44,8 @@ extension FormRequestExtension on Request {
   /// Supports `application/x-www-form-urlencoded` and `multipart/form-data`.
   /// This consumes the request body. It should only be called once for a request.
   Future<FormData> formData({
-    final FormLimits limits = FormLimits.defaults,
-    final UploadStorage? uploadStorage,
+    FormLimits limits = FormLimits.defaults,
+    UploadStorage? uploadStorage,
   }) async {
     final mimeType = body.bodyType?.mimeType;
     if (mimeType == MimeType.urlEncoded) {
@@ -69,8 +69,8 @@ extension FormRequestExtension on Request {
   ///
   /// This consumes the request body. It should only be called once for a request.
   Future<MultipartFormData> multipartForm({
-    final FormLimits limits = FormLimits.defaults,
-    final UploadStorage? uploadStorage,
+    FormLimits limits = FormLimits.defaults,
+    UploadStorage? uploadStorage,
   }) async {
     final storage = uploadStorage ?? const MemoryUploadStorage();
     final fields = <FormFieldEntry>[];
@@ -119,7 +119,7 @@ extension FormRequestExtension on Request {
                 part.body.read(),
                 limits,
                 () => totalFileSize,
-                (final value) => totalFileSize = value,
+                (value) => totalFileSize = value,
               ),
             );
             final entry = FileFieldEntry(name: name, file: file);
@@ -146,7 +146,7 @@ extension FormRequestExtension on Request {
 
   /// Streams a `multipart/form-data` request body as individual parts.
   Stream<MultipartPart> multipart({
-    final FormLimits limits = FormLimits.defaults,
+    FormLimits limits = FormLimits.defaults,
   }) async* {
     final bodyType = body.bodyType;
     if (bodyType?.mimeType != MimeType.multipartFormData) {
@@ -171,7 +171,7 @@ extension FormRequestExtension on Request {
 
   /// Reads the body, throwing [FormLimitExceededException] once it exceeds
   /// [FormLimits.maxBodySize].
-  Stream<Uint8List> _readFormBody(final FormLimits limits) async* {
+  Stream<Uint8List> _readFormBody(FormLimits limits) async* {
     try {
       await for (final chunk in read(maxLength: limits.maxBodySize)) {
         yield chunk;
@@ -194,9 +194,9 @@ extension FormRequestExtension on Request {
 /// reads a part, and fails that part with the error. Remove this workaround
 /// once package:mime reports these errors on the open part.
 Stream<MultipartPart> _parts(
-  final Stream<Uint8List> body,
-  final String boundary,
-  final FormLimits limits,
+  Stream<Uint8List> body,
+  String boundary,
+  FormLimits limits,
 ) {
   final parts = StreamController<MultipartPart>();
   late final StreamSubscription<MimeMultipart> subscription;
@@ -212,7 +212,7 @@ Stream<MultipartPart> _parts(
     }
   }
 
-  void fail(final Object error, final StackTrace stackTrace) {
+  void fail(Object error, StackTrace stackTrace) {
     final mapped = error is MimeMultipartException || error is FormatException
         ? MalformedFormDataException('Malformed multipart body: $error')
         : error;
@@ -226,7 +226,7 @@ Stream<MultipartPart> _parts(
     parts.addError(mapped, stackTrace);
   }
 
-  void addPart(final MimeMultipart mimePart) {
+  void addPart(MimeMultipart mimePart) {
     final content = StreamController<Uint8List>();
     final MultipartPart part;
     try {
@@ -239,9 +239,7 @@ Stream<MultipartPart> _parts(
       partCount++;
 
       final headers = Headers.fromMap(
-        mimePart.headers.map(
-          (final key, final value) => MapEntry(key, [value]),
-        ),
+        mimePart.headers.map((key, value) => MapEntry(key, [value])),
       );
       _checkPartHeaderSize(headers, limits);
       part = MultipartPart(headers: headers, content: content.stream);
@@ -257,7 +255,7 @@ Stream<MultipartPart> _parts(
       ..onListen = () {
         if (content.isClosed) return;
         contentSubscription = mimePart.listen(
-          (final chunk) => content.add(
+          (chunk) => content.add(
             chunk is Uint8List ? chunk : Uint8List.fromList(chunk),
           ),
           onError: content.addError,
@@ -291,7 +289,7 @@ Stream<MultipartPart> _parts(
             boundary,
           ).bind(body).listen(addPart, onError: fail, onDone: parts.close);
         },
-        (final error, final stackTrace) {
+        (error, stackTrace) {
           if (parts.isClosed) Error.throwWithStackTrace(error, stackTrace);
           fail(error, stackTrace);
           subscription.cancel();
@@ -308,9 +306,9 @@ Stream<MultipartPart> _parts(
 }
 
 Future<String> _readPartAsString(
-  final MultipartPart part,
-  final Encoding encoding,
-  final int maxLength,
+  MultipartPart part,
+  Encoding encoding,
+  int maxLength,
 ) async {
   try {
     return await decodeFormText(
@@ -327,10 +325,10 @@ Future<String> _readPartAsString(
 }
 
 Stream<Uint8List> _limitedFileStream(
-  final Stream<Uint8List> stream,
-  final FormLimits limits,
-  final int Function() getTotalFileSize,
-  final void Function(int) setTotalFileSize,
+  Stream<Uint8List> stream,
+  FormLimits limits,
+  int Function() getTotalFileSize,
+  void Function(int) setTotalFileSize,
 ) async* {
   var fileSize = 0;
   await for (final chunk in stream) {
@@ -355,9 +353,9 @@ Stream<Uint8List> _limitedFileStream(
   }
 }
 
-void _checkPartHeaderSize(final Headers headers, final FormLimits limits) {
+void _checkPartHeaderSize(Headers headers, FormLimits limits) {
   var size = 0;
-  headers.forEach((final name, final value) {
+  headers.forEach((name, value) {
     size += utf8.encode(name.lower).length + utf8.encode(value).length;
   });
   if (size > limits.maxPartHeaderSize) {
@@ -369,9 +367,9 @@ void _checkPartHeaderSize(final Headers headers, final FormLimits limits) {
 }
 
 List<FormFieldEntry> _parseUrlEncodedFields(
-  final String body,
-  final Encoding encoding,
-  final FormLimits limits,
+  String body,
+  Encoding encoding,
+  FormLimits limits,
 ) {
   if (body.isEmpty) return [];
 
@@ -405,7 +403,7 @@ List<FormFieldEntry> _parseUrlEncodedFields(
   return entries;
 }
 
-String _decodeFormComponent(final String value, final Encoding encoding) {
+String _decodeFormComponent(String value, Encoding encoding) {
   try {
     return Uri.decodeQueryComponent(
       value.replaceAll('+', ' '),

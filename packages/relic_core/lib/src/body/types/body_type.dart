@@ -49,7 +49,7 @@ class BodyType {
   BodyType({
     required this.mimeType,
     this.encoding,
-    final Map<String, String> parameters = const {},
+    Map<String, String> parameters = const {},
   }) : parameters = parameters.isEmpty
            ? const {}
            : Map.unmodifiable(_normalizeParameters(parameters));
@@ -59,7 +59,7 @@ class BodyType {
   /// The `charset` parameter is the [encoding], and a text type without one
   /// is UTF-8. A parameter relic could not write back is dropped. For a
   /// request's Content-Type and an upstream response's alike.
-  factory BodyType.fromContentType(final ContentTypeHeader contentType) {
+  factory BodyType.fromContentType(ContentTypeHeader contentType) {
     final mimeType = contentType.mimeType;
     final given = contentType.parameters;
     return BodyType(
@@ -77,7 +77,7 @@ class BodyType {
   }
 
   /// Returns the value of the parameter [name], matched case-insensitively.
-  String? parameter(final String name) => parameters[name.toLowerCase()];
+  String? parameter(String name) => parameters[name.toLowerCase()];
 
   /// Checks that the mime type and every parameter fit in a Content-Type
   /// header.
@@ -132,7 +132,7 @@ class BodyType {
       'parameters: $parameters)';
 }
 
-bool _isWritable(final String name, final String value) {
+bool _isWritable(String name, String value) {
   if (!Token.isValid(name)) return false;
   try {
     ParameterValue(value);
@@ -142,7 +142,7 @@ bool _isWritable(final String name, final String value) {
   }
 }
 
-Map<String, String> _normalizeParameters(final Map<String, String> parameters) {
+Map<String, String> _normalizeParameters(Map<String, String> parameters) {
   final normalized = {
     for (final MapEntry(:key, :value) in parameters.entries)
       key.toLowerCase(): value,

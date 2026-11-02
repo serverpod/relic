@@ -30,7 +30,7 @@ class NormalizedPath {
   /// `..` segments and removing empty ones. The path is not percent-decoded,
   /// so an encoded separator such as `%2F` stays literal within its segment;
   /// use [NormalizedPath.fromUri] to derive a path from a request.
-  factory NormalizedPath(final String path) =>
+  factory NormalizedPath(String path) =>
       NormalizedPath._(_normalizeSegments(path.split('/')));
 
   /// Creates a [NormalizedPath] from segments that have already been split.
@@ -40,18 +40,18 @@ class NormalizedPath {
   /// new one. Empty and `.` segments are dropped and `..` segments resolved,
   /// exactly as for a path string, so the result carries the same guarantee
   /// that no segment is `..`.
-  factory NormalizedPath.fromSegments(final Iterable<String> segments) =>
+  factory NormalizedPath.fromSegments(Iterable<String> segments) =>
       NormalizedPath._(_normalizeSegments(segments));
 
   /// Creates a [NormalizedPath] from the path of [url].
   ///
   /// [Uri.pathSegments] splits on the separator before decoding, so an encoded
   /// separator (`%2F`) stays within its segment.
-  factory NormalizedPath.fromUri(final Uri url) =>
+  factory NormalizedPath.fromUri(Uri url) =>
       NormalizedPathInternal.fromPathSegments(url.pathSegments);
 
   /// Normalizes [segments] by resolving `.` and `..` and dropping empty ones.
-  static List<String> _normalizeSegments(final Iterable<String> segments) {
+  static List<String> _normalizeSegments(Iterable<String> segments) {
     final result = <String>[];
 
     for (final segment in segments) {
@@ -71,7 +71,7 @@ class NormalizedPath {
   ///
   /// The [start] parameter specifies the starting segment index (inclusive).
   /// The optional [end] parameter specifies the ending segment index (exclusive).
-  NormalizedPath subPath(final int start, [int? end]) {
+  NormalizedPath subPath(int start, [int? end]) {
     end ??= length;
     if (start == end) return NormalizedPath.empty;
     if (start == 0 && end == length) {
@@ -84,7 +84,7 @@ class NormalizedPath {
   int get length => segments.length;
 
   /// Whether path has parameters or not
-  late final bool hasParameters = segments.any((final s) => s.startsWith(':'));
+  late final bool hasParameters = segments.any((s) => s.startsWith(':'));
 
   /// The string representation of the normalized path, always starting with `/`.
   ///
@@ -104,7 +104,7 @@ class NormalizedPath {
   /// Returns true if the other object is also a [NormalizedPath] and represents the
   /// exact same sequence of path segments.
   @override
-  bool operator ==(final Object other) {
+  bool operator ==(Object other) {
     if (identical(this, other)) return true;
     if (other is! NormalizedPath) return false;
 
@@ -126,7 +126,7 @@ extension NormalizedPathInternal on NormalizedPath {
   /// From segments split and decoded the way [Uri.pathSegments] does it,
   /// such as [RequestTarget.pathSegments]. The list is reused as is when it
   /// is already normalized, so it must be unmodifiable.
-  static NormalizedPath fromPathSegments(final List<String> segments) {
+  static NormalizedPath fromPathSegments(List<String> segments) {
     for (final segment in segments) {
       if (segment.isEmpty || segment == '.' || segment == '..') {
         return NormalizedPath._(NormalizedPath._normalizeSegments(segments));

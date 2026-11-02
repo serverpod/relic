@@ -38,7 +38,7 @@ abstract base class RelicWebSocketBase implements RelicWebSocket {
   Duration? get pingInterval => _pingInterval;
 
   @override
-  set pingInterval(final Duration? value) {
+  set pingInterval(Duration? value) {
     _pingInterval = value;
     _pingTimer?.cancel();
     _pingTimer = null;
@@ -57,36 +57,36 @@ abstract base class RelicWebSocketBase implements RelicWebSocket {
   }
 
   @override
-  void sendBytes(final Uint8List b) {
+  void sendBytes(Uint8List b) {
     if (!trySendBytes(b)) throw WebSocketConnectionClosed();
   }
 
   @override
-  void sendText(final String s) {
+  void sendText(String s) {
     if (!trySendText(s)) throw WebSocketConnectionClosed();
   }
 
   @override
-  bool trySendBytes(final Uint8List b) {
+  bool trySendBytes(Uint8List b) {
     if (isClosed) return false;
     sendFrame(WebSocketOpcode.binary, b);
     return true;
   }
 
   @override
-  bool trySendText(final String s) {
+  bool trySendText(String s) {
     if (isClosed) return false;
     sendFrame(WebSocketOpcode.text, utf8.encode(s));
     return true;
   }
 
   @override
-  Future<void> close([final int? code, final String? reason]) async {
+  Future<void> close([int? code, String? reason]) async {
     if (!await tryClose(code, reason)) throw WebSocketConnectionClosed();
   }
 
   @override
-  Future<bool> tryClose([final int? code, final String? reason]) async {
+  Future<bool> tryClose([int? code, String? reason]) async {
     if (isClosed) return false;
     checkCloseCode(code);
     checkCloseReason(reason);
@@ -108,7 +108,7 @@ abstract base class RelicWebSocketBase implements RelicWebSocket {
   ///
   /// Does nothing on a transport that is gone.
   @protected
-  void sendFrame(final WebSocketOpcode opcode, final Uint8List payload);
+  void sendFrame(WebSocketOpcode opcode, Uint8List payload);
 
   /// Called once a close frame of this side's went out.
   @protected
@@ -149,7 +149,7 @@ abstract base class RelicWebSocketBase implements RelicWebSocket {
 
   /// Closes from this side with [code], and the handler sees that close.
   @protected
-  void goAway(final int code, final String reason) {
+  void goAway(int code, String reason) {
     closeEvents(CloseReceived(code, reason));
     sendClose(code, reason);
   }
@@ -158,7 +158,7 @@ abstract base class RelicWebSocketBase implements RelicWebSocket {
   ///
   /// Later calls do nothing.
   @protected
-  void sendClose(final int? code, final String reason) {
+  void sendClose(int? code, String reason) {
     if (_closeSent) return;
     markCloseSent();
     sendFrame(WebSocketOpcode.close, encodeClosePayload(code, reason));
@@ -167,13 +167,13 @@ abstract base class RelicWebSocketBase implements RelicWebSocket {
 
   /// Hands the handler an event, unless its events ended.
   @protected
-  void addEvent(final WebSocketEvent event) {
+  void addEvent(WebSocketEvent event) {
     if (!_events.isClosed) _events.add(event);
   }
 
   /// Hands the handler an error, unless its events ended.
   @protected
-  void addError(final Object error, [final StackTrace? stackTrace]) {
+  void addError(Object error, [StackTrace? stackTrace]) {
     if (!_events.isClosed) _events.addError(error, stackTrace);
   }
 
@@ -182,7 +182,7 @@ abstract base class RelicWebSocketBase implements RelicWebSocket {
   ///
   /// Does nothing on events that already ended.
   @protected
-  void closeEvents([final CloseReceived? close]) {
+  void closeEvents([CloseReceived? close]) {
     if (_events.isClosed) return;
     if (close != null) _events.add(close);
     unawaited(_events.close());

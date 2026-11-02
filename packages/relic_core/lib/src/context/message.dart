@@ -19,8 +19,7 @@ abstract class Message {
   ///
   /// If [maxLength] is provided, throws [MaxBodySizeExceeded] if the body
   /// exceeds the limit. See [Body.read] for details.
-  Stream<Uint8List> read({final int? maxLength}) =>
-      body.read(maxLength: maxLength);
+  Stream<Uint8List> read({int? maxLength}) => body.read(maxLength: maxLength);
 
   /// Reads the body as a string, decoding it using the specified or detected encoding.
   /// Defaults to utf8 if no encoding is provided or detected.
@@ -34,7 +33,7 @@ abstract class Message {
   ///   // Use data...
   /// });
   /// ```
-  Future<String> readAsString({Encoding? encoding, final int? maxLength}) {
+  Future<String> readAsString({Encoding? encoding, int? maxLength}) {
     encoding ??= body.bodyType?.encoding ?? utf8;
     return encoding.decodeStream(read(maxLength: maxLength));
   }
@@ -43,5 +42,5 @@ abstract class Message {
   bool get isEmpty => body.contentLength == 0;
 
   /// Creates a new message by copying existing values and applying specified changes.
-  Message copyWith({final Headers headers, final Body? body});
+  Message copyWith({Headers headers, Body? body});
 }

@@ -37,10 +37,8 @@ final class FramedWebSocket extends RelicWebSocketBase {
   var _sinkClosed = false;
   Timer? _closeTimer;
 
-  FramedWebSocket(
-    this._channel, {
-    final int maxMessageSize = defaultMaxMessageSize,
-  }) : _assembler = WebSocketMessageAssembler(maxMessageSize: maxMessageSize) {
+  FramedWebSocket(this._channel, {int maxMessageSize = defaultMaxMessageSize})
+    : _assembler = WebSocketMessageAssembler(maxMessageSize: maxMessageSize) {
     _frames = _channel.stream
         .transform(WebSocketFrameDecoder(maxFrameSize: maxMessageSize))
         .listen(
@@ -52,7 +50,7 @@ final class FramedWebSocket extends RelicWebSocketBase {
   }
 
   @override
-  void sendFrame(final WebSocketOpcode opcode, final Uint8List payload) {
+  void sendFrame(WebSocketOpcode opcode, Uint8List payload) {
     if (_sinkClosed) return;
     try {
       _channel.sink.add(encodeWebSocketFrame(opcode, payload));
@@ -70,7 +68,7 @@ final class FramedWebSocket extends RelicWebSocketBase {
   @override
   void onPeerUnresponsive() => _closeSink();
 
-  void _onFrame(final WebSocketFrame raw) {
+  void _onFrame(WebSocketFrame raw) {
     final WebSocketInbound? inbound;
     try {
       inbound = _assembler.add(raw);
@@ -102,7 +100,7 @@ final class FramedWebSocket extends RelicWebSocketBase {
     }
   }
 
-  void _onCloseFrame(final Uint8List payload) {
+  void _onCloseFrame(Uint8List payload) {
     int? code;
     var reason = '';
     if (payload.length == 1) {
@@ -137,12 +135,12 @@ final class FramedWebSocket extends RelicWebSocketBase {
   }
 
   /// Closes with the code [e] calls for, and the handler hears why.
-  void _fail(final WebSocketProtocolException e) {
+  void _fail(WebSocketProtocolException e) {
     addError(WebSocketException(e.message));
     goAway(e.code, e.message);
   }
 
-  void _onError(final Object error, final StackTrace stackTrace) {
+  void _onError(Object error, StackTrace stackTrace) {
     if (error is WebSocketProtocolException) {
       _fail(error);
       // The decoder ended the frame stream, so the peer's answer to the

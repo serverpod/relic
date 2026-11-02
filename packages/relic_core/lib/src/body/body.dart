@@ -138,9 +138,9 @@ class Body {
   /// [open] is given.
   Body({
     this.bytes,
-    final Stream<Uint8List>? stream,
-    final Stream<Uint8List> Function()? open,
-    final int? contentLength,
+    Stream<Uint8List>? stream,
+    Stream<Uint8List> Function()? open,
+    int? contentLength,
     this.bodyType,
   }) : _stream = stream,
        _open = open ?? (bytes == null && stream == null ? _openEmpty : null),
@@ -156,9 +156,9 @@ class Body {
   }
 
   static BodyType? _bodyType(
-    final MimeType? mimeType,
-    final Encoding? encoding,
-    final Map<String, String> parameters,
+    MimeType? mimeType,
+    Encoding? encoding,
+    Map<String, String> parameters,
   ) {
     if (mimeType == null) {
       if (parameters.isNotEmpty) {
@@ -203,7 +203,7 @@ class Body {
       HashMap<MimeType, Map<Encoding?, BodyType>>.identity();
   static const _sharedBodyTypesLimit = 256;
 
-  static bool _isSharedEncoding(final Encoding encoding) =>
+  static bool _isSharedEncoding(Encoding encoding) =>
       identical(encoding, utf8) ||
       identical(encoding, latin1) ||
       identical(encoding, ascii);
@@ -245,8 +245,8 @@ class Body {
   /// );
   /// ```
   factory Body.fromString(
-    final String body, {
-    final Encoding encoding = utf8,
+    String body, {
+    Encoding encoding = utf8,
     MimeType? mimeType,
   }) {
     final encoded = encoding is Utf8Codec
@@ -261,7 +261,7 @@ class Body {
     );
   }
 
-  static MimeType? _tryInferTextMimeTypeFrom(final String content) {
+  static MimeType? _tryInferTextMimeTypeFrom(String content) {
     var firstNonWhiteSpace = 0;
     final end = content.length;
     while (firstNonWhiteSpace < end &&
@@ -292,7 +292,7 @@ class Body {
   }
 
   /// Checks if a character is whitespace.
-  static bool _isWhitespace(final String char) {
+  static bool _isWhitespace(String char) {
     return char == ' ' || char == '\t' || char == '\n' || char == '\r';
   }
 
@@ -334,11 +334,11 @@ class Body {
   /// without reading it. Pass [Body.new] `open` for a stream that opens a
   /// file or a connection when listened to.
   factory Body.fromDataStream(
-    final Stream<Uint8List> body, {
-    final Encoding? encoding,
-    final MimeType? mimeType = MimeType.octetStream,
-    final Map<String, String> parameters = const {},
-    final int? contentLength,
+    Stream<Uint8List> body, {
+    Encoding? encoding,
+    MimeType? mimeType = MimeType.octetStream,
+    Map<String, String> parameters = const {},
+    int? contentLength,
   }) {
     return Body(
       stream: body,
@@ -353,10 +353,8 @@ class Body {
 
   /// The charset of a body with [mimeType] when [encoding] does not name
   /// one. A text type defaults to utf8, any other to none.
-  static Encoding? _charsetFor(
-    final Encoding? encoding,
-    final MimeType? mimeType,
-  ) => encoding ?? (mimeType?.isText == true ? utf8 : null);
+  static Encoding? _charsetFor(Encoding? encoding, MimeType? mimeType) =>
+      encoding ?? (mimeType?.isText == true ? utf8 : null);
 
   static final _resolver = MimeTypeResolver();
 
@@ -388,10 +386,10 @@ class Body {
   /// [parameters] holds media type parameters other than `charset`, which
   /// [encoding] sets. Throws [ArgumentError] if [parameters] has a `charset`.
   factory Body.fromData(
-    final Uint8List body, {
-    final Encoding? encoding,
+    Uint8List body, {
+    Encoding? encoding,
     MimeType? mimeType,
-    final Map<String, String> parameters = const {},
+    Map<String, String> parameters = const {},
   }) {
     if (mimeType == null) {
       final mimeString = _resolver.lookup('', headerBytes: body);
@@ -412,7 +410,7 @@ class Body {
   /// Synchronous when the body was built from bytes or a string, and a
   /// [MaxBodySizeExceeded] is then thrown synchronously too. Counts as
   /// reading the body, like [read].
-  FutureOr<Uint8List> readAll({final int? maxLength}) {
+  FutureOr<Uint8List> readAll({int? maxLength}) {
     final bytes = this.bytes;
     if (bytes != null) {
       consume();
@@ -471,7 +469,7 @@ class Body {
   ///   // Handle oversized body
   /// }
   /// ```
-  Stream<Uint8List> read({final int? maxLength}) {
+  Stream<Uint8List> read({int? maxLength}) {
     // A known length over maxLength fails before the stream is made. A lazy
     // open then never runs, and consume() cancels a stream the body holds.
     final knownLength = contentLength;
@@ -521,8 +519,8 @@ class Body {
   }
 
   static Stream<Uint8List> _limitedStream(
-    final Stream<Uint8List> source,
-    final int maxLength,
+    Stream<Uint8List> source,
+    int maxLength,
   ) async* {
     var totalBytes = 0;
     await for (final chunk in source) {
@@ -562,7 +560,7 @@ class MaxBodySizeExceeded implements Exception {
 ///
 /// `utf8.encode` takes 3.7 us over a 1.3 KB ASCII string and this loop
 /// 1.6 us, so the encoder only runs from the first non-ASCII code unit on.
-Uint8List _encodeUtf8(final String text) {
+Uint8List _encodeUtf8(String text) {
   final out = Uint8List(text.length);
   for (var i = 0; i < text.length; i++) {
     final unit = text.codeUnitAt(i);
@@ -574,11 +572,7 @@ Uint8List _encodeUtf8(final String text) {
 
 /// The UTF-8 bytes of [text], given [prefix] holds its first [from] code
 /// units, all ASCII.
-Uint8List _encodeUtf8Tail(
-  final String text,
-  final Uint8List prefix,
-  final int from,
-) {
+Uint8List _encodeUtf8Tail(String text, Uint8List prefix, int from) {
   final rest = utf8.encoder.convert(text, from);
   return Uint8List(from + rest.length)
     ..setRange(0, from, prefix)

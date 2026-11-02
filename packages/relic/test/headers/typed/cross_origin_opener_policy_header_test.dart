@@ -23,12 +23,12 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (final h) => h.crossOriginOpenerPolicy,
+            touchHeaders: (h) => h.crossOriginOpenerPolicy,
             headers: {'cross-origin-opener-policy': ''},
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (final e) => e.message,
+              (e) => e.message,
               'message',
               contains('Value cannot be empty'),
             ),
@@ -44,12 +44,12 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (final h) => h.crossOriginOpenerPolicy,
+            touchHeaders: (h) => h.crossOriginOpenerPolicy,
             headers: {'cross-origin-opener-policy': 'custom-policy'},
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (final e) => e.message,
+              (e) => e.message,
               'message',
               contains('Invalid value'),
             ),
@@ -77,7 +77,7 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.crossOriginOpenerPolicy,
+          touchHeaders: (h) => h.crossOriginOpenerPolicy,
           headers: {'cross-origin-opener-policy': 'same-origin'},
         );
 
@@ -90,7 +90,7 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.crossOriginOpenerPolicy,
+          touchHeaders: (h) => h.crossOriginOpenerPolicy,
           headers: {},
         );
 

@@ -21,12 +21,12 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (final h) => h.setCookie,
+            touchHeaders: (h) => h.setCookie,
             headers: {'set-cookie': ''},
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (final e) => e.message,
+              (e) => e.message,
               'message',
               contains('Value cannot be empty'),
             ),
@@ -43,14 +43,14 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (final h) => h.setCookie,
+            touchHeaders: (h) => h.setCookie,
             headers: {
               'set-cookie': 'sessionId=abc123; Max-Age=3600; Max-Age=7200',
             },
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (final e) => e.message,
+              (e) => e.message,
               'message',
               contains('Supplied multiple Max-Age attributes'),
             ),
@@ -67,12 +67,12 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (final h) => h.setCookie,
+            touchHeaders: (h) => h.setCookie,
             headers: {'set-cookie': 'sessionId=abc123; SameSite=Invalid'},
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (final e) => e.message,
+              (e) => e.message,
               'message',
               contains('Invalid SameSite attribute'),
             ),
@@ -87,7 +87,7 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.setCookie,
+          touchHeaders: (h) => h.setCookie,
           headers: {'set-cookie': 'sessionId=test; userId=42'},
         );
 
@@ -100,7 +100,7 @@ void main() {
         'then the attribute is ignored per RFC 6265 5.2', () async {
       final headers = await getServerRequestHeaders(
         server: server,
-        touchHeaders: (final h) => h.setCookie,
+        touchHeaders: (h) => h.setCookie,
         headers: {'set-cookie': 'sessionId=abc123; invalidCookie'},
       );
 
@@ -115,12 +115,12 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (final h) => h.setCookie,
+            touchHeaders: (h) => h.setCookie,
             headers: {'set-cookie': 'invalid name=abc123'},
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (final e) => e.message,
+              (e) => e.message,
               'message',
               contains('Invalid cookie name'),
             ),
@@ -136,12 +136,12 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (final h) => h.setCookie,
+            touchHeaders: (h) => h.setCookie,
             headers: {'set-cookie': 'userId=42\x7F'},
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (final e) => e.message,
+              (e) => e.message,
               'message',
               contains('Invalid cookie value'),
             ),
@@ -167,7 +167,7 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.setCookie,
+          touchHeaders: (h) => h.setCookie,
           headers: {'set-cookie': '=abc123'},
         );
 
@@ -211,7 +211,7 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.setCookie,
+          touchHeaders: (h) => h.setCookie,
           headers: {'set-cookie': ' sessionId=abc123 ; Secure '},
         );
 

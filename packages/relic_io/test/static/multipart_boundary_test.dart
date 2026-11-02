@@ -23,7 +23,7 @@ void main() {
       handler,
       '/test_file.txt',
       headers: Headers.build(
-        (final mh) => mh.range = RangeHeader(
+        (mh) => mh.range = RangeHeader(
           ranges: [Range(start: 0, end: 0), Range(start: 2, end: 3)],
         ),
       ),

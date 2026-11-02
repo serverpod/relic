@@ -23,12 +23,12 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (final h) => h.upgrade,
+            touchHeaders: (h) => h.upgrade,
             headers: {'upgrade': ''},
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (final e) => e.message,
+              (e) => e.message,
               'message',
               contains('Value cannot be empty'),
             ),
@@ -42,7 +42,7 @@ void main() {
       expect(
         getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.upgrade,
+          touchHeaders: (h) => h.upgrade,
           headers: {'upgrade': 'Proto/has space'},
         ),
         throwsA(isA<BadRequestException>()),
@@ -82,7 +82,7 @@ void main() {
           expect(
             getServerRequestHeaders(
               server: server,
-              touchHeaders: (final h) => h.upgrade,
+              touchHeaders: (h) => h.upgrade,
               headers: {'upgrade': 'HTTP/2.0, HTTP/has space'},
             ),
             throwsA(isA<BadRequestException>()),
@@ -93,7 +93,7 @@ void main() {
       test('then it should parse the protocols correctly', () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.upgrade,
+          touchHeaders: (h) => h.upgrade,
           headers: {'upgrade': 'HTTP/2.0, WebSocket'},
         );
 
@@ -111,7 +111,7 @@ void main() {
         () async {
           final headers = await getServerRequestHeaders(
             server: server,
-            touchHeaders: (final h) => h.upgrade,
+            touchHeaders: (h) => h.upgrade,
             headers: {'upgrade': 'HTTP/2.0, WebSocket, HTTP/2.0'},
           );
 

@@ -9,7 +9,7 @@ void main() {
         final header = TransferEncodingHeader.parse(['gzip, chunked']);
 
         expect(
-          header.encodings.map((final e) => e.name),
+          header.encodings.map((e) => e.name),
           equals(['gzip', 'chunked']),
         );
       });
@@ -31,7 +31,7 @@ void main() {
         final header = TransferEncodingHeader.parse(['GZIP, Chunked']);
 
         expect(
-          header.encodings.map((final e) => e.name),
+          header.encodings.map((e) => e.name),
           equals(['gzip', 'chunked']),
         );
       });
@@ -43,7 +43,7 @@ void main() {
         final header = TransferEncodingHeader.parse(['gzip, chunked, chunked']);
 
         expect(
-          header.encodings.map((final e) => e.name),
+          header.encodings.map((e) => e.name),
           equals(['gzip', 'chunked']),
         );
       });
@@ -55,7 +55,7 @@ void main() {
         final header = TransferEncodingHeader.parse(['gzip, chunked, CHUNKED']);
 
         expect(
-          header.encodings.map((final e) => e.name),
+          header.encodings.map((e) => e.name),
           equals(['gzip', 'chunked']),
         );
       });
@@ -67,9 +67,7 @@ void main() {
         final header = TransferEncodingHeader.parse(['gzip, chunked']);
 
         expect(
-          header.encodings.any(
-            (final e) => e.name == TransferEncoding.chunked.name,
-          ),
+          header.encodings.any((e) => e.name == TransferEncoding.chunked.name),
           isTrue,
         );
       });

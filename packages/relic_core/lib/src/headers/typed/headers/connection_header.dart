@@ -13,9 +13,7 @@ import '../primitives/byte_scanner.dart' show latin1Bytes;
 /// connection header values.
 final class ConnectionHeader {
   static const codec = HeaderCodec.fields(_parseFields, __encode);
-  static List<String> __encode(final ConnectionHeader value) => [
-    value._encode(),
-  ];
+  static List<String> __encode(ConnectionHeader value) => [value._encode()];
 
   /// A list of connection directives (e.g., `keep-alive`, `close`, `upgrade`).
   final List<ConnectionHeaderType> directives;
@@ -27,11 +25,11 @@ final class ConnectionHeader {
   /// instance.
   ///
   /// The value is split on commas, and each directive trimmed.
-  factory ConnectionHeader.parse(final Iterable<String> values) =>
+  factory ConnectionHeader.parse(Iterable<String> values) =>
       _parseFields([for (final value in values) latin1Bytes(value)]);
 
   /// The header from the wire bytes of its [fields].
-  static ConnectionHeader _parseFields(final List<Uint8List> fields) {
+  static ConnectionHeader _parseFields(List<Uint8List> fields) {
     final elements = splitFieldsUnique(fields);
     if (elements.isEmpty) {
       throw const FormatException('Value cannot be empty');
@@ -39,7 +37,7 @@ final class ConnectionHeader {
     return ConnectionHeader.directives(
       List.generate(
         elements.length,
-        (final i) => ConnectionHeaderType._parseBytes(elements[i]),
+        (i) => ConnectionHeaderType._parseBytes(elements[i]),
         growable: false,
       ),
     );
@@ -58,11 +56,11 @@ final class ConnectionHeader {
   ///
   /// This method generates the header string by concatenating the connection directives.
   String _encode() {
-    return directives.map((final directive) => directive.value).join(', ');
+    return directives.map((directive) => directive.value).join(', ');
   }
 
   @override
-  bool operator ==(final Object other) =>
+  bool operator ==(Object other) =>
       identical(this, other) ||
       other is ConnectionHeader &&
           const ListEquality<ConnectionHeaderType>().equals(
@@ -103,11 +101,11 @@ class ConnectionHeaderType {
   /// 7.6.1), so any valid token is accepted (e.g. `TE`, `Trailer`, custom
   /// hop-by-hop headers), not only the predefined ones. Options are
   /// case-insensitive and canonicalized to lowercase.
-  factory ConnectionHeaderType.parse(final String value) =>
+  factory ConnectionHeaderType.parse(String value) =>
       ConnectionHeaderType._parseBytes(trimmed(latin1Bytes(value)));
 
   /// [parse] over the wire bytes of one trimmed element.
-  static ConnectionHeaderType _parseBytes(final Uint8List element) {
+  static ConnectionHeaderType _parseBytes(Uint8List element) {
     if (element.isEmpty) {
       throw const FormatException('Value cannot be empty');
     }
@@ -120,7 +118,7 @@ class ConnectionHeaderType {
   }
 
   @override
-  bool operator ==(final Object other) =>
+  bool operator ==(Object other) =>
       identical(this, other) ||
       other is ConnectionHeaderType && value == other.value;
 

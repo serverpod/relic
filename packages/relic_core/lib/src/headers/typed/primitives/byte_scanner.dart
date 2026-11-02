@@ -32,12 +32,12 @@ final class ByteScanner {
   ///
   /// Throws [FormatException] for a code unit above 0xFF, which no header
   /// field can carry.
-  factory ByteScanner.text(final String text) => ByteScanner(latin1Bytes(text));
+  factory ByteScanner.text(String text) => ByteScanner(latin1Bytes(text));
 
   /// The current cursor position, 0-based.
   int get position => _pos;
 
-  set position(final int p) {
+  set position(int p) {
     RangeError.checkValueInInterval(p, 0, source.length, 'position');
     _pos = p;
   }
@@ -52,14 +52,14 @@ final class ByteScanner {
   int peek() => _pos < source.length ? source[_pos] : -1;
 
   /// Consumes [byte] when it is at the cursor.
-  bool tryConsume(final int byte) {
+  bool tryConsume(int byte) {
     if (peek() != byte) return false;
     _pos++;
     return true;
   }
 
   /// Consumes [byte] at the cursor, else throws [FormatException].
-  void expect(final int byte) {
+  void expect(int byte) {
     if (!tryConsume(byte)) {
       throw _error("expected '${String.fromCharCode(byte)}'");
     }
@@ -75,7 +75,7 @@ final class ByteScanner {
   }
 
   /// The text of `source[start..end)`.
-  String text(final int start, final int end) => _utf8
+  String text(int start, int end) => _utf8
       ? utf8.decode(Uint8List.sublistView(source, start, end))
       : String.fromCharCodes(source, start, end);
 
@@ -171,7 +171,7 @@ final class ByteScanner {
   /// cursor stays.
   ///
   /// Throws [FormatException] for a malformed `quoted-string` on the way.
-  int indexOfTopLevel(final int byte) {
+  int indexOfTopLevel(int byte) {
     final saved = _pos;
     try {
       while (_pos < source.length) {
@@ -195,7 +195,7 @@ final class ByteScanner {
   ///
   /// An empty source has no elements. A leading, trailing or doubled
   /// separator gives an empty element. The cursor ends at the end.
-  Iterable<ByteScanner> splitTopLevel(final int separator) sync* {
+  Iterable<ByteScanner> splitTopLevel(int separator) sync* {
     if (atEnd) return;
     while (true) {
       skipOws();
@@ -212,12 +212,12 @@ final class ByteScanner {
   }
 
   /// A scanner over `source[start..end)` with this scanner's text decoding.
-  ByteScanner slice(final int start, final int end) {
+  ByteScanner slice(int start, int end) {
     final view = Uint8List.sublistView(source, start, end);
     return _utf8 ? ByteScanner.utf8(view) : ByteScanner(view);
   }
 
-  int _rtrimOws(final int start, int end) {
+  int _rtrimOws(int start, int end) {
     while (end > start) {
       final c = source[end - 1];
       if (c != 0x20 && c != 0x09) break;
@@ -226,10 +226,10 @@ final class ByteScanner {
     return end;
   }
 
-  String _decode(final Uint8List bytes) =>
+  String _decode(Uint8List bytes) =>
       _utf8 ? utf8.decode(bytes) : String.fromCharCodes(bytes);
 
-  FormatException _error(final String message, [final int? offset]) =>
+  FormatException _error(String message, [int? offset]) =>
       FormatException(message, text(0, source.length), offset ?? _pos);
 }
 
@@ -237,7 +237,7 @@ final class ByteScanner {
 ///
 /// Throws [FormatException] for a code unit above 0xFF, which no header
 /// field can carry.
-Uint8List latin1Bytes(final String text) {
+Uint8List latin1Bytes(String text) {
   final bytes = Uint8List(text.length);
   for (var i = 0; i < text.length; i++) {
     final c = text.codeUnitAt(i);
@@ -252,7 +252,7 @@ Uint8List latin1Bytes(final String text) {
 const int _dquote = 0x22;
 const int _backslash = 0x5C;
 
-bool _isQdtext(final int c) {
+bool _isQdtext(int c) {
   // qdtext = HTAB / SP / %x21 / %x23-5B / %x5D-7E / obs-text
   if (c == 0x09 || c == 0x20 || c == 0x21) return true;
   if (c >= 0x23 && c <= 0x5B) return true;
@@ -260,7 +260,7 @@ bool _isQdtext(final int c) {
   return c >= 0x80;
 }
 
-bool _isQuotedPairTarget(final int c) {
+bool _isQuotedPairTarget(int c) {
   // quoted-pair = "\" ( HTAB / SP / VCHAR / obs-text )
   if (c == 0x09 || c == 0x20) return true;
   if (c >= 0x21 && c <= 0x7E) return true;

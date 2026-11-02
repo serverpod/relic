@@ -12,7 +12,7 @@
 abstract final class Token68 {
   /// True if [s] is a syntactically valid `token68` value: at least one
   /// character from the `token68` alphabet, followed only by `=` padding.
-  static bool isValid(final String s) {
+  static bool isValid(String s) {
     var i = 0;
     while (i < s.length && _isToken68Char(s.codeUnitAt(i))) {
       i++;
@@ -26,7 +26,7 @@ abstract final class Token68 {
 
   /// Returns [s] unchanged if it is a valid `token68` value, otherwise throws
   /// [FormatException].
-  static String validate(final String s) {
+  static String validate(String s) {
     if (!isValid(s)) {
       throw FormatException('Not a valid HTTP token68 (RFC 7235 2.1)', s);
     }
@@ -34,7 +34,7 @@ abstract final class Token68 {
   }
 }
 
-bool _isToken68Char(final int c) {
+bool _isToken68Char(int c) {
   // ALPHA
   if (c >= 0x41 && c <= 0x5A) return true; // A-Z
   if (c >= 0x61 && c <= 0x7A) return true; // a-z

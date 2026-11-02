@@ -22,9 +22,9 @@ extension type _RouterEntry<T extends Object>._(List<T?> _routeByVerb)
 
   @pragma('vm:prefer-inline')
   void add(
-    final Method method,
-    final NormalizedPath normalizedPath, // only used for error message
-    final T route,
+    Method method,
+    NormalizedPath normalizedPath, // only used for error message
+    T route,
   ) {
     final idx = method.index;
     if (_routeByVerb[idx] != null) {
@@ -35,23 +35,23 @@ extension type _RouterEntry<T extends Object>._(List<T?> _routeByVerb)
 
   /// The route registered for [method], without fallback.
   @pragma('vm:prefer-inline')
-  T? find(final Method method) => _routeByVerb[method.index];
+  T? find(Method method) => _routeByVerb[method.index];
 
   /// The route a [method] request takes.
   ///
   /// A HEAD request takes the GET route when there is no HEAD route (RFC
   /// 9110 9.1).
   @pragma('vm:prefer-inline')
-  T? match(final Method method) =>
+  T? match(Method method) =>
       find(method) ?? (method == Method.head ? find(Method.get) : null);
 
   /// The methods with a route of their own.
   Set<Method> get registered =>
-      Method.values.where((final method) => find(method) != null).toSet();
+      Method.values.where((method) => find(method) != null).toSet();
 
   /// The methods [match] finds a route for.
   Set<Method> get allowed =>
-      Method.values.where((final method) => match(method) != null).toSet();
+      Method.values.where((method) => match(method) != null).toSet();
 }
 
 extension<T extends Object> on _RouterEntry<T>? {
@@ -64,7 +64,7 @@ extension<T extends Object> on _RouterEntry<T>? {
 /// Used by [Router.inject] which takes an [InjectableIn<Router<T>>].
 abstract interface class InjectableIn<T> {
   /// Overwrite this to define how to inject this object in [owner].
-  void injectIn(final T owner);
+  void injectIn(T owner);
 }
 
 /// A URL router that maps path patterns to values of type [T].
@@ -99,11 +99,11 @@ final class Router<T extends Object> {
   /// The [path] string defines the route pattern. Segments starting with `:` (e.g.,
   /// `:id`) are treated as parameters. The associated [value] (e.g., a request
   /// handler) is stored for this route.
-  void add(final Method method, final String path, final T route) {
+  void add(Method method, String path, T route) {
     final normalizedPath = NormalizedPath(path); // Normalize upfront
     _allRoutes.addOrUpdateInPlace(
       normalizedPath,
-      (final r) => (r.orNew)..add(method, normalizedPath, route),
+      (r) => (r.orNew)..add(method, normalizedPath, route),
     );
   }
 
@@ -128,11 +128,11 @@ final class Router<T extends Object> {
   ///   ..get('/admin/dashboard', adminDashboard)
   ///   ..use('/admin', authMiddleware());
   /// ```
-  void use(final String path, final T Function(T) map) {
+  void use(String path, T Function(T) map) {
     _allRoutes.use(
       NormalizedPath(path),
-      (final r) => _RouterEntry._(
-        List.of(r.map((final v) => v == null ? null : map(v)), growable: false),
+      (r) => _RouterEntry._(
+        List.of(r.map((v) => v == null ? null : map(v)), growable: false),
       ),
     );
   }
@@ -145,11 +145,7 @@ final class Router<T extends Object> {
   /// If [consume] is `true`, the sub-router is reset after attachment,
   /// preventing further modifications to it from affecting this router.
   /// This also allows attaching a single-value router at a tail path (`/**`).
-  void attach(
-    final String path,
-    final Router<T> subRouter, {
-    final bool consume = false,
-  }) {
+  void attach(String path, Router<T> subRouter, {bool consume = false}) {
     _allRoutes.attach(
       NormalizedPath(path),
       subRouter._allRoutes,
@@ -159,8 +155,7 @@ final class Router<T extends Object> {
 
   /// Injects an [injectable] into the router. Unlike [add] it allows
   /// the [injectable] object to determine how to be mounted on the router.
-  void inject(final InjectableIn<Router<T>> injectable) =>
-      injectable.injectIn(this);
+  void inject(InjectableIn<Router<T>> injectable) => injectable.injectIn(this);
 
   /// Looks up a route matching the provided [path].
   ///
@@ -174,11 +169,8 @@ final class Router<T extends Object> {
   /// don't match.
   ///
   /// A HEAD lookup on a path without a HEAD route matches its GET route.
-  LookupResult<T> lookup(
-    final Method method,
-    final String path, {
-    final bool backtrack = true,
-  }) => lookupPath(method, NormalizedPath(path), backtrack: backtrack);
+  LookupResult<T> lookup(Method method, String path, {bool backtrack = true}) =>
+      lookupPath(method, NormalizedPath(path), backtrack: backtrack);
 
   /// Looks up a route matching an already normalized [normalizedPath].
   ///
@@ -186,9 +178,9 @@ final class Router<T extends Object> {
   /// assembled from host and path). Walks the trie directly. Results are not
   /// cached.
   LookupResult<T> lookupPath(
-    final Method method,
-    final NormalizedPath normalizedPath, {
-    final bool backtrack = true,
+    Method method,
+    NormalizedPath normalizedPath, {
+    bool backtrack = true,
   }) {
     final match = _allRoutes.lookup(normalizedPath, backtrack: backtrack);
     if (match == null) return PathMiss(normalizedPath);
@@ -204,11 +196,8 @@ final class Router<T extends Object> {
   /// The entry point for request routing: derives the path via
   /// [NormalizedPath.fromUri] (splitting before decoding, so an encoded
   /// separator cannot alter routing), then looks it up with [lookupPath].
-  LookupResult<T> lookupUri(
-    final Method method,
-    final Uri url, {
-    final bool backtrack = true,
-  }) => lookupPath(method, NormalizedPath.fromUri(url), backtrack: backtrack);
+  LookupResult<T> lookupUri(Method method, Uri url, {bool backtrack = true}) =>
+      lookupPath(method, NormalizedPath.fromUri(url), backtrack: backtrack);
 
   /// Returns true if the router has no routes.
   bool get isEmpty => _allRoutes.isEmpty;
@@ -217,7 +206,7 @@ final class Router<T extends Object> {
   bool get isSingle => _allRoutes.isSingle;
 
   /// Injects [injectable] at [path], creating a consumed sub-router.
-  void injectAt(final String path, final InjectableIn<Router<T>> injectable) {
+  void injectAt(String path, InjectableIn<Router<T>> injectable) {
     final subRouter = Router<T>()..inject(injectable);
     attach(path, subRouter, consume: true);
   }
@@ -228,69 +217,63 @@ extension RouteEx<T extends Object> on Router<T> {
   ///
   /// Equivalent to calling `add(Method.get, path, value)`. A HEAD request
   /// to [path] takes this route too, unless [path] has a HEAD route.
-  void get(final String path, final T value) => add(Method.get, path, value);
+  void get(String path, T value) => add(Method.get, path, value);
 
   /// Adds a route definition for the HEAD HTTP method.
   ///
   /// Equivalent to calling `add(Method.head, path, value)`.
-  void head(final String path, final T value) => add(Method.head, path, value);
+  void head(String path, T value) => add(Method.head, path, value);
 
   /// Adds a route definition for the POST HTTP method.
   ///
   /// Equivalent to calling `add(Method.post, path, value)`.
-  void post(final String path, final T value) => add(Method.post, path, value);
+  void post(String path, T value) => add(Method.post, path, value);
 
   /// Adds a route definition for the PUT HTTP method.
   ///
   /// Equivalent to calling `add(Method.put, path, value)`.
-  void put(final String path, final T value) => add(Method.put, path, value);
+  void put(String path, T value) => add(Method.put, path, value);
 
   /// Adds a route definition for the DELETE HTTP method.
   ///
   /// Equivalent to calling `add(Method.delete, path, value)`.
-  void delete(final String path, final T value) =>
-      add(Method.delete, path, value);
+  void delete(String path, T value) => add(Method.delete, path, value);
 
   /// Adds a route definition for the PATCH HTTP method.
   ///
   /// Equivalent to calling `add(Method.patch, path, value)`.
-  void patch(final String path, final T value) =>
-      add(Method.patch, path, value);
+  void patch(String path, T value) => add(Method.patch, path, value);
 
   /// Adds a route definition for the OPTIONS HTTP method.
   ///
   /// Equivalent to calling `add(Method.options, path, value)`.
-  void options(final String path, final T value) =>
-      add(Method.options, path, value);
+  void options(String path, T value) => add(Method.options, path, value);
 
   /// Adds a route definition for the TRACE HTTP method.
   ///
   /// Equivalent to calling `add(Method.trace, path, value)`.
-  void trace(final String path, final T value) =>
-      add(Method.trace, path, value);
+  void trace(String path, T value) => add(Method.trace, path, value);
 
   /// Adds a route definition for the CONNECT HTTP method.
   ///
   /// Equivalent to calling `add(Method.connect, path, value)`.
-  void connect(final String path, final T value) =>
-      add(Method.connect, path, value);
+  void connect(String path, T value) => add(Method.connect, path, value);
 
   /// Adds a route definition for a set of HTTP methods.
   ///
   /// This is a convenience method that calls `add` for each method in the provided set
   /// [methods].
-  void anyOf(final Set<Method> methods, final String path, final T value) {
+  void anyOf(Set<Method> methods, String path, T value) {
     for (final method in methods) {
       add(method, path, value);
     }
   }
 
   /// Adds a route definition for all HTTP methods (GET, POST, PUT, etc.).
-  void any(final String path, final T value) =>
-      anyOf(Method.values.toSet(), path, value);
+  void any(String path, T value) => anyOf(Method.values.toSet(), path, value);
 
   /// Create and attach a subrouter for a path. If one already exists they are merged.
-  Router<T> group(final String path) {
+  Router<T> group(String path) {
     final subRouter = Router<T>();
     attach(path, subRouter);
     return subRouter;

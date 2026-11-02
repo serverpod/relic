@@ -41,7 +41,7 @@ class PathParameters extends AccessorState<Symbol, RawPathParam> {
 /// });
 /// ```
 final class NumPathParam extends PathParam<num> {
-  const NumPathParam(final Symbol key) : super(key, num.parse);
+  const NumPathParam(Symbol key) : super(key, num.parse);
 }
 
 /// A path parameter accessor that parses values as [int].
@@ -57,7 +57,7 @@ final class NumPathParam extends PathParam<num> {
 /// });
 /// ```
 final class IntPathParam extends PathParam<int> {
-  const IntPathParam(final Symbol key) : super(key, int.parse);
+  const IntPathParam(Symbol key) : super(key, int.parse);
 }
 
 /// A path parameter accessor that parses values as [double].
@@ -75,7 +75,7 @@ final class IntPathParam extends PathParam<int> {
 /// });
 /// ```
 final class DoublePathParam extends PathParam<double> {
-  const DoublePathParam(final Symbol key) : super(key, double.parse);
+  const DoublePathParam(Symbol key) : super(key, double.parse);
 }
 
 final _pathParameters = ContextProperty<PathParameters>();

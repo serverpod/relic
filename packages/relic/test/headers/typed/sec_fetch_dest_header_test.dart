@@ -23,12 +23,12 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (final h) => h.secFetchDest,
+            touchHeaders: (h) => h.secFetchDest,
             headers: {'sec-fetch-dest': ''},
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (final e) => e.message,
+              (e) => e.message,
               'message',
               contains('Value cannot be empty'),
             ),
@@ -44,12 +44,12 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (final h) => h.secFetchDest,
+            touchHeaders: (h) => h.secFetchDest,
             headers: {'sec-fetch-dest': 'custom-destination'},
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (final e) => e.message,
+              (e) => e.message,
               'message',
               contains('Invalid value'),
             ),
@@ -76,7 +76,7 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.secFetchDest,
+          touchHeaders: (h) => h.secFetchDest,
           headers: {'sec-fetch-dest': 'document'},
         );
 
@@ -89,7 +89,7 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.secFetchDest,
+          touchHeaders: (h) => h.secFetchDest,
           headers: {},
         );
 

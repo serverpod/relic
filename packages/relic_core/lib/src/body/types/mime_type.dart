@@ -95,7 +95,7 @@ class MimeType {
   ///   print(e); // FormatException: Invalid mime type invalid-format
   /// }
   /// ```
-  factory MimeType.parse(final String type) {
+  factory MimeType.parse(String type) {
     final parts = type.split('/');
     if (parts.length != 2) {
       throw FormatException('Invalid mime type $type');
@@ -172,7 +172,7 @@ class MimeType {
   String toString() => 'MimeType(primaryType: $primaryType, subType: $subType)';
 
   @override
-  bool operator ==(final Object other) {
+  bool operator ==(Object other) {
     if (other is! MimeType) return false;
     return primaryType == other.primaryType && subType == other.subType;
   }

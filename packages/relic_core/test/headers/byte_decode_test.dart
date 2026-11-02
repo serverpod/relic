@@ -12,7 +12,7 @@ final class _Counting {
 
   late final accessor = HeaderAccessor<int>(
     const HeaderName.custom('x-count'),
-    HeaderCodec.bytes((final raw) {
+    HeaderCodec.bytes((raw) {
       decoded++;
       last = raw;
       return int.parse(String.fromCharCodes(raw));
@@ -20,7 +20,7 @@ final class _Counting {
   );
 }
 
-Headers _byteHeaders(final String value) =>
+Headers _byteHeaders(String value) =>
     Headers.fromStore(ByteHeaderStore.encode([('X-Count', value)]));
 
 void main() {
@@ -66,7 +66,7 @@ void main() {
   });
 
   group('Given parseIntBytes', () {
-    Uint8List bytes(final String s) => Uint8List.fromList(s.codeUnits);
+    Uint8List bytes(String s) => Uint8List.fromList(s.codeUnits);
 
     test('when the bytes are digits, then it parses them', () {
       expect(parseIntBytes(bytes('0')), 0);

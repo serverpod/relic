@@ -20,7 +20,7 @@ extension type const DeltaSeconds._(int seconds) {
 
   /// Creates a [DeltaSeconds] from [seconds], throwing [FormatException] if
   /// the value is negative.
-  factory DeltaSeconds(final int seconds) {
+  factory DeltaSeconds(int seconds) {
     if (seconds < 0) {
       throw FormatException(
         'delta-seconds must be non-negative',
@@ -36,7 +36,7 @@ extension type const DeltaSeconds._(int seconds) {
   /// characters, or carries a leading sign / whitespace. A value too large to
   /// represent is clamped to [maxValue] (RFC 9111 1.2.2) rather than
   /// overflowing or losing precision.
-  factory DeltaSeconds.parse(final String source) {
+  factory DeltaSeconds.parse(String source) {
     if (source.isEmpty) {
       throw const FormatException('delta-seconds cannot be empty');
     }

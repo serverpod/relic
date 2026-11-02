@@ -26,7 +26,7 @@ sealed class Origin {
   /// * `scheme://host[:port]` (returns a [TupleOrigin]).
   ///
   /// Rejects any input with a path, query, or fragment.
-  factory Origin.parse(final String source) {
+  factory Origin.parse(String source) {
     if (source == 'null') return OpaqueOrigin.instance;
 
     final schemeEnd = source.indexOf('://');
@@ -95,7 +95,7 @@ final class OpaqueOrigin extends Origin {
   String encode() => 'null';
 
   @override
-  bool operator ==(final Object other) => other is OpaqueOrigin;
+  bool operator ==(Object other) => other is OpaqueOrigin;
 
   @override
   // A fixed non-zero hash for the single opaque-origin value. Non-zero so it
@@ -121,14 +121,14 @@ final class TupleOrigin extends Origin {
   ///
   /// Throws [FormatException] if [scheme] is empty or does not match
   /// `ALPHA *( ALPHA / DIGIT / "+" / "-" / "." )` (RFC 3986 3.1).
-  TupleOrigin({required final String scheme, required this.host})
+  TupleOrigin({required String scheme, required this.host})
     : scheme = _validateScheme(scheme);
 
   @override
   String encode() => '$scheme://${host.encode()}';
 
   @override
-  bool operator ==(final Object other) =>
+  bool operator ==(Object other) =>
       identical(this, other) ||
       (other is TupleOrigin && scheme == other.scheme && host == other.host);
 
@@ -139,7 +139,7 @@ final class TupleOrigin extends Origin {
   String toString() => encode();
 }
 
-String _validateScheme(final String s) {
+String _validateScheme(String s) {
   if (s.isEmpty) {
     throw const FormatException('scheme cannot be empty');
   }
@@ -161,6 +161,5 @@ String _validateScheme(final String s) {
   return s.toLowerCase();
 }
 
-bool _isAlpha(final int c) =>
-    (c >= 0x41 && c <= 0x5A) || (c >= 0x61 && c <= 0x7A);
-bool _isDigit(final int c) => c >= 0x30 && c <= 0x39;
+bool _isAlpha(int c) => (c >= 0x41 && c <= 0x5A) || (c >= 0x61 && c <= 0x7A);
+bool _isDigit(int c) => c >= 0x30 && c <= 0x39;

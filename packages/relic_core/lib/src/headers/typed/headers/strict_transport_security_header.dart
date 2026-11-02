@@ -8,7 +8,7 @@ import '../primitives/byte_scanner.dart' show latin1Bytes;
 /// HSTS settings.
 final class StrictTransportSecurityHeader {
   static const codec = HeaderCodec.bytes(_parseBytes, __encode);
-  static List<String> __encode(final StrictTransportSecurityHeader value) => [
+  static List<String> __encode(StrictTransportSecurityHeader value) => [
     value._encode(),
   ];
 
@@ -39,7 +39,7 @@ final class StrictTransportSecurityHeader {
   /// Parses the Strict-Transport-Security header value into a [StrictTransportSecurityHeader] instance.
   ///
   /// Throws a [FormatException] if the max-age directive is missing or invalid.
-  factory StrictTransportSecurityHeader.parse(final String value) =>
+  factory StrictTransportSecurityHeader.parse(String value) =>
       _parseBytes(latin1Bytes(value));
 
   /// [parse] over the wire bytes.
@@ -48,7 +48,7 @@ final class StrictTransportSecurityHeader {
   /// a non-negative integer that may come as a quoted-string. The name is
   /// split from its optional value on the first `=`, with OWS allowed
   /// around it (`max-age = 31536000`), and unknown directives are ignored.
-  static StrictTransportSecurityHeader _parseBytes(final Uint8List bytes) {
+  static StrictTransportSecurityHeader _parseBytes(Uint8List bytes) {
     final directives = splitUnique(bytes, 0x3B);
     if (directives.isEmpty) {
       throw const FormatException('Value cannot be empty');
@@ -108,7 +108,7 @@ final class StrictTransportSecurityHeader {
   }
 
   @override
-  bool operator ==(final Object other) =>
+  bool operator ==(Object other) =>
       identical(this, other) ||
       other is StrictTransportSecurityHeader &&
           maxAge == other.maxAge &&

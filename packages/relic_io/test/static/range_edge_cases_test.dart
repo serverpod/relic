@@ -72,8 +72,7 @@ void main() {
         'then a 416 Requested Range Not Satisfiable is returned', () async {
       // File is 16 bytes (0-15), requesting bytes starting from 100
       final headers = Headers.build(
-        (final mh) =>
-            mh.range = RangeHeader(ranges: [Range(start: 100, end: 105)]),
+        (mh) => mh.range = RangeHeader(ranges: [Range(start: 100, end: 105)]),
       );
 
       final response = await makeRequest(
@@ -90,7 +89,7 @@ void main() {
         'then content is returned', () async {
       // File is 16 bytes, requesting last 100 bytes
       final headers = Headers.build(
-        (final mh) => mh.range = RangeHeader(ranges: [Range(end: 100)]),
+        (mh) => mh.range = RangeHeader(ranges: [Range(end: 100)]),
       );
 
       final response = await makeRequest(
@@ -108,7 +107,7 @@ void main() {
         'then a 416 Requested Range Not Satisfiable is returned', () async {
       // Invalid range: end (2) < start (5)
       final headers = Headers.build(
-        (final mh) => mh.range = RangeHeader(ranges: [Range(start: 5, end: 2)]),
+        (mh) => mh.range = RangeHeader(ranges: [Range(start: 5, end: 2)]),
       );
 
       final response = await makeRequest(
@@ -129,8 +128,7 @@ void main() {
       () async {
         // File is 16 bytes (0-15), requesting byte 15
         final headers = Headers.build(
-          (final mh) =>
-              mh.range = RangeHeader(ranges: [Range(start: 15, end: 15)]),
+          (mh) => mh.range = RangeHeader(ranges: [Range(start: 15, end: 15)]),
         );
 
         final response = await makeRequest(
@@ -158,8 +156,7 @@ void main() {
       () async {
         // File is 16 bytes (0-15), requesting byte 0
         final headers = Headers.build(
-          (final mh) =>
-              mh.range = RangeHeader(ranges: [Range(start: 0, end: 0)]),
+          (mh) => mh.range = RangeHeader(ranges: [Range(start: 0, end: 0)]),
         );
 
         final response = await makeRequest(
@@ -188,8 +185,7 @@ void main() {
       () async {
         // File is 16 bytes (0-15), requesting bytes 10-15
         final headers = Headers.build(
-          (final mh) =>
-              mh.range = RangeHeader(ranges: [Range(start: 10, end: 15)]),
+          (mh) => mh.range = RangeHeader(ranges: [Range(start: 10, end: 15)]),
         );
 
         final response = await makeRequest(
@@ -217,8 +213,7 @@ void main() {
       () async {
         // File is 16 bytes (0-15), requesting bytes 10-25 (beyond file end)
         final headers = Headers.build(
-          (final mh) =>
-              mh.range = RangeHeader(ranges: [Range(start: 10, end: 25)]),
+          (mh) => mh.range = RangeHeader(ranges: [Range(start: 10, end: 25)]),
         );
 
         final response = await makeRequest(
@@ -248,7 +243,7 @@ void main() {
       () async {
         // File is 16 bytes, requesting last 16 bytes (entire file)
         final headers = Headers.build(
-          (final mh) => mh.range = RangeHeader(ranges: [Range(end: 16)]),
+          (mh) => mh.range = RangeHeader(ranges: [Range(end: 16)]),
         );
 
         final response = await makeRequest(
@@ -276,7 +271,7 @@ void main() {
       () async {
         // File is 16 bytes, requesting last 1 byte
         final headers = Headers.build(
-          (final mh) => mh.range = RangeHeader(ranges: [Range(end: 1)]),
+          (mh) => mh.range = RangeHeader(ranges: [Range(end: 1)]),
         );
 
         final response = await makeRequest(
@@ -302,7 +297,7 @@ void main() {
     test('Given a Range header with no ranges, '
         'when a request is made for the file, '
         'then an InvalidHeaderException is thrown', () async {
-      final headers = Headers.build((final mh) => mh['Range'] = ['bytes=']);
+      final headers = Headers.build((mh) => mh['Range'] = ['bytes=']);
       await expectLater(
         makeRequest(handler, '/test_file.txt', headers: headers),
         throwsA(isA<InvalidHeaderException>()),

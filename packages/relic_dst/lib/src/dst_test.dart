@@ -19,10 +19,10 @@ int get defaultSeedCount =>
 /// Runs [body] in a fresh [Simulation] seeded with [seed]. When it fails,
 /// the seed and the tail of the trace go out with the failure.
 void runSimulation(
-  final int seed,
-  final FutureOr<void> Function(Simulation sim) body, {
-  final Duration maxElapsed = const Duration(hours: 1),
-  final int traceTail = 200,
+  int seed,
+  FutureOr<void> Function(Simulation sim) body, {
+  Duration maxElapsed = const Duration(hours: 1),
+  int traceTail = 200,
 }) {
   final sim = Simulation(seed: seed, maxElapsed: maxElapsed);
   try {
@@ -39,12 +39,12 @@ void runSimulation(
 /// as soon as the body does. `DST_SEED` overrides [seed].
 @isTest
 void simTest(
-  final String description,
-  final FutureOr<void> Function(Simulation sim) body, {
-  final int? seed,
-  final Duration maxElapsed = const Duration(hours: 1),
-  final Object? skip,
-  final Object? tags,
+  String description,
+  FutureOr<void> Function(Simulation sim) body, {
+  int? seed,
+  Duration maxElapsed = const Duration(hours: 1),
+  Object? skip,
+  Object? tags,
 }) {
   test(
     description,
@@ -61,12 +61,12 @@ void simTest(
 /// and `DST_SEEDS` sets how many seeds run otherwise.
 @isTest
 void simProperty(
-  final String description,
-  final FutureOr<void> Function(Simulation sim) body, {
-  final int? seeds,
-  final int firstSeed = 1,
-  final Duration maxElapsed = const Duration(hours: 1),
-  final Object? skip,
+  String description,
+  FutureOr<void> Function(Simulation sim) body, {
+  int? seeds,
+  int firstSeed = 1,
+  Duration maxElapsed = const Duration(hours: 1),
+  Object? skip,
 }) {
   test(description, () {
     final pinned = pinnedSeed;
@@ -82,7 +82,7 @@ void simProperty(
 
 /// Fails unless nothing is left in the simulation: no timer and no
 /// event. What a clean shutdown leaves behind.
-void expectQuiescent(final Simulation sim) {
+void expectQuiescent(Simulation sim) {
   expect(
     sim.pendingTimers,
     0,

@@ -13,9 +13,7 @@ import 'util/auth_params.dart';
 /// The concrete subclasses handle specific header formats.
 abstract class AuthorizationHeader {
   static const codec = HeaderCodec.bytes(_parseBytes, __encode);
-  static List<String> __encode(final AuthorizationHeader value) => [
-    value._encode(),
-  ];
+  static List<String> __encode(AuthorizationHeader value) => [value._encode()];
 
   /// Returns the value of the Authorization header as a string.
   String get headerValue;
@@ -32,12 +30,12 @@ abstract class AuthorizationHeader {
   /// or Basic authorization type and returns the corresponding header object.
   ///
   /// Throws a [FormatException] if the header value is invalid or unrecognized.
-  static AuthorizationHeader parse(final String value) =>
+  static AuthorizationHeader parse(String value) =>
       _parseBytes(latin1Bytes(value));
 
   /// [parse] over the wire bytes. The auth-scheme is case-insensitive
   /// (RFC 9110 11.1).
-  static AuthorizationHeader _parseBytes(final Uint8List bytes) {
+  static AuthorizationHeader _parseBytes(Uint8List bytes) {
     if (bytes.isEmpty) {
       throw const FormatException('Value cannot be empty');
     }
@@ -60,7 +58,7 @@ abstract class AuthorizationHeader {
 /// returning the trimmed remainder, or [value] itself when absent.
 /// [value] after [prefix], compared without regard to case, trimmed, or
 /// [value] itself when it does not start with [prefix].
-Uint8List _stripOptionalScheme(final Uint8List value, final String prefix) {
+Uint8List _stripOptionalScheme(Uint8List value, String prefix) {
   if (value.length < prefix.length ||
       !equalsIgnoreAsciiCase(value, 0, prefix.length, prefix)) {
     return value;
@@ -72,7 +70,7 @@ Uint8List _stripOptionalScheme(final Uint8List value, final String prefix) {
 /// [value], returning the trimmed remainder. Throws [FormatException] if
 /// [value] does not start with [prefix].
 /// [_stripOptionalScheme], or a [FormatException] when [prefix] is absent.
-Uint8List _stripScheme(final Uint8List value, final String prefix) {
+Uint8List _stripScheme(Uint8List value, String prefix) {
   final result = _stripOptionalScheme(value, prefix);
   if (identical(result, value)) {
     throw FormatException('Invalid ${prefix.trim()} prefix', textOf(value));
@@ -104,11 +102,11 @@ final class BearerAuthorizationHeader extends AuthorizationHeader {
   ///
   /// If the token starts with the "Bearer " prefix, the prefix is stripped
   /// from the token value. Otherwise, it throws a [FormatException].
-  factory BearerAuthorizationHeader.parse(final String value) =>
+  factory BearerAuthorizationHeader.parse(String value) =>
       BearerAuthorizationHeader._parseBytes(latin1Bytes(value));
 
   /// [parse] over the wire bytes.
-  static BearerAuthorizationHeader _parseBytes(final Uint8List value) {
+  static BearerAuthorizationHeader _parseBytes(Uint8List value) {
     if (value.isEmpty) {
       throw const FormatException('Bearer token cannot be empty.');
     }
@@ -124,7 +122,7 @@ final class BearerAuthorizationHeader extends AuthorizationHeader {
   String get headerValue => '$prefix$token';
 
   @override
-  bool operator ==(final Object other) =>
+  bool operator ==(Object other) =>
       identical(this, other) ||
       other is BearerAuthorizationHeader && token == other.token;
 
@@ -147,7 +145,7 @@ final class BearerAuthorizationHeader extends AuthorizationHeader {
   /// Shows the first 4 and last 4 characters of the token, with the middle
   /// replaced by asterisks. For tokens shorter than 16 characters, only
   /// asterisks are shown.
-  static String _maskToken(final String token) {
+  static String _maskToken(String token) {
     if (token.length < 16) {
       return '****';
     }
@@ -190,11 +188,11 @@ final class BasicAuthorizationHeader extends AuthorizationHeader {
   /// The token should start with the "Basic " prefix, followed by Base64-encoded
   /// credentials. This method validates the Base64 format and splits the decoded
   /// string into username and password. If the token is invalid, it throws a [FormatException].
-  factory BasicAuthorizationHeader.parse(final String value) =>
+  factory BasicAuthorizationHeader.parse(String value) =>
       BasicAuthorizationHeader._parseBytes(latin1Bytes(value));
 
   /// [parse] over the wire bytes.
-  static BasicAuthorizationHeader _parseBytes(final Uint8List value) {
+  static BasicAuthorizationHeader _parseBytes(Uint8List value) {
     if (value.isEmpty) {
       throw const FormatException('Basic token cannot be empty.');
     }
@@ -219,7 +217,7 @@ final class BasicAuthorizationHeader extends AuthorizationHeader {
   }
 
   @override
-  bool operator ==(final Object other) =>
+  bool operator ==(Object other) =>
       identical(this, other) ||
       other is BasicAuthorizationHeader &&
           username == other.username &&
@@ -338,11 +336,11 @@ final class DigestAuthorizationHeader extends AuthorizationHeader {
   /// already split it off pass the bare auth-param list.
   ///
   /// Throws a [FormatException] if the header value is invalid or unrecognized.
-  factory DigestAuthorizationHeader.parse(final String value) =>
+  factory DigestAuthorizationHeader.parse(String value) =>
       DigestAuthorizationHeader._parseBytes(latin1Bytes(value));
 
   /// [parse] over the wire bytes.
-  static DigestAuthorizationHeader _parseBytes(final Uint8List value) {
+  static DigestAuthorizationHeader _parseBytes(Uint8List value) {
     if (value.isEmpty) {
       throw const FormatException('Digest token cannot be empty.');
     }
@@ -428,7 +426,7 @@ final class DigestAuthorizationHeader extends AuthorizationHeader {
   }
 
   @override
-  bool operator ==(final Object other) =>
+  bool operator ==(Object other) =>
       identical(this, other) ||
       other is DigestAuthorizationHeader &&
           username == other.username &&
@@ -500,7 +498,7 @@ final class DigestAuthorizationHeader extends AuthorizationHeader {
 ///
 /// A control character (CR/LF in particular) is rejected rather than emitted
 /// verbatim, so a caller-controlled Digest field cannot split the header.
-String _quoteString(final String s) {
+String _quoteString(String s) {
   for (var i = 0; i < s.length; i++) {
     final c = s.codeUnitAt(i);
     if (c <= 0x1F || c == 0x7F) {

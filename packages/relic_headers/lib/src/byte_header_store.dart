@@ -40,7 +40,7 @@ final class ByteHeaderStore extends HeaderStore implements ByteHeaderSource {
   /// adapter would.
   ///
   /// For tests and for stores built in Dart.
-  factory ByteHeaderStore.encode(final Iterable<(String, String)> fields) {
+  factory ByteHeaderStore.encode(Iterable<(String, String)> fields) {
     final buffer = BytesBuilder(copy: false);
     final slots = <int>[];
     for (final (name, value) in fields) {
@@ -60,7 +60,7 @@ final class ByteHeaderStore extends HeaderStore implements ByteHeaderSource {
   ///
   /// A name that is not a token also gets -1, and [_nameAt] rejects it on
   /// first read.
-  static int _idOf(final String name) {
+  static int _idOf(String name) {
     try {
       return HeaderName.lookup(name).id;
     } on FormatException {
@@ -83,7 +83,7 @@ final class ByteHeaderStore extends HeaderStore implements ByteHeaderSource {
   }
 
   @override
-  String? value(final HeaderName name) {
+  String? value(HeaderName name) {
     for (var i = 0; i < fieldCount; i++) {
       if (_matches(i, name)) return _valueAt(i);
     }
@@ -91,7 +91,7 @@ final class ByteHeaderStore extends HeaderStore implements ByteHeaderSource {
   }
 
   @override
-  Iterable<String> values(final HeaderName name) {
+  Iterable<String> values(HeaderName name) {
     final cache = _values ??= {};
     final cached = cache[name];
     if (cached != null) return cached;
@@ -105,7 +105,7 @@ final class ByteHeaderStore extends HeaderStore implements ByteHeaderSource {
   }
 
   @override
-  bool contains(final HeaderName name) {
+  bool contains(HeaderName name) {
     for (var i = 0; i < fieldCount; i++) {
       if (_matches(i, name)) return true;
     }
@@ -113,7 +113,7 @@ final class ByteHeaderStore extends HeaderStore implements ByteHeaderSource {
   }
 
   @override
-  Uint8List? rawValue(final HeaderName name) {
+  Uint8List? rawValue(HeaderName name) {
     for (var i = 0; i < fieldCount; i++) {
       if (_matches(i, name)) return _rawAt(i);
     }
@@ -121,7 +121,7 @@ final class ByteHeaderStore extends HeaderStore implements ByteHeaderSource {
   }
 
   @override
-  List<Uint8List> rawValues(final HeaderName name) {
+  List<Uint8List> rawValues(HeaderName name) {
     final cache = _rawValues ??= {};
     final cached = cache[name];
     if (cached != null) return cached;
@@ -133,7 +133,7 @@ final class ByteHeaderStore extends HeaderStore implements ByteHeaderSource {
     return cache[name] = found;
   }
 
-  Uint8List _rawAt(final int i) {
+  Uint8List _rawAt(int i) {
     final raws = _fieldRaw ??= List.filled(fieldCount, null);
     if (raws[i] case final raw?) return raw;
     final offset = slots[i * 4 + 2];
@@ -149,13 +149,13 @@ final class ByteHeaderStore extends HeaderStore implements ByteHeaderSource {
   /// Two known names compare by id alone, so the walk to a known name reads
   /// nothing but the slot table. A custom name may spell a known one, so it
   /// compares by text.
-  bool _matches(final int i, final HeaderName name) {
+  bool _matches(int i, HeaderName name) {
     final id = slots[i * 4 + 1];
     if (id >= 0 && name.id >= 0) return id == name.id;
     return _nameAt(i) == name;
   }
 
-  HeaderName _nameAt(final int i) {
+  HeaderName _nameAt(int i) {
     final id = slots[i * 4 + 1];
     if (id >= 0) return HeaderName.known[id];
     final names = _fieldNames ??= List.filled(fieldCount, null);
@@ -173,7 +173,7 @@ final class ByteHeaderStore extends HeaderStore implements ByteHeaderSource {
     return names[i] = name;
   }
 
-  String _valueAt(final int i) {
+  String _valueAt(int i) {
     final values = _fieldValues ??= List.filled(fieldCount, null);
     if (values[i] case final value?) return value;
     final offset = slots[i * 4 + 2];

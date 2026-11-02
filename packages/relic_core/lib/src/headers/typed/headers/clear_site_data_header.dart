@@ -18,7 +18,7 @@ final class ClearSiteDataHeader extends WildcardListHeader<ClearSiteDataType> {
   const ClearSiteDataHeader.wildcard() : super.wildcard();
 
   /// Parses the Clear-Site-Data header value and returns a [ClearSiteDataHeader] instance.
-  factory ClearSiteDataHeader.parse(final Iterable<String> values) =>
+  factory ClearSiteDataHeader.parse(Iterable<String> values) =>
       _parseFields([for (final value in values) latin1Bytes(value)]);
 
   ClearSiteDataHeader._owned(super.dataTypes) : super.owned();
@@ -28,7 +28,7 @@ final class ClearSiteDataHeader extends WildcardListHeader<ClearSiteDataType> {
 
   /// The header from the wire bytes of its [fields]: the comma-separated
   /// elements with every `"` dropped, trimmed, non-empty, kept once each.
-  static ClearSiteDataHeader _parseFields(final List<Uint8List> fields) {
+  static ClearSiteDataHeader _parseFields(List<Uint8List> fields) {
     final unquoted = <Uint8List>[];
     for (final field in fields) {
       for (final element in splitAll(field)) {
@@ -39,7 +39,7 @@ final class ClearSiteDataHeader extends WildcardListHeader<ClearSiteDataType> {
         }
         final value = trimmed(kept, 0, n);
         if (value.isEmpty) continue;
-        if (!unquoted.any((final u) => bytesEqual(u, value))) {
+        if (!unquoted.any((u) => bytesEqual(u, value))) {
           unquoted.add(value);
         }
       }
@@ -60,25 +60,23 @@ final class ClearSiteDataHeader extends WildcardListHeader<ClearSiteDataType> {
     return ClearSiteDataHeader._owned(
       List.generate(
         unquoted.length,
-        (final i) => ClearSiteDataType._parseBytes(unquoted[i]),
+        (i) => ClearSiteDataType._parseBytes(unquoted[i]),
         growable: false,
       ),
     );
   }
 
-  static List<String> encodeHeader(final ClearSiteDataHeader header) {
+  static List<String> encodeHeader(ClearSiteDataHeader header) {
     if (header.isWildcard) {
       return ['"*"'];
     } else {
       return [
-        header.dataTypes
-            .map((final dataType) => '"${dataType.value}"')
-            .join(', '),
+        header.dataTypes.map((dataType) => '"${dataType.value}"').join(', '),
       ];
     }
   }
 
-  static List<String> _encode(final ClearSiteDataHeader header) {
+  static List<String> _encode(ClearSiteDataHeader header) {
     return encodeHeader(header);
   }
 }
@@ -107,11 +105,11 @@ class ClearSiteDataType {
 
   /// Parses a [value] and returns the corresponding [ClearSiteDataType] instance.
   /// If the value does not match any predefined types, it returns a custom instance.
-  factory ClearSiteDataType.parse(final String value) =>
+  factory ClearSiteDataType.parse(String value) =>
       ClearSiteDataType._parseBytes(trimmed(latin1Bytes(value)));
 
   /// [parse] over the wire bytes of one trimmed element.
-  static ClearSiteDataType _parseBytes(final Uint8List element) {
+  static ClearSiteDataType _parseBytes(Uint8List element) {
     if (element.isEmpty) {
       throw const FormatException('Value cannot be empty');
     }
@@ -130,7 +128,7 @@ class ClearSiteDataType {
   }
 
   @override
-  bool operator ==(final Object other) =>
+  bool operator ==(Object other) =>
       identical(this, other) ||
       other is ClearSiteDataType && value == other.value;
 

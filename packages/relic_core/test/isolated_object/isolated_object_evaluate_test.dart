@@ -19,30 +19,30 @@ void main() {
     test('Given an IsolatedObject, '
         'when evaluate is called with a getter, '
         'then it returns the correct value', () async {
-      final result = await isolated.evaluate((final counter) => counter.value);
+      final result = await isolated.evaluate((counter) => counter.value);
       expect(result, 0);
     });
 
     test('Given an IsolatedObject, '
         'when evaluate is called with a mutation, '
         'then the state persists across evaluations', () async {
-      await isolated.evaluate((final counter) {
+      await isolated.evaluate((counter) {
         counter.increment();
         return null;
       });
 
-      final result = await isolated.evaluate((final counter) => counter.value);
+      final result = await isolated.evaluate((counter) => counter.value);
       expect(result, 1);
     });
 
     test('Given an IsolatedObject, '
         'when evaluate is called multiple times sequentially, '
         'then all operations execute correctly', () async {
-      await isolated.evaluate((final counter) => counter.increment());
-      await isolated.evaluate((final counter) => counter.increment());
-      await isolated.evaluate((final counter) => counter.increment());
+      await isolated.evaluate((counter) => counter.increment());
+      await isolated.evaluate((counter) => counter.increment());
+      await isolated.evaluate((counter) => counter.increment());
 
-      final result = await isolated.evaluate((final counter) => counter.value);
+      final result = await isolated.evaluate((counter) => counter.value);
       expect(result, 3);
     });
 
@@ -51,12 +51,12 @@ void main() {
         'then all operations complete successfully', () async {
       final futures = List.generate(
         10,
-        (final i) => isolated.evaluate((final counter) => counter.increment()),
+        (i) => isolated.evaluate((counter) => counter.increment()),
       );
 
       await futures.wait;
 
-      final result = await isolated.evaluate((final counter) => counter.value);
+      final result = await isolated.evaluate((counter) => counter.value);
       expect(result, 10);
     });
 
@@ -64,19 +64,19 @@ void main() {
         'when evaluate is called with different return types, '
         'then it returns the correct types', () async {
       final intResult = await isolated.evaluate<int>(
-        (final counter) => counter.value,
+        (counter) => counter.value,
       );
       expect(intResult, isA<int>());
       expect(intResult, 0);
 
       final stringResult = await isolated.evaluate<String>(
-        (final counter) => 'Value: ${counter.value}',
+        (counter) => 'Value: ${counter.value}',
       );
       expect(stringResult, isA<String>());
       expect(stringResult, 'Value: 0');
 
       final boolResult = await isolated.evaluate<bool>(
-        (final counter) => counter.value > 0,
+        (counter) => counter.value > 0,
       );
       expect(boolResult, isA<bool>());
       expect(boolResult, false);
@@ -85,19 +85,19 @@ void main() {
     test('Given an IsolatedObject, '
         'when evaluate is called with async function, '
         'then it awaits the result correctly', () async {
-      await isolated.evaluate((final counter) async {
+      await isolated.evaluate((counter) async {
         await Future<void>.delayed(const Duration(milliseconds: 10));
         counter.increment();
       });
 
-      final result = await isolated.evaluate((final counter) => counter.value);
+      final result = await isolated.evaluate((counter) => counter.value);
       expect(result, 1);
     });
 
     test('Given an IsolatedObject, '
         'when evaluate is called with a function returning complex objects, '
         'then it returns the correct data', () async {
-      final result = await isolated.evaluate((final counter) {
+      final result = await isolated.evaluate((counter) {
         return {
           'value': counter.value,
           'doubled': counter.value * 2,
@@ -114,9 +114,9 @@ void main() {
     test('Given an IsolatedObject, '
         'when evaluate is called with a void function, '
         'then it executes the function without returning a value', () async {
-      await isolated.evaluate((final counter) => counter.increment());
+      await isolated.evaluate((counter) => counter.increment());
 
-      final result = await isolated.evaluate((final counter) => counter.value);
+      final result = await isolated.evaluate((counter) => counter.value);
       expect(result, 1);
     });
 
@@ -124,7 +124,7 @@ void main() {
         'when evaluate is called with a void function that throws, '
         'then it propagates the error', () async {
       expect(
-        () => isolated.evaluate((final counter) {
+        () => isolated.evaluate((counter) {
           throw Exception('Test error');
         }),
         throwsA(isA<RemoteError>()),
@@ -139,7 +139,7 @@ void main() {
       final isolated = IsolatedObject<_Counter>(() => _Counter(0));
 
       try {
-        await isolated.evaluate((final counter) {
+        await isolated.evaluate((counter) {
           throw StateError('Custom error message');
         });
       } catch (e) {
@@ -158,7 +158,7 @@ void main() {
 
       // First operation throws
       try {
-        await isolated.evaluate((final counter) {
+        await isolated.evaluate((counter) {
           throw Exception('First error');
         });
       } catch (_) {
@@ -166,7 +166,7 @@ void main() {
       }
 
       // Second operation should still work
-      final result = await isolated.evaluate((final counter) => counter.value);
+      final result = await isolated.evaluate((counter) => counter.value);
       expect(result, 5);
 
       await isolated.close();
@@ -183,7 +183,7 @@ void main() {
       final futures = <Future<int>>[];
       for (var i = 0; i < 100; i++) {
         futures.add(
-          isolated.evaluate((final counter) {
+          isolated.evaluate((counter) {
             counter.increment();
             return counter.value;
           }),
@@ -196,9 +196,7 @@ void main() {
       expect(results.length, 100);
 
       // Final value should be 100
-      final finalValue = await isolated.evaluate(
-        (final counter) => counter.value,
-      );
+      final finalValue = await isolated.evaluate((counter) => counter.value);
       expect(finalValue, 100);
 
       await isolated.close();
@@ -216,7 +214,7 @@ void main() {
           for (var i = 0; i < ops; i++)
             i % 2 ==
                     0 // even succeeds, odd fails
-                ? isolated.evaluate((final counter) => counter.increment())
+                ? isolated.evaluate((counter) => counter.increment())
                 : isolated.evaluate((_) => throw Exception('Error $i')),
         ].wait;
       } on ParallelWaitError<List, List<AsyncError?>> catch (e) {
@@ -224,7 +222,7 @@ void main() {
         expect(e.values.nonNulls.length, ops / 2); // half succeeds
       }
 
-      final result = await isolated.evaluate((final counter) => counter.value);
+      final result = await isolated.evaluate((counter) => counter.value);
       expect(result, ops / 2); // only half succeeded
 
       await isolated.close();
@@ -237,12 +235,12 @@ void main() {
         'then changes persist correctly', () async {
       final isolated = IsolatedObject<_ComplexObject>(() => _ComplexObject());
 
-      await isolated.evaluate((final obj) {
+      await isolated.evaluate((obj) {
         obj.data['key1'] = 'value1';
         obj.data['key2'] = 'value2';
       });
 
-      final result = await isolated.evaluate((final obj) => obj.data);
+      final result = await isolated.evaluate((obj) => obj.data);
       expect(result, {'key1': 'value1', 'key2': 'value2'});
 
       await isolated.close();
@@ -253,11 +251,11 @@ void main() {
         'then lists are correctly transferred', () async {
       final isolated = IsolatedObject<_ComplexObject>(() => _ComplexObject());
 
-      await isolated.evaluate((final obj) {
+      await isolated.evaluate((obj) {
         obj.items.addAll([1, 2, 3, 4, 5]);
       });
 
-      final result = await isolated.evaluate((final obj) => obj.items);
+      final result = await isolated.evaluate((obj) => obj.items);
       expect(result, [1, 2, 3, 4, 5]);
 
       await isolated.close();
@@ -271,7 +269,7 @@ class _Counter {
   _Counter(this.value);
 
   void increment() => value++;
-  void add(final int amount) => value += amount;
+  void add(int amount) => value += amount;
 }
 
 class _ComplexObject {

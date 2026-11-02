@@ -17,7 +17,7 @@ enum Method {
   /// Parses a [method] string and returns the corresponding [Method] instance.
   ///
   /// Throws an [FormatException] if the [method] string is invalid.
-  factory Method.parse(final String method) {
+  factory Method.parse(String method) {
     final trimmed = method.trim();
     if (trimmed.isEmpty) throw const FormatException('Value cannot be empty');
     return _reverseMap[trimmed.toLowerCase()] ??

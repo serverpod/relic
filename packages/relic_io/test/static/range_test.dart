@@ -26,8 +26,7 @@ void main() {
       'then a 206 Partial Content status with partial content and Content-Range is returned',
       () async {
         final headers = Headers.build(
-          (final mh) =>
-              mh.range = RangeHeader(ranges: [Range(start: 0, end: 4)]),
+          (mh) => mh.range = RangeHeader(ranges: [Range(start: 0, end: 4)]),
         ); // 0-4 (5 bytes)
 
         final response = await makeRequest(
@@ -57,7 +56,7 @@ void main() {
       'then a 206 Partial Content status with partial content and Content-Range is returned',
       () async {
         final headers = Headers.build(
-          (final mh) => mh.range = RangeHeader(ranges: [Range(start: 10)]),
+          (mh) => mh.range = RangeHeader(ranges: [Range(start: 10)]),
         ); // 10-END (6 bytes)
 
         final response = await makeRequest(
@@ -83,7 +82,7 @@ void main() {
       'then a 206 Partial Content status with partial content and Content-Range is returned',
       () async {
         final headers = Headers.build(
-          (final mh) => mh.range = RangeHeader(ranges: [Range(end: 5)]),
+          (mh) => mh.range = RangeHeader(ranges: [Range(end: 5)]),
         ); // last 5 bytes
 
         final response = await makeRequest(
@@ -117,7 +116,7 @@ void main() {
         // Ranges: bytes=0-0,2-3,14-
         // Expected parts: '0', '23', 'EF'
         final headers = Headers.build(
-          (final mh) => mh.range = RangeHeader(
+          (mh) => mh.range = RangeHeader(
             ranges: [
               Range(start: 0, end: 0), // '0'
               Range(start: 2, end: 3), // '23'
@@ -173,7 +172,7 @@ void main() {
       'then the 206 has Content-Type application/octet-stream', () async {
     await d.file('no_extension', fileContent).create();
     final headers = Headers.build(
-      (final mh) => mh.range = RangeHeader(ranges: [Range(start: 0, end: 4)]),
+      (mh) => mh.range = RangeHeader(ranges: [Range(start: 0, end: 4)]),
     );
 
     final response = await makeRequest(

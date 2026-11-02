@@ -64,7 +64,7 @@ class ContextProperty<T extends Object> {
   /// Throws a [StateError] if no value is found for the [request]
   /// and the property has not been set. This ensures that accidental access
   /// to an uninitialized property is caught early.
-  T get(final Request request) {
+  T get(Request request) {
     return this[request] ??
         (throw StateError(
           'ContextProperty value not found. Property: ${_debugName ?? T.toString()}. '
@@ -76,7 +76,7 @@ class ContextProperty<T extends Object> {
   ///
   /// This operator is a non-throwing alternative to [get].
   /// Use this when it's acceptable for the property to be absent.
-  T? operator [](final Request request) {
+  T? operator [](Request request) {
     final slots = request.properties;
     return _slot < slots.length ? slots[_slot] as T? : null;
   }
@@ -85,7 +85,7 @@ class ContextProperty<T extends Object> {
   ///
   /// Associates the [value] with the [request], allowing it
   /// to be retrieved later using [get] or `operator []`.
-  void operator []=(final Request request, final T? value) {
+  void operator []=(Request request, T? value) {
     final slots = request.properties;
     if (_slot >= slots.length) {
       if (value == null) return;

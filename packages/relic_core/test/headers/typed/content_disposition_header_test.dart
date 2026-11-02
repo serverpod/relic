@@ -2,9 +2,9 @@ import 'package:relic_core/relic_core.dart';
 import 'package:test/test.dart';
 
 void main() {
-  String encode(final String filename) {
+  String encode(String filename) {
     final headers = Headers.build(
-      (final mh) => mh.contentDisposition = ContentDispositionHeader(
+      (mh) => mh.contentDisposition = ContentDispositionHeader(
         type: 'attachment',
         parameters: [
           ContentDispositionParameter(name: 'filename', value: filename),
@@ -94,9 +94,7 @@ void main() {
       expect(parameter.language, LanguageTag.parse('en'));
       expect(parameter.value, 'a b.txt');
 
-      final headers = Headers.build(
-        (final mh) => mh.contentDisposition = header,
-      );
+      final headers = Headers.build((mh) => mh.contentDisposition = header);
       expect(
         headers[HeaderName.contentDisposition]!.first,
         "attachment; filename*=UTF-8'en'a%20b.txt",
@@ -118,7 +116,7 @@ void main() {
       ],
     );
 
-    final headers = Headers.build((final mh) => mh.contentDisposition = header);
+    final headers = Headers.build((mh) => mh.contentDisposition = header);
     expect(
       headers[HeaderName.contentDisposition]!.first,
       "attachment; filename*=UTF-8''it%27s%20%281%29%20caf%C3%A9.txt",

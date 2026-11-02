@@ -20,9 +20,8 @@ final class AccessControlAllowMethodsHeader extends WildcardListHeader<Method> {
 
   /// Parses the Access-Control-Allow-Methods header value and returns an
   /// [AccessControlAllowMethodsHeader] instance.
-  factory AccessControlAllowMethodsHeader.parse(
-    final Iterable<String> values,
-  ) => _parseFields([for (final value in values) latin1Bytes(value)]);
+  factory AccessControlAllowMethodsHeader.parse(Iterable<String> values) =>
+      _parseFields([for (final value in values) latin1Bytes(value)]);
 
   AccessControlAllowMethodsHeader._owned(super.methods) : super.owned();
 
@@ -30,9 +29,7 @@ final class AccessControlAllowMethodsHeader extends WildcardListHeader<Method> {
   List<Method> get methods => values;
 
   /// The header from the wire bytes of its [fields].
-  static AccessControlAllowMethodsHeader _parseFields(
-    final List<Uint8List> fields,
-  ) {
+  static AccessControlAllowMethodsHeader _parseFields(List<Uint8List> fields) {
     final parsed = WildcardListHeader.parseFields(fields, parseMethodBytes);
     if (parsed.isWildcard) {
       return const AccessControlAllowMethodsHeader.wildcard();
@@ -40,13 +37,11 @@ final class AccessControlAllowMethodsHeader extends WildcardListHeader<Method> {
     return AccessControlAllowMethodsHeader._owned(parsed.values);
   }
 
-  static List<String> encodeHeader(
-    final AccessControlAllowMethodsHeader header,
-  ) {
-    return header.encode((final Method m) => m.value).toList();
+  static List<String> encodeHeader(AccessControlAllowMethodsHeader header) {
+    return header.encode((Method m) => m.value).toList();
   }
 
-  static List<String> _encode(final AccessControlAllowMethodsHeader header) {
+  static List<String> _encode(AccessControlAllowMethodsHeader header) {
     return encodeHeader(header);
   }
 }

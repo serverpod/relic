@@ -22,14 +22,14 @@ final class AcceptLanguageHeader extends WildcardListHeader<LanguageQuality> {
 
   /// Parses the Accept-Language header [values] and returns an
   /// [AcceptLanguageHeader] instance.
-  factory AcceptLanguageHeader.parse(final Iterable<String> values) =>
+  factory AcceptLanguageHeader.parse(Iterable<String> values) =>
       _parseFields([for (final value in values) latin1Bytes(value)]);
 
   /// The list of languages that are accepted
   List<LanguageQuality> get languages => values;
 
   /// The header from the wire bytes of its [fields].
-  static AcceptLanguageHeader _parseFields(final List<Uint8List> fields) {
+  static AcceptLanguageHeader _parseFields(List<Uint8List> fields) {
     final parsed = WildcardListHeader.parseFields(
       fields,
       LanguageQuality._parseBytes,
@@ -38,11 +38,11 @@ final class AcceptLanguageHeader extends WildcardListHeader<LanguageQuality> {
     return AcceptLanguageHeader._owned(parsed.values);
   }
 
-  static List<String> encodeHeader(final AcceptLanguageHeader header) {
-    return header.encode((final LanguageQuality lq) => lq.encode()).toList();
+  static List<String> encodeHeader(AcceptLanguageHeader header) {
+    return header.encode((LanguageQuality lq) => lq.encode()).toList();
   }
 
-  static List<String> _encode(final AcceptLanguageHeader header) {
+  static List<String> _encode(AcceptLanguageHeader header) {
     return encodeHeader(header);
   }
 }
@@ -56,18 +56,18 @@ class LanguageQuality {
   final double? quality;
 
   /// Constructs an instance of [LanguageQuality].
-  const LanguageQuality(this.language, [final double? quality])
+  const LanguageQuality(this.language, [double? quality])
     : quality = quality ?? 1.0;
 
   /// Parses a string value and returns a [LanguageQuality] instance.
   ///
   /// The weight is recognized as the parameter named `q` (RFC 9110 12.4.2),
   /// case-insensitive, tolerating OWS around the surrounding `;` and `=`.
-  factory LanguageQuality.parse(final String value) =>
+  factory LanguageQuality.parse(String value) =>
       LanguageQuality._parseBytes(latin1Bytes(value));
 
   /// [parse] over the wire bytes of one element.
-  static LanguageQuality _parseBytes(final Uint8List element) {
+  static LanguageQuality _parseBytes(Uint8List element) {
     var semi = indexOfByte(element, 0x3B);
     if (semi < 0) semi = element.length;
     final language = lowerTextOf(element, 0, trimEnd(element, 0, semi));
@@ -85,7 +85,7 @@ class LanguageQuality {
   }
 
   @override
-  bool operator ==(final Object other) =>
+  bool operator ==(Object other) =>
       identical(this, other) ||
       other is LanguageQuality &&
           language == other.language &&

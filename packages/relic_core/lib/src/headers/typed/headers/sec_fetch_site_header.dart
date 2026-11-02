@@ -10,9 +10,7 @@ import '../primitives/byte_scanner.dart' show latin1Bytes;
 /// initiator and the origin of the requested resource.
 final class SecFetchSiteHeader {
   static const codec = HeaderCodec.bytes(_parseBytes, __encode);
-  static List<String> __encode(final SecFetchSiteHeader value) => [
-    value._encode(),
-  ];
+  static List<String> __encode(SecFetchSiteHeader value) => [value._encode()];
 
   /// The site value of the request.
   final String site;
@@ -34,11 +32,11 @@ final class SecFetchSiteHeader {
   /// Parses a [value] into a [SecFetchSiteHeader]. A value outside the
   /// predefined set is rejected; new Fetch values are adopted by updating the
   /// set in a relic release rather than accepted ad hoc.
-  factory SecFetchSiteHeader.parse(final String value) =>
+  factory SecFetchSiteHeader.parse(String value) =>
       _parseBytes(latin1Bytes(value));
 
   /// [parse] over the wire bytes.
-  static SecFetchSiteHeader _parseBytes(final Uint8List bytes) {
+  static SecFetchSiteHeader _parseBytes(Uint8List bytes) {
     final value = trimmed(bytes);
     if (value.isEmpty) {
       throw const FormatException('Value cannot be empty');
@@ -63,7 +61,7 @@ final class SecFetchSiteHeader {
   String _encode() => site;
 
   @override
-  bool operator ==(final Object other) =>
+  bool operator ==(Object other) =>
       identical(this, other) ||
       other is SecFetchSiteHeader && site == other.site;
 

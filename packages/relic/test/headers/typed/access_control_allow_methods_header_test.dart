@@ -23,12 +23,12 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (final h) => h.accessControlAllowMethods,
+            touchHeaders: (h) => h.accessControlAllowMethods,
             headers: {'access-control-allow-methods': ''},
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (final e) => e.message,
+              (e) => e.message,
               'message',
               contains('Value cannot be empty'),
             ),
@@ -46,12 +46,12 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (final h) => h.accessControlAllowMethods,
+            touchHeaders: (h) => h.accessControlAllowMethods,
             headers: {'access-control-allow-methods': 'GET, *'},
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (final e) => e.message,
+              (e) => e.message,
               'message',
               contains('Wildcard (*) cannot be used with other values'),
             ),
@@ -80,14 +80,14 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.accessControlAllowMethods,
+          touchHeaders: (h) => h.accessControlAllowMethods,
           headers: {'access-control-allow-methods': 'GET, POST, OPTIONS'},
         );
 
         final methods = headers.accessControlAllowMethods?.methods;
         expect(methods?.length, equals(3));
         expect(
-          methods?.map((final m) => m.value).toList(),
+          methods?.map((m) => m.value).toList(),
           containsAll(['GET', 'POST', 'OPTIONS']),
         );
       },
@@ -99,14 +99,14 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.accessControlAllowMethods,
+          touchHeaders: (h) => h.accessControlAllowMethods,
           headers: {'access-control-allow-methods': 'GET, POST, OPTIONS, GET'},
         );
 
         final methods = headers.accessControlAllowMethods?.methods;
         expect(methods?.length, equals(3));
         expect(
-          methods?.map((final m) => m.value).toList(),
+          methods?.map((m) => m.value).toList(),
           containsAll(['GET', 'POST', 'OPTIONS']),
         );
       },
@@ -117,7 +117,7 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.accessControlAllowMethods,
+          touchHeaders: (h) => h.accessControlAllowMethods,
           headers: {'access-control-allow-methods': '*'},
         );
 
@@ -130,7 +130,7 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.accessControlAllowMethods,
+          touchHeaders: (h) => h.accessControlAllowMethods,
           headers: {},
         );
 

@@ -3,8 +3,8 @@ import 'dart:io';
 import 'package:relic/relic.dart';
 
 Future<RelicServer> testServe(
-  final Handler handler, {
-  final SecurityContext? context,
+  Handler handler, {
+  SecurityContext? context,
 }) async {
   final server = RelicServer(
     () =>

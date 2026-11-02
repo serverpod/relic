@@ -27,9 +27,9 @@ final class ShelfServer {
   ShelfServer._(this.port, this._first, this._isolates);
 
   static Future<ShelfServer> start(
-    final ShelfHandlerBuilder builder, {
-    required final int port,
-    final int isolates = 1,
+    ShelfHandlerBuilder builder, {
+    required int port,
+    int isolates = 1,
   }) async {
     final first = await _bind(builder, port, shared: isolates > 1);
     final spawned = <Isolate>[];
@@ -47,7 +47,7 @@ final class ShelfServer {
     return ShelfServer._(first.port, first, spawned);
   }
 
-  Future<void> close({final bool force = false}) async {
+  Future<void> close({bool force = false}) async {
     for (final isolate in _isolates) {
       isolate.kill(priority: Isolate.immediate);
     }
@@ -56,9 +56,9 @@ final class ShelfServer {
 }
 
 Future<HttpServer> _bind(
-  final ShelfHandlerBuilder builder,
-  final int port, {
-  required final bool shared,
+  ShelfHandlerBuilder builder,
+  int port, {
+  required bool shared,
 }) => shelf_io.serve(
   builder(),
   InternetAddress.loopbackIPv4,
@@ -67,7 +67,7 @@ Future<HttpServer> _bind(
 );
 
 Future<void> _serveInIsolate(
-  final (ShelfHandlerBuilder, int, SendPort) message,
+  (ShelfHandlerBuilder, int, SendPort) message,
 ) async {
   final (builder, port, ready) = message;
   await _bind(builder, port, shared: true);
@@ -78,15 +78,15 @@ Future<void> _serveInIsolate(
 Handler shelfLoad() {
   final random = Random(1);
   return (Router()
-        ..get('/plaintext', (final Request req) => Response.ok('Hello, World!'))
+        ..get('/plaintext', (Request req) => Response.ok('Hello, World!'))
         ..get(
           '/json',
-          (final Request req) => Response.ok(
+          (Request req) => Response.ok(
             jsonEncode({'message': 'Hello, World!'}),
             headers: {'content-type': 'application/json'},
           ),
         )
-        ..get('/headers', (final Request req) {
+        ..get('/headers', (Request req) {
           // What a page handler reads: the agent, the languages and a
           // cookie. shelf hands out strings, so this splits both.
           final agent = req.headers['user-agent'] ?? '';
@@ -97,7 +97,7 @@ Handler shelfLoad() {
             '${agent.length} $languages ${session?.length ?? 0}',
           );
         })
-        ..get('/browser', (final Request req) {
+        ..get('/browser', (Request req) {
           // A page handler on a real browser head: the host, a cookie and
           // the validator, answered with etag, cache-control and 1 KB of
           // JSON, or 304 when the validator matches.
@@ -116,14 +116,14 @@ Handler shelfLoad() {
             },
           );
         })
-        ..get('/alloc', (final Request req) {
+        ..get('/alloc', (Request req) {
           // Garbage per request: a few thousand short-lived objects and a
           // 64 KiB string built from them.
-          final parts = List.generate(4000, (final i) => 'item-$i-${i * 7}');
+          final parts = List.generate(4000, (i) => 'item-$i-${i * 7}');
           final text = parts.join(',');
           return Response.ok(text.substring(0, 1024));
         })
-        ..get('/mixed', (final Request req) async {
+        ..get('/mixed', (Request req) async {
           // One request in a hundred waits on something slow.
           if (random.nextInt(100) == 0) {
             await Future<void>.delayed(const Duration(milliseconds: 50));
@@ -145,7 +145,7 @@ final _items = jsonEncode([
     },
 ]);
 
-String? _cookie(final String? header, final String name) {
+String? _cookie(String? header, String name) {
   if (header == null) return null;
   for (final pair in header.split(';')) {
     final at = pair.indexOf('=');
@@ -157,6 +157,6 @@ String? _cookie(final String? header, final String name) {
 }
 
 /// Echoes every WebSocket message, as bin/ws_echo.dart does.
-Handler shelfWebSocketEcho() => webSocketHandler((final channel, _) {
+Handler shelfWebSocketEcho() => webSocketHandler((channel, _) {
   channel.stream.listen(channel.sink.add);
 });

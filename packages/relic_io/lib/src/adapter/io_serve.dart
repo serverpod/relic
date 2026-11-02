@@ -25,13 +25,13 @@ extension RelicAppIOServeEx on RelicApp {
   /// If not specified [address] will default to [InternetAddress.loopbackIPv4],
   /// and [port] to 8080.
   Future<RelicServer> serve({
-    final InternetAddress? address,
-    final int port = 8080,
-    final SecurityContext? securityContext,
-    final int backlog = 0,
-    final bool v6Only = false,
-    final bool shared = false,
-    final int noOfIsolates = 1,
+    InternetAddress? address,
+    int port = 8080,
+    SecurityContext? securityContext,
+    int backlog = 0,
+    bool v6Only = false,
+    bool shared = false,
+    int noOfIsolates = 1,
   }) {
     return run(
       () => IOAdapter.bind(

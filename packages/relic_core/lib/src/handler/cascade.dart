@@ -38,12 +38,10 @@ class Cascade {
   /// considered unacceptable. If [shouldCascade] is passed, responses for which
   /// it returns `true` are considered unacceptable. [statusCodes] and
   /// [shouldCascade] may not both be passed.
-  Cascade({
-    final Iterable<int>? statusCodes,
-    final bool Function(Response)? shouldCascade,
-  }) : _shouldCascade = _computeShouldCascade(statusCodes, shouldCascade),
-       _parent = null,
-       _handler = null {
+  Cascade({Iterable<int>? statusCodes, bool Function(Response)? shouldCascade})
+    : _shouldCascade = _computeShouldCascade(statusCodes, shouldCascade),
+      _parent = null,
+      _handler = null {
     if (statusCodes != null && shouldCascade != null) {
       throw ArgumentError(
         'statusCodes and shouldCascade may not both be '
@@ -58,8 +56,7 @@ class Cascade {
   ///
   /// [handler] will only be called if all previous handlers in the cascade
   /// return unacceptable responses.
-  Cascade add(final Handler handler) =>
-      Cascade._(this, handler, _shouldCascade);
+  Cascade add(Handler handler) => Cascade._(this, handler, _shouldCascade);
 
   /// Exposes this cascade as a single handler.
   ///
@@ -75,7 +72,7 @@ class Cascade {
       );
     }
 
-    return (final req) async {
+    return (req) async {
       if (_parent!._handler == null) return handler(req);
       final result = await _parent.handler(req);
       if (result is Response && _shouldCascade(result)) {
@@ -90,10 +87,10 @@ class Cascade {
 /// parameters.
 _ShouldCascade _computeShouldCascade(
   Iterable<int>? statusCodes,
-  final bool Function(Response)? shouldCascade,
+  bool Function(Response)? shouldCascade,
 ) {
   if (shouldCascade != null) return shouldCascade;
   statusCodes ??= [404, 405];
   final statusCodeSet = statusCodes.toSet();
-  return (final response) => statusCodeSet.contains(response.statusCode);
+  return (response) => statusCodeSet.contains(response.statusCode);
 }

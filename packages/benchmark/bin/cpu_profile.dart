@@ -68,7 +68,7 @@ enum ProfileOption<V> implements OptionDefinition<V> {
   final ConfigOptionBase<V> option;
 }
 
-Future<void> main(final List<String> args) async {
+Future<void> main(List<String> args) async {
   final config = resolveOptions(
     ProfileOption.values,
     args,
@@ -89,7 +89,7 @@ Future<void> main(final List<String> args) async {
     await service.setFlag('profiler', 'true');
     final vm = await service.getVM();
     final isolates = vm.isolates!
-        .where((final i) => !i.name!.contains('vm-service'))
+        .where((i) => !i.name!.contains('vm-service'))
         .toList();
     for (final isolate in isolates) {
       await service.clearCpuSamples(isolate.id!);
@@ -112,14 +112,14 @@ Future<void> main(final List<String> args) async {
   }
 }
 
-void _report(final CpuSamples samples, final int window, final int top) {
+void _report(CpuSamples samples, int window, int top) {
   final all = samples.samples!;
   if (all.isEmpty) {
     stdout.writeln('no samples');
     return;
   }
   final last = all.last.timestamp!;
-  final kept = all.where((final s) => s.timestamp! > last - window * 1000000);
+  final kept = all.where((s) => s.timestamp! > last - window * 1000000);
   final functions = samples.functions!;
   final exclusive = <int, int>{};
   final inclusive = <int, int>{};
@@ -127,15 +127,15 @@ void _report(final CpuSamples samples, final int window, final int top) {
   var count = 0;
   for (final sample in kept) {
     count++;
-    tags.update(sample.vmTag ?? '?', (final n) => n + 1, ifAbsent: () => 1);
+    tags.update(sample.vmTag ?? '?', (n) => n + 1, ifAbsent: () => 1);
     final stack = sample.stack!;
     if (stack.isEmpty) continue;
-    exclusive.update(stack[0], (final n) => n + 1, ifAbsent: () => 1);
+    exclusive.update(stack[0], (n) => n + 1, ifAbsent: () => 1);
     for (final f in stack.toSet()) {
-      inclusive.update(f, (final n) => n + 1, ifAbsent: () => 1);
+      inclusive.update(f, (n) => n + 1, ifAbsent: () => 1);
     }
   }
-  String name(final int i) {
+  String name(int i) {
     final f = functions[i];
     final fn = f.function;
     final owner = fn is FuncRef && fn.owner is ClassRef
@@ -147,8 +147,7 @@ void _report(final CpuSamples samples, final int window, final int top) {
     return '$owner${fn is FuncRef ? fn.name : fn.toString()} [$url]';
   }
 
-  String pct(final int n) =>
-      '${(n * 100 / count).toStringAsFixed(1).padLeft(5)}%';
+  String pct(int n) => '${(n * 100 / count).toStringAsFixed(1).padLeft(5)}%';
   stdout.writeln(
     'samples in window: $count over ${window}s '
     '(period ${samples.samplePeriod} us)',
@@ -167,5 +166,5 @@ void _report(final CpuSamples samples, final int window, final int top) {
   }
 }
 
-List<MapEntry<K, int>> _sorted<K>(final Map<K, int> counts) =>
-    counts.entries.toList()..sort((final a, final b) => b.value - a.value);
+List<MapEntry<K, int>> _sorted<K>(Map<K, int> counts) =>
+    counts.entries.toList()..sort((a, b) => b.value - a.value);

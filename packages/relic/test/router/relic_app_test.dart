@@ -87,7 +87,7 @@ void main() {
             (_) => Response(
               203,
               headers: Headers.build(
-                (final mh) => mh.add(HeaderName.lookup('x-route'), 'get'),
+                (mh) => mh.add(HeaderName.lookup('x-route'), 'get'),
               ),
               body: Body(
                 open: report,
@@ -127,7 +127,7 @@ void main() {
       final app = RelicApp()
         ..get(
           '/sse',
-          (_) => Hijack((final channel) {
+          (_) => Hijack((channel) {
             hijacked = true;
             channel.sink.close();
           }),
@@ -150,7 +150,7 @@ void main() {
         'a Hijack, when a HEAD request is sent to that path, '
         'then it gets 405 with GET and POST as the allowed methods', () async {
       final app = RelicApp()
-        ..get('/sse', (_) => Hijack((final channel) => channel.sink.close()))
+        ..get('/sse', (_) => Hijack((channel) => channel.sink.close()))
         ..post('/sse', (_) => Response(201));
       final server = await app.serve(port: 0);
       addTearDown(() => app.close());
@@ -169,7 +169,7 @@ void main() {
         'a WebSocketUpgrade, when a HEAD request is sent to that path, '
         'then it gets 405 with GET and POST as the allowed methods', () async {
       final app = RelicApp()
-        ..get('/ws', (_) => WebSocketUpgrade((final socket) {}))
+        ..get('/ws', (_) => WebSocketUpgrade((socket) {}))
         ..post('/ws', (_) => Response(201));
       final server = await app.serve(port: 0);
       addTearDown(() => app.close());
@@ -191,7 +191,7 @@ void main() {
         ..anyOf(
           {Method.get, Method.post},
           '/ws',
-          (_) => WebSocketUpgrade((final socket) {}),
+          (_) => WebSocketUpgrade((socket) {}),
         );
       final server = await app.serve(port: 0);
       addTearDown(() => app.close());
@@ -210,8 +210,7 @@ void main() {
     test('Given a RelicApp with only a POST route that answers with '
         'a WebSocketUpgrade, when a POST request is sent to that path, '
         'then it gets 405 with an empty Allow', () async {
-      final app = RelicApp()
-        ..post('/ws', (_) => WebSocketUpgrade((final socket) {}));
+      final app = RelicApp()..post('/ws', (_) => WebSocketUpgrade((socket) {}));
       final server = await app.serve(port: 0);
       addTearDown(() => app.close());
 
@@ -229,7 +228,7 @@ void main() {
     test('Given a RelicApp with GET and HEAD routes that answer with a Hijack, '
         'when a HEAD request is sent to that path, '
         'then the hijack answers it', () async {
-      Hijack sse(final Request req) => Hijack((final channel) async {
+      Hijack sse(Request req) => Hijack((channel) async {
         channel.sink.add(utf8.encode('HTTP/1.1 204 No Content\r\n\r\n'));
         await channel.sink.close();
       });

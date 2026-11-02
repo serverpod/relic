@@ -8,10 +8,7 @@ typedef _SocketAddressRecord = ({IPAddress address, int port});
 extension type const SocketAddress._(_SocketAddressRecord record) {
   static const int maxPort = (1 << 16) - 1;
 
-  factory SocketAddress({
-    required final IPAddress address,
-    required final int port,
-  }) {
+  factory SocketAddress({required IPAddress address, required int port}) {
     if (port < 0 || port > maxPort) {
       throw ArgumentError.value(
         port,

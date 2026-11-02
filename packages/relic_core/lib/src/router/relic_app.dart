@@ -92,9 +92,9 @@ final class RelicApp implements RelicRouter, _Reloadable {
   /// Check out [RelicAppIOServeEx.serve] if you are using `dart:io` to avoid
   /// specifying [adapterFactory] explicitly.
   Future<RelicServer> run(
-    final FutureOr<Adapter> Function() adapterFactory, {
-    final int noOfIsolates = 1,
-    final bool backtrack = true,
+    FutureOr<Adapter> Function() adapterFactory, {
+    int noOfIsolates = 1,
+    bool backtrack = true,
   }) async {
     if (_server != null) throw StateError('Cannot call run twice');
     _server = RelicServer(adapterFactory, noOfIsolates: noOfIsolates);
@@ -136,43 +136,38 @@ final class RelicApp implements RelicRouter, _Reloadable {
     }
   }
 
-  void _injectAndTrack(final RouterInjectable injectable) {
+  void _injectAndTrack(RouterInjectable injectable) {
     delegate.inject(injectable);
     _setup.add(injectable);
   }
 
   @override
-  void add(final Method method, final String path, final Handler route) =>
-      inject(_Injectable((final r) => r.add(method, path, route)));
+  void add(Method method, String path, Handler route) =>
+      inject(_Injectable((r) => r.add(method, path, route)));
 
   @override
-  void attach(
-    final String path,
-    final RelicRouter subRouter, {
-    final bool consume = false,
-  }) => inject(
-    _Injectable((final r) => r.attach(path, subRouter, consume: consume)),
-  );
+  void attach(String path, RelicRouter subRouter, {bool consume = false}) =>
+      inject(_Injectable((r) => r.attach(path, subRouter, consume: consume)));
 
   @override
-  void use(final String path, final Middleware map) =>
-      inject(_Injectable((final r) => r.use(path, map)));
+  void use(String path, Middleware map) =>
+      inject(_Injectable((r) => r.use(path, map)));
 
   /// Recreates the sub-router on each hot-reload replay instead of reusing
   /// the consumed (emptied) one from the first call.
   @override
-  void injectAt(final String path, final RouterInjectable injectable) =>
+  void injectAt(String path, RouterInjectable injectable) =>
       inject(_InjectableAt(path, injectable));
 
   @override
-  void inject(final RouterInjectable injectable) => _injectAndTrack(injectable);
+  void inject(RouterInjectable injectable) => _injectAndTrack(injectable);
 
   @override
   Handler? get fallback => delegate.fallback;
 
   @override
-  set fallback(final Handler? value) =>
-      inject(_Injectable((final r) => r.fallback = value));
+  set fallback(Handler? value) =>
+      inject(_Injectable((r) => r.fallback = value));
 
   @override
   PathTrie<_RouterEntry<Handler>> get _allRoutes => delegate._allRoutes;
@@ -185,23 +180,23 @@ final class RelicApp implements RelicRouter, _Reloadable {
 
   @override
   LookupResult<Handler> lookup(
-    final Method method,
-    final String path, {
-    final bool backtrack = true,
+    Method method,
+    String path, {
+    bool backtrack = true,
   }) => delegate.lookup(method, path, backtrack: backtrack);
 
   @override
   LookupResult<Handler> lookupPath(
-    final Method method,
-    final NormalizedPath normalizedPath, {
-    final bool backtrack = true,
+    Method method,
+    NormalizedPath normalizedPath, {
+    bool backtrack = true,
   }) => delegate.lookupPath(method, normalizedPath, backtrack: backtrack);
 
   @override
   LookupResult<Handler> lookupUri(
-    final Method method,
-    final Uri url, {
-    final bool backtrack = true,
+    Method method,
+    Uri url, {
+    bool backtrack = true,
   }) => delegate.lookupUri(method, url, backtrack: backtrack);
 }
 
@@ -224,7 +219,7 @@ final class DeveloperTools {
   /// Whether the VM service is available (i.e. running in dev mode).
   bool get isDevMode => _reloadSubscription != null;
 
-  Future<void> _registerForReload(final _Reloadable app) async {
+  Future<void> _registerForReload(_Reloadable app) async {
     _reloadSubscription = await _hotReloader.registerForReload(app);
     if (_reloadSubscription != null) {
       _registerStaticChangeExtension();
@@ -262,7 +257,7 @@ final class _Injectable implements RouterInjectable {
   _Injectable(this.setup);
 
   @override
-  void injectIn(final RelicRouter owner) => setup(owner);
+  void injectIn(RelicRouter owner) => setup(owner);
 }
 
 /// Creates a fresh sub-router on each replay so routes survive hot-reload.
@@ -278,7 +273,7 @@ final class _InjectableAt implements RouterInjectable {
   _InjectableAt(this.path, this.injectable);
 
   @override
-  void injectIn(final RelicRouter owner) {
+  void injectIn(RelicRouter owner) {
     final subRouter = RelicRouter()..inject(injectable);
     owner.attach(path, subRouter, consume: true);
   }
@@ -297,12 +292,12 @@ class _HotReloader {
             onListen: (_) => vmService.streamListen(streamId),
             onCancel: (_) => vmService.streamCancel(streamId),
           )
-          .where((final e) => e.kind == vm.EventKind.kIsolateReload);
+          .where((e) => e.kind == vm.EventKind.kIsolateReload);
     }
     return null; // no vm service available
   }
 
-  Future<StreamSubscription?> registerForReload(final _Reloadable app) async {
+  Future<StreamSubscription?> registerForReload(_Reloadable app) async {
     final reloadStream = await _reloadStream;
     if (reloadStream != null) {
       return reloadStream.asyncListen((_) => app._reload());
@@ -330,7 +325,7 @@ class _RouterHandlerObject extends HandlerObject {
   /// The pipeline is built once and again when the fallback changes,
   /// not per request.
   @override
-  FutureOr<Result> call(final Request req) {
+  FutureOr<Result> call(Request req) {
     final fallback = router.fallback;
     if (_handler == null || !identical(fallback, _fallback)) {
       _fallback = fallback;
@@ -347,5 +342,5 @@ class _RouterHandlerObject extends HandlerObject {
     return _handler!(req);
   }
 
-  static Result _notFound(final Request _) => Response.notFound();
+  static Result _notFound(Request _) => Response.notFound();
 }

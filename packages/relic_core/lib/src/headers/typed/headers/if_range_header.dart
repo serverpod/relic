@@ -13,7 +13,7 @@ import 'etag_header.dart';
 /// The `If-Range` header can contain either an HTTP date or an ETag.
 final class IfRangeHeader {
   static const codec = HeaderCodec.bytes(_parseBytes, __encode);
-  static List<String> __encode(final IfRangeHeader value) => [value._encode()];
+  static List<String> __encode(IfRangeHeader value) => [value._encode()];
 
   /// The HTTP date if the `If-Range` header contains a date.
   final DateTime? lastModified;
@@ -36,11 +36,10 @@ final class IfRangeHeader {
   /// Parses the `If-Range` header value and returns an [IfRangeHeader] instance.
   ///
   /// Determines if the value is an ETag or a date and creates the appropriate instance.
-  factory IfRangeHeader.parse(final String value) =>
-      _parseBytes(latin1Bytes(value));
+  factory IfRangeHeader.parse(String value) => _parseBytes(latin1Bytes(value));
 
   /// [parse] over the wire bytes: an entity-tag, else an HTTP-date.
-  static IfRangeHeader _parseBytes(final Uint8List bytes) {
+  static IfRangeHeader _parseBytes(Uint8List bytes) {
     final value = trimmed(bytes);
     if (value.isEmpty) {
       throw const FormatException('Value cannot be empty');
@@ -70,7 +69,7 @@ final class IfRangeHeader {
       lastModified != null ? formatHttpDate(lastModified!) : etag!.encode();
 
   @override
-  bool operator ==(final Object other) =>
+  bool operator ==(Object other) =>
       identical(this, other) ||
       other is IfRangeHeader &&
           lastModified == other.lastModified &&

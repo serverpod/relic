@@ -41,14 +41,14 @@ sealed class IPAddress {
   /// If a CIDR prefix is specified (e.g., "192.168.1.0/24"), this value reflects it.
   final int prefixLength; // CIDR prefix length
 
-  IPAddress._(final Uint8List bytes, {final int? prefixLength})
+  IPAddress._(Uint8List bytes, {int? prefixLength})
     : bytes = Uint8List.fromList(bytes).asUnmodifiableView(),
       prefixLength = prefixLength ?? (bytes.length == 4 ? 32 : 128);
 
   /// Factory constructor for automatic type detection
   /// Supports both plain IP addresses and CIDR notation
   /// Examples: "192.168.1.1", "192.168.1.0/24", "2001:db8::1", "2001:db8::/32"
-  factory IPAddress.parse(final String address) {
+  factory IPAddress.parse(String address) {
     // Check if CIDR notation
     final parts = address.split('/');
 
@@ -87,10 +87,7 @@ sealed class IPAddress {
   }
 
   /// Create from raw [bytes], and optionally [prefixLength].
-  factory IPAddress.fromBytes(
-    final Uint8List bytes, {
-    final int? prefixLength,
-  }) {
+  factory IPAddress.fromBytes(Uint8List bytes, {int? prefixLength}) {
     return switch (bytes.length) {
       4 => IPv4Address._(bytes, prefixLength: prefixLength),
       16 => IPv6Address._(bytes, prefixLength: prefixLength),
@@ -99,14 +96,14 @@ sealed class IPAddress {
   }
 
   @override
-  bool operator ==(final Object other) {
+  bool operator ==(Object other) {
     if (identical(this, other)) return true;
     if (other is! IPAddress) return false;
     return _bytesEqual(bytes, other.bytes) &&
         prefixLength == other.prefixLength;
   }
 
-  static bool _bytesEqual(final Uint8List a, final Uint8List b) {
+  static bool _bytesEqual(Uint8List a, Uint8List b) {
     if (a.length != b.length) return false;
     for (var i = 0; i < a.length; i++) {
       if (a[i] != b[i]) return false;
@@ -122,7 +119,7 @@ sealed class IPAddress {
   int get maxPrefixLength => this is IPv4Address ? 32 : 128;
 
   /// Validate prefix length for this IP address type
-  void _validatePrefixLength(final int pl) {
+  void _validatePrefixLength(int pl) {
     if (pl < 0 || pl > maxPrefixLength) {
       throw ArgumentError(
         'Prefix length must be between 0 and $maxPrefixLength, got $pl',
@@ -141,7 +138,7 @@ sealed class IPAddress {
   /// final otherIp = IPAddress.parse('192.168.2.100');
   /// subnet.contains(otherIp); // false
   /// ```
-  bool contains(final IPAddress other) {
+  bool contains(IPAddress other) {
     if (runtimeType != other.runtimeType) {
       return false;
     }
@@ -200,13 +197,13 @@ sealed class IPAddress {
   }
 
   /// Create a new IPAddress with a different prefix length
-  IPAddress withPrefixLength(final int newPrefixLength) {
+  IPAddress withPrefixLength(int newPrefixLength) {
     _validatePrefixLength(newPrefixLength);
     return IPAddress.fromBytes(bytes, prefixLength: newPrefixLength);
   }
 
   /// Create a subnet mask for the given prefix length
-  Uint8List _createMask(final int pl) {
+  Uint8List _createMask(int pl) {
     final byteCount = this is IPv4Address ? 4 : 16;
     final mask = Uint8List(byteCount);
 

@@ -116,7 +116,7 @@ void main() {
           handler,
           '/file.txt',
           headers: Headers.build(
-            (final mh) => mh.range = RangeHeader.parse('bytes=0-4'),
+            (mh) => mh.range = RangeHeader.parse('bytes=0-4'),
           ),
         );
         expect(response.statusCode, HttpStatus.partialContent);
@@ -138,7 +138,7 @@ void main() {
           handler,
           '/file.txt',
           headers: Headers.build(
-            (final mh) => mh.range = RangeHeader.parse('bytes=0-9'),
+            (mh) => mh.range = RangeHeader.parse('bytes=0-9'),
           ),
         );
         expect(response.statusCode, HttpStatus.partialContent);
@@ -162,7 +162,7 @@ void main() {
         handler,
         '/file.txt',
         headers: Headers.build(
-          (final mh) => mh.range = RangeHeader.parse('bytes=8-9'),
+          (mh) => mh.range = RangeHeader.parse('bytes=8-9'),
         ),
       );
 
@@ -181,7 +181,7 @@ void main() {
         handler,
         '/file.txt',
         headers: Headers.build(
-          (final mh) => mh.range = RangeHeader.parse('bytes=2-1'),
+          (mh) => mh.range = RangeHeader.parse('bytes=2-1'),
         ),
       );
       expect(response.statusCode, HttpStatus.requestedRangeNotSatisfiable);
@@ -199,7 +199,7 @@ void main() {
         handler,
         '/file.txt',
         headers: Headers.build(
-          (final mh) => mh.range = RangeHeader.parse('bytes=2-1'),
+          (mh) => mh.range = RangeHeader.parse('bytes=2-1'),
         ),
       );
       expect(response.statusCode, HttpStatus.requestedRangeNotSatisfiable);

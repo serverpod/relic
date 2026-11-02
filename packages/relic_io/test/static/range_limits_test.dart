@@ -19,9 +19,9 @@ void main() {
     ).asHandler;
   });
 
-  Headers rangeHeaders(final int count) => Headers.build(
-    (final mh) => mh.range = RangeHeader(
-      ranges: List.generate(count, (final _) => Range(start: 0, end: 15)),
+  Headers rangeHeaders(int count) => Headers.build(
+    (mh) => mh.range = RangeHeader(
+      ranges: List.generate(count, (_) => Range(start: 0, end: 15)),
     ),
   );
 
@@ -66,7 +66,7 @@ void main() {
         handler,
         '/test_file.txt',
         headers: Headers.build(
-          (final mh) => mh.range = RangeHeader(
+          (mh) => mh.range = RangeHeader(
             ranges: [Range(start: 0, end: 3), Range(start: 4, end: 7)],
           ),
         ),
@@ -95,13 +95,13 @@ void main() {
           handler,
           '/test_file.txt',
           headers: Headers.build(
-            (final mh) => mh.range = RangeHeader(
+            (mh) => mh.range = RangeHeader(
               ranges: [Range(start: 0, end: 0), Range(start: 2, end: 3)],
             ),
           ),
         );
 
-        final bytes = await response.read().expand((final c) => c).toList();
+        final bytes = await response.read().expand((c) => c).toList();
         expect(response.body.contentLength, equals(bytes.length));
       },
     );

@@ -34,7 +34,7 @@ void main() {
   });
 
   parameterizedTest(
-    (final v) =>
+    (v) =>
         'Given a file "${v.key}", '
         'when requested, '
         'then the mimetype is "${v.value.toHeaderValue()}"',
@@ -53,7 +53,7 @@ void main() {
       '/app.wasm': const MimeType('application', 'wasm'),
       '/no_extension': MimeType.octetStream,
     }.entries,
-    (final v) async {
+    (v) async {
       final fileName = v.key;
       final mimeType = v.value;
 

@@ -35,8 +35,8 @@ class CacheBustingConfig {
   final Map<String, String> _cache = {};
 
   CacheBustingConfig({
-    required final String mountPrefix,
-    required final Directory fileSystemRoot,
+    required String mountPrefix,
+    required Directory fileSystemRoot,
     this.separator = '@',
   }) : mountPrefix = _normalizeMount(mountPrefix),
        fileSystemRoot = fileSystemRoot.absolute {
@@ -47,7 +47,7 @@ class CacheBustingConfig {
   /// Returns the cache-busted URL for the given [staticPath].
   ///
   /// Example: '/static/logo.svg' → '/static/logo@hash.svg'.
-  Future<String> assetPath(final String staticPath) async {
+  Future<String> assetPath(String staticPath) async {
     final cached = _cache[staticPath];
     if (cached != null) return cached;
 
@@ -107,7 +107,7 @@ class CacheBustingConfig {
 
   /// Attempts to generate a cache-busted URL. If the file cannot be found or
   /// read, returns [staticPath] unchanged.
-  Future<String> tryAssetPath(final String staticPath) async {
+  Future<String> tryAssetPath(String staticPath) async {
     try {
       return await assetPath(staticPath);
     } catch (_) {
@@ -141,20 +141,20 @@ class CacheBustingConfig {
   /// by [assetPath], [tryAssetPath], or [indexAssets].
   ///
   /// Returns [staticPath] unchanged if not in the cache.
-  String tryAssetPathSync(final String staticPath) {
+  String tryAssetPathSync(String staticPath) {
     return _cache[staticPath] ?? staticPath;
   }
 }
 
 /// Ensures [mountPrefix] starts with '/' and ends with '/'.
-String _normalizeMount(final String mountPrefix) {
+String _normalizeMount(String mountPrefix) {
   if (!mountPrefix.startsWith('/')) {
     throw ArgumentError('mountPrefix must start with "/"');
   }
   return mountPrefix.endsWith('/') ? mountPrefix : '$mountPrefix/';
 }
 
-void _validateFileSystemRoot(final Directory dir) {
+void _validateFileSystemRoot(Directory dir) {
   if (!dir.existsSync()) {
     throw ArgumentError.value(dir.path, 'fileSystemRoot', 'does not exist');
   }
@@ -166,7 +166,7 @@ void _validateFileSystemRoot(final Directory dir) {
   }
 }
 
-void _validateSeparator(final String separator) {
+void _validateSeparator(String separator) {
   if (separator.isEmpty) {
     throw ArgumentError('separator cannot be empty');
   }
@@ -186,7 +186,7 @@ extension CacheBustingFilenameExtension on CacheBustingConfig {
   /// `logo@abc.png` -> `logo.png`
   /// `logo@abc` -> `logo`
   /// `logo.png` -> `logo.png` (no change)
-  String tryStripHashFromFilename(final String fileName) {
+  String tryStripHashFromFilename(String fileName) {
     final ext = p.url.extension(fileName);
     final base = p.url.basenameWithoutExtension(fileName);
 

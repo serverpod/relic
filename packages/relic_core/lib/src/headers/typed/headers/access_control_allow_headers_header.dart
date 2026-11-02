@@ -16,16 +16,15 @@ final class AccessControlAllowHeadersHeader extends WildcardListHeader<String> {
   ///
   /// Header names are case-insensitive (RFC 9110 5.1), so they are
   /// canonicalized to lowercase for case-insensitive equality and membership.
-  AccessControlAllowHeadersHeader.headers(final Iterable<String> headers)
-    : super(List.from(headers.map((final h) => h.toLowerCase())));
+  AccessControlAllowHeadersHeader.headers(Iterable<String> headers)
+    : super(List.from(headers.map((h) => h.toLowerCase())));
 
   /// Constructs an instance allowing all headers to be allowed (`*`).
   const AccessControlAllowHeadersHeader.wildcard() : super.wildcard();
 
   /// Parses the header [values].
-  factory AccessControlAllowHeadersHeader.parse(
-    final Iterable<String> values,
-  ) => _parseFields([for (final value in values) latin1Bytes(value)]);
+  factory AccessControlAllowHeadersHeader.parse(Iterable<String> values) =>
+      _parseFields([for (final value in values) latin1Bytes(value)]);
 
   AccessControlAllowHeadersHeader._owned(super.headers) : super.owned();
 
@@ -33,9 +32,7 @@ final class AccessControlAllowHeadersHeader extends WildcardListHeader<String> {
   List<String> get headers => values;
 
   /// The header from the wire bytes of its [fields].
-  static AccessControlAllowHeadersHeader _parseFields(
-    final List<Uint8List> fields,
-  ) {
+  static AccessControlAllowHeadersHeader _parseFields(List<Uint8List> fields) {
     final parsed = WildcardListHeader.parseFields(fields, lowerTextOf);
     if (parsed.isWildcard) {
       return const AccessControlAllowHeadersHeader.wildcard();
@@ -43,13 +40,11 @@ final class AccessControlAllowHeadersHeader extends WildcardListHeader<String> {
     return AccessControlAllowHeadersHeader._owned(parsed.values);
   }
 
-  static List<String> encodeHeader(
-    final AccessControlAllowHeadersHeader header,
-  ) {
-    return header.encode((final String str) => str).toList();
+  static List<String> encodeHeader(AccessControlAllowHeadersHeader header) {
+    return header.encode((String str) => str).toList();
   }
 
-  static List<String> _encode(final AccessControlAllowHeadersHeader header) {
+  static List<String> _encode(AccessControlAllowHeadersHeader header) {
     return encodeHeader(header);
   }
 }

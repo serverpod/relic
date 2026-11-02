@@ -91,17 +91,17 @@ class Request extends Message {
   /// has one.
   Request._(
     this.method,
-    final Uri? url,
+    Uri? url,
     this._exchange, {
-    final Headers? headers,
-    final HttpProtocol? protocol,
-    final Body? body,
-    final ConnectionInfo? connectionInfo,
-    final ConnectionInfo Function()? lazyConnectionInfo,
-    final List<Object?>? properties,
-    final RequestTarget? target,
-    final String? authority,
-    final String scheme = 'http',
+    Headers? headers,
+    HttpProtocol? protocol,
+    Body? body,
+    ConnectionInfo? connectionInfo,
+    ConnectionInfo Function()? lazyConnectionInfo,
+    List<Object?>? properties,
+    RequestTarget? target,
+    String? authority,
+    String scheme = 'http',
   }) : _url = url,
        _target = target,
        _authority = authority,
@@ -155,7 +155,7 @@ class Request extends Message {
   ///
   /// All parameters are optional. If not provided, the original values are used.
   @override
-  Request copyWith({final Uri? url, final Headers? headers, final Body? body}) {
+  Request copyWith({Uri? url, Headers? headers, Body? body}) {
     return Request._(
       method,
       url ?? _url,

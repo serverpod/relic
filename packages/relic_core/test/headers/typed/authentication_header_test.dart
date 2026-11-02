@@ -22,8 +22,8 @@ void main() {
   });
 
   group('AuthenticationHeader encoding', () {
-    String encode(final AuthenticationHeader header) {
-      final headers = Headers.build((final mh) => mh.wwwAuthenticate = header);
+    String encode(AuthenticationHeader header) {
+      final headers = Headers.build((mh) => mh.wwwAuthenticate = header);
       return headers[HeaderName.wwwAuthenticate]!.first;
     }
 
@@ -94,8 +94,8 @@ void main() {
         final reparsed = AuthenticationHeader.parse(encode(header));
 
         expect(reparsed.scheme, 'Digest');
-        expect(reparsed.parameters.map((final p) => p.key), ['realm', 'qop']);
-        expect(reparsed.parameters.map((final p) => p.value), [
+        expect(reparsed.parameters.map((p) => p.key), ['realm', 'qop']);
+        expect(reparsed.parameters.map((p) => p.value), [
           'example zone',
           'auth',
         ]);
@@ -160,11 +160,8 @@ void main() {
         );
 
         expect(header.scheme, equals('Digest'));
-        expect(header.parameters.map((final p) => p.key), ['realm', 'qop']);
-        expect(header.parameters.map((final p) => p.value), [
-          'example',
-          'auth',
-        ]);
+        expect(header.parameters.map((p) => p.key), ['realm', 'qop']);
+        expect(header.parameters.map((p) => p.value), ['example', 'auth']);
       });
     });
 

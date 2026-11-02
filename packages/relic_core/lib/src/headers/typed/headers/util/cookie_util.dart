@@ -1,7 +1,7 @@
 import 'dart:typed_data';
 
 /// Validates the cookie name and returns a string representation of the cookie name.
-String validateCookieName(final String name) {
+String validateCookieName(String name) {
   for (int i = 0; i < name.length; i++) {
     if (!isCookieNameChar(name.codeUnitAt(i))) {
       throw const FormatException('Invalid cookie name');
@@ -13,12 +13,12 @@ String validateCookieName(final String name) {
 /// Whether [codeUnit] may appear in a cookie name.
 ///
 /// A token character of RFC 6265 4.1.1, visible ASCII less the separators.
-bool isCookieNameChar(final int codeUnit) =>
+bool isCookieNameChar(int codeUnit) =>
     codeUnit < 0x80 && _asciiClasses[codeUnit] & _nameChar != 0;
 
 /// Whether [codeUnit] is a cookie-octet of RFC 6265 4.1.1, visible ASCII
 /// less double quote, comma, semicolon and backslash.
-bool isCookieOctet(final int codeUnit) =>
+bool isCookieOctet(int codeUnit) =>
     codeUnit < 0x80 && _asciiClasses[codeUnit] & _octet != 0;
 
 const _octet = 1;
@@ -51,7 +51,7 @@ const cookieWhitespace = _ws;
 
 const _ws = 4;
 
-bool _isCookieNameChar(final int codeUnit) {
+bool _isCookieNameChar(int codeUnit) {
   if (codeUnit <= 0x20 || codeUnit >= 0x7F) return false;
   return switch (codeUnit) {
     0x28 || // (
@@ -76,7 +76,7 @@ bool _isCookieNameChar(final int codeUnit) {
 }
 
 /// Validates the cookie value and returns a string representation of the cookie value.
-String validateCookieValue(final String value) {
+String validateCookieValue(String value) {
   if (!isCookieValue(value, 0, value.length)) {
     throw const FormatException('Invalid cookie value');
   }
@@ -88,7 +88,7 @@ String validateCookieValue(final String value) {
 
 /// Whether `text[start..end)` is a cookie-value of RFC 6265 4.1.1,
 /// cookie-octets optionally inside one pair of double quotes.
-bool isCookieValue(final String text, int start, int end) {
+bool isCookieValue(String text, int start, int end) {
   if (end - start >= 2 &&
       text.codeUnitAt(start) == 0x22 &&
       text.codeUnitAt(end - 1) == 0x22) {
@@ -104,7 +104,7 @@ bool isCookieValue(final String text, int start, int end) {
 }
 
 /// [isCookieValue] over bytes.
-bool isCookieValueBytes(final Uint8List bytes, int start, int end) {
+bool isCookieValueBytes(Uint8List bytes, int start, int end) {
   if (end - start >= 2 && bytes[start] == 0x22 && bytes[end - 1] == 0x22) {
     start++;
     end--;
@@ -118,7 +118,7 @@ bool isCookieValueBytes(final Uint8List bytes, int start, int end) {
 }
 
 /// [isCookieName] over bytes.
-bool isCookieNameBytes(final Uint8List bytes, final int start, final int end) {
+bool isCookieNameBytes(Uint8List bytes, int start, int end) {
   if (start >= end) return false;
   final classes = _asciiClasses;
   for (int i = start; i < end; i++) {
@@ -128,7 +128,7 @@ bool isCookieNameBytes(final Uint8List bytes, final int start, final int end) {
   return true;
 }
 
-bool _isCookieOctet(final int codeUnit) =>
+bool _isCookieOctet(int codeUnit) =>
     codeUnit == 0x21 ||
     (codeUnit >= 0x23 && codeUnit <= 0x2B) ||
     (codeUnit >= 0x2D && codeUnit <= 0x3A) ||
@@ -136,7 +136,7 @@ bool _isCookieOctet(final int codeUnit) =>
     (codeUnit >= 0x5D && codeUnit <= 0x7E);
 
 /// Whether [codeUnit] is one of the characters `String.trim` strips.
-bool isTrimWhitespace(final int codeUnit) =>
+bool isTrimWhitespace(int codeUnit) =>
     codeUnit == 0x20 ||
     (codeUnit >= 0x09 && codeUnit <= 0x0D) ||
     codeUnit == 0x85 ||
@@ -157,7 +157,7 @@ bool isTrimWhitespace(final int codeUnit) =>
 /// CHAR except CTLs or `;`. Rejecting control characters here prevents
 /// header injection (CR/LF) when a path is built from untrusted input and
 /// later serialized.
-String validateCookiePath(final String path) {
+String validateCookiePath(String path) {
   for (int i = 0; i < path.length; i++) {
     final int codeUnit = path.codeUnitAt(i);
     // CTLs (0x00-0x1F, 0x7F) and ';' (0x3B) are not allowed in a path-value.

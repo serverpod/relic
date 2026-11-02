@@ -12,7 +12,7 @@ const int _semicolon = 0x3B;
 /// This header specifies the policy for embedding cross-origin resources.
 final class CrossOriginEmbedderPolicyHeader {
   static const codec = HeaderCodec.bytes(_parseBytes, __encode);
-  static List<String> __encode(final CrossOriginEmbedderPolicyHeader value) => [
+  static List<String> __encode(CrossOriginEmbedderPolicyHeader value) => [
     value._encode(),
   ];
 
@@ -43,14 +43,14 @@ final class CrossOriginEmbedderPolicyHeader {
   /// The value is the policy token optionally followed by parameters, e.g.
   /// `require-corp; report-to="endpoint"`. The `report-to` parameter is
   /// captured; an unknown policy token is rejected.
-  factory CrossOriginEmbedderPolicyHeader.parse(final String value) =>
+  factory CrossOriginEmbedderPolicyHeader.parse(String value) =>
       _parseBytes(latin1Bytes(value));
 
   /// [parse] over the wire bytes.
   ///
   /// Parameters split at top-level `;` only, so a `;` inside a quoted
   /// report-to value does not split the value.
-  static CrossOriginEmbedderPolicyHeader _parseBytes(final Uint8List bytes) {
+  static CrossOriginEmbedderPolicyHeader _parseBytes(Uint8List bytes) {
     if (trimmed(bytes).isEmpty) {
       throw const FormatException('Value cannot be empty');
     }
@@ -70,7 +70,7 @@ final class CrossOriginEmbedderPolicyHeader {
       reportTo == null ? policy : '$policy; ${encodeReportToParam(reportTo!)}';
 
   @override
-  bool operator ==(final Object other) =>
+  bool operator ==(Object other) =>
       identical(this, other) ||
       other is CrossOriginEmbedderPolicyHeader &&
           policy == other.policy &&

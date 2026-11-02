@@ -26,7 +26,7 @@ void main() {
         final header = ConnectionHeader.parse(['keep-alive, Upgrade']);
 
         expect(
-          header.directives.map((final d) => d.value),
+          header.directives.map((d) => d.value),
           equals(['keep-alive', 'upgrade']),
         );
       });
@@ -49,7 +49,7 @@ void main() {
         ]);
 
         expect(
-          header.directives.map((final d) => d.value),
+          header.directives.map((d) => d.value),
           equals(['keep-alive', 'upgrade']),
         );
       });

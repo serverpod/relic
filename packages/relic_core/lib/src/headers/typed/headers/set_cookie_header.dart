@@ -72,12 +72,12 @@ final class SetCookie {
   /// not carry a port; a [Host] with a port throws [FormatException]. [path]
   /// is validated against the path-value grammar (no CTLs or `;`).
   SetCookie({
-    required final String name,
-    required final String value,
+    required String name,
+    required String value,
     this.expires,
     this.maxAge,
-    final Host? domain,
-    final String? path,
+    Host? domain,
+    String? path,
     this.secure = false,
     this.httpOnly = false,
     this.sameSite,
@@ -86,7 +86,7 @@ final class SetCookie {
        domain = _validateCookieDomain(domain),
        path = path == null ? null : validateCookiePath(path);
 
-  static Host? _validateCookieDomain(final Host? domain) {
+  static Host? _validateCookieDomain(Host? domain) {
     if (domain == null) return null;
     if (domain.port != null) {
       throw const FormatException(
@@ -114,7 +114,7 @@ final class SetCookie {
   // non-positive value expires the cookie). The generic numeric parser would
   // also accept hex (`0xFF`) and other forms, silently reinterpreting the
   // lifetime, so validate the decimal grammar before parsing.
-  static int _parseMaxAge(final Uint8List value) {
+  static int _parseMaxAge(Uint8List value) {
     final digits = value.isNotEmpty && value[0] == 0x2D ? 1 : 0;
     if (digits == value.length || digitsOf(value, digits) == null) {
       throw const FormatException('Invalid Max-Age attribute');
@@ -124,7 +124,7 @@ final class SetCookie {
 
   /// Parses a single `Set-Cookie` line (without the header name) into a
   /// [SetCookie].
-  factory SetCookie.parse(final String value) =>
+  factory SetCookie.parse(String value) =>
       SetCookie._parseBytes(latin1Bytes(value));
 
   /// [parse] over the wire bytes of one field.
@@ -133,7 +133,7 @@ final class SetCookie {
   /// later one a cookie attribute (cookie-av). An unrecognized attribute,
   /// say a future `Partitioned` or `Priority`, is ignored rather than
   /// failing the parse.
-  static SetCookie _parseBytes(final Uint8List bytes) {
+  static SetCookie _parseBytes(Uint8List bytes) {
     final parts = splitAll(bytes, 0x3B);
     if (parts.isEmpty) {
       throw const FormatException('Value cannot be empty');
@@ -166,7 +166,7 @@ final class SetCookie {
             );
           }
           sameSite = SameSite.values.firstWhere(
-            (final s) =>
+            (s) =>
                 equalsIgnoreAsciiCase(attrValue, 0, attrValue.length, s.name),
             orElse: () =>
                 throw const FormatException('Invalid SameSite attribute'),
@@ -237,7 +237,7 @@ final class SetCookie {
   }
 
   @override
-  bool operator ==(final Object other) =>
+  bool operator ==(Object other) =>
       identical(this, other) ||
       other is SetCookie &&
           name == other.name &&
@@ -295,7 +295,7 @@ final class SetCookieHeader {
   final List<SetCookie> cookies;
 
   /// Wraps [cookies] (defensively copied and unmodifiable).
-  SetCookieHeader(final List<SetCookie> cookies)
+  SetCookieHeader(List<SetCookie> cookies)
     : cookies = List.unmodifiable(cookies);
 
   /// An empty collection -- a convenient starting point for [add]/[addAll].
@@ -308,35 +308,35 @@ final class SetCookieHeader {
   /// specific reason. Unlike the request [CookieHeader] -- which skips a stray
   /// malformed cookie sent by an untrusted client -- `Set-Cookie` is produced
   /// by the server itself, so there is no lenient-skip rationale.
-  factory SetCookieHeader.parse(final Iterable<String> values) =>
+  factory SetCookieHeader.parse(Iterable<String> values) =>
       _parseFields([for (final value in values) latin1Bytes(value)]);
 
   /// Takes [cookies], a list the parser built, as its own.
   const SetCookieHeader._(this.cookies);
 
   /// [parse] over the wire bytes of every field, one cookie each.
-  static SetCookieHeader _parseFields(final List<Uint8List> fields) =>
+  static SetCookieHeader _parseFields(List<Uint8List> fields) =>
       SetCookieHeader._(
         List.generate(
           fields.length,
-          (final i) => SetCookie._parseBytes(fields[i]),
+          (i) => SetCookie._parseBytes(fields[i]),
           growable: false,
         ),
       );
 
   /// Returns a new collection with [cookie] appended.
-  SetCookieHeader add(final SetCookie cookie) =>
+  SetCookieHeader add(SetCookie cookie) =>
       SetCookieHeader([...cookies, cookie]);
 
   /// Returns a new collection with all of [cookies] appended.
-  SetCookieHeader addAll(final Iterable<SetCookie> cookies) =>
+  SetCookieHeader addAll(Iterable<SetCookie> cookies) =>
       SetCookieHeader([...this.cookies, ...cookies]);
 
-  static List<String> _encode(final SetCookieHeader value) =>
-      value.cookies.map((final c) => c.encode()).toList();
+  static List<String> _encode(SetCookieHeader value) =>
+      value.cookies.map((c) => c.encode()).toList();
 
   @override
-  bool operator ==(final Object other) =>
+  bool operator ==(Object other) =>
       identical(this, other) ||
       other is SetCookieHeader &&
           const ListEquality<SetCookie>().equals(cookies, other.cookies);

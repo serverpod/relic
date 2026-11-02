@@ -593,7 +593,7 @@ void main() {
           () => trieA.attach(NormalizedPath('/existing'), trieB),
           throwsA(
             isA<ArgumentError>().having(
-              (final e) => e.message,
+              (e) => e.message,
               'message',
               equals('Conflicting values'),
             ),
@@ -610,7 +610,7 @@ void main() {
           () => trieA.attach(NormalizedPath('/existing'), trieB),
           throwsA(
             isA<ArgumentError>().having(
-              (final e) => e.message,
+              (e) => e.message,
               'message',
               equals('Conflicting parameters'),
             ),
@@ -627,7 +627,7 @@ void main() {
           () => trieA.attach(NormalizedPath('/existing'), trieB),
           throwsA(
             isA<ArgumentError>().having(
-              (final e) => e.message,
+              (e) => e.message,
               'message',
               equals('Conflicting children'),
             ),

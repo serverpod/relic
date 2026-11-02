@@ -9,9 +9,7 @@ import '../primitives/byte_scanner.dart' show latin1Bytes;
 /// This header indicates the mode of the request.
 final class SecFetchModeHeader {
   static const codec = HeaderCodec.bytes(_parseBytes, __encode);
-  static List<String> __encode(final SecFetchModeHeader value) => [
-    value._encode(),
-  ];
+  static List<String> __encode(SecFetchModeHeader value) => [value._encode()];
 
   /// The mode value of the request.
   final String mode;
@@ -38,11 +36,11 @@ final class SecFetchModeHeader {
   /// Parses a [value] into a [SecFetchModeHeader]. A value outside the
   /// predefined set is rejected; new Fetch values are adopted by updating the
   /// set in a relic release rather than accepted ad hoc.
-  factory SecFetchModeHeader.parse(final String value) =>
+  factory SecFetchModeHeader.parse(String value) =>
       _parseBytes(latin1Bytes(value));
 
   /// [parse] over the wire bytes.
-  static SecFetchModeHeader _parseBytes(final Uint8List bytes) {
+  static SecFetchModeHeader _parseBytes(Uint8List bytes) {
     final value = trimmed(bytes);
     if (value.isEmpty) {
       throw const FormatException('Value cannot be empty');
@@ -69,7 +67,7 @@ final class SecFetchModeHeader {
   String _encode() => mode;
 
   @override
-  bool operator ==(final Object other) =>
+  bool operator ==(Object other) =>
       identical(this, other) ||
       other is SecFetchModeHeader && mode == other.mode;
 

@@ -40,7 +40,7 @@ final class ParameterValue {
   ///
   /// Equivalent to [HeaderScanner.readTokenOrQuotedString] but returns a
   /// [ParameterValue] wrapper.
-  factory ParameterValue.read(final HeaderScanner scanner) {
+  factory ParameterValue.read(HeaderScanner scanner) {
     return ParameterValue(scanner.readTokenOrQuotedString());
   }
 
@@ -52,7 +52,7 @@ final class ParameterValue {
   }
 
   @override
-  bool operator ==(final Object other) =>
+  bool operator ==(Object other) =>
       identical(this, other) ||
       (other is ParameterValue && value == other.value);
 
@@ -63,7 +63,7 @@ final class ParameterValue {
   String toString() => encode();
 }
 
-String _quote(final String s) {
+String _quote(String s) {
   final buf = StringBuffer()..writeCharCode(0x22);
   for (var i = 0; i < s.length; i++) {
     final c = s.codeUnitAt(i);
@@ -74,7 +74,7 @@ String _quote(final String s) {
   return buf.toString();
 }
 
-bool _isLegalInQuotedString(final int c) {
+bool _isLegalInQuotedString(int c) {
   if (c == 0x09) return true; // HTAB
   if (c >= 0x20 && c <= 0x7E) return true; // SP + VCHAR
   if (c >= 0x80 && c <= 0xFF) return true; // obs-text

@@ -28,9 +28,9 @@ import 'simulation.dart';
 ///   and calls [onCancelled].
 /// - Anything else is 404.
 Handler workloadHandler(
-  final Simulation sim, {
-  final void Function()? onCancelled,
-}) => (final request) async {
+  Simulation sim, {
+  void Function()? onCancelled,
+}) => (request) async {
   final query = request.url.queryParameters;
   switch (request.url.path) {
     case '/echo':
@@ -60,7 +60,7 @@ Handler workloadHandler(
     case '/close':
       return Response.ok(
         headers: Headers.build(
-          (final h) => h.connection = const ConnectionHeader.directives([
+          (h) => h.connection = const ConnectionHeader.directives([
             ConnectionHeaderType.close,
           ]),
         ),
@@ -69,22 +69,22 @@ Handler workloadHandler(
     case '/error':
       throw StateError('the workload asked for an error');
     case '/ws':
-      return WebSocketUpgrade((final socket) {
+      return WebSocketUpgrade((socket) {
         socket.events.listen(
-          (final event) {
+          (event) {
             if (event case TextDataReceived(:final text)) socket.sendText(text);
           },
-          onError: (final _) {
+          onError: (_) {
             // A peer that went away. The socket has closed itself.
           },
         );
       });
     case '/hijack':
-      return Hijack((final channel) {
+      return Hijack((channel) {
         channel.stream.listen(
           channel.sink.add,
           onDone: channel.sink.close,
-          onError: (final _) => channel.sink.close(),
+          onError: (_) => channel.sink.close(),
         );
       });
     case '/wait':
@@ -97,11 +97,11 @@ Handler workloadHandler(
 };
 
 /// [n] bytes a client can check: byte i is `(i * 7) & 0xff`.
-Uint8List workloadPattern(final int n) =>
-    Uint8List.fromList(List.generate(n, (final i) => (i * 7) & 0xff));
+Uint8List workloadPattern(int n) =>
+    Uint8List.fromList(List.generate(n, (i) => (i * 7) & 0xff));
 
 /// FNV-1a over [bytes], 32 bits, as hex. What `/echo` says about a body.
-String workloadHash(final Uint8List bytes) {
+String workloadHash(Uint8List bytes) {
   var hash = 0x811c9dc5;
   for (final byte in bytes) {
     hash = ((hash ^ byte) * 0x01000193) & 0xffffffff;
@@ -110,7 +110,7 @@ String workloadHash(final Uint8List bytes) {
 }
 
 /// What `/echo` answers to [method] with [body].
-String workloadEcho(final Method method, final Uint8List body) =>
+String workloadEcho(Method method, Uint8List body) =>
     '${method.value} ${body.length} ${workloadHash(body)}';
 
 /// What one client session does to the server.
@@ -235,14 +235,14 @@ final class Workload {
   /// How many times a client reset a `/wait` request, each of which the
   /// handler must see as a cancellation.
   int get abandonedWaits =>
-      taken.where((final t) => t.$2 == WorkloadAction.abandonWait).length;
+      taken.where((t) => t.$2 == WorkloadAction.abandonWait).length;
 
   /// Actions whose exchange may complete on the server although the
   /// client read no response: a reset that lost the race with the answer,
   /// or a client that never read.
   int get unreadCompletions => taken
       .where(
-        (final t) =>
+        (t) =>
             t.$2 == WorkloadAction.abandon ||
             t.$2 == WorkloadAction.stopReading,
       )
@@ -265,7 +265,7 @@ final class Workload {
   Future<void> run() =>
       Future.wait([for (var i = 0; i < sessions; i++) _session(i)]);
 
-  Future<void> _session(final int id) async {
+  Future<void> _session(int id) async {
     await sim.sleep(Duration(milliseconds: sim.random.nextInt(200)));
     final count = 1 + sim.random.nextInt(actionsPerSession);
     SimHttpClient? client;
@@ -287,20 +287,18 @@ final class Workload {
   /// Runs [action] on [client]. False when the connection is no longer
   /// good for another request.
   Future<bool> _perform(
-    final int id,
-    final WorkloadAction action,
-    final SimHttpClient client,
+    int id,
+    WorkloadAction action,
+    SimHttpClient client,
   ) async {
-    void check(final bool ok, final String detail) {
+    void check(bool ok, String detail) {
       if (!ok) throw WorkloadFailure(id, action, detail);
       checked++;
     }
 
     /// A response the handler wrote, read within the bound, with a head
     /// every response owes: one Date, and a length or a coding, not both.
-    Future<SimResponse> answered(
-      final Future<SimResponse> Function() read,
-    ) async {
+    Future<SimResponse> answered(Future<SimResponse> Function() read) async {
       final started = sim.elapsed;
       final response = await read();
       final took = sim.elapsed - started;
@@ -505,7 +503,7 @@ final class Workload {
     }
   }
 
-  static bool _sameBytes(final Uint8List a, final Uint8List b) {
+  static bool _sameBytes(Uint8List a, Uint8List b) {
     if (a.length != b.length) return false;
     for (var i = 0; i < a.length; i++) {
       if (a[i] != b[i]) return false;

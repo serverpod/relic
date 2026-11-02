@@ -19,22 +19,22 @@ final class IPv6Address extends IPAddress {
   IPv6Address._(super.bytes, {super.prefixLength}) : super._();
 
   /// Create IPv6 from string
-  factory IPv6Address._parse(final String address) {
+  factory IPv6Address._parse(String address) {
     final bytes = _parseIPv6String(address);
     return IPv6Address._(bytes);
   }
 
   /// Create IPv6 from individual hextets
   factory IPv6Address.fromHextets(
-    final int a,
-    final int b,
-    final int c,
-    final int d,
-    final int e,
-    final int f,
-    final int g,
-    final int h, {
-    final int? prefixLength,
+    int a,
+    int b,
+    int c,
+    int d,
+    int e,
+    int f,
+    int g,
+    int h, {
+    int? prefixLength,
   }) {
     final segments = <int>[a, b, c, d, e, f, g, h];
     for (final segment in segments) {
@@ -49,10 +49,7 @@ final class IPv6Address extends IPAddress {
   }
 
   /// Create IPv6 from 8 16-bit [segments], and optional [prefixLength].
-  factory IPv6Address.fromSegments(
-    final Uint16List segments, {
-    final int? prefixLength,
-  }) {
+  factory IPv6Address.fromSegments(Uint16List segments, {int? prefixLength}) {
     if (segments.length != 8) {
       throw ArgumentError('IPv6 requires exactly 8 segments');
     }
@@ -62,7 +59,7 @@ final class IPv6Address extends IPAddress {
     );
   }
 
-  static Uint8List _parseIPv6String(final String address) {
+  static Uint8List _parseIPv6String(String address) {
     // Handle :: expansion
     if (address.contains('::')) {
       final parts = address.split('::');
@@ -95,7 +92,7 @@ final class IPv6Address extends IPAddress {
     return _segmentsToBytes(parts);
   }
 
-  static Uint8List _segmentsToBytes(final List<String> segments) {
+  static Uint8List _segmentsToBytes(List<String> segments) {
     final bytes = Uint8List(16);
 
     for (int i = 0; i < 8; i++) {
@@ -152,15 +149,13 @@ final class IPv6Address extends IPAddress {
 
     // Only compress if run is 2 or more zeros
     if (bestLength < 2) {
-      return segments.map((final s) => s.toRadixString(16)).join(':');
+      return segments.map((s) => s.toRadixString(16)).join(':');
     }
 
-    final before = segments
-        .take(bestStart)
-        .map((final s) => s.toRadixString(16));
+    final before = segments.take(bestStart).map((s) => s.toRadixString(16));
     final after = segments
         .skip(bestStart + bestLength)
-        .map((final s) => s.toRadixString(16));
+        .map((s) => s.toRadixString(16));
 
     if (bestStart == 0 && bestStart + bestLength == 8) {
       return '::';

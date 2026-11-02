@@ -22,7 +22,7 @@ void main() {
     final isolated = IsolatedObject<_Counter>(() => _Counter(0));
 
     // Start a long-running operation
-    final pendingOperation = isolated.evaluate((final counter) async {
+    final pendingOperation = isolated.evaluate((counter) async {
       await Future<void>.delayed(const Duration(seconds: 10));
       return counter.value;
     });
@@ -38,7 +38,7 @@ void main() {
       pendingOperation,
       throwsA(
         isA<StateError>().having(
-          (final e) => e.message,
+          (e) => e.message,
           'message',
           contains('channel closed'),
         ),
@@ -53,5 +53,5 @@ class _Counter {
   _Counter(this.value);
 
   void increment() => value++;
-  void add(final int amount) => value += amount;
+  void add(int amount) => value += amount;
 }

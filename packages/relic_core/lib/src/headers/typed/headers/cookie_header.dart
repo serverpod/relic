@@ -10,13 +10,13 @@ import 'util/cookie_util.dart';
 /// This class manages the parsing and representation of cookies.
 final class CookieHeader {
   static const codec = HeaderCodec.bytes(_parseBytes, __encode);
-  static List<String> __encode(final CookieHeader value) => [value._encode()];
+  static List<String> __encode(CookieHeader value) => [value._encode()];
 
   /// The list of cookies.
   final List<Cookie> cookies;
 
   /// Constructs a [CookieHeader] instance with the specified cookies.
-  CookieHeader.cookies(final List<Cookie> cookies)
+  CookieHeader.cookies(List<Cookie> cookies)
     : assert(cookies.isNotEmpty),
       cookies = List.unmodifiable(cookies);
 
@@ -26,8 +26,7 @@ final class CookieHeader {
   /// Parses the Cookie header value and returns a [CookieHeader] instance.
   ///
   /// This method processes the header value, extracting the cookies into a list.
-  factory CookieHeader.parse(final String value) =>
-      _parseBytes(latin1Bytes(value));
+  factory CookieHeader.parse(String value) => _parseBytes(latin1Bytes(value));
 
   /// The header from the wire [bytes] of its value.
   ///
@@ -45,7 +44,7 @@ final class CookieHeader {
   /// included, so [getCookies] reports the true count. [getCookie] returns
   /// the first match. Cookie names are case-sensitive per RFC 6265
   /// 4.2.2/5.4, so `Sid` and `sid` stay distinct.
-  static CookieHeader _parseBytes(final Uint8List bytes) {
+  static CookieHeader _parseBytes(Uint8List bytes) {
     if (bytes.isEmpty) {
       throw const FormatException('Value cannot be empty');
     }
@@ -134,24 +133,24 @@ final class CookieHeader {
   /// A `Cookie` header may carry more than one cookie with the same name (RFC 6265 5.4).
   /// Use [getCookies] when you must distinguish "exactly one" from a duplicate,
   /// rather than blindly trusting the first.
-  Cookie? getCookie(final String name) {
-    return cookies.firstWhereOrNull((final cookie) => cookie.name == name);
+  Cookie? getCookie(String name) {
+    return cookies.firstWhereOrNull((cookie) => cookie.name == name);
   }
 
   /// Returns every cookie named [name], in header order (possibly empty).
-  Iterable<Cookie> getCookies(final String name) {
-    return cookies.where((final cookie) => cookie.name == name);
+  Iterable<Cookie> getCookies(String name) {
+    return cookies.where((cookie) => cookie.name == name);
   }
 
   /// Converts the [CookieHeader] instance into a string representation
   /// suitable for HTTP headers.
 
   String _encode() {
-    return cookies.map((final cookie) => cookie._encode()).join('; ');
+    return cookies.map((cookie) => cookie._encode()).join('; ');
   }
 
   @override
-  bool operator ==(final Object other) =>
+  bool operator ==(Object other) =>
       identical(this, other) ||
       other is CookieHeader &&
           const ListEquality<Cookie>().equals(cookies, other.cookies);
@@ -173,13 +172,13 @@ class Cookie {
   /// The value of the cookie.
   final String value;
 
-  Cookie({required final String name, required final String value})
+  Cookie({required String name, required String value})
     : name = validateCookieName(name),
       value = validateCookieValue(value);
 
   const Cookie._(this.name, this.value);
 
-  factory Cookie.parse(final String value) {
+  factory Cookie.parse(String value) {
     // Split on the FIRST '=' only; RFC 6265 cookie-octets permit '=' to
     // appear inside the value (e.g. base64 padding).
     final eq = value.indexOf('=');
@@ -196,7 +195,7 @@ class Cookie {
   String _encode() => '$name=$value';
 
   @override
-  bool operator ==(final Object other) =>
+  bool operator ==(Object other) =>
       identical(this, other) ||
       other is Cookie && name == other.name && value == other.value;
 

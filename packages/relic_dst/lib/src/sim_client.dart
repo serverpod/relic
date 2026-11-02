@@ -20,7 +20,7 @@ final class SimResponse {
   int get statusCode => head.status;
   String get reason => head.reason;
   Map<String, List<String>> get headers => head.headers;
-  String? header(final String name) => head.header(name);
+  String? header(String name) => head.header(name);
   String get body => utf8.decode(bodyBytes);
 
   @override
@@ -80,21 +80,21 @@ final class ByteReader {
   }
 
   /// Takes the first [n] buffered bytes.
-  Uint8List take(final int n) {
+  Uint8List take(int n) {
     final out = _buffer.sublist(0, n);
     consume(n);
     return out;
   }
 
   /// Drops the first [n] buffered bytes.
-  void consume(final int n) {
+  void consume(int n) {
     if (n == 0) return;
     _buffer.setRange(0, _length - n, _buffer, n);
     _length -= n;
   }
 
   /// Exactly [n] bytes, or [HttpParseException] when the peer closed first.
-  Future<Uint8List> readExactly(final int n) async {
+  Future<Uint8List> readExactly(int n) async {
     while (_length < n) {
       if (!await more()) {
         throw HttpParseException(
@@ -114,9 +114,7 @@ final class ByteReader {
 
   /// Waits until [parse] makes something of the buffer. Nothing is
   /// consumed.
-  Future<T> readHead<T>(
-    final T? Function(Uint8List buffer, int length) parse,
-  ) async {
+  Future<T> readHead<T>(T? Function(Uint8List buffer, int length) parse) async {
     while (true) {
       final head = parse(_buffer, _length);
       if (head != null) return head;
@@ -129,7 +127,7 @@ final class ByteReader {
     }
   }
 
-  void _onData(final Uint8List data) {
+  void _onData(Uint8List data) {
     final needed = _length + data.length;
     if (needed > _buffer.length) {
       var size = _buffer.length * 2;
@@ -145,7 +143,7 @@ final class ByteReader {
     _wake();
   }
 
-  void _onError(final Object error) {
+  void _onError(Object error) {
     _error = error;
     _eof = true;
     _wake();
@@ -189,7 +187,7 @@ final class SimHttpClient {
   /// the one being opened.
   Future<SimSocket> get socket {
     if (_socket case final socket?) return Future.value(socket);
-    return _connecting ??= network.connect(port).then((final socket) {
+    return _connecting ??= network.connect(port).then((socket) {
       _socket = socket;
       _reader = ByteReader(socket);
       return socket;
@@ -206,20 +204,20 @@ final class SimHttpClient {
   /// Writes a request. Nothing is read. A body goes out with its length,
   /// or chunked in pieces of random size when [chunked].
   Future<void> write(
-    final Method method,
-    final String target, {
-    final Map<String, String> headers = const {},
-    final List<int>? body,
-    final bool chunked = false,
-    final bool close = false,
-    final HttpProtocol protocol = HttpProtocol.http11,
-    final bool omitHost = false,
+    Method method,
+    String target, {
+    Map<String, String> headers = const {},
+    List<int>? body,
+    bool chunked = false,
+    bool close = false,
+    HttpProtocol protocol = HttpProtocol.http11,
+    bool omitHost = false,
   }) async {
     final version = protocol == HttpProtocol.http10 ? 'HTTP/1.0' : 'HTTP/1.1';
     final head = StringBuffer('${method.value} $target $version\r\n');
-    final hasHost = headers.keys.any((final k) => k.toLowerCase() == 'host');
+    final hasHost = headers.keys.any((k) => k.toLowerCase() == 'host');
     if (!omitHost && !hasHost) head.write('host: $host\r\n');
-    headers.forEach((final name, final value) {
+    headers.forEach((name, value) {
       head.write('$name: $value\r\n');
     });
     if (body != null && !chunked) {
@@ -247,23 +245,23 @@ final class SimHttpClient {
   }
 
   /// Writes [bytes] as they are, for a request the server should refuse.
-  Future<void> writeRaw(final List<int> bytes) async {
+  Future<void> writeRaw(List<int> bytes) async {
     final socket = await this.socket;
     socket.sink.add(Uint8List.fromList(bytes));
   }
 
   /// Writes [text] as Latin-1, for a request spelled out by hand.
-  Future<void> writeText(final String text) => writeRaw(latin1.encode(text));
+  Future<void> writeText(String text) => writeRaw(latin1.encode(text));
 
   /// Sends a request and reads its response.
   Future<SimResponse> send(
-    final Method method,
-    final String target, {
-    final Map<String, String> headers = const {},
-    final List<int>? body,
-    final bool chunked = false,
-    final bool close = false,
-    final HttpProtocol protocol = HttpProtocol.http11,
+    Method method,
+    String target, {
+    Map<String, String> headers = const {},
+    List<int>? body,
+    bool chunked = false,
+    bool close = false,
+    HttpProtocol protocol = HttpProtocol.http11,
   }) async {
     await write(
       method,
@@ -278,30 +276,27 @@ final class SimHttpClient {
   }
 
   Future<SimResponse> get(
-    final String target, {
-    final Map<String, String> headers = const {},
-    final bool close = false,
+    String target, {
+    Map<String, String> headers = const {},
+    bool close = false,
   }) => send(Method.get, target, headers: headers, close: close);
 
   Future<SimResponse> post(
-    final String target,
-    final List<int> body, {
-    final Map<String, String> headers = const {},
-    final bool chunked = false,
+    String target,
+    List<int> body, {
+    Map<String, String> headers = const {},
+    bool chunked = false,
   }) =>
       send(Method.post, target, headers: headers, body: body, chunked: chunked);
 
   /// Reads one response, for a request made with [method].
-  Future<SimResponse> read({final Method method = Method.get}) async {
+  Future<SimResponse> read({Method method = Method.get}) async {
     final head = await reader.readHead(parseStatusHead);
     reader.consume(head.length);
     return SimResponse(head, await _readBody(head, method));
   }
 
-  Future<Uint8List> _readBody(
-    final StatusHead head,
-    final Method method,
-  ) async {
+  Future<Uint8List> _readBody(StatusHead head, Method method) async {
     if (!head.hasBody(method)) return Uint8List(0);
     if (head.chunked) {
       final out = BytesBuilder(copy: true);
@@ -340,9 +335,9 @@ final class SimHttpClient {
   /// [WebSocketUpgradeRefused] when the server answers with anything but
   /// a valid 101.
   Future<SimWebSocketClient> upgrade(
-    final String target, {
-    final Map<String, String> headers = const {},
-    final String? origin,
+    String target, {
+    Map<String, String> headers = const {},
+    String? origin,
   }) async {
     final nonce = Uint8List(16);
     for (var i = 0; i < nonce.length; i++) {
@@ -419,29 +414,24 @@ final class SimWebSocketClient {
     }
   }
 
-  void send(
-    final WebSocketOpcode opcode,
-    final List<int> payload, {
-    final bool fin = true,
-  }) {
+  void send(WebSocketOpcode opcode, List<int> payload, {bool fin = true}) {
     final socket = _client._socket!;
     if (!socket.isOpen) return;
     socket.sink.add(_maskedFrame(opcode, payload, fin));
   }
 
-  void sendText(final String text) =>
-      send(WebSocketOpcode.text, utf8.encode(text));
+  void sendText(String text) => send(WebSocketOpcode.text, utf8.encode(text));
 
-  void sendBytes(final Uint8List bytes) => send(WebSocketOpcode.binary, bytes);
+  void sendBytes(Uint8List bytes) => send(WebSocketOpcode.binary, bytes);
 
-  void ping([final List<int> payload = const []]) =>
+  void ping([List<int> payload = const []]) =>
       send(WebSocketOpcode.ping, payload);
 
-  void pong([final List<int> payload = const []]) =>
+  void pong([List<int> payload = const []]) =>
       send(WebSocketOpcode.pong, payload);
 
   /// Sends a close frame. The server answers with its own and closes.
-  void close([final int? code, final String reason = '']) =>
+  void close([int? code, String reason = '']) =>
       send(WebSocketOpcode.close, encodeClosePayload(code, reason));
 
   /// Closes the connection's write side without a close frame.
@@ -450,11 +440,7 @@ final class SimWebSocketClient {
   /// Resets the connection.
   void destroy() => _client.destroy();
 
-  Uint8List _maskedFrame(
-    final WebSocketOpcode opcode,
-    final List<int> payload,
-    final bool fin,
-  ) {
+  Uint8List _maskedFrame(WebSocketOpcode opcode, List<int> payload, bool fin) {
     final length = payload.length;
     final extra = length < 126
         ? 0
@@ -492,7 +478,7 @@ final class SimWebSocketClient {
 
   /// A server frame at the start of [bytes] and its length, or null when
   /// it is not all there.
-  static (WebSocketFrame, int)? _parseFrame(final Uint8List bytes) {
+  static (WebSocketFrame, int)? _parseFrame(Uint8List bytes) {
     if (bytes.length < 2) return null;
     final fin = bytes[0] & 0x80 != 0;
     final opcode = WebSocketOpcode.fromCode(bytes[0] & 0x0f);

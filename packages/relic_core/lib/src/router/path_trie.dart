@@ -87,7 +87,7 @@ final class PathTrie<T extends Object> {
   /// thrown. If adding a parameter conflicts with an existing parameter name at
   /// the same level (e.g., adding `/users/:id` after `/users/:userId`), an
   /// [ArgumentError] is also thrown.
-  void add(final NormalizedPath normalizedPath, final T value) {
+  void add(NormalizedPath normalizedPath, T value) {
     final currentNode = _build(normalizedPath);
     // Mark the end node and handle potential overwrites
     if (currentNode.value != null) {
@@ -112,7 +112,7 @@ final class PathTrie<T extends Object> {
   /// Throws an [ArgumentError] if [normalizedPath] contains conflicting
   /// parameter definitions (e.g., adding `/users/:id` when `/users/:userId`
   /// exists at the same parameter level, or if a parameter name is empty).
-  bool addOrUpdate(final NormalizedPath normalizedPath, final T value) {
+  bool addOrUpdate(NormalizedPath normalizedPath, T value) {
     final currentNode = _build(normalizedPath);
     final added = currentNode.value == null;
     currentNode.value = value;
@@ -136,8 +136,8 @@ final class PathTrie<T extends Object> {
   /// parameter definitions (e.g., adding `/users/:id` when `/users/:userId`
   /// exists at the same parameter level, or if a parameter name is empty).
   T addOrUpdateInPlace(
-    final NormalizedPath normalizedPath,
-    final T Function(T? old) action,
+    NormalizedPath normalizedPath,
+    T Function(T? old) action,
   ) {
     final currentNode = _build(normalizedPath);
     final value = action(currentNode.value);
@@ -156,7 +156,7 @@ final class PathTrie<T extends Object> {
   ///
   /// Use [addOrUpdate] to set a value on a path that might not exist or
   /// might not currently have a value.
-  void update(final NormalizedPath normalizedPath, final T value) {
+  void update(NormalizedPath normalizedPath, T value) {
     final currentNode = _find(normalizedPath);
     if (currentNode == null || currentNode.value == null) {
       throw ArgumentError.value(
@@ -179,7 +179,7 @@ final class PathTrie<T extends Object> {
   ///
   /// Returns the value that was previously associated with the path, or `null`
   /// if the path was not found or if the node at the path did not have a value.
-  T? remove(final NormalizedPath normalizedPath) {
+  T? remove(NormalizedPath normalizedPath) {
     final currentNode = _find(normalizedPath);
     if (currentNode == null) return null;
     final removed = currentNode.value;
@@ -192,21 +192,21 @@ final class PathTrie<T extends Object> {
   ///
   /// If an existing mapping already exists then the new mapping will be the
   /// old composed with [map], otherwise [map] will be used directly.
-  void use(final NormalizedPath normalizedPath, final T Function(T) map) {
+  void use(NormalizedPath normalizedPath, T Function(T) map) {
     final currentNode = _build(normalizedPath);
     final oldMap = currentNode.map;
-    currentNode.map = oldMap == null ? map : (final v) => oldMap(map(v));
+    currentNode.map = oldMap == null ? map : (v) => oldMap(map(v));
   }
 
   /// Finds the [_TrieNode] that exactly matches the given [normalizedPath].
-  _TrieNode<T>? _find(final NormalizedPath normalizedPath) {
+  _TrieNode<T>? _find(NormalizedPath normalizedPath) {
     final segments = normalizedPath.segments;
     _TrieNode<T> currentNode = _root;
 
     // Helper function
     @pragma('vm:prefer-inline')
     _TrieNode<T>? nextIf<U extends _DynamicSegment<T>>(
-      final _DynamicSegment<T>? dynamicSegment,
+      _DynamicSegment<T>? dynamicSegment,
     ) {
       if (dynamicSegment != null && dynamicSegment is U) {
         return dynamicSegment.node;
@@ -239,15 +239,15 @@ final class PathTrie<T extends Object> {
   }
 
   /// Builds a trie node for the given normalized path.
-  _TrieNode<T> _build(final NormalizedPath normalizedPath) {
+  _TrieNode<T> _build(NormalizedPath normalizedPath) {
     final segments = normalizedPath.segments;
     _TrieNode<T> currentNode = _root;
 
     // Helper function
     @pragma('vm:prefer-inline')
     void isA<U extends _DynamicSegment<T>>(
-      final _DynamicSegment<T>? dynamicSegment,
-      final int segmentNo,
+      _DynamicSegment<T>? dynamicSegment,
+      int segmentNo,
     ) {
       if (dynamicSegment != null && dynamicSegment is! U) {
         normalizedPath.raiseInvalidSegment(
@@ -338,9 +338,9 @@ final class PathTrie<T extends Object> {
   /// - There are overlapping children between the nodes.
   /// - Attaching at a tail path without [consume] being `true` and [trie] being single-value.
   void attach(
-    final NormalizedPath normalizedPath,
-    final PathTrie<T> trie, {
-    final bool consume = false,
+    NormalizedPath normalizedPath,
+    PathTrie<T> trie, {
+    bool consume = false,
   }) {
     final segments = normalizedPath.segments;
     if (segments.isNotEmpty &&
@@ -376,7 +376,7 @@ final class PathTrie<T extends Object> {
       final parentMap = currentNode.map;
       currentNode.map = parentMap == null
           ? childMap
-          : (final v) => parentMap(childMap(v));
+          : (v) => parentMap(childMap(v));
     }
     currentNode.children.addAll(node.children);
     trie._root = consume ? _TrieNode() : currentNode;
@@ -390,10 +390,7 @@ final class PathTrie<T extends Object> {
   ///
   /// Returns a [TrieMatch] containing the associated value and extracted
   /// parameters if a matching path is found, otherwise returns `null`.
-  TrieMatch<T>? lookup(
-    final NormalizedPath normalizedPath, {
-    final bool backtrack = true,
-  }) {
+  TrieMatch<T>? lookup(NormalizedPath normalizedPath, {bool backtrack = true}) {
     return backtrack
         ? _lookupRecursive(
             _root,
@@ -406,11 +403,11 @@ final class PathTrie<T extends Object> {
   }
 
   TrieMatch<T>? _lookupRecursive(
-    final _TrieNode<T> node,
-    final NormalizedPath normalizedPath,
-    final int index,
-    final T Function(T)? currentMap,
-    final Parameters parameters,
+    _TrieNode<T> node,
+    NormalizedPath normalizedPath,
+    int index,
+    T Function(T)? currentMap,
+    Parameters parameters,
   ) {
     final segments = normalizedPath.segments;
 
@@ -441,7 +438,7 @@ final class PathTrie<T extends Object> {
 
     final segment = segments[index];
 
-    TrieMatch<T>? next(_TrieNode<T> node, final T Function(T)? map) =>
+    TrieMatch<T>? next(_TrieNode<T> node, T Function(T)? map) =>
         _lookupRecursive(node, normalizedPath, index + 1, map, parameters);
 
     // Try literal match first
@@ -491,18 +488,18 @@ final class PathTrie<T extends Object> {
 
   /// Composes two map functions.
   static T Function(T)? _composeMap<T>(
-    final T Function(T)? outer,
-    final T Function(T)? inner,
+    T Function(T)? outer,
+    T Function(T)? inner,
   ) {
     if (outer == null) return inner;
     if (inner == null) return outer;
-    return (final v) => outer(inner(v));
+    return (v) => outer(inner(v));
   }
 
   /// A single descent with no backtracking: a literal child is taken over
   /// a dynamic segment at every step, and a dead end is a miss even when a
   /// dynamic branch higher up would have matched.
-  TrieMatch<T>? _lookupIterative(final NormalizedPath normalizedPath) {
+  TrieMatch<T>? _lookupIterative(NormalizedPath normalizedPath) {
     final segments = normalizedPath.segments;
     final parameters = <Symbol, String>{};
 
@@ -515,7 +512,7 @@ final class PathTrie<T extends Object> {
       final m = currentNode.map;
       currentMap = cm == null
           ? m // may also be null
-          : (m == null ? cm : (final v) => cm(m(v))); // compose map function
+          : (m == null ? cm : (v) => cm(m(v))); // compose map function
     }
 
     int i = 0;
@@ -577,9 +574,9 @@ final class PathTrie<T extends Object> {
   }
 
   Iterable<String> _enumeratePaths(
-    final _TrieNode<T> node,
-    final String currentPath,
-    final Set<_TrieNode<T>> visited,
+    _TrieNode<T> node,
+    String currentPath,
+    Set<_TrieNode<T>> visited,
   ) sync* {
     if (!visited.add(node)) return; // Cycle detection
 
@@ -617,7 +614,7 @@ final class PathTrie<T extends Object> {
   String toString() {
     final pathList = paths.toList();
     if (pathList.isEmpty) return 'PathTrie (empty)';
-    return 'PathTrie:\n${pathList.map((final p) => '  $p').join('\n')}';
+    return 'PathTrie:\n${pathList.map((p) => '  $p').join('\n')}';
   }
 
   /// Returns a DOT graph representation of the trie structure.
@@ -696,9 +693,9 @@ final class PathTrie<T extends Object> {
 
 extension on NormalizedPath {
   Never raiseInvalidSegment(
-    final int segmentNo,
-    final String message, {
-    final String name = 'normalizedPath',
+    int segmentNo,
+    String message, {
+    String name = 'normalizedPath',
   }) {
     throw ArgumentError.value(
       this,

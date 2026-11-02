@@ -9,9 +9,7 @@ import '../primitives/byte_scanner.dart' show latin1Bytes;
 /// This header indicates the destination of the request.
 final class SecFetchDestHeader {
   static const codec = HeaderCodec.bytes(_parseBytes, __encode);
-  static List<String> __encode(final SecFetchDestHeader value) => [
-    value._encode(),
-  ];
+  static List<String> __encode(SecFetchDestHeader value) => [value._encode()];
 
   /// The destination value of the request.
   final String destination;
@@ -71,11 +69,11 @@ final class SecFetchDestHeader {
   /// Parses a [value] into a [SecFetchDestHeader]. A value outside the
   /// predefined set is rejected; new Fetch values are adopted by updating the
   /// set in a relic release rather than accepted ad hoc.
-  factory SecFetchDestHeader.parse(final String value) =>
+  factory SecFetchDestHeader.parse(String value) =>
       _parseBytes(latin1Bytes(value));
 
   /// [parse] over the wire bytes.
-  static SecFetchDestHeader _parseBytes(final Uint8List bytes) {
+  static SecFetchDestHeader _parseBytes(Uint8List bytes) {
     final value = trimmed(bytes);
     if (value.isEmpty) {
       throw const FormatException('Value cannot be empty');
@@ -138,7 +136,7 @@ final class SecFetchDestHeader {
   String _encode() => destination;
 
   @override
-  bool operator ==(final Object other) =>
+  bool operator ==(Object other) =>
       identical(this, other) ||
       other is SecFetchDestHeader && destination == other.destination;
 

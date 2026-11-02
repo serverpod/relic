@@ -6,13 +6,13 @@ import '../primitives/byte_fields.dart';
 /// Wanna-be RFC3986 compliant 'Host' header.
 final class HostHeader {
   static const codec = HeaderCodec.bytes(_parseBytes, __encode);
-  static List<String> __encode(final HostHeader value) => [value._encode()];
+  static List<String> __encode(HostHeader value) => [value._encode()];
 
   final String host;
   final int? port;
   HostHeader._(this.host, this.port);
 
-  factory HostHeader(final String host, [final int? port]) {
+  factory HostHeader(String host, [int? port]) {
     final trimmed = host.trim();
     if (trimmed.isEmpty) {
       throw const FormatException('Host cannot be empty');
@@ -28,7 +28,7 @@ final class HostHeader {
   /// A plain `reg-name [ ":" port ]` of letters, digits, `.` and `-` is
   /// read here, which is what a browser sends. Anything else, an IP
   /// literal or an escape among them, goes through `Uri` as text.
-  static HostHeader _parseBytes(final Uint8List bytes) {
+  static HostHeader _parseBytes(Uint8List bytes) {
     final start = trimStart(bytes, 0, bytes.length);
     final end = trimEnd(bytes, start, bytes.length);
     var colon = -1;
@@ -102,7 +102,7 @@ final class HostHeader {
   /// [FormatException] for a non-digit, empty, or out-of-range value. Unlike
   /// `int.parse`, this rejects `0x..`, a leading sign, and surrounding
   /// whitespace, and reports a consistent 'Port out of range' message.
-  static int _parsePort(final String s, final String source) {
+  static int _parsePort(String s, String source) {
     if (s.isEmpty) {
       throw FormatException('Port cannot be empty', source);
     }
@@ -135,7 +135,7 @@ final class HostHeader {
   /// keeps the brackets) and encodes unambiguous syntax. Routing through the
   /// public factory also applies the same normalization and port-range check
   /// as the other constructors.
-  factory HostHeader.fromUri(final Uri uri) {
+  factory HostHeader.fromUri(Uri uri) {
     final host = uri.host.contains(':') ? '[${uri.host}]' : uri.host;
     return HostHeader(host, uri.hasPort ? uri.port : null);
   }
@@ -143,7 +143,7 @@ final class HostHeader {
   String _encode() => port == null ? host : '$host:$port';
 
   @override
-  bool operator ==(final Object other) {
+  bool operator ==(Object other) {
     if (identical(this, other)) return true;
     if (other is! HostHeader) return false;
     return host == other.host && port == other.port;

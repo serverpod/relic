@@ -92,7 +92,7 @@ void main() {
         const FormFieldEntry(name: 'name', value: 'second'),
       ]);
 
-      expect(fields.entries.map((final e) => e.name), ['name', 'role', 'name']);
+      expect(fields.entries.map((e) => e.name), ['name', 'role', 'name']);
       expect(fields.raw['name'], 'first');
       expect(fields.get(const StringFormField('role')), 'admin');
       expect(fields.getAll(const StringFormField('name')), ['first', 'second']);
@@ -171,7 +171,7 @@ void main() {
         FileFieldEntry(name: 'avatar', file: file3),
       ]);
 
-      expect(files.entries.map((final e) => e.name), [
+      expect(files.entries.map((e) => e.name), [
         'avatar',
         'attachment',
         'avatar',
@@ -309,11 +309,7 @@ void main() {
     expect(
       () => fields.get(const IntFormField('age')),
       throwsA(
-        isA<InvalidFormFieldException>().having(
-          (final e) => e.name,
-          'name',
-          'age',
-        ),
+        isA<InvalidFormFieldException>().having((e) => e.name, 'name', 'age'),
       ),
     );
   });
@@ -326,7 +322,7 @@ void main() {
     ]);
     final colorField = FormField<String>(
       'color',
-      (final value) => throw ArgumentError.value(value),
+      (value) => throw ArgumentError.value(value),
     );
 
     expect(() => fields.get(colorField), throwsArgumentError);
@@ -378,10 +374,7 @@ void main() {
   );
 }
 
-MemoryUploadedFile _file({
-  required final String filename,
-  required final String bytes,
-}) {
+MemoryUploadedFile _file({required String filename, required String bytes}) {
   return MemoryUploadedFile(
     filename: filename,
     bodyType: null,
@@ -395,7 +388,7 @@ _storeMemoryUpload() async {
   const storage = MemoryUploadStorage();
   final bodyType = BodyType(mimeType: MimeType.plainText, encoding: utf8);
   final headers = Headers.build(
-    (final mh) => mh[HeaderName.contentType] = [bodyType.toHeaderValue()],
+    (mh) => mh[HeaderName.contentType] = [bodyType.toHeaderValue()],
   );
 
   final file = await storage.store(

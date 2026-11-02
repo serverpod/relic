@@ -108,11 +108,9 @@ void main() {
       () async {
         final router = Router<Handler>();
         router.inject(
-          _HeaderSetMiddlewareObject(
-            (final mh) => mh['X-Middleware'] = ['applied'],
-          ),
+          _HeaderSetMiddlewareObject((mh) => mh['X-Middleware'] = ['applied']),
         );
-        router.get('/test', (final req) => Response.ok());
+        router.get('/test', (req) => Response.ok());
 
         final request = RequestInternal.create(
           Method.get,
@@ -133,12 +131,12 @@ void main() {
       final router = Router<Handler>();
       router.inject(
         _HeaderSetMiddlewareObject(
-          (final mh) => mh['X-Custom-Middleware'] = ['yes'],
+          (mh) => mh['X-Custom-Middleware'] = ['yes'],
           mountAt: '/api',
         ),
       );
-      router.get('/api/users', (final req) => Response.ok());
-      router.get('/other', (final req) => Response.ok());
+      router.get('/api/users', (req) => Response.ok());
+      router.get('/other', (req) => Response.ok());
 
       // Should apply to /api/* paths
       final apiRequest = RequestInternal.create(
@@ -170,16 +168,12 @@ void main() {
         'then they are all registered and compose correctly', () async {
       final router = Router<Handler>();
       router.inject(
-        _HeaderSetMiddlewareObject(
-          (final mh) => mh['X-Middleware'] = ['applied'],
-        ),
+        _HeaderSetMiddlewareObject((mh) => mh['X-Middleware'] = ['applied']),
       );
       router.inject(
-        _HeaderSetMiddlewareObject(
-          (final mh) => mh['X-Second'] = ['also-applied'],
-        ),
+        _HeaderSetMiddlewareObject((mh) => mh['X-Second'] = ['also-applied']),
       );
-      router.get('/test', (final req) => Response.ok());
+      router.get('/test', (req) => Response.ok());
 
       final request = RequestInternal.create(
         Method.get,
@@ -203,10 +197,10 @@ class _EchoHandlerObject extends HandlerObject {
   const _EchoHandlerObject({this.mountAt = '/'});
 
   @override
-  void injectIn(final Router<Handler> router) => router.post(mountAt, call);
+  void injectIn(Router<Handler> router) => router.post(mountAt, call);
 
   @override
-  FutureOr<Result> call(final Request req) {
+  FutureOr<Result> call(Request req) {
     final data = req.body.read();
     return Response.ok(body: Body.fromDataStream(data));
   }
@@ -220,11 +214,11 @@ class _HeaderSetMiddlewareObject extends MiddlewareObject {
   _HeaderSetMiddlewareObject(this.update, {this.mountAt = '/'});
 
   @override
-  void injectIn(final Router<Handler> router) => router.use(mountAt, call);
+  void injectIn(Router<Handler> router) => router.use(mountAt, call);
 
   @override
-  Handler call(final Handler next) {
-    return (final req) async {
+  Handler call(Handler next) {
+    return (req) async {
       final result = await next(req);
       if (result is! Response) return result;
       return result.copyWith(headers: result.headers.transform(update));
