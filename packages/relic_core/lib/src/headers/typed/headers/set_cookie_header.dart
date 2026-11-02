@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:collection/collection.dart' hide equalsIgnoreAsciiCase;
 import 'package:http_parser/http_parser.dart';
 import '../../../../relic_core.dart';
+import '../../codecs/common_types_codecs.dart' show parseDateBytes;
 
 import '../primitives/byte_fields.dart';
 import '../primitives/byte_scanner.dart' show latin1Bytes;

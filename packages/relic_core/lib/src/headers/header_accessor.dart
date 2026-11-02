@@ -33,7 +33,7 @@ final class HeaderAccessor<T extends Object>
     try {
       return codec.decode(raw);
     } on Exception catch (e) {
-      throw toInvalidHeaderException(e, key: key.lower, raw: raw);
+      throw _toInvalidHeaderException(e, key: key.lower, raw: raw);
     }
   }
 
@@ -49,7 +49,7 @@ final class HeaderAccessor<T extends Object>
     try {
       return decoder(bytes);
     } on Exception catch (e) {
-      throw toInvalidHeaderException(
+      throw _toInvalidHeaderException(
         e,
         key: key.lower,
         raw: [String.fromCharCodes(bytes)],
@@ -65,7 +65,7 @@ final class HeaderAccessor<T extends Object>
     try {
       return codec.decodeFields!(fields);
     } on Exception catch (e) {
-      throw toInvalidHeaderException(
+      throw _toInvalidHeaderException(
         e,
         key: key.lower,
         raw: [for (final f in fields) String.fromCharCodes(f)],
@@ -76,7 +76,7 @@ final class HeaderAccessor<T extends Object>
 
 /// Wraps [exception] as an [InvalidHeaderException] for [key], unless it
 /// already is one.
-InvalidHeaderException toInvalidHeaderException(
+InvalidHeaderException _toInvalidHeaderException(
   final Object exception, {
   required final String key,
   required final Iterable<String> raw,

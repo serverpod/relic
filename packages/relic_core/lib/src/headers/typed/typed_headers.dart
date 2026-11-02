@@ -23,7 +23,7 @@ export 'headers/cross_origin_embedder_policy_header.dart';
 export 'headers/cross_origin_opener_policy_header.dart';
 export 'headers/cross_origin_resource_policy_header.dart';
 export 'headers/etag_condition_header.dart';
-export 'headers/etag_header.dart' hide InternalEx;
+export 'headers/etag_header.dart' hide ETagHeaderInternal;
 export 'headers/expect_header.dart';
 export 'headers/forwarded_header.dart';
 export 'headers/from_header.dart';

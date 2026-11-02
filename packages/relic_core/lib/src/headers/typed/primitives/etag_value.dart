@@ -55,11 +55,11 @@ final class ETagValue {
       // A code unit no byte can be fails the etagc check below, as it did.
       bytes[i] = c > 0xFF ? 0x7F : c;
     }
-    return ETagValue.parseBytes(bytes);
+    return ETagValue._parseBytes(bytes);
   }
 
   /// [parse] over the wire bytes.
-  factory ETagValue.parseBytes(final Uint8List source) {
+  factory ETagValue._parseBytes(final Uint8List source) {
     var i = 0;
     var weak = false;
     if (source.length >= 2 && source[0] == 0x57 && source[1] == 0x2F) {
@@ -111,4 +111,11 @@ bool _isEtagc(final int c) {
   if (c >= 0x23 && c <= 0x7E) return true; // VCHAR minus DQUOTE
   if (c >= 0x80 && c <= 0xFF) return true; // obs-text
   return false;
+}
+
+/// Byte parsing for the typed headers, not exported from relic_core.dart.
+extension ETagValueInternal on ETagValue {
+  /// [ETagValue.parse] over the wire bytes.
+  static ETagValue parseBytes(final Uint8List source) =>
+      ETagValue._parseBytes(source);
 }
