@@ -24,13 +24,13 @@ Response countdown(Request req) {
 Future<Response> greeting(Request req) async {
   final file = File('_static_files/hello.txt');
   return Response.ok(
-    body: Body.lazy(
-      () {
+    body: Body(
+      open: () {
         stdout.writeln('opening ${file.path}');
         return file.openRead().cast<Uint8List>();
       },
       contentLength: await file.length(),
-      mimeType: MimeType.plainText,
+      bodyType: BodyType(mimeType: MimeType.plainText),
     ),
   );
 }

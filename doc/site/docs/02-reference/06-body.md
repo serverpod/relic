@@ -76,7 +76,7 @@ With the dart:io adapter, the four lines of the countdown reach the client toget
 
 ## Files, opened only when needed
 
-Serving a file as a stream means opening it. But not every response is sent. A HEAD request wants only the headers, and a request can fail before its response goes out. `Body.lazy` takes a function that opens the stream, and calls it only when the body is read:
+Serving a file as a stream means opening it. But not every response is sent. A HEAD request wants only the headers, and a request can fail before its response goes out. The `Body` constructor takes `open`, a function that makes the stream, and calls it only when the body is read:
 
 GITHUB_CODE_BLOCK lang="dart" file="../_example/basic/body.dart" doctag="body-lazy-file" title="A file that opens when read"
 

@@ -56,7 +56,7 @@ date: Fri, 23 Oct 2026 11:56:48 GMT
 content-length: 16
 ```
 
-The 16 is the length of `You asked for /` and its newline, although no body was sent. The adapter cancels the body's stream without reading it, and a body built with `Body.lazy` never makes its stream at all. The handler sees `Method.head` on `request.method`, so it can skip work that only the body needs.
+The 16 is the length of `You asked for /` and its newline, although no body was sent. The adapter cancels the body's stream without reading it, and a body built with `open` never makes its stream at all. The handler sees `Method.head` on `request.method`, so it can skip work that only the body needs.
 
 A path can still have a HEAD route of its own, and that route takes precedence, whatever order the routes are added in. The one exception to the fallback is a GET handler that returns a `Hijack` or a `WebSocketUpgrade`. Relic cannot strip a body from bytes that the handler writes itself, so a HEAD request to such a route gets 405. The [Handlers](./01-handlers.md#taking-over-the-connection) page shows a hijacking handler with a HEAD route of its own.
 

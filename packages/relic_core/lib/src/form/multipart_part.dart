@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import '../body/body.dart';
+import '../body/types/body_type.dart';
 import '../headers/headers.dart';
 import '../headers/typed/headers/content_disposition_header.dart';
 import '../headers/typed/headers/content_type_header.dart';
@@ -167,16 +168,17 @@ Body _body(
   final Stream<Uint8List> content,
   final ContentTypeHeader? contentType,
 ) {
-  if (contentType == null) return BodyInternal.create(content, null);
-  return BodyInternal.create(
-    content,
-    null,
-    mimeType: contentType.mimeType,
-    encoding: Encoding.getByName(contentType.charset),
-    parameters: {
-      for (final MapEntry(:key, :value) in contentType.parameters.entries)
-        if (key != 'charset') key: value,
-    },
+  if (contentType == null) return Body(stream: content);
+  return Body(
+    stream: content,
+    bodyType: BodyType(
+      mimeType: contentType.mimeType,
+      encoding: Encoding.getByName(contentType.charset),
+      parameters: {
+        for (final MapEntry(:key, :value) in contentType.parameters.entries)
+          if (key != 'charset') key: value,
+      },
+    ),
   );
 }
 

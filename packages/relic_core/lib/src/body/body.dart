@@ -8,7 +8,6 @@ import 'dart:typed_data';
 import 'package:async/async.dart';
 import 'package:mime/mime.dart';
 
-import '../headers/typed/headers/content_type_header.dart';
 import 'types/body_type.dart';
 import 'types/mime_type.dart';
 
@@ -123,16 +122,33 @@ class Body {
   /// ```
   final BodyType? bodyType;
 
-  Body._(
-    this._stream,
-    this.contentLength, {
+  /// A body from one of [bytes], [stream] or [open], or an empty body from
+  /// none of them.
+  ///
+  /// [bytes] when the whole body is in hand; its length is the
+  /// [contentLength]. [stream] when the body arrives as it is read; a body
+  /// consumed unread cancels it. [open] when making the stream costs
+  /// something, such as opening a file: it runs once, when the body is
+  /// read, and never for a body consumed unread. [bodyType] types the body,
+  /// and [BodyType.fromContentType] makes one from a Content-Type header.
+  ///
+  /// The `from` factories cover the common cases.
+  Body({
     this.bytes,
-    final Encoding? encoding,
-    final MimeType? mimeType,
-    final Map<String, String> parameters = const {},
-  }) : bodyType = _bodyType(mimeType, encoding, parameters);
-
-  Body._typed(this._stream, this.contentLength, {this.bytes, this.bodyType});
+    final Stream<Uint8List>? stream,
+    final Stream<Uint8List> Function()? open,
+    final int? contentLength,
+    this.bodyType,
+  }) : assert(
+         [bytes, stream, open].nonNulls.length <= 1,
+         'Pass at most one of bytes, stream and open',
+       ),
+       _stream = stream,
+       _open = open ?? (bytes == null && stream == null ? _openEmpty : null),
+       contentLength =
+           bytes?.length ??
+           contentLength ??
+           (stream == null && open == null ? 0 : null);
 
   static BodyType? _bodyType(
     final MimeType? mimeType,
@@ -184,7 +200,7 @@ class Body {
   /// final emptyBody = Body.empty();
   /// print(emptyBody.contentLength); // 0
   /// ```
-  factory Body.empty() => Body._(null, 0).._open = _openEmpty;
+  factory Body.empty() => Body();
 
   static Stream<Uint8List> _openEmpty() => const Stream.empty();
 
@@ -224,12 +240,9 @@ class Body {
 
     mimeType ??= _tryInferTextMimeTypeFrom(body) ?? MimeType.plainText;
 
-    return Body._(
-      null,
-      encoded.length,
+    return Body(
       bytes: encoded,
-      encoding: encoding,
-      mimeType: mimeType,
+      bodyType: _bodyType(mimeType, encoding, const {}),
     );
   }
 
@@ -303,8 +316,8 @@ class Body {
   ///
   /// The framing takes Content-Length from [contentLength]. A response that
   /// sends no body, such as the answer to a HEAD request, cancels the stream
-  /// without reading it. Use [Body.lazy] for a stream that opens a file or a
-  /// connection when listened to.
+  /// without reading it. Pass [Body.new] `open` for a stream that opens a
+  /// file or a connection when listened to.
   factory Body.fromDataStream(
     final Stream<Uint8List> body, {
     final Encoding? encoding,
@@ -312,44 +325,15 @@ class Body {
     final Map<String, String> parameters = const {},
     final int? contentLength,
   }) {
-    return Body._(
-      body,
-      contentLength,
-      encoding: _charsetFor(encoding, mimeType),
-      mimeType: mimeType,
-      parameters: parameters,
+    return Body(
+      stream: body,
+      contentLength: contentLength,
+      bodyType: _bodyType(
+        mimeType,
+        _charsetFor(encoding, mimeType),
+        parameters,
+      ),
     );
-  }
-
-  /// Creates a body whose stream [open] makes when the body is read.
-  ///
-  /// A body that is not sent, such as the answer to a HEAD request, is
-  /// never read, so [open] never runs and a file or connection behind the
-  /// stream is never opened. [open] runs at most once.
-  ///
-  /// ```dart
-  /// final fileBody = Body.lazy(
-  ///   () => file.openRead().cast(),
-  ///   mimeType: MimeType.pdf,
-  ///   contentLength: fileSize,
-  /// );
-  /// ```
-  ///
-  /// The other parameters are those of [Body.fromDataStream].
-  factory Body.lazy(
-    final Stream<Uint8List> Function() open, {
-    final Encoding? encoding,
-    final MimeType? mimeType = MimeType.octetStream,
-    final Map<String, String> parameters = const {},
-    final int? contentLength,
-  }) {
-    return Body._(
-      null,
-      contentLength,
-      encoding: _charsetFor(encoding, mimeType),
-      mimeType: mimeType,
-      parameters: parameters,
-    ).._open = open;
   }
 
   /// The charset of a body with [mimeType] when [encoding] does not name
@@ -398,13 +382,13 @@ class Body {
       final mimeString = _resolver.lookup('', headerBytes: body);
       mimeType = mimeString == null ? null : MimeType.parse(mimeString);
     }
-    return Body._(
-      null,
-      body.length,
+    return Body(
       bytes: body,
-      encoding: _charsetFor(encoding, mimeType),
-      mimeType: mimeType ?? MimeType.octetStream,
-      parameters: parameters,
+      bodyType: _bodyType(
+        mimeType ?? MimeType.octetStream,
+        _charsetFor(encoding, mimeType),
+        parameters,
+      ),
     );
   }
 
@@ -418,44 +402,7 @@ class Body {
     final MimeType? mimeType,
     final Encoding? encoding,
     final Map<String, String> parameters = const {},
-  }) => Body._(
-    null,
-    bytes.length,
-    bytes: bytes,
-    encoding: encoding,
-    mimeType: mimeType,
-    parameters: parameters,
-  );
-
-  /// The body an adapter hands over, typed by [contentType].
-  ///
-  /// Pass [bytes] when the adapter has read the body, [stream] when it
-  /// arrives as the handler reads, [open] when the adapter can only make
-  /// that stream once the handler reads, with [contentLength] when
-  /// declared, and none of the three for a message without a body.
-  /// [BodyType.fromContentType] does the typing, so a request's
-  /// Content-Type and an upstream response's work alike. Read the header
-  /// with `tryGet`, so one that does not parse counts as none.
-  ///
-  /// A body rejected unread cancels [stream] and never runs [open]. An
-  /// upstream response goes in as [stream], so the cancel frees its
-  /// connection; a `dart:io` request as [open], since a cancel resets it.
-  factory Body.of(
-    final ContentTypeHeader? contentType, {
-    final Uint8List? bytes,
-    final Stream<Uint8List>? stream,
-    final Stream<Uint8List> Function()? open,
-    final int? contentLength,
-  }) {
-    if (bytes == null && stream == null && open == null) return Body.empty();
-    final bodyType = contentType == null
-        ? null
-        : BodyType.fromContentType(contentType);
-    if (bytes != null) {
-      return Body._typed(null, bytes.length, bytes: bytes, bodyType: bodyType);
-    }
-    return Body._typed(stream, contentLength, bodyType: bodyType).._open = open;
-  }
+  }) => Body(bytes: bytes, bodyType: _bodyType(mimeType, encoding, parameters));
 
   /// The whole body as one buffer.
   ///
@@ -573,7 +520,7 @@ extension BodyConsume on Body {
   /// An adapter that sends [Body.bytes] itself, or sends no body at all,
   /// has no use for the stream, and [Body.read] would allocate one for a
   /// body held as bytes. The cancel lets the producer of the stream release
-  /// what it holds. A body from [Body.lazy] has no stream until it is read.
+  /// what it holds. A body built with `open` has no stream until it is read.
   ///
   /// Errors the stream delivers are discarded.
   ///
@@ -594,12 +541,6 @@ extension BodyConsume on Body {
     }
     _isRead = true;
   }
-}
-
-/// Internal extension methods for [Body], not exported from relic_core.dart.
-extension BodyInternal on Body {
-  /// The private `Body._` constructor.
-  static const create = Body._;
 }
 
 /// Exception thrown when the body size exceeds the maximum allowed length.

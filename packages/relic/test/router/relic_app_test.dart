@@ -89,10 +89,13 @@ void main() {
               headers: Headers.build(
                 (final mh) => mh.add(HeaderName.lookup('x-route'), 'get'),
               ),
-              body: Body.lazy(
-                report,
+              body: Body(
+                open: report,
                 contentLength: 5,
-                mimeType: MimeType.plainText,
+                bodyType: BodyType(
+                  mimeType: MimeType.plainText,
+                  encoding: utf8,
+                ),
               ),
             ),
           );

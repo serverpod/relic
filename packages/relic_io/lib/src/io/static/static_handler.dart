@@ -493,11 +493,13 @@ Response _serveMultipleRanges(
   return Response(
     HttpStatus.partialContent,
     headers: headers,
-    body: Body.lazy(
-      () => _multipartSections(fileInfo, boundary, bounds, footer),
+    body: Body(
+      open: () => _multipartSections(fileInfo, boundary, bounds, footer),
       contentLength: totalLength,
-      mimeType: MimeType.multipartByteranges,
-      parameters: {'boundary': boundary},
+      bodyType: BodyType(
+        mimeType: MimeType.multipartByteranges,
+        parameters: {'boundary': boundary},
+      ),
     ),
   );
 }
@@ -569,20 +571,26 @@ Uint8List _multipartSectionHeader(
 
 /// Creates a Body for the full file.
 Body _createFileBody(final FileInfo fileInfo) {
-  return Body.lazy(
-    () => fileInfo.file.openRead().cast(),
+  return Body(
+    open: () => fileInfo.file.openRead().cast(),
     contentLength: fileInfo.stat.size,
-    mimeType: fileInfo.mimeType ?? MimeType.octetStream,
+    bodyType: _fileBodyType(fileInfo),
   );
 }
 
 /// Creates a Body for a specific range of the file.
 Body _createRangeBody(final FileInfo fileInfo, final int start, final int end) {
-  return Body.lazy(
-    () => fileInfo.file.openRead(start, end).cast(),
+  return Body(
+    open: () => fileInfo.file.openRead(start, end).cast(),
     contentLength: end - start,
-    mimeType: fileInfo.mimeType ?? MimeType.octetStream,
+    bodyType: _fileBodyType(fileInfo),
   );
+}
+
+/// The type of a file body: its MIME type, utf-8 for a text type.
+BodyType _fileBodyType(final FileInfo fileInfo) {
+  final mimeType = fileInfo.mimeType ?? MimeType.octetStream;
+  return BodyType(mimeType: mimeType, encoding: mimeType.isText ? utf8 : null);
 }
 
 extension<T> on Stream<T> {

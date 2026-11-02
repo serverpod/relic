@@ -53,7 +53,7 @@ void main() {
     );
 
     final upstream = await (await client.getUrl(url)).close();
-    final body = Body.of(null, stream: upstream.cast(), contentLength: 10);
+    final body = Body(stream: upstream.cast(), contentLength: 10);
     expect(() => body.read(maxLength: 5), throwsA(isA<MaxBodySizeExceeded>()));
 
     final next = await (await client.getUrl(

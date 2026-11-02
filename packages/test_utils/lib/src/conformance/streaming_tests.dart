@@ -165,10 +165,13 @@ void streamingTests(AdapterConformance conformance) {
     var opened = false;
     await serve(
       (req) => Response.ok(
-        body: Body.lazy(() {
-          opened = true;
-          return _patternStream(_bigLength, 64 * 1024);
-        }, contentLength: _bigLength),
+        body: Body(
+          open: () {
+            opened = true;
+            return _patternStream(_bigLength, 64 * 1024);
+          },
+          contentLength: _bigLength,
+        ),
       ),
     );
 
@@ -183,8 +186,8 @@ void streamingTests(AdapterConformance conformance) {
       'then the stream it makes goes out', () async {
     await serve(
       (req) => Response.ok(
-        body: Body.lazy(
-          () => _patternStream(_bigLength, 64 * 1024),
+        body: Body(
+          open: () => _patternStream(_bigLength, 64 * 1024),
           contentLength: _bigLength,
         ),
       ),
