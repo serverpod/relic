@@ -95,7 +95,7 @@ class IOAdapter implements Adapter {
     if (_subscription != null) throw StateError('start was already called');
     _subscription = _server.listen((request) {
       _inFlight++;
-      final pending = sink(IOExchange._(this, request));
+      final pending = sink(_IOExchange._(this, request));
       // The sink never fails by contract. An error here is a bug in the
       // core, and the zone around `start` reports it.
       if (pending is Future<void>) unawaited(pending);
@@ -170,7 +170,7 @@ class IOAdapter implements Adapter {
 }
 
 /// One `dart:io` request and its response.
-final class IOExchange with ExchangeEndState implements AdapterExchange {
+final class _IOExchange with ExchangeEndState implements AdapterExchange {
   final IOAdapter _adapter;
   final io.HttpRequest _request;
 
@@ -182,7 +182,7 @@ final class IOExchange with ExchangeEndState implements AdapterExchange {
   /// the handler read it.
   Body? _body;
 
-  IOExchange._(this._adapter, this._request) {
+  _IOExchange._(this._adapter, this._request) {
     // dart:io reports a peer that went away as an error on `done`. That is
     // its only signal, and it fires only once something was written, so
     // `cancelled` is best effort on this adapter.
