@@ -86,9 +86,9 @@ Future<void> main(List<String> args) async {
 Future<Response> _handler(Request req) async {
   switch (req.url.path) {
     case '/small':
-      return Response.ok(body: Body.fromBytes(_small));
+      return Response.ok(body: Body(bytes: _small));
     case '/big':
-      return Response.ok(body: Body.fromBytes(_big));
+      return Response.ok(body: Body(bytes: _big));
     case '/chunked':
       return Response.ok(
         body: Body.fromDataStream(

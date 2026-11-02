@@ -59,12 +59,7 @@ Handler logBodySize(Handler next) {
     stdout.writeln(
       'a body of ${bytes.length} bytes, ${type?.mimeType.toHeaderValue()}',
     );
-    req.body = Body.fromBytes(
-      bytes,
-      mimeType: type?.mimeType,
-      encoding: type?.encoding,
-      parameters: type?.parameters ?? const {},
-    );
+    req.body = Body(bytes: bytes, bodyType: type);
     return next(req);
   };
 }
