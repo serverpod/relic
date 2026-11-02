@@ -24,7 +24,7 @@ export 'src/headers/codecs/common_types_codecs.dart'
     hide parseDateBytes, parseIntBytes, parseMethodBytes;
 export 'src/headers/exception/header_exception.dart'
     show HeaderException, InvalidHeaderException, MissingHeaderException;
-export 'src/headers/header_accessor.dart';
+export 'src/headers/header_accessor.dart' show HeaderAccessor, HeaderCodec;
 export 'src/headers/headers.dart';
 export 'src/headers/standard_headers_extensions.dart';
 export 'src/headers/typed/primitives/delta_seconds.dart' show DeltaSeconds;

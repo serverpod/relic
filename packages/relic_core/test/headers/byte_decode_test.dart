@@ -5,28 +5,18 @@ import 'package:relic_core/src/headers/codecs/common_types_codecs.dart'
     show parseIntBytes;
 import 'package:test/test.dart';
 
-/// Counts which path decoded.
+/// Counts the decodes and keeps the bytes the last one saw.
 final class _Counting {
-  var text = 0;
-  var bytes = 0;
+  var decoded = 0;
+  Uint8List? last;
 
   late final accessor = HeaderAccessor<int>(
     const HeaderName.custom('x-count'),
-    HeaderCodec.single(
-      (final s) {
-        text++;
-        return int.parse(s.trim());
-      },
-      encodeInt,
-      decodeBytes: (final raw) {
-        bytes++;
-        // Digits alone, else decline to the text path.
-        if (raw.isEmpty || raw.any((final b) => b < 0x30 || b > 0x39)) {
-          return null;
-        }
-        return int.parse(String.fromCharCodes(raw));
-      },
-    ),
+    HeaderCodec.bytes((final raw) {
+      decoded++;
+      last = raw;
+      return int.parse(String.fromCharCodes(raw));
+    }, encodeInt),
   );
 }
 
@@ -34,14 +24,14 @@ Headers _byteHeaders(final String value) =>
     Headers.fromStore(ByteHeaderStore.encode([('X-Count', value)]));
 
 void main() {
-  test('Given a byte store with a digits value, when read, '
-      'then the bytes path decodes and the text path never runs', () {
+  test('Given a byte store, when read through a bytes codec, '
+      'then the decoder runs once over the wire bytes', () {
     final counting = _Counting();
     final headers = _byteHeaders('123');
 
     expect(headers(counting.accessor), 123);
-    expect(counting.bytes, 1);
-    expect(counting.text, 0);
+    expect(counting.decoded, 1);
+    expect(counting.last, '123'.codeUnits);
   });
 
   test('Given a byte store, when the same header is read twice, '
@@ -51,29 +41,19 @@ void main() {
 
     headers(counting.accessor);
     headers.get(counting.accessor);
-    expect(counting.bytes, 1);
+    expect(counting.decoded, 1);
   });
 
-  test('Given a byte store with a value the bytes path declines, '
-      'when read, then the text path decodes it and the decline is kept', () {
-    final counting = _Counting();
-    final headers = _byteHeaders(' 42');
-
-    expect(headers(counting.accessor), 42);
-    expect(headers(counting.accessor), 42);
-    expect(counting.bytes, 1);
-    expect(counting.text, 1);
-  });
-
-  test('Given a map store, when read, then only the text path runs', () {
+  test('Given a map store, when read through a bytes codec, '
+      'then the decoder runs over the Latin-1 bytes of the text', () {
     final counting = _Counting();
     final headers = Headers.fromMap({
       'x-count': ['7'],
     });
 
     expect(headers(counting.accessor), 7);
-    expect(counting.bytes, 0);
-    expect(counting.text, 1);
+    expect(counting.decoded, 1);
+    expect(counting.last, '7'.codeUnits);
   });
 
   test('Given a byte store with a Content-Length, '
