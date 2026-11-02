@@ -34,7 +34,9 @@ final class PathMiss<T extends Object> extends Miss<T> {
 /// This typically results in a 405 Method Not Allowed response with an
 /// Allow header containing the [allowed] methods.
 final class MethodMiss<T extends Object> extends Miss<T> {
-  /// The set of HTTP methods that are allowed for this path.
+  /// The methods a lookup finds a route for on this path: those with a
+  /// route of their own, plus HEAD when GET has one (RFC 9110 9.1). What
+  /// the `Allow` header of a 405 lists.
   final Set<Method> allowed;
 
   const MethodMiss(this.allowed);
@@ -69,6 +71,9 @@ final class RouterMatch<T extends Object>
       method == Method.head && _match.value.find(method) == null;
 
   /// The methods with a route of their own on the matched path.
+  ///
+  /// Unlike [MethodMiss.allowed], HEAD is in it only with a HEAD route, so
+  /// a HEAD that fell back to GET and cannot be served lists GET alone.
   Set<Method> get registered => _match.value.registered;
 }
 
