@@ -53,7 +53,7 @@ export 'src/router/cache.dart';
 export 'src/router/lru_cache.dart';
 export 'src/router/method.dart';
 export 'src/router/no_cache.dart';
-export 'src/router/normalized_path.dart';
+export 'src/router/normalized_path.dart' hide NormalizedPathInternal;
 export 'src/router/path_trie.dart';
 export 'src/router/router.dart';
 export 'src/router/router_handler_extension.dart';

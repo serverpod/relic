@@ -48,19 +48,7 @@ class NormalizedPath {
   /// [Uri.pathSegments] splits on the separator before decoding, so an encoded
   /// separator (`%2F`) stays within its segment.
   factory NormalizedPath.fromUri(final Uri url) =>
-      NormalizedPath.fromPathSegments(url.pathSegments);
-
-  /// From segments split and decoded the way [Uri.pathSegments] does it,
-  /// such as [RequestTarget.pathSegments]. The unmodifiable list is reused
-  /// as is when it is already normalized.
-  factory NormalizedPath.fromPathSegments(final List<String> segments) {
-    for (final segment in segments) {
-      if (segment.isEmpty || segment == '.' || segment == '..') {
-        return NormalizedPath._(_normalizeSegments(segments));
-      }
-    }
-    return NormalizedPath._(segments);
-  }
+      NormalizedPathInternal.fromPathSegments(url.pathSegments);
 
   /// Normalizes [segments] by resolving `.` and `..` and dropping empty ones.
   static List<String> _normalizeSegments(final Iterable<String> segments) {
@@ -130,5 +118,20 @@ class NormalizedPath {
       if (segments[i] != other.segments[i]) return false;
     }
     return true;
+  }
+}
+
+/// The routing path, not exported from relic_core.dart.
+extension NormalizedPathInternal on NormalizedPath {
+  /// From segments split and decoded the way [Uri.pathSegments] does it,
+  /// such as [RequestTarget.pathSegments]. The list is reused as is when it
+  /// is already normalized, so it must be unmodifiable.
+  static NormalizedPath fromPathSegments(final List<String> segments) {
+    for (final segment in segments) {
+      if (segment.isEmpty || segment == '.' || segment == '..') {
+        return NormalizedPath._(NormalizedPath._normalizeSegments(segments));
+      }
+    }
+    return NormalizedPath._(segments);
   }
 }

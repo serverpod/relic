@@ -3,6 +3,8 @@ import 'dart:typed_data';
 
 import 'package:relic_core/relic_core.dart';
 import 'package:relic_core/src/context/result.dart' show RequestInternal;
+import 'package:relic_core/src/router/normalized_path.dart'
+    show NormalizedPathInternal;
 import 'package:test/test.dart';
 
 Uint8List _bytes(String s) => ascii.encode(s);
@@ -142,10 +144,10 @@ void main() {
       'when the segments are read, then they are kept for the router', () {
     final target = RequestTarget.fromBytes(_bytes('/a/./b/../c'));
     expect(target.pathSegments, ['a', '.', 'b', '..', 'c']);
-    expect(NormalizedPath.fromPathSegments(target.pathSegments).segments, [
-      'a',
-      'c',
-    ]);
+    expect(
+      NormalizedPathInternal.fromPathSegments(target.pathSegments).segments,
+      ['a', 'c'],
+    );
   });
 
   test('Given a target from bytes with a backslash, when validated, '
