@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io' as io;
+import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
 import 'package:relic_core/relic_core.dart';
@@ -75,6 +77,67 @@ void requestBodyTests(AdapterConformance conformance) {
       );
 
       expect(reply, endsWith('\r\n\r\nnull hi'));
+    });
+
+    test('when a POST declares a length over the limit of a read, '
+        'then the client receives the answer of the handler.', () async {
+      await serve((req) async {
+        try {
+          await req.read(maxLength: 1024).drain<void>();
+          return Response.ok();
+        } on MaxBodySizeExceeded {
+          return Response.contentTooLarge(body: Body.fromString('too large'));
+        }
+      });
+
+      // Big enough that the client is still sending when the handler answers.
+      final response = await http.post(server!.url, body: Uint8List(16 << 20));
+
+      expect(response.statusCode, 413);
+      expect(response.body, 'too large');
+    });
+
+    test('when a chunked POST runs over the limit of a read, '
+        'then the client receives the answer of the handler.', () async {
+      await serve((req) async {
+        try {
+          await req.read(maxLength: 1024).drain<void>();
+          return Response.ok();
+        } on MaxBodySizeExceeded {
+          return Response.contentTooLarge(body: Body.fromString('too large'));
+        }
+      });
+
+      final request = http.StreamedRequest('POST', server!.url);
+      for (var i = 0; i < 256; i++) {
+        request.sink.add(Uint8List(64 << 10));
+      }
+      unawaited(request.sink.close());
+      final response = await http.Response.fromStream(await request.send());
+
+      expect(response.statusCode, 413);
+      expect(response.body, 'too large');
+    });
+
+    test('when the handler answers without reading a large body, '
+        'then the next request goes on the same connection.', () async {
+      await serve((req) => Response.ok());
+      final client = io.HttpClient()..maxConnectionsPerHost = 1;
+      addTearDown(client.close);
+
+      Future<int> localPortOfPost(int size) async {
+        final request = await client.postUrl(server!.url);
+        request.add(Uint8List(size));
+        final response = await request.close();
+        final port = response.connectionInfo!.localPort;
+        await response.drain<void>();
+        return port;
+      }
+
+      final first = await localPortOfPost(8 << 20);
+      final second = await localPortOfPost(1);
+
+      expect(second, first);
     });
 
     test('when the handler pipes it into the response, '
