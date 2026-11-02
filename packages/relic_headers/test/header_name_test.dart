@@ -92,6 +92,22 @@ void main() {
     expect(const HeaderName.custom('x-a'), isNot(HeaderName.host));
   });
 
+  test('Given a custom name with uppercase, when it is hashed, '
+      'then it fails an assert', () {
+    expect(
+      () => const HeaderName.custom('X-Foo').hashCode,
+      throwsA(isA<AssertionError>()),
+    );
+  });
+
+  test('Given a custom name that is not a token, when it is compared, '
+      'then it fails an assert', () {
+    expect(
+      () => const HeaderName.custom('x foo') == HeaderName.host,
+      throwsA(isA<AssertionError>()),
+    );
+  });
+
   test('Given a known name, when converted to a string, '
       'then it is the lowercase name', () {
     expect(HeaderName.contentType.toString(), 'content-type');
