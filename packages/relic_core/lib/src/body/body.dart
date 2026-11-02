@@ -399,7 +399,8 @@ class Body {
 
   /// The whole body as one buffer.
   ///
-  /// Synchronous when the body was built from bytes or a string. Counts as
+  /// Synchronous when the body was built from bytes or a string, and a
+  /// [MaxBodySizeExceeded] is then thrown synchronously too. Counts as
   /// reading the body, like [read].
   FutureOr<Uint8List> readAll({final int? maxLength}) {
     final bytes = this.bytes;
@@ -425,7 +426,9 @@ class Body {
   /// **Note**: When [contentLength] is known and exceeds [maxLength], the
   /// exception is thrown immediately without consuming any data. When
   /// [contentLength] is unknown (chunked encoding), the exception is thrown
-  /// as soon as the cumulative size exceeds the limit.
+  /// as soon as the cumulative size exceeds the limit. On Windows the rest
+  /// of the body is read and discarded first, since a socket closed with
+  /// unread data there resets the connection before the response is sent.
   ///
   /// Examples:
   /// ```dart
