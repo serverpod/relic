@@ -782,8 +782,8 @@ final class NativeExchange extends LinkedListEntry<NativeExchange>
     if (controller == null || controller.isClosed) return;
     final view = _stage == _Stage.webSocket ? null : _view;
     if (view == null) {
-      // Answered before the body was read. The native side drains the
-      // rest or closes the connection (max_discard in relic_native.zig).
+      // Answered before the body was read. The native side reads and
+      // drops the rest (discardLingering in relic_native.zig).
       unawaited(controller.close());
       return;
     }

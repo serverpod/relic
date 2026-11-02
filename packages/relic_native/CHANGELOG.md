@@ -3,6 +3,10 @@
   PCLMULQDQ and AVX on x64, and the ARMv8 crypto extensions on Linux and
   Windows arm64
 - refactor: `ResponseHead` and `encodeResponseHead` live in `relic_core`
+- fix: A request body the handler did not read to its end is read and
+  dropped after the response, for up to 30 s, or 5 s without bytes. The
+  connection then carries the next request, whatever the body's length,
+  or ends in a lingering close
 
 ## 2.0.0-rc.2
 - Initial release: `NativeAdapter.bind`, `NativeExchange` and `serveNative`

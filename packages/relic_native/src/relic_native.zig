@@ -62,9 +62,6 @@ var accept_shortages = std.atomic.Value(u32).init(0);
 const in_chunk_size = 64 * 1024;
 /// Chunks the task reads ahead of Dart on a streamed request body.
 const in_credit = 4;
-/// The task drains an unread body up to this many bytes to keep the
-/// connection, and closes it beyond that.
-const max_discard = 4 << 20;
 /// The largest payload of a WebSocket control frame (RFC 6455 5.5).
 const ws_control_max = 125;
 /// How long a close frame this side sent waits for the peer's answer
@@ -848,14 +845,14 @@ const Link = struct {
 
     /// Frees the TLS layer, after close_notify, or the alert a failed read
     /// queued, when `notify` is set. Nothing for a plain link. The send runs
-    /// under the lingering close's deadline. The task's cancel is spent by
-    /// now, and a peer that stopped reading must not hold the task past it.
+    /// under `close_notify_ms`. The task's cancel is spent by now, and a
+    /// peer that stopped reading must not hold the task past it.
     /// Destroy sends nothing. It unwinds the tasks on the isolate's thread.
     fn deinit(self: *Link, gpa: std.mem.Allocator, notify: bool) void {
         const secure = self.secure orelse return;
         if (notify) {
             if (secure.conn) |*conn| {
-                self.setWriteTimeout(deadline(lingering_close_ms));
+                self.setWriteTimeout(deadline(close_notify_ms));
                 conn.close() catch {};
             }
         }
@@ -909,24 +906,46 @@ const Link = struct {
     }
 };
 
-/// How long a lingering close reads and drops what the peer still sends.
-const lingering_close_ms = 1000;
+/// How long a send of close_notify may take before the connection ends
+/// without it.
+const close_notify_ms = 1000;
+/// How long a connection goes on reading and dropping what the peer
+/// sends after the response. The read under way when it runs out can
+/// still take up to `linger_idle_ms`. nginx's lingering_time.
+const linger_total_ms = 30_000;
+/// How long that reading waits for bytes. nginx's lingering_timeout.
+const linger_idle_ms = 5_000;
 
-/// Answers with a status, then closes the way nginx's lingering close
-/// does. The send side goes first. Then it reads and drops the peer's
-/// remaining bytes until the peer sees the FIN and hangs up, or the
-/// deadline passes. A plain close with unread input resets the
-/// connection, and a peer that was still sending, which is what these
-/// statuses answer, can then lose the status from its receive buffer.
+/// Answers with a status, then ends in a lingering close.
 fn writeStatusAndClose(link: *Link, status: []const u8) !void {
     const w = link.writer;
     try w.writeAll("HTTP/1.1 ");
     try w.writeAll(status);
     try w.writeAll("\r\nconnection: close\r\ncontent-length: 0\r\n\r\n");
     try w.flush();
+    lingeringClose(link);
+}
+
+/// Closes the way nginx's lingering close does. The send side goes first.
+/// Then it reads and drops the peer's remaining bytes until the peer sees
+/// the FIN and hangs up, or the linger limits pass. A plain close with
+/// unread input resets the connection, and a peer that was still sending
+/// can then lose the response from its receive buffer.
+fn lingeringClose(link: *Link) void {
+    link.setWriteTimeout(deadline(close_notify_ms));
     link.shutdownSend() catch return;
-    link.setReadTimeout(deadline(lingering_close_ms));
-    _ = link.socket_reader.interface.discard(.unlimited) catch {};
+    _ = discardLingering(link, &link.socket_reader.interface);
+}
+
+/// Reads and drops what `reader` has left, under the linger limits. True
+/// when it got to the end.
+fn discardLingering(link: *Link, reader: *std.Io.Reader) bool {
+    link.setReadTimeout(inactivity(linger_idle_ms));
+    const end = nowMs() + linger_total_ms;
+    while (nowMs() < end) {
+        _ = reader.discard(.limited(in_chunk_size)) catch |err| return err == error.EndOfStream;
+    }
+    return false;
 }
 
 fn handleConnInner(r: *Reactor, stream: zio.net.Stream) !void {
@@ -1163,18 +1182,16 @@ fn handleConnInner(r: *Reactor, stream: zio.net.Stream) !void {
             pump = null;
         }
 
-        if (!keep_alive or ex.close_after) return;
-        // A body Dart did not finish reading is still on the wire. A modest
-        // one is drained so the connection can carry the next request, and
-        // so the client is not reset while still sending. A big one is not
-        // worth the bandwidth, so close.
+        // A body Dart did not finish reading is still on the wire. It is
+        // read and dropped, so the client is not reset while still sending.
+        // Read to its end, it leaves the connection to carry the next
+        // request.
+        const closing = !keep_alive or ex.close_after or r.stop;
         if (body_unread) {
-            const left = if (content_length) |len| len else max_discard + 1;
-            if (left > max_discard) return;
-            const br = body_reader orelse return;
-            link.setReadTimeout(inactivity(options.body_timeout_ms));
-            _ = br.discardRemaining() catch return;
+            if (closing) return lingeringClose(&link);
+            if (!discardLingering(&link, body_reader.?)) return;
         }
+        if (closing) return;
     }
 }
 
