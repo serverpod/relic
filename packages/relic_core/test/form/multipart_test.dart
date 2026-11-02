@@ -15,16 +15,14 @@ void main() {
           boundary: 'abc123',
           body: _multipartBody('abc123', [
             const _Part(
-              headers: {
-                Headers.contentDispositionHeader: 'form-data; name="text"',
-              },
+              headers: {'content-disposition': 'form-data; name="text"'},
               body: 'hello',
             ),
             const _Part(
               headers: {
-                Headers.contentDispositionHeader:
+                'content-disposition':
                     'form-data; name="upload"; filename="file.txt"',
-                Headers.contentTypeHeader: 'text/plain; charset=utf-8',
+                'content-type': 'text/plain; charset=utf-8',
               },
               body: 'file-body',
             ),
@@ -62,15 +60,11 @@ void main() {
           boundary: 'dupes',
           body: _multipartBody('dupes', [
             const _Part(
-              headers: {
-                Headers.contentDispositionHeader: 'form-data; name="tag"',
-              },
+              headers: {'content-disposition': 'form-data; name="tag"'},
               body: 'one',
             ),
             const _Part(
-              headers: {
-                Headers.contentDispositionHeader: 'form-data; name="tag"',
-              },
+              headers: {'content-disposition': 'form-data; name="tag"'},
               body: 'two',
             ),
           ]),
@@ -93,10 +87,7 @@ void main() {
         boundary: 'unnamed',
         body: _multipartBody('unnamed', [
           const _Part(
-            headers: {
-              Headers.contentDispositionHeader:
-                  'form-data; filename="file.txt"',
-            },
+            headers: {'content-disposition': 'form-data; filename="file.txt"'},
             body: 'ignored',
           ),
         ]),
@@ -116,14 +107,14 @@ void main() {
           body: _multipartBody('filename-path', [
             const _Part(
               headers: {
-                Headers.contentDispositionHeader:
+                'content-disposition':
                     'form-data; name="upload"; filename="..\\\\..\\\\evil.txt"',
               },
               body: 'file-body',
             ),
             const _Part(
               headers: {
-                Headers.contentDispositionHeader:
+                'content-disposition':
                     'form-data; name="upload"; filename="../../other.txt"',
               },
               body: 'file-body',
@@ -152,7 +143,7 @@ void main() {
         body: _multipartBody('extended-filename', [
           const _Part(
             headers: {
-              Headers.contentDispositionHeader:
+              'content-disposition':
                   "form-data; name=\"upload\"; filename=\"plain.txt\"; filename*=UTF-8''extended%20name.txt",
             },
             body: 'file-body',
@@ -184,7 +175,7 @@ void main() {
         body: _multipartBody('latin1-extended-filename', [
           const _Part(
             headers: {
-              Headers.contentDispositionHeader:
+              'content-disposition':
                   "form-data; name=\"upload\"; filename=\"plain.txt\"; filename*=ISO-8859-1''na%EFve.txt",
             },
             body: 'file-body',
@@ -214,7 +205,7 @@ void main() {
         body: _multipartBody('bad-escape-extended-filename', [
           const _Part(
             headers: {
-              Headers.contentDispositionHeader:
+              'content-disposition':
                   "form-data; name=\"upload\"; filename=\"plain.txt\"; filename*=UTF-8''%zz.txt",
             },
             body: 'file-body',
@@ -242,7 +233,7 @@ void main() {
       body: _multipartBody('extended-only-filename', [
         const _Part(
           headers: {
-            Headers.contentDispositionHeader:
+            'content-disposition':
                 "form-data; name=\"upload\"; filename*=UTF-8''extended%20name.txt",
           },
           body: 'file-body',
@@ -264,9 +255,7 @@ void main() {
       boundary: 'extended-only-name',
       body: _multipartBody('extended-only-name', [
         const _Part(
-          headers: {
-            Headers.contentDispositionHeader: "form-data; name*=UTF-8''x",
-          },
+          headers: {'content-disposition': "form-data; name*=UTF-8''x"},
           body: 'value',
         ),
       ]),
@@ -287,7 +276,7 @@ void main() {
         body: _multipartBody('utf8-filename', [
           const _Part(
             headers: {
-              Headers.contentDispositionHeader:
+              'content-disposition':
                   'form-data; name="upload"; filename="\u65e5\u672c \u{1F600}.pdf"',
             },
             body: 'file-body',
@@ -317,7 +306,7 @@ void main() {
         body: _multipartBody('rtl-override-filename', [
           const _Part(
             headers: {
-              Headers.contentDispositionHeader:
+              'content-disposition':
                   'form-data; name="upload"; filename="invoice\u202Efdp.exe"',
             },
             body: 'file-body',
@@ -345,7 +334,7 @@ void main() {
       body: _multipartBody('line-separator-filename', [
         const _Part(
           headers: {
-            Headers.contentDispositionHeader:
+            'content-disposition':
                 'form-data; name="upload"; filename="report\u2028.txt"',
           },
           body: 'file-body',
@@ -372,7 +361,7 @@ void main() {
       body: _multipartBody('zero-width-space-filename', [
         const _Part(
           headers: {
-            Headers.contentDispositionHeader:
+            'content-disposition':
                 'form-data; name="upload"; filename="in\u200Bvoice\uFEFF.pdf"',
           },
           body: 'file-body',
@@ -399,7 +388,7 @@ void main() {
       body: _multipartBody('arabic-letter-mark-filename', [
         const _Part(
           headers: {
-            Headers.contentDispositionHeader:
+            'content-disposition':
                 'form-data; name="upload"; filename="report\u061C.pdf"',
           },
           body: 'file-body',
@@ -426,7 +415,7 @@ void main() {
       body: _multipartBody('zero-width-joiner-filename', [
         const _Part(
           headers: {
-            Headers.contentDispositionHeader:
+            'content-disposition':
                 'form-data; name="upload"; filename="\u{1F468}\u200D\u{1F4BB}.png"',
           },
           body: 'file-body',
@@ -452,9 +441,7 @@ void main() {
       boundary: 'utf8-name',
       body: _multipartBody('utf8-name', [
         const _Part(
-          headers: {
-            Headers.contentDispositionHeader: 'form-data; name="\u540d\u524d"',
-          },
+          headers: {'content-disposition': 'form-data; name="\u540d\u524d"'},
           body: 'value',
         ),
       ]),
@@ -475,9 +462,9 @@ void main() {
       body: _multipartBody('no-charset', [
         const _Part(
           headers: {
-            Headers.contentDispositionHeader:
+            'content-disposition':
                 'form-data; name="upload"; filename="file.txt"',
-            Headers.contentTypeHeader: 'text/plain',
+            'content-type': 'text/plain',
           },
           body: 'file-body',
         ),
@@ -497,8 +484,7 @@ void main() {
       body: _multipartBody('empty-filename', [
         const _Part(
           headers: {
-            Headers.contentDispositionHeader:
-                'form-data; name="upload"; filename=""',
+            'content-disposition': 'form-data; name="upload"; filename=""',
           },
           body: '',
         ),
@@ -520,8 +506,7 @@ void main() {
       body: _multipartBody('empty-filename-flag', [
         const _Part(
           headers: {
-            Headers.contentDispositionHeader:
-                'form-data; name="upload"; filename=""',
+            'content-disposition': 'form-data; name="upload"; filename=""',
           },
           body: '',
         ),
@@ -547,8 +532,7 @@ void main() {
       body: _multipartBody('dotdot-filename-flag', [
         const _Part(
           headers: {
-            Headers.contentDispositionHeader:
-                'form-data; name="upload"; filename=".."',
+            'content-disposition': 'form-data; name="upload"; filename=".."',
           },
           body: '',
         ),
@@ -573,8 +557,8 @@ void main() {
         bodyBytes: _multipartBodyBytes('latin', [
           _PartBytes(
             headers: const {
-              Headers.contentDispositionHeader: 'form-data; name="name"',
-              Headers.contentTypeHeader: 'text/plain; charset=latin1',
+              'content-disposition': 'form-data; name="name"',
+              'content-type': 'text/plain; charset=latin1',
             },
             body: latin1.encode('André'),
           ),
@@ -636,9 +620,7 @@ void main() {
           boundary: 'bad-disposition',
           body: _multipartBody('bad-disposition', [
             const _Part(
-              headers: {
-                Headers.contentDispositionHeader: 'form-data; name="a" evil',
-              },
+              headers: {'content-disposition': 'form-data; name="a" evil'},
               body: 'value',
             ),
           ]),
@@ -659,8 +641,8 @@ void main() {
           body: _multipartBody('bad-content-type', [
             const _Part(
               headers: {
-                Headers.contentDispositionHeader: 'form-data; name="a"',
-                Headers.contentTypeHeader: 'not-a-content-type',
+                'content-disposition': 'form-data; name="a"',
+                'content-type': 'not-a-content-type',
               },
               body: 'value',
             ),
@@ -682,7 +664,7 @@ void main() {
         boundary: 'size',
         body: _multipartBody('size', [
           const _Part(
-            headers: {Headers.contentDispositionHeader: 'form-data; name="a"'},
+            headers: {'content-disposition': 'form-data; name="a"'},
             body: 'value',
           ),
         ]),
@@ -723,15 +705,11 @@ void main() {
           boundary: 'parts',
           body: _multipartBody('parts', [
             const _Part(
-              headers: {
-                Headers.contentDispositionHeader: 'form-data; name="a"',
-              },
+              headers: {'content-disposition': 'form-data; name="a"'},
               body: 'one',
             ),
             const _Part(
-              headers: {
-                Headers.contentDispositionHeader: 'form-data; name="b"',
-              },
+              headers: {'content-disposition': 'form-data; name="b"'},
               body: 'two',
             ),
           ]),
@@ -764,7 +742,7 @@ void main() {
           body: _multipartBody('headers', [
             const _Part(
               headers: {
-                Headers.contentDispositionHeader: 'form-data; name="large"',
+                'content-disposition': 'form-data; name="large"',
                 'x-large-header': '123456789',
               },
               body: 'value',
@@ -794,9 +772,7 @@ void main() {
           boundary: 'field-size',
           body: _multipartBody('field-size', [
             const _Part(
-              headers: {
-                Headers.contentDispositionHeader: 'form-data; name="a"',
-              },
+              headers: {'content-disposition': 'form-data; name="a"'},
               body: 'abcdef',
             ),
           ]),
@@ -818,7 +794,7 @@ void main() {
         boundary: 'single',
         body: _multipartBody('single', [
           const _Part(
-            headers: {Headers.contentDispositionHeader: 'form-data; name="a"'},
+            headers: {'content-disposition': 'form-data; name="a"'},
             body: 'value',
           ),
         ]),
@@ -837,7 +813,7 @@ void main() {
         boundary: 'request-body',
         body: _multipartBody('request-body', [
           const _Part(
-            headers: {Headers.contentDispositionHeader: 'form-data; name="a"'},
+            headers: {'content-disposition': 'form-data; name="a"'},
             body: 'value',
           ),
         ]),
@@ -859,7 +835,7 @@ void main() {
       boundary: 'bad-utf8',
       bodyBytes: _multipartBodyBytes('bad-utf8', [
         const _PartBytes(
-          headers: {Headers.contentDispositionHeader: 'form-data; name="name"'},
+          headers: {'content-disposition': 'form-data; name="name"'},
           body: [0xff, 0xfe],
         ),
       ]),
@@ -878,10 +854,7 @@ void main() {
     final request = _request(
       boundary: 'no-disposition',
       body: _multipartBody('no-disposition', [
-        const _Part(
-          headers: {Headers.contentTypeHeader: 'text/plain'},
-          body: 'value',
-        ),
+        const _Part(headers: {'content-type': 'text/plain'}, body: 'value'),
       ]),
     );
 
@@ -898,7 +871,7 @@ void main() {
       body: _multipartBody('attachment', [
         const _Part(
           headers: {
-            Headers.contentDispositionHeader:
+            'content-disposition':
                 'attachment; name="upload"; filename="file.txt"',
           },
           body: 'value',
@@ -919,7 +892,7 @@ void main() {
       body: _multipartBody('directory-filename', [
         const _Part(
           headers: {
-            Headers.contentDispositionHeader:
+            'content-disposition':
                 'form-data; name="upload"; filename="uploads/"',
           },
           body: 'value',

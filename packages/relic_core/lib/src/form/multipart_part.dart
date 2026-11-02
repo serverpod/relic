@@ -1,8 +1,11 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:relic_headers/relic_headers.dart';
+
 import '../body/body.dart';
 import '../body/types/body_type.dart';
+
 import '../headers/headers.dart';
 import '../headers/typed/headers/content_disposition_header.dart';
 import '../headers/typed/headers/content_type_header.dart';
@@ -148,7 +151,7 @@ final class MultipartOtherPart extends MultipartPart {
 }
 
 ContentDispositionHeader? _parseContentDisposition(final Headers headers) {
-  final raw = headers[Headers.contentDispositionHeader]?.firstOrNull;
+  final raw = headers[HeaderName.contentDisposition]?.firstOrNull;
   if (raw == null) return null;
   try {
     return ContentDispositionHeaderInternal.parseFormData(raw);
@@ -183,7 +186,7 @@ Body _body(
 }
 
 ContentTypeHeader? _parseContentType(final Headers headers) {
-  final raw = headers[Headers.contentTypeHeader]?.firstOrNull;
+  final raw = headers[HeaderName.contentType]?.firstOrNull;
   if (raw == null) return null;
   try {
     return ContentTypeHeader.parse(raw);

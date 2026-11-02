@@ -490,86 +490,151 @@ final class Headers extends HeaderStore
   static const all = {..._common, ..._requestOnly, ..._responseOnly};
 
   /// Request Headers
+  @Deprecated('Use HeaderName.accept')
   static const acceptHeader = 'accept';
+  @Deprecated('Use HeaderName.acceptEncoding')
   static const acceptEncodingHeader = 'accept-encoding';
+  @Deprecated('Use HeaderName.acceptLanguage')
   static const acceptLanguageHeader = 'accept-language';
+  @Deprecated('Use HeaderName.authorization')
   static const authorizationHeader = 'authorization';
+  @Deprecated('Use HeaderName.expect')
   static const expectHeader = 'expect';
+  @Deprecated('Use HeaderName.from')
   static const fromHeader = 'from';
+  @Deprecated('Use HeaderName.host')
   static const hostHeader = 'host';
+  @Deprecated('Use HeaderName.ifMatch')
   static const ifMatchHeader = 'if-match';
+  @Deprecated('Use HeaderName.ifModifiedSince')
   static const ifModifiedSinceHeader = 'if-modified-since';
+  @Deprecated('Use HeaderName.ifNoneMatch')
   static const ifNoneMatchHeader = 'if-none-match';
+  @Deprecated('Use HeaderName.ifRange')
   static const ifRangeHeader = 'if-range';
+  @Deprecated('Use HeaderName.ifUnmodifiedSince')
   static const ifUnmodifiedSinceHeader = 'if-unmodified-since';
+  @Deprecated('Use HeaderName.maxForwards')
   static const maxForwardsHeader = 'max-forwards';
+  @Deprecated('Use HeaderName.proxyAuthorization')
   static const proxyAuthorizationHeader = 'proxy-authorization';
+  @Deprecated('Use HeaderName.range')
   static const rangeHeader = 'range';
+  @Deprecated('Use HeaderName.te')
   static const teHeader = 'te';
+  @Deprecated('Use HeaderName.upgrade')
   static const upgradeHeader = 'upgrade';
+  @Deprecated('Use HeaderName.userAgent')
   static const userAgentHeader = 'user-agent';
   static const accessControlRequestHeadersHeader =
       'access-control-request-headers';
   static const accessControlRequestMethodHeader =
       'access-control-request-method';
+  @Deprecated('Use HeaderName.forwarded')
   static const forwardedHeader = 'forwarded';
+  @Deprecated('Use HeaderName.xForwardedFor')
   static const xForwardedForHeader = 'x-forwarded-for';
 
   /// Response Headers
   static const accessControlAllowCredentialsHeader =
       'access-control-allow-credentials';
+  @Deprecated('Use HeaderName.accessControlAllowOrigin')
   static const accessControlAllowOriginHeader = 'access-control-allow-origin';
   static const accessControlExposeHeadersHeader =
       'access-control-expose-headers';
+  @Deprecated('Use HeaderName.accessControlMaxAge')
   static const accessControlMaxAgeHeader = 'access-control-max-age';
+  @Deprecated('Use HeaderName.age')
   static const ageHeader = 'age';
+  @Deprecated('Use HeaderName.allow')
   static const allowHeader = 'allow';
+  @Deprecated('Use HeaderName.cacheControl')
   static const cacheControlHeader = 'cache-control';
+  @Deprecated('Use HeaderName.connection')
   static const connectionHeader = 'connection';
+  @Deprecated('Use HeaderName.contentDisposition')
   static const contentDispositionHeader = 'content-disposition';
+  @Deprecated('Use HeaderName.contentEncoding')
   static const contentEncodingHeader = 'content-encoding';
+  @Deprecated('Use HeaderName.contentLanguage')
   static const contentLanguageHeader = 'content-language';
+  @Deprecated('Use HeaderName.contentLocation')
   static const contentLocationHeader = 'content-location';
+  @Deprecated('Use HeaderName.contentRange')
   static const contentRangeHeader = 'content-range';
+  @Deprecated('Use HeaderName.etag')
   static const etagHeader = 'etag';
+  @Deprecated('Use HeaderName.expires')
   static const expiresHeader = 'expires';
+  @Deprecated('Use HeaderName.lastModified')
   static const lastModifiedHeader = 'last-modified';
+  @Deprecated('Use HeaderName.location')
   static const locationHeader = 'location';
+  @Deprecated('Use HeaderName.proxyAuthenticate')
   static const proxyAuthenticateHeader = 'proxy-authenticate';
+  @Deprecated('Use HeaderName.retryAfter')
   static const retryAfterHeader = 'retry-after';
+  @Deprecated('Use HeaderName.trailer')
   static const trailerHeader = 'trailer';
+  @Deprecated('Use HeaderName.transferEncoding')
   static const transferEncodingHeader = 'transfer-encoding';
+  @Deprecated('Use HeaderName.vary')
   static const varyHeader = 'vary';
+  @Deprecated('Use HeaderName.wwwAuthenticate')
   static const wwwAuthenticateHeader = 'www-authenticate';
+  @Deprecated('Use HeaderName.xPoweredBy')
   static const xPoweredByHeader = 'x-powered-by';
 
   /// Common Headers (Used in Both Requests and Responses)
+  @Deprecated('Use HeaderName.acceptRanges')
   static const acceptRangesHeader = 'accept-ranges';
+  @Deprecated('Use HeaderName.contentLength')
   static const contentLengthHeader = 'content-length';
+  @Deprecated('Use HeaderName.contentType')
   static const contentTypeHeader = 'content-type';
 
   /// General Headers
+  @Deprecated('Use HeaderName.date')
   static const dateHeader = 'date';
+  @Deprecated('Use HeaderName.origin')
   static const originHeader = 'origin';
+  @Deprecated('Use HeaderName.referer')
   static const refererHeader = 'referer';
+  @Deprecated('Use HeaderName.server')
   static const serverHeader = 'server';
+  @Deprecated('Use HeaderName.via')
   static const viaHeader = 'via';
+  @Deprecated('Use HeaderName.cookie')
   static const cookieHeader = 'cookie';
+  @Deprecated('Use HeaderName.setCookie')
   static const setCookieHeader = 'set-cookie';
 
   /// Security and Modern Headers
+  @Deprecated('Use HeaderName.strictTransportSecurity')
   static const strictTransportSecurityHeader = 'strict-transport-security';
+  @Deprecated('Use HeaderName.contentSecurityPolicy')
   static const contentSecurityPolicyHeader = 'content-security-policy';
+  @Deprecated('Use HeaderName.referrerPolicy')
   static const referrerPolicyHeader = 'referrer-policy';
+  @Deprecated('Use HeaderName.permissionsPolicy')
   static const permissionsPolicyHeader = 'permissions-policy';
+  @Deprecated('Use HeaderName.accessControlAllowMethods')
   static const accessControlAllowMethodsHeader = 'access-control-allow-methods';
+  @Deprecated('Use HeaderName.accessControlAllowHeaders')
   static const accessControlAllowHeadersHeader = 'access-control-allow-headers';
+  @Deprecated('Use HeaderName.clearSiteData')
   static const clearSiteDataHeader = 'clear-site-data';
+  @Deprecated('Use HeaderName.secFetchDest')
   static const secFetchDestHeader = 'sec-fetch-dest';
+  @Deprecated('Use HeaderName.secFetchMode')
   static const secFetchModeHeader = 'sec-fetch-mode';
+  @Deprecated('Use HeaderName.secFetchSite')
   static const secFetchSiteHeader = 'sec-fetch-site';
+  @Deprecated('Use HeaderName.crossOriginResourcePolicy')
   static const crossOriginResourcePolicyHeader = 'cross-origin-resource-policy';
+  @Deprecated('Use HeaderName.crossOriginEmbedderPolicy')
   static const crossOriginEmbedderPolicyHeader = 'cross-origin-embedder-policy';
+  @Deprecated('Use HeaderName.crossOriginOpenerPolicy')
   static const crossOriginOpenerPolicyHeader = 'cross-origin-opener-policy';
 }
 

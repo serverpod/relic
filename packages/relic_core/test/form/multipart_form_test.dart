@@ -30,9 +30,7 @@ void main() {
           boundary: 'dispatch',
           body: _multipartBody('dispatch', [
             const _Part(
-              headers: {
-                Headers.contentDispositionHeader: 'form-data; name="name"',
-              },
+              headers: {'content-disposition': 'form-data; name="name"'},
               body: 'Gustavo',
             ),
           ]),
@@ -52,23 +50,19 @@ void main() {
           boundary: 'aggregate',
           body: _multipartBody('aggregate', [
             const _Part(
-              headers: {
-                Headers.contentDispositionHeader: 'form-data; name="title"',
-              },
+              headers: {'content-disposition': 'form-data; name="title"'},
               body: 'Report',
             ),
             const _Part(
               headers: {
-                Headers.contentDispositionHeader:
+                'content-disposition':
                     'form-data; name="upload"; filename="report.txt"',
-                Headers.contentTypeHeader: 'text/plain; charset=utf-8',
+                'content-type': 'text/plain; charset=utf-8',
               },
               body: 'file-body',
             ),
             const _Part(
-              headers: {
-                Headers.contentDispositionHeader: 'form-data; name="tag"',
-              },
+              headers: {'content-disposition': 'form-data; name="tag"'},
               body: 'draft',
             ),
           ]),
@@ -100,14 +94,14 @@ void main() {
           body: _multipartBody('dupe-files', [
             const _Part(
               headers: {
-                Headers.contentDispositionHeader:
+                'content-disposition':
                     'form-data; name="photo"; filename="one.txt"',
               },
               body: 'one',
             ),
             const _Part(
               headers: {
-                Headers.contentDispositionHeader:
+                'content-disposition':
                     'form-data; name="photo"; filename="two.txt"',
               },
               body: 'two',
@@ -132,15 +126,12 @@ void main() {
         body: _multipartBody('nameless', [
           const _Part(
             headers: {
-              Headers.contentDispositionHeader:
-                  'form-data; filename="ignored.txt"',
+              'content-disposition': 'form-data; filename="ignored.txt"',
             },
             body: 'ignored',
           ),
           const _Part(
-            headers: {
-              Headers.contentDispositionHeader: 'form-data; name="actual"',
-            },
+            headers: {'content-disposition': 'form-data; name="actual"'},
             body: 'value',
           ),
         ]),
@@ -158,9 +149,7 @@ void main() {
         boundary: 'not-form-data',
         body: _multipartBody('not-form-data', [
           const _Part(
-            headers: {
-              Headers.contentDispositionHeader: 'attachment; name="ignored"',
-            },
+            headers: {'content-disposition': 'attachment; name="ignored"'},
             body: 'ignored',
           ),
           _field('actual', 'value'),
@@ -182,7 +171,7 @@ void main() {
           body: _multipartBody('basename', [
             const _Part(
               headers: {
-                Headers.contentDispositionHeader:
+                'content-disposition':
                     'form-data; name="upload"; filename="../../report.txt"',
               },
               body: 'file-body',
@@ -204,9 +193,7 @@ void main() {
       boundary: 'utf8-default',
       bodyBytes: _multipartBodyBytes('utf8-default', [
         _PartBytes(
-          headers: const {
-            Headers.contentDispositionHeader: 'form-data; name="name"',
-          },
+          headers: const {'content-disposition': 'form-data; name="name"'},
           body: utf8.encode('André'),
         ),
       ]),
@@ -224,7 +211,7 @@ void main() {
         body: _multipartBody('dispose', [
           const _Part(
             headers: {
-              Headers.contentDispositionHeader:
+              'content-disposition':
                   'form-data; name="file"; filename="one.txt"',
             },
             body: 'one',
@@ -450,9 +437,7 @@ void main() {
         boundary: 'bad-utf8',
         bodyBytes: _multipartBodyBytes('bad-utf8', [
           const _PartBytes(
-            headers: {
-              Headers.contentDispositionHeader: 'form-data; name="name"',
-            },
+            headers: {'content-disposition': 'form-data; name="name"'},
             body: [0xff, 0xfe],
           ),
         ]),
@@ -473,9 +458,8 @@ void main() {
       body: _multipartBody('empty-file-input', [
         const _Part(
           headers: {
-            Headers.contentDispositionHeader:
-                'form-data; name="upload"; filename=""',
-            Headers.contentTypeHeader: 'application/octet-stream',
+            'content-disposition': 'form-data; name="upload"; filename=""',
+            'content-type': 'application/octet-stream',
           },
           body: '',
         ),
@@ -498,9 +482,8 @@ void main() {
           _field('title', 'Report'),
           const _Part(
             headers: {
-              Headers.contentDispositionHeader:
-                  'form-data; name="upload"; filename=""',
-              Headers.contentTypeHeader: 'application/octet-stream',
+              'content-disposition': 'form-data; name="upload"; filename=""',
+              'content-type': 'application/octet-stream',
             },
             body: '',
           ),
@@ -525,9 +508,8 @@ void main() {
         bodyBytes: _multipartBodyBytes('empty-filename-binary', [
           const _PartBytes(
             headers: {
-              Headers.contentDispositionHeader:
-                  'form-data; name="upload"; filename=""',
-              Headers.contentTypeHeader: 'application/octet-stream',
+              'content-disposition': 'form-data; name="upload"; filename=""',
+              'content-type': 'application/octet-stream',
             },
             body: [0x89, 0x50, 0x4e, 0x47, 0xff, 0xfe],
           ),
@@ -548,17 +530,15 @@ void main() {
       body: _multipartBody('empty-file-inputs', [
         const _Part(
           headers: {
-            Headers.contentDispositionHeader:
-                'form-data; name="first"; filename=""',
-            Headers.contentTypeHeader: 'application/octet-stream',
+            'content-disposition': 'form-data; name="first"; filename=""',
+            'content-type': 'application/octet-stream',
           },
           body: '',
         ),
         const _Part(
           headers: {
-            Headers.contentDispositionHeader:
-                'form-data; name="second"; filename=""',
-            Headers.contentTypeHeader: 'application/octet-stream',
+            'content-disposition': 'form-data; name="second"; filename=""',
+            'content-type': 'application/octet-stream',
           },
           body: '',
         ),
@@ -580,9 +560,8 @@ void main() {
       body: _multipartBody('empty-file-storage', [
         const _Part(
           headers: {
-            Headers.contentDispositionHeader:
-                'form-data; name="upload"; filename=""',
-            Headers.contentTypeHeader: 'application/octet-stream',
+            'content-disposition': 'form-data; name="upload"; filename=""',
+            'content-type': 'application/octet-stream',
           },
           body: '',
         ),
@@ -628,8 +607,7 @@ void main() {
       body: _multipartBody('path-dotdot', [
         const _Part(
           headers: {
-            Headers.contentDispositionHeader:
-                'form-data; name="upload"; filename="a/.."',
+            'content-disposition': 'form-data; name="upload"; filename="a/.."',
           },
           body: 'content',
         ),
@@ -649,7 +627,7 @@ void main() {
       body: _multipartBody('tab-filename', [
         const _Part(
           headers: {
-            Headers.contentDispositionHeader:
+            'content-disposition':
                 'form-data; name="upload"; filename="report\t.txt"',
           },
           body: 'content',
@@ -670,7 +648,7 @@ void main() {
       body: _multipartBody('c1-filename', [
         const _Part(
           headers: {
-            Headers.contentDispositionHeader:
+            'content-disposition':
                 'form-data; name="upload"; filename="report\u0085.txt"',
           },
           body: 'content',
@@ -842,7 +820,7 @@ Uint8List _multipartBodyBytes(
 
 _Part _field(final String name, final String value) {
   return _Part(
-    headers: {Headers.contentDispositionHeader: 'form-data; name="$name"'},
+    headers: {'content-disposition': 'form-data; name="$name"'},
     body: value,
   );
 }
@@ -850,8 +828,7 @@ _Part _field(final String name, final String value) {
 _Part _file(final String name, final String filename, final String content) {
   return _Part(
     headers: {
-      Headers.contentDispositionHeader:
-          'form-data; name="$name"; filename="$filename"',
+      'content-disposition': 'form-data; name="$name"; filename="$filename"',
     },
     body: content,
   );

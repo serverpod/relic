@@ -24,7 +24,7 @@ void main() {
   group('AuthenticationHeader encoding', () {
     String encode(final AuthenticationHeader header) {
       final headers = Headers.build((final mh) => mh.wwwAuthenticate = header);
-      return headers[Headers.wwwAuthenticateHeader]!.first;
+      return headers[HeaderName.wwwAuthenticate]!.first;
     }
 
     group('Given a realm derived from request data', () {
