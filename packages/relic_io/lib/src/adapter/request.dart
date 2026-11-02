@@ -57,7 +57,9 @@ Headers headersFromHttpRequest(io.HttpRequest request) {
 
 /// The body of [request], typed by [headers].
 ///
-/// A request that declares no length and is not chunked has none.
+/// A request that declares no length and is not chunked has none. The
+/// request goes in lazily: a body rejected unread is then never listened to,
+/// and dart:io drains it after the response instead of resetting the client.
 Body bodyFromHttpRequest(io.HttpRequest request, Headers headers) {
   final length = request.contentLength;
   if (length < 0 && !request.headers.chunkedTransferEncoding) {
@@ -65,7 +67,7 @@ Body bodyFromHttpRequest(io.HttpRequest request, Headers headers) {
   }
   return Body.of(
     headers.tryGet(Headers.contentType),
-    stream: request,
+    open: () => request,
     contentLength: length < 0 ? null : length,
   );
 }

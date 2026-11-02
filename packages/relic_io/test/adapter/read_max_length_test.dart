@@ -39,4 +39,27 @@ void main() {
     expect(response.statusCode, 413);
     expect(await utf8.decodeStream(response), 'too large');
   });
+
+  test('Given an upstream response held by a body, '
+      'when a read with a limit rejects it, '
+      'then its connection is free for the next request.', () async {
+    server = await testServe(
+      (_) async => Response.ok(body: Body.fromData(Uint8List(10))),
+    );
+    final client = HttpClient()..maxConnectionsPerHost = 1;
+    addTearDown(client.close);
+    final url = Uri.http(
+      '${InternetAddress.loopbackIPv4.address}:${server.port}',
+    );
+
+    final upstream = await (await client.getUrl(url)).close();
+    final body = Body.of(null, stream: upstream.cast(), contentLength: 10);
+    expect(() => body.read(maxLength: 5), throwsA(isA<MaxBodySizeExceeded>()));
+
+    final next = await (await client.getUrl(
+      url,
+    )).close().timeout(const Duration(seconds: 5));
+    expect(next.statusCode, 200);
+    await next.drain<void>();
+  });
 }
