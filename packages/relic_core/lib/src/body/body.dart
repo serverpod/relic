@@ -486,6 +486,34 @@ class Body {
     return _limitedStream(stream, maxLength);
   }
 
+  /// Marks the body as read, as [read] does, and cancels its stream
+  /// without reading it.
+  ///
+  /// For a body that is not sent, such as one held as [bytes] that an
+  /// adapter writes directly, or the body of a response with none. The
+  /// cancel lets the producer of the stream release what it holds. A body
+  /// built with `open` has no stream until it is read.
+  ///
+  /// Errors the stream delivers are discarded.
+  ///
+  /// Throws a [StateError] when the body was already read.
+  void consume() {
+    _markRead();
+    _stream?.listen(null).cancel().ignore();
+    _stream = null;
+    _open = null;
+  }
+
+  void _markRead() {
+    if (_isRead) {
+      throw StateError(
+        "The 'read' method can only be called once on a "
+        'Request/Response object.',
+      );
+    }
+    _isRead = true;
+  }
+
   static Stream<Uint8List> _limitedStream(
     final Stream<Uint8List> source,
     final int maxLength,
@@ -509,37 +537,6 @@ class Body {
     }
     // check again to not throw on success
     if (totalBytes > maxLength) throw MaxBodySizeExceeded(maxLength);
-  }
-}
-
-/// What an adapter does with a body it does not stream.
-extension BodyConsume on Body {
-  /// Marks the body as read, as [Body.read] does, and cancels its stream
-  /// without reading it.
-  ///
-  /// An adapter that sends [Body.bytes] itself, or sends no body at all,
-  /// has no use for the stream, and [Body.read] would allocate one for a
-  /// body held as bytes. The cancel lets the producer of the stream release
-  /// what it holds. A body built with `open` has no stream until it is read.
-  ///
-  /// Errors the stream delivers are discarded.
-  ///
-  /// Throws a [StateError] when the body was already read.
-  void consume() {
-    _markRead();
-    _stream?.listen(null).cancel().ignore();
-    _stream = null;
-    _open = null;
-  }
-
-  void _markRead() {
-    if (_isRead) {
-      throw StateError(
-        "The 'read' method can only be called once on a "
-        'Request/Response object.',
-      );
-    }
-    _isRead = true;
   }
 }
 
