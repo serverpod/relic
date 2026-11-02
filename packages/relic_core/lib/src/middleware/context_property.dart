@@ -42,11 +42,12 @@ class ContextProperty<T extends Object> {
   final int _slot = _nextSlot();
 
   static int _nextSlot() {
-    assert(
-      _count < 1024,
-      'Over 1024 ContextProperty instances. Create them once, as globals, '
-      'not per request or per handler.',
-    );
+    if (_count >= 1024) {
+      throw StateError(
+        'Over 1024 ContextProperty instances. Create them once, as globals, '
+        'not per request or per handler.',
+      );
+    }
     return _count++;
   }
 
