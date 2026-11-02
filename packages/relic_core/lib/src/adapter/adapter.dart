@@ -32,18 +32,23 @@ enum Transport { tcp, udp, unix }
 
 /// One bound socket of an [Adapter].
 ///
-/// An h1 plus h3 server has a TCP and a UDP listener.
+/// An HTTP/1 plus HTTP/3 server has a TCP and a UDP listener.
 final class Listener {
   final Transport transport;
 
-  /// The bound address as text.
+  /// The bound address as text: an IP address, or a path for a Unix socket.
   ///
   /// Not an `InternetAddress`, so relic_core stays free of `dart:io`.
-  final String host;
+  final String address;
   final int port;
   final Set<HttpProtocol> protocols;
 
-  const Listener(this.transport, this.host, this.port, this.protocols);
+  const Listener({
+    required this.address,
+    required this.port,
+    this.transport = Transport.tcp,
+    this.protocols = const {HttpProtocol.http10, HttpProtocol.http11},
+  });
 }
 
 /// What an [Adapter] can do beyond a plain request and response.

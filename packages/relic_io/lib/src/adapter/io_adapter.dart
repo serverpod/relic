@@ -87,10 +87,7 @@ class IOAdapter implements Adapter {
 
   @override
   List<Listener> get listeners => [
-    Listener(Transport.tcp, _server.address.address, _server.port, const {
-      HttpProtocol.http10,
-      HttpProtocol.http11,
-    }),
+    Listener(address: _server.address.address, port: _server.port),
   ];
 
   @override

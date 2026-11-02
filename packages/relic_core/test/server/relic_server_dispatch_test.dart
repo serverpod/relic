@@ -21,7 +21,7 @@ final class _FakeAdapter implements Adapter {
 
   @override
   List<Listener> get listeners => const [
-    Listener(Transport.tcp, '127.0.0.1', 1, {HttpProtocol.http11}),
+    Listener(address: '127.0.0.1', port: 1, protocols: {HttpProtocol.http11}),
   ];
 
   @override

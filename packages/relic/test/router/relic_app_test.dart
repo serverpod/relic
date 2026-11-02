@@ -553,7 +553,11 @@ class _FakeAdapter extends Fake implements Adapter {
 
   @override
   List<Listener> get listeners => [
-    Listener(Transport.tcp, '127.0.0.1', port, const {HttpProtocol.http11}),
+    Listener(
+      address: '127.0.0.1',
+      port: port,
+      protocols: const {HttpProtocol.http11},
+    ),
   ];
 
   @override
