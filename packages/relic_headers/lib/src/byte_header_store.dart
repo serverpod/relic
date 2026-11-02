@@ -2,7 +2,8 @@ import 'dart:collection';
 import 'dart:convert';
 import 'dart:typed_data';
 
-import 'package:relic_headers/relic_headers.dart';
+import 'header_name.dart';
+import 'header_store.dart';
 
 /// A [HeaderStore] over the bytes of a request head.
 ///

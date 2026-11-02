@@ -1,7 +1,7 @@
 import 'dart:math';
 import 'dart:typed_data';
 
-import 'package:relic_core/relic_core.dart';
+import 'package:relic_headers/relic_headers.dart';
 import 'package:test/test.dart';
 
 const _knownNames = [
