@@ -157,7 +157,7 @@ final class _RelicServer implements RelicServer {
 
   @override
   int get port =>
-      _adapter?.listeners.first.port ?? (throw StateError('Not bound'));
+      _adapter?.listeners.firstOrNull?.port ?? (throw StateError('Not bound'));
 
   /// Never throws synchronously and never returns a failed Future. The
   /// caller is the adapter, and for a native adapter that is an FFI-driven
