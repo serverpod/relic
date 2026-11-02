@@ -98,10 +98,7 @@ final class SimAdapter implements Adapter {
 
   @override
   List<Listener> get listeners => [
-    Listener(Transport.tcp, SimNetwork.address, port, const {
-      HttpProtocol.http10,
-      HttpProtocol.http11,
-    }),
+    Listener(address: SimNetwork.address, port: port),
   ];
 
   @override

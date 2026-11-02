@@ -301,10 +301,7 @@ final class NativeAdapter implements Adapter {
 
   @override
   List<Listener> get listeners => [
-    Listener(Transport.tcp, address.address, _port, const {
-      HttpProtocol.http10,
-      HttpProtocol.http11,
-    }),
+    Listener(address: address.address, port: _port),
   ];
 
   @override
