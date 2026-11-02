@@ -1,4 +1,5 @@
 import '../../relic_core.dart';
+import 'header_accessor.dart';
 
 part 'mutable_headers.dart';
 
@@ -692,25 +693,25 @@ base mixin _StoreReads on HeaderStore, HeaderValues {
       // implement ByteHeaderSource, a store that keeps its bytes does.
       final Object store = _store;
       if (store is ByteHeaderSource) {
-        if (codec.decodeBytes != null) {
-          final bytes = store.rawValue(accessor.key);
-          if (bytes == null) return null;
-          // The text decode of a declined value is cached under the bytes
-          // too, so the decline is remembered with the value.
-          return decodeCached(
-            accessor,
-            bytes,
-            () => accessor.decodeBytes(bytes) ?? _decodeText(accessor),
-          );
-        }
-        if (codec.decodeFields != null) {
-          final fields = store.rawValues(accessor.key);
-          if (fields.isEmpty) return null;
-          return decodeCached(
-            accessor,
-            fields,
-            () => accessor.decodeFields(fields),
-          );
+        switch (codec) {
+          case BytesHeaderCodec<T>(:final decodeBytes):
+            final bytes = store.rawValue(accessor.key);
+            if (bytes == null) return null;
+            return decodeCached(
+              accessor,
+              bytes,
+              () => accessor.decodeBytes(decodeBytes, bytes),
+            );
+          case FieldsHeaderCodec<T>(:final decodeFields):
+            final fields = store.rawValues(accessor.key);
+            if (fields.isEmpty) return null;
+            return decodeCached(
+              accessor,
+              fields,
+              () => accessor.decodeFields(decodeFields, fields),
+            );
+          case SingleHeaderCodec<T>() || MultiHeaderCodec<T>():
+            break;
         }
       }
       if (codec.isSingle) {
@@ -722,14 +723,6 @@ base mixin _StoreReads on HeaderStore, HeaderValues {
       }
     }
     return super.call(accessor);
-  }
-
-  /// [accessor] decoded from the text of a header that is present.
-  T _decodeText<T extends Object>(final HeaderAccessor<T> accessor) {
-    if (accessor.codec.isSingle) {
-      return accessor.decode([_store.value(accessor.key)!]);
-    }
-    return accessor.decode(lookup(accessor.key)!);
   }
 
   /// The decoded value for [accessor].

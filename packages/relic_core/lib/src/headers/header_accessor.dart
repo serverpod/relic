@@ -39,13 +39,10 @@ final class HeaderAccessor<T extends Object>
 
   Iterable<String> encode(final T value) => codec.encode(value);
 
-  /// Decodes [bytes], the wire bytes of the first value, or returns null
-  /// for the caller to decode the text instead.
+  /// [decoder] over [bytes], the wire bytes of the first field.
   ///
   /// Wraps any exception the codec throws in an [InvalidHeaderException].
-  T? decodeBytes(final Uint8List bytes) {
-    final decoder = codec.decodeBytes;
-    if (decoder == null) return null;
+  T decodeBytes(final T Function(Uint8List) decoder, final Uint8List bytes) {
     try {
       return decoder(bytes);
     } on Exception catch (e) {
@@ -57,13 +54,15 @@ final class HeaderAccessor<T extends Object>
     }
   }
 
-  /// Decodes [fields], the wire bytes of every field.
+  /// [decoder] over [fields], the wire bytes of every field.
   ///
-  /// Only for a codec with a [HeaderCodec.decodeFields]. Wraps any
-  /// exception the codec throws in an [InvalidHeaderException].
-  T decodeFields(final List<Uint8List> fields) {
+  /// Wraps any exception the codec throws in an [InvalidHeaderException].
+  T decodeFields(
+    final T Function(List<Uint8List>) decoder,
+    final List<Uint8List> fields,
+  ) {
     try {
-      return codec.decodeFields!(fields);
+      return decoder(fields);
     } on Exception catch (e) {
       throw _toInvalidHeaderException(
         e,
@@ -116,11 +115,13 @@ abstract interface class _Codec<T, StorageT> {
 /// - [decode]: Converts from header string values to the typed value [T]
 /// - [encode]: Converts from the typed value [T] to header string values
 ///
-/// Four factory constructors are provided:
-/// - [HeaderCodec.bytes]: a parser over the wire bytes of a single field
-/// - [HeaderCodec.fields]: a parser over the wire bytes of every field
-/// - [HeaderCodec.single]: a parser over the text of a single field
-/// - [HeaderCodec]: a parser over the text of every field
+/// The four constructors are the cells of a grid, text or bytes by the
+/// first field or every field:
+///
+/// |       | first field                 | every field                  |
+/// |-------|-----------------------------|------------------------------|
+/// | text  | [HeaderCodec.single]        | [HeaderCodec.new]            |
+/// | bytes | [HeaderCodec.bytes]         | [HeaderCodec.fields]         |
 ///
 /// Relic's own headers parse bytes. A text parser reads the same bytes
 /// decoded as Latin-1, and a bytes parser reads text encoded as Latin-1,
@@ -130,20 +131,6 @@ sealed class HeaderCodec<T extends Object>
   final Iterable<String> Function(T decoded) _encode;
 
   const HeaderCodec._(this._encode);
-
-  /// Whether [decode] reads only the first value.
-  bool get isSingle => false;
-
-  /// A decoder over the wire bytes of the first field, with no `String` in
-  /// between, or null when this codec reads text.
-  ///
-  /// It may return null for an input it does not handle, and [decode] then
-  /// runs on the text.
-  T? Function(Uint8List bytes)? get decodeBytes => null;
-
-  /// A decoder over the wire bytes of every field, or null when this codec
-  /// reads the first field alone or reads text.
-  T Function(List<Uint8List> fields)? get decodeFields => null;
 
   @override
   Iterable<String> encode(final T value) => _encode(value);
@@ -155,38 +142,44 @@ sealed class HeaderCodec<T extends Object>
   const factory HeaderCodec(
     final T Function(Iterable<String> encoded) decode,
     final Iterable<String> Function(T decoded) encode,
-  ) = _MultiDecodeHeaderCodec<T>;
+  ) = MultiHeaderCodec<T>;
 
   /// A codec that parses the wire bytes of the first field.
   const factory HeaderCodec.bytes(
     final T Function(Uint8List bytes) decode,
     final Iterable<String> Function(T decoded) encode,
-  ) = _BytesHeaderCodec<T>;
+  ) = BytesHeaderCodec<T>;
 
   /// A codec that parses the wire bytes of every field.
   const factory HeaderCodec.fields(
     final T Function(List<Uint8List> fields) decode,
     final Iterable<String> Function(T decoded) encode,
-  ) = _FieldsHeaderCodec<T>;
+  ) = FieldsHeaderCodec<T>;
 
-  /// Factory constructor for creating a [HeaderCodec] that processes a single value.
+  /// A codec that parses the text of the first field.
   ///
   /// - [singleDecode]: Function that converts a single header value to type [T]
   /// - [encode]: Function to convert type [T] back to header values
-  ///
-  /// This is a simplified constructor for headers that only need to process the first
-  /// value in a collection of header values.
   const factory HeaderCodec.single(
     final T Function(String) singleDecode,
-    final Iterable<String> Function(T) encode, {
-    final T? Function(Uint8List bytes)? decodeBytes,
-  }) = _SingleDecodeHeaderCodec<T>;
+    final Iterable<String> Function(T) encode,
+  ) = SingleHeaderCodec<T>;
 }
 
-final class _MultiDecodeHeaderCodec<T extends Object> extends HeaderCodec<T> {
+/// The store reads a codec by its kind, not exported from relic_core.dart.
+extension HeaderCodecInternal<T extends Object> on HeaderCodec<T> {
+  /// Whether [HeaderCodec.decode] reads only the first value.
+  bool get isSingle => switch (this) {
+    SingleHeaderCodec<T>() || BytesHeaderCodec<T>() => true,
+    MultiHeaderCodec<T>() || FieldsHeaderCodec<T>() => false,
+  };
+}
+
+/// [HeaderCodec.new]: the text of every field.
+final class MultiHeaderCodec<T extends Object> extends HeaderCodec<T> {
   final T Function(Iterable<String>) _decode;
 
-  const _MultiDecodeHeaderCodec(
+  const MultiHeaderCodec(
     this._decode,
     final Iterable<String> Function(T) encode,
   ) : super._(encode);
@@ -195,56 +188,45 @@ final class _MultiDecodeHeaderCodec<T extends Object> extends HeaderCodec<T> {
   T decode(final Iterable<String> encoded) => _decode(encoded);
 }
 
-final class _SingleDecodeHeaderCodec<T extends Object> extends HeaderCodec<T> {
-  final T Function(String) singleDecode;
+/// [HeaderCodec.single]: the text of the first field.
+final class SingleHeaderCodec<T extends Object> extends HeaderCodec<T> {
+  final T Function(String) _decode;
+
+  const SingleHeaderCodec(
+    this._decode,
+    final Iterable<String> Function(T) encode,
+  ) : super._(encode);
 
   @override
-  final T? Function(Uint8List bytes)? decodeBytes;
+  T decode(final Iterable<String> encoded) => _decode(encoded.first);
+}
 
-  const _SingleDecodeHeaderCodec(
-    this.singleDecode,
-    final Iterable<String> Function(T) encode, {
+/// [HeaderCodec.bytes]: the wire bytes of the first field.
+final class BytesHeaderCodec<T extends Object> extends HeaderCodec<T> {
+  /// The decoder over the wire bytes of the first field.
+  final T Function(Uint8List bytes) decodeBytes;
+
+  const BytesHeaderCodec(
     this.decodeBytes,
-  }) : super._(encode);
-
-  @override
-  bool get isSingle => true;
-
-  @override
-  T decode(final Iterable<String> encoded) => singleDecode(encoded.first);
-}
-
-final class _BytesHeaderCodec<T extends Object> extends HeaderCodec<T> {
-  final T Function(Uint8List bytes) _decode;
-
-  const _BytesHeaderCodec(
-    this._decode,
     final Iterable<String> Function(T) encode,
   ) : super._(encode);
 
   @override
-  bool get isSingle => true;
-
-  @override
-  T Function(Uint8List bytes) get decodeBytes => _decode;
-
-  @override
   T decode(final Iterable<String> encoded) =>
-      _decode(latin1Bytes(encoded.first));
+      decodeBytes(latin1Bytes(encoded.first));
 }
 
-final class _FieldsHeaderCodec<T extends Object> extends HeaderCodec<T> {
-  final T Function(List<Uint8List> fields) _decode;
+/// [HeaderCodec.fields]: the wire bytes of every field.
+final class FieldsHeaderCodec<T extends Object> extends HeaderCodec<T> {
+  /// The decoder over the wire bytes of every field.
+  final T Function(List<Uint8List> fields) decodeFields;
 
-  const _FieldsHeaderCodec(
-    this._decode,
+  const FieldsHeaderCodec(
+    this.decodeFields,
     final Iterable<String> Function(T) encode,
   ) : super._(encode);
 
   @override
-  T Function(List<Uint8List> fields) get decodeFields => _decode;
-
-  @override
   T decode(final Iterable<String> encoded) =>
-      _decode([for (final value in encoded) latin1Bytes(value)]);
+      decodeFields([for (final value in encoded) latin1Bytes(value)]);
 }
