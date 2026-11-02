@@ -133,7 +133,7 @@ class _RoutingMiddlewareBuilder<T extends Object> {
             )
           : _router.lookupPath(
               req.method,
-              NormalizedPath.fromPathSegments(req.target.pathSegments),
+              NormalizedPathInternal.fromPathSegments(req.target.pathSegments),
               backtrack: backtrack,
             );
       switch (result) {
