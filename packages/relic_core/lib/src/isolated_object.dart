@@ -13,13 +13,13 @@ typedef _Setup = (SendPort, ReceivePort, _Inflight);
 class IsolatedObject<T> {
   final Future<_Setup> _connected;
 
-  IsolatedObject(final Factory<T> create) : _connected = _connect(create);
+  IsolatedObject(Factory<T> create) : _connected = _connect(create);
 
-  static Future<_Setup> _connect<T>(final Factory<T> create) async {
+  static Future<_Setup> _connect<T>(Factory<T> create) async {
     final parentPort = RawReceivePort();
     final setupDone = Completer<_Setup>();
 
-    parentPort.handler = (final dynamic message) async {
+    parentPort.handler = (dynamic message) async {
       if (message case final RemoteError e) {
         setupDone.completeError(e, e.stackTrace);
       } else {
@@ -41,7 +41,7 @@ class IsolatedObject<T> {
     final (toChild, fromChild, inflight) = result;
 
     fromChild.asyncListen(
-      (final message) async {
+      (message) async {
         if (message case final _Response response) {
           final completer = inflight.remove(response.id);
           assert(completer != null, 'PROTOCOL BUG. No such ID ${response.id}');
@@ -68,11 +68,8 @@ class IsolatedObject<T> {
     return result;
   }
 
-  static Future<Isolate> _spawn<T>(
-    final Factory<T> create,
-    final SendPort toParent,
-  ) {
-    return Isolate.spawn((final toParent) async {
+  static Future<Isolate> _spawn<T>(Factory<T> create, SendPort toParent) {
+    return Isolate.spawn((toParent) async {
       final childPort = ReceivePort();
       final T isolatedObject;
       try {
@@ -102,7 +99,7 @@ class IsolatedObject<T> {
   }
 
   int _nextId = 0;
-  Future<U> evaluate<U>(final FutureOr<U> Function(T) function) async {
+  Future<U> evaluate<U>(FutureOr<U> Function(T) function) async {
     final (toChild, _, inflight) = await _connected;
 
     final id = _nextId++;

@@ -23,8 +23,7 @@ class WildcardListHeader<T> {
   /// Constructs an instance with the given values
   ///
   /// Passing an empty list will raise an ArgumentError
-  WildcardListHeader(final List<T> values)
-    : values = List.unmodifiable(values) {
+  WildcardListHeader(List<T> values) : values = List.unmodifiable(values) {
     if (values.isEmpty) {
       throw ArgumentError.value(values, 'values', 'Cannot be empty');
     }
@@ -41,8 +40,8 @@ class WildcardListHeader<T> {
 
   /// Parses header values and returns a WildcardListHeader instance
   factory WildcardListHeader.parse(
-    final Iterable<String> headerValues,
-    final T Function(String) parseElement,
+    Iterable<String> headerValues,
+    T Function(String) parseElement,
   ) {
     final splitValues = headerValues.splitTrimAndFilterUnique();
 
@@ -69,8 +68,8 @@ class WildcardListHeader<T> {
   /// [parseElement] reads them. One element that is `*` is the wildcard,
   /// and `*` beside a value is an error.
   factory WildcardListHeader.parseFields(
-    final List<Uint8List> fields,
-    final T Function(Uint8List element) parseElement,
+    List<Uint8List> fields,
+    T Function(Uint8List element) parseElement,
   ) {
     final elements = splitFieldsUnique(fields);
     if (elements.isEmpty) {
@@ -89,14 +88,14 @@ class WildcardListHeader<T> {
     return WildcardListHeader.owned(
       List.generate(
         elements.length,
-        (final i) => parseElement(elements[i]),
+        (i) => parseElement(elements[i]),
         growable: false,
       ),
     );
   }
 
   /// Converts the header instance into a string representation suitable for HTTP headers
-  Iterable<String> encode(final String Function(T) encodeElement) {
+  Iterable<String> encode(String Function(T) encodeElement) {
     if (isWildcard) {
       return ['*'];
     } else {
@@ -105,7 +104,7 @@ class WildcardListHeader<T> {
   }
 
   @override
-  bool operator ==(final Object other) =>
+  bool operator ==(Object other) =>
       identical(this, other) ||
       other is WildcardListHeader<T> && _listEquals(values, other.values);
 
@@ -116,7 +115,7 @@ class WildcardListHeader<T> {
   String toString() =>
       'WildcardListHeader(values: $values, isWildcard: $isWildcard)';
 
-  static bool _listEquals<T>(final List<T> a, final List<T> b) {
+  static bool _listEquals<T>(List<T> a, List<T> b) {
     if (a.length != b.length) return false;
     for (int i = 0; i < a.length; i++) {
       if (a[i] != b[i]) return false;

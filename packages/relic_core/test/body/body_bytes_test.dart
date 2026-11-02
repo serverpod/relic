@@ -189,7 +189,7 @@ void main() {
       body.consume();
 
       await pumpEventQueue();
-    }, (final error, final _) => errors.add(error));
+    }, (error, _) => errors.add(error));
 
     expect(errors, isEmpty);
   });

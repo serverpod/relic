@@ -35,8 +35,8 @@ sealed class MultipartPart {
   /// Throws [MalformedFormDataException] if the Content-Disposition or
   /// Content-Type in [headers] does not parse.
   factory MultipartPart({
-    required final Headers headers,
-    required final Stream<Uint8List> content,
+    required Headers headers,
+    required Stream<Uint8List> content,
   }) {
     final contentDisposition = _parseContentDisposition(headers);
     final body = _body(content, _parseContentType(headers));
@@ -84,14 +84,12 @@ sealed class MultipartPart {
   /// Decodes with [encoding], or else the part charset, or else UTF-8. Throws
   /// [MalformedFormDataException] if the bytes do not decode, and
   /// [MaxBodySizeExceeded] if the body is longer than [maxLength].
-  Future<String> readAsString({
-    final Encoding? encoding,
-    final int? maxLength,
-  }) => decodeFormText(
-    body.read(maxLength: maxLength),
-    encoding ?? body.bodyType?.encoding ?? utf8,
-    'Malformed multipart part',
-  );
+  Future<String> readAsString({Encoding? encoding, int? maxLength}) =>
+      decodeFormText(
+        body.read(maxLength: maxLength),
+        encoding ?? body.bodyType?.encoding ?? utf8,
+        'Malformed multipart part',
+      );
 
   /// Consumes and discards the part body.
   Future<void> discard() => body.read().drain<void>();
@@ -150,7 +148,7 @@ final class MultipartOtherPart extends MultipartPart {
   }) : super._();
 }
 
-ContentDispositionHeader? _parseContentDisposition(final Headers headers) {
+ContentDispositionHeader? _parseContentDisposition(Headers headers) {
   final raw = headers[HeaderName.contentDisposition]?.firstOrNull;
   if (raw == null) return null;
   try {
@@ -167,10 +165,7 @@ ContentDispositionHeader? _parseContentDisposition(final Headers headers) {
 ///
 /// It drops a declared charset that [Encoding.getByName] does not know, so
 /// readers fall back to UTF-8.
-Body _body(
-  final Stream<Uint8List> content,
-  final ContentTypeHeader? contentType,
-) {
+Body _body(Stream<Uint8List> content, ContentTypeHeader? contentType) {
   if (contentType == null) return Body(stream: content);
   return Body(
     stream: content,
@@ -185,7 +180,7 @@ Body _body(
   );
 }
 
-ContentTypeHeader? _parseContentType(final Headers headers) {
+ContentTypeHeader? _parseContentType(Headers headers) {
   final raw = headers[HeaderName.contentType]?.firstOrNull;
   if (raw == null) return null;
   try {
@@ -198,8 +193,8 @@ ContentTypeHeader? _parseContentType(final Headers headers) {
 }
 
 String? _contentDispositionParameter(
-  final ContentDispositionHeader? disposition,
-  final String name,
+  ContentDispositionHeader? disposition,
+  String name,
 ) {
   if (disposition == null) return null;
   for (final parameter in disposition.parameters) {
@@ -208,7 +203,7 @@ String? _contentDispositionParameter(
   return null;
 }
 
-String? _sanitizeFilename(final String filename) {
+String? _sanitizeFilename(String filename) {
   final basename = _basename(filename.replaceAll(_unsafeCharacters, ''));
   if (basename.isEmpty || basename == '.' || basename == '..') return null;
   return basename;
@@ -222,16 +217,16 @@ final _unsafeCharacters = RegExp(
   r'[\x00-\x1f\x7f-\x9f\u061c\u200b\u200e\u200f\u2028\u2029\u202a-\u202e\u2066-\u2069\ufeff]',
 );
 
-bool _hasFilename(final ContentDispositionHeader? disposition) =>
+bool _hasFilename(ContentDispositionHeader? disposition) =>
     disposition != null &&
     disposition.parameters.any(
-      (final parameter) => const {
+      (parameter) => const {
         'filename',
         'filename*',
       }.contains(parameter.name.toLowerCase()),
     );
 
-String _basename(final String path) {
+String _basename(String path) {
   final slash = path.lastIndexOf('/');
   final backslash = path.lastIndexOf(r'\');
   final separator = slash > backslash ? slash : backslash;

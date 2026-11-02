@@ -6,10 +6,10 @@ import 'package:relic_core/relic_core.dart';
 import 'package:test/test.dart';
 
 ResponseFraming _frame(
-  final Response response, {
-  final bool head = false,
-  final HttpProtocol protocol = HttpProtocol.http11,
-  final bool keepAlive = true,
+  Response response, {
+  bool head = false,
+  HttpProtocol protocol = HttpProtocol.http11,
+  bool keepAlive = true,
 }) => ResponseFraming.of(
   response,
   head: head,
@@ -17,16 +17,14 @@ ResponseFraming _frame(
   keepAlive: keepAlive,
 );
 
-Body _stream({final int? contentLength}) => Body.fromDataStream(
+Body _stream({int? contentLength}) => Body.fromDataStream(
   Stream.value(Uint8List.fromList([1, 2, 3])),
   contentLength: contentLength,
 );
 
-Headers _transferEncoding(final List<TransferEncoding> codings) =>
-    Headers.build(
-      (final mh) =>
-          mh.transferEncoding = TransferEncodingHeader.encodings(codings),
-    );
+Headers _transferEncoding(List<TransferEncoding> codings) => Headers.build(
+  (mh) => mh.transferEncoding = TransferEncodingHeader.encodings(codings),
+);
 
 void main() {
   test('Given a body with a type, when framed, '
@@ -61,7 +59,7 @@ void main() {
     final framing = _frame(
       Response.ok(
         body: Body.fromString('ok'),
-        headers: Headers.build((final mh) => mh.contentLength = 99),
+        headers: Headers.build((mh) => mh.contentLength = 99),
       ),
     );
 
@@ -180,9 +178,7 @@ void main() {
     final without = _frame(Response.ok());
     final with_ = _frame(
       Response.ok(
-        headers: Headers.build(
-          (final mh) => mh.date = DateTime.utc(2026, 10, 1),
-        ),
+        headers: Headers.build((mh) => mh.date = DateTime.utc(2026, 10, 1)),
       ),
     );
 
@@ -193,9 +189,7 @@ void main() {
   test('Given Connection: close or a request without keep-alive, '
       'when framed, then the connection closes after', () {
     final byHeader = _frame(
-      Response.ok(
-        headers: Headers.build((final mh) => mh['connection'] = ['close']),
-      ),
+      Response.ok(headers: Headers.build((mh) => mh['connection'] = ['close'])),
     );
     final byRequest = _frame(Response.ok(), keepAlive: false);
 

@@ -9,7 +9,7 @@ void main() {
       trie = PathTrie<int>();
     });
 
-    TrieMatch<int>? lookup(final String path) =>
+    TrieMatch<int>? lookup(String path) =>
         trie.lookup(NormalizedPath(path), backtrack: false);
 
     test('when a literal path is looked up, '
@@ -137,22 +137,22 @@ void main() {
     test('when use is applied at two levels of the matched path, '
         'then the outer mapping wraps the inner one', () {
       trie.add(NormalizedPath('/api/v1/items'), 1);
-      trie.use(NormalizedPath('/api'), (final i) => i * 10);
-      trie.use(NormalizedPath('/api/v1'), (final i) => i + 1);
+      trie.use(NormalizedPath('/api'), (i) => i * 10);
+      trie.use(NormalizedPath('/api/v1'), (i) => i + 1);
       expect(lookup('/api/v1/items')?.value, 20);
     });
 
     test('when use is applied on a parameter prefix, '
         'then the mapping applies to the descendant value', () {
       trie.add(NormalizedPath('/:id/b/c'), 1);
-      trie.use(NormalizedPath('/:id'), (final i) => i * 2);
+      trie.use(NormalizedPath('/:id'), (i) => i * 2);
       expect(lookup('/a/b/c')?.value, 2);
     });
 
     test('when use is applied on a tail route, '
         'then the mapping applies to the tail value', () {
       trie.add(NormalizedPath('/files/**'), 1);
-      trie.use(NormalizedPath('/files'), (final i) => i * 3);
+      trie.use(NormalizedPath('/files'), (i) => i * 3);
       expect(lookup('/files/a/b')?.value, 3);
       expect(lookup('/files')?.value, 3);
     });

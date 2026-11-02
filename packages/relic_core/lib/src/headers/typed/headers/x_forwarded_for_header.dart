@@ -22,7 +22,7 @@ final class XForwardedForHeader {
   final List<String> addresses;
 
   /// Creates an [XForwardedForHeader] with the given list of addresses.
-  XForwardedForHeader(final Iterable<String> addresses)
+  XForwardedForHeader(Iterable<String> addresses)
     : addresses = List.unmodifiable(addresses) {
     if (addresses.isEmpty) {
       throw ArgumentError.value(addresses, 'addresses', 'cannot be empty');
@@ -30,7 +30,7 @@ final class XForwardedForHeader {
   }
 
   /// Parses the `X-Forwarded-For` header values into an [XForwardedForHeader].
-  factory XForwardedForHeader.parse(final Iterable<String> values) =>
+  factory XForwardedForHeader.parse(Iterable<String> values) =>
       _parseFields([for (final value in values) latin1Bytes(value)]);
 
   /// Takes [addresses], a list the parser built, as its own.
@@ -38,7 +38,7 @@ final class XForwardedForHeader {
 
   /// The header from the wire bytes of its [fields]. `unknown` may repeat,
   /// so every element is kept.
-  static XForwardedForHeader _parseFields(final List<Uint8List> fields) {
+  static XForwardedForHeader _parseFields(List<Uint8List> fields) {
     final elements = splitFieldsAll(fields);
     if (elements.isEmpty) {
       throw const FormatException('Value cannot be empty');
@@ -46,7 +46,7 @@ final class XForwardedForHeader {
     return XForwardedForHeader._(
       List.generate(
         elements.length,
-        (final i) => textOf(elements[i]),
+        (i) => textOf(elements[i]),
         growable: false,
       ),
     );
@@ -58,13 +58,11 @@ final class XForwardedForHeader {
     __encode,
   );
 
-  static List<String> __encode(final XForwardedForHeader value) => [
-    value._encode(),
-  ];
+  static List<String> __encode(XForwardedForHeader value) => [value._encode()];
   String _encode() => addresses.join(', ');
 
   @override
-  bool operator ==(final Object other) =>
+  bool operator ==(Object other) =>
       identical(this, other) ||
       other is XForwardedForHeader &&
           const ListEquality<String>().equals(addresses, other.addresses);

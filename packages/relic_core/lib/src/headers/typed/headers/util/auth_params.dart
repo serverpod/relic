@@ -20,7 +20,7 @@ const int _equals = 0x3D;
 /// [FormatException] if an element is not a well-formed auth-param; text
 /// between parameters is rejected rather than skipped, so a value such as
 /// `algorithm=MD5;evil` cannot be stored and re-emitted verbatim.
-List<(String name, String value)> parseAuthParams(final Uint8List value) {
+List<(String name, String value)> parseAuthParams(Uint8List value) {
   final params = <(String, String)>[];
   for (final part in ByteScanner(value).splitTopLevel(_comma)) {
     if (part.source.isEmpty) continue;

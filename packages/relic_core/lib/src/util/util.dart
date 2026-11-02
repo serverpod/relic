@@ -6,8 +6,8 @@ import 'dart:async';
 /// and return the result. Otherwise, it will capture any errors using
 /// [runZoned] and pass them to [onError].
 void catchTopLevelErrors(
-  final void Function() callback,
-  final void Function(dynamic error, StackTrace) onError,
+  void Function() callback,
+  void Function(dynamic error, StackTrace) onError,
 ) {
   if (Zone.current.inSameErrorZone(Zone.root)) {
     return runZonedGuarded(callback, onError);
@@ -18,7 +18,7 @@ void catchTopLevelErrors(
 
 /// Multiple header values are joined with commas.
 /// See https://datatracker.ietf.org/doc/html/draft-ietf-httpbis-p1-messaging-21#page-22
-String? joinHeaderValues(final List<String>? values) {
+String? joinHeaderValues(List<String>? values) {
   if (values == null) return null;
   if (values.isEmpty) return '';
   if (values.length == 1) return values.single;
@@ -29,7 +29,7 @@ extension EventSinkEx<T> on EventSink<T> {
   /// Creates a new [StreamSink<R>] that maps its incoming values of type [R]
   /// to type [T] using the provided [mapper] function, and then adds them
   /// to this sink.
-  StreamSink<R> mapFrom<R>(final T Function(R) mapper) {
+  StreamSink<R> mapFrom<R>(T Function(R) mapper) {
     final controller = StreamController<R>();
     controller.stream.map(mapper).listen(add, onError: addError, onDone: close);
     return controller.sink;
@@ -42,10 +42,10 @@ extension StreamEx<T> on Stream<T> {
   /// The [onData] callbacks are guaranteed to be serialized even when async.
   /// Otherwise behaves as [Stream.listen]
   StreamSubscription<void> asyncListen(
-    final FutureOr<void> Function(T event) onData, {
-    final Function? onError,
-    final void Function()? onDone,
-    final bool? cancelOnError,
+    FutureOr<void> Function(T event) onData, {
+    Function? onError,
+    void Function()? onDone,
+    bool? cancelOnError,
   }) => asyncMap(onData).listen(
     (_) {},
     onError: onError,
@@ -56,5 +56,5 @@ extension StreamEx<T> on Stream<T> {
 
 /// Whether a response with [status] carries a body on the wire. 1xx, 204
 /// and 304 responses have none, and no Content-Length either.
-bool statusMayHaveBody(final int status) =>
+bool statusMayHaveBody(int status) =>
     status >= 200 && status != 204 && status != 304;

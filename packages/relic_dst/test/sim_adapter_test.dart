@@ -22,7 +22,7 @@ final class _Served {
   /// Closes the server and checks what a clean end leaves: no contract
   /// violation and, once the last bytes have landed, nothing pending in
   /// the simulation.
-  Future<void> shutdown({final bool force = false}) async {
+  Future<void> shutdown({bool force = false}) async {
     await server.close(force: force);
     await network.sim.sleep(const Duration(seconds: 1));
     expect(contract.violations, isEmpty);
@@ -31,15 +31,15 @@ final class _Served {
 }
 
 Future<_Served> _serve(
-  final Simulation sim,
-  final Handler handler, {
-  final NetworkOptions network = const NetworkOptions(),
-  final Duration idleTimeout = const Duration(seconds: 60),
-  final Duration headerTimeout = const Duration(seconds: 10),
-  final Duration bodyTimeout = const Duration(seconds: 30),
-  final Duration drainTimeout = const Duration(seconds: 5),
-  final int maxInlineBody = 1 << 20,
-  final int maxHeadSize = 16 << 10,
+  Simulation sim,
+  Handler handler, {
+  NetworkOptions network = const NetworkOptions(),
+  Duration idleTimeout = const Duration(seconds: 60),
+  Duration headerTimeout = const Duration(seconds: 10),
+  Duration bodyTimeout = const Duration(seconds: 30),
+  Duration drainTimeout = const Duration(seconds: 5),
+  int maxInlineBody = 1 << 20,
+  int maxHeadSize = 16 << 10,
 }) async {
   final net = SimNetwork(sim, options: network);
   final adapter = SimAdapter.bind(
@@ -57,24 +57,24 @@ Future<_Served> _serve(
   return _Served(server, net, adapter, contract);
 }
 
-Response _hello(final Request request) =>
+Response _hello(Request request) =>
     Response.ok(body: Body.fromString('Hello from ${request.url.path}'));
 
-Handler _echoLength() => (final request) async {
+Handler _echoLength() => (request) async {
   final bytes = await request.body.readAll();
   return Response.ok(
     body: Body.fromString('${bytes.length} ${request.body.contentLength}'),
   );
 };
 
-Uint8List _bytes(final int n) =>
-    Uint8List.fromList(List.generate(n, (final i) => (i * 7) & 0xff));
+Uint8List _bytes(int n) =>
+    Uint8List.fromList(List.generate(n, (i) => (i * 7) & 0xff));
 
 void main() {
   simTest('Given a server, '
       'when a client sends a GET, '
       'then the response has the body, its length and a Date from the '
-      'simulated clock.', (final sim) async {
+      'simulated clock.', (sim) async {
     final served = await _serve(sim, _hello);
 
     final response = await served.client().get('/path');
@@ -89,7 +89,7 @@ void main() {
   simTest('Given a server, '
       'when a client sends two requests on one connection, '
       'then both are answered and the connection counts as idle in between.', (
-    final sim,
+    sim,
   ) async {
     final served = await _serve(sim, _hello);
     final client = served.client();
@@ -107,7 +107,7 @@ void main() {
 
   simTest('Given a server, '
       'when a client pipelines three requests, '
-      'then the responses come back in order.', (final sim) async {
+      'then the responses come back in order.', (sim) async {
     final served = await _serve(sim, _hello);
     final client = served.client();
 
@@ -122,9 +122,7 @@ void main() {
 
   simTest('Given a server, '
       'when a client posts a 100 KB chunked body, '
-      'then the handler reads it all with no declared length.', (
-    final sim,
-  ) async {
+      'then the handler reads it all with no declared length.', (sim) async {
     final served = await _serve(sim, _echoLength());
 
     final response = await served.client().post(
@@ -140,7 +138,7 @@ void main() {
   simTest('Given a server with a 1000 byte inline body limit, '
       'when a client posts 5000 bytes, '
       'then the handler reads the whole streamed body with its length.', (
-    final sim,
+    sim,
   ) async {
     final served = await _serve(sim, _echoLength(), maxInlineBody: 1000);
 
@@ -152,7 +150,7 @@ void main() {
 
   simTest('Given a server, '
       'when a client sends a HEAD, '
-      'then the response has the length and no body.', (final sim) async {
+      'then the response has the length and no body.', (sim) async {
     final served = await _serve(sim, _hello);
 
     final response = await served.client().send(Method.head, '/');
@@ -166,13 +164,13 @@ void main() {
   simTest('Given a handler that answers with Connection: close, '
       'when a client sends a request, '
       'then the response arrives and the server closes the connection.', (
-    final sim,
+    sim,
   ) async {
     final served = await _serve(
       sim,
-      (final _) => Response.ok(
+      (_) => Response.ok(
         headers: Headers.build(
-          (final h) => h.connection = const ConnectionHeader.directives([
+          (h) => h.connection = const ConnectionHeader.directives([
             ConnectionHeaderType.close,
           ]),
         ),
@@ -192,9 +190,7 @@ void main() {
 
   simTest('Given a server, '
       'when a client sends an HTTP/1.0 request without a Host, '
-      'then it is answered and the connection closes after.', (
-    final sim,
-  ) async {
+      'then it is answered and the connection closes after.', (sim) async {
     final served = await _serve(sim, _hello);
     final client = served.client();
 
@@ -212,9 +208,9 @@ void main() {
 
   simTest('Given a server, '
       'when a client sends a head with bare LF line endings, '
-      'then it gets 400 and the handler never runs.', (final sim) async {
+      'then it gets 400 and the handler never runs.', (sim) async {
     var handled = 0;
-    final served = await _serve(sim, (final request) {
+    final served = await _serve(sim, (request) {
       handled++;
       return _hello(request);
     });
@@ -230,7 +226,7 @@ void main() {
 
   simTest('Given a server with a 1 KB head limit, '
       'when a client sends a 2 KB header, '
-      'then it gets 431.', (final sim) async {
+      'then it gets 431.', (sim) async {
     final served = await _serve(sim, _hello, maxHeadSize: 1024);
     final client = served.client();
 
@@ -243,7 +239,7 @@ void main() {
   simTest('Given a server, '
       'when a client writes two requests before its connection opens, '
       'then both go down one connection and the responses come in order.', (
-    final sim,
+    sim,
   ) async {
     final served = await _serve(sim, _hello);
     final client = served.client();
@@ -263,9 +259,9 @@ void main() {
   simTest('Given a handler that sleeps a second, '
       'when a client sends a GET, '
       'then the contract records the exchange starting when the handler ran '
-      'and ending a second later.', (final sim) async {
+      'and ending a second later.', (sim) async {
     var handled = Duration.zero;
-    final served = await _serve(sim, (final _) async {
+    final served = await _serve(sim, (_) async {
       handled = sim.elapsed;
       await sim.sleep(const Duration(seconds: 1));
       return Response.ok();
@@ -281,7 +277,7 @@ void main() {
 
   simTest('Given a server, '
       'when a client sends a Content-Length of twenty digits, '
-      'then it gets 400.', (final sim) async {
+      'then it gets 400.', (sim) async {
     final served = await _serve(sim, _hello);
     final client = served.client();
 
@@ -297,9 +293,7 @@ void main() {
 
   simTest('Given a server with a 10 second header timeout on a quiet network, '
       'when a client sends half a head and waits, '
-      'then it gets 408 exactly 10 seconds after the first byte.', (
-    final sim,
-  ) async {
+      'then it gets 408 exactly 10 seconds after the first byte.', (sim) async {
     final served = await _serve(
       sim,
       _hello,
@@ -320,12 +314,12 @@ void main() {
   simTest('Given a server with a 30 second body timeout on a quiet network, '
       'when a client sends a chunked head and nothing more, '
       'then the handler reading the body fails 30 seconds after the head.', (
-    final sim,
+    sim,
   ) async {
     Object? failure;
     final served = await _serve(
       sim,
-      (final request) async {
+      (request) async {
         try {
           await request.body.readAll();
         } on Object catch (e) {
@@ -350,9 +344,7 @@ void main() {
 
   simTest('Given a server with a 60 second idle timeout on a quiet network, '
       'when a client connects and sends nothing, '
-      'then the server closes the connection at 60 seconds.', (
-    final sim,
-  ) async {
+      'then the server closes the connection at 60 seconds.', (sim) async {
     final served = await _serve(
       sim,
       _hello,
@@ -373,10 +365,10 @@ void main() {
   simTest('Given a handler waiting on the request, '
       'when the client resets the connection, '
       'then request.cancelled completes and the exchange ended by the peer.', (
-    final sim,
+    sim,
   ) async {
     final cancelled = Completer<void>();
-    final served = await _serve(sim, (final request) async {
+    final served = await _serve(sim, (request) async {
       await request.cancelled;
       cancelled.complete();
       return Response.ok();
@@ -396,10 +388,10 @@ void main() {
   simTest('Given a server with a request in flight, '
       'when the server closes gracefully, '
       'then the request completes with 200 before the close does.', (
-    final sim,
+    sim,
   ) async {
     final release = Completer<void>();
-    final served = await _serve(sim, (final _) async {
+    final served = await _serve(sim, (_) async {
       await release.future;
       return Response.ok(body: Body.fromString('done'));
     });
@@ -423,11 +415,11 @@ void main() {
   simTest('Given a handler that never answers, '
       'when the server closes gracefully with a 5 second drain, '
       'then the close completes at 5 seconds and the client sees a reset.', (
-    final sim,
+    sim,
   ) async {
     final served = await _serve(
       sim,
-      (final _) => Completer<Response>().future,
+      (_) => Completer<Response>().future,
       network: NetworkOptions.quiet,
       drainTimeout: const Duration(seconds: 5),
     );
@@ -446,8 +438,8 @@ void main() {
 
   simTest('Given a server with a request in flight, '
       'when the server closes by force, '
-      'then the client sees a reset at once.', (final sim) async {
-    final served = await _serve(sim, (final _) => Completer<Response>().future);
+      'then the client sees a reset at once.', (sim) async {
+    final served = await _serve(sim, (_) => Completer<Response>().future);
     final client = served.client();
 
     await client.write(Method.get, '/');
@@ -462,10 +454,10 @@ void main() {
 
   simTest('Given a handler that hijacks and echoes, '
       'when the client writes bytes after its request, '
-      'then it reads the same bytes back.', (final sim) async {
+      'then it reads the same bytes back.', (sim) async {
     final served = await _serve(
       sim,
-      (final _) => Hijack((final channel) {
+      (_) => Hijack((channel) {
         channel.stream.listen(channel.sink.add, onDone: channel.sink.close);
       }),
     );
@@ -483,10 +475,10 @@ void main() {
 
   simTest('Given a handler that hijacks without reading the body, '
       'when the client sends a chunked head and nothing more, '
-      'then it gets 500 and the connection closes.', (final sim) async {
+      'then it gets 500 and the connection closes.', (sim) async {
     final served = await _serve(
       sim,
-      (final _) => Hijack((final channel) => channel.sink.close()),
+      (_) => Hijack((channel) => channel.sink.close()),
     );
     final client = served.client();
 
@@ -503,12 +495,12 @@ void main() {
       'reading, '
       'when the server closes gracefully with a 5 second drain, '
       'then the close completes within the drain and the connection is gone.', (
-    final sim,
+    sim,
   ) async {
     final flooded = Completer<void>();
     final served = await _serve(
       sim,
-      (final _) => Hijack((final channel) {
+      (_) => Hijack((channel) {
         for (var i = 0; i < 64; i++) {
           channel.sink.add(Uint8List(1 << 20));
         }
@@ -534,12 +526,12 @@ void main() {
   simTest('Given a WebSocket handler that answers tick with tock, '
       'when the client sends tick and then a close frame, '
       'then it gets tock, the echoed close and the end of the connection.', (
-    final sim,
+    sim,
   ) async {
     final served = await _serve(
       sim,
-      (final _) => WebSocketUpgrade((final socket) {
-        socket.events.listen((final event) {
+      (_) => WebSocketUpgrade((socket) {
+        socket.events.listen((event) {
           if (event case TextDataReceived(text: 'tick')) {
             socket.sendText('tock');
           }
@@ -567,10 +559,10 @@ void main() {
     'Given a WebSocket with a 10 second ping interval on a quiet network, '
     'when the client answers no ping, '
     'then a ping arrives at 10 seconds and a 1001 close at 20.',
-    (final sim) async {
+    (sim) async {
       final served = await _serve(
         sim,
-        (final _) => WebSocketUpgrade((final socket) {
+        (_) => WebSocketUpgrade((socket) {
           socket.pingInterval = const Duration(seconds: 10);
         }),
         network: NetworkOptions.quiet,
@@ -595,11 +587,8 @@ void main() {
   simTest('Given an open WebSocket, '
       'when the server closes gracefully, '
       'then the client gets a 1001 going-away close and the close completes '
-      'once it answers.', (final sim) async {
-    final served = await _serve(
-      sim,
-      (final _) => WebSocketUpgrade((final _) {}),
-    );
+      'once it answers.', (sim) async {
+    final served = await _serve(sim, (_) => WebSocketUpgrade((_) {}));
     final ws = await served.client().upgrade('/ws');
 
     var closed = false;
@@ -620,18 +609,18 @@ void main() {
       'handler, '
       'when a client started in another zone resets the connection, '
       'then the error reaches the zone the server was started in, not the '
-      "client's.", (final sim) async {
+      "client's.", (sim) async {
     final serverErrors = <Object>[];
     final clientErrors = <Object>[];
     late _Served served;
     await runZonedGuarded(() async {
       served = await _serve(
         sim,
-        (final _) => WebSocketUpgrade((final socket) {
-          socket.events.listen((final _) {});
+        (_) => WebSocketUpgrade((socket) {
+          socket.events.listen((_) {});
         }),
       );
-    }, (final error, final _) => serverErrors.add(error))!;
+    }, (error, _) => serverErrors.add(error))!;
 
     await runZonedGuarded(() async {
       final ws = await served.client().upgrade('/ws');
@@ -639,11 +628,11 @@ void main() {
       await sim.sleep(const Duration(milliseconds: 100));
       ws.destroy();
       await sim.sleep(const Duration(milliseconds: 100));
-    }, (final error, final _) => clientErrors.add(error))!;
+    }, (error, _) => clientErrors.add(error))!;
 
     expect(serverErrors, [
       isA<WebSocketException>().having(
-        (final e) => e.message,
+        (e) => e.message,
         'message',
         'Connection reset by peer',
       ),
@@ -654,8 +643,8 @@ void main() {
 
   simTest('Given a handler that throws, '
       'when a client sends a request, '
-      'then it gets 500 and the connection stays usable.', (final sim) async {
-    final served = await _serve(sim, (final _) => throw StateError('oh no'));
+      'then it gets 500 and the connection stays usable.', (sim) async {
+    final served = await _serve(sim, (_) => throw StateError('oh no'));
     final client = served.client();
 
     final first = await client.get('/');
@@ -672,13 +661,13 @@ void main() {
     List<String> run() {
       final sim = Simulation(seed: 11);
       sim.run(() async {
-        final served = await _serve(sim, (final request) async {
+        final served = await _serve(sim, (request) async {
           await sim.sleep(Duration(milliseconds: sim.random.nextInt(50)));
           return _hello(request);
         }, network: const NetworkOptions(fragmentation: 0.8));
         await Future.wait([
           for (var i = 0; i < 20; i++)
-            served.client().get('/$i').then((final r) {
+            served.client().get('/$i').then((r) {
               expect(r.body, 'Hello from /$i');
             }),
         ]);

@@ -38,7 +38,7 @@ final class ExtValue {
   /// Throws [FormatException] when [source] does not match the grammar above,
   /// names a charset other than `UTF-8`, or percent-decodes to bytes that are
   /// not valid UTF-8.
-  factory ExtValue.parse(final String source) {
+  factory ExtValue.parse(String source) {
     final bytes = Uint8List(source.length);
     for (var i = 0; i < source.length; i++) {
       final c = source.codeUnitAt(i);
@@ -49,7 +49,7 @@ final class ExtValue {
   }
 
   /// [parse] over the wire bytes.
-  factory ExtValue.parseBytes(final Uint8List source) {
+  factory ExtValue.parseBytes(Uint8List source) {
     final charsetEnd = indexOfByte(source, 0x27);
     if (charsetEnd < 0) {
       throw FormatException("expected \"'\" after charset", textOf(source));
@@ -93,7 +93,7 @@ final class ExtValue {
   }
 
   @override
-  bool operator ==(final Object other) =>
+  bool operator ==(Object other) =>
       identical(this, other) ||
       (other is ExtValue && value == other.value && language == other.language);
 
@@ -106,7 +106,7 @@ final class ExtValue {
 
 const int _percent = 0x25;
 
-List<int> _decodeValueChars(final Uint8List source, final int start) {
+List<int> _decodeValueChars(Uint8List source, int start) {
   final bytes = <int>[];
   var i = start;
   while (i < source.length) {
@@ -137,14 +137,14 @@ List<int> _decodeValueChars(final Uint8List source, final int start) {
 }
 
 /// The value of the hex digit [c], or -1 if [c] is not a hex digit.
-int _hexValue(final int c) {
+int _hexValue(int c) {
   if (c >= 0x30 && c <= 0x39) return c - 0x30; // 0-9
   if (c >= 0x41 && c <= 0x46) return c - 0x37; // A-F
   if (c >= 0x61 && c <= 0x66) return c - 0x57; // a-f
   return -1;
 }
 
-bool _isAttrChar(final int c) {
+bool _isAttrChar(int c) {
   if (c >= 0x41 && c <= 0x5A) return true; // A-Z
   if (c >= 0x61 && c <= 0x7A) return true; // a-z
   if (c >= 0x30 && c <= 0x39) return true; // 0-9

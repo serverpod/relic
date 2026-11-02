@@ -10,9 +10,7 @@ import '../primitives/byte_scanner.dart' show latin1Bytes;
 /// including cases for unsatisfiable range requests.
 final class ContentRangeHeader {
   static const codec = HeaderCodec.bytes(_parseBytes, __encode);
-  static List<String> __encode(final ContentRangeHeader value) => [
-    value._encode(),
-  ];
+  static List<String> __encode(ContentRangeHeader value) => [value._encode()];
 
   /// The unit of the range, e.g. "bytes".
   final String unit;
@@ -54,13 +52,13 @@ final class ContentRangeHeader {
   }
 
   /// Factory constructor to create a [ContentRangeHeader] from the header string.
-  factory ContentRangeHeader.parse(final String value) =>
+  factory ContentRangeHeader.parse(String value) =>
       _parseBytes(latin1Bytes(value));
 
   /// [parse] over the wire bytes: `unit SP ( first "-" last / "*" ) "/"
   /// ( complete-length / "*" )`, with nothing before or after, so
   /// trailing garbage is rejected rather than dropped.
-  static ContentRangeHeader _parseBytes(final Uint8List bytes) {
+  static ContentRangeHeader _parseBytes(Uint8List bytes) {
     final value = trimmed(bytes);
     if (value.isEmpty) {
       throw const FormatException('Value cannot be empty');
@@ -117,7 +115,7 @@ final class ContentRangeHeader {
   }
 
   /// The end of the run of ASCII digits at [from].
-  static int _digitsEnd(final Uint8List bytes, int from) {
+  static int _digitsEnd(Uint8List bytes, int from) {
     while (from < bytes.length && bytes[from] >= 0x30 && bytes[from] <= 0x39) {
       from++;
     }
@@ -125,7 +123,7 @@ final class ContentRangeHeader {
   }
 
   /// A letter, digit or underscore, what `\w` matches.
-  static bool _isWordByte(final int b) =>
+  static bool _isWordByte(int b) =>
       (b >= 0x30 && b <= 0x39) ||
       (b >= 0x41 && b <= 0x5A) ||
       (b >= 0x61 && b <= 0x7A) ||
@@ -133,7 +131,7 @@ final class ContentRangeHeader {
 
   /// The digits as an int, or a [FormatException] for a run that
   /// overflows, so a specified range never turns into an unsatisfied one.
-  static int _parseField(final String digits) {
+  static int _parseField(String digits) {
     final n = int.tryParse(digits);
     if (n == null) {
       throw FormatException('Content-Range value out of range', digits);
@@ -154,7 +152,7 @@ final class ContentRangeHeader {
   }
 
   @override
-  bool operator ==(final Object other) =>
+  bool operator ==(Object other) =>
       identical(this, other) ||
       other is ContentRangeHeader &&
           unit == other.unit &&

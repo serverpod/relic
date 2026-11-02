@@ -136,13 +136,13 @@ typedef Middleware = Handler Function(Handler next);
 Middleware createMiddleware({
   FutureOr<Response?> Function(Request)? onRequest,
   FutureOr<Response> Function(Response)? onResponse,
-  final FutureOr<Response> Function(Object error, StackTrace)? onError,
+  FutureOr<Response> Function(Object error, StackTrace)? onError,
 }) {
-  onRequest ??= (final request) => null;
-  onResponse ??= (final response) => response;
+  onRequest ??= (request) => null;
+  onResponse ??= (response) => response;
 
-  return (final next) {
-    return (final req) async {
+  return (next) {
+    return (req) async {
       var response = await onRequest!(req);
       if (response != null) return response;
       late Response handlerResponse;
@@ -175,10 +175,10 @@ abstract class MiddlewareObject implements RouterInjectable {
   /// Use this middleware on [router] on path `/`.
   /// Override to use on a different path.
   @override
-  void injectIn(final Router<Handler> router) => router.use('/', call);
+  void injectIn(Router<Handler> router) => router.use('/', call);
 
   /// The implementation of this [MiddlewareObject]
-  Handler call(final Handler next);
+  Handler call(Handler next);
 
   /// Returns this [MiddlewareObject] as a [Middleware] function.
   Middleware get asMiddleware => call;

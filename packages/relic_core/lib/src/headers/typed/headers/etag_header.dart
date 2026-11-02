@@ -12,7 +12,7 @@ import '../primitives/etag_value.dart' show ETagValueInternal;
 /// appropriate header string.
 final class ETagHeader {
   static const codec = HeaderCodec.bytes(_parseBytes, __encode);
-  static List<String> __encode(final ETagHeader value) => [value._encode()];
+  static List<String> __encode(ETagHeader value) => [value._encode()];
 
   /// The opaque-tag value, without the surrounding quotes.
   final String value;
@@ -33,7 +33,7 @@ final class ETagHeader {
   /// Returns false (rather than throwing) for any malformed input, including
   /// empty, so callers can use it to distinguish an ETag from, e.g., an
   /// HTTP-date in `If-Range`.
-  static bool isValidETag(final String value) {
+  static bool isValidETag(String value) {
     final trimmed = value.trim();
     if (trimmed.isEmpty) return false;
     try {
@@ -50,11 +50,10 @@ final class ETagHeader {
   /// (RFC 9110 8.8.3): the opaque-tag is taken from between the quotes without
   /// stripping interior quotes, an interior `"` or CTL is rejected, and no
   /// whitespace is allowed between `W/` and the opening quote.
-  factory ETagHeader.parse(final String value) =>
-      _parseBytes(latin1Bytes(value));
+  factory ETagHeader.parse(String value) => _parseBytes(latin1Bytes(value));
 
   /// [parse] over the wire bytes.
-  static ETagHeader _parseBytes(final Uint8List bytes) {
+  static ETagHeader _parseBytes(Uint8List bytes) {
     final value = trimmed(bytes);
     if (value.isEmpty) {
       throw const FormatException('Value cannot be empty');
@@ -69,7 +68,7 @@ final class ETagHeader {
   }
 
   /// [_parseBytes] of one element of a list of entity-tags.
-  static ETagHeader _parseElement(final Uint8List element) {
+  static ETagHeader _parseElement(Uint8List element) {
     try {
       return _parseBytes(element);
     } on FormatException {
@@ -85,7 +84,7 @@ final class ETagHeader {
   }
 
   @override
-  bool operator ==(final Object other) =>
+  bool operator ==(Object other) =>
       identical(this, other) ||
       other is ETagHeader && value == other.value && isWeak == other.isWeak;
 
@@ -103,6 +102,6 @@ extension ETagHeaderInternal on ETagHeader {
   String encode() => _encode();
 
   /// One element of a list of entity-tags, from its wire bytes.
-  static ETagHeader parseElement(final Uint8List element) =>
+  static ETagHeader parseElement(Uint8List element) =>
       ETagHeader._parseElement(element);
 }

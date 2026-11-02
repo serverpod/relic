@@ -192,7 +192,7 @@ final class HeaderName {
   /// The known name for [name], or a fresh unknown name.
   ///
   /// Throws [FormatException] when [name] is not an HTTP token.
-  static HeaderName lookup(final String name) {
+  static HeaderName lookup(String name) {
     final known = _lookupUnits(name);
     if (known != null) return known;
     if (!isToken(name)) {
@@ -207,7 +207,7 @@ $table
   ];
 
   /// Whether [s] is a non-empty HTTP token (RFC 9110 5.6.2).
-  static bool isToken(final String s) {
+  static bool isToken(String s) {
     if (s.isEmpty) return false;
     for (var i = 0; i < s.length; i++) {
       if (!_isTchar(s.codeUnitAt(i))) return false;
@@ -216,10 +216,10 @@ $table
   }
 
   /// Whether [c] is a `tchar` code unit (RFC 9110 5.6.2).
-  static bool isTchar(final int c) => _isTchar(c);
+  static bool isTchar(int c) => _isTchar(c);
 
   @override
-  bool operator ==(final Object other) {
+  bool operator ==(Object other) {
     assert(_isCanonical, _notCanonical);
     return other is HeaderName &&
         (id >= 0 && other.id >= 0 ? id == other.id : lower == other.lower);
@@ -248,7 +248,7 @@ $table
 
 $constants
 
-  static HeaderName? _lookupUnits(final String name) {
+  static HeaderName? _lookupUnits(String name) {
     switch (name.length) {
 $unitsCases
     }
@@ -259,7 +259,7 @@ $unitsCases
 /// Whether [name] matches the lowercase ASCII [expected], ignoring case.
 ///
 /// Every known name is letters, digits and `-`.
-bool _eqUnits(final String name, final String expected) {
+bool _eqUnits(String name, String expected) {
   for (var i = 0; i < expected.length; i++) {
     if (!_eqFolded(name.codeUnitAt(i), expected.codeUnitAt(i))) return false;
   }
@@ -271,11 +271,11 @@ bool _eqUnits(final String name, final String expected) {
 /// Only a letter folds. A bare `| 0x20` would also take CR to `-` and
 /// 0x10-0x19 to the digits.
 @pragma('vm:prefer-inline')
-bool _eqFolded(final int c, final int expected) =>
+bool _eqFolded(int c, int expected) =>
     c == expected || (expected >= 0x61 && (c | 0x20) == expected);
 
 /// RFC 9110 5.6.2 tchar.
-bool _isTchar(final int c) {
+bool _isTchar(int c) {
   if (c >= 0x30 && c <= 0x39) return true; // 0-9
   if (c >= 0x41 && c <= 0x5a) return true; // A-Z
   if (c >= 0x61 && c <= 0x7a) return true; // a-z

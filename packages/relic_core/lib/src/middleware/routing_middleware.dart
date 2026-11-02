@@ -69,10 +69,10 @@ final _routingProperty = ContextProperty<_RoutingMiddlewareBuilder<Handler>>();
 ///     .addHandler(notFoundHandler);
 /// ```
 Middleware routeWith<T extends Object>(
-  final Router<T> router, {
-  final bool backtrack = true,
-  final bool useHostWhenRouting = false,
-  final Handler Function(T)? toHandler,
+  Router<T> router, {
+  bool backtrack = true,
+  bool useHostWhenRouting = false,
+  Handler Function(T)? toHandler,
 }) => _RoutingMiddlewareBuilder(
   router,
   backtrack: backtrack,
@@ -96,12 +96,12 @@ class _RoutingMiddlewareBuilder<T extends Object> {
     this._router, {
     this.backtrack = true,
     this.useHostWhenRouting = false,
-    final Handler Function(T)? toHandler,
+    Handler Function(T)? toHandler,
   }) {
     if (toHandler != null) {
       _toHandler = toHandler;
     } else if (_routesHandlers) {
-      _toHandler = (final x) => x as Handler;
+      _toHandler = (x) => x as Handler;
     }
     ArgumentError.checkNotNull(_toHandler, 'toHandler');
   }
@@ -110,18 +110,18 @@ class _RoutingMiddlewareBuilder<T extends Object> {
 
   /// Routes [req] as a [RelicRouter.asHandler] would, with this
   /// middleware's options, answering a miss with the router's fallback.
-  FutureOr<Result> forward(final Request req) {
+  FutureOr<Result> forward(Request req) {
     final fallback = (_router as RelicRouter).fallback;
     return call(fallback ?? _notFound)(req);
   }
 
-  static Result _notFound(final Request _) => Response.notFound();
+  static Result _notFound(Request _) => Response.notFound();
 
   /// Passes a sync handler's response through without a Future, so a
   /// route that answers synchronously reaches the adapter without a
   /// microtask hop.
-  Handler call(final Handler next) {
-    return (final req) {
+  Handler call(Handler next) {
+    return (req) {
       final result = useHostWhenRouting
           ? _router.lookupPath(
               req.method,
@@ -140,7 +140,7 @@ class _RoutingMiddlewareBuilder<T extends Object> {
         case MethodMiss():
           return Response(
             405,
-            headers: Headers.build((final mh) => mh.allow = result.allowed),
+            headers: Headers.build((mh) => mh.allow = result.allowed),
           );
         case PathMiss():
           return next(req);
@@ -248,7 +248,7 @@ extension ForwardingRequestEx on Request {
   ///
   /// Throws a [StateError] if this request was not routed through a
   /// [RelicRouter].
-  FutureOr<Result> forwardTo(final Request request) {
+  FutureOr<Result> forwardTo(Request request) {
     final routing = _routingProperty[this];
     if (routing == null) {
       throw StateError(

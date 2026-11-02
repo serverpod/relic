@@ -6,7 +6,7 @@ import '../../primitives/byte_scanner.dart';
 /// absent. A quoted value is decoded as an RFC 9110 `quoted-string`, with its
 /// `quoted-pair` escapes removed. The parameter name is matched
 /// case-insensitively.
-String? parseReportToParam(final Iterable<ByteScanner> params) {
+String? parseReportToParam(Iterable<ByteScanner> params) {
   for (final param in params) {
     final p = trimmed(param.source);
     final eq = indexOfByte(p, 0x3D);
@@ -34,7 +34,7 @@ String? parseReportToParam(final Iterable<ByteScanner> params) {
 /// Renders a `report-to` parameter as `report-to="..."`, escaping interior
 /// `"` and `\` as `quoted-pair` so the value round-trips through
 /// [parseReportToParam].
-String encodeReportToParam(final String value) {
+String encodeReportToParam(String value) {
   // Reject control characters (CR/LF in particular) rather than emitting them
   // verbatim inside the header, so untrusted input cannot split it.
   for (var i = 0; i < value.length; i++) {

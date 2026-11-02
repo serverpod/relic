@@ -16,7 +16,7 @@ final class IPv4Address extends IPAddress {
   IPv4Address._(super.bytes, {super.prefixLength}) : super._();
 
   /// Create IPv4 from string
-  factory IPv4Address._parse(final String address) {
+  factory IPv4Address._parse(String address) {
     final parts = address.split('.');
     if (parts.length != 4) {
       throw FormatException('Invalid IPv4 address: $address');
@@ -36,11 +36,11 @@ final class IPv4Address extends IPAddress {
 
   /// Create IPv4 from individual octets
   factory IPv4Address.fromOctets(
-    final int a,
-    final int b,
-    final int c,
-    final int d, {
-    final int? prefixLength,
+    int a,
+    int b,
+    int c,
+    int d, {
+    int? prefixLength,
   }) {
     final bytes = <int>[a, b, c, d];
     for (final octet in bytes) {
@@ -52,7 +52,7 @@ final class IPv4Address extends IPAddress {
   }
 
   /// Create IPv4 from 32-bit integer
-  factory IPv4Address.fromInt(final int value, {final int? prefixLength}) {
+  factory IPv4Address.fromInt(int value, {int? prefixLength}) {
     if (value < 0 || value > 0xFFFFFFFF) {
       throw ArgumentError('IPv4 integer out of range: $value');
     }

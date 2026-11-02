@@ -12,9 +12,7 @@ import '../primitives/byte_scanner.dart' show latin1Bytes;
 /// indicating when the client should retry the request.
 final class RetryAfterHeader {
   static const codec = HeaderCodec.bytes(_parseBytes, __encode);
-  static List<String> __encode(final RetryAfterHeader value) => [
-    value._encode(),
-  ];
+  static List<String> __encode(RetryAfterHeader value) => [value._encode()];
 
   /// The retry delay in seconds, if present.
   final int? delay;
@@ -37,7 +35,7 @@ final class RetryAfterHeader {
   /// Parses the Retry-After header value and returns a [RetryAfterHeader] instance.
   ///
   /// This method checks if the value is an integer (for delay) or a date string.
-  factory RetryAfterHeader.parse(final String value) =>
+  factory RetryAfterHeader.parse(String value) =>
       _parseBytes(latin1Bytes(value));
 
   /// [parse] over the wire bytes.
@@ -45,7 +43,7 @@ final class RetryAfterHeader {
   /// A numeric value is a delay (`delta-seconds = 1*DIGIT`). A leading
   /// sign is rejected: `-120` is negative and `+120` is not a valid
   /// delta-seconds.
-  static RetryAfterHeader _parseBytes(final Uint8List bytes) {
+  static RetryAfterHeader _parseBytes(Uint8List bytes) {
     final value = trimmed(bytes);
     if (value.isEmpty) {
       throw const FormatException('Value cannot be empty');
@@ -84,7 +82,7 @@ final class RetryAfterHeader {
   }
 
   @override
-  bool operator ==(final Object other) =>
+  bool operator ==(Object other) =>
       identical(this, other) ||
       other is RetryAfterHeader && delay == other.delay && date == other.date;
 

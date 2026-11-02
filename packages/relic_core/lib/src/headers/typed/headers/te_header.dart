@@ -13,13 +13,13 @@ import 'util/qvalue.dart';
 /// optionally with quality values.
 final class TEHeader {
   static const codec = HeaderCodec.fields(_parseFields, __encode);
-  static List<String> __encode(final TEHeader value) => [value._encode()];
+  static List<String> __encode(TEHeader value) => [value._encode()];
 
   /// The list of encodings with their quality values.
   final List<TeQuality> encodings;
 
   /// Constructs a [TEHeader] instance with the specified list of encodings.
-  TEHeader.encodings(final List<TeQuality> encodings)
+  TEHeader.encodings(List<TeQuality> encodings)
     : assert(encodings.isNotEmpty),
       encodings = List.unmodifiable(encodings);
 
@@ -27,7 +27,7 @@ final class TEHeader {
   ///
   /// This method processes the TE header and extracts the list of encodings
   /// with their quality values.
-  factory TEHeader.parse(final Iterable<String> values) =>
+  factory TEHeader.parse(Iterable<String> values) =>
       _parseFields([for (final value in values) latin1Bytes(value)]);
 
   /// Takes [encodings], a list the parser built, as its own.
@@ -37,13 +37,13 @@ final class TEHeader {
   ///
   /// Per RFC 9110 12.4.2 the weight parameter is `q`, case-insensitive,
   /// with OWS allowed around the surrounding `;` and `=`.
-  static TEHeader _parseFields(final List<Uint8List> fields) {
+  static TEHeader _parseFields(List<Uint8List> fields) {
     final elements = splitFieldsUnique(fields);
     if (elements.isEmpty) {
       throw const FormatException('Value cannot be empty');
     }
     return TEHeader._(
-      List.generate(elements.length, (final i) {
+      List.generate(elements.length, (i) {
         final element = elements[i];
         var semi = indexOfByte(element, 0x3B);
         if (semi < 0) semi = element.length;
@@ -59,10 +59,10 @@ final class TEHeader {
   /// Converts the [TEHeader] instance into a string representation
   /// suitable for HTTP headers.
 
-  String _encode() => encodings.map((final e) => e._encode()).join(', ');
+  String _encode() => encodings.map((e) => e._encode()).join(', ');
 
   @override
-  bool operator ==(final Object other) =>
+  bool operator ==(Object other) =>
       identical(this, other) ||
       other is TEHeader &&
           const ListEquality<TeQuality>().equals(encodings, other.encodings);
@@ -83,7 +83,7 @@ class TeQuality {
   final double? quality;
 
   /// Constructs an instance of [TeQuality].
-  TeQuality(this.encoding, [final double? quality]) : quality = quality ?? 1.0;
+  TeQuality(this.encoding, [double? quality]) : quality = quality ?? 1.0;
 
   /// Converts the [TeQuality] instance into a string representation suitable
   /// for HTTP headers. The q-value is rendered with at most 3 fractional
@@ -92,7 +92,7 @@ class TeQuality {
       quality == 1.0 ? encoding : '$encoding;q=${formatQValue(quality!)}';
 
   @override
-  bool operator ==(final Object other) =>
+  bool operator ==(Object other) =>
       identical(this, other) ||
       other is TeQuality &&
           encoding == other.encoding &&

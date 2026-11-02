@@ -32,11 +32,11 @@ final class IfMatchHeader extends ETagConditionHeader {
   IfMatchHeader._owned(super.etags) : super._owned();
 
   /// Parses the If-Match header [values].
-  factory IfMatchHeader.parse(final Iterable<String> values) =>
+  factory IfMatchHeader.parse(Iterable<String> values) =>
       _parseFields([for (final value in values) latin1Bytes(value)]);
 
   /// The header from the wire bytes of its [fields].
-  static IfMatchHeader _parseFields(final List<Uint8List> fields) {
+  static IfMatchHeader _parseFields(List<Uint8List> fields) {
     final parsed = WildcardListHeader.parseFields(
       fields,
       ETagHeaderInternal.parseElement,
@@ -45,11 +45,11 @@ final class IfMatchHeader extends ETagConditionHeader {
     return IfMatchHeader._owned(parsed.values);
   }
 
-  static List<String> encodeHeader(final IfMatchHeader header) {
-    return header.encode((final ETagHeader etag) => etag.encode()).toList();
+  static List<String> encodeHeader(IfMatchHeader header) {
+    return header.encode((ETagHeader etag) => etag.encode()).toList();
   }
 
-  static List<String> _encode(final IfMatchHeader header) {
+  static List<String> _encode(IfMatchHeader header) {
     return encodeHeader(header);
   }
 }
@@ -67,11 +67,11 @@ final class IfNoneMatchHeader extends ETagConditionHeader {
   IfNoneMatchHeader._owned(super.etags) : super._owned();
 
   /// Parses the If-None-Match header [values].
-  factory IfNoneMatchHeader.parse(final Iterable<String> values) =>
+  factory IfNoneMatchHeader.parse(Iterable<String> values) =>
       _parseFields([for (final value in values) latin1Bytes(value)]);
 
   /// The header from the wire bytes of its [fields].
-  static IfNoneMatchHeader _parseFields(final List<Uint8List> fields) {
+  static IfNoneMatchHeader _parseFields(List<Uint8List> fields) {
     final parsed = WildcardListHeader.parseFields(
       fields,
       ETagHeaderInternal.parseElement,
@@ -80,11 +80,11 @@ final class IfNoneMatchHeader extends ETagConditionHeader {
     return IfNoneMatchHeader._owned(parsed.values);
   }
 
-  static List<String> encodeHeader(final IfNoneMatchHeader header) {
-    return header.encode((final ETagHeader etag) => etag.encode()).toList();
+  static List<String> encodeHeader(IfNoneMatchHeader header) {
+    return header.encode((ETagHeader etag) => etag.encode()).toList();
   }
 
-  static List<String> _encode(final IfNoneMatchHeader header) {
+  static List<String> _encode(IfNoneMatchHeader header) {
     return encodeHeader(header);
   }
 }

@@ -9,7 +9,7 @@ void main() {
         final h = CookieHeader.parse('sid=a; other=x; sid=b');
 
         expect(
-          h.getCookies('sid').map((final c) => c.value).toList(),
+          h.getCookies('sid').map((c) => c.value).toList(),
           equals(['a', 'b']),
         );
       });
@@ -25,10 +25,7 @@ void main() {
           'then they are not collapsed and getCookies returns each.', () {
         final h = CookieHeader.parse('sid=a; sid=a');
 
-        expect(
-          h.getCookies('sid').map((final c) => c.value),
-          equals(['a', 'a']),
-        );
+        expect(h.getCookies('sid').map((c) => c.value), equals(['a', 'a']));
       });
     });
 
@@ -49,7 +46,7 @@ void main() {
           'then the malformed cookie is skipped and the valid one kept.', () {
         final h = CookieHeader.parse('invalid cookie; sessionId=abc');
 
-        expect(h.cookies.map((final c) => c.name), equals(['sessionId']));
+        expect(h.cookies.map((c) => c.name), equals(['sessionId']));
       });
     });
 
@@ -58,7 +55,7 @@ void main() {
           'then the malformed cookie is skipped and the valid one kept.', () {
         final h = CookieHeader.parse('sessionId=abc; invalid cookie');
 
-        expect(h.cookies.map((final c) => c.name), equals(['sessionId']));
+        expect(h.cookies.map((c) => c.name), equals(['sessionId']));
       });
     });
   });
@@ -70,14 +67,14 @@ void main() {
         'session=abc; consent=analytics,marketing; theme=dark',
       );
 
-      expect(h.cookies.map((final c) => c.name), ['session', 'theme']);
+      expect(h.cookies.map((c) => c.name), ['session', 'theme']);
     });
 
     test('Given tabs and spaces around names and values, when parsed, '
         'then they are trimmed', () {
       final h = CookieHeader.parse('\t sid = abc \t;theme= dark ');
 
-      expect(h.cookies.map((final c) => '${c.name}=${c.value}'), [
+      expect(h.cookies.map((c) => '${c.name}=${c.value}'), [
         'sid=abc',
         'theme=dark',
       ]);
@@ -101,7 +98,7 @@ void main() {
         'then the cookie is kept with an empty value', () {
       final h = CookieHeader.parse('sid=; theme=dark');
 
-      expect(h.cookies.map((final c) => '${c.name}=${c.value}'), [
+      expect(h.cookies.map((c) => '${c.name}=${c.value}'), [
         'sid=',
         'theme=dark',
       ]);
@@ -111,14 +108,14 @@ void main() {
         'then that cookie is skipped', () {
       final h = CookieHeader.parse('s:id=1; ok=2');
 
-      expect(h.cookies.map((final c) => c.name), ['ok']);
+      expect(h.cookies.map((c) => c.name), ['ok']);
     });
 
     test('Given a value with a space in it, when parsed, '
         'then that cookie is skipped', () {
       final h = CookieHeader.parse('a=b c; ok=2');
 
-      expect(h.cookies.map((final c) => c.name), ['ok']);
+      expect(h.cookies.map((c) => c.name), ['ok']);
     });
 
     test('Given only segments without =, when parsed, then it throws', () {
@@ -135,7 +132,7 @@ void main() {
           'then they are kept distinct (RFC 6265 4.2.2/5.4).', () {
         final h = CookieHeader.parse('Sid=a; sid=b');
 
-        expect(h.cookies.map((final c) => c.name), equals(['Sid', 'sid']));
+        expect(h.cookies.map((c) => c.name), equals(['Sid', 'sid']));
         expect(h.getCookie('Sid')?.value, equals('a'));
         expect(h.getCookie('sid')?.value, equals('b'));
       });
@@ -150,7 +147,7 @@ void main() {
         () {
           final h = CookieHeader.parse('auth=tok; =garbage');
 
-          expect(h.cookies.map((final c) => c.name), equals(['auth']));
+          expect(h.cookies.map((c) => c.name), equals(['auth']));
           expect(h.getCookie(''), isNull);
         },
       );

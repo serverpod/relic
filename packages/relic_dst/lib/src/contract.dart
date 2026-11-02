@@ -35,7 +35,7 @@ final class ContractAdapter implements Adapter {
 
   ContractAdapter(this.inner, this.sim);
 
-  void violate(final String rule, final String detail) {
+  void violate(String rule, String detail) {
     violations.add(ContractViolation(sim.elapsed, rule, detail));
     sim.record('contract', '$rule: $detail');
   }
@@ -47,10 +47,10 @@ final class ContractAdapter implements Adapter {
   List<Listener> get listeners => inner.listeners;
 
   @override
-  void start(final ExchangeSink sink) {
+  void start(ExchangeSink sink) {
     if (_started) violate('start is called once', 'start was called again');
     _started = true;
-    inner.start((final exchange) {
+    inner.start((exchange) {
       if (_closeCompleted) {
         violate(
           'no exchange reaches the sink after close completed',
@@ -62,7 +62,7 @@ final class ContractAdapter implements Adapter {
       try {
         final pending = sink(wrapped);
         if (pending is Future<void>) {
-          return pending.catchError((final Object error) {
+          return pending.catchError((Object error) {
             violate('the sink never fails', 'its future failed with $error');
           });
         }
@@ -75,7 +75,7 @@ final class ContractAdapter implements Adapter {
   }
 
   @override
-  Future<void> close({final bool force = false}) async {
+  Future<void> close({bool force = false}) async {
     await inner.close(force: force);
     _closeCompleted = true;
     // The adapter ended its exchanges as it closed. Their done futures
@@ -118,7 +118,7 @@ final class ContractExchange implements AdapterExchange {
   ContractExchange._(this._adapter, this.inner)
     : _started = _adapter.sim.elapsed {
     unawaited(
-      inner.done.then((final end) {
+      inner.done.then((end) {
         _end = end;
         _ended = _adapter.sim.elapsed;
         _checkEnd(end);
@@ -136,14 +136,14 @@ final class ContractExchange implements AdapterExchange {
     );
   }
 
-  void _violate(final String rule, final String detail) =>
+  void _violate(String rule, String detail) =>
       _adapter.violate(rule, '${_describe()}: $detail');
 
   String _describe() =>
       'exchange ${_adapter.exchanges.indexOf(this)} (${_terminal ?? 'untouched'}'
       '${_end == null ? '' : ', ended $_end'})';
 
-  void _checkEnd(final ExchangeEnd end) {
+  void _checkEnd(ExchangeEnd end) {
     final allowed = switch (_terminal) {
       null => const {ExchangeEnd.aborted, ExchangeEnd.cancelledByPeer},
       'respond' => const {
@@ -168,7 +168,7 @@ final class ContractExchange implements AdapterExchange {
   /// or abort, and the adapter owes it a no-op when the exchange is over.
   /// A hijack the adapter refuses with a [StateError] leaves the exchange
   /// with the core and does not count.
-  void _terminalCall(final String name) {
+  void _terminalCall(String name) {
     final previous = _terminal;
     final retry = _respondFailed && (name == 'respond' || name == 'abort');
     if (previous != null && !retry) {
@@ -186,10 +186,10 @@ final class ContractExchange implements AdapterExchange {
   HttpProtocol get protocol => inner.protocol;
 
   @override
-  Request toRequest(final RequestFactory create) => inner.toRequest(create);
+  Request toRequest(RequestFactory create) => inner.toRequest(create);
 
   @override
-  FutureOr<void> respond(final Response response) {
+  FutureOr<void> respond(Response response) {
     _terminalCall('respond');
     final FutureOr<void> pending;
     try {
@@ -202,7 +202,7 @@ final class ContractExchange implements AdapterExchange {
       rethrow;
     }
     if (pending is Future<void>) {
-      return pending.catchError((final Object error) {
+      return pending.catchError((Object error) {
         _respondFailed = true;
         throw error;
       });
@@ -226,7 +226,7 @@ final class ContractExchange implements AdapterExchange {
   }
 
   @override
-  FutureOr<RelicWebSocket> upgradeWebSocket(final String acceptKey) {
+  FutureOr<RelicWebSocket> upgradeWebSocket(String acceptKey) {
     _terminalCall('upgradeWebSocket');
     if (!_adapter.capabilities.webSocket) {
       _violate(

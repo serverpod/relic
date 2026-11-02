@@ -185,7 +185,7 @@ List<String> _parseStringListFields(List<Uint8List> fields) {
   }
   return List.generate(
     elements.length,
-    (final i) => textOf(elements[i]),
+    (i) => textOf(elements[i]),
     growable: false,
   );
 }

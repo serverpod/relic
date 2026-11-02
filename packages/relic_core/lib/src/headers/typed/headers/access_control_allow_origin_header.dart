@@ -17,7 +17,7 @@ import '../primitives/byte_scanner.dart' show latin1Bytes;
 /// also rejected.
 final class AccessControlAllowOriginHeader {
   static const codec = HeaderCodec.bytes(_parseBytes, __encode);
-  static List<String> __encode(final AccessControlAllowOriginHeader value) => [
+  static List<String> __encode(AccessControlAllowOriginHeader value) => [
     value._encode(),
   ];
 
@@ -42,11 +42,11 @@ final class AccessControlAllowOriginHeader {
   ///
   /// Throws [FormatException] if [value] is empty or is not a valid origin
   /// per [Origin.parse].
-  factory AccessControlAllowOriginHeader.parse(final String value) =>
+  factory AccessControlAllowOriginHeader.parse(String value) =>
       _parseBytes(latin1Bytes(value));
 
   /// [parse] over the wire bytes. `Origin.parse` reads text.
-  static AccessControlAllowOriginHeader _parseBytes(final Uint8List bytes) {
+  static AccessControlAllowOriginHeader _parseBytes(Uint8List bytes) {
     final value = trimmed(bytes);
     if (value.isEmpty) {
       throw const FormatException('Value cannot be empty');
@@ -62,7 +62,7 @@ final class AccessControlAllowOriginHeader {
   String _encode() => origin?.encode() ?? '*';
 
   @override
-  bool operator ==(final Object other) =>
+  bool operator ==(Object other) =>
       identical(this, other) ||
       other is AccessControlAllowOriginHeader && origin == other.origin;
 

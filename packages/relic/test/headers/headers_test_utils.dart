@@ -34,15 +34,15 @@ Future<RelicServer> createServer() async {
 /// Returns the headers from the server request if the server returns a 200
 /// status code. Otherwise, throws an exception.
 Future<Headers> getServerRequestHeaders({
-  required final RelicServer server,
-  required final Map<String, String> headers,
-  required final void Function(Headers) touchHeaders,
+  required RelicServer server,
+  required Map<String, String> headers,
+  required void Function(Headers) touchHeaders,
 }) async {
   final recv = ReceivePort();
   final sendPort = recv.sendPort;
 
   await server.mountAndStart(
-    respondWith((final Request request) {
+    respondWith((Request request) {
       sendPort.send(request.headers);
       touchHeaders(request.headers);
       return Response.ok();

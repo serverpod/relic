@@ -97,7 +97,7 @@ final class SimNetwork {
 
   /// Opens a connection to [port]. Fails with [SimConnectionRefused] when
   /// nothing listens there by the time the connection attempt arrives.
-  Future<SimSocket> connect(final int port) {
+  Future<SimSocket> connect(int port) {
     final completer = Completer<SimSocket>();
     final clientPort = _nextClientPort++;
     sim.schedule(latency(), () {
@@ -149,7 +149,7 @@ final class SimListener {
   /// zone of this call, as a server socket's stream would. Whatever the
   /// server does for the connection then runs in the server's zone, not
   /// in the zone of the client that connected.
-  void listen(final void Function(SimSocket) onConnection) {
+  void listen(void Function(SimSocket) onConnection) {
     _onConnection = onConnection;
     _zone = Zone.current;
     while (_backlog.isNotEmpty) {
@@ -169,7 +169,7 @@ final class SimListener {
     _backlog.clear();
   }
 
-  void _accept(final SimSocket socket) {
+  void _accept(SimSocket socket) {
     final onConnection = _onConnection;
     if (onConnection != null) {
       _zone!.runUnaryGuarded(onConnection, socket);
@@ -187,7 +187,7 @@ final class _Link {
 
   _Link(this.network, this.id);
 
-  SimSocket peerOf(final SimSocket socket) => identical(socket, _a) ? _b : _a;
+  SimSocket peerOf(SimSocket socket) => identical(socket, _a) ? _b : _a;
 }
 
 /// One end of a simulated connection, as a byte channel.
@@ -266,7 +266,7 @@ final class SimSocket with StreamChannelMixin<Uint8List> {
     if (!peer._reset) _sim.schedule(delay, peer._receiveReset);
   }
 
-  void _add(final Uint8List bytes) {
+  void _add(Uint8List bytes) {
     if (_sinkClosed) throw StateError('The socket is closed');
     if (_reset || bytes.isEmpty) return;
     _tx.add(bytes);
@@ -335,7 +335,7 @@ final class SimSocket with StreamChannelMixin<Uint8List> {
     return _lastDue = due > _lastDue ? due : _lastDue;
   }
 
-  void _receive(final Uint8List piece, final SimSocket from) {
+  void _receive(Uint8List piece, SimSocket from) {
     from._inFlight -= piece.length;
     from.onDrain?.call();
     if (_reset) return;
@@ -352,7 +352,7 @@ final class SimSocket with StreamChannelMixin<Uint8List> {
     _deliver();
   }
 
-  void _receiveFin(final SimSocket from) {
+  void _receiveFin(SimSocket from) {
     if (!from._flushed.isCompleted) from._flushed.complete();
     if (_reset) return;
     _sim.record('net', '${from._label} -> $_label FIN');
@@ -382,7 +382,7 @@ final class SimSocket with StreamChannelMixin<Uint8List> {
     if (!_reset) _peer._pump();
   }
 
-  void _resetLocally({final Object? error}) {
+  void _resetLocally({Object? error}) {
     _reset = true;
     _tx.clear();
     _txBytes = 0;
@@ -406,17 +406,17 @@ final class _SimSink implements StreamSink<Uint8List> {
   _SimSink(this._socket);
 
   @override
-  void add(final Uint8List data) => _socket._add(data);
+  void add(Uint8List data) => _socket._add(data);
 
   @override
-  void addError(final Object error, [final StackTrace? stackTrace]) {
+  void addError(Object error, [StackTrace? stackTrace]) {
     // A byte channel has no way to carry an error to the peer. Nothing
     // goes out, as nothing would on a socket.
     _socket._sim.record('net', '${_socket._label} addError ignored: $error');
   }
 
   @override
-  Future<void> addStream(final Stream<Uint8List> stream) => stream.forEach(add);
+  Future<void> addStream(Stream<Uint8List> stream) => stream.forEach(add);
 
   @override
   Future<void> close() => _socket._close();

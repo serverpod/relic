@@ -23,12 +23,12 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (final h) => h.crossOriginResourcePolicy,
+            touchHeaders: (h) => h.crossOriginResourcePolicy,
             headers: {'cross-origin-resource-policy': ''},
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (final e) => e.message,
+              (e) => e.message,
               'message',
               contains('Value cannot be empty'),
             ),
@@ -44,12 +44,12 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (final h) => h.crossOriginResourcePolicy,
+            touchHeaders: (h) => h.crossOriginResourcePolicy,
             headers: {'cross-origin-resource-policy': 'custom-policy'},
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (final e) => e.message,
+              (e) => e.message,
               'message',
               contains('Invalid value'),
             ),
@@ -77,7 +77,7 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.crossOriginResourcePolicy,
+          touchHeaders: (h) => h.crossOriginResourcePolicy,
           headers: {'cross-origin-resource-policy': 'same-origin'},
         );
 
@@ -93,7 +93,7 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.crossOriginResourcePolicy,
+          touchHeaders: (h) => h.crossOriginResourcePolicy,
           headers: {},
         );
 

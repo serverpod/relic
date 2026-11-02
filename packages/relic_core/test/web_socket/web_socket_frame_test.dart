@@ -8,12 +8,12 @@ import 'package:test/test.dart';
 /// A client frame: masked, with the given header bits, as a client sends
 /// it (RFC 6455 5.1).
 Uint8List _clientFrame(
-  final int opcode,
-  final List<int> payload, {
-  final bool fin = true,
-  final int rsv = 0,
-  final bool masked = true,
-  final bool longLength = false,
+  int opcode,
+  List<int> payload, {
+  bool fin = true,
+  int rsv = 0,
+  bool masked = true,
+  bool longLength = false,
 }) {
   final mask = [0x12, 0x34, 0x56, 0x78];
   final length = payload.length;
@@ -47,12 +47,12 @@ Uint8List _clientFrame(
   return out.takeBytes();
 }
 
-Future<List<WebSocketFrame>> _decode(final List<Uint8List> chunks) =>
+Future<List<WebSocketFrame>> _decode(List<Uint8List> chunks) =>
     Stream.fromIterable(
       chunks,
     ).transform(const WebSocketFrameDecoder()).toList();
 
-Future<Object> _decodeError(final List<Uint8List> chunks) async {
+Future<Object> _decodeError(List<Uint8List> chunks) async {
   try {
     await _decode(chunks);
   } catch (e) {
@@ -75,17 +75,14 @@ void main() {
 
     test('when a frame arrives one byte at a time, '
         'then it is reassembled', () async {
-      final bytes = _clientFrame(
-        0x2,
-        List.generate(300, (final i) => i & 0xff),
-      );
+      final bytes = _clientFrame(0x2, List.generate(300, (i) => i & 0xff));
 
       final frames = await _decode([
         for (final b in bytes) Uint8List.fromList([b]),
       ]);
 
       expect(frames.single.opcode, WebSocketOpcode.binary);
-      expect(frames.single.payload, List.generate(300, (final i) => i & 0xff));
+      expect(frames.single.payload, List.generate(300, (i) => i & 0xff));
     });
 
     test('when two frames share a chunk, then both come out', () async {
@@ -96,7 +93,7 @@ void main() {
         Uint8List.fromList([...a, ...b]),
       ]);
 
-      expect(frames.map((final f) => f.opcode), [
+      expect(frames.map((f) => f.opcode), [
         WebSocketOpcode.text,
         WebSocketOpcode.ping,
       ]);
@@ -116,11 +113,7 @@ void main() {
 
       expect(
         error,
-        isA<WebSocketProtocolException>().having(
-          (final e) => e.code,
-          'code',
-          1002,
-        ),
+        isA<WebSocketProtocolException>().having((e) => e.code, 'code', 1002),
       );
     });
 
@@ -129,11 +122,7 @@ void main() {
 
       expect(
         error,
-        isA<WebSocketProtocolException>().having(
-          (final e) => e.code,
-          'code',
-          1002,
-        ),
+        isA<WebSocketProtocolException>().having((e) => e.code, 'code', 1002),
       );
     });
 
@@ -146,11 +135,7 @@ void main() {
 
         expect(
           error,
-          isA<WebSocketProtocolException>().having(
-            (final e) => e.code,
-            'code',
-            1002,
-          ),
+          isA<WebSocketProtocolException>().having((e) => e.code, 'code', 1002),
         );
       },
     );
@@ -164,11 +149,7 @@ void main() {
 
         expect(
           error,
-          isA<WebSocketProtocolException>().having(
-            (final e) => e.code,
-            'code',
-            1002,
-          ),
+          isA<WebSocketProtocolException>().having((e) => e.code, 'code', 1002),
         );
       },
     );
@@ -179,11 +160,7 @@ void main() {
 
       expect(
         error,
-        isA<WebSocketProtocolException>().having(
-          (final e) => e.code,
-          'code',
-          1002,
-        ),
+        isA<WebSocketProtocolException>().having((e) => e.code, 'code', 1002),
       );
     });
 
@@ -193,11 +170,7 @@ void main() {
 
       expect(
         error,
-        isA<WebSocketProtocolException>().having(
-          (final e) => e.code,
-          'code',
-          1002,
-        ),
+        isA<WebSocketProtocolException>().having((e) => e.code, 'code', 1002),
       );
     });
 
@@ -210,11 +183,7 @@ void main() {
 
       expect(
         error,
-        isA<WebSocketProtocolException>().having(
-          (final e) => e.code,
-          'code',
-          1002,
-        ),
+        isA<WebSocketProtocolException>().having((e) => e.code, 'code', 1002),
       );
     });
 
@@ -227,7 +196,7 @@ void main() {
           _clientFrame(0x0, utf8.encode('b')),
         ]);
 
-        expect(frames.map((final f) => f.opcode), [
+        expect(frames.map((f) => f.opcode), [
           WebSocketOpcode.text,
           WebSocketOpcode.ping,
           WebSocketOpcode.continuation,
@@ -258,11 +227,7 @@ void main() {
 
       expect(
         error,
-        isA<WebSocketProtocolException>().having(
-          (final e) => e.code,
-          'code',
-          1002,
-        ),
+        isA<WebSocketProtocolException>().having((e) => e.code, 'code', 1002),
       );
     });
 
@@ -273,18 +238,11 @@ void main() {
             await Stream.fromIterable([_clientFrame(0x2, Uint8List(200))])
                 .transform(const WebSocketFrameDecoder(maxFrameSize: 100))
                 .toList()
-                .then<Object>(
-                  (final _) => 'accepted',
-                  onError: (final Object e) => e,
-                );
+                .then<Object>((_) => 'accepted', onError: (Object e) => e);
 
         expect(
           error,
-          isA<WebSocketProtocolException>().having(
-            (final e) => e.code,
-            'code',
-            1009,
-          ),
+          isA<WebSocketProtocolException>().having((e) => e.code, 'code', 1009),
         );
       },
     );
@@ -341,11 +299,7 @@ void main() {
           ),
         ),
         throwsA(
-          isA<WebSocketProtocolException>().having(
-            (final e) => e.code,
-            'code',
-            1007,
-          ),
+          isA<WebSocketProtocolException>().having((e) => e.code, 'code', 1007),
         ),
       );
     });
@@ -357,11 +311,7 @@ void main() {
         () =>
             assembler.add(WebSocketFrame(WebSocketOpcode.binary, Uint8List(4))),
         throwsA(
-          isA<WebSocketProtocolException>().having(
-            (final e) => e.code,
-            'code',
-            1009,
-          ),
+          isA<WebSocketProtocolException>().having((e) => e.code, 'code', 1009),
         ),
       );
     });

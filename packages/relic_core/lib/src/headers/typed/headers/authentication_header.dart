@@ -10,9 +10,7 @@ import 'util/auth_params.dart';
 /// A class representing the HTTP Authentication header.
 final class AuthenticationHeader {
   static const codec = HeaderCodec.bytes(_parseBytes, __encode);
-  static List<String> __encode(final AuthenticationHeader value) => [
-    value._encode(),
-  ];
+  static List<String> __encode(AuthenticationHeader value) => [value._encode()];
 
   /// The authentication scheme (e.g., "Basic", "Bearer", "Digest").
   final String scheme;
@@ -28,16 +26,16 @@ final class AuthenticationHeader {
   /// Constructs an [AuthenticationHeader] instance with the specified scheme and parameters.
   AuthenticationHeader({
     required this.scheme,
-    required final List<AuthenticationParameter> parameters,
+    required List<AuthenticationParameter> parameters,
   }) : parameters = List.unmodifiable(parameters);
 
   /// Parses the Authentication header value and returns an [AuthenticationHeader] instance.
-  factory AuthenticationHeader.parse(final String value) =>
+  factory AuthenticationHeader.parse(String value) =>
       _parseBytes(latin1Bytes(value));
 
   /// [parse] over the wire bytes: the scheme, a space, then auth-params,
   /// or a token68 when the rest is not a parameter list.
-  static AuthenticationHeader _parseBytes(final Uint8List bytes) {
+  static AuthenticationHeader _parseBytes(Uint8List bytes) {
     final value = trimmed(bytes);
     if (value.isEmpty) {
       throw const FormatException('Value cannot be empty');
@@ -62,9 +60,7 @@ final class AuthenticationHeader {
 
   /// Parses [value] as an `#auth-param` list, returning `null` if it is not
   /// one so the caller can fall back to the `token68` form.
-  static List<AuthenticationParameter>? _tryParseAuthParams(
-    final Uint8List value,
-  ) {
+  static List<AuthenticationParameter>? _tryParseAuthParams(Uint8List value) {
     final List<(String, String)> params;
     try {
       params = parseAuthParams(value);
@@ -83,7 +79,7 @@ final class AuthenticationHeader {
   String _encode() {
     Token.validate(scheme);
     final paramsString = parameters
-        .map((final param) {
+        .map((param) {
           if (param.key.isEmpty) return Token68.validate(param.value);
           return '${Token.validate(param.key)}='
               '${ParameterValue(param.value).encode()}';
@@ -93,7 +89,7 @@ final class AuthenticationHeader {
   }
 
   @override
-  bool operator ==(final Object other) =>
+  bool operator ==(Object other) =>
       identical(this, other) ||
       other is AuthenticationHeader &&
           scheme == other.scheme &&
@@ -122,7 +118,7 @@ class AuthenticationParameter {
   const AuthenticationParameter(this.key, this.value);
 
   @override
-  bool operator ==(final Object other) =>
+  bool operator ==(Object other) =>
       identical(this, other) ||
       other is AuthenticationParameter &&
           key == other.key &&

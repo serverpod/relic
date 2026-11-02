@@ -18,7 +18,7 @@ enum _WsKind {
   /// The connection ended without a close frame.
   dropped;
 
-  static _WsKind of(final int code) => switch (code) {
+  static _WsKind of(int code) => switch (code) {
     1 => text,
     2 => binary,
     3 => close,
@@ -49,7 +49,7 @@ final class NativeWebSocket extends RelicWebSocketBase {
   NativeWebSocket._(this._exchange);
 
   @override
-  void sendFrame(final WebSocketOpcode opcode, final Uint8List payload) =>
+  void sendFrame(WebSocketOpcode opcode, Uint8List payload) =>
       _exchange._wsSend(opcode, payload);
 
   @override
@@ -65,7 +65,7 @@ final class NativeWebSocket extends RelicWebSocketBase {
 
   /// Delivers a message from the native side. [bytes] views memory freed
   /// when this returns, so anything kept is copied out of it.
-  void _onMessage(final _WsKind kind, final Uint8List bytes) {
+  void _onMessage(_WsKind kind, Uint8List bytes) {
     switch (kind) {
       case _WsKind.text:
         addEvent(TextDataReceived(utf8.decode(bytes)));

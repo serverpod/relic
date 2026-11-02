@@ -29,7 +29,7 @@ final class ResponseHead {
   /// the date on the wire. -1 when the head has no Date.
   int dateOffset = -1;
 
-  factory ResponseHead(final Response response, final ResponseFraming framing) {
+  factory ResponseHead(Response response, ResponseFraming framing) {
     final headers = response.headers;
     final statusLine = _statusLineFor(response.statusCode);
     final transferEncoding = framing.transferEncoding?.join(', ');
@@ -74,7 +74,7 @@ final class ResponseHead {
 
   /// Writes the head into [out], which holds at least [bound] bytes, and
   /// returns how many bytes it took.
-  int writeTo(final Uint8List out) {
+  int writeTo(Uint8List out) {
     out.setRange(0, _statusLine.length, _statusLine);
     var off = _statusLine.length;
     for (final name in _headers.names) {
@@ -112,21 +112,13 @@ const _dateName = 'date: ';
 
 /// The head of [response] as bytes, framed by [framing], for an adapter
 /// that writes it from its own buffer.
-Uint8List encodeResponseHead(
-  final Response response,
-  final ResponseFraming framing,
-) {
+Uint8List encodeResponseHead(Response response, ResponseFraming framing) {
   final head = ResponseHead(response, framing);
   final out = Uint8List(head.bound);
   return Uint8List.sublistView(out, 0, head.writeTo(out));
 }
 
-int _field(
-  final Uint8List out,
-  final int off,
-  final String name,
-  final String value,
-) {
+int _field(Uint8List out, int off, String name, String value) {
   var at = _latin1(out, off, name);
   out[at++] = 0x3a;
   out[at++] = 0x20;
@@ -134,7 +126,7 @@ int _field(
   return _crlf(out, at);
 }
 
-int _crlf(final Uint8List out, final int off) {
+int _crlf(Uint8List out, int off) {
   out[off] = 0x0d;
   out[off + 1] = 0x0a;
   return off + 2;
@@ -142,7 +134,7 @@ int _crlf(final Uint8List out, final int off) {
 
 /// One byte per character, as the Latin-1 encoder produces, and the same
 /// rejection of anything beyond it.
-int _latin1(final Uint8List out, final int off, final String s) {
+int _latin1(Uint8List out, int off, String s) {
   for (var i = 0; i < s.length; i++) {
     final c = s.codeUnitAt(i);
     if (c > 0xff) {
@@ -153,7 +145,7 @@ int _latin1(final Uint8List out, final int off, final String s) {
   return off + s.length;
 }
 
-int _digits(final Uint8List out, final int off, final int n) {
+int _digits(Uint8List out, int off, int n) {
   if (n == 0) {
     out[off] = 0x30;
     return off + 1;
@@ -176,17 +168,17 @@ const _maxContentLengthDigits = 19;
 /// The status lines by status, each built on first use.
 final _statusLines = List<Uint8List?>.filled(600, null);
 
-Uint8List _statusLineFor(final int status) {
+Uint8List _statusLineFor(int status) {
   // Always answered as HTTP/1.1, as dart:io does. A 1.0 client understands
   // it, and keep-alive follows the request, not the version here.
   if (status < 100 || status >= 600) return _statusLine(status);
   return _statusLines[status] ??= _statusLine(status);
 }
 
-Uint8List _statusLine(final int status) =>
+Uint8List _statusLine(int status) =>
     latin1.encode('HTTP/1.1 $status ${_reason(status)}\r\n');
 
-String _reason(final int status) => switch (status) {
+String _reason(int status) => switch (status) {
   100 => 'Continue',
   101 => 'Switching Protocols',
   200 => 'OK',

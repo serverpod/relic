@@ -12,7 +12,7 @@ import '../primitives/byte_scanner.dart' show latin1Bytes;
 /// remove, and generate CSP header values.
 final class ContentSecurityPolicyHeader {
   static const codec = HeaderCodec.bytes(_parseBytes, __encode);
-  static List<String> __encode(final ContentSecurityPolicyHeader value) => [
+  static List<String> __encode(ContentSecurityPolicyHeader value) => [
     value._encode(),
   ];
 
@@ -22,7 +22,7 @@ final class ContentSecurityPolicyHeader {
   /// Constructs a [ContentSecurityPolicyHeader] instance with the specified
   /// directives.
   ContentSecurityPolicyHeader.directives(
-    final List<ContentSecurityPolicyDirective> directives,
+    List<ContentSecurityPolicyDirective> directives,
   ) : assert(directives.isNotEmpty),
       directives = List.unmodifiable(directives);
 
@@ -31,7 +31,7 @@ final class ContentSecurityPolicyHeader {
   ///
   /// This method splits the header value by semicolons, trims each directive,
   /// and processes the directive and its values.
-  factory ContentSecurityPolicyHeader.parse(final String value) =>
+  factory ContentSecurityPolicyHeader.parse(String value) =>
       _parseBytes(latin1Bytes(value));
 
   /// Takes [directives], a list the parser built, as its own.
@@ -39,13 +39,13 @@ final class ContentSecurityPolicyHeader {
 
   /// [parse] over the wire bytes: `;`-separated directives, each a name
   /// and whitespace-separated values.
-  static ContentSecurityPolicyHeader _parseBytes(final Uint8List bytes) {
+  static ContentSecurityPolicyHeader _parseBytes(Uint8List bytes) {
     final parts = splitUnique(bytes, 0x3B);
     if (parts.isEmpty) {
       throw const FormatException('Value cannot be empty');
     }
     return ContentSecurityPolicyHeader._(
-      List.generate(parts.length, (final i) {
+      List.generate(parts.length, (i) {
         final words = _words(parts[i]);
         return ContentSecurityPolicyDirective(
           name: words.first,
@@ -57,7 +57,7 @@ final class ContentSecurityPolicyHeader {
 
   /// [part] split on runs of whitespace. A trimmed part starts with a
   /// word, so the first element is the name.
-  static List<String> _words(final Uint8List part) {
+  static List<String> _words(Uint8List part) {
     final words = <String>[];
     var start = 0;
     while (start < part.length) {
@@ -75,11 +75,11 @@ final class ContentSecurityPolicyHeader {
   /// representation suitable for HTTP headers.
 
   String _encode() {
-    return directives.map((final directive) => directive._encode()).join('; ');
+    return directives.map((directive) => directive._encode()).join('; ');
   }
 
   @override
-  bool operator ==(final Object other) =>
+  bool operator ==(Object other) =>
       identical(this, other) ||
       other is ContentSecurityPolicyHeader &&
           const ListEquality<ContentSecurityPolicyDirective>().equals(
@@ -112,17 +112,15 @@ class ContentSecurityPolicyDirective {
   /// CSP directive names are ASCII case-insensitive, so the name is
   /// canonicalized to lowercase for case-insensitive equality. The values are
   /// left untouched (source expressions can be case-sensitive).
-  ContentSecurityPolicyDirective({
-    required final String name,
-    required this.values,
-  }) : name = name.toLowerCase();
+  ContentSecurityPolicyDirective({required String name, required this.values})
+    : name = name.toLowerCase();
 
   /// Converts the [ContentSecurityPolicyDirective] instance into a string
   /// representation.
   String _encode() => '$name ${values.join(' ')}';
 
   @override
-  bool operator ==(final Object other) =>
+  bool operator ==(Object other) =>
       identical(this, other) ||
       other is ContentSecurityPolicyDirective &&
           name == other.name &&

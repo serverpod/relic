@@ -19,10 +19,10 @@ final class BenchmarkAdapter implements Adapter {
   ];
 
   @override
-  void start(final ExchangeSink sink) => this.sink = sink;
+  void start(ExchangeSink sink) => this.sink = sink;
 
   @override
-  Future<void> close({final bool force = false}) async {}
+  Future<void> close({bool force = false}) async {}
 
   @override
   ConnectionsInfo get connectionsInfo => (active: 0, closing: 0, idle: 0);
@@ -47,7 +47,7 @@ final class BenchmarkExchange implements AdapterExchange {
       create(Method.get, this, url: _url, headers: _headers);
 
   @override
-  FutureOr<void> respond(final Response response) {
+  FutureOr<void> respond(Response response) {
     this.response = response;
     return null;
   }
@@ -56,7 +56,7 @@ final class BenchmarkExchange implements AdapterExchange {
   FutureOr<StreamChannel<Uint8List>> hijack() => throw UnsupportedError('');
 
   @override
-  FutureOr<RelicWebSocket> upgradeWebSocket(final String acceptKey) =>
+  FutureOr<RelicWebSocket> upgradeWebSocket(String acceptKey) =>
       throw UnsupportedError('');
 
   @override
@@ -70,7 +70,7 @@ final class BenchmarkExchange implements AdapterExchange {
 }
 
 /// Starts a server on a [BenchmarkAdapter] and returns the sink to drive.
-Future<ExchangeSink> startDispatchServer(final Handler handler) async {
+Future<ExchangeSink> startDispatchServer(Handler handler) async {
   final adapter = BenchmarkAdapter();
   final server = RelicServer(() => adapter);
   await server.mountAndStart(handler);

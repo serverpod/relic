@@ -26,8 +26,8 @@ final class VaryHeader {
   /// Field names are HTTP field names, which are case-insensitive (RFC 9110
   /// 5.1), so they are canonicalized to lowercase. This makes equality,
   /// hashing, and membership checks case-insensitive.
-  VaryHeader.headers({required final Iterable<String> fields})
-    : fields = List.unmodifiable(fields.map((final f) => f.toLowerCase())),
+  VaryHeader.headers({required Iterable<String> fields})
+    : fields = List.unmodifiable(fields.map((f) => f.toLowerCase())),
       isWildcard = false {
     if (fields.isEmpty) {
       throw ArgumentError.value(fields, 'fields', 'cannot be empty');
@@ -37,14 +37,14 @@ final class VaryHeader {
   /// Parses the Vary header value and returns a [VaryHeader] instance.
   ///
   /// This method handles the wildcard value "*" or splits the value by commas and trims each field.
-  factory VaryHeader.parse(final Iterable<String> values) =>
+  factory VaryHeader.parse(Iterable<String> values) =>
       _parseFields([for (final value in values) latin1Bytes(value)]);
 
   /// Takes [fields], a list the parser built, as its own.
   VaryHeader._(this.fields) : isWildcard = false;
 
   /// The header from the wire bytes of its [fields].
-  static VaryHeader _parseFields(final List<Uint8List> fields) {
+  static VaryHeader _parseFields(List<Uint8List> fields) {
     final elements = splitFieldsUnique(fields);
     if (elements.isEmpty) {
       throw const FormatException('Value cannot be empty');
@@ -62,7 +62,7 @@ final class VaryHeader {
     return VaryHeader._(
       List.generate(
         elements.length,
-        (final i) => lowerTextOf(elements[i]),
+        (i) => lowerTextOf(elements[i]),
         growable: false,
       ),
     );
@@ -72,7 +72,7 @@ final class VaryHeader {
   VaryHeader.wildcard() : fields = const [], isWildcard = true;
 
   @override
-  bool operator ==(final Object other) {
+  bool operator ==(Object other) {
     if (identical(this, other)) return true;
     if (other is! VaryHeader) return false;
 
@@ -95,5 +95,5 @@ final class VaryHeader {
   /// suitable for HTTP headers.
   String _encode() => isWildcard ? '*' : fields.join(', ');
 
-  static List<String> ___encode(final VaryHeader value) => [value._encode()];
+  static List<String> ___encode(VaryHeader value) => [value._encode()];
 }

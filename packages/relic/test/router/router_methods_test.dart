@@ -11,9 +11,9 @@ void main() {
     });
 
     void expectLookupResult<T extends Object>(
-      final LookupResult actual,
-      final T expectedValue, [
-      final Map<Symbol, String> expectedParams = const {},
+      LookupResult actual,
+      T expectedValue, [
+      Map<Symbol, String> expectedParams = const {},
     ]) {
       expect(actual, isA<RouterMatch<T>>());
       if (actual is! RouterMatch<T>) throw AssertionError();
@@ -24,19 +24,19 @@ void main() {
     parameterizedGroup(
       variants:
           <Method, void Function(String, String) Function(Router<String>)>{
-            Method.get: (final r) => r.get,
-            Method.head: (final r) => r.head,
-            Method.post: (final r) => r.post,
-            Method.put: (final r) => r.put,
-            Method.delete: (final r) => r.delete,
-            Method.patch: (final r) => r.patch,
-            Method.options: (final r) => r.options,
-            Method.trace: (final r) => r.trace,
-            Method.connect: (final r) => r.connect,
+            Method.get: (r) => r.get,
+            Method.head: (r) => r.head,
+            Method.post: (r) => r.post,
+            Method.put: (r) => r.put,
+            Method.delete: (r) => r.delete,
+            Method.patch: (r) => r.patch,
+            Method.options: (r) => r.options,
+            Method.trace: (r) => r.trace,
+            Method.connect: (r) => r.connect,
           }.entries,
-      (final v) =>
+      (v) =>
           'Given router.${v.key.name} used to register a handler for a path,',
-      (final v) {
+      (v) {
         test('when looking up with ${v.key} for that path, '
             'then returns the correct handler', () {
           v.value(router)('/path', 'handler'); // register handler
@@ -45,10 +45,10 @@ void main() {
         });
 
         parameterizedTest(
-          (final vv) =>
+          (vv) =>
               'when looking up with $vv for that path, '
               'then returns PassMiss',
-          (final vv) {
+          (vv) {
             final result = router.lookup(vv, '/path');
             expect(result, isA<PathMiss>());
           },
@@ -292,7 +292,7 @@ void main() {
           'then returns the mapped GET route', () {
         router
           ..get('/api/report', 'get_report')
-          ..use('/api', (final value) => 'mapped $value');
+          ..use('/api', (value) => 'mapped $value');
         final result = router.lookup(Method.head, '/api/report');
         expectLookupResult(result, 'mapped get_report');
       });
@@ -304,11 +304,9 @@ void main() {
         final result = router.lookup(Method.head, '/submit');
         expect(
           result,
-          isA<MethodMiss<String>>().having(
-            (final miss) => miss.allowed,
-            'allowed',
-            {Method.post},
-          ),
+          isA<MethodMiss<String>>().having((miss) => miss.allowed, 'allowed', {
+            Method.post,
+          }),
         );
       });
 
@@ -320,7 +318,7 @@ void main() {
         expect(
           result,
           isA<RouterMatch<String>>().having(
-            (final match) => match.headFallback,
+            (match) => match.headFallback,
             'headFallback',
             isTrue,
           ),
@@ -338,7 +336,7 @@ void main() {
           expect(
             result,
             isA<RouterMatch<String>>().having(
-              (final match) => match.headFallback,
+              (match) => match.headFallback,
               'headFallback',
               isFalse,
             ),
@@ -353,11 +351,10 @@ void main() {
         final result = router.lookup(Method.post, '/report');
         expect(
           result,
-          isA<MethodMiss<String>>().having(
-            (final miss) => miss.allowed,
-            'allowed',
-            {Method.get, Method.head},
-          ),
+          isA<MethodMiss<String>>().having((miss) => miss.allowed, 'allowed', {
+            Method.get,
+            Method.head,
+          }),
         );
       });
 
@@ -371,7 +368,7 @@ void main() {
         expect(
           result,
           isA<RouterMatch<String>>().having(
-            (final match) => match.registered,
+            (match) => match.registered,
             'registered',
             {Method.get, Method.post},
           ),

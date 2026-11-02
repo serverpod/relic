@@ -10,7 +10,7 @@ void main() {
     final isolated = IsolatedObject<_Counter>(() => _Counter(0));
 
     // Verify it's usable by evaluating a simple operation
-    final result = await isolated.evaluate((final counter) => counter.value);
+    final result = await isolated.evaluate((counter) => counter.value);
     expect(result, 0);
 
     await isolated.close();
@@ -24,7 +24,7 @@ void main() {
       return _Counter(42);
     });
 
-    final result = await isolated.evaluate((final counter) => counter.value);
+    final result = await isolated.evaluate((counter) => counter.value);
     expect(result, 42);
 
     await isolated.close();
@@ -38,7 +38,7 @@ void main() {
     });
 
     expect(
-      () => isolated.evaluate((final counter) => counter.value),
+      () => isolated.evaluate((counter) => counter.value),
       throwsA(anything),
     );
   });
@@ -48,6 +48,6 @@ class _Counter {
   int value;
   _Counter(this.value);
 
-  void add(final int amount) => value += amount;
+  void add(int amount) => value += amount;
   void increment() => value++;
 }

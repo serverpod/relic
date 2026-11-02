@@ -4,8 +4,8 @@ import 'dart:typed_data';
 import 'package:relic_dst/relic_dst.dart';
 import 'package:test/test.dart';
 
-Uint8List _bytes(final int n) =>
-    Uint8List.fromList(List.generate(n, (final i) => i & 0xff));
+Uint8List _bytes(int n) =>
+    Uint8List.fromList(List.generate(n, (i) => i & 0xff));
 
 void main() {
   test(
@@ -63,7 +63,7 @@ void main() {
       final client = await network.connect(listener.port);
       final server = await accepted.future;
       client.destroy();
-      await server.stream.drain<void>().catchError((final Object e) {
+      await server.stream.drain<void>().catchError((Object e) {
         error = e;
       });
     });
@@ -138,10 +138,10 @@ void main() {
     sim.run(() async {
       final queued = await network.connect(listener.port);
       listener.close();
-      await queued.stream.drain<void>().catchError((final Object e) {
+      await queued.stream.drain<void>().catchError((Object e) {
         queuedError = e;
       });
-      await network.connect(listener.port).catchError((final Object e) {
+      await network.connect(listener.port).catchError((Object e) {
         newError = e;
         return queued;
       });

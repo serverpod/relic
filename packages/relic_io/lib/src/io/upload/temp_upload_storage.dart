@@ -26,11 +26,11 @@ final class TempUploadStorage implements UploadStorage {
 
   @override
   Future<UploadedFile> store({
-    required final String fieldName,
-    required final String? filename,
-    required final BodyType? bodyType,
-    required final Headers headers,
-    required final Stream<Uint8List> content,
+    required String fieldName,
+    required String? filename,
+    required BodyType? bodyType,
+    required Headers headers,
+    required Stream<Uint8List> content,
   }) async {
     final uploadDirectory = await _createUploadDirectory();
     final file = File(p.join(uploadDirectory.path, _fileName));
@@ -73,7 +73,7 @@ final class TempUploadStorage implements UploadStorage {
 ///
 /// On Linux, [Directory.createTemp] leaves the mode to the umask, which
 /// typically gives 0755. See `runtime/bin/directory_linux.cc` in the Dart SDK.
-void _restrictToOwner(final String path) {
+void _restrictToOwner(String path) {
   final encoded = utf8.encode(path);
   final cPath = Uint8List(encoded.length + 1)..setAll(0, encoded);
   if (_chmod(cPath.address, _ownerOnly) != 0) {
@@ -109,8 +109,8 @@ final class TempUploadedFile implements UploadedFile {
     required this.filename,
     required this.bodyType,
     required this.headers,
-    required final Directory directory,
-    required final int size,
+    required Directory directory,
+    required int size,
   }) : _directory = directory,
        _size = size;
 
@@ -145,7 +145,7 @@ const _fileName = 'upload';
 /// [content] stays paused while each write runs. The file closes before this
 /// completes, even when [content] fails, so the caller can delete it.
 /// `IOSink.addStream` does not wait for that close.
-Future<int> _write(final File file, final Stream<Uint8List> content) async {
+Future<int> _write(File file, Stream<Uint8List> content) async {
   final output = await file.open(mode: FileMode.writeOnly);
   var size = 0;
   try {
@@ -161,7 +161,7 @@ Future<int> _write(final File file, final Stream<Uint8List> content) async {
   return size;
 }
 
-Future<void> _deleteQuietly(final Directory directory) async {
+Future<void> _deleteQuietly(Directory directory) async {
   try {
     await directory.delete(recursive: true);
   } on FileSystemException {
@@ -169,7 +169,7 @@ Future<void> _deleteQuietly(final Directory directory) async {
   }
 }
 
-Future<void> _ignoreErrors(final Future<void> Function() action) async {
+Future<void> _ignoreErrors(Future<void> Function() action) async {
   try {
     await action();
   } catch (_) {
@@ -177,7 +177,7 @@ Future<void> _ignoreErrors(final Future<void> Function() action) async {
   }
 }
 
-Stream<Uint8List> _asUint8ListStream(final Stream<List<int>> stream) async* {
+Stream<Uint8List> _asUint8ListStream(Stream<List<int>> stream) async* {
   await for (final chunk in stream) {
     if (chunk is Uint8List) {
       yield chunk;

@@ -20,8 +20,8 @@ final class _Harness {
   /// takes bytes and its close never completes, as a hijacked channel to a
   /// peer that stopped reading behaves.
   _Harness({
-    final bool flushes = true,
-    final int maxMessageSize = FramedWebSocket.defaultMaxMessageSize,
+    bool flushes = true,
+    int maxMessageSize = FramedWebSocket.defaultMaxMessageSize,
   }) {
     socket = FramedWebSocket(
       StreamChannel<Uint8List>(
@@ -32,9 +32,7 @@ final class _Harness {
     );
     // An eager listener. A StreamQueue would pause the subscription
     // between requests, and the sink's close then never finishes.
-    fromServer.stream.transform(const _ServerFrameDecoder()).listen((
-      final frame,
-    ) {
+    fromServer.stream.transform(const _ServerFrameDecoder()).listen((frame) {
       if (_waiting.isNotEmpty) {
         _waiting.removeAt(0).complete(frame);
       } else {
@@ -53,11 +51,7 @@ final class _Harness {
 
   /// A frame as the client sends it: masked with zeros, so the payload
   /// bytes are unchanged on the wire.
-  void send(
-    final WebSocketOpcode opcode,
-    final List<int> payload, {
-    final bool fin = true,
-  }) {
+  void send(WebSocketOpcode opcode, List<int> payload, {bool fin = true}) {
     final out = BytesBuilder();
     out.addByte((fin ? 0x80 : 0) | opcode.code);
     if (payload.length < 126) {
@@ -80,14 +74,14 @@ final class _StuckSink implements StreamSink<Uint8List> {
   _StuckSink(this._inner);
 
   @override
-  void add(final Uint8List event) => _inner.add(event);
+  void add(Uint8List event) => _inner.add(event);
 
   @override
-  void addError(final Object error, [final StackTrace? stackTrace]) =>
+  void addError(Object error, [StackTrace? stackTrace]) =>
       _inner.addError(error, stackTrace);
 
   @override
-  Future<void> addStream(final Stream<Uint8List> stream) => stream.forEach(add);
+  Future<void> addStream(Stream<Uint8List> stream) => stream.forEach(add);
 
   @override
   Future<void> close() => _never.future;
@@ -102,7 +96,7 @@ final class _ServerFrameDecoder
   const _ServerFrameDecoder();
 
   @override
-  Stream<WebSocketFrame> bind(final Stream<Uint8List> stream) async* {
+  Stream<WebSocketFrame> bind(Stream<Uint8List> stream) async* {
     final buffer = BytesBuilder();
     await for (final chunk in stream) {
       buffer.add(chunk);

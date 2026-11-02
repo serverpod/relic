@@ -48,7 +48,7 @@ final class ETagValue {
   /// The `W/` prefix is matched case-sensitively. The opaque-tag must be
   /// quoted; surrounding whitespace is not allowed (callers should strip it
   /// at the field level).
-  factory ETagValue.parse(final String source) {
+  factory ETagValue.parse(String source) {
     final bytes = Uint8List(source.length);
     for (var i = 0; i < source.length; i++) {
       final c = source.codeUnitAt(i);
@@ -59,7 +59,7 @@ final class ETagValue {
   }
 
   /// [parse] over the wire bytes.
-  factory ETagValue._parseBytes(final Uint8List source) {
+  factory ETagValue._parseBytes(Uint8List source) {
     var i = 0;
     var weak = false;
     if (source.length >= 2 && source[0] == 0x57 && source[1] == 0x2F) {
@@ -85,15 +85,15 @@ final class ETagValue {
   /// Strong comparison per RFC 9110 8.8.3.2: equal iff both are strong and
   /// have the same opaque-tag. Suitable for cache validation of
   /// representations that must be byte-identical.
-  bool strongMatches(final ETagValue other) =>
+  bool strongMatches(ETagValue other) =>
       !isWeak && !other.isWeak && value == other.value;
 
   /// Weak comparison per RFC 9110 8.8.3.2: equal iff the opaque-tags match,
   /// regardless of either tag's weak marker.
-  bool weakMatches(final ETagValue other) => value == other.value;
+  bool weakMatches(ETagValue other) => value == other.value;
 
   @override
-  bool operator ==(final Object other) =>
+  bool operator ==(Object other) =>
       identical(this, other) ||
       (other is ETagValue && value == other.value && isWeak == other.isWeak);
 
@@ -106,7 +106,7 @@ final class ETagValue {
 
 const int _dquote = 0x22;
 
-bool _isEtagc(final int c) {
+bool _isEtagc(int c) {
   if (c == 0x21) return true;
   if (c >= 0x23 && c <= 0x7E) return true; // VCHAR minus DQUOTE
   if (c >= 0x80 && c <= 0xFF) return true; // obs-text
@@ -116,6 +116,6 @@ bool _isEtagc(final int c) {
 /// Byte parsing for the typed headers, not exported from relic_core.dart.
 extension ETagValueInternal on ETagValue {
   /// [ETagValue.parse] over the wire bytes.
-  static ETagValue parseBytes(final Uint8List source) =>
+  static ETagValue parseBytes(Uint8List source) =>
       ETagValue._parseBytes(source);
 }

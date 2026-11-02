@@ -10,9 +10,9 @@ void main() {
   });
 
   void logger(
-    final String msg, {
-    final LoggerType type = LoggerType.info,
-    final StackTrace? stackTrace,
+    String msg, {
+    LoggerType type = LoggerType.info,
+    StackTrace? stackTrace,
   }) {
     expect(gotLog, isFalse);
     gotLog = true;
@@ -53,9 +53,9 @@ void main() {
             logRequests(
               logger:
                   (
-                    final msg, {
-                    final LoggerType type = LoggerType.info,
-                    final StackTrace? stackTrace,
+                    msg, {
+                    LoggerType type = LoggerType.info,
+                    StackTrace? stackTrace,
                   }) {
                     expect(gotLog, isFalse);
                     gotLog = true;
@@ -64,7 +64,7 @@ void main() {
                   },
             ),
           )
-          .addHandler((final request) {
+          .addHandler((request) {
             throw StateError('oh no');
           });
 

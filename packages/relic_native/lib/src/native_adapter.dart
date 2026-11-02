@@ -76,8 +76,8 @@ final class NativeTls {
 
   /// Reads both from PEM files.
   NativeTls.fromFiles({
-    required final String certificateChain,
-    required final String privateKey,
+    required String certificateChain,
+    required String privateKey,
   }) : this(
          certificateChain: io.File(certificateChain).readAsBytesSync(),
          privateKey: io.File(privateKey).readAsBytesSync(),

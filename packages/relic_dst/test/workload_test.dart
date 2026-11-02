@@ -4,9 +4,9 @@ import 'package:test/test.dart';
 
 /// A server running the workload handler, with the contract watched.
 Future<(RelicServer, ContractAdapter, SimAdapter)> _serve(
-  final Simulation sim,
-  final SimNetwork network, {
-  final void Function()? onCancelled,
+  Simulation sim,
+  SimNetwork network, {
+  void Function()? onCancelled,
 }) async {
   final adapter = SimAdapter.bind(
     network,
@@ -22,11 +22,11 @@ Future<(RelicServer, ContractAdapter, SimAdapter)> _serve(
 }
 
 Workload _workload(
-  final Simulation sim,
-  final SimNetwork network,
-  final int port, {
-  final int sessions = 16,
-  final int actionsPerSession = 4,
+  Simulation sim,
+  SimNetwork network,
+  int port, {
+  int sessions = 16,
+  int actionsPerSession = 4,
 }) => Workload(
   sim,
   network,
@@ -44,20 +44,20 @@ Workload _workload(
 /// completed accounted for by the responses the clients read plus the
 /// ones they never read.
 Future<void> _expectSettled(
-  final RelicServer server,
-  final ContractAdapter contract,
-  final Workload workload,
-  final int cancelled,
+  RelicServer server,
+  ContractAdapter contract,
+  Workload workload,
+  int cancelled,
 ) async {
   expect(await server.connectionsInfo(), (active: 0, closing: 0, idle: 0));
   expect(
-    contract.exchanges.where((final e) => e.end == null),
+    contract.exchanges.where((e) => e.end == null),
     isEmpty,
     reason: 'every exchange has ended once its client is gone',
   );
   expect(cancelled, workload.abandonedWaits);
   final completed = contract.exchanges
-      .where((final e) => e.end == ExchangeEnd.completed)
+      .where((e) => e.end == ExchangeEnd.completed)
       .length;
   expect(completed, greaterThanOrEqualTo(workload.handlerResponses));
   expect(
@@ -71,10 +71,10 @@ Future<void> _expectSettled(
 /// Every checked answer matches, the contract holds and nothing is left
 /// pending.
 Future<void> _expectWorkloadSettles(
-  final Simulation sim, {
-  required final NetworkOptions options,
-  required final int sessions,
-  required final int actionsPerSession,
+  Simulation sim, {
+  required NetworkOptions options,
+  required int sessions,
+  required int actionsPerSession,
 }) async {
   final network = SimNetwork(sim, options: options);
   var cancelled = 0;
@@ -111,7 +111,7 @@ void main() {
     'when 16 random client sessions run and the server closes gracefully, '
     'then every checked answer matched, the contract held and nothing is '
     'left pending.',
-    (final sim) => _expectWorkloadSettles(
+    (sim) => _expectWorkloadSettles(
       sim,
       options: const NetworkOptions(fragmentation: 0.5),
       sessions: 16,
@@ -125,7 +125,7 @@ void main() {
     'closes gracefully, '
     'then every checked answer matched, the contract held and nothing is '
     'left pending.',
-    (final sim) => _expectWorkloadSettles(
+    (sim) => _expectWorkloadSettles(
       sim,
       options: const NetworkOptions(fragmentation: 0.5),
       sessions: 1000,
@@ -139,7 +139,7 @@ void main() {
     'thousand, '
     'when 16 random client sessions run and the server closes gracefully, '
     'then the contract held and nothing is left pending.',
-    (final sim) async {
+    (sim) async {
       final network = SimNetwork(
         sim,
         options: const NetworkOptions(resetProbability: 0.001),

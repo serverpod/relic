@@ -34,7 +34,7 @@ final class HeaderScanner {
   int get position => _pos;
 
   /// Move the cursor. Must be within `[0, source.length]`.
-  set position(final int p) {
+  set position(int p) {
     RangeError.checkValueInInterval(p, 0, source.length, 'position');
     _pos = p;
   }
@@ -49,14 +49,14 @@ final class HeaderScanner {
   int peek() => _pos < source.length ? source.codeUnitAt(_pos) : -1;
 
   /// Consumes [char] if it is at the cursor. Returns true if consumed.
-  bool tryConsume(final int char) {
+  bool tryConsume(int char) {
     if (peek() != char) return false;
     _pos++;
     return true;
   }
 
   /// Consumes [char] at the cursor, otherwise throws [FormatException].
-  void expect(final int char) {
+  void expect(int char) {
     if (!tryConsume(char)) {
       throw _error("expected '${String.fromCharCode(char)}'");
     }
@@ -159,7 +159,7 @@ final class HeaderScanner {
   ///
   /// Throws [FormatException] if a `quoted-string` encountered during the
   /// scan is malformed; the cursor is left at its original position.
-  int indexOfTopLevel(final int char) {
+  int indexOfTopLevel(int char) {
     final saved = _pos;
     try {
       while (_pos < source.length) {
@@ -186,7 +186,7 @@ final class HeaderScanner {
   /// position. Iteration advances the cursor; after the last element the
   /// cursor is at [source].length. Throws [FormatException] if a
   /// `quoted-string` is malformed.
-  Iterable<String> splitTopLevel(final int separator) sync* {
+  Iterable<String> splitTopLevel(int separator) sync* {
     if (atEnd) return;
     while (true) {
       skipOws();
@@ -202,14 +202,14 @@ final class HeaderScanner {
     }
   }
 
-  FormatException _error(final String message, [final int? offset]) =>
+  FormatException _error(String message, [int? offset]) =>
       FormatException(message, source, offset ?? _pos);
 }
 
 const int _dquote = 0x22;
 const int _backslash = 0x5C;
 
-bool _isQdtext(final int c, final int obsTextEnd) {
+bool _isQdtext(int c, int obsTextEnd) {
   // qdtext = HTAB / SP / %x21 / %x23-5B / %x5D-7E / obs-text
   if (c == 0x09) return true;
   if (c == 0x20) return true;
@@ -220,7 +220,7 @@ bool _isQdtext(final int c, final int obsTextEnd) {
   return false;
 }
 
-bool _isQuotedPairTarget(final int c, final int obsTextEnd) {
+bool _isQuotedPairTarget(int c, int obsTextEnd) {
   // quoted-pair = "\" ( HTAB / SP / VCHAR / obs-text )
   if (c == 0x09) return true;
   if (c == 0x20) return true;
@@ -229,7 +229,7 @@ bool _isQuotedPairTarget(final int c, final int obsTextEnd) {
   return false;
 }
 
-String _rtrimOws(final String s) {
+String _rtrimOws(String s) {
   var end = s.length;
   while (end > 0) {
     final c = s.codeUnitAt(end - 1);

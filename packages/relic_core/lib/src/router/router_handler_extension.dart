@@ -24,7 +24,7 @@ extension RouterHandlerEx on RelicRouter {
 
   /// Similar to [HandlerObject] this extension allows a [Router]
   /// to be callable like a [Handler].
-  FutureOr<Result> call(final Request req) => const Pipeline()
+  FutureOr<Result> call(Request req) => const Pipeline()
       .addMiddleware(routeWith(this))
       .addHandler(fallback ?? (_) => Response.notFound())(req);
 }

@@ -10,7 +10,7 @@ import '../primitives/byte_scanner.dart' show latin1Bytes;
 /// It provides functionality to parse and generate Expect header values.
 final class ExpectHeader {
   static const codec = HeaderCodec.bytes(_parseBytes, __encode);
-  static List<String> __encode(final ExpectHeader value) => [value._encode()];
+  static List<String> __encode(ExpectHeader value) => [value._encode()];
 
   /// The string representation of the expectation directive.
   final String value;
@@ -30,8 +30,7 @@ final class ExpectHeader {
   /// expectations so a server can respond with `417 Expectation Failed`
   /// rather than failing at the parse step. The matching of the known
   /// `100-continue` token is case-insensitive.
-  factory ExpectHeader.parse(final String value) =>
-      _parseBytes(latin1Bytes(value));
+  factory ExpectHeader.parse(String value) => _parseBytes(latin1Bytes(value));
 
   /// [parse] over the wire bytes.
   ///
@@ -39,7 +38,7 @@ final class ExpectHeader {
   /// control characters are rejected so a CR/LF cannot be injected into the
   /// header when the value is later re-emitted. HTAB (0x09) is legal OWS
   /// in a field value and is allowed.
-  static ExpectHeader _parseBytes(final Uint8List bytes) {
+  static ExpectHeader _parseBytes(Uint8List bytes) {
     final value = trimmed(bytes);
     if (value.isEmpty) {
       throw const FormatException('Value cannot be empty');
@@ -61,7 +60,7 @@ final class ExpectHeader {
   String _encode() => value;
 
   @override
-  bool operator ==(final Object other) =>
+  bool operator ==(Object other) =>
       identical(this, other) || other is ExpectHeader && value == other.value;
 
   @override

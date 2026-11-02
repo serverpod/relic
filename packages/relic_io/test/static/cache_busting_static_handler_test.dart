@@ -10,9 +10,9 @@ import 'test_util.dart';
 
 /// Helper to build a handler with a static file handler injected at [mountPath]
 Handler buildStaticHandler(
-  final String mountPath,
-  final Directory staticRoot, {
-  required final CacheBustingConfig cacheBustingConfig,
+  String mountPath,
+  Directory staticRoot, {
+  required CacheBustingConfig cacheBustingConfig,
 }) {
   return (RelicRouter()..injectAt(
         mountPath,

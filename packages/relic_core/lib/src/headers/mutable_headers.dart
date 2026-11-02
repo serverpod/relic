@@ -16,10 +16,7 @@ final class MutableHeaders extends MutableHeaderStore
   MutableHeaders() : this._(MapHeaderStore());
 
   /// Sets [accessor] to [value], or removes it when [value] is null.
-  void assign<T extends Object>(
-    final HeaderAccessor<T> accessor,
-    final T? value,
-  ) {
+  void assign<T extends Object>(HeaderAccessor<T> accessor, T? value) {
     if (value == null) {
       remove(accessor.key);
       return;
@@ -38,7 +35,7 @@ final class MutableHeaders extends MutableHeaderStore
   ///
   /// Throws [FormatException] for a name that is not an HTTP token or a
   /// value with CR, LF or NUL.
-  void operator []=(final Object key, final Iterable<String>? values) {
+  void operator []=(Object key, Iterable<String>? values) {
     final name = switch (key) {
       final HeaderName name => name,
       final String text => HeaderName.lookup(text),
@@ -52,17 +49,16 @@ final class MutableHeaders extends MutableHeaderStore
   }
 
   @override
-  void set(final HeaderName name, final Iterable<String> values) =>
+  void set(HeaderName name, Iterable<String> values) =>
       _store.set(name, values);
 
   @override
-  void add(final HeaderName name, final String value) =>
-      _store.add(name, value);
+  void add(HeaderName name, String value) => _store.add(name, value);
 
   /// Removes the header called [key], which may be a [HeaderName], a name
   /// as text, or an accessor.
   @override
-  void remove(final Object key) => _store.remove(switch (key) {
+  void remove(Object key) => _store.remove(switch (key) {
     final HeaderName name => name,
     final ReadOnlyAccessor<dynamic, HeaderName, Iterable<String>> a => a.key,
     final String text => HeaderName.lookup(text),

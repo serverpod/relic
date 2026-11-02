@@ -23,12 +23,12 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (final h) => h.secFetchMode,
+            touchHeaders: (h) => h.secFetchMode,
             headers: {'sec-fetch-mode': ''},
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (final e) => e.message,
+              (e) => e.message,
               'message',
               contains('Value cannot be empty'),
             ),
@@ -44,12 +44,12 @@ void main() {
         expect(
           getServerRequestHeaders(
             server: server,
-            touchHeaders: (final h) => h.secFetchMode,
+            touchHeaders: (h) => h.secFetchMode,
             headers: {'sec-fetch-mode': 'custom-mode'},
           ),
           throwsA(
             isA<BadRequestException>().having(
-              (final e) => e.message,
+              (e) => e.message,
               'message',
               contains('Invalid value'),
             ),
@@ -76,7 +76,7 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.secFetchMode,
+          touchHeaders: (h) => h.secFetchMode,
           headers: {'sec-fetch-mode': 'cors'},
         );
 
@@ -89,7 +89,7 @@ void main() {
       () async {
         final headers = await getServerRequestHeaders(
           server: server,
-          touchHeaders: (final h) => h.secFetchMode,
+          touchHeaders: (h) => h.secFetchMode,
           headers: {},
         );
 

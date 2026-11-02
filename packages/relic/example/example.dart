@@ -7,7 +7,7 @@ Future<void> main() async {
   await app.serve();
 }
 
-Response helloHandler(final Request req) {
+Response helloHandler(Request req) {
   final name = req.rawPathParameters[#name];
   return Response.ok(body: Body.fromString('Hello, $name!\n'));
 }

@@ -11,7 +11,7 @@ import '../primitives/byte_scanner.dart' show latin1Bytes;
 /// This class manages the language codes specified in the Content-Language header.
 final class ContentLanguageHeader {
   static const codec = HeaderCodec.fields(_parseFields, __encode);
-  static List<String> __encode(final ContentLanguageHeader value) => [
+  static List<String> __encode(ContentLanguageHeader value) => [
     value._encode(),
   ];
 
@@ -19,14 +19,14 @@ final class ContentLanguageHeader {
   final List<String> languages;
 
   /// Constructs a [ContentLanguageHeader] instance with the specified language codes.
-  ContentLanguageHeader.languages(final Iterable<String> languages)
+  ContentLanguageHeader.languages(Iterable<String> languages)
     : assert(languages.isNotEmpty),
       languages = List.unmodifiable(languages);
 
   /// Parses the Content-Language header value and returns a [ContentLanguageHeader] instance.
   ///
   /// This method splits the header value by commas and trims each language code.
-  factory ContentLanguageHeader.parse(final Iterable<String> values) =>
+  factory ContentLanguageHeader.parse(Iterable<String> values) =>
       _parseFields([for (final value in values) latin1Bytes(value)]);
 
   /// Takes [languages], a list the parser built, as its own.
@@ -37,13 +37,13 @@ final class ContentLanguageHeader {
   /// Each tag is checked against the full BCP 47 grammar (RFC 5646), so
   /// `es-419`, `zh-Hant-TW` and `x-foo` pass, and kept in canonical case
   /// so equality and hashing ignore case (`en-US` == `EN-us`).
-  static ContentLanguageHeader _parseFields(final List<Uint8List> fields) {
+  static ContentLanguageHeader _parseFields(List<Uint8List> fields) {
     final elements = splitFieldsUnique(fields);
     if (elements.isEmpty) {
       throw const FormatException('Value cannot be empty');
     }
     return ContentLanguageHeader._(
-      List.generate(elements.length, (final i) {
+      List.generate(elements.length, (i) {
         try {
           return LanguageTag.parse(textOf(elements[i])).encode();
         } on FormatException {
@@ -59,7 +59,7 @@ final class ContentLanguageHeader {
   String _encode() => languages.join(', ');
 
   @override
-  bool operator ==(final Object other) =>
+  bool operator ==(Object other) =>
       identical(this, other) ||
       other is ContentLanguageHeader &&
           const ListEquality<String>().equals(languages, other.languages);

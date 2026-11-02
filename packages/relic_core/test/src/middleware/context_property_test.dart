@@ -63,7 +63,7 @@ void main() {
 
     test('when a value is set for a property created after many others, '
         'then it is read back and the earlier properties stay unset.', () {
-      final late = List.generate(40, (final i) => ContextProperty<int>()).last;
+      final late = List.generate(40, (i) => ContextProperty<int>()).last;
       late[request] = 7;
       expect(late[request], 7);
       expect(stringProperty[request], isNull);
@@ -81,7 +81,7 @@ void main() {
           () => property.get(context),
           throwsA(
             isA<StateError>().having(
-              (final e) => e.message,
+              (e) => e.message,
               'message',
               contains(
                 'ContextProperty value not found. Property: debugNameProperty.',
@@ -102,7 +102,7 @@ void main() {
           () => property.get(context),
           throwsA(
             isA<StateError>().having(
-              (final e) => e.message,
+              (e) => e.message,
               'message',
               contains('ContextProperty value not found. Property: int.'),
             ),
@@ -179,7 +179,7 @@ class User {
   User(this.name, this.age);
 
   @override
-  bool operator ==(final Object other) =>
+  bool operator ==(Object other) =>
       identical(this, other) ||
       other is User &&
           runtimeType == other.runtimeType &&

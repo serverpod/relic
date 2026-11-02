@@ -314,7 +314,7 @@ void main() {
           'then each line is one cookie, in order.', () {
         final header = SetCookieHeader.codec.decode(['a=1', 'b=2; Secure']);
 
-        expect(header.cookies.map((final c) => c.name), equals(['a', 'b']));
+        expect(header.cookies.map((c) => c.name), equals(['a', 'b']));
         expect(header.cookies[1].secure, isTrue);
       });
 

@@ -20,12 +20,11 @@ final class Served {
   relic;
   final ShelfHandlerBuilder shelf;
 
-  Served.app(final RelicApp app, this.shelf)
-    : relic = ((final adapter, final isolates) =>
-          app.run(adapter, noOfIsolates: isolates));
+  Served.app(RelicApp app, this.shelf)
+    : relic = ((adapter, isolates) => app.run(adapter, noOfIsolates: isolates));
 
-  Served.handler(final Handler handler, this.shelf)
-    : relic = ((final adapter, final isolates) async {
+  Served.handler(Handler handler, this.shelf)
+    : relic = ((adapter, isolates) async {
         final server = RelicServer(adapter, noOfIsolates: isolates);
         await server.mountAndStart(handler);
         return server;
@@ -49,7 +48,7 @@ var _serveCount = 0;
 }
 
 /// Whether [kind] can serve over TLS. Shelf cannot.
-bool supportsTls(final String kind) => kind != 'shelf';
+bool supportsTls(String kind) => kind != 'shelf';
 
 /// Starts [served] on [kind], `io`, `native` or `shelf`, at [port] on the
 /// IPv4 loopback with [isolates] isolates, over TLS with
@@ -57,11 +56,11 @@ bool supportsTls(final String kind) => kind != 'shelf';
 ///
 /// Port 0 picks a free port.
 Future<Server> startServer(
-  final String kind,
-  final Served served, {
-  required final int port,
-  final int isolates = 1,
-  final bool tls = false,
+  String kind,
+  Served served, {
+  required int port,
+  int isolates = 1,
+  bool tls = false,
 }) async {
   final address = InternetAddress.loopbackIPv4;
   if (tls && !supportsTls(kind)) {
@@ -118,7 +117,7 @@ Future<Server> startServer(
 
 /// Prints `ready <pid>` for whoever started this process, waits for
 /// SIGTERM and closes [server].
-Future<void> serveUntilSigterm(final Server server) async {
+Future<void> serveUntilSigterm(Server server) async {
   stdout.writeln('ready $pid');
   await ProcessSignal.sigterm.watch().first;
   await server.close();

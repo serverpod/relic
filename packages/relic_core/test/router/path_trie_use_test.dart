@@ -8,7 +8,7 @@ void main() {
     final trie = PathTrie<int>();
     final root = NormalizedPath('/');
     trie.add(root, 1);
-    trie.use(root, (final i) => i * 2);
+    trie.use(root, (i) => i * 2);
     expect(trie.lookup(root)?.value, 2, reason: 'Should double');
   });
 
@@ -18,8 +18,8 @@ void main() {
     final trie = PathTrie<int>();
     final root = NormalizedPath('/a');
     trie.add(root, 1);
-    trie.use(root, (final i) => i * 2);
-    trie.use(root, (final i) => i + 3);
+    trie.use(root, (i) => i * 2);
+    trie.use(root, (i) => i + 3);
     expect(trie.lookup(root)?.value, 8, reason: 'Should add 3 and then double');
   });
 
@@ -28,7 +28,7 @@ void main() {
       'then the value is transformed', () {
     final trie = PathTrie<int>();
     final root = NormalizedPath('/');
-    trie.use(root, (final i) => i * 2);
+    trie.use(root, (i) => i * 2);
     trie.add(root, 1);
     expect(trie.lookup(root)?.value, 2, reason: 'Should double');
   });
@@ -39,7 +39,7 @@ void main() {
     final trie = PathTrie<int>();
     final tail = NormalizedPath('/**');
     trie.add(tail, 1);
-    trie.use(tail, (final i) => i * 2);
+    trie.use(tail, (i) => i * 2);
     expect(
       trie.lookup(NormalizedPath('/a/b/c'))?.value,
       2,
@@ -55,7 +55,7 @@ void main() {
       setUp(() {
         trie = PathTrie<int>();
         trie.add(NormalizedPath('/api/**'), 1);
-        trie.use(NormalizedPath('/api/**'), (final i) => i * 2);
+        trie.use(NormalizedPath('/api/**'), (i) => i * 2);
       });
 
       test('when looking up a path with a non-empty tail, '
@@ -101,7 +101,7 @@ void main() {
       'then descendant values are transformed', () {
     final trie = PathTrie<int>();
     trie.add(NormalizedPath('/:id/b/c'), 1);
-    trie.use(NormalizedPath('/:id'), (final i) => i * 2);
+    trie.use(NormalizedPath('/:id'), (i) => i * 2);
     expect(
       trie.lookup(NormalizedPath('/a/b/c'))?.value,
       2,
@@ -114,7 +114,7 @@ void main() {
       'then descendant values are transformed', () {
     final trie = PathTrie<int>();
     trie.add(NormalizedPath('/*/b/c'), 1);
-    trie.use(NormalizedPath('/*'), (final i) => i * 2);
+    trie.use(NormalizedPath('/*'), (i) => i * 2);
     expect(
       trie.lookup(NormalizedPath('/a/b/c'))?.value,
       2,
@@ -132,7 +132,7 @@ void main() {
     trie.add(root, 1);
     trie.add(pathA, 10);
     trie.add(pathB, 100);
-    trie.use(root, (final i) => i * 2);
+    trie.use(root, (i) => i * 2);
     expect(trie.lookup(root)?.value, 2, reason: 'Should double');
     expect(trie.lookup(pathA)?.value, 20, reason: 'Should double');
     expect(trie.lookup(pathB)?.value, 200, reason: 'Should double');
@@ -148,7 +148,7 @@ void main() {
     trie.add(root, 1);
     trie.add(pathA, 10);
     trie.add(pathB, 100);
-    trie.use(pathA, (final i) => i * 2);
+    trie.use(pathA, (i) => i * 2);
     expect(trie.lookup(root)?.value, 1, reason: 'Should not change');
     expect(trie.lookup(pathA)?.value, 20, reason: 'Should double');
     expect(trie.lookup(pathB)?.value, 100, reason: 'Should not change');
@@ -164,7 +164,7 @@ void main() {
     trieA.add(pathA, 10);
     trieB.add(pathB, 100);
     trieA.attach(NormalizedPath('/prefix'), trieB);
-    trieA.use(NormalizedPath('/prefix'), (final i) => i * 2);
+    trieA.use(NormalizedPath('/prefix'), (i) => i * 2);
     expect(trieA.lookup(pathA)?.value, 10, reason: 'Should not change');
     expect(
       trieA.lookup(NormalizedPath('/prefix/b'))?.value,
@@ -182,7 +182,7 @@ void main() {
     final pathB = NormalizedPath('/b');
     trieA.add(pathA, 10);
     trieB.add(pathB, 100);
-    trieB.use(NormalizedPath.empty, (final i) => i * 2);
+    trieB.use(NormalizedPath.empty, (i) => i * 2);
     trieA.attach(NormalizedPath('/prefix'), trieB);
     expect(trieA.lookup(pathA)?.value, 10, reason: 'Should not change');
     expect(
@@ -198,9 +198,9 @@ void main() {
     final trieA = PathTrie<int>();
     final trieB = PathTrie<int>();
     final attachAt = NormalizedPath('/prefix');
-    trieA.use(attachAt, (final i) => i * 2);
+    trieA.use(attachAt, (i) => i * 2);
     trieB.add(NormalizedPath('/suffix'), 1);
-    trieB.use(NormalizedPath.empty, (final i) => i + 3);
+    trieB.use(NormalizedPath.empty, (i) => i + 3);
     trieA.attach(attachAt, trieB);
     expect(
       trieA.lookup(NormalizedPath('/prefix/suffix'))?.value,
@@ -216,8 +216,8 @@ void main() {
     final pathA = NormalizedPath('/a');
     final pathB = NormalizedPath('/a/b');
     trie.add(pathB, 1);
-    trie.use(pathA, (final i) => i * 2);
-    trie.use(pathB, (final i) => i + 3);
+    trie.use(pathA, (i) => i * 2);
+    trie.use(pathB, (i) => i + 3);
     expect(
       trie.lookup(pathB)?.value,
       8,
@@ -235,20 +235,20 @@ void main() {
     final pathD = NormalizedPath('/a/b/c/d');
     trie.use(
       pathA,
-      (final next) =>
-          (final s) => '<a>${next(s)}</a>',
+      (next) =>
+          (s) => '<a>${next(s)}</a>',
     );
     trie.use(
       pathB,
-      (final next) =>
-          (final s) => '<b>${next(s)}</b>',
+      (next) =>
+          (s) => '<b>${next(s)}</b>',
     );
     trie.use(
       pathC,
-      (final next) =>
-          (final s) => '<c>${next(s)}</c>',
+      (next) =>
+          (s) => '<c>${next(s)}</c>',
     );
-    trie.add(pathD, (final s) => s);
+    trie.add(pathD, (s) => s);
     expect(
       trie.lookup(pathD)?.value('request'),
       '<a><b><c>request</c></b></a>',

@@ -27,7 +27,7 @@ final class LruCache<K, V> implements Cache<K, V> {
   /// Returns null if the key is not found. Accessing the key marks it as the most
   /// recently used item.
   @override
-  V? operator [](final K key) {
+  V? operator [](K key) {
     final value = _cache.remove(key);
     if (value != null) {
       // Re-insert to move to the end (most recently used position)
@@ -42,7 +42,7 @@ final class LruCache<K, V> implements Cache<K, V> {
   /// marks it as the most recently used item. If adding the item exceeds the cache
   /// capacity, the least recently used item is evicted.
   @override
-  void operator []=(final K key, final V value) {
+  void operator []=(K key, V value) {
     // Remove existing entry if present
     _cache.remove(key);
 

@@ -7,7 +7,7 @@ import 'package:relic_core/src/context/result.dart' show RequestInternal;
 import 'package:test/test.dart';
 import 'package:test_utils/test_utils.dart';
 
-Request _request({final Headers? headers, final Body? body}) {
+Request _request({Headers? headers, Body? body}) {
   return RequestInternal.create(
     Method.get,
     localhostUri,
@@ -111,7 +111,7 @@ void main() {
 
     test('when there is a Last-Modified header then it is set correctly', () {
       final request = _request(
-        headers: Headers.build((final mh) {
+        headers: Headers.build((mh) {
           mh.ifModifiedSince = parseHttpDate('Sun, 06 Nov 1994 08:49:37 GMT');
         }),
       );
@@ -135,9 +135,7 @@ void main() {
           uri,
           null,
           protocol: HttpProtocol.http10,
-          headers: Headers.build(
-            (final mh) => mh['header1'] = ['header value 1'],
-          ),
+          headers: Headers.build((mh) => mh['header1'] = ['header value 1']),
           body: Body.fromDataStream(controller.stream),
         );
 
@@ -211,9 +209,7 @@ void main() {
       );
 
       final newUri = Uri.parse('https://test.example.com/updated');
-      final newHeaders = Headers.build(
-        (final mh) => mh['X-Custom'] = ['value'],
-      );
+      final newHeaders = Headers.build((mh) => mh['X-Custom'] = ['value']);
       final copy = request.copyWith(url: newUri, headers: newHeaders);
 
       expect(copy.url, equals(newUri));

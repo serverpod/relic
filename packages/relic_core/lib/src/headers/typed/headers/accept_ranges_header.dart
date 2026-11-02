@@ -13,9 +13,7 @@ import '../primitives/byte_scanner.dart' show latin1Bytes;
 /// value `none` indicates the server does not support range requests.
 final class AcceptRangesHeader {
   static const codec = HeaderCodec.bytes(_parseBytes, __encode);
-  static List<String> __encode(final AcceptRangesHeader value) => [
-    value._encode(),
-  ];
+  static List<String> __encode(AcceptRangesHeader value) => [value._encode()];
 
   /// The range units supported by the server (canonical lowercase tokens).
   final List<String> rangeUnits;
@@ -30,15 +28,15 @@ final class AcceptRangesHeader {
   factory AcceptRangesHeader.bytes() => const AcceptRangesHeader._(['bytes']);
 
   /// Parses the Accept-Ranges header value as `1#range-unit`.
-  factory AcceptRangesHeader.parse(final String value) =>
+  factory AcceptRangesHeader.parse(String value) =>
       _parseBytes(latin1Bytes(value));
 
   /// [parse] over the wire bytes.
-  static AcceptRangesHeader _parseBytes(final Uint8List bytes) {
+  static AcceptRangesHeader _parseBytes(Uint8List bytes) {
     final elements = splitAll(bytes);
     final units = List<String>.generate(
       elements.length,
-      (final i) => tokenText(elements[i]).toLowerCase(),
+      (i) => tokenText(elements[i]).toLowerCase(),
     );
     if (units.isEmpty) {
       throw const FormatException('Value cannot be empty');
@@ -63,7 +61,7 @@ final class AcceptRangesHeader {
   String _encode() => rangeUnits.join(', ');
 
   @override
-  bool operator ==(final Object other) =>
+  bool operator ==(Object other) =>
       identical(this, other) ||
       other is AcceptRangesHeader &&
           const ListEquality<String>().equals(rangeUnits, other.rangeUnits);

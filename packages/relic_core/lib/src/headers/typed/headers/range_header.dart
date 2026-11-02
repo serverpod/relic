@@ -15,7 +15,7 @@ import '../primitives/byte_scanner.dart' show latin1Bytes;
 /// bytes or custom units.
 final class RangeHeader {
   static const codec = HeaderCodec.bytes(_parseBytes, __encode);
-  static List<String> __encode(final RangeHeader value) => [value._encode()];
+  static List<String> __encode(RangeHeader value) => [value._encode()];
 
   /// The unit of the range (e.g., "bytes").
   final String unit;
@@ -32,12 +32,11 @@ final class RangeHeader {
   ///
   /// This method processes the range header and extracts the unit and
   /// multiple range values.
-  factory RangeHeader.parse(final String value) =>
-      _parseBytes(latin1Bytes(value));
+  factory RangeHeader.parse(String value) => _parseBytes(latin1Bytes(value));
 
   /// [parse] over the wire bytes: `unit "=" ranges`, each range
   /// `[first] "-" [last]` with at least one side.
-  static RangeHeader _parseBytes(final Uint8List bytes) {
+  static RangeHeader _parseBytes(Uint8List bytes) {
     final value = trimmed(bytes);
     if (value.isEmpty) {
       throw const FormatException('Value cannot be empty');
@@ -84,7 +83,7 @@ final class RangeHeader {
   }
 
   /// The end of the run of ASCII digits at [from], up to [bytes] length.
-  static int _digitsEnd(final Uint8List bytes, int from) {
+  static int _digitsEnd(Uint8List bytes, int from) {
     while (from < bytes.length && bytes[from] >= 0x30 && bytes[from] <= 0x39) {
       from++;
     }
@@ -92,7 +91,7 @@ final class RangeHeader {
   }
 
   /// A letter, digit or underscore, what `\w` matches.
-  static bool _isWordByte(final int b) =>
+  static bool _isWordByte(int b) =>
       (b >= 0x30 && b <= 0x39) ||
       (b >= 0x41 && b <= 0x5A) ||
       (b >= 0x61 && b <= 0x7A) ||
@@ -101,12 +100,12 @@ final class RangeHeader {
   /// Converts the [RangeHeader] instance into a string representation
   /// suitable for HTTP headers.
   String _encode() {
-    final rangesStr = ranges.map((final range) => range._encode()).join(', ');
+    final rangesStr = ranges.map((range) => range._encode()).join(', ');
     return '$unit=$rangesStr';
   }
 
   @override
-  bool operator ==(final Object other) =>
+  bool operator ==(Object other) =>
       identical(this, other) ||
       other is RangeHeader &&
           unit == other.unit &&
@@ -154,7 +153,7 @@ class Range {
   }
 
   @override
-  bool operator ==(final Object other) =>
+  bool operator ==(Object other) =>
       identical(this, other) ||
       other is Range && start == other.start && end == other.end;
 

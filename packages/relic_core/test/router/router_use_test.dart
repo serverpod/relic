@@ -7,7 +7,7 @@ void main() {
       'then the value is transformed', () {
     final router = Router<int>();
     router.get('/', 1);
-    router.use('/', (final i) => i * 2);
+    router.use('/', (i) => i * 2);
     final result = router.lookup(Method.get, '/') as RouterMatch<int>;
     expect(result.value, 2, reason: 'Should double');
   });
@@ -17,8 +17,8 @@ void main() {
       'then the mappings compose', () {
     final router = Router<int>();
     router.get('/a', 1);
-    router.use('/a', (final i) => i * 2);
-    router.use('/a', (final i) => i + 3);
+    router.use('/a', (i) => i * 2);
+    router.use('/a', (i) => i + 3);
     final result = router.lookup(Method.get, '/a') as RouterMatch<int>;
     expect(result.value, 8, reason: 'Should add 3 and then double');
   });
@@ -27,7 +27,7 @@ void main() {
       'when use is applied before add, '
       'then the value is transformed', () {
     final router = Router<int>();
-    router.use('/', (final i) => i * 2);
+    router.use('/', (i) => i * 2);
     router.get('/', 1);
     final result = router.lookup(Method.get, '/') as RouterMatch<int>;
     expect(result.value, 2, reason: 'Should double');
@@ -40,7 +40,7 @@ void main() {
     router.get('/', 1);
     router.get('/a', 10);
     router.get('/b', 100);
-    router.use('/', (final i) => i * 2);
+    router.use('/', (i) => i * 2);
     expect(
       (router.lookup(Method.get, '/') as RouterMatch<int>).value,
       2,
@@ -65,7 +65,7 @@ void main() {
     router.get('/', 1);
     router.get('/a', 10);
     router.get('/b', 100);
-    router.use('/a', (final i) => i * 2);
+    router.use('/a', (i) => i * 2);
     expect(
       (router.lookup(Method.get, '/') as RouterMatch<int>).value,
       1,
@@ -90,7 +90,7 @@ void main() {
     router.get('/api', 1);
     router.post('/api', 2);
     router.put('/api', 3);
-    router.use('/api', (final i) => i * 10);
+    router.use('/api', (i) => i * 10);
     expect((router.lookup(Method.get, '/api') as RouterMatch<int>).value, 10);
     expect((router.lookup(Method.post, '/api') as RouterMatch<int>).value, 20);
     expect((router.lookup(Method.put, '/api') as RouterMatch<int>).value, 30);
@@ -104,7 +104,7 @@ void main() {
     routerA.get('/a', 10);
     routerB.get('/b', 100);
     routerA.attach('/prefix', routerB);
-    routerA.use('/prefix', (final i) => i * 2);
+    routerA.use('/prefix', (i) => i * 2);
     expect(
       (routerA.lookup(Method.get, '/a') as RouterMatch<int>).value,
       10,
@@ -122,9 +122,9 @@ void main() {
       'then map functions are composed', () {
     final routerA = Router<int>();
     final routerB = Router<int>();
-    routerA.use('/prefix', (final i) => i * 2);
+    routerA.use('/prefix', (i) => i * 2);
     routerB.get('/suffix', 1);
-    routerB.use('/', (final i) => i + 3);
+    routerB.use('/', (i) => i + 3);
     routerA.attach('/prefix', routerB);
     expect(
       (routerA.lookup(Method.get, '/prefix/suffix') as RouterMatch<int>).value,
@@ -138,8 +138,8 @@ void main() {
       'then transformations are applied from leaf to root', () {
     final router = Router<int>();
     router.get('/a/b', 1);
-    router.use('/a', (final i) => i * 2);
-    router.use('/a/b', (final i) => i + 3);
+    router.use('/a', (i) => i * 2);
+    router.use('/a/b', (i) => i + 3);
     expect(
       (router.lookup(Method.get, '/a/b') as RouterMatch<int>).value,
       8,
@@ -153,7 +153,7 @@ void main() {
     setUp(() {
       router = Router<int>();
       router.get('/api/**', 1);
-      router.use('/api/**', (final i) => i * 2);
+      router.use('/api/**', (i) => i * 2);
     });
 
     for (final path in ['/api/keys', '/api', '/api/', '/api/x/..']) {
@@ -175,20 +175,20 @@ void main() {
     final router = Router<String Function(String)>();
     router.use(
       '/a',
-      (final next) =>
-          (final s) => '<a>${next(s)}</a>',
+      (next) =>
+          (s) => '<a>${next(s)}</a>',
     );
     router.use(
       '/a/b',
-      (final next) =>
-          (final s) => '<b>${next(s)}</b>',
+      (next) =>
+          (s) => '<b>${next(s)}</b>',
     );
     router.use(
       '/a/b/c',
-      (final next) =>
-          (final s) => '<c>${next(s)}</c>',
+      (next) =>
+          (s) => '<c>${next(s)}</c>',
     );
-    router.get('/a/b/c/d', (final s) => s);
+    router.get('/a/b/c/d', (s) => s);
     final result =
         router.lookup(Method.get, '/a/b/c/d')
             as RouterMatch<String Function(String)>;

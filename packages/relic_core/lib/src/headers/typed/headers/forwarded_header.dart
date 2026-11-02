@@ -12,14 +12,14 @@ import '../primitives/byte_scanner.dart' show latin1Bytes;
 //         "+" / "-" / "." / "^" / "_" / "`" / "|" / "~" /
 //         DIGIT / ALPHA
 final _isTokenRegExp = RegExp(r"^[a-zA-Z0-9!#$%&'*+-.^_`|~]+$");
-bool _isToken(final String s) => _isTokenRegExp.hasMatch(s);
+bool _isToken(String s) => _isTokenRegExp.hasMatch(s);
 
 /// The text of [value], a trimmed parameter value, with the quotes of a
 /// quoted-string removed and `\\` and `\"` unescaped.
 ///
 /// A minimal unescaper: quoted-pair = "\" ( DQUOTE / "\" ). A full one
 /// handles every qdtext and quoted-pair.
-String _unquote(final Uint8List value) {
+String _unquote(Uint8List value) {
   if (value.length >= 2 &&
       value[0] == 0x22 &&
       value[value.length - 1] == 0x22) {
@@ -32,7 +32,7 @@ String _unquote(final Uint8List value) {
   return textOf(value);
 }
 
-String _quote(final String rawValue) {
+String _quote(String rawValue) {
   // If rawValue is not a valid token, it must be a quoted-string.
   if (!_isToken(rawValue)) {
     // Minimal escaping for characters within a quoted-string:
@@ -56,11 +56,11 @@ final class ForwardedIdentifier {
 
   /// Parses a string value (which should be unquoted if it was a quoted-string)
   /// into a [ForwardedIdentifier].
-  factory ForwardedIdentifier.parse(final String value) =>
+  factory ForwardedIdentifier.parse(String value) =>
       ForwardedIdentifier._parseBytes(trimmed(latin1Bytes(value)));
 
   /// [parse] over the wire bytes of a trimmed value.
-  static ForwardedIdentifier _parseBytes(final Uint8List bytes) {
+  static ForwardedIdentifier _parseBytes(Uint8List bytes) {
     final value = textOf(bytes);
     if (value.startsWith('[')) {
       if (value.endsWith(']')) {
@@ -110,7 +110,7 @@ final class ForwardedIdentifier {
   }
 
   @override
-  bool operator ==(final Object other) =>
+  bool operator ==(Object other) =>
       identical(this, other) ||
       other is ForwardedIdentifier &&
           identifier == other.identifier &&
@@ -145,13 +145,13 @@ final class ForwardedElement {
     this.by,
     this.proto,
     this.host,
-    final Map<String, String>? extensions,
+    Map<String, String>? extensions,
   }) : extensions = extensions != null && extensions.isNotEmpty
            ? CaseInsensitiveMap<String>.from(extensions)
            : null;
 
   @override
-  bool operator ==(final Object other) =>
+  bool operator ==(Object other) =>
       identical(this, other) ||
       other is ForwardedElement &&
           forwardedFor == other.forwardedFor &&
@@ -191,16 +191,16 @@ final class ForwardedElement {
 // value          = token / quoted-string
 final class ForwardedHeader {
   static const codec = HeaderCodec.fields(_parseFields, __encode);
-  static List<String> __encode(final ForwardedHeader value) =>
+  static List<String> __encode(ForwardedHeader value) =>
       value.toStrings().toList();
 
   final List<ForwardedElement> elements;
 
-  ForwardedHeader(final List<ForwardedElement> elements)
+  ForwardedHeader(List<ForwardedElement> elements)
     : assert(elements.isNotEmpty),
       elements = List.unmodifiable(elements);
 
-  factory ForwardedHeader.parse(final Iterable<String> values) =>
+  factory ForwardedHeader.parse(Iterable<String> values) =>
       _parseFields([for (final value in values) latin1Bytes(value)]);
 
   /// Takes [elements], a list the parser built, as its own.
@@ -211,7 +211,7 @@ final class ForwardedHeader {
   /// Elements split on commas, their pairs on `;`, which fails for a
   /// quoted-string containing the delimiter, see
   /// https://github.com/serverpod/relic/issues/102.
-  static ForwardedHeader _parseFields(final List<Uint8List> fields) {
+  static ForwardedHeader _parseFields(List<Uint8List> fields) {
     final elements = splitFieldsUnique(fields);
     if (elements.isEmpty) {
       throw const FormatException('Value cannot be empty');
@@ -299,7 +299,7 @@ final class ForwardedHeader {
       }
       final extensions = element.extensions;
       if (extensions != null) {
-        extensions.forEach((final key, final value) {
+        extensions.forEach((key, value) {
           pairs.add('$key=${_quote(value)}');
         });
       }
@@ -311,7 +311,7 @@ final class ForwardedHeader {
   }
 
   @override
-  bool operator ==(final Object other) =>
+  bool operator ==(Object other) =>
       identical(this, other) ||
       other is ForwardedHeader &&
           const ListEquality<ForwardedElement>().equals(

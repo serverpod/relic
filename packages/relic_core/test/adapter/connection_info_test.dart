@@ -8,11 +8,11 @@ void main() {
     group('Constructor', () {
       parameterizedTest<int>(
         variants: [-1, -100, 65536, 100000],
-        (final port) =>
+        (port) =>
             'Given port $port, '
             'when a SocketAddress is created, '
             'then it throws an ArgumentError.',
-        (final port) {
+        (port) {
           expect(
             () => SocketAddress(address: address, port: port),
             throwsA(isA<ArgumentError>()),
@@ -22,11 +22,11 @@ void main() {
 
       parameterizedTest<int>(
         variants: [0, 1, 1023, 1024, 65535],
-        (final port) =>
+        (port) =>
             'Given port $port, '
             'when a SocketAddress is created, '
             'then it succeeds.',
-        (final port) {
+        (port) {
           final socketAddress = SocketAddress(address: address, port: port);
           expect(socketAddress.port, equals(port));
         },
@@ -36,11 +36,11 @@ void main() {
     group('isWellKnownPort', () {
       parameterizedTest<int>(
         variants: [0, 1, 80, 443, 1023],
-        (final port) =>
+        (port) =>
             'Given port $port, '
             'when isWellKnownPort is accessed, '
             'then it returns true.',
-        (final port) {
+        (port) {
           final socketAddress = SocketAddress(address: address, port: port);
           expect(socketAddress.isWellKnownPort, isTrue);
         },
@@ -48,11 +48,11 @@ void main() {
 
       parameterizedTest<int>(
         variants: [1024, 8080, 65535],
-        (final port) =>
+        (port) =>
             'Given port $port, '
             'when isWellKnownPort is accessed, '
             'then it returns false.',
-        (final port) {
+        (port) {
           final socketAddress = SocketAddress(address: address, port: port);
           expect(socketAddress.isWellKnownPort, isFalse);
         },

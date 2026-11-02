@@ -15,19 +15,19 @@ extension StringListExtensions on Iterable<String> {
   ///
   /// The default separator is comma (",").
   Iterable<String> splitTrimAndFilterUnique({
-    final String separator = ',',
-    final bool emptyCheck = true,
-    final bool noTrim = false,
+    String separator = ',',
+    bool emptyCheck = true,
+    bool noTrim = false,
   }) => LinkedHashSet<String>.from(
     splitAndTrim(separator: separator, emptyCheck: emptyCheck, noTrim: noTrim),
   );
 
   Iterable<String> splitAndTrim({
-    final String separator = ',',
-    final bool emptyCheck = true,
-    final bool noTrim = false,
+    String separator = ',',
+    bool emptyCheck = true,
+    bool noTrim = false,
   }) => expand(
-    (final element) => element.splitAndTrim(
+    (element) => element.splitAndTrim(
       separator: separator,
       emptyCheck: emptyCheck,
       noTrim: noTrim,
@@ -50,9 +50,9 @@ extension StringExtensions on String {
   ///
   /// The default separator is comma (",").
   Iterable<String> splitTrimAndFilterUnique({
-    final String separator = ',',
-    final bool emptyCheck = true,
-    final bool noTrim = false,
+    String separator = ',',
+    bool emptyCheck = true,
+    bool noTrim = false,
   }) => LinkedHashSet<String>.from(
     splitAndTrim(separator: separator, emptyCheck: emptyCheck, noTrim: noTrim),
   );
@@ -61,12 +61,12 @@ extension StringExtensions on String {
   ///
   /// Use this where each token is positional and a repeated token is significant.
   Iterable<String> splitAndTrim({
-    final String separator = ',',
-    final bool emptyCheck = true,
-    final bool noTrim = false,
+    String separator = ',',
+    bool emptyCheck = true,
+    bool noTrim = false,
   }) => split(separator)
-      .map((final el) => noTrim ? el : el.trim())
-      .where((final e) => !emptyCheck || e.isNotEmpty);
+      .map((el) => noTrim ? el : el.trim())
+      .where((e) => !emptyCheck || e.isNotEmpty);
 
   /// Checks if the string is a valid email address.
   bool isValidEmail() {

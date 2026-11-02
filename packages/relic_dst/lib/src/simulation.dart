@@ -17,7 +17,7 @@ final class TraceEntry {
 }
 
 /// Simulated time as seconds with microsecond precision.
-String formatElapsed(final Duration elapsed) {
+String formatElapsed(Duration elapsed) {
   final seconds = elapsed.inMicroseconds / Duration.microsecondsPerSecond;
   return '${seconds.toStringAsFixed(6)}s';
 }
@@ -83,7 +83,7 @@ final class Simulation {
 
   Simulation({
     required this.seed,
-    final DateTime? epoch,
+    DateTime? epoch,
     this.maxElapsed = const Duration(hours: 1),
     this.traceLimit = 20000,
     this.forwardPrints = false,
@@ -126,7 +126,7 @@ final class Simulation {
   int get pendingEvents => _pendingEvents;
 
   /// Adds a line to the [trace] at the current instant.
-  void record(final String category, final String message) {
+  void record(String category, String message) {
     if (_trace.length >= traceLimit) {
       _trace.removeFirst();
       _droppedTraceEntries++;
@@ -135,7 +135,7 @@ final class Simulation {
   }
 
   /// The last [tail] lines of the trace, for a failure report.
-  String dump({final int tail = 200}) {
+  String dump({int tail = 200}) {
     final buffer = StringBuffer()
       ..writeln('seed $seed, elapsed ${formatElapsed(_elapsed)}');
     final skipped = _droppedTraceEntries + max(0, _trace.length - tail);
@@ -149,7 +149,7 @@ final class Simulation {
   /// Runs [callback] [delay] from now, in the calling zone. For the parts
   /// of the simulated world that act on their own, such as the network
   /// delivering bytes. Cancel through the returned [Timer].
-  Timer schedule(final Duration delay, final void Function() callback) {
+  Timer schedule(Duration delay, void Function() callback) {
     final timer = _SimTimer(this, Zone.current, _due(delay), callback: callback)
       .._isEvent = true;
     _pendingEvents++;
@@ -158,7 +158,7 @@ final class Simulation {
   }
 
   /// A delay in virtual time. Only meaningful inside [run].
-  Future<void> sleep(final Duration delay) => Future<void>.delayed(delay);
+  Future<void> sleep(Duration delay) => Future<void>.delayed(delay);
 
   /// Runs [body] to completion in virtual time and returns its result.
   ///
@@ -166,7 +166,7 @@ final class Simulation {
   /// time, and the clock jumps to each timer as it fires. Returns when the
   /// body's future completes. Throws [SimulationStalled] when it never can,
   /// and rethrows what the body threw.
-  T run<T>(final FutureOr<T> Function() body) {
+  T run<T>(FutureOr<T> Function() body) {
     if (_running) throw StateError('Simulation.run does not nest');
     _running = true;
     try {
@@ -178,11 +178,11 @@ final class Simulation {
         final result = body();
         if (result is Future<T>) {
           result.then(
-            (final v) {
+            (v) {
               value = v;
               done = true;
             },
-            onError: (final Object e, final StackTrace s) {
+            onError: (Object e, StackTrace s) {
               error = e;
               stackTrace = s;
               done = true;
@@ -209,7 +209,7 @@ final class Simulation {
   /// Runs what is pending without waiting on anything in particular: every
   /// microtask, then every event and timer due within [within] of now.
   /// Virtual time ends at now plus [within] when something later remains.
-  void settle(final Duration within) {
+  void settle(Duration within) {
     final until = _elapsed + within;
     while (true) {
       _flushMicrotasks();
@@ -224,47 +224,33 @@ final class Simulation {
     clock,
     () => Zone.current.fork(
       specification: ZoneSpecification(
-        createTimer:
-            (
-              final self,
-              final parent,
-              final zone,
-              final duration,
-              final callback,
-            ) {
-              final timer = _SimTimer(
-                this,
-                zone,
-                _due(duration),
-                callback: callback,
-              );
-              _pendingTimers++;
-              _queue.add(timer);
-              return timer;
-            },
-        createPeriodicTimer:
-            (
-              final self,
-              final parent,
-              final zone,
-              final period,
-              final callback,
-            ) {
-              final timer = _SimTimer(
-                this,
-                zone,
-                _due(period),
-                periodic: callback,
-                period: period,
-              );
-              _pendingTimers++;
-              _queue.add(timer);
-              return timer;
-            },
-        scheduleMicrotask: (final self, final parent, final zone, final f) {
+        createTimer: (self, parent, zone, duration, callback) {
+          final timer = _SimTimer(
+            this,
+            zone,
+            _due(duration),
+            callback: callback,
+          );
+          _pendingTimers++;
+          _queue.add(timer);
+          return timer;
+        },
+        createPeriodicTimer: (self, parent, zone, period, callback) {
+          final timer = _SimTimer(
+            this,
+            zone,
+            _due(period),
+            periodic: callback,
+            period: period,
+          );
+          _pendingTimers++;
+          _queue.add(timer);
+          return timer;
+        },
+        scheduleMicrotask: (self, parent, zone, f) {
           _microtasks.add(() => zone.runGuarded(f));
         },
-        print: (final self, final parent, final zone, final line) {
+        print: (self, parent, zone, line) {
           printed.add(line);
           record('print', line);
           if (forwardPrints) parent.print(zone, line);
@@ -273,7 +259,7 @@ final class Simulation {
     ),
   );
 
-  Duration _due(final Duration delay) =>
+  Duration _due(Duration delay) =>
       _elapsed + (delay.isNegative ? Duration.zero : delay);
 
   /// Runs the next microtask, or the next timer or event. False when
@@ -299,7 +285,7 @@ final class Simulation {
     }
   }
 
-  void _remove(final _SimTimer timer) {
+  void _remove(_SimTimer timer) {
     if (_queue.remove(timer)) {
       if (timer._isEvent) {
         _pendingEvents--;
@@ -326,15 +312,15 @@ final class _SimTimer implements Timer {
     this._sim,
     this._zone,
     this.due, {
-    final void Function()? callback,
-    final void Function(Timer)? periodic,
-    final Duration? period,
+    void Function()? callback,
+    void Function(Timer)? periodic,
+    Duration? period,
   }) : _callback = callback,
        _periodic = periodic,
        _period = period,
        sequence = _sim._sequence++;
 
-  static int compare(final _SimTimer a, final _SimTimer b) {
+  static int compare(_SimTimer a, _SimTimer b) {
     final byDue = a.due.compareTo(b.due);
     return byDue != 0 ? byDue : a.sequence.compareTo(b.sequence);
   }

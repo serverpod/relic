@@ -14,7 +14,7 @@ import '../primitives/byte_scanner.dart' show latin1Bytes;
 /// split or format-validated.
 final class FromHeader {
   static const codec = HeaderCodec.bytes(_parseBytes, __encode);
-  static List<String> __encode(final FromHeader value) => [value.mailbox];
+  static List<String> __encode(FromHeader value) => [value.mailbox];
 
   /// The single mailbox value (RFC 9110 10.1.2 `From = mailbox`).
   final String mailbox;
@@ -27,11 +27,10 @@ final class FromHeader {
   /// The value is a single mailbox; it is not split on `,` (a `display-name`
   /// may legitimately contain one) and is kept as-is, since an unparseable
   /// mailbox must not fail the request.
-  factory FromHeader.parse(final String value) =>
-      _parseBytes(latin1Bytes(value));
+  factory FromHeader.parse(String value) => _parseBytes(latin1Bytes(value));
 
   /// [parse] over the wire bytes.
-  static FromHeader _parseBytes(final Uint8List bytes) {
+  static FromHeader _parseBytes(Uint8List bytes) {
     final mailbox = trimmed(bytes);
     if (mailbox.isEmpty) {
       throw const FormatException('Value cannot be empty');
@@ -40,7 +39,7 @@ final class FromHeader {
   }
 
   @override
-  bool operator ==(final Object other) =>
+  bool operator ==(Object other) =>
       identical(this, other) || other is FromHeader && mailbox == other.mailbox;
 
   @override

@@ -11,6 +11,7 @@ linter:
   rules:
     avoid_relative_lib_imports: true
     prefer_relative_imports: true
+    avoid_final_parameters: true
     prefer_final_parameters: false
     public_member_api_docs: false # TODO: This is temporary until we get closer to release
 

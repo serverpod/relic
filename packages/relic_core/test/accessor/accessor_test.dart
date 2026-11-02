@@ -110,14 +110,14 @@ class _MyAccessor<T extends Object>
   const _MyAccessor(super.key, super.decode);
 }
 
-T _identity<T>(final T o) => o;
+T _identity<T>(T o) => o;
 
 class _StringAccessor extends _MyAccessor<String> {
-  const _StringAccessor(final String key) : super(key, _identity);
+  const _StringAccessor(String key) : super(key, _identity);
 }
 
 class _IntAccessor extends _MyAccessor<int> {
-  const _IntAccessor(final String key) : super(key, int.parse);
+  const _IntAccessor(String key) : super(key, int.parse);
 }
 
 class Wrapped<T> {
@@ -126,9 +126,9 @@ class Wrapped<T> {
 }
 
 class _CountAccessor extends _MyAccessor<Wrapped<int>> {
-  const _CountAccessor(final String key) : super(key, _decode);
+  const _CountAccessor(String key) : super(key, _decode);
   static int count = 0;
-  static Wrapped<int> _decode(final String s) {
+  static Wrapped<int> _decode(String s) {
     ++count;
     return Wrapped(int.parse(s));
   }

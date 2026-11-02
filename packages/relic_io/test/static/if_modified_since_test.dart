@@ -25,9 +25,7 @@ void main() {
     final initialResponse = await makeRequest(handler, '/test_file.txt');
     final lastModified = initialResponse.headers.lastModified!;
 
-    final headers = Headers.build(
-      (final mh) => mh.ifModifiedSince = lastModified,
-    );
+    final headers = Headers.build((mh) => mh.ifModifiedSince = lastModified);
 
     final response = await makeRequest(
       handler,
@@ -49,9 +47,7 @@ void main() {
     // Create an earlier date, simulating the client's cached date
     final earlierDate = lastModified.subtract(const Duration(days: 1));
 
-    final headers = Headers.build(
-      (final mh) => mh.ifModifiedSince = earlierDate,
-    );
+    final headers = Headers.build((mh) => mh.ifModifiedSince = earlierDate);
 
     final response = await makeRequest(
       handler,
@@ -73,9 +69,7 @@ void main() {
     // Create a future date, simulating a client with a somehow "newer" cached date
     final futureDate = lastModified.add(const Duration(days: 1));
 
-    final headers = Headers.build(
-      (final mh) => mh.ifModifiedSince = futureDate,
-    );
+    final headers = Headers.build((mh) => mh.ifModifiedSince = futureDate);
 
     final response = await makeRequest(
       handler,

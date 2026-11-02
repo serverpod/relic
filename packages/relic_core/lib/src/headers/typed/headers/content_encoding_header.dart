@@ -13,7 +13,7 @@ import '../primitives/byte_scanner.dart' show latin1Bytes;
 /// content encoding header values.
 final class ContentEncodingHeader {
   static const codec = HeaderCodec.fields(_parseFields, __encode);
-  static List<String> __encode(final ContentEncodingHeader value) => [
+  static List<String> __encode(ContentEncodingHeader value) => [
     value._encode(),
   ];
 
@@ -22,7 +22,7 @@ final class ContentEncodingHeader {
 
   /// Constructs a [ContentEncodingHeader] instance with the specified content
   /// encodings.
-  ContentEncodingHeader.encodings(final List<ContentEncoding> encodings)
+  ContentEncodingHeader.encodings(List<ContentEncoding> encodings)
     : assert(encodings.isNotEmpty),
       encodings = List.unmodifiable(encodings);
 
@@ -30,14 +30,14 @@ final class ContentEncodingHeader {
   /// [ContentEncodingHeader] instance.
   ///
   /// This method splits the value by commas and trims each encoding.
-  factory ContentEncodingHeader.parse(final Iterable<String> values) =>
+  factory ContentEncodingHeader.parse(Iterable<String> values) =>
       _parseFields([for (final value in values) latin1Bytes(value)]);
 
   /// Takes [encodings], a list the parser built, as its own.
   const ContentEncodingHeader._(this.encodings);
 
   /// The header from the wire bytes of its [fields].
-  static ContentEncodingHeader _parseFields(final List<Uint8List> fields) {
+  static ContentEncodingHeader _parseFields(List<Uint8List> fields) {
     final elements = splitFieldsUnique(fields);
     if (elements.isEmpty) {
       throw const FormatException('Value cannot be empty');
@@ -45,23 +45,23 @@ final class ContentEncodingHeader {
     return ContentEncodingHeader._(
       List.generate(
         elements.length,
-        (final i) => ContentEncoding._parseBytes(elements[i]),
+        (i) => ContentEncoding._parseBytes(elements[i]),
         growable: false,
       ),
     );
   }
 
   /// Checks if the Content-Encoding contains a specific encoding.
-  bool containsEncoding(final ContentEncoding encoding) {
+  bool containsEncoding(ContentEncoding encoding) {
     return encodings.contains(encoding);
   }
 
   /// Converts the [ContentEncodingHeader] instance into a string representation
   /// suitable for HTTP headers.
-  String _encode() => encodings.map((final e) => e.name).join(', ');
+  String _encode() => encodings.map((e) => e.name).join(', ');
 
   @override
-  bool operator ==(final Object other) =>
+  bool operator ==(Object other) =>
       identical(this, other) ||
       other is ContentEncodingHeader &&
           const ListEquality<ContentEncoding>().equals(
@@ -107,11 +107,11 @@ class ContentEncoding {
   /// any valid `token` is accepted rather than only the predefined ones; this
   /// lets recipients pass through unknown codings instead of failing. Codings
   /// are case-insensitive, so the name is canonicalized to lowercase.
-  factory ContentEncoding.parse(final String name) =>
+  factory ContentEncoding.parse(String name) =>
       ContentEncoding._parseBytes(trimmed(latin1Bytes(name)));
 
   /// [parse] over the wire bytes of one trimmed element.
-  static ContentEncoding _parseBytes(final Uint8List element) {
+  static ContentEncoding _parseBytes(Uint8List element) {
     if (element.isEmpty) {
       throw const FormatException('Name cannot be empty');
     }
@@ -119,7 +119,7 @@ class ContentEncoding {
   }
 
   @override
-  bool operator ==(final Object other) =>
+  bool operator ==(Object other) =>
       identical(this, other) || other is ContentEncoding && name == other.name;
 
   @override

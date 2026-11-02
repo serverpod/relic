@@ -45,10 +45,10 @@ void main() {
 
   group('Given a query parameter with a valid numeric value,', () {
     parameterizedTest(
-      (final v) =>
+      (v) =>
           'when decoded with ${v.name}, '
           'then it returns ${v.expected}',
-      (final v) {
+      (v) {
         final request = _request('value=${v.input}');
 
         final result = request.queryParameters.get(v.param);
@@ -85,10 +85,10 @@ void main() {
 
   group('Given a query parameter with an invalid numeric value,', () {
     parameterizedTest(
-      (final v) =>
+      (v) =>
           'when decoded with ${v.name}, '
           'then it throws FormatException',
-      (final v) {
+      (v) {
         final request = _request('value=${v.input}');
 
         expect(
@@ -124,16 +124,16 @@ void main() {
 }
 
 /// Creates a request with the given query string.
-Request _request(final String? query) {
+Request _request(String? query) {
   final url = query != null
       ? 'http://localhost/test?$query'
       : 'http://localhost/test';
   return RequestInternal.create(Method.get, Uri.parse(url), null);
 }
 
-String _identity(final String value) => value;
+String _identity(String value) => value;
 
-List<String> _splitCommas(final String s) => s.split(',');
+List<String> _splitCommas(String s) => s.split(',');
 
 class _ParamTestCase {
   final String name;

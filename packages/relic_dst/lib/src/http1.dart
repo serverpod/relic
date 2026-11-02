@@ -87,7 +87,7 @@ final class StatusHead {
   );
 
   /// The values of [name] joined with a comma, or null.
-  String? header(final String name) => headers[name.toLowerCase()]?.join(', ');
+  String? header(String name) => headers[name.toLowerCase()]?.join(', ');
 
   int? get contentLength {
     final value = header('content-length');
@@ -100,7 +100,7 @@ final class StatusHead {
   bool get closes => _tokens(header('connection')).contains('close');
 
   /// Whether a body follows this head for a request with [method].
-  bool hasBody(final Method method) =>
+  bool hasBody(Method method) =>
       method != Method.head && statusMayHaveBody(status);
 }
 
@@ -118,9 +118,9 @@ const _colon = 0x3a;
 /// 501 for an unknown method or a transfer coding other than chunked, 505
 /// for an HTTP version other than 1.0 and 1.1.
 RequestHead? parseRequestHead(
-  final Uint8List buffer,
-  final int length, {
-  required final int maxHeadSize,
+  Uint8List buffer,
+  int length, {
+  required int maxHeadSize,
 }) {
   final scanned = _scanLines(buffer, length, maxHeadSize);
   if (scanned == null) return null;
@@ -254,7 +254,7 @@ RequestHead? parseRequestHead(
 /// Parses the response head at the start of [buffer]'s first [length]
 /// bytes. Null when the head is not complete yet. Throws
 /// [HttpParseException] with status 0 for a head that does not parse.
-StatusHead? parseStatusHead(final Uint8List buffer, final int length) {
+StatusHead? parseStatusHead(Uint8List buffer, int length) {
   final scanned = _scanLines(buffer, length, 1 << 20);
   if (scanned == null) return null;
   final (lines, headEnd) = scanned;
@@ -289,9 +289,9 @@ StatusHead? parseStatusHead(final Uint8List buffer, final int length) {
 /// null when the empty line has not arrived. Empty lines before the first
 /// line are skipped (RFC 9112 2.2).
 (List<(int, int)>, int)? _scanLines(
-  final Uint8List buffer,
-  final int length,
-  final int maxHeadSize,
+  Uint8List buffer,
+  int length,
+  int maxHeadSize,
 ) {
   final lines = <(int, int)>[];
   var lineStart = 0;
@@ -333,12 +333,7 @@ final class ChunkedDecoder {
   /// Returns where it stopped: [end], or earlier once the body is done,
   /// where the next message begins. Throws [FormatException] for a body
   /// that is not chunked coding.
-  int feed(
-    final Uint8List buffer,
-    final int start,
-    final int end,
-    final void Function(Uint8List) out,
-  ) {
+  int feed(Uint8List buffer, int start, int end, void Function(Uint8List) out) {
     var i = start;
     while (i < end && !_done) {
       if (_state == _ChunkState.data) {
@@ -390,7 +385,7 @@ final class ChunkedDecoder {
 enum _ChunkState { size, data, dataEnd, trailer }
 
 /// One chunk of a chunked body: the size in hex, the data, CRLFs.
-Uint8List encodeChunk(final Uint8List data) {
+Uint8List encodeChunk(Uint8List data) {
   final size = ascii.encode('${data.length.toRadixString(16)}\r\n');
   final out = Uint8List(size.length + data.length + 2);
   out.setRange(0, size.length, size);
@@ -403,23 +398,18 @@ Uint8List encodeChunk(final Uint8List data) {
 /// The last chunk and an empty trailer section.
 final lastChunk = Uint8List.fromList(ascii.encode('0\r\n\r\n'));
 
-int _indexOf(
-  final Uint8List bytes,
-  final int byte,
-  final int start,
-  final int end,
-) {
+int _indexOf(Uint8List bytes, int byte, int start, int end) {
   for (var i = start; i < end; i++) {
     if (bytes[i] == byte) return i;
   }
   return -1;
 }
 
-bool _isBlank(final int byte) => byte == _sp || byte == _htab;
+bool _isBlank(int byte) => byte == _sp || byte == _htab;
 
-bool _isDigits(final String text) => RegExp(r'^[0-9]+$').hasMatch(text);
+bool _isDigits(String text) => RegExp(r'^[0-9]+$').hasMatch(text);
 
-bool _isTokenChar(final int b) =>
+bool _isTokenChar(int b) =>
     (b >= 0x30 && b <= 0x39) ||
     (b >= 0x41 && b <= 0x5a) ||
     (b >= 0x61 && b <= 0x7a) ||
@@ -428,10 +418,10 @@ bool _isTokenChar(final int b) =>
       0x5e, 0x5f, 0x60, 0x7c, 0x7e,
     ].contains(b);
 
-String _lowerAscii(final Uint8List bytes, final int start, final int end) =>
+String _lowerAscii(Uint8List bytes, int start, int end) =>
     latin1.decode(Uint8List.sublistView(bytes, start, end)).toLowerCase();
 
-List<String> _tokens(final String? value) => value == null
+List<String> _tokens(String? value) => value == null
     ? const []
     : [
         for (final token in value.split(','))

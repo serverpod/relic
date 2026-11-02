@@ -70,14 +70,14 @@ final class SimAdapter implements Adapter {
 
   /// Binds [port] on [network], or a free port for 0.
   factory SimAdapter.bind(
-    final SimNetwork network, {
-    final int port = 0,
-    final Duration idleTimeout = const Duration(seconds: 60),
-    final Duration headerTimeout = const Duration(seconds: 10),
-    final Duration bodyTimeout = const Duration(seconds: 30),
-    final Duration drainTimeout = const Duration(seconds: 5),
-    final int maxHeadSize = 16 << 10,
-    final int maxInlineBody = 1 << 20,
+    SimNetwork network, {
+    int port = 0,
+    Duration idleTimeout = const Duration(seconds: 60),
+    Duration headerTimeout = const Duration(seconds: 10),
+    Duration bodyTimeout = const Duration(seconds: 30),
+    Duration drainTimeout = const Duration(seconds: 5),
+    int maxHeadSize = 16 << 10,
+    int maxInlineBody = 1 << 20,
   }) => SimAdapter(
     network.listen(port: port),
     idleTimeout: idleTimeout,
@@ -103,13 +103,13 @@ final class SimAdapter implements Adapter {
   ];
 
   @override
-  void start(final ExchangeSink sink) {
+  void start(ExchangeSink sink) {
     if (_sink != null) throw StateError('start was already called');
     _sink = sink;
     _listener.listen(_accept);
   }
 
-  void _accept(final SimSocket socket) {
+  void _accept(SimSocket socket) {
     if (_closing) {
       socket.destroy();
       return;
@@ -121,10 +121,9 @@ final class SimAdapter implements Adapter {
   }
 
   @override
-  Future<void> close({final bool force = false}) =>
-      _closeFuture ??= _close(force);
+  Future<void> close({bool force = false}) => _closeFuture ??= _close(force);
 
-  Future<void> _close(final bool force) async {
+  Future<void> _close(bool force) async {
     _closing = true;
     _listener.close();
     if (!force) {
@@ -181,18 +180,18 @@ final class SimAdapter implements Adapter {
     if (_inFlight == 0) _settle(_drained);
   }
 
-  void _tookOver(final _Connection connection) {
+  void _tookOver(_Connection connection) {
     _connections.remove(connection);
     _hijacked.add(connection);
   }
 
-  void _gone(final _Connection connection) {
+  void _gone(_Connection connection) {
     _connections.remove(connection);
     _hijacked.remove(connection);
     if (_hijacked.isEmpty) _settle(_released);
   }
 
-  static void _settle(final Completer<void>? waiter) {
+  static void _settle(Completer<void>? waiter) {
     if (waiter != null && !waiter.isCompleted) waiter.complete();
   }
 }
@@ -255,7 +254,7 @@ final class _Connection {
     _arm(_adapter.idleTimeout, _onIdleTimeout);
   }
 
-  void _arm(final Duration timeout, final void Function() onTimeout) {
+  void _arm(Duration timeout, void Function() onTimeout) {
     _timer?.cancel();
     _timer = timeout == Duration.zero ? null : Timer(timeout, onTimeout);
   }
@@ -265,7 +264,7 @@ final class _Connection {
     _timer = null;
   }
 
-  void _onData(final Uint8List data) {
+  void _onData(Uint8List data) {
     switch (_state) {
       case _State.hijacked:
         _raw!.add(data);
@@ -377,7 +376,7 @@ final class _Connection {
     if (_chunked case final chunked?) {
       final int consumed;
       try {
-        consumed = chunked.feed(_buffer, 0, _length, (final piece) {
+        consumed = chunked.feed(_buffer, 0, _length, (piece) {
           controller.add(Uint8List.fromList(piece));
         });
       } on FormatException catch (e) {
@@ -407,7 +406,7 @@ final class _Connection {
   /// The body cannot be finished. The handler hears why, and the
   /// connection closes after the response, since the rest of the body is
   /// not coming or cannot be found.
-  void _failBody(final Object error) {
+  void _failBody(Object error) {
     _sim.record('adapter', '$label body failed: $error');
     final body = _body;
     _bodyDone = true;
@@ -436,10 +435,10 @@ final class _Connection {
   }
 
   void _dispatch(
-    final RequestHead head, {
-    final Uint8List? bytes,
-    final Stream<Uint8List>? stream,
-    final int? contentLength,
+    RequestHead head, {
+    Uint8List? bytes,
+    Stream<Uint8List>? stream,
+    int? contentLength,
   }) {
     _state = _State.active;
     if (!head.keepAlive) _reusable = false;
@@ -490,13 +489,13 @@ final class _Connection {
     }
   }
 
-  void _write(final Uint8List bytes) {
+  void _write(Uint8List bytes) {
     if (!_socket.isOpen || bytes.isEmpty) return;
     _socket.sink.add(bytes);
   }
 
   /// Answers a request the adapter will not hand over, and closes.
-  void _reject(final int status, final String message) {
+  void _reject(int status, String message) {
     _sim.record('adapter', '$label rejected $status: $message');
     final response = Response(status, body: Body.fromString(message));
     final framing = ResponseFraming.of(
@@ -528,7 +527,7 @@ final class _Connection {
 
   /// Drops the connection. An exchange still with the core ends with
   /// [end].
-  void _destroy({required final ExchangeEnd end}) {
+  void _destroy({required ExchangeEnd end}) {
     final exchange = _exchange;
     _exchange = null;
     if (exchange != null) {
@@ -587,7 +586,7 @@ final class _Connection {
   }
 
   /// The peer reset the connection.
-  void _onError(final Object error) {
+  void _onError(Object error) {
     _sim.record('adapter', '$label reset by peer');
     if (_raw case final raw?) {
       if (!raw.isClosed) raw.addError(error);
@@ -619,7 +618,7 @@ final class _Connection {
     if (_socket.isOpen) unawaited(_socket.sink.close());
   }
 
-  void _append(final Uint8List data) {
+  void _append(Uint8List data) {
     final needed = _length + data.length;
     if (needed > _buffer.length) {
       var size = _buffer.length * 2;
@@ -634,13 +633,13 @@ final class _Connection {
     _length = needed;
   }
 
-  Uint8List _take(final int n) {
+  Uint8List _take(int n) {
     final out = _buffer.sublist(0, n);
     _consume(n);
     return out;
   }
 
-  void _consume(final int n) {
+  void _consume(int n) {
     if (n == 0) return;
     _buffer.setRange(0, _length - n, _buffer, n);
     _length -= n;
@@ -669,9 +668,9 @@ final class _SimExchange implements AdapterExchange {
   _SimExchange(
     this._connection,
     this._head, {
-    final Uint8List? bytes,
-    final Stream<Uint8List>? stream,
-    final int? contentLength,
+    Uint8List? bytes,
+    Stream<Uint8List>? stream,
+    int? contentLength,
   }) : _bytes = bytes,
        _stream = stream,
        _contentLength = contentLength;
@@ -680,7 +679,7 @@ final class _SimExchange implements AdapterExchange {
   HttpProtocol get protocol => _head.protocol;
 
   @override
-  Request toRequest(final RequestFactory create) {
+  Request toRequest(RequestFactory create) {
     final headers = Headers.fromStore(
       ByteHeaderStore(_head.bytes, _head.slots),
     );
@@ -768,7 +767,7 @@ final class _SimExchange implements AdapterExchange {
   }
 
   @override
-  FutureOr<void> respond(final Response response) {
+  FutureOr<void> respond(Response response) {
     if (_end != null) {
       if (_end == ExchangeEnd.aborted || _end == ExchangeEnd.cancelledByPeer) {
         return null;
@@ -801,7 +800,7 @@ final class _SimExchange implements AdapterExchange {
     final finished = _streaming = Completer<void>();
     final socket = _connection._socket;
     _outbound = chunks.listen(
-      (final chunk) {
+      (chunk) {
         if (chunk.isEmpty) return;
         _connection._write(framing.chunked ? encodeChunk(chunk) : chunk);
         if (socket.pendingBytes > _highWater) {
@@ -821,7 +820,7 @@ final class _SimExchange implements AdapterExchange {
         _complete(framing);
         finished.complete();
       },
-      onError: (final Object error, final StackTrace stackTrace) {
+      onError: (Object error, StackTrace stackTrace) {
         _outbound = null;
         socket.onDrain = null;
         _connection._sim.record('adapter', 'response body failed: $error');
@@ -833,7 +832,7 @@ final class _SimExchange implements AdapterExchange {
     return finished.future;
   }
 
-  void _complete(final ResponseFraming framing) {
+  void _complete(ResponseFraming framing) {
     if (_end != null) return;
     _finish(ExchangeEnd.completed);
     if (framing.closeAfter) _connection._reusable = false;
@@ -857,7 +856,7 @@ final class _SimExchange implements AdapterExchange {
   }
 
   @override
-  FutureOr<RelicWebSocket> upgradeWebSocket(final String acceptKey) =>
+  FutureOr<RelicWebSocket> upgradeWebSocket(String acceptKey) =>
       throw UnsupportedError('SimAdapter frames WebSockets over hijack');
 
   @override
@@ -880,7 +879,7 @@ final class _SimExchange implements AdapterExchange {
   }
 
   /// The connection ended under the exchange, by the peer or the adapter.
-  void _ended(final ExchangeEnd end) {
+  void _ended(ExchangeEnd end) {
     _finish(end);
     final outbound = _outbound;
     if (outbound != null) {
@@ -890,7 +889,7 @@ final class _SimExchange implements AdapterExchange {
     }
   }
 
-  void _finish(final ExchangeEnd end) {
+  void _finish(ExchangeEnd end) {
     if (_end != null) return;
     _end = end;
     _done?.complete(end);

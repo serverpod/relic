@@ -12,13 +12,13 @@ import 'util/qvalue.dart';
 /// This class manages media ranges and their associated quality values.
 final class AcceptHeader {
   static const codec = HeaderCodec.fields(_parseFields, __encode);
-  static List<String> __encode(final AcceptHeader value) => [value._encode()];
+  static List<String> __encode(AcceptHeader value) => [value._encode()];
 
   /// The list of media ranges accepted by the client.
   final List<MediaRange> mediaRanges;
 
   /// Constructs an [AcceptHeader] instance with the specified media ranges.
-  AcceptHeader.mediaRanges(final List<MediaRange> mediaRanges)
+  AcceptHeader.mediaRanges(List<MediaRange> mediaRanges)
     : assert(mediaRanges.isNotEmpty),
       mediaRanges = List.unmodifiable(mediaRanges);
 
@@ -27,11 +27,11 @@ final class AcceptHeader {
 
   /// Parses the Accept header [values] and returns an [AcceptHeader]
   /// instance, with the media types and their quality values.
-  factory AcceptHeader.parse(final Iterable<String> values) =>
+  factory AcceptHeader.parse(Iterable<String> values) =>
       _parseFields([for (final value in values) latin1Bytes(value)]);
 
   /// The header from the wire bytes of its [fields].
-  static AcceptHeader _parseFields(final List<Uint8List> fields) {
+  static AcceptHeader _parseFields(List<Uint8List> fields) {
     final elements = splitFieldsUnique(fields);
     if (elements.isEmpty) {
       throw const FormatException('Value cannot be empty');
@@ -39,17 +39,17 @@ final class AcceptHeader {
     return AcceptHeader._(
       List.generate(
         elements.length,
-        (final i) => MediaRange._parseBytes(elements[i]),
+        (i) => MediaRange._parseBytes(elements[i]),
         growable: false,
       ),
     );
   }
 
   /// Converts the [AcceptHeader] instance into a string representation suitable for HTTP headers.
-  String _encode() => mediaRanges.map((final mr) => mr._encode()).join(', ');
+  String _encode() => mediaRanges.map((mr) => mr._encode()).join(', ');
 
   @override
-  bool operator ==(final Object other) =>
+  bool operator ==(Object other) =>
       identical(this, other) ||
       other is AcceptHeader &&
           const ListEquality<MediaRange>().equals(
@@ -77,7 +77,7 @@ class MediaRange {
 
   /// Constructs a [MediaRange] instance with the specified type, subtype,
   /// quality, and parameters.
-  MediaRange(this.type, this.subtype, {final double? quality})
+  MediaRange(this.type, this.subtype, {double? quality})
     : quality = quality ?? 1.0;
 
   /// Parses a media range string and returns a [MediaRange] instance.
@@ -87,11 +87,11 @@ class MediaRange {
   /// surrounded by OWS) per RFC 9110 12.4.2 - not by a literal `q=`
   /// substring, which silently misparses any input with whitespace around
   /// the semicolon.
-  factory MediaRange.parse(final String value) =>
+  factory MediaRange.parse(String value) =>
       MediaRange._parseBytes(latin1Bytes(value));
 
   /// [parse] over the wire bytes of one element.
-  static MediaRange _parseBytes(final Uint8List element) {
+  static MediaRange _parseBytes(Uint8List element) {
     // The first non-empty `;` part is the range, the rest its parameters.
     final parts = splitUnique(element, 0x3B);
     if (parts.isEmpty) {
@@ -123,7 +123,7 @@ class MediaRange {
   }
 
   @override
-  bool operator ==(final Object other) =>
+  bool operator ==(Object other) =>
       identical(this, other) ||
       other is MediaRange &&
           type == other.type &&

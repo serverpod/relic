@@ -8,12 +8,12 @@ import 'package:config/config.dart';
 /// a bad value or a missing mandatory option goes to [usageError], so
 /// main never runs on a bad command line.
 Configuration<O> resolveOptions<O extends OptionDefinition<dynamic>>(
-  final List<O> options,
-  final List<String> args, {
-  required final String synopsis,
+  List<O> options,
+  List<String> args, {
+  required String synopsis,
 }) {
   // A `--help` after `--` belongs to the command that follows it.
-  if (args.takeWhile((final arg) => arg != '--').contains('--help')) {
+  if (args.takeWhile((arg) => arg != '--').contains('--help')) {
     stdout
       ..writeln(synopsis)
       ..writeln()
@@ -30,9 +30,9 @@ Configuration<O> resolveOptions<O extends OptionDefinition<dynamic>>(
 /// Prints [message], [synopsis] and the usage of [options] to stderr and
 /// exits with 64, the usage error status.
 Never usageError(
-  final String message,
-  final List<OptionDefinition<dynamic>> options, {
-  required final String synopsis,
+  String message,
+  List<OptionDefinition<dynamic>> options, {
+  required String synopsis,
 }) {
   stderr
     ..writeln(message)

@@ -81,10 +81,10 @@ final class Headers extends HeaderStore
   Headers._(this._store);
 
   /// A view over [store], or [store] itself when it already is one.
-  factory Headers.fromStore(final HeaderStore store) =>
+  factory Headers.fromStore(HeaderStore store) =>
       store is Headers ? store : Headers._(store);
 
-  factory Headers.fromMap(final Map<String, Iterable<String>>? values) {
+  factory Headers.fromMap(Map<String, Iterable<String>>? values) {
     if (values == null || values.isEmpty) {
       return _emptyHeaders;
     } else {
@@ -94,14 +94,14 @@ final class Headers extends HeaderStore
 
   factory Headers.empty() => _emptyHeaders;
 
-  factory Headers.build(final void Function(MutableHeaders) update) =>
+  factory Headers.build(void Function(MutableHeaders) update) =>
       Headers.empty().transform(update);
 
   /// The store behind this view, for an adapter that knows what to do with
   /// its own kind.
   HeaderStore get store => _store;
 
-  Headers transform(final void Function(MutableHeaders) update) {
+  Headers transform(void Function(MutableHeaders) update) {
     final mutable = MutableHeaders._(_store.toMutable())..adoptCache(this);
     update(mutable);
     return Headers._(mutable._store)..adoptCache(mutable);
@@ -650,26 +650,26 @@ base mixin _StoreReads on HeaderStore, HeaderValues {
   Iterable<HeaderName> get names => _store.names;
 
   @override
-  Iterable<String> values(final HeaderName name) => _store.values(name);
+  Iterable<String> values(HeaderName name) => _store.values(name);
 
   @override
-  String? value(final HeaderName name) => _store.value(name);
+  String? value(HeaderName name) => _store.value(name);
 
   @override
-  bool contains(final HeaderName name) => _store.contains(name);
+  bool contains(HeaderName name) => _store.contains(name);
 
   @override
   int get fieldCount => _store.fieldCount;
 
   @override
-  void forEach(final void Function(HeaderName name, String value) visit) =>
+  void forEach(void Function(HeaderName name, String value) visit) =>
       _store.forEach(visit);
 
   @override
   MutableHeaderStore toMutable() => _store.toMutable();
 
   @override
-  Iterable<String>? lookup(final HeaderName key) {
+  Iterable<String>? lookup(HeaderName key) {
     final found = _store.values(key);
     return found.isEmpty ? null : found;
   }
@@ -679,13 +679,13 @@ base mixin _StoreReads on HeaderStore, HeaderValues {
   ///
   /// Null when absent, or when the text is not a header name at all.
   @override
-  Iterable<String>? operator [](final Object key) => _lookupAny(this, key);
+  Iterable<String>? operator [](Object key) => _lookupAny(this, key);
 
   /// Decodes from the wire bytes when the accessor's codec can and the store
   /// is a [ByteHeaderSource], else from the text.
   @override
   T? call<T extends Object>(
-    final ReadOnlyAccessor<T, HeaderName, Iterable<String>> accessor,
+    ReadOnlyAccessor<T, HeaderName, Iterable<String>> accessor,
   ) {
     if (accessor is HeaderAccessor<T>) {
       final codec = accessor.codec;
@@ -731,7 +731,7 @@ base mixin _StoreReads on HeaderStore, HeaderValues {
   /// [InvalidHeaderException] when it does not decode.
   @override
   T get<T extends Object>(
-    final ReadOnlyAccessor<T, HeaderName, Iterable<String>> accessor,
+    ReadOnlyAccessor<T, HeaderName, Iterable<String>> accessor,
   ) =>
       call(accessor) ??
       (throw MissingHeaderException('', headerType: accessor.key.lower));
@@ -751,7 +751,7 @@ extension HeadersEntries on Headers {
   ];
 }
 
-Iterable<String>? _lookupAny(final HeaderValues headers, final Object key) {
+Iterable<String>? _lookupAny(HeaderValues headers, Object key) {
   switch (key) {
     case final HeaderName name:
       return headers.lookup(name);

@@ -9,7 +9,7 @@ import '../primitives/byte_scanner.dart' show latin1Bytes;
 /// This header specifies the policy for sharing resources across origins.
 final class CrossOriginResourcePolicyHeader {
   static const codec = HeaderCodec.bytes(_parseBytes, __encode);
-  static List<String> __encode(final CrossOriginResourcePolicyHeader value) => [
+  static List<String> __encode(CrossOriginResourcePolicyHeader value) => [
     value._encode(),
   ];
 
@@ -30,11 +30,11 @@ final class CrossOriginResourcePolicyHeader {
 
   /// Parses a [value] and returns the corresponding [CrossOriginResourcePolicyHeader] instance.
   /// If the value does not match any predefined types, it returns a custom instance.
-  factory CrossOriginResourcePolicyHeader.parse(final String value) =>
+  factory CrossOriginResourcePolicyHeader.parse(String value) =>
       _parseBytes(latin1Bytes(value));
 
   /// [parse] over the wire bytes.
-  static CrossOriginResourcePolicyHeader _parseBytes(final Uint8List bytes) {
+  static CrossOriginResourcePolicyHeader _parseBytes(Uint8List bytes) {
     final value = trimmed(bytes);
     if (value.isEmpty) {
       throw const FormatException('Value cannot be empty');
@@ -57,7 +57,7 @@ final class CrossOriginResourcePolicyHeader {
   String _encode() => policy;
 
   @override
-  bool operator ==(final Object other) =>
+  bool operator ==(Object other) =>
       identical(this, other) ||
       other is CrossOriginResourcePolicyHeader && policy == other.policy;
 

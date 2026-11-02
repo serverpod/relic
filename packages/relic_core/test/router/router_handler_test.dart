@@ -3,9 +3,9 @@ import 'package:relic_core/src/context/result.dart' show RequestInternal;
 import 'package:test/test.dart';
 
 Request _request(
-  final String path, {
-  final String host = 'localhost',
-  final Method method = Method.get,
+  String path, {
+  String host = 'localhost',
+  Method method = Method.get,
 }) => RequestInternal.create(method, Uri.http(host, path), null);
 
 void main() {
@@ -14,7 +14,7 @@ void main() {
       'then the handler is invoked and returns response', () async {
     final router = RelicRouter();
     var handlerCalled = false;
-    router.get('/test', (final req) {
+    router.get('/test', (req) {
       handlerCalled = true;
       return Response.ok(body: Body.fromString('success'));
     });
@@ -31,11 +31,11 @@ void main() {
       'when calling router with matching request, '
       'then path parameters are accessible via context', () async {
     final router = RelicRouter();
-    final nameParam = PathParam<String>(#name, (final s) => s);
+    final nameParam = PathParam<String>(#name, (s) => s);
     String? capturedName;
     const ageParam = IntPathParam(#age);
     int? capturedAge;
-    router.get('/user/:name/age/:age', (final req) {
+    router.get('/user/:name/age/:age', (req) {
       capturedName = req.pathParameters.get(nameParam);
       capturedAge = req.pathParameters.get(ageParam);
       return Response.ok();
@@ -53,7 +53,7 @@ void main() {
       'when calling router with POST to same path, '
       'then returns 405 with Allow header', () async {
     final router = RelicRouter();
-    router.get('/test', (final req) => Response.ok());
+    router.get('/test', (req) => Response.ok());
 
     final request = _request('/test', method: Method.post);
     final req = request;
@@ -67,8 +67,8 @@ void main() {
       'when calling router with unregistered method, '
       'then returns 405 with all allowed methods in Allow header', () async {
     final router = RelicRouter();
-    router.get('/test', (final req) => Response.ok());
-    router.post('/test', (final req) => Response.ok());
+    router.get('/test', (req) => Response.ok());
+    router.post('/test', (req) => Response.ok());
 
     final request = _request('/test', method: Method.put);
     final req = request;
@@ -82,7 +82,7 @@ void main() {
       'when calling router with unmatched path, '
       'then returns 404', () async {
     final router = RelicRouter();
-    router.get('/test', (final req) => Response.ok());
+    router.get('/test', (req) => Response.ok());
 
     final request = _request('/nonexistent');
     final req = request;
@@ -95,10 +95,10 @@ void main() {
       'when path misses in router, '
       'then fallback handler is called', () async {
     final router = RelicRouter();
-    router.get('/api/users', (final req) => Response.ok());
+    router.get('/api/users', (req) => Response.ok());
 
     var fallbackCalled = false;
-    router.fallback = (final req) {
+    router.fallback = (req) {
       fallbackCalled = true;
       return Response.ok(body: Body.fromString('fallback'));
     };
@@ -118,7 +118,7 @@ void main() {
       'then remaining path is accessible via context', () async {
     final router = RelicRouter();
     String? capturedRemaining;
-    router.get('/static/**', (final req) {
+    router.get('/static/**', (req) {
       capturedRemaining = req.remainingPath.toString();
       return Response.ok();
     });
@@ -135,7 +135,7 @@ void main() {
       'then matched path is accessible via context', () async {
     final router = RelicRouter();
     String? capturedMatched;
-    router.get('/api/v1/users', (final req) {
+    router.get('/api/v1/users', (req) {
       capturedMatched = req.matchedPath.toString();
       return Response.ok();
     });
@@ -152,7 +152,7 @@ void main() {
       'then handler is invoked', () async {
     final router = RelicRouter();
     var handlerCalled = false;
-    router.get('/files/*/download', (final req) {
+    router.get('/files/*/download', (req) {
       handlerCalled = true;
       return Response.ok();
     });
@@ -180,12 +180,12 @@ void main() {
       'when calling router with matching request, '
       'then middleware transformation is applied', () async {
     final router = RelicRouter();
-    router.get('/test', (final req) => Response.ok());
-    router.use('/', (final handler) {
-      return (final req) async {
+    router.get('/test', (req) => Response.ok());
+    router.use('/', (handler) {
+      return (req) async {
         final result = await handler(req) as Response;
         return result.copyWith(
-          headers: Headers.build((final h) => h['X-Custom'] = ['applied']),
+          headers: Headers.build((h) => h['X-Custom'] = ['applied']),
         );
       };
     });
@@ -201,10 +201,10 @@ void main() {
       'when calling router with unmatched path, '
       'then fallback handler is called', () async {
     final router = RelicRouter();
-    router.get('/users', (final req) => Response.ok());
+    router.get('/users', (req) => Response.ok());
 
     var fallbackCalled = false;
-    router.fallback = (final req) {
+    router.fallback = (req) {
       fallbackCalled = true;
       return Response.ok(body: Body.fromString('fallback response'));
     };
@@ -222,7 +222,7 @@ void main() {
       'when calling router with unmatched path, '
       'then returns 404', () async {
     final router = RelicRouter();
-    router.get('/users', (final req) => Response.ok());
+    router.get('/users', (req) => Response.ok());
     // No fallback set
 
     final request = _request('/nonexistent');
@@ -236,10 +236,10 @@ void main() {
       'when calling router with method miss, '
       'then returns 405 (not fallback)', () async {
     final router = RelicRouter();
-    router.get('/users', (final req) => Response.ok());
+    router.get('/users', (req) => Response.ok());
 
     var fallbackCalled = false;
-    router.fallback = (final req) {
+    router.fallback = (req) {
       fallbackCalled = true;
       return Response.ok();
     };
@@ -257,12 +257,12 @@ void main() {
       'when fallback is overwritten, '
       'then new fallback is used', () async {
     final router = RelicRouter();
-    router.get('/users', (final req) => Response.ok());
+    router.get('/users', (req) => Response.ok());
 
-    router.fallback = (final req) =>
+    router.fallback = (req) =>
         Response.ok(body: Body.fromString('first fallback'));
 
-    router.fallback = (final req) =>
+    router.fallback = (req) =>
         Response.ok(body: Body.fromString('second fallback'));
 
     final request = _request('/nonexistent');
@@ -276,10 +276,9 @@ void main() {
       'when calling router with unmatched path, '
       'then returns 404', () async {
     final router = RelicRouter();
-    router.get('/users', (final req) => Response.ok());
+    router.get('/users', (req) => Response.ok());
 
-    router.fallback = (final req) =>
-        Response.ok(body: Body.fromString('fallback'));
+    router.fallback = (req) => Response.ok(body: Body.fromString('fallback'));
     router.fallback = null; // Clear fallback
 
     final request = _request('/nonexistent');

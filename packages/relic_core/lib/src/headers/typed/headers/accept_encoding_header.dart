@@ -20,7 +20,7 @@ final class AcceptEncodingHeader extends WildcardListHeader<EncodingQuality> {
 
   /// Parses the Accept-Encoding header [values] and returns an
   /// [AcceptEncodingHeader] instance.
-  factory AcceptEncodingHeader.parse(final Iterable<String> values) =>
+  factory AcceptEncodingHeader.parse(Iterable<String> values) =>
       _parseFields([for (final value in values) latin1Bytes(value)]);
 
   AcceptEncodingHeader._owned(super.encodings) : super.owned();
@@ -29,7 +29,7 @@ final class AcceptEncodingHeader extends WildcardListHeader<EncodingQuality> {
   List<EncodingQuality> get encodings => values;
 
   /// The header from the wire bytes of its [fields].
-  static AcceptEncodingHeader _parseFields(final List<Uint8List> fields) {
+  static AcceptEncodingHeader _parseFields(List<Uint8List> fields) {
     final parsed = WildcardListHeader.parseFields(
       fields,
       EncodingQuality._parseBytes,
@@ -38,11 +38,11 @@ final class AcceptEncodingHeader extends WildcardListHeader<EncodingQuality> {
     return AcceptEncodingHeader._owned(parsed.values);
   }
 
-  static List<String> encodeHeader(final AcceptEncodingHeader header) {
-    return header.encode((final EncodingQuality eq) => eq.encode()).toList();
+  static List<String> encodeHeader(AcceptEncodingHeader header) {
+    return header.encode((EncodingQuality eq) => eq.encode()).toList();
   }
 
-  static List<String> _encode(final AcceptEncodingHeader header) {
+  static List<String> _encode(AcceptEncodingHeader header) {
     return encodeHeader(header);
   }
 }
@@ -56,18 +56,17 @@ class EncodingQuality {
   final double? quality;
 
   /// Constructs an instance of [EncodingQuality].
-  EncodingQuality(this.encoding, [final double? quality])
-    : quality = quality ?? 1.0;
+  EncodingQuality(this.encoding, [double? quality]) : quality = quality ?? 1.0;
 
   /// Parses a string value and returns an [EncodingQuality] instance.
   ///
   /// The weight is recognized as the parameter named `q` (RFC 9110 12.4.2),
   /// case-insensitive, tolerating OWS around the surrounding `;` and `=`.
-  factory EncodingQuality.parse(final String value) =>
+  factory EncodingQuality.parse(String value) =>
       EncodingQuality._parseBytes(latin1Bytes(value));
 
   /// [parse] over the wire bytes of one element.
-  static EncodingQuality _parseBytes(final Uint8List element) {
+  static EncodingQuality _parseBytes(Uint8List element) {
     var semi = indexOfByte(element, 0x3B);
     if (semi < 0) semi = element.length;
     final encoding = lowerTextOf(element, 0, trimEnd(element, 0, semi));
@@ -85,7 +84,7 @@ class EncodingQuality {
   }
 
   @override
-  bool operator ==(final Object other) =>
+  bool operator ==(Object other) =>
       identical(this, other) ||
       other is EncodingQuality &&
           encoding == other.encoding &&

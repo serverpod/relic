@@ -22,14 +22,14 @@ const _guid = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11';
 ///
 /// `RelicServer` answers a non-GET upgrade with 405 before calling this, so
 /// the method check here serves direct callers.
-String? webSocketAcceptKey(final Request request) {
+String? webSocketAcceptKey(Request request) {
   if (request.method != Method.get) return null;
   final headers = request.headers;
   try {
     final upgrade = headers.upgrade;
     if (upgrade == null ||
         !upgrade.protocols.any(
-          (final p) => p.protocol.toLowerCase() == 'websocket',
+          (p) => p.protocol.toLowerCase() == 'websocket',
         )) {
       return null;
     }
@@ -54,7 +54,7 @@ String? webSocketAcceptKey(final Request request) {
 }
 
 /// The 101 response that completes the handshake, as bytes for the wire.
-Uint8List webSocketHandshakeResponse(final String acceptKey) => utf8.encode(
+Uint8List webSocketHandshakeResponse(String acceptKey) => utf8.encode(
   'HTTP/1.1 101 Switching Protocols\r\n'
   'Upgrade: websocket\r\n'
   'Connection: Upgrade\r\n'

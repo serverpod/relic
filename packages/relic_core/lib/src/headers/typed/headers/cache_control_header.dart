@@ -11,9 +11,7 @@ import '../primitives/byte_scanner.dart' show latin1Bytes;
 /// the appropriate header string.
 final class CacheControlHeader {
   static const codec = HeaderCodec.fields(_parseLenient, __encode);
-  static List<String> __encode(final CacheControlHeader value) => [
-    value._encode(),
-  ];
+  static List<String> __encode(CacheControlHeader value) => [value._encode()];
   // Cache-Control directive constants
   static const String _noCacheDirective = 'no-cache';
   static const String _noStoreDirective = 'no-store';
@@ -129,11 +127,7 @@ final class CacheControlHeader {
   ///
   /// A malformed value returns `null` so the directive is ignored (RFC 9111
   /// 5.2), or throws a [FormatException] when [strict].
-  static int? _delta(
-    final String name,
-    final String? raw, {
-    required final bool strict,
-  }) {
+  static int? _delta(String name, String? raw, {required bool strict}) {
     if (raw == null || raw.isEmpty) {
       if (strict) {
         throw FormatException(
@@ -162,7 +156,7 @@ final class CacheControlHeader {
   ///
   /// Unrecognized directives and malformed values are ignored (RFC 9111 5.2);
   /// use [parseStrict] to reject them instead.
-  factory CacheControlHeader.parse(final Iterable<String> values) =>
+  factory CacheControlHeader.parse(Iterable<String> values) =>
       CacheControlHeader._parseFields([
         for (final value in values) latin1Bytes(value),
       ], strict: false);
@@ -172,18 +166,18 @@ final class CacheControlHeader {
   ///
   /// Intended for values under the sender's own control, such as server
   /// configuration, where a typo should fail fast.
-  factory CacheControlHeader.parseStrict(final Iterable<String> values) =>
+  factory CacheControlHeader.parseStrict(Iterable<String> values) =>
       CacheControlHeader._parseFields([
         for (final value in values) latin1Bytes(value),
       ], strict: true);
 
   /// [parse] over the wire bytes of every field.
-  static CacheControlHeader _parseLenient(final List<Uint8List> fields) =>
+  static CacheControlHeader _parseLenient(List<Uint8List> fields) =>
       CacheControlHeader._parseFields(fields, strict: false);
 
   factory CacheControlHeader._parseFields(
-    final List<Uint8List> fields, {
-    required final bool strict,
+    List<Uint8List> fields, {
+    required bool strict,
   }) {
     final directives = splitFieldsUnique(fields);
 
@@ -324,7 +318,7 @@ final class CacheControlHeader {
   }
 
   @override
-  bool operator ==(final Object other) =>
+  bool operator ==(Object other) =>
       identical(this, other) ||
       other is CacheControlHeader &&
           noCache == other.noCache &&

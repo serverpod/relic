@@ -7,7 +7,7 @@ import 'package:benchmark/src/echo_web_socket.dart';
 import 'package:benchmark/src/serve.dart';
 import 'package:benchmark/src/shelf_server.dart';
 
-Future<void> main(final List<String> args) async {
+Future<void> main(List<String> args) async {
   final kind = args.isEmpty ? 'native' : args[0];
   final server = await startServer(
     kind,

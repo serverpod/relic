@@ -43,13 +43,13 @@ void main() {
     });
 
     test('then a Hijack result can be created', () {
-      final result = Hijack((final channel) {});
+      final result = Hijack((channel) {});
 
       expect(result, isA<Hijack>());
     });
 
     test('then a WebSocketUpgrade result can be created', () {
-      final result = WebSocketUpgrade((final webSocket) {});
+      final result = WebSocketUpgrade((webSocket) {});
 
       expect(result, isA<WebSocketUpgrade>());
     });

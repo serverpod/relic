@@ -3,7 +3,7 @@ import 'package:test/test.dart';
 
 /// The same field read from a byte store and from a map store, so the two
 /// decode paths can be compared.
-(Headers bytes, Headers text) _both(final String name, final String value) => (
+(Headers bytes, Headers text) _both(String name, String value) => (
   Headers.fromStore(ByteHeaderStore.encode([(name, value)])),
   Headers.fromMap({
     name: [value],
@@ -35,7 +35,7 @@ void main() {
         () => bytes.cookie,
         throwsA(
           isA<InvalidHeaderException>().having(
-            (final e) => e.description,
+            (e) => e.description,
             'description',
             contains('No valid cookies'),
           ),
@@ -74,7 +74,7 @@ void main() {
         () => bytes.acceptLanguage,
         throwsA(
           isA<InvalidHeaderException>().having(
-            (final e) => e.description,
+            (e) => e.description,
             'description',
             contains('Wildcard'),
           ),
@@ -108,7 +108,7 @@ void main() {
           ('Accept-Language', 'da;q=0.5'),
         ]),
       );
-      expect(headers.acceptLanguage!.languages.map((final l) => l.language), [
+      expect(headers.acceptLanguage!.languages.map((l) => l.language), [
         'en',
         'da',
       ]);

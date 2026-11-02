@@ -9,9 +9,7 @@ import '../primitives/byte_fields.dart';
 /// A class representing the HTTP Content-Type header.
 final class ContentTypeHeader {
   static const codec = HeaderCodec.bytes(_parseBytes, __encode);
-  static List<String> __encode(final ContentTypeHeader value) => [
-    value._encode(),
-  ];
+  static List<String> __encode(ContentTypeHeader value) => [value._encode()];
 
   /// The media type without parameters.
   final MimeType mimeType;
@@ -23,16 +21,16 @@ final class ContentTypeHeader {
   /// parameters.
   ContentTypeHeader({
     required this.mimeType,
-    final Map<String, String> parameters = const {},
+    Map<String, String> parameters = const {},
   }) : parameters = Map.unmodifiable(_normalizeParameters(parameters));
 
   /// Parses the Content-Type header value and returns a [ContentTypeHeader].
   /// [parse] over the wire bytes. `MediaType.parse` reads text, so the
   /// bytes become a Latin-1 string first.
-  static ContentTypeHeader _parseBytes(final Uint8List bytes) =>
+  static ContentTypeHeader _parseBytes(Uint8List bytes) =>
       ContentTypeHeader.parse(textOf(bytes));
 
-  factory ContentTypeHeader.parse(final String value) {
+  factory ContentTypeHeader.parse(String value) {
     final mediaType = http_parser.MediaType.parse(value);
     return ContentTypeHeader(
       mimeType: MimeType(mediaType.type, mediaType.subtype),
@@ -44,7 +42,7 @@ final class ContentTypeHeader {
   String? get charset => parameter('charset');
 
   /// Returns the parameter value for [name], matched case-insensitively.
-  String? parameter(final String name) => parameters[name.toLowerCase()];
+  String? parameter(String name) => parameters[name.toLowerCase()];
 
   /// Converts the [ContentTypeHeader] instance into a string representation
   /// suitable for HTTP headers.
@@ -61,7 +59,7 @@ final class ContentTypeHeader {
   }
 
   @override
-  bool operator ==(final Object other) =>
+  bool operator ==(Object other) =>
       identical(this, other) ||
       other is ContentTypeHeader &&
           mimeType == other.mimeType &&
@@ -82,7 +80,7 @@ final class ContentTypeHeader {
   }
 }
 
-Map<String, String> _normalizeParameters(final Map<String, String> parameters) {
+Map<String, String> _normalizeParameters(Map<String, String> parameters) {
   return {
     for (final entry in parameters.entries)
       entry.key.toLowerCase(): entry.value,

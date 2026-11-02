@@ -175,14 +175,14 @@ void main() {
 
 RelicServer? _server;
 
-Future<void> _scheduleServer(final Handler handler) async {
+Future<void> _scheduleServer(Handler handler) async {
   assert(_server == null);
   _server = await testServe(handler);
 }
 
 Future<http.Response> _get({
-  final Map<String, String>? headers,
-  final String path = '',
+  Map<String, String>? headers,
+  String path = '',
 }) async {
   final request = http.Request(
     Method.get.value,
