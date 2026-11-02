@@ -12,7 +12,7 @@ sidebar_position: 12
 
 GITHUB_CODE_BLOCK lang="dart" file="../_example/serving/isolates.dart" doctag="serving-serve" title="Binding, and closing on Ctrl-C"
 
-A close is graceful by default. The server stops accepting, lets the requests in flight finish, tells every WebSocket it is going away and then returns. `close(force: true)` drops every connection at once.
+A close is graceful by default. The server stops accepting, lets the requests in flight finish, tells every WebSocket it is going away and then returns. `close(force: true)` drops every connection at once. `close(grace: const Duration(seconds: 5))` waits that long for the graceful close and then forces it, which is what the example does.
 
 ## Isolates
 

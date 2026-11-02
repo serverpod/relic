@@ -34,16 +34,13 @@ sealed class RelicServer {
   /// peer the server is going away, and waits for the exchanges in flight,
   /// the hijacked channels and those close handshakes to end. The handshakes
   /// are bounded by their protocol implementations, the rest is the
-  /// handlers' own work, so the wait has no deadline of its own. Bound it
-  /// with a timeout and a forced close:
-  ///
-  /// ```dart
-  /// await server.close().timeout(grace, onTimeout: () => server.close(force: true));
-  /// ```
+  /// handlers' own work, so the wait has no deadline of its own. [grace]
+  /// bounds it: when the graceful close has not ended by then, a forced
+  /// close follows.
   ///
   /// A forced close drops every connection at once and ends a graceful
   /// close that is still waiting.
-  Future<void> close({final bool force = false});
+  Future<void> close({final bool force = false, final Duration? grace});
 
   /// Returns information about the current connections.
   Future<ConnectionsInfo> connectionsInfo();
@@ -115,7 +112,14 @@ final class _RelicServer implements RelicServer {
   }
 
   @override
-  Future<void> close({final bool force = false}) async {
+  Future<void> close({final bool force = false, final Duration? grace}) {
+    if (force || grace == null) return _close(force: force);
+    return _close(
+      force: false,
+    ).timeout(grace, onTimeout: () => _close(force: true));
+  }
+
+  Future<void> _close({required final bool force}) async {
     _handler = null;
     final adapter = _adapter ?? await _pendingAdapter;
     final closing = [
@@ -455,8 +459,8 @@ final class _IsolatedRelicServer extends IsolatedObject<RelicServer>
     : super(() => RelicServer(adapterFactory));
 
   @override
-  Future<void> close({final bool force = false}) async {
-    await evaluate((final r) => r.close(force: force));
+  Future<void> close({final bool force = false, final Duration? grace}) async {
+    await evaluate((final r) => r.close(force: force, grace: grace));
     await super.close();
     _port = null;
   }
@@ -489,10 +493,10 @@ final class _MultiIsolateRelicServer implements RelicServer {
       );
 
   @override
-  Future<void> close({final bool force = false}) async {
+  Future<void> close({final bool force = false, final Duration? grace}) async {
     final children = List.of(_children);
     _children.clear();
-    await children.map((final c) => c.close(force: force)).wait;
+    await children.map((final c) => c.close(force: force, grace: grace)).wait;
   }
 
   @override
