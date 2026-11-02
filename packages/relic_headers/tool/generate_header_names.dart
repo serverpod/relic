@@ -183,7 +183,8 @@ final class HeaderName {
   /// It equals the known name of the same text, if there is one, so it keeps
   /// matching when the table grows. Use [lookup] for a name that may carry
   /// uppercase. This constructor does not fold case, so `X-Foo` is not
-  /// `x-foo`.
+  /// `x-foo`; in debug builds the first compare or hash of such a name
+  /// fails an assert.
   const HeaderName.custom(this.lower)
     : id = -1,
       assert(lower != '', 'A header name is not empty');
@@ -218,16 +219,29 @@ $table
   static bool isTchar(final int c) => _isTchar(c);
 
   @override
-  bool operator ==(final Object other) =>
-      other is HeaderName &&
-      (id >= 0 && other.id >= 0 ? id == other.id : lower == other.lower);
+  bool operator ==(final Object other) {
+    assert(_isCanonical, _notCanonical);
+    return other is HeaderName &&
+        (id >= 0 && other.id >= 0 ? id == other.id : lower == other.lower);
+  }
 
   /// The hash of [lower].
   ///
   /// The VM caches a string's hash, so a known name pays a field read, and
   /// a custom name hashes like the known name it spells.
   @override
-  int get hashCode => lower.hashCode;
+  int get hashCode {
+    assert(_isCanonical, _notCanonical);
+    return lower.hashCode;
+  }
+
+  /// Whether [lower] is a lowercase token, as [custom] requires. A const
+  /// constructor cannot check it, so the first compare or hash does.
+  bool get _isCanonical => lower == lower.toLowerCase() && isToken(lower);
+
+  String get _notCanonical =>
+      "HeaderName.custom('\$lower') is not a lowercase token. "
+      'Use HeaderName.lookup for a name that may carry uppercase.';
 
   @override
   String toString() => lower;
