@@ -46,7 +46,7 @@ export 'src/middleware/context_property.dart';
 export 'src/middleware/middleware.dart';
 export 'src/middleware/middleware_extensions.dart' show MiddlewareExtensions;
 export 'src/middleware/middleware_logger.dart' show logRequests;
-export 'src/middleware/routing_middleware.dart';
+export 'src/middleware/routing_middleware.dart' hide RoutingRequestInternal;
 export 'src/query/query_param.dart';
 export 'src/relic_server.dart';
 export 'src/router/cache.dart';

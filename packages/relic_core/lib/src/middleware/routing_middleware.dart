@@ -206,6 +206,16 @@ extension RoutingRequestEx on Request {
   NormalizedPath get remainingPath =>
       _routingContext[this]?.remaining ?? NormalizedPath.fromUri(url);
 
+  /// The [RelicRouter] that routed this request, if available.
+  ///
+  /// Returns `null` if the request was not routed through a [RelicRouter].
+  RelicRouter? get router => _routerProperty[this];
+}
+
+/// Extension on [Request] for forwarding requests through the current router.
+/// What the server reads off a routed request, not exported from
+/// relic_core.dart. A handler checks `request.method`.
+extension RoutingRequestInternal on Request {
   /// Whether this HEAD request matched the GET route of its path (RFC
   /// 9110 9.1), for lack of a HEAD route.
   ///
@@ -217,14 +227,8 @@ extension RoutingRequestEx on Request {
   /// header of a 405. Empty when no router matched the request.
   Set<Method> get registeredMethods =>
       _routingContext[this]?.registered ?? const <Method>{};
-
-  /// The [RelicRouter] that routed this request, if available.
-  ///
-  /// Returns `null` if the request was not routed through a [RelicRouter].
-  RelicRouter? get router => _routerProperty[this];
 }
 
-/// Extension on [Request] for forwarding requests through the current router.
 extension ForwardingRequestEx on Request {
   /// Forwards [request] through the [RelicRouter] that routed this request.
   ///
