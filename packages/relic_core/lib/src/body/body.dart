@@ -514,10 +514,14 @@ class Body {
   /// ```
   Stream<Uint8List> read({final int? maxLength}) {
     // A known length over maxLength fails before the stream is made. A lazy
-    // open then never runs, and consume() cancels a stream the body holds.
+    // open then never runs. A stream the body holds is dropped without a
+    // listen, since dart:io resets the connection when its request stream is
+    // cancelled, and a client still sending loses the response.
     final knownLength = contentLength;
     if (maxLength != null && knownLength != null && knownLength > maxLength) {
-      consume();
+      _markRead();
+      _stream = null;
+      _open = null;
       throw MaxBodySizeExceeded(maxLength);
     }
     _markRead();
