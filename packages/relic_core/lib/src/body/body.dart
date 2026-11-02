@@ -133,22 +133,27 @@ class Body {
   /// and [BodyType.fromContentType] makes one from a Content-Type header.
   ///
   /// The `from` factories cover the common cases.
+  ///
+  /// Throws [ArgumentError] when more than one of [bytes], [stream] and
+  /// [open] is given.
   Body({
     this.bytes,
     final Stream<Uint8List>? stream,
     final Stream<Uint8List> Function()? open,
     final int? contentLength,
     this.bodyType,
-  }) : assert(
-         [bytes, stream, open].nonNulls.length <= 1,
-         'Pass at most one of bytes, stream and open',
-       ),
-       _stream = stream,
+  }) : _stream = stream,
        _open = open ?? (bytes == null && stream == null ? _openEmpty : null),
        contentLength =
            bytes?.length ??
            contentLength ??
-           (stream == null && open == null ? 0 : null);
+           (stream == null && open == null ? 0 : null) {
+    if (bytes != null
+        ? stream != null || open != null
+        : stream != null && open != null) {
+      throw ArgumentError('Pass at most one of bytes, stream and open');
+    }
+  }
 
   static BodyType? _bodyType(
     final MimeType? mimeType,

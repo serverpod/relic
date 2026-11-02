@@ -103,4 +103,12 @@ void main() {
     expect(() => body.read(maxLength: 5), throwsA(isA<MaxBodySizeExceeded>()));
     expect(opened, 0);
   });
+
+  test('Given bytes and a stream, when a Body is built from both, '
+      'then it throws ArgumentError', () {
+    expect(
+      () => Body(bytes: Uint8List(1), stream: const Stream.empty()),
+      throwsArgumentError,
+    );
+  });
 }
