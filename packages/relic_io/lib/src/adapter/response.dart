@@ -8,7 +8,8 @@ extension ResponseExIo on Response {
   /// Writes the response to an [HttpResponse].
   ///
   /// This method sets the status code, headers, and body on the [httpResponse]
-  /// and returns a [Future] that completes when the body has been written.
+  /// and returns a [Future] that completes when the body has been flushed.
+  /// The caller closes [httpResponse].
   Future<void> writeHttpResponse(
     HttpResponse httpResponse, {
     required bool head,
@@ -35,7 +36,5 @@ extension ResponseExIo on Response {
       await httpResponse.addStream(body.read());
     }
     await httpResponse.flush();
-
-    await httpResponse.close();
   }
 }

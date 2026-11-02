@@ -2,8 +2,10 @@ import 'dart:io' as io;
 
 import 'package:relic_core/relic_core.dart';
 
+import 'request_body.dart';
+
 /// Creates a new [Request] from an [io.HttpRequest], on [exchange], with
-/// [create].
+/// [create]. Its body reads [body].
 ///
 /// Throws [FormatException] for a target that does not decode. The core
 /// answers that with 400 before any handler runs.
@@ -11,6 +13,7 @@ Request fromHttpRequest(
   io.HttpRequest request,
   AdapterExchange exchange,
   RequestFactory create,
+  IORequestBody? body,
 ) {
   final url = request.requestedUri;
   final target = RequestTarget.fromUri(url)..validate();
@@ -21,7 +24,7 @@ Request fromHttpRequest(
     url: url,
     target: target,
     headers: headers,
-    body: bodyFromHttpRequest(request, headers),
+    body: bodyFromHttpRequest(request, headers, body),
     lazyConnectionInfo: () =>
         connectionInfoFromHttpConnectionInfo(request.connectionInfo),
   );
@@ -55,17 +58,19 @@ Headers headersFromHttpRequest(io.HttpRequest request) {
   return Headers.fromStore(store);
 }
 
-/// The body of [request], typed by [headers].
+/// The body of [request], typed by [headers], read from [body].
 ///
-/// A request that declares no length and is not chunked has none.
-Body bodyFromHttpRequest(io.HttpRequest request, Headers headers) {
+/// A request without [body] has none.
+Body bodyFromHttpRequest(
+  io.HttpRequest request,
+  Headers headers,
+  IORequestBody? body,
+) {
+  if (body == null) return Body.empty();
   final length = request.contentLength;
-  if (length < 0 && !request.headers.chunkedTransferEncoding) {
-    return Body.empty();
-  }
   return Body.of(
     headers.tryGet(Headers.contentType),
-    stream: request,
+    stream: body.stream,
     contentLength: length < 0 ? null : length,
   );
 }
