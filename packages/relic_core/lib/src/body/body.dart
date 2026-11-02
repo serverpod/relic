@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:collection';
 import 'dart:convert';
-import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
 
@@ -537,22 +536,13 @@ class Body {
     final Stream<Uint8List> source,
     final int maxLength,
   ) async* {
+    // A break cancels the source. What is left on the wire is the
+    // adapter's to read before it closes the connection.
     var totalBytes = 0;
     await for (final chunk in source) {
       totalBytes += chunk.length;
-      if (totalBytes > maxLength) {
-        // Windows TCP behavior:
-        // When you close a socket with unread data in the receive buffer,
-        // Windows sends RST instead of FIN. This nukes the connection before
-        // send buffer flushes.
-        //
-        // To avoid this causing missed responses on a client we keep draining
-        // the socket, but discard the content, before throwing.
-        if (Platform.isWindows) continue;
-        break; // other platforms send FIN, so just raise immediately
-      } else {
-        yield chunk;
-      }
+      if (totalBytes > maxLength) break;
+      yield chunk;
     }
     // check again to not throw on success
     if (totalBytes > maxLength) throw MaxBodySizeExceeded(maxLength);
