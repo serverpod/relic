@@ -65,10 +65,13 @@ Body bodyFromHttpRequest(io.HttpRequest request, Headers headers) {
   if (length < 0 && !request.headers.chunkedTransferEncoding) {
     return Body.empty();
   }
-  return Body.of(
-    headers.tryGet(Headers.contentType),
+  final contentType = headers.tryGet(Headers.contentType);
+  return Body(
     open: () => request,
     contentLength: length < 0 ? null : length,
+    bodyType: contentType == null
+        ? null
+        : BodyType.fromContentType(contentType),
   );
 }
 

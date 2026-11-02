@@ -675,6 +675,7 @@ final class NativeExchange extends LinkedListEntry<NativeExchange>
   @override
   Request toRequest(RequestFactory create) {
     final headers = Headers.fromStore(ByteHeaderStore(_head, _slots));
+    final contentType = headers.tryGet(Headers.contentType);
     final (target, scheme, authority) = _parseTarget();
     return create(
       method,
@@ -684,12 +685,14 @@ final class NativeExchange extends LinkedListEntry<NativeExchange>
           authority ?? headers.value(HeaderName.host) ?? _adapter._authority,
       scheme: scheme ?? _adapter._scheme,
       headers: headers,
-      body: _bodyObject = Body.of(
-        headers.tryGet(Headers.contentType),
+      body: _bodyObject = Body(
         bytes: _body,
-        stream: _bodyStreamed ? _inboundStream() : null,
+        stream: _body == null && _bodyStreamed ? _inboundStream() : null,
         // A chunked body has no declared length.
         contentLength: _bodyStreamed && _bodyLen != 0 ? _bodyLen : null,
+        bodyType: contentType == null
+            ? null
+            : BodyType.fromContentType(contentType),
       ),
       lazyConnectionInfo: _connectionInfo,
     );

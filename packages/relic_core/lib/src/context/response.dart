@@ -20,15 +20,15 @@ part of 'result.dart';
 /// Answer a HEAD request with the response GET would get. The adapter
 /// sends the body's length and type, and cancels the body's stream without
 /// reading it. Cancelling a stream listens to it first, so a stream from
-/// `File.openRead` opens and closes its file. A [Body.lazy] makes its
-/// stream only when it is read, which a HEAD response never does:
+/// `File.openRead` opens and closes its file. A [Body] built with `open`
+/// makes its stream only when it is read, which a HEAD response never does:
 ///
 /// ```dart
 /// Response.ok(
-///   body: Body.lazy(
-///     () => file.openRead().cast(),
+///   body: Body(
+///     open: () => file.openRead().cast(),
 ///     contentLength: size,
-///     mimeType: MimeType.pdf,
+///     bodyType: BodyType(mimeType: MimeType.pdf),
 ///   ),
 /// )
 /// ```

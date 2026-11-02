@@ -4,26 +4,30 @@ import 'package:relic_core/relic_core.dart';
 import 'package:test/test.dart';
 
 void main() {
-  test('Given a lazy body, when it is consumed, '
+  test('Given a body with open, when it is consumed, '
       'then its stream is never made.', () {
     var opened = 0;
-    final body = Body.lazy(() {
-      opened++;
-      return Stream.value(Uint8List(1));
-    });
+    final body = Body(
+      open: () {
+        opened++;
+        return Stream.value(Uint8List(1));
+      },
+    );
 
     body.consume();
 
     expect(opened, 0);
   });
 
-  test('Given a lazy body, when it is read, '
+  test('Given a body with open, when it is read, '
       'then it yields the stream it makes once.', () async {
     var opened = 0;
-    final body = Body.lazy(() {
-      opened++;
-      return Stream.value(Uint8List.fromList([1, 2, 3]));
-    });
+    final body = Body(
+      open: () {
+        opened++;
+        return Stream.value(Uint8List.fromList([1, 2, 3]));
+      },
+    );
 
     final bytes = await body.read().expand((chunk) => chunk).toList();
 
@@ -32,14 +36,16 @@ void main() {
   });
 
   test(
-    'Given a lazy body that was read, when it is read again, '
+    'Given a body with open that was read, when it is read again, '
     'then it throws a StateError and its stream is not made again.',
     () async {
       var opened = 0;
-      final body = Body.lazy(() {
-        opened++;
-        return Stream.value(Uint8List(1));
-      });
+      final body = Body(
+        open: () {
+          opened++;
+          return Stream.value(Uint8List(1));
+        },
+      );
       await body.read().drain<void>();
 
       expect(body.read, throwsStateError);
@@ -49,14 +55,16 @@ void main() {
   );
 
   test(
-    'Given a lazy body that was read, when it is consumed, '
+    'Given a body with open that was read, when it is consumed, '
     'then it throws a StateError and its stream is not made again.',
     () async {
       var opened = 0;
-      final body = Body.lazy(() {
-        opened++;
-        return Stream.value(Uint8List(1));
-      });
+      final body = Body(
+        open: () {
+          opened++;
+          return Stream.value(Uint8List(1));
+        },
+      );
       await body.read().drain<void>();
 
       expect(body.consume, throwsStateError);
@@ -65,13 +73,15 @@ void main() {
     },
   );
 
-  test('Given a lazy body that was consumed, when it is read, '
+  test('Given a body with open that was consumed, when it is read, '
       'then it throws a StateError and its stream is never made.', () {
     var opened = 0;
-    final body = Body.lazy(() {
-      opened++;
-      return Stream.value(Uint8List(1));
-    });
+    final body = Body(
+      open: () {
+        opened++;
+        return Stream.value(Uint8List(1));
+      },
+    );
     body.consume();
 
     expect(body.read, throwsStateError);
@@ -79,23 +89,10 @@ void main() {
     expect(opened, 0);
   });
 
-  test('Given a lazy body longer than maxLength, when it is read, '
+  test('Given a body with open longer than maxLength, when it is read, '
       'then it throws MaxBodySizeExceeded and its stream is never made.', () {
     var opened = 0;
-    final body = Body.lazy(() {
-      opened++;
-      return Stream.value(Uint8List(10));
-    }, contentLength: 10);
-
-    expect(() => body.read(maxLength: 5), throwsA(isA<MaxBodySizeExceeded>()));
-    expect(opened, 0);
-  });
-
-  test('Given a Body.of with open longer than maxLength, when it is read, '
-      'then it throws MaxBodySizeExceeded and its stream is never made.', () {
-    var opened = 0;
-    final body = Body.of(
-      null,
+    final body = Body(
       open: () {
         opened++;
         return Stream.value(Uint8List(10));
