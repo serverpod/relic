@@ -1,1 +1,7 @@
 test/
+
+# Zig build output and package cache, kept out of the published package.
+# pub reads this file instead of .gitignore, so these are listed again.
+.zig-cache/
+zig-out/
+zig-pkg/
