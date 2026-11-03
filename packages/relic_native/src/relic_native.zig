@@ -74,9 +74,10 @@ const ws_close_wait_ms = 2000;
 /// messages still queued for it, the peer's close among them.
 const ws_drain_wait_ms = 1000;
 
-/// What the waiter's pipe, pokeAcceptor and the tests need from libc.
-/// Zig keeps sockets behind std.Io, and the reactor's thread cannot use
-/// that.
+/// What the waiter's pipe and the POSIX-only tests need from libc. The
+/// pipe is polled next to the loop's handle, which std.Io cannot do. Not
+/// used on Windows, where a socket is not a C runtime descriptor and
+/// `close` aborts the process.
 const libc = struct {
     extern "c" fn pipe(fds: *[2]c_int) c_int;
     extern "c" fn socket(domain: c_int, sock_type: c_int, protocol: c_int) c_int;
@@ -2227,6 +2228,10 @@ const ipv6_loopback = [16]u8{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 };
 /// blocked in returns and the loop sees the stop flag. An unspecified
 /// listen address is reached through loopback. A SYN the kernel drops on
 /// a full backlog leaves the accept to its timeout.
+///
+/// On zio's socket layer, not std.Io: on Windows a std.Io connect does
+/// not complete against the IOCP listener, and the acceptor waits out
+/// its timeout on every close.
 fn pokeAcceptor(srv: *Server) void {
     const net = zio.os.net;
     var target = srv.address;
@@ -2238,11 +2243,15 @@ fn pokeAcceptor(srv: *Server) void {
             zio.net.IpAddress.initIp4(.{ 127, 0, 0, 1 }, 0);
     }
     target.setPort(srv.bound_port.load(.acquire));
-    const fd = libc.socket(if (ipv6) net.AF.INET6 else net.AF.INET, net.SOCK.STREAM, 0);
-    if (fd < 0) return;
-    defer _ = libc.close(fd);
-    const len: u32 = if (ipv6) @sizeOf(net.sockaddr.in6) else @sizeOf(net.sockaddr.in);
-    _ = libc.connect(fd, &target.any, len);
+    const fd = net.socket(
+        if (ipv6) .ipv6 else .ipv4,
+        .stream,
+        .tcp,
+        .{ .nonblocking = false },
+    ) catch return;
+    defer net.close(fd);
+    const len: net.socklen_t = if (ipv6) @sizeOf(net.sockaddr.in6) else @sizeOf(net.sockaddr.in);
+    net.connect(fd, &target.any, len) catch {};
 }
 
 /// Stops accepting, joins the thread and frees the server. Assumes every
