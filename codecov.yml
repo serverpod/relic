@@ -5,25 +5,34 @@ coverage:
         target: auto
         informational: true
         paths:
+          - "packages/relic_headers/**"
           - "packages/relic_core/**"
           - "packages/relic_io/**"
+          - "packages/relic_native/**"
           - "packages/relic/**"
     patch:
       default:
         target: auto
         informational: true
         paths:
+          - "packages/relic_headers/**"
           - "packages/relic_core/**"
           - "packages/relic_io/**"
+          - "packages/relic_native/**"
           - "packages/relic/**"
 
 ignore:
+  - "packages/relic_dst/**"
   - "packages/examples/**"
   - "packages/benchmark/**"
   - "doc/**"
 
 flag_management:
   individual_flags:
+    - name: relic_headers
+      paths:
+        - packages/relic_headers/
+      carryforward: true
     - name: relic_core
       paths:
         - packages/relic_core/
@@ -35,4 +44,8 @@ flag_management:
     - name: relic
       paths:
         - packages/relic/
+      carryforward: true
+    - name: relic_native
+      paths:
+        - packages/relic_native/
       carryforward: true

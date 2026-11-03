@@ -167,6 +167,14 @@ jobs:
           dart pub global activate coverage
           melos run coverage --no-select
 
+      - name: Upload Coverage (relic_headers)
+        uses: codecov/codecov-action@v7
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.dart_sdk == 'stable' && matrix.deps == 'upgrade' && !cancelled() }}
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: packages/relic_headers/coverage/lcov.info
+          flags: relic_headers
+
       - name: Upload Coverage (relic_core)
         uses: codecov/codecov-action@v7
         if: ${{ matrix.os == 'ubuntu-latest' && matrix.dart_sdk == 'stable' && matrix.deps == 'upgrade' && !cancelled() }}
@@ -190,6 +198,14 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: packages/relic/coverage/lcov.info
           flags: relic
+
+      - name: Upload Coverage (relic_native)
+        uses: codecov/codecov-action@v7
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.dart_sdk == 'stable' && matrix.deps == 'upgrade' && !cancelled() }}
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: packages/relic_native/coverage/lcov.info
+          flags: relic_native
 
   docs-markdown-lint:
     name: Markdown lint for docs
