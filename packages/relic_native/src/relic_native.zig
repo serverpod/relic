@@ -2914,7 +2914,6 @@ test "accept: a descriptor shortage stalls the acceptor and does not end it" {
 }
 
 test "stop: a stopped reactor sheds its idle connections and the last one closes the listener" {
-    if (builtin.os.tag == .windows) return error.SkipZigTest;
     const srv = testBind(null) orelse return error.BindFailed;
     try checkStopShedsIdle(srv);
 }
@@ -2924,15 +2923,10 @@ test "stop: a stopped reactor sheds its idle connections and the last one closes
 fn checkStopShedsIdle(srv: *Server) !void {
     const r = relic_reactor_create(srv, 1) orelse return error.AttachFailed;
     defer relic_reactor_destroy(r);
-    const address: std.c.sockaddr.in = .{
-        .port = std.mem.nativeToBig(u16, relic_server_port(srv)),
-        .addr = std.mem.nativeToBig(u32, 0x7f000001),
-    };
+    const port = relic_server_port(srv);
 
-    const idle = libc.socket(std.c.AF.INET, std.c.SOCK.STREAM, 0);
-    try std.testing.expect(idle >= 0);
-    defer _ = libc.close(idle);
-    try std.testing.expectEqual(0, libc.connect(idle, @ptrCast(&address), @sizeOf(std.c.sockaddr.in)));
+    const idle = try TestClient.connect(port);
+    defer idle.close();
     var out: [4]*ExchangeView = undefined;
     var rounds: usize = 0;
     while (r.idle.load(.monotonic) == 0 and rounds < 200) : (rounds += 1) {
@@ -2953,11 +2947,12 @@ fn checkStopShedsIdle(srv: *Server) !void {
     var refused = false;
     rounds = 0;
     while (!refused and rounds < 200) : (rounds += 1) {
-        const probe = libc.socket(std.c.AF.INET, std.c.SOCK.STREAM, 0);
-        try std.testing.expect(probe >= 0);
-        defer _ = libc.close(probe);
-        refused = libc.connect(probe, @ptrCast(&address), @sizeOf(std.c.sockaddr.in)) != 0;
-        if (!refused) sleepMs(5);
+        if (TestClient.connect(port)) |probe| {
+            probe.close();
+            sleepMs(5);
+        } else |_| {
+            refused = true;
+        }
     }
     try std.testing.expect(refused);
 }
@@ -2977,21 +2972,60 @@ test "attach: a refused attach leaks no file descriptors" {
     try std.testing.expectEqual(before, openFdCount());
 }
 
+/// A blocking plain-text client on zio's socket calls, which Winsock and
+/// Wine serve where Zig's std.Io does not. The test thread drives it
+/// between ticks.
+const TestClient = struct {
+    const net = zio.os.net;
+
+    fd: net.fd_t,
+
+    fn connect(port: u16) !TestClient {
+        const fd = try net.socket(.ipv4, .stream, .tcp, .{ .nonblocking = false });
+        errdefer net.close(fd);
+        const address = zio.net.IpAddress.initIp4(.{ 127, 0, 0, 1 }, port);
+        try net.connect(fd, &address.any, @sizeOf(net.sockaddr.in));
+        return .{ .fd = fd };
+    }
+
+    fn close(self: TestClient) void {
+        net.close(self.fd);
+    }
+
+    fn writeAll(self: TestClient, bytes: []const u8) !void {
+        var sent: usize = 0;
+        while (sent < bytes.len) {
+            const rest = bytes[sent..];
+            var buffers = [_]net.iovec_const{
+                if (builtin.os.tag == .windows)
+                    .{ .len = @intCast(rest.len), .buf = @constCast(rest.ptr) }
+                else
+                    .{ .base = rest.ptr, .len = rest.len },
+            };
+            sent += try net.send(self.fd, &buffers, .{});
+        }
+    }
+
+    /// Reads what has arrived, without waiting for more.
+    fn readSome(self: TestClient, buffer: []u8) !usize {
+        var fds = [_]net.pollfd{.{ .fd = self.fd, .events = net.POLL.IN, .revents = 0 }};
+        if (try net.poll(&fds, 0) == 0) return 0;
+        var buffers = [_]net.iovec{
+            if (builtin.os.tag == .windows)
+                .{ .len = @intCast(buffer.len), .buf = buffer.ptr }
+            else
+                .{ .base = buffer.ptr, .len = buffer.len },
+        };
+        return try net.recv(self.fd, &buffers, .{});
+    }
+};
+
 test "tick: a request reaches the ready list on the caller's thread and the response goes out" {
-    // The client side is libc sockets and poll, which Windows spells
-    // differently. The Dart tests cover this path there.
-    if (builtin.os.tag == .windows) return error.SkipZigTest;
     const srv = testBind(null) orelse return error.BindFailed;
     const r = relic_reactor_create(srv, 1) orelse return error.AttachFailed;
     defer relic_reactor_destroy(r);
 
-    const client = libc.socket(std.c.AF.INET, std.c.SOCK.STREAM, 0);
-    try std.testing.expect(client >= 0);
-    const address: std.c.sockaddr.in = .{
-        .port = std.mem.nativeToBig(u16, relic_server_port(srv)),
-        .addr = std.mem.nativeToBig(u32, 0x7f000001),
-    };
-    try std.testing.expectEqual(0, libc.connect(client, @ptrCast(&address), @sizeOf(std.c.sockaddr.in)));
+    const client = try TestClient.connect(relic_server_port(srv));
     var out: [4]*ExchangeView = undefined;
     // Ticks until the connection task has issued its read, so the bytes
     // arrive through the loop and not through the optimistic first recv.
@@ -3000,8 +3034,7 @@ test "tick: a request reaches the ready list on the caller's thread and the resp
         _ = relic_reactor_tick(r, 0, &out, out.len);
         sleepMs(5);
     }
-    const request = "GET /x HTTP/1.1\r\nHost: t\r\n\r\n";
-    try std.testing.expectEqual(@as(isize, request.len), libc.write(client, request, request.len));
+    try client.writeAll("GET /x HTTP/1.1\r\nHost: t\r\n\r\n");
 
     var n: u32 = 0;
     rounds = 0;
@@ -3022,20 +3055,15 @@ test "tick: a request reaches the ready list on the caller's thread and the resp
     var total: usize = 0;
     while (total < head.len and rounds < 200) : (rounds += 1) {
         _ = relic_reactor_tick(r, 10, &out, out.len);
-        var pfd = [_]std.posix.pollfd{.{ .fd = client, .events = std.posix.POLL.IN, .revents = 0 }};
-        if ((try std.posix.poll(&pfd, 0)) > 0) {
-            const got_now = libc.read(client, got[total..].ptr, got.len - total);
-            try std.testing.expect(got_now > 0);
-            total += @intCast(got_now);
-        }
+        total += try client.readSome(got[total..]);
     }
     try std.testing.expectEqualStrings(head, got[0..total]);
 
     // The peer closes. The connection task reads EOF and ends, which the
     // idle count shows, within a few ticks.
-    _ = libc.close(client);
+    client.close();
     rounds = 0;
-    while (r.idle.load(.monotonic) != 0 and rounds < 100) : (rounds += 1) {
+    while (r.connections.load(.monotonic) != 0 and rounds < 600) : (rounds += 1) {
         _ = relic_reactor_tick(r, 0, &out, out.len);
         sleepMs(5);
     }
@@ -3113,7 +3141,6 @@ const TestTlsClient = struct {
 };
 
 test "tls: a request over TLS reaches the ready list and the response goes back encrypted" {
-    if (builtin.os.tag == .windows) return error.SkipZigTest;
     const pem = testPem(test_chain, test_key);
     var failure: BindFailure = undefined;
     const srv = relic_server_bind(null, "127.0.0.1", 0, &test_options, &pem, &failure) orelse return error.BindFailed;
@@ -3147,7 +3174,6 @@ test "tls: a request over TLS reaches the ready list and the response goes back 
 }
 
 test "tls: a stopped reactor sheds a connection that has not sent its first byte" {
-    if (builtin.os.tag == .windows) return error.SkipZigTest;
     const pem = testPem(test_chain, test_key);
     var failure: BindFailure = undefined;
     const srv = relic_server_bind(null, "127.0.0.1", 0, &test_options, &pem, &failure) orelse return error.BindFailed;
