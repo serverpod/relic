@@ -550,6 +550,12 @@ pub const Server = struct {
     group: ?[]u8,
     thread: std.Thread = undefined,
     stop: std.atomic.Value(bool) = .init(false),
+    /// Shared by the acceptor's runtime and every reactor's on Windows
+    /// only. On IOCP a socket is bound to one completion port for life, so
+    /// the reactor sees a stream the acceptor took only when both poll the
+    /// same port. Elsewhere sharing just puts one in-flight counter on
+    /// every reactor's hot path.
+    loop_group: zio.ev.LoopGroup = .{},
     /// Set once the listener is bound or binding failed.
     bound: zio.os.ResetEvent = .init(),
     bound_port: std.atomic.Value(u16) = .init(0),
@@ -560,6 +566,10 @@ pub const Server = struct {
     attached_count: u32 = 0,
     /// Rotates the start of the least-loaded scan, so ties spread out.
     next_start: u32 = 0,
+
+    fn sharedLoopGroup(self: *Server) ?*zio.ev.LoopGroup {
+        return if (builtin.os.tag == .windows) &self.loop_group else null;
+    }
 
     fn connectionsTotal(self: *Server) u32 {
         self.attach_lock.lock();
@@ -614,7 +624,7 @@ pub const Server = struct {
     }
 
     fn runInner(self: *Server) !void {
-        const rt = try zio.Runtime.init(self.gpa, .{ .executors = .exact(1) });
+        const rt = try zio.Runtime.init(self.gpa, .{ .executors = .exact(1), .loop_group = self.sharedLoopGroup() });
         defer rt.deinit();
 
         const listener = try self.address.listen(.{
@@ -2333,7 +2343,7 @@ fn createReactor(srv: *Server, port: dart.Dart_Port_DL) !*Reactor {
     const gpa = std.heap.c_allocator;
     const r = try gpa.create(Reactor);
     errdefer gpa.destroy(r);
-    const rt = try zio.Runtime.init(gpa, .{ .executors = .exact(1) });
+    const rt = try zio.Runtime.init(gpa, .{ .executors = .exact(1), .loop_group = srv.sharedLoopGroup() });
     errdefer rt.deinit();
     r.* = .{ .gpa = gpa, .server = srv, .slot = no_slot, .port = port, .rt = rt };
     r.incoming.init();
