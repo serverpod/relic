@@ -7,8 +7,8 @@
         // zio with the Executor.tick patch and io_uring_single_issuer, until
         // they are upstream.
         .zio = .{
-            .url = "git+https://github.com/nielsenko/zio#97bbe04f56980baf1cf70f9ac7ae82ed5bb5aa7f",
-            .hash = "zio-0.19.0-xHbVVO2GLgDrCLEOrBrau0FuUwkqybGs2scbUEyS_k0A",
+            .url = "git+https://github.com/nielsenko/zio#d566dfc6ec7b9e7eda5c6831681e93903722437b",
+            .hash = "zio-0.19.0-xHbVVLuNLgDoJs_3MoO9WcdHhbesqPG-48kyG9mdtTRf",
         },
         // lalinsky's tls.zig, the one dusty uses, with the server picking
         // the cipher suite in its own order, until that is upstream.

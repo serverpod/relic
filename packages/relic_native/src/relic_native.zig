@@ -455,11 +455,14 @@ pub const Reactor = struct {
 
 /// Ends the waiter's wait before its deadline, to stop it or to re-arm
 /// it with an earlier deadline. A pipe, polled alongside the loop's
-/// handle where the loop has one. On Windows the loop has none, so a
-/// futex word stands in and the wait is bounded, which keeps an idle
-/// loop looked at.
+/// handle. On Windows the handle is the completion port, which has no
+/// readiness, so the waiter dequeues one entry and posts it back, and
+/// the poke is an APC that ends that wait.
 const Poke = if (builtin.os.tag == .windows) struct {
-    word: std.atomic.Value(u32) = .init(0),
+    const windows = zio.os.windows;
+
+    /// The waiter's thread, set by it before its first wait.
+    waiter: std.atomic.Value(?windows.HANDLE) = .init(null),
 
     fn init(self: *Poke) bool {
         _ = self;
@@ -467,26 +470,53 @@ const Poke = if (builtin.os.tag == .windows) struct {
     }
 
     fn deinit(self: *Poke) void {
-        _ = self;
+        if (self.waiter.load(.acquire)) |h| _ = windows.CloseHandle(h);
+    }
+
+    /// Makes the calling thread the one a poke reaches.
+    fn adopt(self: *Poke) void {
+        var h: windows.HANDLE = undefined;
+        const ok = windows.DuplicateHandle(
+            windows.GetCurrentProcess(),
+            windows.GetCurrentThread(),
+            windows.GetCurrentProcess(),
+            &h,
+            0,
+            windows.FALSE,
+            windows.DUPLICATE_SAME_ACCESS,
+        );
+        if (ok != windows.FALSE) self.waiter.store(h, .release);
     }
 
     fn poke(self: *Poke) void {
-        _ = self.word.fetchAdd(1, .release);
-        zio.os.Futex.wake(&self.word, .one);
+        const h = self.waiter.load(.acquire) orelse return;
+        _ = windows.QueueUserAPC(nop, h, 0);
     }
 
-    /// Waits for a poke or `timeout_ms`, 10 ms when there is no deadline.
+    fn nop(_: windows.ULONG_PTR) callconv(.winapi) void {}
+
+    /// Waits for an entry on the port, a poke or a wake, or `timeout_ms`.
+    /// An entry is the loop's and goes back unchanged.
     fn wait(self: *Poke, host: anytype, timeout_ms: i32) void {
-        _ = host;
-        const seen = self.word.load(.acquire);
-        const ms: u32 = if (timeout_ms < 0) 10 else @intCast(timeout_ms);
-        zio.os.Futex.timedWait(&self.word, seen, .fromMilliseconds(ms)) catch {};
+        _ = self;
+        const port: windows.HANDLE = @ptrCast(host orelse return);
+        var entries: [1]windows.OVERLAPPED_ENTRY = undefined;
+        var n: u32 = 0;
+        const ms: u32 = if (timeout_ms < 0) windows.INFINITE else @intCast(timeout_ms);
+        if (windows.GetQueuedCompletionStatusEx(port, &entries, 1, &n, ms, windows.TRUE) == windows.FALSE) return;
+        if (n == 0) return;
+        const e = entries[0];
+        _ = windows.PostQueuedCompletionStatus(port, e.dwNumberOfBytesTransferred, e.lpCompletionKey, e.lpOverlapped);
     }
 } else struct {
     pipe: [2]c_int = .{ -1, -1 },
 
     fn init(self: *Poke) bool {
         return libc.pipe(&self.pipe) == 0;
+    }
+
+    fn adopt(self: *Poke) void {
+        _ = self;
     }
 
     fn deinit(self: *Poke) void {
@@ -519,17 +549,21 @@ const Poke = if (builtin.os.tag == .windows) struct {
 /// timer is due, then posts one message to the isolate. Armed by Dart
 /// through relic_reactor_wait each time it has nothing to do.
 fn waiterThread(r: *Reactor) void {
+    const loop = &r.rt.main_executor.loop;
+    r.poke.adopt();
+    loop.adoptWakeThread();
     while (true) {
         r.waiter_arm.wait();
         r.waiter_arm.reset();
         if (r.waiter_stop.load(.acquire)) return;
-        const loop = &r.rt.main_executor.loop;
         const until = r.waiter_until.load(.acquire);
         const timeout: i32 = if (until == std.math.maxInt(i64))
             -1
         else
             @intCast(@max(0, @min(until - nowMs(), std.math.maxInt(i32))));
-        r.poke.wait(loop.hostHandle(), timeout);
+        // A wake since the last tick means work already. Otherwise a wake
+        // from now on reaches the handle.
+        if (loop.prepareHostWait()) r.poke.wait(loop.hostHandle(), timeout);
         r.waiter_armed.store(false, .release);
         if (r.waiter_stop.load(.acquire)) return;
         if (dart.Dart_PostInteger_DL) |post| _ = post(r.port, 0);
