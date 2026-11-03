@@ -57,8 +57,13 @@ jobs:
       - run: rm build.zig build.zig.zon
         working-directory: packages/relic_native
         shell: bash
-      - run: dart test
+      # A crashed test process can exit 0 without a summary, so the
+      # summary line is required, not just the exit code.
+      - run: |
+          dart test --reporter=expanded 2>&1 | tee test.log
+          grep -qE 'All( other)? tests passed' test.log
         working-directory: packages/relic_native
+        shell: bash
 
   publish:
     name: Publish to pub.dev
