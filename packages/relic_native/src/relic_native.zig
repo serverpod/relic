@@ -390,6 +390,8 @@ pub const Reactor = struct {
     waiter: std.Thread = undefined,
     waiter_arm: zio.os.ResetEvent = .init(),
     waiter_stop: std.atomic.Value(bool) = .init(false),
+    /// Set once the waiter is the thread a wake of the loop reaches.
+    waiter_adopted: zio.os.ResetEvent = .init(),
     poke: Poke = .{},
     /// The waiter is in its poll, with `waiter_until` as its deadline in
     /// milliseconds of loop time, or max when it has none.
@@ -552,6 +554,7 @@ fn waiterThread(r: *Reactor) void {
     const loop = &r.rt.main_executor.loop;
     r.poke.adopt();
     loop.adoptWakeThread();
+    r.waiter_adopted.set();
     while (true) {
         r.waiter_arm.wait();
         r.waiter_arm.reset();
@@ -2388,6 +2391,8 @@ fn createReactor(srv: *Server, port: dart.Dart_Port_DL) !*Reactor {
         r.waiter_arm.set();
         r.waiter.join();
     }
+    // A wake before the waiter adopted the loop would go to this thread.
+    r.waiter_adopted.wait();
 
     srv.attach_lock.lock();
     defer srv.attach_lock.unlock();
@@ -2451,6 +2456,9 @@ export fn relic_reactor_destroy(r: *Reactor) void {
     r.pokeWaiter();
     r.waiter.join();
     r.poke.deinit();
+    // The loop runs on this thread from here. A wake from another loop
+    // of the group reaches the thread it was given, which has just ended.
+    r.rt.main_executor.loop.adoptWakeThread();
     // Sockets that arrived after the last tick never got a task.
     while (r.incoming.pop()) |node| {
         const inc: *Incoming = @fieldParentPtr("node", node);
