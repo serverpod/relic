@@ -72,7 +72,8 @@ Future<String> _opensslExchange(int port, String request) async {
   final reply = await utf8
       .decodeStream(client.stdout)
       .timeout(
-        const Duration(seconds: 5),
+        // Spawning openssl on a loaded Windows runner alone can take seconds.
+        const Duration(seconds: 20),
         onTimeout: () {
           client.kill();
           return '';

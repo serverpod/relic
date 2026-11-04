@@ -263,9 +263,9 @@ void _webSocketTests(AdapterConformance conformance) {
       'when a client connects and remains idle for a period, '
       'then pings keep the connection up and later messages arrive',
       () async {
-        // Long enough for a loaded machine to answer each ping before the
+        // Long enough for a loaded CI runner to answer each ping before the
         // next one is due. A framed socket closes on the first missed pong.
-        const pingInterval = Duration(milliseconds: 50);
+        const pingInterval = Duration(milliseconds: 200);
         final tooLong = pingInterval * 3;
 
         await scheduleServer((req) {
