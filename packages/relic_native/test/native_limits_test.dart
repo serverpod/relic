@@ -67,28 +67,36 @@ void main() {
     socket.destroy();
   });
 
-  test('Given a write timeout, when a client stops reading a large response, '
-      'then the server closes the connection', () async {
-    server = await serveNative(
-      (_) => Response.ok(body: Body.fromData(Uint8List(64 << 20))),
-      options: const NativeOptions(writeTimeout: Duration(milliseconds: 300)),
-    );
-    final socket = await Socket.connect('127.0.0.1', server.port);
-    // Never listened to, so the response backs up in the socket buffers.
-    socket.write('GET / HTTP/1.1\r\nHost: x\r\n\r\n');
-    await socket.flush();
+  test(
+    'Given a write timeout, when a client stops reading a large response, '
+    'then the server closes the connection',
+    () async {
+      server = await serveNative(
+        (_) => Response.ok(body: Body.fromData(Uint8List(64 << 20))),
+        options: const NativeOptions(writeTimeout: Duration(milliseconds: 300)),
+      );
+      final socket = await Socket.connect('127.0.0.1', server.port);
+      // Never listened to, so the response backs up in the socket buffers.
+      socket.write('GET / HTTP/1.1\r\nHost: x\r\n\r\n');
+      await socket.flush();
 
-    final stopwatch = Stopwatch()..start();
-    var info = await server.connectionsInfo();
-    while (info.active + info.idle > 0 &&
-        stopwatch.elapsed < const Duration(seconds: 5)) {
-      await Future<void>.delayed(const Duration(milliseconds: 50));
-      info = await server.connectionsInfo();
-    }
+      final stopwatch = Stopwatch()..start();
+      var info = await server.connectionsInfo();
+      while (info.active + info.idle > 0 &&
+          stopwatch.elapsed < const Duration(seconds: 5)) {
+        await Future<void>.delayed(const Duration(milliseconds: 50));
+        info = await server.connectionsInfo();
+      }
 
-    expect(info.active + info.idle, 0);
-    socket.destroy();
-  });
+      expect(info.active + info.idle, 0);
+      socket.destroy();
+    },
+    skip: Platform.isWindows
+        // Loopback on Windows takes the whole 64 MB send at once, so the
+        // server sees the response go out and nothing stalls.
+        ? 'Windows buffers the unread response'
+        : null,
+  );
 
   test('Given a header timeout, when a client drips a partial head, '
       'then it gets 408 and the connection closes', () async {
