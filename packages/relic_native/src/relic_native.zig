@@ -3462,7 +3462,7 @@ const request_tokens = [_][]const u8{
     "GET ",                "POST ",   "0\r\n\r\n",            "5\r\nhello\r\n", "ffffffffffffffff\r\n",
 };
 
-// Zig 0.17.0 does not link the tests in fuzz mode on macOS, so the suite
+// Zig 0.17.1 does not link the tests in fuzz mode on macOS, so the suite
 // carries its own sweep, seeded mutations of the corpus with no coverage
 // guidance. `zig build test --fuzz` takes over once the toolchain builds.
 test "fuzz: a seeded mutation sweep over the request corpus" {

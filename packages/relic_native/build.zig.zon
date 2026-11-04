@@ -2,7 +2,7 @@
     .name = .relic_native,
     .version = "2.0.0-rc.2",
     .fingerprint = 0x538fb26d0ce37fa8,
-    .minimum_zig_version = "0.17.0",
+    .minimum_zig_version = "0.17.1",
     .dependencies = .{
         // zio with the Executor.tick patch and io_uring_single_issuer, until
         // they are upstream.
