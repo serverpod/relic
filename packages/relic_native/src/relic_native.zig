@@ -2534,9 +2534,12 @@ export fn relic_reactor_wait(r: *Reactor) void {
         until = nowMs() + @as(i64, @intCast(d.toMilliseconds())) + 1;
     }
     if (r.waiter_armed.load(.acquire)) {
-        // Already waiting. A deadline earlier than the one it waits with
-        // reaches it through the pipe. The spurious message that follows
-        // costs one tick.
+        // Already waiting. The tick that led here cleared the announced
+        // wait, so a wake since would skip the waiter. Announce it again,
+        // or poke the waiter when such a wake is pending.
+        if (!loop.prepareHostWait()) r.pokeWaiter();
+        // A deadline earlier than the one it waits with reaches it through
+        // the pipe. The spurious message that follows costs one tick.
         if (until < r.waiter_until.load(.acquire)) r.pokeWaiter();
         return;
     }
@@ -3076,6 +3079,27 @@ const TestClient = struct {
         return try net.recv(self.fd, &buffers, .{});
     }
 };
+
+test "wait: a tick while the waiter is armed does not lose the next wake" {
+    const srv = testBind(null) orelse return error.BindFailed;
+    const r = relic_reactor_create(srv, 1) orelse return error.AttachFailed;
+    defer relic_reactor_destroy(r);
+    var out: [4]*ExchangeView = undefined;
+
+    // The waiter announces its wait and parks with no deadline.
+    relic_reactor_wait(r);
+    sleepMs(50);
+    try std.testing.expect(r.waiter_armed.load(.acquire));
+    // A tick's poll clears the announcement. The wait that ends the
+    // drain turn finds the waiter armed and must restore it.
+    _ = relic_reactor_tick(r, 0, &out, out.len);
+    relic_reactor_wait(r);
+    // A completion finished on another loop reaches this one as a wake.
+    r.rt.main_executor.loop.wake();
+    var rounds: usize = 0;
+    while (r.waiter_armed.load(.acquire) and rounds < 100) : (rounds += 1) sleepMs(10);
+    try std.testing.expect(!r.waiter_armed.load(.acquire));
+}
 
 test "tick: a request reaches the ready list on the caller's thread and the response goes out" {
     const srv = testBind(null) orelse return error.BindFailed;
