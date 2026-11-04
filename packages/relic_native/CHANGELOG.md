@@ -1,3 +1,7 @@
+## Unreleased
+- Works on Windows: the acceptor and the reactors share one zio loop group,
+  and the waiter thread waits on the completion port
+
 ## 2.0.0-rc.3
 - Initial release: `NativeAdapter.bind`, `NativeExchange` and `serveNative`
   on zio and `std.http.Server`. HTTP/1.0 and HTTP/1.1, keep-alive, several
