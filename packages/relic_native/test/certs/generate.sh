@@ -3,10 +3,12 @@
 # localhost leaves. The leaves cover the keys the server takes, an EC P-256
 # key as PKCS#8 and as SEC 1, an RSA 2048 key and an Ed25519 key, and what
 # it refuses, an encrypted key and an expired certificate. One leaf hangs
-# off the intermediate, with the chain file holding both. The CA and the
-# intermediate are valid for a century. Apple's verifier, which Dart uses
-# on macOS, refuses a server certificate valid for more than 825 days, so
-# the leaves expire after that and a rerun renews them. The CA and
+# off the intermediate, with the chain file holding both. For client
+# authentication there is a client certificate the CA signs, an expired
+# one, and one a second, unrelated CA signs. The CAs and the intermediate
+# are valid for a century. Apple's verifier, which Dart uses on macOS,
+# refuses a server certificate valid for more than 825 days, so the
+# leaves expire after that and a rerun renews them. The CA and
 # intermediate keys are thrown away, so a rerun replaces it all.
 set -eu
 cd "$(dirname "$0")"
@@ -47,8 +49,29 @@ leaf() {
     -out "${name}_cert.pem" -days 825 -extfile "$tmp/$name.ext" "$@"
 }
 
+# client_leaf NAME SIGNER_CERT SIGNER_KEY [x509 options]: NAME_cert.pem
+# and NAME_key.pem for a client, signed by the signer.
+client_leaf() {
+  name=$1 signer_cert=$2 signer_key=$3
+  shift 3
+  openssl genpkey -algorithm EC -pkeyopt ec_paramgen_curve:P-256 -out "${name}_key.pem"
+  openssl req -new -key "${name}_key.pem" -out "$tmp/$name.csr" \
+    -subj "/CN=relic_native test $name"
+  printf '%s\n' \
+    "basicConstraints=critical,CA:FALSE" \
+    "extendedKeyUsage=clientAuth" > "$tmp/$name.ext"
+  openssl x509 -req -in "$tmp/$name.csr" -CA "$signer_cert" -CAkey "$signer_key" \
+    -out "${name}_cert.pem" -days 825 -extfile "$tmp/$name.ext" "$@"
+}
+
 ca ca ca_cert.pem self self
 ca intermediate "$tmp/intermediate_cert.pem" ca_cert.pem "$tmp/ca_key.pem"
+ca other_ca other_ca_cert.pem self self
+
+client_leaf client ca_cert.pem "$tmp/ca_key.pem"
+client_leaf expired_client ca_cert.pem "$tmp/ca_key.pem" \
+  -not_before 20200101000000Z -not_after 20200102000000Z
+client_leaf other_client other_ca_cert.pem "$tmp/other_ca_key.pem"
 
 openssl genpkey -algorithm EC -pkeyopt ec_paramgen_curve:P-256 -out localhost_key.pem
 leaf localhost localhost_key.pem ca_cert.pem "$tmp/ca_key.pem"
