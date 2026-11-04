@@ -2436,18 +2436,15 @@ fn stopAcceptor(srv: *Server) void {
 }
 
 /// Detaches the reactor, cancels its connections and frees it. Assumes
-/// Dart has aborted every exchange it still held. The last detach stops
-/// the server, which blocks until its thread has joined, and frees it.
-/// Both pointers are dead afterwards.
+/// Dart has aborted every exchange it still held. The last reactor out
+/// stops the server, which blocks until its thread has joined, and frees
+/// it. Both pointers are dead afterwards.
 export fn relic_reactor_destroy(r: *Reactor) void {
     const srv = r.server;
-    var last = false;
     {
         srv.attach_lock.lock();
         defer srv.attach_lock.unlock();
         srv.reactors[r.slot] = null;
-        srv.attached_count -= 1;
-        last = srv.attached_count == 0;
     }
     r.stop = true;
     r.destroying = true;
@@ -2475,6 +2472,15 @@ export fn relic_reactor_destroy(r: *Reactor) void {
     const gpa = r.gpa;
     gpa.destroy(r);
 
+    // Counted out only now: the runtime polled the server's loop group
+    // until its deinit, so the server has to outlive it.
+    var last = false;
+    {
+        srv.attach_lock.lock();
+        defer srv.attach_lock.unlock();
+        srv.attached_count -= 1;
+        last = srv.attached_count == 0;
+    }
     if (!last) return;
     if (srv.group) |g| {
         registry_lock.lock();
