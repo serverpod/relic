@@ -2,7 +2,7 @@
     .name = .relic_baseline_dusty,
     .version = "0.0.0",
     .fingerprint = 0x6ee566658c00f499,
-    .minimum_zig_version = "0.17.0",
+    .minimum_zig_version = "0.17.1",
     .dependencies = .{
         .dusty = .{
             .url = "git+https://github.com/lalinsky/dusty#e319833262556bf0c899e9495e591b675451c88d",
