@@ -2301,8 +2301,7 @@ fn pokeAcceptor(srv: *Server) void {
 /// Stops accepting, joins the thread and frees the server. Assumes every
 /// reactor has detached.
 fn destroyServer(srv: *Server) void {
-    srv.stop.store(true, .release);
-    pokeAcceptor(srv);
+    stopAcceptor(srv);
     srv.thread.join();
     const gpa = srv.gpa;
     if (srv.tls_auth) |auth| freeCertKeyPair(gpa, auth);
@@ -2421,7 +2420,13 @@ export fn relic_reactor_stop(r: *Reactor) void {
         const other = maybe orelse continue;
         if (other.accepting.load(.acquire)) return;
     }
-    srv.stop.store(true, .release);
+    stopAcceptor(srv);
+}
+
+/// Stops the accept loop once. A second poke after the listener closed
+/// is a refused connect, which Windows takes two seconds to report.
+fn stopAcceptor(srv: *Server) void {
+    if (srv.stop.swap(true, .acq_rel)) return;
     pokeAcceptor(srv);
 }
 
