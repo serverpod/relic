@@ -314,7 +314,9 @@ void main() {
     await serve();
     final client = await _Client.connect(server.port);
     final socket = await upgraded.future;
-    socket.pingInterval = const Duration(milliseconds: 20);
+    // A pong must arrive within the interval, which a slow runner needs
+    // more than 20 ms for.
+    socket.pingInterval = const Duration(milliseconds: 100);
 
     for (var i = 0; i < 3; i++) {
       final ping = (await client.next())!;
