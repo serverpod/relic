@@ -1,3 +1,6 @@
+## 2.0.0-rc.4
+- fix: `relic_native` runs on Windows. The core packages are unchanged and released in step
+
 ## 2.0.0-rc.3
 - feat!: Replace the request stream with an exchange-based `Adapter`
   - BREAKING: `Adapter` is an interface with `listeners`, `capabilities` and `start(sink)`. It hands over `AdapterExchange` objects with `respond`, `hijack`, `upgradeWebSocket` and `abort`. `Adapter.requests`, `Adapter.port` and `AdapterRequest` are gone. The port is on `listeners` and on `RelicServer.port`. The toolkit for writing an adapter is in `package:relic_core/adapter.dart`

@@ -1,6 +1,6 @@
 name: relic_core
 description: Core framework for Relic web server (platform-agnostic).
-version: 2.0.0-rc.3
+version: 2.0.0-rc.4
 repository: https://github.com/serverpod/relic
 homepage: https://docs.dartrelic.dev/
 topics:
@@ -24,7 +24,7 @@ dependencies:
   meta: ^1.17.0
   mime: ^2.0.0
   path: ^1.9.0
-  relic_headers: ^2.0.0-rc.3
+  relic_headers: ^2.0.0-rc.4
   stack_trace: ^1.11.0
   stream_channel: ^2.1.1
   vm_service: ^15.0.0
