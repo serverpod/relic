@@ -691,6 +691,9 @@ pub const Server = struct {
         const listener = try self.address.listen(.{
             .reuse_address = true,
             .kernel_backlog = @intCast(@min(self.options.backlog, std.math.maxInt(u31))),
+            // Set explicitly, as dart:io does. Windows defaults to IPv6 only,
+            // the other platforms to dual-stack.
+            .ip6_only = if (self.address.getFamily() == .ipv6) false else null,
         });
         defer listener.close();
         self.bound_port.store(listener.socket.address.ip.getPort(), .release);
