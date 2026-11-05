@@ -17,6 +17,7 @@
   which pins meta to 1.18, can take the package
 - A listening port on Windows refuses every other bind, as in dart:io. Before,
   a socket with SO_REUSEADDR could take it
+- `NativeAdapter.bind` takes `v6Only`, as `IOAdapter.bind` does
 
 ## 2.0.0-rc.4
 - Works on Windows: the acceptor and the reactors share one zio loop group,

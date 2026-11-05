@@ -108,6 +108,8 @@ pub const Options = extern struct {
     body_timeout_ms: u32,
     /// Inactivity while writing a response. 0 = none.
     write_timeout_ms: u32,
+    /// IPV6_V6ONLY on an IPv6 listener, which then refuses IPv4 clients.
+    v6_only: bool,
 };
 
 /// PEM text for an HTTPS server, read during relic_server_bind and not
@@ -693,7 +695,7 @@ pub const Server = struct {
             .kernel_backlog = @intCast(@min(self.options.backlog, std.math.maxInt(u31))),
             // Set explicitly, as dart:io does. Windows defaults to IPv6 only,
             // the other platforms to dual-stack.
-            .ip6_only = if (self.address.getFamily() == .ipv6) false else null,
+            .ip6_only = if (self.address.getFamily() == .ipv6) self.options.v6_only else null,
         });
         defer listener.close();
         self.bound_port.store(listener.socket.address.ip.getPort(), .release);
@@ -2994,6 +2996,7 @@ const test_options: Options = .{
     .header_timeout_ms = 0,
     .body_timeout_ms = 0,
     .write_timeout_ms = 0,
+    .v6_only = false,
 };
 
 /// A plain server on a free loopback port, as most tests bind one.
