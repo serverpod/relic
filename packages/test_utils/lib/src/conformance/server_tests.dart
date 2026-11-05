@@ -34,7 +34,7 @@ void serverTests(AdapterConformance conformance) {
   test('Given a bound adapter with no handler mounted, '
       'when a request arrives before the server is started, '
       'then it is answered once a handler is mounted', () async {
-    final adapter = await conformance.bind(shared: false)();
+    final adapter = await conformance.bindAdapter();
     final port = adapter.listeners.single.port;
     final delayedResponse = http.read(Uri.http('localhost:$port'));
     final server = RelicServer(() => adapter);

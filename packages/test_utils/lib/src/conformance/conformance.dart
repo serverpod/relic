@@ -5,9 +5,17 @@ import 'package:relic_core/relic_core.dart';
 
 /// Returns a fresh adapter factory.
 ///
-/// The suite calls it once per server it starts. [shared] is true when
-/// several isolates will each call the returned factory to serve one port.
-typedef AdapterFactoryBuilder = Factory<Adapter> Function({bool shared});
+/// The suite calls it once per server it starts. [address] and [port] are
+/// where to listen, [port] 0 for a free one. [v6Only] keeps an IPv6
+/// listener from taking IPv4 clients. [shared] is true when several
+/// isolates will each call the returned factory to serve one port.
+typedef AdapterFactoryBuilder =
+    Factory<Adapter> Function({
+      required InternetAddress address,
+      int port,
+      bool v6Only,
+      bool shared,
+    });
 
 /// Opens a client connection to the server on [port].
 typedef SocketConnector = Future<Socket> Function(int port);
@@ -85,15 +93,38 @@ final class AdapterConformance {
 
   /// A bound adapter with nothing started, for a test that drives the
   /// exchanges itself.
-  Future<Adapter> bindAdapter() async => await bind()();
+  Future<Adapter> bindAdapter() async =>
+      await bind(address: InternetAddress.loopbackIPv4)();
 
-  /// A server on port 0 that has not started yet.
-  RelicServer create({int noOfIsolates = 1}) =>
-      RelicServer(bind(shared: noOfIsolates > 1), noOfIsolates: noOfIsolates);
+  /// A server that has not started yet, on the IPv4 loopback and a free
+  /// port unless [address] and [port] say otherwise.
+  RelicServer create({
+    int noOfIsolates = 1,
+    InternetAddress? address,
+    int port = 0,
+    bool v6Only = false,
+  }) => RelicServer(
+    bind(
+      address: address ?? InternetAddress.loopbackIPv4,
+      port: port,
+      v6Only: v6Only,
+      shared: noOfIsolates > 1,
+    ),
+    noOfIsolates: noOfIsolates,
+  );
 
   /// A started server serving [handler].
-  Future<RelicServer> serve(Handler handler, {int noOfIsolates = 1}) async {
-    final server = create(noOfIsolates: noOfIsolates);
+  Future<RelicServer> serve(
+    Handler handler, {
+    int noOfIsolates = 1,
+    InternetAddress? address,
+    bool v6Only = false,
+  }) async {
+    final server = create(
+      noOfIsolates: noOfIsolates,
+      address: address,
+      v6Only: v6Only,
+    );
     await server.mountAndStart(handler);
     return server;
   }

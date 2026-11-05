@@ -8,8 +8,10 @@
 /// void main() {
 ///   adapterConformance(
 ///     'IOAdapter',
-///     bind: ({shared = false}) =>
-///         () => IOAdapter.bind(InternetAddress.loopbackIPv4, shared: shared),
+///     bind: ({required address, port = 0, v6Only = false, shared = false}) =>
+///         () => IOAdapter.bind(
+///           address, port: port, v6Only: v6Only, shared: shared,
+///         ),
 ///     capabilities: const AdapterCapabilities(hijack: true, webSocket: true),
 ///   );
 /// }
@@ -19,6 +21,7 @@ library;
 import 'package:relic_core/relic_core.dart';
 import 'package:test/test.dart';
 
+import 'src/conformance/address_tests.dart';
 import 'src/conformance/cancel_tests.dart';
 import 'src/conformance/close_from_handler_tests.dart';
 import 'src/conformance/conformance.dart';
@@ -41,8 +44,10 @@ export 'src/conformance/framing_tests.dart';
 
 /// Declares the whole suite for one adapter.
 ///
-/// [bind] returns a fresh adapter factory each time it is called. `shared`
-/// is true when several isolates will call the factory for one server.
+/// [bind] returns a fresh adapter factory each time it is called. `address`
+/// and `port` are where to listen, `v6Only` keeps an IPv6 listener from
+/// taking IPv4 clients, and `shared` is true when several isolates will
+/// call the factory for one server.
 /// [connect] opens a raw client connection, see [AdapterConformance].
 /// The three flags name what a transport may be unable to do, see
 /// [AdapterConformance]. The suite skips the tests that need it, with the
@@ -68,6 +73,7 @@ void adapterConformance(
   group(name, () {
     serverTests(conformance);
     serveTests(conformance);
+    addressTests(conformance);
     framingTests(conformance);
     headerWireTests(conformance);
     requestBodyTests(conformance);
