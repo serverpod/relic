@@ -38,17 +38,18 @@ await app.serveNative(
 ```
 
 The chain holds the server's certificate first, then any intermediates.
-The key is a PKCS#8 or SEC 1 key, ECDSA, RSA or Ed25519. An encrypted
-key takes its `password`: PKCS#8 under PBES2 with PBKDF2 and AES-128-CBC
-or AES-256-CBC, or a key block behind OpenSSL's `DEK-Info` headers with
-the same ciphers, as `openssl pkcs8`, `openssl genpkey` and
-`openssl ec -aes256` write them. An empty password counts as none.
-`bind` throws a `TlsException` for a key it cannot use, for a missing or
-wrong password, and for a chain with no certificate or one that is
-expired, unreadable or repeats a subject. The server speaks TLS 1.3 only
-and selects `http/1.1` through ALPN. A client whose ALPN offer holds no
-`http/1.1` is refused with a TLS alert. A client that sends plain HTTP to
-the port gets a plain 400.
+The key is a PKCS#8 key, ECDSA, RSA or Ed25519, or a SEC 1 or PKCS#1 one,
+the `EC PRIVATE KEY` and `RSA PRIVATE KEY` blocks cert-manager writes by
+default. An encrypted key takes its `password`: PKCS#8 under PBES2 with
+PBKDF2 and AES-128-CBC or AES-256-CBC, or a key block behind OpenSSL's
+`DEK-Info` headers with the same ciphers, as `openssl pkcs8`,
+`openssl genpkey` and `openssl ec -aes256` write them. An empty password
+counts as none. `bind` throws a `TlsException` for a key it cannot use,
+for a missing or wrong password, and for a chain with no certificate or
+one that is expired, unreadable or repeats a subject. The server speaks
+TLS 1.3 only and selects `http/1.1` through ALPN. A client whose ALPN
+offer holds no `http/1.1` is refused with a TLS alert. A client that sends
+plain HTTP to the port gets a plain 400.
 
 To require a client certificate, pass the CA certificates it must chain
 to as `clientAuthorities`:
