@@ -891,6 +891,10 @@ const Link = struct {
         self.secure = secure;
     }
 
+    /// What the handshake selects through ALPN: the one protocol the
+    /// server speaks. A client that offers only others is refused.
+    const alpn_protocols = [_][]const u8{"http/1.1"};
+
     /// Runs the server side of the TLS handshake. HTTP then reads and
     /// writes cleartext through `read_buffer` and `write_buffer`.
     fn handshake(self: *Link, auth: *tls.config.CertKeyPair, client_auth: ?tls.config.ClientAuth, read_buffer: []u8, write_buffer: []u8) !void {
@@ -901,6 +905,7 @@ const Link = struct {
             .client_auth = client_auth,
             // Read to check the validity dates of a client certificate.
             .now = std.Io.Clock.real.now(std.Io.Threaded.global_single_threaded.io()),
+            .alpn_protocols = &alpn_protocols,
         });
         const conn = &secure.conn.?;
         secure.reader = conn.reader(read_buffer);

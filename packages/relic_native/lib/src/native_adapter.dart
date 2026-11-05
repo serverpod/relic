@@ -67,7 +67,8 @@ final class NativeOptions {
 /// [certificateChain] has the server's certificate first and any
 /// intermediates after it. [privateKey] is an unencrypted PKCS#8 or SEC 1
 /// key, ECDSA, RSA or Ed25519. The server speaks TLS 1.3 only, through
-/// tls.zig.
+/// tls.zig, and selects `http/1.1` through ALPN. A client that offers
+/// only other protocols is refused.
 ///
 /// With [clientAuthorities], the CA certificates a client certificate must
 /// chain to, the handshake requires a client certificate. A client without

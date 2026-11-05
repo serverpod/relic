@@ -317,7 +317,7 @@ void main() {
   test(
     'Given an HTTPS server, '
     'when a client offers h2 and http/1.1 in ALPN, '
-    'then no protocol is selected and the request is served as HTTP/1.1.',
+    'then http/1.1 is selected and the request is served as HTTP/1.1.',
     () async {
       server = await serveNative(_echoUrl, tls: _tls('localhost'));
       final socket = await SecureSocket.connect(
@@ -337,11 +337,33 @@ void main() {
           .timeout(const Duration(seconds: 5));
       socket.destroy();
 
-      expect(selected, isNull);
+      expect(selected, 'http/1.1');
       expect(reply, startsWith('HTTP/1.1 200 OK\r\n'));
       expect(reply, endsWith('\r\n\r\nhttps://localhost/p'));
     },
   );
+
+  test('Given an HTTPS server, '
+      'when a client offers only h2 in ALPN, '
+      'then the handshake ends with a TLS alert', () async {
+    server = await serveNative(_echoUrl, tls: _tls('localhost'));
+
+    await expectLater(
+      SecureSocket.connect(
+        'localhost',
+        server!.port,
+        context: _contextWith(),
+        supportedProtocols: ['h2'],
+      ),
+      throwsA(
+        isA<HandshakeException>().having(
+          (e) => e.toString(),
+          'toString',
+          contains('NO_APPLICATION_PROTOCOL'),
+        ),
+      ),
+    );
+  });
 
   test('Given an HTTPS server that pipes the request body into the response, '
       'when a client posts a body far over the inline limit, '
