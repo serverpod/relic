@@ -86,6 +86,11 @@ pub fn build(b: *std.Build) void {
             \\pub const ca = @embedFile("ca_cert.pem");
             \\pub const chain = @embedFile("localhost_cert.pem");
             \\pub const key = @embedFile("localhost_key.pem");
+            \\pub const encrypted_key = @embedFile("localhost_encrypted_key.pem");
+            \\pub const encrypted_aes128_key = @embedFile("localhost_encrypted_aes128_key.pem");
+            \\pub const encrypted_des3_key = @embedFile("localhost_encrypted_des3_key.pem");
+            \\pub const legacy_aes128_key = @embedFile("localhost_legacy_aes128_key.pem");
+            \\pub const legacy_key = @embedFile("localhost_legacy_key.pem");
             \\
         ),
     });

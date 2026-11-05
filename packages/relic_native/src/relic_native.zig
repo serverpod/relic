@@ -43,6 +43,7 @@ const builtin = @import("builtin");
 const zio = @import("zio");
 const tls = @import("tls");
 const dart = @import("dart_dl");
+const pem_key = @import("pem_key.zig");
 const header_names = @import("header_names.zig");
 const name_lookup = @import("name_lookup.zig");
 
@@ -116,6 +117,10 @@ pub const TlsPem = extern struct {
     certificate_chain_len: usize,
     private_key: [*]const u8,
     private_key_len: usize,
+    /// The password of an encrypted private key, UTF-8. Null for a key in
+    /// the clear.
+    password: ?[*]const u8,
+    password_len: usize,
     /// The CA certificates a client certificate must chain to. Set, the
     /// handshake requires a client certificate. Null asks for none.
     client_authorities: ?[*]const u8,
@@ -132,13 +137,17 @@ pub const BindFailure = enum(u8) {
     /// shares a subject with another. tls.zig would drop such a certificate
     /// and send the rest.
     certificate_chain = 2,
-    /// Not an unencrypted PKCS#8 or SEC 1 key of a kind tls.zig signs with.
+    /// Not a PKCS#8 or SEC 1 key of a kind tls.zig signs with, or one
+    /// encrypted in a form pem_key.zig does not read.
     private_key = 3,
     /// The client authorities hold no certificate, or one that is expired,
     /// unreadable, not a CA or shares a subject with another.
     client_authorities = 4,
     /// A join with other TLS settings than the group was bound with.
     tls_mismatch = 5,
+    /// The private key is encrypted and the password is missing or wrong,
+    /// or a password came with a key in the clear.
+    password = 6,
 };
 
 pub const HeaderSlot = extern struct {
@@ -2266,7 +2275,20 @@ fn createServer(group: ?[]const u8, ip: []const u8, port: u16, options: Options,
 /// Reads a server's certificate chain and private key, once per server.
 fn loadCertKeyPair(gpa: std.mem.Allocator, pem: *const TlsPem) !*tls.config.CertKeyPair {
     const chain = pem.certificate_chain[0..pem.certificate_chain_len];
-    const key = pem.private_key[0..pem.private_key_len];
+    const given = pem.private_key[0..pem.private_key_len];
+    const password: ?[]const u8 = if (pem.password) |p| p[0..pem.password_len] else null;
+    const decrypted = pem_key.decrypt(gpa, given, password) catch |err| return switch (err) {
+        error.OutOfMemory => error.OutOfMemory,
+        error.Password => error.Password,
+        error.Unsupported => error.PrivateKey,
+    };
+    defer {
+        if (decrypted) |plain| {
+            std.crypto.secureZero(u8, plain);
+            gpa.free(plain);
+        }
+    }
+    const key = decrypted orelse given;
     const pair = try gpa.create(tls.config.CertKeyPair);
     errdefer gpa.destroy(pair);
     // The bundle reads the clock to drop expired certificates.
@@ -2374,6 +2396,7 @@ fn tlsDigest(pem: ?*const TlsPem) ?[std.crypto.hash.sha2.Sha256.digest_length]u8
     const parts = [_][]const u8{
         p.certificate_chain[0..p.certificate_chain_len],
         p.private_key[0..p.private_key_len],
+        if (p.password) |w| w[0..p.password_len] else "",
         if (p.client_authorities) |a| a[0..p.client_authorities_len] else "",
     };
     for (parts) |part| {
@@ -2381,7 +2404,7 @@ fn tlsDigest(pem: ?*const TlsPem) ?[std.crypto.hash.sha2.Sha256.digest_length]u8
         h.update(std.mem.asBytes(&len));
         h.update(part);
     }
-    h.update(&.{@intFromBool(p.client_authorities != null)});
+    h.update(&.{ @intFromBool(p.password != null), @intFromBool(p.client_authorities != null) });
     return h.finalResult();
 }
 
@@ -2475,6 +2498,7 @@ export fn relic_server_bind(
             error.CertificateChain => .certificate_chain,
             error.PrivateKey => .private_key,
             error.ClientAuthorities => .client_authorities,
+            error.Password => .password,
             else => .bind,
         };
         return null;
@@ -3307,6 +3331,11 @@ test "tick: a request reaches the ready list on the caller's thread and the resp
 const test_ca = @import("test_certs").ca;
 const test_chain = @import("test_certs").chain;
 const test_key = @import("test_certs").key;
+const test_encrypted_key = @import("test_certs").encrypted_key;
+const test_encrypted_aes128_key = @import("test_certs").encrypted_aes128_key;
+const test_encrypted_des3_key = @import("test_certs").encrypted_des3_key;
+const test_legacy_aes128_key = @import("test_certs").legacy_aes128_key;
+const test_legacy_key = @import("test_certs").legacy_key;
 
 fn testPem(chain: []const u8, key: []const u8) TlsPem {
     return .{
@@ -3314,6 +3343,8 @@ fn testPem(chain: []const u8, key: []const u8) TlsPem {
         .certificate_chain_len = chain.len,
         .private_key = key.ptr,
         .private_key_len = key.len,
+        .password = null,
+        .password_len = 0,
         .client_authorities = null,
         .client_authorities_len = 0,
     };
@@ -3324,6 +3355,25 @@ fn testPemClientAuthorities(authorities: []const u8) TlsPem {
     pem.client_authorities = authorities.ptr;
     pem.client_authorities_len = authorities.len;
     return pem;
+}
+
+fn testPemPassword(chain: []const u8, key: []const u8, password: ?[]const u8) TlsPem {
+    var pem = testPem(chain, key);
+    if (password) |p| {
+        pem.password = p.ptr;
+        pem.password_len = p.len;
+    }
+    return pem;
+}
+
+test "tls: an encrypted key binds with its password" {
+    var failure: BindFailure = undefined;
+    for ([_][]const u8{ test_encrypted_key, test_encrypted_aes128_key, test_legacy_key, test_legacy_aes128_key }) |key| {
+        const pem = testPemPassword(test_chain, key, "relic");
+        const srv = relic_server_bind(null, "127.0.0.1", 0, &test_options, &pem, &failure) orelse return error.BindFailed;
+        const r = relic_reactor_create(srv, 1) orelse return error.AttachFailed;
+        relic_reactor_destroy(r);
+    }
 }
 
 test "tls: a bind names the half of the PEM it cannot use" {
@@ -3338,6 +3388,13 @@ test "tls: a bind names the half of the PEM it cannot use" {
         .{ .pem = testPemClientAuthorities(test_chain ++ test_chain), .failure = .client_authorities },
         // A leaf, CA:FALSE.
         .{ .pem = testPemClientAuthorities(test_chain), .failure = .client_authorities },
+        .{ .pem = testPemPassword(test_chain, test_encrypted_key, null), .failure = .password },
+        .{ .pem = testPemPassword(test_chain, test_encrypted_key, "wrong"), .failure = .password },
+        .{ .pem = testPemPassword(test_chain, test_legacy_key, "wrong"), .failure = .password },
+        .{ .pem = testPemPassword(test_chain, test_key, "relic"), .failure = .password },
+        // 3DES, which std lacks, is refused as a form before the password.
+        .{ .pem = testPemPassword(test_chain, test_encrypted_des3_key, null), .failure = .private_key },
+        .{ .pem = testPemPassword(test_chain, test_encrypted_des3_key, "relic"), .failure = .private_key },
     };
     for (cases) |case| {
         try std.testing.expect(relic_server_bind(null, "127.0.0.1", 0, &test_options, &case.pem, &failure) == null);

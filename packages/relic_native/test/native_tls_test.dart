@@ -267,7 +267,7 @@ void main() {
     expect(reply, endsWith('\r\n\r\nhello'));
   });
 
-  test('Given an encrypted private key file, '
+  test('Given an encrypted private key file and no password, '
       'when a server binds with it, '
       'then the bind throws a TlsException.', () async {
     final tls = NativeTls.fromFiles(
@@ -281,11 +281,122 @@ void main() {
         isA<TlsException>().having(
           (e) => e.message,
           'message',
-          contains('private key'),
+          contains('password'),
         ),
       ),
     );
   });
+
+  test('Given a private key file in the clear and a password, '
+      'when a server binds with them, '
+      'then the bind throws a TlsException', () async {
+    final tls = NativeTls.fromFiles(
+      certificateChain: 'test/certs/localhost_cert.pem',
+      privateKey: 'test/certs/localhost_key.pem',
+      password: 'relic',
+    );
+
+    await expectLater(
+      NativeAdapter.bind(InternetAddress.loopbackIPv4, tls: tls),
+      throwsA(
+        isA<TlsException>().having(
+          (e) => e.message,
+          'message',
+          contains('password'),
+        ),
+      ),
+    );
+  });
+
+  test('Given a private key file in the clear and an empty password, '
+      'when a server binds with them, '
+      'then a client gets a response', () async {
+    server = await serveNative(
+      _echoUrl,
+      tls: NativeTls.fromFiles(
+        certificateChain: 'test/certs/localhost_cert.pem',
+        privateKey: 'test/certs/localhost_key.pem',
+        password: '',
+      ),
+    );
+
+    expect((await get('/')).statusCode, 200);
+  });
+
+  test('Given a key encrypted with 3DES and no password, '
+      'when a server binds with it, '
+      'then the bind names the form, not the password', () async {
+    final tls = NativeTls.fromFiles(
+      certificateChain: 'test/certs/localhost_cert.pem',
+      privateKey: 'test/certs/localhost_encrypted_des3_key.pem',
+    );
+
+    await expectLater(
+      NativeAdapter.bind(InternetAddress.loopbackIPv4, tls: tls),
+      throwsA(
+        isA<TlsException>().having(
+          (e) => e.message,
+          'message',
+          contains('encrypted in a form other than'),
+        ),
+      ),
+    );
+  });
+
+  test('Given an encrypted private key file and a wrong password, '
+      'when a server binds with them, '
+      'then the bind throws a TlsException', () async {
+    final tls = NativeTls.fromFiles(
+      certificateChain: 'test/certs/localhost_cert.pem',
+      privateKey: 'test/certs/localhost_encrypted_key.pem',
+      password: 'wrong',
+    );
+
+    await expectLater(
+      NativeAdapter.bind(InternetAddress.loopbackIPv4, tls: tls),
+      throwsA(
+        isA<TlsException>().having(
+          (e) => e.message,
+          'message',
+          contains('password'),
+        ),
+      ),
+    );
+  });
+
+  for (final (:file, :form) in [
+    (
+      file: 'localhost_encrypted_key.pem',
+      form: 'a PKCS#8 key under AES-256 and HMAC-SHA256',
+    ),
+    (
+      file: 'localhost_encrypted_aes128_key.pem',
+      form: 'a PKCS#8 key under AES-128 and the default PRF',
+    ),
+    (
+      file: 'localhost_legacy_key.pem',
+      form: 'a SEC 1 key behind DEK-Info headers',
+    ),
+    (
+      file: 'localhost_legacy_aes128_key.pem',
+      form: 'a SEC 1 key behind DEK-Info headers under AES-128',
+    ),
+  ]) {
+    test('Given $form encrypted with a password, '
+        'when a server binds with the key and its password, '
+        'then a client gets a response', () async {
+      server = await serveNative(
+        _echoUrl,
+        tls: NativeTls.fromFiles(
+          certificateChain: 'test/certs/localhost_cert.pem',
+          privateKey: 'test/certs/$file',
+          password: 'relic',
+        ),
+      );
+
+      expect((await get('/')).statusCode, 200);
+    });
+  }
 
   test('Given an HTTPS server, '
       'when a request arrives, '
