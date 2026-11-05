@@ -364,22 +364,31 @@ void main() {
     );
   });
 
-  for (final (:file, :form) in [
+  for (final (:chain, :file, :form) in [
     (
+      chain: 'localhost_cert.pem',
       file: 'localhost_encrypted_key.pem',
       form: 'a PKCS#8 key under AES-256 and HMAC-SHA256',
     ),
     (
+      chain: 'localhost_cert.pem',
       file: 'localhost_encrypted_aes128_key.pem',
       form: 'a PKCS#8 key under AES-128 and the default PRF',
     ),
     (
+      chain: 'localhost_cert.pem',
       file: 'localhost_legacy_key.pem',
       form: 'a SEC 1 key behind DEK-Info headers',
     ),
     (
+      chain: 'localhost_cert.pem',
       file: 'localhost_legacy_aes128_key.pem',
       form: 'a SEC 1 key behind DEK-Info headers under AES-128',
+    ),
+    (
+      chain: 'localhost_rsa_cert.pem',
+      file: 'localhost_rsa_legacy_key.pem',
+      form: 'a PKCS#1 RSA key behind DEK-Info headers',
     ),
   ]) {
     test('Given $form encrypted with a password, '
@@ -388,7 +397,7 @@ void main() {
       server = await serveNative(
         _echoUrl,
         tls: NativeTls.fromFiles(
-          certificateChain: 'test/certs/localhost_cert.pem',
+          certificateChain: 'test/certs/$chain',
           privateKey: 'test/certs/$file',
           password: 'relic',
         ),
@@ -397,6 +406,20 @@ void main() {
       expect((await get('/')).statusCode, 200);
     });
   }
+
+  test('Given a PKCS#1 RSA private key file, '
+      'when a server binds with it, '
+      'then a client gets a response', () async {
+    server = await serveNative(
+      _echoUrl,
+      tls: NativeTls.fromFiles(
+        certificateChain: 'test/certs/localhost_rsa_cert.pem',
+        privateKey: 'test/certs/localhost_rsa_pkcs1_key.pem',
+      ),
+    );
+
+    expect((await get('/')).statusCode, 200);
+  });
 
   test('Given an HTTPS server, '
       'when a request arrives, '
