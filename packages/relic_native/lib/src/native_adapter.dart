@@ -105,6 +105,7 @@ enum _BindFailure {
   certificateChain,
   privateKey,
   clientAuthorities,
+  tlsMismatch,
 }
 
 /// An [Adapter] backed by the Zig HTTP server in `src/relic_native.zig`.
@@ -189,12 +190,14 @@ final class NativeAdapter implements Adapter {
   /// adapter drives from its event loop. [options] are the server's
   /// limits, see [NativeOptions]. With [tls] the server speaks HTTPS, see
   /// [NativeTls]. An isolate that joins a group gets the server as the
-  /// first bind made it, and must pass [tls] as that bind did.
+  /// first bind made it, and must pass [tls] as that bind did, byte for
+  /// byte. A certificate or key renewed on disk since counts, and takes a
+  /// process restart to pick up.
   ///
   /// Throws [UnsupportedError] on a platform without the native library,
   /// [io.TlsException] when [tls] cannot be used, [io.SocketException]
   /// when the port cannot be bound, and [StateError] when the joined
-  /// server differs from [tls] in speaking HTTPS.
+  /// server was bound with other TLS settings than [tls].
   static Future<NativeAdapter> bind(
     io.InternetAddress address, {
     int port = 0,
@@ -265,18 +268,17 @@ final class NativeAdapter implements Adapter {
           'relic_native: the client authorities hold no certificate, or '
           'one that is expired, unreadable, not a CA or repeats a subject',
         ),
+        _BindFailure.tlsMismatch => StateError(
+          'relic_native: the server for group "$group" was bound with '
+          'other TLS settings. A certificate or key that changed on disk '
+          'since counts, until the process restarts',
+        ),
         _BindFailure.none || _BindFailure.bind => io.SocketException(
           'relic_native could not bind',
           address: address,
           port: port,
         ),
       };
-    }
-    if (native.serverSecure(server) != (tls != null)) {
-      throw StateError(
-        'relic_native: the server for group "$group" was bound '
-        '${tls == null ? 'with' : 'without'} TLS',
-      );
     }
     final wake = RawReceivePort(null, 'relic_native');
     final reactor = native.reactorCreate(server, wake.sendPort.nativePort);

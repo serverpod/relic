@@ -626,7 +626,7 @@ void main() {
         isA<StateError>().having(
           (e) => e.message,
           'message',
-          contains('with TLS'),
+          contains('TLS settings'),
         ),
       ),
     );
@@ -652,7 +652,34 @@ void main() {
         isA<StateError>().having(
           (e) => e.message,
           'message',
-          contains('without TLS'),
+          contains('TLS settings'),
+        ),
+      ),
+    );
+  });
+
+  test('Given an HTTPS server in a group, '
+      'when a bind joins the group with other TLS settings, '
+      'then the bind throws a StateError', () async {
+    final group = 'relic_native/$pid/auth_mismatch';
+    final secure = await NativeAdapter.bind(
+      InternetAddress.loopbackIPv4,
+      group: group,
+      tls: _tls('localhost'),
+    );
+    addTearDown(secure.close);
+
+    await expectLater(
+      NativeAdapter.bind(
+        InternetAddress.loopbackIPv4,
+        group: group,
+        tls: _mutualTls(),
+      ),
+      throwsA(
+        isA<StateError>().having(
+          (e) => e.message,
+          'message',
+          contains('TLS settings'),
         ),
       ),
     );
