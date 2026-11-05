@@ -10,11 +10,12 @@
             .url = "git+https://github.com/nielsenko/zio#d566dfc6ec7b9e7eda5c6831681e93903722437b",
             .hash = "zio-0.19.0-xHbVVLuNLgDoJs_3MoO9WcdHhbesqPG-48kyG9mdtTRf",
         },
-        // lalinsky's tls.zig, the one dusty uses, with the server picking
-        // the cipher suite in its own order, until that is upstream.
+        // ianic's tls.zig with the server picking the cipher suite in its own
+        // order, a refused client certificate answered with its alert and
+        // RSA signing through the CRT form of the key, until all are upstream.
         .tls = .{
-            .url = "git+https://github.com/nielsenko/tls.zig#a9db8805d768af5254eecc07323dea3c43ae2a07",
-            .hash = "tls-0.1.0-ER2e0ofYBgBmXlgwPe_e2I0R-DWCjfJrP4fYAuH8Bmte",
+            .url = "git+https://github.com/nielsenko/tls.zig#0f3b2cb7af6a37d33a89a97a59ed5cb9396250ab",
+            .hash = "tls-0.1.0-ER2e0nHYBgCzek0BUvu1Q6RCkEk07lRWmjM-5pxgugit",
         },
     },
     .paths = .{
