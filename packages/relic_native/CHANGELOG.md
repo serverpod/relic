@@ -2,6 +2,8 @@
 - Client certificates: `NativeTls.clientAuthorities` names the CAs a client
   certificate must chain to, and the handshake requires one
 - `bind` refuses a group join with other TLS settings than the group's
+- ALPN: the handshake selects `http/1.1` and refuses a client that offers
+  only other protocols
 
 ## 2.0.0-rc.4
 - Works on Windows: the acceptor and the reactors share one zio loop group,
