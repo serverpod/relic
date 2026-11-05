@@ -1,3 +1,6 @@
+## 2.0.0-rc.5
+- feat: `relic_native` takes client certificates, encrypted and PKCS#1 private keys and `v6Only`, selects http/1.1 through ALPN, and an IPv6 listener takes IPv4 clients. The core packages are unchanged and released in step
+
 ## 2.0.0-rc.4
 - fix: `relic_native` runs on Windows. The core packages are unchanged and released in step
 
