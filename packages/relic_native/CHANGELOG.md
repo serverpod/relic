@@ -7,6 +7,8 @@
 - Encrypted private keys: `NativeTls.password` opens a PKCS#8 key under
   PBES2 with PBKDF2 and AES-128 or AES-256 CBC, or one behind OpenSSL's
   DEK-Info headers
+- PKCS#1 `RSA PRIVATE KEY` files are read, the form cert-manager writes by
+  default
 
 ## 2.0.0-rc.4
 - Works on Windows: the acceptor and the reactors share one zio loop group,
