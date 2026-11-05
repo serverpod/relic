@@ -65,10 +65,14 @@ final class NativeOptions {
 /// The certificate chain and private key of an HTTPS server, as PEM.
 ///
 /// [certificateChain] has the server's certificate first and any
-/// intermediates after it. [privateKey] is an unencrypted PKCS#8 or SEC 1
-/// key, ECDSA, RSA or Ed25519. The server speaks TLS 1.3 only, through
-/// tls.zig, and selects `http/1.1` through ALPN. A client that offers
-/// only other protocols is refused.
+/// intermediates after it. [privateKey] is a PKCS#8 or SEC 1 key, ECDSA,
+/// RSA or Ed25519. An encrypted key takes its [password]: PKCS#8 under
+/// PBES2 with PBKDF2 and AES-128-CBC or AES-256-CBC, or a key block behind
+/// OpenSSL's `DEK-Info` headers with the same ciphers, as `openssl pkcs8`,
+/// `openssl genpkey` and `openssl ec -aes256` write them. An empty
+/// [password] counts as none. The server speaks TLS 1.3 only, through
+/// tls.zig, and selects `http/1.1` through ALPN. A client that offers only
+/// other protocols is refused.
 ///
 /// With [clientAuthorities], the CA certificates a client certificate must
 /// chain to, the handshake requires a client certificate. A client without
@@ -77,22 +81,26 @@ final class NativeOptions {
 final class NativeTls {
   final List<int> certificateChain;
   final List<int> privateKey;
+  final String? password;
   final List<int>? clientAuthorities;
 
   const NativeTls({
     required this.certificateChain,
     required this.privateKey,
+    this.password,
     this.clientAuthorities,
   });
 
-  /// Reads each from a PEM file.
+  /// Reads each PEM from a file. [password] is the password itself.
   NativeTls.fromFiles({
     required String certificateChain,
     required String privateKey,
+    String? password,
     String? clientAuthorities,
   }) : this(
          certificateChain: io.File(certificateChain).readAsBytesSync(),
          privateKey: io.File(privateKey).readAsBytesSync(),
+         password: password,
          clientAuthorities: clientAuthorities == null
              ? null
              : io.File(clientAuthorities).readAsBytesSync(),
@@ -107,6 +115,7 @@ enum _BindFailure {
   privateKey,
   clientAuthorities,
   tlsMismatch,
+  password,
 }
 
 /// An [Adapter] backed by the Zig HTTP server in `src/relic_native.zig`.
@@ -213,6 +222,13 @@ final class NativeAdapter implements Adapter {
     final pem = tls == null ? nullptr : calloc<native.TlsPem>();
     final chain = _nativeCopy(tls?.certificateChain);
     final key = _nativeCopy(tls?.privateKey);
+    final keyLen = tls?.privateKey.length ?? 0;
+    final password = tls?.password;
+    final passwordBytes = password == null || password.isEmpty
+        ? null
+        : utf8.encode(password);
+    final passwordLen = passwordBytes?.length ?? 0;
+    final passwordCopy = _nativeCopy(passwordBytes);
     final authorities = _nativeCopy(tls?.clientAuthorities);
     final failure = calloc<Uint8>();
     final Pointer<Void> server;
@@ -223,7 +239,9 @@ final class NativeAdapter implements Adapter {
           ..certificateChain = chain
           ..certificateChainLen = tls.certificateChain.length
           ..privateKey = key
-          ..privateKeyLen = tls.privateKey.length
+          ..privateKeyLen = keyLen
+          ..password = passwordCopy
+          ..passwordLen = passwordLen
           ..clientAuthorities = authorities
           ..clientAuthoritiesLen = tls.clientAuthorities?.length ?? 0;
       }
@@ -251,7 +269,17 @@ final class NativeAdapter implements Adapter {
       if (groupText != nullptr) calloc.free(groupText);
       if (pem != nullptr) calloc.free(pem);
       if (chain != nullptr) calloc.free(chain);
-      if (key != nullptr) calloc.free(key);
+      // The native copies and the UTF-8 password are zeroed before the
+      // free. The caller's list and string stay in the heap regardless.
+      if (key != nullptr) {
+        key.asTypedList(keyLen).fillRange(0, keyLen, 0);
+        calloc.free(key);
+      }
+      if (passwordCopy != nullptr) {
+        passwordCopy.asTypedList(passwordLen).fillRange(0, passwordLen, 0);
+        passwordBytes?.fillRange(0, passwordLen, 0);
+        calloc.free(passwordCopy);
+      }
       if (authorities != nullptr) calloc.free(authorities);
       calloc.free(failure);
     }
@@ -262,8 +290,14 @@ final class NativeAdapter implements Adapter {
           'that is expired, unreadable or repeats a subject',
         ),
         _BindFailure.privateKey => const io.TlsException(
-          'relic_native: the private key is not an unencrypted PKCS#8 or '
-          'SEC 1 key of a kind tls.zig signs with',
+          'relic_native: the private key is not a PKCS#8 or SEC 1 key of a '
+          'kind tls.zig signs with, or is encrypted in a form other than '
+          'PBES2 with PBKDF2 and AES-128-CBC or AES-256-CBC, or DEK-Info with '
+          'those ciphers',
+        ),
+        _BindFailure.password => const io.TlsException(
+          'relic_native: the private key is encrypted and the password is '
+          'missing or wrong, or it is in the clear and a password was given',
         ),
         _BindFailure.clientAuthorities => const io.TlsException(
           'relic_native: the client authorities hold no certificate, or '

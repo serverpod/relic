@@ -31,6 +31,9 @@ final class TlsPem extends Struct {
   external Pointer<Uint8> privateKey;
   @Size()
   external int privateKeyLen;
+  external Pointer<Uint8> password;
+  @Size()
+  external int passwordLen;
   external Pointer<Uint8> clientAuthorities;
   @Size()
   external int clientAuthoritiesLen;
