@@ -68,24 +68,44 @@ final class NativeOptions {
 /// intermediates after it. [privateKey] is an unencrypted PKCS#8 or SEC 1
 /// key, ECDSA, RSA or Ed25519. The server speaks TLS 1.3 only, through
 /// tls.zig.
+///
+/// With [clientAuthorities], the CA certificates a client certificate must
+/// chain to, the handshake requires a client certificate. A client without
+/// one, or with one that does not chain to them, is refused. A handler does
+/// not see the certificate, only that the connection passed the check.
 final class NativeTls {
   final List<int> certificateChain;
   final List<int> privateKey;
+  final List<int>? clientAuthorities;
 
-  const NativeTls({required this.certificateChain, required this.privateKey});
+  const NativeTls({
+    required this.certificateChain,
+    required this.privateKey,
+    this.clientAuthorities,
+  });
 
-  /// Reads both from PEM files.
+  /// Reads each from a PEM file.
   NativeTls.fromFiles({
     required String certificateChain,
     required String privateKey,
+    String? clientAuthorities,
   }) : this(
          certificateChain: io.File(certificateChain).readAsBytesSync(),
          privateKey: io.File(privateKey).readAsBytesSync(),
+         clientAuthorities: clientAuthorities == null
+             ? null
+             : io.File(clientAuthorities).readAsBytesSync(),
        );
 }
 
 /// Mirrors `BindFailure` in src/relic_native.zig.
-enum _BindFailure { none, bind, certificateChain, privateKey }
+enum _BindFailure {
+  none,
+  bind,
+  certificateChain,
+  privateKey,
+  clientAuthorities,
+}
 
 /// An [Adapter] backed by the Zig HTTP server in `src/relic_native.zig`.
 ///
@@ -189,6 +209,7 @@ final class NativeAdapter implements Adapter {
     final pem = tls == null ? nullptr : calloc<native.TlsPem>();
     final chain = _nativeCopy(tls?.certificateChain);
     final key = _nativeCopy(tls?.privateKey);
+    final authorities = _nativeCopy(tls?.clientAuthorities);
     final failure = calloc<Uint8>();
     final Pointer<Void> server;
     final _BindFailure why;
@@ -198,7 +219,9 @@ final class NativeAdapter implements Adapter {
           ..certificateChain = chain
           ..certificateChainLen = tls.certificateChain.length
           ..privateKey = key
-          ..privateKeyLen = tls.privateKey.length;
+          ..privateKeyLen = tls.privateKey.length
+          ..clientAuthorities = authorities
+          ..clientAuthoritiesLen = tls.clientAuthorities?.length ?? 0;
       }
       nativeOptions.ref
         ..reactorCapacity = options.reactorCapacity
@@ -225,6 +248,7 @@ final class NativeAdapter implements Adapter {
       if (pem != nullptr) calloc.free(pem);
       if (chain != nullptr) calloc.free(chain);
       if (key != nullptr) calloc.free(key);
+      if (authorities != nullptr) calloc.free(authorities);
       calloc.free(failure);
     }
     if (server == nullptr) {
@@ -236,6 +260,10 @@ final class NativeAdapter implements Adapter {
         _BindFailure.privateKey => const io.TlsException(
           'relic_native: the private key is not an unencrypted PKCS#8 or '
           'SEC 1 key of a kind tls.zig signs with',
+        ),
+        _BindFailure.clientAuthorities => const io.TlsException(
+          'relic_native: the client authorities hold no certificate, or '
+          'one that is expired, unreadable, not a CA or repeats a subject',
         ),
         _BindFailure.none || _BindFailure.bind => io.SocketException(
           'relic_native could not bind',

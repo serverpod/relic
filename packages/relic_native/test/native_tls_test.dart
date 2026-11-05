@@ -20,17 +20,58 @@ NativeTls _tls(String leaf) => NativeTls.fromFiles(
   privateKey: 'test/certs/${leaf}_key.pem',
 );
 
-/// A context that trusts the test CA and nothing else.
-SecurityContext _trustTestCa() =>
-    SecurityContext(withTrustedRoots: false)
-      ..setTrustedCertificates('test/certs/ca_cert.pem');
+/// A context that trusts the test CA and nothing else, and presents the
+/// certificate in test/certs/[name]_cert.pem when [name] is given.
+SecurityContext _contextWith([String? name]) {
+  final context = SecurityContext(withTrustedRoots: false)
+    ..setTrustedCertificates('test/certs/ca_cert.pem');
+  if (name != null) {
+    context
+      ..useCertificateChain('test/certs/${name}_cert.pem')
+      ..usePrivateKey('test/certs/${name}_key.pem');
+  }
+  return context;
+}
 
 /// A client that trusts the test CA and nothing else.
-HttpClient _client() => HttpClient(context: _trustTestCa());
+HttpClient _client() => HttpClient(context: _contextWith());
+
+/// A client that trusts the test CA and presents the certificate in
+/// test/certs/[name]_cert.pem.
+HttpClient _clientWith(String name) => HttpClient(context: _contextWith(name));
+
+/// What a raw TLS client that presents the certificate in
+/// test/certs/[name]_cert.pem, or none, gets back for one request: the
+/// response, or the error that ended the connection.
+Future<Object> _rawExchange(int port, {String? name}) async {
+  SecureSocket? socket;
+  try {
+    socket = await SecureSocket.connect(
+      'localhost',
+      port,
+      context: _contextWith(name),
+    );
+    // The alert that ends the connection fails the write side too.
+    unawaited(socket.done.catchError((_) {}));
+    socket.write('GET / HTTP/1.1\r\nHost: localhost\r\n\r\n');
+    return await utf8.decodeStream(socket).timeout(const Duration(seconds: 5));
+  } catch (e) {
+    return e;
+  } finally {
+    socket?.destroy();
+  }
+}
+
+/// An HTTPS server that requires a client certificate the test CA signed.
+NativeTls _mutualTls() => NativeTls.fromFiles(
+  certificateChain: 'test/certs/localhost_cert.pem',
+  privateKey: 'test/certs/localhost_key.pem',
+  clientAuthorities: 'test/certs/ca_cert.pem',
+);
 
 /// A raw TLS connection to [port] that trusts the test CA.
 Future<SecureSocket> _secureConnect(int port) =>
-    SecureSocket.connect('localhost', port, context: _trustTestCa());
+    SecureSocket.connect('localhost', port, context: _contextWith());
 
 /// Answers with the URL the request was addressed to.
 Response _echoUrl(Request request) =>
@@ -282,7 +323,7 @@ void main() {
       final socket = await SecureSocket.connect(
         'localhost',
         server!.port,
-        context: _trustTestCa(),
+        context: _contextWith(),
         supportedProtocols: ['h2', 'http/1.1'],
       );
 
@@ -737,6 +778,118 @@ void main() {
           (e) => e.message,
           'message',
           contains('certificate chain'),
+        ),
+      ),
+    );
+  });
+
+  group('Given a server that requires a client certificate', () {
+    setUp(() async {
+      server = await serveNative(_echoUrl, tls: _mutualTls());
+    });
+
+    Future<HttpClientResponse> getWith(HttpClient client) async {
+      final request = await client.getUrl(
+        Uri.https('localhost:${server!.port}', '/'),
+      );
+      return request.close();
+    }
+
+    test('when a client presents one the trusted CA signed, '
+        'then the request is answered', () async {
+      final client = _clientWith('client');
+      addTearDown(() => client.close(force: true));
+
+      final response = await getWith(client);
+      expect(response.statusCode, 200);
+    });
+
+    test('when a client presents none, '
+        'then the connection ends with a certificate_required alert', () async {
+      expect(
+        await _rawExchange(server!.port),
+        isA<TlsException>().having(
+          (e) => e.toString(),
+          'alert',
+          contains('CERTIFICATE_REQUIRED'),
+        ),
+      );
+    });
+
+    test('when a client presents one another CA signed, '
+        'then the connection ends with an unknown CA alert', () async {
+      expect(
+        await _rawExchange(server!.port, name: 'other_client'),
+        isA<TlsException>().having(
+          (e) => e.toString(),
+          'alert',
+          contains('UNKNOWN_CA'),
+        ),
+      );
+    });
+
+    test('when a client presents an expired one, '
+        'then the connection ends with a certificate expired alert', () async {
+      expect(
+        await _rawExchange(server!.port, name: 'expired_client'),
+        isA<TlsException>().having(
+          (e) => e.toString(),
+          'alert',
+          contains('CERTIFICATE_EXPIRED'),
+        ),
+      );
+    });
+
+    test('when a client presents one, '
+        'then a second request reuses the connection', () async {
+      final client = _clientWith('client');
+      addTearDown(() => client.close(force: true));
+
+      final first = await getWith(client);
+      await first.drain<void>();
+      final second = await getWith(client);
+      expect(second.statusCode, 200);
+      expect(second.connectionInfo!.localPort, first.connectionInfo!.localPort);
+    });
+  });
+
+  test('Given client authorities that are not a CA, '
+      'when a server binds with them, '
+      'then the bind throws a TlsException', () async {
+    final tls = NativeTls.fromFiles(
+      certificateChain: 'test/certs/localhost_cert.pem',
+      privateKey: 'test/certs/localhost_key.pem',
+      clientAuthorities: 'test/certs/localhost_cert.pem',
+    );
+
+    await expectLater(
+      NativeAdapter.bind(InternetAddress.loopbackIPv4, tls: tls),
+      throwsA(
+        isA<TlsException>().having(
+          (e) => e.message,
+          'message',
+          contains('not a CA'),
+        ),
+      ),
+    );
+  });
+
+  test('Given client authorities with no certificate in them, '
+      'when a server binds with them, '
+      'then the bind throws a TlsException', () async {
+    final tls = NativeTls.fromFiles(
+      certificateChain: 'test/certs/localhost_cert.pem',
+      privateKey: 'test/certs/localhost_key.pem',
+      clientAuthorities: 'test/certs/localhost_key.pem',
+    );
+
+    await expectLater(
+      NativeAdapter.bind(InternetAddress.loopbackIPv4, tls: tls),
+      throwsA(
+        isA<TlsException>().having(
+          (e) => e.message,
+          'message',
+          contains('client authorities'),
         ),
       ),
     );

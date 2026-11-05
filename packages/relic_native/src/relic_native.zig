@@ -116,6 +116,10 @@ pub const TlsPem = extern struct {
     certificate_chain_len: usize,
     private_key: [*]const u8,
     private_key_len: usize,
+    /// The CA certificates a client certificate must chain to. Set, the
+    /// handshake requires a client certificate. Null asks for none.
+    client_authorities: ?[*]const u8,
+    client_authorities_len: usize,
 };
 
 /// Why relic_server_bind returned null. Mirrored by `_BindFailure` in
@@ -130,6 +134,9 @@ pub const BindFailure = enum(u8) {
     certificate_chain = 2,
     /// Not an unencrypted PKCS#8 or SEC 1 key of a kind tls.zig signs with.
     private_key = 3,
+    /// The client authorities hold no certificate, or one that is expired,
+    /// unreadable, not a CA or shares a subject with another.
+    client_authorities = 4,
 };
 
 pub const HeaderSlot = extern struct {
@@ -583,6 +590,9 @@ pub const Server = struct {
     /// The certificate chain and key of an HTTPS server, owned. Every
     /// connection starts with a TLS handshake when it is set.
     tls_auth: ?*tls.config.CertKeyPair = null,
+    /// The CA bundle a client certificate is checked against, owned, when
+    /// the handshake asks for one.
+    tls_client_auth: ?tls.config.ClientAuth = null,
     /// Registry key, owned. Null for a server outside the registry.
     group: ?[]u8,
     thread: std.Thread = undefined,
@@ -878,14 +888,14 @@ const Link = struct {
 
     /// Runs the server side of the TLS handshake. HTTP then reads and
     /// writes cleartext through `read_buffer` and `write_buffer`.
-    fn handshake(self: *Link, auth: *tls.config.CertKeyPair, read_buffer: []u8, write_buffer: []u8) !void {
+    fn handshake(self: *Link, auth: *tls.config.CertKeyPair, client_auth: ?tls.config.ClientAuth, read_buffer: []u8, write_buffer: []u8) !void {
         const secure = self.secure.?;
         secure.conn = try tls.server(&self.socket_reader.interface, &self.socket_writer.interface, .{
             .rng = tls_random,
             .auth = auth,
-            // Only read to check a client certificate, which is never
-            // asked for.
-            .now = .zero,
+            .client_auth = client_auth,
+            // Read to check the validity dates of a client certificate.
+            .now = std.Io.Clock.real.now(std.Io.Threaded.global_single_threaded.io()),
         });
         const conn = &secure.conn.?;
         secure.reader = conn.reader(read_buffer);
@@ -960,21 +970,25 @@ const Link = struct {
 /// How long a lingering close reads and drops what the peer still sends.
 const lingering_close_ms = 1000;
 
-/// Answers with a status, then closes the way nginx's lingering close
-/// does. The send side goes first. Then it reads and drops the peer's
-/// remaining bytes until the peer sees the FIN and hangs up, or the
-/// deadline passes. A plain close with unread input resets the
-/// connection, and a peer that was still sending, which is what these
-/// statuses answer, can then lose the status from its receive buffer.
+/// Closes the way nginx's lingering close does. The send side goes first.
+/// Then it reads and drops the peer's remaining bytes until the peer sees
+/// the FIN and hangs up, or the deadline passes. A plain close with unread
+/// input resets the connection, and a peer that was still sending can then
+/// lose what was just written to it from its receive buffer.
+fn lingeringClose(link: *Link) void {
+    link.shutdownSend() catch return;
+    link.setReadTimeout(deadline(lingering_close_ms));
+    _ = link.socket_reader.interface.discard(.unlimited) catch {};
+}
+
+/// Answers with a status to a peer that may still be sending, then closes.
 fn writeStatusAndClose(link: *Link, status: []const u8) !void {
     const w = link.writer;
     try w.writeAll("HTTP/1.1 ");
     try w.writeAll(status);
     try w.writeAll("\r\nconnection: close\r\ncontent-length: 0\r\n\r\n");
     try w.flush();
-    link.shutdownSend() catch return;
-    link.setReadTimeout(deadline(lingering_close_ms));
-    _ = link.socket_reader.interface.discard(.unlimited) catch {};
+    lingeringClose(link);
 }
 
 fn handleConnInner(r: *Reactor, stream: zio.net.Stream) !void {
@@ -1034,7 +1048,15 @@ fn handleConnInner(r: *Reactor, stream: zio.net.Stream) !void {
         // Anything else is plain HTTP, or nothing a handshake would
         // answer, which gets a plain 400, as Go's server answers it.
         if (first >= 32) return writeStatusAndClose(&link, "400 Bad Request");
-        try link.handshake(auth, &rbuf, &wbuf);
+        link.handshake(auth, r.server.tls_client_auth, &rbuf, &wbuf) catch |err| {
+            // The alert tls.zig wrote reaches a peer that already sent its
+            // request only through a lingering close. Nothing was written
+            // for a failure the peer reported or the socket caused, and when
+            // a cancel failed it, that cancel is spent.
+            const alerted = tls.Alert.forLocalError(err) != null;
+            if (alerted and link.readError() == null and link.socket_writer.err == null) lingeringClose(&link);
+            return err;
+        };
         conn.disarm();
     }
     var http = std.http.Server.init(link.reader, link.writer);
@@ -2203,6 +2225,8 @@ fn createServer(group: ?[]const u8, ip: []const u8, port: u16, options: Options,
     const address = try zio.net.IpAddress.parseIp(ip, port);
     const tls_auth = if (pem) |p| try loadCertKeyPair(gpa, p) else null;
     errdefer if (tls_auth) |auth| freeCertKeyPair(gpa, auth);
+    var tls_client_auth = if (pem) |p| try loadClientAuth(gpa, p) else null;
+    errdefer if (tls_client_auth) |*ca| ca.root_ca.deinit(gpa);
     const srv = try gpa.create(Server);
     errdefer gpa.destroy(srv);
     const reactors = try gpa.alloc(?*Reactor, capacity);
@@ -2215,6 +2239,7 @@ fn createServer(group: ?[]const u8, ip: []const u8, port: u16, options: Options,
         .reactors = reactors,
         .options = options,
         .tls_auth = tls_auth,
+        .tls_client_auth = tls_client_auth,
         .group = owned_group,
         .address = address,
     };
@@ -2248,17 +2273,87 @@ fn loadCertKeyPair(gpa: std.mem.Allocator, pem: *const TlsPem) !*tls.config.Cert
             };
         },
     };
-    const pem_count = std.mem.count(u8, chain, "-----BEGIN CERTIFICATE-----");
-    if (pem_count == 0 or pair.bundle.map.count() != pem_count) {
+    if (!bundleHoldsEveryPem(pair.bundle, chain)) {
         pair.deinit(gpa);
         return error.CertificateChain;
     }
     return pair;
 }
 
+/// Whether `bundle` holds every certificate in `pem`, and at least one.
+/// tls.zig drops a certificate it cannot read, that is expired or whose
+/// subject another one has, and keeps the rest.
+fn bundleHoldsEveryPem(bundle: std.crypto.Certificate.Bundle, pem: []const u8) bool {
+    const count = std.mem.count(u8, pem, "-----BEGIN CERTIFICATE-----");
+    return count != 0 and bundle.map.count() == count;
+}
+
 fn freeCertKeyPair(gpa: std.mem.Allocator, pair: *tls.config.CertKeyPair) void {
     pair.deinit(gpa);
     gpa.destroy(pair);
+}
+
+/// Reads the CA certificates a client certificate must chain to, when the
+/// handshake asks for one.
+fn loadClientAuth(gpa: std.mem.Allocator, pem: *const TlsPem) !?tls.config.ClientAuth {
+    const ptr = pem.client_authorities orelse return null;
+    const authorities = ptr[0..pem.client_authorities_len];
+    const io = std.Io.Threaded.global_single_threaded.io();
+    var root_ca = tls.config.cert.fromSlice(gpa, io, authorities) catch |err| switch (err) {
+        error.OutOfMemory => return error.OutOfMemory,
+        else => return error.ClientAuthorities,
+    };
+    errdefer root_ca.deinit(gpa);
+    if (!bundleHoldsEveryPem(root_ca, authorities)) return error.ClientAuthorities;
+    var certs = root_ca.map.valueIterator();
+    while (certs.next()) |index| {
+        if (!isCertificateAuthority(.{ .buffer = root_ca.bytes.items, .index = index.* })) {
+            return error.ClientAuthorities;
+        }
+    }
+    return .{
+        .root_ca = root_ca,
+        .auth_type = .require,
+    };
+}
+
+/// Whether `cert` has basicConstraints with cA set. std verifies a chain
+/// by issuer name, dates and signature alone, so this is the only check
+/// that a client authority is one.
+fn isCertificateAuthority(cert: std.crypto.Certificate) bool {
+    const Certificate = std.crypto.Certificate;
+    const der = Certificate.der;
+    const bytes = cert.buffer;
+    const certificate = der.Element.parse(bytes, cert.index) catch return false;
+    const tbs = der.Element.parse(bytes, certificate.slice.start) catch return false;
+    // The version is an explicit [0]. Without it the certificate is v1,
+    // which has no extensions.
+    var elem = der.Element.parse(bytes, tbs.slice.start) catch return false;
+    if (@as(u8, @bitCast(elem.identifier)) != 0xa0) return false;
+    // serialNumber, signature, issuer, validity, subject,
+    // subjectPublicKeyInfo, then the extensions as an explicit [3].
+    for (0..7) |_| elem = der.Element.parse(bytes, elem.slice.end) catch return false;
+    if (@as(u8, @bitCast(elem.identifier)) != 0xa3) return false;
+    const extensions = der.Element.parse(bytes, elem.slice.start) catch return false;
+    var ext_i = extensions.slice.start;
+    while (ext_i < extensions.slice.end) {
+        const extension = der.Element.parse(bytes, ext_i) catch return false;
+        ext_i = extension.slice.end;
+        const oid = der.Element.parse(bytes, extension.slice.start) catch return false;
+        const id = Certificate.parseExtensionId(bytes, oid) catch continue;
+        if (id != .basic_constraints) continue;
+        // An optional critical flag comes before the value.
+        var value = der.Element.parse(bytes, oid.slice.end) catch return false;
+        if (value.identifier.tag == .boolean) {
+            value = der.Element.parse(bytes, value.slice.end) catch return false;
+        }
+        // BasicConstraints is SEQUENCE { cA BOOLEAN DEFAULT FALSE, ... }.
+        const constraints = der.Element.parse(bytes, value.slice.start) catch return false;
+        if (constraints.slice.start == constraints.slice.end) return false;
+        const ca = der.Element.parse(bytes, constraints.slice.start) catch return false;
+        return ca.identifier.tag == .boolean and ca.slice.end > ca.slice.start and bytes[ca.slice.start] != 0;
+    }
+    return false;
 }
 
 /// tls.zig's randomness, from zio's per-executor CSPRNG, which the OS
@@ -2308,6 +2403,7 @@ fn destroyServer(srv: *Server) void {
     srv.thread.join();
     const gpa = srv.gpa;
     if (srv.tls_auth) |auth| freeCertKeyPair(gpa, auth);
+    if (srv.tls_client_auth) |*ca| ca.root_ca.deinit(gpa);
     if (srv.group) |g| gpa.free(g);
     gpa.free(srv.reactors);
     gpa.destroy(srv);
@@ -2343,6 +2439,7 @@ export fn relic_server_bind(
         failure.* = switch (err) {
             error.CertificateChain => .certificate_chain,
             error.PrivateKey => .private_key,
+            error.ClientAuthorities => .client_authorities,
             else => .bind,
         };
         return null;
@@ -3168,7 +3265,16 @@ fn testPem(chain: []const u8, key: []const u8) TlsPem {
         .certificate_chain_len = chain.len,
         .private_key = key.ptr,
         .private_key_len = key.len,
+        .client_authorities = null,
+        .client_authorities_len = 0,
     };
+}
+
+fn testPemClientAuthorities(authorities: []const u8) TlsPem {
+    var pem = testPem(test_chain, test_key);
+    pem.client_authorities = authorities.ptr;
+    pem.client_authorities_len = authorities.len;
+    return pem;
 }
 
 test "tls: a bind names the half of the PEM it cannot use" {
@@ -3178,11 +3284,24 @@ test "tls: a bind names the half of the PEM it cannot use" {
         .{ .pem = testPem(test_key, test_key), .failure = .certificate_chain },
         // The bundle keeps one certificate per subject.
         .{ .pem = testPem(test_chain ++ test_chain, test_key), .failure = .certificate_chain },
+        .{ .pem = testPemClientAuthorities(""), .failure = .client_authorities },
+        .{ .pem = testPemClientAuthorities(test_key), .failure = .client_authorities },
+        .{ .pem = testPemClientAuthorities(test_chain ++ test_chain), .failure = .client_authorities },
+        // A leaf, CA:FALSE.
+        .{ .pem = testPemClientAuthorities(test_chain), .failure = .client_authorities },
     };
     for (cases) |case| {
         try std.testing.expect(relic_server_bind(null, "127.0.0.1", 0, &test_options, &case.pem, &failure) == null);
         try std.testing.expectEqual(case.failure, failure);
     }
+}
+
+test "tls: the test CA binds as client authorities" {
+    var failure: BindFailure = undefined;
+    const pem = testPemClientAuthorities(test_ca);
+    const srv = relic_server_bind(null, "127.0.0.1", 0, &test_options, &pem, &failure) orelse return error.BindFailed;
+    const r = relic_reactor_create(srv, 1) orelse return error.AttachFailed;
+    relic_reactor_destroy(r);
 }
 
 /// A client on its own thread that trusts the test CA, sends one request
