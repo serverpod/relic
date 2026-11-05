@@ -198,11 +198,12 @@ final class NativeAdapter implements Adapter {
   ///
   /// The adapter's reactor runs on this isolate's thread, in ticks the
   /// adapter drives from its event loop. [options] are the server's
-  /// limits, see [NativeOptions]. With [tls] the server speaks HTTPS, see
-  /// [NativeTls]. An isolate that joins a group gets the server as the
-  /// first bind made it, and must pass [tls] as that bind did, byte for
-  /// byte. A certificate or key renewed on disk since counts, and takes a
-  /// process restart to pick up.
+  /// limits, see [NativeOptions]. [v6Only] keeps an IPv6 listener from
+  /// taking IPv4 clients, as in dart:io. With [tls] the server speaks
+  /// HTTPS, see [NativeTls]. An isolate that joins a group gets the server
+  /// as the first bind made it, and must pass [tls] as that bind did, byte
+  /// for byte. A certificate or key renewed on disk since counts, and takes
+  /// a process restart to pick up.
   ///
   /// Throws [UnsupportedError] on a platform without the native library,
   /// [io.TlsException] when [tls] cannot be used, [io.SocketException]
@@ -211,6 +212,7 @@ final class NativeAdapter implements Adapter {
   static Future<NativeAdapter> bind(
     io.InternetAddress address, {
     int port = 0,
+    bool v6Only = false,
     String? group,
     NativeOptions options = const NativeOptions(),
     NativeTls? tls,
@@ -253,7 +255,8 @@ final class NativeAdapter implements Adapter {
         ..idleTimeoutMs = options.idleTimeout.inMilliseconds
         ..headerTimeoutMs = options.headerTimeout.inMilliseconds
         ..bodyTimeoutMs = options.bodyTimeout.inMilliseconds
-        ..writeTimeoutMs = options.writeTimeout.inMilliseconds;
+        ..writeTimeoutMs = options.writeTimeout.inMilliseconds
+        ..v6Only = v6Only;
       server = native.serverBind(
         groupText.cast(),
         ip.cast(),

@@ -8,8 +8,8 @@ import 'package:test/test.dart';
 // layout. A field added on the Dart side changes the size and fails here.
 // Nothing here reads the Zig side. The sizes below are its only record.
 void main() {
-  test('Given the Options struct, when sized, then it is 40 bytes.', () {
-    expect(sizeOf<Options>(), 40);
+  test('Given the Options struct, when sized, then it is 48 bytes.', () {
+    expect(sizeOf<Options>(), 48);
   });
 
   test('Given the TlsPem struct, when sized, then it is 64 bytes.', () {

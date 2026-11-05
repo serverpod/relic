@@ -21,6 +21,8 @@ final class Options extends Struct {
   external int bodyTimeoutMs;
   @Uint32()
   external int writeTimeoutMs;
+  @Bool()
+  external bool v6Only;
 }
 
 /// Mirrors `TlsPem` in src/relic_native.zig.
