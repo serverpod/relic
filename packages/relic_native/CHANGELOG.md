@@ -15,6 +15,8 @@
   #877) with the fork's executor-tick patches on top
 - Resolves with code_assets 1.1 and up, so a workspace on Flutter below 3.47,
   which pins meta to 1.18, can take the package
+- A listening port on Windows refuses every other bind, as in dart:io. Before,
+  a socket with SO_REUSEADDR could take it
 
 ## 2.0.0-rc.4
 - Works on Windows: the acceptor and the reactors share one zio loop group,
