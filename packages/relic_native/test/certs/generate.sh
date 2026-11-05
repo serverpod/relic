@@ -1,17 +1,18 @@
 #!/bin/sh
 # Writes the TLS test material: a CA, an intermediate it signs, and
 # localhost leaves. The leaves cover the keys the server takes, an EC P-256
-# key as PKCS#8 and as SEC 1, an RSA 2048 key and an Ed25519 key, the EC
-# key encrypted with the password "relic" as PKCS#8 under AES-256 and
-# AES-128 and as SEC 1 behind DEK-Info headers, and what it refuses, an
-# expired certificate and the EC key as PKCS#8 under 3DES. One leaf hangs
-# off the intermediate, with the chain file holding both. For client
-# authentication there is a client certificate the CA signs, an expired
-# one, and one a second, unrelated CA signs. The CAs and the intermediate
-# are valid for a century. Apple's verifier, which Dart uses on macOS,
-# refuses a server certificate valid for more than 825 days, so the leaves
-# expire after that and a rerun renews them. The CA and intermediate keys
-# are thrown away, so a rerun replaces it all.
+# key as PKCS#8 and as SEC 1, an RSA 2048 key as PKCS#8 and as PKCS#1 and
+# an Ed25519 key, the EC key encrypted with the password "relic" as PKCS#8
+# under AES-256 and AES-128 and as SEC 1 behind DEK-Info headers, the RSA
+# key as PKCS#1 behind the same headers, and what it refuses, an expired
+# certificate and the EC key as PKCS#8 under 3DES. One leaf hangs off the
+# intermediate, with the chain file holding both. For client authentication
+# there is a client certificate the CA signs, an expired one, and one a
+# second, unrelated CA signs. The CAs and the intermediate are valid for a
+# century. Apple's verifier, which Dart uses on macOS, refuses a server
+# certificate valid for more than 825 days, so the leaves expire after that
+# and a rerun renews them. The CA and intermediate keys are thrown away, so
+# a rerun replaces it all.
 set -eu
 cd "$(dirname "$0")"
 tmp=$(mktemp -d)
@@ -91,6 +92,9 @@ openssl ec -in localhost_key.pem -aes128 -passout pass:relic \
 
 openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out localhost_rsa_key.pem
 leaf localhost_rsa localhost_rsa_key.pem ca_cert.pem "$tmp/ca_key.pem"
+openssl rsa -traditional -in localhost_rsa_key.pem -out localhost_rsa_pkcs1_key.pem
+openssl rsa -traditional -aes256 -passout pass:relic \
+  -in localhost_rsa_key.pem -out localhost_rsa_legacy_key.pem
 
 openssl genpkey -algorithm Ed25519 -out localhost_ed25519_key.pem
 leaf localhost_ed25519 localhost_ed25519_key.pem ca_cert.pem "$tmp/ca_key.pem"
