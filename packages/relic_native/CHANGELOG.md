@@ -1,3 +1,8 @@
+## Unreleased
+- Client certificates: `NativeTls.clientAuthorities` names the CAs a client
+  certificate must chain to, and the handshake requires one
+- `bind` refuses a group join with other TLS settings than the group's
+
 ## 2.0.0-rc.4
 - Works on Windows: the acceptor and the reactors share one zio loop group,
   and the waiter thread waits on the completion port and owns the loop's wake
