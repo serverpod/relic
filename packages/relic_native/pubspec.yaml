@@ -19,7 +19,9 @@ false_secrets:
 resolution: workspace
 
 dependencies:
-  code_assets: ^2.0.0
+  # Down to 1.1: 2.0 pulls in meta 1.19 through hooks 2.2 and record_use 1.0,
+  # which Flutter below 3.47 pins out.
+  code_assets: '>=1.1.0 <3.0.0'
   ffi: ^2.1.0
   hooks: ^2.0.0
   relic_core: ^2.0.0-rc.4
