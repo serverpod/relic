@@ -9,6 +9,10 @@
   DEK-Info headers
 - PKCS#1 `RSA PRIVATE KEY` files are read, the form cert-manager writes by
   default
+- An IPv6 listener takes IPv4 clients on every platform, as in dart:io. Before,
+  Windows and a Linux with net.ipv6.bindv6only=1 kept it IPv6 only
+- zio pinned at upstream main (IOCP file streaming #857, task-group publish fix
+  #877) with the fork's executor-tick patches on top
 
 ## 2.0.0-rc.4
 - Works on Windows: the acceptor and the reactors share one zio loop group,
