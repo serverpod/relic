@@ -137,6 +137,8 @@ pub const BindFailure = enum(u8) {
     /// The client authorities hold no certificate, or one that is expired,
     /// unreadable, not a CA or shares a subject with another.
     client_authorities = 4,
+    /// A join with other TLS settings than the group was bound with.
+    tls_mismatch = 5,
 };
 
 pub const HeaderSlot = extern struct {
@@ -593,6 +595,9 @@ pub const Server = struct {
     /// The CA bundle a client certificate is checked against, owned, when
     /// the handshake asks for one.
     tls_client_auth: ?tls.config.ClientAuth = null,
+    /// SHA-256 over the PEM the server was bound with, which a join must
+    /// match. Null for plain HTTP.
+    tls_digest: ?[std.crypto.hash.sha2.Sha256.digest_length]u8 = null,
     /// Registry key, owned. Null for a server outside the registry.
     group: ?[]u8,
     thread: std.Thread = undefined,
@@ -2240,6 +2245,7 @@ fn createServer(group: ?[]const u8, ip: []const u8, port: u16, options: Options,
         .options = options,
         .tls_auth = tls_auth,
         .tls_client_auth = tls_client_auth,
+        .tls_digest = tlsDigest(pem),
         .group = owned_group,
         .address = address,
     };
@@ -2356,6 +2362,24 @@ fn isCertificateAuthority(cert: std.crypto.Certificate) bool {
     return false;
 }
 
+/// SHA-256 over `pem`, its fields length-prefixed, or null without one.
+fn tlsDigest(pem: ?*const TlsPem) ?[std.crypto.hash.sha2.Sha256.digest_length]u8 {
+    const p = pem orelse return null;
+    var h = std.crypto.hash.sha2.Sha256.init(.{});
+    const parts = [_][]const u8{
+        p.certificate_chain[0..p.certificate_chain_len],
+        p.private_key[0..p.private_key_len],
+        if (p.client_authorities) |a| a[0..p.client_authorities_len] else "",
+    };
+    for (parts) |part| {
+        const len: u64 = part.len;
+        h.update(std.mem.asBytes(&len));
+        h.update(part);
+    }
+    h.update(&.{@intFromBool(p.client_authorities != null)});
+    return h.finalResult();
+}
+
 /// tls.zig's randomness, from zio's per-executor CSPRNG, which the OS
 /// seeds. The same source std.Io's random gives a std.Io server.
 const tls_random: std.Random = .{ .ptr = undefined, .fillFn = fillRandom };
@@ -2415,8 +2439,8 @@ export fn relic_init_dart_api(data: ?*anyopaque) isize {
     return dart.Dart_InitializeApiDL(data);
 }
 
-/// Creates the server for `group`, or returns the one that exists, as it
-/// was bound, `pem` included. With a null group the server is not
+/// Creates the server for `group`, or returns the one that exists, when
+/// `pem` matches what it was bound with. With a null group the server is not
 /// registered and belongs to the caller alone. Blocks until the listener
 /// is bound. Null with the reason in `failure` when binding failed. A
 /// null `pem` serves plain HTTP.
@@ -2433,7 +2457,13 @@ export fn relic_server_bind(
     registry_lock.lock();
     defer registry_lock.unlock();
     if (key) |k| {
-        if (registry.get(k)) |existing| return existing;
+        if (registry.get(k)) |existing| {
+            if (!std.meta.eql(existing.tls_digest, tlsDigest(pem))) {
+                failure.* = .tls_mismatch;
+                return null;
+            }
+            return existing;
+        }
     }
     const srv = createServer(key, std.mem.span(ip), port, options.*, pem) catch |err| {
         failure.* = switch (err) {
@@ -2981,6 +3011,20 @@ test "registry: different groups and no group are separate servers" {
         const r = relic_reactor_create(srv, 1) orelse return error.AttachFailed;
         relic_reactor_destroy(r);
     }
+}
+
+test "registry: a join with other TLS settings is refused" {
+    var failure: BindFailure = undefined;
+    const pem = testPem(test_chain, test_key);
+    const a = relic_server_bind("tls-group", "127.0.0.1", 0, &test_options, &pem, &failure) orelse return error.BindFailed;
+    try std.testing.expect(relic_server_bind("tls-group", "127.0.0.1", 0, &test_options, &pem, &failure) == a);
+    try std.testing.expect(relic_server_bind("tls-group", "127.0.0.1", 0, &test_options, null, &failure) == null);
+    try std.testing.expectEqual(BindFailure.tls_mismatch, failure);
+    const other = testPemClientAuthorities(test_chain);
+    try std.testing.expect(relic_server_bind("tls-group", "127.0.0.1", 0, &test_options, &other, &failure) == null);
+    try std.testing.expectEqual(BindFailure.tls_mismatch, failure);
+    const r = relic_reactor_create(a, 1) orelse return error.AttachFailed;
+    relic_reactor_destroy(r);
 }
 
 test "attach: a full server refuses" {
