@@ -16,8 +16,19 @@ void main() {
     ..setTrustedCertificates('test/certs/ca_cert.pem');
   final conformance = AdapterConformance(
     'NativeAdapter over TLS',
-    bind: ({bool shared = false}) =>
-        () => NativeAdapter.bind(InternetAddress.loopbackIPv4, tls: tls),
+    bind:
+        ({
+          required InternetAddress address,
+          int port = 0,
+          bool v6Only = false,
+          bool shared = false,
+        }) =>
+            () => NativeAdapter.bind(
+              address,
+              port: port,
+              v6Only: v6Only,
+              tls: tls,
+            ),
     capabilities: const AdapterCapabilities(hijack: true, webSocket: true),
     connect: (port) =>
         SecureSocket.connect('localhost', port, context: trustTestCa),
