@@ -1,4 +1,4 @@
-## Unreleased
+## 2.0.0-rc.5
 - Client certificates: `NativeTls.clientAuthorities` names the CAs a client
   certificate must chain to, and the handshake requires one
 - `bind` refuses a group join with other TLS settings than the group's
