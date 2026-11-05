@@ -1,9 +1,10 @@
-//! Decrypts a password-protected private key PEM into the plain PEM
-//! tls.zig reads. Two forms, the ones OpenSSL writes: PKCS#8
+//! Turns a private key PEM into the plain PKCS#8 or SEC 1 PEM tls.zig
+//! reads. It decrypts two forms, the ones OpenSSL writes: PKCS#8
 //! `ENCRYPTED PRIVATE KEY` under PBES2 with PBKDF2 and AES-128-CBC or
 //! AES-256-CBC, from `openssl pkcs8` and `openssl genpkey`, and a key
 //! block behind `Proc-Type` and `DEK-Info` headers under the same ciphers,
-//! from `openssl ec` and `openssl rsa` with a cipher flag.
+//! from `openssl ec` and `openssl rsa` with a cipher flag. It rewraps a
+//! PKCS#1 `RSA PRIVATE KEY`, which cert-manager and Go write, as PKCS#8.
 const std = @import("std");
 const der = std.crypto.Certificate.der;
 const Element = der.Element;
@@ -17,10 +18,11 @@ pub const Error = error{
     OutOfMemory,
 };
 
-/// The plain PEM for an encrypted `pem`, which the caller zeroes and
-/// frees, or null when `pem` is not encrypted. A password for a key in
-/// the clear is refused as a misconfiguration.
-pub fn decrypt(gpa: std.mem.Allocator, pem: []const u8, password: ?[]const u8) Error!?[]u8 {
+/// The PEM tls.zig reads for `pem`, which the caller zeroes and frees: an
+/// encrypted key decrypted, a PKCS#1 key rewrapped. Null when tls.zig
+/// reads `pem` as it is. A password for a key in the clear is refused as
+/// a misconfiguration.
+pub fn normalize(gpa: std.mem.Allocator, pem: []const u8, password: ?[]const u8) Error!?[]u8 {
     const block = pemBlock(pem) orelse return null;
     if (std.mem.eql(u8, block.label, "ENCRYPTED PRIVATE KEY")) {
         return try pkcs8(gpa, block, password);
@@ -29,6 +31,14 @@ pub fn decrypt(gpa: std.mem.Allocator, pem: []const u8, password: ?[]const u8) E
         return try openssl(gpa, block, dek, password orelse return error.Password);
     }
     if (password != null) return error.Password;
+    if (std.mem.eql(u8, block.label, pkcs1_label)) {
+        const rsa = try decodeBase64(gpa, block.body);
+        defer {
+            std.crypto.secureZero(u8, rsa);
+            gpa.free(rsa);
+        }
+        return try pkcs1ToPem(gpa, rsa);
+    }
     return null;
 }
 
@@ -302,6 +312,7 @@ fn openssl(gpa: std.mem.Allocator, block: Block, dek: DekInfo, password: []const
     md5.update(salt);
     md5.final(key[16..32]);
     const plain = try cbcDecrypt(dek.cipher, key[0..dek.cipher.keyLength()], dek.iv, buf);
+    if (std.mem.eql(u8, block.label, pkcs1_label)) return pkcs1ToPem(gpa, plain);
     return toPem(gpa, block.label, plain);
 }
 
@@ -348,4 +359,47 @@ fn toPem(gpa: std.mem.Allocator, label: []const u8, bytes: []const u8) Error![]u
     }
     _ = encoder.encode(encoded, bytes);
     return std.fmt.allocPrint(gpa, "-----BEGIN {s}-----\n{s}\n-----END {s}-----\n", .{ label, encoded, label });
+}
+
+const pkcs1_label = "RSA PRIVATE KEY";
+
+/// rsaEncryption, 1.2.840.113549.1.1.1, with its NULL parameters.
+const rsa_algorithm = [_]u8{ 0x30, 0x0d, 0x06, 0x09, 0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x01, 0x01, 0x05, 0x00 };
+
+/// Wraps a PKCS#1 RSAPrivateKey in the PKCS#8 PrivateKeyInfo tls.zig
+/// reads: SEQUENCE { version 0, rsaEncryption, privateKey OCTET STRING }.
+fn pkcs1ToPem(gpa: std.mem.Allocator, rsa: []const u8) Error![]u8 {
+    const version = [_]u8{ 0x02, 0x01, 0x00 };
+    var octet_buf: [6]u8 = undefined;
+    const octet = derHeader(&octet_buf, 0x04, rsa.len);
+    const inner_len = version.len + rsa_algorithm.len + octet.len + rsa.len;
+    var sequence_buf: [6]u8 = undefined;
+    const sequence = derHeader(&sequence_buf, 0x30, inner_len);
+    const info = try gpa.alloc(u8, sequence.len + inner_len);
+    defer {
+        std.crypto.secureZero(u8, info);
+        gpa.free(info);
+    }
+    var at: usize = 0;
+    for ([_][]const u8{ sequence, &version, &rsa_algorithm, octet, rsa }) |part| {
+        @memcpy(info[at..][0..part.len], part);
+        at += part.len;
+    }
+    return toPem(gpa, "PRIVATE KEY", info);
+}
+
+/// A DER tag and length, written into `buf`.
+fn derHeader(buf: *[6]u8, tag: u8, len: usize) []const u8 {
+    buf[0] = tag;
+    if (len < 0x80) {
+        buf[1] = @intCast(len);
+        return buf[0..2];
+    }
+    var count: usize = 0;
+    var rest = len;
+    while (rest > 0) : (rest >>= 8) count += 1;
+    std.debug.assert(count <= 4);
+    buf[1] = 0x80 | @as(u8, @intCast(count));
+    for (0..count) |i| buf[2 + i] = @truncate(len >> @as(u6, @intCast(8 * (count - 1 - i))));
+    return buf[0 .. 2 + count];
 }

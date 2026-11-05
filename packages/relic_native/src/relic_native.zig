@@ -137,8 +137,8 @@ pub const BindFailure = enum(u8) {
     /// shares a subject with another. tls.zig would drop such a certificate
     /// and send the rest.
     certificate_chain = 2,
-    /// Not a PKCS#8 or SEC 1 key of a kind tls.zig signs with, or one
-    /// encrypted in a form pem_key.zig does not read.
+    /// Not a PKCS#8, SEC 1 or PKCS#1 key of a kind tls.zig signs with, or
+    /// one encrypted in a form pem_key.zig does not read.
     private_key = 3,
     /// The client authorities hold no certificate, or one that is expired,
     /// unreadable, not a CA or shares a subject with another.
@@ -2277,18 +2277,18 @@ fn loadCertKeyPair(gpa: std.mem.Allocator, pem: *const TlsPem) !*tls.config.Cert
     const chain = pem.certificate_chain[0..pem.certificate_chain_len];
     const given = pem.private_key[0..pem.private_key_len];
     const password: ?[]const u8 = if (pem.password) |p| p[0..pem.password_len] else null;
-    const decrypted = pem_key.decrypt(gpa, given, password) catch |err| return switch (err) {
+    const normalized = pem_key.normalize(gpa, given, password) catch |err| return switch (err) {
         error.OutOfMemory => error.OutOfMemory,
         error.Password => error.Password,
         error.Unsupported => error.PrivateKey,
     };
     defer {
-        if (decrypted) |plain| {
+        if (normalized) |plain| {
             std.crypto.secureZero(u8, plain);
             gpa.free(plain);
         }
     }
-    const key = decrypted orelse given;
+    const key = normalized orelse given;
     const pair = try gpa.create(tls.config.CertKeyPair);
     errdefer gpa.destroy(pair);
     // The bundle reads the clock to drop expired certificates.
@@ -3336,6 +3336,9 @@ const test_encrypted_aes128_key = @import("test_certs").encrypted_aes128_key;
 const test_encrypted_des3_key = @import("test_certs").encrypted_des3_key;
 const test_legacy_aes128_key = @import("test_certs").legacy_aes128_key;
 const test_legacy_key = @import("test_certs").legacy_key;
+const test_rsa_chain = @import("test_certs").rsa_chain;
+const test_rsa_pkcs1_key = @import("test_certs").rsa_pkcs1_key;
+const test_rsa_legacy_key = @import("test_certs").rsa_legacy_key;
 
 fn testPem(chain: []const u8, key: []const u8) TlsPem {
     return .{
@@ -3370,6 +3373,17 @@ test "tls: an encrypted key binds with its password" {
     var failure: BindFailure = undefined;
     for ([_][]const u8{ test_encrypted_key, test_encrypted_aes128_key, test_legacy_key, test_legacy_aes128_key }) |key| {
         const pem = testPemPassword(test_chain, key, "relic");
+        const srv = relic_server_bind(null, "127.0.0.1", 0, &test_options, &pem, &failure) orelse return error.BindFailed;
+        const r = relic_reactor_create(srv, 1) orelse return error.AttachFailed;
+        relic_reactor_destroy(r);
+    }
+}
+
+test "tls: a PKCS#1 RSA key binds, plain and behind DEK-Info headers" {
+    var failure: BindFailure = undefined;
+    const plain = testPem(test_rsa_chain, test_rsa_pkcs1_key);
+    const legacy = testPemPassword(test_rsa_chain, test_rsa_legacy_key, "relic");
+    for ([_]TlsPem{ plain, legacy }) |pem| {
         const srv = relic_server_bind(null, "127.0.0.1", 0, &test_options, &pem, &failure) orelse return error.BindFailed;
         const r = relic_reactor_create(srv, 1) orelse return error.AttachFailed;
         relic_reactor_destroy(r);

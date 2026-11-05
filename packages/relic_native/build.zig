@@ -91,6 +91,9 @@ pub fn build(b: *std.Build) void {
             \\pub const encrypted_des3_key = @embedFile("localhost_encrypted_des3_key.pem");
             \\pub const legacy_aes128_key = @embedFile("localhost_legacy_aes128_key.pem");
             \\pub const legacy_key = @embedFile("localhost_legacy_key.pem");
+            \\pub const rsa_chain = @embedFile("localhost_rsa_cert.pem");
+            \\pub const rsa_pkcs1_key = @embedFile("localhost_rsa_pkcs1_key.pem");
+            \\pub const rsa_legacy_key = @embedFile("localhost_rsa_legacy_key.pem");
             \\
         ),
     });
