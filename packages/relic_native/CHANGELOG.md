@@ -4,6 +4,9 @@
 - `bind` refuses a group join with other TLS settings than the group's
 - ALPN: the handshake selects `http/1.1` and refuses a client that offers
   only other protocols
+- Encrypted private keys: `NativeTls.password` opens a PKCS#8 key under
+  PBES2 with PBKDF2 and AES-128 or AES-256 CBC, or one behind OpenSSL's
+  DEK-Info headers
 
 ## 2.0.0-rc.4
 - Works on Windows: the acceptor and the reactors share one zio loop group,
