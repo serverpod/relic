@@ -13,6 +13,8 @@
   Windows and a Linux with net.ipv6.bindv6only=1 kept it IPv6 only
 - zio pinned at upstream main (IOCP file streaming #857, task-group publish fix
   #877) with the fork's executor-tick patches on top
+- Resolves with code_assets 1.1 and up, so a workspace on Flutter below 3.47,
+  which pins meta to 1.18, can take the package
 
 ## 2.0.0-rc.4
 - Works on Windows: the acceptor and the reactors share one zio loop group,
