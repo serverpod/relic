@@ -41,9 +41,26 @@ The chain holds the server's certificate first, then any intermediates.
 The key is an unencrypted PKCS#8 or SEC 1 key, ECDSA, RSA or Ed25519.
 `bind` throws a `TlsException` for a key it cannot use, and for a chain
 with no certificate or one that is expired, unreadable or repeats a
-subject. The server speaks TLS 1.3 only, asks for no client certificate
-and offers no ALPN. A client that sends plain HTTP to the port gets a
-plain 400.
+subject. The server speaks TLS 1.3 only and offers no ALPN. A client
+that sends plain HTTP to the port gets a plain 400.
+
+To require a client certificate, pass the CA certificates it must chain
+to as `clientAuthorities`:
+
+```dart
+tls: NativeTls.fromFiles(
+  certificateChain: 'cert.pem',
+  privateKey: 'key.pem',
+  clientAuthorities: 'client_ca.pem',
+),
+```
+
+A client without one, or with one that does not chain to them, is
+refused with a TLS alert. A handler does not see the certificate, only
+that the connection passed the check. `bind` throws a `TlsException` for
+client authorities with no certificate, or one that is expired,
+unreadable, not a CA, that is, without the v3 `basicConstraints` that
+marks one, or repeats a subject.
 
 ## Platforms
 
