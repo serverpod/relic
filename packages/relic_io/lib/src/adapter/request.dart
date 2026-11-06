@@ -63,12 +63,29 @@ ConnectionInfo connectionInfoFromHttpConnectionInfo(
   );
 }
 
-Headers headersFromHttpRequest(io.HttpRequest request) {
-  final store = MapHeaderStore();
-  request.headers.forEach(
-    (name, values) => store.set(HeaderName.lookup(name), values),
-  );
-  return Headers.fromStore(store);
+Headers headersFromHttpRequest(io.HttpRequest request) =>
+    Headers.fromStore(_HttpHeadersStore(request.headers));
+
+/// A [HeaderStore] that reads parsed [io.HttpHeaders] in place.
+///
+/// dart:io's parser refuses a value with CR, LF or NUL, and the headers are
+/// immutable once parsed, so no value is copied or checked again. Its name
+/// check, as of SDK 3.13, skips the first byte of a name and lets DEL pass,
+/// so every name goes through [HeaderName.lookup] here, which throws for
+/// one that is not a token. [names] follow dart:io's order, not the wire's.
+final class _HttpHeadersStore extends HeaderStore {
+  final io.HttpHeaders _headers;
+
+  @override
+  final List<HeaderName> names = [];
+
+  _HttpHeadersStore(this._headers) {
+    _headers.forEach((name, _) => names.add(HeaderName.lookup(name)));
+  }
+
+  @override
+  Iterable<String> values(HeaderName name) =>
+      _headers[name.lower] ?? const <String>[];
 }
 
 /// The body of [request], untyped. The core types it from the headers.
