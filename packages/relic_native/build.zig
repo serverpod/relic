@@ -14,6 +14,7 @@ pub fn build(b: *std.Build) void {
     });
     const strip = b.option(bool, "strip", "Strip debug info (used for published binaries)") orelse false;
     const sanitize_thread = b.option(bool, "sanitize-thread", "Build the unit tests under ThreadSanitizer") orelse false;
+    const backend = b.option([]const u8, "backend", "zio's event loop backend: poll, linux, epoll, kqueue, io_uring or iocp (default: the platform's)");
 
     // zio makes an io_uring ring SINGLE_ISSUER unless told not to, and
     // only the thread that made such a ring may enter it. The Dart VM
@@ -23,6 +24,7 @@ pub fn build(b: *std.Build) void {
         .target = target,
         .optimize = optimize,
         .io_uring_single_issuer = false,
+        .backend = backend,
     });
     const tls = b.dependency("tls", .{ .target = target, .optimize = optimize });
 
