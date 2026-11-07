@@ -1170,7 +1170,10 @@ final class NativeExchange extends LinkedListEntry<NativeExchange>
     if (stage != _Stage.raw && stage != _Stage.rawClosing) return;
     final view = _view!;
     _release();
-    if (stage == _Stage.raw) native.abort(view);
+    if (stage == _Stage.raw) {
+      native.abort(view);
+      _adapter._scheduleDrain();
+    }
     final inbound = _inbound;
     if (inbound != null && !inbound.isClosed) {
       if (error != null) inbound.addError(error);

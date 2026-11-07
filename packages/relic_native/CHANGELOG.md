@@ -17,6 +17,9 @@
 - A WebSocket whose 101 fails to go out ends, and so does a streamed
   response whose head fails to. Before, Dart went on writing to the freed
   exchange, which the next connection could be using
+- Dart's abort of a hijacked connection closes it at once. Before, an
+  idle reactor got to it only at its next sweep, and never with every
+  timeout off
 
 ## 2.0.0-rc.5
 - Client certificates: `NativeTls.clientAuthorities` names the CAs a client
