@@ -11,11 +11,12 @@
             .hash = "zio-0.19.0-xHbVVOi6LgBziuPlG5JwbETAEsNVOBMGkOLeJ3OGnZ5D",
         },
         // ianic's tls.zig with the server picking the cipher suite in its own
-        // order, a refused client certificate answered with its alert and
-        // RSA signing through the CRT form of the key, until all are upstream.
+        // order, a refused client certificate answered with its alert, RSA
+        // signing through the CRT form of the key and a shallower handshake
+        // stack, until all are upstream.
         .tls = .{
-            .url = "git+https://github.com/nielsenko/tls.zig#0f3b2cb7af6a37d33a89a97a59ed5cb9396250ab",
-            .hash = "tls-0.1.0-ER2e0nHYBgCzek0BUvu1Q6RCkEk07lRWmjM-5pxgugit",
+            .url = "git+https://github.com/nielsenko/tls.zig#b82c88ae952af27b6c743dc59bc5ad99425a95d6",
+            .hash = "tls-0.1.0-ER2e0qPoBgDgveMWLM-7CrYIYltv57Rqm92zy-XGgYcL",
         },
     },
     .paths = .{
