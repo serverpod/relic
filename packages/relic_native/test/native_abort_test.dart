@@ -7,6 +7,8 @@ import 'package:relic_native/relic_native.dart';
 import 'package:test/test.dart';
 import 'package:test_utils/adapter_conformance.dart';
 
+import 'native_test_helpers.dart';
+
 void main() {
   late NativeAdapter adapter;
   late StreamIterator<AdapterExchange> exchanges;
@@ -56,6 +58,52 @@ void main() {
     await (await nextExchange()).respond(Response.ok());
     return reply;
   }
+
+  test(
+    'Given an upgraded exchange whose 101 the client has, '
+    'when the exchange is aborted, '
+    'then the connection closes and the adapter answers the next request.',
+    () async {
+      final socket = await connect();
+      socket.write(webSocketUpgradeRequest);
+      await socket.flush();
+      final exchange = await nextExchange();
+      await exchange.upgradeWebSocket(webSocketUpgradeAccept);
+      final head = Completer<void>();
+      final received = <int>[];
+      final closed = socket.listen((bytes) {
+        received.addAll(bytes);
+        if (!head.isCompleted && latin1.decode(received).contains('\r\n\r\n')) {
+          head.complete();
+        }
+      }).asFuture<void>();
+      await head.future.timeout(const Duration(seconds: 3));
+
+      exchange.abort();
+
+      await closed.timeout(const Duration(seconds: 3));
+      expect(latin1.decode(received), startsWith('HTTP/1.1 101 '));
+      expect(await answerNextRequest(), startsWith('HTTP/1.1 200 '));
+    },
+  );
+
+  test(
+    'Given an exchange the handler upgraded, '
+    'when the exchange is aborted before the 101 is out, '
+    'then the connection closes and the adapter answers the next request.',
+    () async {
+      final socket = await connect();
+      socket.write(webSocketUpgradeRequest);
+      await socket.flush();
+      final exchange = await nextExchange();
+      await exchange.upgradeWebSocket(webSocketUpgradeAccept);
+
+      exchange.abort();
+
+      await socket.drain<void>().timeout(const Duration(seconds: 3));
+      expect(await answerNextRequest(), startsWith('HTTP/1.1 200 '));
+    },
+  );
 
   test(
     'Given a hijacked exchange whose bytes the client has, on a reactor '

@@ -1174,18 +1174,27 @@ final class NativeExchange extends LinkedListEntry<NativeExchange>
       native.abort(view);
       _adapter._scheduleDrain();
     }
+    _endRaw(error);
+  }
+
+  /// The native side is done with a raw connection. The stream ends with
+  /// an error if the peer had not ended it, as when no writer could start
+  /// for a sink that was still open.
+  void _rawGone() {
+    _release();
+    _endRaw(
+      const io.SocketException('The connection closed before the peer did'),
+    );
+  }
+
+  /// Ends the inbound stream and the sink, and lets the adapter forget the
+  /// connection. A stream still open gets [error] first, when there is one.
+  void _endRaw(Object? error) {
     final inbound = _inbound;
     if (inbound != null && !inbound.isClosed) {
       if (error != null) inbound.addError(error);
       unawaited(inbound.close());
     }
-    _rawSink?._end();
-    _adapter._finished(this);
-  }
-
-  /// The native side is done with a raw connection whose sink was closed.
-  void _rawGone() {
-    _release();
     _rawSink?._end();
     _adapter._finished(this);
   }

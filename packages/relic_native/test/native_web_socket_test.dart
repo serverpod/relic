@@ -255,6 +255,43 @@ void main() {
   });
 
   test('Given an upgraded connection, '
+      'when the handler sends 1000 messages in one go, '
+      'then the client gets them all in order', () async {
+    await serve();
+    final client = await _Client.connect(server.port);
+    final socket = await upgraded.future;
+
+    for (var i = 0; i < 1000; i++) {
+      socket.sendText('$i');
+    }
+
+    for (var i = 0; i < 1000; i++) {
+      expect(utf8.decode((await client.next())!.payload), '$i');
+    }
+    client.destroy();
+  });
+
+  test('Given an upgraded connection whose handler echoes every message, '
+      'when the client sends 200 messages, '
+      'then it gets every echo in order', () async {
+    await serve();
+    final client = await _Client.connect(server.port);
+    final socket = await upgraded.future;
+    socket.events.listen((event) {
+      if (event is TextDataReceived) socket.sendText(event.text);
+    });
+
+    for (var i = 0; i < 200; i++) {
+      client.send(1, utf8.encode('$i'));
+    }
+
+    for (var i = 0; i < 200; i++) {
+      expect(utf8.decode((await client.next())!.payload), '$i');
+    }
+    client.destroy();
+  });
+
+  test('Given an upgraded connection, '
       'when the handler closes with 1000 and the client answers, '
       'then the client got the frame and done completes at once', () async {
     await serve();

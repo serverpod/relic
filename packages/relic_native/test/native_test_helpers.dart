@@ -41,6 +41,10 @@ const webSocketUpgradeFields =
 /// line.
 const webSocketUpgradeRequest = '$webSocketUpgradeFields\r\n';
 
+/// The Sec-WebSocket-Accept that answers the key of
+/// [webSocketUpgradeFields].
+const webSocketUpgradeAccept = 's3pPLMBiTxaQ9kYGzzhZRbK+xOo=';
+
 /// Closes [socket] with a reset everywhere but Windows, so the server's
 /// next write to it fails.
 ///

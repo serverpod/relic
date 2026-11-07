@@ -25,6 +25,8 @@
 - A cancel the sweeper takes back, for a wait that completed anyway, leaves
   nothing behind. Before, the connection's later timeouts read as cancels,
   and one could end the wait for the handler's answer
+- An idle WebSocket or hijacked connection holds one task and its stack,
+  where it held three
 
 ## 2.0.0-rc.5
 - Client certificates: `NativeTls.clientAuthorities` names the CAs a client
