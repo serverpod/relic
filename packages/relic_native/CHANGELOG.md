@@ -20,6 +20,8 @@
 - Dart's abort of a hijacked connection closes it at once. Before, an
   idle reactor got to it only at its next sweep, and never with every
   timeout off
+- Each task commits 144 KiB of stack instead of zio's default 256 KiB. tls.zig
+  is pinned to a fork whose handshake fits in it
 
 ## 2.0.0-rc.5
 - Client certificates: `NativeTls.clientAuthorities` names the CAs a client

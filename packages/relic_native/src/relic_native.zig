@@ -634,6 +634,25 @@ pub const Server = struct {
         return if (builtin.os.tag == .windows) &self.loop_group else null;
     }
 
+    /// The options of every runtime the server runs, the acceptor's and
+    /// each reactor's.
+    fn runtimeOptions(self: *Server) zio.RuntimeOptions {
+        return .{
+            .executors = .exact(1),
+            .loop_group = self.sharedLoopGroup(),
+            // Growing past `committed_size` needs an alternate signal stack,
+            // which the Dart VM's threads lack, so the size covers the
+            // deepest path on x86_64 and aarch64: 131 KiB, a handshake that
+            // checks a client certificate signed with RSA. The 8 MiB
+            // reservation stays, because without stack probes a big frame can
+            // jump the single guard page.
+            .stack_pool = .{
+                .maximum_size = 8 * 1024 * 1024,
+                .committed_size = 144 * 1024,
+            },
+        };
+    }
+
     fn connectionsTotal(self: *Server) u32 {
         self.attach_lock.lock();
         defer self.attach_lock.unlock();
@@ -687,7 +706,7 @@ pub const Server = struct {
     }
 
     fn runInner(self: *Server) !void {
-        const rt = try zio.Runtime.init(self.gpa, .{ .executors = .exact(1), .loop_group = self.sharedLoopGroup() });
+        const rt = try zio.Runtime.init(self.gpa, self.runtimeOptions());
         defer rt.deinit();
 
         const listener = try self.address.listen(.{
@@ -2568,7 +2587,7 @@ fn createReactor(srv: *Server, port: dart.Dart_Port_DL) !*Reactor {
     const gpa = std.heap.c_allocator;
     const r = try gpa.create(Reactor);
     errdefer gpa.destroy(r);
-    const rt = try zio.Runtime.init(gpa, .{ .executors = .exact(1), .loop_group = srv.sharedLoopGroup() });
+    const rt = try zio.Runtime.init(gpa, srv.runtimeOptions());
     errdefer rt.deinit();
     r.* = .{ .gpa = gpa, .server = srv, .slot = no_slot, .port = port, .rt = rt };
     r.incoming.init();
