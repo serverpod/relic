@@ -217,6 +217,37 @@ jobs:
           files: packages/relic_native/coverage/lcov.info
           flags: relic_native
 
+  zig_tests:
+    name: Run Zig Tests (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v7
+
+      - name: Setup Zig
+        uses: mlugg/setup-zig@v2
+        with:
+          version: 0.17.1
+
+      # Debug, zig build's default, keeps the safety checks that the Dart
+      # suites' ReleaseFast library drops, so a bounds or overflow bug
+      # panics here.
+      - name: Run Zig Tests
+        working-directory: packages/relic_native
+        run: zig build test --summary all
+
+      # zio takes io_uring where the kernel allows it, as these runners do.
+      # Its epoll fallback gets a run of its own.
+      - name: Run Zig Tests On Epoll
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        working-directory: packages/relic_native
+        run: zig build test -Dbackend=epoll --summary all
+
   docs-markdown-lint:
     name: Markdown lint for docs
     runs-on: ubuntu-latest
