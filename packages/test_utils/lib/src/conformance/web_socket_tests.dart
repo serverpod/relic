@@ -100,6 +100,39 @@ void _webSocketTests(AdapterConformance conformance) {
       expect(serverReceivedMessages, equals(['msg1', 'msg2']));
     });
 
+    test('when 128 clients connect eight at a time and each sends a message, '
+        'then every client gets its message back', () async {
+      await scheduleServer((req) {
+        return WebSocketUpgrade((serverSocket) {
+          serverSocket.events.listen((event) {
+            if (event is TextDataReceived) serverSocket.sendText(event.text);
+          });
+        });
+      });
+      final clientSockets = <WebSocket>[];
+
+      Future<WebSocketEvent> echo(String message) async {
+        final clientSocket = await WebSocket.connect(
+          Uri.parse('ws://localhost:${serverPort()}'),
+        );
+        clientSockets.add(clientSocket);
+        clientSocket.sendText(message);
+        return clientSocket.events.first;
+      }
+
+      for (var round = 0; round < 16; round++) {
+        final sent = [for (var i = 0; i < 8; i++) 'message $round.$i'];
+        final replies = await Future.wait([
+          for (final message in sent) echo(message),
+        ]).timeout(const Duration(seconds: 5));
+
+        expect(replies, [
+          for (final message in sent) TextDataReceived(message),
+        ]);
+      }
+      await Future.wait([for (final socket in clientSockets) socket.close()]);
+    });
+
     test('when the server sends multiple messages upon connection, '
         'then the client receives all server messages in order', () async {
       await scheduleServer((req) {

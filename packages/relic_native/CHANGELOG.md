@@ -4,6 +4,9 @@
   HTTP/1.0 request kept its connection on a keep-alive beside a close
 - An HTTP/1.0 request with Transfer-Encoding closes its connection after
   the response, even with keep-alive
+- A tick that brings new exchanges and events together loses none of them.
+  rc.5 read the events into the buffer that held the new exchanges, so
+  concurrent requests and WebSocket upgrades could stall
 
 ## 2.0.0-rc.5
 - Client certificates: `NativeTls.clientAuthorities` names the CAs a client
