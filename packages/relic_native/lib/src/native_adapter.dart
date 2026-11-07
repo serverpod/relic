@@ -136,7 +136,8 @@ final class NativeAdapter implements Adapter {
   final RawReceivePort _wake;
   final io.InternetAddress address;
   final int _port;
-  final _out = calloc<Pointer<native.ExchangeView>>(_batchSize);
+  final _exchangesOut = calloc<Pointer<native.ExchangeView>>(_batchSize);
+  final _eventsOut = calloc<Size>(_batchSize);
 
   /// Scratch for the three results of relic_read_chunk, reused by every
   /// pull. A pull never re-enters.
@@ -428,7 +429,7 @@ final class NativeAdapter implements Adapter {
     try {
       for (var batch = 0; batch < _batchesPerTurn; batch++) {
         _drainAgain = false;
-        final n = native.reactorTick(_reactor, 0, _out, _batchSize);
+        final n = native.reactorTick(_reactor, 0, _exchangesOut, _batchSize);
         if (_handOver(n, sink)) handedOver = true;
         if (n > 0 || _drainAgain || native.reactorPending(_reactor)) continue;
         // What this turn handed to Dart may answer from a microtask, an
@@ -445,7 +446,7 @@ final class NativeAdapter implements Adapter {
         final m = native.reactorTick(
           _reactor,
           _linger.inMilliseconds,
-          _out,
+          _exchangesOut,
           _batchSize,
         );
         if (_handOver(m, sink)) handedOver = true;
@@ -487,7 +488,7 @@ final class NativeAdapter implements Adapter {
   bool _takeExchanges(int n, ExchangeSink sink) {
     var async = false;
     for (var i = 0; i < n; i++) {
-      final exchange = NativeExchange._(this, _out[i]);
+      final exchange = NativeExchange._(this, _exchangesOut[i]);
       _inFlight.add(exchange);
       if (exchange._bodyStreamed) exchange._expectEvents();
       final pending = sink(exchange);
@@ -505,13 +506,12 @@ final class NativeAdapter implements Adapter {
   /// An event is the address of a view, with the low bit set for the last
   /// event of a raw connection, whose view is about to die.
   bool _dispatchEvents() {
-    final events = _out.cast<Size>();
     var any = false;
     while (true) {
-      final m = native.reactorEvents(_reactor, events, _batchSize);
+      final m = native.reactorEvents(_reactor, _eventsOut, _batchSize);
       if (m > 0) any = true;
       for (var i = 0; i < m; i++) {
-        final tagged = events[i];
+        final tagged = _eventsOut[i];
         _byAddress[tagged & ~1]?._onEvent(last: tagged & 1 != 0);
       }
       if (m < _batchSize) return any;
@@ -571,7 +571,8 @@ final class NativeAdapter implements Adapter {
     _wake.close();
     // Blocks while the connections unwind.
     native.reactorDestroy(_reactor);
-    calloc.free(_out);
+    calloc.free(_exchangesOut);
+    calloc.free(_eventsOut);
     calloc.free(_chunkData);
     calloc.free(_chunkLength);
     calloc.free(_chunkStatus);
