@@ -11,6 +11,9 @@
   Dart, as by a response body's own stream subscription or by the exchange
   sink, leaves the reactor running. Before, it stopped every connection on
   the isolate
+- A WebSocket upgrade request with a chunked body leaves the reactor
+  running. Before, the body's chunks reached the socket as messages of no
+  known kind, and the error stopped every connection on the isolate
 
 ## 2.0.0-rc.5
 - Client certificates: `NativeTls.clientAuthorities` names the CAs a client
