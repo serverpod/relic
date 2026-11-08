@@ -1974,7 +1974,9 @@ fn parseHead(bytes: []const u8, head_copy: []u8, slots: []HeaderSlot) ParseHeadE
     // Every Connection line counts, and close wins (RFC 9112 9.3).
     head.keep_alive = !close_option and switch (head.version) {
         .@"HTTP/1.1" => true,
-        .@"HTTP/1.0" => keep_alive_option,
+        // Framing of an HTTP/1.0 message with Transfer-Encoding counts as
+        // faulty, so the connection closes after it (RFC 9112 6.1).
+        .@"HTTP/1.0" => keep_alive_option and !transfer_encoded,
     };
     @memcpy(head_copy[0..bytes.len], bytes);
     return .{ .head = head, .count = n, .host_slot = host_slot };
@@ -3546,6 +3548,7 @@ fn checkRequestBytes(bytes: []const u8) !void {
         var expected = try reference;
         var close_option = false;
         var keep_alive_option = false;
+        var transfer_encoded = false;
         for (slots[0..index.count]) |slot| {
             const colon = std.mem.findScalarPos(u8, head, slot.name_off, ':').?;
             try std.testing.expect(colon < slot.value_off);
@@ -3556,8 +3559,10 @@ fn checkRequestBytes(bytes: []const u8) !void {
                 close_option = close_option or connectionHas(value, "close");
                 keep_alive_option = keep_alive_option or connectionHas(value, "keep-alive");
             }
+            transfer_encoded = transfer_encoded or slot.name_id == header_names.transfer_encoding;
         }
-        expected.keep_alive = !close_option and (expected.version == .@"HTTP/1.1" or keep_alive_option);
+        expected.keep_alive = !close_option and
+            (expected.version == .@"HTTP/1.1" or (keep_alive_option and !transfer_encoded));
         try std.testing.expectEqualDeep(expected, index.head);
         var req: std.http.Server.Request = .{ .server = &http, .head_buffer = head, .head = index.head };
         try std.testing.expect(index.host_slot < @as(i32, @intCast(index.count)));
@@ -3581,6 +3586,7 @@ const request_corpus = [_][]const u8{
     corpus("GET / HTTP/1.0\r\nConnection: keep-alive, close\r\n\r\nGET / HTTP/1.1\r\nHost: x\r\nConnection: close\r\nConnection: TE\r\n\r\n"),
     corpus("POST / HTTP/1.1\r\nHost: x\r\nContent-Length: 5\r\n\r\nhelloGET / HTTP/1.1\r\n\r\n"),
     corpus("POST / HTTP/1.1\r\nHost: x\r\nTransfer-Encoding: chunked\r\n\r\n5\r\nhello\r\n0\r\n\r\n"),
+    corpus("POST / HTTP/1.0\r\nConnection: keep-alive\r\nTransfer-Encoding: chunked\r\n\r\n5\r\nhello\r\n0\r\n\r\nGET / HTTP/1.0\r\n\r\n"),
     corpus("POST / HTTP/1.1\r\nHost: x\r\nTransfer-Encoding: chunked\r\n\r\n5\r\nhello\r\n0\r\nX-Trailer: 1\r\n\r\n"),
     corpus("PUT / HTTP/1.1\r\nHost: x\r\nExpect: 100-continue\r\nContent-Length: 2\r\n\r\nok"),
     corpus("DELETE / HTTP/1.1\r\nHost: x\r\nContent-Length: 3\r\n\r\nabc"),
@@ -3732,6 +3738,15 @@ test "head: every Connection line counts, and close wins over keep-alive" {
     try std.testing.expect(!earlier.head.keep_alive);
     const split = try parseHead("GET / HTTP/1.0\r\nConnection: keep-alive\r\nConnection: TE\r\n\r\n", &head_copy, &slots);
     try std.testing.expect(split.head.keep_alive);
+}
+
+test "head: an HTTP/1.0 request with Transfer-Encoding does not keep its connection" {
+    var head_copy: [max_head]u8 = undefined;
+    var slots: [max_headers]HeaderSlot = undefined;
+    const old = try parseHead("POST / HTTP/1.0\r\nConnection: keep-alive\r\nTransfer-Encoding: chunked\r\n\r\n", &head_copy, &slots);
+    try std.testing.expect(!old.head.keep_alive);
+    const new = try parseHead("POST / HTTP/1.1\r\nHost: x\r\nTransfer-Encoding: chunked\r\n\r\n", &head_copy, &slots);
+    try std.testing.expect(new.head.keep_alive);
 }
 
 test "head: Transfer-Encoding beside Content-Length is refused" {

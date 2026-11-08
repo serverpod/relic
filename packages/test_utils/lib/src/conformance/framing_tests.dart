@@ -159,6 +159,25 @@ void framingTests(AdapterConformance conformance) {
       expect(rest, '/first');
     });
 
+    test('when an HTTP/1.0 client asks to keep the connection alive and '
+        'sends a chunked body, '
+        'then no request after it on the connection is answered', () async {
+      await serve((req) async {
+        await req.readAsString();
+        return Response.ok(body: Body.fromString(req.url.path));
+      });
+
+      // The framing of such a request counts as faulty (RFC 9112 6.1). An
+      // adapter may answer it before it closes, or drop it as dart:io does.
+      final reply = await raw(
+        'POST /first HTTP/1.0\r\nHost: x\r\nConnection: keep-alive\r\n'
+        'Transfer-Encoding: chunked\r\n\r\n2\r\nhi\r\n0\r\n\r\n'
+        'GET /second HTTP/1.0\r\nHost: x\r\n\r\n',
+      );
+
+      expect(reply, isNot(contains('/second')));
+    });
+
     test('when a request keeps the connection alive, '
         'then the response carries no Connection: close', () async {
       await serve(ok);
