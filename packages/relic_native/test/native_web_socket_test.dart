@@ -329,6 +329,19 @@ void main() {
     expect(await socket.events.first, TextDataReceived('still here'));
     client.destroy();
   });
+
+  test('Given an upgrade request with a chunked body, '
+      'when the client sends text after the 101, '
+      'then the handler receives the text as its first event', () async {
+    await serve();
+    final client = await _Client.connect(server.port, chunkedBody: 'hello');
+    final socket = await upgraded.future;
+
+    client.send(1, utf8.encode('tick'));
+
+    expect(await socket.events.first, TextDataReceived('tick'));
+    client.destroy();
+  });
 }
 
 /// A client on a raw socket, past the opening handshake, that sends
@@ -341,8 +354,13 @@ final class _Client {
   _Client._(this._socket) : _chunks = StreamIterator(_socket);
 
   /// Upgrades a fresh connection, after one plain request on it when
-  /// [reused] is set.
-  static Future<_Client> connect(int port, {bool reused = false}) async {
+  /// [reused] is set. The upgrade request carries [chunkedBody] when there
+  /// is one.
+  static Future<_Client> connect(
+    int port, {
+    bool reused = false,
+    String? chunkedBody,
+  }) async {
     final socket = await Socket.connect(InternetAddress.loopbackIPv4, port);
     final client = _Client._(socket);
     if (reused) {
@@ -350,10 +368,13 @@ final class _Client {
       await socket.flush();
       expect(await client._head(), startsWith('HTTP/1.1 200 '));
     }
+    socket.write(webSocketUpgradeFields);
     socket.write(
-      'GET / HTTP/1.1\r\nHost: localhost\r\nUpgrade: websocket\r\n'
-      'Connection: Upgrade\r\nSec-WebSocket-Version: 13\r\n'
-      'Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==\r\n\r\n',
+      chunkedBody == null
+          ? '\r\n'
+          : 'Transfer-Encoding: chunked\r\n\r\n'
+                '${chunkedBody.length.toRadixString(16)}\r\n$chunkedBody\r\n'
+                '0\r\n\r\n',
     );
     await socket.flush();
     final head = await client._head();

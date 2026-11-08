@@ -1203,6 +1203,9 @@ fn handleConnInner(r: *Reactor, stream: zio.net.Stream) !void {
         if (ex.upgraded) {
             if (pump) |*p| p.cancel();
             pump = null;
+            // What the pump queued is the request body, and no message.
+            freeChunks(&ex.in);
+            ex.in_pending = 0;
             if (ex.resp_head) |p| try w.writeAll(p[0..ex.resp_head_len]);
             try w.flush();
             pumpWebSocket(&link, &ex);

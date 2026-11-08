@@ -1239,8 +1239,16 @@ final class NativeExchange extends LinkedListEntry<NativeExchange>
         final bytes = pointer == nullptr
             ? _noBytes
             : pointer.asTypedList(length.value);
+        final message = _WsKind.of(kind.value);
         try {
-          socket._onMessage(_WsKind.of(kind.value), bytes);
+          if (message == null) {
+            socket._fail(
+              StateError('relic_native: unknown message kind ${kind.value}'),
+            );
+            abort();
+            return;
+          }
+          socket._onMessage(message, bytes);
         } finally {
           if (pointer != nullptr) native.free(pointer);
         }

@@ -18,13 +18,14 @@ enum _WsKind {
   /// The connection ended without a close frame.
   dropped;
 
-  static _WsKind of(int code) => switch (code) {
+  /// The kind [code] names, or null for a code with no kind.
+  static _WsKind? of(int code) => switch (code) {
     1 => text,
     2 => binary,
     3 => close,
     4 => failed,
     5 => dropped,
-    _ => throw StateError('relic_native: unknown message kind $code'),
+    _ => null,
   };
 }
 
@@ -80,6 +81,9 @@ final class NativeWebSocket extends RelicWebSocketBase {
         closeEvents(CloseReceived(1006, ''));
     }
   }
+
+  /// Fails the socket with [error]. The connection ends after.
+  void _fail(Object error) => addError(error);
 
   /// Ends the socket, however the connection went.
   void _gone() {
