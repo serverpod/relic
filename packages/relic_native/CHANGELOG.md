@@ -22,6 +22,9 @@
   timeout off
 - Each task commits 144 KiB of stack instead of zio's default 256 KiB. tls.zig
   is pinned to a fork whose handshake fits in it
+- A cancel the sweeper takes back, for a wait that completed anyway, leaves
+  nothing behind. Before, the connection's later timeouts read as cancels,
+  and one could end the wait for the handler's answer
 
 ## 2.0.0-rc.5
 - Client certificates: `NativeTls.clientAuthorities` names the CAs a client

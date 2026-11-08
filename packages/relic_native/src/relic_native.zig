@@ -785,8 +785,10 @@ const Conn = struct {
     /// Clock time in milliseconds by which the phase must end, 0 for no
     /// limit.
     deadline: i64 = 0,
-    /// The sweeper found the deadline passed and cancelled the task.
-    timed_out: bool = false,
+    /// zio's count of the task's delivered cancels when the sweeper's
+    /// cancel took. `settle` hands it to retractAutoCancel to take that
+    /// cancel back. Null when there is none to take back.
+    swept_delivered: ?u7 = null,
     /// Waiting for the first byte of a request.
     idle: bool = false,
 
@@ -802,20 +804,30 @@ const Conn = struct {
         self.settle();
     }
 
+    /// The deadline passed. Cancels the task the way a zio timeout does,
+    /// so `settle` can take the cancel back in full. A user cancel would
+    /// stay on the task, and zio would read every later timeout of the
+    /// connection as that cancel.
+    fn expire(self: *Conn) void {
+        self.deadline = 0;
+        self.swept_delivered = self.task.setCanceled(.auto);
+        self.task.wake();
+    }
+
     /// Whether the sweeper ended the wait that just failed.
     fn expired(self: *Conn) bool {
-        const was = self.timed_out;
-        self.timed_out = false;
-        return was;
+        if (self.swept_delivered == null) return false;
+        self.swept_delivered = null;
+        return self.task.checkAutoCancel();
     }
 
     /// Takes back a cancel the sweeper sent for a wait that completed
     /// anyway. zio hands such a cancel to the task's next wait, which
     /// must not be the park. Dart holds the frame until it answers.
     fn settle(self: *Conn) void {
-        if (!self.timed_out) return;
-        self.timed_out = false;
-        self.task.checkCancel() catch {};
+        const delivered = self.swept_delivered orelse return;
+        self.swept_delivered = null;
+        _ = self.task.retractAutoCancel(delivered);
     }
 };
 
@@ -854,9 +866,7 @@ fn sweep(r: *Reactor) void {
         while (next) |node| : (next = node.next) {
             const conn: *Conn = @fieldParentPtr("node", node);
             if (conn.deadline == 0 or conn.deadline > now) continue;
-            conn.deadline = 0;
-            conn.timed_out = true;
-            conn.task.cancel();
+            conn.expire();
         }
     }
 }
@@ -3378,6 +3388,63 @@ test "tick: a request reaches the ready list on the caller's thread and the resp
         sleepMs(5);
     }
     try std.testing.expectEqual(0, r.idle.load(.monotonic));
+    try std.testing.expectEqual(0, r.connections.load(.monotonic));
+}
+
+/// Sends `request` once the connection task has issued its read, and
+/// returns the exchange it reaches Dart as.
+fn testExchange(r: *Reactor, client: TestClient, request: []const u8) !*ExchangeView {
+    var out: [4]*ExchangeView = undefined;
+    var rounds: usize = 0;
+    while (rounds < 20) : (rounds += 1) {
+        _ = relic_reactor_tick(r, 0, &out, out.len);
+        sleepMs(5);
+    }
+    try client.writeAll(request);
+    var n: u32 = 0;
+    rounds = 0;
+    while (n == 0 and rounds < 200) : (rounds += 1) {
+        n = relic_reactor_tick(r, 0, &out, out.len);
+        sleepMs(10);
+    }
+    try std.testing.expectEqual(1, n);
+    return out[0];
+}
+
+/// Has the sweeper cancel the connection task and take the cancel back,
+/// as when a deadline passes in the tick its wait completes. The task
+/// wakes to no cancel and parks again.
+fn testSettledSweep(r: *Reactor) void {
+    const conn: *Conn = @fieldParentPtr("node", r.conns.first.?);
+    conn.expire();
+    conn.settle();
+}
+
+test "sweep: a cancel taken back leaves the connection task as it was" {
+    const srv = testBind(null) orelse return error.BindFailed;
+    const r = relic_reactor_create(srv, 1) orelse return error.AttachFailed;
+    defer relic_reactor_destroy(r);
+
+    const client = try TestClient.connect(relic_server_port(srv));
+    defer client.close();
+    const v = try testExchange(r, client, "GET / HTTP/1.1\r\nHost: t\r\n\r\n");
+    const conn: *Conn = @fieldParentPtr("node", r.conns.first.?);
+    const before = conn.task.canceled_status.load(.acquire);
+    testSettledSweep(r);
+    try std.testing.expectEqual(before, conn.task.canceled_status.load(.acquire));
+
+    relic_abort(v);
+    try testConnectionsEnd(r);
+}
+
+/// Ticks until the reactor has no connection left.
+fn testConnectionsEnd(r: *Reactor) !void {
+    var out: [4]*ExchangeView = undefined;
+    var rounds: usize = 0;
+    while (r.connections.load(.monotonic) != 0 and rounds < 600) : (rounds += 1) {
+        _ = relic_reactor_tick(r, 0, &out, out.len);
+        sleepMs(5);
+    }
     try std.testing.expectEqual(0, r.connections.load(.monotonic));
 }
 
