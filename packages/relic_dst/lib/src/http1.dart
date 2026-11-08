@@ -247,7 +247,8 @@ RequestHead? parseRequestHead(
     hostSlot: hostSlot,
     contentLength: contentLength,
     chunked: chunked,
-    keepAlive: protocol == HttpProtocol.http11 ? !close : keepAlive,
+    // Every Connection line counts, and close wins (RFC 9112 9.3).
+    keepAlive: !close && (protocol == HttpProtocol.http11 || keepAlive),
   );
 }
 
