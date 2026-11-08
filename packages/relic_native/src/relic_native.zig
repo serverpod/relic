@@ -486,7 +486,7 @@ pub const Reactor = struct {
     }
 
     /// Spawns a connection task for every socket the acceptor handed over.
-    /// Assumes a tick has bound the executor to this thread.
+    /// Assumes relic_reactor_tick has bound the executor to this thread.
     fn drainIncoming(self: *Reactor) void {
         while (self.incoming.pop()) |node| {
             const inc: *Incoming = @fieldParentPtr("node", node);
@@ -497,17 +497,16 @@ pub const Reactor = struct {
                 stream.close();
                 continue;
             };
-            self.pending = true;
         }
     }
 
     /// Starts a writer for every connection in `writers_wanted`.
-    /// Assumes a tick has bound the executor to this thread.
+    /// Assumes relic_reactor_tick has bound the executor to this thread.
     fn drainWritersWanted(self: *Reactor) void {
         while (self.writers_wanted.popFirst()) |node| {
             const ex: *Exchange = @fieldParentPtr("writer_wanted_node", node);
             ex.writer_wanted = false;
-            if (startWriter(ex)) self.pending = true;
+            _ = startWriter(ex);
         }
     }
 };
@@ -677,12 +676,13 @@ pub const Server = struct {
         return .{
             .executors = .exact(1),
             .loop_group = self.sharedLoopGroup(),
-            // Growing past `committed_size` needs an alternate signal stack,
-            // which the Dart VM's threads lack, so the size covers the
-            // deepest path on x86_64 and aarch64: 131 KiB, a handshake that
-            // checks a client certificate signed with RSA. The 8 MiB
-            // reservation stays, because without stack probes a big frame can
-            // jump the single guard page.
+            // The committed size covers the deepest path on x86_64 and
+            // aarch64, 131 KiB for a handshake that checks a client
+            // certificate signed with RSA. A deeper task grows its stack,
+            // since a tick makes sure its thread has an alternate signal
+            // stack before its first task runs. The 8 MiB reservation
+            // stays, because without stack probes a big frame can jump the
+            // single guard page.
             .stack_pool = .{
                 .maximum_size = 8 * 1024 * 1024,
                 .committed_size = 144 * 1024,
@@ -2741,6 +2741,9 @@ fn createReactor(srv: *Server, port: dart.Dart_Port_DL) !*Reactor {
         r.slot = @intCast(i);
         slot.* = r;
         srv.attached_count += 1;
+        // The isolate may tick from another thread next, and every call
+        // that needs the executor binds it for itself.
+        rt.main_executor.unbindThread();
         return r;
     }
     return error.ServerFull;
@@ -2802,9 +2805,10 @@ export fn relic_reactor_destroy(r: *Reactor) void {
         inc.stream.close();
         r.gpa.destroy(inc);
     }
-    // One tick binds the executor to this thread. Then the main task
-    // blocks in the cancel, which runs the loop until every connection
-    // task has unwound.
+    // Bound to this thread, the main task blocks in the cancel, which runs
+    // the loop until every connection task has unwound. A tick first
+    // writes the responses Dart gave since the last one.
+    r.rt.main_executor.bindThread() catch |err| switch (err) {};
     _ = r.rt.main_executor.tick(.zero) catch {};
     r.group.cancel();
     r.rt.deinit();
@@ -2830,16 +2834,21 @@ export fn relic_reactor_destroy(r: *Reactor) void {
     destroyServer(srv);
 }
 
-/// One pass of the reactor: runs its tasks, polls the loop for at most
-/// `wait_ms`, takes in the sockets the acceptor handed over, starts the
-/// writers Dart's queued output waits for, and returns up to `max`
+/// One pass of the reactor: takes in the sockets the acceptor handed over,
+/// starts the writers Dart's queued output waits for, runs its tasks,
+/// polls the loop for at most `wait_ms`, and returns up to `max`
 /// exchanges that are ready for a handler. Afterwards
 /// relic_reactor_pending says whether to call again at once.
 export fn relic_reactor_tick(r: *Reactor, wait_ms: u32, out: [*]*ExchangeView, max: u32) u32 {
+    const executor = &r.rt.main_executor;
+    // The drains spawn tasks, which needs a binding, and the tick keeps
+    // it, so what they spawn runs in this tick.
+    executor.bindThread() catch |err| switch (err) {};
+    defer executor.unbindThread();
     r.refreshDate();
-    r.pending = r.rt.main_executor.tick(.fromMilliseconds(wait_ms)) catch false;
     r.drainIncoming();
     r.drainWritersWanted();
+    r.pending = executor.tick(.fromMilliseconds(wait_ms)) catch false;
     var n: u32 = 0;
     while (n < max) : (n += 1) {
         const node = r.ready.pop() orelse break;
@@ -2953,6 +2962,25 @@ export fn relic_reactor_slot(r: *Reactor) u32 {
     return r.slot;
 }
 
+/// The binding of a call from Dart that wakes a task. Dart calls between
+/// ticks, on a thread bound to no executor. An unbound wake goes through
+/// zio's remote queue and also wakes the waiter, though Dart has already
+/// scheduled a drain. A bound wake lands in the executor's own run queue
+/// for that drain's tick.
+const DartCall = struct {
+    executor: *@FieldType(zio.Runtime, "main_executor"),
+
+    fn begin(r: *Reactor) DartCall {
+        const executor = &r.rt.main_executor;
+        executor.bindThread() catch |err| switch (err) {};
+        return .{ .executor = executor };
+    }
+
+    fn end(self: DartCall) void {
+        self.executor.unbindThread();
+    }
+};
+
 /// Ownership of `head` and `body`, malloc'd by Dart, passes to native.
 export fn relic_respond(
     v: *ExchangeView,
@@ -2968,6 +2996,8 @@ export fn relic_respond(
     ex.resp_body = body;
     ex.resp_body_len = body_len;
     ex.close_after = close_after;
+    const call = DartCall.begin(ex.reactor);
+    defer call.end();
     ex.done.set();
 }
 
@@ -2977,6 +3007,8 @@ export fn relic_respond_inline(v: *ExchangeView, len: u32, close_after: bool) vo
     const ex: *Exchange = @fieldParentPtr("view", v);
     ex.resp_inline_len = len;
     ex.close_after = close_after;
+    const call = DartCall.begin(ex.reactor);
+    defer call.end();
     ex.done.set();
 }
 
@@ -2996,6 +3028,8 @@ export fn relic_respond_stream(
     ex.resp_streamed = true;
     ex.resp_chunked = chunked;
     ex.close_after = close_after;
+    const call = DartCall.begin(ex.reactor);
+    defer call.end();
     ex.done.set();
 }
 
@@ -3015,7 +3049,10 @@ export fn relic_write_chunk(v: *ExchangeView, data: [*]u8, len: usize) bool {
 /// a streamed body, or the writer the next tick starts for a raw
 /// connection.
 fn outputQueued(ex: *Exchange) void {
-    if (ex.hijacked) wantWriter(ex) else ex.out_ready.set();
+    if (ex.hijacked) return wantWriter(ex);
+    const call = DartCall.begin(ex.reactor);
+    defer call.end();
+    ex.out_ready.set();
 }
 
 /// Ends a streamed response. `ok` false drops the connection instead of
@@ -3047,6 +3084,8 @@ export fn relic_read_chunk(v: *ExchangeView, data: *?[*]u8, len: *usize, status:
     status.* = if (!chunk.last) 0 else if (chunk.ok) 1 else 2;
     // Dart consumed one, so the task may read one more ahead.
     ex.in_pending -= 1;
+    const call = DartCall.begin(ex.reactor);
+    defer call.end();
     ex.credit.set();
     return 1;
 }
@@ -3055,6 +3094,8 @@ export fn relic_read_chunk(v: *ExchangeView, data: *?[*]u8, len: *usize, status:
 /// parked. An event follows, with `peer_gone` set.
 export fn relic_watch(v: *ExchangeView) void {
     const ex: *Exchange = @fieldParentPtr("view", v);
+    const call = DartCall.begin(ex.reactor);
+    defer call.end();
     ex.watch.set();
 }
 
@@ -3062,6 +3103,8 @@ export fn relic_watch(v: *ExchangeView) void {
 export fn relic_abort(v: *ExchangeView) void {
     const ex: *Exchange = @fieldParentPtr("view", v);
     ex.aborted = true;
+    const call = DartCall.begin(ex.reactor);
+    defer call.end();
     ex.done.set();
     endTakenOver(ex);
 }
@@ -3073,6 +3116,8 @@ export fn relic_abort(v: *ExchangeView) void {
 export fn relic_hijack(v: *ExchangeView) void {
     const ex: *Exchange = @fieldParentPtr("view", v);
     ex.hijacked = true;
+    const call = DartCall.begin(ex.reactor);
+    defer call.end();
     ex.done.set();
 }
 
@@ -3086,6 +3131,8 @@ export fn relic_ws_upgrade(v: *ExchangeView, head: [*]u8, head_len: u32, max_mes
     ex.resp_head_len = head_len;
     ex.upgraded = true;
     ex.ws_max_message = max_message;
+    const call = DartCall.begin(ex.reactor);
+    defer call.end();
     ex.done.set();
 }
 
@@ -3116,6 +3163,8 @@ export fn relic_ws_read(v: *ExchangeView, data: *?[*]u8, len: *usize, kind: *u8)
     len.* = chunk.len;
     kind.* = chunk.kind;
     ex.in_pending -= 1;
+    const call = DartCall.begin(ex.reactor);
+    defer call.end();
     ex.credit.set();
     return 1;
 }
@@ -3528,15 +3577,21 @@ test "tick: a request reaches the ready list on the caller's thread and the resp
     try std.testing.expectEqual(0, r.connections.load(.monotonic));
 }
 
+/// The stacks the reactor's tasks hold. The executor's own cache of free
+/// stacks counts as checked out of the pool too.
+fn testLiveStacks(r: *Reactor) usize {
+    return r.rt.stack_pool.in_use - r.rt.main_executor.stack_cache.count;
+}
+
 /// Ticks until the reactor's tasks hold `stacks` stacks, or gives up.
 fn testStacksBackTo(r: *Reactor, stacks: usize) !void {
     var out: [4]*ExchangeView = undefined;
     var rounds: usize = 0;
-    while (r.rt.stack_pool.in_use != stacks and rounds < 200) : (rounds += 1) {
+    while (testLiveStacks(r) != stacks and rounds < 200) : (rounds += 1) {
         _ = relic_reactor_tick(r, 0, &out, out.len);
         sleepMs(5);
     }
-    try std.testing.expectEqual(stacks, r.rt.stack_pool.in_use);
+    try std.testing.expectEqual(stacks, testLiveStacks(r));
 }
 
 test "ws: an idle WebSocket holds only its connection task, and a send's writer ends" {
@@ -3549,7 +3604,7 @@ test "ws: an idle WebSocket holds only its connection task, and a send's writer 
     const v = try testExchange(r, client, test_upgrade_request);
     // Every task the reactor runs, the connection task parked for the
     // handler among them.
-    const parked = r.rt.stack_pool.in_use;
+    const parked = testLiveStacks(r);
 
     testUpgrade(v);
     var head: [test_switching_head.len]u8 = undefined;
@@ -3580,7 +3635,7 @@ test "hijack: an idle hijacked connection holds only its connection task, and a 
     const v = try testExchange(r, client, "GET /raw HTTP/1.1\r\nHost: t\r\n\r\n");
     // Every task the reactor runs, the connection task parked for the
     // handler among them.
-    const parked = r.rt.stack_pool.in_use;
+    const parked = testLiveStacks(r);
 
     relic_hijack(v);
     try testStacksBackTo(r, parked);
@@ -3596,6 +3651,58 @@ test "hijack: an idle hijacked connection holds only its connection task, and a 
     // Dart closes its sink. The writer writes the end, and the connection
     // closes.
     relic_finish_stream(v, true);
+    try testConnectionsEnd(r);
+}
+
+test "respond: an answer from Dart wakes its task in the executor's own run queue" {
+    const srv = testBind(null) orelse return error.BindFailed;
+    const r = relic_reactor_create(srv, 1) orelse return error.AttachFailed;
+    defer relic_reactor_destroy(r);
+
+    const client = try TestClient.connect(relic_server_port(srv));
+    defer client.close();
+    const v = try testExchange(r, client, "GET /x HTTP/1.1\r\nHost: t\r\n\r\n");
+    const run_queue = &r.rt.main_executor.run_queue;
+    try std.testing.expect(run_queue.isEmpty() and run_queue.overflow.isEmpty());
+
+    const head = "HTTP/1.1 204 No Content\r\ncontent-length: 0\r\n\r\n";
+    const buf = relic_alloc(head.len).?;
+    @memcpy(buf[0..head.len], head);
+    relic_respond(v, buf, head.len, null, 0, false);
+    // The overflow is the remote queue, whose wakes also wake the waiter.
+    try std.testing.expect(!run_queue.isEmpty());
+    try std.testing.expect(run_queue.overflow.isEmpty());
+
+    var got: [head.len]u8 = undefined;
+    try std.testing.expectEqualStrings(head, try testReceive(r, client, &got));
+}
+
+test "ws: a frame Dart sends goes out in the next tick" {
+    const srv = testBind(null) orelse return error.BindFailed;
+    const r = relic_reactor_create(srv, 1) orelse return error.AttachFailed;
+    defer relic_reactor_destroy(r);
+
+    const client = try TestClient.connect(relic_server_port(srv));
+    defer client.close();
+    const v = try testExchange(r, client, test_upgrade_request);
+    testUpgrade(v);
+    var head: [test_switching_head.len]u8 = undefined;
+    try std.testing.expectEqualStrings(test_switching_head, try testReceive(r, client, &head));
+    var out: [4]*ExchangeView = undefined;
+    var rounds: usize = 0;
+    while (rounds < 10) : (rounds += 1) _ = relic_reactor_tick(r, 0, &out, out.len);
+
+    const text = "hi";
+    const text_buf = relic_alloc(text.len).?;
+    @memcpy(text_buf[0..text.len], text);
+    try std.testing.expect(relic_ws_send(v, text_buf, text.len, 1));
+    _ = relic_reactor_tick(r, 0, &out, out.len);
+    sleepMs(20);
+    var frame: [4]u8 = undefined;
+    try std.testing.expectEqual(frame.len, try client.readSome(&frame));
+    try std.testing.expectEqualSlices(u8, &.{ 0x81, 0x02, 'h', 'i' }, &frame);
+
+    client.hangUp();
     try testConnectionsEnd(r);
 }
 

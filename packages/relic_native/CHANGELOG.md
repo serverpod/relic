@@ -27,6 +27,12 @@
   and one could end the wait for the handler's answer
 - An idle WebSocket or hijacked connection holds one task and its stack,
   where it held three
+- A task that goes deeper than its committed 144 KiB grows its stack,
+  whichever thread the isolate runs on. Before, the process crashed unless
+  the isolate was on the thread that created its reactor
+- An idle connection on Linux keeps reading after the Dart VM retires the
+  thread its isolate ran on. Before, io_uring cancelled the read with that
+  thread, and the connection hung or was reset
 
 ## 2.0.0-rc.5
 - Client certificates: `NativeTls.clientAuthorities` names the CAs a client
