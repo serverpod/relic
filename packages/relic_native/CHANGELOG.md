@@ -14,6 +14,9 @@
 - A WebSocket upgrade request with a chunked body leaves the reactor
   running. Before, the body's chunks reached the socket as messages of no
   known kind, and the error stopped every connection on the isolate
+- A WebSocket whose 101 fails to go out ends, and so does a streamed
+  response whose head fails to. Before, Dart went on writing to the freed
+  exchange, which the next connection could be using
 
 ## 2.0.0-rc.5
 - Client certificates: `NativeTls.clientAuthorities` names the CAs a client

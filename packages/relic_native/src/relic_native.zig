@@ -1206,8 +1206,15 @@ fn handleConnInner(r: *Reactor, stream: zio.net.Stream) !void {
             // What the pump queued is the request body, and no message.
             freeChunks(&ex.in);
             ex.in_pending = 0;
-            if (ex.resp_head) |p| try w.writeAll(p[0..ex.resp_head_len]);
-            try w.flush();
+            {
+                // Dart holds on to the view until the last event.
+                errdefer {
+                    freeChunks(&ex.out);
+                    postLastEvent(&ex);
+                }
+                if (ex.resp_head) |p| try w.writeAll(p[0..ex.resp_head_len]);
+                try w.flush();
+            }
             pumpWebSocket(&link, &ex);
             return;
         }
@@ -1224,7 +1231,16 @@ fn handleConnInner(r: *Reactor, stream: zio.net.Stream) !void {
         }
         stampDate(r, &ex, w);
         if (ex.resp_streamed) {
-            if (ex.resp_head) |p| try w.writeAll(p[0..ex.resp_head_len]);
+            {
+                // Dart streams the body until it hears of the failure, and
+                // the frame waits for its last chunk.
+                errdefer {
+                    ex.view.write_failed = 1;
+                    postExchangeEvent(&ex);
+                    drainOutbound(&ex);
+                }
+                if (ex.resp_head) |p| try w.writeAll(p[0..ex.resp_head_len]);
+            }
             const finished = pumpResponseBody(&ex, w);
             if (!finished) return;
         } else if (ex.resp_inline_len != 0) {
