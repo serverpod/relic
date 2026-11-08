@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:relic_core/relic_core.dart';
 import 'package:relic_native/relic_native.dart';
@@ -35,3 +36,28 @@ const webSocketUpgradeFields =
     'GET / HTTP/1.1\r\nHost: localhost\r\nUpgrade: websocket\r\n'
     'Connection: Upgrade\r\nSec-WebSocket-Version: 13\r\n'
     'Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==\r\n';
+
+/// A WebSocket opening handshake, [webSocketUpgradeFields] and the empty
+/// line.
+const webSocketUpgradeRequest = '$webSocketUpgradeFields\r\n';
+
+/// Closes [socket] with a reset everywhere but Windows, so the server's
+/// next write to it fails.
+///
+/// SO_LINGER on with a zero timeout. Its struct is two ints, or two
+/// u_shorts on Windows. dart:io on Windows shuts a socket down and
+/// disconnects it before it closes it (ClientSocket::DoCloseLocked in the
+/// SDK's runtime/bin/eventhandler_win.cc), so the server sees a FIN there
+/// and its first write still goes out.
+void resetConnection(Socket socket) {
+  final (option, linger) = switch (Platform.operatingSystem) {
+    'linux' || 'android' => (13, Uint8List(8)),
+    'windows' => (0x80, Uint8List(4)),
+    _ => (0x80, Uint8List(8)),
+  };
+  linger[0] = 1;
+  socket.setRawOption(
+    RawSocketOption(RawSocketOption.levelSocket, option, linger),
+  );
+  socket.destroy();
+}
