@@ -126,6 +126,39 @@ void framingTests(AdapterConformance conformance) {
       },
     );
 
+    test('when a request says close in one Connection line and keep-alive '
+        'in the next, '
+        'then the connection closes after the response', () async {
+      await serve((req) => Response.ok(body: Body.fromString(req.url.path)));
+
+      final reply = await raw(
+        'GET /first HTTP/1.1\r\nHost: x\r\nConnection: close\r\n'
+        'Connection: keep-alive\r\n\r\n'
+        'GET /second HTTP/1.1\r\nHost: x\r\nConnection: close\r\n\r\n',
+      );
+
+      final (head: first, body: rest) = splitHead(reply);
+      expect(first, startsWith('HTTP/1.1 200'));
+      expect(rest, '/first');
+    });
+
+    test('when an HTTP/1.0 client asks to keep the connection alive and to '
+        'close it, '
+        'then the connection closes after the response', () async {
+      await serve((req) => Response.ok(body: Body.fromString(req.url.path)));
+
+      final reply = await raw(
+        'GET /first HTTP/1.0\r\nHost: x\r\nConnection: keep-alive, close\r\n'
+        '\r\n'
+        'GET /second HTTP/1.0\r\nHost: x\r\n\r\n',
+      );
+
+      final (head: first, body: rest) = splitHead(reply);
+      expect(first, matches(RegExp(r'^HTTP/1\.[01] 200')));
+      expect(first.toLowerCase(), isNot(contains('keep-alive')));
+      expect(rest, '/first');
+    });
+
     test('when a request keeps the connection alive, '
         'then the response carries no Connection: close', () async {
       await serve(ok);

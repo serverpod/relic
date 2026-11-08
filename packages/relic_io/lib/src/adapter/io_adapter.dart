@@ -219,7 +219,7 @@ final class _IOExchange with ExchangeEndState implements AdapterExchange {
       _request.response,
       head: _request.method == 'HEAD',
       protocol: httpProtocolOf(_request),
-      keepAlive: _request.persistentConnection,
+      keepAlive: keepAliveOf(_request),
     );
     _finish(ExchangeEnd.completed);
   }

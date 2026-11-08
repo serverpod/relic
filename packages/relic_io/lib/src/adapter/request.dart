@@ -37,6 +37,19 @@ HttpProtocol httpProtocolOf(io.HttpRequest request) =>
       _ => HttpProtocol.http11,
     };
 
+/// Whether the connection goes on after the response to [request].
+///
+/// Every Connection option counts, and close wins (RFC 9112 9.3), where
+/// dart:io's `persistentConnection` follows the later of the two.
+bool keepAliveOf(io.HttpRequest request) {
+  final options =
+      request.headers[io.HttpHeaders.connectionHeader] ?? const <String>[];
+  bool lists(String option) =>
+      options.any((value) => value.toLowerCase() == option);
+  if (lists('close')) return false;
+  return request.protocolVersion != '1.0' || lists('keep-alive');
+}
+
 ConnectionInfo connectionInfoFromHttpConnectionInfo(
   io.HttpConnectionInfo? info,
 ) {
