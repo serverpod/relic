@@ -247,8 +247,12 @@ RequestHead? parseRequestHead(
     hostSlot: hostSlot,
     contentLength: contentLength,
     chunked: chunked,
-    // Every Connection line counts, and close wins (RFC 9112 9.3).
-    keepAlive: !close && (protocol == HttpProtocol.http11 || keepAlive),
+    // Every Connection line counts, and close wins (RFC 9112 9.3). Framing
+    // of an HTTP/1.0 message with Transfer-Encoding counts as faulty, so the
+    // connection closes after it (RFC 9112 6.1).
+    keepAlive:
+        !close &&
+        (protocol == HttpProtocol.http11 || (keepAlive && !transferEncoding)),
   );
 }
 

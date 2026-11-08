@@ -226,6 +226,29 @@ void main() {
   });
 
   simTest('Given a server, '
+      'when an HTTP/1.0 client asks to keep the connection alive and sends a '
+      'chunked body, '
+      'then the connection closes after the response.', (sim) async {
+    final served = await _serve(sim, (request) async {
+      await request.readAsString();
+      return _hello(request);
+    });
+    final client = served.client();
+
+    await client.writeText(
+      'POST /first HTTP/1.0\r\nConnection: keep-alive\r\n'
+      'Transfer-Encoding: chunked\r\n\r\n2\r\nhi\r\n0\r\n\r\n'
+      'GET /second HTTP/1.0\r\n\r\n',
+    );
+    final response = await client.read(method: Method.post);
+    final more = await client.reader.more();
+
+    expect(response.body, 'Hello from /first');
+    expect(more, isFalse, reason: 'the server sent its FIN');
+    await served.shutdown();
+  });
+
+  simTest('Given a server, '
       'when a client sends a head with bare LF line endings, '
       'then it gets 400 and the handler never runs.', (sim) async {
     var handled = 0;

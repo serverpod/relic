@@ -2,6 +2,8 @@
 - A close in any Connection line closes the connection after the response,
   whatever else the lines list. Before, only the last line counted, and an
   HTTP/1.0 request kept its connection on a keep-alive beside a close
+- An HTTP/1.0 request with Transfer-Encoding closes its connection after
+  the response, even with keep-alive
 
 ## 2.0.0-rc.5
 - Client certificates: `NativeTls.clientAuthorities` names the CAs a client
