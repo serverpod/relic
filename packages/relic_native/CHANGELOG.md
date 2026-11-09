@@ -17,6 +17,11 @@
 - A WebSocket whose 101 fails to go out ends, and so does a streamed
   response whose head fails to. Before, Dart went on writing to the freed
   exchange, which the next connection could be using
+- A WebSocket upgrade drops the rest of a request body the handler left
+  unread before the 101 goes out, up to 4 MiB with a Content-Length. A
+  bigger body, or a chunked one that has not ended, closes the connection
+  without the 101. Before, the rest of the body was read as frames, and
+  the socket failed with 1002
 - Dart's abort of a hijacked connection closes it at once. Before, an
   idle reactor got to it only at its next sweep, and never with every
   timeout off

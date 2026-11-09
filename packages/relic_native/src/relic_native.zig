@@ -1267,8 +1267,7 @@ fn handleConnInner(r: *Reactor, stream: zio.net.Stream) !void {
             freeChunks(&ex.in);
         }
         if (ex.upgraded) {
-            if (pump) |*p| p.cancel();
-            pump = null;
+            const body_unread = stopPump(&pump);
             // What the pump queued is the request body, and no message.
             freeChunks(&ex.in);
             ex.in_pending = 0;
@@ -1277,6 +1276,11 @@ fn handleConnInner(r: *Reactor, stream: zio.net.Stream) !void {
                 errdefer {
                     freeChunks(&ex.out);
                     postLastEvent(&ex);
+                }
+                // The peer's frames follow the body. A body too big to drop
+                // ends the connection without the 101, as a failed read does.
+                if (body_unread and !discardBody(&link, body_reader, content_length, options.body_timeout_ms)) {
+                    return error.ReadFailed;
                 }
                 if (ex.resp_head) |p| try w.writeAll(p[0..ex.resp_head_len]);
                 try w.flush();
@@ -1335,26 +1339,36 @@ fn handleConnInner(r: *Reactor, stream: zio.net.Stream) !void {
         }
         // The response is out. A pump still waiting on credit has a body
         // Dart did not finish reading.
-        var body_unread = false;
-        if (pump) |*p| {
-            p.cancel();
-            body_unread = !p.join();
-            pump = null;
-        }
+        const body_unread = stopPump(&pump);
 
         if (!keep_alive or ex.close_after) return;
-        // A body Dart did not finish reading is still on the wire. A modest
-        // one is drained so the connection can carry the next request, and
-        // so the client is not reset while still sending. A big one is not
-        // worth the bandwidth, so close.
-        if (body_unread) {
-            const left = if (content_length) |len| len else max_discard + 1;
-            if (left > max_discard) return;
-            const br = body_reader orelse return;
-            link.setReadTimeout(inactivity(options.body_timeout_ms));
-            _ = br.discardRemaining() catch return;
-        }
+        // A body Dart did not finish reading is still on the wire. It is
+        // drained so the connection can carry the next request, and so the
+        // client is not reset while still sending.
+        if (body_unread and !discardBody(&link, body_reader, content_length, options.body_timeout_ms)) return;
     }
+}
+
+/// Stops the request body pump, if one runs. True when it left part of
+/// the body unread.
+fn stopPump(pump: *?zio.JoinHandle(bool)) bool {
+    const p = if (pump.*) |*p| p else return false;
+    p.cancel();
+    const unread = !p.join();
+    pump.* = null;
+    return unread;
+}
+
+/// Reads and drops the rest of a request body Dart did not read. False
+/// for a body with no Content-Length or one over `max_discard`, and when
+/// the read fails.
+fn discardBody(link: *Link, body_reader: ?*std.Io.Reader, content_length: ?u64, timeout_ms: u32) bool {
+    const len = content_length orelse return false;
+    if (len > max_discard) return false;
+    const br = body_reader orelse return false;
+    link.setReadTimeout(inactivity(timeout_ms));
+    _ = br.discardRemaining() catch return false;
+    return true;
 }
 
 fn pushInbound(ex: *Exchange, chunk: *Chunk) void {
@@ -3800,6 +3814,56 @@ test "events: a tick's last events reach Dart before its plain ones" {
     try std.testing.expectEqual(0, relic_reactor_events(r, &out, out.len));
 }
 
+test "ws: an upgrade drops the rest of a request body before the peer's frames" {
+    var options = test_options;
+    options.max_inline_body = 1024;
+    var failure: BindFailure = undefined;
+    const srv = relic_server_bind(null, "127.0.0.1", 0, &options, null, &failure) orelse return error.BindFailed;
+    const r = relic_reactor_create(srv, 1) orelse return error.AttachFailed;
+    defer relic_reactor_destroy(r);
+
+    const client = try TestClient.connect(relic_server_port(srv));
+    defer client.close();
+    const body: [32 << 10]u8 = @splat(0);
+    const v = try testExchange(r, client, test_upgrade_head_with_length ++ body[0 .. 4 << 10]);
+    testUpgrade(v);
+    var out: [4]*ExchangeView = undefined;
+    var rounds: usize = 0;
+    while (rounds < 10) : (rounds += 1) {
+        _ = relic_reactor_tick(r, 0, &out, out.len);
+        sleepMs(5);
+    }
+
+    // The rest of the body, then a masked ping with no payload.
+    try client.writeAll(body[4 << 10 ..]);
+    try client.writeAll(&.{ 0x89, 0x80, 1, 2, 3, 4 });
+    var got: [test_switching_head.len + 2]u8 = undefined;
+    try std.testing.expectEqualSlices(u8, test_switching_head ++ [_]u8{ 0x8A, 0x00 }, try testReceive(r, client, &got));
+
+    client.hangUp();
+    try testConnectionsEnd(r);
+}
+
+test "ws: an upgrade whose chunked body has not ended closes without the 101" {
+    const srv = testBind(null) orelse return error.BindFailed;
+    const r = relic_reactor_create(srv, 1) orelse return error.AttachFailed;
+    defer relic_reactor_destroy(r);
+
+    const client = try TestClient.connect(relic_server_port(srv));
+    defer client.close();
+    const v = try testExchange(r, client, test_upgrade_chunked_head ++ "2\r\nhi\r\n");
+    var events: [8]usize = undefined;
+    _ = relic_reactor_events(r, &events, events.len);
+    testUpgrade(v);
+    try testConnectionsEnd(r);
+
+    // Dart lets go of the view.
+    try std.testing.expectEqual(1, relic_reactor_events(r, &events, events.len));
+    try std.testing.expectEqual(@intFromPtr(v) | 1, events[0]);
+    var got: [test_switching_head.len]u8 = undefined;
+    try std.testing.expectEqual(0, try client.readSome(&got));
+}
+
 /// Sends `request` once the connection task has issued its read, and
 /// returns the exchange it reaches Dart as.
 fn testExchange(r: *Reactor, client: TestClient, request: []const u8) !*ExchangeView {
@@ -3823,6 +3887,11 @@ fn testExchange(r: *Reactor, client: TestClient, request: []const u8) !*Exchange
 /// A WebSocket handshake, with the sample key of RFC 6455 1.3.
 const test_upgrade_request = "GET / HTTP/1.1\r\nHost: t\r\nUpgrade: websocket\r\nConnection: Upgrade\r\n" ++
     "Sec-WebSocket-Version: 13\r\nSec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==\r\n\r\n";
+
+/// A WebSocket handshake with a 32 KiB body, which streams to Dart on a
+/// server whose inline limit is below that.
+const test_upgrade_head_with_length = "GET / HTTP/1.1\r\nHost: t\r\nUpgrade: websocket\r\nConnection: Upgrade\r\n" ++
+    "Sec-WebSocket-Version: 13\r\nSec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==\r\nContent-Length: 32768\r\n\r\n";
 
 /// A WebSocket handshake with a chunked body, which streams to Dart.
 const test_upgrade_chunked_head = "GET / HTTP/1.1\r\nHost: t\r\nUpgrade: websocket\r\nConnection: Upgrade\r\n" ++
