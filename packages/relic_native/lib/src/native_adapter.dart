@@ -426,6 +426,7 @@ final class NativeAdapter implements Adapter {
     if (sink == null || _closed) return;
     _inDrain = true;
     var handedOver = false;
+    var parked = false;
     try {
       for (var batch = 0; batch < _batchesPerTurn; batch++) {
         _drainAgain = false;
@@ -452,13 +453,16 @@ final class NativeAdapter implements Adapter {
         if (_handOver(m, sink)) handedOver = true;
         if (m > 0 || _drainAgain || native.reactorPending(_reactor)) continue;
         native.reactorWait(_reactor);
+        parked = true;
         return;
       }
     } finally {
       _inDrain = false;
       _settle(_drainReturned);
+      // A throw ends the turn too, and nothing else would run the
+      // reactor again.
+      if (!parked) _scheduleDrain();
     }
-    _scheduleDrain();
   }
 
   /// How long an idle tick waits in the kernel before the isolate parks.
@@ -512,7 +516,17 @@ final class NativeAdapter implements Adapter {
       if (m > 0) any = true;
       for (var i = 0; i < m; i++) {
         final tagged = _eventsOut[i];
-        _byAddress[tagged & ~1]?._onEvent(last: tagged & 1 != 0);
+        final exchange = _byAddress[tagged & ~1];
+        if (exchange == null) continue;
+        // The native side has let go of these events, so one that throws,
+        // as a handler's own stream subscription may, must not cost the
+        // rest. A last event among them is all that tells an exchange its
+        // frame is gone.
+        try {
+          exchange._onEvent(last: tagged & 1 != 0);
+        } catch (error, stackTrace) {
+          Zone.current.handleUncaughtError(error, stackTrace);
+        }
       }
       if (m < _batchSize) return any;
     }
