@@ -126,6 +126,26 @@ void framingTests(AdapterConformance conformance) {
       },
     );
 
+    test('when a request asks to close the connection and the response sets '
+        'a Connection value without close, '
+        'then the response lists close beside that value', () async {
+      await serve(
+        (req) => Response.ok(
+          body: Body.fromString('ok'),
+          headers: Headers.build((mh) => mh['connection'] = ['x-trace']),
+        ),
+      );
+
+      final reply = await raw(
+        'GET / HTTP/1.1\r\nHost: x\r\nConnection: close\r\n\r\n',
+      );
+
+      final (head: first, body: rest) = splitHead(reply);
+      expect(first, startsWith('HTTP/1.1 200'));
+      expect(_connectionOptions(first), unorderedEquals(['x-trace', 'close']));
+      expect(rest, 'ok');
+    });
+
     test('when a request says close in one Connection line and keep-alive '
         'in the next, '
         'then the connection closes after the response', () async {
@@ -272,3 +292,12 @@ void framingTests(AdapterConformance conformance) {
     });
   });
 }
+
+/// The options of every Connection line in [head], lowercased, as one list
+/// (RFC 9110 5.3).
+List<String> _connectionOptions(String head) => [
+  for (final line in head.toLowerCase().split('\r\n'))
+    if (line.startsWith('connection:'))
+      for (final option in line.substring('connection:'.length).split(','))
+        if (option.trim().isNotEmpty) option.trim(),
+];
