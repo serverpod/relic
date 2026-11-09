@@ -2858,6 +2858,21 @@ export fn relic_reactor_tick(r: *Reactor, wait_ms: u32, out: [*]*ExchangeView, m
     return n;
 }
 
+/// relic_reactor_tick on a thread of its own, which has exited when this
+/// returns. A test ticks this way to stand in for the Dart VM, which
+/// retires the threads its isolates ran on.
+export fn relic_reactor_tick_on_new_thread(r: *Reactor, wait_ms: u32, out: [*]*ExchangeView, max: u32) u32 {
+    var n: u32 = 0;
+    const thread = std.Thread.spawn(.{}, tickInto, .{ r, wait_ms, out, max, &n }) catch
+        @panic("relic_native: no thread for relic_reactor_tick_on_new_thread");
+    thread.join();
+    return n;
+}
+
+fn tickInto(r: *Reactor, wait_ms: u32, out: [*]*ExchangeView, max: u32, n: *u32) void {
+    n.* = relic_reactor_tick(r, wait_ms, out, max);
+}
+
 /// Whether the last tick left work behind: ready tasks, sockets just
 /// spawned, or exchanges that did not fit in `out`.
 export fn relic_reactor_pending(r: *Reactor) bool {

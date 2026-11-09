@@ -192,6 +192,18 @@ external int reactorTick(
   int max,
 );
 
+/// [reactorTick] on a native thread of its own, which has exited when this
+/// returns.
+@Native<
+  Uint32 Function(Pointer<Void>, Uint32, Pointer<Pointer<ExchangeView>>, Uint32)
+>(symbol: 'relic_reactor_tick_on_new_thread')
+external int reactorTickOnNewThread(
+  Pointer<Void> reactor,
+  int waitMs,
+  Pointer<Pointer<ExchangeView>> out,
+  int max,
+);
+
 /// Whether the last tick left work that the next tick should take at once.
 @Native<Bool Function(Pointer<Void>)>(
   symbol: 'relic_reactor_pending',
