@@ -188,6 +188,29 @@ void main() {
     await served.shutdown();
   });
 
+  simTest('Given a handler that answers with a Connection value without close, '
+      'when a client asks to close the connection, '
+      'then the response says close beside that value and the server closes '
+      'the connection.', (sim) async {
+    final served = await _serve(
+      sim,
+      (_) => Response.ok(
+        headers: Headers.build((h) => h['connection'] = ['x-trace']),
+        body: Body.fromString('bye'),
+      ),
+    );
+    final client = served.client();
+
+    final response = await client.get('/', close: true);
+    final more = await client.reader.more();
+
+    expect(response.body, 'bye');
+    expect(response.head.closes, isTrue);
+    expect(response.head.header('connection'), contains('x-trace'));
+    expect(more, isFalse, reason: 'the server sent its FIN');
+    await served.shutdown();
+  });
+
   simTest('Given a server, '
       'when a client sends an HTTP/1.0 request without a Host, '
       'then it is answered and the connection closes after.', (sim) async {

@@ -50,11 +50,15 @@ final class ResponseFraming {
   /// else frames the body, so its end must.
   final bool closeAfter;
 
-  /// The Connection option to add, or null when the response sets the
-  /// header itself or needs none. [ConnectionHeaderType.close] when
-  /// [closeAfter] (RFC 9112 9.6). [ConnectionHeaderType.keepAlive] to an
-  /// HTTP/1.0 request whose connection stays open, which such a client
-  /// takes as closed unless told (RFC 9112 C.2.2).
+  /// The Connection option to add, or null when none is needed. A head
+  /// writer puts it on a line of its own, beside any value the response
+  /// sets itself (RFC 9110 5.3).
+  ///
+  /// [ConnectionHeaderType.close] when [closeAfter] and the response does
+  /// not say close itself (RFC 9112 9.6). [ConnectionHeaderType.keepAlive]
+  /// when an HTTP/1.0 connection stays open and the response sets no value
+  /// of its own, since such a client takes the connection as closed unless
+  /// told (RFC 9112 C.2.2).
   final ConnectionHeaderType? connection;
 
   const ResponseFraming._({
@@ -163,16 +167,29 @@ final class ResponseFraming {
       date: date,
       dateLine: dateLine,
       closeAfter: closeAfter,
-      connection: setsConnection ? null : _option(closeAfter, protocol),
+      connection: _option(closeAfter, protocol, own),
     );
   }
 
-  /// The Connection option for a response that sets no Connection value
-  /// of its own.
-  static ConnectionHeaderType? _option(bool closeAfter, HttpProtocol protocol) {
-    if (closeAfter) return ConnectionHeaderType.close;
-    if (protocol == HttpProtocol.http10) return ConnectionHeaderType.keepAlive;
-    return null;
+  /// The Connection option to add beside [own], the response's own
+  /// Connection value, if it sets one.
+  static ConnectionHeaderType? _option(
+    bool closeAfter,
+    HttpProtocol protocol,
+    ConnectionHeader? own,
+  ) {
+    if (closeAfter) {
+      return (own?.isClose ?? false) ? null : ConnectionHeaderType.close;
+    }
+    if (own != null) {
+      // An HTTP/1.0 connection stays open beside a value of the handler's
+      // only when that value says keep-alive.
+      assert(protocol != HttpProtocol.http10 || own.isKeepAlive);
+      return null;
+    }
+    return protocol == HttpProtocol.http10
+        ? ConnectionHeaderType.keepAlive
+        : null;
   }
 
   /// A header of the response, read as typed.
