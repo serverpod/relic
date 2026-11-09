@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:relic_core/relic_core.dart';
 import 'package:relic_native/relic_native.dart';
+import 'package:test_utils/adapter_conformance.dart';
 
 var _groups = 0;
 
@@ -29,6 +30,33 @@ Future<RelicServer> serveNative(
   await server.mountAndStart(handler);
   return server;
 }
+
+/// The conformance suite's bind for a plain [NativeAdapter]. A server of
+/// several isolates gets a group under [prefix], minted when the suite asks
+/// for the factory, so the isolates of one server share it and two servers
+/// never do. Suites that run side by side in one process need prefixes of
+/// their own. [inIsolate] runs in each isolate that binds, before the bind.
+AdapterFactoryBuilder conformanceBind(
+  String prefix, {
+  void Function()? inIsolate,
+}) =>
+    ({
+      required InternetAddress address,
+      int port = 0,
+      bool v6Only = false,
+      bool shared = false,
+    }) {
+      final group = shared ? '$prefix/$pid/${_groups++}' : null;
+      return () {
+        inIsolate?.call();
+        return NativeAdapter.bind(
+          address,
+          port: port,
+          v6Only: v6Only,
+          group: group,
+        );
+      };
+    };
 
 /// The head of a WebSocket opening handshake with the sample key of RFC
 /// 6455 1.3, short of the empty line that ends it.

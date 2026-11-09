@@ -17,6 +17,13 @@ import 'bindings.dart' as native;
 
 part 'native_web_socket.dart';
 
+/// Whether the adapters this isolate binds from now on run each reactor
+/// tick on a native thread of its own, which exits when the tick returns.
+///
+/// For tests, which stand in this way for the Dart VM retiring the threads
+/// its isolates ran on. Not exported.
+bool debugTickOnNewThreads = false;
+
 /// The limits of a server [NativeAdapter.bind] starts, with the defaults
 /// a server gets when none are given.
 ///
@@ -172,6 +179,8 @@ final class NativeAdapter implements Adapter {
 
   /// The most bytes a WebSocket message from a peer may have.
   final int _maxWebSocketMessage;
+
+  final bool _tickOnNewThreads = debugTickOnNewThreads;
 
   NativeAdapter._(
     this._server,
@@ -430,7 +439,7 @@ final class NativeAdapter implements Adapter {
     try {
       for (var batch = 0; batch < _batchesPerTurn; batch++) {
         _drainAgain = false;
-        final n = native.reactorTick(_reactor, 0, _exchangesOut, _batchSize);
+        final n = _tick(0);
         if (_handOver(n, sink)) handedOver = true;
         if (n > 0 || _drainAgain || native.reactorPending(_reactor)) continue;
         // What this turn handed to Dart may answer from a microtask, an
@@ -444,12 +453,7 @@ final class NativeAdapter implements Adapter {
         // a busy reactor sees next. Only then does the isolate park on the
         // waiter and its port message.
         _drainAgain = false;
-        final m = native.reactorTick(
-          _reactor,
-          _linger.inMilliseconds,
-          _exchangesOut,
-          _batchSize,
-        );
+        final m = _tick(_linger.inMilliseconds);
         if (_handOver(m, sink)) handedOver = true;
         if (m > 0 || _drainAgain || native.reactorPending(_reactor)) continue;
         native.reactorWait(_reactor);
@@ -464,6 +468,16 @@ final class NativeAdapter implements Adapter {
       if (!parked) _scheduleDrain();
     }
   }
+
+  /// One reactor tick, which waits at most [waitMs] in the kernel.
+  int _tick(int waitMs) => _tickOnNewThreads
+      ? native.reactorTickOnNewThread(
+          _reactor,
+          waitMs,
+          _exchangesOut,
+          _batchSize,
+        )
+      : native.reactorTick(_reactor, waitMs, _exchangesOut, _batchSize);
 
   /// How long an idle tick waits in the kernel before the isolate parks.
   /// The event loop is held for at most this long, which is what a timer
