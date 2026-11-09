@@ -1382,7 +1382,18 @@ fn pumpRequestBody(br: *std.Io.Reader, link: *Link, ex: *Exchange, content_lengt
             return false;
         };
         const data: [*]u8 = @ptrCast(buf);
-        const got = br.readSliceShort(data[0..in_chunk_size]) catch {
+        const read = br.readSliceShort(data[0..in_chunk_size]);
+        if (ex.upgraded) {
+            // Dart takes only WebSocket messages from here on. The
+            // connection task drops what is queued and the rest of the body.
+            std.c.free(buf);
+            gpa.destroy(chunk);
+            // A short read is the end of the body, or of the connection.
+            const got = read catch return false;
+            if (remaining) |left| return got == left;
+            return got < in_chunk_size;
+        }
+        const got = read catch {
             std.c.free(buf);
             gpa.destroy(chunk);
             if (link.readCanceled()) return false;
@@ -3721,6 +3732,39 @@ test "ws: a frame Dart sends goes out in the next tick" {
     try testConnectionsEnd(r);
 }
 
+test "ws: a body chunk the pump reads after Dart upgraded does not reach Dart" {
+    const srv = testBind(null) orelse return error.BindFailed;
+    const r = relic_reactor_create(srv, 1) orelse return error.AttachFailed;
+    defer relic_reactor_destroy(r);
+
+    const client = try TestClient.connect(relic_server_port(srv));
+    defer client.close();
+    // The pump fills a whole chunk unless the body ends, so it waits.
+    const v = try testExchange(r, client, test_upgrade_chunked_head ++ "2\r\nhi\r\n");
+    const ex: *Exchange = @fieldParentPtr("view", v);
+    var events: [8]usize = undefined;
+    _ = relic_reactor_events(r, &events, events.len);
+    try std.testing.expectEqual(0, ex.in_pending);
+
+    // Dart has upgraded, and the pump reads the end of the body before the
+    // connection task runs again, as when the tick budget holds that task
+    // back.
+    ex.upgraded = true;
+    try client.writeAll("0\r\n\r\n");
+    var out: [4]*ExchangeView = undefined;
+    var rounds: usize = 0;
+    while (rounds < 20) : (rounds += 1) {
+        _ = relic_reactor_tick(r, 0, &out, out.len);
+        sleepMs(5);
+    }
+    try std.testing.expectEqual(0, ex.in_pending);
+    try std.testing.expectEqual(0, relic_reactor_events(r, &events, events.len));
+
+    client.hangUp();
+    relic_abort(v);
+    try testConnectionsEnd(r);
+}
+
 /// Sends `request` once the connection task has issued its read, and
 /// returns the exchange it reaches Dart as.
 fn testExchange(r: *Reactor, client: TestClient, request: []const u8) !*ExchangeView {
@@ -3744,6 +3788,10 @@ fn testExchange(r: *Reactor, client: TestClient, request: []const u8) !*Exchange
 /// A WebSocket handshake, with the sample key of RFC 6455 1.3.
 const test_upgrade_request = "GET / HTTP/1.1\r\nHost: t\r\nUpgrade: websocket\r\nConnection: Upgrade\r\n" ++
     "Sec-WebSocket-Version: 13\r\nSec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==\r\n\r\n";
+
+/// A WebSocket handshake with a chunked body, which streams to Dart.
+const test_upgrade_chunked_head = "GET / HTTP/1.1\r\nHost: t\r\nUpgrade: websocket\r\nConnection: Upgrade\r\n" ++
+    "Sec-WebSocket-Version: 13\r\nSec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==\r\nTransfer-Encoding: chunked\r\n\r\n";
 
 /// The 101 a test hands over for Dart.
 const test_switching_head = "HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\n\r\n";
