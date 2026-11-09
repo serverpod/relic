@@ -7,6 +7,10 @@
 - A tick that brings new exchanges and events together loses none of them.
   rc.5 read the events into the buffer that held the new exchanges, so
   concurrent requests and WebSocket upgrades could stall
+- An error thrown while the adapter hands a tick's events and exchanges to
+  Dart, as by a response body's own stream subscription or by the exchange
+  sink, leaves the reactor running. Before, it stopped every connection on
+  the isolate
 
 ## 2.0.0-rc.5
 - Client certificates: `NativeTls.clientAuthorities` names the CAs a client
