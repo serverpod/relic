@@ -522,7 +522,9 @@ final class NativeAdapter implements Adapter {
   /// there was at least one.
   ///
   /// An event is the address of a view, with the low bit set for the last
-  /// event of a raw connection, whose view is about to die.
+  /// event of a WebSocket or hijacked connection, whose view is about to
+  /// die. A tick's last events come first, so a plain one never finds a
+  /// dead view.
   bool _dispatchEvents() {
     var any = false;
     while (true) {
