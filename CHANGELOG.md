@@ -1,5 +1,6 @@
 ## Unreleased
-- fix: A response to an HTTP/1.0 request that keeps its connection open carries `Connection: keep-alive`, and a response with a Connection value of its own but no keep-alive closes such a connection. `ResponseFraming.connection` is the `ConnectionHeaderType` an adapter adds, `close` or `keepAlive`
+- feat: An adapter that writes its own response head must write `ResponseFraming.connection` when it is set: `keepAlive` to an HTTP/1.0 client whose connection stays open, which otherwise takes every connection as closed, and `close` when the connection closes after the response
+- fix: A response to an HTTP/1.0 request that keeps its connection open carries `Connection: keep-alive`, and a response with a Connection value of its own but no keep-alive closes such a connection
 - fix: The dart:io adapter closes the connection after a request that lists `close` in its Connection field, also beside a later `keep-alive`, which won in dart:io's `persistentConnection`
 - fix: A response with a Connection value of its own carries `close` beside it when the connection closes after it. `relic_native` sent the handler's value alone, so an HTTP/1.1 client could send its next request on a connection that was closing
 
