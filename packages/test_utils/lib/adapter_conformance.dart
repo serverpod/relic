@@ -31,6 +31,7 @@ import 'src/conformance/exchange_abort_tests.dart';
 import 'src/conformance/framing_tests.dart';
 import 'src/conformance/header_wire_tests.dart';
 import 'src/conformance/hijack_tests.dart';
+import 'src/conformance/idle_connection_tests.dart';
 import 'src/conformance/request_body_tests.dart';
 import 'src/conformance/response_failure_tests.dart';
 import 'src/conformance/serve_tests.dart';
@@ -90,6 +91,7 @@ void adapterConformance(
     shutdownTests(conformance);
     closeFromHandlerTests(conformance);
     connectionsTests(conformance);
+    idleConnectionTests(conformance);
     responseFailureTests(conformance);
     exchangeAbortTests(conformance);
     hijackTests(conformance);
