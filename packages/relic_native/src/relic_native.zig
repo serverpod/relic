@@ -2892,9 +2892,14 @@ export fn relic_reactor_pending(r: *Reactor) bool {
 
 /// Takes up to `max` addresses of exchanges with an event since the last
 /// call. The same address may appear more than once. The low bit is set
-/// on the last event of a hijacked connection, whose view Dart must not
-/// read.
+/// on the last event of a WebSocket or hijacked connection, whose view
+/// Dart must not read.
+///
+/// The last events come first. A frame can post a plain event and die in
+/// the same tick, and Dart reads the view on a plain event. Once Dart has
+/// seen the last one, it no longer knows the address.
 export fn relic_reactor_events(r: *Reactor, out: [*]usize, max: u32) u32 {
+    if (r.events_taken == 0) lastEventsFirst(r.events.items);
     var n: u32 = 0;
     while (n < max and r.events_taken < r.events.items.len) : (n += 1) {
         out[n] = r.events.items[r.events_taken];
@@ -2905,6 +2910,18 @@ export fn relic_reactor_events(r: *Reactor, out: [*]usize, max: u32) u32 {
         r.events_taken = 0;
     }
     return n;
+}
+
+/// Moves the tagged addresses to the front. The order among the plain
+/// ones does not matter, since each only tells Dart to look at its view.
+fn lastEventsFirst(events: []usize) void {
+    var front: usize = 0;
+    for (events, 0..) |event, i| {
+        if (event & 1 == 0) continue;
+        events[i] = events[front];
+        events[front] = event;
+        front += 1;
+    }
 }
 
 /// Arms the waiter, which posts one message to the isolate's port once
@@ -3763,6 +3780,24 @@ test "ws: a body chunk the pump reads after Dart upgraded does not reach Dart" {
     client.hangUp();
     relic_abort(v);
     try testConnectionsEnd(r);
+}
+
+test "events: a tick's last events reach Dart before its plain ones" {
+    const srv = testBind(null) orelse return error.BindFailed;
+    const r = relic_reactor_create(srv, 1) orelse return error.AttachFailed;
+    defer relic_reactor_destroy(r);
+
+    // One frame posts a plain event and its last one in the same tick,
+    // another connection a plain event in between.
+    const a: usize = 0x1000;
+    const b: usize = 0x2000;
+    try r.events.appendSlice(r.gpa, &.{ a, b, a | 1 });
+    var out: [3]usize = undefined;
+    try std.testing.expectEqual(1, relic_reactor_events(r, &out, 1));
+    try std.testing.expectEqual(a | 1, out[0]);
+    try std.testing.expectEqual(2, relic_reactor_events(r, &out, out.len));
+    try std.testing.expect(out[0] & 1 == 0 and out[1] & 1 == 0);
+    try std.testing.expectEqual(0, relic_reactor_events(r, &out, out.len));
 }
 
 /// Sends `request` once the connection task has issued its read, and
