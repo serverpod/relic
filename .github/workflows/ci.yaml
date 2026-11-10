@@ -248,6 +248,29 @@ jobs:
         working-directory: packages/relic_native
         run: zig build test -Dbackend=epoll --summary all
 
+  # Only the Zig tests: a sanitizer runtime has to be in the process from
+  # the start, and the Dart VM dlopens the library long after that.
+  zig_tsan:
+    name: Run Zig Tests Under ThreadSanitizer
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v7
+
+      - name: Setup Zig
+        uses: mlugg/setup-zig@v2
+        with:
+          version: 0.17.1
+
+      - name: Run Zig Tests Under TSan
+        working-directory: packages/relic_native
+        run: zig build test -Dsanitize-thread --summary all
+
+      - name: Run Zig Tests Under TSan On Epoll
+        working-directory: packages/relic_native
+        run: zig build test -Dsanitize-thread -Dbackend=epoll --summary all
+
   docs-markdown-lint:
     name: Markdown lint for docs
     runs-on: ubuntu-latest
