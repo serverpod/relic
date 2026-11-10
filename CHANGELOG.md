@@ -1,3 +1,6 @@
+## 2.0.0-rc.7
+- perf: `relic_native` now holds no task and no buffers for a connection with nothing to read. An idle WebSocket takes about 3 KiB of memory where it previously took 29, and 15 KiB over TLS. 
+
 ## 2.0.0-rc.6
 - feat: An adapter that writes its own response head must write `ResponseFraming.connection` when it is set: `keepAlive` to an HTTP/1.0 client whose connection stays open, which otherwise takes every connection as closed, and `close` when the connection closes after the response
 - fix: A response to an HTTP/1.0 request that keeps its connection open carries `Connection: keep-alive`, and a response with a Connection value of its own but no keep-alive closes such a connection

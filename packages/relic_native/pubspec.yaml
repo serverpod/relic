@@ -1,6 +1,6 @@
 name: relic_native
 description: A Relic adapter backed by a Zig HTTP server on native I/O threads.
-version: 2.0.0-rc.6
+version: 2.0.0-rc.7
 repository: https://github.com/serverpod/relic
 homepage: https://docs.dartrelic.dev/
 topics:
@@ -24,7 +24,7 @@ dependencies:
   code_assets: '>=1.1.0 <3.0.0'
   ffi: ^2.1.0
   hooks: ^2.0.0
-  relic_core: ^2.0.0-rc.6
+  relic_core: ^2.0.0-rc.7
   stream_channel: ^2.1.1
   web_socket: ^1.0.1
 
