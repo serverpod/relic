@@ -1193,13 +1193,15 @@ final class NativeExchange extends LinkedListEntry<NativeExchange>
     _endRaw(error);
   }
 
-  /// The native side is done with a raw connection. The stream ends with
-  /// an error if the peer had not ended it, as when no writer could start
-  /// for a sink that was still open.
+  /// The native side is done with a raw connection. A stream still open
+  /// ends with an error. Only a writer that could not start ends the
+  /// connection that way, since the sink's close ends the stream first.
   void _rawGone() {
     _release();
     _endRaw(
-      const io.SocketException('The connection closed before the peer did'),
+      const io.SocketException(
+        'The connection ended before the sink was closed',
+      ),
     );
   }
 
