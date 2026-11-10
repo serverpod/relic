@@ -27,12 +27,6 @@ dart pub add relic
 
 That adds the latest stable release to the `dependencies` in `pubspec.yaml`, and fetches it. You can also add the line to `pubspec.yaml` yourself, and run `dart pub get`.
 
-These pages describe the coming release of Relic, 2.0, and a few of the features they show are not in a published version yet. To try the latest prerelease instead of the stable release, give the version explicitly:
-
-```bash
-dart pub add 'relic:^2.0.0-rc.7'
-```
-
 ## Reading the code on these pages
 
 Every code block on these pages is cut from a complete program in the [examples](https://github.com/serverpod/relic/tree/main/packages/examples) directory of the Relic repository, and each page links the program behind it under Related reading. A few things hold for all of them:
