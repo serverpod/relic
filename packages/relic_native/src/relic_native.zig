@@ -381,6 +381,13 @@ const Exchange = struct {
     /// Where a WebSocket's frames or a raw connection's bytes go, once the
     /// connection is the task's. No writer starts without it.
     writer: ?*std.Io.Writer = null,
+    /// The link `writer` is of, whose buffers a writer task keeps.
+    link: ?*Link = null,
+    /// The WebSocket message being assembled from its frames, and its
+    /// opcode while it is not whole. Plain malloc for the bytes, so Dart
+    /// frees a message with relic_free.
+    ws_message: std.ArrayListUnmanaged(u8) = .empty,
+    ws_message_opcode: ?WsOpcode = null,
     /// A writer task is writing Dart's output. It ends once none is left.
     writing: bool = false,
     /// Set when a writer ends, whether it wrote everything or a write
@@ -461,6 +468,14 @@ pub const Reactor = struct {
     /// second old. A tick refreshes it, so a stamp is a copy.
     date: [http_date_len]u8 = undefined,
     date_until_ms: i64 = 0,
+    /// Connections that wait for input with no task, on a poll of their
+    /// socket.
+    parked: u32 = 0,
+    /// Connections whose poll ended, for the next tick to spawn a task
+    /// for. On Windows the loops of a group share a completion port, and
+    /// the callback of a poll runs on the thread of whichever loop
+    /// dequeues it, the acceptor's among them.
+    resumes: Mpsc = undefined,
     /// Where Buffers come from. An allocator that hands whole pages back
     /// when a block is freed. The pages of a burst of connections would
     /// stay with a malloc for good.
@@ -542,6 +557,23 @@ pub const Reactor = struct {
                 stream.close();
                 continue;
             };
+        }
+    }
+
+    /// Spawns the task of every connection in `resumes`. One that no
+    /// task could be spawned for waits for the next tick.
+    /// Assumes relic_reactor_tick has bound the executor to this thread.
+    fn drainResumes(self: *Reactor) void {
+        while (self.resumes.pop()) |node| {
+            const c: *Connection = @fieldParentPtr("resume_node", node);
+            self.group.spawn(resumeConn, .{c}) catch {
+                self.resumes.push(node);
+                self.pending = true;
+                return;
+            };
+            c.parked = false;
+            c.link.parked = false;
+            self.parked -= 1;
         }
     }
 
@@ -840,23 +872,42 @@ pub const Server = struct {
 };
 
 fn handleConn(r: *Reactor, stream: zio.net.Stream) void {
-    defer _ = r.connections.fetchSub(1, .monotonic);
-    _ = r.idle.fetchAdd(1, .monotonic);
-    defer _ = r.idle.fetchSub(1, .monotonic);
-    const c = r.gpa.create(Connection) catch return stream.close();
-    defer r.gpa.destroy(c);
-    c.* = .{ .conn = .{ .task = r.rt.main_executor.current_task.? } };
-    handleConnInner(r, stream, c) catch |err| switch (err) {
-        error.HttpConnectionClosing, error.ReadFailed, error.WriteFailed, error.Canceled => {},
-        else => std.log.debug("relic_native: connection ended with {t}", .{err}),
+    const c = r.gpa.create(Connection) catch {
+        _ = r.connections.fetchSub(1, .monotonic);
+        return stream.close();
     };
+    c.* = .{ .reactor = r, .stream = stream, .conn = .{ .task = r.rt.main_executor.current_task.? } };
+    _ = r.idle.fetchAdd(1, .monotonic);
+    r.addConn(&c.conn);
+    openConn(c) catch |err| {
+        switch (err) {
+            error.HttpConnectionClosing, error.ReadFailed, error.WriteFailed, error.Canceled => {},
+            else => std.log.debug("relic_native: connection ended with {t}", .{err}),
+        }
+        c.end = true;
+    };
+    runConn(c);
 }
 
 /// What a connection keeps from one wait to the next. It lives apart
 /// from the task's stack, so Dart's pointer to `ex.view` and the
 /// sweeper's to `conn` do not depend on a frame.
 const Connection = struct {
+    reactor: *Reactor,
+    stream: zio.net.Stream,
     conn: Conn,
+    /// `link` is set up, so the end of the connection takes it down.
+    linked: bool = false,
+    /// What the connection's task runs when it starts again.
+    phase: enum { request, web_socket, raw } = .request,
+    /// The connection is over. Its task only takes it down.
+    end: bool = false,
+    /// The connection waits for input with no task. `poll` is in the
+    /// loop, and its callback lists the connection in the reactor's
+    /// `resumes`.
+    parked: bool = false,
+    poll: zio.ev.NetPoll = undefined,
+    resume_node: Node = .{},
     link: Link = undefined,
     http: std.http.Server = undefined,
     /// Holds an inline request body, and is kept across requests while
@@ -865,6 +916,81 @@ const Connection = struct {
     /// The request a handler has, or the connection Dart took over.
     ex: Exchange = undefined,
 };
+
+/// Ends the task and leaves the connection to a poll of its socket. A
+/// connection with nothing to read then holds no stack. Everything it
+/// keeps is in the Connection.
+fn parkConn(c: *Connection) void {
+    const r = c.reactor;
+    c.conn.task = null;
+    c.parked = true;
+    c.link.parked = true;
+    r.parked += 1;
+    c.poll = .init(c.stream.socket.handle, .recv);
+    c.poll.c.userdata = c;
+    c.poll.c.callback = onParkedWake;
+    r.rt.main_executor.loop.add(&c.poll.c);
+}
+
+/// Ends the poll of a parked connection, whose callback then lists it
+/// for its task. For a wake that is not input: a deadline, a stop, the end of a
+/// connection Dart took over. Nothing for a connection that has a task.
+fn unparkConn(c: *Connection) void {
+    if (c.parked) c.reactor.rt.main_executor.loop.cancel(&c.poll.c);
+}
+
+/// The socket has input, or unparkConn ended the poll. This may run on
+/// another thread than the reactor's, so it only hands the connection
+/// over, as the acceptor hands over a socket.
+fn onParkedWake(_: *zio.ev.Loop, completion: *zio.ev.Completion) void {
+    const c: *Connection = @alignCast(@ptrCast(completion.userdata.?));
+    const r = c.reactor;
+    r.resumes.push(&c.resume_node);
+    r.pokeWaiter();
+}
+
+/// The task of a connection that was parked.
+fn resumeConn(c: *Connection) void {
+    c.conn.task = c.reactor.rt.main_executor.current_task.?;
+    c.link.woken = true;
+    runConn(c);
+}
+
+/// Runs the connection from where it stands until it is over or parks.
+fn runConn(c: *Connection) void {
+    const run: anyerror!void = if (c.end) {} else switch (c.phase) {
+        .request => serveRequests(c),
+        .web_socket, .raw => takenOver(c),
+    };
+    run catch |err| switch (err) {
+        error.Parked => return parkConn(c),
+        error.HttpConnectionClosing, error.ReadFailed, error.WriteFailed, error.Canceled => {},
+        else => std.log.debug("relic_native: connection ended with {t}", .{err}),
+    };
+    endConn(c);
+}
+
+/// Takes the connection down and frees it.
+fn endConn(c: *Connection) void {
+    const r = c.reactor;
+    if (c.phase != .request) {
+        // What Dart did not take.
+        freeChunks(&c.ex.in);
+        c.ex.ws_message.deinit(std.heap.c_allocator);
+        _ = r.active.fetchSub(1, .monotonic);
+        _ = r.idle.fetchAdd(1, .monotonic);
+    }
+    if (c.linked) {
+        c.link.deinit(r.gpa, !r.destroying);
+        c.link.detach();
+    }
+    r.conns.remove(&c.conn.node);
+    c.body_store.deinit(r.gpa);
+    c.stream.close();
+    _ = r.idle.fetchSub(1, .monotonic);
+    _ = r.connections.fetchSub(1, .monotonic);
+    r.gpa.destroy(c);
+}
 
 /// A task of this reactor, as the executor names the one that is running.
 const Task = @typeInfo(@FieldType(@FieldType(zio.Runtime, "main_executor"), "current_task")).optional.child;
@@ -880,7 +1006,8 @@ const Task = @typeInfo(@FieldType(@FieldType(zio.Runtime, "main_executor"), "cur
 /// streamed responses and the lingering close keep their zio timeouts.
 const Conn = struct {
     node: std.DoublyLinkedList.Node = .{},
-    task: Task,
+    /// Null while the connection is parked.
+    task: ?Task,
     /// Clock time in milliseconds by which the phase must end, 0 for no
     /// limit.
     deadline: i64 = 0,
@@ -890,6 +1017,15 @@ const Conn = struct {
     swept_delivered: ?u7 = null,
     /// Waiting for the first byte of a request.
     idle: bool = false,
+    /// The connection's streams, once it has them.
+    link: ?*Link = null,
+    /// In Link.awaitInput, a read that may wait for as long as the peer
+    /// has nothing to say.
+    quiet: bool = false,
+    /// The sweeps that read has waited through.
+    quiet_sweeps: u16 = 0,
+    /// The sweeper cancelled that read to have the buffers back.
+    rest_asked: bool = false,
 
     /// Starts a phase that must end within `ms`, or without a limit for 0.
     fn arm(self: *Conn, ms: u32) void {
@@ -909,24 +1045,61 @@ const Conn = struct {
     /// connection as that cancel.
     fn expire(self: *Conn) void {
         self.deadline = 0;
-        self.swept_delivered = self.task.setCanceled(.auto);
-        self.task.wake();
+        const task = self.task orelse return self.endParked();
+        self.swept_delivered = task.setCanceled(.auto);
+        task.wake();
+    }
+
+    /// Starts the task of a parked connection for its end. One that
+    /// waited for a request is only taken down. One Dart took over runs
+    /// its end as after a read that was stopped, which writes what Dart
+    /// queued.
+    fn endParked(self: *Conn) void {
+        const c: *Connection = @fieldParentPtr("conn", self);
+        if (c.phase == .request) c.end = true;
+        unparkConn(c);
     }
 
     /// Whether the sweeper ended the wait that just failed.
     fn expired(self: *Conn) bool {
         if (self.swept_delivered == null) return false;
         self.swept_delivered = null;
-        return self.task.checkAutoCancel();
+        return self.task.?.checkAutoCancel();
+    }
+
+    /// Whether the connection waits for input with buffers it could
+    /// give back.
+    fn couldRest(self: *const Conn) bool {
+        if (!self.quiet) return false;
+        const link = self.link orelse return false;
+        return link.buffers != null and link.writers == 0;
+    }
+
+    /// Cancels the quiet read, as `expire` cancels a wait. The task
+    /// gives its buffers back and ends, and the connection parks.
+    fn askRest(self: *Conn) void {
+        self.quiet_sweeps = 0;
+        self.rest_asked = true;
+        self.swept_delivered = self.task.?.setCanceled(.auto);
+        self.task.?.wake();
+    }
+
+    /// Whether the sweeper ended the read that just failed to have the
+    /// buffers back.
+    fn restAsked(self: *Conn) bool {
+        if (!self.rest_asked) return false;
+        self.rest_asked = false;
+        return self.expired();
     }
 
     /// Takes back a cancel the sweeper sent for a wait that completed
     /// anyway. zio hands such a cancel to the task's next wait, which
     /// must not be the park. Dart holds the frame until it answers.
     fn settle(self: *Conn) void {
+        self.rest_asked = false;
         const delivered = self.swept_delivered orelse return;
         self.swept_delivered = null;
-        _ = self.task.retractAutoCancel(delivered);
+        _ = self.task.?.retractAutoCancel(delivered);
     }
 };
 
@@ -972,17 +1145,25 @@ fn sweepInterval(options: Options) u32 {
     return std.math.clamp(shortest / 4, 10, 1000);
 }
 
+/// How long a connection waits for input before the sweeper asks for its
+/// buffers, in milliseconds. A busy connection never waits that long, so
+/// it keeps its buffers and reads straight into them.
+const rest_after_ms = 1000;
+
 /// How often the sweeper frees the spare buffers no connection needed,
 /// in milliseconds.
 const trim_spare_ms = 1000;
 
-/// Cancels the task of every connection past its deadline, once per
-/// interval for as long as the reactor has connections. A timeout fires
-/// up to one interval late. Frees spare buffers every trim_spare_ms.
+/// Cancels the task of every connection past its deadline, and asks
+/// every connection that has waited rest_after_ms for input to give its
+/// buffers back. Once per interval for as long as the reactor has
+/// connections. Either comes up to one interval late. Frees spare
+/// buffers every trim_spare_ms.
 fn sweep(r: *Reactor) void {
     defer r.sweeping = false;
     const interval = sweepInterval(r.server.options);
     const trim_sweeps = std.math.divCeil(u32, trim_spare_ms, interval) catch unreachable;
+    const rest_sweeps = std.math.divCeil(u32, rest_after_ms, interval) catch unreachable;
     // The buffers the last connections left are spare for good.
     defer r.freeSpareBuffersBut(kept_spare_buffers);
     var sweeps: u32 = 0;
@@ -994,8 +1175,17 @@ fn sweep(r: *Reactor) void {
         var next = r.conns.first;
         while (next) |node| : (next = node.next) {
             const conn: *Conn = @fieldParentPtr("node", node);
-            if (conn.deadline == 0 or conn.deadline > now) continue;
-            conn.expire();
+            if (conn.deadline != 0 and conn.deadline <= now) {
+                conn.expire();
+                continue;
+            }
+            if (!conn.couldRest()) continue;
+            // The first sweep may come right after the read began.
+            if (conn.quiet_sweeps < rest_sweeps) {
+                conn.quiet_sweeps += 1;
+                continue;
+            }
+            conn.askRest();
         }
     }
 }
@@ -1029,6 +1219,20 @@ const Link = struct {
     reader: *std.Io.Reader,
     writer: *std.Io.Writer,
     secure: ?*Secure = null,
+    /// Where `buffers` come from and go back to. Set by `attach`.
+    reactor: *Reactor = undefined,
+    conn: *Conn = undefined,
+    /// What `reader` and `writer` work in. Null while the connection has
+    /// nothing to read and no writer is at work.
+    buffers: ?*Buffers = null,
+    /// The writer tasks at work, which keep the buffers.
+    writers: u32 = 0,
+    /// The connection is parked, so no task is there to give back the
+    /// buffers a writer took.
+    parked: bool = false,
+    /// The task started again after a park, so there is input, or
+    /// something to end the wait for it.
+    woken: bool = false,
 
     /// tls.zig supports one reader and one writer at a time, which is what
     /// a body pump, a WebSocket and a hijacked connection run.
@@ -1063,6 +1267,102 @@ const Link = struct {
         secure.conn = null;
         self.init(stream, &secure.ciphertext_in, &secure.ciphertext_out);
         self.secure = secure;
+    }
+
+    /// Makes `buffers` the link's, which `reader` and `writer` work in
+    /// already or will after the handshake, and lists the link with the
+    /// sweeper.
+    fn attach(self: *Link, reactor: *Reactor, conn: *Conn, buffers: *Buffers) void {
+        self.reactor = reactor;
+        self.conn = conn;
+        self.buffers = buffers;
+        conn.link = self;
+    }
+
+    /// Gives the buffers back at the end of the connection.
+    fn detach(self: *Link) void {
+        self.conn.link = null;
+        if (self.buffers) |buffers| self.reactor.giveBuffers(buffers);
+        self.buffers = null;
+    }
+
+    fn bindRead(self: *Link, buffer: []u8) void {
+        const rd = self.reader;
+        std.debug.assert(rd.seek == rd.end);
+        rd.buffer = buffer;
+        rd.seek = 0;
+        rd.end = 0;
+    }
+
+    fn bindWrite(self: *Link, buffer: []u8) void {
+        std.debug.assert(self.writer.end == 0);
+        self.writer.buffer = buffer;
+    }
+
+    /// Takes buffers from the reactor when the link has none.
+    fn takeBuffers(self: *Link) !void {
+        if (self.buffers != null) return;
+        const buffers = try self.reactor.takeBuffers();
+        self.buffers = buffers;
+        self.bindWrite(&buffers.write);
+        self.bindRead(&buffers.read);
+    }
+
+    /// Gives the buffers back to the reactor, unless a writer is at work
+    /// or something is in them.
+    fn giveBuffers(self: *Link) void {
+        const buffers = self.buffers orelse return;
+        if (self.writers != 0 or self.writer.end != 0 or self.reader.seek != self.reader.end) return;
+        self.bindRead(&.{});
+        self.bindWrite(&.{});
+        self.buffers = null;
+        self.reactor.giveBuffers(buffers);
+    }
+
+    /// A writer task starts. It keeps the buffers until endWrite, and
+    /// writes unbuffered when there are none to take.
+    fn beginWrite(self: *Link) void {
+        self.writers += 1;
+        self.takeBuffers() catch {};
+    }
+
+    fn endWrite(self: *Link) void {
+        self.writers -= 1;
+        if (self.parked) self.giveBuffers();
+    }
+
+    /// Waits until `reader` has input, for as long as the peer has
+    /// nothing to say. It reads into the buffers, as any read does. Once
+    /// the sweeper asks, it gives them back and returns error.Parked,
+    /// for the task to end and the connection to park. A connection with
+    /// nothing to do then holds no buffers and no stack. The task that
+    /// starts when there is input calls this again.
+    fn awaitInput(self: *Link) (std.Io.Reader.Error || error{Parked})!void {
+        if (self.reader.seek != self.reader.end) return;
+        const conn = self.conn;
+        if (self.buffers == null) {
+            // Nothing was asked for yet, and nothing is there.
+            if (!self.woken) return error.Parked;
+            self.takeBuffers() catch return error.ReadFailed;
+        }
+        self.woken = false;
+        conn.quiet_sweeps = 0;
+        conn.quiet = true;
+        defer conn.quiet = false;
+        while (true) {
+            if (self.reader.fillMore()) |_| {
+                // A cancel that came with the input is not for the next
+                // wait.
+                conn.settle();
+                return;
+            } else |err| {
+                if (err != error.ReadFailed or !conn.restAsked()) return err;
+                self.clearReadError();
+                self.giveBuffers();
+                // A writer at work keeps them, and the read goes on.
+                if (self.buffers == null) return error.Parked;
+            }
+        }
     }
 
     /// What the handshake selects through ALPN: the one protocol the
@@ -1175,40 +1475,35 @@ fn writeStatusAndClose(link: *Link, status: []const u8) !void {
     lingeringClose(link);
 }
 
-fn handleConnInner(r: *Reactor, stream: zio.net.Stream, c: *Connection) !void {
-    defer stream.close();
-
-    const buffers = try r.takeBuffers();
-    defer r.giveBuffers(buffers);
-
-    const peer = stream.socket.address.ip;
-    const local_port = r.server.bound_port.load(.acquire);
+/// Sets up the connection's streams, with the TLS handshake on an HTTPS
+/// server.
+fn openConn(c: *Connection) !void {
+    const r = c.reactor;
+    const stream = c.stream;
     const options = r.server.options;
-
-    const body_store = &c.body_store;
-    defer body_store.deinit(r.gpa);
-
     const conn = &c.conn;
-    r.addConn(conn);
-    defer r.conns.remove(&conn.node);
-
     const link = &c.link;
-    if (r.server.tls_auth != null) {
-        try link.initTls(r.gpa, stream);
-    } else {
-        link.init(stream, &buffers.read, &buffers.write);
+    {
+        const buffers = try r.takeBuffers();
+        errdefer r.giveBuffers(buffers);
+        if (r.server.tls_auth != null) {
+            try link.initTls(r.gpa, stream);
+        } else {
+            link.init(stream, &buffers.read, &buffers.write);
+        }
+        link.attach(r, conn, buffers);
     }
-    defer link.deinit(r.gpa, !r.destroying);
+    c.linked = true;
     link.setWriteTimeout(inactivity(options.write_timeout_ms));
     if (r.server.tls_auth) |auth| {
         // The wait for the first byte is idle, as the wait for a request
         // is, and the handshake runs under the header deadline, as the head
         // that follows it does.
-        if (r.stop) return;
+        if (r.stop) return error.HttpConnectionClosing;
         conn.arm(options.idle_timeout_ms);
         conn.idle = true;
         const first = link.reader.peekByte() catch |err| switch (err) {
-            error.EndOfStream => return,
+            error.EndOfStream => return error.HttpConnectionClosing,
             error.ReadFailed => return link.readError() orelse err,
         };
         conn.idle = false;
@@ -1224,8 +1519,11 @@ fn handleConnInner(r: *Reactor, stream: zio.net.Stream, c: *Connection) !void {
         // A TLS record opens with its content type, a byte under 32.
         // Anything else is plain HTTP, or nothing a handshake would
         // answer, which gets a plain 400, as Go's server answers it.
-        if (first >= 32) return writeStatusAndClose(link, "400 Bad Request");
-        link.handshake(auth, r.server.tls_client_auth, &buffers.read, &buffers.write) catch |err| {
+        if (first >= 32) {
+            try writeStatusAndClose(link, "400 Bad Request");
+            return error.HttpConnectionClosing;
+        }
+        link.handshake(auth, r.server.tls_client_auth, &link.buffers.?.read, &link.buffers.?.write) catch |err| {
             // The alert tls.zig wrote reaches a peer that already sent its
             // request only through a lingering close. Nothing was written
             // for a failure the peer reported or the socket caused, and when
@@ -1237,6 +1535,19 @@ fn handleConnInner(r: *Reactor, stream: zio.net.Stream, c: *Connection) !void {
         conn.disarm();
     }
     c.http = std.http.Server.init(link.reader, link.writer);
+}
+
+/// Serves the connection's requests until it is over, or Dart takes it
+/// over, which takenOver goes on with. error.Parked when the wait for a
+/// request ended the task.
+fn serveRequests(c: *Connection) !void {
+    const r = c.reactor;
+    const peer = c.stream.socket.address.ip;
+    const local_port = r.server.bound_port.load(.acquire);
+    const options = r.server.options;
+    const body_store = &c.body_store;
+    const conn = &c.conn;
+    const link = &c.link;
     const http = &c.http;
     const w = link.writer;
 
@@ -1250,11 +1561,15 @@ fn handleConnInner(r: *Reactor, stream: zio.net.Stream, c: *Connection) !void {
         link.clearReadError();
         conn.arm(options.idle_timeout_ms);
         conn.idle = true;
-        link.reader.fill(1) catch |err| switch (err) {
+        link.awaitInput() catch |err| switch (err) {
             error.EndOfStream => return,
             error.ReadFailed => return link.readError() orelse err,
+            // Still idle, and under the idle deadline.
+            error.Parked => return err,
         };
         conn.idle = false;
+        // The ones the wait ended with, which a long one gave back.
+        const buffers = link.buffers.?;
         conn.arm(options.header_timeout_ms);
         const head = http.reader.receiveHead() catch |err| switch (err) {
             error.HttpHeadersOversize => return writeStatusAndClose(link, "431 Request Header Fields Too Large"),
@@ -1267,10 +1582,11 @@ fn handleConnInner(r: *Reactor, stream: zio.net.Stream, c: *Connection) !void {
         conn.disarm();
         _ = r.idle.fetchSub(1, .monotonic);
         _ = r.active.fetchAdd(1, .monotonic);
-        defer {
+        // A connection Dart took over counts as active until its end.
+        defer if (c.phase == .request) {
             _ = r.active.fetchSub(1, .monotonic);
             _ = r.idle.fetchAdd(1, .monotonic);
-        }
+        };
 
         const index = parseHead(head, &buffers.head_copy, &buffers.slots) catch |err| switch (err) {
             error.TooManyHeaders => return writeStatusAndClose(link, "431 Request Header Fields Too Large"),
@@ -1373,15 +1689,15 @@ fn handleConnInner(r: *Reactor, stream: zio.net.Stream, c: *Connection) !void {
                 if (ex.resp_head) |p| try w.writeAll(p[0..ex.resp_head_len]);
                 try w.flush();
             }
-            pumpWebSocket(link, ex);
-            return;
+            c.phase = .web_socket;
+            break;
         }
         if (ex.hijacked) {
             // The raw reader takes the socket over from the pump.
             if (pump) |*p| p.cancel();
             pump = null;
-            pumpRaw(link, ex);
-            return;
+            c.phase = .raw;
+            break;
         }
         if (ex.aborted) {
             drainOutbound(ex);
@@ -1434,6 +1750,17 @@ fn handleConnInner(r: *Reactor, stream: zio.net.Stream, c: *Connection) !void {
         // drained so the connection can carry the next request, and so the
         // client is not reset while still sending.
         if (body_unread and !discardBody(link, body_reader, content_length, options.body_timeout_ms)) return;
+    }
+    return takenOver(c);
+}
+
+/// Runs a connection Dart took over to its end. error.Parked when the
+/// wait for the peer ended the task.
+fn takenOver(c: *Connection) error{Parked}!void {
+    switch (c.phase) {
+        .request => unreachable,
+        .web_socket => try pumpWebSocket(&c.link, &c.ex),
+        .raw => try pumpRaw(&c.link, &c.ex),
     }
 }
 
@@ -1573,8 +1900,8 @@ fn pumpResponseBody(ex: *Exchange, w: *std.Io.Writer) bool {
 /// chunk queues with no framing. This task reads, and a writer task runs
 /// while chunks wait. It ends once Dart closed its sink and the rest is
 /// out, or Dart aborts. The socket closes when this returns.
-fn pumpRaw(link: *Link, ex: *Exchange) void {
-    pumpTakenOver(link, ex, rawReader);
+fn pumpRaw(link: *Link, ex: *Exchange) error{Parked}!void {
+    try pumpTakenOver(link, ex, rawReader);
     // An abort drops what is queued. A forced server close does not abort
     // a sink Dart closed, so the sink's bytes and its end still go out.
     if (!ex.aborted) writeLast(ex);
@@ -1587,16 +1914,15 @@ fn pumpRaw(link: *Link, ex: *Exchange) void {
 
 /// Pushes what the socket has, as it comes, at most `in_credit` chunks
 /// ahead of Dart. A last chunk marks a clean EOF or a read error.
-fn rawReader(link: *Link, ex: *Exchange) void {
+fn rawReader(link: *Link, ex: *Exchange) error{Parked}!void {
     const rd = link.reader;
     while (true) {
         if (!waitCredit(ex, &ex.closed)) return;
-        if (rd.bufferedLen() == 0) {
-            rd.fillMore() catch |err| {
-                if (!link.readCanceled()) pushLastInbound(ex, err == error.EndOfStream);
-                return;
-            };
-        }
+        link.awaitInput() catch |err| {
+            if (err == error.Parked) return error.Parked;
+            if (!link.readCanceled()) pushLastInbound(ex, err == error.EndOfStream);
+            return;
+        };
         const avail = rd.buffered();
         const n = @min(avail.len, in_chunk_size);
         const chunk = std.heap.c_allocator.create(Chunk) catch return;
@@ -1762,17 +2088,24 @@ fn isValidCloseCode(code: u16) bool {
 /// until the peer ends or the connection is over. A writer task runs while
 /// Dart's output waits, and ends once it is out. Returns once the
 /// connection is over. After that only writeLast starts a writer.
-fn pumpTakenOver(link: *Link, ex: *Exchange, comptime read: fn (*Link, *Exchange) void) void {
+fn pumpTakenOver(link: *Link, ex: *Exchange, comptime read: fn (*Link, *Exchange) error{Parked}!void) error{Parked}!void {
     link.setReadTimeout(.none);
     link.clearReadError();
     ex.writer = link.writer;
+    ex.link = link;
     // What Dart queued before the connection was this task's.
     _ = startWriter(ex);
+    // The peer may have nothing to say for long. The read parks the
+    // connection then, and takes the buffers again once there is input.
+    link.giveBuffers();
     var reader = zio.CancelHandle.current();
     defer reader.deinit();
     ex.reader = &reader;
     // A close before this point found no read to stop.
-    if (!ex.closed.isSet()) read(link, ex);
+    if (!ex.closed.isSet()) read(link, ex) catch |err| {
+        ex.reader = null;
+        return err;
+    };
     // A stop took the reader. Its cancel is still pending when the read
     // ended on its own first, and must not end a wait below.
     if (ex.reader == null) zio.checkCancel() catch {};
@@ -1813,8 +2146,8 @@ fn writeLast(ex: *Exchange) void {
 /// task runs while frames wait to go out, and ends once they are out. It
 /// all stops when the close handshake is over, the peer is gone, or Dart
 /// aborts. The socket closes when this returns.
-fn pumpWebSocket(link: *Link, ex: *Exchange) void {
-    pumpTakenOver(link, ex, wsReader);
+fn pumpWebSocket(link: *Link, ex: *Exchange) error{Parked}!void {
+    try pumpTakenOver(link, ex, wsReader);
     // A forced server close queues its close frame right before the abort.
     writeLast(ex);
     endWriters(ex);
@@ -1838,17 +2171,22 @@ fn pumpWebSocket(link: *Link, ex: *Exchange) void {
 /// peer's close frame, which it echoes, at the end of the connection, or
 /// at a violation, which it answers with a close frame. The writer learns
 /// through `peer_close` that nothing more comes.
-fn wsReader(link: *Link, ex: *Exchange) void {
-    defer ex.peer_close.set();
+fn wsReader(link: *Link, ex: *Exchange) error{Parked}!void {
+    try wsRead(link, ex);
+    ex.peer_close.set();
+}
+
+fn wsRead(link: *Link, ex: *Exchange) error{Parked}!void {
     const rd = link.reader;
-    // Plain malloc for a byte list, so Dart frees a message with relic_free.
     const gpa = std.heap.c_allocator;
-    var message: std.ArrayListUnmanaged(u8) = .empty;
-    defer message.deinit(gpa);
-    var message_opcode: ?WsOpcode = null;
+    const message = &ex.ws_message;
     const max: u64 = ex.ws_max_message;
     while (true) {
-        const result = readFrameHead(rd, message_opcode != null, max) catch return wsReadEnded(link, ex);
+        link.awaitInput() catch |err| {
+            if (err == error.Parked) return error.Parked;
+            return wsReadEnded(link, ex);
+        };
+        const result = readFrameHead(rd, ex.ws_message_opcode != null, max) catch return wsReadEnded(link, ex);
         const head = switch (result) {
             .head => |h| h,
             .violation => |v| return wsFail(ex, v.code, v.reason),
@@ -1867,8 +2205,8 @@ fn wsReader(link: *Link, ex: *Exchange) void {
             continue;
         }
         if (message.items.len + head.len > max) return wsFail(ex, 1009, "Message too big");
-        const opcode = message_opcode orelse head.opcode;
-        message_opcode = opcode;
+        const opcode = ex.ws_message_opcode orelse head.opcode;
+        ex.ws_message_opcode = opcode;
         const len: usize = @intCast(head.len);
         message.ensureUnusedCapacity(gpa, len) catch return wsFail(ex, 1011, "Out of memory");
         const slot = message.unusedCapacitySlice()[0..len];
@@ -1876,7 +2214,7 @@ fn wsReader(link: *Link, ex: *Exchange) void {
         unmask(slot, head.mask);
         message.items.len += len;
         if (!head.fin) continue;
-        message_opcode = null;
+        ex.ws_message_opcode = null;
         if (opcode == .text and !std.unicode.utf8ValidateSlice(message.items)) return wsFail(ex, 1007, "Text is not valid UTF-8");
         if (ex.ws_close_sent) {
             message.clearRetainingCapacity();
@@ -2033,6 +2371,8 @@ fn spawnWriter(ex: *Exchange) bool {
 fn writeOutput(w: *std.Io.Writer, ex: *Exchange) void {
     defer ex.writing = false;
     defer ex.out_written.set();
+    if (ex.link) |link| link.beginWrite();
+    defer if (ex.link) |link| link.endWrite();
     if (ex.upgraded) wsWriter(w, ex) else rawWriter(w, ex);
 }
 
@@ -2057,7 +2397,12 @@ fn writeFailed(ex: *Exchange) void {
 /// `closed`, and the first call while the read runs cancels it.
 fn endTakenOver(ex: *Exchange) void {
     ex.closed.set();
-    const reader = ex.reader orelse return;
+    const reader = ex.reader orelse {
+        // No read to stop. A parked connection starts its task for the
+        // end.
+        if (ex.link) |link| unparkConn(@fieldParentPtr("conn", link.conn));
+        return;
+    };
     ex.reader = null;
     reader.requestCancel();
 }
@@ -2836,6 +3181,7 @@ fn createReactor(srv: *Server, port: dart.Dart_Port_DL) !*Reactor {
     errdefer rt.deinit();
     r.* = .{ .gpa = gpa, .server = srv, .slot = no_slot, .port = port, .rt = rt };
     r.incoming.init();
+    r.resumes.init();
     if (!r.poke.init()) return error.PokeFailed;
     errdefer r.poke.deinit();
     r.waiter = try std.Thread.spawn(.{}, waiterThread, .{r});
@@ -2872,7 +3218,14 @@ export fn relic_reactor_stop(r: *Reactor) void {
     var next = r.conns.first;
     while (next) |node| : (next = node.next) {
         const conn: *Conn = @fieldParentPtr("node", node);
-        if (conn.idle) conn.task.cancel();
+        if (!conn.idle) continue;
+        if (conn.task) |task| {
+            task.cancel();
+        } else {
+            const call = DartCall.begin(r);
+            defer call.end();
+            conn.endParked();
+        }
     }
     const srv = r.server;
     srv.attach_lock.lock();
@@ -2923,6 +3276,20 @@ export fn relic_reactor_destroy(r: *Reactor) void {
     // writes the responses Dart gave since the last one.
     r.rt.main_executor.bindThread() catch |err| switch (err) {};
     _ = r.rt.main_executor.tick(.zero) catch {};
+    // A parked connection has no task to cancel. The end of its poll
+    // starts one.
+    {
+        var next = r.conns.first;
+        while (next) |node| : (next = node.next) {
+            const conn: *Conn = @fieldParentPtr("node", node);
+            if (conn.task == null) conn.endParked();
+        }
+        var rounds: u32 = 0;
+        while (r.parked != 0 and rounds < 1000) : (rounds += 1) {
+            _ = r.rt.main_executor.tick(.fromMilliseconds(1)) catch {};
+            r.drainResumes();
+        }
+    }
     r.group.cancel();
     r.freeSpareBuffersBut(0);
     r.rt.deinit();
@@ -2961,6 +3328,7 @@ export fn relic_reactor_tick(r: *Reactor, wait_ms: u32, out: [*]*ExchangeView, m
     defer executor.unbindThread();
     r.refreshDate();
     r.drainIncoming();
+    r.drainResumes();
     r.drainWritersWanted();
     r.pending = executor.tick(.fromMilliseconds(wait_ms)) catch false;
     var n: u32 = 0;
@@ -3740,7 +4108,7 @@ fn testStacksBackTo(r: *Reactor, stacks: usize) !void {
     try std.testing.expectEqual(stacks, testLiveStacks(r));
 }
 
-test "ws: an idle WebSocket holds only its connection task, and a send's writer ends" {
+test "ws: an idle WebSocket holds no task, and a send's writer ends" {
     const srv = testBind(null) orelse return error.BindFailed;
     const r = relic_reactor_create(srv, 1) orelse return error.AttachFailed;
     defer relic_reactor_destroy(r);
@@ -3755,7 +4123,7 @@ test "ws: an idle WebSocket holds only its connection task, and a send's writer 
     testUpgrade(v);
     var head: [test_switching_head.len]u8 = undefined;
     try std.testing.expectEqualStrings(test_switching_head, try testReceive(r, client, &head));
-    try testStacksBackTo(r, parked);
+    try testStacksBackTo(r, parked - 1);
 
     const text = "hi";
     const text_buf = relic_alloc(text.len).?;
@@ -3763,7 +4131,7 @@ test "ws: an idle WebSocket holds only its connection task, and a send's writer 
     try std.testing.expect(relic_ws_send(v, text_buf, text.len, 1));
     var frame: [4]u8 = undefined;
     try std.testing.expectEqualSlices(u8, &.{ 0x81, 0x02, 'h', 'i' }, try testReceive(r, client, &frame));
-    try testStacksBackTo(r, parked);
+    try testStacksBackTo(r, parked - 1);
 
     // The peer drops. The connection holds on for up to a second for Dart
     // to take the news, which nothing here does, and then ends.
@@ -3771,7 +4139,7 @@ test "ws: an idle WebSocket holds only its connection task, and a send's writer 
     try testConnectionsEnd(r);
 }
 
-test "hijack: an idle hijacked connection holds only its connection task, and a write's writer ends" {
+test "hijack: an idle hijacked connection holds no task, and a write's writer ends" {
     const srv = testBind(null) orelse return error.BindFailed;
     const r = relic_reactor_create(srv, 1) orelse return error.AttachFailed;
     defer relic_reactor_destroy(r);
@@ -3784,7 +4152,7 @@ test "hijack: an idle hijacked connection holds only its connection task, and a 
     const parked = testLiveStacks(r);
 
     relic_hijack(v);
-    try testStacksBackTo(r, parked);
+    try testStacksBackTo(r, parked - 1);
 
     const text = "hi";
     const buf = relic_alloc(text.len).?;
@@ -3792,7 +4160,7 @@ test "hijack: an idle hijacked connection holds only its connection task, and a 
     try std.testing.expect(relic_write_chunk(v, buf, text.len));
     var got: [text.len]u8 = undefined;
     try std.testing.expectEqualStrings(text, try testReceive(r, client, &got));
-    try testStacksBackTo(r, parked);
+    try testStacksBackTo(r, parked - 1);
 
     // Dart closes its sink. The writer writes the end, and the connection
     // closes.
@@ -4027,12 +4395,136 @@ test "sweep: a cancel taken back leaves the connection task as it was" {
     defer client.close();
     const v = try testExchange(r, client, "GET / HTTP/1.1\r\nHost: t\r\n\r\n");
     const conn: *Conn = @fieldParentPtr("node", r.conns.first.?);
-    const before = conn.task.canceled_status.load(.acquire);
+    const before = conn.task.?.canceled_status.load(.acquire);
     testSettledSweep(r);
-    try std.testing.expectEqual(before, conn.task.canceled_status.load(.acquire));
+    try std.testing.expectEqual(before, conn.task.?.canceled_status.load(.acquire));
 
     relic_abort(v);
     try testConnectionsEnd(r);
+}
+
+/// Waits for the connection to wait for input, asks for its buffers as
+/// the sweeper does after rest_after_ms, and ticks until they are back
+/// and the connection is parked.
+fn testRest(r: *Reactor) !void {
+    const conn: *Conn = @fieldParentPtr("node", r.conns.first.?);
+    var out: [4]*ExchangeView = undefined;
+    var rounds: usize = 0;
+    while (!conn.couldRest() and rounds < 200) : (rounds += 1) {
+        _ = relic_reactor_tick(r, 0, &out, out.len);
+        sleepMs(5);
+    }
+    try std.testing.expect(conn.couldRest());
+    conn.askRest();
+    rounds = 0;
+    while (conn.link.?.buffers != null and rounds < 200) : (rounds += 1) {
+        _ = relic_reactor_tick(r, 0, &out, out.len);
+        sleepMs(5);
+    }
+    try std.testing.expectEqual(null, conn.link.?.buffers);
+    try std.testing.expectEqual(null, conn.task);
+    try std.testing.expectEqual(1, r.parked);
+}
+
+/// A connection that answered one request and parked in its wait for
+/// the next.
+fn testParked(r: *Reactor, client: TestClient) !void {
+    testRespondNoContent(try testExchange(r, client, "GET / HTTP/1.1\r\nHost: t\r\n\r\n"));
+    var reply: [test_no_content.len]u8 = undefined;
+    try std.testing.expectEqualStrings(test_no_content, try testReceive(r, client, &reply));
+    try testRest(r);
+}
+
+test "park: a connection that waits for a request holds no task" {
+    const srv = testBind(null) orelse return error.BindFailed;
+    const r = relic_reactor_create(srv, 1) orelse return error.AttachFailed;
+    defer relic_reactor_destroy(r);
+
+    const client = try TestClient.connect(relic_server_port(srv));
+    defer client.close();
+    const v = try testExchange(r, client, "GET / HTTP/1.1\r\nHost: t\r\n\r\n");
+    const in_handler = testLiveStacks(r);
+    testRespondNoContent(v);
+    var reply: [test_no_content.len]u8 = undefined;
+    try std.testing.expectEqualStrings(test_no_content, try testReceive(r, client, &reply));
+    try testRest(r);
+    try testStacksBackTo(r, in_handler - 1);
+    try std.testing.expectEqual(1, r.connections.load(.monotonic));
+    try std.testing.expectEqual(1, r.idle.load(.monotonic));
+}
+
+test "park: a parked connection past its deadline is closed" {
+    const srv = testBind(null) orelse return error.BindFailed;
+    const r = relic_reactor_create(srv, 1) orelse return error.AttachFailed;
+    defer relic_reactor_destroy(r);
+
+    const client = try TestClient.connect(relic_server_port(srv));
+    defer client.close();
+    try testParked(r, client);
+
+    // As the sweeper does once the idle timeout passed, from a task of
+    // the loop's thread.
+    const conn: *Conn = @fieldParentPtr("node", r.conns.first.?);
+    {
+        const call = DartCall.begin(r);
+        defer call.end();
+        conn.expire();
+    }
+    try testConnectionsEnd(r);
+    try std.testing.expectEqual(0, r.parked);
+    try std.testing.expectEqual(0, r.idle.load(.monotonic));
+}
+
+test "park: a stopped reactor sheds a parked connection" {
+    const srv = testBind(null) orelse return error.BindFailed;
+    const r = relic_reactor_create(srv, 1) orelse return error.AttachFailed;
+    defer relic_reactor_destroy(r);
+
+    const client = try TestClient.connect(relic_server_port(srv));
+    defer client.close();
+    try testParked(r, client);
+
+    relic_reactor_stop(r);
+    try testConnectionsEnd(r);
+    try std.testing.expectEqual(0, r.parked);
+}
+
+test "park: a destroy takes a parked connection down" {
+    const srv = testBind(null) orelse return error.BindFailed;
+    const r = relic_reactor_create(srv, 1) orelse return error.AttachFailed;
+
+    const client = try TestClient.connect(relic_server_port(srv));
+    defer client.close();
+    try testParked(r, client);
+
+    relic_reactor_destroy(r);
+    // The peer reads the end of the connection.
+    var byte: [1]u8 = undefined;
+    var fds = [_]TestClient.net.pollfd{.{ .fd = client.fd, .events = TestClient.net.POLL.IN, .revents = 0 }};
+    try std.testing.expectEqual(1, try TestClient.net.poll(&fds, 2000));
+    try std.testing.expectEqual(0, try client.readSome(&byte));
+}
+
+test "park: a parked WebSocket ends when Dart aborts it" {
+    const srv = testBind(null) orelse return error.BindFailed;
+    const r = relic_reactor_create(srv, 1) orelse return error.AttachFailed;
+    defer relic_reactor_destroy(r);
+
+    const client = try TestClient.connect(relic_server_port(srv));
+    defer client.close();
+    const v = try testExchange(r, client, test_upgrade_request);
+    testUpgrade(v);
+    var head: [test_switching_head.len]u8 = undefined;
+    try std.testing.expectEqualStrings(test_switching_head, try testReceive(r, client, &head));
+    var out: [4]*ExchangeView = undefined;
+    var rounds: usize = 0;
+    while (r.parked == 0 and rounds < 200) : (rounds += 1) _ = relic_reactor_tick(r, 5, &out, out.len);
+    try std.testing.expectEqual(1, r.parked);
+
+    relic_abort(v);
+    try testConnectionsEnd(r);
+    try std.testing.expectEqual(0, r.parked);
+    try std.testing.expectEqual(0, r.active.load(.monotonic));
 }
 
 test "buffers: a trim frees the spare ones no connection needed since the last trim" {
@@ -4058,15 +4550,158 @@ test "buffers: a trim frees the spare ones no connection needed since the last t
     try std.testing.expectEqual(kept_spare_buffers, r.spare_buffers_count);
 }
 
-/// Ticks until the connection task reads the connection Dart took over.
-fn testReading(r: *Reactor, ex: *Exchange) !void {
+const test_no_content = "HTTP/1.1 204 No Content\r\ncontent-length: 0\r\n\r\n";
+
+/// Answers with test_no_content, as Dart does.
+fn testRespondNoContent(v: *ExchangeView) void {
+    const buf = relic_alloc(test_no_content.len).?;
+    @memcpy(buf[0..test_no_content.len], test_no_content);
+    relic_respond(v, buf, test_no_content.len, null, 0, false);
+}
+
+test "rest: a connection that waits for a request gives its buffers back and takes them for the next" {
+    const srv = testBind(null) orelse return error.BindFailed;
+    const r = relic_reactor_create(srv, 1) orelse return error.AttachFailed;
+    defer relic_reactor_destroy(r);
+
+    const client = try TestClient.connect(relic_server_port(srv));
+    defer client.close();
+    testRespondNoContent(try testExchange(r, client, "GET / HTTP/1.1\r\nHost: t\r\n\r\n"));
+    var reply: [test_no_content.len]u8 = undefined;
+    try std.testing.expectEqualStrings(test_no_content, try testReceive(r, client, &reply));
+    try std.testing.expectEqual(0, r.spare_buffers_count);
+
+    try testRest(r);
+    try std.testing.expectEqual(1, r.spare_buffers_count);
+
+    const target = "/next";
+    const v = try testExchange(r, client, "GET " ++ target ++ " HTTP/1.1\r\nHost: t\r\n\r\n");
+    try std.testing.expectEqualStrings(target, v.head[v.target_off .. v.target_off + v.target_len]);
+    try std.testing.expectEqual(0, r.spare_buffers_count);
+    testRespondNoContent(v);
+    try std.testing.expectEqualStrings(test_no_content, try testReceive(r, client, &reply));
+
+    client.hangUp();
+    try testConnectionsEnd(r);
+    try std.testing.expectEqual(1, r.spare_buffers_count);
+}
+
+test "rest: a connection without its buffers ends when the peer hangs up" {
+    const srv = testBind(null) orelse return error.BindFailed;
+    const r = relic_reactor_create(srv, 1) orelse return error.AttachFailed;
+    defer relic_reactor_destroy(r);
+
+    const client = try TestClient.connect(relic_server_port(srv));
+    defer client.close();
+    testRespondNoContent(try testExchange(r, client, "GET / HTTP/1.1\r\nHost: t\r\n\r\n"));
+    var reply: [test_no_content.len]u8 = undefined;
+    try std.testing.expectEqualStrings(test_no_content, try testReceive(r, client, &reply));
+    try testRest(r);
+
+    client.hangUp();
+    try testConnectionsEnd(r);
+    try std.testing.expectEqual(1, r.spare_buffers_count);
+}
+
+test "rest: a WebSocket with nothing to read gives its buffers back, and a send and a frame take them" {
+    const srv = testBind(null) orelse return error.BindFailed;
+    const r = relic_reactor_create(srv, 1) orelse return error.AttachFailed;
+    defer relic_reactor_destroy(r);
+
+    const client = try TestClient.connect(relic_server_port(srv));
+    defer client.close();
+    const v = try testExchange(r, client, test_upgrade_request);
+    testUpgrade(v);
+    var head: [test_switching_head.len]u8 = undefined;
+    try std.testing.expectEqualStrings(test_switching_head, try testReceive(r, client, &head));
+    // It starts without them.
+    const conn: *Conn = @fieldParentPtr("node", r.conns.first.?);
+    try std.testing.expectEqual(null, conn.link.?.buffers);
+    try std.testing.expectEqual(1, r.spare_buffers_count);
+
+    // Dart sends while the connection is parked. The writer takes them,
+    // and gives them back once it is done.
+    const text = "hi";
+    const text_buf = relic_alloc(text.len).?;
+    @memcpy(text_buf[0..text.len], text);
+    try std.testing.expect(relic_ws_send(v, text_buf, text.len, 1));
+    var frame: [4]u8 = undefined;
+    try std.testing.expectEqualSlices(u8, &.{ 0x81, 0x02, 'h', 'i' }, try testReceive(r, client, &frame));
+    try std.testing.expectEqual(null, conn.link.?.buffers);
+    try std.testing.expectEqual(1, r.spare_buffers_count);
+
+    // The peer's masked "yo", which starts the connection's task.
+    try client.writeAll(&.{ 0x81, 0x82, 1, 2, 3, 4, 'y' ^ 1, 'o' ^ 2 });
+    var data: ?[*]u8 = null;
+    var len: usize = 0;
+    var kind: u8 = 0;
     var out: [4]*ExchangeView = undefined;
     var rounds: usize = 0;
-    while (ex.reader == null and rounds < 200) : (rounds += 1) {
+    while (relic_ws_read(v, &data, &len, &kind) == 0 and rounds < 200) : (rounds += 1) {
         _ = relic_reactor_tick(r, 0, &out, out.len);
         sleepMs(5);
     }
-    try std.testing.expect(ex.reader != null);
+    try std.testing.expectEqual(@backingInt(WsKind.text), kind);
+    try std.testing.expectEqualStrings("yo", data.?[0..len]);
+    relic_free(data.?);
+    try std.testing.expectEqual(0, r.spare_buffers_count);
+
+    client.hangUp();
+    try testConnectionsEnd(r);
+}
+
+test "rest: a cancel that comes with the input does not end the connection" {
+    const srv = testBind(null) orelse return error.BindFailed;
+    const r = relic_reactor_create(srv, 1) orelse return error.AttachFailed;
+    defer relic_reactor_destroy(r);
+
+    const client = try TestClient.connect(relic_server_port(srv));
+    defer client.close();
+    testRespondNoContent(try testExchange(r, client, "GET / HTTP/1.1\r\nHost: t\r\n\r\n"));
+    var reply: [test_no_content.len]u8 = undefined;
+    try std.testing.expectEqualStrings(test_no_content, try testReceive(r, client, &reply));
+    const conn: *Conn = @fieldParentPtr("node", r.conns.first.?);
+    var out: [4]*ExchangeView = undefined;
+    var rounds: usize = 0;
+    while (!conn.couldRest() and rounds < 200) : (rounds += 1) {
+        _ = relic_reactor_tick(r, 0, &out, out.len);
+        sleepMs(5);
+    }
+    try std.testing.expect(conn.couldRest());
+
+    // The request is in the socket before the task hears of the cancel.
+    try client.writeAll("GET /second HTTP/1.1\r\nHost: t\r\n\r\n");
+    sleepMs(20);
+    conn.askRest();
+    var n: u32 = 0;
+    rounds = 0;
+    while (n == 0 and rounds < 200) : (rounds += 1) {
+        n = relic_reactor_tick(r, 0, &out, out.len);
+        sleepMs(5);
+    }
+    try std.testing.expectEqual(1, n);
+    const v = out[0];
+    try std.testing.expectEqualStrings("/second", v.head[v.target_off .. v.target_off + v.target_len]);
+    // The task parks for Dart with no cancel left to end that wait.
+    rounds = 0;
+    while (rounds < 10) : (rounds += 1) _ = relic_reactor_tick(r, 0, &out, out.len);
+    testRespondNoContent(v);
+    try std.testing.expectEqualStrings(test_no_content, try testReceive(r, client, &reply));
+
+    client.hangUp();
+    try testConnectionsEnd(r);
+}
+
+/// Ticks until the connection Dart took over waits for the peer: its
+/// task reads, or it is parked with none.
+fn testReading(r: *Reactor, ex: *Exchange) !void {
+    var out: [4]*ExchangeView = undefined;
+    var rounds: usize = 0;
+    while (ex.reader == null and r.parked == 0 and rounds < 200) : (rounds += 1) {
+        _ = relic_reactor_tick(r, 0, &out, out.len);
+        sleepMs(5);
+    }
+    try std.testing.expect(ex.reader != null or r.parked == 1);
 }
 
 /// Ticks until the reactor has no connection left.
@@ -4333,6 +4968,11 @@ const TestTlsClient = struct {
     reply_len: usize = 0,
     err: ?anyerror = null,
     done: std.atomic.Value(bool) = .init(false),
+    /// Sends a request that keeps the connection first, reads
+    /// test_no_content, and waits for `go` before the closing request.
+    two: bool = false,
+    waiting: std.atomic.Value(bool) = .init(false),
+    go: std.atomic.Value(bool) = .init(false),
 
     fn run(self: *TestTlsClient) void {
         defer self.done.store(true, .release);
@@ -4362,6 +5002,13 @@ const TestTlsClient = struct {
             // An EOF without close_notify fails the read.
             .strict_close_notify = true,
         });
+        if (self.two) {
+            try conn.writeAll("GET /first HTTP/1.1\r\nHost: localhost\r\n\r\n");
+            var first: [test_no_content.len]u8 = undefined;
+            if (try conn.readAll(&first) != first.len) return error.EndOfStream;
+            self.waiting.store(true, .release);
+            while (!self.go.load(.acquire)) sleepMs(5);
+        }
         try conn.writeAll("GET /x HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n");
         self.reply_len = try conn.readAll(&self.reply);
     }
@@ -4381,6 +5028,58 @@ test "tls: a request over TLS reaches the ready list and the response goes back 
     var out: [4]*ExchangeView = undefined;
     var n: u32 = 0;
     var rounds: usize = 0;
+    while (n == 0 and !client.done.load(.acquire) and rounds < 500) : (rounds += 1) {
+        n = relic_reactor_tick(r, 10, &out, out.len);
+    }
+    try std.testing.expectEqual(1, n);
+    const v = out[0];
+    try std.testing.expectEqualStrings("/x", v.head[v.target_off .. v.target_off + v.target_len]);
+
+    const head = "HTTP/1.1 204 No Content\r\nconnection: close\r\ncontent-length: 0\r\n\r\n";
+    const buf = relic_alloc(head.len).?;
+    @memcpy(buf[0..head.len], head);
+    relic_respond(v, buf, head.len, null, 0, true);
+    rounds = 0;
+    while (!client.done.load(.acquire) and rounds < 500) : (rounds += 1) {
+        _ = relic_reactor_tick(r, 10, &out, out.len);
+    }
+    if (client.err) |err| return err;
+    try std.testing.expectEqualStrings(head, client.reply[0..client.reply_len]);
+}
+
+test "rest: a TLS connection gives its buffers back and takes them for the next request" {
+    const pem = testPem(test_chain, test_key);
+    var failure: BindFailure = undefined;
+    const srv = relic_server_bind(null, "127.0.0.1", 0, &test_options, &pem, &failure) orelse return error.BindFailed;
+    const r = relic_reactor_create(srv, 1) orelse return error.AttachFailed;
+    defer relic_reactor_destroy(r);
+
+    var client: TestTlsClient = .{ .port = relic_server_port(srv), .two = true };
+    const thread = try std.Thread.spawn(.{}, TestTlsClient.run, .{&client});
+    defer thread.join();
+    // The client leaves its wait on any way out.
+    defer client.go.store(true, .release);
+
+    var out: [4]*ExchangeView = undefined;
+    var n: u32 = 0;
+    var rounds: usize = 0;
+    while (n == 0 and !client.done.load(.acquire) and rounds < 500) : (rounds += 1) {
+        n = relic_reactor_tick(r, 10, &out, out.len);
+    }
+    try std.testing.expectEqual(1, n);
+    testRespondNoContent(out[0]);
+    rounds = 0;
+    while (!client.waiting.load(.acquire) and !client.done.load(.acquire) and rounds < 500) : (rounds += 1) {
+        _ = relic_reactor_tick(r, 10, &out, out.len);
+    }
+    try std.testing.expect(client.waiting.load(.acquire));
+
+    try testRest(r);
+    try std.testing.expectEqual(1, r.spare_buffers_count);
+
+    client.go.store(true, .release);
+    n = 0;
+    rounds = 0;
     while (n == 0 and !client.done.load(.acquire) and rounds < 500) : (rounds += 1) {
         n = relic_reactor_tick(r, 10, &out, out.len);
     }
