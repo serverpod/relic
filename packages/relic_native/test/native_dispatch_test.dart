@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -55,7 +56,72 @@ void main() {
 
       expect(await reply, startsWith('HTTP/1.1 200 '));
       expect(errors, isNotEmpty);
-      expect(errors, everyElement(isA<StateError>()));
+      expect(
+        errors,
+        everyElement(
+          isA<StateError>().having(
+            (e) => e.message,
+            'message',
+            'resume failed',
+          ),
+        ),
+      );
+    },
+  );
+
+  test(
+    'Given a hijacked connection and a streamed response whose subscription throws from resume, '
+    'when one tick brings bytes from the peer after the resume, '
+    'then the hijacked stream gets the bytes.',
+    () async {
+      final adapter = await NativeAdapter.bind(InternetAddress.loopbackIPv4);
+      addTearDown(() => adapter.close(force: true));
+      final errors = <Object>[];
+      final exchanges = StreamController<AdapterExchange>();
+      runZonedGuarded(
+        () => adapter.start(exchanges.add),
+        (error, _) => errors.add(error),
+      );
+      final next = StreamIterator(exchanges.stream);
+      Future<AdapterExchange> nextExchange() async {
+        expect(
+          await next.moveNext().timeout(const Duration(seconds: 3)),
+          isTrue,
+        );
+        return next.current;
+      }
+
+      final port = adapter.listeners.first.port;
+      final hijacker = await Socket.connect(InternetAddress.loopbackIPv4, port);
+      addTearDown(hijacker.destroy);
+      hijacker.write('GET /raw HTTP/1.1\r\nHost: localhost\r\n\r\n');
+      await hijacker.flush();
+      final channel = await (await nextExchange()).hijack();
+      final bytes = channel.stream.first;
+
+      final streamer = await Socket.connect(InternetAddress.loopbackIPv4, port);
+      addTearDown(streamer.destroy);
+      streamer.write('GET /a HTTP/1.1\r\nHost: localhost\r\n\r\n');
+      await streamer.flush();
+      addTearDown(streamer.listen(null).cancel);
+      final stalled = await nextExchange();
+      // Long enough for the drain to run out of work and park the reactor,
+      // so one tick takes up what follows. It starts the response's writer
+      // before it reads the socket, so the throw comes first in the batch.
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+
+      hijacker.write('ping');
+      Future.value(
+        stalled.respond(
+          Response.ok(body: Body.fromDataStream(_ResumeThrows())),
+        ),
+      ).ignore();
+
+      expect(
+        utf8.decode(await bytes.timeout(const Duration(seconds: 3))),
+        'ping',
+      );
+      expect(errors, isNotEmpty);
     },
   );
 
