@@ -461,6 +461,51 @@ pub const Reactor = struct {
     /// second old. A tick refreshes it, so a stamp is a copy.
     date: [http_date_len]u8 = undefined,
     date_until_ms: i64 = 0,
+    /// Where Buffers come from. An allocator that hands whole pages back
+    /// when a block is freed. The pages of a burst of connections would
+    /// stay with a malloc for good.
+    buffers_gpa: std.mem.Allocator = std.heap.page_allocator,
+    /// Buffers no connection holds, for the next one that needs them.
+    spare_buffers: std.SinglyLinkedList = .{},
+    spare_buffers_count: u32 = 0,
+    /// The fewest spare ones since the last trim, which no connection
+    /// needed in that time.
+    spare_buffers_low: u32 = 0,
+
+    /// Buffers for a connection, from the spare ones when there are any.
+    fn takeBuffers(self: *Reactor) !*Buffers {
+        if (self.spare_buffers.popFirst()) |node| {
+            self.spare_buffers_count -= 1;
+            self.spare_buffers_low = @min(self.spare_buffers_low, self.spare_buffers_count);
+            return @fieldParentPtr("spare", node);
+        }
+        return self.buffers_gpa.create(Buffers);
+    }
+
+    /// Takes back what takeBuffers gave. The last one back is the next
+    /// one out, since its pages are the ones in the cache.
+    fn giveBuffers(self: *Reactor, buffers: *Buffers) void {
+        self.spare_buffers.prepend(&buffers.spare);
+        self.spare_buffers_count += 1;
+    }
+
+    /// Frees the spare buffers no connection needed since the last trim,
+    /// but for `keep` of them.
+    fn trimSpareBuffers(self: *Reactor, keep: u32) void {
+        var excess = self.spare_buffers_low -| keep;
+        while (excess > 0) : (excess -= 1) {
+            const buffers: *Buffers = @fieldParentPtr("spare", self.spare_buffers.popFirst().?);
+            self.spare_buffers_count -= 1;
+            self.buffers_gpa.destroy(buffers);
+        }
+        self.spare_buffers_low = self.spare_buffers_count;
+    }
+
+    /// Frees the spare buffers, but for `keep` of them.
+    fn freeSpareBuffersBut(self: *Reactor, keep: u32) void {
+        self.spare_buffers_low = self.spare_buffers_count;
+        self.trimSpareBuffers(keep);
+    }
 
     fn refreshDate(self: *Reactor) void {
         const now = nowMs();
@@ -475,10 +520,10 @@ pub const Reactor = struct {
     }
 
     /// Lists the connection and starts the sweeper when it is not
-    /// running. A server with no timeout the sweeper enforces has none.
+    /// running.
     fn addConn(self: *Reactor, conn: *Conn) void {
         self.conns.append(&conn.node);
-        if (self.sweeping or sweepInterval(self.server.options) == 0) return;
+        if (self.sweeping) return;
         self.sweeping = true;
         self.group.spawn(sweep, .{self}) catch {
             self.sweeping = false;
@@ -868,6 +913,27 @@ const Conn = struct {
     }
 };
 
+/// What a connection reads, parses and writes in. Kept off the task's
+/// stack, where every buffer would hold a page of its own for as long as
+/// the connection lives.
+const Buffers = struct {
+    /// In the reactor's `spare_buffers` while no connection holds them.
+    spare: std.SinglyLinkedList.Node = .{},
+    /// The socket's read buffer, or the cleartext one under TLS.
+    read: [max_head]u8 = undefined,
+    /// The socket's write buffer, or the cleartext one under TLS. Dart
+    /// writes a small response into it directly.
+    write: [16 * 1024]u8 = undefined,
+    /// The request head and where its fields sit, as Dart reads them.
+    head_copy: [max_head]u8 = undefined,
+    slots: [max_headers]HeaderSlot = undefined,
+    /// The body reader's own buffer, which the chunked decoder parses in.
+    body: [16 * 1024]u8 = undefined,
+};
+
+/// How many spare buffers a reactor keeps through a quiet time.
+const kept_spare_buffers = 16;
+
 /// The largest inline body buffer a connection keeps for its next
 /// request. A larger one is freed when its request is done.
 const body_store_keep = 64 * 1024;
@@ -879,25 +945,34 @@ const body_store_keep = 64 * 1024;
 const swept_write_max = 64 * 1024;
 
 /// How often the sweeper looks, in milliseconds. A quarter of the
-/// shortest timeout it enforces, within 10 ms and a second, or 0 when it
-/// enforces none.
+/// shortest timeout it enforces, within 10 ms and a second, or a second
+/// when it enforces none.
 fn sweepInterval(options: Options) u32 {
     var shortest: u32 = std.math.maxInt(u32);
     for ([_]u32{ options.idle_timeout_ms, options.header_timeout_ms, options.write_timeout_ms }) |ms| {
         if (ms != 0) shortest = @min(shortest, ms);
     }
-    if (shortest == std.math.maxInt(u32)) return 0;
     return std.math.clamp(shortest / 4, 10, 1000);
 }
 
+/// How often the sweeper frees the spare buffers no connection needed,
+/// in milliseconds.
+const trim_spare_ms = 1000;
+
 /// Cancels the task of every connection past its deadline, once per
 /// interval for as long as the reactor has connections. A timeout fires
-/// up to one interval late.
+/// up to one interval late. Frees spare buffers every trim_spare_ms.
 fn sweep(r: *Reactor) void {
     defer r.sweeping = false;
     const interval = sweepInterval(r.server.options);
+    const trim_sweeps = std.math.divCeil(u32, trim_spare_ms, interval) catch unreachable;
+    // The buffers the last connections left are spare for good.
+    defer r.freeSpareBuffersBut(kept_spare_buffers);
+    var sweeps: u32 = 0;
     while (r.conns.first != null) {
         zio.sleep(.fromMilliseconds(interval)) catch return;
+        sweeps += 1;
+        if (sweeps % trim_sweeps == 0) r.trimSpareBuffers(kept_spare_buffers);
         const now = nowMs();
         var next = r.conns.first;
         while (next) |node| : (next = node.next) {
@@ -1086,13 +1161,8 @@ fn writeStatusAndClose(link: *Link, status: []const u8) !void {
 fn handleConnInner(r: *Reactor, stream: zio.net.Stream) !void {
     defer stream.close();
 
-    var rbuf: [max_head]u8 = undefined;
-    var wbuf: [16 * 1024]u8 = undefined;
-    // Per-connection scratch, reused across keep-alive requests.
-    var head_copy: [max_head]u8 = undefined;
-    var slots: [max_headers]HeaderSlot = undefined;
-    // The body reader's own buffer, which the chunked decoder parses in.
-    var tbuf: [16 * 1024]u8 = undefined;
+    const buffers = try r.takeBuffers();
+    defer r.giveBuffers(buffers);
 
     const peer = stream.socket.address.ip;
     const local_port = r.server.bound_port.load(.acquire);
@@ -1111,7 +1181,7 @@ fn handleConnInner(r: *Reactor, stream: zio.net.Stream) !void {
     if (r.server.tls_auth != null) {
         try link.initTls(r.gpa, stream);
     } else {
-        link.init(stream, &rbuf, &wbuf);
+        link.init(stream, &buffers.read, &buffers.write);
     }
     defer link.deinit(r.gpa, !r.destroying);
     link.setWriteTimeout(inactivity(options.write_timeout_ms));
@@ -1140,7 +1210,7 @@ fn handleConnInner(r: *Reactor, stream: zio.net.Stream) !void {
         // Anything else is plain HTTP, or nothing a handshake would
         // answer, which gets a plain 400, as Go's server answers it.
         if (first >= 32) return writeStatusAndClose(&link, "400 Bad Request");
-        link.handshake(auth, r.server.tls_client_auth, &rbuf, &wbuf) catch |err| {
+        link.handshake(auth, r.server.tls_client_auth, &buffers.read, &buffers.write) catch |err| {
             // The alert tls.zig wrote reaches a peer that already sent its
             // request only through a lingering close. Nothing was written
             // for a failure the peer reported or the socket caused, and when
@@ -1186,7 +1256,7 @@ fn handleConnInner(r: *Reactor, stream: zio.net.Stream) !void {
             _ = r.idle.fetchAdd(1, .monotonic);
         }
 
-        const index = parseHead(head, &head_copy, &slots) catch |err| switch (err) {
+        const index = parseHead(head, &buffers.head_copy, &buffers.slots) catch |err| switch (err) {
             error.TooManyHeaders => return writeStatusAndClose(&link, "431 Request Header Fields Too Large"),
             error.MalformedHead => return writeStatusAndClose(&link, "400 Bad Request"),
         };
@@ -1206,7 +1276,7 @@ fn handleConnInner(r: *Reactor, stream: zio.net.Stream) !void {
         defer if (body_store.capacity > body_store_keep) body_store.clearAndFree(r.gpa);
         var body_reader: ?*std.Io.Reader = null;
         if (stream_body or content_length != null) {
-            const br = openBody(&req, &tbuf) catch return writeStatusAndClose(&link, "417 Expectation Failed");
+            const br = openBody(&req, &buffers.body) catch return writeStatusAndClose(&link, "417 Expectation Failed");
             link.setReadTimeout(inactivity(options.body_timeout_ms));
             if (stream_body) {
                 body_reader = br;
@@ -1234,12 +1304,12 @@ fn handleConnInner(r: *Reactor, stream: zio.net.Stream) !void {
             .remote_port = peer.getPort(),
             .local_port = local_port,
             .remote_addr = peerBytes(peer),
-            .head = &head_copy,
+            .head = &buffers.head_copy,
             .head_len = @intCast(head.len),
             .target_off = target_off,
             .target_len = target_len,
             .header_count = index.count,
-            .headers = &slots,
+            .headers = &buffers.slots,
             .body = if (body) |b| b.ptr else null,
             .body_len = if (body) |b| b.len else (content_length orelse 0),
             .body_streamed = @intFromBool(stream_body),
@@ -2838,6 +2908,7 @@ export fn relic_reactor_destroy(r: *Reactor) void {
     r.rt.main_executor.bindThread() catch |err| switch (err) {};
     _ = r.rt.main_executor.tick(.zero) catch {};
     r.group.cancel();
+    r.freeSpareBuffersBut(0);
     r.rt.deinit();
     r.events.deinit(r.gpa);
     const gpa = r.gpa;
@@ -3946,6 +4017,29 @@ test "sweep: a cancel taken back leaves the connection task as it was" {
 
     relic_abort(v);
     try testConnectionsEnd(r);
+}
+
+test "buffers: a trim frees the spare ones no connection needed since the last trim" {
+    const srv = testBind(null) orelse return error.BindFailed;
+    const r = relic_reactor_create(srv, 1) orelse return error.AttachFailed;
+    defer relic_reactor_destroy(r);
+
+    var taken: [kept_spare_buffers + 4]*Buffers = undefined;
+    for (&taken) |*buffers| buffers.* = try r.takeBuffers();
+    for (taken) |buffers| r.giveBuffers(buffers);
+    // All were in use since the last trim.
+    r.trimSpareBuffers(kept_spare_buffers);
+    try std.testing.expectEqual(taken.len, r.spare_buffers_count);
+
+    // Three are needed, so one more than is kept was not.
+    for (taken[0..3]) |*buffers| buffers.* = try r.takeBuffers();
+    for (taken[0..3]) |buffers| r.giveBuffers(buffers);
+    r.trimSpareBuffers(kept_spare_buffers);
+    try std.testing.expectEqual(taken.len - 1, r.spare_buffers_count);
+
+    // None is needed.
+    r.trimSpareBuffers(kept_spare_buffers);
+    try std.testing.expectEqual(kept_spare_buffers, r.spare_buffers_count);
 }
 
 /// Ticks until the connection task reads the connection Dart took over.
