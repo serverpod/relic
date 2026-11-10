@@ -436,6 +436,10 @@ pub const Reactor = struct {
     waiter_stop: std.atomic.Value(bool) = .init(false),
     /// Set once the waiter is the thread a wake of the loop reaches.
     waiter_adopted: zio.os.ResetEvent = .init(),
+    /// What the waiter waits on, the loop's host handle. Read once on the
+    /// reactor's thread: the loop's own read of it takes in backend
+    /// state that a tick writes.
+    host_handle: ?zio.os.net.fd_t = null,
     poke: Poke = .{},
     /// The waiter is in its poll, with `waiter_until` as its deadline in
     /// milliseconds of loop time, or max when it has none.
@@ -622,7 +626,7 @@ fn waiterThread(r: *Reactor) void {
             @intCast(@max(0, @min(until - nowMs(), std.math.maxInt(i32))));
         // A wake since the last tick means work already. Otherwise a wake
         // from now on reaches the handle.
-        if (loop.prepareHostWait()) r.poke.wait(loop.hostHandle(), timeout);
+        if (loop.prepareHostWait()) r.poke.wait(r.host_handle, timeout);
         r.waiter_armed.store(false, .release);
         if (r.waiter_stop.load(.acquire)) return;
         if (dart.Dart_PostInteger_DL) |post| _ = post(r.port, 0);
@@ -2750,6 +2754,7 @@ fn createReactor(srv: *Server, port: dart.Dart_Port_DL) !*Reactor {
     r.incoming.init();
     if (!r.poke.init()) return error.PokeFailed;
     errdefer r.poke.deinit();
+    r.host_handle = rt.main_executor.loop.hostHandle();
     r.waiter = try std.Thread.spawn(.{}, waiterThread, .{r});
     errdefer {
         r.waiter_stop.store(true, .release);
