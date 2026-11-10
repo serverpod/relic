@@ -843,11 +843,28 @@ fn handleConn(r: *Reactor, stream: zio.net.Stream) void {
     defer _ = r.connections.fetchSub(1, .monotonic);
     _ = r.idle.fetchAdd(1, .monotonic);
     defer _ = r.idle.fetchSub(1, .monotonic);
-    handleConnInner(r, stream) catch |err| switch (err) {
+    const c = r.gpa.create(Connection) catch return stream.close();
+    defer r.gpa.destroy(c);
+    c.* = .{ .conn = .{ .task = r.rt.main_executor.current_task.? } };
+    handleConnInner(r, stream, c) catch |err| switch (err) {
         error.HttpConnectionClosing, error.ReadFailed, error.WriteFailed, error.Canceled => {},
         else => std.log.debug("relic_native: connection ended with {t}", .{err}),
     };
 }
+
+/// What a connection keeps from one wait to the next. It lives apart
+/// from the task's stack, so Dart's pointer to `ex.view` and the
+/// sweeper's to `conn` do not depend on a frame.
+const Connection = struct {
+    conn: Conn,
+    link: Link = undefined,
+    http: std.http.Server = undefined,
+    /// Holds an inline request body, and is kept across requests while
+    /// it stays small.
+    body_store: std.ArrayListUnmanaged(u8) = .empty,
+    /// The request a handler has, or the connection Dart took over.
+    ex: Exchange = undefined,
+};
 
 /// A task of this reactor, as the executor names the one that is running.
 const Task = @typeInfo(@FieldType(@FieldType(zio.Runtime, "main_executor"), "current_task")).optional.child;
@@ -1158,7 +1175,7 @@ fn writeStatusAndClose(link: *Link, status: []const u8) !void {
     lingeringClose(link);
 }
 
-fn handleConnInner(r: *Reactor, stream: zio.net.Stream) !void {
+fn handleConnInner(r: *Reactor, stream: zio.net.Stream, c: *Connection) !void {
     defer stream.close();
 
     const buffers = try r.takeBuffers();
@@ -1168,16 +1185,14 @@ fn handleConnInner(r: *Reactor, stream: zio.net.Stream) !void {
     const local_port = r.server.bound_port.load(.acquire);
     const options = r.server.options;
 
-    // Holds an inline request body, and is kept across requests while it
-    // stays small.
-    var body_store: std.ArrayListUnmanaged(u8) = .empty;
+    const body_store = &c.body_store;
     defer body_store.deinit(r.gpa);
 
-    var conn: Conn = .{ .task = r.rt.main_executor.current_task.? };
-    r.addConn(&conn);
+    const conn = &c.conn;
+    r.addConn(conn);
     defer r.conns.remove(&conn.node);
 
-    var link: Link = undefined;
+    const link = &c.link;
     if (r.server.tls_auth != null) {
         try link.initTls(r.gpa, stream);
     } else {
@@ -1209,19 +1224,20 @@ fn handleConnInner(r: *Reactor, stream: zio.net.Stream) !void {
         // A TLS record opens with its content type, a byte under 32.
         // Anything else is plain HTTP, or nothing a handshake would
         // answer, which gets a plain 400, as Go's server answers it.
-        if (first >= 32) return writeStatusAndClose(&link, "400 Bad Request");
+        if (first >= 32) return writeStatusAndClose(link, "400 Bad Request");
         link.handshake(auth, r.server.tls_client_auth, &buffers.read, &buffers.write) catch |err| {
             // The alert tls.zig wrote reaches a peer that already sent its
             // request only through a lingering close. Nothing was written
             // for a failure the peer reported or the socket caused, and when
             // a cancel failed it, that cancel is spent.
             const alerted = tls.Alert.forLocalError(err) != null;
-            if (alerted and link.readError() == null and link.socket_writer.err == null) lingeringClose(&link);
+            if (alerted and link.readError() == null and link.socket_writer.err == null) lingeringClose(link);
             return err;
         };
         conn.disarm();
     }
-    var http = std.http.Server.init(link.reader, link.writer);
+    c.http = std.http.Server.init(link.reader, link.writer);
+    const http = &c.http;
     const w = link.writer;
 
     while (true) {
@@ -1241,9 +1257,9 @@ fn handleConnInner(r: *Reactor, stream: zio.net.Stream) !void {
         conn.idle = false;
         conn.arm(options.header_timeout_ms);
         const head = http.reader.receiveHead() catch |err| switch (err) {
-            error.HttpHeadersOversize => return writeStatusAndClose(&link, "431 Request Header Fields Too Large"),
+            error.HttpHeadersOversize => return writeStatusAndClose(link, "431 Request Header Fields Too Large"),
             error.ReadFailed => {
-                if (conn.expired()) return writeStatusAndClose(&link, "408 Request Timeout");
+                if (conn.expired()) return writeStatusAndClose(link, "408 Request Timeout");
                 return err;
             },
             else => return err,
@@ -1257,10 +1273,10 @@ fn handleConnInner(r: *Reactor, stream: zio.net.Stream) !void {
         }
 
         const index = parseHead(head, &buffers.head_copy, &buffers.slots) catch |err| switch (err) {
-            error.TooManyHeaders => return writeStatusAndClose(&link, "431 Request Header Fields Too Large"),
-            error.MalformedHead => return writeStatusAndClose(&link, "400 Bad Request"),
+            error.TooManyHeaders => return writeStatusAndClose(link, "431 Request Header Fields Too Large"),
+            error.MalformedHead => return writeStatusAndClose(link, "400 Bad Request"),
         };
-        var req: std.http.Server.Request = .{ .server = &http, .head_buffer = head, .head = index.head };
+        var req: std.http.Server.Request = .{ .server = http, .head_buffer = head, .head = index.head };
         const target_off = off(head, req.head.target);
         const target_len: u32 = @intCast(req.head.target.len);
         const method = req.head.method;
@@ -1276,7 +1292,7 @@ fn handleConnInner(r: *Reactor, stream: zio.net.Stream) !void {
         defer if (body_store.capacity > body_store_keep) body_store.clearAndFree(r.gpa);
         var body_reader: ?*std.Io.Reader = null;
         if (stream_body or content_length != null) {
-            const br = openBody(&req, &buffers.body) catch return writeStatusAndClose(&link, "417 Expectation Failed");
+            const br = openBody(&req, &buffers.body) catch return writeStatusAndClose(link, "417 Expectation Failed");
             link.setReadTimeout(inactivity(options.body_timeout_ms));
             if (stream_body) {
                 body_reader = br;
@@ -1284,7 +1300,7 @@ fn handleConnInner(r: *Reactor, stream: zio.net.Stream) !void {
                 body_store.clearRetainingCapacity();
                 const into = try body_store.addManyAsSlice(r.gpa, @intCast(content_length.?));
                 br.readSliceAll(into) catch |err| {
-                    if (link.timedOut()) return writeStatusAndClose(&link, "408 Request Timeout");
+                    if (link.timedOut()) return writeStatusAndClose(link, "408 Request Timeout");
                     return err;
                 };
                 body = into;
@@ -1295,7 +1311,7 @@ fn handleConnInner(r: *Reactor, stream: zio.net.Stream) !void {
         // .received_head, which is what std.http.Server.respond resets too.
         if (http.reader.state == .received_head) http.reader.state = .ready;
 
-        var ex: Exchange = undefined;
+        const ex = &c.ex;
         ex.init(r, .{
             .method = dartMethod(method).?,
             .version = version,
@@ -1317,7 +1333,7 @@ fn handleConnInner(r: *Reactor, stream: zio.net.Stream) !void {
             .scratch_cap = @intCast(w.buffer.len),
         });
 
-        if (r.stop) return writeStatusAndClose(&link, "503 Service Unavailable");
+        if (r.stop) return writeStatusAndClose(link, "503 Service Unavailable");
 
         // A task of its own pumps a streamed body to Dart, so it keeps
         // flowing while the handler runs and while the response goes out.
@@ -1326,11 +1342,11 @@ fn handleConnInner(r: *Reactor, stream: zio.net.Stream) !void {
         var pump: ?zio.JoinHandle(bool) = null;
         defer if (pump) |*p| p.cancel();
         if (body_reader) |br| {
-            pump = zio.spawn(pumpRequestBody, .{ br, &link, &ex, content_length }) catch return;
+            pump = zio.spawn(pumpRequestBody, .{ br, link, ex, content_length }) catch return;
         }
         r.ready.push(&ex.node);
 
-        try park(&link, &ex, pump != null);
+        try park(link, ex, pump != null);
 
         defer {
             if (pump) |*p| p.cancel();
@@ -1347,43 +1363,43 @@ fn handleConnInner(r: *Reactor, stream: zio.net.Stream) !void {
                 // Dart holds on to the view until the last event.
                 errdefer {
                     freeChunks(&ex.out);
-                    postLastEvent(&ex);
+                    postLastEvent(ex);
                 }
                 // The peer's frames follow the body. A body too big to drop
                 // ends the connection without the 101, as a failed read does.
-                if (body_unread and !discardBody(&link, body_reader, content_length, options.body_timeout_ms)) {
+                if (body_unread and !discardBody(link, body_reader, content_length, options.body_timeout_ms)) {
                     return error.ReadFailed;
                 }
                 if (ex.resp_head) |p| try w.writeAll(p[0..ex.resp_head_len]);
                 try w.flush();
             }
-            pumpWebSocket(&link, &ex);
+            pumpWebSocket(link, ex);
             return;
         }
         if (ex.hijacked) {
             // The raw reader takes the socket over from the pump.
             if (pump) |*p| p.cancel();
             pump = null;
-            pumpRaw(&link, &ex);
+            pumpRaw(link, ex);
             return;
         }
         if (ex.aborted) {
-            drainOutbound(&ex);
+            drainOutbound(ex);
             return;
         }
-        stampDate(r, &ex, w);
+        stampDate(r, ex, w);
         if (ex.resp_streamed) {
             {
                 // Dart streams the body until it hears of the failure, and
                 // the frame waits for its last chunk.
                 errdefer {
                     ex.view.write_failed = 1;
-                    postExchangeEvent(&ex);
-                    drainOutbound(&ex);
+                    postExchangeEvent(ex);
+                    drainOutbound(ex);
                 }
                 if (ex.resp_head) |p| try w.writeAll(p[0..ex.resp_head_len]);
             }
-            const finished = pumpResponseBody(&ex, w);
+            const finished = pumpResponseBody(ex, w);
             if (!finished) return;
         } else if (ex.resp_inline_len != 0) {
             // Dart wrote the whole response into the write buffer, so it
@@ -1417,7 +1433,7 @@ fn handleConnInner(r: *Reactor, stream: zio.net.Stream) !void {
         // A body Dart did not finish reading is still on the wire. It is
         // drained so the connection can carry the next request, and so the
         // client is not reset while still sending.
-        if (body_unread and !discardBody(&link, body_reader, content_length, options.body_timeout_ms)) return;
+        if (body_unread and !discardBody(link, body_reader, content_length, options.body_timeout_ms)) return;
     }
 }
 
