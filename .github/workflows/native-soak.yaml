@@ -1,0 +1,42 @@
+name: Native Soak
+
+# Five hours of mixed traffic through relic_native, daily. It fails on a
+# failed request and on open descriptors or memory that grow once the
+# server is warm. See packages/relic_native/tool/soak.dart.
+on:
+  schedule:
+    - cron: "0 3 * * *" # every day at 03:00 UTC
+  workflow_dispatch:
+    inputs:
+      seconds:
+        description: How long the soak runs, in seconds
+        default: "18000"
+
+jobs:
+  soak:
+    name: Soak relic_native
+    runs-on: ubuntu-latest
+    # A hosted runner ends a job after six hours.
+    timeout-minutes: 345
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v7
+
+      - name: Setup Dart
+        uses: dart-lang/setup-dart@v1
+        with:
+          sdk: stable
+
+      # relic_native compiles its Zig library through the build hook on a
+      # source checkout. The version comes from packages/relic_native/build.zig.zon.
+      - name: Setup Zig
+        uses: mlugg/setup-zig@v2
+        with:
+          version: 0.17.1
+
+      - name: Install Dependencies
+        run: dart pub get
+
+      - name: Run The Soak
+        working-directory: packages/relic_native
+        run: dart tool/soak.dart --seconds=${{ inputs.seconds || '18000' }} --clients=32 --check
