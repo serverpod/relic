@@ -60,7 +60,7 @@ void main() {
   }
 
   test(
-    'Given an upgraded exchange whose 101 the client has, '
+    'Given an upgraded exchange whose 101 the client has, on a reactor gone idle, '
     'when the exchange is aborted, '
     'then the connection closes and the adapter answers the next request.',
     () async {
@@ -78,6 +78,8 @@ void main() {
         }
       }).asFuture<void>();
       await head.future.timeout(const Duration(seconds: 3));
+      // Long enough for the drain to run out of work and park the reactor.
+      await Future<void>.delayed(const Duration(milliseconds: 50));
 
       exchange.abort();
 
