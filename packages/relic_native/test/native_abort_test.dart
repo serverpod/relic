@@ -91,7 +91,7 @@ void main() {
 
   test(
     'Given an exchange the handler upgraded, '
-    'when the exchange is aborted before the 101 is out, '
+    'when the exchange is aborted with the 101 still queued, '
     'then the connection closes and the adapter answers the next request.',
     () async {
       final socket = await connect();
