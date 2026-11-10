@@ -1,20 +1,116 @@
-## 2.0.0-rc.7
-- perf: `relic_native` now holds no task and no buffers for a connection with nothing to read. An idle WebSocket takes about 3 KiB of memory where it previously took 29, and 15 KiB over TLS. 
+## 2.0.0
 
-## 2.0.0-rc.6
-- feat: An adapter that writes its own response head must write `ResponseFraming.connection` when it is set: `keepAlive` to an HTTP/1.0 client whose connection stays open, which otherwise takes every connection as closed, and `close` when the connection closes after the response
-- fix: A response to an HTTP/1.0 request that keeps its connection open carries `Connection: keep-alive`, and a response with a Connection value of its own but no keep-alive closes such a connection
-- fix: The dart:io adapter closes the connection after a request that lists `close` in its Connection field, also beside a later `keep-alive`, which won in dart:io's `persistentConnection`
-- fix: A response with a Connection value of its own carries `close` beside it when the connection closes after it. `relic_native` sent the handler's value alone, so an HTTP/1.1 client could send its next request on a connection that was closing
-- fix: `relic_native` keeps its reactor running after an error in a tick, handles a WebSocket upgrade request with a body, and holds one task per idle WebSocket or hijacked connection. Its CHANGELOG lists every change
+Relic 2.0 adds `relic_native`, a native HTTP adapter that answers about five times the requests per second of `relic_io`. To try it, add the package and call `app.serveNative()` where the program called `app.serve()`.
 
-## 2.0.0-rc.5
-- feat: `relic_native` takes client certificates, encrypted and PKCS#1 private keys and `v6Only`, selects http/1.1 through ALPN, and an IPv6 listener takes IPv4 clients. The core packages are unchanged and released in step
+The release also makes the typed headers fully RFC compliant, adds HTML form and multipart parsing, and fixes the findings of a security audit.
 
-## 2.0.0-rc.4
-- fix: `relic_native` runs on Windows. The core packages are unchanged and released in step
+Relic 2.0.0 requires Dart 3.10.0 or later.
 
-## 2.0.0-rc.3
+### `relic_native`
+
+`relic_native` is a new package, a Relic adapter on an HTTP server written in Zig, a systems language that compiles to native code and has no garbage collector. The server accepts connections, parses requests, keeps connections alive, enforces timeouts, terminates TLS and frames WebSockets in native code, and a request reaches the handler as plain Dart data. It runs the same handlers, middleware and router as `relic_io` and passes the same conformance suite.
+
+#### Benchmarks
+
+The figures are from a GCP c4d-standard-32 instance, 16 AMD EPYC 9B45 cores with one thread per core, running Ubuntu 24.04 and Dart 3.13.7. oha held 64 keep-alive connections over loopback from the same machine.
+
+One isolate at saturation over HTTP, in thousands of requests per second:
+
+| Route | `relic_io` | `relic_native` | Speed-up |
+|---|---:|---:|---:|
+| Plaintext, a 13-byte answer | 61.1 | 294.9 | 5x |
+| Headers, three typed request headers read | 33.8 | 182.9 | 5x |
+| Browser, 1 KB of JSON to a browser-like request | 30.4 | 128.6 | 4x |
+
+The same over HTTPS. It is TLS 1.3 on connections that stay open, so it measures records, not handshakes:
+
+| Route | `relic_io` | `relic_native` | Speed-up |
+|---|---:|---:|---:|
+| Plaintext | 25.4 | 243.3 | 10x |
+| Headers | 18.6 | 146.8 | 8x |
+| Browser | 18.1 | 98.4 | 5x |
+
+99th percentile latency over HTTP, in milliseconds, with each adapter at 75 percent of its own saturation rate:
+
+| Route | `relic_io` | `relic_native` |
+|---|---:|---:|
+| Plaintext | 1.29 | 0.27 |
+| Headers | 1.41 | 0.44 |
+| Browser | 1.59 | 0.66 |
+
+Throughput grows with `noOfIsolates`. Four isolates answer 580 thousand requests per second on the headers route, against 105 thousand on `relic_io`.
+
+With 10,000 idle WebSockets open over TLS, the server's resident memory grows by 14.8 KiB per connection on `relic_native` and 61.6 KiB on `relic_io`.
+
+#### Protocols and platforms
+
+The adapter is opt-in, and `app.serve()` stays on `relic_io`. It speaks HTTP/1.0 and HTTP/1.1, its HTTPS is TLS 1.3 only, and it supports WebSockets and hijacked connections. Prebuilt libraries ship for Linux, macOS and Windows on x64 and arm64, so a project needs no Zig toolchain. The gain shows once the server is the limit, not the database or the handler. The [`relic_native` changelog](https://pub.dev/packages/relic_native/changelog) and the [serving page](https://docs.dartrelic.dev/reference/serving) have the details.
+
+### All changes
+
+The changes are grouped by area, and each breaking change carries a BREAKING label in its group.
+
+#### Headers
+
+- feat!: RFC compliant typed headers ([#360](https://github.com/serverpod/relic/pull/360)) - fixes [#113](https://github.com/serverpod/relic/issues/113), [#142](https://github.com/serverpod/relic/issues/142)
+  - BREAKING: Many typed headers changed their Dart interface or their parse and serialize semantics. Parsing is lenient on receive, except for security-sensitive headers, and construction and serialization are strict
+  - BREAKING: Extended `Content-Disposition` parameters such as `filename*` are RFC 8187 ext-values and always encode as UTF-8. `ContentDispositionParameter` has no `encoding`, and its `language` is a `LanguageTag`. Parsing throws `FormatException` for a charset other than UTF-8 and for a malformed ext-value ([#380](https://github.com/serverpod/relic/pull/380))
+  - Add a typed `ContentTypeHeader`, read with `headers.contentType` ([#380](https://github.com/serverpod/relic/pull/380))
+  - Add `CacheControlHeader.parseStrict` for values under the sender's own control. It throws `FormatException` for an unrecognized directive or a malformed delta-seconds value, and `parse` stays lenient per RFC 9111 5.2 ([#370](https://github.com/serverpod/relic/pull/370))
+- refactor!: Cookie and Set-Cookie headers ([#361](https://github.com/serverpod/relic/pull/361))
+  - BREAKING: `SetCookie` is a single cookie, and `SetCookieHeader` is a `List<SetCookie>`, one `Set-Cookie` line per cookie (RFC 6265 4.1). Build a cookie with `SetCookie(...)` and add it with `mh.setCookie = (mh.setCookie ?? const SetCookieHeader.empty()).add(cookie)`
+  - The request `Cookie` header is parsed leniently: a malformed cookie is skipped, nameless `=value` segments are dropped, and the header is rejected only when no cookie in it is usable
+  - Add `CookieHeader.getCookies(name)`, every cookie with that name in order, byte-identical duplicates included
+  - `Set-Cookie` decode is strict: a malformed attribute rejects the cookie
+  - `Domain` is normalized per RFC 6265 5.2.3: the leading dots are stripped and the host is lower-cased. An all-dots `Domain` is rejected
+  - `Max-Age` is a strict decimal integer per RFC 6265 5.2.2, so a value such as `0xFF` is rejected
+- feat!: Rebase `Headers` on `HeaderStore`
+  - BREAKING: `Headers` and `MutableHeaders` are not `Map`s. Read with `headers[name]`, `headers(accessor)`, `get` or `tryGet`. Write with `Headers.build`, `transform`, and `MutableHeaders.set`, `add`, `remove` and `assign`. The `Headers.x[headers]` form, the `Header` extension type and `HeadersBase` are gone
+  - BREAKING: `Headers.fromMap` throws `FormatException` for a name that is not a token or a value with CR, LF or NUL
+  - BREAKING: `HeaderAccessor` takes a `HeaderName`. `ReadOnlyAccessor` has an abstract `decode`, and an accessor built from a function extends `FunctionAccessor`
+  - BREAKING: `Request.target` holds the path and query as a `RequestTarget`. An adapter answers 400 to a malformed one
+  - New package `relic_headers`, re-exported by relic_core: `HeaderName`, `HeaderStore`, `MutableHeaderStore`, `MapHeaderStore` and `ByteHeaderStore`. `HeaderName.custom` takes a lowercase token
+  - Typed headers decode from the wire bytes. `HeaderCodec.bytes` and `HeaderCodec.fields` take a parser over bytes, and `HeaderCodec.single` and the text constructors stay
+  - The `Headers.xHeader` string constants are deprecated in favour of `HeaderName.x`
+
+#### Bodies and forms
+
+- feat!: The `Body` frames every response
+  - BREAKING: `Content-Length`, `Content-Type` and the chunked coding come from the `Body`. Setting them on the response headers has no effect
+  - BREAKING: `BodyType` has no const constructor. It carries Content-Type parameters such as `boundary` in `parameters`, and `Body.fromData` and `Body.fromDataStream` take a `parameters` argument
+  - The `Body` constructor is public and takes `bytes`, `stream` or `open`. A body built with `open` opens only when read
+  - Add `Body.bytes`, `Body.readAll()` and `Body.consume()`. `read(maxLength:)` rejects a body whose known length is over the limit without reading it
+  - Add `BodyType.fromContentType`, the type of a body sent with a `ContentTypeHeader`
+  - A HEAD request gets the same `Response` as GET. The adapter sends its length and type and no body
+- feat: Add HTML form and multipart parsing ([#380](https://github.com/serverpod/relic/pull/380)) - closes [#379](https://github.com/serverpod/relic/issues/379)
+  - Add `req.urlEncodedForm()`, `req.multipartForm()` and `req.formData()`, which picks the parser from the request Content-Type
+  - Add `req.multipart()` to stream parts without aggregating them. Each part is a `MultipartFieldPart`, `MultipartFilePart` or `MultipartOtherPart`
+  - Read fields through accessors such as `IntFormField('age')` with `form.fields.get`, `tryGet` and `getAll`, and files through `FormFile`. A missing field throws `MissingFormFieldException`, a value that does not decode throws `InvalidFormFieldException`
+  - `FormLimits` caps body size, part, field and file counts, and field and file sizes. Going over one throws `FormLimitExceededException`, whose `limit` names the `FormLimit`
+  - Uploads go to `MemoryUploadStorage` by default. `TempUploadStorage` in relic_io writes each upload to its own directory. On POSIX systems the directory has mode 0700. On Windows it inherits the permissions of its parent, and the default parent, the user's temp directory, is private to that user. Call `MultipartFormData.dispose()` to delete them
+  - Upload filenames are reduced to their basename, with control and bidi formatting characters removed. `.`, `..` and an empty filename give a null `filename`. `filename*` is ignored, per RFC 7578
+  - The server answers an uncaught `FormException` with its `statusCode`, which is 400, 413 or 415. When parsing fails it also sends `Connection: close`, as the rest of the body may be unread
+- fix: A 206 range response defaults its Content-Type to application/octet-stream
+
+#### Routing
+
+- fix!: A HEAD request to a path without a HEAD route runs its GET route (RFC 9110 9.1)
+  - BREAKING: `Router.lookup(Method.head, ...)` returns the GET route of such a path, and `MethodMiss.allowed` lists HEAD beside GET. A GET handler that must not run on HEAD checks `request.method`
+  - BREAKING: `RouterMatch` has no public constructor, and `LookupResult` takes `T extends Object`
+  - A `Hijack` or `WebSocketUpgrade` answering such a HEAD gets 405. `RouterMatch.headFallback` marks the match and `RouterMatch.registered` lists the path's own methods
+- refactor!: Drop `NormalizedPath` interning ([#375](https://github.com/serverpod/relic/pull/375)) - fixes [#118](https://github.com/serverpod/relic/issues/118), [#342](https://github.com/serverpod/relic/issues/342), closes [#344](https://github.com/serverpod/relic/issues/344)
+  - BREAKING: `NormalizedPath.interned` is removed. Construction does not cache, so there is no per-isolate cache to size and no input that can thrash it
+  - Add `Router.lookupUri(method, url)`, the entry point for request routing. It derives the path with `NormalizedPath.fromUri` and looks it up with `lookupPath`
+- fix: `RelicApp.run(backtrack: false)` and `routeWith(backtrack: false)` look routes up without backtracking
+- fix: `Request.forwardTo` keeps the `backtrack` and `useHostWhenRouting` options of the original
+
+#### WebSockets
+
+- feat: `FramedWebSocket` frames RFC 6455 over any `StreamChannel<Uint8List>`. The server upgrades through the adapter when `capabilities.webSocket` is set and frames over `hijack` otherwise. With neither it answers 501
+- fix: A `WebSocketUpgrade` answers a request other than GET with 405
+
+#### Adapters and serving
+
 - feat!: Replace the request stream with an exchange-based `Adapter`
   - BREAKING: `Adapter` is an interface with `listeners`, `capabilities` and `start(sink)`. It hands over `AdapterExchange` objects with `respond`, `hijack`, `upgradeWebSocket` and `abort`. `Adapter.requests`, `Adapter.port` and `AdapterRequest` are gone. The port is on `listeners` and on `RelicServer.port`. The toolkit for writing an adapter is in `package:relic_core/adapter.dart`
   - BREAKING: `IOAdapter.port`, `requests`, `respond`, `hijack`, `connect` and `IOAdapterRequest` are gone
@@ -23,95 +119,36 @@
   - BREAKING: `hijack` throws `HijackRefused` when the request body is chunked and not read to its end
   - BREAKING: `Request.protocolVersion` is `Request.protocol`, an `HttpProtocol`
   - BREAKING: `RelicWebSocket` implementers provide `done`, and `tryClose` accepts 1001
-  - BREAKING: `RelicServer.close()` waits for the exchanges in flight and sends 1001 to every WebSocket. `close(grace:)` forces the close after a deadline. `close(force: true)` ends a graceful close that is still waiting. `RelicApp.close` takes the same `force` and `grace`
-  - The adapter conformance suite in `test_utils` runs against any adapter
-- feat!: Rebase `Headers` on `HeaderStore`
-  - BREAKING: `Headers` and `MutableHeaders` are no longer `Map`s. Read with `headers[name]`, `headers(accessor)`, `get` or `tryGet`. Write with `Headers.build`, `transform`, and `MutableHeaders.set`, `add`, `remove` and `assign`. The `Headers.x[headers]` form, the `Header` extension type and `HeadersBase` are gone
-  - BREAKING: `Headers.fromMap` throws `FormatException` for a name that is not a token or a value with CR, LF or NUL
-  - BREAKING: `HeaderAccessor` takes a `HeaderName`. `ReadOnlyAccessor` has an abstract `decode`, and an accessor built from a function extends `FunctionAccessor`
-  - BREAKING: `Request.target` holds the path and query as a `RequestTarget`. An adapter answers 400 to a malformed one
-  - New package `relic_headers`, re-exported by relic_core: `HeaderName`, `HeaderStore`, `MutableHeaderStore`, `MapHeaderStore` and `ByteHeaderStore`. `HeaderName.custom` takes a lowercase token
-  - The `Headers.xHeader` string constants are deprecated in favour of `HeaderName.x`
-- feat!: The `Body` frames every response
-  - BREAKING: `Content-Length`, `Content-Type` and the chunked coding come from the `Body`. Setting them on the response headers has no effect
-  - `BodyType.fromContentType` and the `Headers.contentType` accessor are public
-  - A HEAD request gets the same `Response` as GET. The adapter sends its length and type and no body
-- fix!: A HEAD request to a path without a HEAD route runs its GET route (RFC 9110 9.1)
-  - BREAKING: `Router.lookup(Method.head, ...)` returns the GET route of such a path, and `MethodMiss.allowed` lists HEAD beside GET. A GET handler that must not run on HEAD checks `request.method`
-  - BREAKING: `RouterMatch` has no public constructor, and `LookupResult` takes `T extends Object`
-  - A `Hijack` or `WebSocketUpgrade` answering such a HEAD gets 405. `RouterMatch.headFallback` marks the match and `RouterMatch.registered` lists the path's own methods
+  - BREAKING: `RelicServer.close()` waits for the exchanges in flight and sends 1001 to every WebSocket. `close(grace:)` forces the close after a deadline, and `close(force: true)` ends a graceful close that is still waiting. `RelicApp.close` takes the same `force` and `grace`
+  - Add `Request.cancelled`, a future that completes when the client went away before the response finished. The dart:io adapter sees that only once something was written
+  - Hijacked and upgraded connections count in `connectionsInfo()`, a graceful close drains them, and `close(force: true)` destroys them
+- feat: New package `relic_native`, a Relic adapter on a Zig HTTP server with TLS, WebSockets and hijacking, prebuilt for Linux, macOS and Windows on x64 and arm64. Its own CHANGELOG describes it
+- fix: The dart:io adapter closes the connection after a request that lists `close` in any Connection line, also beside a later `keep-alive`, which won in dart:io's `persistentConnection`
+
+#### Security
+
+- fix!: Address security audit findings ([#369](https://github.com/serverpod/relic/pull/369))
+  - BREAKING: Cross-origin WebSocket upgrades are rejected with 403 by default. Pass `WebSocketUpgrade(..., allowAnyOrigin: true)` to accept them. Only the host is compared, since a TLS-terminating proxy changes scheme and port
+  - BREAKING: A header name that is not a token, or a value with CR, LF or NUL, throws `FormatException` where it is set
+  - BREAKING: Malformed auth headers are rejected, and so are MIME type parts that are not tokens, which `io.ContentType` took separately and so slipped past the CR and LF check on other header values
+  - The request path is split into segments before percent-decoding, so an encoded separator (`%2F`) cannot introduce a path boundary that no upstream proxy saw. `NormalizedPath.fromUri` names the safe conversion
+  - The path is normalized before the routing host is prepended, so a path resolving upwards cannot pop the host and select another virtual host
+  - Auth headers are parsed in one pass by the linear header scanner, with no quadratic backtracking on a long value, and text between auth-params is rejected instead of skipped
+  - `Content-Disposition` parameter values and `AuthenticationHeader` challenge parts are escaped and validated, so a quote in a filename or realm cannot end the value and graft on another parameter or challenge
+  - Multi-range responses are streamed lazily and the range count is capped, so a short request cannot ask for many times the file size
+  - Multipart boundaries are drawn from a cryptographic generator instead of about 20 bits from `Random`
+  - A response that fails to write gets a 500, or an aborted connection once its head is out, instead of a client left waiting
+  - `use()` on a catch-all route applies to the prefix itself, so `/api` does not bypass the middleware that `/api/keys` runs
+  - Add `Token68` for the RFC 9110 `token68` form, used to validate a single-token `WWW-Authenticate` challenge
+  - docs: The static file handler serves every file in its directory, dot files included. The documentation no longer says it filters hidden files
+
+#### Other changes
+
+- build!: The minimum Dart SDK is 3.10.0
 - perf!: A sync response reaches the adapter without a Future, and a `ContextProperty` takes its slot once
   - BREAKING: The routing handler and `respondWith` return a sync handler's `Response` as is. A handler that throws before its first `await` throws to the caller
   - BREAKING: A `ContextProperty` holds its slot for the life of the isolate. Create each one once, as a global
-- perf: Typed headers decode from the wire bytes. `HeaderCodec.bytes` and `HeaderCodec.fields` take a parser over bytes. `HeaderCodec.single` and the text constructors stay
-- feat: New package `relic_native`, a Relic adapter on a Zig HTTP server
-- feat: `FramedWebSocket` frames RFC 6455 over any `StreamChannel<Uint8List>`. The server upgrades through the adapter when `capabilities.webSocket` is set and frames over `hijack` otherwise. With neither it answers 501
-- feat: The `Body` constructor is public and takes `bytes`, `stream` or `open`. A body built with `open` opens only when read. `read(maxLength:)` rejects a known oversize body without reading it, and a rejected upload gets its answer instead of a reset
-- feat: `Body.bytes`, `Body.readAll()`, `Body.consume` and `httpDate()`
-- feat: `httpDate`, `logMessage` and `logRequests` read the time through `package:clock`, so `withClock` controls them
-- fix: A response head carries `Connection: close` when the connection closes after it (RFC 9112 9.6)
-- fix: A 206 range response defaults its Content-Type to application/octet-stream
-- fix: A `WebSocketUpgrade` answers a request other than GET with 405
-- fix: `RelicApp.run(backtrack: false)` and `routeWith(backtrack: false)` look routes up without backtracking
-- fix: `Request.forwardTo` keeps the `backtrack` and `useHostWhenRouting` options of the original
-
-## 2.0.0-rc.2
-- feat!: Add HTML form and multipart parsing ([#380](https://github.com/serverpod/relic/pull/380)) - closes [#379](https://github.com/serverpod/relic/issues/379)
-  - BREAKING: The minimum Dart SDK is 3.10.0. The Dart 3.9.0 compiler crashes in the FFI transform ([dart-lang/sdk#61321](https://github.com/dart-lang/sdk/issues/61321))
-  - BREAKING: `BodyType` has no const constructor. Drop `const` from `BodyType(...)` calls
-  - BREAKING: Extended `Content-Disposition` parameters such as `filename*` are RFC 8187 ext-values and always encode as UTF-8. `ContentDispositionParameter` has no `encoding`, and its `language` is a `LanguageTag`. Parsing throws `FormatException` for a charset other than UTF-8 and for a malformed ext-value
-  - Add `req.urlEncodedForm()`, `req.multipartForm()` and `req.formData()`, which picks the parser from the request Content-Type
-  - Add `req.multipart()` to stream parts without aggregating them. Each part is a `MultipartFieldPart`, `MultipartFilePart` or `MultipartOtherPart`
-  - Read fields through accessors such as `IntFormField('age')` with `form.fields.get`, `tryGet` and `getAll`, and files through `FormFile`. A missing field throws `MissingFormFieldException`, a value that does not decode throws `InvalidFormFieldException`
-  - `FormLimits` caps body size, part, field and file counts, and field and file sizes. Going over one throws `FormLimitExceededException`, whose `limit` names the `FormLimit`
-  - Uploads go to `MemoryUploadStorage` by default. `TempUploadStorage` in relic_io writes each upload to its own directory. On POSIX systems the directory has mode 0700. On Windows it inherits the permissions of its parent, and the default parent, the user's temp directory, is private to that user. Call `MultipartFormData.dispose()` to delete them
-  - Upload filenames are reduced to their basename, with control and bidi formatting characters removed. `.`, `..` and an empty filename give a null `filename`. `filename*` is ignored, per RFC 7578
-  - The server answers an uncaught `FormException` with its `statusCode`, which is 400, 413 or 415. When parsing fails it also sends `Connection: close`, as the rest of the body may be unread
-  - `BodyType` carries Content-Type parameters such as `boundary` in `parameters`. `Body.fromData` and `Body.fromDataStream` take a `parameters` argument, and the dart:io adapter carries them through
-  - Add a typed `ContentTypeHeader`, read with `headers.contentType`. Set Content-Type through the body
-
-## 2.0.0-rc.1
-- refactor!: Drop `NormalizedPath` interning ([#375](https://github.com/serverpod/relic/pull/375)) - fixes [#118](https://github.com/serverpod/relic/issues/118), [#342](https://github.com/serverpod/relic/issues/342), closes [#344](https://github.com/serverpod/relic/issues/344)
-  - BREAKING: `NormalizedPath.interned` is removed. Construction no longer caches, so there is no per-isolate cache to size, and no input that can thrash it
-  - Add `Router.lookupUri(method, url)`, the entry point for request routing: it derives the path with `NormalizedPath.fromUri` and looks it up with `lookupPath`
-  - Routing recovers most of the lost throughput by pre-computing repeated work and by undoing parameter bindings in place while backtracking, instead of copying the parameter map at every level
-- fix!: Address security audit findings ([#369](https://github.com/serverpod/relic/pull/369))
-  - BREAKING: Cross-origin WebSocket upgrades are rejected with 403 by default; pass `WebSocketUpgrade(..., allowAnyOrigin: true)` to accept them. Only the host is compared, since a TLS-terminating proxy changes scheme and port
-  - BREAKING: Header names and values are validated on assignment. CR, LF, NUL, and invalid names now throw where every header write funnels, rather than reaching the wire
-  - BREAKING: Malformed auth headers and non-token MIME type parts are rejected where they were previously tolerated
-  - The request path is split into segments before percent-decoding, so an encoded separator (`%2F`) can no longer introduce a path boundary that no upstream proxy saw; `NormalizedPath.fromUri` names the safe conversion
-  - The path is normalized before the routing host is prepended, so a path resolving upwards can no longer pop the host and select another virtual host
-  - Auth headers are parsed with the linear header scanner: one pass with no quadratic backtracking on a long value, and text between auth-params is rejected instead of skipped
-  - `Content-Disposition` parameter values and `AuthenticationHeader` challenge parts are escaped and validated, so a quote in a filename or realm can no longer end the value and graft on another parameter or challenge
-  - The token grammar is enforced on MIME type parts, which `io.ContentType` took separately and thus bypassed the CR/LF check applied to ordinary header values
-  - Multi-range responses are streamed lazily and the range count is capped, so a short request can no longer ask for many times the file size
-  - Multipart boundaries are drawn from a cryptographic generator instead of ~20 bits from `Random`
-  - The adapter dispatch is awaited, so a response that fails to write yields a 500 instead of leaving the connection open and the client waiting
-  - Detached (hijacked and upgraded) connections are tracked by the adapter: counted by `connectionsInfo()`, drained and sent a 1001 close on graceful shutdown, and destroyed on `close(force: true)`
-  - `use()` on a catch-all route now applies to the prefix itself, so `/api` no longer bypasses the middleware that `/api/keys` runs
-  - Add `Token68` for the RFC 9110 `token68` form, used when validating a single-token `WWW-Authenticate` challenge
-  - docs: The static file handler never filtered hidden files; the documentation no longer claims it does. Every file in the served directory is served, dot files included
-
-## 2.0.0-beta.1
-- feat: Add `CacheControlHeader.parseStrict` for validating own values ([#370](https://github.com/serverpod/relic/pull/370))
-  - Throws a `FormatException` for an unrecognized directive or a malformed delta-seconds value instead of ignoring it
-  - Intended for values under the sender's own control, such as server configuration; `parse` remains lenient per RFC 9111 5.2
-
-## 2.0.0-beta.0
-
-Overhaul of typed HTTP headers for RFC compliance, landing in concert with serverpod 4.0. Parsing of received (request) headers is lenient (except security-sensitive ones), while construction and serialization are always strict. Many typed headers changed shape and/or semantics, so this is a breaking release.
-
-- refactor!: Cookie and Set-Cookie headers ([#361](https://github.com/serverpod/relic/pull/361))
-  - BREAKING: `SetCookie` now represents a single cookie, and `SetCookieHeader` is a `List<SetCookie>` collection (one `Set-Cookie` line per cookie, RFC 6265 4.1). The previous single-cookie `SetCookieHeader(name:, value:, ...)` API is replaced by `SetCookie(...)`; augment a response with `mh.setCookie = (mh.setCookie ?? const SetCookieHeader.empty()).add(cookie)`
-  - The request `Cookie` header is parsed leniently: a malformed cookie is skipped and the header is rejected only when no cookie in it is usable
-  - Add `CookieHeader.getCookies(name)` returning every cookie with that name in order; byte-identical duplicates are preserved (not collapsed)
-  - `Set-Cookie` decode is strict (it is produced by the server): a malformed attribute rejects the cookie
-  - `Domain` is normalized per RFC 6265 5.2.3 — the full leading-dot run is stripped and the host is lower-cased; an all-dots `Domain` is rejected
-  - `Max-Age` is parsed as a strict decimal integer per RFC 6265 5.2.2; non-decimal values such as `0xFF` are rejected
-  - Nameless `=value` segments are dropped when parsing the request `Cookie` header
-- feat!: RFC compliant typed headers ([#360](https://github.com/serverpod/relic/pull/360)) — fixes [#113](https://github.com/serverpod/relic/issues/113), [#142](https://github.com/serverpod/relic/issues/142)
-  - Many typed headers changed their Dart interface and/or their parse/serialize semantics
-  - Parsing is lenient on receive; construction and serialization are strict
+- feat: Add `httpDate()`. `httpDate`, `logMessage` and `logRequests` read the time through `package:clock`, so `withClock` controls them
 
 ## 1.2.0
 - feat: Make `NormalizedPath` interning cache configurable ([#343](https://github.com/serverpod/relic/pull/343))
