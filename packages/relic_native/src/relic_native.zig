@@ -966,7 +966,9 @@ const Link = struct {
     /// Until `handshake`, `reader` and `writer` are the socket's.
     fn initTls(self: *Link, gpa: std.mem.Allocator, stream: zio.net.Stream) !void {
         const secure = try gpa.create(Secure);
-        secure.* = .{};
+        // Not `secure.* = .{}`, which writes the whole block, the two
+        // ciphertext buffers among it, and so takes all its pages.
+        secure.conn = null;
         self.init(stream, &secure.ciphertext_in, &secure.ciphertext_out);
         self.secure = secure;
     }
