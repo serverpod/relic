@@ -30,7 +30,7 @@ That adds the latest stable release to the `dependencies` in `pubspec.yaml`, and
 These pages describe the coming release of Relic, 2.0, and a few of the features they show are not in a published version yet. To try the latest prerelease instead of the stable release, give the version explicitly:
 
 ```bash
-dart pub add 'relic:^2.0.0-rc.6'
+dart pub add 'relic:^2.0.0-rc.7'
 ```
 
 ## Reading the code on these pages

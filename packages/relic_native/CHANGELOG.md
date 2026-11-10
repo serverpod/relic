@@ -1,3 +1,22 @@
+## 2.0.0-rc.7
+- A connection with nothing to read holds no task and no buffers. Once it
+  has waited a second for a request, a WebSocket frame or a hijacked
+  connection's bytes, it gives its buffers back, its task ends, and a
+  poll of the socket starts one again. A WebSocket or hijacked connection
+  starts that way. An idle WebSocket takes about 3 KiB where it took 29,
+  and 15 KiB over TLS
+- A connection's read, write, head and body buffers come from a pool of
+  the reactor, which frees the ones no connection needed for a second.
+  Before, they were on the task's stack for as long as the connection
+  lived
+- A TLS connection leaves its ciphertext buffers unwritten when it opens.
+  Before, it wrote all 33 KiB of them, used or not
+- The sweeper runs once a second on a server with no timeout set. Before,
+  such a server had none
+- The waiter thread reads the loop's host handle once, when the reactor
+  starts. Before, each wait read loop state that a tick writes, which
+  ThreadSanitizer reported in a debug build
+
 ## 2.0.0-rc.6
 - A close in any Connection line closes the connection after the response,
   whatever else the lines list. Before, only the last line counted, and an
