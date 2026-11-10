@@ -1,4 +1,4 @@
-## Unreleased
+## 2.0.0-rc.6
 - A close in any Connection line closes the connection after the response,
   whatever else the lines list. Before, only the last line counted, and an
   HTTP/1.0 request kept its connection on a keep-alive beside a close
