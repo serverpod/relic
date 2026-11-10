@@ -9,6 +9,11 @@
 // unread, drop). `--adapter=io` runs the same soak against the dart:io
 // adapter, which tells client-side growth from server-side growth.
 //
+// `--check` makes it a test: the exit code is 1 when a request failed,
+// or when the open descriptors or the memory of the last quarter of the
+// run exceed those of the second quarter by more than the slack below.
+// The first quarter is warm-up.
+//
 // The numbers are the whole VM's, clients included, so read the trend
 // after warm-up. On macOS the RSS keeps counting pages that malloc freed
 // and marked reusable until the kernel takes them back, so a native
@@ -28,6 +33,14 @@ const _inlineLimit = 64 * 1024;
 const _routes = ['small', 'big', 'chunked', 'echo', 'unread', 'drop'];
 const _sampleEvery = Duration(seconds: 10);
 
+/// How many more descriptors the last quarter may hold open than the
+/// second. Connections in flight move the count by about the clients.
+const _fdSlack = 16;
+
+/// How much more memory the last quarter may hold than the second, as a
+/// share. The Dart heap moves the whole VM's number by a few percent.
+const _memorySlack = 0.25;
+
 final _small = Uint8List.fromList('hello'.codeUnits);
 final _big = Uint8List(1 << 20);
 
@@ -36,10 +49,11 @@ Future<void> main(List<String> args) async {
   final clients = _intArg(args, 'clients', 32);
   final mix = _stringArg(args, 'mix', 'all');
   final adapter = _stringArg(args, 'adapter', 'native');
+  final check = args.contains('--check');
   if (!const {'all', ..._routes}.contains(mix) ||
       !const {'native', 'io'}.contains(adapter)) {
     stderr.writeln(
-      'usage: --seconds=N --clients=N --mix=all|${_routes.join('|')} --adapter=native|io',
+      'usage: --seconds=N --clients=N --mix=all|${_routes.join('|')} --adapter=native|io [--check]',
     );
     exitCode = 64;
     return;
@@ -68,11 +82,16 @@ Future<void> main(List<String> args) async {
 
   final clock = Stopwatch()..start();
   stdout.writeln('elapsed_s\trss_mb\tfootprint_mb\tfds\trequests\terrors');
+  final samples = <_Sample>[];
   final sampler = Timer.periodic(_sampleEvery, (_) {
+    final rss = ProcessInfo.currentRss >> 20;
+    final footprint = _footprintMb();
+    final fds = _openFds();
+    // The footprint where there is one, see the note on macOS above.
+    samples.add(_Sample(double.tryParse(footprint)?.round() ?? rss, fds));
     stdout.writeln(
-      '${clock.elapsed.inSeconds}\t${ProcessInfo.currentRss >> 20}\t'
-      '${_footprintMb()}\t${_openFds()}\t${counts.requests}\t'
-      '${counts.errors}',
+      '${clock.elapsed.inSeconds}\t$rss\t$footprint\t$fds\t'
+      '${counts.requests}\t${counts.errors}',
     );
   });
   await Future<void>.delayed(Duration(seconds: seconds));
@@ -81,6 +100,45 @@ Future<void> main(List<String> args) async {
   await Future.wait(workers);
   await server.close(force: true);
   stdout.writeln('done: ${counts.requests} requests, ${counts.errors} errors');
+  final failures = _verdict(samples, counts.errors);
+  for (final failure in failures) {
+    stdout.writeln('FAILED: $failure');
+  }
+  if (check && failures.isNotEmpty) exitCode = 1;
+}
+
+class _Sample {
+  final int memoryMb;
+  final int fds;
+  _Sample(this.memoryMb, this.fds);
+}
+
+/// What the run got wrong: a failed request, or descriptors or memory
+/// that grew from the second quarter of the samples to the last.
+List<String> _verdict(List<_Sample> samples, int errors) {
+  final failures = <String>[if (errors > 0) '$errors requests failed'];
+  final quarter = samples.length ~/ 4;
+  if (quarter < 2) return failures;
+  final early = samples.sublist(quarter, 2 * quarter);
+  final late = samples.sublist(samples.length - quarter);
+
+  final earlyFds = early.map((s) => s.fds).reduce(max);
+  final lateFds = late.map((s) => s.fds).reduce(max);
+  if (lateFds > earlyFds + _fdSlack) {
+    failures.add('open descriptors grew from $earlyFds to $lateFds');
+  }
+
+  final earlyMemory = _median(early.map((s) => s.memoryMb));
+  final lateMemory = _median(late.map((s) => s.memoryMb));
+  if (lateMemory > earlyMemory * (1 + _memorySlack)) {
+    failures.add('memory grew from $earlyMemory MB to $lateMemory MB');
+  }
+  return failures;
+}
+
+int _median(Iterable<int> values) {
+  final sorted = values.toList()..sort();
+  return sorted[sorted.length ~/ 2];
 }
 
 Future<Response> _handler(Request req) async {
