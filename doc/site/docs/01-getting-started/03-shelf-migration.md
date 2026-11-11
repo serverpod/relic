@@ -200,7 +200,7 @@ In Relic, a handler returns a `WebSocketUpgrade`:
 
 GITHUB_CODE_BLOCK lang="dart" file="../_example/basic/relic_shelf.dart" doctag="websocket-relic" title="A WebSocket handler"
 
-`webSocketHandler` accepts a browser connection from any origin unless you pass `allowedOrigins`. Relic refuses an upgrade from a page on another origin with 403. Set `allowAnyOrigin: true` on the `WebSocketUpgrade` only for an endpoint meant to be opened by other sites, and that does not authenticate with cookies.
+`webSocketHandler` accepts a browser connection from any origin unless you pass `allowedOrigins`. Relic refuses an upgrade from a page on another host with 403. Set `allowAnyOrigin: true` on the `WebSocketUpgrade` only for an endpoint meant to be opened by other sites, and that does not authenticate with cookies.
 
 ## A complete example
 
