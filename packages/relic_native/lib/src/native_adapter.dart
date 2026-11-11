@@ -892,7 +892,7 @@ final class NativeExchange extends LinkedListEntry<NativeExchange>
         final pointer = data.value;
         if (pointer != nullptr) {
           final chunk = Uint8List.fromList(pointer.asTypedList(length.value));
-          native.free(pointer);
+          native.free(pointer, length.value);
           controller.add(chunk);
         }
         switch (status.value) {
@@ -956,6 +956,7 @@ final class NativeExchange extends LinkedListEntry<NativeExchange>
     native.respond(
       view,
       headBuffer,
+      head.bound,
       headLength,
       bodyBuffer,
       bytes.length,
@@ -986,6 +987,7 @@ final class NativeExchange extends LinkedListEntry<NativeExchange>
     native.respondStream(
       view,
       headBuffer,
+      head.bound,
       headLength,
       framing.closeAfter,
       framing.chunked,
@@ -998,7 +1000,7 @@ final class NativeExchange extends LinkedListEntry<NativeExchange>
         final buffer = _nativeCopy(chunk);
         _adapter._scheduleDrain();
         if (!native.writeChunk(view, buffer, chunk.length)) {
-          native.free(buffer);
+          native.free(buffer, chunk.length);
           _failStream(view, StateError('relic_native: out of memory'));
           return;
         }
@@ -1089,14 +1091,14 @@ final class NativeExchange extends LinkedListEntry<NativeExchange>
   static int _dateOff(ResponseHead head) =>
       head.dateOffset < 0 ? 0 : head.dateOffset;
 
-  /// The head written into the buffer the native side takes over, and
-  /// its length.
+  /// The head written into the buffer of [ResponseHead.bound] bytes that
+  /// the native side takes over, and its length.
   static (Pointer<Uint8>, int) _nativeHead(ResponseHead head) {
     final buffer = native.alloc(head.bound);
     try {
       return (buffer, head.writeTo(buffer.asTypedList(head.bound)));
     } catch (_) {
-      native.free(buffer);
+      native.free(buffer, head.bound);
       rethrow;
     }
   }
@@ -1159,7 +1161,7 @@ final class NativeExchange extends LinkedListEntry<NativeExchange>
     final buffer = _nativeCopy(data);
     _adapter._scheduleDrain();
     if (!native.writeChunk(view, buffer, data.length)) {
-      native.free(buffer);
+      native.free(buffer, data.length);
       _failRaw(const io.SocketException('relic_native: out of memory'));
     }
   }
@@ -1245,7 +1247,7 @@ final class NativeExchange extends LinkedListEntry<NativeExchange>
     if (payload.isNotEmpty) buffer = _nativeCopy(payload);
     _adapter._scheduleDrain();
     if (!native.wsSend(view, buffer, payload.length, opcode.code)) {
-      if (buffer != nullptr) native.free(buffer);
+      if (buffer != nullptr) native.free(buffer, payload.length);
       // Out of memory.
       abort();
     }
@@ -1262,9 +1264,9 @@ final class NativeExchange extends LinkedListEntry<NativeExchange>
     try {
       while (native.wsRead(view, data, length, kind) != 0) {
         final pointer = data.value;
-        final bytes = pointer == nullptr
-            ? _noBytes
-            : pointer.asTypedList(length.value);
+        // The handler below may read another message into `length`.
+        final size = length.value;
+        final bytes = pointer == nullptr ? _noBytes : pointer.asTypedList(size);
         final message = _WsKind.of(kind.value);
         try {
           if (message == null) {
@@ -1276,7 +1278,7 @@ final class NativeExchange extends LinkedListEntry<NativeExchange>
           }
           socket._onMessage(message, bytes);
         } finally {
-          if (pointer != nullptr) native.free(pointer);
+          if (pointer != nullptr) native.free(pointer, size);
         }
       }
     } finally {

@@ -16,8 +16,8 @@
 //!                    writes the response. relic_respond_inline() leaves
 //!                    the encoded head and body in the connection's write
 //!                    buffer when they fit. relic_respond() hands them
-//!                    back otherwise, malloc'd, with ownership
-//!                    transferred
+//!                    back otherwise, from relic_alloc, with
+//!                    ownership transferred
 //!   task:            writes, frees what relic_respond() handed back,
 //!                    loops for keep-alive.
 //! Sockets are only ever touched by tasks. Dart only touches Exchanges, and
@@ -298,8 +298,9 @@ const Fifo = struct {
 };
 
 /// One piece of a streamed body, in either direction. The data buffer is
-/// malloc'd. Dart allocates an outbound one and hands it over. The task
-/// allocates an inbound one, and Dart frees it with relic_free.
+/// `len` of `dart_bytes`. Dart allocates an outbound one with relic_alloc
+/// and hands it over. The task allocates an inbound one, and Dart frees
+/// it with relic_free.
 const Chunk = struct {
     node: Node = .{},
     ptr: ?[*]u8,
@@ -326,8 +327,10 @@ const Exchange = struct {
     reactor: *Reactor,
     // The relic_respond functions, relic_abort, relic_hijack and
     // relic_ws_upgrade set the answer before `done`.
-    /// Status line, headers and CRLF, encoded by Dart. Owned here.
+    /// Status line, headers and CRLF, encoded by Dart into the first
+    /// `resp_head_len` of `resp_head_cap` bytes. Owned here.
     resp_head: ?[*]u8 = null,
+    resp_head_cap: u32 = 0,
     resp_head_len: u32 = 0,
     /// The body, owned here, or null for a streamed or inline one.
     resp_body: ?[*]u8 = null,
@@ -384,8 +387,8 @@ const Exchange = struct {
     /// The link `writer` is of, whose buffers a writer task keeps.
     link: ?*Link = null,
     /// The WebSocket message being assembled from its frames, and its
-    /// opcode while it is not whole. Plain malloc for the bytes, so Dart
-    /// frees a message with relic_free.
+    /// opcode while it is not whole. The bytes are of `dart_bytes`, so
+    /// Dart frees a message with relic_free.
     ws_message: std.ArrayListUnmanaged(u8) = .empty,
     ws_message_opcode: ?WsOpcode = null,
     /// A writer task is writing Dart's output. It ends once none is left.
@@ -1683,8 +1686,8 @@ fn serveRequests(c: *Connection) !void {
 
         defer {
             if (pump) |*p| p.cancel();
-            if (ex.resp_head) |p| std.c.free(p);
-            if (ex.resp_body) |p| std.c.free(p);
+            if (ex.resp_head) |p| dart_bytes.free(p[0..ex.resp_head_cap]);
+            if (ex.resp_body) |p| dart_bytes.free(p[0..@intCast(ex.resp_body_len)]);
             freeChunks(ex.reactor.gpa, &ex.in);
         }
         if (ex.upgraded) {
@@ -1823,16 +1826,15 @@ fn pumpRequestBody(br: *std.Io.Reader, link: *Link, ex: *Exchange, content_lengt
     while (true) {
         if (!waitCredit(ex, &ex.closed)) return false;
         const chunk = gpa.create(Chunk) catch return false;
-        const buf = std.c.malloc(in_chunk_size) orelse {
+        const buf = dart_bytes.alloc(u8, in_chunk_size) catch {
             gpa.destroy(chunk);
             return false;
         };
-        const data: [*]u8 = @ptrCast(buf);
-        const read = br.readSliceShort(data[0..in_chunk_size]);
+        const read = br.readSliceShort(buf);
         if (ex.upgraded) {
             // Dart takes only WebSocket messages from here on. The
             // connection task drops what is queued and the rest of the body.
-            std.c.free(buf);
+            dart_bytes.free(buf);
             gpa.destroy(chunk);
             // A short read is the end of the body, or of the connection.
             const got = read catch return false;
@@ -1840,7 +1842,7 @@ fn pumpRequestBody(br: *std.Io.Reader, link: *Link, ex: *Exchange, content_lengt
             return got < in_chunk_size;
         }
         const got = read catch {
-            std.c.free(buf);
+            dart_bytes.free(buf);
             gpa.destroy(chunk);
             if (link.readCanceled()) return false;
             if (link.readError() != null) ex.view.peer_gone = 1;
@@ -1848,7 +1850,7 @@ fn pumpRequestBody(br: *std.Io.Reader, link: *Link, ex: *Exchange, content_lengt
             return false;
         };
         if (got == 0) {
-            std.c.free(buf);
+            dart_bytes.free(buf);
             gpa.destroy(chunk);
             // EOF before the declared length is a truncated body, not an
             // end. The chunked decoder reports its own truncation as an
@@ -1859,7 +1861,14 @@ fn pumpRequestBody(br: *std.Io.Reader, link: *Link, ex: *Exchange, content_lengt
             return complete;
         }
         if (remaining) |left| remaining = left - @min(left, got);
-        chunk.* = .{ .ptr = data, .len = got };
+        // A chunk's buffer is as long as its data. Only the last read of
+        // a body comes short.
+        const data = dart_bytes.realloc(buf, got) catch {
+            dart_bytes.free(buf);
+            gpa.destroy(chunk);
+            return false;
+        };
+        chunk.* = .{ .ptr = data.ptr, .len = got };
         pushInbound(ex, chunk);
     }
 }
@@ -1899,7 +1908,7 @@ fn pumpResponseBody(ex: *Exchange, w: *std.Io.Writer) bool {
         while (ex.out.pop()) |node| {
             const chunk: *Chunk = @fieldParentPtr("node", node);
             defer ex.reactor.gpa.destroy(chunk);
-            defer if (chunk.ptr) |p| std.c.free(p);
+            defer if (chunk.ptr) |p| dart_bytes.free(p[0..chunk.len]);
             if (chunk.last) {
                 if (!chunk.ok or ex.view.write_failed != 0) return false;
                 if (ex.resp_chunked) w.writeAll("0\r\n\r\n") catch return false;
@@ -1943,14 +1952,12 @@ fn rawReader(link: *Link, ex: *Exchange) error{Parked}!void {
         const avail = rd.buffered();
         const n = @min(avail.len, in_chunk_size);
         const chunk = ex.reactor.gpa.create(Chunk) catch return;
-        const buf = std.c.malloc(n) orelse {
+        const data = dart_bytes.dupe(u8, avail[0..n]) catch {
             ex.reactor.gpa.destroy(chunk);
             return;
         };
-        const data: [*]u8 = @ptrCast(buf);
-        @memcpy(data[0..n], avail[0..n]);
         rd.toss(n);
-        chunk.* = .{ .ptr = data, .len = n };
+        chunk.* = .{ .ptr = data.ptr, .len = n };
         pushInbound(ex, chunk);
     }
 }
@@ -1971,7 +1978,7 @@ fn rawWriter(w: *std.Io.Writer, ex: *Exchange) void {
     while (ex.out.pop()) |node| {
         const chunk: *Chunk = @fieldParentPtr("node", node);
         defer ex.reactor.gpa.destroy(chunk);
-        defer if (chunk.ptr) |p| std.c.free(p);
+        defer if (chunk.ptr) |p| dart_bytes.free(p[0..chunk.len]);
         if (chunk.last) {
             if (ex.view.write_failed == 0) w.flush() catch {};
             endTakenOver(ex);
@@ -2300,13 +2307,11 @@ fn pushOutbound(ex: *Exchange, opcode: WsOpcode, payload: []const u8) void {
     const chunk = ex.reactor.gpa.create(Chunk) catch return;
     var ptr: ?[*]u8 = null;
     if (payload.len > 0) {
-        const buf = std.c.malloc(payload.len) orelse {
+        const data = dart_bytes.dupe(u8, payload) catch {
             ex.reactor.gpa.destroy(chunk);
             return;
         };
-        const data: [*]u8 = @ptrCast(buf);
-        @memcpy(data[0..payload.len], payload);
-        ptr = data;
+        ptr = data.ptr;
     }
     chunk.* = .{ .ptr = ptr, .len = payload.len, .kind = @backingInt(opcode) };
     ex.out.push(&chunk.node);
@@ -2316,7 +2321,7 @@ fn pushOutbound(ex: *Exchange, opcode: WsOpcode, payload: []const u8) void {
 /// Hands Dart a message it frees with relic_free, or an empty one.
 fn pushWsInbound(ex: *Exchange, kind: WsKind, ptr: ?[*]u8, len: usize) void {
     const chunk = ex.reactor.gpa.create(Chunk) catch {
-        if (ptr) |p| std.c.free(p);
+        if (ptr) |p| dart_bytes.free(p[0..len]);
         return;
     };
     chunk.* = .{ .ptr = ptr, .len = len, .kind = @backingInt(kind) };
@@ -2325,10 +2330,8 @@ fn pushWsInbound(ex: *Exchange, kind: WsKind, ptr: ?[*]u8, len: usize) void {
 
 fn pushWsInboundCopy(ex: *Exchange, kind: WsKind, payload: []const u8) void {
     if (payload.len == 0) return pushWsInbound(ex, kind, null, 0);
-    const buf = std.c.malloc(payload.len) orelse return;
-    const data: [*]u8 = @ptrCast(buf);
-    @memcpy(data[0..payload.len], payload);
-    pushWsInbound(ex, kind, data, payload.len);
+    const data = dart_bytes.dupe(u8, payload) catch return;
+    pushWsInbound(ex, kind, data.ptr, data.len);
 }
 
 /// Writes what is queued for the peer: Dart's messages and pings, the
@@ -2341,7 +2344,7 @@ fn wsWriter(w: *std.Io.Writer, ex: *Exchange) void {
         while (ex.out.pop()) |node| {
             const chunk: *Chunk = @fieldParentPtr("node", node);
             defer ex.reactor.gpa.destroy(chunk);
-            defer if (chunk.ptr) |p| std.c.free(p);
+            defer if (chunk.ptr) |p| dart_bytes.free(p[0..chunk.len]);
             const payload: []const u8 = if (chunk.ptr) |p| p[0..chunk.len] else "";
             const opcode: WsOpcode = @fromBackingInt(@intCast(@as(u4, @truncate(chunk.kind))));
             writeFrame(w, opcode, payload) catch return writeFailed(ex);
@@ -2443,7 +2446,7 @@ fn drainOutbound(ex: *Exchange) void {
         while (ex.out.pop()) |node| {
             const chunk: *Chunk = @fieldParentPtr("node", node);
             const last = chunk.last;
-            if (chunk.ptr) |p| std.c.free(p);
+            if (chunk.ptr) |p| dart_bytes.free(p[0..chunk.len]);
             ex.reactor.gpa.destroy(chunk);
             if (last) return;
         }
@@ -2455,7 +2458,7 @@ fn drainOutbound(ex: *Exchange) void {
 fn freeChunks(gpa: std.mem.Allocator, queue: *Fifo) void {
     while (queue.pop()) |node| {
         const chunk: *Chunk = @fieldParentPtr("node", node);
-        if (chunk.ptr) |p| std.c.free(p);
+        if (chunk.ptr) |p| dart_bytes.free(p[0..chunk.len]);
         gpa.destroy(chunk);
     }
 }
@@ -2902,8 +2905,10 @@ fn openBody(req: *std.http.Server.Request, buffer: []u8) std.http.Server.Request
 const default_gpa = if (builtin.is_test) std.testing.allocator else std.heap.c_allocator;
 const default_buffers_gpa = if (builtin.is_test) std.testing.allocator else std.heap.page_allocator;
 
-/// Where bytes that Dart frees with relic_free come from, so always malloc.
-const dart_bytes = std.heap.c_allocator;
+/// Where the bytes come from that pass between Dart and native, which
+/// either side allocates and the other frees: relic_alloc and relic_free
+/// on Dart's side. They name no server, so every server shares it.
+const dart_bytes = default_gpa;
 
 var registry_lock: zio.os.Mutex = .{};
 /// One Server per group, shared by the isolates that attach.
@@ -3537,10 +3542,13 @@ const DartCall = struct {
     }
 };
 
-/// Ownership of `head` and `body`, malloc'd by Dart, passes to native.
+/// Ownership of `head`, `head_cap` bytes from relic_alloc of which
+/// `head_len` are the head, and of `body`, `body_len` bytes from
+/// relic_alloc, passes to native.
 export fn relic_respond(
     v: *ExchangeView,
     head: [*]u8,
+    head_cap: u32,
     head_len: u32,
     body: ?[*]u8,
     body_len: u64,
@@ -3548,6 +3556,7 @@ export fn relic_respond(
 ) void {
     const ex: *Exchange = @fieldParentPtr("view", v);
     ex.resp_head = head;
+    ex.resp_head_cap = head_cap;
     ex.resp_head_len = head_len;
     ex.resp_body = body;
     ex.resp_body_len = body_len;
@@ -3574,12 +3583,14 @@ export fn relic_respond_inline(v: *ExchangeView, len: u32, close_after: bool) vo
 export fn relic_respond_stream(
     v: *ExchangeView,
     head: [*]u8,
+    head_cap: u32,
     head_len: u32,
     close_after: bool,
     chunked: bool,
 ) void {
     const ex: *Exchange = @fieldParentPtr("view", v);
     ex.resp_head = head;
+    ex.resp_head_cap = head_cap;
     ex.resp_head_len = head_len;
     ex.resp_streamed = true;
     ex.resp_chunked = chunked;
@@ -3590,7 +3601,7 @@ export fn relic_respond_stream(
 }
 
 /// Hands over one chunk of a streamed response. Ownership of `data`,
-/// malloc'd by Dart, passes to native. Returns false when the node could
+/// `len` bytes from relic_alloc, passes to native. Returns false when the node could
 /// not be allocated, in which case `data` still belongs to Dart.
 export fn relic_write_chunk(v: *ExchangeView, data: [*]u8, len: usize) bool {
     const ex: *Exchange = @fieldParentPtr("view", v);
@@ -3677,13 +3688,14 @@ export fn relic_hijack(v: *ExchangeView) void {
     ex.done.set();
 }
 
-/// Answers with the 101 head Dart encoded, ownership of which passes to
-/// native, and makes the connection a WebSocket. The peer's messages come
+/// Answers with the 101 head Dart encoded, `head_len` bytes from
+/// relic_alloc, ownership of which passes to native, and makes the connection a WebSocket. The peer's messages come
 /// through relic_ws_read and frames go out through relic_ws_send. A
 /// message over `max_message` bytes closes the connection with 1009.
 export fn relic_ws_upgrade(v: *ExchangeView, head: [*]u8, head_len: u32, max_message: u32) void {
     const ex: *Exchange = @fieldParentPtr("view", v);
     ex.resp_head = head;
+    ex.resp_head_cap = head_len;
     ex.resp_head_len = head_len;
     ex.upgraded = true;
     ex.ws_max_message = max_message;
@@ -3694,8 +3706,8 @@ export fn relic_ws_upgrade(v: *ExchangeView, head: [*]u8, head_len: u32, max_mes
 
 /// Queues a frame for the peer: `opcode` 1 for text, 2 for binary, 9 for
 /// a ping, 8 for a close with the code and reason as its payload, after
-/// which nothing else goes out. Ownership of `data`, malloc'd by Dart,
-/// passes to native. Returns false when the node could not be allocated,
+/// which nothing else goes out. Ownership of `data`, `len` bytes from
+/// relic_alloc, passes to native. Returns false when the node could not be allocated,
 /// in which case `data` still belongs to Dart.
 export fn relic_ws_send(v: *ExchangeView, data: ?[*]u8, len: usize, opcode: u8) bool {
     const ex: *Exchange = @fieldParentPtr("view", v);
@@ -3725,13 +3737,16 @@ export fn relic_ws_read(v: *ExchangeView, data: *?[*]u8, len: *usize, kind: *u8)
     return 1;
 }
 
+/// `len` bytes for Dart to fill and hand over, or to free with relic_free.
 export fn relic_alloc(len: usize) ?[*]u8 {
-    const p = std.c.malloc(len) orelse return null;
-    return @ptrCast(p);
+    const bytes = dart_bytes.alloc(u8, len) catch return null;
+    return bytes.ptr;
 }
 
-export fn relic_free(p: [*]u8) void {
-    std.c.free(p);
+/// Frees `len` bytes that relic_alloc gave, or that native handed to Dart
+/// as `len` bytes.
+export fn relic_free(p: [*]u8, len: usize) void {
+    dart_bytes.free(p[0..len]);
 }
 
 export fn relic_server_stats(srv: *Server, out: *Stats) void {
@@ -4111,7 +4126,7 @@ test "tick: a request reaches the ready list on the caller's thread and the resp
     const head = "HTTP/1.1 204 No Content\r\ncontent-length: 0\r\n\r\n";
     const buf = relic_alloc(head.len).?;
     @memcpy(buf[0..head.len], head);
-    relic_respond(v, buf, head.len, null, 0, false);
+    relic_respond(v, buf, head.len, head.len, null, 0, false);
     rounds = 0;
     var got: [64]u8 = undefined;
     var total: usize = 0;
@@ -4224,7 +4239,7 @@ test "respond: an answer from Dart wakes its task in the executor's own run queu
     const head = "HTTP/1.1 204 No Content\r\ncontent-length: 0\r\n\r\n";
     const buf = relic_alloc(head.len).?;
     @memcpy(buf[0..head.len], head);
-    relic_respond(v, buf, head.len, null, 0, false);
+    relic_respond(v, buf, head.len, head.len, null, 0, false);
     // The overflow is the remote queue, whose wakes also wake the waiter.
     try std.testing.expect(!run_queue.isEmpty());
     try std.testing.expect(run_queue.overflow.isEmpty());
@@ -4618,7 +4633,7 @@ const test_no_content = "HTTP/1.1 204 No Content\r\ncontent-length: 0\r\n\r\n";
 fn testRespondNoContent(v: *ExchangeView) void {
     const buf = relic_alloc(test_no_content.len).?;
     @memcpy(buf[0..test_no_content.len], test_no_content);
-    relic_respond(v, buf, test_no_content.len, null, 0, false);
+    relic_respond(v, buf, test_no_content.len, test_no_content.len, null, 0, false);
 }
 
 test "rest: a connection that waits for a request gives its buffers back and takes them for the next" {
@@ -4705,7 +4720,7 @@ test "rest: a WebSocket with nothing to read gives its buffers back, and a send 
     }
     try std.testing.expectEqual(@backingInt(WsKind.text), kind);
     try std.testing.expectEqualStrings("yo", data.?[0..len]);
-    relic_free(data.?);
+    relic_free(data.?, len);
     try std.testing.expectEqual(0, r.spare_buffers_count);
 
     client.hangUp();
@@ -5100,7 +5115,7 @@ test "tls: a request over TLS reaches the ready list and the response goes back 
     const head = "HTTP/1.1 204 No Content\r\nconnection: close\r\ncontent-length: 0\r\n\r\n";
     const buf = relic_alloc(head.len).?;
     @memcpy(buf[0..head.len], head);
-    relic_respond(v, buf, head.len, null, 0, true);
+    relic_respond(v, buf, head.len, head.len, null, 0, true);
     rounds = 0;
     while (!client.done.load(.acquire) and rounds < 500) : (rounds += 1) {
         _ = relic_reactor_tick(r, 10, &out, out.len);
@@ -5152,7 +5167,7 @@ test "rest: a TLS connection gives its buffers back and takes them for the next 
     const head = "HTTP/1.1 204 No Content\r\nconnection: close\r\ncontent-length: 0\r\n\r\n";
     const buf = relic_alloc(head.len).?;
     @memcpy(buf[0..head.len], head);
-    relic_respond(v, buf, head.len, null, 0, true);
+    relic_respond(v, buf, head.len, head.len, null, 0, true);
     rounds = 0;
     while (!client.done.load(.acquire) and rounds < 500) : (rounds += 1) {
         _ = relic_reactor_tick(r, 10, &out, out.len);
