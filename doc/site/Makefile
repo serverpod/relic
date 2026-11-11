@@ -25,6 +25,8 @@ version: validate-version
 	rm -rf $(VERSIONED_EXAMPLE_DIR)
 	mkdir -p $(dir $(VERSIONED_EXAMPLE_DIR))
 	cp -R "$(EXAMPLE_SOURCE_DIR)" "$(VERSIONED_EXAMPLE_DIR)"
+# The include in it points outside the copy, and dart format fails on that.
+	rm -f "$(VERSIONED_EXAMPLE_DIR)/analysis_options.yaml"
 
 validate-version:
 	@if [ -z "$(VERSION)" ]; then \
