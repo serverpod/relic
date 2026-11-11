@@ -242,7 +242,7 @@ User 42: Nova
 User 7: Unknown
 ```
 
-and it logs each request:
+and it logs each request, shown here without the `INFO` line before each:
 
 ```text
 2026-10-23T14:21:16.388161  0:00:00.007249 GET     [200] /users/42?name=Nova

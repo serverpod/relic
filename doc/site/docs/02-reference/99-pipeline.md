@@ -47,7 +47,7 @@ server: Relic
 Hello from /router
 ```
 
-and each request leaves one line in the log:
+and each request is logged, shown here without the `INFO` line before each:
 
 ```text
 2026-10-23T14:13:46.292765  0:00:00.010513 GET     [200] /pipeline
