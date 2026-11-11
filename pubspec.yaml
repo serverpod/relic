@@ -17,6 +17,8 @@ workspace:
   - packages/test_utils
 
 dev_dependencies:
+  # melos allows 0.3.4, which cannot find melos on Dart 3.14.
+  cli_launcher: ^0.3.4+1
   melos: 8.10.1 # Required for Dart 3.9+ support
 
 melos:
