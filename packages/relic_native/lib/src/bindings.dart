@@ -229,6 +229,7 @@ external void reactorWait(Pointer<Void> reactor);
     Pointer<ExchangeView>,
     Pointer<Uint8>,
     Uint32,
+    Uint32,
     Pointer<Uint8>,
     Uint64,
     Bool,
@@ -237,6 +238,7 @@ external void reactorWait(Pointer<Void> reactor);
 external void respond(
   Pointer<ExchangeView> view,
   Pointer<Uint8> head,
+  int headCapacity,
   int headLen,
   Pointer<Uint8> body,
   int bodyLen,
@@ -254,11 +256,19 @@ external void respondInline(
 );
 
 @Native<
-  Void Function(Pointer<ExchangeView>, Pointer<Uint8>, Uint32, Bool, Bool)
+  Void Function(
+    Pointer<ExchangeView>,
+    Pointer<Uint8>,
+    Uint32,
+    Uint32,
+    Bool,
+    Bool,
+  )
 >(symbol: 'relic_respond_stream', isLeaf: true)
 external void respondStream(
   Pointer<ExchangeView> view,
   Pointer<Uint8> head,
+  int headCapacity,
   int headLen,
   bool closeAfter,
   bool chunked,
@@ -361,8 +371,8 @@ external int wsRead(
 @Native<Pointer<Uint8> Function(Size)>(symbol: 'relic_alloc', isLeaf: true)
 external Pointer<Uint8> alloc(int length);
 
-@Native<Void Function(Pointer<Uint8>)>(symbol: 'relic_free', isLeaf: true)
-external void free(Pointer<Uint8> pointer);
+@Native<Void Function(Pointer<Uint8>, Size)>(symbol: 'relic_free', isLeaf: true)
+external void free(Pointer<Uint8> pointer, int length);
 
 @Native<Void Function(Pointer<Void>, Pointer<Stats>)>(
   symbol: 'relic_server_stats',
