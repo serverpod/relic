@@ -23,9 +23,8 @@ Future<void> main() async {
 ## HTTPS
 
 Pass a `NativeTls` with the certificate chain and private key as PEM, and
-the server speaks HTTPS. [tls.zig](https://github.com/lalinsky/tls.zig)
-runs the handshake and the records in native code, on the same thread
-as the rest of the connection.
+the server speaks HTTPS. The handshake and the records run in native
+code, on the same thread as the rest of the connection.
 
 ```dart
 await app.serveNative(
@@ -108,8 +107,7 @@ and router, and both pass the same conformance suite. The differences:
 - Throughput and tail latency. On a plaintext route the native adapter
   answers several times the requests per second of `relic_io` on one
   isolate, and its p99 under load is lower, since parsing and keep-alive
-  run on native threads while the isolate is busy. The numbers are in
-  `doc/design/relic_native/NOTES.md`.
+  run on native threads while the isolate is busy.
 - TLS. Both terminate it. `relic_io` uses a `SecurityContext` and speaks
   TLS 1.2 and 1.3. `relic_native` takes PEM through `NativeTls` and speaks
   TLS 1.3 only.
