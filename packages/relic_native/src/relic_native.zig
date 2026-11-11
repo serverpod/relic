@@ -480,10 +480,8 @@ pub const Reactor = struct {
     /// the callback of a poll runs on the thread of whichever loop
     /// dequeues it, the acceptor's among them.
     resumes: Mpsc = undefined,
-    /// Where Buffers come from. An allocator that hands whole pages back
-    /// when a block is freed. The pages of a burst of connections would
-    /// stay with a malloc for good.
-    buffers_gpa: std.mem.Allocator = std.heap.page_allocator,
+    /// Where Buffers come from, the server's `buffers_gpa`.
+    buffers_gpa: std.mem.Allocator,
     /// Buffers no connection holds, for the next one that needs them.
     spare_buffers: std.SinglyLinkedList = .{},
     spare_buffers_count: u32 = 0,
@@ -721,7 +719,14 @@ fn waiterThread(r: *Reactor) void {
 /// The acceptor, one per group, shared by the isolates of the group. The
 /// last reactor to detach stops it.
 pub const Server = struct {
+    /// Where the server, its reactors and everything they own come from,
+    /// but for the Buffers and the bytes Dart frees. Safe to call from
+    /// any thread, since Dart's threads allocate chunk records too.
     gpa: std.mem.Allocator,
+    /// Where the Buffers of the reactors come from. One that hands whole
+    /// pages back when a block is freed, since the pages of a burst of
+    /// connections would stay with a malloc for good.
+    buffers_gpa: std.mem.Allocator,
     reactors: []?*Reactor,
     address: zio.net.IpAddress,
     options: Options,
@@ -987,8 +992,8 @@ fn endConn(c: *Connection) void {
     const r = c.reactor;
     if (c.phase != .request) {
         // What Dart did not take.
-        freeChunks(&c.ex.in);
-        c.ex.ws_message.deinit(std.heap.c_allocator);
+        freeChunks(r.gpa, &c.ex.in);
+        c.ex.ws_message.deinit(dart_bytes);
         _ = r.active.fetchSub(1, .monotonic);
         _ = r.idle.fetchAdd(1, .monotonic);
     }
@@ -1680,17 +1685,17 @@ fn serveRequests(c: *Connection) !void {
             if (pump) |*p| p.cancel();
             if (ex.resp_head) |p| std.c.free(p);
             if (ex.resp_body) |p| std.c.free(p);
-            freeChunks(&ex.in);
+            freeChunks(ex.reactor.gpa, &ex.in);
         }
         if (ex.upgraded) {
             const body_unread = stopPump(&pump);
             // What the pump queued is the request body, and no message.
-            freeChunks(&ex.in);
+            freeChunks(ex.reactor.gpa, &ex.in);
             ex.in_pending = 0;
             {
                 // Dart holds on to the view until the last event.
                 errdefer {
-                    freeChunks(&ex.out);
+                    freeChunks(ex.reactor.gpa, &ex.out);
                     postLastEvent(ex);
                 }
                 // The peer's frames follow the body. A body too big to drop
@@ -1813,7 +1818,7 @@ fn pushInbound(ex: *Exchange, chunk: *Chunk) void {
 /// a peer that hung up, as the peer watcher does for a request without a
 /// streamed body.
 fn pumpRequestBody(br: *std.Io.Reader, link: *Link, ex: *Exchange, content_length: ?u64) bool {
-    const gpa = std.heap.c_allocator;
+    const gpa = ex.reactor.gpa;
     var remaining: ?u64 = content_length;
     while (true) {
         if (!waitCredit(ex, &ex.closed)) return false;
@@ -1893,7 +1898,7 @@ fn pumpResponseBody(ex: *Exchange, w: *std.Io.Writer) bool {
     while (true) {
         while (ex.out.pop()) |node| {
             const chunk: *Chunk = @fieldParentPtr("node", node);
-            defer std.heap.c_allocator.destroy(chunk);
+            defer ex.reactor.gpa.destroy(chunk);
             defer if (chunk.ptr) |p| std.c.free(p);
             if (chunk.last) {
                 if (!chunk.ok or ex.view.write_failed != 0) return false;
@@ -1918,7 +1923,7 @@ fn pumpRaw(link: *Link, ex: *Exchange) error{Parked}!void {
     // a sink Dart closed, so the sink's bytes and its end still go out.
     if (!ex.aborted) writeLast(ex);
     endWriters(ex);
-    freeChunks(&ex.out);
+    freeChunks(ex.reactor.gpa, &ex.out);
     // The last event. Dart drops its reference to the view on it, so the
     // frame is free to die once this returns.
     postLastEvent(ex);
@@ -1937,9 +1942,9 @@ fn rawReader(link: *Link, ex: *Exchange) error{Parked}!void {
         };
         const avail = rd.buffered();
         const n = @min(avail.len, in_chunk_size);
-        const chunk = std.heap.c_allocator.create(Chunk) catch return;
+        const chunk = ex.reactor.gpa.create(Chunk) catch return;
         const buf = std.c.malloc(n) orelse {
-            std.heap.c_allocator.destroy(chunk);
+            ex.reactor.gpa.destroy(chunk);
             return;
         };
         const data: [*]u8 = @ptrCast(buf);
@@ -1951,7 +1956,7 @@ fn rawReader(link: *Link, ex: *Exchange) error{Parked}!void {
 }
 
 fn pushLastInbound(ex: *Exchange, ok: bool) void {
-    const chunk = std.heap.c_allocator.create(Chunk) catch return;
+    const chunk = ex.reactor.gpa.create(Chunk) catch return;
     chunk.* = .{ .ptr = null, .len = 0, .last = true, .ok = ok };
     pushInbound(ex, chunk);
 }
@@ -1965,7 +1970,7 @@ fn rawWriter(w: *std.Io.Writer, ex: *Exchange) void {
     // end, so a later chunk finds no writer and starts another.
     while (ex.out.pop()) |node| {
         const chunk: *Chunk = @fieldParentPtr("node", node);
-        defer std.heap.c_allocator.destroy(chunk);
+        defer ex.reactor.gpa.destroy(chunk);
         defer if (chunk.ptr) |p| std.c.free(p);
         if (chunk.last) {
             if (ex.view.write_failed == 0) w.flush() catch {};
@@ -2174,7 +2179,7 @@ fn pumpWebSocket(link: *Link, ex: *Exchange) error{Parked}!void {
         ex.credit.reset();
     }
     // What Dart queued after the end, which no writer takes.
-    freeChunks(&ex.out);
+    freeChunks(ex.reactor.gpa, &ex.out);
     postLastEvent(ex);
 }
 
@@ -2190,7 +2195,6 @@ fn wsReader(link: *Link, ex: *Exchange) error{Parked}!void {
 
 fn wsRead(link: *Link, ex: *Exchange) error{Parked}!void {
     const rd = link.reader;
-    const gpa = std.heap.c_allocator;
     const message = &ex.ws_message;
     const max: u64 = ex.ws_max_message;
     while (true) {
@@ -2220,7 +2224,7 @@ fn wsRead(link: *Link, ex: *Exchange) error{Parked}!void {
         const opcode = ex.ws_message_opcode orelse head.opcode;
         ex.ws_message_opcode = opcode;
         const len: usize = @intCast(head.len);
-        message.ensureUnusedCapacity(gpa, len) catch return wsFail(ex, 1011, "Out of memory");
+        message.ensureUnusedCapacity(dart_bytes, len) catch return wsFail(ex, 1011, "Out of memory");
         const slot = message.unusedCapacitySlice()[0..len];
         rd.readSliceAll(slot) catch return wsReadEnded(link, ex);
         unmask(slot, head.mask);
@@ -2238,7 +2242,7 @@ fn wsRead(link: *Link, ex: *Exchange) error{Parked}!void {
             pushWsInbound(ex, kind, null, 0);
             continue;
         }
-        const owned = message.toOwnedSlice(gpa) catch return wsFail(ex, 1011, "Out of memory");
+        const owned = message.toOwnedSlice(dart_bytes) catch return wsFail(ex, 1011, "Out of memory");
         pushWsInbound(ex, kind, owned.ptr, owned.len);
     }
 }
@@ -2293,11 +2297,11 @@ fn wsFail(ex: *Exchange, code: u16, reason: []const u8) void {
 
 /// Queues a frame for the writer, with its own copy of `payload`.
 fn pushOutbound(ex: *Exchange, opcode: WsOpcode, payload: []const u8) void {
-    const chunk = std.heap.c_allocator.create(Chunk) catch return;
+    const chunk = ex.reactor.gpa.create(Chunk) catch return;
     var ptr: ?[*]u8 = null;
     if (payload.len > 0) {
         const buf = std.c.malloc(payload.len) orelse {
-            std.heap.c_allocator.destroy(chunk);
+            ex.reactor.gpa.destroy(chunk);
             return;
         };
         const data: [*]u8 = @ptrCast(buf);
@@ -2311,7 +2315,7 @@ fn pushOutbound(ex: *Exchange, opcode: WsOpcode, payload: []const u8) void {
 
 /// Hands Dart a message it frees with relic_free, or an empty one.
 fn pushWsInbound(ex: *Exchange, kind: WsKind, ptr: ?[*]u8, len: usize) void {
-    const chunk = std.heap.c_allocator.create(Chunk) catch {
+    const chunk = ex.reactor.gpa.create(Chunk) catch {
         if (ptr) |p| std.c.free(p);
         return;
     };
@@ -2336,7 +2340,7 @@ fn wsWriter(w: *std.Io.Writer, ex: *Exchange) void {
     while (true) {
         while (ex.out.pop()) |node| {
             const chunk: *Chunk = @fieldParentPtr("node", node);
-            defer std.heap.c_allocator.destroy(chunk);
+            defer ex.reactor.gpa.destroy(chunk);
             defer if (chunk.ptr) |p| std.c.free(p);
             const payload: []const u8 = if (chunk.ptr) |p| p[0..chunk.len] else "";
             const opcode: WsOpcode = @fromBackingInt(@intCast(@as(u4, @truncate(chunk.kind))));
@@ -2440,7 +2444,7 @@ fn drainOutbound(ex: *Exchange) void {
             const chunk: *Chunk = @fieldParentPtr("node", node);
             const last = chunk.last;
             if (chunk.ptr) |p| std.c.free(p);
-            std.heap.c_allocator.destroy(chunk);
+            ex.reactor.gpa.destroy(chunk);
             if (last) return;
         }
         ex.out_ready.wait() catch return;
@@ -2448,11 +2452,11 @@ fn drainOutbound(ex: *Exchange) void {
     }
 }
 
-fn freeChunks(queue: *Fifo) void {
+fn freeChunks(gpa: std.mem.Allocator, queue: *Fifo) void {
     while (queue.pop()) |node| {
         const chunk: *Chunk = @fieldParentPtr("node", node);
         if (chunk.ptr) |p| std.c.free(p);
-        std.heap.c_allocator.destroy(chunk);
+        gpa.destroy(chunk);
     }
 }
 
@@ -2892,14 +2896,30 @@ fn openBody(req: *std.http.Server.Request, buffer: []u8) std.http.Server.Request
     return req.server.reader.bodyReader(buffer, req.head.transfer_encoding, req.head.content_length);
 }
 
+/// Where a server made through the C API allocates. The tests take the
+/// testing allocator for both, which fails a test that leaves an
+/// allocation behind.
+const default_gpa = if (builtin.is_test) std.testing.allocator else std.heap.c_allocator;
+const default_buffers_gpa = if (builtin.is_test) std.testing.allocator else std.heap.page_allocator;
+
+/// Where bytes that Dart frees with relic_free come from, so always malloc.
+const dart_bytes = std.heap.c_allocator;
+
 var registry_lock: zio.os.Mutex = .{};
 /// One Server per group, shared by the isolates that attach.
 var registry: std.StringHashMapUnmanaged(*Server) = .empty;
 
 /// Every failure is an error, so the errdefers run. They do not on a
 /// `return null`.
-fn createServer(group: ?[]const u8, ip: []const u8, port: u16, options: Options, pem: ?*const TlsPem) !*Server {
-    const gpa = std.heap.c_allocator;
+fn createServer(
+    gpa: std.mem.Allocator,
+    buffers_gpa: std.mem.Allocator,
+    group: ?[]const u8,
+    ip: []const u8,
+    port: u16,
+    options: Options,
+    pem: ?*const TlsPem,
+) !*Server {
     const capacity = @max(options.reactor_capacity, 1);
     const address = try zio.net.IpAddress.parseIp(ip, port);
     const tls_auth = if (pem) |p| try loadCertKeyPair(gpa, p) else null;
@@ -2915,6 +2935,7 @@ fn createServer(group: ?[]const u8, ip: []const u8, port: u16, options: Options,
     errdefer if (owned_group) |g| gpa.free(g);
     srv.* = .{
         .gpa = gpa,
+        .buffers_gpa = buffers_gpa,
         .reactors = reactors,
         .options = options,
         .tls_auth = tls_auth,
@@ -3153,7 +3174,7 @@ export fn relic_server_bind(
             return existing;
         }
     }
-    const srv = createServer(key, std.mem.span(ip), port, options.*, pem) catch |err| {
+    const srv = createServer(default_gpa, default_buffers_gpa, key, std.mem.span(ip), port, options.*, pem) catch |err| {
         failure.* = switch (err) {
             error.CertificateChain => .certificate_chain,
             error.PrivateKey => .private_key,
@@ -3164,7 +3185,7 @@ export fn relic_server_bind(
         return null;
     };
     if (srv.group) |g| {
-        registry.put(std.heap.c_allocator, g, srv) catch {
+        registry.put(default_gpa, g, srv) catch {
             destroyServer(srv);
             failure.* = .bind;
             return null;
@@ -3192,12 +3213,12 @@ export fn relic_reactor_create(srv: *Server, port: dart.Dart_Port_DL) ?*Reactor 
 /// Every failure is an error, so the errdefers run. They do not on a
 /// `return null`.
 fn createReactor(srv: *Server, port: dart.Dart_Port_DL) !*Reactor {
-    const gpa = std.heap.c_allocator;
+    const gpa = srv.gpa;
     const r = try gpa.create(Reactor);
     errdefer gpa.destroy(r);
     const rt = try zio.Runtime.init(gpa, srv.runtimeOptions());
     errdefer rt.deinit();
-    r.* = .{ .gpa = gpa, .server = srv, .slot = no_slot, .port = port, .rt = rt };
+    r.* = .{ .gpa = gpa, .buffers_gpa = srv.buffers_gpa, .server = srv, .slot = no_slot, .port = port, .rt = rt };
     r.incoming.init();
     r.resumes.init();
     if (!r.poke.init()) return error.PokeFailed;
@@ -3330,6 +3351,8 @@ export fn relic_reactor_destroy(r: *Reactor) void {
         registry_lock.lock();
         defer registry_lock.unlock();
         _ = registry.remove(g);
+        // An empty registry holds no table.
+        if (registry.count() == 0) registry.clearAndFree(default_gpa);
     }
     destroyServer(srv);
 }
@@ -3571,7 +3594,7 @@ export fn relic_respond_stream(
 /// not be allocated, in which case `data` still belongs to Dart.
 export fn relic_write_chunk(v: *ExchangeView, data: [*]u8, len: usize) bool {
     const ex: *Exchange = @fieldParentPtr("view", v);
-    const chunk = std.heap.c_allocator.create(Chunk) catch return false;
+    const chunk = ex.reactor.gpa.create(Chunk) catch return false;
     chunk.* = .{ .ptr = data, .len = len };
     ex.out.push(&chunk.node);
     outputQueued(ex);
@@ -3593,7 +3616,7 @@ fn outputQueued(ex: *Exchange) void {
 export fn relic_finish_stream(v: *ExchangeView, ok: bool) void {
     const ex: *Exchange = @fieldParentPtr("view", v);
     if (ex.hijacked) ex.sink_closed = true;
-    const chunk = std.heap.c_allocator.create(Chunk) catch {
+    const chunk = ex.reactor.gpa.create(Chunk) catch {
         // Out of memory. Failing the connection is the best that is left.
         v.write_failed = 1;
         return;
@@ -3611,7 +3634,7 @@ export fn relic_read_chunk(v: *ExchangeView, data: *?[*]u8, len: *usize, status:
     const ex: *Exchange = @fieldParentPtr("view", v);
     const node = ex.in.pop() orelse return 0;
     const chunk: *Chunk = @fieldParentPtr("node", node);
-    defer std.heap.c_allocator.destroy(chunk);
+    defer ex.reactor.gpa.destroy(chunk);
     data.* = chunk.ptr;
     len.* = chunk.len;
     status.* = if (!chunk.last) 0 else if (chunk.ok) 1 else 2;
@@ -3676,7 +3699,7 @@ export fn relic_ws_upgrade(v: *ExchangeView, head: [*]u8, head_len: u32, max_mes
 /// in which case `data` still belongs to Dart.
 export fn relic_ws_send(v: *ExchangeView, data: ?[*]u8, len: usize, opcode: u8) bool {
     const ex: *Exchange = @fieldParentPtr("view", v);
-    const chunk = std.heap.c_allocator.create(Chunk) catch return false;
+    const chunk = ex.reactor.gpa.create(Chunk) catch return false;
     chunk.* = .{ .ptr = data, .len = len, .kind = opcode };
     if (opcode == @backingInt(WsOpcode.close)) ex.ws_close_sent = true;
     ex.out.push(&chunk.node);
@@ -3691,7 +3714,7 @@ export fn relic_ws_read(v: *ExchangeView, data: *?[*]u8, len: *usize, kind: *u8)
     const ex: *Exchange = @fieldParentPtr("view", v);
     const node = ex.in.pop() orelse return 0;
     const chunk: *Chunk = @fieldParentPtr("node", node);
-    defer std.heap.c_allocator.destroy(chunk);
+    defer ex.reactor.gpa.destroy(chunk);
     data.* = chunk.ptr;
     len.* = chunk.len;
     kind.* = chunk.kind;
