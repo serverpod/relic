@@ -102,15 +102,17 @@ Hello
 
 The response is the one `relic_io` sends, header for header. The `options` argument, a `NativeOptions`, sets the limits and timeouts: the listen backlog, a cap on open connections, the idle, header, body and write timeouts, the size of a body that is read before the handler runs, and the largest WebSocket message. Their defaults suit a server behind a proxy.
 
+`serveNative` also takes `tls`, a `NativeTls` with the certificate chain and the private key as PEM, and the server then speaks HTTPS. `NativeTls.fromFiles` reads the two from files. The package's README lists the key formats it accepts, and how to require a client certificate.
+
 ### What the native adapter does not do
 
 - It speaks HTTP/1.0 and HTTP/1.1 only, with `Content-Length` and chunked bodies both ways. There is no HTTP/2 or HTTP/3.
-- It does not terminate TLS. Put a proxy in front for HTTPS, or stay with `relic_io`, whose `serve` takes a `SecurityContext`.
+- Its HTTPS is TLS 1.3 only, and a client that offers only TLS 1.2 is refused. `relic_io` speaks both, and its `serve` takes a `SecurityContext`.
 - A request head is at most 16 KiB with at most 128 header fields.
 
 ### Choosing
 
-`relic_io` is the default for a reason. It runs wherever Dart runs, it has no native library in the process, and it terminates TLS itself. Stay with it until you have measured the server, not the database or the handler, as the limit. When that happens, `relic_native` answers several times the requests per second of `relic_io` on one isolate on a trivial route, with a lower tail latency under load, because a busy isolate no longer stalls the parsing of the next request. Both adapters support hot reload, hijacking and WebSockets, so a program can switch between them by changing the one line that serves.
+`relic_io` is the default for a reason. It runs wherever Dart runs, it has no native library in the process, and its TLS covers 1.2 as well as 1.3. Stay with it until you have measured the server, not the database or the handler, as the limit. When that happens, `relic_native` answers several times the requests per second of `relic_io` on one isolate on a trivial route, with a lower tail latency under load, because a busy isolate no longer stalls the parsing of the next request. Both adapters support hot reload, hijacking and WebSockets, so a program can switch between them by changing the one line that serves.
 
 ## Examples & further reading
 
