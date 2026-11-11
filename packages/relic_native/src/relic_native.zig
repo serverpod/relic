@@ -1525,7 +1525,7 @@ const lingering_close_ms = 1000;
 fn lingeringClose(link: *Link) void {
     link.shutdownSend() catch return;
     link.setReadTimeout(deadline(lingering_close_ms));
-    _ = link.socket_reader.interface.discard(.unlimited) catch {};
+    _ = link.socket_reader.interface.discardRemaining() catch {};
 }
 
 /// Answers with a status to a peer that may still be sending, then closes.
@@ -4510,6 +4510,37 @@ fn testReceive(r: *Reactor, client: TestClient, buf: []u8) ![]u8 {
         total += try client.readSome(buf[total..]);
     }
     return buf[0..total];
+}
+
+/// Sends 16 pieces of `max_head` bytes with a tick after each, as a peer
+/// still sending does, then checks that the server kept the connection
+/// through all of them and ends it when the peer hangs up.
+fn testServerTakesMore(r: *Reactor, client: TestClient) !void {
+    const piece: [max_head]u8 = @splat('a');
+    var out: [4]*ExchangeView = undefined;
+    for (0..16) |_| {
+        try client.writeAll(&piece);
+        _ = relic_reactor_tick(r, 5, &out, out.len);
+    }
+    try std.testing.expectEqual(1, r.connections.load(.monotonic));
+    client.hangUp();
+    try testConnectionsEnd(r);
+}
+
+test "close: a lingering close takes what the peer sends until it hangs up" {
+    const srv = testBind(null) orelse return error.BindFailed;
+    const r = relic_reactor_create(srv, 1) orelse return error.AttachFailed;
+    defer relic_reactor_destroy(r);
+
+    const client = try TestClient.connect(relic_server_port(srv));
+    defer client.close();
+    const fill: [max_head]u8 = @splat('a');
+    try client.writeAll("GET / HTTP/1.1\r\nX: " ++ fill);
+    const status = "HTTP/1.1 431 Request Header Fields Too Large\r\n";
+    var got: [status.len]u8 = undefined;
+    try std.testing.expectEqualStrings(status, try testReceive(r, client, &got));
+
+    try testServerTakesMore(r, client);
 }
 
 /// Has the sweeper cancel the connection task and take the cancel back,
