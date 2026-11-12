@@ -2713,7 +2713,7 @@ fn scanHead(bytes: []const u8, lines: []Line) ParseHeadError!usize {
 /// The id of the header name `bytes[start..][0..len]`, -1 for a token
 /// the table does not know, or null when it is not a token. The name is
 /// lower-cased sixteen bytes at a time, read straight from the head
-/// where sixteen bytes are there, for one hashed lookup; a known name
+/// where sixteen bytes are there, for one hashed lookup. A known name
 /// is a token by construction, so only a stranger is checked byte by
 /// byte.
 fn lookupName(bytes: []const u8, start: usize, len: usize) ?i32 {
