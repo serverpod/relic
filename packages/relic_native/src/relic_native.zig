@@ -608,8 +608,10 @@ const Poke = if (builtin.os.tag == .windows) struct {
         return true;
     }
 
+    /// A poke after this queues no APC, for the reason the pipe gives
+    /// below.
     fn deinit(self: *Poke) void {
-        if (self.waiter.load(.acquire)) |h| _ = windows.CloseHandle(h);
+        if (self.waiter.swap(null, .acq_rel)) |h| _ = windows.CloseHandle(h);
     }
 
     /// Makes the calling thread the one a poke reaches.
@@ -658,12 +660,18 @@ const Poke = if (builtin.os.tag == .windows) struct {
         _ = self;
     }
 
+    /// A poke after this writes to no descriptor. The loop outlives the
+    /// waiter in relic_reactor_destroy, and the end of a parked
+    /// connection pokes from it. By then another thread may have opened
+    /// a socket under the number the pipe had.
     fn deinit(self: *Poke) void {
         _ = libc.close(self.pipe[0]);
         _ = libc.close(self.pipe[1]);
+        self.pipe = .{ -1, -1 };
     }
 
     fn poke(self: *Poke) void {
+        if (self.pipe[1] < 0) return;
         _ = libc.write(self.pipe[1], "x", 1);
     }
 
@@ -4508,6 +4516,26 @@ test "park: a destroy takes a parked connection down" {
     var fds = [_]TestClient.net.pollfd{.{ .fd = client.fd, .events = TestClient.net.POLL.IN, .revents = 0 }};
     try std.testing.expectEqual(1, try TestClient.net.poll(&fds, 2000));
     try std.testing.expectEqual(0, try client.readSome(&byte));
+}
+
+test "poke: a poke after deinit writes to no descriptor" {
+    if (builtin.os.tag == .windows) return error.SkipZigTest;
+    var poke: Poke = .{};
+    try std.testing.expect(poke.init());
+    const closed = poke.pipe;
+    poke.deinit();
+
+    // A new pipe takes the lowest free descriptors, the two just closed.
+    var reused: [2]c_int = undefined;
+    try std.testing.expectEqual(0, libc.pipe(&reused));
+    defer for (reused) |fd| {
+        _ = libc.close(fd);
+    };
+    if (!std.mem.eql(c_int, &closed, &reused)) return error.SkipZigTest;
+
+    poke.poke();
+    var fds = [_]std.posix.pollfd{.{ .fd = reused[0], .events = std.posix.POLL.IN, .revents = 0 }};
+    try std.testing.expectEqual(0, try std.posix.poll(&fds, 0));
 }
 
 test "park: a parked WebSocket ends when Dart aborts it" {
