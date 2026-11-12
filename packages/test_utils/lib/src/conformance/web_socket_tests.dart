@@ -1,16 +1,61 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io' as io;
 import 'dart:isolate';
+import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:relic_core/relic_core.dart';
 import 'package:test/test.dart';
+import 'package:web_socket/io_web_socket.dart';
 import 'package:web_socket/web_socket.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 import 'conformance.dart';
 
 final _throwsWscClosed = throwsA(isA<WebSocketConnectionClosed>());
+
+/// A client WebSocket to [port] on the loopback, from an opening handshake
+/// made here.
+///
+/// `WebSocket.connect` reports every answer but a 101 as "was not upgraded
+/// to websocket". This fails the test with the status, the headers and the
+/// body of such an answer.
+Future<WebSocket> _openWebSocket(int port) async {
+  final random = Random();
+  final key = base64.encode([for (var i = 0; i < 16; i++) random.nextInt(256)]);
+  final client = io.HttpClient();
+  try {
+    final request = await client.openUrl(
+      'GET',
+      Uri.parse('http://localhost:$port'),
+    );
+    request.headers
+      ..set(io.HttpHeaders.connectionHeader, 'Upgrade')
+      ..set(io.HttpHeaders.upgradeHeader, 'websocket')
+      ..set('Sec-WebSocket-Key', key)
+      ..set(io.HttpHeaders.cacheControlHeader, 'no-cache')
+      ..set('Sec-WebSocket-Version', '13');
+    final response = await request.close();
+    if (response.statusCode != io.HttpStatus.switchingProtocols) {
+      final body = await utf8.decodeStream(response);
+      fail(
+        'The server answered the opening handshake with '
+        '${response.statusCode} ${response.reasonPhrase}.\n'
+        '${response.headers}\n'
+        '$body',
+      );
+    }
+    return IOWebSocket.fromWebSocket(
+      io.WebSocket.fromUpgradedSocket(
+        await response.detachSocket(),
+        serverSide: false,
+      ),
+    );
+  } finally {
+    client.close();
+  }
+}
 
 void webSocketTests(AdapterConformance conformance) {
   group('Given WebSocket support', () {
@@ -112,9 +157,7 @@ void _webSocketTests(AdapterConformance conformance) {
       final clientSockets = <WebSocket>[];
 
       Future<WebSocketEvent> echo(String message) async {
-        final clientSocket = await WebSocket.connect(
-          Uri.parse('ws://localhost:${serverPort()}'),
-        );
+        final clientSocket = await _openWebSocket(serverPort());
         clientSockets.add(clientSocket);
         clientSocket.sendText(message);
         return clientSocket.events.first;
