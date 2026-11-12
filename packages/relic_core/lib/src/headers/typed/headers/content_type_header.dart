@@ -31,12 +31,23 @@ final class ContentTypeHeader {
       ContentTypeHeader.parse(textOf(bytes));
 
   factory ContentTypeHeader.parse(String value) {
+    // Requests mostly repeat a handful of Content-Type values, and parsing one
+    // runs a regex-based scanner. A header is immutable, so a parsed one is
+    // shared. The cache is small and emptied when full, so distinct values
+    // sent by a client can't make it grow.
+    final cached = _parsed[value];
+    if (cached != null) return cached;
     final mediaType = http_parser.MediaType.parse(value);
-    return ContentTypeHeader(
+    final header = ContentTypeHeader(
       mimeType: MimeType(mediaType.type, mediaType.subtype),
       parameters: mediaType.parameters,
     );
+    if (_parsed.length >= _maxParsed) _parsed.clear();
+    return _parsed[value] = header;
   }
+
+  static const _maxParsed = 32;
+  static final _parsed = <String, ContentTypeHeader>{};
 
   /// The charset parameter, if present.
   String? get charset => parameter('charset');

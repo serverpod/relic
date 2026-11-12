@@ -83,4 +83,37 @@ void main() {
       expect(header.parameter('BOUNDARY'), 'abc123');
     });
   });
+
+  group('Given a Content-Type value parsed before', () {
+    test('when parsed again then the same header is returned', () {
+      final first = ContentTypeHeader.parse('application/json; charset=utf-8');
+      final second = ContentTypeHeader.parse('application/json; charset=utf-8');
+
+      expect(identical(first, second), isTrue);
+      expect(second.mimeType, MimeType.json);
+      expect(second.charset, 'utf-8');
+    });
+
+    test('when many distinct values are parsed then each still parses '
+        'correctly', () {
+      for (var i = 0; i < 100; i++) {
+        final header = ContentTypeHeader.parse(
+          'multipart/form-data; boundary=b$i',
+        );
+        expect(header.mimeType, MimeType.multipartFormData);
+        expect(header.parameter('boundary'), 'b$i');
+      }
+    });
+
+    test('when an invalid value is parsed twice then both throw', () {
+      expect(
+        () => ContentTypeHeader.parse('not-a-content-type'),
+        throwsFormatException,
+      );
+      expect(
+        () => ContentTypeHeader.parse('not-a-content-type'),
+        throwsFormatException,
+      );
+    });
+  });
 }
