@@ -218,13 +218,7 @@ const int _semicolon = 0x3B;
 String _readParameterValue(ByteScanner scanner) {
   final value = scanner.readTokenOrQuotedString();
   scanner.skipOws();
-  if (!scanner.atEnd) {
-    throw FormatException(
-      'unexpected characters after parameter value',
-      scanner.text(0, scanner.source.length),
-      scanner.position,
-    );
-  }
+  scanner.expectEnd('parameter value');
   return value;
 }
 

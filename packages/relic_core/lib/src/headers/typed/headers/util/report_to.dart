@@ -20,12 +20,7 @@ String? parseReportToParam(Iterable<ByteScanner> params) {
     final scanner = ByteScanner(rest);
     final value = scanner.readQuotedString();
     scanner.skipOws();
-    if (!scanner.atEnd) {
-      throw FormatException(
-        'unexpected characters after report-to value',
-        textOf(rest),
-      );
-    }
+    scanner.expectEnd('report-to value');
     return value;
   }
   return null;

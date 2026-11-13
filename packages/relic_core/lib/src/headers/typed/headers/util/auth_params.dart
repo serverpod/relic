@@ -30,13 +30,7 @@ List<(String name, String value)> parseAuthParams(Uint8List value) {
     part.skipOws();
     final paramValue = part.readTokenOrQuotedString();
     part.skipOws();
-    if (!part.atEnd) {
-      throw FormatException(
-        'unexpected characters after auth-param',
-        part.rest,
-        part.position,
-      );
-    }
+    part.expectEnd('auth-param');
     params.add((name, paramValue));
   }
   return params;
