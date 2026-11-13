@@ -24,7 +24,7 @@ Request fromHttpRequest(
     url: url,
     target: target,
     headers: headers,
-    body: bodyFromHttpRequest(request, headers, onBodyEnd: onBodyEnd),
+    body: bodyFromHttpRequest(request, onBodyEnd: onBodyEnd),
     lazyConnectionInfo: () =>
         connectionInfoFromHttpConnectionInfo(request.connectionInfo),
   );
@@ -71,31 +71,23 @@ Headers headersFromHttpRequest(io.HttpRequest request) {
   return Headers.fromStore(store);
 }
 
-/// The body of [request], typed by [headers].
+/// The body of [request], untyped. The core types it from the headers.
 ///
 /// A request that declares no length and is not chunked has none. The
 /// request goes in lazily: a body rejected unread is then never listened to,
 /// and dart:io drains it after the response instead of resetting the client.
 /// [onBodyEnd] runs when a chunked body has been read to its end.
-Body bodyFromHttpRequest(
-  io.HttpRequest request,
-  Headers headers, {
-  void Function()? onBodyEnd,
-}) {
+Body bodyFromHttpRequest(io.HttpRequest request, {void Function()? onBodyEnd}) {
   final length = request.contentLength;
   if (length < 0 && !request.headers.chunkedTransferEncoding) {
     return Body.empty();
   }
   final chunked = length < 0;
-  final contentType = headers.tryGet(Headers.contentType);
   return Body(
     open: () => chunked && onBodyEnd != null
         ? request.transform(_endingWith(onBodyEnd))
         : request,
     contentLength: chunked ? null : length,
-    bodyType: contentType == null
-        ? null
-        : BodyType.fromContentType(contentType),
   );
 }
 

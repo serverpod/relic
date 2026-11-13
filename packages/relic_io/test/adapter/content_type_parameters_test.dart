@@ -70,8 +70,8 @@ void main() {
 
   test(
     'Given a request whose Content-Type has a parameter name that is not a token, '
-    'when the handler echoes the request body, '
-    'then the response succeeds without that parameter.',
+    'when the request is made, '
+    'then the client receives a 400.',
     () async {
       server = await testServe((req) => Response.ok(body: req.body));
 
@@ -81,8 +81,7 @@ void main() {
       final response = await request.close();
       await response.drain<void>();
 
-      expect(response.statusCode, 200);
-      expect(response.headers.contentType?.parameters, isNot(contains('a@b')));
+      expect(response.statusCode, 400);
     },
   );
 

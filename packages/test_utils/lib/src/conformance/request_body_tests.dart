@@ -63,13 +63,8 @@ void requestBodyTests(AdapterConformance conformance) {
     });
 
     test('when a POST declares a Content-Type that does not parse, '
-        'then the body has no type and still reads', () async {
-      await serve((req) async {
-        final bytes = await req.body.readAll();
-        return Response.ok(
-          body: Body.fromString('${req.body.bodyType} ${utf8.decode(bytes)}'),
-        );
-      });
+        'then the client receives a 400 that names the header.', () async {
+      await serve((req) => Response.ok());
 
       // No HTTP client sends such a header, so this one is written by hand.
       final reply = await rawExchange(
@@ -79,7 +74,54 @@ void requestBodyTests(AdapterConformance conformance) {
         connect: conformance.connect,
       );
 
-      expect(reply, endsWith('\r\n\r\nnull hi'));
+      expect(reply, startsWith('HTTP/1.1 400 Bad Request\r\n'));
+      expect(splitHead(reply).body, startsWith("Invalid 'content-type' "));
+    });
+
+    test('when a chunked POST declares a Content-Type that does not parse, '
+        'then the client receives a 400.', () async {
+      await serve((req) => Response.ok());
+
+      final reply = await rawExchange(
+        server!.port,
+        'POST / HTTP/1.1\r\nHost: x\r\nContent-Type: ;;;\r\n'
+        'Transfer-Encoding: chunked\r\nConnection: close\r\n\r\n'
+        '2\r\nhi\r\n0\r\n\r\n',
+        connect: conformance.connect,
+      );
+
+      expect(reply, startsWith('HTTP/1.1 400 Bad Request\r\n'));
+    });
+
+    test('when a bodiless GET declares a Content-Type that does not parse, '
+        'then the handler answers it.', () async {
+      await serve((req) => Response.ok(body: Body.fromString('served')));
+
+      final reply = await rawExchange(
+        server!.port,
+        'GET / HTTP/1.1\r\nHost: x\r\nContent-Type: ;;;\r\n'
+        'Connection: close\r\n\r\n',
+        connect: conformance.connect,
+      );
+
+      expect(reply, startsWith('HTTP/1.1 200 OK\r\n'));
+      expect(splitHead(reply).body, 'served');
+    });
+
+    test('when a POST of length zero declares a type, '
+        'then the body has no type.', () async {
+      await serve(
+        (req) => Response.ok(body: Body.fromString('${req.body.bodyType}')),
+      );
+
+      final reply = await rawExchange(
+        server!.port,
+        'POST / HTTP/1.1\r\nHost: x\r\nContent-Type: text/plain\r\n'
+        'Content-Length: 0\r\nConnection: close\r\n\r\n',
+        connect: conformance.connect,
+      );
+
+      expect(splitHead(reply).body, 'null');
     });
 
     test('when the handler pipes it into the response, '
