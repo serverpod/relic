@@ -1,3 +1,8 @@
+## Unreleased
+- fix: `ContentTypeHeader` follows the media type grammar of RFC 9110 8.3.1. It reads the bytes with the scanner the other typed headers use, in place of the regular expressions of `http_parser`, and a value parses in about a seventh of the time
+  - A byte above 0x7F outside a quoted value is a `FormatException`, as are a folded line and a backslash before a control character. A tab inside a quoted value is accepted, and so is a `;` with no parameter after it, as in `application/json;`
+  - Encoding writes a parameter value that is not a token as a quoted string. It throws `FormatException` for a value with a control character or a code unit above 0xFF
+
 ## 2.0.0
 
 Relic 2.0 adds `relic_native`, a native HTTP adapter that answers about five times the requests per second of `relic_io`. To try it, add the package and call `app.serveNative()` where the program called `app.serve()`.

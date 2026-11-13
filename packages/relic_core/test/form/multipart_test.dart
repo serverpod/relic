@@ -454,6 +454,28 @@ void main() {
     ]);
   });
 
+  test('Given a multipart file part whose Content-Type quotes a UTF-8 name, '
+      'when the request is streamed, '
+      'then its body type has the name.', () async {
+    final request = _request(
+      boundary: 'utf8-type',
+      body: _multipartBody('utf8-type', [
+        const _Part(
+          headers: {
+            'content-disposition':
+                'form-data; name="upload"; filename="file.txt"',
+            'content-type': 'text/plain; name="\u65e5\u672c.txt"',
+          },
+          body: 'file-body',
+        ),
+      ]),
+    );
+
+    final part = await request.multipart().first;
+
+    expect(part.body.bodyType?.parameters, {'name': '\u65e5\u672c.txt'});
+  });
+
   test('Given a multipart text part without a charset, '
       'when the request is streamed, '
       'then its body type has no encoding.', () async {

@@ -114,4 +114,28 @@ void main() {
       ]);
     });
   });
+
+  group('Given a Content-Type header in a byte store,', () {
+    const cases = [
+      'application/json',
+      'Application/JSON; Charset=UTF-8',
+      ' text/plain ;\tcharset=utf-8 ',
+      r'multipart/form-data; boundary="a;b\"c"; boundary=d',
+      'text/plain; title="caf\u00e9"',
+    ];
+    for (final value in cases) {
+      test('when "$value" is read, '
+          'then the bytes path reads what the text path reads.', () {
+        final (bytes, text) = _both('Content-Type', value);
+        expect(bytes.contentType, text.contentType);
+      });
+    }
+
+    test('when the value has no subtype, '
+        'then both paths reject it.', () {
+      final (bytes, text) = _both('Content-Type', 'text');
+      expect(() => bytes.contentType, throwsA(isA<InvalidHeaderException>()));
+      expect(() => text.contentType, throwsA(isA<InvalidHeaderException>()));
+    });
+  });
 }
