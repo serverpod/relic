@@ -110,7 +110,7 @@ curl -X POST http://localhost:8080/shout -d 'hello, relic'
 HELLO, RELIC
 ```
 
-`readAsString` decodes with the charset the request declares in its `Content-Type`, and with UTF-8 when it declares none. For JSON, decode that string yourself, and turn the ways it can go wrong into answers the client can act on:
+`readAsString` decodes with the charset the request declares in its `Content-Type`, and with UTF-8 when it declares none. A request with a body whose `Content-Type` does not parse never reaches the handler. Relic answers it with a 400 that names the header. For JSON, decode that string yourself, and turn the ways it can go wrong into answers the client can act on:
 
 GITHUB_CODE_BLOCK lang="dart" file="../_example/routing/request.dart" doctag="requests-json-body" title="Reading a JSON body"
 

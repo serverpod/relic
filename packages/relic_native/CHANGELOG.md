@@ -1,3 +1,7 @@
+## Unreleased
+- fix: The request body takes its type from `relic_core`, and a request
+  with no content has no body type
+
 ## 2.0.0
 
 The first release of `relic_native`, a

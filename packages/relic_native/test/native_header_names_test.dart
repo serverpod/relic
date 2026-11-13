@@ -40,7 +40,7 @@ void main() {
   tearDown(() => server.close(force: true));
 
   test('Given a request with every known name, when the names are read, '
-      'then each is the constant of its id, in wire order', () async {
+      'then each is the constant of its id, in wire order.', () async {
     final head = StringBuffer(
       'GET / HTTP/1.1\r\nHost: a\r\nConnection: close\r\n',
     );

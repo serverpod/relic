@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'package:meta/meta.dart';
 
 import '../../relic_core.dart';
+import '../body/body.dart' show BodyInternal;
 
 part 'message.dart';
 part 'request.dart';

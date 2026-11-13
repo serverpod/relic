@@ -120,7 +120,8 @@ class Body {
   /// var body = Body.fromString('hello', mimeType: MimeType.plainText);
   /// print(body.bodyType?.toHeaderValue()); // text/plain; charset=utf-8
   /// ```
-  final BodyType? bodyType;
+  BodyType? get bodyType => _type;
+  BodyType? _type;
 
   /// A body from one of [bytes], [stream] or [open], or an empty body from
   /// none of them.
@@ -141,8 +142,9 @@ class Body {
     Stream<Uint8List>? stream,
     Stream<Uint8List> Function()? open,
     int? contentLength,
-    this.bodyType,
+    BodyType? bodyType,
   }) : _stream = stream,
+       _type = bodyType,
        _open = open ?? (bytes == null && stream == null ? _openEmpty : null),
        contentLength =
            bytes?.length ??
@@ -541,6 +543,19 @@ class Body {
     }
     // check again to not throw on success
     if (totalBytes > maxLength) throw MaxBodySizeExceeded(maxLength);
+  }
+}
+
+/// Members of [Body] for relic_core, not exported from relic_core.dart.
+extension BodyInternal on Body {
+  /// Types a request body that its adapter handed over untyped.
+  ///
+  /// The type goes on the instance the adapter built. An adapter may keep
+  /// that instance to see whether the body was read, which a typed copy
+  /// would hide from it.
+  void typeAs(BodyType type) {
+    assert(_type == null, 'The body has a type already');
+    _type = type;
   }
 }
 

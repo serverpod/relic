@@ -135,7 +135,7 @@ abstract interface class AdapterExchange {
   /// Converts the adapter's request into a [Request] built with [create].
   ///
   /// May throw, for example on a malformed target. The core answers that
-  /// with 400.
+  /// with 400. For a header that does not parse, the 400 names the header.
   Request toRequest(RequestFactory create);
 
   /// Sends [response].

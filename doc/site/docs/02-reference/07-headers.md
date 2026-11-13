@@ -86,6 +86,8 @@ Invalid 'range' header: Invalid range
 
 The accessor throws an `InvalidHeaderException`, and Relic turns it into a 400 that names the header. The handler never ran. A handler that would rather answer itself reads with `tryGet`, which gives null for a value that does not parse as well as for one that is absent.
 
+`Content-Type` is the one header Relic reads on its own. The body of a request takes its type from it, so a request with a body and a `Content-Type` that does not parse gets the 400 before any handler runs.
+
 For a header Relic has no accessor for, index the headers by name. `headers['X-Request-Id']` gives its values as text, or null. The name is matched whatever its case.
 
 ## Writing headers

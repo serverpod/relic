@@ -65,7 +65,7 @@ final class _FakeExchange implements AdapterExchange {
   final _Respond respondMode;
   final Uri url;
   final Headers headers;
-  final bool toRequestThrows;
+  final Object? toRequestError;
 
   final responses = <Response>[];
   var aborted = false;
@@ -77,7 +77,7 @@ final class _FakeExchange implements AdapterExchange {
     this.respondMode = _Respond.sync,
     Uri? url,
     Headers? headers,
-    this.toRequestThrows = false,
+    this.toRequestError,
   }) : url = url ?? localhostUri,
        headers = headers ?? Headers.empty();
 
@@ -86,7 +86,7 @@ final class _FakeExchange implements AdapterExchange {
 
   @override
   Request toRequest(RequestFactory create) {
-    if (toRequestThrows) throw const FormatException('bad target');
+    if (toRequestError case final error?) throw error;
     return create(Method.get, this, url: url, headers: headers);
   }
 
@@ -245,17 +245,45 @@ void main() {
 
   test('Given an exchange whose request cannot be read, '
       'when it is pushed, '
-      'then a 400 is sent and the handler never runs', () async {
+      'then a 400 is sent and the handler never runs.', () async {
     var handled = false;
     final (_, adapter) = await _serve((_) {
       handled = true;
       return _ok();
     });
-    final exchange = _FakeExchange(toRequestThrows: true);
+    final exchange = _FakeExchange(
+      toRequestError: const FormatException('bad target'),
+    );
 
     await _push(adapter, exchange);
 
     expect(exchange.responses.single.statusCode, 400);
+    expect(handled, isFalse);
+  });
+
+  test('Given an exchange whose request has a header that does not parse, '
+      'when it is pushed, '
+      'then the 400 names the header and the handler never runs.', () async {
+    var handled = false;
+    final (_, adapter) = await _serve((_) {
+      handled = true;
+      return _ok();
+    });
+    final exchange = _FakeExchange(
+      toRequestError: const InvalidHeaderException(
+        'expected a media type',
+        headerType: 'content-type',
+      ),
+    );
+
+    await _push(adapter, exchange);
+
+    final response = exchange.responses.single;
+    expect(response.statusCode, 400);
+    expect(
+      await response.readAsString(),
+      "Invalid 'content-type' header: expected a media type",
+    );
     expect(handled, isFalse);
   });
 
