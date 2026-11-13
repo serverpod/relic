@@ -65,13 +65,7 @@ final class ContentTypeHeader {
           .readTokenOrQuotedString();
       scanner.skipOws();
     }
-    if (!scanner.atEnd) {
-      throw FormatException(
-        'unexpected characters after media type',
-        scanner.text(0, scanner.source.length),
-        scanner.position,
-      );
-    }
+    scanner.expectEnd('media type');
     return ContentTypeHeader._(
       MimeType(type.toLowerCase(), subtype.toLowerCase()),
       parameters == null ? const {} : UnmodifiableMapView(parameters),

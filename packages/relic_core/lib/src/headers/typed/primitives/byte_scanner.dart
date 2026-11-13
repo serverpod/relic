@@ -65,6 +65,14 @@ final class ByteScanner {
     }
   }
 
+  /// Throws [FormatException] unless the cursor is at the end.
+  ///
+  /// The message names [what] as the element the leftover characters
+  /// follow.
+  void expectEnd(String what) {
+    if (!atEnd) throw _error('unexpected characters after $what');
+  }
+
   /// Skips RFC 9110 `OWS = *( SP / HTAB )` at the cursor.
   void skipOws() {
     while (_pos < source.length) {
