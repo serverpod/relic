@@ -197,8 +197,15 @@ final class RequestFactory {
   ///
   /// Pass [url], or a [target] and an [authority]. From the latter, the
   /// first read of [Request.url] builds the URL with [scheme]. The request
-  /// takes the protocol of [exchange]. Throws on a URL that is not absolute
-  /// or has a fragment, and on an [authority] that does not parse.
+  /// takes the protocol of [exchange].
+  ///
+  /// Pass [body] untyped. A body with content takes its type from the
+  /// Content-Type in [headers], and an empty body gets none. A body that
+  /// comes typed keeps its type.
+  ///
+  /// Throws on a URL that is not absolute or has a fragment, and on an
+  /// [authority] that does not parse. Throws [InvalidHeaderException] on a
+  /// Content-Type that does not parse, when the body has content.
   Request call(
     Method method,
     AdapterExchange exchange, {
@@ -209,18 +216,30 @@ final class RequestFactory {
     Headers? headers,
     Body? body,
     ConnectionInfo Function()? lazyConnectionInfo,
-  }) => Request._(
-    method,
-    url,
-    exchange,
-    target: target,
-    authority: authority,
-    scheme: scheme,
-    protocol: exchange.protocol,
-    headers: headers,
-    body: body,
-    lazyConnectionInfo: lazyConnectionInfo,
-  );
+  }) {
+    final request = Request._(
+      method,
+      url,
+      exchange,
+      target: target,
+      authority: authority,
+      scheme: scheme,
+      protocol: exchange.protocol,
+      headers: headers,
+      body: body,
+      lazyConnectionInfo: lazyConnectionInfo,
+    );
+    _typeBody(request.body, request.headers);
+    return request;
+  }
+
+  static void _typeBody(Body body, Headers headers) {
+    if (body.contentLength == 0 || body.bodyType != null) return;
+    final contentType = headers.contentType;
+    if (contentType != null) {
+      body.typeAs(BodyType.fromContentType(contentType));
+    }
+  }
 }
 
 /// The [RequestFactory] the core hands to [AdapterExchange.toRequest].

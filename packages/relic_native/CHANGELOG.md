@@ -1,3 +1,10 @@
+## Unreleased
+- fix: The request body takes its type from `relic_core`, and a request
+  with no content has no body type
+- fix: A request with more than one `Content-Type` field gets 400. A
+  filter in front and the server could otherwise read the body as
+  different types, as in CVE-2023-38199
+
 ## 2.0.0
 
 The first release of `relic_native`, a

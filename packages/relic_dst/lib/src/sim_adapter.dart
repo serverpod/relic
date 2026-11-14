@@ -683,7 +683,6 @@ final class _SimExchange implements AdapterExchange {
     final headers = Headers.fromStore(
       ByteHeaderStore(_head.bytes, _head.slots),
     );
-    final contentType = headers.tryGet(Headers.contentType);
     final (target, scheme, authority) = _parseTarget();
     final socket = _connection._socket;
     return create(
@@ -697,9 +696,6 @@ final class _SimExchange implements AdapterExchange {
         bytes: _bytes,
         stream: _bytes == null ? _stream : null,
         contentLength: _contentLength,
-        bodyType: contentType == null
-            ? null
-            : BodyType.fromContentType(contentType),
       ),
       lazyConnectionInfo: () => ConnectionInfo(
         remote: SocketAddress(
