@@ -115,6 +115,9 @@ and router, and both pass the same conformance suite. The differences:
   Linux, macOS and Windows.
 - Dependencies. `relic_io` is pure Dart. `relic_native` ships prebuilt
   libraries and needs Zig only for a source checkout.
+- A repeated `Content-Type`. `relic_native` answers a request with two
+  `Content-Type` fields with 400. `relic_io` reads the last one, since
+  dart:io keeps only that and the repeat never reaches Relic.
 
 Stay with `relic_io` unless you have measured the dart:io adapter as the
 bottleneck. `relic_native` is newer code with a native library in the
