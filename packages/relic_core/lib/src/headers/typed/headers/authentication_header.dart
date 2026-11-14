@@ -5,6 +5,7 @@ import 'package:collection/collection.dart';
 import '../../../../relic_core.dart';
 import '../primitives/byte_fields.dart';
 import '../primitives/byte_scanner.dart' show latin1Bytes;
+import '../primitives/parameter_value.dart';
 import 'util/auth_params.dart';
 
 /// A class representing the HTTP Authentication header.
@@ -81,8 +82,7 @@ final class AuthenticationHeader {
     final paramsString = parameters
         .map((param) {
           if (param.key.isEmpty) return Token68.validate(param.value);
-          return '${Token.validate(param.key)}='
-              '${ParameterValue(param.value).encode()}';
+          return encodeParameter(param.key, param.value);
         })
         .join(', ');
     return '$scheme $paramsString';

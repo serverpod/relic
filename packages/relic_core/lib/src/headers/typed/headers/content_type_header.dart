@@ -5,6 +5,7 @@ import 'package:collection/collection.dart';
 
 import '../../../../relic_core.dart';
 import '../primitives/byte_scanner.dart';
+import '../primitives/parameter_value.dart';
 
 /// A class representing the HTTP Content-Type header.
 final class ContentTypeHeader {
@@ -81,11 +82,10 @@ final class ContentTypeHeader {
   /// Converts the [ContentTypeHeader] instance into a string representation
   /// suitable for HTTP headers.
   String _encode() {
-    mimeType.validate();
     return [
-      '${mimeType.primaryType.toLowerCase()}/${mimeType.subType.toLowerCase()}',
+      mimeType.toHeaderValue().toLowerCase(),
       for (final MapEntry(:key, :value) in parameters.entries)
-        '${Token.validate(key)}=${ParameterValue(value).encode()}',
+        encodeParameter(key, value),
     ].join('; ');
   }
 

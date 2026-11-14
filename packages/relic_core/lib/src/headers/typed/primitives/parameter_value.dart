@@ -63,6 +63,14 @@ final class ParameterValue {
   String toString() => encode();
 }
 
+/// The wire form of the parameter [name] with [value], `name=value`, the
+/// value a `token` or a `quoted-string` (RFC 9110 5.6.6).
+///
+/// Throws [FormatException] when [name] is not a token or [value] has a
+/// character neither form can carry.
+String encodeParameter(String name, String value) =>
+    '${Token.validate(name)}=${ParameterValue(value).encode()}';
+
 String _quote(String s) {
   final buf = StringBuffer()..writeCharCode(0x22);
   for (var i = 0; i < s.length; i++) {
