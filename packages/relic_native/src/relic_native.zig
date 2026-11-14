@@ -2586,7 +2586,13 @@ fn parseHead(bytes: []const u8, head_copy: []u8, slots: []HeaderSlot) ParseHeadE
                 close_option = close_option or connectionHas(value, "close");
                 keep_alive_option = keep_alive_option or connectionHas(value, "keep-alive");
             },
-            header_names.content_type => head.content_type = value,
+            header_names.content_type => {
+                // A second Content-Type gets a 400. A filter in front and
+                // this server could otherwise read the body as different
+                // types, as in CVE-2023-38199.
+                if (head.content_type != null) return error.MalformedHead;
+                head.content_type = value;
+            },
             header_names.content_length => {
                 if (head.content_length != null) return error.MalformedHead;
                 head.content_length = parseContentLength(value) orelse return error.MalformedHead;
@@ -5326,6 +5332,15 @@ test "head: HTTP/1.1 needs one Host and HTTP/1.0 may have none" {
     try std.testing.expectError(error.MalformedHead, parseHead("GET / HTTP/1.1\r\n\r\n", &head_copy, &slots));
     try std.testing.expectError(error.MalformedHead, parseHead("GET / HTTP/1.1\r\nHost: a\r\nHost: b\r\n\r\n", &head_copy, &slots));
     try std.testing.expectError(error.MalformedHead, parseHead("GET / HTTP/1.0\r\nHost: a\r\nhost: a\r\n\r\n", &head_copy, &slots));
+}
+
+test "head: a second Content-Type is malformed" {
+    var head_copy: [max_head]u8 = undefined;
+    var slots: [max_headers]HeaderSlot = undefined;
+    const one = try parseHead("POST / HTTP/1.1\r\nHost: a\r\nContent-Type: text/plain\r\n\r\n", &head_copy, &slots);
+    try std.testing.expectEqualStrings("text/plain", one.head.content_type.?);
+    try std.testing.expectError(error.MalformedHead, parseHead("POST / HTTP/1.1\r\nHost: a\r\nContent-Type: text/plain\r\nContent-Type: application/json\r\n\r\n", &head_copy, &slots));
+    try std.testing.expectError(error.MalformedHead, parseHead("POST / HTTP/1.1\r\nHost: a\r\nContent-Type: text/plain\r\ncontent-type: text/plain\r\n\r\n", &head_copy, &slots));
 }
 
 test "head: the Connection tokens decide keep-alive by version" {
