@@ -7,6 +7,7 @@ import '../../../../relic_core.dart';
 import '../primitives/byte_fields.dart';
 import '../primitives/byte_scanner.dart';
 import '../primitives/ext_value.dart';
+import '../primitives/parameter_value.dart';
 
 /// A class representing the HTTP Content-Disposition header.
 ///
@@ -186,11 +187,11 @@ class ContentDispositionParameter {
   /// Converts the [ContentDispositionParameter] instance into a string
   /// representation suitable for HTTP headers.
   String _encode() {
-    Token.validate(name);
     if (isExtended) {
+      Token.validate(name);
       return '$name*=${ExtValue(value, language: language).encode()}';
     }
-    return '$name=${ParameterValue(value).encode()}';
+    return encodeParameter(name, value);
   }
 
   @override

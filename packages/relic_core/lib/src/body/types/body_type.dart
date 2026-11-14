@@ -122,7 +122,7 @@ class BodyType {
       mimeType.toHeaderValue(),
       if (charset != null) 'charset=${charset.name}',
       for (final MapEntry(:key, :value) in parameters.entries)
-        '${Token.validate(key)}=${ParameterValue(value).encode()}',
+        encodeParameter(key, value),
     ].join('; ');
   }
 
