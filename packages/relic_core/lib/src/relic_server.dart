@@ -173,16 +173,10 @@ final class _RelicServer implements RelicServer {
     try {
       request = exchange.toRequest(requestFactory);
     } on HeaderException catch (error) {
-      // Any client can send this to any route. The line costs about 6 us,
-      // an error log with its stack trace 0.85 ms.
-      logMessage('Rejected a request. ${error.httpResponseBody}');
+      _logRejected(error.httpResponseBody);
       return _respondOrAbort(exchange, _badHeader(error));
-    } catch (error, stackTrace) {
-      logMessage(
-        'Error reading request.\n$error',
-        stackTrace: stackTrace,
-        type: LoggerType.error,
-      );
+    } catch (error) {
+      _logRejected(error);
       return _respondOrAbort(exchange, Response.badRequest());
     }
 
@@ -431,6 +425,12 @@ final class _RelicServer implements RelicServer {
     return origin.host.toLowerCase() == request.url.host.toLowerCase();
   }
 }
+
+/// Logs why a request got its 400 before any handler ran.
+///
+/// Any client can send such a request to any route. The line costs about
+/// 6 us, an error log with its stack trace 0.85 ms.
+void _logRejected(Object reason) => logMessage('Rejected a request. $reason');
 
 /// The 400 that tells the client which header did not parse.
 Response _badHeader(HeaderException error) =>

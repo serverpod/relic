@@ -5,6 +5,7 @@
 - fix: A request with a body whose `Content-Type` does not parse gets 400 with the header's error in the body, before any handler runs. Such a request used to reach the handler with a body of no type
   - `RequestFactory` types the request body from the headers, so every adapter follows the one rule. An adapter passes the body untyped
   - A request with no content has no body type
+- fix: A request that gets its 400 before any handler runs, for a target or a header that does not parse, is logged as one info line with no stack trace
 
 ## 2.0.0
 
