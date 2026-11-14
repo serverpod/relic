@@ -30,6 +30,36 @@ void main() {
     });
   }
 
+  test(
+    'Given every code unit, '
+    'when asked whether it is a tchar, '
+    'then only the digits, the letters and the 15 marks of RFC 9110 are.',
+    () {
+      const marks = "!#\$%&'*+-.^_`|~";
+      const digits = '0123456789';
+      const letters = 'abcdefghijklmnopqrstuvwxyz';
+      final expected = [
+        ...marks.codeUnits,
+        ...digits.codeUnits,
+        ...letters.toUpperCase().codeUnits,
+        ...letters.codeUnits,
+      ]..sort();
+
+      final tchars = [
+        for (var c = 0; c <= 0xFFFF; c++)
+          if (HeaderName.isTchar(c)) c,
+      ];
+
+      expect(tchars, expected);
+    },
+  );
+
+  test('Given a negative code, '
+      'when asked whether it is a tchar, '
+      'then it is not.', () {
+    expect(HeaderName.isTchar(-1), isFalse);
+  });
+
   test('Given a name that differs from a known one by one character, '
       'when looked up, then it is unknown', () {
     expect(HeaderName.lookup('content-typo').id, -1);
