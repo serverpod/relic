@@ -107,6 +107,17 @@ void main() {
     expect(reply, startsWith('HTTP/1.1 400'));
   });
 
+  test('Given a request with two Content-Type fields, '
+      'when it is sent, '
+      'then the server answers 400 and closes.', () async {
+    final reply = await send(
+      'POST / HTTP/1.1\r\nHost: x\r\nContent-Type: text/plain\r\n'
+      'Content-Type: application/json\r\nContent-Length: 2\r\n\r\nhi',
+    );
+
+    expect(reply, startsWith('HTTP/1.1 400'));
+  });
+
   test('Given a Content-Length of digits, when it is sent, '
       'then the request is served', () async {
     final reply = await send(
