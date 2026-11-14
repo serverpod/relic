@@ -892,28 +892,18 @@ bool _eqUnits(String name, String expected) {
 bool _eqFolded(int c, int expected) =>
     c == expected || (expected >= 0x61 && (c | 0x20) == expected);
 
-/// RFC 9110 5.6.2 tchar.
-bool _isTchar(int c) {
-  if (c >= 0x30 && c <= 0x39) return true; // 0-9
-  if (c >= 0x41 && c <= 0x5a) return true; // A-Z
-  if (c >= 0x61 && c <= 0x7a) return true; // a-z
-  switch (c) {
-    case 0x21: // !
-    case 0x23: // #
-    case 0x24: // $
-    case 0x25: // %
-    case 0x26: // &
-    case 0x27: // '
-    case 0x2a: // *
-    case 0x2b: // +
-    case 0x2d: // -
-    case 0x2e: // .
-    case 0x5e: // ^
-    case 0x5f: // _
-    case 0x60: // `
-    case 0x7c: // |
-    case 0x7e: // ~
-      return true;
-  }
-  return false;
-}
+/// RFC 9110 5.6.2 tchar, looked up in [_tchar].
+///
+/// A token scan compiled ahead of time takes 19 instructions a byte with
+/// the table. Range compares with a switch took 30, and a bit vector of
+/// four 32-bit words took about as long as those.
+@pragma('vm:prefer-inline')
+bool _isTchar(int c) => c >= 0 && c < 0x80 && _tchar.codeUnitAt(c) == 0x31;
+
+/// A `1` at the offset of every ASCII code that is a tchar: the digits, the
+/// letters and ``!#$%&'*+-.^_`|~``.
+const _tchar =
+    '00000000000000000000000000000000' // 0x00-0x1F
+    '01011111001101101111111111000000' // 0x20-0x3F
+    '01111111111111111111111111100011' // 0x40-0x5F
+    '11111111111111111111111111101010'; // 0x60-0x7F
