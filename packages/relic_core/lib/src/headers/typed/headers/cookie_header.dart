@@ -62,6 +62,10 @@ final class CookieHeader {
         i++;
       }
       final nameStart = i;
+      // A run of name characters needs no check but its end.
+      while (i < length && classes[bytes[i]] & cookieNameChar != 0) {
+        i++;
+      }
       var nameEnd = i;
       var ok = true;
       var b = 0;
@@ -87,6 +91,10 @@ final class CookieHeader {
         i++;
       }
       final valueStart = i;
+      // Likewise a run of cookie-octets.
+      while (i < length && classes[bytes[i]] & cookieOctet != 0) {
+        i++;
+      }
       var valueEnd = i;
       var quotes = 0;
       var lastQuote = -1;
