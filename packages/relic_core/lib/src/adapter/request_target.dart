@@ -86,6 +86,11 @@ final class RequestTarget {
     if (path.contains('%') || path.contains(r'\')) {
       return Uri(path: path).pathSegments;
     }
+    return _splitPlain(path);
+  }
+
+  /// [_splitPath] for a path without an escape or a backslash.
+  static List<String> _splitPlain(String path) {
     final from = path.isNotEmpty && path.codeUnitAt(0) == 0x2f ? 1 : 0;
     if (from == path.length) return const [];
     return UnmodifiableListView(path.substring(from).split('/'));
@@ -105,16 +110,43 @@ final class RequestTarget {
   /// without an escape is left for a handler that asks, since it cannot
   /// fail.
   void validate() {
-    if (_uri == null &&
-        (_hasByte(_pathBytes!, 0x23) || _hasByte(_queryBytes, 0x23))) {
+    if (_uri != null) {
+      pathSegments;
+      queryParametersAll;
+      return;
+    }
+    // One pass over the bytes answers what the checks below ask.
+    final pathMarks = _marks(_pathBytes!);
+    final queryBytes = _queryBytes;
+    final queryMarks = queryBytes == null ? 0 : _marks(queryBytes);
+    if ((pathMarks | queryMarks) & _fragmentMark != 0) {
       throw FormatException('A request target has no fragment', originForm);
     }
-    pathSegments;
-    if (_uri != null || query.contains('%')) queryParametersAll;
+    _pathSegments ??= pathMarks & (_escapeMark | _backslashMark) == 0
+        ? _splitPlain(path)
+        : _splitPath(path);
+    if (queryMarks & _escapeMark != 0) queryParametersAll;
   }
 
-  static bool _hasByte(Uint8List? bytes, int byte) =>
-      bytes != null && bytes.contains(byte);
+  static const _fragmentMark = 1;
+  static const _escapeMark = 2;
+  static const _backslashMark = 4;
+
+  /// Which of `#`, `%` and `\` [bytes] holds, as marks.
+  static int _marks(Uint8List bytes) {
+    var marks = 0;
+    for (var i = 0; i < bytes.length; i++) {
+      final b = bytes[i];
+      if (b == 0x23) {
+        marks |= _fragmentMark;
+      } else if (b == 0x25) {
+        marks |= _escapeMark;
+      } else if (b == 0x5c) {
+        marks |= _backslashMark;
+      }
+    }
+    return marks;
+  }
 
   /// The encoded path, then `?` and the query when there is one.
   String get originForm => _hasQuery ? '$path?$query' : path;
