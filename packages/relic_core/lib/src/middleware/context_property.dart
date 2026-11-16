@@ -1,4 +1,5 @@
 import '../context/result.dart';
+import 'context_slots.dart';
 
 /// Manages a piece of data associated with a specific [Request].
 ///
@@ -37,18 +38,16 @@ class ContextProperty<T extends Object> {
   ///
   /// A request that sets a property grows its slot list to that property's
   /// slot, so a property made per request would leak.
-  static int _count = 0;
-
   final int _slot = _nextSlot();
 
   static int _nextSlot() {
-    if (_count >= 1024) {
+    if (contextSlotCount >= 1024) {
       throw StateError(
         'Over 1024 ContextProperty instances. Create them once, as globals, '
         'not per request or per handler.',
       );
     }
-    return _count++;
+    return contextSlotCount++;
   }
 
   final String? _debugName;
@@ -89,7 +88,8 @@ class ContextProperty<T extends Object> {
     final slots = request.properties;
     if (_slot >= slots.length) {
       if (value == null) return;
-      slots.length = _slot + 1;
+      // Room for every slot, so a request grows its list at most once.
+      slots.length = contextSlotCount;
     }
     slots[_slot] = value;
   }

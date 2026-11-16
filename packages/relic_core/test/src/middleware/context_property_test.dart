@@ -12,6 +12,16 @@ Request _request() {
 }
 
 void main() {
+  test('Given a request made before a property exists, '
+      'when the property is set on it, then the value reads back', () {
+    final request = _request();
+    final property = ContextProperty<String>('late');
+
+    expect(property[request], isNull);
+    property[request] = 'value';
+    expect(property.get(request), 'value');
+  });
+
   group('Given a ContextProperty<String> and a Request,', () {
     late ContextProperty<String> stringProperty;
     late Request request;
