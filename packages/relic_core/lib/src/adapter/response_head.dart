@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import '../context/result.dart';
 import '../headers/headers.dart';
+import '../util/http_date.dart';
 import 'response_framing.dart';
 
 /// The status line and header block of a response, sized before it is
@@ -77,7 +78,7 @@ final class ResponseHead {
       }
     }
     if (_framing.contentType case final contentType?) {
-      off = _field(out, off, 'content-type', contentType);
+      off = _copy(out, off, _contentTypeLine(contentType));
     }
     if (_framing.dateLine case final dateLine?) {
       dateOffset = off + _dateName.length;
@@ -85,10 +86,12 @@ final class ResponseHead {
       off += dateLine.length;
     } else if (_framing.date case final date?) {
       dateOffset = off + _dateName.length;
-      off = _field(out, off, 'date', date);
+      off = identical(date, stampedDate)
+          ? _copy(out, off, _stampedDateLine)
+          : _field(out, off, 'date', date);
     }
     if (_framing.contentLength case final contentLength?) {
-      off = _latin1(out, off, 'content-length: ');
+      off = _copy(out, off, _contentLengthName);
       off = _digits(out, off, contentLength);
       off = _crlf(out, off);
     }
@@ -104,6 +107,31 @@ final class ResponseHead {
 
 /// What precedes the value on a Date line.
 const _dateName = 'date: ';
+
+/// The Date line of the stand-in an adapter stamps.
+final _stampedDateLine = latin1.encode('$_dateName$stampedDate\r\n');
+
+/// What precedes the value on a Content-Length line.
+final _contentLengthName = latin1.encode('content-length: ');
+
+/// The Content-Type line last written, by its value. Bodies of one type
+/// share the value's string, so a server that answers one type mostly
+/// copies the line.
+String? _contentType;
+Uint8List _contentTypeBytes = Uint8List(0);
+
+Uint8List _contentTypeLine(String value) {
+  if (identical(value, _contentType)) return _contentTypeBytes;
+  final line = Uint8List('content-type'.length + value.length + 4);
+  _field(line, 0, 'content-type', value);
+  _contentType = value;
+  return _contentTypeBytes = line;
+}
+
+int _copy(Uint8List out, int off, Uint8List bytes) {
+  out.setRange(off, off + bytes.length, bytes);
+  return off + bytes.length;
+}
 
 /// The head of [response] as bytes, framed by [framing], for an adapter
 /// that writes it from its own buffer.

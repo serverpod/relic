@@ -35,6 +35,20 @@ void main() {
     },
   );
 
+  test('Given responses of two content types in turn, '
+      'when their heads are encoded, then each carries its own type', () {
+    Response json() =>
+        Response.ok(body: Body.fromString('{}', mimeType: MimeType.json));
+    Response text() => Response.ok(body: Body.fromString('Hello'));
+
+    final heads = [json(), text(), json(), text()].map(_encode).toList();
+
+    for (final i in [0, 2]) {
+      expect(heads[i], contains('\r\ncontent-type: application/json; '));
+      expect(heads[i + 1], contains('\r\ncontent-type: text/plain; '));
+    }
+  });
+
   test('Given a connection that closes after the response, '
       'when the head is encoded, then it carries Connection: close', () {
     final head = latin1.decode(
