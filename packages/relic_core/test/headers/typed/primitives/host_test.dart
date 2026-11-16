@@ -365,6 +365,17 @@ void main() {
       });
     }
 
+    test('Given an accepted authority, '
+        'when a bad one is checked next, then it still throws', () {
+      Host.checkAuthority('example.com:8080');
+
+      expect(
+        () => Host.checkAuthority('example.com:8x'),
+        throwsFormatException,
+      );
+      expect(() => Host.checkAuthority('example.com:8080'), returnsNormally);
+    });
+
     test('Given authorities the character scan decides on its own, '
         'when checked, then the verdict is the one Host.parse gives', () {
       for (final authority in [
