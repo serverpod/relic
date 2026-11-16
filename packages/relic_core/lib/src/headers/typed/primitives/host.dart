@@ -144,6 +144,8 @@ final class Host {
   /// [parse], such as an IP literal, a second colon, a port that is not a
   /// number or is too large, or a colon with nothing on one side.
   static void checkAuthority(String authority) {
+    // A client sends the same authority on every request.
+    if (authority == _lastAccepted) return;
     if (authority.isEmpty) {
       throw const FormatException('Not a valid authority: empty');
     }
@@ -168,7 +170,11 @@ final class Host {
     }
     if (colonAt == 0 || colonAt == authority.length - 1) parse = true;
     if (parse) Host.parse(authority);
+    _lastAccepted = authority;
   }
+
+  /// The authority [checkAuthority] last accepted.
+  static String? _lastAccepted;
 
   /// RFC 3986 unreserved and sub-delims, plus `:` for the port, `%` for an
   /// escape and the brackets of an IPv6 literal.
