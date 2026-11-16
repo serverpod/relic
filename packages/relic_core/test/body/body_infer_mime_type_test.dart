@@ -55,6 +55,22 @@ void main() {
     expect(body.bodyType?.mimeType, MimeType.plainText);
   });
 
+  for (final (content, mimeType) in [
+    (' \t\n\r ', MimeType.plainText),
+    ('  [1, 2]', MimeType.json),
+    ('<html><body>Hi</body></html>', MimeType.html),
+    ('<!doctype html>', MimeType.html),
+    ('<p>Hi</p>', MimeType.plainText),
+    ('<', MimeType.plainText),
+    ('<?xm', MimeType.plainText),
+  ]) {
+    test('Given the content ${jsonEncode(content)} without explicit mimeType, '
+        'when Body.fromString is called, '
+        'then it is $mimeType', () {
+      expect(Body.fromString(content).bodyType?.mimeType, mimeType);
+    });
+  }
+
   test('Given JSON content with explicit mimeType, '
       'when Body.fromString is called, '
       'then it uses the explicit mimeType', () {

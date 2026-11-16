@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:collection';
 import 'dart:convert';
 import 'dart:io';
-import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:async/async.dart';
@@ -264,39 +263,29 @@ class Body {
   }
 
   static MimeType? _tryInferTextMimeTypeFrom(String content) {
-    var firstNonWhiteSpace = 0;
     final end = content.length;
-    while (firstNonWhiteSpace < end &&
-        _isWhitespace(content[firstNonWhiteSpace])) {
-      firstNonWhiteSpace++;
+    var at = 0;
+    while (at < end && _isWhitespace(content.codeUnitAt(at))) {
+      at++;
     }
+    if (at == end) return null;
 
-    final prefix = content.substring(
-      firstNonWhiteSpace,
-      min(end, firstNonWhiteSpace + 14),
-    ); // 14 max length needed
+    final first = content.codeUnitAt(at);
+    if (first == 0x7B || first == 0x5B) return MimeType.json; // { [
+    if (first != 0x3C) return null; // <
 
-    if (prefix.startsWith('{') || prefix.startsWith('[')) {
-      return MimeType.json;
-    }
-
-    if (prefix.startsWith('<?xml')) {
-      return MimeType.xml;
-    }
-
-    if (prefix.startsWith('<!DOCTYPE html') ||
-        prefix.startsWith('<!doctype html') ||
-        prefix.startsWith('<html')) {
+    if (content.startsWith('<?xml', at)) return MimeType.xml;
+    if (content.startsWith('<!DOCTYPE html', at) ||
+        content.startsWith('<!doctype html', at) ||
+        content.startsWith('<html', at)) {
       return MimeType.html;
     }
-
     return null; // give up
   }
 
   /// Checks if a character is whitespace.
-  static bool _isWhitespace(String char) {
-    return char == ' ' || char == '\t' || char == '\n' || char == '\r';
-  }
+  static bool _isWhitespace(int c) =>
+      c == 0x20 || c == 0x09 || c == 0x0A || c == 0x0D;
 
   /// Creates a body from a [Stream] of [Uint8List].
   ///
