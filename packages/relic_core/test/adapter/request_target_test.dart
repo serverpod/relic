@@ -150,6 +150,24 @@ void main() {
     );
   });
 
+  for (final (path, query) in [('/a#b', null), ('/a', 'x=1#b')]) {
+    test('Given the target bytes "$path${query == null ? '' : '?$query'}", '
+        'when validated, then it throws a FormatException', () {
+      final target = RequestTarget.fromBytes(
+        _bytes(path),
+        query == null ? null : _bytes(query),
+      );
+      expect(target.validate, throwsFormatException);
+    });
+  }
+
+  test('Given target bytes with an escape in the path, when validated, '
+      'then its segments are decoded', () {
+    final target = RequestTarget.fromBytes(_bytes('/a%20b/c'))..validate();
+
+    expect(target.pathSegments, ['a b', 'c']);
+  });
+
   test('Given a target from bytes with a backslash, when validated, '
       'then its segments are those of the url built from it', () {
     final target = RequestTarget.fromBytes(_bytes(r'/files/a\b'))..validate();
