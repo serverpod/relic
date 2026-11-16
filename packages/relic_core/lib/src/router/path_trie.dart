@@ -402,6 +402,12 @@ final class PathTrie<T extends Object> {
         : _lookupIterative(normalizedPath);
   }
 
+  /// The parameters a match keeps: [_noParameters] when there are none.
+  static Parameters _keep(Parameters parameters) =>
+      parameters.isEmpty ? _noParameters : parameters;
+
+  static const Parameters _noParameters = {};
+
   TrieMatch<T>? _lookupRecursive(
     _TrieNode<T> node,
     NormalizedPath normalizedPath,
@@ -427,10 +433,11 @@ final class PathTrie<T extends Object> {
       }
 
       if (value == null) return null;
+      final kept = _keep(parameters);
       value = map?.call(value) ?? value;
       return TrieMatch(
         value,
-        parameters,
+        kept,
         normalizedPath.subPath(0, index),
         normalizedPath.subPath(index),
       );
@@ -460,10 +467,11 @@ final class PathTrie<T extends Object> {
         // Tail matches: check for value at this position
         T? value = dynamicNode.value;
         if (value != null) {
+          final kept = _keep(parameters);
           value = newMap?.call(value) ?? value;
           return TrieMatch(
             value,
-            parameters,
+            kept,
             normalizedPath.subPath(0, index),
             normalizedPath.subPath(index),
           );
@@ -501,7 +509,7 @@ final class PathTrie<T extends Object> {
   /// dynamic branch higher up would have matched.
   TrieMatch<T>? _lookupIterative(NormalizedPath normalizedPath) {
     final segments = normalizedPath.segments;
-    final parameters = <Symbol, String>{};
+    Parameters? parameters;
 
     var currentNode = _root;
     var currentMap = currentNode.map;
@@ -529,7 +537,7 @@ final class PathTrie<T extends Object> {
         currentNode = dynamicSegment.node;
         updateMap();
         if (dynamicSegment case final _Parameter<T> parameter) {
-          parameters[parameter.symbol] = segment;
+          (parameters ??= {})[parameter.symbol] = segment;
         }
         if (dynamicSegment is _Tail<T>) break; // possible early match
       }
@@ -553,7 +561,12 @@ final class PathTrie<T extends Object> {
 
     if (value == null) return null;
     value = currentMap?.call(value) ?? value;
-    return TrieMatch(value, parameters, matchedPath, remainingPath);
+    return TrieMatch(
+      value,
+      parameters ?? _noParameters,
+      matchedPath,
+      remainingPath,
+    );
   }
 
   /// Returns true if the path trie has no routes.
