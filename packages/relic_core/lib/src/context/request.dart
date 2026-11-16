@@ -109,7 +109,9 @@ class Request extends Message {
        protocol = protocol ?? HttpProtocol.http11,
        _connectionInfo = connectionInfo,
        _lazyConnectionInfo = lazyConnectionInfo,
-       _properties = properties ?? <Object?>[],
+       _properties =
+           properties ??
+           List<Object?>.filled(contextSlotCount, null, growable: true),
        super(body: body ?? Body.empty(), headers: headers ?? Headers.empty()) {
     if (url == null) {
       if (target == null || authority == null) {

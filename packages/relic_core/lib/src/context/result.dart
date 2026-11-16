@@ -6,6 +6,7 @@ import 'package:meta/meta.dart';
 
 import '../../relic_core.dart';
 import '../body/body.dart' show BodyInternal;
+import '../middleware/context_slots.dart';
 
 part 'message.dart';
 part 'request.dart';
