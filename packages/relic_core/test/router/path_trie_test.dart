@@ -9,6 +9,32 @@ void main() {
       trie = PathTrie<int>();
     });
 
+    for (final backtrack in [true, false]) {
+      test('Given routes with and without parameters and backtrack '
+          '$backtrack, when looked up in turn, then each match keeps '
+          'its own parameters', () {
+        trie.add(NormalizedPath('/users/:id'), 1);
+        trie.add(NormalizedPath('/about'), 2);
+
+        final first = trie.lookup(
+          NormalizedPath('/users/1'),
+          backtrack: backtrack,
+        )!;
+        final plain = trie.lookup(
+          NormalizedPath('/about'),
+          backtrack: backtrack,
+        )!;
+        final second = trie.lookup(
+          NormalizedPath('/users/2'),
+          backtrack: backtrack,
+        )!;
+
+        expect(first.parameters, {#id: '1'});
+        expect(plain.parameters, isEmpty);
+        expect(second.parameters, {#id: '2'});
+      });
+    }
+
     group('Adding and Looking Up Basic Routes', () {
       test('Given a simple literal path, '
           'when added and looked up, '
