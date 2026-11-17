@@ -191,7 +191,7 @@ extension RoutingRequestEx on Request {
   /// ```
   ///
   /// Returns an empty map if no parameters were extracted or if the request
-  /// was not routed through a router.
+  /// was not routed through a router. The map is unmodifiable.
   Map<Symbol, String> get rawPathParameters =>
       _routingContext[this]?.parameters ?? const <Symbol, String>{};
 
