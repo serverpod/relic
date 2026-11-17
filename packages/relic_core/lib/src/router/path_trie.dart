@@ -1,3 +1,5 @@
+import 'dart:collection';
+
 import 'normalized_path.dart';
 
 typedef Parameters = Map<Symbol, String>;
@@ -402,9 +404,10 @@ final class PathTrie<T extends Object> {
         : _lookupIterative(normalizedPath);
   }
 
-  /// The parameters a match keeps: [_noParameters] when there are none.
+  /// The parameters a match keeps, unmodifiable: [_noParameters] when there
+  /// are none.
   static Parameters _keep(Parameters parameters) =>
-      parameters.isEmpty ? _noParameters : parameters;
+      parameters.isEmpty ? _noParameters : UnmodifiableMapView(parameters);
 
   static const Parameters _noParameters = {};
 
@@ -563,7 +566,7 @@ final class PathTrie<T extends Object> {
     value = currentMap?.call(value) ?? value;
     return TrieMatch(
       value,
-      parameters ?? _noParameters,
+      parameters == null ? _noParameters : UnmodifiableMapView(parameters),
       matchedPath,
       remainingPath,
     );

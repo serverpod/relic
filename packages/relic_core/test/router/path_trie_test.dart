@@ -2,7 +2,7 @@ import 'package:relic_core/relic_core.dart';
 import 'package:test/test.dart';
 
 void main() {
-  group('PathTrie<T>', () {
+  group('PathTrie<T>,', () {
     late PathTrie<int> trie;
 
     setUp(() {
@@ -32,6 +32,25 @@ void main() {
         expect(first.parameters, {#id: '1'});
         expect(plain.parameters, isEmpty);
         expect(second.parameters, {#id: '2'});
+      });
+
+      test('Given routes with and without parameters and backtrack $backtrack, '
+          'when the parameters of a match are written, '
+          'then it throws an UnsupportedError.', () {
+        trie.add(NormalizedPath('/users/:id'), 1);
+        trie.add(NormalizedPath('/about'), 2);
+
+        final bound = trie.lookup(
+          NormalizedPath('/users/1'),
+          backtrack: backtrack,
+        )!;
+        final plain = trie.lookup(
+          NormalizedPath('/about'),
+          backtrack: backtrack,
+        )!;
+
+        expect(() => bound.parameters[#id] = '2', throwsUnsupportedError);
+        expect(() => plain.parameters[#id] = '2', throwsUnsupportedError);
       });
     }
 
