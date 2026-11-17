@@ -5145,6 +5145,15 @@ fn corpus(comptime request: []const u8) []const u8 {
     return std.mem.toBytes(std.mem.nativeToLittle(u32, request.len)) ++ request;
 }
 
+/// The id of `name` by a plain scan of the table, matched ASCII
+/// case-insensitively, or -1. The fuzz oracle for name_lookup.
+fn referenceNameId(name: []const u8) i32 {
+    for (header_names.names, 0..) |known, id| {
+        if (std.ascii.eqlIgnoreCase(name, known)) return @intCast(id);
+    }
+    return -1;
+}
+
 /// One connection's worth of bytes through parseHead, as handleConnInner
 /// runs it, with no socket and no Dart. It claims no panic, and that
 /// every offset handed to Dart stays inside the head copy.
@@ -5171,7 +5180,7 @@ fn checkRequestBytes(bytes: []const u8) !void {
             const colon = std.mem.findScalarPos(u8, head, slot.name_off, ':').?;
             try std.testing.expect(colon < slot.value_off);
             try std.testing.expect(slot.value_off + slot.value_len <= head.len);
-            try std.testing.expectEqual(header_names.lookup(head[slot.name_off..colon]), slot.name_id);
+            try std.testing.expectEqual(referenceNameId(head[slot.name_off..colon]), slot.name_id);
             const value = head[slot.value_off..][0..slot.value_len];
             if (slot.name_id == header_names.connection) {
                 close_option = close_option or connectionHas(value, "close");
