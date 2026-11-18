@@ -41,7 +41,7 @@
 const std = @import("std");
 const builtin = @import("builtin");
 const zio = @import("zio");
-const tls = @import("tls");
+const tls = @import("ztls");
 const dart = @import("dart_dl");
 const pem_key = @import("pem_key.zig");
 const header_names = @import("header_names.zig");
@@ -139,10 +139,9 @@ pub const BindFailure = enum(u8) {
     /// The address could not be bound, or the server could not start.
     bind = 1,
     /// The chain has no certificate, or one that is expired, unreadable or
-    /// shares a subject with another. tls.zig would drop such a certificate
-    /// and send the rest.
+    /// shares a subject with another.
     certificate_chain = 2,
-    /// Not a PKCS#8, SEC 1 or PKCS#1 key of a kind tls.zig signs with, or
+    /// Not a PKCS#8, SEC 1 or PKCS#1 key of a kind ztls signs with, or
     /// one encrypted in a form pem_key.zig does not read.
     private_key = 3,
     /// The client authorities hold no certificate, or one that is expired,
@@ -738,10 +737,10 @@ pub const Server = struct {
     options: Options,
     /// The certificate chain and key of an HTTPS server, owned. Every
     /// connection starts with a TLS handshake when it is set.
-    tls_auth: ?*tls.config.CertKeyPair = null,
+    tls_auth: ?*tls.CertKeyPair = null,
     /// The CA bundle a client certificate is checked against, owned, when
     /// the handshake asks for one.
-    tls_client_auth: ?tls.config.ClientAuth = null,
+    tls_client_auth: ?*tls.TrustStore = null,
     /// SHA-256 over the PEM the server was bound with, which a join must
     /// match. Null for plain HTTP.
     tls_digest: ?[std.crypto.hash.sha2.Sha256.digest_length]u8 = null,
@@ -1292,7 +1291,7 @@ const Link = struct {
     /// something to end the wait for it.
     woken: bool = false,
 
-    /// tls.zig supports one reader and one writer at a time, which is what
+    /// ztls supports one reader and one writer at a time, which is what
     /// a body pump, a WebSocket and a hijacked connection run.
     const Secure = struct {
         /// Null until the handshake is done.
@@ -1429,14 +1428,16 @@ const Link = struct {
 
     /// Runs the server side of the TLS handshake. HTTP then reads and
     /// writes cleartext through `read_buffer` and `write_buffer`.
-    fn handshake(self: *Link, auth: *tls.config.CertKeyPair, client_auth: ?tls.config.ClientAuth, read_buffer: []u8, write_buffer: []u8) !void {
+    fn handshake(self: *Link, gpa: std.mem.Allocator, auth: *const tls.CertKeyPair, client_authorities: ?*const tls.TrustStore, read_buffer: []u8, write_buffer: []u8) !void {
         const secure = self.secure.?;
+        const io = std.Io.Threaded.global_single_threaded.io();
         secure.conn = try tls.server(&self.socket_reader.interface, &self.socket_writer.interface, .{
-            .rng = tls_random,
+            .io = io,
+            .gpa = gpa,
             .auth = auth,
-            .client_auth = client_auth,
+            .client_auth = if (client_authorities) |root_ca| .{ .root_ca = root_ca } else null,
             // Read to check the validity dates of a client certificate.
-            .now = std.Io.Clock.real.now(std.Io.Threaded.global_single_threaded.io()),
+            .now = std.Io.Clock.real.now(io),
             .alpn_protocols = &alpn_protocols,
         });
         const conn = &secure.conn.?;
@@ -1459,6 +1460,7 @@ const Link = struct {
                 conn.close() catch {};
             }
         }
+        if (secure.conn) |*conn| conn.deinit();
         gpa.destroy(secure);
         self.secure = null;
     }
@@ -1581,12 +1583,12 @@ fn openConn(c: *Connection) !void {
             try writeStatusAndClose(link, "400 Bad Request");
             return error.HttpConnectionClosing;
         }
-        link.handshake(auth, r.server.tls_client_auth, &link.buffers.?.read, &link.buffers.?.write) catch |err| {
-            // The alert tls.zig wrote reaches a peer that already sent its
+        link.handshake(r.gpa, auth, r.server.tls_client_auth, &link.buffers.?.read, &link.buffers.?.write) catch |err| {
+            // The alert ztls wrote reaches a peer that already sent its
             // request only through a lingering close. Nothing was written
             // for a failure the peer reported or the socket caused, and when
             // a cancel failed it, that cancel is spent.
-            const alerted = tls.Alert.forLocalError(err) != null;
+            const alerted = tls.protocol.Alert.forLocalError(err) != null;
             if (alerted and link.readError() == null and link.socket_writer.err == null) lingeringClose(link);
             return err;
         };
@@ -2967,8 +2969,8 @@ fn createServer(
     const address = try zio.net.IpAddress.parseIp(ip, port);
     const tls_auth = if (pem) |p| try loadCertKeyPair(gpa, p) else null;
     errdefer if (tls_auth) |auth| freeCertKeyPair(gpa, auth);
-    var tls_client_auth = if (pem) |p| try loadClientAuth(gpa, p) else null;
-    errdefer if (tls_client_auth) |*ca| ca.root_ca.deinit(gpa);
+    const tls_client_auth = if (pem) |p| try loadClientAuth(gpa, p) else null;
+    errdefer if (tls_client_auth) |store| freeClientAuth(gpa, store);
     const srv = try gpa.create(Server);
     errdefer gpa.destroy(srv);
     const reactors = try gpa.alloc(?*Reactor, capacity);
@@ -2997,7 +2999,7 @@ fn createServer(
 }
 
 /// Reads a server's certificate chain and private key, once per server.
-fn loadCertKeyPair(gpa: std.mem.Allocator, pem: *const TlsPem) !*tls.config.CertKeyPair {
+fn loadCertKeyPair(gpa: std.mem.Allocator, pem: *const TlsPem) !*tls.CertKeyPair {
     const chain = pem.certificate_chain[0..pem.certificate_chain_len];
     const given = pem.private_key[0..pem.private_key_len];
     const password: ?[]const u8 = if (pem.password) |p| p[0..pem.password_len] else null;
@@ -3013,65 +3015,93 @@ fn loadCertKeyPair(gpa: std.mem.Allocator, pem: *const TlsPem) !*tls.config.Cert
         }
     }
     const key = normalized orelse given;
-    const pair = try gpa.create(tls.config.CertKeyPair);
-    errdefer gpa.destroy(pair);
-    // The bundle reads the clock to drop expired certificates.
-    const io = std.Io.Threaded.global_single_threaded.io();
-    pair.* = tls.config.CertKeyPair.fromSlice(gpa, io, chain, key) catch |err| switch (err) {
+    // ztls sends the chain as given. A certificate that is unreadable,
+    // expired or shares a subject with another is refused here, as
+    // before ztls.
+    var bundle = certificateBundle(gpa, chain) catch |err| switch (err) {
         error.OutOfMemory => return error.OutOfMemory,
-        // fromSlice parses the key, then the chain, then derives the ECDSA
-        // key pair, which only it can. The key is parsed again on its own
-        // to tell its failure from the chain's.
-        else => {
-            _ = tls.config.PrivateKey.parsePem(key) catch return error.PrivateKey;
-            return switch (err) {
-                error.InvalidEncoding, error.IdentityElement => error.PrivateKey,
-                else => error.CertificateChain,
-            };
-        },
+        else => return error.CertificateChain,
     };
-    if (!bundleHoldsEveryPem(pair.bundle, chain)) {
-        pair.deinit(gpa);
-        return error.CertificateChain;
-    }
+    defer bundle.deinit(gpa);
+    const pair = try gpa.create(tls.CertKeyPair);
+    errdefer gpa.destroy(pair);
+    pair.* = tls.CertKeyPair.fromSlice(gpa, chain, key) catch |err| switch (err) {
+        error.OutOfMemory => return error.OutOfMemory,
+        error.InvalidKey, error.UnsupportedKey, error.KeyMismatch => return error.PrivateKey,
+        else => return error.CertificateChain,
+    };
     return pair;
 }
 
-/// Whether `bundle` holds every certificate in `pem`, and at least one.
-/// tls.zig drops a certificate it cannot read, that is expired or whose
-/// subject another one has, and keeps the rest.
-fn bundleHoldsEveryPem(bundle: std.crypto.Certificate.Bundle, pem: []const u8) bool {
-    const count = std.mem.count(u8, pem, "-----BEGIN CERTIFICATE-----");
-    return count != 0 and bundle.map.count() == count;
+/// `pem`'s certificates in a std bundle, which drops one that is
+/// unreadable, expired or whose subject another one has. error.Rejected
+/// when it dropped any, or there were none.
+fn certificateBundle(gpa: std.mem.Allocator, pem: []const u8) !std.crypto.Certificate.Bundle {
+    const Bundle = std.crypto.Certificate.Bundle;
+    const base64 = std.base64.standard.decoderWithIgnore(" \t\r\n");
+    const io = std.Io.Threaded.global_single_threaded.io();
+    const now = std.Io.Clock.real.now(io).toSeconds();
+    var bundle: Bundle = .empty;
+    errdefer bundle.deinit(gpa);
+    const begin_marker = "-----BEGIN CERTIFICATE-----";
+    const end_marker = "-----END CERTIFICATE-----";
+    var count: usize = 0;
+    var start: usize = 0;
+    while (std.mem.indexOfPos(u8, pem, start, begin_marker)) |begin| {
+        const cert_start = begin + begin_marker.len;
+        const cert_end = std.mem.indexOfPos(u8, pem, cert_start, end_marker) orelse return error.Rejected;
+        start = cert_end + end_marker.len;
+        const encoded = std.mem.trim(u8, pem[cert_start..cert_end], " \t\r\n");
+        const size = base64.calcSizeUpperBound(encoded.len);
+        try bundle.bytes.ensureUnusedCapacity(gpa, size);
+        const decoded_start: u32 = @intCast(bundle.bytes.items.len);
+        const decoded = base64.decode(bundle.bytes.unusedCapacitySlice(), encoded) catch return error.Rejected;
+        bundle.bytes.items.len += decoded;
+        bundle.parseCert(gpa, decoded_start, now) catch |err| switch (err) {
+            error.OutOfMemory => return error.OutOfMemory,
+            else => return error.Rejected,
+        };
+        count += 1;
+    }
+    if (count == 0 or bundle.map.count() != count) return error.Rejected;
+    return bundle;
 }
 
-fn freeCertKeyPair(gpa: std.mem.Allocator, pair: *tls.config.CertKeyPair) void {
+fn freeCertKeyPair(gpa: std.mem.Allocator, pair: *tls.CertKeyPair) void {
     pair.deinit(gpa);
     gpa.destroy(pair);
 }
 
 /// Reads the CA certificates a client certificate must chain to, when the
 /// handshake asks for one.
-fn loadClientAuth(gpa: std.mem.Allocator, pem: *const TlsPem) !?tls.config.ClientAuth {
+fn loadClientAuth(gpa: std.mem.Allocator, pem: *const TlsPem) !?*tls.TrustStore {
     const ptr = pem.client_authorities orelse return null;
     const authorities = ptr[0..pem.client_authorities_len];
-    const io = std.Io.Threaded.global_single_threaded.io();
-    var root_ca = tls.config.cert.fromSlice(gpa, io, authorities) catch |err| switch (err) {
+    var bundle = certificateBundle(gpa, authorities) catch |err| switch (err) {
         error.OutOfMemory => return error.OutOfMemory,
         else => return error.ClientAuthorities,
     };
-    errdefer root_ca.deinit(gpa);
-    if (!bundleHoldsEveryPem(root_ca, authorities)) return error.ClientAuthorities;
-    var certs = root_ca.map.valueIterator();
+    defer bundle.deinit(gpa);
+    var certs = bundle.map.valueIterator();
     while (certs.next()) |index| {
-        if (!isCertificateAuthority(.{ .buffer = root_ca.bytes.items, .index = index.* })) {
+        if (!isCertificateAuthority(.{ .buffer = bundle.bytes.items, .index = index.* })) {
             return error.ClientAuthorities;
         }
     }
-    return .{
-        .root_ca = root_ca,
-        .auth_type = .require,
+    const store = try gpa.create(tls.TrustStore);
+    errdefer gpa.destroy(store);
+    store.* = tls.TrustStore.init() catch return error.OutOfMemory;
+    errdefer store.deinit();
+    store.addPem(gpa, authorities) catch |err| switch (err) {
+        error.OutOfMemory => return error.OutOfMemory,
+        else => return error.ClientAuthorities,
     };
+    return store;
+}
+
+fn freeClientAuth(gpa: std.mem.Allocator, store: *tls.TrustStore) void {
+    store.deinit();
+    gpa.destroy(store);
 }
 
 /// Whether `cert` has basicConstraints with cA set. std verifies a chain
@@ -3132,14 +3162,6 @@ fn tlsDigest(pem: ?*const TlsPem) ?[std.crypto.hash.sha2.Sha256.digest_length]u8
     return h.finalResult();
 }
 
-/// tls.zig's randomness, from zio's per-executor CSPRNG, which the OS
-/// seeds. The same source std.Io's random gives a std.Io server.
-const tls_random: std.Random = .{ .ptr = undefined, .fillFn = fillRandom };
-
-fn fillRandom(_: *anyopaque, buffer: []u8) void {
-    zio.random(buffer);
-}
-
 const ipv6_loopback = [16]u8{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 };
 
 /// Connects to the listener and hangs up, so an accept the acceptor is
@@ -3179,7 +3201,7 @@ fn destroyServer(srv: *Server) void {
     srv.thread.join();
     const gpa = srv.gpa;
     if (srv.tls_auth) |auth| freeCertKeyPair(gpa, auth);
-    if (srv.tls_client_auth) |*ca| ca.root_ca.deinit(gpa);
+    if (srv.tls_client_auth) |store| freeClientAuth(gpa, store);
     if (srv.group) |g| gpa.free(g);
     gpa.free(srv.reactors);
     gpa.destroy(srv);
@@ -5115,26 +5137,33 @@ const TestTlsClient = struct {
         var out: [tls.output_buffer_len]u8 = undefined;
         var stream_reader = stream.reader(io, &in);
         var stream_writer = stream.writer(io, &out);
-        var root_ca = try tls.config.cert.fromSlice(gpa, io, test_ca);
-        defer root_ca.deinit(gpa);
-        const rng: std.Random.IoSource = .{ .io = io };
+        var root_ca = try tls.TrustStore.init();
+        defer root_ca.deinit();
+        try root_ca.addPem(gpa, test_ca);
         var conn = try tls.client(&stream_reader.interface, &stream_writer.interface, .{
-            .rng = rng.interface(),
-            .now = std.Io.Clock.real.now(io),
+            .io = io,
+            .gpa = gpa,
             .host = "localhost",
-            .root_ca = root_ca,
+            .root_ca = &root_ca,
             // An EOF without close_notify fails the read.
             .strict_close_notify = true,
         });
+        defer conn.deinit();
+        var read_buffer: [tls.input_buffer_len]u8 = undefined;
+        var write_buffer: [1024]u8 = undefined;
+        var reader = conn.reader(&read_buffer);
+        var writer = conn.writer(&write_buffer);
         if (self.two) {
-            try conn.writeAll("GET /first HTTP/1.1\r\nHost: localhost\r\n\r\n");
+            try writer.interface.writeAll("GET /first HTTP/1.1\r\nHost: localhost\r\n\r\n");
+            try writer.interface.flush();
             var first: [test_no_content.len]u8 = undefined;
-            if (try conn.readAll(&first) != first.len) return error.EndOfStream;
+            try reader.interface.readSliceAll(&first);
             self.waiting.store(true, .release);
             while (!self.go.load(.acquire)) sleepMs(5);
         }
-        try conn.writeAll("GET /x HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n");
-        self.reply_len = try conn.readAll(&self.reply);
+        try writer.interface.writeAll("GET /x HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n");
+        try writer.interface.flush();
+        self.reply_len = try reader.interface.readSliceShort(&self.reply);
     }
 };
 

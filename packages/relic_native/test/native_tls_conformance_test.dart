@@ -7,7 +7,7 @@ import 'package:test/test.dart';
 import 'package:test_utils/adapter_conformance.dart';
 
 /// The conformance tests of what goes over the wire, over TLS, so the
-/// bytes go through tls.zig's records.
+/// bytes go through ztls's records.
 void main() {
   final tls = NativeTls.fromFiles(
     certificateChain: 'test/certs/localhost_cert.pem',

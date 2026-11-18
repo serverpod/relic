@@ -26,7 +26,7 @@ pub fn build(b: *std.Build) void {
         .io_uring_single_issuer = false,
         .backend = backend,
     });
-    const tls = b.dependency("tls", .{ .target = target, .optimize = optimize });
+    const ztls = b.dependency("ztls", .{ .target = target, .optimize = optimize });
 
     // The Dart DL API header, translated once and imported as a module by
     // the library and the tests. @cImport is gone from the language as of
@@ -47,7 +47,7 @@ pub fn build(b: *std.Build) void {
         .link_libc = true,
     });
     module.addImport("zio", zio.module("zio"));
-    module.addImport("tls", tls.module("tls"));
+    module.addImport("ztls", ztls.module("ztls"));
     module.addImport("dart_dl", dart_dl_module);
     module.addIncludePath(b.path("src/dart-dl"));
     module.addCSourceFile(.{ .file = b.path("src/dart-dl/dart_api_dl.c"), .flags = &.{} });
@@ -75,7 +75,7 @@ pub fn build(b: *std.Build) void {
         .sanitize_thread = sanitize_thread,
     });
     test_module.addImport("zio", zio.module("zio"));
-    test_module.addImport("tls", tls.module("tls"));
+    test_module.addImport("ztls", ztls.module("ztls"));
     test_module.addImport("dart_dl", dart_dl_module);
     test_module.addIncludePath(b.path("src/dart-dl"));
     test_module.addCSourceFile(.{ .file = b.path("src/dart-dl/dart_api_dl.c"), .flags = &.{} });
