@@ -10,13 +10,10 @@
             .url = "git+https://github.com/nielsenko/zio#db810c0523d938503a621c1cfee713a53b559b2a",
             .hash = "zio-0.20.1-xHbVVLvFMADd-xDiaz9rZro-4lo9S4jexMFZKKQnDeuY",
         },
-        // ianic's tls.zig with the server picking the cipher suite in its own
-        // order, a refused client certificate answered with its alert, RSA
-        // signing through the CRT form of the key and a shallower handshake
-        // stack, until all are upstream.
-        .tls = .{
-            .url = "git+https://github.com/nielsenko/tls.zig#b82c88ae952af27b6c743dc59bc5ad99425a95d6",
-            .hash = "tls-0.1.0-ER2e0qPoBgDgveMWLM-7CrYIYltv57Rqm92zy-XGgYcL",
+        // lalinsky's ztls, the TLS protocol in Zig on AWS-LC's libcrypto.
+        .ztls = .{
+            .url = "git+https://github.com/lalinsky/ztls?ref=v0.2.1#a367bac13af75c3c8c4b428cacbd584fd828f813",
+            .hash = "ztls-0.2.1-kXOuzkXFCwD3bWm1745QXL056y6OnFOoYqiRh9VHLTPO",
         },
     },
     .paths = .{

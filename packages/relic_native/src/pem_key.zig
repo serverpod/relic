@@ -1,4 +1,4 @@
-//! Turns a private key PEM into the plain PKCS#8 or SEC 1 PEM tls.zig
+//! Turns a private key PEM into the plain PKCS#8 or SEC 1 PEM ztls
 //! reads. It decrypts two forms, the ones OpenSSL writes: PKCS#8
 //! `ENCRYPTED PRIVATE KEY` under PBES2 with PBKDF2 and AES-128-CBC or
 //! AES-256-CBC, from `openssl pkcs8` and `openssl genpkey`, and a key
@@ -18,8 +18,8 @@ pub const Error = error{
     OutOfMemory,
 };
 
-/// The PEM tls.zig reads for `pem`, which the caller zeroes and frees: an
-/// encrypted key decrypted, a PKCS#1 key rewrapped. Null when tls.zig
+/// The PEM ztls reads for `pem`, which the caller zeroes and frees: an
+/// encrypted key decrypted, a PKCS#1 key rewrapped. Null when ztls
 /// reads `pem` as it is. A password for a key in the clear is refused as
 /// a misconfiguration.
 pub fn normalize(gpa: std.mem.Allocator, pem: []const u8, password: ?[]const u8) Error!?[]u8 {
@@ -51,7 +51,7 @@ const Block = struct {
 };
 
 /// The first private key block in `pem`, past any certificate, parameters
-/// or malformed block before it, as tls.zig finds its key.
+/// or malformed block before it, as ztls finds its key.
 fn pemBlock(pem: []const u8) ?Block {
     const begin = "-----BEGIN ";
     const end = "-----END ";
@@ -366,7 +366,7 @@ const pkcs1_label = "RSA PRIVATE KEY";
 /// rsaEncryption, 1.2.840.113549.1.1.1, with its NULL parameters.
 const rsa_algorithm = [_]u8{ 0x30, 0x0d, 0x06, 0x09, 0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x01, 0x01, 0x05, 0x00 };
 
-/// Wraps a PKCS#1 RSAPrivateKey in the PKCS#8 PrivateKeyInfo tls.zig
+/// Wraps a PKCS#1 RSAPrivateKey in the PKCS#8 PrivateKeyInfo ztls
 /// reads: SEQUENCE { version 0, rsaEncryption, privateKey OCTET STRING }.
 fn pkcs1ToPem(gpa: std.mem.Allocator, rsa: []const u8) Error![]u8 {
     const version = [_]u8{ 0x02, 0x01, 0x00 };

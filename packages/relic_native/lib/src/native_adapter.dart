@@ -78,7 +78,7 @@ final class NativeOptions {
 /// AES-256-CBC, or a key block behind OpenSSL's `DEK-Info` headers with the
 /// same ciphers, as `openssl pkcs8`, `openssl genpkey` and
 /// `openssl ec -aes256` write them. An empty [password] counts as none. The
-/// server speaks TLS 1.3 only, through tls.zig, and selects `http/1.1`
+/// server speaks TLS 1.3 only, through ztls, and selects `http/1.1`
 /// through ALPN. A client that offers only other protocols is refused.
 ///
 /// With [clientAuthorities], the CA certificates a client certificate must
@@ -304,7 +304,7 @@ final class NativeAdapter implements Adapter {
         ),
         _BindFailure.privateKey => const io.TlsException(
           'relic_native: the private key is not a PKCS#8, SEC 1 or PKCS#1 key '
-          'of a kind tls.zig signs with, or is encrypted in a form other than '
+          'of a kind ztls signs with, or is encrypted in a form other than '
           'PBES2 with PBKDF2 and AES-128-CBC or AES-256-CBC, or DEK-Info with '
           'those ciphers',
         ),
