@@ -480,7 +480,7 @@ final class NativeAdapter implements Adapter {
         // a busy reactor sees next. Only then does the isolate park on the
         // waiter and its port message.
         _drainAgain = false;
-        final m = _tick(_linger.inMilliseconds);
+        final m = _tick(_linger.inMicroseconds);
         if (_handOver(m, sink)) handedOver = true;
         if (m > 0 || _drainAgain || native.reactorPending(_reactor)) continue;
         native.reactorWait(_reactor);
@@ -496,15 +496,16 @@ final class NativeAdapter implements Adapter {
     }
   }
 
-  /// One reactor tick, which waits at most [waitMs] in the kernel.
-  int _tick(int waitMs) => _tickOnNewThreads
+  /// One reactor tick, which waits at most [waitUs] microseconds in the
+  /// kernel.
+  int _tick(int waitUs) => _tickOnNewThreads
       ? native.reactorTickOnNewThread(
           _reactor,
-          waitMs,
+          waitUs,
           _exchangesOut,
           _batchSize,
         )
-      : native.reactorTick(_reactor, waitMs, _exchangesOut, _batchSize);
+      : native.reactorTick(_reactor, waitUs, _exchangesOut, _batchSize);
 
   /// How long an idle tick waits in the kernel before the isolate parks.
   /// The drain lingers only with no exchange in flight, so no handler
