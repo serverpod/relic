@@ -511,7 +511,7 @@ final class NativeAdapter implements Adapter {
   /// The drain lingers only with no exchange in flight, so no handler
   /// waits behind it. The event loop is still held for up to this long,
   /// which is what a timer or other work on the isolate can be late by.
-  static const _linger = Duration(milliseconds: 1);
+  static const _linger = Duration(microseconds: 100);
 
   /// Hands what a tick produced to Dart, events first, then the [n] new
   /// exchanges. True when a handler is still at work on one of them.
