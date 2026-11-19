@@ -53,10 +53,9 @@ void main() {
 
     times.sort();
     final median = times[times.length ~/ 2];
-    // A drain that lingers in the kernel with the event loop held delays
-    // each turn by up to the 1 ms linger. The bound is half a linger per
-    // turn, relative so that it holds on a slower runner.
-    const lingerMicros = 1000;
-    expect(median, lessThan(turns * lingerMicros ~/ 2));
+    // A drain that held the event loop for a 1 ms linger delayed each
+    // turn by up to that long. The bound is half of it per turn.
+    const perTurnMicros = 500;
+    expect(median, lessThan(turns * perTurnMicros));
   });
 }
