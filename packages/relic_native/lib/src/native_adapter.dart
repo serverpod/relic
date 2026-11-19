@@ -399,6 +399,11 @@ final class NativeAdapter implements Adapter {
 
   /// Turns given to the event loop in a row while handlers wait on their
   /// own I/O and nothing new arrives, before the isolate parks.
+  ///
+  /// Each yield is a drain that ticks once and re-posts itself, so the
+  /// bound caps how long a handler waiting on slow I/O keeps the isolate
+  /// spinning. Parking at once instead puts every next request behind a
+  /// wake from the waiter thread. Counts from zero again after a park.
   var _idleYields = 0;
   static const _maxIdleYields = 4;
 
@@ -465,6 +470,7 @@ final class NativeAdapter implements Adapter {
             _idleYields++;
             break;
           }
+          _idleYields = 0;
           native.reactorWait(_reactor);
           parked = true;
           return;
@@ -501,8 +507,9 @@ final class NativeAdapter implements Adapter {
       : native.reactorTick(_reactor, waitMs, _exchangesOut, _batchSize);
 
   /// How long an idle tick waits in the kernel before the isolate parks.
-  /// The event loop is held for at most this long, which is what a timer
-  /// or a handler's own I/O can be late by while the reactor is idle.
+  /// The drain lingers only with no exchange in flight, so no handler
+  /// waits behind it. The event loop is still held for up to this long,
+  /// which is what a timer or other work on the isolate can be late by.
   static const _linger = Duration(milliseconds: 1);
 
   /// Hands what a tick produced to Dart, events first, then the [n] new
