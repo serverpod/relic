@@ -180,14 +180,14 @@ external void reactorDestroy(Pointer<Void> reactor);
 external int reactorSlot(Pointer<Void> reactor);
 
 /// Runs one pass of the reactor on the calling thread. Its tasks run, its
-/// loop polls for at most [waitMs], and up to [max] exchanges ready for a
+/// loop polls for at most [waitUs] microseconds, and up to [max] exchanges ready for a
 /// handler land in [out].
 @Native<
   Uint32 Function(Pointer<Void>, Uint32, Pointer<Pointer<ExchangeView>>, Uint32)
 >(symbol: 'relic_reactor_tick')
 external int reactorTick(
   Pointer<Void> reactor,
-  int waitMs,
+  int waitUs,
   Pointer<Pointer<ExchangeView>> out,
   int max,
 );
@@ -199,7 +199,7 @@ external int reactorTick(
 >(symbol: 'relic_reactor_tick_on_new_thread')
 external int reactorTickOnNewThread(
   Pointer<Void> reactor,
-  int waitMs,
+  int waitUs,
   Pointer<Pointer<ExchangeView>> out,
   int max,
 );

@@ -3364,10 +3364,10 @@ export fn relic_reactor_destroy(r: *Reactor) void {
 
 /// One pass of the reactor: takes in the sockets the acceptor handed over,
 /// starts the writers Dart's queued output waits for, runs its tasks,
-/// polls the loop for at most `wait_ms`, and returns up to `max`
+/// polls the loop for at most `wait_us`, and returns up to `max`
 /// exchanges that are ready for a handler. Afterwards
 /// relic_reactor_pending says whether to call again at once.
-export fn relic_reactor_tick(r: *Reactor, wait_ms: u32, out: [*]*ExchangeView, max: u32) u32 {
+export fn relic_reactor_tick(r: *Reactor, wait_us: u32, out: [*]*ExchangeView, max: u32) u32 {
     const executor = &r.rt.main_executor;
     // The drains spawn tasks, which needs a binding, and the tick keeps
     // it, so what they spawn runs in this tick.
@@ -3377,7 +3377,7 @@ export fn relic_reactor_tick(r: *Reactor, wait_ms: u32, out: [*]*ExchangeView, m
     r.drainIncoming();
     r.drainResumes();
     r.drainWritersWanted();
-    r.pending = executor.tick(.fromMilliseconds(wait_ms)) catch false;
+    r.pending = executor.tick(.fromMicroseconds(wait_us)) catch false;
     var n: u32 = 0;
     while (n < max) : (n += 1) {
         const node = r.ready.pop() orelse break;
@@ -3390,16 +3390,16 @@ export fn relic_reactor_tick(r: *Reactor, wait_ms: u32, out: [*]*ExchangeView, m
 /// relic_reactor_tick on a thread of its own, which has exited when this
 /// returns. A test ticks this way to stand in for the Dart VM, which
 /// retires the threads its isolates ran on.
-export fn relic_reactor_tick_on_new_thread(r: *Reactor, wait_ms: u32, out: [*]*ExchangeView, max: u32) u32 {
+export fn relic_reactor_tick_on_new_thread(r: *Reactor, wait_us: u32, out: [*]*ExchangeView, max: u32) u32 {
     var n: u32 = 0;
-    const thread = std.Thread.spawn(.{}, tickInto, .{ r, wait_ms, out, max, &n }) catch
+    const thread = std.Thread.spawn(.{}, tickInto, .{ r, wait_us, out, max, &n }) catch
         @panic("relic_native: no thread for relic_reactor_tick_on_new_thread");
     thread.join();
     return n;
 }
 
-fn tickInto(r: *Reactor, wait_ms: u32, out: [*]*ExchangeView, max: u32, n: *u32) void {
-    n.* = relic_reactor_tick(r, wait_ms, out, max);
+fn tickInto(r: *Reactor, wait_us: u32, out: [*]*ExchangeView, max: u32, n: *u32) void {
+    n.* = relic_reactor_tick(r, wait_us, out, max);
 }
 
 /// Whether the last tick left work behind: ready tasks, sockets just
@@ -4131,7 +4131,7 @@ test "tick: a request reaches the ready list on the caller's thread and the resp
     var got: [64]u8 = undefined;
     var total: usize = 0;
     while (total < head.len and rounds < 200) : (rounds += 1) {
-        _ = relic_reactor_tick(r, 10, &out, out.len);
+        _ = relic_reactor_tick(r, 10_000, &out, out.len);
         total += try client.readSome(got[total..]);
     }
     try std.testing.expectEqualStrings(head, got[0..total]);
@@ -4428,7 +4428,7 @@ fn testReceive(r: *Reactor, client: TestClient, buf: []u8) ![]u8 {
     var total: usize = 0;
     var rounds: usize = 0;
     while (total < buf.len and rounds < 200) : (rounds += 1) {
-        _ = relic_reactor_tick(r, 10, &out, out.len);
+        _ = relic_reactor_tick(r, 10_000, &out, out.len);
         total += try client.readSome(buf[total..]);
     }
     return buf[0..total];
@@ -4595,7 +4595,7 @@ test "park: a parked WebSocket ends when Dart aborts it" {
     try std.testing.expectEqualStrings(test_switching_head, try testReceive(r, client, &head));
     var out: [4]*ExchangeView = undefined;
     var rounds: usize = 0;
-    while (r.parked == 0 and rounds < 200) : (rounds += 1) _ = relic_reactor_tick(r, 5, &out, out.len);
+    while (r.parked == 0 and rounds < 200) : (rounds += 1) _ = relic_reactor_tick(r, 5_000, &out, out.len);
     try std.testing.expectEqual(1, r.parked);
 
     relic_abort(v);
@@ -5106,7 +5106,7 @@ test "tls: a request over TLS reaches the ready list and the response goes back 
     var n: u32 = 0;
     var rounds: usize = 0;
     while (n == 0 and !client.done.load(.acquire) and rounds < 500) : (rounds += 1) {
-        n = relic_reactor_tick(r, 10, &out, out.len);
+        n = relic_reactor_tick(r, 10_000, &out, out.len);
     }
     try std.testing.expectEqual(1, n);
     const v = out[0];
@@ -5118,7 +5118,7 @@ test "tls: a request over TLS reaches the ready list and the response goes back 
     relic_respond(v, buf, head.len, head.len, null, 0, true);
     rounds = 0;
     while (!client.done.load(.acquire) and rounds < 500) : (rounds += 1) {
-        _ = relic_reactor_tick(r, 10, &out, out.len);
+        _ = relic_reactor_tick(r, 10_000, &out, out.len);
     }
     if (client.err) |err| return err;
     try std.testing.expectEqualStrings(head, client.reply[0..client.reply_len]);
@@ -5141,13 +5141,13 @@ test "rest: a TLS connection gives its buffers back and takes them for the next 
     var n: u32 = 0;
     var rounds: usize = 0;
     while (n == 0 and !client.done.load(.acquire) and rounds < 500) : (rounds += 1) {
-        n = relic_reactor_tick(r, 10, &out, out.len);
+        n = relic_reactor_tick(r, 10_000, &out, out.len);
     }
     try std.testing.expectEqual(1, n);
     testRespondNoContent(out[0]);
     rounds = 0;
     while (!client.waiting.load(.acquire) and !client.done.load(.acquire) and rounds < 500) : (rounds += 1) {
-        _ = relic_reactor_tick(r, 10, &out, out.len);
+        _ = relic_reactor_tick(r, 10_000, &out, out.len);
     }
     try std.testing.expect(client.waiting.load(.acquire));
 
@@ -5158,7 +5158,7 @@ test "rest: a TLS connection gives its buffers back and takes them for the next 
     n = 0;
     rounds = 0;
     while (n == 0 and !client.done.load(.acquire) and rounds < 500) : (rounds += 1) {
-        n = relic_reactor_tick(r, 10, &out, out.len);
+        n = relic_reactor_tick(r, 10_000, &out, out.len);
     }
     try std.testing.expectEqual(1, n);
     const v = out[0];
@@ -5170,7 +5170,7 @@ test "rest: a TLS connection gives its buffers back and takes them for the next 
     relic_respond(v, buf, head.len, head.len, null, 0, true);
     rounds = 0;
     while (!client.done.load(.acquire) and rounds < 500) : (rounds += 1) {
-        _ = relic_reactor_tick(r, 10, &out, out.len);
+        _ = relic_reactor_tick(r, 10_000, &out, out.len);
     }
     if (client.err) |err| return err;
     try std.testing.expectEqualStrings(head, client.reply[0..client.reply_len]);
