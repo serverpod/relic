@@ -4,12 +4,11 @@
     .fingerprint = 0x538fb26d0ce37fa8,
     .minimum_zig_version = "0.17.1",
     .dependencies = .{
-        // zio with Executor.tick and its thread bindings, io_uring_single_issuer,
-        // ip6_only and SO_EXCLUSIVEADDRUSE on a Windows listener, until they are
-        // upstream.
+        // zio with Executor.tick, Loop.adoptThread, io_uring_single_issuer,
+        // ip6_only on a listener, until they are upstream.
         .zio = .{
-            .url = "git+https://github.com/nielsenko/zio#054581978e9222662a31a8837aa7f3a24c66720b",
-            .hash = "zio-0.19.0-xHbVVNG0MAB19GQbu8OMQ97BM9EA3LHjQHLX1Jj3uLG1",
+            .url = "git+https://github.com/nielsenko/zio#db810c0523d938503a621c1cfee713a53b559b2a",
+            .hash = "zio-0.20.1-xHbVVLvFMADd-xDiaz9rZro-4lo9S4jexMFZKKQnDeuY",
         },
         // ianic's tls.zig with the server picking the cipher suite in its own
         // order, a refused client certificate answered with its alert, RSA
