@@ -557,6 +557,7 @@ pub const Reactor = struct {
             const inc: *Incoming = @fieldParentPtr("node", node);
             const stream = inc.stream;
             self.gpa.destroy(inc);
+            resetSpawnStreak(&self.rt.main_executor);
             self.group.spawn(handleConn, .{ self, stream }) catch {
                 _ = self.connections.fetchSub(1, .monotonic);
                 stream.close();
@@ -571,6 +572,7 @@ pub const Reactor = struct {
     fn drainResumes(self: *Reactor) void {
         while (self.resumes.pop()) |node| {
             const c: *Connection = @fieldParentPtr("resume_node", node);
+            resetSpawnStreak(&self.rt.main_executor);
             self.group.spawn(resumeConn, .{c}) catch {
                 self.resumes.push(node);
                 self.pending = true;
@@ -588,6 +590,7 @@ pub const Reactor = struct {
         while (self.writers_wanted.popFirst()) |node| {
             const ex: *Exchange = @fieldParentPtr("writer_wanted_node", node);
             ex.writer_wanted = false;
+            resetSpawnStreak(&self.rt.main_executor);
             _ = startWriter(ex);
         }
     }
@@ -776,10 +779,9 @@ pub const Server = struct {
             // The committed size covers the deepest path on x86_64 and
             // aarch64, 131 KiB for a handshake that checks a client
             // certificate signed with RSA. A deeper task grows its stack,
-            // since a tick makes sure its thread has an alternate signal
-            // stack before its first task runs. The 8 MiB reservation
-            // stays, because without stack probes a big frame can jump the
-            // single guard page.
+            // since `tickWithSignalStack` gives its thread an alternate signal
+            // stack. The 8 MiB reservation stays, because without stack
+            // probes a big frame can jump the single guard page.
             .stack_pool = .{
                 .maximum_size = 8 * 1024 * 1024,
                 .committed_size = 144 * 1024,
@@ -1012,8 +1014,44 @@ fn endConn(c: *Connection) void {
     r.gpa.destroy(c);
 }
 
+/// The executor of a reactor's runtime.
+const Executor = @FieldType(zio.Runtime, "main_executor");
+
 /// A task of this reactor, as the executor names the one that is running.
-const Task = @typeInfo(@FieldType(@FieldType(zio.Runtime, "main_executor"), "current_task")).optional.child;
+const Task = @typeInfo(@FieldType(Executor, "current_task")).optional.child;
+
+/// Makes the calling thread the one `executor` runs on, until
+/// `unbindThread`. zio calls on the thread then act for the executor's
+/// main task. zio binds only the thread that initialized the runtime, and
+/// the Dart VM moves an isolate between the threads of its pool.
+fn bindThread(executor: *Executor) void {
+    Executor.current_DO_NOT_ACCESS_DIRECTLY = executor;
+    executor.loop.adoptThread();
+    resetSpawnStreak(executor);
+}
+
+fn unbindThread(executor: *Executor) void {
+    Executor.current_DO_NOT_ACCESS_DIRECTLY = null;
+    zio.coro.Coroutine.clearCurrent();
+    executor.loop.releaseThread();
+    zio.coro.releaseAltStack();
+}
+
+/// Makes the next spawn from the bound thread count as its first. With
+/// one executor, zio makes a spawner yield after 13 spawns in a row, and
+/// on the bound thread that yield runs a pass of the loop inside the
+/// spawn. What a drain or a call from Dart spawns is for the next tick.
+fn resetSpawnStreak(executor: *Executor) void {
+    executor.spawn_streak = 0;
+}
+
+/// `Executor.tick` on a bound thread. A task that outgrows its committed
+/// stack grows it from a signal handler, which needs an alternate signal
+/// stack on the thread, and a thread of the VM's pool has none.
+fn tickWithSignalStack(executor: *Executor, wait_cap: zio.Duration) !bool {
+    try zio.coro.installAltStack();
+    return executor.tick(wait_cap);
+}
 
 /// What the sweeper needs of a connection: when its task must have made
 /// progress by, and the task to cancel when it has not.
@@ -3247,7 +3285,7 @@ fn createReactor(srv: *Server, port: dart.Dart_Port_DL) !*Reactor {
         srv.attached_count += 1;
         // The isolate may tick from another thread next, and every call
         // that needs the executor binds it for itself.
-        rt.main_executor.unbindThread();
+        unbindThread(&rt.main_executor);
         return r;
     }
     return error.ServerFull;
@@ -3319,8 +3357,8 @@ export fn relic_reactor_destroy(r: *Reactor) void {
     // Bound to this thread, the main task blocks in the cancel, which runs
     // the loop until every connection task has unwound. A tick first
     // writes the responses Dart gave since the last one.
-    r.rt.main_executor.bindThread() catch |err| switch (err) {};
-    _ = r.rt.main_executor.tick(.zero) catch {};
+    bindThread(&r.rt.main_executor);
+    _ = tickWithSignalStack(&r.rt.main_executor, .zero) catch {};
     // A parked connection has no task to cancel. The end of its poll
     // starts one.
     {
@@ -3331,7 +3369,7 @@ export fn relic_reactor_destroy(r: *Reactor) void {
         }
         var rounds: u32 = 0;
         while (r.parked != 0 and rounds < 1000) : (rounds += 1) {
-            _ = r.rt.main_executor.tick(.fromMilliseconds(1)) catch {};
+            _ = tickWithSignalStack(&r.rt.main_executor, .fromMilliseconds(1)) catch {};
             r.drainResumes();
         }
     }
@@ -3386,13 +3424,13 @@ export fn relic_reactor_tick(r: *Reactor, wait_us: u32, out: [*]*ExchangeView, m
     const executor = &r.rt.main_executor;
     // The drains spawn tasks, which needs a binding, and the tick keeps
     // it, so what they spawn runs in this tick.
-    executor.bindThread() catch |err| switch (err) {};
-    defer executor.unbindThread();
+    bindThread(executor);
+    defer unbindThread(executor);
     r.refreshDate();
     r.drainIncoming();
     r.drainResumes();
     r.drainWritersWanted();
-    r.pending = executor.tick(.fromMicroseconds(wait_us)) catch false;
+    r.pending = tickWithSignalStack(executor, .fromMicroseconds(wait_us)) catch false;
     var n: u32 = 0;
     while (n < max) : (n += 1) {
         const node = r.ready.pop() orelse break;
@@ -3538,16 +3576,16 @@ export fn relic_reactor_slot(r: *Reactor) u32 {
 /// scheduled a drain. A bound wake lands in the executor's own run queue
 /// for that drain's tick.
 const DartCall = struct {
-    executor: *@FieldType(zio.Runtime, "main_executor"),
+    executor: *Executor,
 
     fn begin(r: *Reactor) DartCall {
         const executor = &r.rt.main_executor;
-        executor.bindThread() catch |err| switch (err) {};
+        bindThread(executor);
         return .{ .executor = executor };
     }
 
     fn end(self: DartCall) void {
-        self.executor.unbindThread();
+        unbindThread(self.executor);
     }
 };
 
