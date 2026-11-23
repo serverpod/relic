@@ -625,6 +625,7 @@ final class NativeAdapter implements Adapter {
     }
     if (!force) {
       if (_inFlight.isNotEmpty) await (_drained ??= Completer<void>()).future;
+      await _written();
       return;
     }
     if (_closed) return _closedFuture.future;
@@ -647,6 +648,17 @@ final class NativeAdapter implements Adapter {
   }
 
   final _closedFuture = Completer<void>();
+
+  /// Waits until the native side has written every response Dart gave it.
+  ///
+  /// The wait leaves out the hijacked connections, which the close path
+  /// ends.
+  Future<void> _written() async {
+    while (!_closed && native.reactorActive(_reactor) > _hijacked.length) {
+      _scheduleDrain();
+      await Future<void>.delayed(const Duration(milliseconds: 1));
+    }
+  }
 
   /// The server's connections, reported by one isolate.
   ///

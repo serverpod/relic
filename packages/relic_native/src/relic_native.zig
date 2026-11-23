@@ -3320,6 +3320,12 @@ fn createReactor(srv: *Server, port: dart.Dart_Port_DL) !*Reactor {
 /// it over, its idle connections close, and its other connections close
 /// after their current response, with a 503 for a request that arrives
 /// after this. The listener closes with the last accepting reactor.
+/// How many of the reactor's connections have a response not yet written.
+/// A connection Dart took over counts until it ends.
+export fn relic_reactor_active(r: *Reactor) u32 {
+    return r.active.load(.monotonic);
+}
+
 export fn relic_reactor_stop(r: *Reactor) void {
     r.stop = true;
     r.accepting.store(false, .release);
