@@ -8,8 +8,8 @@ environment:
 resolution: workspace
 
 dependencies:
-  relic: ^2.0.0
-  relic_native: ^2.0.0
+  relic: ^2.0.1
+  relic_native: ^2.0.1
 
 dev_dependencies:
   http: any

@@ -1,9 +1,22 @@
-## Unreleased
+## 2.0.1
 - fix: The request body takes its type from `relic_core`, and a request
   with no content has no body type
 - fix: A request with more than one `Content-Type` field gets 400. A
   filter in front and the server could otherwise read the body as
   different types, as in CVE-2023-38199
+- fix: A handler that waits on its own I/O, such as a database reply or
+  a timer, gets the event loop at once. The drain no longer waits in
+  the kernel while an exchange is in flight, and a route that ran
+  `SELECT 1` under steady load stalled near one second on 2.0.0
+- fix: A graceful `close()` waits until every response handed to the
+  native side is written, so a large response is not cut off
+- perf: An idle drain lingers 100 us, and a drain turn whose requests
+  all went to `async` handlers ends without another tick
+- build: TLS runs on [ztls](https://github.com/lalinsky/ztls) and
+  AWS-LC's libcrypto, in place of tls.zig
+- build: zio is updated. On macOS a poll without a wait goes through
+  `kevent64`, and the server accepts the next connection after one that
+  failed
 
 ## 2.0.0
 
