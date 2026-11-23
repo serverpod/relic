@@ -845,7 +845,10 @@ pub const Server = struct {
         defer rt.deinit();
 
         const listener = try self.address.listen(.{
-            .reuse_address = true,
+            // On Windows SO_REUSEADDR lets a second socket bind the port
+            // while this one listens, and a rebind past TIME_WAIT works
+            // without it.
+            .reuse_address = builtin.os.tag != .windows,
             .kernel_backlog = @intCast(@min(self.options.backlog, std.math.maxInt(u31))),
             // Set explicitly, as dart:io does. Windows defaults to IPv6 only,
             // the other platforms to dual-stack.
