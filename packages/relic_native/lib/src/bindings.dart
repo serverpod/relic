@@ -179,6 +179,18 @@ external void reactorDestroy(Pointer<Void> reactor);
 )
 external int reactorSlot(Pointer<Void> reactor);
 
+/// The result of one [reactorTick].
+///
+/// The bits follow `TickResult` in src/relic_native.zig: the count in the
+/// low 31 bits, the pending flag in the top bit.
+extension type const TickResult(int _bits) {
+  /// The number of exchanges the tick wrote to its output.
+  int get count => _bits & 0x7fffffff;
+
+  /// Whether the tick left work that the next tick should take at once.
+  bool get pending => _bits & 0x80000000 != 0;
+}
+
 /// Runs one pass of the reactor on the calling thread. Its tasks run, its
 /// loop polls for at most [waitUs] microseconds, and up to [max] exchanges ready for a
 /// handler land in [out].
@@ -203,13 +215,6 @@ external int reactorTickOnNewThread(
   Pointer<Pointer<ExchangeView>> out,
   int max,
 );
-
-/// Whether the last tick left work that the next tick should take at once.
-@Native<Bool Function(Pointer<Void>)>(
-  symbol: 'relic_reactor_pending',
-  isLeaf: true,
-)
-external bool reactorPending(Pointer<Void> reactor);
 
 /// Up to [max] addresses, in [out], of exchanges with an event since the
 /// last call. The low bit marks the last event of a raw connection, whose

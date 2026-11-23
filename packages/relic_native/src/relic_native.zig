@@ -3362,12 +3362,27 @@ export fn relic_reactor_destroy(r: *Reactor) void {
     destroyServer(srv);
 }
 
+/// What relic_reactor_tick returns, a u32 over the C ABI. TickResult in
+/// lib/src/bindings.dart reads the same bits.
+pub const TickResult = packed struct(u32) {
+    /// Exchanges written to `out`, at most `max`.
+    count: u31,
+    /// The tick left work behind: ready tasks, sockets just spawned, or
+    /// exchanges that did not fit in `out`. The next tick should come
+    /// without a wait.
+    pending: bool,
+};
+
+comptime {
+    std.debug.assert(@bitOffsetOf(TickResult, "count") == 0);
+    std.debug.assert(@bitOffsetOf(TickResult, "pending") == 31);
+}
+
 /// One pass of the reactor: takes in the sockets the acceptor handed over,
 /// starts the writers Dart's queued output waits for, runs its tasks,
-/// polls the loop for at most `wait_us`, and returns up to `max`
-/// exchanges that are ready for a handler. Afterwards
-/// relic_reactor_pending says whether to call again at once.
-export fn relic_reactor_tick(r: *Reactor, wait_us: u32, out: [*]*ExchangeView, max: u32) u32 {
+/// polls the loop for at most `wait_us`, and writes up to `max` exchanges
+/// that are ready for a handler to `out`.
+export fn relic_reactor_tick(r: *Reactor, wait_us: u32, out: [*]*ExchangeView, max: u32) TickResult {
     const executor = &r.rt.main_executor;
     // The drains spawn tasks, which needs a binding, and the tick keeps
     // it, so what they spawn runs in this tick.
@@ -3384,28 +3399,22 @@ export fn relic_reactor_tick(r: *Reactor, wait_us: u32, out: [*]*ExchangeView, m
         out[n] = &@as(*Exchange, @fieldParentPtr("node", node)).view;
     }
     if (!r.ready.isEmpty()) r.pending = true;
-    return n;
+    return .{ .count = @intCast(n), .pending = r.pending };
 }
 
 /// relic_reactor_tick on a thread of its own, which has exited when this
 /// returns. A test ticks this way to stand in for the Dart VM, which
 /// retires the threads its isolates ran on.
-export fn relic_reactor_tick_on_new_thread(r: *Reactor, wait_us: u32, out: [*]*ExchangeView, max: u32) u32 {
-    var n: u32 = 0;
-    const thread = std.Thread.spawn(.{}, tickInto, .{ r, wait_us, out, max, &n }) catch
+export fn relic_reactor_tick_on_new_thread(r: *Reactor, wait_us: u32, out: [*]*ExchangeView, max: u32) TickResult {
+    var result: TickResult = .{ .count = 0, .pending = false };
+    const thread = std.Thread.spawn(.{}, tickInto, .{ r, wait_us, out, max, &result }) catch
         @panic("relic_native: no thread for relic_reactor_tick_on_new_thread");
     thread.join();
-    return n;
+    return result;
 }
 
-fn tickInto(r: *Reactor, wait_us: u32, out: [*]*ExchangeView, max: u32, n: *u32) void {
-    n.* = relic_reactor_tick(r, wait_us, out, max);
-}
-
-/// Whether the last tick left work behind: ready tasks, sockets just
-/// spawned, or exchanges that did not fit in `out`.
-export fn relic_reactor_pending(r: *Reactor) bool {
-    return r.pending;
+fn tickInto(r: *Reactor, wait_us: u32, out: [*]*ExchangeView, max: u32, result: *TickResult) void {
+    result.* = relic_reactor_tick(r, wait_us, out, max);
 }
 
 /// Takes up to `max` addresses of exchanges with an event since the last
@@ -3933,7 +3942,7 @@ test "accept: a descriptor shortage stalls the acceptor and does not end it" {
     var out: [4]*ExchangeView = undefined;
     var rounds: usize = 0;
     while (accept_shortages.load(.monotonic) == shortages_before and rounds < 300) : (rounds += 1) {
-        for (out[0..relic_reactor_tick(r, 0, &out, out.len)]) |v| relic_abort(v);
+        for (out[0..relic_reactor_tick(r, 0, &out, out.len).count]) |v| relic_abort(v);
         sleepMs(10);
     }
     try std.testing.expect(accept_shortages.load(.monotonic) > shortages_before);
@@ -3952,7 +3961,7 @@ test "accept: a descriptor shortage stalls the acceptor and does not end it" {
     var served_second = false;
     rounds = 0;
     while (!served_second and rounds < 300) : (rounds += 1) {
-        const n = relic_reactor_tick(r, 0, &out, out.len);
+        const n = relic_reactor_tick(r, 0, &out, out.len).count;
         for (out[0..n]) |v| {
             const target = v.head[v.target_off .. v.target_off + v.target_len];
             if (std.mem.eql(u8, target, "/y")) served_second = true else try std.testing.expectEqualStrings("/x", target);
@@ -4116,7 +4125,7 @@ test "tick: a request reaches the ready list on the caller's thread and the resp
     var n: u32 = 0;
     rounds = 0;
     while (n == 0 and rounds < 200) : (rounds += 1) {
-        n = relic_reactor_tick(r, 0, &out, out.len);
+        n = relic_reactor_tick(r, 0, &out, out.len).count;
         sleepMs(10);
     }
     try std.testing.expectEqual(1, n);
@@ -4391,7 +4400,7 @@ fn testExchange(r: *Reactor, client: TestClient, request: []const u8) !*Exchange
     var n: u32 = 0;
     rounds = 0;
     while (n == 0 and rounds < 200) : (rounds += 1) {
-        n = relic_reactor_tick(r, 0, &out, out.len);
+        n = relic_reactor_tick(r, 0, &out, out.len).count;
         sleepMs(10);
     }
     try std.testing.expectEqual(1, n);
@@ -4753,7 +4762,7 @@ test "rest: a cancel that comes with the input does not end the connection" {
     var n: u32 = 0;
     rounds = 0;
     while (n == 0 and rounds < 200) : (rounds += 1) {
-        n = relic_reactor_tick(r, 0, &out, out.len);
+        n = relic_reactor_tick(r, 0, &out, out.len).count;
         sleepMs(5);
     }
     try std.testing.expectEqual(1, n);
@@ -5106,7 +5115,7 @@ test "tls: a request over TLS reaches the ready list and the response goes back 
     var n: u32 = 0;
     var rounds: usize = 0;
     while (n == 0 and !client.done.load(.acquire) and rounds < 500) : (rounds += 1) {
-        n = relic_reactor_tick(r, 10_000, &out, out.len);
+        n = relic_reactor_tick(r, 10_000, &out, out.len).count;
     }
     try std.testing.expectEqual(1, n);
     const v = out[0];
@@ -5141,7 +5150,7 @@ test "rest: a TLS connection gives its buffers back and takes them for the next 
     var n: u32 = 0;
     var rounds: usize = 0;
     while (n == 0 and !client.done.load(.acquire) and rounds < 500) : (rounds += 1) {
-        n = relic_reactor_tick(r, 10_000, &out, out.len);
+        n = relic_reactor_tick(r, 10_000, &out, out.len).count;
     }
     try std.testing.expectEqual(1, n);
     testRespondNoContent(out[0]);
@@ -5158,7 +5167,7 @@ test "rest: a TLS connection gives its buffers back and takes them for the next 
     n = 0;
     rounds = 0;
     while (n == 0 and !client.done.load(.acquire) and rounds < 500) : (rounds += 1) {
-        n = relic_reactor_tick(r, 10_000, &out, out.len);
+        n = relic_reactor_tick(r, 10_000, &out, out.len).count;
     }
     try std.testing.expectEqual(1, n);
     const v = out[0];
