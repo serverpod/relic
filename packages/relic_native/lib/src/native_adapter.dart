@@ -452,6 +452,14 @@ final class NativeAdapter implements Adapter {
         final n = _tick(0);
         if (_handOver(n, sink)) handedOver = true;
         if (n > 0 || handedOver) _idleYields = 0;
+        // Requests that went to async handlers get their answers after the
+        // drain returns, so another tick now would come back empty.
+        if (n > 0 &&
+            handedOver &&
+            !_drainAgain &&
+            !native.reactorPending(_reactor)) {
+          break;
+        }
         if (n > 0 || _drainAgain || native.reactorPending(_reactor)) continue;
         // What this turn handed to Dart may answer from a microtask, an
         // async handler or a stream listener such as the WebSocket framer.
