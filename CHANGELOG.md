@@ -1,4 +1,4 @@
-## Unreleased
+## 2.0.1
 - fix: `ContentTypeHeader` follows the media type grammar of RFC 9110 8.3.1. It reads the bytes with the scanner the other typed headers use, in place of the regular expressions of `http_parser`, and a value parses in about a seventh of the time
   - A byte above 0x7F outside a quoted value is a `FormatException`, as are a folded line and a backslash before a control character. A tab inside a quoted value is accepted, and so is a `;` with no parameter after it, as in `application/json;`
   - Encoding writes a parameter value that is not a token as a quoted string. It throws `FormatException` for a value with a control character or a code unit above 0xFF
@@ -6,6 +6,9 @@
   - `RequestFactory` types the request body from the headers, so every adapter follows the one rule. An adapter passes the body untyped
   - A request with no content has no body type
 - fix: A request that gets its 400 before any handler runs, for a target or a header that does not parse, is logged as one info line with no stack trace
+- fix: `Request.rawPathParameters` and the parameters of a route match are unmodifiable maps
+- perf: `relic_io` reads the request headers in place from `HttpHeaders`, without copying them
+- perf: Less work per request in `relic_core` and `relic_headers`: the constant response head lines are copied as bytes, the last accepted `Host` is not scanned again, a string body's MIME type is inferred without a substring, the `Cookie` parser skips runs of plain bytes, a byte request target is scanned once, a request's context slots and route parameters are allocated once, and token characters are looked up in a table
 
 ## 2.0.0
 
