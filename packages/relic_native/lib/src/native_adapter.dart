@@ -408,7 +408,14 @@ final class NativeAdapter implements Adapter {
   static const _maxIdleYields = 4;
 
   var _drainScheduled = false;
+
+  /// Whether [_drain] is running.
   var _inDrain = false;
+
+  /// Whether something was handed to the native side since the drain's
+  /// last tick, such as a response a sync handler wrote.
+  ///
+  /// The next tick acts on it. Meaningless outside [_drain].
   var _drainAgain = false;
 
   /// Set by a close called from inside the drain, which the drain
@@ -451,26 +458,21 @@ final class NativeAdapter implements Adapter {
         _drainAgain = false;
         final tick = _tick(0);
         final n = tick.count;
+        final pending = tick.pending;
         if (_handOver(n, sink)) handedOver = true;
+        final queued = _drainAgain;
         if (n > 0 || handedOver) _idleYields = 0;
         // Requests that went to async handlers get their answers after the
         // drain returns, so another tick now would come back empty.
-        if (n > 0 && handedOver && !_drainAgain && !tick.pending) {
-          break;
-        }
-        if (n > 0 || _drainAgain || tick.pending) continue;
-        // What this turn handed to Dart may answer from a microtask, an
-        // async handler or a stream listener such as the WebSocket framer.
-        // Those run when the drain returns, so the turn ends here and the
-        // next one picks their writes up. A sync handler has answered
-        // already and does not end the turn.
+        final onlyAsync = n > 0 && handedOver && !queued && !pending;
+        if (onlyAsync) break;
+        final busy = n > 0 || queued || pending;
+        if (busy) continue;
+        // Answers handed over this turn come from microtasks. End the turn
+        // so they run.
         if (handedOver) break;
-        // Handlers are still at work, waiting on their own I/O such as a
-        // database reply. That I/O reaches this isolate through the event
-        // loop, which a lingering tick would hold. Give the event loop a
-        // turn instead: this drain ends without parking, so it runs again
-        // from its own port message after the I/O queued ahead of it. Only
-        // after a few such turns with nothing new does the isolate park.
+        // Handlers wait on I/O that reaches the isolate through the event
+        // loop, which a tick waiting in the kernel would hold.
         if (_inFlight.isNotEmpty) {
           if (_idleYields < _maxIdleYields) {
             _idleYields++;
@@ -481,10 +483,8 @@ final class NativeAdapter implements Adapter {
           parked = true;
           return;
         }
-        // Nothing to do. One tick that waits in the kernel for a moment
-        // catches the next request without a thread handoff, which is what
-        // a busy reactor sees next. Only then does the isolate park on the
-        // waiter and its port message.
+        // A short wait catches the next request without the waiter's thread
+        // handoff.
         _drainAgain = false;
         final linger = _tick(_linger.inMicroseconds);
         if (_handOver(linger.count, sink)) handedOver = true;
