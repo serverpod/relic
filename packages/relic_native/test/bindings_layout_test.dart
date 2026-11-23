@@ -27,4 +27,20 @@ void main() {
   test('Given the Stats struct, when sized, then it is 12 bytes.', () {
     expect(sizeOf<Stats>(), 12);
   });
+
+  test('Given a tick result with the top bit set, '
+      'when decoded, '
+      'then count is the low 31 bits and pending is true.', () {
+    const tick = TickResult(0x80000000 | 64);
+    expect(tick.count, 64);
+    expect(tick.pending, isTrue);
+  });
+
+  test('Given a tick result without the top bit, '
+      'when decoded, '
+      'then count is the value and pending is false.', () {
+    const tick = TickResult(3);
+    expect(tick.count, 3);
+    expect(tick.pending, isFalse);
+  });
 }

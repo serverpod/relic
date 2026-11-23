@@ -449,18 +449,16 @@ final class NativeAdapter implements Adapter {
     try {
       for (var batch = 0; batch < _batchesPerTurn; batch++) {
         _drainAgain = false;
-        final n = _tick(0);
+        final tick = _tick(0);
+        final n = tick.count;
         if (_handOver(n, sink)) handedOver = true;
         if (n > 0 || handedOver) _idleYields = 0;
         // Requests that went to async handlers get their answers after the
         // drain returns, so another tick now would come back empty.
-        if (n > 0 &&
-            handedOver &&
-            !_drainAgain &&
-            !native.reactorPending(_reactor)) {
+        if (n > 0 && handedOver && !_drainAgain && !tick.pending) {
           break;
         }
-        if (n > 0 || _drainAgain || native.reactorPending(_reactor)) continue;
+        if (n > 0 || _drainAgain || tick.pending) continue;
         // What this turn handed to Dart may answer from a microtask, an
         // async handler or a stream listener such as the WebSocket framer.
         // Those run when the drain returns, so the turn ends here and the
@@ -488,9 +486,9 @@ final class NativeAdapter implements Adapter {
         // a busy reactor sees next. Only then does the isolate park on the
         // waiter and its port message.
         _drainAgain = false;
-        final m = _tick(_linger.inMicroseconds);
-        if (_handOver(m, sink)) handedOver = true;
-        if (m > 0 || _drainAgain || native.reactorPending(_reactor)) continue;
+        final linger = _tick(_linger.inMicroseconds);
+        if (_handOver(linger.count, sink)) handedOver = true;
+        if (linger.count > 0 || _drainAgain || linger.pending) continue;
         native.reactorWait(_reactor);
         parked = true;
         return;
@@ -506,14 +504,16 @@ final class NativeAdapter implements Adapter {
 
   /// One reactor tick, which waits at most [waitUs] microseconds in the
   /// kernel.
-  int _tick(int waitUs) => _tickOnNewThreads
-      ? native.reactorTickOnNewThread(
-          _reactor,
-          waitUs,
-          _exchangesOut,
-          _batchSize,
-        )
-      : native.reactorTick(_reactor, waitUs, _exchangesOut, _batchSize);
+  native.TickResult _tick(int waitUs) => native.TickResult(
+    _tickOnNewThreads
+        ? native.reactorTickOnNewThread(
+            _reactor,
+            waitUs,
+            _exchangesOut,
+            _batchSize,
+          )
+        : native.reactorTick(_reactor, waitUs, _exchangesOut, _batchSize),
+  );
 
   /// How long an idle tick waits in the kernel before the isolate parks.
   /// The drain lingers only with no exchange in flight, so no handler
