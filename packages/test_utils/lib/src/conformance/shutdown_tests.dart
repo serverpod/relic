@@ -79,6 +79,33 @@ _startInFlightRequests(RelicServer server, {int numberOfRequests = 4}) async {
 }
 
 void shutdownTests(AdapterConformance conformance) {
+  test('Given a server with in-flight requests whose responses are 4 MiB, '
+      'when server.close() is called, '
+      'then every body arrives whole', () async {
+    const size = 4 << 20;
+    final body = 'x' * size;
+    final server = conformance.create();
+    addTearDown(server.close);
+    var requestsStarted = 0;
+    final allRequestsStarted = Completer<void>();
+    final canComplete = Completer<void>();
+    await server.mountAndStart((req) async {
+      if (++requestsStarted == 4) allRequestsStarted.complete();
+      await canComplete.future;
+      return Response.ok(body: Body.fromString(body));
+    });
+    final responseFutures = List.generate(4, (_) => http.get(server.url));
+    await allRequestsStarted.future;
+
+    final closeFuture = server.close();
+    canComplete.complete();
+
+    final (responses, _) = await (responseFutures.wait, closeFuture).wait;
+    for (final response in responses) {
+      expect(response.body.length, size);
+    }
+  });
+
   group('Given a server with in-flight requests', () {
     late RelicServer server;
 

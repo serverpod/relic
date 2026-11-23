@@ -168,6 +168,12 @@ external Pointer<Void> reactorCreate(Pointer<Void> server, int port);
 @Native<Void Function(Pointer<Void>)>(symbol: 'relic_reactor_stop')
 external void reactorStop(Pointer<Void> reactor);
 
+/// Counts the reactor's connections whose response is not yet written.
+///
+/// A connection Dart took over counts until it ends.
+@Native<Uint32 Function(Pointer<Void>)>(symbol: 'relic_reactor_active')
+external int reactorActive(Pointer<Void> reactor);
+
 /// Cancels the reactor's connections and frees it. The last one of a
 /// server stops the server too. Blocks while the connections unwind.
 @Native<Void Function(Pointer<Void>)>(symbol: 'relic_reactor_destroy')
