@@ -1525,7 +1525,7 @@ const lingering_close_ms = 1000;
 fn lingeringClose(link: *Link) void {
     link.shutdownSend() catch return;
     link.setReadTimeout(deadline(lingering_close_ms));
-    _ = link.socket_reader.interface.discard(.unlimited) catch {};
+    _ = link.socket_reader.interface.discardRemaining() catch {};
 }
 
 /// Answers with a status to a peer that may still be sending, then closes.
@@ -1808,11 +1808,18 @@ fn serveRequests(c: *Connection) !void {
         // Dart did not finish reading.
         const body_unread = stopPump(&pump);
 
-        if (!keep_alive or ex.close_after) return;
+        if (!keep_alive or ex.close_after) {
+            // The client may still be sending the body (RFC 9112 9.6).
+            if (body_unread) lingeringClose(link);
+            return;
+        }
         // A body Dart did not finish reading is still on the wire. It is
-        // drained so the connection can carry the next request, and so the
-        // client is not reset while still sending.
-        if (body_unread and !discardBody(link, body_reader, content_length, options.body_timeout_ms)) return;
+        // drained so the connection can carry the next request. One that
+        // discardBody leaves there ends the connection.
+        if (body_unread and !discardBody(link, body_reader, content_length, options.body_timeout_ms)) {
+            lingeringClose(link);
+            return;
+        }
     }
     return takenOver(c);
 }
@@ -4510,6 +4517,70 @@ fn testReceive(r: *Reactor, client: TestClient, buf: []u8) ![]u8 {
         total += try client.readSome(buf[total..]);
     }
     return buf[0..total];
+}
+
+/// Sends 16 pieces of `max_head` bytes with a tick after each, as a peer
+/// still sending does, then checks that the server kept the connection
+/// through all of them and ends it when the peer hangs up.
+fn testServerTakesMore(r: *Reactor, client: TestClient) !void {
+    const piece: [max_head]u8 = @splat('a');
+    var out: [4]*ExchangeView = undefined;
+    for (0..16) |_| {
+        try client.writeAll(&piece);
+        _ = relic_reactor_tick(r, 5, &out, out.len);
+    }
+    try std.testing.expectEqual(1, r.connections.load(.monotonic));
+    client.hangUp();
+    try testConnectionsEnd(r);
+}
+
+test "close: a lingering close takes what the peer sends until it hangs up" {
+    const srv = testBind(null) orelse return error.BindFailed;
+    const r = relic_reactor_create(srv, 1) orelse return error.AttachFailed;
+    defer relic_reactor_destroy(r);
+
+    const client = try TestClient.connect(relic_server_port(srv));
+    defer client.close();
+    const fill: [max_head]u8 = @splat('a');
+    try client.writeAll("GET / HTTP/1.1\r\nX: " ++ fill);
+    const status = "HTTP/1.1 431 Request Header Fields Too Large\r\n";
+    var got: [status.len]u8 = undefined;
+    try std.testing.expectEqualStrings(status, try testReceive(r, client, &got));
+
+    try testServerTakesMore(r, client);
+}
+
+/// Answers a POST that has sent 1 KiB of the body it declares, with Dart
+/// reading none of it, and has the peer send on.
+fn testAnswerToUnreadBody(comptime content_length: []const u8, close_after: bool) !void {
+    var options = test_options;
+    options.max_inline_body = 1024;
+    var failure: BindFailure = undefined;
+    const srv = relic_server_bind(null, "127.0.0.1", 0, &options, null, &failure) orelse return error.BindFailed;
+    const r = relic_reactor_create(srv, 1) orelse return error.AttachFailed;
+    defer relic_reactor_destroy(r);
+
+    const client = try TestClient.connect(relic_server_port(srv));
+    defer client.close();
+    const start: [1024]u8 = @splat('a');
+    const v = try testExchange(r, client, "POST / HTTP/1.1\r\nHost: t\r\nContent-Length: " ++ content_length ++ "\r\n\r\n" ++ start);
+    const head = "HTTP/1.1 413 Content Too Large\r\ncontent-length: 0\r\n\r\n";
+    const buf = relic_alloc(head.len).?;
+    @memcpy(buf[0..head.len], head);
+    relic_respond(v, buf, head.len, head.len, null, 0, close_after);
+    var got: [head.len]u8 = undefined;
+    try std.testing.expectEqualStrings(head, try testReceive(r, client, &got));
+
+    try testServerTakesMore(r, client);
+}
+
+test "close: a response that closes the connection lingers for a body Dart left unread" {
+    try testAnswerToUnreadBody("1048576", true);
+}
+
+test "close: a response to an unread body over max_discard lingers for it" {
+    comptime std.debug.assert(8 << 20 > max_discard);
+    try testAnswerToUnreadBody("8388608", false);
 }
 
 /// Has the sweeper cancel the connection task and take the cancel back,
