@@ -933,7 +933,8 @@ const Connection = struct {
     poll: zio.ev.NetPoll = undefined,
     resume_node: Node = .{},
     link: Link = undefined,
-    http: std.http.Server = undefined,
+    /// The body of the request being served, which body readers point at.
+    body: BodyReader = .none,
     /// Holds an inline request body, and is kept across requests while
     /// it stays small.
     body_store: std.ArrayListUnmanaged(u8) = .empty,
@@ -1597,7 +1598,6 @@ fn openConn(c: *Connection) !void {
         };
         conn.disarm();
     }
-    c.http = std.http.Server.init(link.reader, link.writer);
 }
 
 /// Serves the connection's requests until it is over, or Dart takes it
@@ -1611,7 +1611,6 @@ fn serveRequests(c: *Connection) !void {
     const body_store = &c.body_store;
     const conn = &c.conn;
     const link = &c.link;
-    const http = &c.http;
     const w = link.writer;
 
     while (true) {
@@ -1634,8 +1633,11 @@ fn serveRequests(c: *Connection) !void {
         // The ones the wait ended with, which a long one gave back.
         const buffers = link.buffers.?;
         conn.arm(options.header_timeout_ms);
-        const head = http.reader.receiveHead() catch |err| switch (err) {
-            error.HttpHeadersOversize => return writeStatusAndClose(link, "431 Request Header Fields Too Large"),
+        var lines: [max_headers + 2]Line = undefined;
+        var scan: HeadScan = .{ .lines = &lines };
+        const head = receiveHead(link.reader, &scan) catch |err| switch (err) {
+            error.HttpHeadersOversize, error.TooManyHeaders => return writeStatusAndClose(link, "431 Request Header Fields Too Large"),
+            error.MalformedHead => return writeStatusAndClose(link, "400 Bad Request"),
             error.ReadFailed => {
                 if (conn.expired()) return writeStatusAndClose(link, "408 Request Timeout");
                 return err;
@@ -1651,27 +1653,30 @@ fn serveRequests(c: *Connection) !void {
             _ = r.idle.fetchAdd(1, .monotonic);
         };
 
-        const index = parseHead(head, &buffers.head_copy, &buffers.slots) catch |err| switch (err) {
+        const index = parseHead(head, lines[0..scan.count], &buffers.head_copy, &buffers.slots) catch |err| switch (err) {
             error.TooManyHeaders => return writeStatusAndClose(link, "431 Request Header Fields Too Large"),
             error.MalformedHead => return writeStatusAndClose(link, "400 Bad Request"),
         };
-        var req: std.http.Server.Request = .{ .server = http, .head_buffer = head, .head = index.head };
-        const target_off = off(head, req.head.target);
-        const target_len: u32 = @intCast(req.head.target.len);
-        const method = req.head.method;
-        const version: u8 = if (req.head.version == .@"HTTP/1.0") 0 else 1;
-        const keep_alive = req.head.keep_alive;
+        var req_head = index.head;
+        const target_off = off(head, req_head.target);
+        const target_len: u32 = @intCast(req_head.target.len);
+        const method = req_head.method;
+        const version: u8 = if (req_head.version == .@"HTTP/1.0") 0 else 1;
+        const keep_alive = req_head.keep_alive;
 
         // A small body with a known length is read now and handed over
         // inline. Anything else streams to Dart while the handler runs.
-        const chunked = req.head.transfer_encoding == .chunked;
-        const content_length = req.head.content_length;
+        const chunked = req_head.transfer_encoding == .chunked;
+        const content_length = req_head.content_length;
         const stream_body = chunked or (content_length != null and content_length.? > options.max_inline_body);
         var body: ?[]u8 = null;
         defer if (body_store.capacity > body_store_keep) body_store.clearAndFree(r.gpa);
         var body_reader: ?*std.Io.Reader = null;
         if (stream_body or content_length != null) {
-            const br = openBody(&req, &buffers.body) catch return writeStatusAndClose(link, "417 Expectation Failed");
+            const br = c.body.open(&req_head, link.reader, w, &buffers.body) catch |err| switch (err) {
+                error.HttpExpectationFailed => return writeStatusAndClose(link, "417 Expectation Failed"),
+                error.WriteFailed => return err,
+            };
             link.setReadTimeout(inactivity(options.body_timeout_ms));
             if (stream_body) {
                 body_reader = br;
@@ -1685,10 +1690,6 @@ fn serveRequests(c: *Connection) !void {
                 body = into;
             }
         }
-        // The next receiveHead needs the parser back in .ready. A request with
-        // a body got there by reading it all. One without a body is still in
-        // .received_head, which is what std.http.Server.respond resets too.
-        if (http.reader.state == .received_head) http.reader.state = .ready;
 
         const ex = &c.ex;
         ex.init(r, .{
@@ -2566,8 +2567,8 @@ const Head = std.http.Server.Request.Head;
 /// message, and where every header field sits.
 const ParsedHead = struct { head: Head, count: u32, host_slot: i32 };
 
-/// Parses the head in one pass, copies it into `head_copy` and fills
-/// `slots` with where each header field sits in it.
+/// Parses the head that HeadScan split into `lines`, copies it into
+/// `head_copy` and fills `slots` with where each header field sits in it.
 ///
 /// The head lives in the reader buffer, which the body read reuses, so
 /// the copy is what Dart gets. Offsets computed against the original
@@ -2588,10 +2589,9 @@ const ParsedHead = struct { head: Head, count: u32, host_slot: i32 };
 /// this to. That parser is not used. It splits the head with a two-byte
 /// sequence search and compares every field name against six names,
 /// which sampled at four percent of the isolate.
-fn parseHead(bytes: []const u8, head_copy: []u8, slots: []HeaderSlot) ParseHeadError!ParsedHead {
+fn parseHead(bytes: []const u8, lines: []const Line, head_copy: []u8, slots: []HeaderSlot) ParseHeadError!ParsedHead {
     if (!std.mem.endsWith(u8, bytes, "\r\n\r\n")) return error.MalformedHead;
-    var lines: [max_headers + 2]Line = undefined;
-    const count = try scanHead(bytes, &lines);
+    const count = lines.len;
     var head: Head = undefined;
     var n: u32 = 0;
     var host_slot: i32 = -1;
@@ -2707,64 +2707,123 @@ const Line = struct {
     const no_colon = std.math.maxInt(u32);
 };
 
-/// Splits the head into `lines` and checks it in one pass, sixteen bytes
+/// Splits a head into lines and checks it as its bytes arrive, sixteen
 /// at a time: no control character but HTAB and the CR LF pairs, so a
 /// bare LF, a stray CR and DEL are MalformedHead, and more lines than
-/// `lines` holds is TooManyHeaders. Returns the line count.
-fn scanHead(bytes: []const u8, lines: []Line) ParseHeadError!usize {
-    const Bytes16 = @Vector(16, u8);
-    // The previous byte was a CR, so this one must be the LF.
-    var after_cr = false;
-    var count: usize = 0;
-    var line_start: u32 = 0;
-    var colon: u32 = Line.no_colon;
-    var i: usize = 0;
-    while (i + 16 <= bytes.len) : (i += 16) {
-        const block: Bytes16 = bytes[i..][0..16].*;
-        const low: u16 = @bitCast(block < @as(Bytes16, @splat(' ')));
-        const tab: u16 = @bitCast(block == @as(Bytes16, @splat('\t')));
-        const del: u16 = @bitCast(block == @as(Bytes16, @splat(0x7f)));
-        const cr: u16 = @bitCast(block == @as(Bytes16, @splat('\r')));
-        const lf: u16 = @bitCast(block == @as(Bytes16, @splat('\n')));
-        const col: u16 = @bitCast(block == @as(Bytes16, @splat(':')));
-        if (del != 0 or (low & ~tab) != (cr | lf)) return error.MalformedHead;
-        // Bit i of cr wants bit i + 1 of lf, and only those.
-        if (((cr << 1) | @as(u16, @intFromBool(after_cr))) != lf) return error.MalformedHead;
-        after_cr = cr >> 15 != 0;
-        var events = lf | col;
-        while (events != 0) : (events &= events - 1) {
-            const bit: u4 = @intCast(@ctz(events));
-            const at: u32 = @intCast(i + bit);
-            if (lf >> bit & 1 != 0) {
-                if (count == lines.len) return error.TooManyHeaders;
-                lines[count] = .{ .start = line_start, .colon = colon, .end = at - 1 };
-                count += 1;
-                line_start = at + 1;
-                colon = Line.no_colon;
-            } else if (colon == Line.no_colon) {
-                colon = at;
+/// `lines` holds is TooManyHeaders. The empty line ends the head, and no
+/// byte after it is looked at, since a body or the next request follows.
+const HeadScan = struct {
+    lines: []Line,
+    count: usize = 0,
+    /// How far `feed` has looked.
+    pos: usize = 0,
+    /// The byte before `pos` was a CR, so the one at `pos` must be the LF.
+    after_cr: bool = false,
+    line_start: u32 = 0,
+    colon: u32 = Line.no_colon,
+    /// The lines before the empty one that ends the head: 1 for a head,
+    /// whose request line comes first, and 0 for a chunked trailer.
+    leading: usize = 1,
+
+    /// Looks at `bytes[pos..]`, where `bytes` starts where the head does
+    /// and holds every byte an earlier call looked at. Returns the head's
+    /// length once its empty line is in, and null while it is not.
+    fn feed(scan: *HeadScan, bytes: []const u8) ParseHeadError!?usize {
+        const Bytes16 = @Vector(16, u8);
+        var i = scan.pos;
+        while (i + 16 <= bytes.len) : (i += 16) {
+            const block: Bytes16 = bytes[i..][0..16].*;
+            const low: u16 = @bitCast(block < @as(Bytes16, @splat(' ')));
+            const tab: u16 = @bitCast(block == @as(Bytes16, @splat('\t')));
+            const del: u16 = @bitCast(block == @as(Bytes16, @splat(0x7f)));
+            const cr: u16 = @bitCast(block == @as(Bytes16, @splat('\r')));
+            const lf: u16 = @bitCast(block == @as(Bytes16, @splat('\n')));
+            const col: u16 = @bitCast(block == @as(Bytes16, @splat(':')));
+            // Bit i of cr wants bit i + 1 of lf, and only those.
+            const unpaired = ((cr << 1) | @as(u16, @intFromBool(scan.after_cr))) ^ lf;
+            const bad = del | (low & ~tab & ~(cr | lf)) | unpaired;
+            // Only the bytes up to the first bad one count, and only if
+            // the head ends before it.
+            const before_bad: u16 = @truncate((@as(u17, 1) << @ctz(bad)) - 1);
+            var events = (lf | col) & before_bad;
+            while (events != 0) : (events &= events - 1) {
+                const bit: u4 = @intCast(@ctz(events));
+                const at: u32 = @intCast(i + bit);
+                if (lf >> bit & 1 != 0) {
+                    if (try scan.endLine(at)) return at + 1;
+                } else if (scan.colon == Line.no_colon) {
+                    scan.colon = at;
+                }
+            }
+            if (bad != 0) return error.MalformedHead;
+            scan.after_cr = cr >> 15 != 0;
+        }
+        while (i < bytes.len) : (i += 1) {
+            const c = bytes[i];
+            const is_cr = c == '\r';
+            const is_lf = c == '\n';
+            if (c == 0x7f or (c < ' ' and c != '\t' and !is_cr and !is_lf)) return error.MalformedHead;
+            if (scan.after_cr != is_lf) return error.MalformedHead;
+            scan.after_cr = is_cr;
+            if (is_lf) {
+                if (try scan.endLine(@intCast(i))) return i + 1;
+            } else if (c == ':' and scan.colon == Line.no_colon) {
+                scan.colon = @intCast(i);
             }
         }
+        scan.pos = i;
+        return null;
     }
-    for (bytes[i..], i..) |c, at| {
-        const is_cr = c == '\r';
-        const is_lf = c == '\n';
-        if (c == 0x7f or (c < ' ' and c != '\t' and !is_cr and !is_lf)) return error.MalformedHead;
-        if (after_cr != is_lf) return error.MalformedHead;
-        after_cr = is_cr;
-        if (is_lf) {
-            if (count == lines.len) return error.TooManyHeaders;
-            lines[count] = .{ .start = line_start, .colon = colon, .end = @intCast(at - 1) };
-            count += 1;
-            line_start = @intCast(at + 1);
-            colon = Line.no_colon;
-        } else if (c == ':' and colon == Line.no_colon) {
-            colon = @intCast(at);
-        }
+
+    /// Records the line the LF at `at` ends. True when it is the empty
+    /// line that ends the head.
+    fn endLine(scan: *HeadScan, at: u32) ParseHeadError!bool {
+        if (scan.count == scan.lines.len) return error.TooManyHeaders;
+        const line: Line = .{ .start = scan.line_start, .colon = scan.colon, .end = at - 1 };
+        scan.lines[scan.count] = line;
+        scan.count += 1;
+        scan.line_start = at + 1;
+        scan.colon = Line.no_colon;
+        return line.start == line.end and scan.count > scan.leading;
     }
-    if (after_cr) return error.MalformedHead;
-    return count;
+};
+
+/// Splits `bytes`, the whole of a head or less, into `lines` as
+/// HeadScan does, and returns the line count.
+fn scanHead(bytes: []const u8, lines: []Line) ParseHeadError!usize {
+    var scan: HeadScan = .{ .lines = lines };
+    if (try scan.feed(bytes) == null and scan.after_cr) return error.MalformedHead;
+    return scan.count;
 }
+
+/// Reads until the head of the next request is in `in`'s buffer, as
+/// `std.http.Reader.receiveHead` does, splitting it into `scan.lines` on
+/// the way, and takes it out of the buffer. A head that does not fit the
+/// buffer is HttpHeadersOversize.
+fn receiveHead(in: *std.Io.Reader, scan: *HeadScan) ReceiveHeadError![]const u8 {
+    while (true) {
+        const buffered = in.buffered();
+        if (try scan.feed(buffered)) |len| {
+            in.toss(len);
+            return buffered[0..len];
+        }
+        if (buffered.len >= in.buffer.len) return error.HttpHeadersOversize;
+        in.fillMore() catch |err| switch (err) {
+            error.EndOfStream => return if (buffered.len == 0)
+                error.HttpConnectionClosing
+            else
+                error.HttpRequestTruncated,
+            error.ReadFailed => |e| return e,
+        };
+    }
+}
+
+const ReceiveHeadError = ParseHeadError || error{
+    HttpHeadersOversize,
+    HttpConnectionClosing,
+    HttpRequestTruncated,
+    ReadFailed,
+};
 
 /// The id of the header name `bytes[start..][0..len]`, -1 for a token
 /// the table does not know, or null when it is not a token. The name is
@@ -2931,16 +2990,124 @@ fn hasControl(bytes: []const u8) bool {
     return false;
 }
 
-/// The body reader for a request that declares a body, after answering
-/// an `Expect: 100-continue`. Any method may carry a body here. The
-/// std.http.Server reader hands back an empty one for GET and DELETE,
-/// which would leave the declared bytes in the stream as the next head.
-fn openBody(req: *std.http.Server.Request, buffer: []u8) std.http.Server.Request.ExpectContinueError!*std.Io.Reader {
-    const flush = req.head.expect != null;
-    try req.writeExpectContinue();
-    if (flush) try req.server.out.flush();
-    return req.server.reader.bodyReader(buffer, req.head.transfer_encoding, req.head.content_length);
-}
+/// The body of a request that declares one: Content-Length bytes, or
+/// chunks until the last one and its trailer.
+const BodyReader = union(enum) {
+    none,
+    length: std.Io.Reader.Limited,
+    chunked: Chunked,
+
+    /// Opens the body `head` declares on `in`, after answering an
+    /// `Expect: 100-continue` on `out`, and returns its reader. Any method
+    /// may carry a body here, so the declared bytes never stay in the
+    /// stream to be read as the next head. An Expect other than
+    /// 100-continue is HttpExpectationFailed.
+    fn open(body: *BodyReader, head: *Head, in: *std.Io.Reader, out: *std.Io.Writer, buffer: []u8) error{ HttpExpectationFailed, WriteFailed }!*std.Io.Reader {
+        if (head.expect) |expect| {
+            if (!std.mem.eql(u8, expect, "100-continue")) return error.HttpExpectationFailed;
+            try out.writeAll("HTTP/1.1 100 Continue\r\n\r\n");
+            try out.flush();
+            head.expect = null;
+        }
+        if (head.transfer_encoding == .chunked) {
+            body.* = .{ .chunked = .init(in, buffer) };
+            return &body.chunked.interface;
+        }
+        body.* = .{ .length = in.limited(.limited64(head.content_length orelse 0), buffer) };
+        return &body.length.interface;
+    }
+};
+
+/// A chunked body (RFC 9112 7.1). The chunk-size lines read as
+/// std.http.ChunkParser reads them, and the trailer is skipped after
+/// HeadScan checks it as it checks a head. A body that ends early or
+/// breaks the framing is ReadFailed.
+const Chunked = struct {
+    interface: std.Io.Reader,
+    in: *std.Io.Reader,
+    state: union(enum) { size, data: u64, crlf, done } = .size,
+
+    fn init(in: *std.Io.Reader, buffer: []u8) Chunked {
+        return .{
+            .in = in,
+            .interface = .{
+                .buffer = buffer,
+                .seek = 0,
+                .end = 0,
+                .vtable = &.{ .stream = stream, .discard = discard },
+            },
+        };
+    }
+
+    fn stream(io_r: *std.Io.Reader, w: *std.Io.Writer, limit: std.Io.Limit) std.Io.Reader.StreamError!usize {
+        const ch: *Chunked = @alignCast(@fieldParentPtr("interface", io_r));
+        const left = try ch.chunkLeft();
+        if (left == 0) return error.EndOfStream;
+        const n = ch.in.stream(w, limit.min(.limited64(left))) catch |err| switch (err) {
+            error.EndOfStream => return error.ReadFailed,
+            else => |e| return e,
+        };
+        ch.state = if (n == left) .crlf else .{ .data = left - n };
+        return n;
+    }
+
+    fn discard(io_r: *std.Io.Reader, limit: std.Io.Limit) std.Io.Reader.Error!usize {
+        const ch: *Chunked = @alignCast(@fieldParentPtr("interface", io_r));
+        const left = try ch.chunkLeft();
+        if (left == 0) return error.EndOfStream;
+        const n = ch.in.discard(limit.min(.limited64(left))) catch |err| switch (err) {
+            error.EndOfStream => return error.ReadFailed,
+            else => |e| return e,
+        };
+        ch.state = if (n == left) .crlf else .{ .data = left - n };
+        return n;
+    }
+
+    /// The bytes left in the current chunk, reading past a chunk's CR LF,
+    /// the next size line and the trailer as it comes to them. 0 once the
+    /// body is over.
+    fn chunkLeft(ch: *Chunked) std.Io.Reader.Error!u64 {
+        while (true) switch (ch.state) {
+            .data => |left| return left,
+            .done => return 0,
+            .crlf => {
+                const rn = ch.in.peekArray(2) catch return error.ReadFailed;
+                if (rn[0] != '\r' or rn[1] != '\n') return error.ReadFailed;
+                ch.in.toss(2);
+                ch.state = .size;
+            },
+            .size => {
+                var cp: std.http.ChunkParser = .init;
+                while (true) {
+                    const i = cp.feed(ch.in.buffered());
+                    ch.in.toss(i);
+                    switch (cp.state) {
+                        .invalid => return error.ReadFailed,
+                        .data => break,
+                        else => ch.in.fillMore() catch return error.ReadFailed,
+                    }
+                }
+                if (cp.chunk_len != 0) {
+                    ch.state = .{ .data = cp.chunk_len };
+                } else {
+                    try ch.skipTrailer();
+                    ch.state = .done;
+                }
+            },
+        };
+    }
+
+    fn skipTrailer(ch: *Chunked) std.Io.Reader.Error!void {
+        var lines: [max_headers + 2]Line = undefined;
+        var scan: HeadScan = .{ .lines = &lines, .leading = 0 };
+        while (true) {
+            const buffered = ch.in.buffered();
+            if (scan.feed(buffered) catch return error.ReadFailed) |len| return ch.in.toss(len);
+            if (buffered.len >= ch.in.buffer.len) return error.ReadFailed;
+            ch.in.fillMore() catch return error.ReadFailed;
+        }
+    }
+};
 
 /// Where a server made through the C API allocates. The tests take the
 /// testing allocator for both, which fails a test that leaves an
@@ -5283,20 +5450,30 @@ fn referenceNameId(name: []const u8) i32 {
     return -1;
 }
 
+/// Splits the whole head `bytes` and parses it, as serveRequests does
+/// for a head it received.
+fn parseWholeHead(bytes: []const u8, head_copy: []u8, slots: []HeaderSlot) ParseHeadError!ParsedHead {
+    var lines: [max_headers + 2]Line = undefined;
+    const count = try scanHead(bytes, &lines);
+    return parseHead(bytes, lines[0..count], head_copy, slots);
+}
+
 /// One connection's worth of bytes through parseHead, as handleConnInner
 /// runs it, with no socket and no Dart. It claims no panic, and that
 /// every offset handed to Dart stays inside the head copy.
 fn checkRequestBytes(bytes: []const u8) !void {
     var in: std.Io.Reader = .fixed(bytes);
     var sink: std.Io.Writer.Discarding = .init(&.{});
-    var http = std.http.Server.init(&in, &sink.writer);
+    var body: BodyReader = .none;
     var head_copy: [max_head]u8 = undefined;
     var slots: [max_headers]HeaderSlot = undefined;
     var tbuf: [1024]u8 = undefined;
+    var lines: [max_headers + 2]Line = undefined;
     while (true) {
-        const head = http.reader.receiveHead() catch return;
+        var scan: HeadScan = .{ .lines = &lines };
+        const head = receiveHead(&in, &scan) catch return;
         const reference = Head.parse(head);
-        const index = parseHead(head, &head_copy, &slots) catch return;
+        const index = parseHead(head, lines[0..scan.count], &head_copy, &slots) catch return;
         // Stricter than std.http's parser and never looser, and the same
         // reading of whatever both accept, except Connection. std reads
         // each line's value as one token, the last line winning, and keeps
@@ -5320,14 +5497,13 @@ fn checkRequestBytes(bytes: []const u8) !void {
         expected.keep_alive = !close_option and
             (expected.version == .@"HTTP/1.1" or (keep_alive_option and !transfer_encoded));
         try std.testing.expectEqualDeep(expected, index.head);
-        var req: std.http.Server.Request = .{ .server = &http, .head_buffer = head, .head = index.head };
+        var req_head = index.head;
         try std.testing.expect(index.host_slot < @as(i32, @intCast(index.count)));
-        try std.testing.expect(off(head, req.head.target) + req.head.target.len <= head.len);
-        if (req.head.transfer_encoding == .chunked or req.head.content_length != null) {
-            const br = openBody(&req, &tbuf) catch return;
+        try std.testing.expect(off(head, req_head.target) + req_head.target.len <= head.len);
+        if (req_head.transfer_encoding == .chunked or req_head.content_length != null) {
+            const br = body.open(&req_head, &in, &sink.writer, &tbuf) catch return;
             _ = br.discardRemaining() catch return;
         }
-        if (http.reader.state == .received_head) http.reader.state = .ready;
     }
 }
 
@@ -5432,6 +5608,109 @@ test "head: scanHead splits lines at CR LF and takes HTAB, nothing else below sp
     try std.testing.expectError(error.TooManyHeaders, scanHead("a\r\nb\r\nc\r\n", &two));
 }
 
+test "head: HeadScan ends the head at its empty line and leaves what follows unread" {
+    var lines: [8]Line = undefined;
+    // The head ends inside a sixteen byte block, and a body byte no head
+    // may hold follows in that block.
+    const del: [20]u8 = @splat(0x7f);
+    const bytes = "GET / HTTP/1.1\r\nHost: abc\r\n\r\n\x00\x01\n\r" ++ del;
+    var scan: HeadScan = .{ .lines = &lines };
+    try std.testing.expectEqual(@as(?usize, 29), try scan.feed(bytes));
+    try std.testing.expectEqual(@as(usize, 3), scan.count);
+}
+
+test "head: HeadScan fed a byte at a time splits as it does fed at once" {
+    const bytes = "GET /a/long/enough/path HTTP/1.1\r\nHost: example.com\r\nAccept: */*\r\nX-A: 1\r\n\r\n";
+    var whole: [8]Line = undefined;
+    var whole_scan: HeadScan = .{ .lines = &whole };
+    const len = (try whole_scan.feed(bytes)).?;
+    var parts: [8]Line = undefined;
+    var part_scan: HeadScan = .{ .lines = &parts };
+    var n: usize = 0;
+    const end = while (n < bytes.len) {
+        n += 1;
+        if (try part_scan.feed(bytes[0..n])) |found| break found;
+    } else null;
+    try std.testing.expectEqual(@as(?usize, len), end);
+    try std.testing.expectEqualSlices(Line, whole[0..whole_scan.count], parts[0..part_scan.count]);
+}
+
+/// The body `bytes` frames as `head` declares it, read to the end, and
+/// what the stream holds after it.
+fn readTestBody(head: Head, bytes: []const u8, out: *std.Io.Writer) ![]const u8 {
+    var in: std.Io.Reader = .fixed(bytes);
+    var head_copy = head;
+    var body: BodyReader = .none;
+    var buffer: [64]u8 = undefined;
+    const br = try body.open(&head_copy, &in, out, &buffer);
+    var got: std.Io.Writer.Allocating = .init(std.testing.allocator);
+    defer got.deinit();
+    _ = try br.streamRemaining(&got.writer);
+    try std.testing.expectEqualStrings("hello, world", got.written());
+    return in.buffered();
+}
+
+fn testHead(transfer_encoding: std.http.TransferEncoding, content_length: ?u64, expect: ?[]const u8) Head {
+    var head: Head = undefined;
+    head.transfer_encoding = transfer_encoding;
+    head.content_length = content_length;
+    head.expect = expect;
+    return head;
+}
+
+test "body: a chunked body reads its chunks, skips extensions and the trailer, and stops there" {
+    var sink: std.Io.Writer.Discarding = .init(&.{});
+    const rest = try readTestBody(testHead(.chunked, null, null), "5;a=b\r\nhello\r\n7\r\n, world\r\n0\r\nX-T: 1\r\n\r\nGET /", &sink.writer);
+    try std.testing.expectEqualStrings("GET /", rest);
+}
+
+test "body: a Content-Length body reads that many bytes and leaves the rest" {
+    var sink: std.Io.Writer.Discarding = .init(&.{});
+    const rest = try readTestBody(testHead(.none, 12, null), "hello, worldGET /", &sink.writer);
+    try std.testing.expectEqualStrings("GET /", rest);
+}
+
+test "body: a chunked body that breaks its framing or ends early is ReadFailed" {
+    const cases = [_][]const u8{
+        "5\r\nhelloX\r\n0\r\n\r\n",
+        "5\r\nhel",
+        "zz\r\nhello\r\n",
+        "5\r\nhello\r\n0\r\nX-T: 1\n\r\n",
+    };
+    for (cases) |bytes| {
+        var in: std.Io.Reader = .fixed(bytes);
+        var sink: std.Io.Writer.Discarding = .init(&.{});
+        var head = testHead(.chunked, null, null);
+        var body: BodyReader = .none;
+        var buffer: [64]u8 = undefined;
+        const br = try body.open(&head, &in, &sink.writer, &buffer);
+        try std.testing.expectError(error.ReadFailed, br.discardRemaining());
+    }
+}
+
+test "body: Expect 100-continue gets the interim answer, any other Expect fails" {
+    var out: [64]u8 = undefined;
+    var writer: std.Io.Writer = .fixed(&out);
+    _ = try readTestBody(testHead(.none, 12, "100-continue"), "hello, world", &writer);
+    try std.testing.expectEqualStrings("HTTP/1.1 100 Continue\r\n\r\n", writer.buffered());
+    var in: std.Io.Reader = .fixed("hello, world");
+    var head = testHead(.none, 12, "something-else");
+    var body: BodyReader = .none;
+    var buffer: [64]u8 = undefined;
+    try std.testing.expectError(error.HttpExpectationFailed, body.open(&head, &in, &writer, &buffer));
+}
+
+test "head: receiveHead takes one head and leaves the next request in the buffer" {
+    var in: std.Io.Reader = .fixed("GET /a HTTP/1.1\r\nHost: a\r\n\r\nGET /b HTTP/1.1\r\nHost: a\r\n\r\n");
+    var lines: [8]Line = undefined;
+    var first: HeadScan = .{ .lines = &lines };
+    try std.testing.expectEqualStrings("GET /a HTTP/1.1\r\nHost: a\r\n\r\n", try receiveHead(&in, &first));
+    var second: HeadScan = .{ .lines = &lines };
+    try std.testing.expectEqualStrings("GET /b HTTP/1.1\r\nHost: a\r\n\r\n", try receiveHead(&in, &second));
+    var third: HeadScan = .{ .lines = &lines };
+    try std.testing.expectError(error.HttpConnectionClosing, receiveHead(&in, &third));
+}
+
 test "head: lookupName knows a name in any case and tells a token from a stranger" {
     const name = struct {
         fn of(text: []const u8) ?i32 {
@@ -5457,71 +5736,71 @@ test "head: lookupName knows a name in any case and tells a token from a strange
 test "head: HTTP/1.1 needs one Host and HTTP/1.0 may have none" {
     var head_copy: [max_head]u8 = undefined;
     var slots: [max_headers]HeaderSlot = undefined;
-    const one = try parseHead("GET / HTTP/1.1\r\nHost: a\r\n\r\n", &head_copy, &slots);
+    const one = try parseWholeHead("GET / HTTP/1.1\r\nHost: a\r\n\r\n", &head_copy, &slots);
     try std.testing.expectEqual(@as(i32, 0), one.host_slot);
-    const none10 = try parseHead("GET / HTTP/1.0\r\n\r\n", &head_copy, &slots);
+    const none10 = try parseWholeHead("GET / HTTP/1.0\r\n\r\n", &head_copy, &slots);
     try std.testing.expectEqual(@as(i32, -1), none10.host_slot);
-    try std.testing.expectError(error.MalformedHead, parseHead("GET / HTTP/1.1\r\n\r\n", &head_copy, &slots));
-    try std.testing.expectError(error.MalformedHead, parseHead("GET / HTTP/1.1\r\nHost: a\r\nHost: b\r\n\r\n", &head_copy, &slots));
-    try std.testing.expectError(error.MalformedHead, parseHead("GET / HTTP/1.0\r\nHost: a\r\nhost: a\r\n\r\n", &head_copy, &slots));
+    try std.testing.expectError(error.MalformedHead, parseWholeHead("GET / HTTP/1.1\r\n\r\n", &head_copy, &slots));
+    try std.testing.expectError(error.MalformedHead, parseWholeHead("GET / HTTP/1.1\r\nHost: a\r\nHost: b\r\n\r\n", &head_copy, &slots));
+    try std.testing.expectError(error.MalformedHead, parseWholeHead("GET / HTTP/1.0\r\nHost: a\r\nhost: a\r\n\r\n", &head_copy, &slots));
 }
 
 test "head: a second Content-Type is malformed" {
     var head_copy: [max_head]u8 = undefined;
     var slots: [max_headers]HeaderSlot = undefined;
-    const one = try parseHead("POST / HTTP/1.1\r\nHost: a\r\nContent-Type: text/plain\r\n\r\n", &head_copy, &slots);
+    const one = try parseWholeHead("POST / HTTP/1.1\r\nHost: a\r\nContent-Type: text/plain\r\n\r\n", &head_copy, &slots);
     try std.testing.expectEqualStrings("text/plain", one.head.content_type.?);
-    try std.testing.expectError(error.MalformedHead, parseHead("POST / HTTP/1.1\r\nHost: a\r\nContent-Type: text/plain\r\nContent-Type: application/json\r\n\r\n", &head_copy, &slots));
-    try std.testing.expectError(error.MalformedHead, parseHead("POST / HTTP/1.1\r\nHost: a\r\nContent-Type: text/plain\r\ncontent-type: text/plain\r\n\r\n", &head_copy, &slots));
+    try std.testing.expectError(error.MalformedHead, parseWholeHead("POST / HTTP/1.1\r\nHost: a\r\nContent-Type: text/plain\r\nContent-Type: application/json\r\n\r\n", &head_copy, &slots));
+    try std.testing.expectError(error.MalformedHead, parseWholeHead("POST / HTTP/1.1\r\nHost: a\r\nContent-Type: text/plain\r\ncontent-type: text/plain\r\n\r\n", &head_copy, &slots));
 }
 
 test "head: the Connection tokens decide keep-alive by version" {
     var head_copy: [max_head]u8 = undefined;
     var slots: [max_headers]HeaderSlot = undefined;
-    const list = try parseHead("GET / HTTP/1.1\r\nHost: x\r\nConnection: TE, close\r\n\r\n", &head_copy, &slots);
+    const list = try parseWholeHead("GET / HTTP/1.1\r\nHost: x\r\nConnection: TE, close\r\n\r\n", &head_copy, &slots);
     try std.testing.expect(!list.head.keep_alive);
-    const first = try parseHead("GET / HTTP/1.1\r\nHost: x\r\nConnection: Close ,TE\r\n\r\n", &head_copy, &slots);
+    const first = try parseWholeHead("GET / HTTP/1.1\r\nHost: x\r\nConnection: Close ,TE\r\n\r\n", &head_copy, &slots);
     try std.testing.expect(!first.head.keep_alive);
-    const other = try parseHead("GET / HTTP/1.1\r\nHost: x\r\nConnection: TE, closer\r\n\r\n", &head_copy, &slots);
+    const other = try parseWholeHead("GET / HTTP/1.1\r\nHost: x\r\nConnection: TE, closer\r\n\r\n", &head_copy, &slots);
     try std.testing.expect(other.head.keep_alive);
-    const alive = try parseHead("GET / HTTP/1.0\r\nConnection: keep-alive\r\n\r\n", &head_copy, &slots);
+    const alive = try parseWholeHead("GET / HTTP/1.0\r\nConnection: keep-alive\r\n\r\n", &head_copy, &slots);
     try std.testing.expect(alive.head.keep_alive);
-    const listed = try parseHead("GET / HTTP/1.0\r\nConnection: TE, Keep-Alive\r\n\r\n", &head_copy, &slots);
+    const listed = try parseWholeHead("GET / HTTP/1.0\r\nConnection: TE, Keep-Alive\r\n\r\n", &head_copy, &slots);
     try std.testing.expect(listed.head.keep_alive);
-    const te = try parseHead("GET / HTTP/1.0\r\nConnection: TE\r\n\r\n", &head_copy, &slots);
+    const te = try parseWholeHead("GET / HTTP/1.0\r\nConnection: TE\r\n\r\n", &head_copy, &slots);
     try std.testing.expect(!te.head.keep_alive);
-    const none = try parseHead("GET / HTTP/1.0\r\n\r\n", &head_copy, &slots);
+    const none = try parseWholeHead("GET / HTTP/1.0\r\n\r\n", &head_copy, &slots);
     try std.testing.expect(!none.head.keep_alive);
 }
 
 test "head: every Connection line counts, and close wins over keep-alive" {
     var head_copy: [max_head]u8 = undefined;
     var slots: [max_headers]HeaderSlot = undefined;
-    const both = try parseHead("GET / HTTP/1.0\r\nConnection: keep-alive, close\r\n\r\n", &head_copy, &slots);
+    const both = try parseWholeHead("GET / HTTP/1.0\r\nConnection: keep-alive, close\r\n\r\n", &head_copy, &slots);
     try std.testing.expect(!both.head.keep_alive);
-    const earlier = try parseHead("GET / HTTP/1.1\r\nHost: x\r\nConnection: close\r\nConnection: TE\r\n\r\n", &head_copy, &slots);
+    const earlier = try parseWholeHead("GET / HTTP/1.1\r\nHost: x\r\nConnection: close\r\nConnection: TE\r\n\r\n", &head_copy, &slots);
     try std.testing.expect(!earlier.head.keep_alive);
-    const split = try parseHead("GET / HTTP/1.0\r\nConnection: keep-alive\r\nConnection: TE\r\n\r\n", &head_copy, &slots);
+    const split = try parseWholeHead("GET / HTTP/1.0\r\nConnection: keep-alive\r\nConnection: TE\r\n\r\n", &head_copy, &slots);
     try std.testing.expect(split.head.keep_alive);
 }
 
 test "head: an HTTP/1.0 request with Transfer-Encoding does not keep its connection" {
     var head_copy: [max_head]u8 = undefined;
     var slots: [max_headers]HeaderSlot = undefined;
-    const old = try parseHead("POST / HTTP/1.0\r\nConnection: keep-alive\r\nTransfer-Encoding: chunked\r\n\r\n", &head_copy, &slots);
+    const old = try parseWholeHead("POST / HTTP/1.0\r\nConnection: keep-alive\r\nTransfer-Encoding: chunked\r\n\r\n", &head_copy, &slots);
     try std.testing.expect(!old.head.keep_alive);
-    const new = try parseHead("POST / HTTP/1.1\r\nHost: x\r\nTransfer-Encoding: chunked\r\n\r\n", &head_copy, &slots);
+    const new = try parseWholeHead("POST / HTTP/1.1\r\nHost: x\r\nTransfer-Encoding: chunked\r\n\r\n", &head_copy, &slots);
     try std.testing.expect(new.head.keep_alive);
 }
 
 test "head: Transfer-Encoding beside Content-Length is refused" {
     var head_copy: [max_head]u8 = undefined;
     var slots: [max_headers]HeaderSlot = undefined;
-    const chunked = try parseHead("POST / HTTP/1.1\r\nHost: x\r\nTransfer-Encoding: chunked\r\n\r\n", &head_copy, &slots);
+    const chunked = try parseWholeHead("POST / HTTP/1.1\r\nHost: x\r\nTransfer-Encoding: chunked\r\n\r\n", &head_copy, &slots);
     try std.testing.expectEqual(.chunked, chunked.head.transfer_encoding);
-    try std.testing.expectError(error.MalformedHead, parseHead("POST / HTTP/1.1\r\nHost: x\r\nTransfer-Encoding: chunked\r\nContent-Length: 5\r\n\r\n", &head_copy, &slots));
-    try std.testing.expectError(error.MalformedHead, parseHead("POST / HTTP/1.1\r\nHost: x\r\nContent-Length: 5\r\nTransfer-Encoding: chunked\r\n\r\n", &head_copy, &slots));
-    try std.testing.expectError(error.MalformedHead, parseHead("POST / HTTP/1.1\r\nHost: x\r\nContent-Length: 5\r\nTransfer-Encoding: gzip\r\n\r\n", &head_copy, &slots));
+    try std.testing.expectError(error.MalformedHead, parseWholeHead("POST / HTTP/1.1\r\nHost: x\r\nTransfer-Encoding: chunked\r\nContent-Length: 5\r\n\r\n", &head_copy, &slots));
+    try std.testing.expectError(error.MalformedHead, parseWholeHead("POST / HTTP/1.1\r\nHost: x\r\nContent-Length: 5\r\nTransfer-Encoding: chunked\r\n\r\n", &head_copy, &slots));
+    try std.testing.expectError(error.MalformedHead, parseWholeHead("POST / HTTP/1.1\r\nHost: x\r\nContent-Length: 5\r\nTransfer-Encoding: gzip\r\n\r\n", &head_copy, &slots));
 }
 
 test "fuzz: the request parse path panics on nothing and indexes within the head" {
